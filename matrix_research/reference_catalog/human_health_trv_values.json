@@ -19133,5 +19133,2175 @@
       "TRV"
     ],
     "candidate_group_id": "human-health-direct__zinc__rfd_oral_mg_per_kg_bw_day__BC_provincial"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-direct-rfd",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD (US EPA IRIS)",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for cadmium; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Cadmium (IRIS substance 0141), I.A.1. Oral RfD Summary; source PDF iris_0141_cadmium.pdf",
+        "value_text": "5E-4 mg/kg/day (water) | NOAEL (water): 0.005 mg/kg/day | UF=10 MF=1 | Significant proteinuria | Human studies involving chronic exposures (I.A.1 Oral RfD Summary, Cadmium IRIS 0141); food-pathway RfD 1E-3 mg/kg/day also stated; water-pathway captured here.",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-food-rfd",
+    "substance_key": "cadmium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Cadmium oral RfD (US EPA IRIS)",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for cadmium; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Cadmium (IRIS substance 0141), I.A.1. Oral RfD Summary; source PDF iris_0141_cadmium.pdf",
+        "value_text": "5E-4 mg/kg/day (water) | NOAEL (water): 0.005 mg/kg/day | UF=10 MF=1 | Significant proteinuria | Human studies involving chronic exposures (I.A.1 Oral RfD Summary, Cadmium IRIS 0141); food-pathway RfD 1E-3 mg/kg/day also stated; water-pathway captured here.",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__cadmium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-cadmium-hh-direct-iur",
+    "substance_key": "cadmium",
+    "pathway": "human-health-direct",
+    "input_key": "unit_risk_inhalation_per_ug_m3",
+    "display_name": "Cadmium inhalation unit risk (US EPA IRIS)",
+    "value": 0.0018,
+    "unit": "per ug/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS IUR for cadmium; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Cadmium (IRIS substance 0141), II.C.1. Summary of Risk Estimates; source PDF iris_0141_cadmium.pdf",
+        "value_text": "Inhalation Unit Risk - 1.8E-3 per (ug/cu.m) | Extrapolation Method - Two stage; only first affected by exposure; extra risk (II.C.1 Cadmium IRIS 0141)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-cadmium-hh-direct-iur-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS IUR candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__cadmium__unit_risk_inhalation_per_ug_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl_chloride-hh-direct-rfd",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Vinyl Chloride oral RfD (US EPA IRIS)",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for vinyl_chloride; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Vinyl Chloride (IRIS substance 1001), I.A.1. Oral RfD Summary; source PDF iris_1001_vinyl_chloride.pdf",
+        "value_text": "RfD | 3E-3 mg/kg-day | UF=30 MF=1 | Liver cell polymorphism | Rat chronic feeding study, Til et al., 1983, 1991 | NOAEL(HED): 0.09 mg/kg-day (I.A.1 Oral RfD Summary, Vinyl Chloride IRIS 1001)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-vinyl_chloride-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl_chloride-hh-food-rfd",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Vinyl Chloride oral RfD (US EPA IRIS)",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for vinyl_chloride; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Vinyl Chloride (IRIS substance 1001), I.A.1. Oral RfD Summary; source PDF iris_1001_vinyl_chloride.pdf",
+        "value_text": "RfD | 3E-3 mg/kg-day | UF=30 MF=1 | Liver cell polymorphism | Rat chronic feeding study, Til et al., 1983, 1991 | NOAEL(HED): 0.09 mg/kg-day (I.A.1 Oral RfD Summary, Vinyl Chloride IRIS 1001)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-vinyl_chloride-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__vinyl_chloride__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-vinyl_chloride-hh-direct-rfc",
+    "substance_key": "vinyl_chloride",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Vinyl Chloride inhalation RfC (US EPA IRIS)",
+    "value": 0.1,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFC for vinyl_chloride; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Vinyl Chloride (IRIS substance 1001), I.B.1. Inhalation RfC Summary; source PDF iris_1001_vinyl_chloride.pdf",
+        "value_text": "RfC | 1E-1 mg/m3 | UF=30 MF=1 | Liver cell polymorphism | Rat chronic feeding study, Til et al., 1983, 1991 | NOAEL(HEC): 2.5 mg/m3 (I.B.1 Inhalation RfC Summary, Vinyl Chloride IRIS 1001)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-vinyl_chloride-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFC candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__vinyl_chloride__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-acetone-hh-direct-rfd",
+    "substance_key": "acetone",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Acetone oral RfD (US EPA IRIS)",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for acetone; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Acetone (IRIS substance 0128), I.A.1. Oral RfD Summary; source PDF iris_0128_acetone.pdf",
+        "value_text": "0.9 mg/kg- [unit reconstructed from split-line: mg/kg+day]",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-acetone-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__acetone__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-acetone-hh-food-rfd",
+    "substance_key": "acetone",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Acetone oral RfD (US EPA IRIS)",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for acetone; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Acetone (IRIS substance 0128), I.A.1. Oral RfD Summary; source PDF iris_0128_acetone.pdf",
+        "value_text": "0.9 mg/kg- [unit reconstructed from split-line: mg/kg+day]",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-acetone-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__acetone__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-boron-hh-direct-rfd",
+    "substance_key": "boron",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Boron and Compounds oral RfD (US EPA IRIS)",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for boron; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Boron and Compounds (IRIS substance 0410), I.A.1. Oral RfD Summary; source PDF iris_0410_boron.pdf",
+        "value_text": "2E-1 mg/kg-; BMDL05: 10.3 mg/kg- [unit reconstructed from split-line: mg/kg+day]",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-boron-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__boron__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-boron-hh-food-rfd",
+    "substance_key": "boron",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Boron and Compounds oral RfD (US EPA IRIS)",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for boron; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Boron and Compounds (IRIS substance 0410), I.A.1. Oral RfD Summary; source PDF iris_0410_boron.pdf",
+        "value_text": "2E-1 mg/kg-; BMDL05: 10.3 mg/kg- [unit reconstructed from split-line: mg/kg+day]",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-boron-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__boron__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bromodichloromethane-hh-direct-rfd",
+    "substance_key": "bromodichloromethane",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Bromodichloromethane oral RfD (US EPA IRIS)",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for bromodichloromethane; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Bromodichloromethane (IRIS substance 0213), I.A.1. Oral RfD Summary; source PDF iris_0213_bromodichloromethane.pdf",
+        "value_text": "mg/kg/day; 2E-2; LOAEL: 17.9 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-bromodichloromethane-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__bromodichloromethane__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-bromodichloromethane-hh-food-rfd",
+    "substance_key": "bromodichloromethane",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Bromodichloromethane oral RfD (US EPA IRIS)",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for bromodichloromethane; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Bromodichloromethane (IRIS substance 0213), I.A.1. Oral RfD Summary; source PDF iris_0213_bromodichloromethane.pdf",
+        "value_text": "mg/kg/day; 2E-2; LOAEL: 17.9 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-bromodichloromethane-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__bromodichloromethane__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-dichloromethane-hh-direct-rfd",
+    "substance_key": "dichloromethane",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Dichloromethane oral RfD (US EPA IRIS)",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for dichloromethane; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Dichloromethane (IRIS substance 0070), I.A.1. Oral RfD Summary; source PDF iris_0070_dichloromethane.pdf",
+        "value_text": "mg/kg-day; 6 ? 10-3; dose: 0.19 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-dichloromethane-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__dichloromethane__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-dichloromethane-hh-food-rfd",
+    "substance_key": "dichloromethane",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Dichloromethane oral RfD (US EPA IRIS)",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for dichloromethane; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Dichloromethane (IRIS substance 0070), I.A.1. Oral RfD Summary; source PDF iris_0070_dichloromethane.pdf",
+        "value_text": "mg/kg-day; 6 ? 10-3; dose: 0.19 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-dichloromethane-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__dichloromethane__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-dichloromethane-hh-direct-rfc",
+    "substance_key": "dichloromethane",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Dichloromethane inhalation RfC (US EPA IRIS)",
+    "value": 0.6,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFC for dichloromethane; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Dichloromethane (IRIS substance 0070), I.B.1. Inhalation RfC Summary; source PDF iris_0070_dichloromethane.pdf",
+        "value_text": "0.6 mg/m3; concentration: 17.2 mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-dichloromethane-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFC candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__dichloromethane__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-ethylbenzene-hh-direct-rfd",
+    "substance_key": "ethylbenzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Ethylbenzene oral RfD (US EPA IRIS)",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for ethylbenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Ethylbenzene (IRIS substance 0051), I.A.1. Oral RfD Summary; source PDF iris_0051_ethylbenzene.pdf",
+        "value_text": "mg/kg/day; 1E-1; mg/kg/day)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-ethylbenzene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__ethylbenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-ethylbenzene-hh-food-rfd",
+    "substance_key": "ethylbenzene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Ethylbenzene oral RfD (US EPA IRIS)",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for ethylbenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Ethylbenzene (IRIS substance 0051), I.A.1. Oral RfD Summary; source PDF iris_0051_ethylbenzene.pdf",
+        "value_text": "mg/kg/day; 1E-1; mg/kg/day)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-ethylbenzene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__ethylbenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-ethylbenzene-hh-direct-rfc",
+    "substance_key": "ethylbenzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Ethylbenzene inhalation RfC (US EPA IRIS)",
+    "value": 1,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFC for ethylbenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Ethylbenzene (IRIS substance 0051), I.B.1. Inhalation RfC Summary; source PDF iris_0051_ethylbenzene.pdf",
+        "value_text": "mg/cu.m; 1E+0; LOAEL(HEC): 4340 mg/cu.m; LOAEL(ADJ): 4340 mg/cu.m",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-ethylbenzene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFC candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__ethylbenzene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-hexachlorobenzene-hh-direct-rfd",
+    "substance_key": "hexachlorobenzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Hexachlorobenzene oral RfD (US EPA IRIS)",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for hexachlorobenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Hexachlorobenzene (IRIS substance 0374), I.A.1. Oral RfD Summary; source PDF iris_0374_hexachlorobenzene.pdf",
+        "value_text": "mg/kg/day; 8E-4; (0.29 mg/kg/day)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-hexachlorobenzene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__hexachlorobenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-hexachlorobenzene-hh-food-rfd",
+    "substance_key": "hexachlorobenzene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Hexachlorobenzene oral RfD (US EPA IRIS)",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for hexachlorobenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Hexachlorobenzene (IRIS substance 0374), I.A.1. Oral RfD Summary; source PDF iris_0374_hexachlorobenzene.pdf",
+        "value_text": "mg/kg/day; 8E-4; (0.29 mg/kg/day)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-hexachlorobenzene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__hexachlorobenzene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-molybdenum-hh-direct-rfd",
+    "substance_key": "molybdenum",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Molybdenum oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for molybdenum; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Molybdenum (IRIS substance 0425), I.A.1. Oral RfD Summary; source PDF iris_0425_molybdenum.pdf",
+        "value_text": "mg/kg-day; 5E-3; LOAEL: 0.14 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-molybdenum-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__molybdenum__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-molybdenum-hh-food-rfd",
+    "substance_key": "molybdenum",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Molybdenum oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for molybdenum; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Molybdenum (IRIS substance 0425), I.A.1. Oral RfD Summary; source PDF iris_0425_molybdenum.pdf",
+        "value_text": "mg/kg-day; 5E-3; LOAEL: 0.14 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-molybdenum-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__molybdenum__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-nitrobenzene-hh-direct-rfc",
+    "substance_key": "nitrobenzene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Nitrobenzene inhalation RfC (US EPA IRIS)",
+    "value": 0.009,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFC for nitrobenzene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Nitrobenzene (IRIS substance 0079), I.B.1. Inhalation RfC Summary; source PDF iris_0079_nitrobenzene.pdf",
+        "value_text": "mg/m3; 9 x 10-3; mg/m3",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-nitrobenzene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFC candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__nitrobenzene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pentachlorophenol-hh-direct-rfd",
+    "substance_key": "pentachlorophenol",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Pentachlorophenol oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for pentachlorophenol; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Pentachlorophenol (IRIS substance 0086), I.A.1. Oral RfD Summary; source PDF iris_0086_pentachlorophenol.pdf",
+        "value_text": "0.005 mg/kg-day; LOAEL: 1.5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-pentachlorophenol-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__pentachlorophenol__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pentachlorophenol-hh-food-rfd",
+    "substance_key": "pentachlorophenol",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Pentachlorophenol oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for pentachlorophenol; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Pentachlorophenol (IRIS substance 0086), I.A.1. Oral RfD Summary; source PDF iris_0086_pentachlorophenol.pdf",
+        "value_text": "0.005 mg/kg-day; LOAEL: 1.5 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-pentachlorophenol-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__pentachlorophenol__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pyrene-hh-direct-rfd",
+    "substance_key": "pyrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Pyrene oral RfD (US EPA IRIS)",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for pyrene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Pyrene (IRIS substance 0445), I.A.1. Oral RfD Summary; source PDF iris_0445_pyrene.pdf",
+        "value_text": "3E-2 mg/kg/day; LOAEL: 125 mg/kg/day; NOAEL: 75 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-pyrene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-pyrene-hh-food-rfd",
+    "substance_key": "pyrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Pyrene oral RfD (US EPA IRIS)",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for pyrene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Pyrene (IRIS substance 0445), I.A.1. Oral RfD Summary; source PDF iris_0445_pyrene.pdf",
+        "value_text": "3E-2 mg/kg/day; LOAEL: 125 mg/kg/day; NOAEL: 75 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-pyrene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-selenium-hh-direct-rfd",
+    "substance_key": "selenium",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Selenium and Compounds oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for selenium; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Selenium and Compounds (IRIS substance 0472), I.A.1. Oral RfD Summary; source PDF iris_0472_selenium.pdf",
+        "value_text": "mg/kg/day; 5E-3; LOAEL: 0.023 mg/kg/day; NOAEL: 0.015 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-selenium-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__selenium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-selenium-hh-food-rfd",
+    "substance_key": "selenium",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Selenium and Compounds oral RfD (US EPA IRIS)",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for selenium; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Selenium and Compounds (IRIS substance 0472), I.A.1. Oral RfD Summary; source PDF iris_0472_selenium.pdf",
+        "value_text": "mg/kg/day; 5E-3; LOAEL: 0.023 mg/kg/day; NOAEL: 0.015 mg/kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-selenium-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__selenium__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-styrene-hh-direct-rfd",
+    "substance_key": "styrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Styrene oral RfD (US EPA IRIS)",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for styrene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Styrene (IRIS substance 0104), I.A.1. Oral RfD Summary; source PDF iris_0104_styrene.pdf",
+        "value_text": "mg/kg-day; 2E-1; LOAEL: 400 mg/kg-day; NOAEL: 200 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-styrene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__styrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-styrene-hh-food-rfd",
+    "substance_key": "styrene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Styrene oral RfD (US EPA IRIS)",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for styrene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Styrene (IRIS substance 0104), I.A.1. Oral RfD Summary; source PDF iris_0104_styrene.pdf",
+        "value_text": "mg/kg-day; 2E-1; LOAEL: 400 mg/kg-day; NOAEL: 200 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-styrene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__styrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-styrene-hh-direct-rfc",
+    "substance_key": "styrene",
+    "pathway": "human-health-direct",
+    "input_key": "rfc_inhalation_mg_per_m3",
+    "display_name": "Styrene inhalation RfC (US EPA IRIS)",
+    "value": 1,
+    "unit": "mg/m3",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-chemical-details-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFC for styrene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "locator": "US EPA IRIS, Styrene (IRIS substance 0104), I.B.1. Inhalation RfC Summary; source PDF iris_0104_styrene.pdf",
+        "value_text": "mg/cu.m; 1E+0; LOAEL: >94 mg/cu.m (>22 ppm",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-styrene-hh-direct-rfc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFC candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-chemical-details-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__styrene__rfc_inhalation_mg_per_m3__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-toluene-hh-direct-rfd",
+    "substance_key": "toluene",
+    "pathway": "human-health-direct",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Toluene oral RfD (US EPA IRIS)",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for toluene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Toluene (IRIS substance 0118), I.A.1. Oral RfD Summary; source PDF iris_0118_toluene.pdf",
+        "value_text": "0.08 mg/kg-day; BMD: 431 mg/kg-day; BMDL: 238 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-toluene-hh-direct-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening child"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "direct contact",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-direct__toluene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-iris-toluene-hh-food-rfd",
+    "substance_key": "toluene",
+    "pathway": "human-health-food",
+    "input_key": "rfd_oral_mg_per_kg_bw_day",
+    "display_name": "Toluene oral RfD (US EPA IRIS)",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-iris-rfd-table-live"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA IRIS RFD for toluene; human-health TRV candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "locator": "US EPA IRIS, Toluene (IRIS substance 0118), I.A.1. Oral RfD Summary; source PDF iris_0118_toluene.pdf",
+        "value_text": "0.08 mg/kg-day; BMD: 431 mg/kg-day; BMDL: 238 mg/kg-day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-05-29",
+        "qa_status": "needs_review",
+        "note": "Robot-extracted from US EPA IRIS; pending direct-source verification.",
+        "evidence_id": "ev-pv-iris-toluene-hh-food-rfd-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA IRIS RFD candidate, robot-extracted 2026-05-29. Read-only library value; verify against the live source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-05-29",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-iris-rfd-table-live",
+        "role": "canonical_candidate",
+        "note": "US EPA IRIS is the source for this extracted TRV row; source date 2026-05-29."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "screening adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "toxicology endpoint",
+      "food web",
+      "TRV"
+    ],
+    "candidate_group_id": "human-health-food__toluene__rfd_oral_mg_per_kg_bw_day__US_federal"
   }
 ]
