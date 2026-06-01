@@ -29,9 +29,10 @@ function writeManifest(manifest) {
 
 function extractVitestCount() {
   try {
-    // Run vitest with --reporter=json to get structured output
-    // Fallback to parsing text output if JSON reporter not available
-    const output = execSync('npm run test:unit 2>&1', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    // Use the CI-faithful gate command (test:ci) so the recorded count provenance matches the
+    // GitHub Actions Unit Tests job rather than the non-CI test:unit (single-source contract).
+    // The "Tests X passed" summary line is identical under coverage, so parsing is unaffected.
+    const output = execSync('npm run test:ci 2>&1', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
     
     // Try to extract count from output
     // Vitest output format: "Test Files  X passed | Y failed | Z total"
@@ -115,7 +116,7 @@ function main() {
     console.log('📊 Extracting Vitest test count...');
     const count = extractVitestCount();
     if (count !== null) {
-      updateFact(manifest, 'testing', 'vitest_test_count', count, `npm run test:unit output (${TODAY})`);
+      updateFact(manifest, 'testing', 'vitest_test_count', count, `npm run test:ci output (${TODAY})`);
       console.log(`✅ Updated vitest_test_count: ${count}`);
       updated = true;
     }

@@ -41,8 +41,8 @@ run_command "2️⃣  Type checking" npx tsc --noEmit
 # 3. Linting
 run_command "3️⃣  Linting check" npm run lint
 
-# 4. Unit Tests
-run_command "4️⃣  Unit tests" npm run test:unit
+# 4. Unit Tests (CI-faithful: coverage + CI env, matches the GitHub Actions Unit Tests job)
+run_command "4️⃣  Unit tests (CI-faithful)" npm run test:ci
 
 # 5. Check for poll-related files in changes
 echo "5️⃣  Checking for poll-related file changes..."

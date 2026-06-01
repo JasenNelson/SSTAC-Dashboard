@@ -74,11 +74,16 @@ Never use `git add .` or `git add -A` or `git add -u`. Path-scoped staging only 
 Run gates in this order. Each gate must reach GREEN before the next gate starts.
 
 1. `npm run lint`
-2. `npm run test:unit`
-3. `npm run test:coverage` -- run when coverage recently failed or the change touches a coverage-gated path.
-4. `npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` -- never raw `npm run build` (see section 10).
-5. Focused e2e first when the change has a narrow e2e surface.
-6. Full e2e last.
+2. `npm run test:ci` -- MANDATORY push-gate unit/coverage gate. Sets `CI=true` and runs Vitest
+   coverage to exactly match the GitHub Actions "Unit Tests" job (the CI-conditional `testTimeout`
+   and `maxWorkers` in `vitest.config.ts` only activate when `CI` is set). Use `npm run test:unit`
+   ONLY for fast inner-loop checks, NEVER as push-gate evidence: it runs no coverage and at default
+   workers, so it cannot reproduce coverage/CI-only failures. This exact gap turned `main` RED on
+   2026-06-01 (a coverage-only render timeout passed `test:unit` locally). One command names the
+   CI contract so local and CI cannot drift; see `feedback_push_gate_must_match_ci_test_coverage`.
+3. `npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` -- never raw `npm run build` (see section 10).
+4. Focused e2e first when the change has a narrow e2e surface.
+5. Full e2e last.
 
 See section 5 for retry limits on known failure classes.
 
@@ -116,7 +121,7 @@ All gate output goes to `.tmp/gate-logs/` with timestamped filenames. Chat recei
 Format for GREEN gates:
 
 ```
-gate: npm run test:unit
+gate: npm run test:ci
 status: GREEN
 duration: 42s
 log: .tmp/gate-logs/unit-20260526-183000.log

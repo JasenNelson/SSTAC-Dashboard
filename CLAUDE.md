@@ -85,7 +85,10 @@ Quick reference:
 
 npm scripts:
 - `npm run lint` -- ESLint via next lint
-- `npm run test:unit` -- Vitest run
+- `npm run test:ci` -- Vitest coverage with `CI=true` (matches the GitHub Actions Unit Tests job).
+  This is the MANDATORY push-gate unit command. `npm run test:unit` (`vitest run`, no coverage) is
+  for fast inner-loop dev ONLY, never push-gate evidence -- it cannot reproduce coverage/CI-only
+  failures (see `docs/GATE_MODE_SOP.md` Phase 4).
 - `npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` -- monitored build
 - `npm run test:e2e` -- Playwright
 

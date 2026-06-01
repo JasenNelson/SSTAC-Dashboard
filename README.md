@@ -18,7 +18,10 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 
 #### **Testing Commands**
 ```bash
-# Run unit tests
+# CI-faithful gate (matches GitHub Actions; required before commit/PR -- see CONTRIBUTING.md)
+npm run test:ci
+
+# Run unit tests (fast inner-loop only; no coverage -- not a substitute for test:ci as the gate)
 npm run test:unit
 
 # Run tests in watch mode

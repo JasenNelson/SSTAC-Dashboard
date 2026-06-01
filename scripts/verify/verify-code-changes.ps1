@@ -74,8 +74,8 @@ Run-Command @("npx", "tsc", "--noEmit") "2️⃣  Type checking"
 # 3. Linting
 Run-Command @("npm", "run", "lint") "3️⃣  Linting check"
 
-# 4. Unit Tests
-Run-Command @("npm", "run", "test:unit") "4️⃣  Unit tests"
+# 4. Unit Tests (CI-faithful: coverage + CI env, matches the GitHub Actions Unit Tests job)
+Run-Command @("npm", "run", "test:ci") "4️⃣  Unit tests (CI-faithful)"
 
 # 5. Check for poll-related files in changes
 Write-Host "5️⃣  Checking for poll-related file changes..." -ForegroundColor Yellow

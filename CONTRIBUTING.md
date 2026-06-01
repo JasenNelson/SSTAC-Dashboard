@@ -301,8 +301,10 @@ const { data } = await supabase
 
 2. **Unit Tests** (Required)
    ```bash
-   npm run test:unit
-   # All 122+ unit tests must pass
+   npm run test:ci
+   # CI-faithful: runs Vitest coverage with CI=true, exactly matching the GitHub Actions
+   # Unit Tests job. All unit tests must pass. (npm run test:unit is fast inner-loop only --
+   # no coverage, default workers -- so it cannot reproduce coverage/CI-only failures.)
    ```
 
 3. **E2E Tests** (Required)
