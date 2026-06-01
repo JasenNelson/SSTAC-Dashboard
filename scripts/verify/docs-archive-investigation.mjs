@@ -84,8 +84,20 @@ function collectMarkdownFiles(args) {
 }
 
 function stripFences(markdown) {
-  // Remove fenced code blocks to reduce false-positive links/duplication
-  return markdown.replace(/```[\s\S]*?```/g, '')
+  // Reduce false-positive links/duplication by removing code. ORDER MATTERS:
+  //  1. Remove multi-line fenced code blocks FIRST. (Doing inline removal first can
+  //     desync on backticks INSIDE a fence -- e.g. console.error(`...`) in a ```js block --
+  //     and then consume the closing fence's backticks, stripping real prose.)
+  //  2. THEN remove single-line inline code spans of ANY backtick-run length: a run of N
+  //     backticks closed by the next run of exactly N backticks (\1 backreference). This
+  //     covers `inline` and the ``multi-backtick`` form and is line-bounded ([^\n]) so it
+  //     cannot run across lines into other content.
+  // Docs legitimately show markdown-link SYNTAX inside backticks (e.g. `[text](file.md)`),
+  // which must not be treated as real link targets (that produced a false "broken link"
+  // gate failure on 2026-06-01).
+  return markdown
+    .replace(/```[\s\S]*?```/g, '')
+    .replace(/(`+)[^\n]*?\1/g, '')
 }
 
 function extractHeadings(markdown) {
