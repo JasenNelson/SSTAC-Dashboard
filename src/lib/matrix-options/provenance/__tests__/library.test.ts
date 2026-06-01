@@ -25,12 +25,23 @@ describe('matrix options evidence library helpers', () => {
     expect(view.totalCounts.sourceLeads).toBe(4);
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
-    expect(view.valueGroups).toHaveLength(157);
-    expect(view.audit.values.approvedSourceBacked).toBe(84);
-    expect(view.audit.values.pendingSourceLocator).toBe(15);
+    // Catalog regenerated 2026-06-01 (class-1 collapse + class-3 dirty exclusion + IRIS EPA
+    // data-integrity gate). human_health_trv_values.json = 84 base + 355 P28 (soil + water/vapour)
+    // + 92 Health Canada + 32 US EPA IRIS = 563 TRV records (the known-bad carbon_tetrachloride
+    // inhalation unit risk 1.5e-5 is dropped by the EPA snapshot gate). valueGroups counts UNIQUE
+    // candidate_group_id over the full view (563 HH-TRV + 80 parameter_values.json = 643 records);
+    // 643 records map to 631 groups because 10 multi-endpoint candidate families (e.g. IRIS BaP
+    // neuro/repro/immune, cadmium water/food) intentionally share one group id.
+    expect(view.valueGroups).toHaveLength(631);
+    // approvedSourceBacked: 84 base + 92 Health Canada + 32 US EPA IRIS = 208.
+    // (P28 rows use pending_source_locator, not approved_source_backed.)
+    expect(view.audit.values.approvedSourceBacked).toBe(208);
+    // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370.
+    expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    expect(view.audit.values.availableOptions).toBe(90);
+    // availableOptions: 479 generated records + 90 base available_option = 569.
+    expect(view.audit.values.availableOptions).toBe(569);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
@@ -54,7 +65,9 @@ describe('matrix options evidence library helpers', () => {
     expect(view.equations[0].record.equation_id).toBe(
       'eq-human-health-direct-contact',
     );
+    // sources order updated 2026-05-31: src-bc-protocol-28-2021-jan added by d0c00003 HH-direct records.
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
+      'src-bc-protocol-28-2021-jan',
       'src-us-epa-iris-rfd-table-live',
       'src-us-epa-iris-chemical-details-live',
       'src-health-canada-trv-v4-2025',
@@ -152,13 +165,16 @@ describe('matrix options evidence library helpers', () => {
       }),
     );
 
+    // values and valueGroups updated 2026-05-31: pv-p28-arsenic_inorganic-hh-food-rfd added by d0c00003.
     expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual([
       'pv-arsenic-hh-food-rfd',
       'pv-iris-arsenic-hh-food-rfd',
       'pv-p28-arsenic-hh-food-rfd',
+      'pv-p28-arsenic_inorganic-hh-food-rfd',
     ]);
     expect(view.valueGroups.map((group) => group.groupId).sort()).toEqual([
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC',
+      'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC_provincial',
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__US_federal',
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general',
     ]);
@@ -253,9 +269,12 @@ describe('matrix options evidence library helpers', () => {
   it('summarizes Protocol 28 as a blocked review queue', () => {
     const summary = buildProtocol28ReviewSummary();
 
+    // candidateValueCount/blockedCandidateCount recomputed 2026-06-01:
+    // 355 generated P28 records (soil + water/vapour, after class-1 collapse + 5 dirty exclusions)
+    // + 6 other P28-aligned pending records = 361 human-health pending P28 records.
     expect(summary).toMatchObject({
-      candidateValueCount: 6,
-      blockedCandidateCount: 6,
+      candidateValueCount: 361,
+      blockedCandidateCount: 361,
       currentDefaultCount: 0,
       sourceLeadSetCount: 1,
       canDriveCalculatorDefaults: false,

@@ -198,6 +198,9 @@ export interface EvidenceReviewDisposition {
 export const PROTOCOL28_POLICY_ALIGNMENT =
   'protocol_28_v3_0_policy_compilation';
 const PROTOCOL28_SOURCE_ID = 'src-bc-protocol-28-v3-0-2024';
+// Jan-2021 revision source added 2026-05-31 (d0c00003 HH-soil TRVs).
+const PROTOCOL28_JAN2021_ALIGNMENT = 'protocol_28_crystallized_bc_policy_trv';
+const PROTOCOL28_JAN2021_SOURCE_ID = 'src-bc-protocol-28-2021-jan';
 
 const EMPTY_FILTERS: EvidenceLibraryFilters = {
   search: '',
@@ -972,6 +975,24 @@ export function getParameterValueReviewDisposition(
   }
 
   if (record.evidence_support_status === 'approved_source_backed') {
+    // Check blocking conditions even within approved_source_backed: a record can carry
+    // an approved-source type label while still needing direct-source QA verification.
+    // Example: robot-extracted IRIS rows have approved_source_backed (the source authority
+    // is approved) but canonical_source_status=needs_direct_source_check and
+    // qa_status=needs_review (the per-row extraction has not been QA-verified).
+    // Those rows must surface as blocked until QA is complete.
+    if (
+      hasReviewBlockingCanonicalStatus(record) ||
+      hasReviewBlockingSourceRole(record, sources)
+    ) {
+      return {
+        label: 'Needs original-source verification',
+        detail:
+          'Read-only candidate until the original source, exact locator, currentness, applicability, QA, and owner or delegated approval are complete.',
+        blocksCalculatorDefault: true,
+        tone: 'blocked',
+      };
+    }
     if (record.default_status === 'available_option') {
       return {
         label: 'Approved alternative',
@@ -1117,8 +1138,11 @@ function buildSourceLeadSummaries(): EvidenceLibrarySourceLeadSummary[] {
 function isProtocol28ValueRecord(record: ParameterValueRecord): boolean {
   return (
     record.bc_protocol_alignment === PROTOCOL28_POLICY_ALIGNMENT ||
+    record.bc_protocol_alignment === PROTOCOL28_JAN2021_ALIGNMENT ||
     record.source_ids.includes(PROTOCOL28_SOURCE_ID) ||
-    record.compilation_source_ids?.includes(PROTOCOL28_SOURCE_ID) === true
+    record.source_ids.includes(PROTOCOL28_JAN2021_SOURCE_ID) ||
+    record.compilation_source_ids?.includes(PROTOCOL28_SOURCE_ID) === true ||
+    record.compilation_source_ids?.includes(PROTOCOL28_JAN2021_SOURCE_ID) === true
   );
 }
 
