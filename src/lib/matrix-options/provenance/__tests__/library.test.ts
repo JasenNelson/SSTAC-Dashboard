@@ -26,22 +26,24 @@ describe('matrix options evidence library helpers', () => {
     expect(view.values.length).toBe(view.totalCounts.values);
     expect(view.equations.length).toBe(view.totalCounts.equations);
     // Catalog regenerated 2026-06-01 (class-1 collapse + class-3 dirty exclusion + IRIS EPA
-    // data-integrity gate). human_health_trv_values.json = 84 base + 355 P28 (soil + water/vapour)
-    // + 92 Health Canada + 32 US EPA IRIS = 563 TRV records (the known-bad carbon_tetrachloride
-    // inhalation unit risk 1.5e-5 is dropped by the EPA snapshot gate). valueGroups counts UNIQUE
-    // candidate_group_id over the full view (563 HH-TRV + 80 parameter_values.json = 643 records);
-    // 643 records map to 631 groups because 10 multi-endpoint candidate families (e.g. IRIS BaP
-    // neuro/repro/immune, cadmium water/food) intentionally share one group id.
-    expect(view.valueGroups).toHaveLength(631);
-    // approvedSourceBacked: 84 base + 92 Health Canada + 32 US EPA IRIS = 208.
+    // data-integrity gate; IRIS coverage expanded to the snapshot-validated master-list set).
+    // human_health_trv_values.json = 84 base + 355 P28 (soil + water/vapour) + 92 Health Canada
+    // + 166 US EPA IRIS = 697 TRV records (the known-bad carbon_tetrachloride inhalation unit risk
+    // 1.5e-5 is dropped by the EPA snapshot gate; every shipped IRIS value matches the EPA
+    // snapshot within 2%). valueGroups counts UNIQUE candidate_group_id over the full view
+    // (697 HH-TRV + 80 parameter_values.json = 777 records); 777 records map to 765 groups because
+    // multi-endpoint candidate families (e.g. IRIS BaP neuro/repro/immune, cadmium water/food)
+    // intentionally share one group id.
+    expect(view.valueGroups).toHaveLength(765);
+    // approvedSourceBacked: 84 base + 92 Health Canada + 166 US EPA IRIS = 342.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
-    expect(view.audit.values.approvedSourceBacked).toBe(208);
+    expect(view.audit.values.approvedSourceBacked).toBe(342);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370.
     expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions: 479 generated records + 90 base available_option = 569.
-    expect(view.audit.values.availableOptions).toBe(569);
+    // availableOptions: 613 generated records + 90 base available_option = 703.
+    expect(view.audit.values.availableOptions).toBe(703);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
