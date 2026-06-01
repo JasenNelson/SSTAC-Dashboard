@@ -975,6 +975,24 @@ export function getParameterValueReviewDisposition(
   }
 
   if (record.evidence_support_status === 'approved_source_backed') {
+    // Check blocking conditions even within approved_source_backed: a record can carry
+    // an approved-source type label while still needing direct-source QA verification.
+    // Example: robot-extracted IRIS rows have approved_source_backed (the source authority
+    // is approved) but canonical_source_status=needs_direct_source_check and
+    // qa_status=needs_review (the per-row extraction has not been QA-verified).
+    // Those rows must surface as blocked until QA is complete.
+    if (
+      hasReviewBlockingCanonicalStatus(record) ||
+      hasReviewBlockingSourceRole(record, sources)
+    ) {
+      return {
+        label: 'Needs original-source verification',
+        detail:
+          'Read-only candidate until the original source, exact locator, currentness, applicability, QA, and owner or delegated approval are complete.',
+        blocksCalculatorDefault: true,
+        tone: 'blocked',
+      };
+    }
     if (record.default_status === 'available_option') {
       return {
         label: 'Approved alternative',
