@@ -15,7 +15,15 @@ export default defineConfig({
     globals: true,
     environment: 'jsdom',
     css: false,
-    testTimeout: 15000,
+    // Per-test timeout. The CI Unit Tests job runs `vitest run --coverage`; v8 coverage
+    // instrumentation on the 2-core CI runner slows full-component renders ~5x vs local.
+    // The EvidenceLibrary overview tests render the whole References & Values catalog
+    // (765 candidate groups after the 2026-06-01 expansion to 697 records), and the two
+    // heaviest renders (~3-5s locally, uninstrumented) exceeded the 15s cap on CI under
+    // coverage. Raise the ceiling on CI only; local runs (no coverage instrumentation)
+    // keep the tight 15s for fast hang detection. Mirrors the CI-conditional maxWorkers
+    // pattern below.
+    testTimeout: process.env.CI ? 60000 : 15000,
     setupFiles: ['./src/test/setup.ts'],
     // CI runners (2 cores, ~7GB) OOM-kill forked workers during the v8-coverage run
     // (`npm run test:coverage`), after which vitest's forks pool crashes with
