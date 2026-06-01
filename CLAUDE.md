@@ -84,7 +84,8 @@ Quick reference:
 - Stop conditions and retry limits: `docs/GATE_MODE_SOP.md` sections 5 and 9.
 
 npm scripts:
-- `npm run lint` -- ESLint via next lint
+- `npm run lint` -- ESLint CLI (`eslint .`; migrated off the deprecated `next lint`, removed in
+  Next 16). `npm run lint:fix` applies autofixes. Uses the flat config `eslint.config.mjs`.
 - `npm run test:ci` -- Vitest coverage with `CI=true` (matches the GitHub Actions Unit Tests job).
   This is the MANDATORY push-gate unit command. `npm run test:unit` (`vitest run`, no coverage) is
   for fast inner-loop dev ONLY, never push-gate evidence -- it cannot reproduce coverage/CI-only
