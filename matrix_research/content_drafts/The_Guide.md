@@ -83,7 +83,9 @@ The provenance catalog is repo-managed under `matrix_research/reference_catalog/
 
 Zotero remains the reference manager and file vault. Google Drive and OneDrive reference folders can be inventoried as external source locations, but source files are not copied into the app repo or Supabase. Future Supabase work may mirror structured metadata for querying, but source files stay outside Supabase unless the owner explicitly changes that policy.
 
-Starter calculator values lifted from the current substance library are not automatically "approved." Values that were already flagged as interim screening defaults, such as the B[a]P ecological TRV and the PCB FCV screening value, are marked `needs_owner_review` in the catalog until the first source batch is extracted and reviewed.
+Starter calculator values lifted from the current substance library are not automatically "approved." Values that were already flagged as interim screening defaults, such as the B[a]P ecological TRV and the PCB FCV screening value, are marked `needs_owner_review` in the catalog. The first human-health source batches -- BC Protocol 28, US EPA IRIS, and Health Canada TRV v4.0 toxicity reference values -- are now loaded as candidate options, but these starter screening defaults stay flagged until a reviewer confirms them against those sources.
+
+The catalog also holds multiple candidate values for the same substance and pathway drawn from different sources (for example, a BC Protocol 28 value alongside US EPA IRIS and Health Canada toxicity reference values). These candidates are kept side by side, each carrying its own unit, source locator, and review state, so a reviewer can compare them. Following the Protocol 1 source-hierarchy guidance, the hierarchy is surfaced for consideration only -- the workspace never auto-selects or promotes a default value. Selection remains a professional-judgment decision recorded by the reviewer. Values added from a source batch enter the library as available options with a `needs_review` QA state, never as the active calculator default.
 
 ---
 
@@ -102,7 +104,7 @@ Six workflows are shipped:
 
 No value moves to `approved_source_backed` without explicit HITL action. No source is mutated automatically. The Evidence Library is readable by all signed-in TWG members; only admin reviewers can register sources, link locators, promote candidates, or triage source leads.
 
-**Persistence status (as of 2026-05-28):** The QA review workflow persists to Supabase (`promoted_parameter_values` + `parameter_value_reviews`). Source registration, source-locator entry, and source-lead triage are UI-complete but their backing tables (`catalog_sources`, `catalog_evidence_items`, `source_lead_triage`) are pending migration -- actions taken in those workflows do not persist until migrations land. Zotero integration is read-only and does not require a backing table. Cross-pathway audit is an analysis surface; no persistence required.
+**Persistence status (as of 2026-05-31):** All six workflows now persist. The QA review workflow writes to Supabase (`promoted_parameter_values` + `parameter_value_reviews`); source registration, source-locator entry, and source-lead triage write to their backing tables (`catalog_sources`, `catalog_evidence_items`, `source_lead_triage`), all now in production. Zotero integration is read-only and does not require a backing table. Cross-pathway audit is an analysis surface; no persistence required.
 
 ---
 
