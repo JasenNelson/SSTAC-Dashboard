@@ -65,8 +65,9 @@ function Run-Command {
     return $success
 }
 
-# 1. Build Verification
-Run-Command @("npm", "run", "build") "1️⃣  Build verification"
+# 1. Build Verification (monitored build -- never raw `npm run build`, which has no quarantine/
+# timeout and causes Access Denied stalls on Windows; see docs/GATE_MODE_SOP.md section 10)
+Run-Command @("npm", "run", "build:monitored:clean", "--", "-TimeoutSeconds", "360", "-PollSeconds", "10") "1️⃣  Build verification"
 
 # 2. Type Checking
 Run-Command @("npx", "tsc", "--noEmit") "2️⃣  Type checking"

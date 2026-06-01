@@ -33,6 +33,10 @@ run_command() {
 }
 
 # 1. Build Verification
+# NOTE: the monitored build (npm run build:monitored:clean) is a Windows-only PowerShell wrapper
+# (scripts/verify/monitored-build.ps1). On Linux/Mac, where this bash script runs, that wrapper is
+# unavailable, so a raw `npm run build` is the only option here. On Windows, use the PowerShell
+# verify script (verify-code-changes.ps1), which uses the monitored build per docs/GATE_MODE_SOP.md.
 run_command "1️⃣  Build verification" npm run build
 
 # 2. Type Checking
