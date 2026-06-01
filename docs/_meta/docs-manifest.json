@@ -105,6 +105,15 @@
     }
   },
   "facts_history": {
+    "session_2026_05_31_refs_values_catalog_expansion": {
+      "status": "IN_REVIEW",
+      "session_date": "2026-05-31",
+      "phase": "Stream D: References & Values catalog population (JSON-first)",
+      "work_summary": "Built a deterministic catalog generator (scripts/matrix-options/generate-catalog-records.mjs) and expanded human_health_trv_values.json by ~478 source-backed TRV records (BC Protocol 28, US EPA IRIS, Health Canada TRV v4.0). All default_status=available_option + qa_status=needs_review; units normalized fail-closed; IRIS validated within 2% of the EPA snapshot guardrail. Shipped as 4 batch draft PRs (#214/#215/#216/#217) plus an integrated single-merge draft PR #218 (586 records). Per-PR codex review GREEN; holistic codex on #218 returned YELLOW with one P2 (duplicate candidate tuples) plus 2 stale test comments -- fix spec written for the fresh session.",
+      "open_items": "P2 dedup fix (MATRIX_OPTIONS_P2_DEDUP_FIX_SPEC_2026_05_31.md) -> updates #218 to GREEN; owner merge decision (#218 single-merge vs the 4 batch PRs); The Guide content review (2 factual edits on feat/matrix-options-guide-update-2026-05-31, pending owner sign-off); deferred IRIS orphans + d0c00013 data-integrity fix + eco passes + Supabase paste.",
+      "key_docs": "MATRIX_OPTIONS_PROGRAM_PLAN_REBASELINED_2026_05_31.md (current program map), MATRIX_OPTIONS_REFS_VALUES_JSON_HANDOFF_2026_05_31.md, MATRIX_OPTIONS_P2_DEDUP_FIX_SPEC_2026_05_31.md",
+      "last_verified": "2026-05-31"
+    },
     "phase4_performance_optimization": {
       "status": "COMPLETE",
       "session_date": "2026-01-26",

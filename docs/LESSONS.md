@@ -10,6 +10,150 @@
 
 ---
 
+## 2026-05-31 - Parallel tool-batch cancel-cascade wastes tokens [HIGH]
+
+**Area:** Agent execution discipline / cost
+**Impact:** HIGH (repeatedly burned a high-Opus session; misleading transcript)
+**Status:** Documented + codified as L0 rule 1.16
+
+### Problem
+Launching many tool calls in one parallel batch is dangerous: ONE failed call CANCELS all its
+siblings. A ~20-call fan-out with a single bad command reads back as 19 "Cancelled: parallel tool
+call" errors. This happened several times in one session (probe fleets + subagent-launch-plus-verify
+batches), each time wasting significant Opus tokens and producing a confusing transcript. A
+contributing trigger: inline ESM `import ... assert { type: 'json' }`, removed in Node 24.
+
+### Solution or Pattern
+- Run ONE shell/tool call at a time when the outcome is uncertain. Parallel-batch ONLY independent
+  calls confident to succeed (reading known files, git status).
+- Never fan out "is the shell alive?" probe fleets. Empty output is usually SUCCESS.
+- Never batch a subagent launch together with follow-up verify calls -- a failed verify cancels the
+  subagent. Launch a subagent alone.
+- Node JSON loading: `fs.readFileSync` + `JSON.parse` (or `with { type: 'json' }` on Node 22+), never
+  the removed `assert { type: 'json' }`.
+- Look at an unknown file/encoding with `head` before writing a parser regex.
+
+### File References
+- L0 rule: `C:/Projects/CLAUDE.md` section 1.16
+- Memory: `feedback_tool_call_batching_anti_cascade.md`, `feedback_always_show_consolidated_gate_block.md`
+
+### Key Takeaway
+One failed call in a parallel batch cancels the whole batch. Serialize uncertain calls; never batch a
+subagent launch with anything else.
+
+---
+
+## 2026-05-31 - JSON-first deterministic generator for catalog data expansion [HIGH]
+
+**Area:** Matrix-Options References & Values catalog / data pipeline
+**Impact:** HIGH (added ~478 source-backed TRV records without the Supabase-paste bottleneck)
+**Status:** Implemented (PRs #214-#218, draft)
+
+### Problem or Discovery
+The References & Values catalog needed expansion from ~18 to ~294 substances. The Values view reads
+repo-local JSON statically via `buildEvidenceLibraryView` (no DB round-trip), AND a parallel path
+promotes to Supabase `promoted_parameter_values` (owner-pasted SQL). Hand-copying regulatory values
+row-by-row is slow and a hallucination risk; waiting on the owner to paste SQL is a bottleneck.
+
+### Solution or Pattern
+A deterministic Node generator (`scripts/matrix-options/generate-catalog-records.mjs`) transforms the
+already-extracted `.tmp/catalog-paste/*.sql` payloads into `ParameterValueRecord` rows appended to
+the in-repo JSON. Correct-by-construction: maps source input_keys to calculator input_keys, NORMALIZES
+every value to the input_key base unit and FAILS CLOSED on unrecognized units (mu/micro handled before
+lowercasing -> no 1000x errors; reciprocal slope-factor/IUR handled), sets
+`default_status=available_option` + `qa_status=needs_review` (AI never sets a default), idempotent dedup
+by parameter_value_id. JSON-first surfaces values in the Values view immediately; `--emit-sql` prepares
+the later Supabase migration batch. IRIS values validated within 2% of an EPA-derived snapshot guardrail.
+
+### File References
+- Generator: `scripts/matrix-options/generate-catalog-records.mjs`
+- Merge path: `src/lib/matrix-options/provenance/library.ts` (`buildEvidenceLibraryView`), `provenance/catalog.ts`
+- Data: `matrix_research/reference_catalog/{human_health_trv_values.json,sources.json}`
+- Guardrail: `src/lib/matrix-options/provenance/__tests__/iris-canonical.test.ts`
+- Handoff: `MATRIX_OPTIONS_REFS_VALUES_JSON_HANDOFF_2026_05_31.md`; open P2 fix spec: `MATRIX_OPTIONS_P2_DEDUP_FIX_SPEC_2026_05_31.md`
+
+### Key Takeaway
+For bulk regulatory-data expansion, write a deterministic fail-closed generator (not row-by-row LLM
+copying), go JSON-first to dodge the paste bottleneck, and gate every value behind a source-validated
+unit-aware guardrail with no AI default-selection.
+
+---
+
+## 2026-05-31 - Validate regulatory values against the authoritative source, NOT AI memory [CRITICAL]
+
+**Area:** Matrix-Options catalog / data integrity
+**Impact:** CRITICAL (a multi-agent "audit" produced ~100% false positives)
+**Status:** Documented + guardrail enforced (PR #212/#213)
+
+### Problem
+A 3-way data-integrity review (Opus subagents + codex-desktop + claude-desktop) all flagged the
+catalog's arsenic IRIS oral RfD (`6e-5 mg/kg-bw/day`) and oral SF (`32 (mg/kg-day)^-1`) as
+"errors" -- because each cross-checked against AI-**memorized** 1991/1995 canonical values
+(`3e-4` / `1.5`). The current EPA IRIS assessment is `6e-5` / `32`; the catalog was CORRECT. A full
+Excel<->catalog cross-walk confirmed all catalog IRIS values match the EPA source.
+
+### Solution / Pattern
+For IRIS / regulatory TRVs, validate against the OWNER-PROVIDED authoritative source -- the EPA
+IRIS `Chemicals_Details` Excel export + `https://www.epa.gov/iris` -- never training memory
+(it is stale). Committed as a Vitest guardrail: an EPA-derived snapshot fixture + a test asserting
+every IRIS-labeled catalog value matches it.
+
+### File References
+- `src/lib/matrix-options/provenance/__tests__/iris-canonical.test.ts`
+- `src/lib/matrix-options/provenance/__tests__/epa_iris_canonical_snapshot.json` (derived from the EPA Excel, CAS-matched)
+
+### Key Takeaway
+"The catalog disagrees with my memory of IRIS" is NOT evidence of an error -- re-check the
+authoritative source first.
+
+---
+
+## 2026-05-31 - ALWAYS report + normalize units; never compare values unit-blind [CRITICAL]
+
+**Area:** Data integrity / toxicology values
+**Impact:** CRITICAL (a unit-blind comparison "corrected" already-correct catalog values, which would have corrupted the catalog 1000x)
+**Status:** Documented + guardrail made unit-aware
+
+### Problem
+I compared raw numbers without units and flagged catalog values as "1000x errors": `0.06` vs
+`6e-5`. But `0.06 ug/kg-bw/day` == `6e-5 mg/kg-bw/day` -- identical value, different unit. My
+"corrected" SQL would have made correct values 1000x too low.
+
+### Solution / Pattern
+Always attach units to every reported value. Before any value comparison/validation, normalize to
+a common base: oral RfD -> mg/kg-bw/day (ug = mg x 1e-3); RfC -> mg/m3; oral SF -> (mg/kg-day)^-1;
+inhalation unit risk -> (ug/m3)^-1. A same-unit difference (e.g. BaP oral SF `1` vs `2`) may be a
+legitimate basis/endpoint choice (adult vs lifetime), a HITL decision -- not an error.
+
+### File References
+- `src/lib/matrix-options/provenance/__tests__/iris-canonical.test.ts` (`normalizeToBase()` + unit-normalization test)
+
+### Key Takeaway
+A bare number is useless and dangerous in this domain. Units always; normalize before comparing.
+
+---
+
+## 2026-05-31 - Matrix-Options catalog is two data planes (in-repo JSON merged with Supabase) [MEDIUM]
+
+**Area:** Architecture / catalog data flow
+**Impact:** MEDIUM (clarifies how values surface + how the approve-gate is/ isn't involved)
+
+### Discovery
+The References & Values view shows a MERGE of two sources: (1) the in-repo JSON reference catalog
+(`matrix_research/reference_catalog/*.json`, compiled into the bundle via `catalog.ts` ->
+`PARAMETER_VALUE_RECORDS`) -- static repo files, not a queryable DB; and (2) Supabase
+`promoted_parameter_values` (the queryable SQL DB), fetched at runtime and merged on top
+(`buildEvidenceLibraryView(filters, supabaseRecords)` -> `mergeParameterValueRecords(...)`,
+`library.ts:1388`). The in-repo JSON plane needs NO in-app approval; only the Supabase
+staging->promoted path uses the approve-all button. So a JSON-first expansion surfaces immediately
+without the approve gate; migrate JSON -> Supabase in a later batch.
+
+### Key Takeaway
+JSON-first (AI-prepared, no approve-gate) then batch-migrate to SQL is the efficient pattern for
+bulk reference-content expansion.
+
+---
+
 ## 2026-01-26 - Advanced Lazy Loading with Suspense for Performance Optimization [HIGH]
 
 **Date:** January 26, 2026
