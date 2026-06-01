@@ -1,5 +1,36 @@
 [
   {
+    "source_id": "src-bc-protocol-28-2021-jan",
+    "short_citation": "BC Protocol 28 (Jan 2021 revisions)",
+    "title": "Protocol 28 for Contaminated Sites: 2016 Standards Derivation Methods (Jan 2021 revisions)",
+    "year": 2021,
+    "publisher": "Province of British Columbia",
+    "doi": null,
+    "url": "https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p28__jan_2021_revisions_final_signed.pdf",
+    "zotero_item_key": "LPZUVAC2",
+    "zotero_collection_path": "Sediment Project; Regulatory_Frameworks",
+    "zotero_attachment_keys": [
+      "HYNUIDR5"
+    ],
+    "zotero_status": "linked",
+    "external_file_hint": "Official BC PDF (Jan 2021 revisions). Zotero item LPZUVAC2 attachment HYNUIDR5. Appendix 8A holds the Human Health Soil Standard TRVs used by the d0c00003 extraction pass. Use metadata and locators only; do not copy the PDF into the repo.",
+    "file_storage": "zotero_or_external",
+    "notes": "Protocol 28 Jan-2021 revisions. Appendix 8A (TRVs Used to Derive Human Health Soil Standards) and the water/vapour TRV tables are the extraction source for catalog passes d0c00003/d0c00004. Crystallized BC policy TRVs; verify against current Health Canada / US EPA IRIS before any default use.",
+    "authority_scope": "bc-guidance",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "currentness_status": "needs_currentness_check",
+    "version": "2021-jan-revisions",
+    "page_last_modified": null,
+    "checked_at": "2026-05-29",
+    "conflict_rule": "Use as a BC policy compilation. Do not treat Protocol 28 as the canonical scientific source for calculator values when an original Health Canada, US EPA, CCME, or other cited source can be checked directly.",
+    "supersedes_source_ids": [],
+    "calculator_source_role": "policy_compilation",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_28_crystallized_bc_policy_trv",
+    "bc_protocol_basis": "Protocol 28 Appendix 8A lists the TRVs used to derive Human Health Soil Standards; Protocol 1 v5.0 is the target hierarchy for standards work effective 2027-01-15.",
+    "source_crystallization_date": "2021-01-31"
+  },
+  {
     "source_id": "src-us-epa-iris-rfd-table-live",
     "short_citation": "US EPA IRIS RfD table, live",
     "title": "Integrated Risk Information System RfD Toxicity Values",

@@ -304,16 +304,66 @@ describe('matrix options provenance catalog', () => {
   });
 
   it('assigns candidate groups to every parameter value', () => {
+    // candidate_group_id is the 4-part slot key pathway__substance_key__input_key__jurisdiction.
+    // It is a SHARED display-grouping key: multi-endpoint substances (e.g. BaP neuro/repro/immune,
+    // cadmium water/food media, methylmercury sensitive/adult) keep all their distinct candidate
+    // values under one group so the QP can compare them. The 4-part prefix must always match.
+    // (startsWith also tolerates any future basis-suffixed key without weakening the prefix check.)
+    const prefix4 = (record: { pathway: string; substance_key: string; input_key: string; jurisdiction: string }) =>
+      [record.pathway, record.substance_key, record.input_key, record.jurisdiction].join('__');
     for (const record of PARAMETER_VALUE_RECORDS) {
-      expect(record.candidate_group_id, record.parameter_value_id).toBe(
-        [
-          record.pathway,
-          record.substance_key,
-          record.input_key,
-          record.jurisdiction,
-        ].join('__'),
-      );
+      const p = prefix4(record);
+      expect(
+        record.candidate_group_id === p || record.candidate_group_id.startsWith(p + '__'),
+        record.parameter_value_id + ': candidate_group_id ' + record.candidate_group_id + ' does not start with ' + p,
+      ).toBe(true);
     }
+  });
+
+  it('collapses class-1 pure duplicates (no same-tuple same-value rows)', () => {
+    // The codex P2 (2026-05-31) was duplicate candidate tuples in the expanded catalog. The
+    // actual defect is class-1 PURE duplicates: two records with the same
+    // (source_ids[0], substance_key, input_key, pathway, jurisdiction) AND the same normalized
+    // value. The generator collapses these; this guards against a re-derived id slug smuggling
+    // one back in. (Distinct-value records sharing a candidate_group_id is NOT a defect -- it is
+    // the designed candidate-grouping behavior: candidate_group_id is a SHARED display-grouping
+    // key so the QP can compare alternative values for one parameter slot. See
+    // value-groups.test.ts and iris-canonical.test.ts. Default-selection pools by
+    // (substance_key, pathway, input_key) and ignores candidate_group_id.)
+    const seenTupleValue = new Map<string, string>(); // tupleValueKey -> first parameter_value_id
+    const duplicates: string[] = [];
+    for (const record of PARAMETER_VALUE_RECORDS) {
+      const sid = Array.isArray(record.source_ids) ? record.source_ids[0] : '';
+      const k = [sid, record.substance_key, record.input_key, record.pathway, record.jurisdiction, String(record.value)].join('|');
+      if (seenTupleValue.has(k)) {
+        duplicates.push(record.parameter_value_id + ' == ' + seenTupleValue.get(k) + ' (' + k + ')');
+      } else {
+        seenTupleValue.set(k, record.parameter_value_id);
+      }
+    }
+    expect(
+      duplicates,
+      'class-1 pure duplicates (same source+substance+input+pathway+jurisdiction+value): ' + duplicates.join(' ; ') +
+      '. Collapse the duplicate rather than emitting both.',
+    ).toEqual([]);
+  });
+
+  it('groups multi-endpoint candidates under one shared candidate_group_id', () => {
+    // Guards the designed grouping: IRIS benzo[a]pyrene's three distinct oral RfD endpoints
+    // (neuro 3e-4 / repro 4e-4 / immune 2e-3) must share ONE candidate_group_id so the Evidence
+    // Library shows them as alternative candidates for the same slot (not three singletons).
+    const bapDirectRfd = PARAMETER_VALUE_RECORDS.filter(
+      (r) =>
+        r.substance_key === 'benzo_a_pyrene' &&
+        r.pathway === 'human-health-direct' &&
+        r.input_key === 'rfd_oral_mg_per_kg_bw_day' &&
+        r.jurisdiction === 'US_federal',
+    );
+    expect(bapDirectRfd.length).toBeGreaterThanOrEqual(3);
+    const groupIds = new Set(bapDirectRfd.map((r) => r.candidate_group_id));
+    expect(groupIds.size).toBe(1);
+    const distinctValues = new Set(bapDirectRfd.map((r) => String(r.value)));
+    expect(distinctValues.size).toBeGreaterThanOrEqual(3);
   });
 
   it('records currentness metadata for current Health Canada sources', () => {
@@ -367,11 +417,16 @@ describe('matrix options provenance catalog', () => {
   });
 
   it('catalogs Health Canada and US EPA IRIS human-health TRVs with extraction dates', () => {
+    // Filter to the source-verified HC/IRIS batch (qa_status='approved') only.
+    // Protocol 28 d0c00003 records use pending_source_locator (not approved_source_backed) because
+    // P28 is a policy compilation whose values require direct-source verification before use.
+    // They are excluded from this filter by evidence_support_status='approved_source_backed'.
     const tier1Trvs = PARAMETER_VALUE_RECORDS.filter(
       (record) =>
         record.pathway.startsWith('human-health') &&
         record.evidence_support_status === 'approved_source_backed' &&
-        record.assumption_tags?.includes('TRV'),
+        record.assumption_tags?.includes('TRV') &&
+        record.qa_status === 'approved',
     );
     const sourceIds = new Set(tier1Trvs.flatMap((record) => record.source_ids));
 
