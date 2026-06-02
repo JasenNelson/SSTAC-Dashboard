@@ -198,6 +198,17 @@ function aiSuggestionDisplay(row: JoinedRow): string {
   );
 }
 
+function aiSignalHeader(rows: readonly JoinedRow[]): string {
+  // S4 AI-scope: 0.1.0 (evidence-status) exports label this column
+  // "AI Evidence Signal" (matching the dashboard); legacy 0.0.1 keep
+  // "AI Suggestion". Cell values (aiSuggestionDisplay) are already
+  // schema-aware; this neutralizes the static header. The AI surfaces
+  // evidence; it does not make suggestions or determinations.
+  return rows.some((r) => resolveEvidenceStatus(r.result).isEvidenceStatus)
+    ? "AI Evidence Signal"
+    : "AI Suggestion";
+}
+
 function confidenceDisplay(row: JoinedRow): string {
   // Scope-aware (P3): an unscoped 0.1.0 row has no surfaceable confidence, so the
   // export "Confidence" column is blank for it -- matching the dashboard, which
@@ -259,16 +270,18 @@ function escapeCSV(text: string): string {
   return s;
 }
 
-const CSV_HEADERS: readonly string[] = [
-  "Policy ID",
-  "Tier",
-  "AI Suggestion",
-  "Confidence",
-  "Reviewer Verdict",
-  "Rationale",
-  "Summary",
-  "Reviewed At",
-] as const;
+function csvHeaders(rows: readonly JoinedRow[]): readonly string[] {
+  return [
+    "Policy ID",
+    "Tier",
+    aiSignalHeader(rows),
+    "Confidence",
+    "Reviewer Verdict",
+    "Rationale",
+    "Summary",
+    "Reviewed At",
+  ];
+}
 
 export function generateCSV(input: ExportInput): string {
   const rows = joinResults(input.perPolicy, input.judgments);
@@ -280,7 +293,7 @@ export function generateCSV(input: ExportInput): string {
   // therefore emit ONLY the header line + data rows. Project / eval metadata
   // lives in the filename (and is set by the API route). This preserves
   // Excel "open with no parse error" -- the acceptance criterion.
-  lines.push(CSV_HEADERS.map((h) => escapeCSV(h)).join(","));
+  lines.push(csvHeaders(rows).map((h) => escapeCSV(h)).join(","));
   for (const row of rows) {
     assertRowTierDiscretion(row);
     const fields = [
@@ -339,7 +352,7 @@ export function generateMarkdown(input: ExportInput): string {
   // rendering); CSV and HTML carry Summary for completeness. Lane 2e may
   // revisit if reviewers ask for it.
   lines.push(
-    "| Policy ID | Tier | AI Suggestion | Confidence | Reviewer Verdict | Rationale | Reviewed At |",
+    `| Policy ID | Tier | ${aiSignalHeader(rows)} | Confidence | Reviewer Verdict | Rationale | Reviewed At |`,
   );
   lines.push(
     "|-----------|------|---------------|------------|------------------|-----------|-------------|",
@@ -436,7 +449,7 @@ export function generateHTML(input: ExportInput): string {
   out.push("      <tr>");
   out.push("        <th>Policy ID</th>");
   out.push("        <th>Tier</th>");
-  out.push("        <th>AI Suggestion</th>");
+  out.push(`        <th>${escapeHtml(aiSignalHeader(rows))}</th>`);
   out.push("        <th>Confidence</th>");
   out.push("        <th>Reviewer Verdict</th>");
   out.push("        <th>Rationale</th>");

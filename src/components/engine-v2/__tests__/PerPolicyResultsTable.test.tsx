@@ -251,13 +251,47 @@ describe("PerPolicyResultsTable tier-aware verdict dropdown", () => {
 });
 
 describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure", () => {
-  it("uses 'AI Determination' as column header (not 'Summary')", () => {
+  it("uses 'AI Determination' column header for legacy 0.0.1 runs (not 'Summary')", () => {
     render(
       <PerPolicyResultsTable results={RESULTS} judgments={NO_JUDGMENTS} />,
     );
     const headers = screen.getAllByRole("columnheader").map((h) => h.textContent);
     expect(headers).toContain("AI Determination");
     expect(headers).not.toContain("Summary");
+  });
+
+  it("uses 'AI Evidence Synthesis' column header for 0.1.0 evidence-status runs (AI-scope, owner 2026-06-02)", () => {
+    // AI-scope correction: the AI surfaces evidence, it does not make
+    // determinations. Schema-aware header -- 0.1.0 rows show the neutral label;
+    // legacy 0.0.1 keep "AI Determination" (covered by the test above).
+    render(
+      <PerPolicyResultsTable
+        results={[makeS4Result({ policy_id: "PX-S4-1" })]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+    const headers = screen
+      .getAllByRole("columnheader")
+      .map((h) => h.textContent);
+    expect(headers).toContain("AI Evidence Synthesis");
+    expect(headers).not.toContain("AI Determination");
+  });
+
+  it("0.1.0 expanded row carries no determination wording; uses AI Evidence Synthesis (Surface-3 P3)", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[makeS4Result({ policy_id: "PX-S4-2" })]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    // No determination-shaped wording anywhere for a 0.1.0 table (header + expanded).
+    expect(screen.queryByText("AI Determination")).not.toBeInTheDocument();
+    expect(screen.queryByText(/no determination/i)).not.toBeInTheDocument();
+    // The synthesis label appears in both the column header and the expanded detail.
+    expect(
+      screen.getAllByText("AI Evidence Synthesis").length,
+    ).toBeGreaterThanOrEqual(2);
   });
 
   it("renders policy text prominently from evidence_slices when policy_id matches", () => {

@@ -350,6 +350,14 @@ function aiSignalForMemo(result: V2PerPolicyResult): string {
   return pickString(result.ai_suggestion ?? result.verdict_suggestion);
 }
 
+// S4 AI-scope: 0.1.0 (evidence-status) memos label the AI column "AI Evidence
+// Signal" (the AI surfaces evidence, it does not suggest/flag/determine);
+// legacy 0.0.1 keep their existing per-tier labels. Cell values
+// (aiSignalForMemo) are already schema-aware; this drives the static headers.
+function memoIsEvidenceStatus(rows: readonly JoinedRow[]): boolean {
+  return rows.some((r) => resolveEvidenceStatus(r.result).isEvidenceStatus);
+}
+
 // --- Evidence-packet helpers -----------------------------------------------
 //
 // The engine_v2 evidence_packet is a polymorphic object whose items may live
@@ -591,10 +599,26 @@ const TIER_1_EXPLAINER =
   "The AI provided an initial determination; the reviewer's judgment is the " +
   "final position.";
 
+// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence, it
+// does not determine. Legacy 0.0.1 memos keep TIER_1_EXPLAINER above (consistent
+// with their "AI Suggestion" header + verdict-suggestion cells).
+const TIER_1_EXPLAINER_ES =
+  "These regulatory items are binary requirements (must / shall / required). " +
+  "The AI surfaced initial evidence; the reviewer's judgment is the " +
+  "final position.";
+
 const TIER_2_EXPLAINER =
   "These items require professional judgment. The AI can only flag potential " +
   "deficiencies; a qualified professional (QP) must make the adequacy " +
   "determination.";
+
+// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence
+// signals, it does not "flag deficiencies"; the QP still makes the adequacy
+// determination. Legacy 0.0.1 memos keep TIER_2_EXPLAINER above.
+const TIER_2_EXPLAINER_ES =
+  "These items require professional judgment. The AI surfaces evidence signals " +
+  "(present or absent, with supporting / negating counts); a qualified " +
+  "professional (QP) makes the adequacy determination.";
 
 const TIER_3_EXPLAINER =
   "These items involve statutory discretion (Director, Statutory Decision " +
@@ -618,11 +642,13 @@ function buildTier1Section(
     "Tier 1 (Binary) Findings",
     HeadingLevel.HEADING_2,
   );
-  const explainer = bodyParagraph([bodyText(TIER_1_EXPLAINER)]);
+  const explainer = bodyParagraph([
+    bodyText(memoIsEvidenceStatus(allRows) ? TIER_1_EXPLAINER_ES : TIER_1_EXPLAINER),
+  ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
-    "AI Suggestion",
+    memoIsEvidenceStatus(allRows) ? "AI Evidence Signal" : "AI Suggestion",
     "Reviewer Judgment",
     "Rationale",
   ]);
@@ -651,14 +677,18 @@ function buildTier2Section(
   allRows: readonly JoinedRow[],
 ): Array<Paragraph | Table> {
   const heading = headingParagraph(
-    "Tier 2 (Professional Judgment) Flagged Items",
+    memoIsEvidenceStatus(allRows)
+      ? "Tier 2 (Professional Judgment) Items"
+      : "Tier 2 (Professional Judgment) Flagged Items",
     HeadingLevel.HEADING_2,
   );
-  const explainer = bodyParagraph([bodyText(TIER_2_EXPLAINER)]);
+  const explainer = bodyParagraph([
+    bodyText(memoIsEvidenceStatus(allRows) ? TIER_2_EXPLAINER_ES : TIER_2_EXPLAINER),
+  ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
-    "AI Flag",
+    memoIsEvidenceStatus(allRows) ? "AI Evidence Signal" : "AI Flag",
     "Reviewer Flag",
     "Rationale",
   ]);
