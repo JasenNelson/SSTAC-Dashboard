@@ -211,7 +211,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         </p>
         <button 
           onClick={() => setIsSubmitted(false)}
-          className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+          className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
         >
           Return to Draft
         </button>
@@ -230,12 +230,14 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         <div className="p-6 overflow-y-auto flex-1">
           <ul className="space-y-3">
             {headings.map((h) => (
-              <li
-                key={h.storageKey}
-                onClick={() => scrollToHeading(h.idx)}
-                className="text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors"
-              >
-                {h.displayLabel}
+              <li key={h.storageKey}>
+                <button
+                  type="button"
+                  onClick={() => scrollToHeading(h.idx)}
+                  className="w-full text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:rounded"
+                >
+                  {h.displayLabel}
+                </button>
               </li>
             ))}
           </ul>
@@ -327,14 +329,14 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-3 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
           <button 
             onClick={handleSave}
-            className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors"
+            className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
           >
             Save Draft
           </button>
           <button
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors"
+            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
           >
             {isSubmitting ? 'Submitting...' : 'Submit Review'}
           </button>
