@@ -213,6 +213,7 @@ describe("buildMemo", () => {
     expect(xml).not.toContain("AI Suggestion");
     expect(xml).not.toContain("AI Flag");
     expect(xml).not.toContain("initial determination");
+    expect(xml).not.toContain("can only flag");
   });
 
   it("TIER_2_PROFESSIONAL + ADEQUATE judgment throws memo_build_invariant_violation_tier_2_adequate", async () => {

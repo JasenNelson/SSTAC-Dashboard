@@ -604,6 +604,14 @@ const TIER_2_EXPLAINER =
   "deficiencies; a qualified professional (QP) must make the adequacy " +
   "determination.";
 
+// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence
+// signals, it does not "flag deficiencies"; the QP still makes the adequacy
+// determination. Legacy 0.0.1 memos keep TIER_2_EXPLAINER above.
+const TIER_2_EXPLAINER_ES =
+  "These items require professional judgment. The AI surfaces evidence signals " +
+  "(present or absent, with supporting / negating counts); a qualified " +
+  "professional (QP) makes the adequacy determination.";
+
 const TIER_3_EXPLAINER =
   "These items involve statutory discretion (Director, Statutory Decision " +
   "Maker). The AI provides observations only; final adequacy is determined " +
@@ -662,7 +670,9 @@ function buildTier2Section(
     "Tier 2 (Professional Judgment) Flagged Items",
     HeadingLevel.HEADING_2,
   );
-  const explainer = bodyParagraph([bodyText(TIER_2_EXPLAINER)]);
+  const explainer = bodyParagraph([
+    bodyText(memoIsEvidenceStatus(allRows) ? TIER_2_EXPLAINER_ES : TIER_2_EXPLAINER),
+  ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
