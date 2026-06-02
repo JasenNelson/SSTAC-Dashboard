@@ -592,6 +592,7 @@ function compareResults(
   a: V2PerPolicyResult,
   b: V2PerPolicyResult,
   key: SortKey,
+  sortDir: SortDir,
 ): number {
   if (key === "policy_id") {
     return (a.policy_id ?? "").localeCompare(b.policy_id ?? "");
@@ -606,11 +607,17 @@ function compareResults(
     // absent), 2000..2499 (legacy by verdict rank), 3000 (fallback).
     return resolveEvidenceStatus(a).sortKey - resolveEvidenceStatus(b).sortKey;
   }
-  // confidence: nulls sort last (treat as -Infinity for asc, so they end up
-  // smallest; but we want nulls last regardless of direction, so use a
-  // sentinel approach).
-  const av = controlConfidence(a) ?? Number.NEGATIVE_INFINITY;
-  const bv = controlConfidence(b) ?? Number.NEGATIVE_INFINITY;
+  // confidence: rows with no surfaceable confidence (null controlConfidence:
+  // null-confidence legacy rows + unscoped 0.1.0 rows) ALWAYS sort last, in BOTH
+  // directions. The caller negates cmp for desc, so the null branch returns a
+  // direction-corrected value so nulls stay last after that negation (codex P2).
+  const av = controlConfidence(a);
+  const bv = controlConfidence(b);
+  const aNull = av === null;
+  const bNull = bv === null;
+  if (aNull && bNull) return 0;
+  if (aNull) return sortDir === "asc" ? 1 : -1;
+  if (bNull) return sortDir === "asc" ? -1 : 1;
   if (av === bv) return 0;
   return av < bv ? -1 : 1;
 }
@@ -870,7 +877,7 @@ export function PerPolicyResultsTable({
     // Stable sort: decorate with original index.
     const decorated = filteredArr.map((r, idx) => ({ r, idx }));
     decorated.sort((a, b) => {
-      const cmp = compareResults(a.r, b.r, sortBy);
+      const cmp = compareResults(a.r, b.r, sortBy, sortDir);
       if (cmp !== 0) return sortDir === "asc" ? cmp : -cmp;
       return a.idx - b.idx;
     });

@@ -1294,4 +1294,66 @@ describe("PerPolicyResultsTable S4 confidence column (codex P2: no unscoped/dupl
     expect(rows).toHaveLength(1);
     expect(rows[0]!.getAttribute("data-policy-id")).toBe("SCOPED-77");
   });
+
+  it("Confidence sort: no-surfaceable-confidence rows sort LAST in both directions (codex P2 r3)", () => {
+    const scopedHigh = makeResult({
+      id: "sorthi-00000000-0000-4000-8000-000000000001",
+      policy_id: "S-HI",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.9,
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    const legacyMid = makeResult({
+      id: "sortmid-00000000-0000-4000-8000-000000000002",
+      policy_id: "L-MID",
+      confidence: 0.5,
+      verdict_suggestion: "PASS",
+      ai_suggestion: "PASS",
+    });
+    const unscopedHidden = makeResult({
+      id: "sorthidden-00000000-0000-4000-8000-000000000003",
+      policy_id: "U-HIDDEN",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.77, // real but unscoped -> not surfaceable -> sorts as null
+      confidence_scope: null,
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    const nullLegacy = makeResult({
+      id: "sortnull-00000000-0000-4000-8000-000000000004",
+      policy_id: "N-NULL",
+      confidence: null,
+      verdict_suggestion: "PASS",
+      ai_suggestion: "PASS",
+    });
+    render(
+      <PerPolicyResultsTable
+        results={[unscopedHidden, nullLegacy, scopedHigh, legacyMid]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+    fireEvent.change(screen.getByTestId("sort-by"), {
+      target: { value: "confidence" },
+    });
+
+    const ids = () =>
+      screen.getAllByTestId("per-policy-row").map((r) => r.getAttribute("data-policy-id"));
+
+    // Ascending (default): real values ascending (0.5, 0.9), nulls last.
+    const asc = ids();
+    expect(asc.slice(0, 2)).toEqual(["L-MID", "S-HI"]);
+    expect(new Set(asc.slice(2))).toEqual(new Set(["U-HIDDEN", "N-NULL"]));
+
+    // Descending: real values descending (0.9, 0.5), nulls STILL last.
+    fireEvent.click(screen.getByTestId("sort-dir-toggle"));
+    const desc = ids();
+    expect(desc.slice(0, 2)).toEqual(["S-HI", "L-MID"]);
+    expect(new Set(desc.slice(2))).toEqual(new Set(["U-HIDDEN", "N-NULL"]));
+  });
 });
