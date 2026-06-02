@@ -94,8 +94,8 @@ export async function POST(request: NextRequest) {
 
     if (voteError) {
       console.error('Error submitting ranking votes:', voteError);
-      console.error(`[Ranking Poll Submit] Vote error details:`, JSON.stringify(voteError, null, 2));
-      return NextResponse.json({ error: 'Failed to submit ranking votes', details: voteError.message }, { status: 500 });
+
+      return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
     }
 
     if (process.env.NODE_ENV === 'development') {
