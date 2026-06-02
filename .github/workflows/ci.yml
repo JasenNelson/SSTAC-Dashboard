@@ -122,6 +122,25 @@ jobs:
           node-version: '24'
           cache: 'npm'
 
+      - name: Install build toolchain
+        # The Playwright image ships browser deps but not a C/C++ toolchain. node-pty (and
+        # better-sqlite3) have no Node-24 linux prebuild and fall back to node-gyp, which needs
+        # make + g++. build-essential is a small package set with no service-restart triggers
+        # (unlike the browser deps that hung), so installing it here is safe; bound it anyway so
+        # it can never hang the job. Runs as root in the container (no sudo).
+        env:
+          DEBIAN_FRONTEND: noninteractive
+        run: |
+          for attempt in 1 2; do
+            if timeout 240 sh -c 'apt-get update && apt-get install -y --no-install-recommends build-essential python3'; then
+              exit 0
+            fi
+            echo "::warning::build toolchain install attempt $attempt failed; retrying"
+            sleep 10
+          done
+          echo "::error::build toolchain install failed after 2 attempts"
+          exit 1
+
       - name: Install dependencies
         run: npm ci
 
