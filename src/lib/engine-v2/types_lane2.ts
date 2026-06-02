@@ -74,6 +74,14 @@ export interface V2PerPolicyResult {
   rubric_self_score: Record<string, unknown> | null;
   raw_result_json: Record<string, unknown>;
   created_at: string;
+  // S4 read-side expand-contract fields (0.1.0 tier-blind evidence-match packet).
+  // All nullable: NULL means legacy 0.0.1 row (no backfill).
+  // Do NOT rename rubric_self_score; evidence_synthesis_self_score is a NEW column.
+  s4_schema_version: string | null;
+  evidence_present: boolean | null;
+  evidence_signal_counts: Record<string, unknown> | null;
+  confidence_scope: string | null;
+  evidence_synthesis_self_score: Record<string, unknown> | null;
 }
 
 export interface EvalCoverageStatement {
