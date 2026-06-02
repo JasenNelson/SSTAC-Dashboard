@@ -52,11 +52,11 @@ export interface EvidenceStatus {
   // Numeric total-order key for sorting a MIXED list of 0.1.0 and legacy rows
   // deterministically (must be transitive; never NaN).
   //
-  // Banding scheme (ascending = "more relevant first"):
-  //   Band 0 (0..999)   : 0.1.0 rows, evidence present=true, ordered by supporting count.
-  //   Band 1 (1000..1999): 0.1.0 rows, evidence present=false / null.
-  //   Band 2 (2000..2999): legacy 0.0.1 rows, ordered by verdict_suggestion rank.
-  //   Band 3 (3000)     : fallback for anything unclassified.
+  // Banding scheme (ascending = "more relevant first"). Every row is exactly one
+  // of these bands -- there is no unclassified path:
+  //   Band 0 (0..999)    : 0.1.0 rows, evidence present=true, ordered by supporting count.
+  //   Band 1 (1000)      : 0.1.0 rows, evidence present=false / null.
+  //   Band 2 (2000..2400): legacy rows, ordered by verdict_suggestion rank.
   //
   // Within band 0: sortKey = 999 - min(supporting, 999) (more supporting -> lower key).
   // Within band 2: PASS=2000, FAIL=2100, NOT_FOUND=2200, ESCALATE=2300, unknown=2400.

@@ -600,11 +600,18 @@ function compareResults(
     return (a.tier ?? "").localeCompare(b.tier ?? "");
   }
   if (key === "verdict") {
-    // S4: use a normalized numeric sort key so 0.1.0 and 0.0.1 rows order
-    // deterministically in a MIXED list without breaking V8 transitivity.
-    // resolveEvidenceStatus bands: 0..999 (0.1.0 present), 1000..1999 (0.1.0
-    // absent), 2000..2499 (legacy by verdict rank), 3000 (fallback).
-    return resolveEvidenceStatus(a).sortKey - resolveEvidenceStatus(b).sortKey;
+    // Pure-legacy pairs keep the original alphabetical verdict_suggestion order so
+    // the pre-S4 legacy "verdict" sort is preserved byte-for-byte (codex + claude
+    // desktop P2). Any pair involving a 0.1.0 row uses the banded numeric sortKey
+    // for a transitive mixed-list order: 0.1.0 rows always band before legacy rows
+    // (sortKey 0..1999 < legacy 2000..2400), so a 0.1.0 row never sits between two
+    // legacy rows and transitivity holds.
+    const esa = resolveEvidenceStatus(a);
+    const esb = resolveEvidenceStatus(b);
+    if (!esa.isEvidenceStatus && !esb.isEvidenceStatus) {
+      return (a.verdict_suggestion ?? "").localeCompare(b.verdict_suggestion ?? "");
+    }
+    return esa.sortKey - esb.sortKey;
   }
   // confidence: rows with no surfaceable confidence (null controlConfidence:
   // null-confidence legacy rows + unscoped 0.1.0 rows) ALWAYS sort last, in BOTH

@@ -1357,3 +1357,29 @@ describe("PerPolicyResultsTable S4 confidence column (codex P2: no unscoped/dupl
     expect(new Set(desc.slice(2))).toEqual(new Set(["U-HIDDEN", "N-NULL"]));
   });
 });
+
+describe("PerPolicyResultsTable legacy verdict sort (codex+claude desktop P2)", () => {
+  it("pure-legacy rows sort by verdict_suggestion alphabetically (pre-S4 behavior restored)", () => {
+    const mk = (id: string, pol: string, verdict: string) =>
+      makeResult({
+        id,
+        policy_id: pol,
+        verdict_suggestion: verdict,
+        ai_suggestion: verdict,
+      });
+    // Scrambled input; verdict sort (asc) must restore the legacy localeCompare order.
+    const rows = [
+      mk("lg-p-00000000-0000-4000-8000-000000000001", "LG-PASS", "PASS"),
+      mk("lg-e-00000000-0000-4000-8000-000000000002", "LG-ESCALATE", "ESCALATE"),
+      mk("lg-n-00000000-0000-4000-8000-000000000003", "LG-NOTFOUND", "NOT_FOUND"),
+      mk("lg-f-00000000-0000-4000-8000-000000000004", "LG-FAIL", "FAIL"),
+    ];
+    render(<PerPolicyResultsTable results={rows} judgments={NO_JUDGMENTS} />);
+    fireEvent.change(screen.getByTestId("sort-by"), { target: { value: "verdict" } });
+    const ids = screen
+      .getAllByTestId("per-policy-row")
+      .map((r) => r.getAttribute("data-policy-id"));
+    // localeCompare order: ESCALATE < FAIL < NOT_FOUND < PASS (NOT the semantic rank).
+    expect(ids).toEqual(["LG-ESCALATE", "LG-FAIL", "LG-NOTFOUND", "LG-PASS"]);
+  });
+});
