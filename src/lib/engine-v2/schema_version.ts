@@ -336,3 +336,20 @@ export function formatEvidenceStatusSummary(status: EvidenceStatus): string {
   }
   return `${label} (${parts.join(" / ")})`;
 }
+
+/**
+ * surfaceableConfidence: the confidence value that may be SHOWN to a reviewer or
+ * used to filter/sort/export. A 0.1.0 row whose confidence_scope is not
+ * EVIDENCE_MATCH_NOT_ADEQUACY has NO surfaceable confidence (returns null) -- it
+ * is not displayed anywhere, must not drive the Min-Confidence filter or Confidence
+ * sort, and must not appear in the export "Confidence" column. Legacy + scoped-0.1.0
+ * rows return the resolved confidence. Single source of truth for the dashboard
+ * controls (PerPolicyResultsTable) AND the export surface so they never drift.
+ */
+export function surfaceableConfidence(row: S4VersionRow): number | null {
+  const es = resolveEvidenceStatus(row);
+  if (es.isEvidenceStatus && es.confidenceScope !== "EVIDENCE_MATCH_NOT_ADEQUACY") {
+    return null;
+  }
+  return es.confidence;
+}

@@ -30,7 +30,10 @@ import {
   type EvidenceSliceMap,
 } from "@/lib/engine-v2/evidence_slices";
 import { useSidePanel } from "./side-panel/SidePanelContext";
-import { resolveEvidenceStatus } from "@/lib/engine-v2/schema_version";
+import {
+  resolveEvidenceStatus,
+  surfaceableConfidence,
+} from "@/lib/engine-v2/schema_version";
 import { EvidenceStatusCell } from "./EvidenceStatusCell";
 
 // Lane 2d / Phase E: pulse animation for the row(s) that match a
@@ -117,18 +120,14 @@ function formatConfidence(c: number | null): string {
   return c.toFixed(2);
 }
 
-// Confidence usable by the Min-Confidence filter + Confidence sort. A 0.1.0 row
-// whose confidence_scope is not EVIDENCE_MATCH_NOT_ADEQUACY surfaces its confidence
-// NOWHERE (the evidence cell suppresses it; the Confidence column shows "-"), so it
-// must not drive filter/sort either (codex P2). It falls to the same null-handling
-// as a null-confidence legacy row. Legacy + scoped-0.1.0 rows use the raw value
-// (valid, and shown in the evidence cell for scoped 0.1.0).
+// Confidence usable by the Min-Confidence filter + Confidence sort. Delegates to
+// the shared surfaceableConfidence (single source of truth) so the dashboard
+// controls, the evidence cell, and the export "Confidence" column never drift: a
+// 0.1.0 row whose confidence_scope is not EVIDENCE_MATCH_NOT_ADEQUACY has no
+// surfaceable confidence and falls to the same null-handling as a null-confidence
+// legacy row (codex P2). Legacy + scoped-0.1.0 rows use the resolved value.
 function controlConfidence(r: V2PerPolicyResult): number | null {
-  const es = resolveEvidenceStatus(r);
-  if (es.isEvidenceStatus && es.confidenceScope !== "EVIDENCE_MATCH_NOT_ADEQUACY") {
-    return null;
-  }
-  return r.confidence ?? null;
+  return surfaceableConfidence(r);
 }
 
 function formatDateLocaleLocked(iso: string | null | undefined): string {
