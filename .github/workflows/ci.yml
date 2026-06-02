@@ -119,11 +119,21 @@ jobs:
         run: npm ci
 
       - name: Install Playwright browsers
-        # `playwright install --with-deps` shells out to apt-get for OS libraries, which has
-        # no built-in timeout and can hang on a slow Azure mirror (observed 36+ min on Node-24
-        # runs 2026-06-02). Bound each attempt and retry so a transient apt stall recovers
-        # instead of hanging the job; clean any partial apt/dpkg state between attempts.
+        env:
+          DEBIAN_FRONTEND: noninteractive
+          NEEDRESTART_MODE: a
+          NEEDRESTART_SUSPEND: "1"
+        # `playwright install --with-deps` spawns `sudo apt-get`; on Node-24 runs the apt phase
+        # hung consistently (2026-06-02), while the Node-20 e2e ran the same step fine in the same
+        # window -- so this is Node-24-correlated, most likely apt blocking on a debconf/needrestart
+        # prompt because Node 24's child-process stdio handling leaves the spawned apt waiting.
+        # Disable interactive prompts at the SYSTEM level (so it reaches the sudo'd apt regardless
+        # of env propagation through sudo), then run with a bounded retry so any residual stall
+        # fails fast instead of hanging the job.
         run: |
+          sudo mkdir -p /etc/needrestart/conf.d
+          echo '$nrconf{restart} = "a";' | sudo tee /etc/needrestart/conf.d/99-no-prompt.conf >/dev/null || true
+          echo 'debconf debconf/frontend select Noninteractive' | sudo debconf-set-selections || true
           for attempt in 1 2; do
             if timeout 300 npx playwright install --with-deps; then
               echo "playwright install succeeded on attempt $attempt"
