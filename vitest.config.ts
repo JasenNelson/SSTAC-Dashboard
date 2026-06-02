@@ -29,10 +29,14 @@ export default defineConfig({
     // (`npm run test:coverage`), after which vitest's forks pool crashes with
     // `write EPIPE` on the dead worker's IPC channel -- an unhandled 'error' event
     // that fails the whole Unit Tests job even though every test passes. Cap the
-    // worker count on CI to stay under the memory ceiling. Mirrors the documented
-    // local "--maxWorkers=2 under memory pressure" practice; no effect locally
+    // worker count on CI to stay under the memory ceiling; no effect locally
     // (CI is unset off the runner).
-    maxWorkers: process.env.CI ? 2 : undefined,
+    // 2026-06-02: maxWorkers=2 held on Node 20 but the worker OOM/`write EPIPE`
+    // recurred on Node 24 (v8 coverage uses more heap per worker), which reverted
+    // the Node 20->24 bump (#226 -> #227). Drop to 1 worker on CI: serial execution
+    // halves peak memory so a single coverage worker stays under the 7GB ceiling on
+    // Node 24. Slower wall-clock, but the per-test timeout above is unaffected.
+    maxWorkers: process.env.CI ? 1 : undefined,
     include: ['**/*.{test,spec}.{js,mjs,cjs,ts,mts,cts,jsx,tsx}'],
     exclude: [
       'node_modules',
