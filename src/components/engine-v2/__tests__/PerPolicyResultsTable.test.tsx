@@ -1202,3 +1202,60 @@ describe("PerPolicyResultsTable S4 mixed-list filter", () => {
     expect(rows[0]!.getAttribute("data-policy-id")).toBe("LG-PASS");
   });
 });
+
+describe("PerPolicyResultsTable S4 confidence column (codex P2: no unscoped/duplicate confidence)", () => {
+  it("0.1.0 row: standalone Confidence column defers ('-'); match confidence is in the evidence cell only", () => {
+    const row010 = makeResult({
+      id: "conf010-00000000-0000-4000-8000-000000000001",
+      policy_id: "EV-CONF",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.88,
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    render(<PerPolicyResultsTable results={[row010]} judgments={NO_JUDGMENTS} />);
+    // Standalone Confidence column defers to the scope-guarded evidence cell.
+    expect(screen.getByTestId("per-policy-confidence-cell").textContent?.trim()).toBe("-");
+    // The scoped match confidence is shown exactly once, in the evidence cell.
+    expect(
+      screen.getByTestId("evidence-match-confidence").textContent,
+    ).toContain("0.88");
+  });
+
+  it("0.1.0 row with MISSING confidence_scope: neither column nor cell leaks the number", () => {
+    const unscoped = makeResult({
+      id: "confunscoped-00000000-0000-4000-8000-000000000003",
+      policy_id: "EV-UNSCOPED",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.77,
+      confidence_scope: null,
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    render(<PerPolicyResultsTable results={[unscoped]} judgments={NO_JUDGMENTS} />);
+    expect(screen.getByTestId("per-policy-confidence-cell").textContent?.trim()).toBe("-");
+    expect(screen.queryByTestId("evidence-match-confidence")).toBeNull();
+    // The raw 0.77 must not leak anywhere when scope is missing.
+    const row = screen.getByTestId("per-policy-row");
+    expect(row.textContent ?? "").not.toContain("0.77");
+  });
+
+  it("legacy 0.0.1 row: standalone Confidence column shows the number (unchanged)", () => {
+    const legacy = makeResult({
+      id: "conflegacy-00000000-0000-4000-8000-000000000002",
+      policy_id: "LG-CONF",
+      confidence: 0.9,
+      verdict_suggestion: "PASS",
+      ai_suggestion: "PASS",
+    });
+    render(<PerPolicyResultsTable results={[legacy]} judgments={NO_JUDGMENTS} />);
+    const confCell = screen.getByTestId("per-policy-confidence-cell");
+    expect(confCell.textContent?.trim()).not.toBe("-");
+    expect(confCell.textContent ?? "").toMatch(/\d/);
+  });
+});

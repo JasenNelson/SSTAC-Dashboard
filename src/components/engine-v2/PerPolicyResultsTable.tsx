@@ -1229,8 +1229,23 @@ export function PerPolicyResultsTable({
                           return <VerdictBadge verdict={r.verdict_suggestion} />;
                         })()}
                       </td>
-                      <td className="px-4 py-2 text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
-                        {formatConfidence(r.confidence)}
+                      <td
+                        className="px-4 py-2 text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap"
+                        data-testid="per-policy-confidence-cell"
+                      >
+                        {resolveEvidenceStatus(r).isEvidenceStatus ? (
+                          // 0.1.0: match confidence is shown scope-guarded in the
+                          // EvidenceStatusCell (AI Evidence Signal column). Defer here
+                          // to avoid an unscoped duplicate (codex P2).
+                          <span
+                            className="text-slate-400 dark:text-slate-500"
+                            title="Match confidence is shown (scope-guarded) in the AI Evidence Signal cell"
+                          >
+                            -
+                          </span>
+                        ) : (
+                          formatConfidence(r.confidence)
+                        )}
                       </td>
                       <td className="px-4 py-2 text-sm text-slate-700 dark:text-slate-300 max-w-xl">
                         <span className="line-clamp-2">

@@ -140,6 +140,20 @@ describe("isEvidenceStatusVersion", () => {
   it("string with 4 parts is legacy (malformed)", () => {
     expect(isEvidenceStatusVersion("0.1.0.0")).toBe(false);
   });
+
+  it("non-numeric token: prerelease suffix is legacy (codex P3; parseInt would truncate)", () => {
+    // "0.1.0-canary".split(".") -> ["0","1","0-canary"]; parseInt("0-canary")===0 would
+    // wrongly pass without strict /^\d+$/ validation.
+    expect(isEvidenceStatusVersion("0.1.0-canary")).toBe(false);
+  });
+
+  it("non-numeric token: alpha inside a segment is legacy (codex P3)", () => {
+    expect(isEvidenceStatusVersion("1.0x.0")).toBe(false);
+  });
+
+  it("whitespace/padded token is legacy (codex P3)", () => {
+    expect(isEvidenceStatusVersion("0. 1.0")).toBe(false);
+  });
 });
 
 // ---- resolveEvidenceStatus ----

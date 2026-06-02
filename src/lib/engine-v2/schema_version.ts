@@ -152,6 +152,10 @@ export function isEvidenceStatusVersion(v: string | null | undefined): boolean {
   if (v === null || v === undefined || v === "") return false;
   const parts = v.split(".");
   if (parts.length !== 3) return false;
+  // Reject non-numeric tokens before parseInt, which truncates ("0-canary" -> 0,
+  // "1.0x.0" -> 1.0.0). Contract: malformed versions are legacy, NOT evidence-status
+  // (codex P3). Each segment must be pure non-negative digits.
+  if (!parts.every((p) => /^\d+$/.test(p))) return false;
   const major = parseInt(parts[0]!, 10);
   const minor = parseInt(parts[1]!, 10);
   const patch = parseInt(parts[2]!, 10);
