@@ -52,11 +52,11 @@ export interface EvidenceStatus {
   // Numeric total-order key for sorting a MIXED list of 0.1.0 and legacy rows
   // deterministically (must be transitive; never NaN).
   //
-  // Banding scheme (ascending = "more relevant first"):
-  //   Band 0 (0..999)   : 0.1.0 rows, evidence present=true, ordered by supporting count.
-  //   Band 1 (1000..1999): 0.1.0 rows, evidence present=false / null.
-  //   Band 2 (2000..2999): legacy 0.0.1 rows, ordered by verdict_suggestion rank.
-  //   Band 3 (3000)     : fallback for anything unclassified.
+  // Banding scheme (ascending = "more relevant first"). Every row is exactly one
+  // of these bands -- there is no unclassified path:
+  //   Band 0 (0..999)    : 0.1.0 rows, evidence present=true, ordered by supporting count.
+  //   Band 1 (1000)      : 0.1.0 rows, evidence present=false / null.
+  //   Band 2 (2000..2400): legacy rows, ordered by verdict_suggestion rank.
   //
   // Within band 0: sortKey = 999 - min(supporting, 999) (more supporting -> lower key).
   // Within band 2: PASS=2000, FAIL=2100, NOT_FOUND=2200, ESCALATE=2300, unknown=2400.
@@ -335,4 +335,21 @@ export function formatEvidenceStatusSummary(status: EvidenceStatus): string {
     return label;
   }
   return `${label} (${parts.join(" / ")})`;
+}
+
+/**
+ * surfaceableConfidence: the confidence value that may be SHOWN to a reviewer or
+ * used to filter/sort/export. A 0.1.0 row whose confidence_scope is not
+ * EVIDENCE_MATCH_NOT_ADEQUACY has NO surfaceable confidence (returns null) -- it
+ * is not displayed anywhere, must not drive the Min-Confidence filter or Confidence
+ * sort, and must not appear in the export "Confidence" column. Legacy + scoped-0.1.0
+ * rows return the resolved confidence. Single source of truth for the dashboard
+ * controls (PerPolicyResultsTable) AND the export surface so they never drift.
+ */
+export function surfaceableConfidence(row: S4VersionRow): number | null {
+  const es = resolveEvidenceStatus(row);
+  if (es.isEvidenceStatus && es.confidenceScope !== "EVIDENCE_MATCH_NOT_ADEQUACY") {
+    return null;
+  }
+  return es.confidence;
 }

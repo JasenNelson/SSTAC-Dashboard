@@ -37,6 +37,7 @@ import { assertVerdictAllowedForTier } from "./zod_lane2";
 import {
   resolveEvidenceStatus,
   formatEvidenceStatusSummary,
+  surfaceableConfidence,
 } from "./schema_version";
 
 export type ExportFormat = "csv" | "md" | "html";
@@ -198,7 +199,11 @@ function aiSuggestionDisplay(row: JoinedRow): string {
 }
 
 function confidenceDisplay(row: JoinedRow): string {
-  const c = row.result.confidence;
+  // Scope-aware (P3): an unscoped 0.1.0 row has no surfaceable confidence, so the
+  // export "Confidence" column is blank for it -- matching the dashboard, which
+  // neither displays it nor lets it drive controls. Scoped 0.1.0 + legacy rows
+  // export the value.
+  const c = surfaceableConfidence(row.result);
   if (c === null || c === undefined || Number.isNaN(c)) return "";
   return c.toFixed(2);
 }

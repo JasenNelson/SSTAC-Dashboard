@@ -603,6 +603,33 @@ describe("export_formats S4 evidence-status branch (aiSuggestionDisplay)", () =>
     );
     expect(csv).toContain("Evidence absent");
   });
+
+  // P3: Confidence column is scope-aware (matches the dashboard).
+  it("CSV: scoped 0.1.0 row exports its match-confidence in the Confidence column (P3)", () => {
+    const s4 = makeS4ExportResult("s4-conf1", "S4-CONF-001");
+    const judgment = makeJudgment("s4-conf1", "TIER_1_BINARY", "ADEQUATE");
+    const csv = generateCSV(baseInput({ results: [s4], judgments: [judgment] }));
+    expect(csv).toContain("0.88"); // scoped 0.1.0 confidence IS exported
+  });
+
+  it("CSV: UNSCOPED 0.1.0 row blanks the Confidence column -- no leak (P3)", () => {
+    const unscoped: V2PerPolicyResult = {
+      ...makeS4ExportResult("s4-conf2", "S4-CONF-002"),
+      confidence_scope: null, // contract-violating -> no surfaceable confidence
+    };
+    const judgment = makeJudgment("s4-conf2", "TIER_1_BINARY", "ADEQUATE");
+    const csv = generateCSV(baseInput({ results: [unscoped], judgments: [judgment] }));
+    expect(csv).not.toContain("0.88"); // confidence is NOT exported when unscoped
+  });
+
+  it("CSV: legacy 0.0.1 row exports its confidence (unchanged)", () => {
+    const legacy = makeResult("legacy-conf3", "LG-CONF-003", "TIER_1_BINARY", {
+      confidence: 0.61,
+    });
+    const judgment = makeJudgment("legacy-conf3", "TIER_1_BINARY", "ADEQUATE");
+    const csv = generateCSV(baseInput({ results: [legacy], judgments: [judgment] }));
+    expect(csv).toContain("0.61");
+  });
 });
 
 // --- Dispatch + descriptors ------------------------------------------------

@@ -13,6 +13,7 @@ import {
   isEvidenceStatusVersion,
   resolveEvidenceStatus,
   formatEvidenceStatusSummary,
+  surfaceableConfidence,
 } from "../schema_version";
 import type { EvidenceStatus } from "../schema_version";
 
@@ -511,5 +512,62 @@ describe("formatEvidenceStatusSummary", () => {
     for (let i = 0; i < result.length; i++) {
       expect(result.charCodeAt(i)).toBeLessThanOrEqual(127);
     }
+  });
+});
+
+// ---- surfaceableConfidence (P3: shared scope-gate for controls + export) ----
+
+describe("surfaceableConfidence", () => {
+  it("scoped 0.1.0 row returns the resolved confidence", () => {
+    expect(
+      surfaceableConfidence({
+        s4_schema_version: "0.1.0",
+        confidence: 0.82,
+        confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+        raw_result_json: { schema_version: "0.1.0" },
+      }),
+    ).toBe(0.82);
+  });
+
+  it("unscoped 0.1.0 row returns null (no surfaceable confidence)", () => {
+    expect(
+      surfaceableConfidence({
+        s4_schema_version: "0.1.0",
+        confidence: 0.82,
+        confidence_scope: null,
+        raw_result_json: { schema_version: "0.1.0" },
+      }),
+    ).toBeNull();
+  });
+
+  it("0.1.0 row with a wrong confidence_scope returns null", () => {
+    expect(
+      surfaceableConfidence({
+        s4_schema_version: "0.1.0",
+        confidence: 0.82,
+        confidence_scope: "SOMETHING_ELSE",
+        raw_result_json: { schema_version: "0.1.0" },
+      }),
+    ).toBeNull();
+  });
+
+  it("legacy 0.0.1 row returns its confidence", () => {
+    expect(
+      surfaceableConfidence({
+        s4_schema_version: "0.0.1",
+        confidence: 0.5,
+        raw_result_json: { schema_version: "0.0.1" },
+      }),
+    ).toBe(0.5);
+  });
+
+  it("legacy row with null confidence returns null", () => {
+    expect(
+      surfaceableConfidence({
+        s4_schema_version: "0.0.1",
+        confidence: null,
+        raw_result_json: { schema_version: "0.0.1" },
+      }),
+    ).toBeNull();
   });
 });
