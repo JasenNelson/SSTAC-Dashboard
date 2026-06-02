@@ -122,6 +122,36 @@ function baseInput(opts: {
   };
 }
 
+// --- S4 0.1.0 schema-aware AI-scope header (codex deep-dive Surface-2 P2) --
+
+describe("0.1.0 evidence-status exports use neutral AI-scope header", () => {
+  function s4Result(id: string, policyId: string): V2PerPolicyResult {
+    return makeResult(id, policyId, "TIER_1_BINARY", {
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      evidence_signal_counts: { total_cited: 5, supporting: 3, negating: 1 },
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+  }
+
+  it("CSV/Markdown/HTML use 'AI Evidence Signal' not 'AI Suggestion' for 0.1.0", () => {
+    const input = baseInput({ results: [s4Result("r1", "POL-001")], judgments: [] });
+    for (const out of [generateCSV(input), generateMarkdown(input), generateHTML(input)]) {
+      expect(out).toContain("AI Evidence Signal");
+      expect(out).not.toContain("AI Suggestion");
+    }
+  });
+
+  it("legacy 0.0.1 exports keep 'AI Suggestion'", () => {
+    const input = baseInput({
+      results: [makeResult("r1", "POL-001", "TIER_1_BINARY")],
+      judgments: [],
+    });
+    expect(generateCSV(input)).toContain("AI Suggestion");
+  });
+});
+
 // --- CSV ------------------------------------------------------------------
 
 describe("generateCSV", () => {

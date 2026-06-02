@@ -277,6 +277,23 @@ describe("PerPolicyResultsTable AI Determination + policy text + tech disclosure
     expect(headers).not.toContain("AI Determination");
   });
 
+  it("0.1.0 expanded row carries no determination wording; uses AI Evidence Synthesis (Surface-3 P3)", () => {
+    render(
+      <PerPolicyResultsTable
+        results={[makeS4Result({ policy_id: "PX-S4-2" })]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    // No determination-shaped wording anywhere for a 0.1.0 table (header + expanded).
+    expect(screen.queryByText("AI Determination")).not.toBeInTheDocument();
+    expect(screen.queryByText(/no determination/i)).not.toBeInTheDocument();
+    // The synthesis label appears in both the column header and the expanded detail.
+    expect(
+      screen.getAllByText("AI Evidence Synthesis").length,
+    ).toBeGreaterThanOrEqual(2);
+  });
+
   it("renders policy text prominently from evidence_slices when policy_id matches", () => {
     const slices = {
       "slice_abc": {

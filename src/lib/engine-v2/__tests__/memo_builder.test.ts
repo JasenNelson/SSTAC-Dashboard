@@ -183,6 +183,38 @@ describe("buildMemo", () => {
     expect(alteredOut.judgmentSnapshotHash).not.toBe(baseOut.judgmentSnapshotHash);
   });
 
+  it("0.1.0 evidence-status memo uses neutral AI-scope labels (codex Surface-2 P2)", async () => {
+    function s4(tier: JudgmentTier, policyId: string, id: string): V2PerPolicyResult {
+      return makeResult(tier, policyId, "PASS", {
+        id,
+        s4_schema_version: "0.1.0",
+        evidence_present: true,
+        evidence_signal_counts: { total_cited: 5, supporting: 3, negating: 1 },
+        confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+        raw_result_json: { schema_version: "0.1.0" },
+      });
+    }
+    const t1 = s4("TIER_1_BINARY", "POL-001", "r-s4t1");
+    const t2 = s4("TIER_2_PROFESSIONAL", "POL-010", "r-s4t2");
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t1, t2],
+      judgments: [
+        makeJudgment(t1.id, "TIER_1_BINARY", "ADEQUATE"),
+        makeJudgment(t2.id, "TIER_2_PROFESSIONAL", "DEFICIENT"),
+      ],
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+    // The AI surfaces evidence; it does not suggest/flag/determine. 0.1.0 memos
+    // use the neutral "AI Evidence Signal" header and drop "initial determination".
+    expect(xml).toContain("AI Evidence Signal");
+    expect(xml).not.toContain("AI Suggestion");
+    expect(xml).not.toContain("AI Flag");
+    expect(xml).not.toContain("initial determination");
+  });
+
   it("TIER_2_PROFESSIONAL + ADEQUATE judgment throws memo_build_invariant_violation_tier_2_adequate", async () => {
     const input = happyPathInput();
     const t2Result = input.results.find((r) => r.tier === "TIER_2_PROFESSIONAL")!;
