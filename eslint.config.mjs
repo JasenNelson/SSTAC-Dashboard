@@ -18,6 +18,11 @@ const eslintConfig = [
       "dist/**",
       "build/**",
       "coverage/**",
+      // Build/gate scratch dir: build:monitored:clean quarantines .next into
+      // .tmp/next-quarantine-* (compiled JS full of require()), and gate logs land in
+      // .tmp/build-monitor. These are gitignored artifacts -- linting them produced
+      // false no-require-imports errors that broke local `npm run lint` after a build.
+      ".tmp/**",
       "tests/**/*.js",
       "tests/archive/**",
       "*.config.js",

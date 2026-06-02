@@ -4,7 +4,7 @@
 
 import { describe, it, expect, beforeEach } from 'vitest';
 import { useSiteDataStore } from '../siteDataStore';
-import type { SiteData, SiteAssessment } from '@/types/bn-rrm/site-data';
+import type { SiteData, SiteAssessment, SedimentChemistry } from '@/types/bn-rrm/site-data';
 import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 
 function makeFeature(layerKey: string, propId: number): IdentifiedFeature {
@@ -284,6 +284,132 @@ describe('siteDataStore', () => {
       expect(persistedState.sites).toHaveProperty('siteA');
       expect(persistedState).not.toHaveProperty('identifiedFeatures');
       expect(persistedState).not.toHaveProperty('primaryFeatureIndex');
+    });
+  });
+
+  describe('validateChemistry (CCME ISQG/PEL guidelines)', () => {
+    function makeChem(overrides: Partial<SedimentChemistry>): SedimentChemistry {
+      return {
+        siteId: 's',
+        sampleId: 's-sample',
+        dateCollected: '2026-01-01',
+        ...overrides,
+      };
+    }
+
+    it('reports valid (no message/guideline) when a value is at or below the ISQG', () => {
+      const store = useSiteDataStore.getState();
+      // 30 < copper ISQG 35.7.
+      const below = store.validateChemistry(makeChem({ copper: 30 }));
+      expect(below).toHaveLength(1);
+      expect(below[0]).toMatchObject({ field: 'copper', value: 30, status: 'valid' });
+      expect(below[0].message).toBeUndefined();
+      expect(below[0].guideline).toBeUndefined();
+
+      // Exactly at the ISQG is NOT an exceedance (strict greater-than).
+      const atIsqg = store.validateChemistry(makeChem({ copper: 35.7 }));
+      expect(atIsqg[0].status).toBe('valid');
+    });
+
+    it('flags a warning between the ISQG and PEL with the ISQG exceedance ratio', () => {
+      const store = useSiteDataStore.getState();
+      // 35.7 < 50 < 197.
+      const [result] = store.validateChemistry(makeChem({ copper: 50 }));
+      expect(result.status).toBe('warning');
+      expect(result.message).toBe('Exceeds ISQG (35.7 mg/kg)');
+      expect(result.guideline).toMatchObject({ name: 'ISQG', value: 35.7 });
+      expect(result.guideline?.exceedance).toBeCloseTo(50 / 35.7, 6);
+
+      // Exactly at the PEL stays a warning (not > PEL, but > ISQG).
+      const atPel = store.validateChemistry(makeChem({ copper: 197 }));
+      expect(atPel[0].status).toBe('warning');
+    });
+
+    it('flags an error above the PEL with the PEL exceedance ratio', () => {
+      const store = useSiteDataStore.getState();
+      const [result] = store.validateChemistry(makeChem({ copper: 200 }));
+      expect(result.status).toBe('error');
+      expect(result.message).toBe('Exceeds PEL (197 mg/kg)');
+      expect(result.guideline).toMatchObject({ name: 'PEL', value: 197 });
+      expect(result.guideline?.exceedance).toBeCloseTo(200 / 197, 6);
+    });
+
+    it('omits undefined parameters and evaluates each provided parameter independently', () => {
+      const store = useSiteDataStore.getState();
+      const results = store.validateChemistry(
+        makeChem({ copper: 200 /* error */, zinc: 200 /* warning */, lead: 10 /* valid */ }),
+      );
+      expect(results).toHaveLength(3);
+      const byField = Object.fromEntries(results.map((r) => [r.field, r.status]));
+      expect(byField).toEqual({ copper: 'error', zinc: 'warning', lead: 'valid' });
+      // Parameters not present in the chemistry payload are not reported at all.
+      expect(results.some((r) => r.field === 'mercury')).toBe(false);
+    });
+
+    it('uses the ug/kg unit for totalPAHs', () => {
+      const store = useSiteDataStore.getState();
+      const [result] = store.validateChemistry(makeChem({ totalPAHs: 2000 }));
+      expect(result.status).toBe('warning');
+      expect(result.message).toBe('Exceeds ISQG (1684 ug/kg)');
+    });
+
+    it('returns no results for a chemistry payload with no guideline parameters', () => {
+      const store = useSiteDataStore.getState();
+      expect(store.validateChemistry(makeChem({}))).toEqual([]);
+    });
+  });
+
+  describe('read selectors', () => {
+    it('getSiteCount reflects the number of loaded sites', () => {
+      const store = useSiteDataStore.getState();
+      expect(store.getSiteCount()).toBe(0);
+      store.addSites([makeSite('a'), makeSite('b')]);
+      expect(useSiteDataStore.getState().getSiteCount()).toBe(2);
+    });
+
+    it('getSelectedSites maps selected ids to sites and drops missing ones', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b'), makeSite('c')]);
+      store.selectMultipleSites(['a', 'c']);
+      const selected = useSiteDataStore.getState().getSelectedSites();
+      expect(selected.map((s) => s.location.id)).toEqual(['a', 'c']);
+
+      // A selected id whose site was removed is filtered out (no undefined entries).
+      useSiteDataStore.setState({ selectedSiteIds: ['a', 'gone', 'c'] });
+      const afterRemoval = useSiteDataStore.getState().getSelectedSites();
+      expect(afterRemoval.map((s) => s.location.id)).toEqual(['a', 'c']);
+    });
+
+    it('getSelectedSite returns the single selected site or undefined', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      expect(useSiteDataStore.getState().getSelectedSite()).toBeUndefined();
+      store.selectSite('b');
+      expect(useSiteDataStore.getState().getSelectedSite()?.location.id).toBe('b');
+    });
+
+    it('getSiteLocations returns the location of every loaded site', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      const ids = useSiteDataStore
+        .getState()
+        .getSiteLocations()
+        .map((loc) => loc.id)
+        .sort();
+      expect(ids).toEqual(['a', 'b']);
+    });
+
+    it('getSitesByRegion filters sites by their location region', () => {
+      const store = useSiteDataStore.getState();
+      const north = makeSite('n1');
+      north.location.region = 'North';
+      const south = makeSite('s1');
+      south.location.region = 'South';
+      store.addSites([north, south, makeSite('no-region')]);
+
+      const inNorth = useSiteDataStore.getState().getSitesByRegion('North');
+      expect(inNorth.map((s) => s.location.id)).toEqual(['n1']);
+      expect(useSiteDataStore.getState().getSitesByRegion('East')).toEqual([]);
     });
   });
 });
