@@ -214,6 +214,17 @@ describe("buildMemo", () => {
     expect(xml).not.toContain("AI Flag");
     expect(xml).not.toContain("initial determination");
     expect(xml).not.toContain("can only flag");
+    expect(xml).not.toContain("Flagged Items");
+  });
+
+  it("legacy 0.0.1 memo keeps its established wording (no evidence-status regression)", async () => {
+    // codex PR #234 P2-1: a 0.1.0-only reword must NOT change legacy 0.0.1 memos,
+    // whose header is "AI Suggestion" + verdict-suggestion cells.
+    const out = await buildMemo(happyPathInput());
+    const xml = await readDocumentXml(out.bytes);
+    expect(xml).toContain("AI Suggestion");
+    expect(xml).toContain("initial determination");
+    expect(xml).toContain("Flagged Items");
   });
 
   it("TIER_2_PROFESSIONAL + ADEQUATE judgment throws memo_build_invariant_violation_tier_2_adequate", async () => {

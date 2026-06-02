@@ -596,6 +596,14 @@ function buildPolicyEvidenceSection(
 
 const TIER_1_EXPLAINER =
   "These regulatory items are binary requirements (must / shall / required). " +
+  "The AI provided an initial determination; the reviewer's judgment is the " +
+  "final position.";
+
+// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence, it
+// does not determine. Legacy 0.0.1 memos keep TIER_1_EXPLAINER above (consistent
+// with their "AI Suggestion" header + verdict-suggestion cells).
+const TIER_1_EXPLAINER_ES =
+  "These regulatory items are binary requirements (must / shall / required). " +
   "The AI surfaced initial evidence; the reviewer's judgment is the " +
   "final position.";
 
@@ -634,7 +642,9 @@ function buildTier1Section(
     "Tier 1 (Binary) Findings",
     HeadingLevel.HEADING_2,
   );
-  const explainer = bodyParagraph([bodyText(TIER_1_EXPLAINER)]);
+  const explainer = bodyParagraph([
+    bodyText(memoIsEvidenceStatus(allRows) ? TIER_1_EXPLAINER_ES : TIER_1_EXPLAINER),
+  ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
     "Policy ID",
@@ -667,7 +677,9 @@ function buildTier2Section(
   allRows: readonly JoinedRow[],
 ): Array<Paragraph | Table> {
   const heading = headingParagraph(
-    "Tier 2 (Professional Judgment) Flagged Items",
+    memoIsEvidenceStatus(allRows)
+      ? "Tier 2 (Professional Judgment) Items"
+      : "Tier 2 (Professional Judgment) Flagged Items",
     HeadingLevel.HEADING_2,
   );
   const explainer = bodyParagraph([
