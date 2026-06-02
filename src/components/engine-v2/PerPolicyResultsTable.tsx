@@ -890,6 +890,20 @@ export function PerPolicyResultsTable({
     return decorated.map((d) => d.r);
   }, [results, filterTier, filterVerdict, minConfidence, sortBy, sortDir]);
 
+  // AI-scope (owner 2026-06-02): the AI surfaces evidence, it does not make
+  // determinations. Tier-blind 0.1.0 ("evidence status") runs label this column
+  // "AI Evidence Synthesis"; legacy 0.0.1 runs keep "AI Determination" (0.0.1 UI
+  // unchanged per owner decision -- 0.1.0-only scope). A single eval run is
+  // uniform-version, so `.some` matches the realistic case; a mixed historical
+  // view shows the synthesis label when any 0.1.0 row is present.
+  const aiSynthesisColumnLabel = useMemo(
+    () =>
+      results.some((r) => resolveEvidenceStatus(r).isEvidenceStatus)
+        ? "AI Evidence Synthesis"
+        : "AI Determination",
+    [results],
+  );
+
   function setDraftField(
     id: string,
     field: keyof JudgmentDraft,
@@ -1158,13 +1172,15 @@ export function PerPolicyResultsTable({
               >
                 Confidence
               </th>
-              {/* TODO(owner): CLAUDE.md says the AI does not make determinations;
-                  consider renaming to "AI Evidence Synthesis" (deferred to owner). */}
+              {/* AI-scope (owner 2026-06-02): schema-aware label. 0.1.0 runs
+                  show "AI Evidence Synthesis"; legacy 0.0.1 keep "AI
+                  Determination". See aiSynthesisColumnLabel. */}
               <th
                 scope="col"
+                data-testid="ai-synthesis-column-header"
                 className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
               >
-                AI Determination
+                {aiSynthesisColumnLabel}
               </th>
               <th
                 scope="col"
@@ -1278,7 +1294,9 @@ export function PerPolicyResultsTable({
                         <span className="line-clamp-2">
                           {r.summary ?? (
                             <span className="italic text-slate-400 dark:text-slate-500">
-                              (no determination)
+                              {resolveEvidenceStatus(r).isEvidenceStatus
+                                ? "(no evidence synthesis)"
+                                : "(no determination)"}
                             </span>
                           )}
                         </span>
@@ -1363,16 +1381,17 @@ export function PerPolicyResultsTable({
                             })()}
                           </section>
 
-                          {/* AI Determination (formerly "Summary"). This is
-                              the AI's verdict + supporting prose for THIS
-                              submission against THIS policy, not a recap of
-                              the policy itself.
-                              TODO(owner): CLAUDE.md says the AI does not make
-                              determinations; consider renaming to "AI Evidence
-                              Synthesis" (deferred to owner). */}
+                          {/* AI synthesis (formerly "Summary"). This is the
+                              AI's evidence read + supporting prose for THIS
+                              submission against THIS policy, not a recap of the
+                              policy itself. AI-scope (owner 2026-06-02): 0.1.0
+                              rows label this "AI Evidence Synthesis"; legacy
+                              0.0.1 rows keep "AI Determination". */}
                           <section>
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
-                              AI Determination
+                              {resolveEvidenceStatus(r).isEvidenceStatus
+                                ? "AI Evidence Synthesis"
+                                : "AI Determination"}
                             </div>
                             <div
                               data-testid="per-policy-full-summary"
@@ -1380,7 +1399,9 @@ export function PerPolicyResultsTable({
                             >
                               {r.summary ?? (
                                 <span className="italic text-slate-400 dark:text-slate-500">
-                                  (no determination)
+                                  {resolveEvidenceStatus(r).isEvidenceStatus
+                                    ? "(no evidence synthesis)"
+                                    : "(no determination)"}
                                 </span>
                               )}
                             </div>
@@ -1404,9 +1425,11 @@ export function PerPolicyResultsTable({
                                     data-testid="per-policy-evidence-empty-submission"
                                     className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-3 text-xs italic text-slate-600 dark:text-slate-300 whitespace-pre-line"
                                   >
-                                    {
-                                      "No submission evidence cited. The engine could not locate matching\ncontent in the structured submission for this policy. Reviewer should\nexamine the AI determination above and the structured submission\ndirectly to verify whether the AI's read is supported by the source."
-                                    }
+                                    {`No submission evidence cited. The engine could not locate matching\ncontent in the structured submission for this policy. Reviewer should\nexamine the ${
+                                      resolveEvidenceStatus(r).isEvidenceStatus
+                                        ? "AI evidence synthesis"
+                                        : "AI determination"
+                                    } above and the structured submission\ndirectly to verify whether the AI's read is supported by the source.`}
                                   </div>
                                 );
                               }
