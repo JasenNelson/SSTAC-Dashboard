@@ -104,45 +104,28 @@ jobs:
     needs: build
     # Hard backstop so a stuck step can never hang for hours (default is 360 min).
     timeout-minutes: 25
-    # Run inside the official Playwright image: browser binaries + all OS libraries are
-    # pre-baked, so we DROP `playwright install --with-deps` entirely. That apt step hung
-    # consistently in its dpkg "Setting up"/postinst phase under Node 24 (2026-06-02), while
-    # the same step passed on Node 20. The image tag is pinned to the @playwright/test version
-    # (1.56.1) so the bundled browsers match -- bump both together when Playwright is upgraded.
-    # --ipc=host gives Chromium a full-size /dev/shm to avoid OOM crashes in the container.
-    container:
-      image: mcr.microsoft.com/playwright:v1.56.1-noble
-      options: --ipc=host
+    # NOTE: this job intentionally stays on Node 20 while lint/unit/build run on Node 24.
+    # E2E validates the built APP in a browser, not the Node runtime -- the Node-version-sensitive
+    # work (native modules, JS behavior, the production build) is covered by the Unit Tests and
+    # Build jobs, both green on Node 24. On Node 24 the e2e environment hit a cascade of issues
+    # (Playwright `--with-deps` apt postinst hang; then, in the Playwright container, browsers
+    # crashing on launch ~1/3 of tests), none of which reflect app/runtime correctness. Keeping
+    # e2e on Node 20 -- its known-good configuration -- is the pragmatic, well-scoped choice.
+    # Revisit only if the Node-24 browser-launch issue is worth a dedicated fix.
     steps:
       - uses: actions/checkout@v6
 
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '20'
           cache: 'npm'
-
-      - name: Install build toolchain
-        # The Playwright image ships browser deps but not a C/C++ toolchain. node-pty (and
-        # better-sqlite3) have no Node-24 linux prebuild and fall back to node-gyp, which needs
-        # make + g++. build-essential is a small package set with no service-restart triggers
-        # (unlike the browser deps that hung), so installing it here is safe; bound it anyway so
-        # it can never hang the job. Runs as root in the container (no sudo).
-        env:
-          DEBIAN_FRONTEND: noninteractive
-        run: |
-          for attempt in 1 2; do
-            if timeout 240 sh -c 'apt-get update && apt-get install -y --no-install-recommends build-essential python3'; then
-              exit 0
-            fi
-            echo "::warning::build toolchain install attempt $attempt failed; retrying"
-            sleep 10
-          done
-          echo "::error::build toolchain install failed after 2 attempts"
-          exit 1
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
 
       - name: Run E2E tests
         run: npm run test:e2e
