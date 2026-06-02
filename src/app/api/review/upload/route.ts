@@ -1,6 +1,7 @@
 import { randomBytes } from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth'
+import { randomBytes } from 'crypto'
 
 /**
  * Task 2.3: File Upload Validation
