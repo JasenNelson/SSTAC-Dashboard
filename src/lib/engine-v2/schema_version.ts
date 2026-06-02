@@ -291,3 +291,44 @@ export function resolveEvidenceStatus(row: S4VersionRow): EvidenceStatus {
     sortKey,
   };
 }
+
+/**
+ * formatEvidenceStatusSummary: returns a compact one-line evidence-status string
+ * for text surfaces (memo + export) so they never drift from each other.
+ *
+ * Examples:
+ *   "Evidence present (5 cited / 3 support / 1 negate)"
+ *   "Evidence present"
+ *   "Evidence absent"
+ *   "Evidence status unknown"
+ *
+ * Rules:
+ *   - Never uses adequacy/verdict/tier words.
+ *   - Degrades gracefully when counts are missing (omits absent keys).
+ *   - present===null (legacy path) returns "Evidence status unknown".
+ *   - Plain ASCII only.
+ */
+export function formatEvidenceStatusSummary(status: EvidenceStatus): string {
+  if (status.present === null) {
+    return "Evidence status unknown";
+  }
+  const label = status.present ? "Evidence present" : "Evidence absent";
+  if (!status.signalCounts) {
+    return label;
+  }
+  const parts: string[] = [];
+  const { total_cited, supporting, negating } = status.signalCounts;
+  if (typeof total_cited === "number") {
+    parts.push(`${total_cited} cited`);
+  }
+  if (typeof supporting === "number") {
+    parts.push(`${supporting} support`);
+  }
+  if (typeof negating === "number") {
+    parts.push(`${negating} negate`);
+  }
+  if (parts.length === 0) {
+    return label;
+  }
+  return `${label} (${parts.join(" / ")})`;
+}

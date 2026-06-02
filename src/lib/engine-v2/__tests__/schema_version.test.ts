@@ -12,7 +12,9 @@ import {
   resolveS4Version,
   isEvidenceStatusVersion,
   resolveEvidenceStatus,
+  formatEvidenceStatusSummary,
 } from "../schema_version";
+import type { EvidenceStatus } from "../schema_version";
 
 // ---- resolveS4Version ----
 
@@ -411,5 +413,89 @@ describe("resolveEvidenceStatus", () => {
     expect(() =>
       resolveEvidenceStatus({ raw_result_json: "not-an-object" as unknown as Record<string, unknown> }),
     ).not.toThrow();
+  });
+});
+
+// ---- formatEvidenceStatusSummary ----
+
+describe("formatEvidenceStatusSummary", () => {
+  function makeStatus(overrides: Partial<EvidenceStatus> = {}): EvidenceStatus {
+    return {
+      version: "0.1.0",
+      isEvidenceStatus: true,
+      present: true,
+      signalCounts: { total_cited: 5, supporting: 3, negating: 1, absence_or_category_mismatch: 0, neutral: 1 },
+      confidence: 0.88,
+      confidenceScope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      synthesisSelfScore: null,
+      indigenousMatched: false,
+      indigenousKeywords: [],
+      sortKey: 996,
+      ...overrides,
+    };
+  }
+
+  it("present=true with full signalCounts returns 'Evidence present (...)'", () => {
+    const result = formatEvidenceStatusSummary(makeStatus());
+    expect(result).toBe("Evidence present (5 cited / 3 support / 1 negate)");
+  });
+
+  it("present=false with full signalCounts returns 'Evidence absent (...)'", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ present: false, sortKey: 1000 }),
+    );
+    expect(result).toBe("Evidence absent (5 cited / 3 support / 1 negate)");
+  });
+
+  it("present=true with null signalCounts returns 'Evidence present' (no parens)", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ signalCounts: null }),
+    );
+    expect(result).toBe("Evidence present");
+  });
+
+  it("present=false with null signalCounts returns 'Evidence absent'", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ present: false, signalCounts: null, sortKey: 1000 }),
+    );
+    expect(result).toBe("Evidence absent");
+  });
+
+  it("present=null returns 'Evidence status unknown'", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ present: null, signalCounts: null, sortKey: 2400 }),
+    );
+    expect(result).toBe("Evidence status unknown");
+  });
+
+  it("omits keys that are absent (undefined) from signalCounts", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ signalCounts: { total_cited: 3 } }),
+    );
+    // Only total_cited is present; supporting and negating are absent.
+    expect(result).toBe("Evidence present (3 cited)");
+    expect(result).not.toContain("support");
+    expect(result).not.toContain("negate");
+  });
+
+  it("returns 'Evidence present' (no parens) when all signalCounts keys are absent", () => {
+    const result = formatEvidenceStatusSummary(
+      makeStatus({ signalCounts: {} }),
+    );
+    expect(result).toBe("Evidence present");
+  });
+
+  it("never includes adequacy/verdict/tier words", () => {
+    const result = formatEvidenceStatusSummary(makeStatus());
+    expect(result.toLowerCase()).not.toContain("adequacy");
+    expect(result.toLowerCase()).not.toContain("verdict");
+    expect(result.toLowerCase()).not.toContain("tier");
+  });
+
+  it("is plain ASCII (all code points <= 127)", () => {
+    const result = formatEvidenceStatusSummary(makeStatus());
+    for (let i = 0; i < result.length; i++) {
+      expect(result.charCodeAt(i)).toBeLessThanOrEqual(127);
+    }
   });
 });

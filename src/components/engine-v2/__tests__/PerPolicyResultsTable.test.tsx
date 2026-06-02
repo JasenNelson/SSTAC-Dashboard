@@ -37,6 +37,12 @@ function makeResult(overrides: Partial<V2PerPolicyResult>): V2PerPolicyResult {
     rubric_self_score: null,
     raw_result_json: {},
     created_at: "2026-05-12T10:00:00Z",
+    // S4 expand-contract fields: null for legacy 0.0.1 rows.
+    s4_schema_version: null,
+    evidence_present: null,
+    evidence_signal_counts: null,
+    confidence_scope: null,
+    evidence_synthesis_self_score: null,
     ...overrides,
   };
 }
@@ -897,5 +903,302 @@ describe("PerPolicyResultsTable highlight (collapsed rows)", () => {
     for (const row of rows) {
       expect(row.getAttribute("data-eval-pulse")).toBe("true");
     }
+  });
+});
+
+// ---- S4 read-side tests: mixed 0.1.0 and 0.0.1 rows ----
+//
+// Spec: PerPolicyResultsTable spec Task 2a / 2b / 2d (render swap, sort).
+// Plain ASCII only.
+
+function makeS4Result(overrides: Partial<V2PerPolicyResult>): V2PerPolicyResult {
+  // 0.1.0 packet: no verdict_suggestion / ai_suggestion; has evidence fields.
+  return {
+    id: "s4-00000000-0000-4000-8000-000000000001",
+    evaluation_id: "00000000-0000-4000-8000-000000000abc",
+    policy_id: "S4-001",
+    stage: "S4",
+    packet_id: "pkt-s4-1",
+    tier: "TIER_1_BINARY",
+    verdict_suggestion: null,
+    ai_suggestion: null,
+    confidence: 0.88,
+    confidence_method: "evidence_match",
+    summary: "Evidence match summary.",
+    evidence_packet: {},
+    pathway_notes: {},
+    rubric_self_score: null,
+    s4_schema_version: "0.1.0",
+    evidence_present: true,
+    evidence_signal_counts: {
+      total_cited: 5,
+      supporting: 3,
+      negating: 1,
+      absence_or_category_mismatch: 0,
+      neutral: 1,
+    },
+    confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+    evidence_synthesis_self_score: null,
+    raw_result_json: {
+      schema_version: "0.1.0",
+      indigenous_content_signal: {
+        matched: false,
+        trigger_keywords_matched: [],
+        detector_version: "v1",
+      },
+    },
+    created_at: "2026-06-02T10:00:00Z",
+    ...overrides,
+  };
+}
+
+describe("PerPolicyResultsTable S4 mixed-row rendering", () => {
+  it("0.1.0 row renders EvidenceStatusCell (data-testid=evidence-status-cell); 0.0.1 row renders VerdictBadge", () => {
+    const legacy = makeResult({
+      id: "legacy-00000000-0000-4000-8000-000000000001",
+      policy_id: "LG-001",
+      tier: "TIER_1_BINARY",
+      verdict_suggestion: "PASS",
+      confidence: 0.9,
+    });
+    const s4 = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000002",
+      policy_id: "S4-002",
+    });
+
+    render(
+      <PerPolicyResultsTable results={[legacy, s4]} judgments={NO_JUDGMENTS} />,
+    );
+
+    // 0.1.0 row must render evidence-status-cell, not verdict-badge.
+    expect(screen.getByTestId("evidence-status-cell")).toBeInTheDocument();
+
+    // 0.0.1 row must render verdict-badge.
+    // The judgment-cell also contains verdict badges; find via query for
+    // per-policy-verdict-badge in a non-judgment context -- easiest: check
+    // the badge has data-verdict=PASS.
+    const verdictBadges = screen.getAllByTestId("per-policy-verdict-badge");
+    const verdicts = verdictBadges.map((b) => b.getAttribute("data-verdict"));
+    expect(verdicts).toContain("PASS");
+  });
+
+  it("tier badge renders for BOTH 0.1.0 and 0.0.1 rows (tier is unchanged)", () => {
+    const legacy = makeResult({
+      id: "legacy-00000000-0000-4000-8000-000000000001",
+      policy_id: "LG-001",
+      tier: "TIER_2_PROFESSIONAL",
+      verdict_suggestion: "ESCALATE",
+      confidence: 0.5,
+    });
+    const s4 = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000002",
+      policy_id: "S4-002",
+      tier: "TIER_1_BINARY",
+    });
+
+    render(
+      <PerPolicyResultsTable results={[legacy, s4]} judgments={NO_JUDGMENTS} />,
+    );
+
+    const tierBadges = screen.getAllByTestId("per-policy-tier-badge");
+    expect(tierBadges).toHaveLength(2);
+    const tiers = tierBadges.map((b) => b.getAttribute("data-tier"));
+    expect(tiers).toContain("TIER_2_PROFESSIONAL");
+    expect(tiers).toContain("TIER_1_BINARY");
+  });
+
+  it("column header renamed from 'AI Verdict' to 'AI Evidence Signal'", () => {
+    render(
+      <PerPolicyResultsTable results={RESULTS} judgments={NO_JUDGMENTS} />,
+    );
+    const headers = screen.getAllByRole("columnheader").map((h) => h.textContent ?? "");
+    expect(headers.some((h) => h.includes("AI Evidence Signal"))).toBe(true);
+    expect(headers.some((h) => h.trim() === "AI Verdict")).toBe(false);
+  });
+});
+
+describe("PerPolicyResultsTable S4 mixed-list sort", () => {
+  it("sorts mixed 0.1.0 and 0.0.1 rows deterministically by verdict key without throwing", () => {
+    const legacy = makeResult({
+      id: "legacy-00000000-0000-4000-8000-000000000001",
+      policy_id: "LG-001",
+      tier: "TIER_1_BINARY",
+      verdict_suggestion: "PASS",
+      confidence: 0.9,
+    });
+    const s4present = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000002",
+      policy_id: "S4-002",
+      evidence_present: true,
+      evidence_signal_counts: { total_cited: 5, supporting: 3, negating: 1 },
+    });
+    const s4absent = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000003",
+      policy_id: "S4-003",
+      evidence_present: false,
+      evidence_signal_counts: { total_cited: 0 },
+    });
+
+    // Should not throw.
+    render(
+      <PerPolicyResultsTable
+        results={[legacy, s4absent, s4present]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+
+    // Switch to verdict sort asc.
+    fireEvent.change(screen.getByTestId("sort-by"), {
+      target: { value: "verdict" },
+    });
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    // We expect 3 rows total -- the render completed without throwing.
+    expect(rows).toHaveLength(3);
+
+    // In asc order: present first (band 0), absent next (band 1), legacy last (band 2).
+    const order = rows.map((r) => r.getAttribute("data-policy-id"));
+    expect(order[0]).toBe("S4-002"); // present=true, supporting=3 -> band 0
+    expect(order[1]).toBe("S4-003"); // present=false -> band 1
+    expect(order[2]).toBe("LG-001"); // legacy -> band 2
+  });
+
+  it("reverses the mixed sort order when direction is desc", () => {
+    const legacy = makeResult({
+      id: "legacy-00000000-0000-4000-8000-000000000001",
+      policy_id: "LG-001",
+      tier: "TIER_1_BINARY",
+      verdict_suggestion: "PASS",
+      confidence: 0.9,
+    });
+    const s4 = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000002",
+      policy_id: "S4-002",
+      evidence_present: true,
+    });
+
+    render(
+      <PerPolicyResultsTable
+        results={[legacy, s4]}
+        judgments={NO_JUDGMENTS}
+      />,
+    );
+
+    fireEvent.change(screen.getByTestId("sort-by"), {
+      target: { value: "verdict" },
+    });
+    // Toggle to desc.
+    fireEvent.click(screen.getByTestId("sort-dir-toggle"));
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    const order = rows.map((r) => r.getAttribute("data-policy-id"));
+    // desc: legacy (band 2) first, then s4 (band 0).
+    expect(order[0]).toBe("LG-001");
+    expect(order[1]).toBe("S4-002");
+  });
+});
+
+describe("PerPolicyResultsTable S4 technical details block (L1505)", () => {
+  it("0.1.0 row shows evidence_present + confidence_scope in tech details (not blank ai_suggestion)", () => {
+    const s4 = makeS4Result({
+      id: "s4-00000000-0000-4000-8000-000000000002",
+      policy_id: "S4-002",
+      evidence_present: true,
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+    });
+
+    render(
+      <PerPolicyResultsTable results={[s4]} judgments={NO_JUDGMENTS} />,
+    );
+
+    // Expand the row.
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    // Show tech details.
+    fireEvent.click(screen.getByTestId("per-policy-tech-details-toggle"));
+
+    const stageInfo = screen.getByTestId("per-policy-stage-info");
+    expect(stageInfo.textContent).toContain("evidence_present=true");
+    expect(stageInfo.textContent).toContain("confidence_scope=EVIDENCE_MATCH_NOT_ADEQUACY");
+    // Must not show stale ai_suggestion=null or blank.
+    expect(stageInfo.textContent).not.toContain("ai_suggestion");
+  });
+
+  it("legacy 0.0.1 row shows ai_suggestion in tech details", () => {
+    const legacy = makeResult({
+      id: "legacy-00000000-0000-4000-8000-000000000001",
+      policy_id: "LG-001",
+      ai_suggestion: "PASS",
+      verdict_suggestion: "PASS",
+      confidence: 0.9,
+    });
+
+    render(
+      <PerPolicyResultsTable results={[legacy]} judgments={NO_JUDGMENTS} />,
+    );
+
+    fireEvent.click(screen.getByTestId("per-policy-expand-toggle"));
+    fireEvent.click(screen.getByTestId("per-policy-tech-details-toggle"));
+
+    const stageInfo = screen.getByTestId("per-policy-stage-info");
+    expect(stageInfo.textContent).toContain("ai_suggestion=PASS");
+    expect(stageInfo.textContent).not.toContain("evidence_present");
+  });
+});
+
+describe("PerPolicyResultsTable S4 mixed-list filter", () => {
+  const present010 = makeResult({
+    id: "present-00000000-0000-4000-8000-000000000001",
+    policy_id: "EV-PRESENT",
+    s4_schema_version: "0.1.0",
+    evidence_present: true,
+    verdict_suggestion: null,
+    ai_suggestion: null,
+    raw_result_json: { schema_version: "0.1.0" },
+  });
+  const absent010 = makeResult({
+    id: "absent-00000000-0000-4000-8000-000000000002",
+    policy_id: "EV-ABSENT",
+    s4_schema_version: "0.1.0",
+    evidence_present: false,
+    verdict_suggestion: null,
+    ai_suggestion: null,
+    raw_result_json: { schema_version: "0.1.0" },
+  });
+  const legacyPass = makeResult({
+    id: "legacy-00000000-0000-4000-8000-000000000003",
+    policy_id: "LG-PASS",
+    verdict_suggestion: "PASS",
+    ai_suggestion: "PASS",
+  });
+  const MIXED: V2PerPolicyResult[] = [present010, absent010, legacyPass];
+
+  it("EVIDENCE_PRESENT shows only the 0.1.0 present row (hides absent 0.1.0 + legacy)", () => {
+    render(<PerPolicyResultsTable results={MIXED} judgments={NO_JUDGMENTS} />);
+    fireEvent.change(screen.getByTestId("filter-verdict"), {
+      target: { value: "EVIDENCE_PRESENT" },
+    });
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.getAttribute("data-policy-id")).toBe("EV-PRESENT");
+  });
+
+  it("EVIDENCE_ABSENT shows only the 0.1.0 absent row", () => {
+    render(<PerPolicyResultsTable results={MIXED} judgments={NO_JUDGMENTS} />);
+    fireEvent.change(screen.getByTestId("filter-verdict"), {
+      target: { value: "EVIDENCE_ABSENT" },
+    });
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.getAttribute("data-policy-id")).toBe("EV-ABSENT");
+  });
+
+  it("a legacy verdict value (PASS) shows only the legacy row (hides 0.1.0 rows)", () => {
+    render(<PerPolicyResultsTable results={MIXED} judgments={NO_JUDGMENTS} />);
+    fireEvent.change(screen.getByTestId("filter-verdict"), {
+      target: { value: "PASS" },
+    });
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.getAttribute("data-policy-id")).toBe("LG-PASS");
   });
 });

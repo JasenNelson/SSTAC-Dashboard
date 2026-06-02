@@ -30,6 +30,8 @@ import {
   type EvidenceSliceMap,
 } from "@/lib/engine-v2/evidence_slices";
 import { useSidePanel } from "./side-panel/SidePanelContext";
+import { resolveEvidenceStatus } from "@/lib/engine-v2/schema_version";
+import { EvidenceStatusCell } from "./EvidenceStatusCell";
 
 // Lane 2d / Phase E: pulse animation for the row(s) that match a
 // pendingHighlight.evidenceItemId. The keyframe lives as a scoped style
@@ -584,9 +586,11 @@ function compareResults(
     return (a.tier ?? "").localeCompare(b.tier ?? "");
   }
   if (key === "verdict") {
-    return (a.verdict_suggestion ?? "").localeCompare(
-      b.verdict_suggestion ?? "",
-    );
+    // S4: use a normalized numeric sort key so 0.1.0 and 0.0.1 rows order
+    // deterministically in a MIXED list without breaking V8 transitivity.
+    // resolveEvidenceStatus bands: 0..999 (0.1.0 present), 1000..1999 (0.1.0
+    // absent), 2000..2499 (legacy by verdict rank), 3000 (fallback).
+    return resolveEvidenceStatus(a).sortKey - resolveEvidenceStatus(b).sortKey;
   }
   // confidence: nulls sort last (treat as -Infinity for asc, so they end up
   // smallest; but we want nulls last regardless of direction, so use a
@@ -650,7 +654,7 @@ export function PerPolicyResultsTable({
   const [pulseTick, setPulseTick] = useState<number>(0);
   // Row-level refs keyed by per-policy-result id so the effect can
   // scroll the first matching row into view even when it is collapsed
-  // (Round 2 fix: IMPORTANT 1 — the old approach queried for an
+  // (Round 2 fix: IMPORTANT 1 - the old approach queried for an
   // evidence cell that only exists in the EXPANDED detail row).
   const rowRefs = useRef<Map<string, HTMLTableRowElement | null>>(new Map());
   const pulseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -830,11 +834,21 @@ export function PerPolicyResultsTable({
   const filtered = useMemo(() => {
     const filteredArr = results.filter((r) => {
       if (filterTier !== "ALL" && r.tier !== filterTier) return false;
-      if (
-        filterVerdict !== "ALL" &&
-        r.verdict_suggestion !== filterVerdict
-      ) {
-        return false;
+      if (filterVerdict !== "ALL") {
+        const es = resolveEvidenceStatus(r);
+        if (es.isEvidenceStatus) {
+          // 0.1.0 rows: match evidence-status filter options.
+          if (filterVerdict === "EVIDENCE_PRESENT" && es.present !== true) return false;
+          if (filterVerdict === "EVIDENCE_ABSENT" && es.present !== false) return false;
+          // Legacy verdict options ("PASS", "FAIL", etc.) never match a 0.1.0 row.
+          if (
+            filterVerdict !== "EVIDENCE_PRESENT" &&
+            filterVerdict !== "EVIDENCE_ABSENT"
+          ) return false;
+        } else {
+          // Legacy 0.0.1 rows: match existing verdict_suggestion options.
+          if (r.verdict_suggestion !== filterVerdict) return false;
+        }
       }
       if ((r.confidence ?? 0) < minConfidence) return false;
       return true;
@@ -1014,7 +1028,7 @@ export function PerPolicyResultsTable({
         </label>
         <label className="flex flex-col text-xs text-slate-600 dark:text-slate-300">
           <span className="mb-1 font-semibold uppercase tracking-wide">
-            AI Verdict
+            AI Evidence Signal
           </span>
           <select
             data-testid="filter-verdict"
@@ -1022,7 +1036,11 @@ export function PerPolicyResultsTable({
             onChange={(e) => setFilterVerdict(e.target.value)}
             className="rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-2 py-1 text-xs text-slate-900 dark:text-white"
           >
-            <option value="ALL">All verdicts</option>
+            <option value="ALL">All</option>
+            {/* 0.1.0 evidence-status options */}
+            <option value="EVIDENCE_PRESENT">Evidence present</option>
+            <option value="EVIDENCE_ABSENT">Evidence absent</option>
+            {/* Legacy 0.0.1 verdict options */}
             {ALL_VERDICT_SUGGESTIONS.map((v) => (
               <option key={v} value={v}>
                 {v}
@@ -1105,7 +1123,7 @@ export function PerPolicyResultsTable({
                 scope="col"
                 className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
               >
-                AI Verdict
+                AI Evidence Signal
               </th>
               <th
                 scope="col"
@@ -1113,6 +1131,8 @@ export function PerPolicyResultsTable({
               >
                 Confidence
               </th>
+              {/* TODO(owner): CLAUDE.md says the AI does not make determinations;
+                  consider renaming to "AI Evidence Synthesis" (deferred to owner). */}
               <th
                 scope="col"
                 className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-slate-600 dark:text-slate-300"
@@ -1192,7 +1212,22 @@ export function PerPolicyResultsTable({
                         <TierBadge tier={r.tier} />
                       </td>
                       <td className="px-4 py-2 text-sm whitespace-nowrap">
-                        <VerdictBadge verdict={r.verdict_suggestion} />
+                        {(() => {
+                          const es = resolveEvidenceStatus(r);
+                          if (es.isEvidenceStatus) {
+                            return (
+                              <EvidenceStatusCell
+                                present={es.present}
+                                signalCounts={es.signalCounts}
+                                confidence={es.confidence}
+                                confidenceScope={es.confidenceScope}
+                                indigenousMatched={es.indigenousMatched}
+                                indigenousKeywords={es.indigenousKeywords}
+                              />
+                            );
+                          }
+                          return <VerdictBadge verdict={r.verdict_suggestion} />;
+                        })()}
                       </td>
                       <td className="px-4 py-2 text-sm font-mono text-slate-700 dark:text-slate-300 whitespace-nowrap">
                         {formatConfidence(r.confidence)}
@@ -1289,7 +1324,10 @@ export function PerPolicyResultsTable({
                           {/* AI Determination (formerly "Summary"). This is
                               the AI's verdict + supporting prose for THIS
                               submission against THIS policy, not a recap of
-                              the policy itself. */}
+                              the policy itself.
+                              TODO(owner): CLAUDE.md says the AI does not make
+                              determinations; consider renaming to "AI Evidence
+                              Synthesis" (deferred to owner). */}
                           <section>
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                               AI Determination
@@ -1497,15 +1535,41 @@ export function PerPolicyResultsTable({
                                 <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                                   Stage / Packet
                                 </div>
-                                <div
-                                  data-testid="per-policy-stage-info"
-                                  className="font-mono text-xs break-words text-slate-600 dark:text-slate-400"
-                                >
-                                  stage={r.stage ?? "-"} packet_id=
-                                  {r.packet_id ?? "-"} ai_suggestion=
-                                  {r.ai_suggestion ?? "-"} confidence_method=
-                                  {r.confidence_method ?? "-"}
-                                </div>
+                                {(() => {
+                                  const es = resolveEvidenceStatus(r);
+                                  if (es.isEvidenceStatus) {
+                                    // 0.1.0: show evidence-status technical fields
+                                    // (ai_suggestion is null; confidence_scope replaces it).
+                                    return (
+                                      <div
+                                        data-testid="per-policy-stage-info"
+                                        className="font-mono text-xs break-words text-slate-600 dark:text-slate-400"
+                                      >
+                                        stage={r.stage ?? "-"} packet_id=
+                                        {r.packet_id ?? "-"} evidence_present=
+                                        {es.present === null
+                                          ? "-"
+                                          : String(es.present)}{" "}
+                                        confidence_scope=
+                                        {es.confidenceScope ?? "-"}{" "}
+                                        confidence_method=
+                                        {r.confidence_method ?? "-"}
+                                      </div>
+                                    );
+                                  }
+                                  // Legacy 0.0.1: show the classic ai_suggestion field.
+                                  return (
+                                    <div
+                                      data-testid="per-policy-stage-info"
+                                      className="font-mono text-xs break-words text-slate-600 dark:text-slate-400"
+                                    >
+                                      stage={r.stage ?? "-"} packet_id=
+                                      {r.packet_id ?? "-"} ai_suggestion=
+                                      {r.ai_suggestion ?? "-"} confidence_method=
+                                      {r.confidence_method ?? "-"}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                             ) : null}
                           </section>
