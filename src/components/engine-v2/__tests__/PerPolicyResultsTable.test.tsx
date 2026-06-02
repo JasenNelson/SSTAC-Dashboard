@@ -1258,4 +1258,40 @@ describe("PerPolicyResultsTable S4 confidence column (codex P2: no unscoped/dupl
     expect(confCell.textContent?.trim()).not.toBe("-");
     expect(confCell.textContent ?? "").toMatch(/\d/);
   });
+
+  it("unscoped 0.1.0 confidence does NOT drive the Min-Confidence filter (codex P2 round 2)", () => {
+    // Unscoped 0.1.0 row has a real 0.77 but it is surfaced nowhere; it must NOT be
+    // filtered-IN by that hidden value. A scoped 0.1.0 row at 0.77 IS filtered by it.
+    const scoped = makeResult({
+      id: "ctlscoped-00000000-0000-4000-8000-000000000001",
+      policy_id: "SCOPED-77",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.77,
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    const unscoped = makeResult({
+      id: "ctlunscoped-00000000-0000-4000-8000-000000000002",
+      policy_id: "UNSCOPED-77",
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      confidence: 0.77,
+      confidence_scope: null,
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      raw_result_json: { schema_version: "0.1.0" },
+    });
+    render(
+      <PerPolicyResultsTable results={[scoped, unscoped]} judgments={NO_JUDGMENTS} />,
+    );
+    fireEvent.change(screen.getByTestId("filter-min-confidence"), {
+      target: { value: "0.5" },
+    });
+    const rows = screen.getAllByTestId("per-policy-row");
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.getAttribute("data-policy-id")).toBe("SCOPED-77");
+  });
 });
