@@ -124,6 +124,38 @@ describe('saved-views-sync', () => {
       expect(rows[0].view_mode).toBe('values');
     });
 
+    it('remaps a source-leads view_mode to sources (avoids a blank render)', async () => {
+      // The source-leads section renders under viewMode === 'sources' and there is no
+      // 'source-leads' tab. A saved view persisted as 'source-leads' would satisfy none of the
+      // EvidenceLibrary show* flags and render a blank page, so it must resolve to 'sources'
+      // (mirroring the localStorage loader's remap, which the Supabase path previously omitted).
+      resultQueue = [
+        {
+          data: [
+            { id: 'v4', name: 'leads', filters: {}, view_mode: 'source-leads', created_at: 't', updated_at: 't' },
+          ],
+          error: null,
+        },
+      ];
+      const rows = await fetchSavedViews();
+      expect(rows[0].view_mode).toBe('sources');
+    });
+
+    it('preserves a by-parameter view_mode (re-exposed value-groups tab)', async () => {
+      // 'by-parameter' is a live, selectable tab again (the #206 incommensurate-unit
+      // value-groups re-expose), so a saved view carrying it passes through unchanged.
+      resultQueue = [
+        {
+          data: [
+            { id: 'v5', name: 'groups', filters: {}, view_mode: 'by-parameter', created_at: 't', updated_at: 't' },
+          ],
+          error: null,
+        },
+      ];
+      const rows = await fetchSavedViews();
+      expect(rows[0].view_mode).toBe('by-parameter');
+    });
+
     it('returns [] on a Supabase error', async () => {
       resultQueue = [{ data: null, error: { message: 'relation does not exist' } }];
       expect(await fetchSavedViews()).toEqual([]);

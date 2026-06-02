@@ -65,16 +65,22 @@ interface SavedViewDbRow {
 const VIEW_MODES: readonly EvidenceLibraryViewMode[] = [
   'by-parameter',
   'sources',
-  'source-leads',
   'values',
   'assumptions',
 ];
 
-// Retired view modes that may still be persisted in older saved views (notably the former
-// 'equations' tab, whose content now renders in the Jurisdictional Frameworks Quick
-// Reference) are absent from VIEW_MODES, so they fall back to the default 'values' view
-// rather than leaving a saved view stuck on a mode the library no longer renders.
+// Coerce a persisted view_mode to one the library can actually render today.
+//
+// 'source-leads' is special: the source-leads content folds into the Sources view (the
+// EvidenceLibrary render keys the source-leads section off viewMode === 'sources'), and there
+// is no 'source-leads' tab. A saved view persisted as 'source-leads' would otherwise satisfy
+// none of the show* flags and render a BLANK page, so it is remapped to 'sources' -- matching
+// the localStorage loader's remap (EvidenceLibrary.loadSavedViews) which the Supabase path
+// previously did not mirror. The retired 'equations' tab (content now in the Jurisdictional
+// Frameworks Quick Reference) and any other unknown value fall back to the default 'values'
+// view. 'by-parameter' is once again a live tab (#206 re-expose), so it passes through.
 function coerceViewMode(value: string | null | undefined): EvidenceLibraryViewMode {
+  if (value === 'source-leads') return 'sources';
   return value && (VIEW_MODES as readonly string[]).includes(value)
     ? (value as EvidenceLibraryViewMode)
     : 'values';
