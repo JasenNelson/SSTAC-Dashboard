@@ -44,6 +44,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showOnboarding, setShowOnboarding] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -247,6 +248,37 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           visible scrollport. */}
       <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:flex-none print:overflow-visible print:h-auto print:p-0">
         <div className="max-w-4xl mx-auto space-y-8">
+          {/* Scope label + onboarding. Inserted in normal flow at the top of
+              the center content column so it does not overlap the dashboard
+              toolbar or the Final Master Draft header card when the details
+              panel expands. Hidden in print so PDF starts at the paper body. */}
+          <div className="flex flex-col gap-2 print:hidden">
+            <div className="inline-flex w-fit items-center gap-2 rounded-md bg-sky-50 px-3 py-1 text-xs font-medium text-sky-800 dark:bg-sky-900/30 dark:text-sky-200">
+              <span className="font-semibold">Phase 2 (2026)</span>
+              <span className="text-sky-700 dark:text-sky-300">Options Paper Review</span>
+            </div>
+            <details
+              open={showOnboarding}
+              onToggle={(e) => setShowOnboarding((e.target as HTMLDetailsElement).open)}
+              className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800/50"
+            >
+              <summary className="cursor-pointer px-4 py-2 text-sm font-medium text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100">
+                How TWG Review works
+              </summary>
+              <div className="space-y-2 px-4 pb-4 pt-2 text-sm text-slate-600 dark:text-slate-300">
+                <p>
+                  Read each section of the paper below. Use the comment textarea after each heading to record technical input. Your drafts auto-save locally; click Submit at the bottom to send all comments to the project record.
+                </p>
+                <p>
+                  You can return and edit drafts before submitting. After submitting, your feedback is logged for the project record.
+                </p>
+                <p>
+                  Calculator outputs referenced in the paper are screening-grade preliminary values, not final sediment standards. Professional judgment is required before any regulator-facing use.
+                </p>
+              </div>
+            </details>
+          </div>
+
           {/* Header card with title + Download (PDF) action. The whole card
               is hidden in print so the PDF starts at the paper body. */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
