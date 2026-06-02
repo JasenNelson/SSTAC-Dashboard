@@ -54,6 +54,10 @@ import type {
 } from "./types_lane2";
 import type { V2Project } from "./types";
 import type { EvidenceSliceMap, EvidenceSlice } from "./evidence_slices";
+import {
+  resolveEvidenceStatus,
+  formatEvidenceStatusSummary,
+} from "./schema_version";
 
 export const MEMO_GENERATOR_VERSION = "lane2b-memo-v1";
 
@@ -332,6 +336,18 @@ function pickString(v: unknown): string {
   if (typeof v === "string") return v;
   if (v === null || v === undefined) return "";
   return String(v);
+}
+
+// S4: version-aware AI signal string for the memo table cells.
+// For 0.1.0 evidence-status rows, returns the compact evidence-status summary
+// (e.g. "Evidence present (5 cited / 3 support / 1 negate)").
+// Legacy rows return the existing ai_suggestion / verdict_suggestion fallback.
+function aiSignalForMemo(result: V2PerPolicyResult): string {
+  const es = resolveEvidenceStatus(result);
+  if (es.isEvidenceStatus) {
+    return formatEvidenceStatusSummary(es);
+  }
+  return pickString(result.ai_suggestion ?? result.verdict_suggestion);
 }
 
 // --- Evidence-packet helpers -----------------------------------------------
@@ -614,7 +630,7 @@ function buildTier1Section(
     new TableRow({
       children: [
         cell(r.result.policy_id, { widthPct: 18 }),
-        cell(pickString(r.result.ai_suggestion ?? r.result.verdict_suggestion), { widthPct: 16 }),
+        cell(aiSignalForMemo(r.result), { widthPct: 16 }),
         cell(r.judgment ? r.judgment.verdict : "(unjudged)", { widthPct: 18 }),
         cell(r.judgment?.rationale ?? "", { widthPct: 48 }),
       ],
@@ -650,7 +666,7 @@ function buildTier2Section(
     new TableRow({
       children: [
         cell(r.result.policy_id, { widthPct: 18 }),
-        cell(pickString(r.result.ai_suggestion ?? r.result.verdict_suggestion), { widthPct: 16 }),
+        cell(aiSignalForMemo(r.result), { widthPct: 16 }),
         cell(r.judgment ? r.judgment.verdict : "(unjudged)", { widthPct: 18 }),
         cell(r.judgment?.rationale ?? "", { widthPct: 48 }),
       ],

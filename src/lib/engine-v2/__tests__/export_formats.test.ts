@@ -80,6 +80,12 @@ function makeResult(
     rubric_self_score: null,
     raw_result_json: {},
     created_at: NOW_ISO,
+    // S4 expand-contract fields: null for legacy 0.0.1 rows in this fixture.
+    s4_schema_version: null,
+    evidence_present: null,
+    evidence_signal_counts: null,
+    confidence_scope: null,
+    evidence_synthesis_self_score: null,
     ...overrides,
   };
 }
@@ -498,6 +504,104 @@ describe("generateHTML", () => {
     expect(() =>
       generateHTML(baseInput({ results: [r], judgments: [bad] })),
     ).toThrow(ExportInvariantError);
+  });
+});
+
+// ---- S4 read-side: export_formats evidence-status branch ----
+//
+// Spec: Task 4 -- aiSuggestionDisplay() in export_formats.ts.
+// 0.1.0 rows must render an evidence-status summary string.
+// Legacy rows keep the existing ai_suggestion / verdict_suggestion fallback.
+
+describe("export_formats S4 evidence-status branch (aiSuggestionDisplay)", () => {
+  function makeS4ExportResult(
+    id: string,
+    policyId: string,
+    tier: JudgmentTier | null = "TIER_1_BINARY",
+  ): V2PerPolicyResult {
+    return {
+      id,
+      evaluation_id: EVAL_ID,
+      policy_id: policyId,
+      stage: "S4",
+      packet_id: null,
+      tier,
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      confidence: 0.88,
+      confidence_method: "evidence_match",
+      summary: "Evidence match summary.",
+      evidence_packet: {},
+      pathway_notes: {},
+      rubric_self_score: null,
+      raw_result_json: {
+        schema_version: "0.1.0",
+        indigenous_content_signal: { matched: false, trigger_keywords_matched: [], detector_version: "v1" },
+      },
+      created_at: NOW_ISO,
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      evidence_signal_counts: {
+        total_cited: 4,
+        supporting: 2,
+        negating: 1,
+        absence_or_category_mismatch: 0,
+        neutral: 1,
+      },
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      evidence_synthesis_self_score: null,
+    };
+  }
+
+  it("CSV: 0.1.0 row renders evidence-status summary (not blank)", () => {
+    const s4 = makeS4ExportResult("s4-r1", "S4-POL-001");
+    const judgment = makeJudgment("s4-r1", "TIER_1_BINARY", "ADEQUATE");
+    const csv = generateCSV(baseInput({ results: [s4], judgments: [judgment] }));
+    expect(csv).toContain("Evidence present");
+    expect(csv).toContain("4 cited");
+    expect(csv).toContain("2 support");
+    expect(csv).toContain("1 negate");
+  });
+
+  it("Markdown: 0.1.0 row renders evidence-status summary (not blank)", () => {
+    const s4 = makeS4ExportResult("s4-r2", "S4-POL-002");
+    const judgment = makeJudgment("s4-r2", "TIER_1_BINARY", "ADEQUATE");
+    const md = generateMarkdown(baseInput({ results: [s4], judgments: [judgment] }));
+    expect(md).toContain("Evidence present");
+    expect(md).toContain("4 cited");
+  });
+
+  it("HTML: 0.1.0 row renders evidence-status summary (not blank)", () => {
+    const s4 = makeS4ExportResult("s4-r3", "S4-POL-003");
+    const judgment = makeJudgment("s4-r3", "TIER_1_BINARY", "ADEQUATE");
+    const html = generateHTML(baseInput({ results: [s4], judgments: [judgment] }));
+    expect(html).toContain("Evidence present");
+    expect(html).toContain("4 cited");
+  });
+
+  it("CSV: legacy 0.0.1 row renders ai_suggestion (existing behavior unchanged)", () => {
+    const legacy = makeResult("legacy-r4", "LG-POL-004", "TIER_1_BINARY", {
+      ai_suggestion: "PASS",
+      verdict_suggestion: "PASS",
+    });
+    const judgment = makeJudgment("legacy-r4", "TIER_1_BINARY", "ADEQUATE");
+    const csv = generateCSV(baseInput({ results: [legacy], judgments: [judgment] }));
+    expect(csv).toContain("PASS");
+    expect(csv).not.toContain("Evidence present");
+  });
+
+  it("evidence-absent 0.1.0 row renders 'Evidence absent' (not blank)", () => {
+    const s4absent = makeS4ExportResult("s4-r5", "S4-POL-005");
+    const s4absentWithAbsent: V2PerPolicyResult = {
+      ...s4absent,
+      evidence_present: false,
+      evidence_signal_counts: { total_cited: 0 },
+    };
+    const judgment = makeJudgment("s4-r5", "TIER_1_BINARY", "INADEQUATE");
+    const csv = generateCSV(
+      baseInput({ results: [s4absentWithAbsent], judgments: [judgment] }),
+    );
+    expect(csv).toContain("Evidence absent");
   });
 });
 

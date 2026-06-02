@@ -34,6 +34,10 @@ import {
 } from "./types_lane2";
 import type { V2Project } from "./types";
 import { assertVerdictAllowedForTier } from "./zod_lane2";
+import {
+  resolveEvidenceStatus,
+  formatEvidenceStatusSummary,
+} from "./schema_version";
 
 export type ExportFormat = "csv" | "md" | "html";
 
@@ -181,6 +185,13 @@ function tierDisplay(row: JoinedRow): string {
 }
 
 function aiSuggestionDisplay(row: JoinedRow): string {
+  // S4: for 0.1.0 evidence-status rows, return the compact evidence-status
+  // summary (e.g. "Evidence present (5 cited / 3 support / 1 negate)").
+  // Legacy 0.0.1 rows keep the existing ai_suggestion / verdict_suggestion fallback.
+  const es = resolveEvidenceStatus(row.result);
+  if (es.isEvidenceStatus) {
+    return formatEvidenceStatusSummary(es);
+  }
   return (
     row.result.ai_suggestion ?? row.result.verdict_suggestion ?? ""
   );

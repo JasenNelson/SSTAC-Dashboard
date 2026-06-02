@@ -295,7 +295,7 @@ export default async function EvaluationResultsPage(props: PageProps) {
   const { data: rowsData } = await client
     .from("v2_per_policy_results")
     .select(
-      "id, evaluation_id, policy_id, stage, packet_id, tier, verdict_suggestion, ai_suggestion, confidence, confidence_method, summary, evidence_packet, pathway_notes, rubric_self_score, raw_result_json, created_at",
+      "id, evaluation_id, policy_id, stage, packet_id, tier, verdict_suggestion, ai_suggestion, confidence, confidence_method, summary, evidence_packet, pathway_notes, rubric_self_score, raw_result_json, created_at, s4_schema_version, evidence_present, evidence_signal_counts, confidence_scope, evidence_synthesis_self_score",
     )
     .eq("evaluation_id", evaluation.id)
     .order("policy_id", { ascending: true });

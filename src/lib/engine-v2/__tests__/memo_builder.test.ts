@@ -84,6 +84,12 @@ function makeResult(
     rubric_self_score: null,
     raw_result_json: {},
     created_at: "2026-05-12T10:20:00.000Z",
+    // S4 expand-contract fields: null for legacy 0.0.1 rows in this fixture.
+    s4_schema_version: null,
+    evidence_present: null,
+    evidence_signal_counts: null,
+    confidence_scope: null,
+    evidence_synthesis_self_score: null,
     ...overrides,
   };
 }
@@ -570,5 +576,74 @@ describe("buildMemo evidence_slices integration", () => {
     expect(xml).toContain("No verbatim submission evidence cited by AI");
     // No actual content that shouldn't be there.
     expect(xml).not.toContain("slice_should_be_missing");
+  });
+});
+
+// ---- S4 read-side: memo_builder evidence-status branch ----
+//
+// Spec: Task 3 -- aiSignalForMemo() in memo_builder.ts.
+// 0.1.0 rows must render an evidence-status summary (not blank / not null
+// ai_suggestion). Legacy rows keep the existing ai_suggestion / verdict_suggestion.
+
+describe("buildMemo S4 evidence-status branch", () => {
+  function makeS4MemoResult(
+    tier: JudgmentTier,
+    policyId: string,
+    overrides: Partial<V2PerPolicyResult> = {},
+  ): V2PerPolicyResult {
+    const base = makeResult(tier, policyId, "PASS", {
+      verdict_suggestion: null,
+      ai_suggestion: null,
+      s4_schema_version: "0.1.0",
+      evidence_present: true,
+      evidence_signal_counts: {
+        total_cited: 5,
+        supporting: 3,
+        negating: 1,
+        absence_or_category_mismatch: 0,
+        neutral: 1,
+      },
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      raw_result_json: {
+        schema_version: "0.1.0",
+        indigenous_content_signal: { matched: false, trigger_keywords_matched: [], detector_version: "v1" },
+      },
+      ...overrides,
+    });
+    return base;
+  }
+
+  it("0.1.0 row renders evidence-status summary in the memo (not blank)", async () => {
+    const s4 = makeS4MemoResult("TIER_1_BINARY", "S4-POL-001", { id: "s4-memo-r1" });
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [s4],
+      judgments: [makeJudgment(s4.id, "TIER_1_BINARY", "ADEQUATE")],
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+    // Must contain the evidence-status summary text, not blank.
+    expect(xml).toContain("Evidence present");
+    // Must include signal detail (5 cited / 3 support).
+    expect(xml).toContain("5 cited");
+    expect(xml).toContain("3 support");
+    expect(xml).toContain("1 negate");
+    // Must NOT contain adequacy/verdict words in the AI signal cell.
+    expect(xml).not.toContain("verdict_suggestion");
+  });
+
+  it("legacy 0.0.1 row renders ai_suggestion in the memo (existing behavior unchanged)", async () => {
+    const legacy = makeResult("TIER_1_BINARY", "LG-POL-001", "PASS", { id: "legacy-memo-r1" });
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [legacy],
+      judgments: [makeJudgment(legacy.id, "TIER_1_BINARY", "ADEQUATE")],
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+    // Legacy row: the ai_suggestion "PASS" must appear in the AI Suggestion column.
+    expect(xml).toContain("PASS");
   });
 });
