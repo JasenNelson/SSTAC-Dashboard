@@ -90,17 +90,21 @@ interface EvidenceLibraryProps {
   onRequestOpenRightPanel?: () => void;
 }
 
-// References & Values is the catalog browser: the Values table (default) and the Sources
-// table (with source-of-sources leads folded in). The former By Parameter, Equations,
-// Source Leads, and Assumptions tabs were retired -- equations now render in the
-// Jurisdictional Frameworks Quick Reference (their view-mode branch is removed here), source
-// leads fold into Sources, and Assumptions duplicated Values. The remaining retired branches
-// stay for internal/quick-filter use.
+// References & Values is the catalog browser: the Values table (default), the Sources table
+// (with source-of-sources leads folded in), and the By Parameter view that groups values per
+// (pathway, substance, input) and flags incommensurate-unit candidate groups (the #206
+// badge). By Parameter was inadvertently orphaned when the tab list was trimmed in #210
+// (its render branch + ValueGroupCard stayed, but no tab selected it); it is re-exposed here.
+// The Equations tab was retired -- equations now render in the Jurisdictional Frameworks
+// Quick Reference. Source Leads still folds into Sources, and the Assumptions branch (which
+// duplicated Values) remains unexposed by design.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
-  // Ordered References then Values to match the tab title "References & Values".
-  // (Values remains the default-selected view -- see the useState default.)
+  // Ordered References then Values to match the tab title "References & Values"; By Parameter
+  // is the third, value-centric view. (Values remains the default-selected view -- see the
+  // useState default.)
   { id: 'sources', label: 'References' },
   { id: 'values', label: 'Values' },
+  { id: 'by-parameter', label: 'By Parameter' },
 ];
 
 type FilterArrayKey = {
@@ -266,18 +270,23 @@ function loadSavedViews(): SavedFilterView[] {
       .map((entry) => ({
         id: entry.id as string,
         name: entry.name as string,
-        // Only the References (sources) and Values views are user-selectable, so a legacy
-        // local-only saved view whose persisted mode is anything else is PRESERVED (kept with
-        // its name + filters rather than silently dropped) and remapped to where that content
-        // now lives: 'source-leads' folds into the Sources view; the retired 'equations' tab
-        // (now in the Jurisdictional Frameworks Quick Reference), 'by-parameter', and
-        // 'assumptions' all collapse to the default Values view. This is intentionally more
-        // aggressive than the Supabase coerceViewMode (which only rewrites truly-unknown
-        // modes): locally these two tabs are the only modes a user can ever re-select.
+        // Coerce the persisted mode to one the library can render today. This MUST mirror the
+        // Supabase-side coerceViewMode (saved-views-sync.ts) so a saved view behaves the same
+        // whether it is hydrated from localStorage or Supabase: 'source-leads' folds into the
+        // Sources view (it has no tab and would otherwise render blank); the live, renderable
+        // modes ('by-parameter' -- re-exposed with the #206 value-groups tab -- 'sources',
+        // 'values', and the unexposed-but-still-rendering 'assumptions') are PRESERVED; the
+        // retired 'equations' tab (now in the Jurisdictional Frameworks Quick Reference) and
+        // any unknown value fall back to the default 'values' view.
         viewMode:
-          entry.viewMode === 'sources' || entry.viewMode === 'source-leads'
+          entry.viewMode === 'source-leads'
             ? 'sources'
-            : 'values',
+            : entry.viewMode === 'by-parameter' ||
+                entry.viewMode === 'sources' ||
+                entry.viewMode === 'values' ||
+                entry.viewMode === 'assumptions'
+              ? (entry.viewMode as EvidenceLibraryViewMode)
+              : 'values',
         // Re-build through createEvidenceLibraryFilters so the stored filters are always a
         // complete, well-formed EvidenceLibraryFilters (unknown keys dropped, arrays ensured).
         filters: createEvidenceLibraryFilters(
@@ -3752,7 +3761,7 @@ export default function EvidenceLibrary({
           </div>
         </div>
         <div
-          className="grid w-full grid-cols-2 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-2"
+          className="grid w-full grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-3"
           aria-label="Evidence library view"
         >
           {VIEW_MODES.map((mode) => (

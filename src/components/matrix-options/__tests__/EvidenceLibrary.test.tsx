@@ -101,9 +101,10 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByRole('button', { name: /^All$/ }),
     ).not.toBeInTheDocument();
-    // By Parameter / Equations / Source Leads / Assumptions tabs were retired; only the
-    // Values (default) and Sources tabs remain.
-    expect(screen.queryByRole('button', { name: /^By Parameter$/ })).not.toBeInTheDocument();
+    // Three tabs are exposed: References (sources), Values (default), and By Parameter (the
+    // value-groups view re-exposed in the #206 incommensurate-unit re-expose). The Equations,
+    // Source Leads, and Assumptions tabs remain retired.
+    expect(screen.getByRole('button', { name: /^By Parameter$/ })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Equations$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Source Leads$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Assumptions$/ })).not.toBeInTheDocument();
@@ -158,6 +159,25 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /original source pending/i,
     );
+  });
+
+  it('switches to the By Parameter view and renders the value-groups section', () => {
+    renderControlled();
+
+    // The value-groups section (which carries the #206 incommensurate-unit badge) is hidden
+    // in the default Values view and shown only under the re-exposed By Parameter tab.
+    expect(
+      screen.queryByTestId('evidence-library-value-groups'),
+    ).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /^By Parameter$/ }));
+
+    const valueGroups = screen.getByTestId('evidence-library-value-groups');
+    expect(valueGroups).toBeInTheDocument();
+    expect(valueGroups).toHaveTextContent(/Values By Parameter/);
+    expect(
+      screen.getByRole('button', { name: /^By Parameter$/ }),
+    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('projects read-only default-selection policy decisions in value rows', () => {
@@ -1273,6 +1293,30 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
       await screen.findByRole('button', { name: /^Legacy leads view/ }),
     );
     expect(screen.getByTestId('evidence-library-sources')).toBeInTheDocument();
+  });
+
+  it('preserves a localStorage by-parameter saved view (re-exposed value-groups tab)', async () => {
+    // 'by-parameter' is a live, selectable tab again (the #206 value-groups re-expose), so a
+    // local saved view carrying it must be PRESERVED and land on the value-groups view -- not
+    // collapsed to Values. This must match the Supabase-side coerceViewMode (saved-views-sync).
+    window.localStorage.setItem(
+      SAVED_VIEWS_KEY,
+      JSON.stringify([
+        { id: 'local-bp', name: 'Legacy groups view', filters: {}, viewMode: 'by-parameter' },
+      ]),
+    );
+    window.localStorage.setItem(MIGRATED_KEY, 'done');
+    vi.mocked(savedViewsSync.fetchSavedViewsResult).mockResolvedValue({
+      signedIn: false,
+      error: false,
+      views: [],
+    });
+
+    renderControlled();
+    fireEvent.click(
+      await screen.findByRole('button', { name: /^Legacy groups view/ }),
+    );
+    expect(screen.getByTestId('evidence-library-value-groups')).toBeInTheDocument();
   });
 
   it('keeps the local mirror on a remote read ERROR (does not erase the fallback)', async () => {
