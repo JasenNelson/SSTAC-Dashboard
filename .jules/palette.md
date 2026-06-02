@@ -1,0 +1,3 @@
+## 2024-05-23 - Accessible Icon-Only Buttons
+**Learning:** Icon-only action buttons (like those using Lucide icons `Trash2`, `Eye`, `Pencil`, etc.) in grid or list views frequently rely only on the `title` attribute for screen readers, which is insufficient, and lack explicit focus styles for keyboard users.
+**Action:** When auditing or implementing icon-only buttons, always ensure they include a descriptive `aria-label` (e.g. `aria-label="Delete project"`) and explicit `focus-visible` Tailwind classes (e.g., `focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500`) to guarantee both screen reader and keyboard navigation support.
