@@ -399,4 +399,118 @@ describe("importEvalResult", () => {
     // Object-shaped packet is preserved as-is (asArray returns null -> asRecord succeeds).
     expect(rows[0]!.evidence_packet).toEqual(legacyPacket);
   });
+
+  // ---- Rule 1 regression guard: per-packet schema_version, NOT envelope ----
+  //
+  // This is the load-bearing guard against the Rule 1 hazard documented in
+  // S4_DASHBOARD_CHANGE_SPEC.md section 3.1. The ENVELOPE schema_version (line 26
+  // of eval_result_import.ts) is already "0.1.0" for unrelated Lane 2c reasons.
+  // The importer MUST read the per-packet `raw.schema_version`, NOT the envelope.
+  //
+  // Test setup: one eval_result envelope with schema_version="0.1.0" (envelope-only)
+  // containing BOTH a 0.0.1 packet AND a 0.1.0 packet. A buggy implementation that
+  // reads the envelope would stamp both rows as 0.1.0, causing the 0.0.1 row to be
+  // mislabeled (FAIL). The correct implementation reads each packet's own field.
+
+  it("Rule 1: each row gets its OWN per-packet schema_version, not the envelope version", async () => {
+    // 0.0.1 packet: legacy shape with verdict fields, no evidence-status fields.
+    const policy001 = {
+      policy_id: "POLICY-001",
+      schema_version: "0.0.1",
+      stage: "S4",
+      packet_id: "pkt_001",
+      tier: "TIER_1_BINARY",
+      verdict_suggestion: "PASS",
+      ai_suggestion: "PASS",
+      confidence: 0.88,
+      confidence_method: "calibrated",
+      summary: "Legacy summary",
+      evidence_packet: [],
+      pathway_notes: {},
+      rubric_self_score: { overall: 3 },
+      // 0.0.1 packet does NOT have these fields.
+    };
+
+    // 0.1.0 packet: tier-blind evidence-match shape.
+    const policy010 = {
+      policy_id: "POLICY-010",
+      schema_version: "0.1.0",
+      stage: "S4",
+      packet_id: "pkt_010",
+      tier: "TIER_2_PROFESSIONAL",
+      // No verdict_suggestion / ai_suggestion (engine dropped these in 0.1.0).
+      confidence: 0.75,
+      confidence_method: "model_self_report",
+      confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+      summary: "Evidence summary",
+      evidence_present: true,
+      evidence_signal_counts: {
+        total_cited: 4,
+        supporting: 3,
+        negating: 1,
+        absence_or_category_mismatch: 0,
+        neutral: 0,
+      },
+      evidence_synthesis_self_score: {
+        appropriateness: 2.5,
+        sufficiency: 2.0,
+        banned_phrase_hits: [],
+      },
+      evidence_packet: [],
+      pathway_notes: {},
+    };
+
+    // Envelope schema_version is "0.1.0" (Lane 2c, unrelated to the S4 packet version).
+    // A buggy implementation that reads this would mislabel the 0.0.1 row as 0.1.0.
+    const env = makeEnvelope({
+      schema_version: "0.1.0",
+      per_policy_results: [policy001, policy010],
+    });
+
+    const { client, calls } = makeMockClient();
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(2);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(2);
+
+    const row001 = rows.find((r) => r.policy_id === "POLICY-001");
+    const row010 = rows.find((r) => r.policy_id === "POLICY-010");
+    expect(row001).toBeDefined();
+    expect(row010).toBeDefined();
+
+    // Rule 1 assertion: each row branched on ITS OWN per-packet schema_version.
+    // The 0.0.1 row must NOT be mislabeled as 0.1.0 (which would happen if the
+    // importer accidentally read the envelope schema_version = "0.1.0").
+    expect(row001!.s4_schema_version).toBe("0.0.1");
+    expect(row010!.s4_schema_version).toBe("0.1.0");
+
+    // 0.0.1 row keeps legacy fields (verdict_suggestion / ai_suggestion present).
+    expect(row001!.verdict_suggestion).toBe("PASS");
+    expect(row001!.ai_suggestion).toBe("PASS");
+
+    // 0.0.1 row: evidence-status fields are null (engine did not emit them).
+    expect(row001!.evidence_present).toBeNull();
+    expect(row001!.evidence_signal_counts).toBeNull();
+    expect(row001!.confidence_scope).toBeNull();
+    expect(row001!.evidence_synthesis_self_score).toBeNull();
+
+    // 0.1.0 row: evidence-status fields are populated.
+    expect(row010!.evidence_present).toBe(true);
+    expect(row010!.evidence_signal_counts).toMatchObject({
+      total_cited: 4,
+      supporting: 3,
+    });
+    expect(row010!.confidence_scope).toBe("EVIDENCE_MATCH_NOT_ADEQUACY");
+    expect(row010!.evidence_synthesis_self_score).toMatchObject({
+      appropriateness: 2.5,
+      sufficiency: 2.0,
+    });
+
+    // 0.1.0 row: verdict_suggestion / ai_suggestion are null (engine dropped them).
+    expect(row010!.verdict_suggestion).toBeNull();
+    expect(row010!.ai_suggestion).toBeNull();
+  });
 });

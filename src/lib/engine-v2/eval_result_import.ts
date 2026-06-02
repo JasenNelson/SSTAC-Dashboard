@@ -69,6 +69,11 @@ function asArray(v: unknown): unknown[] | null {
   if (Array.isArray(v)) return v;
   return null;
 }
+function asBoolean(v: unknown): boolean | null {
+  if (v === null || v === undefined) return null;
+  if (typeof v === "boolean") return v;
+  return null;
+}
 
 // Build the row payload that v2_per_policy_results expects.
 // stage and packet_id default to "" (NOT NULL columns per Lane 2a unique-index
@@ -92,6 +97,13 @@ function toPerPolicyRow(
     pathway_notes: asRecord(raw.pathway_notes) ?? {},
     rubric_self_score: asRecord(raw.rubric_self_score),
     raw_result_json: raw,
+    // S4 read-side expand-contract: per-packet fields (Rule 1 -- read from `raw`,
+    // the per-policy-results item, NOT from the envelope schema_version at line 26).
+    s4_schema_version: asString(raw.schema_version),
+    evidence_present: asBoolean(raw.evidence_present),
+    evidence_signal_counts: asRecord(raw.evidence_signal_counts),
+    confidence_scope: asString(raw.confidence_scope),
+    evidence_synthesis_self_score: asRecord(raw.evidence_synthesis_self_score),
   };
 }
 
