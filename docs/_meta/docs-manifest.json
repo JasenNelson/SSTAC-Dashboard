@@ -805,6 +805,29 @@
       "regressions": 0,
       "estimated_hours": "40-50",
       "last_verified": "2026-01-25"
+    },
+    "session_2026_06_02_matrix_options_ci": {
+      "status": "complete",
+      "session_date": "2026-06-02",
+      "work_summary": "Semi-autonomous run landing 3 PRs to main: #230 bulk-approve RPC concurrency hardening, #232 re-expose Evidence Library By Parameter (value-groups) view + saved-view coercion lockstep, #233 siteDataStore unit coverage + .tmp eslint ignore.",
+      "prs_merged": [
+        "#230 (932610b) - catalog_approve_staging_rows_bulk concurrency hardening: append-only migration adds pg_try_advisory_xact_lock fast-fail guard + GET STACKED DIAGNOSTICS constraint-name check (status-conditional supersede) + P0001 count-honesty",
+        "#232 (cf4380c) - re-expose Evidence Library By Parameter (value-groups) view (renders PR #206 incommensurate-unit badge; orphaned by #210 tab-list trim) + unify saved-view view_mode coercion across localStorage loader and Supabase coerceViewMode",
+        "#233 (1a2e2ad) - add unit coverage for siteDataStore.validateChemistry + read selectors; ignore .tmp/** in eslint.config.mjs (monitored build quarantines .next to .tmp/next-quarantine-*, whose compiled require() calls failed local eslint with false no-require-imports)"
+      ],
+      "migrations_added": [
+        "#230 append-only migration adding the advisory-lock guard to catalog_approve_staging_rows_bulk (paste into Supabase Studio SQL Editor per L1 Supabase protocol)"
+      ],
+      "lessons_added": 4,
+      "lesson_topics": [
+        "Trimming UI Tabs Can Silently Orphan a Shipped Feature (HIGH)",
+        "Saved-View Coercion Must Be Identical on Both Hydration Paths (MEDIUM)",
+        "eslint . Lints Build-Quarantine Artifacts Unless .tmp Is Ignored (MEDIUM)",
+        "codex CLI and Phone App Can Both Be Down; cursor-agent Is the Working Fallback (MEDIUM)"
+      ],
+      "vitest_test_count_note": "Unit tests increased by #233 (siteDataStore.validateChemistry + read selectors). Live facts.testing.vitest_test_count NOT updated by hand this session; run npm run docs:manifest:update -- --vitest to record the verified post-#233 count.",
+      "branch": "docs edits authored in worktree auto-mo-2026-06-02 (== origin/main at 1a2e2ad)",
+      "last_verified": "2026-06-02"
     }
   },
   "known_issues": {
