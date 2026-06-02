@@ -1637,8 +1637,166 @@ units as not-comparable.
 
 ---
 
-**Last Updated:** May 29, 2026 (A1 unit-normalization guard PR #191; catalog Step-1 canonicalization)
-**Lesson Count:** 1 critical, 3 high, 1 medium (deployment, security, architecture, data-integrity patterns)
+## 2026-06-02 - Trimming UI Tabs Can Silently Orphan a Shipped Feature [HIGH]
+
+**Date:** June 2, 2026
+**Area:** Architecture / UI State (matrix-options Evidence Library)
+**Impact:** HIGH (a shipped, tested feature became unreachable in production with no error)
+**Status:** Implemented (PR #232)
+
+### Problem or Discovery
+The Evidence Library "By Parameter" (value-groups) view -- which renders PR #206's
+incommensurate-unit badge -- silently disappeared from the UI. The render branch and its tests
+still existed and still passed; the view was simply unreachable because no tab in the trimmed
+tab list selected it. A later session "discovered" a feature was missing that had in fact shipped
+and was still fully tested.
+
+### Root Cause or Context
+PR #210 trimmed the Evidence Library tab list (it retired the dead "equations" view and
+reorganized tabs). It removed the tab that selected the value-groups view but LEFT the render
+branch in place. The render branch became reachable only via a legacy saved view whose stored
+view_mode still pointed at it -- so on a clean session with no such saved state, the feature was
+dead code from the user's perspective. Unit tests render the branch directly, so they kept
+passing and gave false confidence the feature was live.
+
+### Solution or Pattern
+Re-expose the value-groups view by restoring its tab entry (PR #232). The reusable discipline:
+when removing or reordering UI tabs, audit for render branches that are now reachable ONLY via
+legacy persisted state (saved views, localStorage, URL params). A render branch with no live
+entry point is orphaned even though it compiles and its unit tests pass. Tests that mount a
+component branch directly do NOT prove the branch is reachable through the real navigation.
+
+### File References
+- `C:/Projects/SSTAC-Dashboard/src/components/matrix-options/EvidenceLibrary.tsx`
+  (value-groups / By Parameter tab + render branch)
+- Related origin: PR #206 (incommensurate-unit badge), PR #210 (tab-list trim that orphaned it)
+
+### Key Takeaway
+Removing a UI tab does not remove the render code behind it. When trimming tabs, grep for every
+render branch and confirm each still has a live entry point; a branch reachable only through
+legacy saved state is orphaned. Unit tests that render a branch directly will not catch this --
+verify reachability through the actual navigation.
+
+---
+
+## 2026-06-02 - Saved-View Coercion Must Be Identical on Both Hydration Paths [MEDIUM]
+
+**Date:** June 2, 2026
+**Area:** Architecture / State Hydration (matrix-options saved views)
+**Impact:** MEDIUM (same saved view behaves differently depending on where it loads from)
+**Status:** Implemented (PR #232)
+
+### Problem or Discovery
+A saved view's view_mode is normalized (coerced) in TWO places: the localStorage loader and the
+Supabase coerceViewMode path. The two policies had drifted apart, so the SAME logical saved view
+behaved differently by source: a "source-leads" view rendered blank when hydrated from Supabase,
+and a "by-parameter" view reset to "Values" when hydrated from localStorage.
+
+### Root Cause or Context
+When a feature persists a discriminated value (here view_mode) in more than one store, each store
+needs its own deserialize/coerce step. Those steps were written and edited independently over
+several PRs, so the localStorage path and the Supabase path applied different remap rules for the
+same legacy values. There was no single shared coercion function, so they fell out of lockstep.
+
+### Solution or Pattern
+Unify the coercion policy across both hydration paths (PR #232): source-leads -> sources;
+preserve by-parameter / sources / values / assumptions; map equations and any unknown value ->
+values. Apply the identical mapping in the localStorage loader and in Supabase coerceViewMode.
+Best practice: factor the mapping into ONE shared function both paths call, so they cannot drift.
+
+### File References
+- `C:/Projects/SSTAC-Dashboard/src/components/matrix-options/EvidenceLibrary.tsx`
+  (localStorage saved-view loader + Supabase coerceViewMode)
+
+### Key Takeaway
+When the same persisted value is hydrated from more than one store (localStorage AND Supabase),
+the coercion/normalization policy must be identical on every path -- ideally one shared function.
+If the policies drift, the same saved view behaves differently by source (blank, or reset to a
+default).
+
+---
+
+## 2026-06-02 - eslint . Lints Build-Quarantine Artifacts Unless .tmp Is Ignored [MEDIUM]
+
+**Date:** June 2, 2026
+**Area:** Tooling / Lint Gate (local dev workflow)
+**Impact:** MEDIUM (false local lint failures AFTER a monitored build; CI unaffected)
+**Status:** Implemented (PR #233)
+
+### Problem or Discovery
+Running `eslint .` locally fails with false `no-require-imports` errors -- but only AFTER running
+`npm run build:monitored:clean`. The errors come from compiled JS, not from source.
+
+### Root Cause or Context
+build:monitored:clean quarantines the `.next` build output by moving it to
+`.tmp/next-quarantine-*` (to avoid the Windows Access-Denied / EPERM .next stalls). That
+quarantined output is compiled JavaScript full of legitimate `require()` calls. Because
+`.tmp/**` was not in the ESLint ignore list, `eslint .` walked into the quarantine folder and
+flagged those compiled `require()` calls as `no-require-imports` violations. CI never sees this
+because it lints a clean checkout that has never run a monitored build, so `.tmp/` does not exist
+there.
+
+### Solution or Pattern
+Add `.tmp/**` to the ignores in `eslint.config.mjs` (PR #233). General principle: any directory
+the build/gate tooling writes generated or quarantined artifacts into must be in the linter's
+ignore list, or `eslint .` will lint build output and produce failures that exist only on
+machines that have run the build.
+
+### File References
+- `C:/Projects/SSTAC-Dashboard/eslint.config.mjs` (added `.tmp/**` to ignores)
+- Producer of the quarantine dir: `scripts/verify/monitored-build.ps1` (moves .next to
+  `.tmp/next-quarantine-*`)
+
+### Key Takeaway
+`eslint .` lints everything not explicitly ignored, including build-quarantine artifacts. If a
+gate script moves compiled output into a working dir (here `.tmp/next-quarantine-*`), add that
+dir to the ESLint ignores or you get false `no-require-imports` failures locally that never
+appear in CI's clean checkout.
+
+---
+
+## 2026-06-02 - codex CLI and Phone App Can Both Be Down; cursor-agent Is the Working Fallback [MEDIUM]
+
+**Date:** June 2, 2026
+**Area:** Process / Review Tooling (codex review fallback ladder)
+**Impact:** MEDIUM (avoids blocking the commit gate when the primary reviewer is unreachable)
+**Status:** Documented
+
+### Problem or Discovery
+The codex iterate-to-GREEN-before-commit gate (L0 rule 1.3) depends on codex review. This session
+hit a state where BOTH codex CLI (the chatgpt.com backend) AND the codex iPhone app were down at
+the same time -- so the usual rung 1 (CLI) and the usual owner-run rung 2 (phone) were both
+unavailable.
+
+### Root Cause or Context
+The codex CLI and the phone app share the same chatgpt.com backend, so a backend outage takes out
+both at once. Treating the phone as an independent fallback for the CLI is therefore unreliable
+during a backend outage -- they fail together.
+
+### Solution or Pattern
+Drop to fallback ladder rung 4, cursor-agent, which uses a different backend:
+```
+& 'C:\Users\jasen\AppData\Local\cursor-agent\agent.ps1' --print --mode ask -f --model gpt-5.3-codex-xhigh "<prompt>"
+```
+The `-f` flag trusts the current worktree directory (needed so it can read the diff). After ANY
+non-CLI fallback (cursor-agent or Opus adversarial), still append the artifact + verdict +
+disposition to the codex re-review queue and re-confirm with codex CLI once the backend recovers
+(per L0 rule 1.3 codex-fallback ladder).
+
+### File References
+- L0 rule 1.3 (codex-fallback ladder) in `C:/Projects/CLAUDE.md`
+- Re-review queue: `C:/Users/jasen/.claude/projects/C--Projects-Regulatory-Review/memory/codex_rereview_queue_2026_05_17.md`
+
+### Key Takeaway
+codex CLI and the codex phone app share a backend and can be down simultaneously -- they are not
+independent fallbacks. cursor-agent (ladder rung 4, different backend) is the working fallback:
+`& 'agent.ps1' --print --mode ask -f --model gpt-5.3-codex-xhigh "<prompt>"`. Always queue the
+fallback verdict for codex re-confirm when the CLI recovers.
+
+---
+
+**Last Updated:** June 2, 2026 (PR #232 re-expose By Parameter view + saved-view coercion lockstep; PR #233 .tmp eslint ignore; PR #230 bulk-approve RPC concurrency hardening)
+**Lesson Count (2026-06-02 session added 4):** running totals not re-tallied; this session added 1 high (orphaned-tab) and 3 medium (saved-view coercion lockstep, .tmp eslint ignore, codex/cursor-agent fallback)
 **Security Status:** ✓ Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
