@@ -164,6 +164,11 @@ def main():
     unparseable = []
     data_quality = []
     seen_value = set()
+    # Raw-level minted-key -> CASRN/name accumulation for the collision guard. Tracked BEFORE
+    # grouping + value-dedupe so two distinct CASRNs that mint the same key under the SAME input_key
+    # (and whose values dedupe) are still detected (cursor HIGH 2026-06-02).
+    minted_cas = defaultdict(set)
+    minted_names = defaultdict(set)
 
     for r in rows:
         if not r or r[0] is None:
@@ -190,6 +195,10 @@ def main():
             sub_key = known_key
         else:
             sub_key = mint_key(name)
+            # Track every raw minted row's CASRN/name BEFORE grouping + value-dedupe, so a true
+            # two-CASRN collision under one input_key cannot be hidden by the collapse below.
+            minted_cas[sub_key].add(casrn)
+            minted_names[sub_key].add(name)
 
         gkey = (sub_key, input_key)
         # Dedup identical (substance, input, value).
@@ -252,6 +261,25 @@ def main():
                 entry["classification"] = "ORPHAN_NEW_SUBSTANCE"
                 orphan_new_substance.append(entry)
 
+    # Guardrail (cursor 2026-06-02): new-vs-new minted-key collision. Two DISTINCT EPA chemicals
+    # (different CASRN) that mint the same substance_key would be silently merged. Detection uses the
+    # RAW-level minted_cas map (accumulated before grouping/value-dedupe), so a collision under the
+    # same input_key cannot be hidden. Colliding keys are partitioned OUT of auto-generation and
+    # reported for owner disambiguation. A single substance spanning multiple input_keys under ONE
+    # CASRN is NOT a collision (its minted_cas set has size 1).
+    colliding_keys = {k for k, cas in minted_cas.items() if len(cas) > 1}
+    key_collision = []
+    for k in sorted(colliding_keys):
+        for cas in sorted(str(c) for c in minted_cas[k]):
+            key_collision.append({
+                "substance_key": k,
+                "casrn": cas,
+                "excel_chemical": " / ".join(sorted(minted_names[k])),
+                "short_input": "(multiple)",
+                "classification": "KEY_COLLISION",
+            })
+    orphan_new_substance = [e for e in orphan_new_substance if e["substance_key"] not in colliding_keys]
+
     # Distinct-substance tallies.
     def subs(lst):
         return sorted({e["substance_key"] for e in lst})
@@ -265,6 +293,7 @@ def main():
             "orphan_new_input_groups": len(orphan_new_input),
             "orphan_new_substance_groups": len(orphan_new_substance),
             "ambiguous_groups": len(ambiguous),
+            "key_collision_groups": len(key_collision),
             "data_quality_flagged_rows": len(data_quality),
             "unparseable_rows": len(unparseable),
             "orphan_new_substance_distinct_subs": len(subs(orphan_new_substance)),
@@ -289,13 +318,14 @@ def main():
             "orphan_new_substance": orphan_new_substance,
             "orphan_new_input": orphan_new_input,
             "ambiguous": ambiguous,
+            "key_collision": key_collision,
             "already_covered_count": len(covered),
             "data_quality": data_quality,
             "unparseable": unparseable,
         }, f, indent=2)
 
     write_report(summary, orphan_new_substance, orphan_new_input, ambiguous,
-                 data_quality, unparseable)
+                 key_collision, data_quality, unparseable)
 
     print("RECON SUMMARY")
     print(json.dumps(summary, indent=2))
@@ -303,7 +333,7 @@ def main():
     print("report   ->", REPORT_OUT)
 
 
-def write_report(summary, new_sub, new_input, ambiguous, data_quality, unparseable):
+def write_report(summary, new_sub, new_input, ambiguous, key_collision, data_quality, unparseable):
     t = summary["totals"]
     L = []
     L.append("# Matrix-Options IRIS orphan recon (2026-06-02)")
@@ -324,6 +354,7 @@ def write_report(summary, new_sub, new_input, ambiguous, data_quality, unparseab
         t["orphan_new_substance_groups"], t["orphan_new_substance_distinct_subs"]))
     L.append("| AMBIGUOUS (needs owner adjudication) | %d | %d |" % (
         t["ambiguous_groups"], t["ambiguous_distinct_subs"]))
+    L.append("| KEY-COLLISION (excluded; 2 CASRN -> 1 minted key) | %d | -- |" % t["key_collision_groups"])
     L.append("| DATA-QUALITY flagged (cell unit vs type) | %d | -- |" % t["data_quality_flagged_rows"])
     L.append("| Unparseable EPA value rows | %d | -- |" % t["unparseable_rows"])
     L.append("")
@@ -362,16 +393,31 @@ def write_report(summary, new_sub, new_input, ambiguous, data_quality, unparseab
     else:
         L.append("(none)")
     L.append("")
+    if key_collision:
+        L.append("## KEY-COLLISION (excluded; two distinct CASRN minted the same substance_key)")
+        L.append("")
+        L.append("Guardrail: these EPA chemicals would silently merge into one substance_key. Excluded")
+        L.append("from auto-generation; owner must disambiguate (rename one key) before they are added.")
+        L.append("")
+        L.append("| minted substance_key | CASRN | EPA chemical | input |")
+        L.append("|---|---|---|---|")
+        for e in sorted(key_collision, key=lambda x: (x["substance_key"], str(x["casrn"]))):
+            L.append("| %s | %s | %s | %s |" % (
+                e["substance_key"], e["casrn"], e["excel_chemical"], e["short_input"]))
+        L.append("")
     L.append("## ORPHAN new-substance (full list)")
     L.append("")
     L.append("Proposed substance_key is minted snake_case from the EPA chemical name; owner may rename.")
+    L.append("epa_raw is the verbatim EPA cell string -- the independent cross-check anchor for each")
+    L.append("value (verify against epa.gov/iris; the 2% snapshot gate is consistency, not independence).")
     L.append("")
-    L.append("| proposed substance_key | EPA chemical | CASRN | input | values |")
-    L.append("|---|---|---|---|---|")
+    L.append("| proposed substance_key | EPA chemical | CASRN | input | parsed value | epa_raw |")
+    L.append("|---|---|---|---|---|---|")
     for e in sorted(new_sub, key=lambda x: (x["substance_key"], x["input_key"])):
-        L.append("| %s | %s | %s | %s | %s |" % (
+        L.append("| %s | %s | %s | %s | %s | %s |" % (
             e["substance_key"], e["excel_chemical"], e["casrn"], e["short_input"],
-            ", ".join(repr(v) for v in e["epa_values"])))
+            ", ".join(repr(v) for v in e["epa_values"]),
+            " ; ".join(e["epa_raw"])))
     L.append("")
     if data_quality:
         L.append("## DATA-QUALITY flagged (excluded; cell unit contradicts its type)")

@@ -107,16 +107,47 @@ const pool = mode === 'new-substance'
   ? recon.orphan_new_substance
   : [...recon.orphan_new_input, ...recon.ambiguous];
 let selected = pool.map((e) => ({ ...e, target_key: targetKey(e) }));
-// Optional batching by a contiguous slice of sorted distinct target substance_keys.
+// Optional batching by a contiguous slice of sorted distinct target substance_keys, with a
+// manifest-backed overlap/gap guard (cursor 2026-06-02) so sibling batches and re-runs cannot
+// silently double-cover or skip a substance.
 if (slice) {
   const [offStr, cntStr] = slice.split(':');
   const offset = Number(offStr);
   const count = Number(cntStr);
+  if (!Number.isInteger(offset) || !Number.isInteger(count) || offset < 0 || count <= 0) {
+    throw new Error('Bad --substance-slice "' + slice + '" (want offset:count, non-negative ints)');
+  }
   const distinct = [...new Set(selected.map((e) => e.target_key))].sort();
-  const keep = new Set(distinct.slice(offset, offset + count));
+  if (offset >= distinct.length) {
+    throw new Error('--substance-slice offset ' + offset + ' >= distinct substances ' + distinct.length);
+  }
+  const batchKeys = distinct.slice(offset, offset + count);
+  const keep = new Set(batchKeys);
   selected = selected.filter((e) => keep.has(e.target_key));
-  console.log('substance-slice', slice, '-> distinct total', distinct.length,
-    '| this batch substances', keep.size);
+
+  const manifestPath = path.join(PASTE_DIR, 'iris-batch-manifest.json');
+  let manifest = { distinct_total: distinct.length, passes: {} };
+  if (fs.existsSync(manifestPath)) manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  const priorCovered = new Map();
+  for (const [pid, keys] of Object.entries(manifest.passes)) {
+    if (pid === passId) continue; // re-running the SAME pass id overwrites its own range, not a conflict
+    for (const k of keys) priorCovered.set(k, pid);
+  }
+  const overlap = batchKeys.filter((k) => priorCovered.has(k));
+  if (overlap.length) {
+    throw new Error('substance-slice OVERLAP with pass ' + priorCovered.get(overlap[0]) + ': '
+      + overlap.slice(0, 5).join(', ') + (overlap.length > 5 ? ' ...' : ''));
+  }
+  if (writeSnapshot) {
+    manifest.distinct_total = distinct.length;
+    manifest.passes[passId] = batchKeys;
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
+    const covered = new Set(Object.values(manifest.passes).flat());
+    console.log('manifest: covered', covered.size, 'of', distinct.length,
+      '| remaining', distinct.length - covered.size);
+  }
+  console.log('substance-slice', slice, '-> distinct total', distinct.length, '| this batch',
+    keep.size, '| range', batchKeys[0], '..', batchKeys[batchKeys.length - 1]);
 }
 
 // --- 1. Snapshot anchors (APPEND-ONLY: preserve existing file bytes exactly) -------------------
@@ -171,12 +202,14 @@ if (writeSnapshot && newRecords.length) {
   const at = orig.lastIndexOf(marker);
   if (at < 0) throw new Error('could not locate records-array close in snapshot');
   let out = orig.slice(0, at) + ',\n' + block + orig.slice(at);
-  // Bump records_count and stamp the note in place (string edits; existing formatting preserved).
+  // Bump records_count and stamp a per-pass provenance fragment (cumulative + mode-aware; cursor
+  // 2026-06-02). Each batch records its own fragment; idempotent re-runs skip an already-stamped pass.
   out = out.replace(/("records_count":\s*)\d+/, '$1' + (snapshot.records.length + newRecords.length));
-  if (!out.includes('EXPANDED 2026-06-02')) {
-    const stamp = ' EXPANDED 2026-06-02 with IRIS new-input + ambiguous orphan anchors '
-      + '(new-input + existing-substance attaches) from the EPA Chemicals_Details export; '
-      + 'values rounded to EPA precision.';
+  const modeDesc = mode === 'new-substance' ? 'new-substance' : 'new-input + ambiguous';
+  const passTag = 'pass ' + passId;
+  if (!out.includes(passTag)) {
+    const stamp = ' EXPANDED 2026-06-02 (' + passTag + ', ' + modeDesc + '): +' + newRecords.length
+      + ' EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision).';
     out = out.replace('",\n    "records_count":', stamp + '",\n    "records_count":');
   }
   fs.writeFileSync(SNAPSHOT_FILE, out, 'utf8');
