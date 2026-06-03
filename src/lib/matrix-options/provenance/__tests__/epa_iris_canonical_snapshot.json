@@ -3,8 +3,8 @@
     "source": "US EPA IRIS (https://www.epa.gov/iris), Chemicals_Details export",
     "source_file": "Chemicals_Details (1).xlsx",
     "derived": "2026-05-31",
-    "note": "Authoritative IRIS toxicity values for the catalog's IRIS-labeled substances/inputs, derived from the EPA IRIS Chemicals_Details export. Used by iris-canonical.test.ts to assert catalog IRIS values match the EPA source (NOT AI-memorized canon). Regenerate from a fresh EPA IRIS export when IRIS updates. Value notation in EPA export: 'N x 10 M' = N*10^M (minus signs preserved). EXPANDED 2026-05-31 to the full master-list IRIS substance set (CAS-matched via CATALOG_SUBSTANCE_COVERAGE_MATRIX.csv); the original 16 in-repo substances' entries are preserved verbatim. EXPANDED 2026-06-02 with IRIS new-input + ambiguous orphan anchors (new-input + existing-substance attaches) from the EPA Chemicals_Details export; values rounded to EPA precision. EXPANDED 2026-06-02 (pass d0c00016, new-substance): +134 EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision).",
-    "records_count": 481
+    "note": "Authoritative IRIS toxicity values for the catalog's IRIS-labeled substances/inputs, derived from the EPA IRIS Chemicals_Details export. Used by iris-canonical.test.ts to assert catalog IRIS values match the EPA source (NOT AI-memorized canon). Regenerate from a fresh EPA IRIS export when IRIS updates. Value notation in EPA export: 'N x 10 M' = N*10^M (minus signs preserved). EXPANDED 2026-05-31 to the full master-list IRIS substance set (CAS-matched via CATALOG_SUBSTANCE_COVERAGE_MATRIX.csv); the original 16 in-repo substances' entries are preserved verbatim. EXPANDED 2026-06-02 with IRIS new-input + ambiguous orphan anchors (new-input + existing-substance attaches) from the EPA Chemicals_Details export; values rounded to EPA precision. EXPANDED 2026-06-02 (pass d0c00016, new-substance): +134 EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision). EXPANDED 2026-06-02 (pass d0c00017, new-substance): +126 EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision).",
+    "records_count": 607
   },
   "records": [
     {
@@ -7739,6 +7739,2040 @@
       ],
       "epa_raw": [
         "6 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "p_chloroaniline",
+      "cas_number": "106-47-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "p-Chloroaniline"
+      ],
+      "epa_values": [
+        0.004
+      ],
+      "epa_raw": [
+        "4 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "p_p_dichlorodiphenyl_dichloroethane_ddd",
+      "cas_number": "72-54-8",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "p,p'-Dichlorodiphenyl dichloroethane (DDD)"
+      ],
+      "epa_values": [
+        0.24
+      ],
+      "epa_raw": [
+        "2.4 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "p_p_dichlorodiphenyldichloroethylene_dde",
+      "cas_number": "72-55-9",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "p,p'-Dichlorodiphenyldichloroethylene (DDE)"
+      ],
+      "epa_values": [
+        0.34
+      ],
+      "epa_raw": [
+        "3.4 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "p_p_dichlorodiphenyltrichloroethane_ddt",
+      "cas_number": "50-29-3",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "p,p'-Dichlorodiphenyltrichloroethane (DDT)"
+      ],
+      "epa_values": [
+        0.000097
+      ],
+      "epa_raw": [
+        "9.7 x 10 -5 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "p_p_dichlorodiphenyltrichloroethane_ddt",
+      "cas_number": "50-29-3",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "p,p'-Dichlorodiphenyltrichloroethane (DDT)"
+      ],
+      "epa_values": [
+        0.34
+      ],
+      "epa_raw": [
+        "3.4 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "p_p_dichlorodiphenyltrichloroethane_ddt",
+      "cas_number": "50-29-3",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "p,p'-Dichlorodiphenyltrichloroethane (DDT)"
+      ],
+      "epa_values": [
+        0.0005
+      ],
+      "epa_raw": [
+        "5 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_n_dimethylformamide",
+      "cas_number": "68-12-2",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "N,N-Dimethylformamide"
+      ],
+      "epa_values": [
+        0.03
+      ],
+      "epa_raw": [
+        "3 x 10 -2 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "s_ethyl_dipropylthiocarbamate_eptc",
+      "cas_number": "759-94-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "S-Ethyl dipropylthiocarbamate (EPTC)"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "technical_hexachlorocyclohexane_t_hch",
+      "cas_number": "608-73-1",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "technical Hexachlorocyclohexane (t-HCH)"
+      ],
+      "epa_values": [
+        1.8
+      ],
+      "epa_raw": [
+        "1.8 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "technical_hexachlorocyclohexane_t_hch",
+      "cas_number": "608-73-1",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "technical Hexachlorocyclohexane (t-HCH)"
+      ],
+      "epa_values": [
+        0.00051
+      ],
+      "epa_raw": [
+        "5.1 x 10 -4 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "metolachlor",
+      "cas_number": "51218-45-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Metolachlor"
+      ],
+      "epa_values": [
+        0.15
+      ],
+      "epa_raw": [
+        "1.5 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "metribuzin",
+      "cas_number": "21087-64-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Metribuzin"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "mirex",
+      "cas_number": "2385-85-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Mirex"
+      ],
+      "epa_values": [
+        0.0002
+      ],
+      "epa_raw": [
+        "2 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "molinate",
+      "cas_number": "2212-67-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Molinate"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "monochloramine",
+      "cas_number": "10599-90-3",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Monochloramine"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "naled",
+      "cas_number": "300-76-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Naled"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "napropamide",
+      "cas_number": "15299-99-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Napropamide"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "nickel_refinery_dust",
+      "cas_number": null,
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Nickel refinery dust"
+      ],
+      "epa_values": [
+        0.00024
+      ],
+      "epa_raw": [
+        "2.4 x 10 -4 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "nickel_soluble_salts",
+      "cas_number": "Various",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Nickel, soluble salts"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "nitrate",
+      "cas_number": "14797-55-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Nitrate"
+      ],
+      "epa_values": [
+        1.6
+      ],
+      "epa_raw": [
+        "1.6 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "nitrite",
+      "cas_number": "14797-65-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Nitrite"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "nitroguanidine",
+      "cas_number": "556-88-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Nitroguanidine"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitroso_n_methylethylamine",
+      "cas_number": "10595-95-6",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitroso-N-methylethylamine"
+      ],
+      "epa_values": [
+        22
+      ],
+      "epa_raw": [
+        "2.2 x 10 1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitroso_di_n_butylamine",
+      "cas_number": "924-16-3",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "N-Nitroso-di-n-butylamine"
+      ],
+      "epa_values": [
+        0.0016
+      ],
+      "epa_raw": [
+        "1.6 x 10 -3 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "n_nitroso_di_n_butylamine",
+      "cas_number": "924-16-3",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitroso-di-n-butylamine"
+      ],
+      "epa_values": [
+        5.4
+      ],
+      "epa_raw": [
+        "5.4 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodi_n_propylamine",
+      "cas_number": "621-64-7",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosodi-N-propylamine"
+      ],
+      "epa_values": [
+        7
+      ],
+      "epa_raw": [
+        "7 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodiethanolamine",
+      "cas_number": "1116-54-7",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosodiethanolamine"
+      ],
+      "epa_values": [
+        2.8
+      ],
+      "epa_raw": [
+        "2.8 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodiethylamine",
+      "cas_number": "55-18-5",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "N-Nitrosodiethylamine"
+      ],
+      "epa_values": [
+        0.043
+      ],
+      "epa_raw": [
+        "4.3 x 10 -2 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodiethylamine",
+      "cas_number": "55-18-5",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosodiethylamine"
+      ],
+      "epa_values": [
+        150
+      ],
+      "epa_raw": [
+        "1.5 x 10 2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodimethylamine",
+      "cas_number": "62-75-9",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "N-Nitrosodimethylamine"
+      ],
+      "epa_values": [
+        0.014
+      ],
+      "epa_raw": [
+        "1.4 x 10 -2 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodimethylamine",
+      "cas_number": "62-75-9",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosodimethylamine"
+      ],
+      "epa_values": [
+        51
+      ],
+      "epa_raw": [
+        "5.1 x 10 1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosodiphenylamine",
+      "cas_number": "86-30-6",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosodiphenylamine"
+      ],
+      "epa_values": [
+        0.0049
+      ],
+      "epa_raw": [
+        "4.9 x 10 -3 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosopyrrolidine",
+      "cas_number": "930-55-2",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "N-Nitrosopyrrolidine"
+      ],
+      "epa_values": [
+        0.00061
+      ],
+      "epa_raw": [
+        "6.1 x 10 -4 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "n_nitrosopyrrolidine",
+      "cas_number": "930-55-2",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "N-Nitrosopyrrolidine"
+      ],
+      "epa_values": [
+        2.1
+      ],
+      "epa_raw": [
+        "2.1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "norflurazon",
+      "cas_number": "27314-13-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Norflurazon"
+      ],
+      "epa_values": [
+        0.04
+      ],
+      "epa_raw": [
+        "4 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "nustar",
+      "cas_number": "85509-19-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "NuStar"
+      ],
+      "epa_values": [
+        0.0007
+      ],
+      "epa_raw": [
+        "7 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "octabromodiphenyl_ether",
+      "cas_number": "32536-52-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Octabromodiphenyl ether"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx",
+      "cas_number": "2691-41-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Octahydro-1,3,5,7-tetranitro-1,3,5,7-tetrazocine (HMX)"
+      ],
+      "epa_values": [
+        0.05
+      ],
+      "epa_raw": [
+        "5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "oryzalin",
+      "cas_number": "19044-88-3",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Oryzalin"
+      ],
+      "epa_values": [
+        0.05
+      ],
+      "epa_raw": [
+        "5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "oxadiazon",
+      "cas_number": "19666-30-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Oxadiazon"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "oxamyl",
+      "cas_number": "23135-22-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Oxamyl"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "oxyfluorfen",
+      "cas_number": "42874-03-3",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Oxyfluorfen"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "paclobutrazol",
+      "cas_number": "76738-62-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Paclobutrazol"
+      ],
+      "epa_values": [
+        0.013
+      ],
+      "epa_raw": [
+        "1.3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "paraquat",
+      "cas_number": "1910-42-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Paraquat"
+      ],
+      "epa_values": [
+        0.0045
+      ],
+      "epa_raw": [
+        "4.5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pendimethalin",
+      "cas_number": "40487-42-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pendimethalin"
+      ],
+      "epa_values": [
+        0.04
+      ],
+      "epa_raw": [
+        "4 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pentabromodiphenyl_ether",
+      "cas_number": "32534-81-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pentabromodiphenyl ether"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pentachloronitrobenzene_pcnb",
+      "cas_number": "82-68-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pentachloronitrobenzene (PCNB)"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "perchlorate_clo4_and_perchlorate_salts",
+      "cas_number": "7790-98-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Perchlorate (ClO4) and Perchlorate Salts"
+      ],
+      "epa_values": [
+        0.0007
+      ],
+      "epa_raw": [
+        "7 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "perfluorobutanoic_acid_pfba",
+      "cas_number": "375-22-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Perfluorobutanoic Acid (PFBA)"
+      ],
+      "epa_values": [
+        0.01,
+        0.006,
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/kg-day",
+        "6 x 10 -3 mg/kg-day",
+        "1 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "perfluorodecanoic_acid_pfda",
+      "cas_number": "335-76-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Perfluorodecanoic Acid (PFDA)"
+      ],
+      "epa_values": [
+        2e-9,
+        6e-7,
+        0.000003,
+        0.000001
+      ],
+      "epa_raw": [
+        "2 x 10 -9 mg/kg-day",
+        "6 x 10 -7 mg/kg-day",
+        "3 x 10 -6 mg/kg-day",
+        "1 x 10 -6 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "perfluorohexanoic_acid_pfhxa",
+      "cas_number": "307-24-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Perfluorohexanoic Acid (PFHxA)"
+      ],
+      "epa_values": [
+        0.001,
+        0.0008,
+        0.0005,
+        0.005,
+        0.0004
+      ],
+      "epa_raw": [
+        "1 x 10 -3 mg/kg-day",
+        "8 x 10 -4 mg/kg-day",
+        "5 x 10 -4 mg/kg-day",
+        "5 x 10 -3 mg/kg-day",
+        "4 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "phenmedipham",
+      "cas_number": "13684-63-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Phenmedipham"
+      ],
+      "epa_values": [
+        0.25
+      ],
+      "epa_raw": [
+        "2.5 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "phenylmercuric_acetate",
+      "cas_number": "62-38-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Phenylmercuric acetate"
+      ],
+      "epa_values": [
+        0.00008
+      ],
+      "epa_raw": [
+        "8 x 10 -5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "phosgene",
+      "cas_number": "75-44-5",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Phosgene"
+      ],
+      "epa_values": [
+        0.0003
+      ],
+      "epa_raw": [
+        "3 x 10 -4 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "phosmet",
+      "cas_number": "732-11-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Phosmet"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "phosphoric_acid",
+      "cas_number": "7664-38-2",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Phosphoric acid"
+      ],
+      "epa_values": [
+        0.01
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "phthalic_anhydride",
+      "cas_number": "85-44-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Phthalic anhydride"
+      ],
+      "epa_values": [
+        2
+      ],
+      "epa_raw": [
+        "2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "picloram",
+      "cas_number": "1918-02-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Picloram"
+      ],
+      "epa_values": [
+        0.07
+      ],
+      "epa_raw": [
+        "7 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pirimiphos_methyl",
+      "cas_number": "29232-93-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pirimiphos-methyl"
+      ],
+      "epa_values": [
+        0.01
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "polychlorinated_biphenyls_pcbs",
+      "cas_number": "1336-36-3",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Polychlorinated Biphenyls (PCBs)"
+      ],
+      "epa_values": [
+        0.0001
+      ],
+      "epa_raw": [
+        "1 x 10 -4 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "polychlorinated_biphenyls_pcbs",
+      "cas_number": "1336-36-3",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Polychlorinated Biphenyls (PCBs)"
+      ],
+      "epa_values": [
+        2
+      ],
+      "epa_raw": [
+        "2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "potassium_cyanide",
+      "cas_number": "151-50-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Potassium cyanide"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "potassium_silver_cyanide",
+      "cas_number": "506-61-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Potassium silver cyanide"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "prochloraz",
+      "cas_number": "67747-09-5",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Prochloraz"
+      ],
+      "epa_values": [
+        0.15
+      ],
+      "epa_raw": [
+        "1.5 x 10 -1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "prochloraz",
+      "cas_number": "67747-09-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Prochloraz"
+      ],
+      "epa_values": [
+        0.009
+      ],
+      "epa_raw": [
+        "9 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "prometon",
+      "cas_number": "1610-18-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Prometon"
+      ],
+      "epa_values": [
+        0.015
+      ],
+      "epa_raw": [
+        "1.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "prometryn",
+      "cas_number": "7287-19-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Prometryn"
+      ],
+      "epa_values": [
+        0.004
+      ],
+      "epa_raw": [
+        "4 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pronamide",
+      "cas_number": "23950-58-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pronamide"
+      ],
+      "epa_values": [
+        0.075
+      ],
+      "epa_raw": [
+        "7.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propachlor",
+      "cas_number": "1918-16-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propachlor"
+      ],
+      "epa_values": [
+        0.013
+      ],
+      "epa_raw": [
+        "1.3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propanil",
+      "cas_number": "709-98-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propanil"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propargite",
+      "cas_number": "2312-35-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propargite"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propargyl_alcohol",
+      "cas_number": "107-19-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propargyl alcohol"
+      ],
+      "epa_values": [
+        0.002
+      ],
+      "epa_raw": [
+        "2 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propazine",
+      "cas_number": "139-40-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propazine"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propham",
+      "cas_number": "122-42-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propham"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propiconazole",
+      "cas_number": "60207-90-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Propiconazole"
+      ],
+      "epa_values": [
+        0.013
+      ],
+      "epa_raw": [
+        "1.3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "propionaldehyde",
+      "cas_number": "123-38-6",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Propionaldehyde"
+      ],
+      "epa_values": [
+        0.008
+      ],
+      "epa_raw": [
+        "8 x 10 -3 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "propylene_glycol_monomethyl_ether_pgme",
+      "cas_number": "107-98-2",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "Propylene glycol monomethyl ether (PGME)"
+      ],
+      "epa_values": [
+        2
+      ],
+      "epa_raw": [
+        "2 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "pursuit",
+      "cas_number": "81335-77-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pursuit"
+      ],
+      "epa_values": [
+        0.25
+      ],
+      "epa_raw": [
+        "2.5 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "pydrin",
+      "cas_number": "51630-58-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Pydrin"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "quinalphos",
+      "cas_number": "13593-03-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Quinalphos"
+      ],
+      "epa_values": [
+        0.0005
+      ],
+      "epa_raw": [
+        "5 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "quinoline",
+      "cas_number": "91-22-5",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Quinoline"
+      ],
+      "epa_values": [
+        3
+      ],
+      "epa_raw": [
+        "3 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "resmethrin",
+      "cas_number": "10453-86-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Resmethrin"
+      ],
+      "epa_values": [
+        0.03
+      ],
+      "epa_raw": [
+        "3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "rotenone",
+      "cas_number": "83-79-4",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Rotenone"
+      ],
+      "epa_values": [
+        0.004
+      ],
+      "epa_raw": [
+        "4 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "savey",
+      "cas_number": "78587-05-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Savey"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "selenious_acid",
+      "cas_number": "7783-00-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Selenious acid"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "sethoxydim",
+      "cas_number": "74051-80-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Sethoxydim"
+      ],
+      "epa_values": [
+        0.09
+      ],
+      "epa_raw": [
+        "9 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "silver_cyanide",
+      "cas_number": "506-64-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Silver cyanide"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "simazine",
+      "cas_number": "122-34-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Simazine"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "sodium_azide",
+      "cas_number": "26628-22-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Sodium azide"
+      ],
+      "epa_values": [
+        0.004
+      ],
+      "epa_raw": [
+        "4 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "sodium_cyanide",
+      "cas_number": "143-33-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Sodium cyanide"
+      ],
+      "epa_values": [
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "sodium_diethyldithiocarbamate",
+      "cas_number": "148-18-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Sodium diethyldithiocarbamate"
+      ],
+      "epa_values": [
+        0.03
+      ],
+      "epa_raw": [
+        "3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "sodium_fluoroacetate",
+      "cas_number": "62-74-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Sodium fluoroacetate"
+      ],
+      "epa_values": [
+        0.00002
+      ],
+      "epa_raw": [
+        "2 x 10 -5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "strontium",
+      "cas_number": "7440-24-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Strontium"
+      ],
+      "epa_values": [
+        0.6
+      ],
+      "epa_raw": [
+        "6 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "strychnine",
+      "cas_number": "57-24-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Strychnine"
+      ],
+      "epa_values": [
+        0.0003
+      ],
+      "epa_raw": [
+        "3 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "systhane",
+      "cas_number": "88671-89-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Systhane"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tebuthiuron",
+      "cas_number": "34014-18-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tebuthiuron"
+      ],
+      "epa_values": [
+        0.07
+      ],
+      "epa_raw": [
+        "7 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "terbacil",
+      "cas_number": "5902-51-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Terbacil"
+      ],
+      "epa_values": [
+        0.013
+      ],
+      "epa_raw": [
+        "1.3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "terbutryn",
+      "cas_number": "886-50-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Terbutryn"
+      ],
+      "epa_values": [
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tetrachlorovinphos",
+      "cas_number": "961-11-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tetrachlorovinphos"
+      ],
+      "epa_values": [
+        0.03
+      ],
+      "epa_raw": [
+        "3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tetraethyl_lead",
+      "cas_number": "78-00-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tetraethyl lead"
+      ],
+      "epa_values": [
+        1e-7
+      ],
+      "epa_raw": [
+        "1 x 10 -7 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tetraethyldithiopyrophosphate",
+      "cas_number": "3689-24-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tetraethyldithiopyrophosphate"
+      ],
+      "epa_values": [
+        0.0005
+      ],
+      "epa_raw": [
+        "5 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "thiobencarb",
+      "cas_number": "28249-77-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Thiobencarb"
+      ],
+      "epa_values": [
+        0.01
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "thiophanate_methyl",
+      "cas_number": "23564-05-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Thiophanate-methyl"
+      ],
+      "epa_values": [
+        0.08
+      ],
+      "epa_raw": [
+        "8 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "thiram",
+      "cas_number": "137-26-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Thiram"
+      ],
+      "epa_values": [
+        0.005
+      ],
+      "epa_raw": [
+        "5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "toxaphene",
+      "cas_number": "8001-35-2",
+      "input_key": "unit_risk_inhalation_per_ug_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "Inhalation Unit Risk",
+      "excel_chemical": [
+        "Toxaphene"
+      ],
+      "epa_values": [
+        0.00032
+      ],
+      "epa_raw": [
+        "3.2 x 10 -4 per \u00b5g/m3"
+      ]
+    },
+    {
+      "substance_key": "toxaphene",
+      "cas_number": "8001-35-2",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Toxaphene"
+      ],
+      "epa_values": [
+        1.1
+      ],
+      "epa_raw": [
+        "1.1 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tralomethrin",
+      "cas_number": "66841-25-6",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tralomethrin"
+      ],
+      "epa_values": [
+        0.0075
+      ],
+      "epa_raw": [
+        "7.5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "triallate",
+      "cas_number": "2303-17-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Triallate"
+      ],
+      "epa_values": [
+        0.013
+      ],
+      "epa_raw": [
+        "1.3 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "triasulfuron",
+      "cas_number": "82097-50-5",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Triasulfuron"
+      ],
+      "epa_values": [
+        0.01
+      ],
+      "epa_raw": [
+        "1 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tributyltin_oxide_tbto",
+      "cas_number": "56-35-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tributyltin oxide (TBTO)"
+      ],
+      "epa_values": [
+        0.0003
+      ],
+      "epa_raw": [
+        "3 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trichloroacetic_acid",
+      "cas_number": "76-03-9",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Trichloroacetic acid"
+      ],
+      "epa_values": [
+        0.02
+      ],
+      "epa_raw": [
+        "2 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trichloroacetic_acid",
+      "cas_number": "76-03-9",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Trichloroacetic acid"
+      ],
+      "epa_values": [
+        0.07
+      ],
+      "epa_raw": [
+        "7 x 10 -2 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tridiphane",
+      "cas_number": "58138-08-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Tridiphane"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trifluralin",
+      "cas_number": "1582-09-8",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "Trifluralin"
+      ],
+      "epa_values": [
+        0.0077
+      ],
+      "epa_raw": [
+        "7.7 x 10 -3 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "trifluralin",
+      "cas_number": "1582-09-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Trifluralin"
+      ],
+      "epa_values": [
+        0.0075
+      ],
+      "epa_raw": [
+        "7.5 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "uranium_soluble_salts",
+      "cas_number": "Various",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Uranium, soluble salts"
+      ],
+      "epa_values": [
+        0.003
+      ],
+      "epa_raw": [
+        "3 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "vanadium_pentoxide",
+      "cas_number": "1314-62-1",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Vanadium pentoxide"
+      ],
+      "epa_values": [
+        0.009
+      ],
+      "epa_raw": [
+        "9 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "vernam",
+      "cas_number": "1929-77-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Vernam"
+      ],
+      "epa_values": [
+        0.001
+      ],
+      "epa_raw": [
+        "1 x 10 -3 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "vinclozolin",
+      "cas_number": "50471-44-8",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Vinclozolin"
+      ],
+      "epa_values": [
+        0.025
+      ],
+      "epa_raw": [
+        "2.5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "warfarin",
+      "cas_number": "81-81-2",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Warfarin"
+      ],
+      "epa_values": [
+        0.0003
+      ],
+      "epa_raw": [
+        "3 x 10 -4 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "white_phosphorus",
+      "cas_number": "7723-14-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "White phosphorus"
+      ],
+      "epa_values": [
+        0.00002
+      ],
+      "epa_raw": [
+        "2 x 10 -5 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "zineb",
+      "cas_number": "12122-67-7",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "Zineb"
+      ],
+      "epa_values": [
+        0.05
+      ],
+      "epa_raw": [
+        "5 x 10 -2 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "n_butanol",
+      "cas_number": "71-36-3",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "n-Butanol"
+      ],
+      "epa_values": [
+        0.1
+      ],
+      "epa_raw": [
+        "1 x 10 -1 mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tert_butyl_alcohol_tba",
+      "cas_number": "75-65-0",
+      "input_key": "rfc_inhalation_mg_per_m3",
+      "exposure_route": "Inhalation",
+      "toxicity_value_type": "RfC",
+      "excel_chemical": [
+        "tert-Butyl Alcohol (tBA)"
+      ],
+      "epa_values": [
+        5
+      ],
+      "epa_raw": [
+        "5 mg/m3"
+      ]
+    },
+    {
+      "substance_key": "tert_butyl_alcohol_tba",
+      "cas_number": "75-65-0",
+      "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "Oral Slope Factor",
+      "excel_chemical": [
+        "tert-Butyl Alcohol (tBA)"
+      ],
+      "epa_values": [
+        0.0005
+      ],
+      "epa_raw": [
+        "5 x 10 -4 per mg/kg-day"
+      ]
+    },
+    {
+      "substance_key": "tert_butyl_alcohol_tba",
+      "cas_number": "75-65-0",
+      "input_key": "rfd_oral_mg_per_kg_bw_day",
+      "exposure_route": "Oral",
+      "toxicity_value_type": "RfD",
+      "excel_chemical": [
+        "tert-Butyl Alcohol (tBA)"
+      ],
+      "epa_values": [
+        0.4
+      ],
+      "epa_raw": [
+        "4 x 10 -1 mg/kg-day"
       ]
     }
   ]

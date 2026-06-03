@@ -30,20 +30,21 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-02 IRIS orphan expansion landed in batches: first +95 (new-input + ambiguous),
     // then new-substance orphans in batches of ~113 substances. All US EPA IRIS records carry
     // default_status=available_option, qa_status=needs_review; every value validated against the
-    // EPA snapshot within 2%. This batch (new-substance B2, pass d0c00016, +252 records) extends
-    // the prior new-substance B1 batch. valueGroups counts UNIQUE candidate_group_id over the full
-    // view (HH-TRV + parameter_values.json) -> 1363 groups, because multi-endpoint candidate
-    // families intentionally share one group id.
-    expect(view.valueGroups).toHaveLength(1363);
-    // approvedSourceBacked: 712 prior + 252 US EPA IRIS new-substance B2 rows = 964.
+    // EPA snapshot within 2%. This batch (new-substance B3, FINAL, pass d0c00017, +255 records)
+    // closes the new-substance orphan backlog (recon remaining now 0) on top of B2 (d0c00016).
+    // valueGroups counts UNIQUE candidate_group_id over the full view (HH-TRV +
+    // parameter_values.json) -> 1600 groups, because multi-endpoint candidate families
+    // intentionally share one group id.
+    expect(view.valueGroups).toHaveLength(1600);
+    // approvedSourceBacked: 964 prior + 255 US EPA IRIS new-substance B3 rows = 1219.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
-    expect(view.audit.values.approvedSourceBacked).toBe(964);
+    expect(view.audit.values.approvedSourceBacked).toBe(1219);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370 (unchanged).
     expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions: 1073 prior + 252 IRIS new-substance B2 rows = 1325.
-    expect(view.audit.values.availableOptions).toBe(1325);
+    // availableOptions: 1325 prior + 255 IRIS new-substance B3 rows = 1580.
+    expect(view.audit.values.availableOptions).toBe(1580);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
