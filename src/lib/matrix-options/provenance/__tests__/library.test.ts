@@ -30,20 +30,20 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-02 IRIS orphan expansion landed in batches: first +95 (new-input + ambiguous),
     // then new-substance orphans in batches of ~113 substances. All US EPA IRIS records carry
     // default_status=available_option, qa_status=needs_review; every value validated against the
-    // EPA snapshot within 2%. This batch (new-substance B1, +275 records) takes
-    // human_health_trv_values.json 792 -> 1067. valueGroups counts UNIQUE candidate_group_id over
-    // the full view (1067 HH-TRV + 80 parameter_values.json) -> 1115 groups, because multi-endpoint
-    // candidate families intentionally share one group id.
-    expect(view.valueGroups).toHaveLength(1115);
-    // approvedSourceBacked: 437 prior + 275 US EPA IRIS new-substance rows = 712.
+    // EPA snapshot within 2%. This batch (new-substance B2, pass d0c00016, +252 records) extends
+    // the prior new-substance B1 batch. valueGroups counts UNIQUE candidate_group_id over the full
+    // view (HH-TRV + parameter_values.json) -> 1363 groups, because multi-endpoint candidate
+    // families intentionally share one group id.
+    expect(view.valueGroups).toHaveLength(1363);
+    // approvedSourceBacked: 712 prior + 252 US EPA IRIS new-substance B2 rows = 964.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
-    expect(view.audit.values.approvedSourceBacked).toBe(712);
+    expect(view.audit.values.approvedSourceBacked).toBe(964);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370 (unchanged).
     expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions: 798 prior + 275 IRIS new-substance rows = 1073.
-    expect(view.audit.values.availableOptions).toBe(1073);
+    // availableOptions: 1073 prior + 252 IRIS new-substance B2 rows = 1325.
+    expect(view.audit.values.availableOptions).toBe(1325);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
