@@ -52,7 +52,7 @@ function fullRow(overrides: Record<string, unknown> = {}) {
     id: 'row-1',
     parameter_value_id: 'pv-1',
     substance_key: 'lead',
-    pathway: 'direct-contact-soil',
+    pathway: 'human-health-direct',
     input_key: 'rfd',
     display_name: 'Reference dose',
     value: '0.0036',
@@ -82,7 +82,7 @@ function record(
   return {
     parameter_value_id: 'pv-1',
     substance_key: 'lead',
-    pathway: 'direct-contact-soil',
+    pathway: 'human-health-direct',
     input_key: 'rfd',
     display_name: 'Reference dose',
     value: 0.0036,
@@ -211,7 +211,6 @@ describe('upsertPromotedValue -- recordToUpsertPayload mapping', () => {
 
   it('null-coalesces an undefined uncertainty to null in the payload', async () => {
     resultQueue = [{ error: null }];
-    // @ts-expect-error -- forcing the ?? null branch with an undefined uncertainty
     await upsertPromotedValue(record({ uncertainty: undefined }));
     expect(lastUpsertPayload?.uncertainty).toBeNull();
   });
