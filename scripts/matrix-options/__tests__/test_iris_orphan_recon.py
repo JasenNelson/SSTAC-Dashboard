@@ -123,3 +123,42 @@ def test_non_colliding_ambiguous_entry_is_preserved():
     colliding = recon.colliding_minted_keys(minted)
     ambiguous = [_entry("arsenic", "AMBIGUOUS", existing="arsenic_inorganic")]
     assert recon.exclude_colliding(ambiguous, colliding) == ambiguous
+
+
+# ---------------------------------------------------------------------------
+# unit_consistent -- inhalation scale/basis gate (the 2026-06-03 fiber + scale fix)
+# ---------------------------------------------------------------------------
+
+IUR = "unit_risk_inhalation_per_ug_m3"
+RFC = "rfc_inhalation_mg_per_m3"
+
+
+def test_iur_per_mg_m3_is_accepted_and_convertible():
+    # Mass-scale reciprocal air unit (the ETBE case "8 x 10^-5 per mg/m3"): convertible to
+    # per ug/m3 by the builder (/1000), so unit_consistent ACCEPTS it -> stays an orphan.
+    assert recon.unit_consistent("per mg/m3", IUR) is True
+
+
+def test_iur_per_ug_m3_and_per_ng_m3_accepted():
+    # All mass-scale variants are convertible and must stay accepted.
+    assert recon.unit_consistent("per ug/m3", IUR) is True
+    assert recon.unit_consistent("per ng/m3", IUR) is True
+
+
+def test_iur_fiber_unit_routes_to_data_quality():
+    # Fiber-count basis (the asbestos case "2.3 x 10^-1 per f/mL") is NOT mass-convertible to
+    # per ug/m3 -> unit_consistent REJECTS it so the recon routes it to data_quality (excluded).
+    assert recon.unit_consistent("per f/mL", IUR) is False
+    assert recon.unit_consistent("per fiber/cc", IUR) is False
+    assert recon.unit_consistent("per fiber", IUR) is False
+
+
+def test_rfc_fiber_unit_routes_to_data_quality():
+    # An RfC carried in a fiber basis is likewise non-convertible and excluded.
+    assert recon.unit_consistent("f/mL", RFC) is False
+
+
+def test_rfc_mass_air_accepted():
+    # A normal mass-per-air RfC unit stays accepted.
+    assert recon.unit_consistent("mg/m3", RFC) is True
+    assert recon.unit_consistent("ug/m3", RFC) is True

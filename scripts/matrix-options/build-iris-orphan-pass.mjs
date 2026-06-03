@@ -21,6 +21,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Reuse the generator's unit conversion so the staging value AND the snapshot anchor are
+// written in the CANONICAL scale, never the raw cell magnitude mislabeled. A 'per mg/m3' IUR
+// must be stored as the converted 'per ug/m3' number (/1000) -- see normalizeToCanonical. This
+// closes the 2026-06-03 scale-blind defect (ETBE 8e-5 per mg/m3 was stored as 8e-5 per ug/m3,
+// 1000x too high; the snapshot anchor carried the same wrong number so the 2% gate validated it
+// against itself).
+import { normalizeToCanonical } from './generate-catalog-records.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -47,6 +54,30 @@ const slice = argval('--substance-slice', null);
 // EPA values are 1-2 significant figures; strip float-repr artifacts (0.013000000000000001 -> 0.013).
 function clean(v) {
   return Number(Number(v).toPrecision(6));
+}
+// Extract the TRUE raw unit from a verbatim EPA cell (e.g. "8 x 10 -5 per mg/m3" -> "per mg/m3",
+// "5 x 10 -5 mg/m3" -> "mg/m3", "9 x 10 -4 mg/kg-day" -> "mg/kg-day"). Mirrors the recon's
+// parse_value unit capture: strip a leading "N x 10 M" (or leading "N ") and keep the remainder.
+// The micro sign may surface as U+00B5/U+FFFD in the raw; fold to 'u' so "per ug/m3" matches the
+// generator's canonUnit. Returns '' when no unit text is present (a bare number).
+function rawCellUnit(raw) {
+  let s = asciiFold(String(raw || '')).trim();
+  // Drop a trailing bracketed provenance tag if present (defensive; recon raws are bare cells).
+  s = s.replace(/\s*\[[^\]]*\]\s*$/, '').trim();
+  const sci = s.match(/^\s*[0-9.]+\s*x\s*10\s*-?\d+\s*(.*)$/i);
+  if (sci) return sci[1].trim();
+  const lead = s.match(/^\s*[0-9.]+\s+(\S.*?)\s*$/);
+  if (lead) return lead[1].trim();
+  return ''; // plain number, no unit text
+}
+// Canonicalize one EPA magnitude for input_key using the SAME math as the generator. We feed
+// normalizeToCanonical the TRUE raw unit parsed from the verbatim cell, so a 'per mg/m3' IUR is
+// converted to per ug/m3 (/1000), not the raw number relabeled. clean() then trims float-repr
+// noise. epaRaw is the verbatim cell (carries the true unit); epaVal is the parsed magnitude.
+function canonicalMagnitude(epaVal, epaRaw, inputKey) {
+  const unit = rawCellUnit(epaRaw);
+  const { value } = normalizeToCanonical(epaVal, unit, inputKey);
+  return clean(value);
 }
 // Fold any non-ASCII to 'u' so catalog text stays ASCII (the only expected non-ASCII is the
 // micro sign in IUR raws: 'per <micro>g/m3' -> 'per ug/m3', matching the existing catalog style).
@@ -191,7 +222,10 @@ const newPairs = new Set();
 const mergeNeeded = [];
 for (const e of selected) {
   const pairKey = e.target_key + '::' + e.input_key;
-  const cleanVals = e.epa_values.map(clean);
+  // CANONICALIZE before anchoring: each EPA magnitude is converted through the generator's
+  // normalizeToCanonical using the TRUE raw unit from its verbatim cell, so the anchor stores
+  // the per-ug/m3 (or canonical) value -- not the raw cell number relabeled (2026-06-03 fix).
+  const cleanVals = e.epa_values.map((v, i) => canonicalMagnitude(v, e.epa_raw[i], e.input_key));
   const existing = snapByPair.get(pairKey);
   if (existing) {
     // Existing anchor: every value we will stage must already be covered within 2%. If not, an
@@ -255,7 +289,10 @@ for (const e of selected) {
   const unit = UNIT_BY_SHORT[short];
   const desc = DESC_BY_SHORT[short];
   e.epa_values.forEach((rawVal, i) => {
-    const val = clean(rawVal);
+    // Write the CANONICAL magnitude (converted from the verbatim cell's TRUE unit) paired with the
+    // canonical `unit` label, so the downstream generator's normalizeToCanonical is a no-op and the
+    // staged value is never the raw cell number relabeled (2026-06-03 scale-blind defect fix).
+    const val = canonicalMagnitude(rawVal, e.epa_raw[i], e.input_key);
     payloadCount += 1;
     const pvId = ['pv', 'iris', e.target_key, short, String(i + 1)].join('-')
       .replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').toLowerCase();

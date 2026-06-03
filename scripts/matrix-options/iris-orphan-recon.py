@@ -84,21 +84,38 @@ def unit_consistent(unit_text, input_key):
     We assign canonical units by type downstream, so a cell whose unit contradicts its
     type (e.g. an 'Oral Slope Factor' row whose unit is the non-reciprocal 'mg/kg-day')
     is a data-quality defect and must be flagged, never silently coerced.
+
+    SCALE/BASIS GATE (2026-06-03, fiber-unit + scale-blind defect fix): for the two
+    inhalation types the cell must carry a MASS-per-air unit so the builder's
+    normalizeToCanonical can convert it. A FIBER-count basis (f/mL, fiber/cc, "fiber")
+    is NOT mass-convertible to per ug/m3 and MUST route to data_quality (excluded) --
+    e.g. the asbestos IUR '2.3 x 10^-1 per f/mL' should never have been generated.
+    Mass-scale variants (per mg/m3, per ug/m3, per ng/m3) stay ACCEPTED; the builder
+    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000).
     """
     u = unit_text.lower().replace(" ", "")
     if u == "":
         return True  # bare number; type assigns the unit
     recip = ("per" in u) or (")-1" in u) or u.endswith("-1")
+    # Fiber-count basis: not mass-convertible (no mg/ug/ng prefix on an air volume).
+    fiber = ("f/ml" in u) or ("fiber" in u) or ("f/cc" in u)
     air = ("m3" in u) or ("/m" in u and "kg" not in u)
     dose = "kg" in u
+    # Mass prefix on the numerator (the convertible scales: ng/ug/mg/g per m3). The numerator
+    # is the text before '/m' (e.g. 'permg/m3' -> 'permg', 'mg/m3' -> 'mg'); a bare 'm3' with no
+    # mass prefix (or a fiber basis) is NOT convertible. matches the builder's numeratorPrefix.
+    numerator = u.split("/m")[0]
+    mass_air = air and any(numerator.endswith(p) for p in ("ng", "ug", "mg", "g"))
     if input_key == "rfd_oral_mg_per_kg_bw_day":
         return dose and not recip
     if input_key == "sf_oral_per_mg_per_kg_bw_per_day":
         return dose and recip
     if input_key == "rfc_inhalation_mg_per_m3":
-        return air and not recip
+        # RfC: mass-per-air, non-reciprocal. Fiber basis is excluded.
+        return air and (not recip) and (not fiber) and mass_air
     if input_key == "unit_risk_inhalation_per_ug_m3":
-        return air and recip
+        # IUR: reciprocal mass-per-air. Fiber basis (per f/mL) is excluded.
+        return air and recip and (not fiber) and mass_air
     return False
 
 

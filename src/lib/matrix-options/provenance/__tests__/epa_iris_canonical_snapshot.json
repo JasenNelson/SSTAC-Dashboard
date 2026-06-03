@@ -4,7 +4,7 @@
     "source_file": "Chemicals_Details (1).xlsx",
     "derived": "2026-05-31",
     "note": "Authoritative IRIS toxicity values for the catalog's IRIS-labeled substances/inputs, derived from the EPA IRIS Chemicals_Details export. Used by iris-canonical.test.ts to assert catalog IRIS values match the EPA source (NOT AI-memorized canon). Regenerate from a fresh EPA IRIS export when IRIS updates. Value notation in EPA export: 'N x 10 M' = N*10^M (minus signs preserved). EXPANDED 2026-05-31 to the full master-list IRIS substance set (CAS-matched via CATALOG_SUBSTANCE_COVERAGE_MATRIX.csv); the original 16 in-repo substances' entries are preserved verbatim. EXPANDED 2026-06-02 with IRIS new-input + ambiguous orphan anchors (new-input + existing-substance attaches) from the EPA Chemicals_Details export; values rounded to EPA precision. EXPANDED 2026-06-02 (pass d0c00016, new-substance): +134 EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision). EXPANDED 2026-06-02 (pass d0c00017, new-substance): +126 EPA IRIS orphan anchors from the EPA Chemicals_Details export (values rounded to EPA precision).",
-    "records_count": 607
+    "records_count": 606
   },
   "records": [
     {
@@ -3756,22 +3756,6 @@
       ]
     },
     {
-      "substance_key": "asbestos",
-      "cas_number": "1332-21-4",
-      "input_key": "unit_risk_inhalation_per_ug_m3",
-      "exposure_route": "Inhalation",
-      "toxicity_value_type": "Inhalation Unit Risk",
-      "excel_chemical": [
-        "Asbestos"
-      ],
-      "epa_values": [
-        0.23
-      ],
-      "epa_raw": [
-        "2.3 x 10 -1 per f/mL"
-      ]
-    },
-    {
       "substance_key": "assure",
       "cas_number": "76578-14-8",
       "input_key": "rfd_oral_mg_per_kg_bw_day",
@@ -6515,7 +6499,7 @@
         "Ethyl Tertiary Butyl Ether (ETBE)"
       ],
       "epa_values": [
-        0.00008
+        8e-8
       ],
       "epa_raw": [
         "8 x 10 -5 per mg/m3"
