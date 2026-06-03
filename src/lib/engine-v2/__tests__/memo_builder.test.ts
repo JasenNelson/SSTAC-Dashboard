@@ -218,13 +218,65 @@ describe("buildMemo", () => {
   });
 
   it("legacy 0.0.1 memo keeps its established wording (no evidence-status regression)", async () => {
-    // codex PR #234 P2-1: a 0.1.0-only reword must NOT change legacy 0.0.1 memos,
-    // whose header is "AI Suggestion" + verdict-suggestion cells.
+    // Option A (2026-06-02): explainer prose is neutralized across BOTH schema
+    // versions. The legacy 0.0.1 memo still keeps its "AI Suggestion" header
+    // and "Flagged Items" heading (data-shape version-awareness, not authority
+    // claims), but must no longer contain determination-voice AI wording.
     const out = await buildMemo(happyPathInput());
     const xml = await readDocumentXml(out.bytes);
     expect(xml).toContain("AI Suggestion");
-    expect(xml).toContain("initial determination");
+    expect(xml).not.toContain("initial determination");
     expect(xml).toContain("Flagged Items");
+  });
+
+  it("determination-voice strings absent from ALL tier explainers across BOTH schema versions (Option A regression)", async () => {
+    // Regression guard: neither "provided an initial determination", "can only
+    // flag", nor "provides observations only" may appear in any rendered memo
+    // regardless of schema version or tier mix. This test covers:
+    //   (a) a legacy 0.0.1 memo with all three tiers present; and
+    //   (b) a 0.1.0 (evidence-status) memo that includes a TIER_3_STATUTORY
+    //       policy -- the specific gap that previously let the bug through.
+    //
+    // (a) Legacy 0.0.1 -- happyPathInput already has T1 + T2 + T3 with 0.0.1
+    //     null s4_schema_version fields.
+    const legacyOut = await buildMemo(happyPathInput());
+    const legacyXml = await readDocumentXml(legacyOut.bytes);
+    expect(legacyXml).not.toContain("provided an initial determination");
+    expect(legacyXml).not.toContain("can only flag");
+    expect(legacyXml).not.toContain("provides observations only");
+
+    // (b) 0.1.0 memo with all three tiers including TIER_3_STATUTORY.
+    function s4(tier: JudgmentTier, policyId: string, id: string): V2PerPolicyResult {
+      return makeResult(tier, policyId, "PASS", {
+        id,
+        s4_schema_version: "0.1.0",
+        evidence_present: true,
+        evidence_signal_counts: { total_cited: 3, supporting: 2, negating: 0 },
+        confidence_scope: "EVIDENCE_MATCH_NOT_ADEQUACY",
+        raw_result_json: { schema_version: "0.1.0" },
+      });
+    }
+    const esT1 = s4("TIER_1_BINARY", "POL-ES-001", "r-es-t1");
+    const esT2 = s4("TIER_2_PROFESSIONAL", "POL-ES-010", "r-es-t2");
+    const esT3 = s4("TIER_3_STATUTORY", "POL-ES-100", "r-es-t3");
+    const esInput: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [esT1, esT2, esT3],
+      judgments: [
+        makeJudgment(esT1.id, "TIER_1_BINARY", "ADEQUATE"),
+        makeJudgment(esT2.id, "TIER_2_PROFESSIONAL", "DEFICIENT"),
+        makeJudgment(esT3.id, "TIER_3_STATUTORY", "OBSERVATION_ONLY"),
+      ],
+    };
+    const esOut = await buildMemo(esInput);
+    const esXml = await readDocumentXml(esOut.bytes);
+    expect(esXml).not.toContain("provided an initial determination");
+    expect(esXml).not.toContain("can only flag");
+    expect(esXml).not.toContain("provides observations only");
+    // Confirm version-aware headers are still present (data-shape, not authority).
+    expect(esXml).toContain("AI Evidence Signal");
+    expect(esXml).not.toContain("AI Suggestion");
   });
 
   it("TIER_2_PROFESSIONAL + ADEQUATE judgment throws memo_build_invariant_violation_tier_2_adequate", async () => {
@@ -328,6 +380,37 @@ describe("memo typography and content polish", () => {
     expect(xml).toContain("binary requirements");
     expect(xml).toContain("qualified professional");
     expect(xml).toContain("statutory discretion");
+    // Role-framed AI clause (FIX 1): describes the AI's role, not a per-memo
+    // claim that evidence WAS cited. The apostrophe in "AI's" is XML-escaped
+    // to &apos; in the rendered docx, so assert on the apostrophe-free tail.
+    expect(xml).toContain("role is to surface relevant submission evidence with verbatim citations");
+  });
+
+  it("explainer renders role-framed even when a tier is empty / a policy has no evidence (no over-claim)", async () => {
+    // FIX 1 regression: the explainer must NOT assert evidence was cited when
+    // there is none. Build a memo with ONLY a Tier 1 policy that has no
+    // evidence_packet items (so it renders "No verbatim submission evidence
+    // cited by AI") and EMPTY Tier 2 + Tier 3 sections.
+    const t1 = makeResult("TIER_1_BINARY", "POL-NOEV-001", "PASS", {
+      id: "r-noev-t1",
+      evidence_packet: {}, // no items -> no verbatim evidence rendered.
+    });
+    const input: MemoBuilderInput = {
+      project: makeProject(),
+      evaluation: makeEvaluation(),
+      results: [t1],
+      judgments: [makeJudgment(t1.id, "TIER_1_BINARY", "ADEQUATE")],
+    };
+    const out = await buildMemo(input);
+    const xml = await readDocumentXml(out.bytes);
+    // The per-policy outcome line reports the actual (no-evidence) state.
+    expect(xml).toContain("No verbatim submission evidence cited by AI");
+    // The explainer is still role-framed (true even with no evidence) and does
+    // NOT over-claim that evidence was surfaced for this memo. The "AI's"
+    // apostrophe is XML-escaped (&apos;) in the docx, so match the
+    // apostrophe-free tail of the role clause.
+    expect(xml).toContain("role is to surface relevant submission evidence with verbatim citations");
+    expect(xml).not.toContain("The AI surfaced the relevant evidence");
   });
 
   it("renders a single-line footer of the form 'Generated <date>' without generator version or hash", async () => {

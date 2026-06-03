@@ -165,11 +165,14 @@ export async function POST(
   // The hash now includes evidence_slices content hashes so memos invalidate
   // when slices change (e.g. after the submission-text correction engine run).
   const snapshotHash = computeJudgmentSnapshotHash(judgments, evidenceSlices);
+  // Cache lookup: version-aware. A stale generator_version row is a MISS so
+  // that a version bump always causes regeneration without a manual purge.
   const { data: cachedRow, error: cachedErr } = await client
     .from("v2_memo_exports")
     .select("id, content_sha256, byte_size, judgment_snapshot_hash")
     .eq("evaluation_id", evaluation.id)
     .eq("judgment_snapshot_hash", snapshotHash)
+    .eq("generator_version", MEMO_GENERATOR_VERSION)
     .maybeSingle();
   if (cachedErr) {
     return NextResponse.json(
@@ -238,12 +241,15 @@ export async function POST(
 
   if (insertResp.error) {
     // 23505 unique violation: another request inserted between our cache check
-    // and our insert. Re-read and return the existing row.
+    // and our insert. Re-read the existing row and check its generator_version.
+    // If it is the same version (concurrent same-version write), return it as
+    // a cache hit. If it is a stale version, DELETE it and retry the INSERT
+    // once (bounded: at most one delete + one retry).
     const code = (insertResp.error as { code?: string }).code;
     if (code === "23505") {
       const { data: reRead, error: reReadErr } = await client
         .from("v2_memo_exports")
-        .select("id, content_sha256, byte_size")
+        .select("id, content_sha256, byte_size, generator_version")
         .eq("evaluation_id", evaluation.id)
         .eq("judgment_snapshot_hash", built.judgmentSnapshotHash)
         .maybeSingle();
@@ -256,17 +262,111 @@ export async function POST(
           { status: 500 },
         );
       }
-      const row = reRead as {
+      const existingRow = reRead as {
+        id: string;
+        content_sha256: string;
+        byte_size: number;
+        generator_version: string;
+      };
+      // Same-version concurrent write -- reuse the row.
+      if (existingRow.generator_version === MEMO_GENERATOR_VERSION) {
+        return NextResponse.json(
+          {
+            memo_id: existingRow.id,
+            content_sha256: existingRow.content_sha256,
+            byte_size: existingRow.byte_size,
+            cached: true,
+          },
+          { status: 200 },
+        );
+      }
+      // Stale version row -- DELETE it and retry the INSERT once.
+      //
+      // (a) The DELETE predicate (id = existingRow.id) targets the exact row
+      //     the reread SELECT just returned, so RLS cannot hide from the DELETE
+      //     a row it already exposed via SELECT (both are governed by the same
+      //     owner/admin FOR ALL policy).
+      // (b) Transient window: a concurrent regenerator's reread can observe
+      //     null in the gap between this request's DELETE and its re-INSERT.
+      //     That concurrent request returns a retryable 500 (no row found on
+      //     reread); the caller simply re-requests. We do not loop here -- the
+      //     delete + retry is bounded to one attempt to avoid unbounded churn.
+      const { error: deleteErr } = await client
+        .from("v2_memo_exports")
+        .delete()
+        .eq("id", existingRow.id);
+      if (deleteErr) {
+        return NextResponse.json(
+          {
+            error: "memo_stale_delete_failed",
+            detail: deleteErr.message,
+          },
+          { status: 500 },
+        );
+      }
+      // Retry INSERT (bounded: one attempt only).
+      const retryResp = await client
+        .from("v2_memo_exports")
+        .insert({
+          evaluation_id: evaluation.id,
+          generator_version: MEMO_GENERATOR_VERSION,
+          judgment_snapshot_hash: built.judgmentSnapshotHash,
+          content_sha256: built.contentSha256,
+          content_blob: encodeByteaHex(built.bytes),
+          byte_size: built.bytes.byteLength,
+        })
+        .select("id, content_sha256, byte_size")
+        .single();
+      if (retryResp.error) {
+        // Concurrent same-version writer won the retry -- reread and return.
+        if ((retryResp.error as { code?: string }).code === "23505") {
+          const { data: retryRead, error: retryReadErr } = await client
+            .from("v2_memo_exports")
+            .select("id, content_sha256, byte_size")
+            .eq("evaluation_id", evaluation.id)
+            .eq("judgment_snapshot_hash", built.judgmentSnapshotHash)
+            .eq("generator_version", MEMO_GENERATOR_VERSION)
+            .maybeSingle();
+          if (retryReadErr || !retryRead) {
+            return NextResponse.json(
+              {
+                error: "memo_retry_conflict_reread_failed",
+                detail: retryReadErr?.message ?? "no_row",
+              },
+              { status: 500 },
+            );
+          }
+          const retryRow = retryRead as {
+            id: string;
+            content_sha256: string;
+            byte_size: number;
+          };
+          return NextResponse.json(
+            {
+              memo_id: retryRow.id,
+              content_sha256: retryRow.content_sha256,
+              byte_size: retryRow.byte_size,
+              cached: true,
+            },
+            { status: 200 },
+          );
+        }
+        return NextResponse.json(
+          { error: "memo_retry_insert_failed", detail: retryResp.error.message },
+          { status: 500 },
+        );
+      }
+      const retryInserted = retryResp.data as {
         id: string;
         content_sha256: string;
         byte_size: number;
       };
       return NextResponse.json(
         {
-          memo_id: row.id,
-          content_sha256: row.content_sha256,
-          byte_size: row.byte_size,
-          cached: true,
+          memo_id: retryInserted.id,
+          content_sha256: retryInserted.content_sha256,
+          byte_size: retryInserted.byte_size,
+          cached: false,
         },
         { status: 200 },
       );

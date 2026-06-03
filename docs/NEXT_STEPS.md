@@ -19,6 +19,22 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-06-02 -- From the engine_v2 S4 Tier-explainer neutralization pass
+
+Deferred during the memo Tier-explainer neutralization (the pass that reworded the
+`src/lib/engine-v2/memo_builder.ts` Tier explainers so no memo claims tier-scaled AI
+authority, and made the memo cache regenerate on a generator-version bump). See
+`docs/engine_v2_frontend_s4_read_side_handoff_2026_06_02.md`.
+
+- **Legacy memo column-header wording ("AI Suggestion" / "AI Flag") leans determination-voice.**
+  For legacy 0.0.1 memos the builder still prints the column headers "AI Suggestion" (Tier 1)
+  and "AI Flag" (Tier 2); the 0.1.0 evidence-status path already uses the neutral "AI Evidence
+  Signal" header. Relabelling the legacy headers (for example to "AI signal (legacy)") is a
+  small, separable cleanup that was deliberately scoped out of the neutralization pass -- that
+  pass corrected the explainer prose across both schema versions but left the legacy data-shape
+  headers untouched to avoid changing the legacy render path.
+  - **Source:** Tier-explainer redesign memo (`engine_v2/docs/MEMO_TIER_EXPLAINER_REDESIGN_2026_06_02.md`) section 4.2; 2026-06-02 S4 lane.
+
 ### 2026-04-20 — From documentation audit (Phase 1a) and reference-doc pass (Phase 3b)
 
 Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b reference-doc survey that were not addressed in the April 2026 documentation pass. These are candidates for a future documentation or code session.
