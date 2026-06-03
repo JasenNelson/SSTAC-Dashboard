@@ -27,23 +27,23 @@ describe('matrix options evidence library helpers', () => {
     expect(view.equations.length).toBe(view.totalCounts.equations);
     // Catalog regenerated 2026-06-01 (class-1 collapse + class-3 dirty exclusion + IRIS EPA
     // data-integrity gate; IRIS coverage expanded to the snapshot-validated master-list set).
-    // 2026-06-02 IRIS orphan expansion: +95 US EPA IRIS records (new-input orphans + ambiguous
-    // values attached to existing substance_keys; default_status=available_option,
-    // qa_status=needs_review; every value validated against the EPA snapshot within 2%), taking
-    // human_health_trv_values.json 697 -> 792. valueGroups counts UNIQUE candidate_group_id over
-    // the full view (792 HH-TRV + 80 parameter_values.json = 872 records) -> 859 groups, because
-    // multi-endpoint candidate families (e.g. IRIS BaP neuro/repro/immune, cadmium water/food)
-    // intentionally share one group id.
-    expect(view.valueGroups).toHaveLength(859);
-    // approvedSourceBacked: 342 prior + 95 US EPA IRIS orphan rows = 437.
+    // 2026-06-02 IRIS orphan expansion landed in batches: first +95 (new-input + ambiguous),
+    // then new-substance orphans in batches of ~113 substances. All US EPA IRIS records carry
+    // default_status=available_option, qa_status=needs_review; every value validated against the
+    // EPA snapshot within 2%. This batch (new-substance B1, +275 records) takes
+    // human_health_trv_values.json 792 -> 1067. valueGroups counts UNIQUE candidate_group_id over
+    // the full view (1067 HH-TRV + 80 parameter_values.json) -> 1115 groups, because multi-endpoint
+    // candidate families intentionally share one group id.
+    expect(view.valueGroups).toHaveLength(1115);
+    // approvedSourceBacked: 437 prior + 275 US EPA IRIS new-substance rows = 712.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
-    expect(view.audit.values.approvedSourceBacked).toBe(437);
+    expect(view.audit.values.approvedSourceBacked).toBe(712);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370 (unchanged).
     expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions: 703 prior + 95 IRIS orphan rows = 798.
-    expect(view.audit.values.availableOptions).toBe(798);
+    // availableOptions: 798 prior + 275 IRIS new-substance rows = 1073.
+    expect(view.audit.values.availableOptions).toBe(1073);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);

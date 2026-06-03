@@ -32,11 +32,17 @@ const SNAPSHOT_FILE = path.join(
 const PASTE_DIR = path.join(REPO_ROOT, '.tmp', 'catalog-paste');
 
 const args = process.argv.slice(2);
-const passId = (() => {
-  const i = args.indexOf('--pass');
-  return i >= 0 ? args[i + 1] : 'd0c00014';
-})();
+function argval(flag, dflt) {
+  const i = args.indexOf(flag);
+  return i >= 0 ? args[i + 1] : dflt;
+}
+const passId = argval('--pass', 'd0c00014');
 const writeSnapshot = args.includes('--write-snapshot');
+// --mode: 'newinput-ambiguous' (default; the 2026-06-02 first batch) or 'new-substance'.
+const mode = argval('--mode', 'newinput-ambiguous');
+// --substance-slice 'offset:count' selects a contiguous range of the sorted distinct target
+// substance_keys (so a substance's multiple inputs stay together in one batch).
+const slice = argval('--substance-slice', null);
 
 // EPA values are 1-2 significant figures; strip float-repr artifacts (0.013000000000000001 -> 0.013).
 function clean(v) {
@@ -52,6 +58,13 @@ function asciiFold(s) {
 // Prefix every line of a multi-line string with pad (for inserting array elements at depth).
 function indent(s, pad) {
   return s.split('\n').map((l) => (l.length ? pad + l : l)).join('\n');
+}
+// Per-record provenance label so the staging audit trail reflects the actual orphan class
+// (codex P2 2026-06-02: new-substance runs were mislabeled as 'new input').
+function scopeLabel(cls) {
+  if (cls === 'ORPHAN_NEW_SUBSTANCE') return 'new substance';
+  if (cls === 'AMBIGUOUS') return 'attached to existing substance_key';
+  return 'new input';
 }
 // Escape any non-ASCII to backslash-uXXXX so the committed JSON stays <= code point 127.
 function asciiStringify(obj) {
@@ -90,10 +103,21 @@ const snapshot = JSON.parse(fs.readFileSync(SNAPSHOT_FILE, 'utf8'));
 function targetKey(e) {
   return e.classification === 'AMBIGUOUS' ? e.existing_substance_key : e.substance_key;
 }
-const selected = [
-  ...recon.orphan_new_input,
-  ...recon.ambiguous,
-].map((e) => ({ ...e, target_key: targetKey(e) }));
+const pool = mode === 'new-substance'
+  ? recon.orphan_new_substance
+  : [...recon.orphan_new_input, ...recon.ambiguous];
+let selected = pool.map((e) => ({ ...e, target_key: targetKey(e) }));
+// Optional batching by a contiguous slice of sorted distinct target substance_keys.
+if (slice) {
+  const [offStr, cntStr] = slice.split(':');
+  const offset = Number(offStr);
+  const count = Number(cntStr);
+  const distinct = [...new Set(selected.map((e) => e.target_key))].sort();
+  const keep = new Set(distinct.slice(offset, offset + count));
+  selected = selected.filter((e) => keep.has(e.target_key));
+  console.log('substance-slice', slice, '-> distinct total', distinct.length,
+    '| this batch substances', keep.size);
+}
 
 // --- 1. Snapshot anchors (APPEND-ONLY: preserve existing file bytes exactly) -------------------
 // The committed snapshot is Python-generated (numbers like 6e-05, 32.0). Re-serializing it with
@@ -203,7 +227,7 @@ for (const e of selected) {
       + '  $cat$parameter_value$cat$,\n  $cat$' + j + '$cat$::jsonb,\n  0.5,\n'
       + '  $cat$qa_status=needs_review; US EPA IRIS ' + desc + ' for ' + e.target_key
       + ' (CASRN ' + (e.casrn || 'n/a') + '); value verbatim from the EPA Chemicals_Details export; '
-      + 'IRIS orphan ' + (e.classification === 'AMBIGUOUS' ? 'attached to existing substance_key' : 'new input')
+      + 'IRIS orphan ' + scopeLabel(e.classification)
       + '.$cat$,\n  $cat$claude-opus-4-8$cat$\n);',
     );
   });
@@ -211,9 +235,12 @@ for (const e of selected) {
 
 if (!fs.existsSync(PASTE_DIR)) fs.mkdirSync(PASTE_DIR, { recursive: true });
 const sqlPath = path.join(PASTE_DIR, passId + '-iris-orphans-2026-06-02.sql');
+const scopeDesc = mode === 'new-substance'
+  ? 'new-substance orphans (brand-new substance_keys)'
+  : 'new-input + ambiguous (attached to existing substance_key)';
 const header = '-- IRIS orphan staging pass (' + passId + '), generated 2026-06-02. Owner pastes into\n'
   + '-- Supabase Studio; AI never pastes. catalog_extraction_staging, hitl_status defaults pending.\n'
-  + '-- Scope: new-input + ambiguous (attached to existing substance_key). ' + payloadCount + ' payloads.\n';
+  + '-- Scope: ' + scopeDesc + '. ' + payloadCount + ' payloads.\n';
 fs.writeFileSync(sqlPath, header + sqlBlocks.join('\n') + '\n', 'utf8');
 
 console.log('selected groups:', selected.length, '| staging payloads:', payloadCount);
