@@ -62,7 +62,7 @@ function source(id: string): SourceRecord {
 function equation(id: string): EquationRecord {
   return {
     equation_id: id,
-    pathway: 'direct-contact-soil',
+    pathway: 'human-health-direct',
     display_name: `Equation ${id}`,
     equation_latex: 'x = y',
     plain_language: 'plain',
@@ -84,13 +84,13 @@ function paramRecord(
   return {
     parameter_value_id: 'pv-1',
     substance_key: 'lead',
-    pathway: 'direct-contact-soil',
+    pathway: 'human-health-direct',
     input_key: 'rfd',
     display_name: 'Reference dose',
     value: 0.0036,
     unit: 'mg/kg-bw/day',
     value_type: 'single_value',
-    candidate_group_id: 'lead::direct-contact-soil::rfd',
+    candidate_group_id: 'lead::human-health-direct::rfd',
     default_status: 'current_default',
     evidence_support_status: 'approved_source_backed',
     extraction_status: 'extracted_from_source',
@@ -148,8 +148,8 @@ describe('resolveEquationRecords', () => {
 describe('resolveEquationsForPathway', () => {
   it('delegates to getPathwayEquationRecords with the pathway', () => {
     mockGetPathwayEquationRecords.mockReturnValue([equation('eqP')]);
-    const out = resolveEquationsForPathway('direct-contact-soil');
-    expect(mockGetPathwayEquationRecords).toHaveBeenCalledWith('direct-contact-soil');
+    const out = resolveEquationsForPathway('human-health-direct');
+    expect(mockGetPathwayEquationRecords).toHaveBeenCalledWith('human-health-direct');
     expect(out[0].equation_id).toBe('eqP');
   });
 });
@@ -176,14 +176,14 @@ describe('resolveProvenanceRows -- catalog lookup gating', () => {
         label: '',
         value: 0.0036,
         role: 'source-backed default',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ];
     resolveProvenanceRows(used);
     expect(mockGetParameterValueRecord).toHaveBeenCalledWith(
       'lead',
-      'direct-contact-soil',
+      'human-health-direct',
       'rfd',
     );
   });
@@ -228,7 +228,7 @@ describe('resolveProvenanceRows -- formatValue', () => {
         value: 1,
         unit: 'used-unit',
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ];
@@ -244,7 +244,7 @@ describe('resolveProvenanceRows -- formatValue', () => {
         label: 'L',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ];
@@ -272,7 +272,7 @@ describe('resolveProvenanceRows -- label fallback chain', () => {
         label: '',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ]);
@@ -301,7 +301,7 @@ describe('resolveProvenanceRows -- resolveRole', () => {
         label: 'L',
         value: 1,
         role: usedRole,
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ])[0].role;
@@ -363,7 +363,7 @@ describe('resolveProvenanceRows -- resolveEvidenceSupportStatus', () => {
         label: 'L',
         value: 1,
         role: usedRole,
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ])[0].evidence_support_status;
@@ -396,7 +396,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
         label: 'L',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ]);
@@ -420,7 +420,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
         label: 'L',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
         note: 'used note',
       },
@@ -437,7 +437,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
         label: 'L',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ]);
@@ -459,7 +459,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
         label: 'L',
         value: 1,
         role: 'user-entered value',
-        pathway: 'direct-contact-soil',
+        pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ]);
