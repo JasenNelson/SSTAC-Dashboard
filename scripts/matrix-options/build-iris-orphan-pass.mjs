@@ -138,13 +138,42 @@ if (slice) {
     throw new Error('substance-slice OVERLAP with pass ' + priorCovered.get(overlap[0]) + ': '
       + overlap.slice(0, 5).join(', ') + (overlap.length > 5 ? ' ...' : ''));
   }
+  // PASS-ID REUSE GUARD (2026-06-03): re-running the SAME pass id is skipped from the overlap check
+  // above so a pass can be re-run idempotently. But if it is re-run with a DIFFERENT key set/slice
+  // than the manifest already records, silently overwriting manifest.passes[passId] (below) would
+  // corrupt coverage accounting (the prior range's keys would vanish from the covered set, no longer
+  // protected against a future overlapping batch). An IDENTICAL slice (same key set, order-insensitive)
+  // stays idempotent; a DIFFERENT one fails loudly so the owner picks a fresh pass id.
+  const recorded = manifest.passes[passId];
+  if (recorded) {
+    const recordedSet = new Set(recorded);
+    const sameKeys = recorded.length === batchKeys.length
+      && batchKeys.every((k) => recordedSet.has(k));
+    if (!sameKeys) {
+      throw new Error('PASS-ID REUSE: pass ' + passId + ' already recorded a different key set ('
+        + recorded.length + ' keys: ' + recorded.slice(0, 5).join(', ')
+        + (recorded.length > 5 ? ' ...' : '') + '); this run would stage ' + batchKeys.length
+        + ' keys (' + batchKeys.slice(0, 5).join(', ') + (batchKeys.length > 5 ? ' ...' : '')
+        + '). Re-running an IDENTICAL slice is idempotent; a DIFFERENT slice must use a new --pass id.');
+    }
+  }
   if (writeSnapshot) {
+    if (manifest.distinct_total !== distinct.length) {
+      // Scope drift: the recon pool changed size since an earlier pass recorded distinct_total.
+      // Coverage accounting against a moved denominator is unreliable; warn rather than report a
+      // confident (possibly negative) remaining count.
+      console.warn('WARNING: distinct_total drift -- manifest recorded', manifest.distinct_total,
+        'but this run sees', distinct.length, 'distinct substances; coverage count may be stale.');
+    }
     manifest.distinct_total = distinct.length;
     manifest.passes[passId] = batchKeys;
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
-    const covered = new Set(Object.values(manifest.passes).flat());
+    // Count only manifest-covered keys that still exist in the CURRENT distinct pool, so coverage
+    // stays bounded by distinct.length even if a prior pass recorded keys no longer present.
+    const distinctSet = new Set(distinct);
+    const covered = new Set(Object.values(manifest.passes).flat().filter((k) => distinctSet.has(k)));
     console.log('manifest: covered', covered.size, 'of', distinct.length,
-      '| remaining', distinct.length - covered.size);
+      '| remaining', Math.max(0, distinct.length - covered.size));
   }
   console.log('substance-slice', slice, '-> distinct total', distinct.length, '| this batch',
     keep.size, '| range', batchKeys[0], '..', batchKeys[batchKeys.length - 1]);
