@@ -59,7 +59,7 @@ import {
   formatEvidenceStatusSummary,
 } from "./schema_version";
 
-export const MEMO_GENERATOR_VERSION = "lane2b-memo-v1";
+export const MEMO_GENERATOR_VERSION = "lane2b-memo-v2";
 
 // Typography constants. docx sizes are in half-points.
 export const MEMO_FONT_FAMILY = "Times New Roman";
@@ -594,36 +594,36 @@ function buildPolicyEvidenceSection(
 
 // --- Tier sections --------------------------------------------------------
 
+// Option A (2026-06-02): explainer prose is TIER-BLIND and version-neutral.
+// The AI surfaces evidence with verbatim citations; the HITL makes all
+// adequacy / compliance / sufficiency determinations. Wording is identical
+// across schema versions (0.0.1 and 0.1.0) -- column headers and headings
+// still vary by schema version via memoIsEvidenceStatus (data-shape, not
+// AI-authority claims).
+//
+// Role-framing (2026-06-02 review FIX 1): the AI clause describes the AI's
+// ROLE ("The AI's role is to surface relevant submission evidence with
+// verbatim citations"), NOT a per-memo claim that evidence WAS cited. The
+// earlier "The AI surfaced the relevant evidence ..." phrasing over-claimed:
+// empty tiers and legacy / no-evidence policies render "No verbatim submission
+// evidence cited by AI", so a per-memo "surfaced evidence" assertion would be
+// false exactly where there is none. The role statement stays true even when
+// no evidence was found; the per-policy "No verbatim submission evidence cited
+// by AI" line still reports the actual outcome.
 const TIER_1_EXPLAINER =
   "These regulatory items are binary requirements (must / shall / required). " +
-  "The AI provided an initial determination; the reviewer's judgment is the " +
-  "final position.";
-
-// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence, it
-// does not determine. Legacy 0.0.1 memos keep TIER_1_EXPLAINER above (consistent
-// with their "AI Suggestion" header + verdict-suggestion cells).
-const TIER_1_EXPLAINER_ES =
-  "These regulatory items are binary requirements (must / shall / required). " +
-  "The AI surfaced initial evidence; the reviewer's judgment is the " +
-  "final position.";
+  "The AI's role is to surface relevant submission evidence with verbatim citations; " +
+  "the reviewer makes the binary determination.";
 
 const TIER_2_EXPLAINER =
-  "These items require professional judgment. The AI can only flag potential " +
-  "deficiencies; a qualified professional (QP) must make the adequacy " +
-  "determination.";
-
-// S4 AI-scope: 0.1.0 (evidence-status) variant -- the AI surfaces evidence
-// signals, it does not "flag deficiencies"; the QP still makes the adequacy
-// determination. Legacy 0.0.1 memos keep TIER_2_EXPLAINER above.
-const TIER_2_EXPLAINER_ES =
-  "These items require professional judgment. The AI surfaces evidence signals " +
-  "(present or absent, with supporting / negating counts); a qualified " +
-  "professional (QP) makes the adequacy determination.";
+  "These items require professional judgment (should / sufficient / appropriate). " +
+  "The AI's role is to surface relevant submission evidence with verbatim citations; " +
+  "a qualified professional (QP) makes the adequacy determination.";
 
 const TIER_3_EXPLAINER =
-  "These items involve statutory discretion (Director, Statutory Decision " +
-  "Maker). The AI provides observations only; final adequacy is determined " +
-  "by the SDM / Crown.";
+  "These items involve statutory discretion (Director / Statutory Decision Maker). " +
+  "The AI's role is to surface relevant submission evidence with verbatim citations; " +
+  "the SDM / Crown makes the determination.";
 
 // Build a labelled heading for a per-policy evidence sub-section.
 function policyEvidenceHeading(policyId: string): Paragraph {
@@ -643,7 +643,7 @@ function buildTier1Section(
     HeadingLevel.HEADING_2,
   );
   const explainer = bodyParagraph([
-    bodyText(memoIsEvidenceStatus(allRows) ? TIER_1_EXPLAINER_ES : TIER_1_EXPLAINER),
+    bodyText(TIER_1_EXPLAINER),
   ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
@@ -683,7 +683,7 @@ function buildTier2Section(
     HeadingLevel.HEADING_2,
   );
   const explainer = bodyParagraph([
-    bodyText(memoIsEvidenceStatus(allRows) ? TIER_2_EXPLAINER_ES : TIER_2_EXPLAINER),
+    bodyText(TIER_2_EXPLAINER),
   ]);
   if (rows.length === 0) return [heading, explainer, emptySectionParagraph()];
   const header = buildHeaderRow([
