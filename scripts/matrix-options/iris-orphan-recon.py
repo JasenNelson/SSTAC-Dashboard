@@ -78,44 +78,97 @@ def parse_value(raw):
     return None, s
 
 
-def unit_consistent(unit_text, input_key):
-    """The EPA cell's own unit must agree with the column's TOXICITY VALUE TYPE.
+# Builder-parity unit predicates: ported byte-for-byte from generate-catalog-records.mjs
+# (canonUnit / numeratorPrefix / isReciprocalUnit / isPerDay / isDose / isAir) so the recon's
+# accepted set is IDENTICAL to what the builder's normalizeToCanonical can convert. Greek mu
+# (U+03BC) and the micro sign (U+00B5) map to 'ug' BEFORE lowercasing so a raw microgram symbol
+# never collapses to 'g' (a 1000-fold error). Plain-ASCII source rule (CLAUDE.md 1.1): the two
+# non-ASCII code points are written as escapes.
+_RE_MU_G = re.compile(chr(0x03BC) + "g|" + chr(0x00B5) + "g", re.IGNORECASE)
 
-    We assign canonical units by type downstream, so a cell whose unit contradicts its
-    type (e.g. an 'Oral Slope Factor' row whose unit is the non-reciprocal 'mg/kg-day')
-    is a data-quality defect and must be flagged, never silently coerced.
 
-    SCALE/BASIS GATE (2026-06-03, fiber-unit + scale-blind defect fix): for the two
-    inhalation types the cell must carry a MASS-per-air unit so the builder's
-    normalizeToCanonical can convert it. A FIBER-count basis (f/mL, fiber/cc, "fiber")
-    is NOT mass-convertible to per ug/m3 and MUST route to data_quality (excluded) --
-    e.g. the asbestos IUR '2.3 x 10^-1 per f/mL' should never have been generated.
-    Mass-scale variants (per mg/m3, per ug/m3, per ng/m3) stay ACCEPTED; the builder
-    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000).
+def canon_unit(u):
+    s = _RE_MU_G.sub("ug", str(u if u is not None else ""))
+    s = s.lower()
+    s = re.sub(r"\s+", "", s)
+    s = re.sub(r"bw", "", s)
+    s = re.sub(r"cu\.?m", "m3", s)
+    s = re.sub(r"microg|mcg", "ug", s)
+    return s
+
+
+def numerator_prefix(u):
+    """Mass prefix on the numerator (text before the first '/'); None unless exactly ng/ug/mg/g.
+
+    Mirrors the builder's numeratorPrefix EXACTLY (anchored ^(ng|ug|mg|g)$), so a 'kg' numerator
+    (which the old recon's endswith('g') wrongly accepted) returns None -> reject.
     """
-    u = unit_text.lower().replace(" ", "")
-    if u == "":
-        return True  # bare number; type assigns the unit
-    recip = ("per" in u) or (")-1" in u) or u.endswith("-1")
-    # Fiber-count basis: not mass-convertible (no mg/ug/ng prefix on an air volume).
-    fiber = ("f/ml" in u) or ("fiber" in u) or ("f/cc" in u)
-    air = ("m3" in u) or ("/m" in u and "kg" not in u)
-    dose = "kg" in u
-    # Mass prefix on the numerator (the convertible scales: ng/ug/mg/g per m3). The numerator
-    # is the text before '/m' (e.g. 'permg/m3' -> 'permg', 'mg/m3' -> 'mg'); a bare 'm3' with no
-    # mass prefix (or a fiber basis) is NOT convertible. matches the builder's numeratorPrefix.
-    numerator = u.split("/m")[0]
-    mass_air = air and any(numerator.endswith(p) for p in ("ng", "ug", "mg", "g"))
+    numerator = re.sub(r"[^a-z0-9]", "", u.split("/")[0])
+    numerator = re.sub(r"^per", "", numerator)
+    m = re.match(r"^(ng|ug|mg|g)$", numerator)
+    return m.group(1) if m else None
+
+
+def is_reciprocal_unit(u):
+    return ("per" in u) or (")-1" in u) or ("^-1" in u) or u.endswith("-1")
+
+
+def is_per_day(u):
+    """A per-day RATE token: literal 'day' or a standalone 'd' (mirrors the builder's isDose 'd')."""
+    return ("day" in u) or (re.search(r"(^|[^a-z])d($|[^a-z])", u) is not None)
+
+
+def is_dose(u):
+    return ("kg" in u) and is_per_day(u)
+
+
+def is_air(u):
+    return "m3" in u
+
+
+def unit_consistent(unit_text, input_key):
+    """The EPA cell's own unit must be one the builder's normalizeToCanonical can CONVERT.
+
+    BUILDER PARITY (2026-06-03, F1): recon accepts a unit IFF generate-catalog-records.mjs
+    normalizeToCanonical would convert it (not throw). The predicates above are ported byte-for-
+    byte from the builder, so the recon's orphan (generatable) pool and the builder's accepted set
+    cannot drift. Real-but-non-convertible units return False and route to data_quality (excluded),
+    never the orphan pool:
+      - a 'kg' numerator (numerator_prefix None -- the old endswith('g') wrongly accepted it),
+      - an 'm2' / bare '/m' surface (is_air False -- the old '/m' clause wrongly accepted it),
+      - a FIBER-count basis (f/mL, fiber/cc, 'fiber'): is_air False AND numerator_prefix None,
+        so it falls out naturally (no special-case clause needed) -- e.g. the asbestos IUR
+        '2.3 x 10^-1 per f/mL' is excluded,
+      - a wrong reciprocal POLARITY for the type (RfD reciprocal, SF non-reciprocal, etc.),
+      - an air RATE carrying a trailing /day (see below).
+    Mass-scale variants (per mg/m3, per ug/m3, per ng/m3, per mcg/m3) stay ACCEPTED; the builder
+    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000). A bare/empty cell
+    stays True: the TOXICITY VALUE TYPE assigns the canonical unit downstream (the value is already
+    in canonical units; no conversion is performed, so this is intentionally outside builder parity).
+
+    /day RATE GUARD: an air unit carrying a trailing /day (e.g. 'mg/m3/day') is a rate, not a
+    concentration; EPA RfC/IUR are never per-day. Both recon AND the builder reject it (symmetric
+    guard added 2026-06-03 after a preflight confirmed zero shipped rows AND zero EPA-export rows
+    carry such a unit -- pure hardening, no reclassification of real data).
+    """
+    raw = "" if unit_text is None else str(unit_text)
+    if raw.strip() == "":
+        return True  # bare number; the type assigns the canonical unit
+    u = canon_unit(raw)
+    recip = is_reciprocal_unit(u)
+    dose = is_dose(u)
+    air = is_air(u)
+    prefix = numerator_prefix(u)
+    if air and is_per_day(u):
+        return False  # air RATE (per-day); not a concentration
     if input_key == "rfd_oral_mg_per_kg_bw_day":
-        return dose and not recip
+        return dose and (not recip) and (prefix is not None)
     if input_key == "sf_oral_per_mg_per_kg_bw_per_day":
-        return dose and recip
+        return dose and recip and (prefix is not None)
     if input_key == "rfc_inhalation_mg_per_m3":
-        # RfC: mass-per-air, non-reciprocal. Fiber basis is excluded.
-        return air and (not recip) and (not fiber) and mass_air
+        return air and (not recip) and (prefix is not None)
     if input_key == "unit_risk_inhalation_per_ug_m3":
-        # IUR: reciprocal mass-per-air. Fiber basis (per f/mL) is excluded.
-        return air and recip and (not fiber) and mass_air
+        return air and recip and (prefix is not None)
     return False
 
 

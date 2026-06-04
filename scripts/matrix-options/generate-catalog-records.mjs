@@ -211,6 +211,14 @@ function numeratorPrefix(u) {
 function isReciprocalUnit(u) {
   return /per/.test(u) || /\)-1/.test(u) || /\^-1/.test(u) || /-1$/.test(u);
 }
+// A per-day RATE token: literal 'day' or a standalone 'd'. Used both for isDose (RfD/SF carry a
+// /day basis) and -- symmetrically with the recon (iris-orphan-recon.py is_per_day) -- to REJECT
+// an air unit that carries a trailing /day (e.g. 'mg/m3/day'): that is a rate, not a concentration,
+// and EPA RfC/IUR are never per-day. Preflight 2026-06-03 confirmed zero shipped/EPA-export rows
+// carry such an air unit, so this guard is pure hardening (no reclassification of real data).
+function isPerDay(u) {
+  return u.includes('day') || /(^|[^a-z])d($|[^a-z])/.test(u);
+}
 
 // Normalize raw value+unit into the canonical catalog value for targetInputKey.
 // Throws (fail closed) when the unit cannot be confidently classified.
@@ -219,7 +227,7 @@ export function normalizeToCanonical(rawValue, rawUnit, targetInputKey) {
   if (!Number.isFinite(num)) throw new Error('Non-numeric value "' + rawValue + '"');
   const u = canonUnit(rawUnit);
   const recip = isReciprocalUnit(u);
-  const isDose = u.includes('kg') && (u.includes('day') || /(^|[^a-z])d($|[^a-z])/.test(u));
+  const isDose = u.includes('kg') && isPerDay(u);
   const isAir = u.includes('m3');
   const p = numeratorPrefix(u);
 
@@ -235,11 +243,13 @@ export function normalizeToCanonical(rawValue, rawUnit, targetInputKey) {
   }
   if (targetInputKey === 'rfc_inhalation_mg_per_m3') {
     if (!isAir || recip) throw new Error('Bad RfC unit "' + rawUnit + '"');
+    if (isPerDay(u)) throw new Error('RfC unit is a per-day rate, not a concentration "' + rawUnit + '"');
     if (!p) throw new Error('No mass prefix in RfC unit "' + rawUnit + '"');
     return { value: num * MASS_TO_MG[p], unit: CANONICAL[targetInputKey].unit };
   }
   if (targetInputKey === 'unit_risk_inhalation_per_ug_m3') {
     if (!isAir || !recip) throw new Error('Bad IUR unit "' + rawUnit + '"');
+    if (isPerDay(u)) throw new Error('IUR unit is a per-day rate, not a concentration "' + rawUnit + '"');
     if (!p) throw new Error('No mass prefix in IUR unit "' + rawUnit + '"');
     // store as per ug/m3: factor = (ug->mg) / (p->mg)
     return { value: num * (MASS_TO_MG.ug / MASS_TO_MG[p]), unit: CANONICAL[targetInputKey].unit };

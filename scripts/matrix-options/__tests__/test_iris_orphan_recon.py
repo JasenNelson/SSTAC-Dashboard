@@ -162,3 +162,65 @@ def test_rfc_mass_air_accepted():
     # A normal mass-per-air RfC unit stays accepted.
     assert recon.unit_consistent("mg/m3", RFC) is True
     assert recon.unit_consistent("ug/m3", RFC) is True
+
+
+# ---------------------------------------------------------------------------
+# unit_consistent -- builder parity (F1 2026-06-03)
+#
+# recon.unit_consistent must accept a unit IFF generate-catalog-records.mjs:normalizeToCanonical
+# would convert it. The helpers (canon_unit / numerator_prefix / is_reciprocal_unit / is_per_day /
+# is_dose / is_air) are ported byte-for-byte from the builder, so the recon's orphan pool and the
+# builder's accepted set cannot drift. A preflight over all 676 EPA toxicity rows confirmed the
+# port + the /day guard reclassify ZERO real rows (pure hardening).
+# ---------------------------------------------------------------------------
+
+RFD = "rfd_oral_mg_per_kg_bw_day"
+SF = "sf_oral_per_mg_per_kg_bw_per_day"
+
+# (unit_text, input_key, expect_accept)
+_PARITY_CASES = [
+    # accept: convertible mass-per-air / dose units across every prefix the builder maps.
+    ("per ug/m3", IUR, True),
+    ("per ng/m3", IUR, True),
+    ("per mg/m3", IUR, True),
+    ("per mcg/m3", IUR, True),        # mcg -> ug via canon_unit; the builder converts it
+    ("per microg/m3", IUR, True),
+    ("mg/m3", RFC, True),
+    ("ug/m3", RFC, True),
+    ("ng/m3", RFC, True),
+    ("mcg/m3", RFC, True),
+    ("mg/kg-day", RFD, True),
+    ("ug/kg-day", RFD, True),
+    ("per mg/kg-day", SF, True),
+    ("", RFD, True),                  # bare number; the type assigns the canonical unit
+    ("", IUR, True),
+    # accept: case / whitespace variants canonicalize identically.
+    ("PER MG/M3", IUR, True),
+    ("  mg / m3  ", RFC, True),
+    # reject: real-but-non-convertible scales/bases -> route to data_quality, not the orphan pool.
+    ("per kg/m3", IUR, False),        # kg numerator -> numerator_prefix None (old endswith('g') bug)
+    ("per mg/m2", RFC, False),        # m2 surface -> is_air False (old '/m' clause wrongly accepted)
+    ("f/mL", RFC, False),             # fiber basis -> is_air False
+    ("per f/mL", IUR, False),
+    ("per fiber/cc", IUR, False),
+    # reject: air RATE carrying a trailing /day (the symmetric /day guard).
+    ("mg/m3/day", RFC, False),
+    ("per mg/m3/day", IUR, False),
+    # reject: wrong reciprocal polarity for the type.
+    ("per mg/kg-day", RFD, False),    # RfD must be non-reciprocal
+    ("mg/kg-day", SF, False),         # SF must be reciprocal
+    ("per mg/m3", RFC, False),        # RfC must be non-reciprocal
+    ("mg/m3", IUR, False),            # IUR must be reciprocal
+    # reject: dose missing its /day basis or its numerator mass prefix.
+    ("mg/kg", RFD, False),            # no /day -> is_dose False
+    ("per /kg-day", SF, False),       # no numerator mass prefix
+]
+
+
+def test_unit_consistent_builder_parity_table():
+    failures = []
+    for unit_text, input_key, expect in _PARITY_CASES:
+        got = recon.unit_consistent(unit_text, input_key)
+        if got is not expect:
+            failures.append({"unit": unit_text, "input_key": input_key, "expect": expect, "got": got})
+    assert not failures, "unit_consistent parity mismatches: " + repr(failures)
