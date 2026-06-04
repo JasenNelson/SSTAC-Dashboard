@@ -1,0 +1,36 @@
+{
+  "_comment": "F3 cross-language unit CONTRACT fixture. Read by BOTH pytest (test_unit_contract.py -> iris-orphan-recon.unit_consistent) AND vitest (src/lib/matrix-options/provenance/__tests__/unit-contract.test.ts -> generate-catalog-records.normalizeToCanonical). It pins recon's ACCEPT-set == the builder's CONVERT-set AND the conversion magnitude, so the Python and JS unit logic cannot silently drift apart -- a divergence fails CI on one side or the other. AMEND-F3a: every row carries a NUMERIC raw_value so the JS builder throws on the UNIT classification (not on a non-numeric value) for rejected rows. expect_canonical_value/expect_canonical_unit appear ONLY on accepted rows and are independently-computed power-of-ten conversions (MASS_TO_MG ng/ug/mg/g = 1e-6/1e-3/1/1e3; mcg folds to ug), NOT generated from the builder, so a builder bug cannot bake itself into the fixture. AMEND-F3b: an empty unit '' is a both-sides REJECT (F1 made recon reject '' and the builder throws on '').",
+  "rows": [
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "mg/kg-day", "raw_value": 9, "expect_accept": true, "expect_canonical_value": 9, "expect_canonical_unit": "mg/kg-bw/day"},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "ug/kg-day", "raw_value": 9, "expect_accept": true, "expect_canonical_value": 0.009, "expect_canonical_unit": "mg/kg-bw/day"},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "ng/kg-day", "raw_value": 9, "expect_accept": true, "expect_canonical_value": 9e-6, "expect_canonical_unit": "mg/kg-bw/day"},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "mcg/kg-day", "raw_value": 9, "expect_accept": true, "expect_canonical_value": 0.009, "expect_canonical_unit": "mg/kg-bw/day"},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "g/kg-day", "raw_value": 2, "expect_accept": true, "expect_canonical_value": 2000, "expect_canonical_unit": "mg/kg-bw/day"},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "per mg/kg-day", "raw_value": 9, "expect_accept": false},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "mg/kg", "raw_value": 9, "expect_accept": false},
+    {"input_key": "rfd_oral_mg_per_kg_bw_day", "raw_unit": "", "raw_value": 9, "expect_accept": false},
+
+    {"input_key": "sf_oral_per_mg_per_kg_bw_per_day", "raw_unit": "per mg/kg-day", "raw_value": 2, "expect_accept": true, "expect_canonical_value": 2, "expect_canonical_unit": "per mg/kg-bw/day"},
+    {"input_key": "sf_oral_per_mg_per_kg_bw_per_day", "raw_unit": "per ug/kg-day", "raw_value": 2, "expect_accept": true, "expect_canonical_value": 2000, "expect_canonical_unit": "per mg/kg-bw/day"},
+    {"input_key": "sf_oral_per_mg_per_kg_bw_per_day", "raw_unit": "per ng/kg-day", "raw_value": 2, "expect_accept": true, "expect_canonical_value": 2000000, "expect_canonical_unit": "per mg/kg-bw/day"},
+    {"input_key": "sf_oral_per_mg_per_kg_bw_per_day", "raw_unit": "mg/kg-day", "raw_value": 2, "expect_accept": false},
+
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "mg/m3", "raw_value": 5, "expect_accept": true, "expect_canonical_value": 5, "expect_canonical_unit": "mg/m3"},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "ug/m3", "raw_value": 5, "expect_accept": true, "expect_canonical_value": 0.005, "expect_canonical_unit": "mg/m3"},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "ng/m3", "raw_value": 5, "expect_accept": true, "expect_canonical_value": 5e-6, "expect_canonical_unit": "mg/m3"},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "mcg/m3", "raw_value": 5, "expect_accept": true, "expect_canonical_value": 0.005, "expect_canonical_unit": "mg/m3"},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "per mg/m3", "raw_value": 5, "expect_accept": false},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "mg/m2", "raw_value": 5, "expect_accept": false},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "mg/m3/day", "raw_value": 5, "expect_accept": false},
+    {"input_key": "rfc_inhalation_mg_per_m3", "raw_unit": "f/mL", "raw_value": 5, "expect_accept": false},
+
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per ug/m3", "raw_value": 8, "expect_accept": true, "expect_canonical_value": 8, "expect_canonical_unit": "per ug/m3"},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per mg/m3", "raw_value": 8, "expect_accept": true, "expect_canonical_value": 0.008, "expect_canonical_unit": "per ug/m3"},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per ng/m3", "raw_value": 8, "expect_accept": true, "expect_canonical_value": 8000, "expect_canonical_unit": "per ug/m3"},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per mcg/m3", "raw_value": 8, "expect_accept": true, "expect_canonical_value": 8, "expect_canonical_unit": "per ug/m3"},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "mg/m3", "raw_value": 8, "expect_accept": false},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per kg/m3", "raw_value": 8, "expect_accept": false},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per f/mL", "raw_value": 8, "expect_accept": false},
+    {"input_key": "unit_risk_inhalation_per_ug_m3", "raw_unit": "per mg/m3/day", "raw_value": 8, "expect_accept": false}
+  ]
+}
