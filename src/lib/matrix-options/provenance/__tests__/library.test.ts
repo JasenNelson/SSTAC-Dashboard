@@ -33,18 +33,20 @@ describe('matrix options evidence library helpers', () => {
     // EPA snapshot within 2%. This batch (new-substance B3, FINAL, pass d0c00017, +255 records)
     // closes the new-substance orphan backlog (recon remaining now 0) on top of B2 (d0c00016).
     // valueGroups counts UNIQUE candidate_group_id over the full view (HH-TRV +
-    // parameter_values.json) -> 1600 groups, because multi-endpoint candidate families
-    // intentionally share one group id.
-    expect(view.valueGroups).toHaveLength(1600);
-    // approvedSourceBacked: 964 prior + 255 US EPA IRIS new-substance B3 rows = 1219.
+    // parameter_values.json) -> 1599 groups, because multi-endpoint candidate families
+    // intentionally share one group id. (2026-06-03: -1 from 1600 -- the asbestos IUR was a
+    // singleton candidate_group, deleted as a non-convertible fiber-unit defect.)
+    expect(view.valueGroups).toHaveLength(1599);
+    // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
-    expect(view.audit.values.approvedSourceBacked).toBe(1219);
+    expect(view.audit.values.approvedSourceBacked).toBe(1218);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370 (unchanged).
     expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
-    // availableOptions: 1325 prior + 255 IRIS new-substance B3 rows = 1580.
-    expect(view.audit.values.availableOptions).toBe(1580);
+    // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
+    // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
+    expect(view.audit.values.availableOptions).toBe(1579);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);

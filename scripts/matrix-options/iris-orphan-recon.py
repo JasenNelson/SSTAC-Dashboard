@@ -84,21 +84,38 @@ def unit_consistent(unit_text, input_key):
     We assign canonical units by type downstream, so a cell whose unit contradicts its
     type (e.g. an 'Oral Slope Factor' row whose unit is the non-reciprocal 'mg/kg-day')
     is a data-quality defect and must be flagged, never silently coerced.
+
+    SCALE/BASIS GATE (2026-06-03, fiber-unit + scale-blind defect fix): for the two
+    inhalation types the cell must carry a MASS-per-air unit so the builder's
+    normalizeToCanonical can convert it. A FIBER-count basis (f/mL, fiber/cc, "fiber")
+    is NOT mass-convertible to per ug/m3 and MUST route to data_quality (excluded) --
+    e.g. the asbestos IUR '2.3 x 10^-1 per f/mL' should never have been generated.
+    Mass-scale variants (per mg/m3, per ug/m3, per ng/m3) stay ACCEPTED; the builder
+    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000).
     """
     u = unit_text.lower().replace(" ", "")
     if u == "":
         return True  # bare number; type assigns the unit
     recip = ("per" in u) or (")-1" in u) or u.endswith("-1")
+    # Fiber-count basis: not mass-convertible (no mg/ug/ng prefix on an air volume).
+    fiber = ("f/ml" in u) or ("fiber" in u) or ("f/cc" in u)
     air = ("m3" in u) or ("/m" in u and "kg" not in u)
     dose = "kg" in u
+    # Mass prefix on the numerator (the convertible scales: ng/ug/mg/g per m3). The numerator
+    # is the text before '/m' (e.g. 'permg/m3' -> 'permg', 'mg/m3' -> 'mg'); a bare 'm3' with no
+    # mass prefix (or a fiber basis) is NOT convertible. matches the builder's numeratorPrefix.
+    numerator = u.split("/m")[0]
+    mass_air = air and any(numerator.endswith(p) for p in ("ng", "ug", "mg", "g"))
     if input_key == "rfd_oral_mg_per_kg_bw_day":
         return dose and not recip
     if input_key == "sf_oral_per_mg_per_kg_bw_per_day":
         return dose and recip
     if input_key == "rfc_inhalation_mg_per_m3":
-        return air and not recip
+        # RfC: mass-per-air, non-reciprocal. Fiber basis is excluded.
+        return air and (not recip) and (not fiber) and mass_air
     if input_key == "unit_risk_inhalation_per_ug_m3":
-        return air and recip
+        # IUR: reciprocal mass-per-air. Fiber basis (per f/mL) is excluded.
+        return air and recip and (not fiber) and mass_air
     return False
 
 
@@ -119,10 +136,45 @@ def norm_name(name):
     return n
 
 
+def norm_casrn(casrn):
+    """Normalize a CASRN for the new-vs-new collision compare.
+
+    Returns a stable string form (surrounding whitespace stripped; an int/float Excel cell
+    coerced to str) or None for a blank/missing CASRN. A None CASRN is a sentinel that must
+    NOT collide-merge: two rows with no CASRN cannot be asserted to be distinct substances,
+    and a formatting variant of one CASRN must not mask -- nor false-trigger -- a real
+    two-CASRN collision. The minted-key collision set drops None so blanks never inflate it.
+    """
+    if casrn is None:
+        return None
+    s = str(casrn).strip()
+    return s or None
+
+
 def is_iris(rec):
     dn = (rec.get("display_name") or "").lower()
     sid = " ".join(rec.get("source_ids") or []).lower()
     return "iris" in dn or "iris" in sid
+
+
+def colliding_minted_keys(minted_cas):
+    """Minted substance_keys that map to 2+ DISTINCT (normalized) CASRNs -> a new-vs-new collision.
+
+    `minted_cas` maps minted substance_key -> set of normalized CASRNs (None/blanks already dropped
+    by the caller). A key with 0 or 1 distinct CASRN is NOT a collision (a single substance spanning
+    multiple input_keys under one CASRN, or a blank-CASRN-only key).
+    """
+    return {k for k, cas in minted_cas.items() if len(cas) > 1}
+
+
+def exclude_colliding(entries, colliding_keys):
+    """Drop every entry whose minted substance_key is in `colliding_keys`.
+
+    Applied to BOTH minted-key buckets (orphan_new_substance AND ambiguous) so a 2-CASRN-same-key
+    pair can never be staged in ANY generation mode. Non-colliding entries (incl. legitimately
+    ambiguous ones whose minted key has < 2 CASRNs) are preserved.
+    """
+    return [e for e in entries if e["substance_key"] not in colliding_keys]
 
 
 def main():
@@ -197,7 +249,11 @@ def main():
             sub_key = mint_key(name)
             # Track every raw minted row's CASRN/name BEFORE grouping + value-dedupe, so a true
             # two-CASRN collision under one input_key cannot be hidden by the collapse below.
-            minted_cas[sub_key].add(casrn)
+            # CASRN is normalized (whitespace stripped; blank -> None sentinel) so formatting
+            # variants neither false-trigger KEY_COLLISION nor mask a real two-CASRN collision.
+            ncas = norm_casrn(casrn)
+            if ncas is not None:
+                minted_cas[sub_key].add(ncas)
             minted_names[sub_key].add(name)
 
         gkey = (sub_key, input_key)
@@ -261,16 +317,24 @@ def main():
                 entry["classification"] = "ORPHAN_NEW_SUBSTANCE"
                 orphan_new_substance.append(entry)
 
-    # Guardrail (cursor 2026-06-02): new-vs-new minted-key collision. Two DISTINCT EPA chemicals
-    # (different CASRN) that mint the same substance_key would be silently merged. Detection uses the
-    # RAW-level minted_cas map (accumulated before grouping/value-dedupe), so a collision under the
-    # same input_key cannot be hidden. Colliding keys are partitioned OUT of auto-generation and
-    # reported for owner disambiguation. A single substance spanning multiple input_keys under ONE
-    # CASRN is NOT a collision (its minted_cas set has size 1).
-    colliding_keys = {k for k, cas in minted_cas.items() if len(cas) > 1}
+    # Guardrail (cursor 2026-06-02; cross-bucket hardening 2026-06-03): new-vs-new minted-key
+    # collision. Two DISTINCT EPA chemicals (different CASRN) that mint the same substance_key would
+    # be silently merged. Detection uses the RAW-level minted_cas map (accumulated before
+    # grouping/value-dedupe, with CASRN normalized), so a collision under the same input_key cannot
+    # be hidden. A single substance spanning multiple input_keys under ONE (normalized) CASRN is NOT
+    # a collision (its minted_cas set has size 1; a blank-CASRN-only key has size 0).
+    #
+    # CROSS-BUCKET EXCLUSION: a minted key lands in ORPHAN_NEW_SUBSTANCE (no existing-substance
+    # collision) OR AMBIGUOUS (its minted key/name collides with an existing catalog substance).
+    # BOTH carry the minted substance_key, and build-iris-orphan-pass.mjs feeds `ambiguous` into the
+    # generation pool in newinput-ambiguous mode. So a colliding key must be partitioned OUT of EVERY
+    # minted-key bucket -- not just orphan_new_substance -- or a 2-CASRN-same-key pair could still be
+    # staged via the ambiguous path. Colliding entries move to key_collision for owner disambiguation;
+    # legitimately-ambiguous-but-non-colliding entries (minted_cas size < 2) stay in `ambiguous`.
+    colliding_keys = colliding_minted_keys(minted_cas)
     key_collision = []
     for k in sorted(colliding_keys):
-        for cas in sorted(str(c) for c in minted_cas[k]):
+        for cas in sorted(minted_cas[k]):
             key_collision.append({
                 "substance_key": k,
                 "casrn": cas,
@@ -278,7 +342,8 @@ def main():
                 "short_input": "(multiple)",
                 "classification": "KEY_COLLISION",
             })
-    orphan_new_substance = [e for e in orphan_new_substance if e["substance_key"] not in colliding_keys]
+    orphan_new_substance = exclude_colliding(orphan_new_substance, colliding_keys)
+    ambiguous = exclude_colliding(ambiguous, colliding_keys)
 
     # Distinct-substance tallies.
     def subs(lst):

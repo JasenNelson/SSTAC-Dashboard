@@ -21,6 +21,13 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+// Reuse the generator's unit conversion so the staging value AND the snapshot anchor are
+// written in the CANONICAL scale, never the raw cell magnitude mislabeled. A 'per mg/m3' IUR
+// must be stored as the converted 'per ug/m3' number (/1000) -- see normalizeToCanonical. This
+// closes the 2026-06-03 scale-blind defect (ETBE 8e-5 per mg/m3 was stored as 8e-5 per ug/m3,
+// 1000x too high; the snapshot anchor carried the same wrong number so the 2% gate validated it
+// against itself).
+import { normalizeToCanonical } from './generate-catalog-records.mjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
@@ -47,6 +54,30 @@ const slice = argval('--substance-slice', null);
 // EPA values are 1-2 significant figures; strip float-repr artifacts (0.013000000000000001 -> 0.013).
 function clean(v) {
   return Number(Number(v).toPrecision(6));
+}
+// Extract the TRUE raw unit from a verbatim EPA cell (e.g. "8 x 10 -5 per mg/m3" -> "per mg/m3",
+// "5 x 10 -5 mg/m3" -> "mg/m3", "9 x 10 -4 mg/kg-day" -> "mg/kg-day"). Mirrors the recon's
+// parse_value unit capture: strip a leading "N x 10 M" (or leading "N ") and keep the remainder.
+// The micro sign may surface as U+00B5/U+FFFD in the raw; fold to 'u' so "per ug/m3" matches the
+// generator's canonUnit. Returns '' when no unit text is present (a bare number).
+function rawCellUnit(raw) {
+  let s = asciiFold(String(raw || '')).trim();
+  // Drop a trailing bracketed provenance tag if present (defensive; recon raws are bare cells).
+  s = s.replace(/\s*\[[^\]]*\]\s*$/, '').trim();
+  const sci = s.match(/^\s*[0-9.]+\s*x\s*10\s*-?\d+\s*(.*)$/i);
+  if (sci) return sci[1].trim();
+  const lead = s.match(/^\s*[0-9.]+\s+(\S.*?)\s*$/);
+  if (lead) return lead[1].trim();
+  return ''; // plain number, no unit text
+}
+// Canonicalize one EPA magnitude for input_key using the SAME math as the generator. We feed
+// normalizeToCanonical the TRUE raw unit parsed from the verbatim cell, so a 'per mg/m3' IUR is
+// converted to per ug/m3 (/1000), not the raw number relabeled. clean() then trims float-repr
+// noise. epaRaw is the verbatim cell (carries the true unit); epaVal is the parsed magnitude.
+function canonicalMagnitude(epaVal, epaRaw, inputKey) {
+  const unit = rawCellUnit(epaRaw);
+  const { value } = normalizeToCanonical(epaVal, unit, inputKey);
+  return clean(value);
 }
 // Fold any non-ASCII to 'u' so catalog text stays ASCII (the only expected non-ASCII is the
 // micro sign in IUR raws: 'per <micro>g/m3' -> 'per ug/m3', matching the existing catalog style).
@@ -138,13 +169,42 @@ if (slice) {
     throw new Error('substance-slice OVERLAP with pass ' + priorCovered.get(overlap[0]) + ': '
       + overlap.slice(0, 5).join(', ') + (overlap.length > 5 ? ' ...' : ''));
   }
+  // PASS-ID REUSE GUARD (2026-06-03): re-running the SAME pass id is skipped from the overlap check
+  // above so a pass can be re-run idempotently. But if it is re-run with a DIFFERENT key set/slice
+  // than the manifest already records, silently overwriting manifest.passes[passId] (below) would
+  // corrupt coverage accounting (the prior range's keys would vanish from the covered set, no longer
+  // protected against a future overlapping batch). An IDENTICAL slice (same key set, order-insensitive)
+  // stays idempotent; a DIFFERENT one fails loudly so the owner picks a fresh pass id.
+  const recorded = manifest.passes[passId];
+  if (recorded) {
+    const recordedSet = new Set(recorded);
+    const sameKeys = recorded.length === batchKeys.length
+      && batchKeys.every((k) => recordedSet.has(k));
+    if (!sameKeys) {
+      throw new Error('PASS-ID REUSE: pass ' + passId + ' already recorded a different key set ('
+        + recorded.length + ' keys: ' + recorded.slice(0, 5).join(', ')
+        + (recorded.length > 5 ? ' ...' : '') + '); this run would stage ' + batchKeys.length
+        + ' keys (' + batchKeys.slice(0, 5).join(', ') + (batchKeys.length > 5 ? ' ...' : '')
+        + '). Re-running an IDENTICAL slice is idempotent; a DIFFERENT slice must use a new --pass id.');
+    }
+  }
   if (writeSnapshot) {
+    if (manifest.distinct_total !== distinct.length) {
+      // Scope drift: the recon pool changed size since an earlier pass recorded distinct_total.
+      // Coverage accounting against a moved denominator is unreliable; warn rather than report a
+      // confident (possibly negative) remaining count.
+      console.warn('WARNING: distinct_total drift -- manifest recorded', manifest.distinct_total,
+        'but this run sees', distinct.length, 'distinct substances; coverage count may be stale.');
+    }
     manifest.distinct_total = distinct.length;
     manifest.passes[passId] = batchKeys;
     fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n', 'utf8');
-    const covered = new Set(Object.values(manifest.passes).flat());
+    // Count only manifest-covered keys that still exist in the CURRENT distinct pool, so coverage
+    // stays bounded by distinct.length even if a prior pass recorded keys no longer present.
+    const distinctSet = new Set(distinct);
+    const covered = new Set(Object.values(manifest.passes).flat().filter((k) => distinctSet.has(k)));
     console.log('manifest: covered', covered.size, 'of', distinct.length,
-      '| remaining', distinct.length - covered.size);
+      '| remaining', Math.max(0, distinct.length - covered.size));
   }
   console.log('substance-slice', slice, '-> distinct total', distinct.length, '| this batch',
     keep.size, '| range', batchKeys[0], '..', batchKeys[batchKeys.length - 1]);
@@ -162,7 +222,10 @@ const newPairs = new Set();
 const mergeNeeded = [];
 for (const e of selected) {
   const pairKey = e.target_key + '::' + e.input_key;
-  const cleanVals = e.epa_values.map(clean);
+  // CANONICALIZE before anchoring: each EPA magnitude is converted through the generator's
+  // normalizeToCanonical using the TRUE raw unit from its verbatim cell, so the anchor stores
+  // the per-ug/m3 (or canonical) value -- not the raw cell number relabeled (2026-06-03 fix).
+  const cleanVals = e.epa_values.map((v, i) => canonicalMagnitude(v, e.epa_raw[i], e.input_key));
   const existing = snapByPair.get(pairKey);
   if (existing) {
     // Existing anchor: every value we will stage must already be covered within 2%. If not, an
@@ -226,7 +289,10 @@ for (const e of selected) {
   const unit = UNIT_BY_SHORT[short];
   const desc = DESC_BY_SHORT[short];
   e.epa_values.forEach((rawVal, i) => {
-    const val = clean(rawVal);
+    // Write the CANONICAL magnitude (converted from the verbatim cell's TRUE unit) paired with the
+    // canonical `unit` label, so the downstream generator's normalizeToCanonical is a no-op and the
+    // staged value is never the raw cell number relabeled (2026-06-03 scale-blind defect fix).
+    const val = canonicalMagnitude(rawVal, e.epa_raw[i], e.input_key);
     payloadCount += 1;
     const pvId = ['pv', 'iris', e.target_key, short, String(i + 1)].join('-')
       .replace(/[^a-z0-9-]/gi, '-').replace(/-+/g, '-').toLowerCase();
