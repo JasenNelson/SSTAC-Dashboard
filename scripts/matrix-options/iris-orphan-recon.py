@@ -142,33 +142,40 @@ def unit_consistent(unit_text, input_key):
       - a wrong reciprocal POLARITY for the type (RfD reciprocal, SF non-reciprocal, etc.),
       - an air RATE carrying a trailing /day (see below).
     Mass-scale variants (per mg/m3, per ug/m3, per ng/m3, per mcg/m3) stay ACCEPTED; the builder
-    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000). A bare/empty cell
-    stays True: the TOXICITY VALUE TYPE assigns the canonical unit downstream (the value is already
-    in canonical units; no conversion is performed, so this is intentionally outside builder parity).
+    canonicalizes their magnitude (e.g. ETBE 'per mg/m3' -> per ug/m3, /1000).
 
-    /day RATE GUARD: an air unit carrying a trailing /day (e.g. 'mg/m3/day') is a rate, not a
-    concentration; EPA RfC/IUR are never per-day. Both recon AND the builder reject it (symmetric
-    guard added 2026-06-03 after a preflight confirmed zero shipped rows AND zero EPA-export rows
-    carry such a unit -- pure hardening, no reclassification of real data).
+    EMPTY/BARE cell -> REJECTED (data_quality). The builder THROWS on an empty unit (canonUnit('')
+    has no air/dose/prefix), and build-iris-orphan-pass.mjs re-parses the CELL unit (not the type)
+    before calling normalizeToCanonical -- so a bare-number row is NOT builder-convertible. Recon
+    mirrors that and routes it to data_quality for HITL inspection. (Preflight: ZERO bare-number
+    rows exist in the EPA export, so this drops no real data; it keeps the IFF parity exception-free
+    -- empty rejects on BOTH sides. Was the codex-flagged F1 asymmetry, 2026-06-03.)
+
+    /day RATE GUARD lives in the RfC/IUR branches ONLY, mirroring the builder which rejects an air
+    RATE (trailing /day, e.g. 'mg/m3/day') inside its RfC/IUR branches but NOT globally: a dose unit
+    legitimately carries /day, and a dose+m3 hybrid like 'mg/kg-day/m3' is ACCEPTED by the builder's
+    RfD branch (it takes the mg numerator, ignores the stray m3). Putting the guard in only the air
+    branches keeps strict parity (the codex-flagged F1 over-rejection, 2026-06-03). Preflight: zero
+    EPA-export rows carry an air /day unit, so the guard is pure hardening.
     """
     raw = "" if unit_text is None else str(unit_text)
     if raw.strip() == "":
-        return True  # bare number; the type assigns the canonical unit
+        return False  # bare/empty cell: builder throws -> route to data_quality (mirror)
     u = canon_unit(raw)
     recip = is_reciprocal_unit(u)
     dose = is_dose(u)
     air = is_air(u)
     prefix = numerator_prefix(u)
-    if air and is_per_day(u):
-        return False  # air RATE (per-day); not a concentration
     if input_key == "rfd_oral_mg_per_kg_bw_day":
         return dose and (not recip) and (prefix is not None)
     if input_key == "sf_oral_per_mg_per_kg_bw_per_day":
         return dose and recip and (prefix is not None)
     if input_key == "rfc_inhalation_mg_per_m3":
-        return air and (not recip) and (prefix is not None)
+        # /day guard HERE (air branch) only -- mirrors the builder (it never guards /day in the
+        # RfD/SF dose branches, which legitimately carry /day).
+        return air and (not recip) and (prefix is not None) and (not is_per_day(u))
     if input_key == "unit_risk_inhalation_per_ug_m3":
-        return air and recip and (prefix is not None)
+        return air and recip and (prefix is not None) and (not is_per_day(u))
     return False
 
 

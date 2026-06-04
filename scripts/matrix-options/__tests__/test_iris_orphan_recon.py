@@ -192,8 +192,10 @@ _PARITY_CASES = [
     ("mg/kg-day", RFD, True),
     ("ug/kg-day", RFD, True),
     ("per mg/kg-day", SF, True),
-    ("", RFD, True),                  # bare number; the type assigns the canonical unit
-    ("", IUR, True),
+    # accept: dose+m3 hybrids -- the builder's RfD/SF branches take the mass numerator and ignore
+    # the stray m3 (the /day guard is air-branch only), so recon must accept them too (parity).
+    ("mg/kg-day/m3", RFD, True),
+    ("per mg/kg-day/m3", SF, True),
     # accept: case / whitespace variants canonicalize identically.
     ("PER MG/M3", IUR, True),
     ("  mg / m3  ", RFC, True),
@@ -203,9 +205,12 @@ _PARITY_CASES = [
     ("f/mL", RFC, False),             # fiber basis -> is_air False
     ("per f/mL", IUR, False),
     ("per fiber/cc", IUR, False),
-    # reject: air RATE carrying a trailing /day (the symmetric /day guard).
+    # reject: air RATE carrying a trailing /day (/day guard, RfC/IUR branches only).
     ("mg/m3/day", RFC, False),
     ("per mg/m3/day", IUR, False),
+    # reject: empty/bare cell -- builder throws on "" -> recon mirrors (routes to data_quality).
+    ("", RFD, False),
+    ("", IUR, False),
     # reject: wrong reciprocal polarity for the type.
     ("per mg/kg-day", RFD, False),    # RfD must be non-reciprocal
     ("mg/kg-day", SF, False),         # SF must be reciprocal
