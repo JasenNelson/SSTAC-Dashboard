@@ -271,7 +271,8 @@ function main() {
   applyPromotion(records, snapshotIndex, opts);
   fs.writeFileSync(HH_TRV_FILE, JSON.stringify(records, null, 2) + '\n', 'utf8');
   console.log('\nWROTE ' + HH_TRV_FILE + ' (' + promote.length + ' rows promoted).');
-  console.log('Next: run the local gates (npx tsc --noEmit; npm run lint; npm run test:ci; build; e2e).');
+  console.log('Next: run the local gates: npx tsc --noEmit; npm run lint; npm run test:ci;');
+  console.log('  npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10; npm run test:e2e');
   console.log('The reworked catalog.test.ts stays green for either --canonical variant.');
 }
 

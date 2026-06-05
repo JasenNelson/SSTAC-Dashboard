@@ -33,9 +33,9 @@ later.
 
 ## Scope
 
-Exactly the 20 EPA-IRIS rows enumerated in the #249 packet Section 4 (7 substances:
-benzo(a)pyrene, carbon tetrachloride, anthracene, p,p'-DDT, fluoride, uranium - and the already
-cross-walked chromium(VI)/BaP approved set is NOT in scope, see below). This sheet does NOT cover the
+Exactly the 20 EPA-IRIS rows enumerated in the #249 packet Section 4 (6 substances:
+benzo(a)pyrene, carbon tetrachloride, anthracene, p,p'-DDT, fluoride, uranium - the already-approved
+chromium(VI) IRIS rows, and the already-approved BaP oral RfD/SF rows, are NOT in scope, see below). This sheet does NOT cover the
 other roughly 1020 `needs_review` IRIS TRV rows in the catalog that were not part of the live-Excel
 cross-walk; those remain `needs_review` and out of scope here.
 

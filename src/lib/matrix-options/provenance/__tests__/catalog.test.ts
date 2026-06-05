@@ -11,6 +11,9 @@ import {
   resolveEquationsForPathway,
   resolveProvenanceRows,
 } from '../resolver';
+// The exactly-20 IRIS rows the 2026-06-04 apply sheet sanctions for qa-promotion. Imported from the
+// owner-run tool so the test and tool share ONE source of truth for the sanctioned set.
+import { TARGET_IDS as IRIS_QA_PROMOTION_TARGET_IDS } from '../../../../../scripts/matrix-options/apply-qa-promotion.mjs';
 import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
@@ -513,13 +516,24 @@ describe('matrix options provenance catalog', () => {
         !record.evidence_items.every((evidence) => evidence.extracted_at === '2026-05-23'),
     );
 
-    // Mass-promotion tripwire: the apply sheet sanctions exactly 20 EPA-IRIS rows and the apply
-    // tool (scripts/matrix-options/apply-qa-promotion.mjs) is hard-scoped to those 20. A larger
-    // approved-beyond-frozen set means an unsanctioned bulk promotion slipped in -- fail. This
-    // restores the catalog-wide count tripwire the old hardcoded 84-count test used to provide.
-    expect(promotedBeyondFrozen.length).toBeLessThanOrEqual(20);
+    // Mass-promotion / substitution tripwire: every approved-beyond-frozen row MUST be one of the
+    // exactly-20 EPA-IRIS rows the 2026-06-04 apply sheet sanctions (the apply tool's TARGET_IDS),
+    // not merely a well-formed IRIS row -- a swap-in of a non-target IRIS row or a bulk promotion
+    // must fail here. And once promoted, the set must be EXACTLY those 20 (no more, no fewer, no
+    // substitutions). This restores and tightens the catalog-wide tripwire the old hardcoded
+    // 84-count test provided.
+    const sanctionedPromotionIds = new Set(IRIS_QA_PROMOTION_TARGET_IDS);
+    if (promotedBeyondFrozen.length > 0) {
+      expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(
+        sanctionedPromotionIds,
+      );
+    }
 
     for (const record of promotedBeyondFrozen) {
+      // Each promoted row is one of the sanctioned 20 (defense in depth with the set-equality above).
+      expect(sanctionedPromotionIds.has(record.parameter_value_id), record.parameter_value_id).toBe(
+        true,
+      );
       // The apply sheet covers EPA-IRIS-sourced rows only.
       expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
       // A qa promotion never makes a value a calculator default.
