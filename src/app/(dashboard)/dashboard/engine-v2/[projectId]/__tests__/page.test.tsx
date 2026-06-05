@@ -77,7 +77,13 @@ function makeClient(opts: {
       async maybeSingle() {
         if (table === "v2_projects") {
           return {
-            data: { id: PROJECT_ID, name: "P", user_id: "u" },
+            data: {
+              id: PROJECT_ID,
+              name: "P",
+              user_id: "u",
+              // M1a Phase 2: present in the live row (JSONB DEFAULT '[]').
+              applicable_policy_ids: [],
+            },
             error: null,
           };
         }
@@ -196,6 +202,30 @@ describe("ProjectDetailPage evaluations slim-select split", () => {
     ]) {
       expect(historySelect!.cols).toContain(col);
     }
+  });
+
+  it("project select includes applicable_policy_ids (M1a Phase 2)", async () => {
+    // The page casts projectRow as V2Project (a full-row type); the explicit
+    // select list must therefore carry every V2Project column. This pins the
+    // M1a Phase 2 column so a future select-list edit cannot silently drop it
+    // and make the cast lie at runtime.
+    const captured: SelectCall[] = [];
+    const client = makeClient({
+      selectCallsCapture: captured,
+      latestRow: null,
+      historyRows: [],
+    });
+    (
+      requireAdminForServerComponent as unknown as ReturnType<typeof vi.fn>
+    ).mockResolvedValue({ client });
+
+    await ProjectDetailPage({
+      params: Promise.resolve({ projectId: PROJECT_ID }),
+    });
+
+    const projectSelects = captured.filter((c) => c.table === "v2_projects");
+    expect(projectSelects).toHaveLength(1);
+    expect(projectSelects[0].cols).toContain("applicable_policy_ids");
   });
 });
 
