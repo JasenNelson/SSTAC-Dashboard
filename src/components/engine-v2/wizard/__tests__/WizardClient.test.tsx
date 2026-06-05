@@ -482,4 +482,130 @@ describe("WizardClient", () => {
       ),
     );
   });
+
+  // --- P2 same-context overlapping-fetch guard (codex confirmation round) ---
+  // Both requests share IDENTICAL selections, so the context-key guard cannot
+  // distinguish them; the monotonic seq guard must ensure only the NEWEST settles.
+
+  it("(p2a) same-context overlap: stale request A resolves with an ERROR first, then B with a proposal -> B wins, no error, Next enabled only after B", async () => {
+    // Queue of deferred resolvers, one per propose-policies call (same context).
+    const resolvers: Array<(r: Response) => void> = [];
+    fetchSpy.mockImplementation(async (input) => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("propose-policies")) {
+        return new Promise<Response>((resolve) => {
+          resolvers.push(resolve);
+        });
+      }
+      if (url.includes("/api/engine-v2/projects")) {
+        return jsonResponse(201, { id: "new-project-id" });
+      }
+      return jsonResponse(404, { error: "not_found" });
+    });
+
+    // Enter step 4 with services=["era-review"] -> fetch A (pending).
+    render(<WizardClient />);
+    fireEvent.click(screen.getByTestId("metadata-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 1
+    fireEvent.click(screen.getByTestId("apptype-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step")); // services = ["era-review"]
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolvers.length).toBe(1)); // A pending
+
+    // Leave step 4 (Back to step 3) and re-enter with IDENTICAL selections -> fetch B.
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolvers.length).toBe(2)); // B pending; same context
+
+    // Resolve the STALE A with an ERROR first. The seq guard must DISCARD it:
+    // no error must surface, and the spinner must NOT be cleared by A.
+    resolvers[0]!(jsonResponse(500, { error: "stale_boom" }));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(screen.getByTestId("ap-error").textContent).toBe("");
+    expect(screen.getByTestId("ap-proposal").textContent).toBe("null");
+    // Next still disabled (B is the only valid fetch and is still pending).
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+      "disabled",
+      true,
+    );
+
+    // Now resolve B with the real proposal.
+    resolvers[1]!(jsonResponse(200, PROPOSAL_FIXTURE));
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    expect(screen.getByTestId("ap-error").textContent).toBe("");
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+        "disabled",
+        false,
+      ),
+    );
+  });
+
+  it("(p2b) same-context overlap: stale request A resolves AFTER B with a different payload -> B's payload retained", async () => {
+    const A_PAYLOAD = {
+      ...PROPOSAL_FIXTURE,
+      signal_fired: [
+        { policy_id: "A-STALE-1", score: 1, rationale: "r", inclusive_fallback: false },
+      ],
+      counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
+    };
+    const B_PAYLOAD = {
+      ...PROPOSAL_FIXTURE,
+      signal_fired: [
+        { policy_id: "B-FRESH-1", score: 1, rationale: "r", inclusive_fallback: false },
+      ],
+      counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
+    };
+
+    const resolvers: Array<(r: Response) => void> = [];
+    fetchSpy.mockImplementation(async (input) => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("propose-policies")) {
+        return new Promise<Response>((resolve) => {
+          resolvers.push(resolve);
+        });
+      }
+      if (url.includes("/api/engine-v2/projects")) {
+        return jsonResponse(201, { id: "new-project-id" });
+      }
+      return jsonResponse(404, { error: "not_found" });
+    });
+
+    render(<WizardClient />);
+    fireEvent.click(screen.getByTestId("metadata-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 1
+    fireEvent.click(screen.getByTestId("apptype-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step")); // services = ["era-review"]
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolvers.length).toBe(1)); // A pending
+
+    // Re-enter with identical selections -> B (same context).
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolvers.length).toBe(2)); // B pending
+
+    // B resolves first (becomes the loaded proposal).
+    resolvers[1]!(jsonResponse(200, B_PAYLOAD));
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-selected").textContent).toContain("B-FRESH-1"),
+    );
+
+    // A (stale, superseded) resolves AFTER with a different payload -> must be ignored.
+    resolvers[0]!(jsonResponse(200, A_PAYLOAD));
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(screen.getByTestId("ap-selected").textContent).toContain("B-FRESH-1");
+    expect(screen.getByTestId("ap-selected").textContent).not.toContain("A-STALE-1");
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
 });

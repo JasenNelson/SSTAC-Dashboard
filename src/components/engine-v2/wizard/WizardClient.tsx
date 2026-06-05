@@ -117,6 +117,15 @@ export function WizardClient() {
   const currentContextKeyRef = useRef(currentContextKey);
   currentContextKeyRef.current = currentContextKey;
 
+  // Monotonic request id. The context-key guard cannot distinguish two overlapping
+  // fetches that share the SAME context (leave step 4 mid-fetch, re-enter with
+  // identical selections): both carry the same requestContextKey, so an abandoned
+  // older request would still pass the key guard and could apply state or clear the
+  // spinner under the newer in-flight fetch (worst case: an OLD error lands and
+  // enables skip-on-error advance against the fresh fetch). Every fetch captures the
+  // next seq at start; only the request holding the current (highest) seq may settle.
+  const proposalRequestSeq = useRef(0);
+
   // Invalidate any loaded/in-flight proposal so returning to step 4 always
   // refetches against the current context. Called from the upstream onChange
   // handlers (services / application types) whose edits change the request body.
@@ -133,9 +142,11 @@ export function WizardClient() {
     );
   }
 
-  // Fetch proposal on entering step 4 (first time or retry). The request's context
-  // key is captured at call time; on resolve, the response is DISCARDED if that key
-  // no longer equals the current context key (stale-response guard).
+  // Fetch proposal on entering step 4 (first time or retry). Each request captures
+  // its context key AND a monotonic seq at start; a response may only settle when it
+  // is BOTH the current-context request (key guard, handles upstream edits) AND the
+  // newest request (seq guard, handles same-context overlaps). Otherwise it is
+  // discarded silently -- no state mutation, no spinner change.
   const fetchProposal = useMemo(
     () => async () => {
       const requestContextKey = makeContextKey({
@@ -143,6 +154,12 @@ export function WizardClient() {
         mediaTypes,
         applicationTypes: state.applicationTypes,
       });
+      const mySeq = ++proposalRequestSeq.current;
+      // True only while this request is the newest AND its context is still current.
+      const isCurrent = () =>
+        mySeq === proposalRequestSeq.current &&
+        requestContextKey === currentContextKeyRef.current;
+
       setProposalLoading(true);
       setProposalError(null);
       setState((prev) => ({
@@ -163,8 +180,8 @@ export function WizardClient() {
             application_types: state.applicationTypes,
           }),
         });
-        // Stale-response guard: discard if the context changed while in flight.
-        if (requestContextKey !== currentContextKeyRef.current) return;
+        // Discard if context changed (key) OR a newer fetch superseded us (seq).
+        if (!isCurrent()) return;
         if (!res.ok) {
           let detail = `Request failed (${res.status})`;
           try {
@@ -174,14 +191,14 @@ export function WizardClient() {
           } catch {
             // body wasn't JSON
           }
-          if (requestContextKey !== currentContextKeyRef.current) return;
+          if (!isCurrent()) return;
           setProposalError(detail);
           setProposalLoading(false);
           return;
         }
         const output = (await res.json()) as ProposerCliOutput;
-        // Re-check after the async json() parse: context may have changed again.
-        if (requestContextKey !== currentContextKeyRef.current) return;
+        // Re-check after the async json() parse: context/seq may have changed again.
+        if (!isCurrent()) return;
         // Default-check all signal_fired ids; floor tail starts unchecked.
         const defaultSelected = output.signal_fired.map((e) => e.policy_id);
         setState((prev) => ({
@@ -191,13 +208,13 @@ export function WizardClient() {
           selectedIds: defaultSelected,
         }));
       } catch (err) {
-        if (requestContextKey !== currentContextKeyRef.current) return;
+        if (!isCurrent()) return;
         const message = err instanceof Error ? err.message : String(err);
         setProposalError(`Network error: ${message}`);
       } finally {
         // Only clear loading if this request is still the current one; otherwise a
-        // stale resolution must not flip the spinner for the newer in-flight fetch.
-        if (requestContextKey === currentContextKeyRef.current) {
+        // superseded resolution must not flip the spinner for the newer in-flight fetch.
+        if (isCurrent()) {
           setProposalLoading(false);
         }
       }
