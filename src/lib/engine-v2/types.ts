@@ -31,6 +31,11 @@ export interface V2Project {
   application_types: unknown[];
   selected_services: unknown[];
   media_types: unknown[];
+  // HITL-CONFIRMED applicable-policy id list (engine v2 M1a Phase 2).
+  // The engine PROPOSES candidates; the reviewer confirms/edits (M1b wizard);
+  // the confirmed set becomes the evaluator cohort verbatim (S14 invariant).
+  // [] = not yet confirmed.
+  applicable_policy_ids: unknown[];
   submission_context_overrides: Record<string, unknown>;
   applicability_mode: string;
   evaluation_backend: string;
