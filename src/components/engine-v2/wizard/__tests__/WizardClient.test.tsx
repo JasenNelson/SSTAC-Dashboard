@@ -127,7 +127,20 @@ const PROPOSAL_FIXTURE = {
   },
 };
 
-let fetchSpy: ReturnType<typeof vi.spyOn>;
+// Narrow structural spy type: ReturnType<typeof vi.spyOn> collapses to the
+// wrong overload (constructor Mock) and fails CI's tsc --noEmit, and explicit
+// spyOn generics fight the keyof-globalThis constraint. Only the members this
+// file actually uses are typed; call args stay unknown[][] (use sites cast).
+type FetchMockImpl = (
+  input: RequestInfo | URL,
+  init?: RequestInit,
+) => Promise<Response>;
+type FetchSpy = {
+  mockImplementation: (impl: FetchMockImpl) => unknown;
+  mockRestore: () => void;
+  mock: { calls: unknown[][] };
+};
+let fetchSpy: FetchSpy;
 
 beforeEach(() => {
   vi.clearAllMocks();
