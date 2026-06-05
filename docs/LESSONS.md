@@ -1795,8 +1795,60 @@ fallback verdict for codex re-confirm when the CLI recovers.
 
 ---
 
-**Last Updated:** June 2, 2026 (PR #232 re-expose By Parameter view + saved-view coercion lockstep; PR #233 .tmp eslint ignore; PR #230 bulk-approve RPC concurrency hardening)
-**Lesson Count (2026-06-02 session added 4):** running totals not re-tallied; this session added 1 high (orphaned-tab) and 3 medium (saved-view coercion lockstep, .tmp eslint ignore, codex/cursor-agent fallback)
+## 2026-06-04 - Promoting a Catalog qa_status Is Coupled; the Supabase Review Path Is Audit-Only [HIGH]
+
+**Date:** June 4, 2026
+**Area:** Matrix Options catalog / QA-review provenance
+**Impact:** HIGH (a naive qa_status edit RED's CI; the "approve in the UI" path does not actually promote)
+**Status:** Documented (apply tool + structural test shipped; the flip itself is owner-gated)
+
+### Problem or Discovery
+The #249 packet listed 20 EPA-IRIS rows to consider promoting from `qa_status=needs_review` to
+`approved` in `human_health_trv_values.json`. A bare find-replace of `qa_status` is unsafe two ways:
+it turns CI RED, and the dashboard's "approve" button does not make the promotion take effect.
+
+### Root Cause or Context
+1. `catalog.test.ts` couples `qa_status`: it asserts every `evidence_items[].qa_status` equals the
+   record's, AND that any `approved` evidence has a truthy `reviewed_by` + a dated `reviewed_at`
+   (and a non-pending locator, non-scaffold method). So a flip must also flip evidence qa and add
+   reviewer attestation.
+2. The "catalogs ... TRVs" test froze the verified batch as a hardcoded `toHaveLength(84)` + fixed
+   substance set + a property loop requiring `canonical_source_status === 'direct_source_verified'`
+   and evidence `extracted_at === '2026-05-23'`. The 20 candidates are TRV-tagged human-health
+   `approved_source_backed` rows extracted later and still `needs_direct_source_check`, so promoting
+   them joined that filter and broke it on count, substances, canonical status, and dates.
+3. The Supabase `parameter_value_reviews` path (`qa-review-sync.ts submitReview`) writes a review
+   HISTORY row only -- there is no overlay that reflects the latest review's `qa_status` onto the
+   displayed/effective value, and the table is not created by any committed migration. So the repo
+   JSON is the effective source of truth; clicking "approve" records an audit row but does not promote.
+
+### Solution or Pattern
+- Replace the brittle frozen-count assertion with a STRUCTURAL invariant: identify the original batch
+  by a stable predicate (`direct_source_verified` AND every evidence `extracted_at === '2026-05-23'`)
+  and keep its exact 84-count/substance/provenance checks; in a second test, constrain ANY approved
+  TRV beyond that batch to be a well-formed, source-backed, HITL-attested IRIS row whose
+  `canonical_source_status` is in `{direct_source_verified, needs_direct_source_check}`. This is green
+  before the promotion (empty set) and after (the 20), in either canonical variant.
+- Apply the coupled edit with a deterministic, fail-closed, idempotent OWNER-run tool
+  (`scripts/matrix-options/apply-qa-promotion.mjs`) that touches only the 20 ids, re-checks each value
+  against the EPA snapshot, and stamps the owner's reviewer id + date. AI never writes `qa_status`.
+
+### File References
+- `src/lib/matrix-options/provenance/__tests__/catalog.test.ts` (frozen-batch + promoted-constraint tests)
+- `scripts/matrix-options/apply-qa-promotion.mjs` + `scripts/matrix-options/__tests__/apply-qa-promotion.test.mjs`
+- `matrix_research/reference_catalog/iris_qa_promotion_apply_sheet_2026_06_04.md` (the apply sheet)
+- `src/lib/matrix-options/provenance/qa-review-sync.ts` (audit-only review history)
+
+### Key Takeaway
+A catalog `qa_status` promotion is not a find-replace: flip evidence qa in lockstep, add reviewer
+attestation, and replace any frozen-count test with a structural invariant that tolerates the
+sanctioned change. And know your write surface: the Supabase review path here is audit-only, so the
+repo JSON is the effective source of truth for `qa_status`.
+
+---
+
+**Last Updated:** June 4, 2026 (IRIS qa-promotion apply sheet + owner-run tool + structural catalog test rework; the qa_status flip itself remains owner-gated)
+**Lesson Count (2026-06-02 session added 4):** running totals not re-tallied; this session added 1 high (orphaned-tab) and 3 medium (saved-view coercion lockstep, .tmp eslint ignore, codex/cursor-agent fallback); 2026-06-04 added 1 high (qa-promotion coupling + Supabase audit-only)
 **Security Status:** ✓ Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
