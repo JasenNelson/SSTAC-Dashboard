@@ -57,10 +57,13 @@ import {
   getSubmissions,
   getSubmissionById,
   getSubmissionBySubmissionId,
+  createSubmission,
   getAssessments,
   getAssessmentById,
   getAssessmentWithJudgment,
   getJudgmentsForSubmission,
+  createAssessment,
+  createAssessmentsBulk,
   createJudgment,
   updateJudgment,
   getOrCreateJudgment,
@@ -70,6 +73,7 @@ import {
   endReviewSession,
   getReviewSessions,
 } from '../index';
+import type { UpdateJudgmentData } from '../index';
 
 import {
   getReviewProjects,
@@ -161,6 +165,129 @@ describe('getSubmissionBySubmissionId', () => {
       expect.stringContaining('WHERE submission_id = ?'),
       ['SID-999']
     );
+  });
+});
+
+// ===========================================================================
+// createSubmission
+// ===========================================================================
+
+describe('createSubmission', () => {
+  const baseSubmission = {
+    id: 'sub-1',
+    submission_id: 'SID-1',
+    site_id: 'site-1',
+    submission_type: 'CSR',
+    checklist_source: 'csap',
+    total_items: 10,
+    evaluation_started: '2026-01-01',
+    evaluation_completed: null,
+    overall_recommendation: null,
+    requires_human_review: 1,
+    pass_count: 5,
+    partial_count: 2,
+    fail_count: 1,
+    requires_judgment_count: 2,
+    tier1_count: 3,
+    tier2_count: 4,
+    tier3_count: 3,
+    overall_coverage: 0.8,
+  };
+
+  it('prepares an INSERT INTO submissions and binds every column in order', () => {
+    // getOne is used by the trailing getSubmissionById(...)! return.
+    mockGetOne.mockReturnValue({ ...baseSubmission, imported_at: 'now' });
+
+    const result = createSubmission(baseSubmission);
+
+    expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO submissions'));
+    const args = mockRun.mock.calls[0];
+    expect(args[0]).toBe('sub-1');
+    expect(args[1]).toBe('SID-1');
+    expect(args[2]).toBe('site-1');
+    // overall_coverage is the final (18th) bind param.
+    expect(args[17]).toBe(0.8);
+    expect(result).toMatchObject({ id: 'sub-1', imported_at: 'now' });
+  });
+});
+
+// ===========================================================================
+// createAssessment / createAssessmentsBulk
+// ===========================================================================
+
+describe('createAssessment', () => {
+  const baseAssessment = {
+    submission_id: 'sub-1',
+    csap_id: 'C1',
+    csap_text: 'text',
+    section: 'S1',
+    sheet: 'Sheet1',
+    item_number: 1,
+    ai_result: 'PASS',
+    ai_confidence: 'high',
+    discretion_tier: 'TIER_1_BINARY',
+    evidence_coverage: 0.9,
+    regulatory_authority: 'BC',
+    linked_policies: null,
+    reviewer_notes: null,
+    action_required: null,
+    evidence_found: 'yes',
+    keywords_matched: 'kw',
+    sections_searched: 3,
+  };
+
+  it('inserts the assessment and looks the row up by lastInsertRowid', () => {
+    mockRun.mockReturnValue({ changes: 1, lastInsertRowid: 77 });
+    mockGetOne.mockReturnValue({ id: 77, ...baseAssessment });
+
+    const result = createAssessment(baseAssessment);
+
+    expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO assessments'));
+    // getAssessmentById(Number(lastInsertRowid)) -> getOne WHERE id = ?
+    expect(mockGetOne).toHaveBeenCalledWith(expect.stringContaining('WHERE id = ?'), [77]);
+    expect(result).toMatchObject({ id: 77 });
+    // First bind param is submission_id.
+    expect(mockRun.mock.calls[0][0]).toBe('sub-1');
+  });
+});
+
+describe('createAssessmentsBulk', () => {
+  const item = {
+    submission_id: 'sub-1',
+    csap_id: 'C1',
+    csap_text: 'text',
+    section: null,
+    sheet: null,
+    item_number: null,
+    ai_result: 'PASS',
+    ai_confidence: null,
+    discretion_tier: 'TIER_1_BINARY',
+    evidence_coverage: 0,
+    regulatory_authority: null,
+    linked_policies: null,
+    reviewer_notes: null,
+    action_required: null,
+    evidence_found: null,
+    keywords_matched: null,
+    sections_searched: 0,
+  };
+
+  it('runs the prepared statement once per item inside a transaction and returns the count', () => {
+    // mockTransaction returns the passed fn unchanged, so invoking the result
+    // executes the transaction body and exercises the per-item run loop.
+    const count = createAssessmentsBulk([item, { ...item, csap_id: 'C2' }]);
+
+    expect(mockTransaction).toHaveBeenCalledTimes(1);
+    expect(mockPrepare).toHaveBeenCalledWith(expect.stringContaining('INSERT INTO assessments'));
+    // run() is called once per item.
+    expect(mockRun).toHaveBeenCalledTimes(2);
+    expect(count).toBe(2);
+  });
+
+  it('returns 0 for an empty batch without running any insert', () => {
+    const count = createAssessmentsBulk([]);
+    expect(count).toBe(0);
+    expect(mockRun).not.toHaveBeenCalled();
   });
 });
 
@@ -438,6 +565,47 @@ describe('updateJudgment', () => {
     // When reviewed_at is explicit the auto branch is skipped; the column appears once
     const occurrences = ((updateCall![0] as string).match(/reviewed_at/g) || []).length;
     expect(occurrences).toBe(1);
+  });
+
+  // Remaining dynamic SET-builder branches. Each field individually appends its
+  // own `col = ?` clause and binds the value, terminating with the WHERE id.
+  const setBuilderFields: Array<{ key: keyof UpdateJudgmentData; col: string; value: string }> = [
+    { key: 'judgment_notes', col: 'judgment_notes', value: 'note text' },
+    { key: 'override_reason', col: 'override_reason', value: 'overridden because' },
+    { key: 'final_memo_summary', col: 'final_memo_summary', value: 'summary' },
+    { key: 'routed_to', col: 'routed_to', value: 'queue-A' },
+    { key: 'routing_reason', col: 'routing_reason', value: 'needs specialist' },
+    { key: 'reviewer_id', col: 'reviewer_id', value: 'rev-1' },
+    { key: 'reviewer_name', col: 'reviewer_name', value: 'Reviewer One' },
+  ];
+
+  for (const { key, col, value } of setBuilderFields) {
+    it(`builds SET for ${col} and binds its value before the id`, () => {
+      updateJudgment(5, { [key]: value } as UpdateJudgmentData);
+      const updateCall = mockPrepare.mock.calls.find(
+        (c) => typeof c[0] === 'string' && c[0].includes('UPDATE judgments')
+      );
+      expect(updateCall).toBeDefined();
+      expect(updateCall![0]).toMatch(new RegExp(`${col} = \\?`));
+      // The bound params are [value, id] for a single-field update.
+      expect(mockRun).toHaveBeenCalledWith(value, 5);
+    });
+  }
+
+  it('accumulates multiple SET fields into a single comma-joined UPDATE', () => {
+    updateJudgment(5, {
+      judgment_notes: 'n',
+      override_reason: 'o',
+      reviewer_name: 'R',
+    });
+    const updateCall = mockPrepare.mock.calls.find(
+      (c) => typeof c[0] === 'string' && c[0].includes('UPDATE judgments')
+    );
+    expect(updateCall![0]).toMatch(/judgment_notes = \?/);
+    expect(updateCall![0]).toMatch(/override_reason = \?/);
+    expect(updateCall![0]).toMatch(/reviewer_name = \?/);
+    // Three set fields + the trailing id bind.
+    expect(mockRun).toHaveBeenCalledWith('n', 'o', 'R', 5);
   });
 });
 

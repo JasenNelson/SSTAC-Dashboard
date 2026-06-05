@@ -165,6 +165,33 @@ describe('siteDataStore', () => {
       expect(state.selectedSiteIds).toEqual(['u1']);
     });
 
+    it('reassigns selectedSiteId when the selected site is among the removed tagged sites', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('t1', 'training'), makeSite('u1', 'user')]);
+      store.selectMultipleSites(['t1', 'u1']);
+      // Make the tagged site the single selectedSiteId.
+      useSiteDataStore.setState({ selectedSiteId: 't1' });
+
+      store.clearSitesByTag('training');
+
+      const state = useSiteDataStore.getState();
+      // t1 was removed, so selectedSiteId falls back to the first remaining selected id.
+      expect(state.selectedSiteId).toBe('u1');
+      expect(state.selectedSiteIds).toEqual(['u1']);
+    });
+
+    it('nulls selectedSiteId when the selected site is removed and none remain selected', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('t1', 'training')]);
+      store.selectSite('t1');
+
+      store.clearSitesByTag('training');
+
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteId).toBeNull();
+      expect(state.selectedSiteIds).toEqual([]);
+    });
+
     it('is a no-op when no sites match the tag', () => {
       const store = useSiteDataStore.getState();
       store.addSites([makeSite('u1', 'user'), makeSite('u2', 'user')]);
@@ -410,6 +437,232 @@ describe('siteDataStore', () => {
       const inNorth = useSiteDataStore.getState().getSitesByRegion('North');
       expect(inNorth.map((s) => s.location.id)).toEqual(['n1']);
       expect(useSiteDataStore.getState().getSitesByRegion('East')).toEqual([]);
+    });
+
+    it('getAssessment returns the stored assessment or undefined', () => {
+      const store = useSiteDataStore.getState();
+      expect(store.getAssessment('a')).toBeUndefined();
+      store.addAssessment(makeAssessment('a'));
+      expect(useSiteDataStore.getState().getAssessment('a')?.siteId).toBe('a');
+    });
+  });
+
+  describe('selection mutations', () => {
+    it('toggleSiteSelection adds an unselected id and promotes single selection to selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+
+      store.toggleSiteSelection('a');
+      let state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual(['a']);
+      // A single selection sets selectedSiteId to that id.
+      expect(state.selectedSiteId).toBe('a');
+
+      store.toggleSiteSelection('b');
+      state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual(['a', 'b']);
+      // With more than one selected, selectedSiteId is left unchanged (still 'a').
+      expect(state.selectedSiteId).toBe('a');
+    });
+
+    it('toggleSiteSelection removes an already-selected id and nulls selectedSiteId when empty', () => {
+      const store = useSiteDataStore.getState();
+      store.addSite(makeSite('a'));
+      store.toggleSiteSelection('a');
+      expect(useSiteDataStore.getState().selectedSiteIds).toEqual(['a']);
+
+      store.toggleSiteSelection('a');
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual([]);
+      expect(state.selectedSiteId).toBeNull();
+    });
+
+    it('toggleSiteSelection back to a single remaining id re-promotes it to selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      store.selectMultipleSites(['a', 'b']);
+
+      store.toggleSiteSelection('b'); // removes b, leaving exactly [a]
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual(['a']);
+      expect(state.selectedSiteId).toBe('a');
+    });
+
+    it('selectMultipleSites with a single id sets that id as selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      store.selectMultipleSites(['b']);
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual(['b']);
+      expect(state.selectedSiteId).toBe('b');
+    });
+
+    it('selectMultipleSites with multiple ids keeps the first id as selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b'), makeSite('c')]);
+      store.selectMultipleSites(['b', 'c']);
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual(['b', 'c']);
+      expect(state.selectedSiteId).toBe('b');
+    });
+
+    it('selectMultipleSites with an empty list nulls selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSite(makeSite('a'));
+      store.selectSite('a');
+      store.selectMultipleSites([]);
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual([]);
+      expect(state.selectedSiteId).toBeNull();
+    });
+
+    it('selectSite(null) leaves selectedSiteIds untouched but clears selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      store.selectMultipleSites(['a', 'b']);
+
+      store.selectSite(null);
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteId).toBeNull();
+      // selectSite only resets selectedSiteIds for a non-null id.
+      expect(state.selectedSiteIds).toEqual(['a', 'b']);
+    });
+
+    it('clearSiteSelection empties both selection fields', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      store.selectMultipleSites(['a', 'b']);
+
+      store.clearSiteSelection();
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual([]);
+      expect(state.selectedSiteId).toBeNull();
+    });
+
+    it('selectAllSites selects every loaded id and sets the first as selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b'), makeSite('c')]);
+
+      store.selectAllSites();
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds.sort()).toEqual(['a', 'b', 'c']);
+      expect(state.selectedSiteId).not.toBeNull();
+    });
+
+    it('selectAllSites with no sites nulls selectedSiteId', () => {
+      const store = useSiteDataStore.getState();
+      store.selectAllSites();
+      const state = useSiteDataStore.getState();
+      expect(state.selectedSiteIds).toEqual([]);
+      expect(state.selectedSiteId).toBeNull();
+    });
+
+    it('removeSelectedSites deletes selected sites and their assessments, then clears selection', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b'), makeSite('c')]);
+      store.addAssessment(makeAssessment('a'));
+      store.addAssessment(makeAssessment('b'));
+      store.selectMultipleSites(['a', 'b']);
+
+      store.removeSelectedSites();
+      const state = useSiteDataStore.getState();
+      expect(Object.keys(state.sites)).toEqual(['c']);
+      expect(state.assessments).not.toHaveProperty('a');
+      expect(state.assessments).not.toHaveProperty('b');
+      expect(state.selectedSiteIds).toEqual([]);
+      expect(state.selectedSiteId).toBeNull();
+    });
+
+    it('removeSelectedSites is a no-op on sites/assessments when nothing is selected', () => {
+      const store = useSiteDataStore.getState();
+      store.addSites([makeSite('a'), makeSite('b')]);
+      store.addAssessment(makeAssessment('a'));
+
+      store.removeSelectedSites();
+      const state = useSiteDataStore.getState();
+      expect(Object.keys(state.sites).sort()).toEqual(['a', 'b']);
+      expect(state.assessments).toHaveProperty('a');
+    });
+  });
+
+  describe('validateChemistry per-parameter breadth and boundaries', () => {
+    function makeChem(overrides: Partial<SedimentChemistry>): SedimentChemistry {
+      return {
+        siteId: 's',
+        sampleId: 's-sample',
+        dateCollected: '2026-01-01',
+        ...overrides,
+      };
+    }
+
+    // One representative warning + error per guideline parameter. Values chosen
+    // strictly between ISQG and PEL (warning) and strictly above PEL (error).
+    const cases: Array<{
+      param: keyof SedimentChemistry;
+      isqg: number;
+      pel: number;
+      unit: string;
+    }> = [
+      { param: 'copper', isqg: 35.7, pel: 197, unit: 'mg/kg' },
+      { param: 'zinc', isqg: 123, pel: 315, unit: 'mg/kg' },
+      { param: 'lead', isqg: 35, pel: 91.3, unit: 'mg/kg' },
+      { param: 'cadmium', isqg: 0.6, pel: 3.5, unit: 'mg/kg' },
+      { param: 'mercury', isqg: 0.17, pel: 0.486, unit: 'mg/kg' },
+      { param: 'arsenic', isqg: 5.9, pel: 17, unit: 'mg/kg' },
+      { param: 'chromium', isqg: 37.3, pel: 90, unit: 'mg/kg' },
+      { param: 'totalPAHs', isqg: 1684, pel: 16770, unit: 'ug/kg' },
+    ];
+
+    for (const { param, isqg, pel, unit } of cases) {
+      it(`${param}: warning between ISQG and PEL with the ISQG exceedance ratio`, () => {
+        const store = useSiteDataStore.getState();
+        const value = (isqg + pel) / 2; // strictly between
+        const [result] = store.validateChemistry(makeChem({ [param]: value }));
+        expect(result.field).toBe(param);
+        expect(result.status).toBe('warning');
+        expect(result.message).toBe(`Exceeds ISQG (${isqg} ${unit})`);
+        expect(result.guideline).toMatchObject({ name: 'ISQG', value: isqg });
+        expect(result.guideline?.exceedance).toBeCloseTo(value / isqg, 6);
+      });
+
+      it(`${param}: error above PEL with the PEL exceedance ratio`, () => {
+        const store = useSiteDataStore.getState();
+        const value = pel * 2; // strictly above
+        const [result] = store.validateChemistry(makeChem({ [param]: value }));
+        expect(result.field).toBe(param);
+        expect(result.status).toBe('error');
+        expect(result.message).toBe(`Exceeds PEL (${pel} ${unit})`);
+        expect(result.guideline).toMatchObject({ name: 'PEL', value: pel });
+        expect(result.guideline?.exceedance).toBeCloseTo(value / pel, 6);
+      });
+    }
+
+    it('treats a zero value as valid (0 is not undefined and is below every ISQG)', () => {
+      const store = useSiteDataStore.getState();
+      const [result] = store.validateChemistry(makeChem({ copper: 0 }));
+      expect(result).toMatchObject({ field: 'copper', value: 0, status: 'valid' });
+      expect(result.message).toBeUndefined();
+    });
+
+    it('evaluates all eight guideline parameters together in definition order', () => {
+      const store = useSiteDataStore.getState();
+      const results = store.validateChemistry(
+        makeChem({
+          copper: 1, zinc: 1, lead: 1, cadmium: 0.1,
+          mercury: 0.01, arsenic: 1, chromium: 1, totalPAHs: 1,
+        }),
+      );
+      expect(results.map((r) => r.field)).toEqual([
+        'copper', 'zinc', 'lead', 'cadmium', 'mercury', 'arsenic', 'chromium', 'totalPAHs',
+      ]);
+      expect(results.every((r) => r.status === 'valid')).toBe(true);
+    });
+
+    it('ignores non-guideline chemistry fields such as nickel and toc', () => {
+      const store = useSiteDataStore.getState();
+      // nickel and toc are valid SedimentChemistry fields with no CCME guideline.
+      const results = store.validateChemistry(makeChem({ nickel: 9999, toc: 5, copper: 200 }));
+      expect(results.map((r) => r.field)).toEqual(['copper']);
     });
   });
 });
