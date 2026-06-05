@@ -10,6 +10,12 @@ import type {
 } from "./ApplicationTypeStep";
 import type { SubmissionContextValue } from "./SubmissionContextStep";
 
+interface ProposalSummary {
+  selectedCount: number;
+  signalCount: number;
+  floorCount: number;
+}
+
 interface Props {
   metadata: ProjectMetadataValue;
   applicationTypes: ApplicationTypeId[];
@@ -17,6 +23,9 @@ interface Props {
   selectedServices: string[];
   mediaTypes: string[];
   context: SubmissionContextValue;
+  // proposalSummary: provided when the wizard completed step 4; null when absent
+  // (legacy path or proposal was unavailable).
+  proposalSummary: ProposalSummary | null;
 }
 
 export function ReviewStep({
@@ -26,6 +35,7 @@ export function ReviewStep({
   selectedServices,
   mediaTypes,
   context,
+  proposalSummary,
 }: Props) {
   const applicationLabel = (id: ApplicationTypeId): string =>
     applicationTypeLabels.find((o) => o.id === id)?.label ?? id;
@@ -123,6 +133,19 @@ export function ReviewStep({
             )}
           </dd>
         </div>
+
+        {proposalSummary !== null ? (
+          <div className="sm:col-span-3">
+            <dt className="font-medium text-slate-500 dark:text-slate-400">
+              Proposed applicable policies
+            </dt>
+            <dd className="mt-1 text-slate-900 dark:text-white">
+              {proposalSummary.selectedCount} selected (of{" "}
+              {proposalSummary.signalCount} signal +{" "}
+              {proposalSummary.floorCount} floor proposed)
+            </dd>
+          </div>
+        ) : null}
 
         <div className="sm:col-span-3">
           <dt className="font-medium text-slate-500 dark:text-slate-400">
