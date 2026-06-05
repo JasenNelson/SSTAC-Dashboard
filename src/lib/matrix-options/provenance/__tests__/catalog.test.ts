@@ -416,21 +416,27 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
-  it('catalogs Health Canada and US EPA IRIS human-health TRVs with extraction dates', () => {
-    // Filter to the source-verified HC/IRIS batch (qa_status='approved') only.
+  it('catalogs the frozen 2026-05-23 source-verified HC/IRIS human-health TRV batch', () => {
+    // The original tier-1 TRV batch was extracted and direct-source-verified on 2026-05-23. It is
+    // identified here by a STABLE predicate that is independent of any later qa-promotion: approved
+    // human-health TRVs that are direct_source_verified AND whose every evidence item was extracted
+    // on 2026-05-23. This frozen set must stay at exactly 84 -- a later qa-promotion of other IRIS
+    // rows carries its own later extraction date and is covered by the next test, not this one.
     // Protocol 28 d0c00003 records use pending_source_locator (not approved_source_backed) because
     // P28 is a policy compilation whose values require direct-source verification before use.
     // They are excluded from this filter by evidence_support_status='approved_source_backed'.
-    const tier1Trvs = PARAMETER_VALUE_RECORDS.filter(
+    const frozenBatch = PARAMETER_VALUE_RECORDS.filter(
       (record) =>
         record.pathway.startsWith('human-health') &&
         record.evidence_support_status === 'approved_source_backed' &&
         record.assumption_tags?.includes('TRV') &&
-        record.qa_status === 'approved',
+        record.qa_status === 'approved' &&
+        record.canonical_source_status === 'direct_source_verified' &&
+        record.evidence_items.every((evidence) => evidence.extracted_at === '2026-05-23'),
     );
-    const sourceIds = new Set(tier1Trvs.flatMap((record) => record.source_ids));
+    const sourceIds = new Set(frozenBatch.flatMap((record) => record.source_ids));
 
-    expect(tier1Trvs).toHaveLength(84);
+    expect(frozenBatch).toHaveLength(84);
     expect(sourceIds).toEqual(
       new Set([
         'src-health-canada-trv-v4-2025',
@@ -438,7 +444,7 @@ describe('matrix options provenance catalog', () => {
         'src-us-epa-iris-chemical-details-live',
       ]),
     );
-    expect(new Set(tier1Trvs.map((record) => record.substance_key))).toEqual(
+    expect(new Set(frozenBatch.map((record) => record.substance_key))).toEqual(
       new Set([
         'arsenic_inorganic',
         'barium',
@@ -461,7 +467,7 @@ describe('matrix options provenance catalog', () => {
       ]),
     );
 
-    for (const record of tier1Trvs) {
+    for (const record of frozenBatch) {
       expect(record.default_status, record.parameter_value_id).toBe(
         'available_option',
       );
@@ -480,6 +486,56 @@ describe('matrix options provenance catalog', () => {
         expect(evidence.locator, evidence.evidence_id).toMatch(
           /checked 2026-05-23/i,
         );
+        expect(evidence.note ?? '', evidence.evidence_id).not.toMatch(
+          /C:\\|Downloads|Chemicals_Details\.xlsx/i,
+        );
+      }
+    }
+  });
+
+  it('constrains any qa-promoted IRIS TRV beyond the frozen batch (apply sheet 2026-06-04)', () => {
+    // Approved human-health TRVs that are NOT in the frozen 2026-05-23 batch are the qa-promotion
+    // candidates documented in
+    // matrix_research/reference_catalog/iris_qa_promotion_apply_sheet_2026_06_04.md (the 20 EPA-IRIS
+    // rows verified against the live EPA Excel by the #249 packet). BEFORE the owner runs
+    // scripts/matrix-options/apply-qa-promotion.mjs this set is empty; AFTER, it is up to 20 IRIS
+    // rows. This test stays green in BOTH states and in either --canonical variant. It does NOT relax
+    // the frozen-batch check above; it constrains new promotions to be well-formed, source-backed,
+    // HITL-attested IRIS rows in one of the two sanctioned canonical-status states. This replaces the
+    // old hardcoded 84-count snapshot, which would have turned RED on a sanctioned promotion (see
+    // docs/LESSONS.md).
+    const promotedBeyondFrozen = PARAMETER_VALUE_RECORDS.filter(
+      (record) =>
+        record.pathway.startsWith('human-health') &&
+        record.evidence_support_status === 'approved_source_backed' &&
+        record.assumption_tags?.includes('TRV') &&
+        record.qa_status === 'approved' &&
+        !record.evidence_items.every((evidence) => evidence.extracted_at === '2026-05-23'),
+    );
+
+    // Mass-promotion tripwire: the apply sheet sanctions exactly 20 EPA-IRIS rows and the apply
+    // tool (scripts/matrix-options/apply-qa-promotion.mjs) is hard-scoped to those 20. A larger
+    // approved-beyond-frozen set means an unsanctioned bulk promotion slipped in -- fail. This
+    // restores the catalog-wide count tripwire the old hardcoded 84-count test used to provide.
+    expect(promotedBeyondFrozen.length).toBeLessThanOrEqual(20);
+
+    for (const record of promotedBeyondFrozen) {
+      // The apply sheet covers EPA-IRIS-sourced rows only.
+      expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
+      // A qa promotion never makes a value a calculator default.
+      expect(record.default_status, record.parameter_value_id).toBe('available_option');
+      expect(record.source_authority_tier, record.parameter_value_id).toBe(
+        'tier_1_government_or_regulatory',
+      );
+      // qa_status and canonical_source_status are independent gates: both sanctioned states allowed.
+      expect(
+        ['direct_source_verified', 'needs_direct_source_check'],
+        record.parameter_value_id,
+      ).toContain(record.canonical_source_status);
+      for (const evidence of record.evidence_items) {
+        expect(evidence.qa_status, evidence.evidence_id).toBe('approved');
+        expect(evidence.reviewed_by, evidence.evidence_id).toBeTruthy();
+        expect(evidence.reviewed_at, evidence.evidence_id).toMatch(/^\d{4}-\d{2}-\d{2}$/);
         expect(evidence.note ?? '', evidence.evidence_id).not.toMatch(
           /C:\\|Downloads|Chemicals_Details\.xlsx/i,
         );
