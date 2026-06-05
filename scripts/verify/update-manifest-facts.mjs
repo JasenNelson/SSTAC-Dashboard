@@ -27,12 +27,20 @@ function writeManifest(manifest) {
   writeFileSync(MANIFEST_PATH, JSON.stringify(manifest, null, 2) + '\n', 'utf-8');
 }
 
+// Vitest (and Playwright) emit ANSI color escapes even when piped (tinyrainbow forces color
+// under CI=true), which breaks the summary-line regexes below -- the literal output is
+// "Tests \x1b[22m \x1b[1m\x1b[32mN passed", so \s+ cannot bridge "Tests" to the digits.
+// Strip escapes before matching (observed 2026-06-05; previously extraction returned null).
+function stripAnsi(text) {
+  return text.replace(/\x1b\[[0-9;]*m/g, '');
+}
+
 function extractVitestCount() {
   try {
     // Use the CI-faithful gate command (test:ci) so the recorded count provenance matches the
     // GitHub Actions Unit Tests job rather than the non-CI test:unit (single-source contract).
     // The "Tests X passed" summary line is identical under coverage, so parsing is unaffected.
-    const output = execSync('npm run test:ci 2>&1', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 });
+    const output = stripAnsi(execSync('npm run test:ci 2>&1', { encoding: 'utf-8', maxBuffer: 10 * 1024 * 1024 }));
     
     // Try to extract count from output
     // Vitest output format: "Test Files  X passed | Y failed | Z total"
@@ -59,7 +67,7 @@ function extractVitestCount() {
 function extractPlaywrightCount() {
   try {
     // Count test files in e2e directory
-    const output = execSync('npx playwright test --list 2>&1', { encoding: 'utf-8' });
+    const output = stripAnsi(execSync('npx playwright test --list 2>&1', { encoding: 'utf-8' }));
     const match = output.match(/(\d+)\s+test[s]?/i);
     if (match) {
       return parseInt(match[1], 10);

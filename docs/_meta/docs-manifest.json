@@ -85,10 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 481,
-        "source": "npm run test output - Phase 3 comprehensive testing completion (2026-01-25)",
-        "last_verified": "2026-01-25",
-        "note": "Increased from 246 to 481 (+235 tests from Phase 3 unit/integration expansion, 305+ total new tests across all 6 categories). Phase 3 breakdown: Unit expansion 218 (+tier logic 94, +rate-limit 48, +rate-limit-redis 43), Integration 50, E2E 37, Load 14 scenarios, Security 55, Performance 33. ALL TESTS PASSING: 0 failures."
+        "value": 2992,
+        "source": "npm run test:ci output (2026-06-05)",
+        "last_verified": "2026-06-05"
       },
       "playwright_test_count": {
         "status": "verified",
