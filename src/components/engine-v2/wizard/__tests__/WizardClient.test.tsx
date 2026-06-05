@@ -44,12 +44,21 @@ vi.mock("../ApplicationTypeStep", () => ({
 
 vi.mock("../ServiceTypeStep", () => ({
   ServiceTypeStep: ({ onChange }: { onChange: (v: string[]) => void }) => (
-    <button
-      onClick={() => onChange(["era-review"])}
-      data-testid="service-step"
-    >
-      ServiceTypeStep
-    </button>
+    <>
+      <button
+        onClick={() => onChange(["era-review"])}
+        data-testid="service-step"
+      >
+        ServiceTypeStep
+      </button>
+      {/* Emits a DIFFERENT service set so tests can change the proposer context. */}
+      <button
+        onClick={() => onChange(["hhra-review"])}
+        data-testid="service-step-alt"
+      >
+        ServiceTypeStepAlt
+      </button>
+    </>
   ),
 }));
 
@@ -294,5 +303,183 @@ describe("WizardClient", () => {
   it("ReviewStep receives proposalSummary with selected count", async () => {
     await navigateToStep(5);
     expect(screen.getByTestId("review-step").textContent).toContain("selected=");
+  });
+
+  // --- P1 stale-cohort guard (codex ship-gate) ---
+
+  it("(a) editing services after a proposal loads forces a refetch and disables Next until the new proposal lands", async () => {
+    // Count propose-policies calls so we can prove a SECOND fetch fires.
+    let proposeCalls = 0;
+    fetchSpy.mockImplementation(async (input) => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("propose-policies")) {
+        proposeCalls += 1;
+        return jsonResponse(200, PROPOSAL_FIXTURE);
+      }
+      if (url.includes("/api/engine-v2/projects")) {
+        return jsonResponse(201, { id: "new-project-id" });
+      }
+      return jsonResponse(404, { error: "not_found" });
+    });
+
+    await navigateToStep(4);
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    expect(proposeCalls).toBe(1);
+    // Next is enabled for the loaded proposal.
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+      "disabled",
+      false,
+    );
+
+    // Go Back to step 2 (services) and change the service selection. This both
+    // invalidates the proposal and changes the context key.
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step-alt")); // services -> ["hhra-review"]
+
+    // Forward again to step 4. The fetch-on-enter effect must refetch.
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+
+    await waitFor(() => expect(proposeCalls).toBe(2));
+    // After the second proposal resolves, Next is enabled again for the NEW context.
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+        "disabled",
+        false,
+      ),
+    );
+  });
+
+  it("(b) a stale in-flight response (old context) is discarded; state holds the new context's proposal", async () => {
+    // Two distinct proposals keyed by which service set is in the request body.
+    const OLD_PROPOSAL = {
+      ...PROPOSAL_FIXTURE,
+      signal_fired: [
+        { policy_id: "OLD-1", score: 1, rationale: "r", inclusive_fallback: false },
+      ],
+      counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
+    };
+    const NEW_PROPOSAL = {
+      ...PROPOSAL_FIXTURE,
+      signal_fired: [
+        { policy_id: "NEW-1", score: 1, rationale: "r", inclusive_fallback: false },
+      ],
+      counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
+    };
+
+    // Deferred resolvers so we can control resolution ORDER: the OLD (era-review)
+    // request resolves AFTER the NEW (hhra-review) request.
+    let resolveOld: ((r: Response) => void) | null = null;
+    let resolveNew: ((r: Response) => void) | null = null;
+
+    fetchSpy.mockImplementation(async (input, init) => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("propose-policies")) {
+        const body = JSON.parse(
+          (init as RequestInit).body as string,
+        ) as { selected_services: string[] };
+        const isOld = body.selected_services.includes("era-review");
+        return new Promise<Response>((resolve) => {
+          if (isOld) resolveOld = resolve;
+          else resolveNew = resolve;
+        });
+      }
+      if (url.includes("/api/engine-v2/projects")) {
+        return jsonResponse(201, { id: "new-project-id" });
+      }
+      return jsonResponse(404, { error: "not_found" });
+    });
+
+    // Navigate to step 4 with services=["era-review"] -> fires the OLD request (hangs).
+    render(<WizardClient />);
+    fireEvent.click(screen.getByTestId("metadata-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 1
+    fireEvent.click(screen.getByTestId("apptype-step"));
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step")); // services = ["era-review"]
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolveOld).not.toBeNull());
+
+    // Go Back to step 2, change services -> ["hhra-review"] (invalidates + new key),
+    // then forward to step 4 -> fires the NEW request (also hangs).
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step-alt")); // services = ["hhra-review"]
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+    await waitFor(() => expect(resolveNew).not.toBeNull());
+
+    // Resolve the NEW request first, then the OLD (stale) one AFTER.
+    resolveNew!(jsonResponse(200, NEW_PROPOSAL));
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-selected").textContent).toContain("NEW-1"),
+    );
+
+    // Now resolve the STALE old-context request. It must be DISCARDED.
+    resolveOld!(jsonResponse(200, OLD_PROPOSAL));
+    // Give microtasks a chance to (wrongly) apply the stale response.
+    await Promise.resolve();
+    await Promise.resolve();
+
+    // State still holds the NEW context's proposal; OLD-1 never appears.
+    expect(screen.getByTestId("ap-selected").textContent).toContain("NEW-1");
+    expect(screen.getByTestId("ap-selected").textContent).not.toContain("OLD-1");
+    // Next remains enabled for the current (new) context.
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+      "disabled",
+      false,
+    );
+  });
+
+  it("(c) editing services while a proposal is loaded blocks Next (gate requires matching context key)", async () => {
+    // A propose-policies response that hangs forever so a refetch never lands;
+    // the only way Next becomes enabled is a key-matching loaded proposal.
+    let proposeCalls = 0;
+    fetchSpy.mockImplementation(async (input) => {
+      const url = typeof input === "string" ? input : (input as URL).toString();
+      if (url.includes("propose-policies")) {
+        proposeCalls += 1;
+        // First call resolves; later calls hang (so post-edit refetch stays pending).
+        if (proposeCalls === 1) return jsonResponse(200, PROPOSAL_FIXTURE);
+        return new Promise(() => {});
+      }
+      if (url.includes("/api/engine-v2/projects")) {
+        return jsonResponse(201, { id: "new-project-id" });
+      }
+      return jsonResponse(404, { error: "not_found" });
+    });
+
+    await navigateToStep(4);
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+      "disabled",
+      false,
+    );
+
+    // Back to services, change selection (invalidates + changes key), return to step 4.
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /back/i })); // -> step 2
+    fireEvent.click(screen.getByTestId("service-step-alt")); // services -> ["hhra-review"]
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 3
+    fireEvent.click(screen.getByRole("button", { name: /next/i })); // -> step 4
+
+    // The refetch is pending (hangs); the gate must keep Next DISABLED because no
+    // proposal matches the current context key.
+    await waitFor(() => expect(proposeCalls).toBe(2));
+    await waitFor(() =>
+      expect(screen.getByRole("button", { name: /next/i })).toHaveProperty(
+        "disabled",
+        true,
+      ),
+    );
   });
 });
