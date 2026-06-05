@@ -1,10 +1,10 @@
 "use client";
 
 // engine_v2 frontend Lane 1 / Module L1-4: client-side wizard orchestrator.
-// Holds step state, advances through 5 steps, and submits to
+// Holds step state, advances through 6 steps, and submits to
 // POST /api/engine-v2/projects. On 201 redirects to the project detail route.
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import {
   ProjectMetadataStep,
@@ -20,16 +20,19 @@ import {
   SubmissionContextStep,
   type SubmissionContextValue,
 } from "./SubmissionContextStep";
+import { ApplicablePolicyStep } from "./ApplicablePolicyStep";
 import { ReviewStep } from "./ReviewStep";
 import { deriveMediaTypesFromServices } from "@/lib/engine-v2/service_to_media";
+import type { ProposerCliOutput } from "@/lib/engine-v2/propose_policies";
 
-type StepIndex = 0 | 1 | 2 | 3 | 4;
+type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
 
 const STEP_LABELS: readonly string[] = [
   "Metadata",
   "Application types",
   "Services",
   "Context",
+  "Applicable policies",
   "Review",
 ];
 
@@ -38,6 +41,16 @@ interface WizardState {
   applicationTypes: ApplicationTypeId[];
   selectedServices: string[];
   context: SubmissionContextValue;
+  // proposal: result from POST /api/engine-v2/projects/propose-policies (step 4).
+  // null = not yet loaded (or was cleared on retry / upstream-context edit).
+  proposal: ProposerCliOutput | null;
+  // proposalContextKey: the context key (see makeContextKey) of the inputs that
+  // produced `proposal`. Used by the step-4 gate to ensure the loaded proposal
+  // matches the CURRENT upstream context -- guards against advancing/submitting a
+  // proposal computed for a now-stale services/application-types selection.
+  proposalContextKey: string | null;
+  // selectedIds: HITL-curated policy id list. Initialised on first proposal load.
+  selectedIds: string[];
 }
 
 const INITIAL_STATE: WizardState = {
@@ -45,7 +58,28 @@ const INITIAL_STATE: WizardState = {
   applicationTypes: [],
   selectedServices: [],
   context: { overrides: {} },
+  proposal: null,
+  proposalContextKey: null,
+  selectedIds: [],
 };
+
+// Stable JSON key of EXACTLY the inputs sent to /propose-policies. Arrays that do
+// not carry semantic order (services, media types, application types) are sorted so
+// the key is order-insensitive; lifecycle_stages is always [] today (kept explicit
+// to mirror the request body). Two contexts yielding the same proposer universe map
+// to the same key; any upstream edit that changes the request changes the key.
+function makeContextKey(args: {
+  selectedServices: string[];
+  mediaTypes: string[];
+  applicationTypes: string[];
+}): string {
+  return JSON.stringify({
+    selected_services: [...args.selectedServices].sort(),
+    media_types: [...args.mediaTypes].sort(),
+    lifecycle_stages: [],
+    application_types: [...args.applicationTypes].sort(),
+  });
+}
 
 export function WizardClient() {
   const router = useRouter();
@@ -54,10 +88,151 @@ export function WizardClient() {
   const [submitting, setSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
 
+  // Proposal loading state (step 4).
+  const [proposalLoading, setProposalLoading] = useState(false);
+  const [proposalError, setProposalError] = useState<string | null>(null);
+  // Track whether we have triggered the proposal fetch for the current step-4 visit.
+  const proposalFetchedRef = useRef(false);
+
   const mediaTypes = useMemo(
     () => deriveMediaTypesFromServices(state.selectedServices),
     [state.selectedServices],
   );
+
+  // The context key for the CURRENT upstream selections. The step-4 gate compares
+  // this against the key stored with the loaded proposal.
+  const currentContextKey = useMemo(
+    () =>
+      makeContextKey({
+        selectedServices: state.selectedServices,
+        mediaTypes,
+        applicationTypes: state.applicationTypes,
+      }),
+    [state.selectedServices, mediaTypes, state.applicationTypes],
+  );
+
+  // Ref mirror of currentContextKey so the async fetchProposal closure can read the
+  // LATEST key at resolve time (the memoized closure would otherwise capture a stale
+  // value). Kept in sync on every render.
+  const currentContextKeyRef = useRef(currentContextKey);
+  currentContextKeyRef.current = currentContextKey;
+
+  // Monotonic request id. The context-key guard cannot distinguish two overlapping
+  // fetches that share the SAME context (leave step 4 mid-fetch, re-enter with
+  // identical selections): both carry the same requestContextKey, so an abandoned
+  // older request would still pass the key guard and could apply state or clear the
+  // spinner under the newer in-flight fetch (worst case: an OLD error lands and
+  // enables skip-on-error advance against the fresh fetch). Every fetch captures the
+  // next seq at start; only the request holding the current (highest) seq may settle.
+  const proposalRequestSeq = useRef(0);
+
+  // Invalidate any loaded/in-flight proposal so returning to step 4 always
+  // refetches against the current context. Called from the upstream onChange
+  // handlers (services / application types) whose edits change the request body.
+  // The stale-response guard in fetchProposal additionally prevents an older
+  // in-flight response from repopulating state after an edit.
+  function invalidateProposal() {
+    setProposalError(null);
+    setState((prev) =>
+      prev.proposal === null &&
+      prev.proposalContextKey === null &&
+      prev.selectedIds.length === 0
+        ? prev
+        : { ...prev, proposal: null, proposalContextKey: null, selectedIds: [] },
+    );
+  }
+
+  // Fetch proposal on entering step 4 (first time or retry). Each request captures
+  // its context key AND a monotonic seq at start; a response may only settle when it
+  // is BOTH the current-context request (key guard, handles upstream edits) AND the
+  // newest request (seq guard, handles same-context overlaps). Otherwise it is
+  // discarded silently -- no state mutation, no spinner change.
+  const fetchProposal = useMemo(
+    () => async () => {
+      const requestContextKey = makeContextKey({
+        selectedServices: state.selectedServices,
+        mediaTypes,
+        applicationTypes: state.applicationTypes,
+      });
+      const mySeq = ++proposalRequestSeq.current;
+      // True only while this request is the newest AND its context is still current.
+      const isCurrent = () =>
+        mySeq === proposalRequestSeq.current &&
+        requestContextKey === currentContextKeyRef.current;
+
+      setProposalLoading(true);
+      setProposalError(null);
+      setState((prev) => ({
+        ...prev,
+        proposal: null,
+        proposalContextKey: null,
+        selectedIds: [],
+      }));
+
+      try {
+        const res = await fetch("/api/engine-v2/projects/propose-policies", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            selected_services: state.selectedServices,
+            media_types: mediaTypes,
+            lifecycle_stages: [],
+            application_types: state.applicationTypes,
+          }),
+        });
+        // Discard if context changed (key) OR a newer fetch superseded us (seq).
+        if (!isCurrent()) return;
+        if (!res.ok) {
+          let detail = `Request failed (${res.status})`;
+          try {
+            const j = (await res.json()) as { error?: string; detail?: string };
+            if (j?.detail) detail = j.detail;
+            else if (j?.error) detail = j.error;
+          } catch {
+            // body wasn't JSON
+          }
+          if (!isCurrent()) return;
+          setProposalError(detail);
+          setProposalLoading(false);
+          return;
+        }
+        const output = (await res.json()) as ProposerCliOutput;
+        // Re-check after the async json() parse: context/seq may have changed again.
+        if (!isCurrent()) return;
+        // Default-check all signal_fired ids; floor tail starts unchecked.
+        const defaultSelected = output.signal_fired.map((e) => e.policy_id);
+        setState((prev) => ({
+          ...prev,
+          proposal: output,
+          proposalContextKey: requestContextKey,
+          selectedIds: defaultSelected,
+        }));
+      } catch (err) {
+        if (!isCurrent()) return;
+        const message = err instanceof Error ? err.message : String(err);
+        setProposalError(`Network error: ${message}`);
+      } finally {
+        // Only clear loading if this request is still the current one; otherwise a
+        // superseded resolution must not flip the spinner for the newer in-flight fetch.
+        if (isCurrent()) {
+          setProposalLoading(false);
+        }
+      }
+    },
+    [state.selectedServices, state.applicationTypes, mediaTypes],
+  );
+
+  // Trigger proposal fetch when step becomes 4 (first time).
+  useEffect(() => {
+    if (step === 4 && !proposalFetchedRef.current) {
+      proposalFetchedRef.current = true;
+      fetchProposal();
+    }
+    // When navigating away from step 4, reset so re-entry re-fetches.
+    if (step !== 4) {
+      proposalFetchedRef.current = false;
+    }
+  }, [step, fetchProposal]);
 
   const canAdvance = useMemo(() => {
     switch (step) {
@@ -70,15 +245,28 @@ export function WizardClient() {
       case 3:
         return true;
       case 4:
+        // Advance only when a proposal is loaded AND it was computed for the
+        // CURRENT context (proposalContextKey === currentContextKey) AND we are not
+        // mid-fetch. A proposal whose key no longer matches is stale (user edited
+        // services/application types after it loaded) and must not be advanced or
+        // submitted. proposalError !== null still allows skipping a failed fetch.
+        // Zero selection is allowed (warning shown in component).
+        if (proposalLoading) return false;
+        if (proposalError !== null) return true;
+        return (
+          state.proposal !== null &&
+          state.proposalContextKey === currentContextKey
+        );
+      case 5:
         return true;
       default:
         return false;
     }
-  }, [step, state]);
+  }, [step, state, proposalError, proposalLoading, currentContextKey]);
 
   function next() {
     if (!canAdvance) return;
-    if (step < 4) setStep((step + 1) as StepIndex);
+    if (step < 5) setStep((step + 1) as StepIndex);
   }
   function back() {
     if (step > 0) setStep((step - 1) as StepIndex);
@@ -95,7 +283,7 @@ export function WizardClient() {
       overrides["description"] = description;
     }
 
-    const body = {
+    const body: Record<string, unknown> = {
       name: state.metadata.name.trim(),
       application_types: state.applicationTypes,
       selected_services: state.selectedServices,
@@ -103,6 +291,11 @@ export function WizardClient() {
       submission_context_overrides: overrides,
       model: null,
     };
+
+    // Include HITL-curated policy ids when present.
+    if (state.selectedIds.length > 0) {
+      body["applicable_policy_ids"] = state.selectedIds;
+    }
 
     try {
       const res = await fetch("/api/engine-v2/projects", {
@@ -172,17 +365,23 @@ export function WizardClient() {
         {step === 1 ? (
           <ApplicationTypeStep
             value={state.applicationTypes}
-            onChange={(applicationTypes) =>
-              setState((prev) => ({ ...prev, applicationTypes }))
-            }
+            onChange={(applicationTypes) => {
+              // Application types feed the proposer context -> invalidate any
+              // loaded/in-flight proposal so step 4 refetches for the new context.
+              setState((prev) => ({ ...prev, applicationTypes }));
+              invalidateProposal();
+            }}
           />
         ) : null}
         {step === 2 ? (
           <ServiceTypeStep
             value={state.selectedServices}
-            onChange={(selectedServices) =>
-              setState((prev) => ({ ...prev, selectedServices }))
-            }
+            onChange={(selectedServices) => {
+              // Services drive both selected_services AND derived media types in the
+              // proposer context -> invalidate any loaded/in-flight proposal.
+              setState((prev) => ({ ...prev, selectedServices }));
+              invalidateProposal();
+            }}
           />
         ) : null}
         {step === 3 ? (
@@ -194,6 +393,21 @@ export function WizardClient() {
           />
         ) : null}
         {step === 4 ? (
+          <ApplicablePolicyStep
+            proposal={state.proposal}
+            loading={proposalLoading}
+            error={proposalError}
+            selectedIds={state.selectedIds}
+            onChange={(selectedIds) =>
+              setState((prev) => ({ ...prev, selectedIds }))
+            }
+            onRetry={() => {
+              proposalFetchedRef.current = true;
+              fetchProposal();
+            }}
+          />
+        ) : null}
+        {step === 5 ? (
           <ReviewStep
             metadata={state.metadata}
             applicationTypes={state.applicationTypes}
@@ -201,6 +415,15 @@ export function WizardClient() {
             selectedServices={state.selectedServices}
             mediaTypes={mediaTypes}
             context={state.context}
+            proposalSummary={
+              state.proposal
+                ? {
+                    selectedCount: state.selectedIds.length,
+                    signalCount: state.proposal.counts.signal_fired_count,
+                    floorCount: state.proposal.counts.floor_tail_count,
+                  }
+                : null
+            }
           />
         ) : null}
       </div>
@@ -220,7 +443,7 @@ export function WizardClient() {
         >
           Back
         </button>
-        {step < 4 ? (
+        {step < 5 ? (
           <button
             type="button"
             onClick={next}

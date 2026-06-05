@@ -16,6 +16,12 @@ export const ProjectCreatePayloadSchema = z.object({
   media_types: z.array(z.unknown()).default([]),
   submission_context_overrides: z.record(z.string(), z.unknown()).default({}),
   model: z.string().nullable().optional(),
+  // applicable_policy_ids: HITL-curated list of policy ids proposed by the
+  // proposer CLI step (step 4). Optional: absent when the wizard is submitted
+  // without the new step (legacy path) or when the HITL cleared all selections.
+  // Max 6000 guards against oversized payloads; the full KB is ~5860 policies.
+  // Each id must be a non-empty string; empty strings are a client encoding bug.
+  applicable_policy_ids: z.array(z.string().min(1)).max(6000).optional(),
 }).strict();
 export type ProjectCreatePayload = z.infer<typeof ProjectCreatePayloadSchema>;
 
@@ -40,6 +46,19 @@ export const OrphanCleanupPayloadSchema = z.object({
   file_id: uuid,
 }).strict();
 export type OrphanCleanupPayload = z.infer<typeof OrphanCleanupPayloadSchema>;
+
+// ProposePoliciesPayload (POST /api/engine-v2/projects/propose-policies).
+// Body carries the application context that the engine proposer uses to score
+// and filter the knowledge-base. All array fields default to empty so callers
+// can omit context dimensions that are not yet known.
+// .strict() rejects extra keys; no client-supplied policy ids or scoring params.
+export const ProposePoliciesPayloadSchema = z.object({
+  selected_services: z.array(z.string()).default([]),
+  media_types: z.array(z.string()).default([]),
+  lifecycle_stages: z.array(z.string()).default([]),
+  application_types: z.array(z.string()).default([]),
+}).strict();
+export type ProposePoliciesPayload = z.infer<typeof ProposePoliciesPayloadSchema>;
 
 // ExtractStatusSyncPayload (POST /api/engine-v2/projects/[id]/extract-status, Finding 37).
 // .strict() rejects extra keys -- the body carries only run_id per Finding 37 spec.

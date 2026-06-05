@@ -26,6 +26,13 @@ export interface ComposeScenarioYamlArgs {
   // Path to pre-downloaded BGE model directory. Required when
   // embedderBackend === "real". Engine pre-flight verifies on-disk.
   embedderModelPath?: string;
+  // Path to a JSON array of HITL-confirmed applicable policy ids, written by the
+  // evaluate route into evalRunDir (policy_ids.json). Consumed by
+  // run_owner_scenario.py via the cfg key `applicable_policy_ids_file`, which it
+  // forwards to the evaluator as `--policy-ids-file`. Omitted (no line emitted)
+  // when the project has no confirmed list -> engine falls back to its
+  // bench_fixture default. Landed engine-side at c97d3d17.
+  applicablePolicyIdsFile?: string;
 }
 
 // YAML double-quoted scalar: escape backslash + double-quote.
@@ -50,6 +57,11 @@ export function composeScenarioYaml(args: ComposeScenarioYamlArgs): string {
   ];
   if (args.embedderModelPath) {
     lines.push(`embedder_model_path: ${quote(args.embedderModelPath)}`);
+  }
+  if (args.applicablePolicyIdsFile) {
+    lines.push(
+      `applicable_policy_ids_file: ${quote(args.applicablePolicyIdsFile)}`,
+    );
   }
   // Trailing newline to keep POSIX-style file contents.
   return lines.join("\n") + "\n";

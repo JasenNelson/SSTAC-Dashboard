@@ -146,9 +146,11 @@ export async function POST(
   const { id: projectId } = await context.params;
 
   // Step 5: Ownership probe (RLS returns 0 rows for non-owners -> 403).
+  // applicable_policy_ids (JSONB) carries the HITL-confirmed policy list from the
+  // M1b wizard; used below to write policy_ids.json + point the scenario YAML at it.
   const { data: project, error: projectErr } = await client
     .from("v2_projects")
-    .select("id, user_id")
+    .select("id, user_id, applicable_policy_ids")
     .eq("id", projectId)
     .maybeSingle();
   if (projectErr || !project) {
@@ -377,6 +379,45 @@ export async function POST(
       { status: 500 },
     );
   }
+
+  // M1c cutover (expand-contract): if the project carries a HITL-confirmed
+  // applicable_policy_ids list, write it to policy_ids.json in the run dir and
+  // point the scenario YAML at it. The column arrives as JSONB (unknown[]);
+  // coerce by filtering to non-empty strings. The ids were validated against the
+  // proposer universe at create time, so a non-string remnant is dropped (not an
+  // error). If the list is empty / null / missing -- OR every entry filters out --
+  // we write NOTHING and pass NOTHING: the composed YAML stays byte-identical to
+  // the pre-M1c bench_fixture fallback path.
+  let applicablePolicyIdsFile: string | undefined;
+  const rawPolicyIds = (project as { applicable_policy_ids?: unknown })
+    .applicable_policy_ids;
+  if (Array.isArray(rawPolicyIds)) {
+    const policyIds = rawPolicyIds.filter(
+      (v): v is string => typeof v === "string" && v.length > 0,
+    );
+    if (policyIds.length > 0) {
+      const policyIdsPath = path.join(evalRunDir, "policy_ids.json");
+      try {
+        await fs.writeFile(policyIdsPath, JSON.stringify(policyIds), "utf8");
+        applicablePolicyIdsFile = policyIdsPath;
+      } catch (err) {
+        const msg = (err as Error).message ?? "unknown";
+        await client
+          .from("v2_evaluations")
+          .update({
+            status: "error",
+            errors: [`policy_ids.json write failed: ${msg}`],
+            completed_at: new Date().toISOString(),
+          })
+          .eq("id", evaluationId);
+        return NextResponse.json(
+          { error: "policy_ids_write_failed", detail: msg },
+          { status: 500 },
+        );
+      }
+    }
+  }
+
   try {
     const yaml = composeScenarioYaml({
       // Engine rejects scenario_ids containing 4-5 digit numeric segments
@@ -399,6 +440,7 @@ export async function POST(
       model: effectiveBackend === "live" ? ollamaModel : "",
       variant: "graph_v2_default",
       embedderModelPath,
+      applicablePolicyIdsFile,
     });
     await fs.writeFile(scenarioYamlPath, yaml, "utf8");
   } catch (err) {
