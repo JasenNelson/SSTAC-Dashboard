@@ -12,6 +12,7 @@ import type {
   ApiResponse as _ApiResponse,
   ApiError,
 } from '@/types';
+import type { ReviewSubmissionStatus } from '@/types/database';
 
 // Re-export to suppress unused import warning (type is used by consumers)
 export type { _ApiResponse as ApiResponse };
@@ -584,7 +585,7 @@ export class ApiClient {
       async () =>
         supabase.from('review_submissions').insert({
           user_id: userId,
-          status: 'draft',
+          status: 'IN_PROGRESS' satisfies ReviewSubmissionStatus,
           form_data: formData,
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
@@ -600,7 +601,7 @@ export class ApiClient {
         supabase
           .from('review_submissions')
           .update({
-            status: 'submitted',
+            status: 'SUBMITTED' satisfies ReviewSubmissionStatus,
             updated_at: new Date().toISOString(),
           })
           .eq('id', submissionId),

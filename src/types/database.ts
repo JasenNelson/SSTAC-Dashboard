@@ -222,10 +222,15 @@ export interface Milestone {
 // TWG Review Submission Types
 // =============================================================================
 
+// Source of truth: database_schema.sql:452
+//   CHECK (status IN ('IN_PROGRESS', 'SUBMITTED'))
+export const REVIEW_SUBMISSION_STATUSES = ['IN_PROGRESS', 'SUBMITTED'] as const;
+export type ReviewSubmissionStatus = typeof REVIEW_SUBMISSION_STATUSES[number];
+
 export interface ReviewSubmission {
   id: string;
   user_id: string;
-  status: 'draft' | 'submitted' | 'approved' | 'rejected';
+  status: ReviewSubmissionStatus;
   form_data: ReviewFormData; // Typed JSONB
   created_at: string;
   updated_at: string;
