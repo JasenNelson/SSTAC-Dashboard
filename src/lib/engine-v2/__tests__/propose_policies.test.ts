@@ -124,15 +124,28 @@ describe("runProposeCli", () => {
     expect(opts.env).toBeDefined();
     const pythonPath = opts.env!["PYTHONPATH"];
     expect(typeof pythonPath).toBe("string");
-    const firstEntry = pythonPath!.split(path.delimiter)[0]!;
-    // First entry must end with engine_v2/src (or engine_v2\\src on win32).
-    const normalised = firstEntry.replace(/\\/g, "/");
-    expect(normalised.endsWith("engine_v2/src")).toBe(true);
+    // Derive the expected srcDir the same way the implementation does so the
+    // check works on both win32 (path.delimiter=";") and posix (":").
+    // On posix a Windows-style cliPath contains "C:" which embeds a colon;
+    // splitting by ":" would shatter the srcDir itself, so compare via
+    // startsWith on the normalised PYTHONPATH value instead.
+    const expectedSrcDir = path
+      .resolve(path.dirname(ARGS.cliPath), "..", "src")
+      .replace(/\\/g, "/");
+    const normalisedPythonPath = pythonPath!.replace(/\\/g, "/");
+    expect(normalisedPythonPath.startsWith(expectedSrcDir)).toBe(true);
   });
 
   it("PYTHONPATH prepends srcDir ahead of an existing PYTHONPATH", async () => {
     const saved = process.env.PYTHONPATH;
-    process.env.PYTHONPATH = "C:/existing/path";
+    // Use a colon-free path so the test works on both win32 (delimiter=";")
+    // and posix (delimiter=":"). A Windows-style "C:/..." path contains a
+    // colon that posix split(":") would shatter into extra parts, and the
+    // srcDir itself (derived from the Windows-style cliPath) also contains
+    // "C:" on posix -- so we verify structure via startsWith/endsWith rather
+    // than counting delimiter-split parts.
+    const EXISTING_PYTHONPATH = "/tmp/existing/path";
+    process.env.PYTHONPATH = EXISTING_PYTHONPATH;
     try {
       const fake = makeFakeChild();
       spawnMock.mockReturnValue(fake as unknown as ChildProcess);
@@ -149,10 +162,20 @@ describe("runProposeCli", () => {
         { env?: Record<string, string> },
       ];
       const pythonPath = opts.env!["PYTHONPATH"]!;
-      const parts = pythonPath.split(path.delimiter);
-      expect(parts.length).toBe(2);
-      expect(parts[0]!.replace(/\\/g, "/").endsWith("engine_v2/src")).toBe(true);
-      expect(parts[1]).toBe("C:/existing/path");
+      // Derive the expected srcDir the same way the implementation does.
+      const expectedSrcDir = path
+        .resolve(path.dirname(ARGS.cliPath), "..", "src")
+        .replace(/\\/g, "/");
+      const normalisedPythonPath = pythonPath.replace(/\\/g, "/");
+      // srcDir must be the prefix.
+      expect(normalisedPythonPath.startsWith(expectedSrcDir)).toBe(true);
+      // Existing PYTHONPATH must follow the delimiter immediately after srcDir.
+      const expectedSuffix = path.delimiter + EXISTING_PYTHONPATH;
+      expect(normalisedPythonPath.endsWith(expectedSuffix)).toBe(true);
+      // No other content between srcDir and the existing path.
+      expect(normalisedPythonPath).toBe(
+        expectedSrcDir + expectedSuffix,
+      );
     } finally {
       if (saved === undefined) delete process.env.PYTHONPATH;
       else process.env.PYTHONPATH = saved;
