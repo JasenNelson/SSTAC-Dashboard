@@ -49,6 +49,7 @@ export type {
 
   // Reviews
   ReviewSubmission,
+  ReviewSubmissionStatus,
   ReviewFile,
 
   // Regulatory (SQLite)
@@ -63,6 +64,9 @@ export type {
   SubmissionSummary,
   RegulatorySubmissionDetail,
 } from './database';
+
+// Runtime value re-export (not a type): allowed review-submission status set.
+export { REVIEW_SUBMISSION_STATUSES } from './database';
 
 // =============================================================================
 // Form Types

@@ -8,6 +8,7 @@
  */
 
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
+import type { ReviewSubmissionStatus } from '@/types/database';
 
 // =============================================================================
 // Admin & User Management Queries
@@ -478,7 +479,7 @@ export async function createReviewSubmission(
     .from('review_submissions')
     .insert({
       user_id: userId,
-      status: 'draft',
+      status: 'IN_PROGRESS' satisfies ReviewSubmissionStatus,
       form_data: formData,
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
@@ -506,7 +507,7 @@ export async function submitReviewSubmission(submissionId: string) {
   return supabase
     .from('review_submissions')
     .update({
-      status: 'submitted',
+      status: 'SUBMITTED' satisfies ReviewSubmissionStatus,
       updated_at: new Date().toISOString(),
     })
     .eq('id', submissionId)
