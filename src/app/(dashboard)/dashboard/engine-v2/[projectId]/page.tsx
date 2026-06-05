@@ -32,7 +32,7 @@ export default async function ProjectDetailPage(props: PageProps) {
   const { data: projectRow, error: projectErr } = await client
     .from("v2_projects")
     .select(
-      "id, user_id, name, application_types, selected_services, media_types, submission_context_overrides, applicability_mode, evaluation_backend, embedder_backend, reranker_backend, model, max_files, max_total_bytes, created_at, updated_at",
+      "id, user_id, name, application_types, selected_services, media_types, applicable_policy_ids, submission_context_overrides, applicability_mode, evaluation_backend, embedder_backend, reranker_backend, model, max_files, max_total_bytes, created_at, updated_at",
     )
     .eq("id", projectId)
     .maybeSingle();

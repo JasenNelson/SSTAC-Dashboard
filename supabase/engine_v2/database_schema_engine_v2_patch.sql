@@ -18,6 +18,7 @@ CREATE TABLE IF NOT EXISTS v2_projects (
   application_types JSONB NOT NULL DEFAULT '[]'::jsonb,
   selected_services JSONB NOT NULL DEFAULT '[]'::jsonb,
   media_types JSONB NOT NULL DEFAULT '[]'::jsonb,
+  applicable_policy_ids JSONB NOT NULL DEFAULT '[]'::jsonb,
   submission_context_overrides JSONB NOT NULL DEFAULT '{}'::jsonb,
   applicability_mode TEXT NOT NULL DEFAULT 'off',
   evaluation_backend TEXT NOT NULL DEFAULT 'stub',
@@ -33,6 +34,9 @@ CREATE TABLE IF NOT EXISTS v2_projects (
 -- Defensive (Finding 31): ensure v7.x cap columns exist if v2_projects pre-dates them.
 ALTER TABLE v2_projects ADD COLUMN IF NOT EXISTS max_files INTEGER NOT NULL DEFAULT 50;
 ALTER TABLE v2_projects ADD COLUMN IF NOT EXISTS max_total_bytes BIGINT NOT NULL DEFAULT 524288000;
+-- Defensive (M1a Phase 2): ensure applicable_policy_ids exists if v2_projects pre-dates it
+-- (canonical add: supabase/migrations/20260604_v2_projects_applicable_policy_ids.sql).
+ALTER TABLE v2_projects ADD COLUMN IF NOT EXISTS applicable_policy_ids JSONB NOT NULL DEFAULT '[]'::jsonb;
 
 -- v2_submission_files: id is the TUS client-supplied file_id (Finding 58); NOT auto-generated.
 CREATE TABLE IF NOT EXISTS v2_submission_files (
