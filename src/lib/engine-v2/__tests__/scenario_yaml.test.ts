@@ -96,4 +96,86 @@ describe("composeScenarioYaml", () => {
     // Each backslash should be doubled in the emitted YAML.
     expect(yaml).toContain('extract_path: "C:\\\\data\\\\extract.json"');
   });
+
+  it("emits applicable_policy_ids_file (quoted, snake_case key) when provided", () => {
+    const yaml = composeScenarioYaml({
+      scenarioId: "scn",
+      extractPath: "C:/x.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off",
+      evaluationBackend: "stub",
+      embedderBackend: "stub",
+      rerankerBackend: "disabled",
+      model: "",
+      variant: "graph_v2_default",
+      applicablePolicyIdsFile: "C:/runs/abc/policy_ids.json",
+    });
+    expect(yaml).toContain(
+      'applicable_policy_ids_file: "C:/runs/abc/policy_ids.json"',
+    );
+  });
+
+  it("omits applicable_policy_ids_file when absent", () => {
+    const yaml = composeScenarioYaml({
+      scenarioId: "scn",
+      extractPath: "C:/x.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off",
+      evaluationBackend: "stub",
+      embedderBackend: "stub",
+      rerankerBackend: "disabled",
+      model: "",
+      variant: "graph_v2_default",
+    });
+    expect(yaml).not.toContain("applicable_policy_ids_file");
+  });
+
+  it("byte-identity: absent applicablePolicyIdsFile == pre-M1c composer output", () => {
+    // Golden equality proving the expand-contract fallback path is byte-for-byte
+    // unchanged from the pre-M1c composer when the field is not supplied.
+    const yaml = composeScenarioYaml({
+      scenarioId: "abc-123",
+      extractPath: "C:/data/extract.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off",
+      evaluationBackend: "stub",
+      embedderBackend: "stub",
+      rerankerBackend: "disabled",
+      model: "",
+      variant: "graph_v2_default",
+    });
+    const expectedPreM1c =
+      'scenario_id: "abc-123"\n' +
+      'extract_path: "C:/data/extract.json"\n' +
+      'bench_fixture: "bench_43_full"\n' +
+      'applicability_mode: "off"\n' +
+      'evaluation_backend: "stub"\n' +
+      'embedder_backend: "stub"\n' +
+      'reranker_backend: "disabled"\n' +
+      'model: ""\n' +
+      'variant: "graph_v2_default"\n' +
+      'rerank: "off"\n' +
+      'pathway_notes_mode: "annotation_only"\n';
+    expect(yaml).toBe(expectedPreM1c);
+  });
+
+  it("passing applicablePolicyIdsFile: undefined is identical to omitting it", () => {
+    const base = {
+      scenarioId: "scn",
+      extractPath: "C:/x.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off" as const,
+      evaluationBackend: "stub" as const,
+      embedderBackend: "stub" as const,
+      rerankerBackend: "disabled" as const,
+      model: "",
+      variant: "graph_v2_default",
+    };
+    const omitted = composeScenarioYaml(base);
+    const explicitUndefined = composeScenarioYaml({
+      ...base,
+      applicablePolicyIdsFile: undefined,
+    });
+    expect(explicitUndefined).toBe(omitted);
+  });
 });
