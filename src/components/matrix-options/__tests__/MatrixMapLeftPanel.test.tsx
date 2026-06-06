@@ -169,9 +169,10 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(screen.getByText(/1 selected station has unclassified status/)).toBeInTheDocument();
   });
 
-  // Phase 0: the stats-shell placeholder should appear inside the
-  // hasSelection branch and be absent in the empty state.
-  it('renders the stats-shell placeholder when a selection is active', () => {
+  // Phase 1: the stats-shell mounts MatrixMapSelectionStats.
+  // When the measurement store has not fetched yet (selectedIdKey=''),
+  // ready=false so the shell shows the loading state.
+  it('renders the stats-shell when a selection is active (Phase 1: shows stats UI)', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleIds: ['ref-1'],
       selectedSampleId: 'ref-1',
@@ -180,9 +181,14 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(
       screen.getByTestId('matrix-map-left-panel-stats-shell'),
     ).toBeInTheDocument();
+    // Phase 1: placeholder copy is gone; the shell renders MatrixMapSelectionStats.
+    // With no fetch yet (selectedIdKey=''), ready=false -> loading state shown.
     expect(
-      screen.getByTestId('matrix-map-left-panel-stats-shell'),
-    ).toHaveTextContent('Detailed selection statistics will appear here.');
+      screen.queryByText('Detailed selection statistics will appear here.'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('matrix-map-stats-loading'),
+    ).toBeInTheDocument();
   });
 
   it('does not render the stats-shell when the empty state is shown', () => {

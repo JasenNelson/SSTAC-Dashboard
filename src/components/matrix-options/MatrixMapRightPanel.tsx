@@ -26,6 +26,7 @@ import type {
   CoordinateQualityTier,
   MatrixMapData,
 } from '@/app/(dashboard)/matrix-map/types';
+import { filterMeasurementRows as filterMeasurementRowsLib } from '@/lib/matrix-map/filter-measurements';
 
 const PAGE_SIZE = 100;
 const TABLE_HEADERS = [
@@ -171,7 +172,7 @@ export function MatrixMapRightPanel({
   }, [filterKey, selectedIdKey]);
 
   const filteredRows = useMemo(
-    () => filterMeasurementRows(rows, filterState),
+    () => filterMeasurementRowsLib(rows, filterState),
     [rows, filterState],
   );
 
@@ -893,21 +894,10 @@ function normalizeMeasurementRow(value: unknown): MeasurementRow | null {
   };
 }
 
-function filterMeasurementRows(rows: MeasurementRow[], filterState: MatrixMapFilterState) {
-  const substanceIds = new Set(filterState.substance_ids);
-  const mediums = new Set(filterState.mediums);
-
-  return rows.filter((row) => {
-    if (substanceIds.size > 0 && (!row.substance_id || !substanceIds.has(row.substance_id))) return false;
-    if (mediums.size > 0 && !mediums.has(row.medium as MatrixMapMedium)) return false;
-    if (filterState.qa === 'detected' && row.censored) return false;
-    if (filterState.qa === 'censored' && !row.censored) return false;
-    if (filterState.classification !== 'all' && row.classification !== filterState.classification) return false;
-    if (filterState.date_from && row.event_date < filterState.date_from) return false;
-    if (filterState.date_to && row.event_date > filterState.date_to) return false;
-    return true;
-  });
-}
+// filterMeasurementRows was extracted verbatim to
+// src/lib/matrix-map/filter-measurements.ts (Phase 1) so the left stats panel
+// and the right workbench share identical filter logic.
+// This file now imports filterMeasurementRowsLib from that module (see top of file).
 
 function extractSubstanceOptions(rows: MeasurementRow[]) {
   const options = new Map<string, SubstanceOption>();
