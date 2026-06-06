@@ -26,9 +26,29 @@ UNIQUE constraint:
   dras                    -- bnrrm_doc_id
   samples                 -- bnrrm_station_id
   sample_events           -- bnrrm_event_id
-  measurements            -- bnrrm_chemistry_id (added per codex PR-MAP-1 R1 P2-1)
+  measurements (sediment) -- bnrrm_chemistry_id (PR-MAP-1 R1 P2-1)
+  measurements (toxicity) -- bnrrm_toxicity_id (multi-medium extension)
+  measurements (community)-- (bnrrm_community_id, substance_id) composite
+  measurements (modifier) -- bnrrm_env_modifier_id (multi-medium extension)
 so re-running over an already-populated schema is safe and does NOT duplicate
 rows. Re-running does NOT update existing rows; that is a v1.x concern.
+
+Multi-medium mapping (added 2026-05-20):
+  toxicity_tests -> measurements (medium='toxicity'); substance key is
+    a synthetic slug "tox_<test_type>_<endpoint>" with contaminant_class
+    'toxicity_test'; result -> value; supporting fields (species,
+    duration_days, control_result, p_value, percent_of_control,
+    sig_different, stat_test, LC50/EC50/IC25) folded into notes JSON.
+  benthic_community -> measurements (medium='community'); one row PER
+    non-null metric column (shannon_h, simpson_d, pielous_j, bray_curtis,
+    abundance, taxa_richness, ept_pct, oligochaete_pct, amphipod_pct,
+    polychaete_pct, mollusc_pct, biomass, stress_index); substance key
+    "comm_<metric>" with contaminant_class 'community_metric'; replicate
+    + source row id captured in notes.
+  env_modifiers -> measurements (medium='sediment'); substance key
+    "envmod_<parameter>" with contaminant_class 'env_modifier'; value ->
+    value; notes='env_modifier' tag so downstream queries can split env
+    modifiers from sediment chemistry within the 'sediment' medium.
 
 Q12 classification rules (plan v3.4.2 R-1):
   station_type = 'reference'                          -> classification='reference'
@@ -66,6 +86,32 @@ Usage:
   # apply against Supabase (requires DATABASE_URL env var)
   DATABASE_URL=postgresql://... python scripts/matrix-map/etl_bnrrm_to_supabase.py --apply
 """
+
+# v1.1.0 restored to main 2026-06-06 from commit 2e1da4c on the UNMERGED branch
+# feat/matrix-map-etl-multi-medium-extension (2026-05-20) -- the multimedium
+# version was committed there but never merged, so main stayed on v1.0.0 while
+# the v1.1.0 OUTPUT (..._output_v1_1_0_multimedium_PATH_B.sql, an UNCOMMITTED
+# artifact in the primary checkout) was generated and loaded live. Validation
+# 2026-06-06: regenerating against bnrrm_training.db reproduces that Path B SQL
+# byte-for-byte except the generated-at timestamp and the two re-applied fixes
+# noted below (9521/9521 lines; counters substances=194 dras=19 samples=290
+# events=302 measurements=7508 tox=334 community=175 env_modifiers=658).
+# TWO fixes from main's 22c51bd (which postdates the 2e1da4c branch point) are
+# RE-APPLIED on top of the restored version -- they are deliberate diffs vs the
+# committed Path B output: (1) search_path includes 'extensions' so PostGIS
+# ST_SetSRID/ST_MakePoint resolve on canonical environments; (2) the
+# service_role_audit INSERT supplies the NOT NULL invoked_by_role column
+# (current_user), matching the v1.0.0 form on main.
+# SCHEMA DEPENDENCY: the toxicity/community ON CONFLICT keys require the
+# bnrrm_toxicity_id / bnrrm_community_id columns + unique indexes captured in
+# supabase/migrations/20260606000002_* (PR #260) -- already applied LIVE;
+# fresh environments must apply that migration before running this ETL.
+# 2026-06-06: --include-env-modifiers flag added (default OFF). The owner
+# excluded env_modifiers as a map medium on 2026-06-05: grain size/TOC/pH etc.
+# are sediment-characterization metadata, not contaminant layers. The column
+# bnrrm_env_modifier_id does not exist in the live/canonical schema; emitting
+# those INSERTs without an owner-approved migration would fail at apply time.
+
 
 from __future__ import annotations
 
@@ -108,7 +154,26 @@ IMPACTED_TYPES: frozenset[str] = frozenset({"exposure", "near_field", "far_field
 # Anything else (including 'sampling', empty string, NULL) -> 'unknown'.
 
 RPC_NAME = "etl_bnrrm_to_supabase"
-SCRIPT_VERSION = "1.0.0"
+SCRIPT_VERSION = "1.1.0"
+
+# Benthic community metric columns + units. Each non-null metric in a
+# benthic_community row becomes a separate matrix_map.measurements row
+# under medium='community' with a synthetic substance key.
+BENTHIC_METRICS: tuple[tuple[str, str], ...] = (
+    ("abundance",        "count_per_sample"),
+    ("taxa_richness",    "count"),
+    ("shannon_h",        "dimensionless"),
+    ("simpson_d",        "dimensionless"),
+    ("pielous_j",        "dimensionless"),
+    ("bray_curtis",      "dimensionless"),
+    ("ept_pct",          "percent"),
+    ("oligochaete_pct",  "percent"),
+    ("amphipod_pct",     "percent"),
+    ("polychaete_pct",   "percent"),
+    ("mollusc_pct",      "percent"),
+    ("biomass",          "g_per_m2"),
+    ("stress_index",     "dimensionless"),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -311,9 +376,17 @@ class SourceData:
     ra_documents: dict[int, dict[str, Any]]
     # Per-site default DRA (first ra_documents row by doc_id ASC) for citation
     site_default_doc: dict[int, int] = field(default_factory=dict)
+    # Multi-medium extension (2026-05-20)
+    toxicity_tests: list[dict[str, Any]] = field(default_factory=list)
+    benthic_community: list[dict[str, Any]] = field(default_factory=list)
+    env_modifiers: list[dict[str, Any]] = field(default_factory=list)
 
 
-def fetch_source_data(conn: sqlite3.Connection, site_ids: Iterable[int]) -> SourceData:
+def fetch_source_data(
+    conn: sqlite3.Connection,
+    site_ids: Iterable[int],
+    include_env_modifiers: bool = False,
+) -> SourceData:
     """Pull rows for the seed sites in a single read pass each (no per-row queries)."""
     site_ids = tuple(site_ids)
     placeholders = ",".join("?" for _ in site_ids)
@@ -368,6 +441,44 @@ def fetch_source_data(conn: sqlite3.Connection, site_ids: Iterable[int]) -> Sour
             for row in cur:
                 sediment_chemistry.append(dict(row))
 
+    # Multi-medium extension: toxicity_tests, benthic_community,
+    # env_modifiers. All keyed on event_id; chunked the same way as
+    # sediment_chemistry to respect SQLite's 999-host-parameter cap.
+    toxicity_tests: list[dict[str, Any]] = []
+    benthic_community: list[dict[str, Any]] = []
+    env_modifiers: list[dict[str, Any]] = []
+    if event_ids:
+        CHUNK = 800
+        for start in range(0, len(event_ids), CHUNK):
+            chunk = event_ids[start:start + CHUNK]
+            ph = ",".join("?" for _ in chunk)
+            cur = conn.execute(
+                f"SELECT id, event_id, test_type, species, duration_days, endpoint, "
+                f"result, unit, control_result, reference_result, sig_different, "
+                f"stat_test, p_value, percent_of_control, lc50, ec50, ic25, notes "
+                f"FROM toxicity_tests WHERE event_id IN ({ph})",
+                chunk,
+            )
+            for row in cur:
+                toxicity_tests.append(dict(row))
+            cur = conn.execute(
+                f"SELECT id, event_id, replicate, abundance, taxa_richness, shannon_h, "
+                f"simpson_d, pielous_j, bray_curtis, ept_pct, oligochaete_pct, "
+                f"amphipod_pct, polychaete_pct, mollusc_pct, biomass, stress_index, "
+                f"notes FROM benthic_community WHERE event_id IN ({ph})",
+                chunk,
+            )
+            for row in cur:
+                benthic_community.append(dict(row))
+            if include_env_modifiers:
+                cur = conn.execute(
+                    f"SELECT id, event_id, parameter, value, unit "
+                    f"FROM env_modifiers WHERE event_id IN ({ph})",
+                    chunk,
+                )
+                for row in cur:
+                    env_modifiers.append(dict(row))
+
     ra_documents: dict[int, dict[str, Any]] = {}
     cur = conn.execute(
         f"SELECT doc_id, site_id, filepath, filename, title, author, doc_date, doc_type, "
@@ -389,6 +500,9 @@ def fetch_source_data(conn: sqlite3.Connection, site_ids: Iterable[int]) -> Sour
         sediment_chemistry=sediment_chemistry,
         ra_documents=ra_documents,
         site_default_doc=site_default_doc,
+        toxicity_tests=toxicity_tests,
+        benthic_community=benthic_community,
+        env_modifiers=env_modifiers,
     )
 
 
@@ -404,9 +518,15 @@ class EmitCounters:
     samples: int = 0
     sample_events: int = 0
     measurements: int = 0
+    toxicity_measurements: int = 0
+    community_measurements: int = 0
+    env_modifier_measurements: int = 0
     skipped_no_geom: int = 0
     skipped_no_event_date: int = 0
     skipped_no_value: int = 0
+    skipped_no_tox_value: int = 0
+    skipped_no_community_metric: int = 0
+    skipped_no_env_modifier_value: int = 0
 
 
 def build_sql(
@@ -414,6 +534,7 @@ def build_sql(
     centroids: dict[int, TierBCentroid],
     source_db: Path,
     geocoding_csv: Path,
+    include_env_modifiers: bool = False,
 ) -> tuple[str, EmitCounters]:
     """Construct the transaction-bracketed SQL artifact."""
     counters = EmitCounters()
@@ -450,6 +571,54 @@ def build_sql(
             "contaminant_class": row.get("parameter_group"),
             "aliases": {param},
         }
+
+    # Multi-medium extension: synthetic substances for toxicity tests,
+    # benthic community metrics, and env modifiers. Each uses a namespaced
+    # key prefix so they cannot collide with real chemistry substances.
+    for tox in src.toxicity_tests:
+        test_type = (tox.get("test_type") or "").strip()
+        endpoint = (tox.get("endpoint") or "").strip()
+        if not test_type or not endpoint:
+            continue
+        display = f"{test_type} / {endpoint}"
+        key = substance_key(f"tox_{test_type}_{endpoint}")
+        if key in seen_substances:
+            seen_substances[key].setdefault("aliases", set()).add(display)
+            continue
+        seen_substances[key] = {
+            "key": key,
+            "display_name": display,
+            "contaminant_class": "toxicity_test",
+            "aliases": {display},
+        }
+
+    for metric, _unit in BENTHIC_METRICS:
+        key = substance_key(f"comm_{metric}")
+        display = f"Benthic community: {metric}"
+        if key in seen_substances:
+            continue
+        seen_substances[key] = {
+            "key": key,
+            "display_name": display,
+            "contaminant_class": "community_metric",
+            "aliases": {display},
+        }
+
+    if include_env_modifiers:
+        for em in src.env_modifiers:
+            param = (em.get("parameter") or "").strip()
+            if not param:
+                continue
+            key = substance_key(f"envmod_{param}")
+            if key in seen_substances:
+                seen_substances[key].setdefault("aliases", set()).add(param)
+                continue
+            seen_substances[key] = {
+                "key": key,
+                "display_name": f"Env modifier: {param}",
+                "contaminant_class": "env_modifier",
+                "aliases": {param},
+            }
 
     for key in sorted(seen_substances):
         rec = seen_substances[key]
@@ -744,6 +913,171 @@ def build_sql(
         counters.measurements += 1
     out.append("")
 
+    # -- toxicity measurements --------------------------------------------
+    out.append("-- ===================== toxicity measurements =====================")
+    for tox in src.toxicity_tests:
+        if tox["event_id"] not in valid_event_ids:
+            continue
+        test_type = (tox.get("test_type") or "").strip()
+        endpoint = (tox.get("endpoint") or "").strip()
+        if not test_type or not endpoint:
+            counters.skipped_no_tox_value += 1
+            continue
+        value = tox.get("result")
+        if value is None:
+            counters.skipped_no_tox_value += 1
+            continue
+        tox_id = tox.get("id")
+        if tox_id is None:
+            counters.skipped_no_tox_value += 1
+            continue
+        key = substance_key(f"tox_{test_type}_{endpoint}")
+        unit = (tox.get("unit") or "dimensionless").strip() or "dimensionless"
+
+        # Fold supporting fields into a structured notes payload so the
+        # bridge-audit snapshot can reproduce the source reading.
+        notes_payload = {
+            "source": "toxicity_tests",
+            "species": tox.get("species"),
+            "duration_days": tox.get("duration_days"),
+            "control_result": tox.get("control_result"),
+            "reference_result": tox.get("reference_result"),
+            "sig_different": tox.get("sig_different"),
+            "stat_test": tox.get("stat_test"),
+            "p_value": tox.get("p_value"),
+            "percent_of_control": tox.get("percent_of_control"),
+            "lc50": tox.get("lc50"),
+            "ec50": tox.get("ec50"),
+            "ic25": tox.get("ic25"),
+            "notes": tox.get("notes"),
+        }
+        notes_payload = {k: v for k, v in notes_payload.items() if v is not None}
+        notes_text = json.dumps(notes_payload, separators=(",", ":"), default=str)
+
+        substance_clause = (
+            f"(SELECT id FROM matrix_map.substances WHERE key = {sql_text(key)})"
+        )
+        event_clause = (
+            f"(SELECT id FROM matrix_map.sample_events "
+            f"WHERE bnrrm_event_id = {tox['event_id']})"
+        )
+        out.append(
+            "INSERT INTO matrix_map.measurements ("
+            "bnrrm_toxicity_id, sample_event_id, substance_id, medium, value, unit, "
+            "raw_value, raw_unit, detection_limit, qualifier, censored, "
+            "method, lab, notes) "
+            f"SELECT {int(tox_id)}, {event_clause}, {substance_clause}, 'toxicity', "
+            f"{sql_text(value)}, {sql_text(unit)}, "
+            f"{sql_text(value)}, {sql_text(unit)}, "
+            "NULL, NULL, FALSE, "
+            f"{sql_text(tox.get('stat_test'))}, NULL, "
+            f"{sql_text(notes_text)} "
+            f"WHERE {event_clause} IS NOT NULL AND {substance_clause} IS NOT NULL "
+            "ON CONFLICT (bnrrm_toxicity_id) DO NOTHING;"
+        )
+        counters.toxicity_measurements += 1
+    out.append("")
+
+    # -- community measurements -------------------------------------------
+    out.append("-- ===================== community measurements =====================")
+    for bc in src.benthic_community:
+        if bc["event_id"] not in valid_event_ids:
+            continue
+        bc_id = bc.get("id")
+        if bc_id is None:
+            counters.skipped_no_community_metric += 1
+            continue
+        replicate = bc.get("replicate")
+        any_metric_emitted = False
+        for metric, unit in BENTHIC_METRICS:
+            value = bc.get(metric)
+            if value is None:
+                continue
+            any_metric_emitted = True
+            key = substance_key(f"comm_{metric}")
+
+            notes_payload = {
+                "source": "benthic_community",
+                "metric": metric,
+                "replicate": replicate,
+                "notes": bc.get("notes"),
+            }
+            notes_payload = {k: v for k, v in notes_payload.items() if v is not None}
+            notes_text = json.dumps(notes_payload, separators=(",", ":"), default=str)
+
+            substance_clause = (
+                f"(SELECT id FROM matrix_map.substances WHERE key = {sql_text(key)})"
+            )
+            event_clause = (
+                f"(SELECT id FROM matrix_map.sample_events "
+                f"WHERE bnrrm_event_id = {bc['event_id']})"
+            )
+            out.append(
+                "INSERT INTO matrix_map.measurements ("
+                "bnrrm_community_id, sample_event_id, substance_id, medium, value, unit, "
+                "raw_value, raw_unit, detection_limit, qualifier, censored, "
+                "method, lab, notes) "
+                f"SELECT {int(bc_id)}, {event_clause}, {substance_clause}, 'community', "
+                f"{sql_text(value)}, {sql_text(unit)}, "
+                f"{sql_text(value)}, {sql_text(unit)}, "
+                "NULL, NULL, FALSE, NULL, NULL, "
+                f"{sql_text(notes_text)} "
+                f"WHERE {event_clause} IS NOT NULL AND {substance_clause} IS NOT NULL "
+                "ON CONFLICT (bnrrm_community_id, substance_id) DO NOTHING;"
+            )
+            counters.community_measurements += 1
+        if not any_metric_emitted:
+            counters.skipped_no_community_metric += 1
+    out.append("")
+
+    # -- env_modifier measurements ----------------------------------------
+    # Tagged medium='sediment' (sediment-pathway bioavailability controls);
+    # notes='env_modifier' lets downstream queries split env modifiers
+    # from sediment chemistry. matrix_map.measurements.medium has no
+    # 'env_modifier' enum value so the notes tag is the only distinguisher.
+    # Gated on --include-env-modifiers (default OFF): the owner excluded
+    # env_modifiers as a map medium on 2026-06-05; bnrrm_env_modifier_id does
+    # not exist in the live/canonical schema.
+    out.append("-- ===================== env_modifier measurements =====================")
+    if include_env_modifiers:
+        for em in src.env_modifiers:
+            if em["event_id"] not in valid_event_ids:
+                continue
+            em_id = em.get("id")
+            if em_id is None:
+                counters.skipped_no_env_modifier_value += 1
+                continue
+            param = (em.get("parameter") or "").strip()
+            value = em.get("value")
+            if not param or value is None:
+                counters.skipped_no_env_modifier_value += 1
+                continue
+            key = substance_key(f"envmod_{param}")
+            unit = (em.get("unit") or "dimensionless").strip() or "dimensionless"
+
+            substance_clause = (
+                f"(SELECT id FROM matrix_map.substances WHERE key = {sql_text(key)})"
+            )
+            event_clause = (
+                f"(SELECT id FROM matrix_map.sample_events "
+                f"WHERE bnrrm_event_id = {em['event_id']})"
+            )
+            out.append(
+                "INSERT INTO matrix_map.measurements ("
+                "bnrrm_env_modifier_id, sample_event_id, substance_id, medium, value, unit, "
+                "raw_value, raw_unit, detection_limit, qualifier, censored, "
+                "method, lab, notes) "
+                f"SELECT {int(em_id)}, {event_clause}, {substance_clause}, 'sediment', "
+                f"{sql_text(value)}, {sql_text(unit)}, "
+                f"{sql_text(value)}, {sql_text(unit)}, "
+                "NULL, NULL, FALSE, NULL, NULL, "
+                f"{sql_text('env_modifier')} "
+                f"WHERE {event_clause} IS NOT NULL AND {substance_clause} IS NOT NULL "
+                "ON CONFLICT (bnrrm_env_modifier_id) DO NOTHING;"
+            )
+            counters.env_modifier_measurements += 1
+    out.append("")
+
     # -- service_role_audit ------------------------------------------------
     out.append("-- ===================== service_role_audit =====================")
     args_summary = {
@@ -760,17 +1094,25 @@ def build_sql(
             "samples": counters.samples,
             "sample_events": counters.sample_events,
             "measurements": counters.measurements,
+            "toxicity_measurements": counters.toxicity_measurements,
+            "community_measurements": counters.community_measurements,
+            "env_modifier_measurements": counters.env_modifier_measurements,
         },
         "skipped": {
             "stations_missing_geom": counters.skipped_no_geom,
             "events_missing_date": counters.skipped_no_event_date,
             "measurements_missing_value": counters.skipped_no_value,
+            "toxicity_missing_value": counters.skipped_no_tox_value,
+            "community_missing_metric": counters.skipped_no_community_metric,
+            "env_modifier_missing_value": counters.skipped_no_env_modifier_value,
         },
         "generated_at_utc": timestamp,
     }
     affected = (
         counters.substances + counters.dras + counters.samples
         + counters.sample_events + counters.measurements
+        + counters.toxicity_measurements + counters.community_measurements
+        + counters.env_modifier_measurements
     )
     out.append(
         "INSERT INTO matrix_map.service_role_audit (rpc_name, invoked_by_role, args_summary, affected_rows) "
@@ -871,6 +1213,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "DATABASE_URL env var (psycopg2 preferred; psql fallback)."
         ),
     )
+    parser.add_argument(
+        "--include-env-modifiers",
+        action="store_true",
+        default=False,
+        help=(
+            "Include env_modifier rows (medium tagged sediment). Default OFF: "
+            "the bnrrm_env_modifier_id column does not exist in the live/canonical "
+            "schema -- the owner excluded env_modifiers as a map medium "
+            "(characterization metadata, not a contaminant layer). Requires an "
+            "owner-approved migration before use."
+        ),
+    )
     return parser.parse_args(argv)
 
 
@@ -883,6 +1237,7 @@ def main(argv: list[str] | None = None) -> int:
         out_sql=str(args.out_sql),
         dry_run=not args.apply,
         apply=args.apply,
+        include_env_modifiers=args.include_env_modifiers,
     )
 
     if not args.source_db.exists():
@@ -903,7 +1258,8 @@ def main(argv: list[str] | None = None) -> int:
 
     conn = sqlite3.connect(str(args.source_db))
     try:
-        src = fetch_source_data(conn, SEED_SITE_IDS)
+        src = fetch_source_data(conn, SEED_SITE_IDS,
+                                include_env_modifiers=args.include_env_modifiers)
     finally:
         conn.close()
     log_phase(
@@ -912,10 +1268,16 @@ def main(argv: list[str] | None = None) -> int:
         stations=len(src.stations),
         sampling_events=len(src.sampling_events),
         sediment_chemistry_rows=len(src.sediment_chemistry),
+        toxicity_tests_rows=len(src.toxicity_tests),
+        benthic_community_rows=len(src.benthic_community),
+        env_modifiers_rows=len(src.env_modifiers),
         ra_documents=len(src.ra_documents),
     )
 
-    sql_body, counters = build_sql(src, centroids, args.source_db, args.geocoding_csv)
+    sql_body, counters = build_sql(
+        src, centroids, args.source_db, args.geocoding_csv,
+        include_env_modifiers=args.include_env_modifiers,
+    )
     args.out_sql.parent.mkdir(parents=True, exist_ok=True)
     args.out_sql.write_text(sql_body, encoding="utf-8", newline="\n")
     log_phase(
@@ -927,9 +1289,15 @@ def main(argv: list[str] | None = None) -> int:
         samples=counters.samples,
         sample_events=counters.sample_events,
         measurements=counters.measurements,
+        toxicity_measurements=counters.toxicity_measurements,
+        community_measurements=counters.community_measurements,
+        env_modifier_measurements=counters.env_modifier_measurements,
         skipped_no_geom=counters.skipped_no_geom,
         skipped_no_event_date=counters.skipped_no_event_date,
         skipped_no_value=counters.skipped_no_value,
+        skipped_no_tox_value=counters.skipped_no_tox_value,
+        skipped_no_community_metric=counters.skipped_no_community_metric,
+        skipped_no_env_modifier_value=counters.skipped_no_env_modifier_value,
     )
 
     if args.apply:
@@ -954,9 +1322,15 @@ def main(argv: list[str] | None = None) -> int:
         "samples": counters.samples,
         "sample_events": counters.sample_events,
         "measurements": counters.measurements,
+        "toxicity_measurements": counters.toxicity_measurements,
+        "community_measurements": counters.community_measurements,
+        "env_modifier_measurements": counters.env_modifier_measurements,
         "skipped_no_geom": counters.skipped_no_geom,
         "skipped_no_event_date": counters.skipped_no_event_date,
         "skipped_no_value": counters.skipped_no_value,
+        "skipped_no_tox_value": counters.skipped_no_tox_value,
+        "skipped_no_community_metric": counters.skipped_no_community_metric,
+        "skipped_no_env_modifier_value": counters.skipped_no_env_modifier_value,
     }
     log_phase("done", mode="apply" if args.apply else "dry-run", **summary)
     return 0
