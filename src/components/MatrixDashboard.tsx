@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -49,6 +49,14 @@ import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
 import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
 import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
 import { useIsMobile } from '@/hooks/useIsMobile';
+import {
+  MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
+  MATRIX_MAP_LEFT_PANEL_MIN_WIDTH,
+  MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH,
+  MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH,
+  clampMatrixMapPanelWidth,
+  getMatrixMapPanelMaxWidth,
+} from './matrix-map-panel-layout';
 
 // Audience tier for the Calculator sidebar guide. The value is persisted
 // with the rest of the lifted Calculator state so the chosen explanation
@@ -113,10 +121,11 @@ const LS_KEY_SUBSTANCE = 'matrix-options-substance-v1';
 const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
 const MATRIX_ADMIN_CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_MATRIX_ADMIN_CONTACT_EMAIL;
-const MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH = 360;
-const MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH = 480;
-const MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH = 720;
-const MATRIX_MAP_MIN_MAP_WIDTH = 360;
+// Panel layout constants + clampMatrixMapPanelWidth imported from
+// src/components/matrix-map-panel-layout.ts (unit-testable, shared by
+// both resize handles and keyboard nudge handlers).
+// MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH (720) removed -- max is now viewport-derived.
+// Left/right min constants also live in matrix-map-panel-layout.ts.
 const CALCULATOR_PROVENANCE_PATHWAYS: Record<MatrixCategory, ProvenancePathway> = {
   'eco-direct': 'eco-direct-eqp',
   'eco-food': 'eco-food-bsaf',
@@ -129,23 +138,6 @@ const CALCULATOR_CATEGORY_LABELS: Record<MatrixCategory, string> = {
   'hh-direct': 'Human Health Direct Contact',
   'hh-food': 'Human Health Food Web',
 };
-
-function clampMatrixMapRightPanelWidth(width: number, showLeftPanel: boolean) {
-  if (typeof window === 'undefined') {
-    return Math.min(
-      MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH,
-      Math.max(MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH, width),
-    );
-  }
-
-  const leftPanelWidth = showLeftPanel ? 320 : 0;
-  const viewportMax = window.innerWidth - leftPanelWidth - MATRIX_MAP_MIN_MAP_WIDTH;
-  const maxWidth = Math.max(
-    MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH,
-    Math.min(MATRIX_MAP_RIGHT_PANEL_MAX_WIDTH, viewportMax),
-  );
-  return Math.min(maxWidth, Math.max(MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH, width));
-}
 
 // Validate-on-load coercion per plan v5 Delta 1. SSR-safe (typeof window
 // guard). On invalid / stale localStorage values: clear the entry so the
@@ -248,10 +240,32 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [matrixMapLeftPanelWidth, setMatrixMapLeftPanelWidth] = useState(
+    MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
+  );
   const [matrixMapRightPanelWidth, setMatrixMapRightPanelWidth] = useState(
     MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH,
   );
   const [matrixMapWorkbenchFocused, setMatrixMapWorkbenchFocused] = useState(false);
+  // useRef mirrors keep the resize listener from re-subscribing on every
+  // width change. We compute nextLeft locally when re-clamping both panels
+  // so left + right <= viewport - 48px (MATRIX_MAP_MIN_MAP_WIDTH) holds in a
+  // single recompute without waiting for the ref to update post-render.
+  const leftWidthRef = useRef(MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH);
+  const rightWidthRef = useRef(MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH);
+  // ARIA ranges for the resize separators. aria-valuemax depends on
+  // window.innerWidth, which differs between SSR and the client; computing
+  // it at render time would ship an invalid SSR range (valuemax below
+  // valuenow) and a hydration mismatch. Initialize hydration-stable
+  // (max == the default width, so valuenow <= valuemax on the server and
+  // the first client render) and compute the real viewport-derived max in
+  // the post-mount effect below + the window resize handler.
+  const [leftPanelAriaMax, setLeftPanelAriaMax] = useState(
+    MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
+  );
+  const [rightPanelAriaMax, setRightPanelAriaMax] = useState(
+    MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH,
+  );
 
   // PR-MAP-17a mobile fallback: when the viewport is narrower than
   // 768 px (docs/design/matrix-map/PLAN_V3_4_2.md section 3.8), the
@@ -356,11 +370,52 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
       return !current;
     });
   }, []);
+  // Left separator is on the panel's RIGHT edge. Dragging right widens the
+  // left panel; dragging left narrows it.
+  // delta = clientX - startX (positive = moving right = wider left panel).
+  const handleLeftPanelResizePointerDown = useCallback(
+    (event: React.PointerEvent<HTMLButtonElement>) => {
+      event.preventDefault();
+      const startX = event.clientX;
+      const startWidth = leftWidthRef.current;
+      const previousCursor = document.body.style.cursor;
+      const previousUserSelect = document.body.style.userSelect;
+      document.body.style.cursor = 'col-resize';
+      document.body.style.userSelect = 'none';
+
+      const onPointerMove = (moveEvent: PointerEvent) => {
+        const nextWidth = startWidth + (moveEvent.clientX - startX);
+        const clamped = clampMatrixMapPanelWidth(
+          'left',
+          nextWidth,
+          showRightPanel ? rightWidthRef.current : 0,
+        );
+        leftWidthRef.current = clamped;
+        setMatrixMapLeftPanelWidth(clamped);
+      };
+      const onDragEnd = () => {
+        document.body.style.cursor = previousCursor;
+        document.body.style.userSelect = previousUserSelect;
+        window.removeEventListener('pointermove', onPointerMove);
+        window.removeEventListener('pointerup', onDragEnd);
+        window.removeEventListener('pointercancel', onDragEnd);
+      };
+
+      window.addEventListener('pointermove', onPointerMove);
+      window.addEventListener('pointerup', onDragEnd);
+      window.addEventListener('pointercancel', onDragEnd);
+    },
+    [showRightPanel],
+  );
+
+  // Right separator is on the panel's LEFT edge. Dragging left widens the
+  // right panel; dragging right narrows it.
+  // delta = startX - clientX (positive = moving left = wider right panel).
   const handleRightPanelResizePointerDown = useCallback(
     (event: React.PointerEvent<HTMLButtonElement>) => {
       event.preventDefault();
       const startX = event.clientX;
-      const startWidth = matrixMapRightPanelWidth;
+      const startWidth = rightWidthRef.current;
       const previousCursor = document.body.style.cursor;
       const previousUserSelect = document.body.style.userSelect;
       document.body.style.cursor = 'col-resize';
@@ -368,28 +423,76 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
 
       const onPointerMove = (moveEvent: PointerEvent) => {
         const nextWidth = startWidth + (startX - moveEvent.clientX);
-        setMatrixMapRightPanelWidth(
-          clampMatrixMapRightPanelWidth(nextWidth, showLeftPanel),
+        const clamped = clampMatrixMapPanelWidth(
+          'right',
+          nextWidth,
+          showLeftPanel ? leftWidthRef.current : 0,
         );
+        rightWidthRef.current = clamped;
+        setMatrixMapRightPanelWidth(clamped);
       };
-      const onPointerUp = () => {
+      const onDragEnd = () => {
         document.body.style.cursor = previousCursor;
         document.body.style.userSelect = previousUserSelect;
         window.removeEventListener('pointermove', onPointerMove);
-        window.removeEventListener('pointerup', onPointerUp);
+        window.removeEventListener('pointerup', onDragEnd);
+        window.removeEventListener('pointercancel', onDragEnd);
       };
 
       window.addEventListener('pointermove', onPointerMove);
-      window.addEventListener('pointerup', onPointerUp);
+      window.addEventListener('pointerup', onDragEnd);
+      window.addEventListener('pointercancel', onDragEnd);
     },
-    [matrixMapRightPanelWidth, showLeftPanel],
+    [showLeftPanel],
   );
 
+  // Re-clamp both widths when either panel is toggled. Compute nextLeft
+  // first as a local value so right can be clamped against it in the same
+  // recompute (left + right <= viewport - 48 invariant holds within a
+  // single setState batch). Widths are read from the refs (kept in sync at
+  // every width write) rather than inside setState updaters -- updaters
+  // must stay pure (StrictMode double-invokes them); this mirrors the
+  // resize handler's ref-read pattern below.
   useEffect(() => {
-    setMatrixMapRightPanelWidth((current) =>
-      clampMatrixMapRightPanelWidth(current, showLeftPanel),
+    const nextLeft = clampMatrixMapPanelWidth(
+      'left',
+      leftWidthRef.current,
+      showRightPanel ? rightWidthRef.current : 0,
     );
-  }, [showLeftPanel]);
+    leftWidthRef.current = nextLeft;
+    setMatrixMapLeftPanelWidth(nextLeft);
+
+    const nextRight = clampMatrixMapPanelWidth(
+      'right',
+      rightWidthRef.current,
+      showLeftPanel ? nextLeft : 0,
+    );
+    rightWidthRef.current = nextRight;
+    setMatrixMapRightPanelWidth(nextRight);
+  }, [showLeftPanel, showRightPanel]);
+
+  // Post-mount (and on any width/toggle change): recompute the separators'
+  // viewport-derived aria-valuemax. Runs only on the client, so the SSR
+  // markup keeps the hydration-stable defaults.
+  useEffect(() => {
+    setLeftPanelAriaMax(
+      getMatrixMapPanelMaxWidth(
+        'left',
+        showRightPanel ? matrixMapRightPanelWidth : 0,
+      ),
+    );
+    setRightPanelAriaMax(
+      getMatrixMapPanelMaxWidth(
+        'right',
+        showLeftPanel ? matrixMapLeftPanelWidth : 0,
+      ),
+    );
+  }, [
+    matrixMapLeftPanelWidth,
+    matrixMapRightPanelWidth,
+    showLeftPanel,
+    showRightPanel,
+  ]);
 
   useEffect(() => {
     if (!showRightPanel) setMatrixMapWorkbenchFocused(false);
@@ -398,13 +501,40 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onResize = () => {
-      setMatrixMapRightPanelWidth((current) =>
-        clampMatrixMapRightPanelWidth(current, showLeftPanel),
+      // Re-clamp both panels on viewport resize using ref values to avoid
+      // stale closure over the in-render state. Left first, then right
+      // against fresh left.
+      const nextLeft = clampMatrixMapPanelWidth(
+        'left',
+        leftWidthRef.current,
+        showRightPanel ? rightWidthRef.current : 0,
+      );
+      leftWidthRef.current = nextLeft;
+      setMatrixMapLeftPanelWidth(nextLeft);
+
+      const nextRight = clampMatrixMapPanelWidth(
+        'right',
+        rightWidthRef.current,
+        showLeftPanel ? nextLeft : 0,
+      );
+      rightWidthRef.current = nextRight;
+      setMatrixMapRightPanelWidth(nextRight);
+
+      // The viewport-derived aria-valuemax can change even when both
+      // widths stay in bounds (no width state change), so recompute it
+      // here too -- the width-keyed effect above would not fire.
+      setLeftPanelAriaMax(
+        getMatrixMapPanelMaxWidth('left', showRightPanel ? nextRight : 0),
+      );
+      setRightPanelAriaMax(
+        getMatrixMapPanelMaxWidth('right', showLeftPanel ? nextLeft : 0),
       );
     };
     window.addEventListener('resize', onResize);
     return () => window.removeEventListener('resize', onResize);
-  }, [showLeftPanel]);
+  // showLeftPanel + showRightPanel are stable booleans; the listener reads
+  // them via closure and is re-registered when they change.
+  }, [showLeftPanel, showRightPanel]);
 
   const selectedSubstance = findSubstance(substanceKey);
   const selectedJurisdiction = JURISDICTION_OPTIONS.find(
@@ -740,17 +870,62 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               onRefresh={handleRefreshMapData}
             />
             <div className="relative flex min-h-0 flex-1 overflow-hidden">
-              {/* Left panel: Selection Stats (PR-MAP-4 scaffold) */}
+              {/* Left panel: Selection Stats (Phase 0 redesign) */}
               <div
                 data-testid="matrix-map-left-panel-wrapper"
                 className={cn(
-                  'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm',
-                  showLeftPanel ? 'w-80' : 'w-0',
+                  'relative transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 shadow-sm',
+                  !showLeftPanel && 'pointer-events-none',
                 )}
+                style={{ width: showLeftPanel ? `${matrixMapLeftPanelWidth}px` : '0px' }}
               >
+                {/* Left separator: handle on the RIGHT edge of the left panel */}
+                {showLeftPanel && !matrixMapWorkbenchFocused && (
+                  <button
+                    type="button"
+                    role="separator"
+                    aria-orientation="vertical"
+                    aria-label="Resize selection stats panel"
+                    aria-valuenow={matrixMapLeftPanelWidth}
+                    aria-valuemin={MATRIX_MAP_LEFT_PANEL_MIN_WIDTH}
+                    aria-valuemax={leftPanelAriaMax}
+                    onPointerDown={handleLeftPanelResizePointerDown}
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        const next = clampMatrixMapPanelWidth(
+                          'left',
+                          leftWidthRef.current + 16,
+                          showRightPanel ? rightWidthRef.current : 0,
+                        );
+                        leftWidthRef.current = next;
+                        setMatrixMapLeftPanelWidth(next);
+                      } else if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        const next = clampMatrixMapPanelWidth(
+                          'left',
+                          leftWidthRef.current - 16,
+                          showRightPanel ? rightWidthRef.current : 0,
+                        );
+                        leftWidthRef.current = next;
+                        setMatrixMapLeftPanelWidth(next);
+                      }
+                    }}
+                    className="absolute inset-y-0 right-0 z-10 w-3 cursor-col-resize border-r border-transparent hover:border-blue-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:hover:border-blue-700"
+                  >
+                    {/* Grip dots: 3 small dots centered on the handle */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1"
+                    >
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                    </span>
+                  </button>
+                )}
                 <MatrixMapLeftPanel
                   initialMapData={initialMapData}
-                  substanceKey={substanceKey}
                 />
               </div>
 
@@ -768,26 +943,61 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 className={cn(
                   'relative transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-800 border-l border-slate-200 dark:border-slate-700 shadow-sm',
                   matrixMapWorkbenchFocused &&
-                    'absolute inset-y-4 right-4 z-[1200] rounded-lg border border-slate-200 shadow-2xl dark:border-slate-700',
+                    'absolute inset-y-2 right-3 z-[1200] rounded-lg border border-slate-200 shadow-2xl dark:border-slate-700',
                   !showRightPanel && !matrixMapWorkbenchFocused && 'pointer-events-none',
                 )}
                 style={{
                   width: matrixMapWorkbenchFocused
-                    ? 'min(960px, calc(100% - 96px))'
+                    ? 'calc(100% - 24px)'
                     : showRightPanel
                       ? `${matrixMapRightPanelWidth}px`
                       : '0px',
                 }}
               >
+                {/* Right separator: handle on the LEFT edge of the right panel */}
                 {showRightPanel && !matrixMapWorkbenchFocused && (
                   <button
                     type="button"
                     role="separator"
                     aria-orientation="vertical"
                     aria-label="Resize measurement workbench"
+                    aria-valuenow={matrixMapRightPanelWidth}
+                    aria-valuemin={MATRIX_MAP_RIGHT_PANEL_MIN_WIDTH}
+                    aria-valuemax={rightPanelAriaMax}
                     onPointerDown={handleRightPanelResizePointerDown}
-                    className="absolute inset-y-0 left-0 z-10 w-2 cursor-col-resize border-l border-transparent hover:border-blue-300 focus:border-blue-500 focus:outline-none dark:hover:border-blue-700"
-                  />
+                    onKeyDown={(e) => {
+                      if (e.key === 'ArrowLeft') {
+                        e.preventDefault();
+                        const next = clampMatrixMapPanelWidth(
+                          'right',
+                          rightWidthRef.current + 16,
+                          showLeftPanel ? leftWidthRef.current : 0,
+                        );
+                        rightWidthRef.current = next;
+                        setMatrixMapRightPanelWidth(next);
+                      } else if (e.key === 'ArrowRight') {
+                        e.preventDefault();
+                        const next = clampMatrixMapPanelWidth(
+                          'right',
+                          rightWidthRef.current - 16,
+                          showLeftPanel ? leftWidthRef.current : 0,
+                        );
+                        rightWidthRef.current = next;
+                        setMatrixMapRightPanelWidth(next);
+                      }
+                    }}
+                    className="absolute inset-y-0 left-0 z-10 w-3 cursor-col-resize border-l border-transparent hover:border-blue-300 focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-1 dark:hover:border-blue-700"
+                  >
+                    {/* Grip dots: 3 small dots centered on the handle */}
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center gap-1"
+                    >
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                      <span className="h-1 w-1 rounded-full bg-slate-300 dark:bg-slate-600" />
+                    </span>
+                  </button>
                 )}
                 <MatrixMapRightPanel
                   initialMapData={initialMapData}

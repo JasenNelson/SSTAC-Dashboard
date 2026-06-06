@@ -45,8 +45,11 @@ vi.mock('../matrix-options/SsdWorkbench', () => ({
 // MatrixMapLoader statically imports leaflet + markercluster CSS;
 // Vite's CSS pipeline cannot load the project's .mjs PostCSS config in
 // the vitest worker. Mock the loader + its CSS dependencies for the
-// MatrixDashboard tests; the Interactive Map tab is not exercised by
-// this suite (Calculator + Guide + TWG-tab assertions only).
+// MatrixDashboard tests. The Interactive Map tab IS exercised by the
+// drag-handler + focus-toggle tests at the bottom of this suite (the
+// stale comment here claimed it was not -- fixed in Phase 0 redesign
+// 2026-06-05). Calculator + Guide + TWG-tab assertions run in the upper
+// describe blocks.
 // Same pattern as MatrixMap.test.tsx (2026-05-20 fork commit 89eee3f).
 vi.mock('@/app/(dashboard)/matrix-map/MatrixMapLoader', () => ({
   default: () => <div data-testid="matrix-map-loader-mock" />,
@@ -628,6 +631,23 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.getByRole('separator', { name: /Resize measurement workbench/i })).toBeInTheDocument();
   });
 
+  it('renders Matrix Map left wrapper at the default width with a resize separator', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    // Default left panel width = 320px (MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH).
+    expect(leftWrapper).toHaveStyle({ width: '320px' });
+    expect(
+      screen.getByRole('separator', { name: /Resize selection stats panel/i }),
+    ).toBeInTheDocument();
+  });
+
   it('renders the SSD Workbench as a Matrix Options top-level tab', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
 
@@ -655,10 +675,294 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       ).toBeInTheDocument();
     });
 
+    // Focused width is calc(100% - 24px) with insets inset-y-2 right-3.
+    expect(wrapper).toHaveStyle({ width: 'calc(100% - 24px)' });
+
     fireEvent.click(screen.getByRole('button', { name: /Collapse measurement workbench focus/i }));
     await waitFor(() => {
       expect(wrapper.className).not.toContain('absolute');
       expect(wrapper).toHaveStyle({ width: '480px' });
     });
   });
+
+  it('suppresses BOTH resize handles while the workbench is focused', async () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    // Both handles present before focusing.
+    expect(
+      screen.getByRole('separator', { name: /Resize measurement workbench/i }),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('separator', { name: /Resize selection stats panel/i }),
+    ).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: /Focus measurement workbench/i }));
+
+    await waitFor(() => {
+      // Both handles suppressed in focus mode.
+      expect(
+        screen.queryByRole('separator', { name: /Resize measurement workbench/i }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('separator', { name: /Resize selection stats panel/i }),
+      ).not.toBeInTheDocument();
+    });
+  });
+
+  it('right drag handler widens the right panel when dragging left', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    // Initial width = 480px.
+    expect(wrapper).toHaveStyle({ width: '480px' });
+
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+    // Simulate drag: pointerdown at x=200, then pointermove to x=150 (left = wider right).
+    fireEvent.pointerDown(sep, { clientX: 200 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 150, bubbles: true }));
+
+    // Width should increase by 50 from initial 480 -> 530.
+    // clamp: max = 1280 - 320 - 48 = 912; min = 360. 530 is within range.
+    expect(wrapper).toHaveStyle({ width: '530px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  it('right drag handler narrows the right panel when dragging right', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+    // pointerdown at x=200, pointermove to x=250 (right = narrower right panel).
+    fireEvent.pointerDown(sep, { clientX: 200 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 250, bubbles: true }));
+
+    // Width should decrease by 50 from 480 -> 430; but min = 360, so 430 > 360.
+    expect(wrapper).toHaveStyle({ width: '430px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  it('right drag handler clamps against min width', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+    // Drag far right -- desired = 480 - 200 = 280 which is below min 360.
+    fireEvent.pointerDown(sep, { clientX: 200 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 400, bubbles: true }));
+
+    expect(wrapper).toHaveStyle({ width: '360px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  it('left drag handler widens the left panel when dragging right', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    // Initial width = 320px.
+    expect(leftWrapper).toHaveStyle({ width: '320px' });
+
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    // pointerdown at x=320, pointermove to x=370 (right = wider left panel).
+    fireEvent.pointerDown(leftSep, { clientX: 320 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 370, bubbles: true }));
+
+    // Width increases by 50: 320 + 50 = 370.
+    expect(leftWrapper).toHaveStyle({ width: '370px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  it('left drag handler narrows the left panel when dragging left', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    // pointerdown at x=320, pointermove to x=280 (left = narrower left panel).
+    fireEvent.pointerDown(leftSep, { clientX: 320 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 280, bubbles: true }));
+
+    // Width decreases by 40: 320 - 40 = 280, which equals min (280).
+    expect(leftWrapper).toHaveStyle({ width: '280px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  it('left drag handler clamps against min width', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+    // Drag far left -- desired = 320 - 200 = 120 which is below min 280.
+    fireEvent.pointerDown(leftSep, { clientX: 320 });
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 120, bubbles: true }));
+
+    expect(leftWrapper).toHaveStyle({ width: '280px' });
+
+    fireEvent(window, new PointerEvent('pointerup', { bubbles: true }));
+  });
+
+  // Keyboard nudge tests: ArrowLeft/ArrowRight on each separator.
+  // Right handle natural direction: ArrowLeft widens right, ArrowRight narrows.
+  it('right handle keyboard ArrowLeft nudges right panel wider by 16px', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+
+    fireEvent.keyDown(sep, { key: 'ArrowLeft' });
+
+    // 480 + 16 = 496
+    expect(wrapper).toHaveStyle({ width: '496px' });
+  });
+
+  it('right handle keyboard ArrowRight nudges right panel narrower by 16px', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+
+    fireEvent.keyDown(sep, { key: 'ArrowRight' });
+
+    // 480 - 16 = 464
+    expect(wrapper).toHaveStyle({ width: '464px' });
+  });
+
+  // Left handle natural direction: ArrowRight widens left, ArrowLeft narrows.
+  it('left handle keyboard ArrowRight nudges left panel wider by 16px', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+
+    fireEvent.keyDown(leftSep, { key: 'ArrowRight' });
+
+    // 320 + 16 = 336
+    expect(leftWrapper).toHaveStyle({ width: '336px' });
+  });
+
+  it('left handle keyboard ArrowLeft nudges left panel narrower by 16px', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+
+    fireEvent.keyDown(leftSep, { key: 'ArrowLeft' });
+
+    // 320 - 16 = 304
+    expect(leftWrapper).toHaveStyle({ width: '304px' });
+  });
+
+  it('keyboard nudge clamps at min width', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
+    const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
+
+    // Nudge down many times -- should floor at 280.
+    for (let i = 0; i < 20; i++) {
+      fireEvent.keyDown(leftSep, { key: 'ArrowLeft' });
+    }
+
+    expect(leftWrapper).toHaveStyle({ width: '280px' });
+  });
+
+  // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
+  it('pointercancel restores body cursor and userSelect (drag cleanup on cancel)', () => {
+    Object.defineProperty(window, 'innerWidth', {
+      configurable: true,
+      writable: true,
+      value: 1280,
+    });
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+
+    const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
+    // Start a drag -- body cursor should be col-resize.
+    fireEvent.pointerDown(sep, { clientX: 200 });
+    expect(document.body.style.cursor).toBe('col-resize');
+    expect(document.body.style.userSelect).toBe('none');
+
+    // Cancel the drag -- cleanup must run the same as pointerup.
+    fireEvent(window, new PointerEvent('pointermove', { clientX: 150, bubbles: true }));
+    fireEvent(window, new PointerEvent('pointercancel', { bubbles: true }));
+
+    expect(document.body.style.cursor).not.toBe('col-resize');
+    expect(document.body.style.userSelect).not.toBe('none');
+  });
 });
+

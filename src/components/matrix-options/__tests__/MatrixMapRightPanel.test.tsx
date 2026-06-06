@@ -263,6 +263,118 @@ describe('MatrixMapRightPanel', () => {
     expect(useMatrixMapSelectionStore.getState().selectedSampleIds).toEqual(['sample-a', 'sample-b']);
   });
 
+  // Phase 0: disabled chips for media absent from rows.
+  it('disables medium chips for media not present in any row', async () => {
+    // fixture has sediment (sample-a) and water (sample-b) -- toxicity and
+    // community have no rows, so those chips should be disabled.
+    rpcMock.mockResolvedValue({ data: measurementRows(), error: null });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a', 'sample-b'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+
+    const sedimentChip = screen.getByRole('button', { name: /^sediment$/i });
+    const waterChip = screen.getByRole('button', { name: /^water$/i });
+    // toxicity and community have no rows -> disabled with (none) suffix
+    const toxicityChip = screen.getByRole('button', { name: /toxicity/i });
+    const communityChip = screen.getByRole('button', { name: /community/i });
+
+    expect(sedimentChip).not.toBeDisabled();
+    expect(waterChip).not.toBeDisabled();
+    expect(toxicityChip).toBeDisabled();
+    expect(communityChip).toBeDisabled();
+    // Disabled chips carry the (none) suffix text
+    expect(toxicityChip).toHaveTextContent('(none)');
+    expect(communityChip).toHaveTextContent('(none)');
+  });
+
+  it('selecting one medium leaves other present media enabled', async () => {
+    rpcMock.mockResolvedValue({ data: measurementRows(), error: null });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a', 'sample-b'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+    // Click sediment chip to select it
+    fireEvent.click(screen.getByRole('button', { name: /^sediment$/i }));
+
+    // water also has rows -- it must remain enabled even though sediment is selected
+    const waterChip = screen.getByRole('button', { name: /^water$/i });
+    expect(waterChip).not.toBeDisabled();
+  });
+
+  it('selected-but-unavailable chip stays enabled so user can deselect', async () => {
+    // RPC returns only water rows.
+    rpcMock.mockResolvedValue({
+      data: [measurementRows()[1]], // water row only
+      error: null,
+    });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-b'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    // Wait for measurements to arrive -- look for the water substance.
+    await waitFor(() => {
+      expect(rpcMock).toHaveBeenCalled();
+    });
+
+    // Now select sediment in the filter -- this makes it selected-but-unavailable
+    // (the RPC only has water rows). Chip must remain enabled for deselect.
+    useMatrixMapFilterStore.getState().setFilterState({ mediums: ['sediment'] });
+
+    // sediment has no rows in the dataset, but it IS in filterState.mediums.
+    // The caller excludes selected values from disabledValues, so sediment
+    // should not be in the disabled list -> chip enabled, no (none) suffix.
+    await waitFor(() => {
+      const sedimentChip = screen.getByRole('button', { name: /^sediment$/i });
+      expect(sedimentChip).not.toBeDisabled();
+      expect(sedimentChip).not.toHaveTextContent('(none)');
+    });
+  });
+
+  it('disables all unselected chips while a new selection is refetching (no stale rows)', async () => {
+    // codex 5.5 P2 regression lock: after a selection CHANGE, `rows` still
+    // holds the previous selection's data until the new RPC resolves.
+    // availableMedia must gate on isLoading so chips fall back to the
+    // all-disabled loading state instead of reflecting stale rows.
+    rpcMock.mockResolvedValueOnce({ data: measurementRows(), error: null });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a', 'sample-b'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+    await screen.findByText('Copper');
+    expect(screen.getByRole('button', { name: /^sediment$/i })).not.toBeDisabled();
+
+    // Change the selection; the new fetch never resolves -> loading window.
+    rpcMock.mockReturnValueOnce(new Promise(() => {}));
+    act(() => {
+      useMatrixMapSelectionStore.setState({
+        selectedSampleIds: ['sample-b'],
+        selectedSampleId: null,
+      });
+    });
+
+    // During the refetch, previously-available media must be disabled too.
+    // NOTE: disabled chips gain the " (none)" suffix, which changes their
+    // accessible name -- match by prefix, not exact name.
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: /^sediment/i })).toBeDisabled();
+      expect(screen.getByRole('button', { name: /^water/i })).toBeDisabled();
+    });
+  });
+
   it('renders an error instead of staying loading when the RPC throws', async () => {
     rpcMock.mockRejectedValue(new Error('network down'));
     useMatrixMapSelectionStore.setState({

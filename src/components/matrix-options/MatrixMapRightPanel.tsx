@@ -16,6 +16,7 @@ import {
   MATRIX_MAP_QA_FILTERS,
   getHiddenSelectedSampleIds,
   hasActiveMatrixMapFilters,
+  isMatrixMapMedium,
   useMatrixMapFilterStore,
   type MatrixMapFilterState,
   type MatrixMapMedium,
@@ -200,6 +201,29 @@ export function MatrixMapRightPanel({
   );
   const activeFilters = hasActiveMatrixMapFilters(filterState);
   const substanceOptions = useMemo(() => extractSubstanceOptions(rows), [rows]);
+  // availableMedia is computed from UNFILTERED rows so selecting one medium
+  // does not disable others that are present in the data. While a fetch is
+  // in flight, `rows` still holds the PREVIOUS selection's data (fetch start
+  // only flips isLoading), so gate on isLoading to fall back to the accepted
+  // all-disabled loading state instead of enabling chips from stale rows.
+  const availableMedia = useMemo(() => {
+    const media = new Set<MatrixMapMedium>();
+    if (isLoading) return media;
+    for (const row of rows) {
+      if (isMatrixMapMedium(row.medium)) media.add(row.medium);
+    }
+    return media;
+  }, [isLoading, rows]);
+  // A chip is disabled if the medium has no data AND is not currently
+  // selected. A selected-but-unavailable medium stays enabled so the user
+  // can deselect it without a store write from an effect.
+  const disabledMedia = useMemo(
+    () =>
+      MATRIX_MAP_MEDIA.filter(
+        (m) => !availableMedia.has(m) && !filterState.mediums.includes(m),
+      ),
+    [availableMedia, filterState.mediums],
+  );
   const selectedSubstanceOptions = useMemo(
     () => substanceOptions.filter((option) => filterState.substance_ids.includes(option.id)),
     [filterState.substance_ids, substanceOptions],
@@ -273,6 +297,7 @@ export function MatrixMapRightPanel({
               onSubstanceSearch={setSubstanceSearch}
               isSubstancePickerOpen={isSubstancePickerOpen}
               onSubstancePickerOpen={setIsSubstancePickerOpen}
+              disabledMedia={disabledMedia}
             />
 
             {hiddenSelectedSampleIds.length > 0 && activeFilters && (
@@ -371,6 +396,7 @@ function FilterControls({
   onSubstanceSearch,
   isSubstancePickerOpen,
   onSubstancePickerOpen,
+  disabledMedia,
 }: {
   filterState: MatrixMapFilterState;
   onFilterState: (patch: Partial<MatrixMapFilterState>) => void;
@@ -382,6 +408,7 @@ function FilterControls({
   onSubstanceSearch: (value: string) => void;
   isSubstancePickerOpen: boolean;
   onSubstancePickerOpen: (value: boolean) => void;
+  disabledMedia: readonly MatrixMapMedium[];
 }) {
   const activeFilters = hasActiveMatrixMapFilters(filterState);
 
@@ -403,6 +430,7 @@ function FilterControls({
         values={MATRIX_MAP_MEDIA}
         selectedValues={filterState.mediums}
         onChange={(mediums) => onFilterState({ mediums })}
+        disabledValues={disabledMedia}
       />
       <ChipGroup
         label="QA"
@@ -612,13 +640,22 @@ function MultiChipGroup<T extends string>({
   values,
   selectedValues,
   onChange,
+  disabledValues,
 }: {
   label: string;
   values: readonly T[];
   selectedValues: T[];
   onChange: (value: T[]) => void;
+  // Optional: chips in this list are rendered disabled + muted with a
+  // "(none)" suffix so screen readers and touch users know the medium has
+  // no data in the current selection (tooltip also provided).
+  // A selected-but-unavailable value must NOT appear here; the caller is
+  // responsible for excluding selected values from the disabled list so
+  // the user can still deselect without a spurious store write.
+  disabledValues?: readonly T[];
 }) {
   const selectedSet = new Set(selectedValues);
+  const disabledSet = new Set(disabledValues ?? []);
   return (
     <div>
       <div className="mb-1 flex items-center justify-between gap-2">
@@ -638,10 +675,13 @@ function MultiChipGroup<T extends string>({
       <div className="flex flex-wrap gap-1">
         {values.map((item) => {
           const selected = selectedSet.has(item);
+          const isDisabled = disabledSet.has(item);
           return (
             <button
               key={item}
               type="button"
+              disabled={isDisabled}
+              title={isDisabled ? 'No measurements for this medium in the current selection' : undefined}
               onClick={() =>
                 onChange(
                   selected
@@ -651,12 +691,19 @@ function MultiChipGroup<T extends string>({
               }
               className={cn(
                 'rounded-md border px-2 py-1 text-[11px] font-semibold capitalize',
-                selected
-                  ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200'
-                  : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
+                isDisabled
+                  ? 'cursor-not-allowed border-slate-200 bg-white text-slate-400 opacity-60 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-500'
+                  : selected
+                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-200'
+                    : 'border-slate-200 bg-white text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300',
               )}
             >
               {item}
+              {isDisabled && (
+                <span className="ml-1 text-[10px] font-normal text-slate-400 dark:text-slate-500">
+                  (none)
+                </span>
+              )}
             </button>
           );
         })}

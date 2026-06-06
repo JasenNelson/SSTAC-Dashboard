@@ -5,10 +5,19 @@
 //
 // REGRESSION discipline (per cross_project_never_delete_regression_tests_during_cleanup):
 // do NOT remove these without explicit deletion of the corresponding feature.
+//
+// Phase 0 redesign (panel-redesign-2026-06-05):
+//   - Substance card and medium radio card REMOVED from the left panel (both
+//     features moved to the right panel). The tests that asserted on
+//     matrix-map-left-panel-substance and the sediment/water/toxicity radio
+//     buttons are removed here because the FEATURES themselves are deleted --
+//     this is the permitted exception under the regression discipline.
+//   - substanceKey prop dropped from renderPanel() helper.
+//   - MatrixMapStatsShell placeholder assertions added.
 
 import React from 'react';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import type { IdentifiedFeature } from '@/lib/maps/wms-identify';
 import type { MatrixMapData, MatrixSample } from '@/app/(dashboard)/matrix-map/types';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
@@ -67,11 +76,12 @@ const MAP_DATA: MatrixMapData = {
   data_snapshot_version: 'test',
 };
 
+// Phase 0: substanceKey prop removed from the left panel; renderPanel
+// no longer accepts or passes it.
 function renderPanel() {
   return render(
     <MatrixMapLeftPanel
       initialMapData={MAP_DATA}
-      substanceKey="benzo_a_pyrene"
     />,
   );
 }
@@ -141,7 +151,11 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(useMatrixMapIdentifyStore.getState().primaryFeatureIndex).toBeNull();
   });
 
-  it('renders selected-sample composition counts above identify state', async () => {
+  // SPLIT from the original mixed test at ~144-159:
+  //   - KEPT: composition-summary assertion (~153-155)
+  //   - DROPPED: sediment-radio assertion (~156-158) -- the medium radio card
+  //     was removed from the left panel in Phase 0 (moved to right panel chips).
+  it('renders selected-sample composition counts', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleIds: ['ref-1', 'imp-1', 'unk-1'],
       selectedSampleId: null,
@@ -153,27 +167,29 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(screen.getByTestId('matrix-map-left-panel-selection-stats')).toBeInTheDocument();
     expect(screen.getByText('3 selected (1 reference, 1 impacted, 1 unknown)')).toBeInTheDocument();
     expect(screen.getByText(/1 selected station has unclassified status/)).toBeInTheDocument();
-    await waitFor(() => {
-      expect(screen.getByRole('radio', { name: /^sediment$/i })).toBeEnabled();
-    });
   });
 
-  it('renders Calculator-controlled substance and enables only media with measurements', async () => {
+  // Phase 0: the stats-shell placeholder should appear inside the
+  // hasSelection branch and be absent in the empty state.
+  it('renders the stats-shell placeholder when a selection is active', () => {
     useMatrixMapSelectionStore.setState({
       selectedSampleIds: ['ref-1'],
       selectedSampleId: 'ref-1',
     });
-    useMatrixMapMeasurementStore.getState().setRows('ref-1', [
-      makeMeasurementRow({ sample_id: 'ref-1', medium: 'sediment' }),
-      makeMeasurementRow({ sample_id: 'ref-1', medium: 'toxicity' }),
-    ]);
-
     renderPanel();
+    expect(
+      screen.getByTestId('matrix-map-left-panel-stats-shell'),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByTestId('matrix-map-left-panel-stats-shell'),
+    ).toHaveTextContent('Detailed selection statistics will appear here.');
+  });
 
-    expect(screen.getByTestId('matrix-map-left-panel-substance')).toHaveTextContent('Benzo[a]pyrene');
-    expect(await screen.findByRole('radio', { name: /^sediment$/i })).toBeEnabled();
-    expect(screen.getByRole('radio', { name: /^toxicity$/i })).toBeEnabled();
-    expect(screen.getByRole('radio', { name: /^water$/i })).toBeDisabled();
+  it('does not render the stats-shell when the empty state is shown', () => {
+    renderPanel();
+    expect(
+      screen.queryByTestId('matrix-map-left-panel-stats-shell'),
+    ).not.toBeInTheDocument();
   });
 });
 
