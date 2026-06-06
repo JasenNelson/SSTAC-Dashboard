@@ -15,6 +15,7 @@ import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
 import { useMatrixMapMeasurementStore } from '@/stores/matrix-map/measurementStore';
 import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
+import { useMatrixMapFilterStore } from '@/stores/matrix-map/filterStore';
 import { MatrixMapLeftPanel } from '../MatrixMapLeftPanel';
 
 vi.mock('@/lib/admin-utils', () => ({
@@ -89,6 +90,7 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
       panRequestSeq: 0,
     });
     useMatrixMapMeasurementStore.getState().clear();
+    useMatrixMapFilterStore.getState().resetFilters();
   });
 
   it('renders the Selection Stats heading when no samples are selected', () => {
@@ -174,6 +176,29 @@ describe('MatrixMapLeftPanel -- PR-MAP-10 identify list wiring', () => {
     expect(await screen.findByRole('radio', { name: /^sediment$/i })).toBeEnabled();
     expect(screen.getByRole('radio', { name: /^toxicity$/i })).toBeEnabled();
     expect(screen.getByRole('radio', { name: /^water$/i })).toBeDisabled();
+  });
+
+  it('selecting a medium radio writes the choice into the global filter store (not just local state)', async () => {
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['ref-1'],
+      selectedSampleId: 'ref-1',
+    });
+    useMatrixMapMeasurementStore.getState().setRows('ref-1', [
+      makeMeasurementRow({ sample_id: 'ref-1', medium: 'sediment' }),
+      makeMeasurementRow({ sample_id: 'ref-1', medium: 'toxicity' }),
+    ]);
+
+    renderPanel();
+
+    const toxicityRadio = await screen.findByRole('radio', { name: /^toxicity$/i });
+    expect(toxicityRadio).toBeEnabled();
+    fireEvent.click(toxicityRadio);
+
+    await waitFor(() => {
+      expect(useMatrixMapFilterStore.getState().filterState.mediums).toEqual(['toxicity']);
+    });
+    // single-select on the left: the radio reflects the store value and it is checked
+    expect(screen.getByRole('radio', { name: /^toxicity$/i })).toBeChecked();
   });
 });
 

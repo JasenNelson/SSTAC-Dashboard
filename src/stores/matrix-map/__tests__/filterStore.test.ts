@@ -49,6 +49,24 @@ describe('useMatrixMapFilterStore', () => {
     expect(state.matchingSampleIdsReady).toBe(true);
   });
 
+  it('setSelectedMedium sets mediums to a single-element array and replaces (not appends) on switch', () => {
+    const store = useMatrixMapFilterStore.getState();
+    store.setSelectedMedium('toxicity');
+    expect(useMatrixMapFilterStore.getState().filterState.mediums).toEqual(['toxicity']);
+
+    // switching replaces the prior single-select medium rather than appending
+    store.setSelectedMedium('community');
+    expect(useMatrixMapFilterStore.getState().filterState.mediums).toEqual(['community']);
+  });
+
+  it('setSelectedMedium replaces a multi-select medium array from the right panel with a single medium', () => {
+    useMatrixMapFilterStore.getState().setFilterState({
+      mediums: ['sediment', 'toxicity', 'community'],
+    });
+    useMatrixMapFilterStore.getState().setSelectedMedium('sediment');
+    expect(useMatrixMapFilterStore.getState().filterState.mediums).toEqual(['sediment']);
+  });
+
   it('does not filter map samples until matching ids are ready', () => {
     const samples = [makeSample({ id: 'sample-a' }), makeSample({ id: 'sample-b' })];
     const filterState = {

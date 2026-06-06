@@ -11,13 +11,15 @@ import { useEffect, useMemo, useState } from 'react';
 import { useMatrixMapIdentifyStore } from '@/stores/matrix-map/identifyStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
 import { useMatrixMapMeasurementStore } from '@/stores/matrix-map/measurementStore';
+import {
+  MATRIX_MAP_MEDIA,
+  useMatrixMapFilterStore,
+  type MatrixMapMedium,
+} from '@/stores/matrix-map/filterStore';
 import { IdentifiedFeaturesList } from '@/components/bn-rrm/map/IdentifiedFeaturesList';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { MatrixMapData, MatrixSample } from '@/app/(dashboard)/matrix-map/types';
-
-const MEDIUM_OPTIONS = ['sediment', 'water', 'tissue', 'toxicity', 'community'] as const;
-type MatrixMapMedium = (typeof MEDIUM_OPTIONS)[number];
 
 interface MatrixMapLeftPanelProps {
   initialMapData: MatrixMapData;
@@ -37,7 +39,13 @@ export function MatrixMapLeftPanel({ initialMapData, substanceKey }: MatrixMapLe
   const [isAdmin, setIsAdmin] = useState(false);
   const [isExporting, setIsExporting] = useState(false);
   const [exportError, setExportError] = useState<string | null>(null);
-  const [selectedMedium, setSelectedMedium] = useState<MatrixMapMedium>('sediment');
+  const filterMediums = useMatrixMapFilterStore((s) => s.filterState.mediums);
+  const setSelectedMedium = useMatrixMapFilterStore((s) => s.setSelectedMedium);
+  // Single-select on the left: drive the radio from the first medium in the
+  // global filter store (defaulting to 'sediment' when no filter is set). The
+  // right panel stays multi-select; this writes mediums:[X] so the left panel
+  // acts as a quick switch that syncs with right-panel filtering.
+  const selectedMedium: MatrixMapMedium = filterMediums[0] ?? 'sediment';
 
   const hasIdentified = identifiedFeatures.length > 0;
   const selectedSamples = initialMapData.visible_samples.filter((sample) =>
@@ -69,10 +77,9 @@ export function MatrixMapLeftPanel({ initialMapData, substanceKey }: MatrixMapLe
   }, []);
 
   useEffect(() => {
-    setSelectedMedium((current) =>
-      availableMedia.has(current) ? current : availableMedia.values().next().value ?? 'sediment',
-    );
-  }, [availableMedia]);
+    if (availableMedia.size === 0 || availableMedia.has(selectedMedium)) return;
+    setSelectedMedium(availableMedia.values().next().value ?? 'sediment');
+  }, [availableMedia, selectedMedium, setSelectedMedium]);
 
   return (
     <div className="w-80 h-full flex flex-col">
@@ -119,7 +126,7 @@ export function MatrixMapLeftPanel({ initialMapData, substanceKey }: MatrixMapLe
                 Medium
               </p>
               <div className="space-y-2">
-                {MEDIUM_OPTIONS.map((medium) => {
+                {MATRIX_MAP_MEDIA.map((medium) => {
                   const enabled = availableMedia.has(medium);
                   return (
                     <label
@@ -248,7 +255,7 @@ function extractAvailableMedia(value: { medium?: unknown }[]): Set<MatrixMapMedi
 }
 
 function isMatrixMapMedium(value: unknown): value is MatrixMapMedium {
-  return typeof value === 'string' && (MEDIUM_OPTIONS as readonly string[]).includes(value);
+  return typeof value === 'string' && (MATRIX_MAP_MEDIA as readonly string[]).includes(value);
 }
 
 async function exportSelectionCsv({

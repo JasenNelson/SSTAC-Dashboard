@@ -33,6 +33,7 @@ interface MatrixMapFilterStoreState {
   matchingSampleIdsReady: boolean;
   showSelectedDespiteFilters: boolean;
   setFilterState: (patch: Partial<MatrixMapFilterState>) => void;
+  setSelectedMedium: (medium: MatrixMapMedium) => void;
   resetFilters: () => void;
   setMatchingSampleIds: (sampleIds: string[], ready: boolean) => void;
   setShowSelectedDespiteFilters: (value: boolean) => void;
@@ -48,6 +49,14 @@ export const useMatrixMapFilterStore = create<MatrixMapFilterStoreState>()((set)
       filterState: {
         ...state.filterState,
         ...patch,
+      },
+    }));
+  },
+  setSelectedMedium: (medium) => {
+    set((state) => ({
+      filterState: {
+        ...state.filterState,
+        mediums: [medium],
       },
     }));
   },
