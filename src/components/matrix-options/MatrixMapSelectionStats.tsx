@@ -1,17 +1,19 @@
 'use client';
 
-// Phase 1 stats display component for the matrix-map left panel.
+// Phase 2 stats display component for the matrix-map left panel.
 // Receives raw measurement rows + filter state; filters and computes
-// descriptive stats + UCL95 client-side.
+// descriptive stats + GOF + Recommended UCL + Bootstrap UCL.
 //
-// Design authority: MATRIX_MAP_STATS_ENGINE_DESIGN_2026_06_05.md
+// Traced to: docs/PROUCL_V52_EXTRACTION_PACKET_2026_06_06.md
 // Plain ASCII only (code point <= 127).
 
-import { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { computeSelectionStats } from '@/lib/matrix-map/stats';
 import type { StatsBucket, StatFlag } from '@/lib/matrix-map/stats';
 import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
 import type { MatrixMapFilterState } from '@/stores/matrix-map/filterStore';
+import { bootstrapUcls } from '@/lib/matrix-map/bootstrap';
+import type { BootstrapResults } from '@/lib/matrix-map/bootstrap';
 
 // ---------------------------------------------------------------------------
 // Props
@@ -38,10 +40,74 @@ export function MatrixMapSelectionStats({
   errorMessage,
   ready,
 }: MatrixMapSelectionStatsProps) {
+  const [selectedMethod, setSelectedMethod] = useState<string>('recommended');
+  const [bootstrapCache, setBootstrapCache] = useState<Record<string, BootstrapResults>>({});
+  const [calculatingKeys, setCalculatingKeys] = useState<Record<string, boolean>>({});
+
   const result = useMemo(() => {
     if (!ready || isLoading) return null;
     return computeSelectionStats({ rows, filterState });
   }, [rows, filterState, isLoading, ready]);
+
+  // Effect to run bootstrap calculation asynchronously if the active method is a bootstrap method
+  useEffect(() => {
+    if (!result) return;
+
+    const missingBuckets: { bucketKey: string; values: number[]; cacheKey: string }[] = [];
+
+    for (const bucket of result.buckets) {
+      const activeMethod = selectedMethod === 'recommended'
+        ? bucket.recommendation.recommendedMethod
+        : selectedMethod;
+      const isBootstrap = activeMethod === 'percentile95' || activeMethod === 'bca95' || activeMethod === 'bootstrapT';
+
+      if (isBootstrap && bucket.acceptedValues.length >= 2) {
+        // Sort values to compute a deterministic cache key
+        const sortedVals = [...bucket.acceptedValues].sort((a, b) => a - b);
+        const cacheKey = bucket.bucketKey + '::' + sortedVals.join(',');
+
+        if (!bootstrapCache[cacheKey] && !calculatingKeys[cacheKey]) {
+          missingBuckets.push({
+            bucketKey: bucket.bucketKey,
+            values: sortedVals,
+            cacheKey,
+          });
+        }
+      }
+    }
+
+    if (missingBuckets.length === 0) return;
+
+    // Mark missing buckets as calculating
+    setCalculatingKeys((prev) => {
+      const next = { ...prev };
+      for (const item of missingBuckets) {
+        next[item.cacheKey] = true;
+      }
+      return next;
+    });
+
+    // Run async bootstrap calculations
+    for (const item of missingBuckets) {
+      bootstrapUcls(item.values)
+        .then((res) => {
+          setBootstrapCache((prev) => ({
+            ...prev,
+            [item.cacheKey]: res,
+          }));
+        })
+        .catch((err) => {
+          console.error('Bootstrap worker failed for ' + item.bucketKey, err);
+        })
+        .finally(() => {
+          setCalculatingKeys((prev) => {
+            const next = { ...prev };
+            delete next[item.cacheKey];
+            return next;
+          });
+        });
+    }
+  }, [result, selectedMethod, bootstrapCache, calculatingKeys]);
 
   // Not-ready / loading state.
   if (!ready || isLoading) {
@@ -85,12 +151,45 @@ export function MatrixMapSelectionStats({
     );
   }
 
-  // Per-bucket stat cards.
+  // Render stats with dropdown
   return (
-    <div data-testid="matrix-map-stats-buckets" className="space-y-3">
-      {result.buckets.map((bucket) => (
-        <BucketCard key={bucket.bucketKey} bucket={bucket} />
-      ))}
+    <div className="space-y-3">
+      {/* Dropdown method selector */}
+      <div className="flex flex-col gap-1.5 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30">
+        <label htmlFor="ucl-method-selector" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+          UCL Method Selector
+        </label>
+        <select
+          id="ucl-method-selector"
+          value={selectedMethod}
+          onChange={(e) => setSelectedMethod(e.target.value)}
+          className="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs px-2.5 py-1.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+        >
+          <option value="recommended">ProUCL Recommended (Default)</option>
+          <option value="studentT95">{"Student's-t (95%)"}</option>
+          <option value="approximateGamma">Approximate Gamma (Wilson-Hilferty)</option>
+          <option value="adjustedGamma">Adjusted Gamma (Grice-Bain)</option>
+          <option value="hUcl">H-UCL</option>
+          <option value="chebyshev95">Chebyshev 95%</option>
+          <option value="chebyshev975">Chebyshev 97.5%</option>
+          <option value="chebyshev99">Chebyshev 99%</option>
+          <option value="percentile95">Percentile Bootstrap</option>
+          <option value="bca95">BCA Bootstrap</option>
+          <option value="bootstrapT">Bootstrap-t</option>
+        </select>
+      </div>
+
+      <div data-testid="matrix-map-stats-buckets" className="space-y-3">
+        {result.buckets.map((bucket) => (
+          <BucketCard
+            key={bucket.bucketKey}
+            bucket={bucket}
+            selectedMethod={selectedMethod}
+            bootstrapCache={bootstrapCache}
+            calculatingKeys={calculatingKeys}
+          />
+        ))}
+      </div>
     </div>
   );
 }
@@ -99,9 +198,95 @@ export function MatrixMapSelectionStats({
 // BucketCard
 // ---------------------------------------------------------------------------
 
-function BucketCard({ bucket }: { bucket: StatsBucket }) {
+interface BucketCardProps {
+  bucket: StatsBucket;
+  selectedMethod: string;
+  bootstrapCache: Record<string, BootstrapResults>;
+  calculatingKeys: Record<string, boolean>;
+}
+
+function BucketCard({
+  bucket,
+  selectedMethod,
+  bootstrapCache,
+  calculatingKeys,
+}: BucketCardProps) {
   const d = bucket.descriptive;
   const u = bucket.ucl;
+
+  const activeMethod = selectedMethod === 'recommended'
+    ? bucket.recommendation.recommendedMethod
+    : selectedMethod;
+
+  const sortedVals = [...bucket.acceptedValues].sort((a, b) => a - b);
+  const cacheKey = bucket.bucketKey + '::' + sortedVals.join(',');
+  const isCalculating = calculatingKeys[cacheKey];
+  const bData = bootstrapCache[cacheKey];
+
+  let uclValue: number | null = null;
+  let isBootstrap = false;
+  let methodLabel = '';
+
+  if (activeMethod === 'studentT95') {
+    uclValue = u.studentT95;
+    methodLabel = "Student's-t (95%)";
+  } else if (activeMethod === 'chebyshev95') {
+    uclValue = u.chebyshev.find((e) => e.level === 0.95)?.ucl ?? null;
+    methodLabel = 'Chebyshev 95%';
+  } else if (activeMethod === 'chebyshev975') {
+    uclValue = u.chebyshev.find((e) => e.level === 0.975)?.ucl ?? null;
+    methodLabel = 'Chebyshev 97.5%';
+  } else if (activeMethod === 'chebyshev99') {
+    uclValue = u.chebyshev.find((e) => e.level === 0.99)?.ucl ?? null;
+    methodLabel = 'Chebyshev 99%';
+  } else if (activeMethod === 'approximateGamma') {
+    uclValue = u.approximateGamma;
+    methodLabel = 'Approximate Gamma (Wilson-Hilferty)';
+  } else if (activeMethod === 'adjustedGamma') {
+    uclValue = u.adjustedGamma;
+    methodLabel = 'Adjusted Gamma (Grice-Bain)';
+  } else if (activeMethod === 'hUcl') {
+    uclValue = u.hUcl;
+    methodLabel = 'H-UCL';
+  } else if (activeMethod === 'percentile95') {
+    isBootstrap = true;
+    uclValue = bData ? bData.percentile95 : null;
+    methodLabel = 'Percentile Bootstrap';
+  } else if (activeMethod === 'bca95') {
+    isBootstrap = true;
+    uclValue = bData ? bData.bca95 : null;
+    methodLabel = 'BCA Bootstrap';
+  } else if (activeMethod === 'bootstrapT') {
+    isBootstrap = true;
+    uclValue = bData ? bData.bootstrapT95 : null;
+    methodLabel = 'Bootstrap-t';
+  } else if (activeMethod === 'none') {
+    methodLabel = 'Recommended UCL';
+  }
+
+  let displayVal = 'N/A';
+  if (bucket.acceptedValues.length < 2) {
+    displayVal = 'N/A';
+  } else if (isBootstrap && (isCalculating || !bData)) {
+    displayVal = 'Calculating...';
+  } else if (uclValue !== null) {
+    displayVal = fmtNum(uclValue);
+  }
+
+  let basisText = bucket.ucl.basis;
+  if (selectedMethod !== 'recommended') {
+    const censoredSuffix = bucket.flags.includes('dl_substitution_used')
+      ? ' [DL/2 substitution (interim, Phase 3: KM)]'
+      : '';
+    basisText = `Manual Override -> ${methodLabel}${censoredSuffix}`;
+  }
+
+  let uclHeader = 'UCL 95%';
+  if (activeMethod === 'chebyshev975') {
+    uclHeader = 'UCL 97.5%';
+  } else if (activeMethod === 'chebyshev99') {
+    uclHeader = 'UCL 99%';
+  }
 
   return (
     <div
@@ -109,28 +294,43 @@ function BucketCard({ bucket }: { bucket: StatsBucket }) {
       className="rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30 p-4 space-y-3"
     >
       {/* Header: substance - unit */}
-      <div data-testid="matrix-map-stats-bucket-header">
-        <p className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
-          {bucket.substanceDisplayName}
-          {bucket.unit ? ' - ' + bucket.unit : ''}
-        </p>
+      <div data-testid="matrix-map-stats-bucket-header" className="flex justify-between items-start">
+        <div>
+          <h4
+            data-testid="matrix-map-stats-substance-name"
+            className="text-xs font-bold text-slate-800 dark:text-slate-200"
+          >
+            {bucket.substanceDisplayName}
+          </h4>
+          {bucket.unit && (
+            <span
+              data-testid="matrix-map-stats-unit"
+              className="text-[10px] text-slate-400 dark:text-slate-500"
+            >
+              {bucket.unit}
+            </span>
+          )}
+        </div>
       </div>
 
-      {/* Descriptive strip */}
-      <div data-testid="matrix-map-stats-descriptive" className="space-y-1">
-        <DescRow label="n" value={String(d.n)} />
-        <DescRow label="Detects / non-detects" value={String(d.detects) + ' / ' + String(d.nonDetects)} />
-        <DescRow label="Detection freq" value={fmtPct(d.detectionFrequencyPct)} />
-        {d.n > 0 && (
-          <>
-            <DescRow label="Min" value={fmtNum(d.min)} />
-            <DescRow label="Max" value={fmtNum(d.max)} />
-            <DescRow label="Mean" value={fmtNum(d.mean)} />
-            <DescRow label="Median" value={fmtNum(d.median)} />
-          </>
+      {/* Stats grid */}
+      <div data-testid="matrix-map-stats-descriptive" className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-xs text-slate-600 dark:text-slate-400">
+        <DescRow label="Sample size (n)" value={String(d.n)} />
+        <DescRow label="Detects" value={String(d.detects)} />
+        {d.detectionFrequencyPct !== null && (
+          <DescRow label="Detection Freq" value={fmtPct(d.detectionFrequencyPct)} />
+        )}
+        {Number.isFinite(d.min) && (
+          <DescRow label="Min" value={fmtNum(d.min)} />
+        )}
+        {Number.isFinite(d.max) && (
+          <DescRow label="Max" value={fmtNum(d.max)} />
+        )}
+        {Number.isFinite(d.mean) && (
+          <DescRow label="Mean" value={fmtNum(d.mean)} />
         )}
         {Number.isFinite(d.sd) && (
-          <DescRow label="SD" value={fmtNum(d.sd)} />
+          <DescRow label="Std Dev" value={fmtNum(d.sd)} />
         )}
         {d.cv !== null && (
           <DescRow label="CV" value={fmtNum(d.cv)} />
@@ -138,39 +338,31 @@ function BucketCard({ bucket }: { bucket: StatsBucket }) {
         {Number.isFinite(d.skewness) && (
           <DescRow label="Skewness" value={fmtNum(d.skewness)} />
         )}
-        {Number.isFinite(d.p90) && (
-          <DescRow label="P90" value={fmtNum(d.p90)} />
-        )}
-        {Number.isFinite(d.p95) && (
-          <DescRow label="P95" value={fmtNum(d.p95)} />
-        )}
-        {d.sigmaHat !== null && (
-          <DescRow label="Sigma-hat" value={fmtNum(d.sigmaHat)} />
-        )}
       </div>
 
       {/* UCL block */}
-      {(u.studentT95 !== null || u.chebyshev.length > 0) && (
+      {(uclValue !== null || isCalculating || activeMethod === 'none') && (
         <div data-testid="matrix-map-stats-ucl" className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-700/50">
-          <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-            UCL 95%
-          </p>
-          {u.studentT95 !== null && (
-            <DescRow label="Student's-t" value={fmtNum(u.studentT95)} testid="matrix-map-stats-ucl-student-t" />
-          )}
-          {u.chebyshev.map((e) => (
-            <DescRow
-              key={String(e.level)}
-              label={'Chebyshev ' + fmtPct(e.level * 100)}
-              value={fmtNum(e.ucl)}
-              testid={'matrix-map-stats-ucl-chebyshev-' + String(Math.round(e.level * 1000))}
-            />
-          ))}
+          <div className="flex justify-between items-center mb-1">
+            <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+              {uclHeader}
+            </p>
+            {selectedMethod !== 'recommended' && (
+              <span className="text-[10px] text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-800 px-1 py-0.5 rounded">
+                Override
+              </span>
+            )}
+          </div>
+          <DescRow
+            label={methodLabel}
+            value={displayVal}
+            testid="matrix-map-stats-ucl-value"
+          />
           <p
             data-testid="matrix-map-stats-ucl-basis"
             className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-1"
           >
-            {u.basis}
+            {basisText}
           </p>
         </div>
       )}
@@ -249,23 +441,15 @@ function FlagChip({ flag }: { flag: StatFlag }) {
 // Formatting helpers (ASCII-only -- no Unicode symbols)
 // ---------------------------------------------------------------------------
 
-// Format a number for display: up to 6 significant figures, fallback to NaN string.
 function fmtNum(v: number): string {
   if (!Number.isFinite(v)) return 'NaN';
   const s = v.toPrecision(6);
-  // Exponent forms (1.23457e+8) pass through untouched.
   if (s.includes('e') || s.includes('E')) return s;
-  // Trim zeros ONLY after a decimal point -- integer trailing zeros are
-  // significant digits (100000 must render as 100000, never 1; codex 5.5
-  // P2, 2026-06-05). Then drop a bare trailing decimal point.
   if (!s.includes('.')) return s;
   return s.replace(/0+$/, '').replace(/\.$/, '');
 }
 
-// Format a percentage: one decimal place.
 function fmtPct(pct: number | null): string {
-  // null = undefined ratio (e.g. detection frequency of an all-excluded
-  // bucket, 0/0) -- render a dash, never '0.0%'.
   if (pct === null) return '--';
   return pct.toFixed(1) + '%';
 }
