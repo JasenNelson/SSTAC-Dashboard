@@ -14,6 +14,10 @@ import { tCritical } from './inverse-t';
 import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
 import type { MatrixMapFilterState } from '@/stores/matrix-map/filterStore';
 import { filterMeasurementRows } from './filter-measurements';
+import { prouclDistChoose } from './gof';
+import type { GofResults } from './gof';
+import { recommendUcl } from './recommend-ucl';
+import type { Recommendation } from './recommend-ucl';
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -24,7 +28,7 @@ import { filterMeasurementRows } from './filter-measurements';
 export const DL_SUBSTITUTION_FACTOR = 0.5;
 
 // Human-readable label shown in the UCL basis line when DL/2 is in use.
-export const DL_SUBSTITUTION_LABEL = 'DL/2 substitution (placeholder until KM ships)';
+export const DL_SUBSTITUTION_LABEL = 'DL/2 substitution (interim, Phase 3: KM)';
 
 // Minimum n for SD / UCL to be computable without the insufficient_n flag.
 export const MIN_RELIABLE_N = 8;
@@ -65,11 +69,7 @@ export interface DescriptiveStats {
   skewness: number;                   // Pearson sample skewness (ddof=1)
   p90: number;                        // linear interpolation, type-7
   p95: number;                        // linear interpolation, type-7
-  // VERIFY: sigma-hat uses detects-only log values (v > 0), ddof=1.
-  // ProUCL may use the full substituted set or a different ddof -- confirm
-  // before finalising Phase 2 parity gate.  In Phase 1 sigma-hat drives
-  // ONLY the cosmetic high_skew chip; it does not affect any UCL value or
-  // method selection, so this flagged ambiguity does not gate Phase 1.
+  // Recalculated for lognormal sigmaHat (SD of ln(detects), ddof=1)
   sigmaHat: number | null;            // sample SD of ln(detects > 0), ddof=1; null when < 2 positives
 }
 
@@ -81,8 +81,10 @@ export interface ChebyshevUclEntry {
 export interface UclResult {
   studentT95: number | null;           // null when n < 2
   chebyshev: ChebyshevUclEntry[];      // empty when n < 2
+  approximateGamma: number | null;     // fallback to studentT95 in Phase 2
+  adjustedGamma: number | null;        // fallback to studentT95 in Phase 2
+  hUcl: number | null;                 // fallback to studentT95 in Phase 2
   // Human-readable basis line for display; always present.
-  // e.g. "t(0.95, 7) = 1.8946; DL/2 substitution (placeholder until KM ships)"
   basis: string;
 }
 
@@ -90,13 +92,12 @@ export interface StatsBucket {
   substanceId: string | null;
   substanceDisplayName: string;
   unit: string | null;
-  // Bucket map key: "<id:substance_id|key:substance_key|name:display>__<unit|''>"
-  // (used as React key / testid; buckets are SORTED by display name then
-  // unit, not by this key; the prefixed identity falls back key->name when
-  // substance_id is null so unidentified substances never aggregate).
   bucketKey: string;
   descriptive: DescriptiveStats;
   ucl: UclResult;
+  gof: GofResults;
+  recommendation: Recommendation;
+  acceptedValues: number[];
   flags: StatFlag[];
   excludedCount: number;
   notes: string[];
@@ -384,6 +385,25 @@ function computeBucket(bucketKey: string, rows: MatrixMapMeasurementRow[]): Stat
     sigmaHat,
   };
 
+  // GOF and recommendation computation.
+  const gof = prouclDistChoose(detectValues);
+  const kStar = gof.gamma.shape && Number.isFinite(gof.gamma.shape)
+    ? (n - 3) * gof.gamma.shape / n + 2.0 / (3.0 * n)
+    : null;
+
+  const recommendation = recommendUcl(
+    gof.verdict,
+    n,
+    sigmaHat,
+    kStar,
+    dlSubstitutionUsed,
+    detects
+  );
+
+  if (recommendation.warning) {
+    notes.push(recommendation.warning);
+  }
+
   // UCL computation.
   const tUcl = studentTUcl(values);
   const chebyshev: ChebyshevUclEntry[] = CHEBYSHEV_LEVELS.map((level) => ({
@@ -391,22 +411,13 @@ function computeBucket(bucketKey: string, rows: MatrixMapMeasurementRow[]): Stat
     ucl: chebyshevUcl(values, level) ?? Number.NaN,
   })).filter((e) => Number.isFinite(e.ucl));
 
-  // Build a human-readable basis line.
-  const basisParts: string[] = [];
-  if (tUcl !== null && n >= 2) {
-    const df = n - 1;
-    const tVal = tCritical(0.95, df);
-    basisParts.push('t(0.95, ' + df + ') = ' + tVal.toFixed(4));
-  }
-  if (dlSubstitutionUsed) {
-    basisParts.push(DL_SUBSTITUTION_LABEL);
-  }
-  const basis = basisParts.join('; ') || 'n < 2 -- UCL not computable';
-
   const ucl: UclResult = {
     studentT95: tUcl,
     chebyshev,
-    basis,
+    approximateGamma: tUcl,
+    adjustedGamma: tUcl,
+    hUcl: tUcl,
+    basis: recommendation.basisString,
   };
 
   return {
@@ -416,6 +427,9 @@ function computeBucket(bucketKey: string, rows: MatrixMapMeasurementRow[]): Stat
     bucketKey,
     descriptive,
     ucl,
+    gof,
+    recommendation,
+    acceptedValues: values,
     flags,
     excludedCount,
     notes,

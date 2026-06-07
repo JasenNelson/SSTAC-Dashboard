@@ -348,8 +348,8 @@ describe('computeSelectionStats -- [1..8] fixture', () => {
     expect(result.buckets[0].excludedCount).toBe(0);
   });
 
-  it('UCL basis contains t(0.95, 7)', () => {
-    expect(result.buckets[0].ucl.basis).toContain('t(0.95, 7)');
+  it('UCL basis contains Normal distribution recommendation', () => {
+    expect(result.buckets[0].ucl.basis).toContain('Normal distribution');
   });
 });
 

@@ -144,8 +144,13 @@ describe('MatrixMapSelectionStats -- two-bucket render', () => {
 
   it('each bucket header shows substance name and unit', () => {
     renderStats({ rows, ready: true });
-    expect(screen.getByText(/Copper.*mg\/kg/i)).toBeInTheDocument();
-    expect(screen.getByText(/Lead.*mg\/kg/i)).toBeInTheDocument();
+    const copperCard = screen.getByTestId('matrix-map-stats-bucket-id:sub-copper__mg/kg');
+    expect(copperCard).toHaveTextContent(/Copper/i);
+    expect(copperCard).toHaveTextContent(/mg\/kg/i);
+
+    const leadCard = screen.getByTestId('matrix-map-stats-bucket-id:sub-lead__mg/kg');
+    expect(leadCard).toHaveTextContent(/Lead/i);
+    expect(leadCard).toHaveTextContent(/mg\/kg/i);
   });
 
   it('each bucket shows descriptive stats', () => {
