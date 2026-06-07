@@ -74,6 +74,8 @@ vi.mock("../ApplicablePolicyStep", () => ({
     selectedIds,
     onChange,
     onRetry,
+    activeBandMin,
+    onBandChange,
   }: {
     proposal: Record<string, unknown> | null;
     loading: boolean;
@@ -81,17 +83,28 @@ vi.mock("../ApplicablePolicyStep", () => ({
     selectedIds: string[];
     onChange: (ids: string[]) => void;
     onRetry: () => void;
+    bandPresets: unknown[];
+    activeBandMin: number;
+    onBandChange: (min: number) => void;
   }) => (
     <div data-testid="applicable-policy-step">
       <span data-testid="ap-loading">{String(loading)}</span>
       <span data-testid="ap-error">{error ?? ""}</span>
       <span data-testid="ap-proposal">{proposal ? "loaded" : "null"}</span>
       <span data-testid="ap-selected">{selectedIds.join(",")}</span>
+      <span data-testid="ap-band-min">{String(activeBandMin)}</span>
       <button onClick={() => onChange(["P1", "P2"])} data-testid="ap-change">
         Change
       </button>
       <button onClick={onRetry} data-testid="ap-retry">
         Retry
+      </button>
+      {/* Band-switch buttons used by band-preset tests. */}
+      <button onClick={() => onBandChange(0)} data-testid="ap-band-all">
+        Band-all
+      </button>
+      <button onClick={() => onBandChange(12)} data-testid="ap-band-12">
+        Band-12
       </button>
     </div>
   ),
@@ -272,9 +285,14 @@ describe("WizardClient", () => {
       expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
     );
 
-    // Default selection is all signal_fired ids.
+    // Default band is >=11 (CP3_DEFAULT_BAND_MIN). CSAP-COP-GW-001 has score 12
+    // (>= 11) so it IS default-checked. P28-ERA-001 has score 8 (< 11) so it
+    // is NOT default-checked (still visible/tickable -- recall guarantee).
     expect(screen.getByTestId("ap-selected").textContent).toContain(
       "CSAP-COP-GW-001",
+    );
+    expect(screen.getByTestId("ap-selected").textContent).not.toContain(
+      "P28-ERA-001",
     );
 
     // Advance to step 5.
@@ -303,6 +321,48 @@ describe("WizardClient", () => {
   it("ReviewStep receives proposalSummary with selected count", async () => {
     await navigateToStep(5);
     expect(screen.getByTestId("review-step").textContent).toContain("selected=");
+  });
+
+  // --- CP-3 score-band preset tests ---
+
+  it("CP-3: default band >=11 checks only score>=11 entries on proposal load", async () => {
+    // PROPOSAL_FIXTURE: CSAP-COP-GW-001 score=12 (>=11 -> checked),
+    //                   P28-ERA-001 score=8 (<11 -> NOT checked).
+    await navigateToStep(4);
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    const selected = screen.getByTestId("ap-selected").textContent ?? "";
+    expect(selected).toContain("CSAP-COP-GW-001");
+    expect(selected).not.toContain("P28-ERA-001");
+    // The active band min is passed to the step.
+    expect(screen.getByTestId("ap-band-min").textContent).toBe("11");
+  });
+
+  it("CP-3: switching band to All-signal-fired (min=0) checks both entries", async () => {
+    await navigateToStep(4);
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    // Switch to min=0 (all signal-fired).
+    fireEvent.click(screen.getByTestId("ap-band-all"));
+    const selected = screen.getByTestId("ap-selected").textContent ?? "";
+    expect(selected).toContain("CSAP-COP-GW-001");
+    expect(selected).toContain("P28-ERA-001");
+    expect(screen.getByTestId("ap-band-min").textContent).toBe("0");
+  });
+
+  it("CP-3: switching band to >=12 checks only the score-12 entry", async () => {
+    await navigateToStep(4);
+    await waitFor(() =>
+      expect(screen.getByTestId("ap-proposal").textContent).toBe("loaded"),
+    );
+    // Switch to min=12.
+    fireEvent.click(screen.getByTestId("ap-band-12"));
+    const selected = screen.getByTestId("ap-selected").textContent ?? "";
+    expect(selected).toContain("CSAP-COP-GW-001");
+    expect(selected).not.toContain("P28-ERA-001");
+    expect(screen.getByTestId("ap-band-min").textContent).toBe("12");
   });
 
   // --- P1 stale-cohort guard (codex ship-gate) ---
@@ -355,17 +415,19 @@ describe("WizardClient", () => {
 
   it("(b) a stale in-flight response (old context) is discarded; state holds the new context's proposal", async () => {
     // Two distinct proposals keyed by which service set is in the request body.
+    // Use score=12 so entries are above the default band (>=11) and appear in
+    // ap-selected, making the stale-discard assertions meaningful.
     const OLD_PROPOSAL = {
       ...PROPOSAL_FIXTURE,
       signal_fired: [
-        { policy_id: "OLD-1", score: 1, rationale: "r", inclusive_fallback: false },
+        { policy_id: "OLD-1", score: 12, rationale: "r", inclusive_fallback: false },
       ],
       counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
     };
     const NEW_PROPOSAL = {
       ...PROPOSAL_FIXTURE,
       signal_fired: [
-        { policy_id: "NEW-1", score: 1, rationale: "r", inclusive_fallback: false },
+        { policy_id: "NEW-1", score: 12, rationale: "r", inclusive_fallback: false },
       ],
       counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
     };
@@ -547,17 +609,19 @@ describe("WizardClient", () => {
   });
 
   it("(p2b) same-context overlap: stale request A resolves AFTER B with a different payload -> B's payload retained", async () => {
+    // Use score=12 so entries are above the default band (>=11) and appear in
+    // ap-selected, making the stale-discard assertions meaningful.
     const A_PAYLOAD = {
       ...PROPOSAL_FIXTURE,
       signal_fired: [
-        { policy_id: "A-STALE-1", score: 1, rationale: "r", inclusive_fallback: false },
+        { policy_id: "A-STALE-1", score: 12, rationale: "r", inclusive_fallback: false },
       ],
       counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
     };
     const B_PAYLOAD = {
       ...PROPOSAL_FIXTURE,
       signal_fired: [
-        { policy_id: "B-FRESH-1", score: 1, rationale: "r", inclusive_fallback: false },
+        { policy_id: "B-FRESH-1", score: 12, rationale: "r", inclusive_fallback: false },
       ],
       counts: { ...PROPOSAL_FIXTURE.counts, signal_fired_count: 1 },
     };

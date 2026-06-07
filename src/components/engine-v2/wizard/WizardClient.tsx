@@ -20,12 +20,39 @@ import {
   SubmissionContextStep,
   type SubmissionContextValue,
 } from "./SubmissionContextStep";
-import { ApplicablePolicyStep } from "./ApplicablePolicyStep";
+import {
+  ApplicablePolicyStep,
+  type Cp3BandPreset,
+} from "./ApplicablePolicyStep";
 import { ReviewStep } from "./ReviewStep";
 import { deriveMediaTypesFromServices } from "@/lib/engine-v2/service_to_media";
 import type { ProposerCliOutput } from "@/lib/engine-v2/propose_policies";
 
 type StepIndex = 0 | 1 | 2 | 3 | 4 | 5;
+
+// CP-3: Score-band presets for the Applicable Policies step.
+//
+// signal_fired[].score is a WEIGHTED ADDITIVE RELEVANCE SCORE emitted by the
+// proposer (schema proposer_cli/0.1.0). Observed breakpoints on a WARP-like
+// distribution: >=12 -> ~43 policies, >=11 -> ~610, >=9 -> ~1158, all -> ~3518.
+//
+// RECALL GUARANTEE (load-bearing): ALL signal_fired entries remain VISIBLE and
+// selectable regardless of the active band. The band only changes the default-
+// checked set; it never hides or removes rows. This preserves the AI-scope rule:
+// the engine signals priority, the HITL decides.
+//
+// Cp3BandPreset is defined in ApplicablePolicyStep to avoid a circular import.
+export const CP3_BAND_PRESETS: readonly Cp3BandPreset[] = [
+  { label: "Strong (>=12)", min: 12 },
+  { label: "Production (>=11)", min: 11 },
+  { label: "Broad (>=9)", min: 9 },
+  { label: "All signal-fired", min: 0 },
+];
+
+// Default preset: Production (>=11). Switching a preset resets the checked set
+// to the new band's default (manual ticks are cleared). This keeps the control
+// predictable and is acceptable for a "starting selection" control.
+export const CP3_DEFAULT_BAND_MIN = 11;
 
 const STEP_LABELS: readonly string[] = [
   "Metadata",
@@ -51,6 +78,10 @@ interface WizardState {
   proposalContextKey: string | null;
   // selectedIds: HITL-curated policy id list. Initialised on first proposal load.
   selectedIds: string[];
+  // activeBandMin: the minimum score for the active CP-3 band preset. Policies
+  // with score >= activeBandMin are default-checked when a proposal loads.
+  // Stored in wizard state so the band choice persists across step navigation.
+  activeBandMin: number;
 }
 
 const INITIAL_STATE: WizardState = {
@@ -61,6 +92,7 @@ const INITIAL_STATE: WizardState = {
   proposal: null,
   proposalContextKey: null,
   selectedIds: [],
+  activeBandMin: CP3_DEFAULT_BAND_MIN,
 };
 
 // Stable JSON key of EXACTLY the inputs sent to /propose-policies. Arrays that do
@@ -142,6 +174,21 @@ export function WizardClient() {
     );
   }
 
+  // Handle CP-3 band preset change. Switches the active band and re-derives the
+  // default-checked set from the current proposal (if loaded). Manual ticks are
+  // reset to the new band default -- intentional; the control is a "starting
+  // selection" tool, not a fine-grained filter.
+  function handleBandChange(newMin: number) {
+    setState((prev) => {
+      const nextSelected = prev.proposal
+        ? prev.proposal.signal_fired
+            .filter((e) => e.score >= newMin)
+            .map((e) => e.policy_id)
+        : [];
+      return { ...prev, activeBandMin: newMin, selectedIds: nextSelected };
+    });
+  }
+
   // Fetch proposal on entering step 4 (first time or retry). Each request captures
   // its context key AND a monotonic seq at start; a response may only settle when it
   // is BOTH the current-context request (key guard, handles upstream edits) AND the
@@ -199,14 +246,20 @@ export function WizardClient() {
         const output = (await res.json()) as ProposerCliOutput;
         // Re-check after the async json() parse: context/seq may have changed again.
         if (!isCurrent()) return;
-        // Default-check all signal_fired ids; floor tail starts unchecked.
-        const defaultSelected = output.signal_fired.map((e) => e.policy_id);
-        setState((prev) => ({
-          ...prev,
-          proposal: output,
-          proposalContextKey: requestContextKey,
-          selectedIds: defaultSelected,
-        }));
+        // Default-check signal_fired ids whose score meets the active band minimum
+        // (CP-3 preset). Below-band entries remain rendered and tickable -- recall
+        // guarantee. Floor tail starts unchecked regardless of band.
+        setState((prev) => {
+          const defaultSelected = output.signal_fired
+            .filter((e) => e.score >= prev.activeBandMin)
+            .map((e) => e.policy_id);
+          return {
+            ...prev,
+            proposal: output,
+            proposalContextKey: requestContextKey,
+            selectedIds: defaultSelected,
+          };
+        });
       } catch (err) {
         if (!isCurrent()) return;
         const message = err instanceof Error ? err.message : String(err);
@@ -405,6 +458,9 @@ export function WizardClient() {
               proposalFetchedRef.current = true;
               fetchProposal();
             }}
+            bandPresets={CP3_BAND_PRESETS}
+            activeBandMin={state.activeBandMin}
+            onBandChange={handleBandChange}
           />
         ) : null}
         {step === 5 ? (

@@ -15,7 +15,16 @@ import { describe, it, expect, vi } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import React from "react";
 import { ApplicablePolicyStep } from "../ApplicablePolicyStep";
+import type { Cp3BandPreset } from "../ApplicablePolicyStep";
 import type { ProposerCliOutput } from "@/lib/engine-v2/propose_policies";
+
+// Minimal band presets for tests that need them.
+const TEST_BAND_PRESETS: readonly Cp3BandPreset[] = [
+  { label: "Strong (>=12)", min: 12 },
+  { label: "Production (>=11)", min: 11 },
+  { label: "Broad (>=9)", min: 9 },
+  { label: "All signal-fired", min: 0 },
+];
 
 function makeProposal(overrides: Partial<ProposerCliOutput> = {}): ProposerCliOutput {
   return {
@@ -330,5 +339,99 @@ describe("ApplicablePolicyStep", () => {
     expect(screen.queryByText("BIG-GRP-0500")).toBeNull();
     // Remaining count reflected (600 - 500 = 100).
     expect(screen.getByRole("button", { name: /Show 100 more/i })).toBeTruthy();
+  });
+
+  // --- CP-3 recall-guarantee tests ---
+
+  it("CP-3: band preset control is rendered with the correct active preset", () => {
+    const proposal = makeProposal();
+    const onBandChange = vi.fn();
+    render(
+      <ApplicablePolicyStep
+        proposal={proposal}
+        loading={false}
+        error={null}
+        selectedIds={[]}
+        onChange={vi.fn()}
+        onRetry={vi.fn()}
+        bandPresets={TEST_BAND_PRESETS}
+        activeBandMin={11}
+        onBandChange={onBandChange}
+      />,
+    );
+    // All four preset labels should be present.
+    expect(screen.getByRole("button", { name: /Strong \(>=12\)/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Production \(>=11\)/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Broad \(>=9\)/ })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /All signal-fired/ })).toBeTruthy();
+    // The active button has aria-pressed=true.
+    const prodBtn = screen.getByRole("button", { name: /Production \(>=11\)/ });
+    expect(prodBtn.getAttribute("aria-pressed")).toBe("true");
+    // The other buttons are not pressed.
+    expect(screen.getByRole("button", { name: /Strong \(>=12\)/ }).getAttribute("aria-pressed")).toBe("false");
+  });
+
+  it("CP-3: clicking a band preset button calls onBandChange with the correct min", () => {
+    const proposal = makeProposal();
+    const onBandChange = vi.fn();
+    render(
+      <ApplicablePolicyStep
+        proposal={proposal}
+        loading={false}
+        error={null}
+        selectedIds={["CSAP-COP-GW-001", "CSAP-COP-SED-001"]}
+        onChange={vi.fn()}
+        onRetry={vi.fn()}
+        bandPresets={TEST_BAND_PRESETS}
+        activeBandMin={11}
+        onBandChange={onBandChange}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: /All signal-fired/ }));
+    expect(onBandChange).toHaveBeenCalledWith(0);
+    fireEvent.click(screen.getByRole("button", { name: /Strong \(>=12\)/ }));
+    expect(onBandChange).toHaveBeenCalledWith(12);
+  });
+
+  it("CP-3 recall guarantee: a below-band entry (score=8, band>=11) still RENDERS and is tickable", () => {
+    // P28-ERA-001 has score=8, which is below the default band of >=11.
+    // With activeBandMin=11, the parent default-checks only score>=11 entries,
+    // so selectedIds does NOT include P28-ERA-001. The entry must still RENDER
+    // (visible + tickable) -- this is the recall guarantee.
+    const proposal = makeProposal();
+    const onChange = vi.fn();
+    // selectedIds reflects the >=11 band: CSAP-COP-GW-001(12) and
+    // CSAP-COP-SED-001(12) are checked; P28-ERA-001(8) is NOT.
+    const selectedIds = ["CSAP-COP-GW-001", "CSAP-COP-SED-001"];
+    render(
+      <ApplicablePolicyStep
+        proposal={proposal}
+        loading={false}
+        error={null}
+        selectedIds={selectedIds}
+        onChange={onChange}
+        onRetry={vi.fn()}
+        bandPresets={TEST_BAND_PRESETS}
+        activeBandMin={11}
+        onBandChange={vi.fn()}
+      />,
+    );
+    // P28-ERA group header must be present (group renders even if below-band).
+    expect(screen.getByText(/^P28-ERA$/)).toBeTruthy();
+    // Expand the P28-ERA group.
+    fireEvent.click(screen.getByRole("button", { name: /P28-ERA/i }));
+    // P28-ERA-001 must be visible.
+    expect(screen.getByText("P28-ERA-001")).toBeTruthy();
+    // The row's checkbox must be unchecked (not in selectedIds) but present.
+    // Check-all for the group should also be present and toggleable.
+    const groupCheckAll = screen.getByRole("checkbox", {
+      name: /Select all P28-ERA policies/i,
+    });
+    expect(groupCheckAll).toBeTruthy();
+    // Clicking it adds P28-ERA-001 to selection (tickable = recall guaranteed).
+    fireEvent.click(groupCheckAll);
+    expect(onChange).toHaveBeenCalledOnce();
+    const nextIds = onChange.mock.calls[0]![0] as string[];
+    expect(nextIds).toContain("P28-ERA-001");
   });
 });
