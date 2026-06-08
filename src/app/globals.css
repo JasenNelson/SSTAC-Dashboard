@@ -516,6 +516,23 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
   }
 
   /* Tables: visible cell borders + light header bg on print. */
+  thead {
+    display: table-header-group !important;
+  }
+  tr {
+    page-break-inside: avoid !important;
+  }
+  .math-renderer-table-wrapper {
+    overflow: visible !important;
+    max-width: none !important;
+    margin: 0 !important;
+  }
+  table {
+    width: 100% !important;
+    max-width: 100% !important;
+    border-collapse: collapse !important;
+    table-layout: auto !important;
+  }
   html.dark th, th {
     background-color: #f1f5f9 !important;
     color: #0f172a !important;
@@ -523,6 +540,10 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
   }
   html.dark td, td {
     border: 1px solid #cbd5e1 !important;
+  }
+  th, td {
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
   }
 
   /* Links: dark blue underlined for print. */
