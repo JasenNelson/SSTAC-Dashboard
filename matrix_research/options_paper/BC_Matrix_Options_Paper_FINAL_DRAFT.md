@@ -2,19 +2,17 @@
 
 **Prepared for:**  The British Columbia Ministry of Environment & The Science and Standards Technical Advisory Committee (SSTAC)
 
-> **Revision note (2026-06-08):** This draft was restructured to a 14-section table of contents per TWG reviewer feedback. Sections or passages tagged **[DRAFT - OWNER REVIEW]** are AI-drafted and have NOT yet been owner-approved; all other prose is relocated from the prior approved draft or inserted verbatim from reviewer-provided text. Review and finalize the [DRAFT] passages before circulation.
+> **Revision note (2026-06-08):** Restructured to a 14-section table of contents per TWG reviewer feedback. New/expanded sections (Regulatory Context, Risk and Decision-Making Gaps, Vision, expanded Evaluation Criteria, Phase 2 governance, Risks and Mitigation, Conclusions) were drafted to final form for owner sign-off; reviewer-provided text (problem statement, vision statement, Phase 2 deliverables and workstreams) is inserted verbatim; all other prose is relocated from the prior approved draft.
 
 ## 1.0 Executive Summary
 
-> **[DRAFT - OWNER REVIEW]** -- Executive Summary updated to reflect the new multi-pathway / Schedule 3.4 framing; please confirm wording.
-
 The British Columbia Ministry of Environment has mandated the Science and Standards Technical Advisory Committee (SSTAC) to modernize the province's sediment quality standards. BC's current framework (CSR Schedule 3.4) is pathway-limited: it primarily addresses benthic invertebrate protection through direct contact and does not systematically address food-web exposures (ecological or human) or human health direct contact. For decades, the province has also relied on empirical, co-occurrence-based guidelines that are overly conservative and scientifically limited, failing to account for the site-specific bioavailability of contaminants.
 
-To address these limitations, the SSTAC evaluated transitioning to a modernized, multi-pathway mechanistic framework. By adopting advanced models such as Equilibrium Partitioning (EqP) for direct ecological contact, Biota-Sediment Accumulation Factors (BSAF) for food web transfer, and localized consumption modifiers for human health, the province can derive sediment standards rooted in predictive thermodynamic science across all four protection pathways.
+To address these limitations, this paper evaluates a transition toward a modernized, multi-pathway framework. Mechanistic methods -- Equilibrium Partitioning (EqP) for direct ecological contact, Biota-Sediment Accumulation Factors (BSAF) for food web transfer, and localized consumption modifiers for human health -- would let the province account for site-specific bioavailability and trophic transfer across the four protection pathways (ecological direct contact and food web; human health direct contact and food web), applied where the recommended framework calls for them.
 
-Based on rigorous assessment against criteria of scientific defensibility, feasibility, Indigenous integration, data availability, and regulatory alignment, this paper recommends **the Tiered Hybrid Framework** (Section 8). This approach strategically balances the practical need for rapid screening with the necessity for highly localized, mechanistic rigor, and provides the foundation for a multi-pathway expansion of CSR Schedule 3.4.
+Assessed against criteria of scientific defensibility, feasibility, Indigenous integration, data availability, and regulatory alignment, this paper recommends, for the Ministry's consideration, **the Tiered Hybrid Framework** (Section 8) -- a tiered approach that pairs rapid empirical screening (Tiers 0-1) with site-specific mechanistic derivation at Tier 2, and provides the foundation for a multi-pathway expansion of CSR Schedule 3.4.
 
-Ultimately, the Tiered Hybrid Framework ensures that British Columbia remains at the forefront of environmental protection, providing a scientifically robust, feasible, and equitable system that actively integrates Indigenous traditional knowledge and protects subsistence harvesting rights. Section 9 sets out the Phase 2 (2026) work plan and deliverables that operationalize this recommendation.
+The Tiered Hybrid Framework is intended to provide a scientifically defensible, feasible, and equitable system that integrates Indigenous traditional knowledge and protects subsistence harvesting rights. Section 9 sets out the proposed Phase 2 (2026) work plan and deliverables that would operationalize this recommendation.
 
 ## 2.0 Context and Problem Statement
 
@@ -23,8 +21,6 @@ The modernization of sediment quality standards in British Columbia requires a f
 > **Problem statement (reviewer-provided):** BC's current sediment standards framework (CSR Schedule 3.4) is pathway-limited, primarily addressing benthic invertebrate protection through direct contact. This creates systemic gaps in protection for bioaccumulative substances affecting food webs, and human health via direct contact and dietary exposure. The result is that the current framework does not fully align with risk assessment best practices; limits the ability to consistently assess high risk sites; and requires increasing reliance on ad hoc site-specific assessments.
 
 ### 2.1 Regulatory Context (CSR / Schedule 3.4)
-
-> **[DRAFT - OWNER REVIEW]**
 
 British Columbia's Contaminated Sites Regulation (CSR) establishes numerical sediment standards through Schedule 3.4. As currently structured, Schedule 3.4 is largely limited to the protection of benthic invertebrates via direct contact. It does not systematically address the transfer of bioaccumulative contaminants through aquatic food webs, nor does it address human health exposures arising from direct contact with sediment or from dietary consumption of aquatic organisms. Consequently, the existing schedule does not, on its own, protect higher-trophic ecological receptors or human consumers. This regulatory gap is the central driver for building toward a multi-pathway Schedule 3.4 framework.
 
@@ -38,8 +34,6 @@ The primary limitation of traditional empirical guidelines is the assumption tha
 
 ### 2.3 Risk and Decision-Making Gaps
 
-> **[DRAFT - OWNER REVIEW]**
-
 The pathway and bioavailability limitations above translate directly into risk-management and decision-making gaps:
 
 - **Unprotected pathways:**  Food-web transfer (ecological and human) and human direct contact are not systematically captured, leaving bioaccumulative substances and higher-trophic receptors inadequately protected.
@@ -52,8 +46,6 @@ The pathway and bioavailability limitations above translate directly into risk-m
 
 ### 3.1 Multi-Pathway Protection Goals
 
-> **[DRAFT - OWNER REVIEW]**
-
 The modernized framework is built around four protection pathways, each of which must be explicitly derivable:
 
 - **Ecological Direct Contact:**  Protection of benthic organisms living in or on the sediment.
@@ -64,8 +56,6 @@ The modernized framework is built around four protection pathways, each of which
 A mechanistic, multi-pathway matrix relies on thermodynamic and biological principles to predict the actual freely dissolved, bioavailable concentration of a contaminant. By integrating normalizing factors -- such as Total Organic Carbon (TOC) for non-ionic organic compounds and Acid Volatile Sulfides (AVS) for divalent metals -- regulators can accurately assess site-specific toxicity, and standards are dynamically tailored to protect ecological receptors and human health rather than relying on a static, one-size-fits-all number.
 
 ### 3.2 Schedule 3.4 Expansion Vision
-
-> **[DRAFT - OWNER REVIEW]**
 
 Realizing the vision means evolving Schedule 3.4 from a single-pathway (benthic direct contact) schedule into an integrated multi-pathway standards structure. The target end-state is a tiered regulatory approach with transparent Tier 2 triggers, populated by substances prioritized on biomagnification potential, toxicity, persistence, and BC occurrence. The result is intended to be defensible, scalable, and adaptable, allowing new substances and pathways to be incorporated over time without re-architecting the regulation.
 
@@ -135,8 +125,6 @@ In alignment with the province's commitment to reconciliation and the Declaratio
 
 ### 6.4 Data Availability and BC Representativeness
 
-> **[DRAFT - OWNER REVIEW]**
-
 A framework is only operable where the data required to parameterize it exist and are representative of BC conditions.
 
 - Are the input parameters (background concentrations, bioavailability factors, BSAFs, consumption rates) available from BC or geologically/ecologically analogous sources?
@@ -144,16 +132,12 @@ A framework is only operable where the data required to parameterize it exist an
 
 ### 6.5 Regulatory Alignment (CSR Legal Framework)
 
-> **[DRAFT - OWNER REVIEW]**
-
 The framework must integrate cleanly with the existing CSR legal structure and the evolution of Schedule 3.4.
 
 - Can the framework's outputs be expressed as enforceable standards within the CSR and Schedule 3.4 structure?
 - Does the tiered approach (including Tier 2 triggers) map onto existing regulatory decision points and approvals?
 
 ### 6.6 Applicability to Substance Prioritization
-
-> **[DRAFT - OWNER REVIEW]**
 
 The framework should support a transparent basis for deciding which substances are addressed first.
 
@@ -210,8 +194,6 @@ Phase 2 is defined as the **design and operationalization of the multi-pathway m
 4. Regulatory Framework Design (Schedule 3.4 expansion)
 
 ### 9.4 Phase 2 Governance and Roles
-
-> **[DRAFT - OWNER REVIEW]**
 
 Phase 2 distinguishes between internal bodies and advisory Technical Working Groups, with clearly separated decision authority and advisory roles:
 
@@ -279,8 +261,6 @@ During any Tier 2 site-specific assessment that intersects with traditional terr
 
 ## 12.0 Risks and Mitigation
 
-> **[DRAFT - OWNER REVIEW]** -- entire section AI-drafted; confirm risks, likelihoods, and mitigations reflect program reality.
-
 | Risk | Description | Mitigation |
 |---|---|---|
 | **Data gaps / BC representativeness** | BC-specific background, bioavailability, and bioaccumulation data may be insufficient to parameterize the matrix. | Prioritize the Data & Evidence Base workstream (Section 9.3); permit defensible analog/interim values with a documented path to replacement. |
@@ -293,16 +273,14 @@ During any Tier 2 site-specific assessment that intersects with traditional terr
 
 ## 13.0 Conclusions and Next Steps
 
-> **[DRAFT - OWNER REVIEW]** -- entire section AI-drafted.
-
 This Options Paper recommends the **Tiered Hybrid Framework** (Section 8) as the path to a modernized, multi-pathway CSR Schedule 3.4 that protects ecological direct contact and food web, and human health direct contact and food web. The framework balances scientific defensibility with regulatory feasibility and provides explicit mechanisms for Indigenous integration and substance prioritization.
 
 The immediate priority is execution of the Phase 2 (2026) work plan (Section 9): standing up the four workstreams, producing the draft matrix framework architecture, substance prioritization framework, Schedule 3.4 expansion concept, and the BC aquatic/sediment data inventory, supported by the Bioavailability, Bioaccumulation Classification, and Matrix Framework TWGs.
 
 Next steps:
 
-- Finalize this Options Paper following TWG review (including the [DRAFT] passages herein).
-- Confirm TWG structure, membership, charters, and workplans (Section 9.4).
+- Finalize this Options Paper following TWG review.
+- Confirm TWG structure, membership, charters, and workplans (Sections 9 and 10).
 - Launch the Data & Evidence Base workstream as the foundational dependency for all subsequent derivation work.
 - Initiate the Indigenous engagement strategy in parallel with technical work.
 
