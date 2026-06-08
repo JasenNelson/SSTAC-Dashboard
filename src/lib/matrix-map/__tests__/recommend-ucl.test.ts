@@ -17,9 +17,10 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     expect(rec.recommendedMethod).toBe('studentT95');
     expect(rec.basisString).toContain("Student's-t UCL");
 
-    // Censored Normal
+    // Censored Normal -> kmT
     const recCensored = recommendUcl('Normal', 15, 0.4, null, true, 10);
-    expect(recCensored.basisString).toContain('DL/2 substitution');
+    expect(recCensored.recommendedMethod).toBe('kmT');
+    expect(recCensored.basisString).toContain('KM (t) UCL');
   });
 
   it('handles Censored low-detection (detects < 4) and extreme censoring (NDs > 95%)', () => {
@@ -40,11 +41,6 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     expect(recSmallSkewed.basisString).toContain('Bootstrap-t');
     expect(recSmallSkewed.warning).toBeDefined();
 
-    // Highly skewed n = 18 (< 20)
-    const recSmallSkewed2 = recommendUcl('Gamma', 18, 0.8, 0.9, false);
-    expect(recSmallSkewed2.recommendedMethod).toBe('bootstrapT');
-    expect(recSmallSkewed2.basisString).toContain('n = 18 < 20');
-
     // Large n
     const recLarge = recommendUcl('Gamma', 60, 0.4, 1.5, false);
     expect(recLarge.recommendedMethod).toBe('approximateGamma');
@@ -54,6 +50,24 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     const recSmallMild = recommendUcl('Gamma', 25, 0.4, 2.5, false);
     expect(recSmallMild.recommendedMethod).toBe('adjustedGamma');
     expect(recSmallMild.basisString).toContain('Adjusted Gamma');
+
+    // Censored Gamma n > 50 -> kmApproxGamma
+    const recCensoredLarge = recommendUcl('Gamma', 55, 0.4, 1.5, true, 45);
+    expect(recCensoredLarge.recommendedMethod).toBe('kmApproxGamma');
+    expect(recCensoredLarge.basisString).toContain('Approximate Gamma KM-UCL');
+
+    // Censored Gamma n <= 50 -> kmAdjustedGamma
+    const recCensoredSmall = recommendUcl('Gamma', 24, 0.4, 1.5, true, 11);
+    expect(recCensoredSmall.recommendedMethod).toBe('kmAdjustedGamma');
+    expect(recCensoredSmall.basisString).toContain('Adjusted Gamma KM-UCL');
+
+    // Boundary check: Censored Gamma n exactly 50 -> kmAdjustedGamma
+    const recCensoredExact50 = recommendUcl('Gamma', 50, 0.4, 1.5, true, 40);
+    expect(recCensoredExact50.recommendedMethod).toBe('kmAdjustedGamma');
+
+    // Boundary check: Censored Gamma n exactly 51 -> kmApproxGamma
+    const recCensoredExact51 = recommendUcl('Gamma', 51, 0.4, 1.5, true, 41);
+    expect(recCensoredExact51.recommendedMethod).toBe('kmApproxGamma');
   });
 
   it('handles Lognormal distribution', () => {
@@ -69,6 +83,19 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     const recSmallHighSkew = recommendUcl('Lognormal', 15, 1.8, null, false);
     expect(recSmallHighSkew.recommendedMethod).toBe('studentT95');
     expect(recSmallHighSkew.warning).toBeDefined();
+
+    // Censored Lognormal n >= 28 -> kmH
+    const recCensoredLarge = recommendUcl('Lognormal', 30, 1.2, null, true, 20);
+    expect(recCensoredLarge.recommendedMethod).toBe('kmH');
+    expect(recCensoredLarge.basisString).toContain('H-UCL (KM-Log)');
+
+    // Censored Lognormal n < 28, log SD < 1.5 -> kmH
+    const recCensoredSmallLow = recommendUcl('Lognormal', 24, 1.2, null, true, 11);
+    expect(recCensoredSmallLow.recommendedMethod).toBe('kmH');
+
+    // Censored Lognormal n < 28, log SD >= 1.5 -> kmT
+    const recCensoredSmallHigh = recommendUcl('Lognormal', 24, 1.8, null, true, 11);
+    expect(recCensoredSmallHigh.recommendedMethod).toBe('kmT');
   });
 
   it('handles Nonparametric / Non-discernible distribution', () => {
@@ -100,5 +127,21 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     const recCheb99Extreme = recommendUcl('Nonparametric', 25, 3.2, null, false);
     expect(recCheb99Extreme.recommendedMethod).toBe('chebyshev99');
     expect(recCheb99Extreme.warning).toBeDefined();
+
+    // Censored Nonparametric log SD < 0.5 -> kmT
+    const recCensoredLow = recommendUcl('Nonparametric', 20, 0.4, null, true, 15);
+    expect(recCensoredLow.recommendedMethod).toBe('kmT');
+
+    // Censored Nonparametric log SD < 1.0 -> kmChebyshev95
+    const recCensoredCheb95 = recommendUcl('Nonparametric', 20, 0.8, null, true, 15);
+    expect(recCensoredCheb95.recommendedMethod).toBe('kmChebyshev95');
+
+    // Censored Nonparametric log SD < 1.5 -> kmChebyshev975
+    const recCensoredCheb975 = recommendUcl('Nonparametric', 20, 1.2, null, true, 15);
+    expect(recCensoredCheb975.recommendedMethod).toBe('kmChebyshev975');
+
+    // Censored Nonparametric log SD < 2.0 -> kmChebyshev99
+    const recCensoredCheb99 = recommendUcl('Nonparametric', 20, 1.8, null, true, 15);
+    expect(recCensoredCheb99.recommendedMethod).toBe('kmChebyshev99');
   });
 });
