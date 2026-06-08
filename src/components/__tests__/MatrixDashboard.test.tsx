@@ -90,11 +90,9 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
   it('keeps the v1 guide focused on workflow instead of placeholder status copy', () => {
     expect(GUIDE_MARKDOWN).toMatch(/## 1\. How to Use This Workspace/);
     expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*The Guide\*\*/);
-    expect(GUIDE_MARKDOWN).toMatch(/## 3\. Reviewer Checklist/);
+    expect(GUIDE_MARKDOWN).toMatch(/## 2\. Project Roadmap/);
     expect(GUIDE_MARKDOWN).toMatch(/Scientific Literature Search/);
     expect(GUIDE_MARKDOWN).toMatch(/Jurisdictional Scan/);
-    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*AVS\/SEM\*\*/);
-    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*TRV\*\*/);
     expect(GUIDE_MARKDOWN).not.toMatch(/Coming Soon/i);
     expect(GUIDE_MARKDOWN).not.toMatch(/placeholder/i);
     expect(GUIDE_MARKDOWN).not.toMatch(/What Is Working Now/i);
@@ -107,7 +105,7 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
       /How to Use This Workspace/,
     );
     expect(screen.getByTestId('math-renderer-mock')).toHaveTextContent(
-      /Reviewer Checklist/,
+      /Project Roadmap/,
     );
     expect(screen.queryByText(/Coming Soon/i)).not.toBeInTheDocument();
   });

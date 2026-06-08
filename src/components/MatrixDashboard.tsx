@@ -17,6 +17,7 @@ import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculato
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
 import EvidenceLibrary from './matrix-options/EvidenceLibrary';
 import SsdWorkbench from './matrix-options/SsdWorkbench';
+import Phase2TasksSection from './matrix-options/Phase2TasksSection';
 import CalculatorValueSearchPanel from './matrix-options/CalculatorValueSearchPanel';
 import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
@@ -748,6 +749,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
         return (
           <div className="space-y-6">
             <MathRenderer content={guideContent} />
+            <Phase2TasksSection />
           </div>
         );
       case 'Conceptual Model':
