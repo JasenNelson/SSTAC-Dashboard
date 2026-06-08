@@ -22,6 +22,13 @@
 import { useState, useMemo, useCallback } from "react";
 import type { ProposerCliOutput } from "@/lib/engine-v2/propose_policies";
 
+// CP-3: band preset shape. Mirrors Cp3BandPreset in WizardClient (kept local to
+// avoid a circular import; the two must stay in sync).
+export interface Cp3BandPreset {
+  label: string;
+  min: number;
+}
+
 // Groups larger than this render rows in incremental slices.
 const GROUP_SLICE_LIMIT = 300;
 // Rows revealed per "show more" click (and as the initial slice for big groups).
@@ -63,6 +70,15 @@ function buildGroups(
   return order.map((f) => map[f]!);
 }
 
+// Default presets used when the parent does not supply bandPresets (e.g. tests
+// that pre-date CP-3 and do not exercise the band control).
+const DEFAULT_BAND_PRESETS: readonly Cp3BandPreset[] = [
+  { label: "Strong (>=12)", min: 12 },
+  { label: "Production (>=11)", min: 11 },
+  { label: "Broad (>=9)", min: 9 },
+  { label: "All signal-fired", min: 0 },
+];
+
 interface Props {
   proposal: ProposerCliOutput | null;
   loading: boolean;
@@ -70,6 +86,11 @@ interface Props {
   selectedIds: string[];
   onChange: (ids: string[]) => void;
   onRetry: () => void;
+  // CP-3 band preset control props. Optional: defaults to DEFAULT_BAND_PRESETS /
+  // min=11 / no-op so callers that do not need the control can omit them.
+  bandPresets?: readonly Cp3BandPreset[];
+  activeBandMin?: number;
+  onBandChange?: (min: number) => void;
 }
 
 export function ApplicablePolicyStep({
@@ -79,6 +100,9 @@ export function ApplicablePolicyStep({
   selectedIds,
   onChange,
   onRetry,
+  bandPresets = DEFAULT_BAND_PRESETS,
+  activeBandMin = 11,
+  onBandChange = () => undefined,
 }: Props) {
   // Track which accordion sections are open. Key: family name or "floor".
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -241,6 +265,43 @@ export function ApplicablePolicyStep({
           proposal below and include or exclude policies before creating the
           project.
         </p>
+      </div>
+
+      {/* CP-3 score-band preset control. Sets which signal-fired policies start
+          checked. All signal-fired entries remain visible and tickable regardless
+          of the active band (recall guarantee). */}
+      <div className="flex flex-wrap items-center gap-2">
+        <span
+          id="cp3-band-caption"
+          className="text-sm font-medium text-slate-700 dark:text-slate-200 shrink-0"
+        >
+          Default-checked band:
+        </span>
+        <div
+          role="group"
+          aria-labelledby="cp3-band-caption"
+          className="flex flex-wrap gap-1"
+        >
+          {bandPresets.map((preset) => {
+            const isActive = preset.min === activeBandMin;
+            return (
+              <button
+                key={preset.min}
+                type="button"
+                onClick={() => onBandChange(preset.min)}
+                aria-pressed={isActive}
+                className={
+                  "px-2.5 py-1 rounded-md text-xs font-medium border transition-colors " +
+                  (isActive
+                    ? "bg-sky-600 text-white border-sky-600"
+                    : "bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700")
+                }
+              >
+                {preset.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {warnEmpty ? (
