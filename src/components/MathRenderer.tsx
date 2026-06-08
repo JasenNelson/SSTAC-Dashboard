@@ -51,11 +51,10 @@ export default function MathRenderer({ content }: MathRendererProps) {
         '[&_li]:leading-relaxed',
         '[&_li>p]:mb-2',
         // Tables (GFM)
-        '[&>table]:w-full [&>table]:my-6 [&>table]:border-collapse [&>table]:text-sm',
-        '[&_thead]:bg-slate-50 dark:[&_thead]:bg-slate-800/60',
-        '[&_th]:px-3 [&_th]:py-2 [&_th]:text-left [&_th]:font-semibold [&_th]:text-slate-700 dark:[&_th]:text-slate-200 [&_th]:border [&_th]:border-slate-200 dark:[&_th]:border-slate-700',
-        '[&_td]:px-3 [&_td]:py-2 [&_td]:border [&_td]:border-slate-200 dark:[&_td]:border-slate-700 [&_td]:align-top',
-        '[&_tbody>tr:nth-child(even)]:bg-slate-50/50 dark:[&_tbody>tr:nth-child(even)]:bg-slate-800/30',
+        '[&_table]:w-full [&_table]:border-collapse [&_table]:text-sm',
+        '[&_th]:px-4 [&_th]:py-3 [&_th]:text-left [&_th]:font-bold [&_th]:bg-slate-100 dark:[&_th]:bg-slate-800 [&_th]:text-slate-800 dark:[&_th]:text-slate-200 [&_th]:border [&_th]:border-slate-200 dark:[&_th]:border-slate-700 [&_th]:break-words',
+        '[&_td]:px-4 [&_td]:py-3 [&_td]:border [&_td]:border-slate-200 dark:[&_td]:border-slate-700 [&_td]:align-top [&_td]:break-words',
+        '[&_tbody>tr:nth-child(even)]:bg-slate-50 dark:[&_tbody>tr:nth-child(even)]:bg-slate-900/40',
         // Blockquotes
         '[&>blockquote]:border-l-4 [&>blockquote]:border-sky-400 dark:[&>blockquote]:border-sky-600 [&>blockquote]:pl-4 [&>blockquote]:my-5 [&>blockquote]:italic [&>blockquote]:text-slate-700 dark:[&>blockquote]:text-slate-300',
         // Horizontal rules
@@ -69,6 +68,13 @@ export default function MathRenderer({ content }: MathRendererProps) {
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
+        components={{
+          table: ({ node: _node, ...props }) => (
+            <div className="math-renderer-table-wrapper overflow-x-auto max-w-full my-6">
+              <table {...props} />
+            </div>
+          ),
+        }}
       >
         {content}
       </ReactMarkdown>
