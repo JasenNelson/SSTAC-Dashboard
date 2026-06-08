@@ -2,8 +2,18 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Skip ONLY the redundant in-build ESLint pass: CI's `eslint .` gate is a
+  // superset, so re-linting inside `next build` adds no coverage and wastes
+  // build memory. The in-build TypeScript check is KEPT -- it validates the
+  // per-page `.next/types/app/**` route guards that `next typegen` + CI
+  // `tsc --noEmit` do NOT generate (codex 2026-06-08), so disabling it would
+  // open a real coverage gap. The Vercel 8GB OOM (2026-06-08, commit 3ba0b7a)
+  // is instead mitigated by pinning the build to Node 22 (package.json engines)
+  // rather than the heavier forced Node 24 -- confirmed by the resulting Vercel
+  // deploy; if it still OOMs, the fallback is Vercel Enhanced Builds (larger
+  // machine), NOT disabling this typecheck.
   eslint: {
-    ignoreDuringBuilds: false,
+    ignoreDuringBuilds: true,
   },
   // Reduce preload warnings by optimizing resource hints
   experimental: {
