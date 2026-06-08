@@ -593,6 +593,7 @@ function computeBucket(
   }
 
   // 8. Recommendation
+  // VERIFY vs ProUCL v5.2 Tech Guide: KM-lognormal H-vs-t threshold uses logN (positive-detect count), not total n. Table 2-13 p.128 does not disambiguate total-vs-detect for the censored path. Tracked: brief 5 follow-up.
   const logN = gof.verdict === 'Lognormal'
     ? (hasCensored && censoredMethod === 'KM'
         ? rawParsed.filter((x) => x.value > 0).length
