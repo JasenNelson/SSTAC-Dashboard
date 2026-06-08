@@ -3665,17 +3665,41 @@ the Jermilova case-study pack share most of the rendering machinery
 but differ in several important ways. The table below summarizes the
 practically visible differences:
 
-| Feature | General pack (sediment) | Jermilova pack (mercury) |
-|---------|-------------------------|--------------------------|
-| Network size | 20 nodes | 14 nodes (per submodel) |
-| Schema | `bnrrm-v1` | `generic-bn-rrm-v1` |
-| Renderer entry point | `createDefaultNetwork` | `createGenericNetwork` |
-| Substance composition | 9 contaminants (Cu, Zn, Pb, Cd, Hg, As, Cr, PAHs, PCBs) + 3 environmental modifiers (TOC, AVS, grain size) | 6 mercury-pathway substance nodes per submodel (3 nonpoint: atmospheric, permafrost, soil erosion; 1 aggregator: total deposition; 2 point sources: GSL = mine + historic mine, or GBS = oil + RPTS slumps) plus 2 condition nodes (fish_species, fish_length). Counted as `category: substance` vs `category: condition` per `dag_definition_mackenzie_hg.py:46-58`. (CORRECTED per codex body-R1 P3-1 from prior "7 mercury-pathway sources" which incorrectly conflated substance and condition categories and miscounted.) |
-| Impact endpoint | `ecological_risk` (sediment-community risk) | `ptwi_exceedance` (human-health weekly intake exceedance) |
-| CPT provenance | Mix of expert-elicited (interim) and data-learned (where co-located triad data exists) | Mix of BDeu (3 CPTs), deterministic (4 CPTs), and empirical priors (7 root nodes) per submodel |
-| Data tab mode | Upload + classification (user supplies station data) | Read-only `BenchmarkDataViewer` (frozen training data, 604+855 GSL or 274+1,589 GBS) |
-| Map layers | Site-specific (uploaded by user as needed) | Pack-provided (12 GeoJSONs: basins, mines, advisory lakes, claims, communities, climate, thaw slumps) |
-| Top-banner | None or internal | Purple "frozen benchmark" warning that the pack is a published-paper reconstruction, not a user-driven assessment |
+- **Network size**
+  - General pack (sediment): 20 nodes
+  - Jermilova pack (mercury): 14 nodes (per submodel)
+
+- **Schema**
+  - General pack (sediment): `bnrrm-v1`
+  - Jermilova pack (mercury): `generic-bn-rrm-v1`
+
+- **Renderer entry point**
+  - General pack (sediment): `createDefaultNetwork`
+  - Jermilova pack (mercury): `createGenericNetwork`
+
+- **Substance composition**
+  - General pack (sediment): 9 contaminants (Cu, Zn, Pb, Cd, Hg, As, Cr, PAHs, PCBs) + 3 environmental modifiers (TOC, AVS, grain size)
+  - Jermilova pack (mercury): 6 mercury-pathway substance nodes per submodel (3 nonpoint: atmospheric, permafrost, soil erosion; 1 aggregator: total deposition; 2 point sources: GSL = mine + historic mine, or GBS = oil + RPTS slumps) plus 2 condition nodes (fish_species, fish_length). Counted as `category: substance` vs `category: condition` per `dag_definition_mackenzie_hg.py:46-58`. (CORRECTED per codex body-R1 P3-1 from prior "7 mercury-pathway sources" which incorrectly conflated substance and condition categories and miscounted.)
+
+- **Impact endpoint**
+  - General pack (sediment): `ecological_risk` (sediment-community risk)
+  - Jermilova pack (mercury): `ptwi_exceedance` (human-health weekly intake exceedance)
+
+- **CPT provenance**
+  - General pack (sediment): Mix of expert-elicited (interim) and data-learned (where co-located triad data exists)
+  - Jermilova pack (mercury): Mix of BDeu (3 CPTs), deterministic (4 CPTs), and empirical priors (7 root nodes) per submodel
+
+- **Data tab mode**
+  - General pack (sediment): Upload + classification (user supplies station data)
+  - Jermilova pack (mercury): Read-only `BenchmarkDataViewer` (frozen training data, 604+855 GSL or 274+1,589 GBS)
+
+- **Map layers**
+  - General pack (sediment): Site-specific (uploaded by user as needed)
+  - Jermilova pack (mercury): Pack-provided (12 GeoJSONs: basins, mines, advisory lakes, claims, communities, climate, thaw slumps)
+
+- **Top-banner**
+  - General pack (sediment): None or internal
+  - Jermilova pack (mercury): Purple "frozen benchmark" warning that the pack is a published-paper reconstruction, not a user-driven assessment
 
 The "frozen benchmark" banner is load-bearing for honest reporting:
 the Jermilova pack is a reconstruction of a published model on a
@@ -5108,22 +5132,173 @@ traced through `fit_all_cpts()` (`fit_mackenzie_model.py:454-579`).
 
 ### A.4.1 GSL node table
 
-| Node ID | Display label | Category | States | Discretization breaks | Unit | Parents | CPT method | Container | Source attribution | Definition file:line |
-|---------|---------------|----------|--------|----------------------|------|---------|------------|-----------|--------------------|----------------------|
-| atmospheric_hg_deposition | Atmospheric Hg Deposition | substance | very_low, low, medium, high, very_high | 0, 3, 9, 12, 15 (>15 = very_high) | ug THg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR GEM-MACH-Hg annual avg; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:19-24`; breaks `:241-244` |
-| permafrost_hg_release | Permafrost Thaw Hg Release | substance | none, very_low, low, medium, high, very_high | 0, 0, 2, 4, 6, 10 (>10 = very_high; lowest 0 -> "none") | ug DHg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR SiBCASA model output; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:25-30`; breaks `:245-248` |
-| soil_erosion_hg_release | Soil Erosion Hg Release | substance | low, medium, high, very_high | 0, 5, 10, 20 (>20 = very_high) | ug THg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR RUSLE-derived; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:31-36`; breaks `:249-252` |
-| total_hg_deposition | Total Hg Deposition (Nonpoint) | substance | low, moderate_low, moderate_high, high, very_high | 0, 10, 15, 20, 50 (>50 = very_high) | ug/m2/yr | atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release | bdeu | Hg Deposition | derived (sum of nonpoint sources); breaks Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:39-44`; breaks `:253-256` |
-| proximity_mine_gsl | Proximity to Mine Development (15 km) | substance | yes, no | binary (within 15 km) | -- | none (root) | empirical_prior | Point Sources | FRDR NearMine_15km; lme formula in Manuscript_RCode.R (GSL fish + water) | `dag_definition_mackenzie_hg.py:106-111` |
-| proximity_historic_mine | Proximity to Historic Mine (15 km) | substance | yes, no | binary (within 15 km) | -- | none (root) | empirical_prior | Point Sources | FRDR Near_HistoricMine_15km; lme formula in Manuscript_RCode.R (GSL fish + water) | `dag_definition_mackenzie_hg.py:112-117` |
-| fish_species | Freshwater Fish Species | condition | lake_whitefish, burbot, walleye, lake_trout, northern_pike | categorical (5 species) | -- | none (root) | empirical_prior | Exposure Factors | FRDR Fish_Code; Jermilova et al. 2025 Indigenous food fish species | `dag_definition_mackenzie_hg.py:47-52` |
-| fish_length | Fish Length | condition | small, large | per-species cutoff: 450 mm (LW/WA), 600 mm (BU/LT/NP) | mm | none (root) | empirical_prior | Exposure Factors | FRDR Fork_length; cutoffs derived from species-specific size distributions | `dag_definition_mackenzie_hg.py:53-58`; per-species breaks `:265-274` |
-| freshwater_thg | Freshwater THg (ng/L) | effect | low, medium, high | 0, 10, 26 (>26 = high) | ng/L | proximity_mine_gsl, proximity_historic_mine, total_hg_deposition | bdeu | Stressors | FRDR THg; break 26 ng/L = CCME aquatic life guideline; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:61-66`; breaks `:257-260` |
-| fish_tissue_hg | Fish Tissue Hg (ug/g ww) | effect | low, subsistence, ec20, ec50, above_ec50 | 0, 0.2, 0.5, 0.77, 3 (>3 = above_ec50) | ug/g ww | fish_species, fish_length, proximity_mine_gsl, proximity_historic_mine, total_hg_deposition | bdeu | Stressors | FRDR Tissue_Hg; breaks derived from Dillon 2010 EC20/EC50 dose-response | `dag_definition_mackenzie_hg.py:67-72`; breaks `:261-264` |
-| degree_of_injury | Degree of Injury (%) | effect | low, moderate, high, very_high | 0, 25, 50, 75 (>75 = very_high) | percent | fish_tissue_hg | deterministic_dillon | Effects | derived from Dillon 2010 LL.3 dose-response at fish_tissue_hg midpoints | `dag_definition_mackenzie_hg.py:73-78`; breaks `:275-278` |
-| eligible_commercial_catch | Eligible Commercial Catch | impact | eligible, not_eligible | threshold 0.5 ug/g ww | ug/g ww | fish_tissue_hg | deterministic_hc_guideline | Effects | derived from Health Canada commercial fish guideline (0.5 ug/g ww) | `dag_definition_mackenzie_hg.py:81-86`; threshold `:283-286` |
-| mehg_ingested | MeHg Ingested (ug Hg/kgbw/wk) | impact | none, low, moderate_low, moderate_mid, moderate_high, high | 0, 0, 1, 1.4, 2.5, 3.3 (>3.3 = high) | ug Hg/kgbw/wk | fish_tissue_hg | deterministic_subsistence | Human Health | derived from subsistence intake formula (100 g/day, 60 kg bw, 0.95 MeHg fraction); breaks aligned with pTWI thresholds | `dag_definition_mackenzie_hg.py:87-92`; breaks `:279-282` |
-| ptwi_exceedance | pTWI Exceedance | impact | does_not_exceed, exceeds | binary at US EPA child pTWI = 0.7 ug/kgbw/wk | ug/kgbw/wk (threshold) | mehg_ingested | deterministic_ptwi | Human Health | derived from US EPA child pTWI = 0.7 ug/kgbw/wk; full HC thresholds 0.7/1.4/3.3 stored in canonical_mackenzie.PTWI_THRESHOLDS | `dag_definition_mackenzie_hg.py:93-98`; thresholds `canonical_mackenzie.py:38` |
+- **atmospheric_hg_deposition**
+  - Display label: Atmospheric Hg Deposition
+  - Category: substance
+  - States: very_low, low, medium, high, very_high
+  - Discretization breaks: 0, 3, 9, 12, 15 (>15 = very_high)
+  - Unit: ug THg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR GEM-MACH-Hg annual avg; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:19-24`; breaks `:241-244`
+
+- **permafrost_hg_release**
+  - Display label: Permafrost Thaw Hg Release
+  - Category: substance
+  - States: none, very_low, low, medium, high, very_high
+  - Discretization breaks: 0, 0, 2, 4, 6, 10 (>10 = very_high; lowest 0 -> "none")
+  - Unit: ug DHg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR SiBCASA model output; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:25-30`; breaks `:245-248`
+
+- **soil_erosion_hg_release**
+  - Display label: Soil Erosion Hg Release
+  - Category: substance
+  - States: low, medium, high, very_high
+  - Discretization breaks: 0, 5, 10, 20 (>20 = very_high)
+  - Unit: ug THg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR RUSLE-derived; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:31-36`; breaks `:249-252`
+
+- **total_hg_deposition**
+  - Display label: Total Hg Deposition (Nonpoint)
+  - Category: substance
+  - States: low, moderate_low, moderate_high, high, very_high
+  - Discretization breaks: 0, 10, 15, 20, 50 (>50 = very_high)
+  - Unit: ug/m2/yr
+  - Parents: atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release
+  - CPT method: bdeu
+  - Container: Hg Deposition
+  - Source attribution: derived (sum of nonpoint sources); breaks Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:39-44`; breaks `:253-256`
+
+- **proximity_mine_gsl**
+  - Display label: Proximity to Mine Development (15 km)
+  - Category: substance
+  - States: yes, no
+  - Discretization breaks: binary (within 15 km)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Point Sources
+  - Source attribution: FRDR NearMine_15km; lme formula in Manuscript_RCode.R (GSL fish + water)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:106-111`
+
+- **proximity_historic_mine**
+  - Display label: Proximity to Historic Mine (15 km)
+  - Category: substance
+  - States: yes, no
+  - Discretization breaks: binary (within 15 km)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Point Sources
+  - Source attribution: FRDR Near_HistoricMine_15km; lme formula in Manuscript_RCode.R (GSL fish + water)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:112-117`
+
+- **fish_species**
+  - Display label: Freshwater Fish Species
+  - Category: condition
+  - States: lake_whitefish, burbot, walleye, lake_trout, northern_pike
+  - Discretization breaks: categorical (5 species)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Exposure Factors
+  - Source attribution: FRDR Fish_Code; Jermilova et al. 2025 Indigenous food fish species
+  - Definition file:line: `dag_definition_mackenzie_hg.py:47-52`
+
+- **fish_length**
+  - Display label: Fish Length
+  - Category: condition
+  - States: small, large
+  - Discretization breaks: per-species cutoff: 450 mm (LW/WA), 600 mm (BU/LT/NP)
+  - Unit: mm
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Exposure Factors
+  - Source attribution: FRDR Fork_length; cutoffs derived from species-specific size distributions
+  - Definition file:line: `dag_definition_mackenzie_hg.py:53-58`; per-species breaks `:265-274`
+
+- **freshwater_thg**
+  - Display label: Freshwater THg (ng/L)
+  - Category: effect
+  - States: low, medium, high
+  - Discretization breaks: 0, 10, 26 (>26 = high)
+  - Unit: ng/L
+  - Parents: proximity_mine_gsl, proximity_historic_mine, total_hg_deposition
+  - CPT method: bdeu
+  - Container: Stressors
+  - Source attribution: FRDR THg; break 26 ng/L = CCME aquatic life guideline; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:61-66`; breaks `:257-260`
+
+- **fish_tissue_hg**
+  - Display label: Fish Tissue Hg (ug/g ww)
+  - Category: effect
+  - States: low, subsistence, ec20, ec50, above_ec50
+  - Discretization breaks: 0, 0.2, 0.5, 0.77, 3 (>3 = above_ec50)
+  - Unit: ug/g ww
+  - Parents: fish_species, fish_length, proximity_mine_gsl, proximity_historic_mine, total_hg_deposition
+  - CPT method: bdeu
+  - Container: Stressors
+  - Source attribution: FRDR Tissue_Hg; breaks derived from Dillon 2010 EC20/EC50 dose-response
+  - Definition file:line: `dag_definition_mackenzie_hg.py:67-72`; breaks `:261-264`
+
+- **degree_of_injury**
+  - Display label: Degree of Injury (%)
+  - Category: effect
+  - States: low, moderate, high, very_high
+  - Discretization breaks: 0, 25, 50, 75 (>75 = very_high)
+  - Unit: percent
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_dillon
+  - Container: Effects
+  - Source attribution: derived from Dillon 2010 LL.3 dose-response at fish_tissue_hg midpoints
+  - Definition file:line: `dag_definition_mackenzie_hg.py:73-78`; breaks `:275-278`
+
+- **eligible_commercial_catch**
+  - Display label: Eligible Commercial Catch
+  - Category: impact
+  - States: eligible, not_eligible
+  - Discretization breaks: threshold 0.5 ug/g ww
+  - Unit: ug/g ww
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_hc_guideline
+  - Container: Effects
+  - Source attribution: derived from Health Canada commercial fish guideline (0.5 ug/g ww)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:81-86`; threshold `:283-286`
+
+- **mehg_ingested**
+  - Display label: MeHg Ingested (ug Hg/kgbw/wk)
+  - Category: impact
+  - States: none, low, moderate_low, moderate_mid, moderate_high, high
+  - Discretization breaks: 0, 0, 1, 1.4, 2.5, 3.3 (>3.3 = high)
+  - Unit: ug Hg/kgbw/wk
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_subsistence
+  - Container: Human Health
+  - Source attribution: derived from subsistence intake formula (100 g/day, 60 kg bw, 0.95 MeHg fraction); breaks aligned with pTWI thresholds
+  - Definition file:line: `dag_definition_mackenzie_hg.py:87-92`; breaks `:279-282`
+
+- **ptwi_exceedance**
+  - Display label: pTWI Exceedance
+  - Category: impact
+  - States: does_not_exceed, exceeds
+  - Discretization breaks: binary at US EPA child pTWI = 0.7 ug/kgbw/wk
+  - Unit: ug/kgbw/wk (threshold)
+  - Parents: mehg_ingested
+  - CPT method: deterministic_ptwi
+  - Container: Human Health
+  - Source attribution: derived from US EPA child pTWI = 0.7 ug/kgbw/wk; full HC thresholds 0.7/1.4/3.3 stored in canonical_mackenzie.PTWI_THRESHOLDS
+  - Definition file:line: `dag_definition_mackenzie_hg.py:93-98`; thresholds `canonical_mackenzie.py:38`
 
 ### A.4.2 GSL edge list (15 edges)
 
@@ -5170,22 +5345,173 @@ specific point-source nodes replace the GSL pair).
 
 ### A.5.1 GBS node table
 
-| Node ID | Display label | Category | States | Discretization breaks | Unit | Parents | CPT method | Container | Source attribution | Definition file:line |
-|---------|---------------|----------|--------|----------------------|------|---------|------------|-----------|--------------------|----------------------|
-| atmospheric_hg_deposition | Atmospheric Hg Deposition | substance | very_low, low, medium, high, very_high | 0, 3, 9, 12, 15 (>15 = very_high) | ug THg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR GEM-MACH-Hg annual avg; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:19-24`; breaks `:241-244` |
-| permafrost_hg_release | Permafrost Thaw Hg Release | substance | none, very_low, low, medium, high, very_high | 0, 0, 2, 4, 6, 10 (>10 = very_high) | ug DHg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR SiBCASA model output; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:25-30`; breaks `:245-248` |
-| soil_erosion_hg_release | Soil Erosion Hg Release | substance | low, medium, high, very_high | 0, 5, 10, 20 (>20 = very_high) | ug THg/m2/yr | none (root) | empirical_prior | Nonpoint Sources | FRDR RUSLE-derived; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:31-36`; breaks `:249-252` |
-| total_hg_deposition | Total Hg Deposition (Nonpoint) | substance | low, moderate_low, moderate_high, high, very_high | 0, 10, 15, 20, 50 (>50 = very_high) | ug/m2/yr | atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release | bdeu | Hg Deposition | derived (sum of nonpoint sources); breaks Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:39-44`; breaks `:253-256` |
-| proximity_oil_gbs | Proximity to Oil Development (50 km) | substance | yes, no | binary (within 50 km) | -- | none (root) | empirical_prior | Point Sources | FRDR NearOil_50km; lme formula in Manuscript_RCode.R (GBS fish + water) | `dag_definition_mackenzie_hg.py:125-130` |
-| proximity_rpts_gbs | Proximity to Retrogressive Permafrost Thaw Slumps (10 km) | substance | yes, no | binary (within 10 km) | -- | none (root) | empirical_prior | Point Sources | FRDR NearSlump_10km; lme formula in Manuscript_RCode.R (GBS fish + water) | `dag_definition_mackenzie_hg.py:131-136` |
-| fish_species | Freshwater Fish Species | condition | lake_whitefish, burbot, walleye, lake_trout, northern_pike | categorical (5 species) | -- | none (root) | empirical_prior | Exposure Factors | FRDR Fish_Code; Jermilova et al. 2025 Indigenous food fish species | `dag_definition_mackenzie_hg.py:47-52` |
-| fish_length | Fish Length | condition | small, large | per-species cutoff: 450 mm (LW/WA), 600 mm (BU/LT/NP) | mm | none (root) | empirical_prior | Exposure Factors | FRDR Fork_length; cutoffs derived from species-specific size distributions | `dag_definition_mackenzie_hg.py:53-58`; per-species breaks `:265-274` |
-| freshwater_thg | Freshwater THg (ng/L) | effect | low, medium, high | 0, 10, 26 (>26 = high) | ng/L | proximity_oil_gbs, proximity_rpts_gbs, total_hg_deposition | bdeu | Stressors | FRDR THg; break 26 ng/L = CCME aquatic life guideline; Table S4 of Jermilova et al. 2025 | `dag_definition_mackenzie_hg.py:61-66`; breaks `:257-260` |
-| fish_tissue_hg | Fish Tissue Hg (ug/g ww) | effect | low, subsistence, ec20, ec50, above_ec50 | 0, 0.2, 0.5, 0.77, 3 (>3 = above_ec50) | ug/g ww | fish_species, fish_length, proximity_oil_gbs, proximity_rpts_gbs, total_hg_deposition | bdeu | Stressors | FRDR Tissue_Hg; breaks derived from Dillon 2010 EC20/EC50 dose-response | `dag_definition_mackenzie_hg.py:67-72`; breaks `:261-264` |
-| degree_of_injury | Degree of Injury (%) | effect | low, moderate, high, very_high | 0, 25, 50, 75 (>75 = very_high) | percent | fish_tissue_hg | deterministic_dillon | Effects | derived from Dillon 2010 LL.3 dose-response at fish_tissue_hg midpoints | `dag_definition_mackenzie_hg.py:73-78`; breaks `:275-278` |
-| eligible_commercial_catch | Eligible Commercial Catch | impact | eligible, not_eligible | threshold 0.5 ug/g ww | ug/g ww | fish_tissue_hg | deterministic_hc_guideline | Effects | derived from Health Canada commercial fish guideline (0.5 ug/g ww) | `dag_definition_mackenzie_hg.py:81-86`; threshold `:283-286` |
-| mehg_ingested | MeHg Ingested (ug Hg/kgbw/wk) | impact | none, low, moderate_low, moderate_mid, moderate_high, high | 0, 0, 1, 1.4, 2.5, 3.3 (>3.3 = high) | ug Hg/kgbw/wk | fish_tissue_hg | deterministic_subsistence | Human Health | derived from subsistence intake formula (100 g/day, 60 kg bw, 0.95 MeHg fraction); breaks aligned with pTWI thresholds | `dag_definition_mackenzie_hg.py:87-92`; breaks `:279-282` |
-| ptwi_exceedance | pTWI Exceedance | impact | does_not_exceed, exceeds | binary at US EPA child pTWI = 0.7 ug/kgbw/wk | ug/kgbw/wk (threshold) | mehg_ingested | deterministic_ptwi | Human Health | derived from US EPA child pTWI = 0.7 ug/kgbw/wk; full HC thresholds 0.7/1.4/3.3 stored in canonical_mackenzie.PTWI_THRESHOLDS | `dag_definition_mackenzie_hg.py:93-98`; thresholds `canonical_mackenzie.py:38` |
+- **atmospheric_hg_deposition**
+  - Display label: Atmospheric Hg Deposition
+  - Category: substance
+  - States: very_low, low, medium, high, very_high
+  - Discretization breaks: 0, 3, 9, 12, 15 (>15 = very_high)
+  - Unit: ug THg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR GEM-MACH-Hg annual avg; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:19-24`; breaks `:241-244`
+
+- **permafrost_hg_release**
+  - Display label: Permafrost Thaw Hg Release
+  - Category: substance
+  - States: none, very_low, low, medium, high, very_high
+  - Discretization breaks: 0, 0, 2, 4, 6, 10 (>10 = very_high)
+  - Unit: ug DHg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR SiBCASA model output; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:25-30`; breaks `:245-248`
+
+- **soil_erosion_hg_release**
+  - Display label: Soil Erosion Hg Release
+  - Category: substance
+  - States: low, medium, high, very_high
+  - Discretization breaks: 0, 5, 10, 20 (>20 = very_high)
+  - Unit: ug THg/m2/yr
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Nonpoint Sources
+  - Source attribution: FRDR RUSLE-derived; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:31-36`; breaks `:249-252`
+
+- **total_hg_deposition**
+  - Display label: Total Hg Deposition (Nonpoint)
+  - Category: substance
+  - States: low, moderate_low, moderate_high, high, very_high
+  - Discretization breaks: 0, 10, 15, 20, 50 (>50 = very_high)
+  - Unit: ug/m2/yr
+  - Parents: atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release
+  - CPT method: bdeu
+  - Container: Hg Deposition
+  - Source attribution: derived (sum of nonpoint sources); breaks Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:39-44`; breaks `:253-256`
+
+- **proximity_oil_gbs**
+  - Display label: Proximity to Oil Development (50 km)
+  - Category: substance
+  - States: yes, no
+  - Discretization breaks: binary (within 50 km)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Point Sources
+  - Source attribution: FRDR NearOil_50km; lme formula in Manuscript_RCode.R (GBS fish + water)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:125-130`
+
+- **proximity_rpts_gbs**
+  - Display label: Proximity to Retrogressive Permafrost Thaw Slumps (10 km)
+  - Category: substance
+  - States: yes, no
+  - Discretization breaks: binary (within 10 km)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Point Sources
+  - Source attribution: FRDR NearSlump_10km; lme formula in Manuscript_RCode.R (GBS fish + water)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:131-136`
+
+- **fish_species**
+  - Display label: Freshwater Fish Species
+  - Category: condition
+  - States: lake_whitefish, burbot, walleye, lake_trout, northern_pike
+  - Discretization breaks: categorical (5 species)
+  - Unit: --
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Exposure Factors
+  - Source attribution: FRDR Fish_Code; Jermilova et al. 2025 Indigenous food fish species
+  - Definition file:line: `dag_definition_mackenzie_hg.py:47-52`
+
+- **fish_length**
+  - Display label: Fish Length
+  - Category: condition
+  - States: small, large
+  - Discretization breaks: per-species cutoff: 450 mm (LW/WA), 600 mm (BU/LT/NP)
+  - Unit: mm
+  - Parents: none (root)
+  - CPT method: empirical_prior
+  - Container: Exposure Factors
+  - Source attribution: FRDR Fork_length; cutoffs derived from species-specific size distributions
+  - Definition file:line: `dag_definition_mackenzie_hg.py:53-58`; per-species breaks `:265-274`
+
+- **freshwater_thg**
+  - Display label: Freshwater THg (ng/L)
+  - Category: effect
+  - States: low, medium, high
+  - Discretization breaks: 0, 10, 26 (>26 = high)
+  - Unit: ng/L
+  - Parents: proximity_oil_gbs, proximity_rpts_gbs, total_hg_deposition
+  - CPT method: bdeu
+  - Container: Stressors
+  - Source attribution: FRDR THg; break 26 ng/L = CCME aquatic life guideline; Table S4 of Jermilova et al. 2025
+  - Definition file:line: `dag_definition_mackenzie_hg.py:61-66`; breaks `:257-260`
+
+- **fish_tissue_hg**
+  - Display label: Fish Tissue Hg (ug/g ww)
+  - Category: effect
+  - States: low, subsistence, ec20, ec50, above_ec50
+  - Discretization breaks: 0, 0.2, 0.5, 0.77, 3 (>3 = above_ec50)
+  - Unit: ug/g ww
+  - Parents: fish_species, fish_length, proximity_oil_gbs, proximity_rpts_gbs, total_hg_deposition
+  - CPT method: bdeu
+  - Container: Stressors
+  - Source attribution: FRDR Tissue_Hg; breaks derived from Dillon 2010 EC20/EC50 dose-response
+  - Definition file:line: `dag_definition_mackenzie_hg.py:67-72`; breaks `:261-264`
+
+- **degree_of_injury**
+  - Display label: Degree of Injury (%)
+  - Category: effect
+  - States: low, moderate, high, very_high
+  - Discretization breaks: 0, 25, 50, 75 (>75 = very_high)
+  - Unit: percent
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_dillon
+  - Container: Effects
+  - Source attribution: derived from Dillon 2010 LL.3 dose-response at fish_tissue_hg midpoints
+  - Definition file:line: `dag_definition_mackenzie_hg.py:73-78`; breaks `:275-278`
+
+- **eligible_commercial_catch**
+  - Display label: Eligible Commercial Catch
+  - Category: impact
+  - States: eligible, not_eligible
+  - Discretization breaks: threshold 0.5 ug/g ww
+  - Unit: ug/g ww
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_hc_guideline
+  - Container: Effects
+  - Source attribution: derived from Health Canada commercial fish guideline (0.5 ug/g ww)
+  - Definition file:line: `dag_definition_mackenzie_hg.py:81-86`; threshold `:283-286`
+
+- **mehg_ingested**
+  - Display label: MeHg Ingested (ug Hg/kgbw/wk)
+  - Category: impact
+  - States: none, low, moderate_low, moderate_mid, moderate_high, high
+  - Discretization breaks: 0, 0, 1, 1.4, 2.5, 3.3 (>3.3 = high)
+  - Unit: ug Hg/kgbw/wk
+  - Parents: fish_tissue_hg
+  - CPT method: deterministic_subsistence
+  - Container: Human Health
+  - Source attribution: derived from subsistence intake formula (100 g/day, 60 kg bw, 0.95 MeHg fraction); breaks aligned with pTWI thresholds
+  - Definition file:line: `dag_definition_mackenzie_hg.py:87-92`; breaks `:279-282`
+
+- **ptwi_exceedance**
+  - Display label: pTWI Exceedance
+  - Category: impact
+  - States: does_not_exceed, exceeds
+  - Discretization breaks: binary at US EPA child pTWI = 0.7 ug/kgbw/wk
+  - Unit: ug/kgbw/wk (threshold)
+  - Parents: mehg_ingested
+  - CPT method: deterministic_ptwi
+  - Container: Human Health
+  - Source attribution: derived from US EPA child pTWI = 0.7 ug/kgbw/wk; full HC thresholds 0.7/1.4/3.3 stored in canonical_mackenzie.PTWI_THRESHOLDS
+  - Definition file:line: `dag_definition_mackenzie_hg.py:93-98`; thresholds `canonical_mackenzie.py:38`
 
 ### A.5.2 GBS edge list (15 edges)
 
@@ -5358,14 +5684,35 @@ per the documented limitation at `fit_mackenzie_model.py:950-952`.)
 Traceable through `fit_all_cpts()` at `fit_mackenzie_model.py:454-579`. The
 function dispatches per node:
 
-| CPT method | Nodes | Implementation file:line | Algorithm |
-|------------|-------|--------------------------|-----------|
-| empirical_prior | atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release, proximity_mine_gsl, proximity_historic_mine, proximity_oil_gbs, proximity_rpts_gbs, fish_species, fish_length | `fit_mackenzie_model.py:246-271` (definition); `:482-500` (orchestration) | observed-state counts smoothed by BDeu prior alpha_k = ESS / n_states |
-| bdeu | total_hg_deposition, freshwater_thg, fish_tissue_hg | `fit_mackenzie_model.py:160-243` (definition); `:502-538` (orchestration) | BDeu posterior P(s\|cfg) = (count + alpha_ijk) / (n + alpha_ij), ESS = 1.0 default |
-| deterministic_dillon (exported as `deterministic_dillon_2010` in `learned-model-*.json`) | degree_of_injury | `fit_mackenzie_model.py:278-296` (Dillon LL.3); `:328-359` (CPT build); `:540-550` (orchestration) | Dillon 2010 LL.3 at fish_tissue_hg midpoint, soft 0.90 / 0.10 across n-1 others |
-| deterministic_hc_guideline | eligible_commercial_catch | `fit_mackenzie_model.py:362-382` (CPT build); `:553-559` (orchestration) | binary threshold at HC 0.5 ug/g ww applied to fish_tissue_hg midpoint, soft 0.95 / 0.05 |
-| deterministic_subsistence | mehg_ingested | `fit_mackenzie_model.py:385-417` (CPT build); `:561-568` (orchestration) | midpoint * 100 g/day * 7 * 0.95 / 60 kg, bin via MEHG_BREAKS, soft 0.90 / 0.10 across n-1 others |
-| deterministic_ptwi | ptwi_exceedance | `fit_mackenzie_model.py:420-447` (CPT build); `:570-577` (orchestration) | mehg_ingested midpoint vs US EPA child pTWI 0.7 ug/kgbw/wk, soft 0.95 / 0.05 |
+- **empirical_prior**
+  - Nodes: atmospheric_hg_deposition, permafrost_hg_release, soil_erosion_hg_release, proximity_mine_gsl, proximity_historic_mine, proximity_oil_gbs, proximity_rpts_gbs, fish_species, fish_length
+  - Implementation file:line: `fit_mackenzie_model.py:246-271` (definition); `:482-500` (orchestration)
+  - Algorithm: observed-state counts smoothed by BDeu prior alpha_k = ESS / n_states
+
+- **bdeu**
+  - Nodes: total_hg_deposition, freshwater_thg, fish_tissue_hg
+  - Implementation file:line: `fit_mackenzie_model.py:160-243` (definition); `:502-538` (orchestration)
+  - Algorithm: BDeu posterior P(s|cfg) = (count + alpha_ijk) / (n + alpha_ij), ESS = 1.0 default
+
+- **deterministic_dillon** (exported as `deterministic_dillon_2010` in `learned-model-*.json`)
+  - Nodes: degree_of_injury
+  - Implementation file:line: `fit_mackenzie_model.py:278-296` (Dillon LL.3); `:328-359` (CPT build); `:540-550` (orchestration)
+  - Algorithm: Dillon 2010 LL.3 at fish_tissue_hg midpoint, soft 0.90 / 0.10 across n-1 others
+
+- **deterministic_hc_guideline**
+  - Nodes: eligible_commercial_catch
+  - Implementation file:line: `fit_mackenzie_model.py:362-382` (CPT build); `:553-559` (orchestration)
+  - Algorithm: binary threshold at HC 0.5 ug/g ww applied to fish_tissue_hg midpoint, soft 0.95 / 0.05
+
+- **deterministic_subsistence**
+  - Nodes: mehg_ingested
+  - Implementation file:line: `fit_mackenzie_model.py:385-417` (CPT build); `:561-568` (orchestration)
+  - Algorithm: midpoint * 100 g/day * 7 * 0.95 / 60 kg, bin via MEHG_BREAKS, soft 0.90 / 0.10 across n-1 others
+
+- **deterministic_ptwi**
+  - Nodes: ptwi_exceedance
+  - Implementation file:line: `fit_mackenzie_model.py:420-447` (CPT build); `:570-577` (orchestration)
+  - Algorithm: mehg_ingested midpoint vs US EPA child pTWI 0.7 ug/kgbw/wk, soft 0.95 / 0.05
 
 CPT method count per submodel:
 
@@ -5617,22 +5964,20 @@ Roots are shared in structure between submodels but their priors differ
 numerically because the underlying data differ. Each row pertains to ONE
 submodel.
 
-| Node ID | Submodel | Method | Parents | n_parent_configs | n_states | ESS | Total observations used | Configs with data / n_parent_configs | Soft-edge | file:line |
-|---------|----------|--------|---------|----------------:|--------:|----:|------------------------:|-------------------------------------:|-----------|-----------|
-| atmospheric_hg_deposition | GSL | empirical_prior | (none) | 1 | 5 | 1.0 | 1459 (total of fish + water, line 260 sum) | 1/1 | N/A | `fit_mackenzie_model.py:485-488,495-496`; called via `fit_empirical_prior` lines 246-271 |
-| atmospheric_hg_deposition | GBS | empirical_prior | (none) | 1 | 5 | 1.0 | 1863 (274 + 1589, less any null rows) | 1/1 | N/A | same as above |
-| permafrost_hg_release | GSL | empirical_prior | (none) | 1 | 6 | 1.0 | up to 1459 | 1/1 | N/A | `fit_mackenzie_model.py:485-488,495-496` |
-| permafrost_hg_release | GBS | empirical_prior | (none) | 1 | 6 | 1.0 | up to 1863 | 1/1 | N/A | same |
-| soil_erosion_hg_release | GSL | empirical_prior | (none) | 1 | 4 | 1.0 | up to 1459 | 1/1 | N/A | `fit_mackenzie_model.py:485-488,495-496` |
-| soil_erosion_hg_release | GBS | empirical_prior | (none) | 1 | 4 | 1.0 | up to 1863 | 1/1 | N/A | same |
-| proximity_mine_gsl | GSL | empirical_prior | (none) | 1 | 2 | 1.0 | up to 1459 | 1/1 | N/A | `fit_mackenzie_model.py:490-496` |
-| proximity_historic_mine | GSL | empirical_prior | (none) | 1 | 2 | 1.0 | up to 1459 | 1/1 | N/A | `fit_mackenzie_model.py:490-496` |
-| proximity_oil_gbs | GBS | empirical_prior | (none) | 1 | 2 | 1.0 | up to 1863 | 1/1 | N/A | `fit_mackenzie_model.py:492-496` |
-| proximity_rpts_gbs | GBS | empirical_prior | (none) | 1 | 2 | 1.0 | up to 1863 | 1/1 | N/A | `fit_mackenzie_model.py:492-496` |
-| fish_species | GSL | empirical_prior | (none) | 1 | 5 | 1.0 | up to 604 (fish only, line 500) | 1/1 | N/A | `fit_mackenzie_model.py:499-500` |
-| fish_species | GBS | empirical_prior | (none) | 1 | 5 | 1.0 | up to 274 (fish only) | 1/1 | N/A | same |
-| fish_length | GSL | empirical_prior | (none) | 1 | 2 | 1.0 | up to 604 | 1/1 | N/A | `fit_mackenzie_model.py:499-500` |
-| fish_length | GBS | empirical_prior | (none) | 1 | 2 | 1.0 | up to 274 | 1/1 | N/A | same |
+- **atmospheric_hg_deposition (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 5; ESS: 1.0; Total observations used: 1459 (total of fish + water, line 260 sum); Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:485-488,495-496`; called via `fit_empirical_prior` lines 246-271
+- **atmospheric_hg_deposition (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 5; ESS: 1.0; Total observations used: 1863 (274 + 1589, less any null rows); Configs with data: 1/1; Soft-edge: N/A; file:line: same as above
+- **permafrost_hg_release (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 6; ESS: 1.0; Total observations used: up to 1459; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:485-488,495-496`
+- **permafrost_hg_release (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 6; ESS: 1.0; Total observations used: up to 1863; Configs with data: 1/1; Soft-edge: N/A; file:line: same
+- **soil_erosion_hg_release (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 4; ESS: 1.0; Total observations used: up to 1459; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:485-488,495-496`
+- **soil_erosion_hg_release (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 4; ESS: 1.0; Total observations used: up to 1863; Configs with data: 1/1; Soft-edge: N/A; file:line: same
+- **proximity_mine_gsl (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 1459; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:490-496`
+- **proximity_historic_mine (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 1459; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:490-496`
+- **proximity_oil_gbs (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 1863; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:492-496`
+- **proximity_rpts_gbs (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 1863; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:492-496`
+- **fish_species (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 5; ESS: 1.0; Total observations used: up to 604 (fish only, line 500); Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:499-500`
+- **fish_species (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 5; ESS: 1.0; Total observations used: up to 274 (fish only); Configs with data: 1/1; Soft-edge: N/A; file:line: same
+- **fish_length (GSL)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 604; Configs with data: 1/1; Soft-edge: N/A; file:line: `fit_mackenzie_model.py:499-500`
+- **fish_length (GBS)** -- Method: empirical_prior; Parents: (none); n_parent_configs: 1; n_states: 2; ESS: 1.0; Total observations used: up to 274; Configs with data: 1/1; Soft-edge: N/A; file:line: same
 
 Subtotal: 7 root nodes per submodel x 2 submodels = 14 empirical-prior
 rows. (GSL roots: `atmospheric_hg_deposition`, `permafrost_hg_release`,
@@ -5650,14 +5995,48 @@ log at line 269-270. The verbose line stores the raw `total` from line
 
 ### B.1.2 BDeu CPTs (bdeu method)
 
-| Node ID | Submodel | Method | Parents | n_parent_configs | n_states | ESS | Total observations used | Configs with data / n_parent_configs | Soft-edge | file:line |
-|---------|----------|--------|---------|----------------:|--------:|----:|------------------------:|-------------------------------------:|-----------|-----------|
-| total_hg_deposition | GSL | bdeu | atmospheric_hg_deposition (5), permafrost_hg_release (6), soil_erosion_hg_release (4) | 5x6x4 = 120 | 5 | 1.0 | up to 1459 (fish + water; rows with any-parent-None skipped per lines 216-225) | see fit run log | N/A | `fit_mackenzie_model.py:505-514` (orchestration); `fit_bdeu_cpt` lines 160-243 (math) |
-| total_hg_deposition | GBS | bdeu | atmospheric_hg_deposition (5), permafrost_hg_release (6), soil_erosion_hg_release (4) | 5x6x4 = 120 | 5 | 1.0 | up to 1863 | see fit run log | N/A | same |
-| freshwater_thg | GSL | bdeu | proximity_mine_gsl (2), proximity_historic_mine (2), total_hg_deposition (5) | 2x2x5 = 20 | 3 | 1.0 | up to 855 (water only; line 524) | see fit run log | N/A | `fit_mackenzie_model.py:517-526` |
-| freshwater_thg | GBS | bdeu | proximity_oil_gbs (2), proximity_rpts_gbs (2), total_hg_deposition (5) | 2x2x5 = 20 | 3 | 1.0 | up to 1589 | see fit run log | N/A | same orchestration, different parent identity per `get_model_spec` |
-| fish_tissue_hg | GSL | bdeu | fish_species (5), fish_length (2), proximity_mine_gsl (2), proximity_historic_mine (2), total_hg_deposition (5) | 5x2x2x2x5 = 200 | 5 | 1.0 | up to 604 (fish only; line 536) | see fit run log | N/A | `fit_mackenzie_model.py:529-538` |
-| fish_tissue_hg | GBS | bdeu | fish_species (5), fish_length (2), proximity_oil_gbs (2), proximity_rpts_gbs (2), total_hg_deposition (5) | 5x2x2x2x5 = 200 | 5 | 1.0 | up to 274 | see fit run log | N/A | same |
+- **total_hg_deposition (GSL)**
+  - Method: bdeu
+  - Parents: atmospheric_hg_deposition (5), permafrost_hg_release (6), soil_erosion_hg_release (4)
+  - n_parent_configs: 5x6x4 = 120; n_states: 5; ESS: 1.0
+  - Total observations used: up to 1459 (fish + water; rows with any-parent-None skipped per lines 216-225)
+  - Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: `fit_mackenzie_model.py:505-514` (orchestration); `fit_bdeu_cpt` lines 160-243 (math)
+
+- **total_hg_deposition (GBS)**
+  - Method: bdeu
+  - Parents: atmospheric_hg_deposition (5), permafrost_hg_release (6), soil_erosion_hg_release (4)
+  - n_parent_configs: 5x6x4 = 120; n_states: 5; ESS: 1.0
+  - Total observations used: up to 1863; Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: same
+
+- **freshwater_thg (GSL)**
+  - Method: bdeu
+  - Parents: proximity_mine_gsl (2), proximity_historic_mine (2), total_hg_deposition (5)
+  - n_parent_configs: 2x2x5 = 20; n_states: 3; ESS: 1.0
+  - Total observations used: up to 855 (water only; line 524); Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: `fit_mackenzie_model.py:517-526`
+
+- **freshwater_thg (GBS)**
+  - Method: bdeu
+  - Parents: proximity_oil_gbs (2), proximity_rpts_gbs (2), total_hg_deposition (5)
+  - n_parent_configs: 2x2x5 = 20; n_states: 3; ESS: 1.0
+  - Total observations used: up to 1589; Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: same orchestration, different parent identity per `get_model_spec`
+
+- **fish_tissue_hg (GSL)**
+  - Method: bdeu
+  - Parents: fish_species (5), fish_length (2), proximity_mine_gsl (2), proximity_historic_mine (2), total_hg_deposition (5)
+  - n_parent_configs: 5x2x2x2x5 = 200; n_states: 5; ESS: 1.0
+  - Total observations used: up to 604 (fish only; line 536); Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: `fit_mackenzie_model.py:529-538`
+
+- **fish_tissue_hg (GBS)**
+  - Method: bdeu
+  - Parents: fish_species (5), fish_length (2), proximity_oil_gbs (2), proximity_rpts_gbs (2), total_hg_deposition (5)
+  - n_parent_configs: 5x2x2x2x5 = 200; n_states: 5; ESS: 1.0
+  - Total observations used: up to 274; Configs with data: see fit run log; Soft-edge: N/A
+  - file:line: same
 
 Subtotal: 3 BDeu CPTs per submodel x 2 submodels = 6 BDeu rows.
 n_parent_configs values verified by reading the JSON
@@ -5691,16 +6070,14 @@ the single dominant `low` state floors kappa).
 
 ### B.1.3 Deterministic CPTs
 
-| Node ID | Submodel | Method | Parents | n_parent_configs | n_states | ESS | Total observations used | Configs with data / n_parent_configs | Soft-edge | file:line |
-|---------|----------|--------|---------|----------------:|--------:|----:|------------------------:|-------------------------------------:|-----------|-----------|
-| degree_of_injury | GSL | deterministic_dillon | fish_tissue_hg (5) | 5 | 4 | N/A | N/A | 5/5 (all configs covered deterministically) | 0.90 on MAP, 0.10 / 3 = 0.0333 on each other | `fit_mackenzie_model.py:328-359`; orchestration `fit_mackenzie_model.py:542-550` |
-| degree_of_injury | GBS | deterministic_dillon | fish_tissue_hg (5) | 5 | 4 | N/A | N/A | 5/5 | 0.90 / 0.0333 (each of 3 others) | same |
-| eligible_commercial_catch | GSL | deterministic_hc_guideline | fish_tissue_hg (5) | 5 | 2 | N/A | N/A | 5/5 | 0.95 on MAP, 0.05 on the other state | `fit_mackenzie_model.py:362-382`; orchestration `fit_mackenzie_model.py:552-559` |
-| eligible_commercial_catch | GBS | deterministic_hc_guideline | fish_tissue_hg (5) | 5 | 2 | N/A | N/A | 5/5 | 0.95 / 0.05 | same |
-| mehg_ingested | GSL | deterministic_subsistence | fish_tissue_hg (5) | 5 | 6 | N/A | N/A | 5/5 | 0.90 on MAP, 0.10 / 5 = 0.02 on each of 5 others | `fit_mackenzie_model.py:385-417`; orchestration `fit_mackenzie_model.py:561-568` |
-| mehg_ingested | GBS | deterministic_subsistence | fish_tissue_hg (5) | 5 | 6 | N/A | N/A | 5/5 | 0.90 / 0.02 (each of 5 others) | same |
-| ptwi_exceedance | GSL | deterministic_ptwi | mehg_ingested (6) | 6 | 2 | N/A | N/A | 6/6 | 0.95 on MAP, 0.05 on the other state | `fit_mackenzie_model.py:420-447`; orchestration `fit_mackenzie_model.py:570-577` |
-| ptwi_exceedance | GBS | deterministic_ptwi | mehg_ingested (6) | 6 | 2 | N/A | N/A | 6/6 | 0.95 / 0.05 | same |
+- **degree_of_injury (GSL)** -- Method: deterministic_dillon; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 4; ESS: N/A; Total obs: N/A; Configs with data: 5/5 (all configs covered deterministically); Soft-edge: 0.90 on MAP, 0.10 / 3 = 0.0333 on each other; file:line: `fit_mackenzie_model.py:328-359`; orchestration `fit_mackenzie_model.py:542-550`
+- **degree_of_injury (GBS)** -- Method: deterministic_dillon; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 4; ESS: N/A; Total obs: N/A; Configs with data: 5/5; Soft-edge: 0.90 / 0.0333 (each of 3 others); file:line: same
+- **eligible_commercial_catch (GSL)** -- Method: deterministic_hc_guideline; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 2; ESS: N/A; Total obs: N/A; Configs with data: 5/5; Soft-edge: 0.95 on MAP, 0.05 on the other state; file:line: `fit_mackenzie_model.py:362-382`; orchestration `fit_mackenzie_model.py:552-559`
+- **eligible_commercial_catch (GBS)** -- Method: deterministic_hc_guideline; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 2; ESS: N/A; Total obs: N/A; Configs with data: 5/5; Soft-edge: 0.95 / 0.05; file:line: same
+- **mehg_ingested (GSL)** -- Method: deterministic_subsistence; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 6; ESS: N/A; Total obs: N/A; Configs with data: 5/5; Soft-edge: 0.90 on MAP, 0.10 / 5 = 0.02 on each of 5 others; file:line: `fit_mackenzie_model.py:385-417`; orchestration `fit_mackenzie_model.py:561-568`
+- **mehg_ingested (GBS)** -- Method: deterministic_subsistence; Parents: fish_tissue_hg (5); n_parent_configs: 5; n_states: 6; ESS: N/A; Total obs: N/A; Configs with data: 5/5; Soft-edge: 0.90 / 0.02 (each of 5 others); file:line: same
+- **ptwi_exceedance (GSL)** -- Method: deterministic_ptwi; Parents: mehg_ingested (6); n_parent_configs: 6; n_states: 2; ESS: N/A; Total obs: N/A; Configs with data: 6/6; Soft-edge: 0.95 on MAP, 0.05 on the other state; file:line: `fit_mackenzie_model.py:420-447`; orchestration `fit_mackenzie_model.py:570-577`
+- **ptwi_exceedance (GBS)** -- Method: deterministic_ptwi; Parents: mehg_ingested (6); n_parent_configs: 6; n_states: 2; ESS: N/A; Total obs: N/A; Configs with data: 6/6; Soft-edge: 0.95 / 0.05; file:line: same
 
 Subtotal: 4 deterministic CPTs per submodel x 2 submodels = 8
 deterministic rows.
@@ -6289,15 +6666,61 @@ Reason, Implementation file:line.
 
 ### C.3.a Breaks borrowed from Jermilova Table S4
 
-| Node ID | Unit | Break boundaries | Resulting states (in order) | Source | Reason | Implementation file:line |
-|---|---|---|---|---|---|---|
-| atmospheric_hg_deposition | ug THg/m2/yr | [0, 3, 9, 12, 15] | very_low, low, medium, high, very_high | Borrowed from Jermilova Table S4 | Distribution of GEM-MACH-Hg modeled atmospheric deposition across the Mackenzie River basin; published bin edges 3, 9, 12, 15 are the FRDR Atm_cat category boundaries (see crosswalk.md Table S4 row "Atmospheric Hg deposition"). | dag_definition_mackenzie_hg.py:241-244; prepare_mackenzie_data.py:120-135 |
-| permafrost_hg_release | ug DHg/m2/yr | [0, 0, 2, 4, 6, 10] | none, very_low, low, medium, high, very_high | Borrowed from Jermilova Table S4 (extended with a none state -- see section C.3.b) | Distribution of SiBCASA modeled permafrost-thaw Hg release; published bin edges 2, 4, 6, 10 are the FRDR Perm_cat boundaries. Exactly-zero values get a dedicated "none" state via the duplicated leading break. | dag_definition_mackenzie_hg.py:245-248; prepare_mackenzie_data.py:138-156 |
-| soil_erosion_hg_release | ug THg/m2/yr | [0, 5, 10, 20] | low, medium, high, very_high | Borrowed from Jermilova Table S4 | Distribution of RUSLE-derived erosion Hg mobilization; bin edges 5, 10, 20 match the FRDR ErodeHg_cat boundaries for water samples (see crosswalk.md note that fish samples used a coarser 1 / 6 break; the BN-RRM build adopts the water-sample boundaries as they cover the full deposition range). | dag_definition_mackenzie_hg.py:249-252; prepare_mackenzie_data.py:159-172 |
-| total_hg_deposition | ug/m2/yr | [0, 10, 15, 20, 50] | low, moderate_low, moderate_high, high, very_high | Borrowed from Jermilova Table S4 | Combined nonpoint deposition distribution; bin edges 10, 15, 20, 50 are the FRDR TotalHg_cat / TotalHg_deposition.cat boundaries. Used as the rollup parent of the three nonpoint source nodes. | dag_definition_mackenzie_hg.py:253-256; prepare_mackenzie_data.py:102-117 |
-| freshwater_thg | ng/L | [0, 10, 26] | low, medium, high | Borrowed from Jermilova Table S4 (lower edge 10 interpolated; upper edge 26 = CCME aquatic life criterion). Cross-cited "Derived from CCME aquatic life criterion" for the 26 ng/L edge. | The 26 ng/L upper boundary is the Canadian Council of Ministers of the Environment freshwater total-Hg guideline for the protection of aquatic life (canonical_mackenzie.py:31, CCME_FRESHWATER_THG_NG_L = 26). The 10 ng/L interior boundary provides a "low" state below the criterion floor and matches the FRDR THg.cat column structure. The published Table S4 also recognizes a 100 ng/L upper bin; the BN-RRM build collapses everything above 26 into a single "high" state because the operational interpretation is "exceeds CCME yes/no". | dag_definition_mackenzie_hg.py:257-260; prepare_mackenzie_data.py:175-186 |
-| fish_tissue_hg | ug/g ww | [0, 0.2, 0.5, 0.77, 3] | low, subsistence, ec20, ec50, above_ec50 | Borrowed from Jermilova Table S4. Cross-cited "Derived from Health Canada commercial-fish guideline" for the 0.5 ug/g edge and "Derived from Dillon 2010 LL.3 percentages" for the 0.77 ug/g edge (Dillon 2010 EC20). | The break at 0.2 ug/g is the subsistence threshold (canonical_mackenzie.py:70, SUBSISTENCE_THRESHOLD_UG_G_WW = 0.2). The break at 0.5 ug/g is the Health Canada commercial-fish guideline (canonical_mackenzie.py:34, HC_COMMERCIAL_FISH_UG_G_WW = 0.5). The break at 0.77 ug/g is the Dillon et al. 2010 LL.3 EC20 (canonical_mackenzie.py:62, DILLON_2010_DOSE_RESPONSE["ec20"] = 0.77). The break at 3 ug/g is the published Table S4 upper bound; values above 3 fall into "above_ec50" (note: the EC50 itself is 2.435 ug/g, used in the dose-response fit but NOT as a state boundary). | dag_definition_mackenzie_hg.py:261-264; prepare_mackenzie_data.py:189-204 |
-| degree_of_injury | percent | [0, 25, 50, 75] | low, moderate, high, very_high | Borrowed from Jermilova Table S4. Cross-cited "Derived from Dillon 2010 LL.3 percentages" because the underlying LL.3 dose-response model output is the percent-injury value being binned. | Percent-injury quartile bins of the Dillon et al. 2010 LL.3 dose-response output. The 25 / 50 / 75 boundaries match the published Table S4 row "Degree of injury". The LL.3 model itself has asymptote DILLON_UPPER_LIMIT = 133.99 (fit_mackenzie_model.py:64), but for BN state assignment values are clipped to [0, 100] via the percent interpretation. | dag_definition_mackenzie_hg.py:275-278; fit_mackenzie_model.py:91-92 (INJURY_BREAKS / INJURY_STATES) |
+- **atmospheric_hg_deposition**
+  - Unit: ug THg/m2/yr
+  - Break boundaries: [0, 3, 9, 12, 15]
+  - Resulting states (in order): very_low, low, medium, high, very_high
+  - Source: Borrowed from Jermilova Table S4
+  - Reason: Distribution of GEM-MACH-Hg modeled atmospheric deposition across the Mackenzie River basin; published bin edges 3, 9, 12, 15 are the FRDR Atm_cat category boundaries (see crosswalk.md Table S4 row "Atmospheric Hg deposition").
+  - Implementation file:line: dag_definition_mackenzie_hg.py:241-244; prepare_mackenzie_data.py:120-135
+
+- **permafrost_hg_release**
+  - Unit: ug DHg/m2/yr
+  - Break boundaries: [0, 0, 2, 4, 6, 10]
+  - Resulting states (in order): none, very_low, low, medium, high, very_high
+  - Source: Borrowed from Jermilova Table S4 (extended with a none state -- see section C.3.b)
+  - Reason: Distribution of SiBCASA modeled permafrost-thaw Hg release; published bin edges 2, 4, 6, 10 are the FRDR Perm_cat boundaries. Exactly-zero values get a dedicated "none" state via the duplicated leading break.
+  - Implementation file:line: dag_definition_mackenzie_hg.py:245-248; prepare_mackenzie_data.py:138-156
+
+- **soil_erosion_hg_release**
+  - Unit: ug THg/m2/yr
+  - Break boundaries: [0, 5, 10, 20]
+  - Resulting states (in order): low, medium, high, very_high
+  - Source: Borrowed from Jermilova Table S4
+  - Reason: Distribution of RUSLE-derived erosion Hg mobilization; bin edges 5, 10, 20 match the FRDR ErodeHg_cat boundaries for water samples (see crosswalk.md note that fish samples used a coarser 1 / 6 break; the BN-RRM build adopts the water-sample boundaries as they cover the full deposition range).
+  - Implementation file:line: dag_definition_mackenzie_hg.py:249-252; prepare_mackenzie_data.py:159-172
+
+- **total_hg_deposition**
+  - Unit: ug/m2/yr
+  - Break boundaries: [0, 10, 15, 20, 50]
+  - Resulting states (in order): low, moderate_low, moderate_high, high, very_high
+  - Source: Borrowed from Jermilova Table S4
+  - Reason: Combined nonpoint deposition distribution; bin edges 10, 15, 20, 50 are the FRDR TotalHg_cat / TotalHg_deposition.cat boundaries. Used as the rollup parent of the three nonpoint source nodes.
+  - Implementation file:line: dag_definition_mackenzie_hg.py:253-256; prepare_mackenzie_data.py:102-117
+
+- **freshwater_thg**
+  - Unit: ng/L
+  - Break boundaries: [0, 10, 26]
+  - Resulting states (in order): low, medium, high
+  - Source: Borrowed from Jermilova Table S4 (lower edge 10 interpolated; upper edge 26 = CCME aquatic life criterion). Cross-cited "Derived from CCME aquatic life criterion" for the 26 ng/L edge.
+  - Reason: The 26 ng/L upper boundary is the Canadian Council of Ministers of the Environment freshwater total-Hg guideline for the protection of aquatic life (canonical_mackenzie.py:31, CCME_FRESHWATER_THG_NG_L = 26). The 10 ng/L interior boundary provides a "low" state below the criterion floor and matches the FRDR THg.cat column structure. The published Table S4 also recognizes a 100 ng/L upper bin; the BN-RRM build collapses everything above 26 into a single "high" state because the operational interpretation is "exceeds CCME yes/no".
+  - Implementation file:line: dag_definition_mackenzie_hg.py:257-260; prepare_mackenzie_data.py:175-186
+
+- **fish_tissue_hg**
+  - Unit: ug/g ww
+  - Break boundaries: [0, 0.2, 0.5, 0.77, 3]
+  - Resulting states (in order): low, subsistence, ec20, ec50, above_ec50
+  - Source: Borrowed from Jermilova Table S4. Cross-cited "Derived from Health Canada commercial-fish guideline" for the 0.5 ug/g edge and "Derived from Dillon 2010 LL.3 percentages" for the 0.77 ug/g edge (Dillon 2010 EC20).
+  - Reason: The break at 0.2 ug/g is the subsistence threshold (canonical_mackenzie.py:70, SUBSISTENCE_THRESHOLD_UG_G_WW = 0.2). The break at 0.5 ug/g is the Health Canada commercial-fish guideline (canonical_mackenzie.py:34, HC_COMMERCIAL_FISH_UG_G_WW = 0.5). The break at 0.77 ug/g is the Dillon et al. 2010 LL.3 EC20 (canonical_mackenzie.py:62, DILLON_2010_DOSE_RESPONSE["ec20"] = 0.77). The break at 3 ug/g is the published Table S4 upper bound; values above 3 fall into "above_ec50" (note: the EC50 itself is 2.435 ug/g, used in the dose-response fit but NOT as a state boundary).
+  - Implementation file:line: dag_definition_mackenzie_hg.py:261-264; prepare_mackenzie_data.py:189-204
+
+- **degree_of_injury**
+  - Unit: percent
+  - Break boundaries: [0, 25, 50, 75]
+  - Resulting states (in order): low, moderate, high, very_high
+  - Source: Borrowed from Jermilova Table S4. Cross-cited "Derived from Dillon 2010 LL.3 percentages" because the underlying LL.3 dose-response model output is the percent-injury value being binned.
+  - Reason: Percent-injury quartile bins of the Dillon et al. 2010 LL.3 dose-response output. The 25 / 50 / 75 boundaries match the published Table S4 row "Degree of injury". The LL.3 model itself has asymptote DILLON_UPPER_LIMIT = 133.99 (fit_mackenzie_model.py:64), but for BN state assignment values are clipped to [0, 100] via the percent interpretation.
+  - Implementation file:line: dag_definition_mackenzie_hg.py:275-278; fit_mackenzie_model.py:91-92 (INJURY_BREAKS / INJURY_STATES)
 
 ### C.3.b The permafrost "none" state
 
@@ -6338,11 +6761,29 @@ sample frequency of exact zeros is non-negligible in the FRDR data
 
 ### C.3.c Breaks derived from regulatory or empirical sources
 
-| Node ID | Unit | Break boundaries | Resulting states (in order) | Source | Reason | Implementation file:line |
-|---|---|---|---|---|---|---|
-| fish_length | mm | Species-specific: 450 for lake_whitefish, walleye; 600 for burbot, lake_trout, northern_pike | small, large | Derived from species fishery knowledge (Manuscript_RCode.R lines 64-77; also recorded in Table S4 species rows but the cutoffs are empirical species-size distributions, not regulatory) | Larger fish accumulate more Hg via bioaccumulation. The species-specific cutoffs reflect each species' fork-length distribution in the monitoring data such that "large" individuals are above the species median for bioaccumulation-relevant sizes. The 450 / 600 split groups species by adult body size. | dag_definition_mackenzie_hg.py:265-273 (breaks_by_species dict); prepare_mackenzie_data.py:207-215 (discretize_fish_length); canonical_mackenzie.py:122-133 (classify_value branch) |
-| mehg_ingested | ug Hg/kgbw/wk | [0, 0, 1.0, 1.4, 2.5, 3.3] | none, low, moderate_low, moderate_mid, moderate_high, high | Derived from Health Canada pTWI thresholds (canonical_mackenzie.PTWI_THRESHOLDS at canonical_mackenzie.py:36-57). Bin edges 1.4 and 3.3 correspond verbatim to WHO/JECFA childbearing-women pTWI (1.4) and Health Canada adult-male pTWI (3.3). The interior edges 1.0 and 2.5 provide intermediate bin granularity. Note: US EPA child pTWI (0.7) is NOT used as a break here; it is used downstream by ptwi_exceedance as the default exceedance threshold. | The mehg_ingested node represents weekly methylmercury intake (ug Hg per kg body weight per week) derived from the subsistence consumption scenario. The break list brackets the pTWI thresholds with buffer zones above and below so that downstream CPT fitting can discriminate between sub-pTWI, near-pTWI, and supra-pTWI exposure levels. The leading "0, 0" pair encodes a "none" state for zero ingested (no fish consumption case), matching the permafrost_hg_release convention. | dag_definition_mackenzie_hg.py:279-282; fit_mackenzie_model.py:80-81 (MEHG_BREAKS / MEHG_STATES); fit_mackenzie_model.py:385-417 (build_deterministic_cpt_mehg_ingested) |
-| eligible_commercial_catch | ug/g ww | Single threshold: 0.5 | eligible (< 0.5), not_eligible (>= 0.5) | Derived from Health Canada commercial-fish guideline (canonical_mackenzie.py:34, HC_COMMERCIAL_FISH_UG_G_WW = 0.5) | Binary classifier of whether a fish-tissue Hg measurement falls below the Canadian commercial-fish guideline for sale. The "eligible" state covers tissue Hg below 0.5 ug/g ww (fish-tissue states "low" and "subsistence"); "not_eligible" covers tissue Hg at or above 0.5 ug/g ww (fish-tissue states "ec20", "ec50", "above_ec50"). | dag_definition_mackenzie_hg.py:283-286 (threshold = 0.5); canonical_mackenzie.py:135-141 (classify_value branch); prepare_mackenzie_data.py:230-237 (discretize_eligible_commercial, derived-from-tissue-state form) |
+- **fish_length**
+  - Unit: mm
+  - Break boundaries: Species-specific: 450 for lake_whitefish, walleye; 600 for burbot, lake_trout, northern_pike
+  - Resulting states (in order): small, large
+  - Source: Derived from species fishery knowledge (Manuscript_RCode.R lines 64-77; also recorded in Table S4 species rows but the cutoffs are empirical species-size distributions, not regulatory)
+  - Reason: Larger fish accumulate more Hg via bioaccumulation. The species-specific cutoffs reflect each species' fork-length distribution in the monitoring data such that "large" individuals are above the species median for bioaccumulation-relevant sizes. The 450 / 600 split groups species by adult body size.
+  - Implementation file:line: dag_definition_mackenzie_hg.py:265-273 (breaks_by_species dict); prepare_mackenzie_data.py:207-215 (discretize_fish_length); canonical_mackenzie.py:122-133 (classify_value branch)
+
+- **mehg_ingested**
+  - Unit: ug Hg/kgbw/wk
+  - Break boundaries: [0, 0, 1.0, 1.4, 2.5, 3.3]
+  - Resulting states (in order): none, low, moderate_low, moderate_mid, moderate_high, high
+  - Source: Derived from Health Canada pTWI thresholds (canonical_mackenzie.PTWI_THRESHOLDS at canonical_mackenzie.py:36-57). Bin edges 1.4 and 3.3 correspond verbatim to WHO/JECFA childbearing-women pTWI (1.4) and Health Canada adult-male pTWI (3.3). The interior edges 1.0 and 2.5 provide intermediate bin granularity. Note: US EPA child pTWI (0.7) is NOT used as a break here; it is used downstream by ptwi_exceedance as the default exceedance threshold.
+  - Reason: The mehg_ingested node represents weekly methylmercury intake (ug Hg per kg body weight per week) derived from the subsistence consumption scenario. The break list brackets the pTWI thresholds with buffer zones above and below so that downstream CPT fitting can discriminate between sub-pTWI, near-pTWI, and supra-pTWI exposure levels. The leading "0, 0" pair encodes a "none" state for zero ingested (no fish consumption case), matching the permafrost_hg_release convention.
+  - Implementation file:line: dag_definition_mackenzie_hg.py:279-282; fit_mackenzie_model.py:80-81 (MEHG_BREAKS / MEHG_STATES); fit_mackenzie_model.py:385-417 (build_deterministic_cpt_mehg_ingested)
+
+- **eligible_commercial_catch**
+  - Unit: ug/g ww
+  - Break boundaries: Single threshold: 0.5
+  - Resulting states (in order): eligible (< 0.5), not_eligible (>= 0.5)
+  - Source: Derived from Health Canada commercial-fish guideline (canonical_mackenzie.py:34, HC_COMMERCIAL_FISH_UG_G_WW = 0.5)
+  - Reason: Binary classifier of whether a fish-tissue Hg measurement falls below the Canadian commercial-fish guideline for sale. The "eligible" state covers tissue Hg below 0.5 ug/g ww (fish-tissue states "low" and "subsistence"); "not_eligible" covers tissue Hg at or above 0.5 ug/g ww (fish-tissue states "ec20", "ec50", "above_ec50").
+  - Implementation file:line: dag_definition_mackenzie_hg.py:283-286 (threshold = 0.5); canonical_mackenzie.py:135-141 (classify_value branch); prepare_mackenzie_data.py:230-237 (discretize_eligible_commercial, derived-from-tissue-state form)
 
 **Boundary-equality drift between paths (codex appendices-R1 P2-6).**
 The two classification paths handle exact-equality at break values
@@ -7258,91 +7699,226 @@ rows whose proposer and decider are both HITL are HITL-originated.
 
 ## F.1 M1 -- FRDR data acquisition (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Adopt FRDR DOI 10.20383/103.0957 v2 as the canonical raw data source | Claude orchestrator | Claude Opus 4.7 | HITL Jasen Nelson | The DOI is the FAIR-compliant identifier authored by the published paper's authors; using anything else would risk drift | (pre-implementation) | SOURCE_MANIFEST.md:36-38 |
-| 2026-04-06 | Local-archive the FRDR raw/ folder with checksum verification (`frdr-dfdr-checksums.txt`) | Claude orchestrator | Claude Opus 4.7 | HITL | FRDR remote availability is not guaranteed; documented unavailability 2026-04-06 made the local snapshot the build's source of truth | (pre-implementation) | Appendix D Section 3 |
-| 2026-04-06 | Treat below-detection-limit (BDL) water samples conservatively (use the detection-limit value as-is, NOT zero-substitute or impute) | HITL | n/a | HITL | Zero-substitution biases the freshwater_thg distribution toward "low"; multiple imputation introduces methodological dependency the build avoids | (pre-implementation) | prepare_mackenzie_data.py:175-186 (`discretize_freshwater_thg`); Appendix C Section C.6 |
+- **2026-04-06: Adopt FRDR DOI 10.20383/103.0957 v2 as the canonical raw data source**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL Jasen Nelson
+  - Why: The DOI is the FAIR-compliant identifier authored by the published paper's authors; using anything else would risk drift
+  - Commit: (pre-implementation); Artifact: SOURCE_MANIFEST.md:36-38
+
+- **2026-04-06: Local-archive the FRDR raw/ folder with checksum verification (`frdr-dfdr-checksums.txt`)**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: FRDR remote availability is not guaranteed; documented unavailability 2026-04-06 made the local snapshot the build's source of truth
+  - Commit: (pre-implementation); Artifact: Appendix D Section 3
+
+- **2026-04-06: Treat below-detection-limit (BDL) water samples conservatively (use the detection-limit value as-is, NOT zero-substitute or impute)**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Zero-substitution biases the freshwater_thg distribution toward "low"; multiple imputation introduces methodological dependency the build avoids
+  - Commit: (pre-implementation); Artifact: prepare_mackenzie_data.py:175-186 (`discretize_freshwater_thg`); Appendix C Section C.6
 
 ## F.2 M2 -- DAG spec, crosswalk, comparison protocol (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Adopt the published DAG topology (14 nodes, 15 edges per submodel; 12 shared + 2 GSL-specific + 2 GBS-specific) | HITL | n/a | HITL | The comparison protocol's Dimension 1 (structural fidelity) requires that we BORROW the topology rather than re-derive it; otherwise we are comparing two different DAGs | (pre-implementation) | MODEL_SPECIFICATION_MACKENZIE.md Section 1; dag_definition_mackenzie_hg.py:17-99,105-118,124-137,163-178,181-196 |
-| 2026-04-06 | Collapse the fish-tissue regression into a single fish_tissue_hg BN-RRM node with fish_species as a categorical parent (the published model uses ONE lme() per submodel with Fish_Code as a factor, not five separate species regressions; codex holistic-R1 P1-3 correction) | HITL | n/a | HITL | Reduces visualization complexity in the SSTAC-Dashboard; preserves the species-conditional discretized distribution via the BDeu parent dimension. INFORMATION LOSS (explicit): the published lme() species-factor intercept shifts, random-effect smoothing on station within species, parametric coefficient uncertainty, and partitioned residual variance are NOT preserved in the BN-RRM representation. Documented as Section 26 limitation per codex holistic-R1 P2-5. | (pre-implementation) | MODEL_SPECIFICATION_MACKENZIE.md Section 4; body Part III Section 8.1 (codex holistic-R1 corrected text) |
-| 2026-04-06 | Collapse the RUSLE soil-erosion intermediate nodes into a single soil_erosion_hg_release node | HITL | n/a | HITL | The RUSLE intermediates are not directly observed in FRDR; the aggregate is, and the BN needs only the aggregate | (pre-implementation) | MODEL_SPECIFICATION_MACKENZIE.md Section 4 |
-| 2026-04-06 | Exclude freshwater discharge as a BN parent | HITL | n/a | HITL | Discharge is a hydrological transport variable, not a contaminant source; including it would conflate transport with deposition | (pre-implementation) | crosswalk.md exclusion table |
-| 2026-04-06 | Exclude wildfire C-factor as ancillary | HITL | n/a | HITL | The published paper treats C-factor as a wildfire-impact ancillary; our build does not model wildfires | (pre-implementation) | crosswalk.md exclusion table |
-| 2026-04-06 | Adopt all discretization breaks from Jermilova Table S4 verbatim | Claude orchestrator | Claude Opus 4.7 | HITL | Borrowing the published thresholds is what makes the comparison meaningful; deriving our own would compare two different models | (pre-implementation) | Appendix C Section C.2; dag_definition_mackenzie_hg.py:240-287 |
-| 2026-04-06 | Add Health Canada pTWI thresholds (0.7 / 1.4 / 3.3 ug Hg/kgbw/wk) as the regulatory anchor for ptwi_exceedance | HITL | n/a | HITL | The pTWI is the most-protective regulatory standard for human dietary mercury; using US EPA child (0.7) as the default is the most-conservative choice | (pre-implementation) | canonical_mackenzie.py:38-57 (PTWI_THRESHOLDS) |
-| 2026-04-06 | Adopt 100 g/day fish consumption, 60 kg body weight, 0.95 MeHg fraction as the subsistence-scenario parameters | HITL | n/a | HITL | These are the Indigenous-subsistence-scenario default parameters from the public-health literature; they MUST be surfaced as scenario-conditioning per Part II Section 6.6 and Section 26.9 | (pre-implementation) | fit_mackenzie_model.py:84-88 |
-| 2026-04-06 | Author the 5-dimension comparison protocol (structural; CPT JSD < 0.15; per-region marginal Pearson r > 0.7, MAD < 0.15; sensitivity Spearman rho > 0.6 or top-3 >= 2/3; Minamata counterfactual within +/- 0.5x of 1.2x) and FREEZE the thresholds before fitting | HITL | n/a | HITL | Freezing thresholds before any fitting prevents post-hoc tuning to pass the gate; this is the structural defense of the comparison's integrity | (pre-implementation) | COMPARISON_PROTOCOL.md:35,50,81,109,127 |
+- **2026-04-06: Adopt the published DAG topology (14 nodes, 15 edges per submodel; 12 shared + 2 GSL-specific + 2 GBS-specific)**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The comparison protocol's Dimension 1 (structural fidelity) requires that we BORROW the topology rather than re-derive it; otherwise we are comparing two different DAGs
+  - Commit: (pre-implementation); Artifact: MODEL_SPECIFICATION_MACKENZIE.md Section 1; dag_definition_mackenzie_hg.py:17-99,105-118,124-137,163-178,181-196
+
+- **2026-04-06: Collapse the fish-tissue regression into a single fish_tissue_hg BN-RRM node with fish_species as a categorical parent (the published model uses ONE lme() per submodel with Fish_Code as a factor, not five separate species regressions; codex holistic-R1 P1-3 correction)**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Reduces visualization complexity in the SSTAC-Dashboard; preserves the species-conditional discretized distribution via the BDeu parent dimension. INFORMATION LOSS (explicit): the published lme() species-factor intercept shifts, random-effect smoothing on station within species, parametric coefficient uncertainty, and partitioned residual variance are NOT preserved in the BN-RRM representation. Documented as Section 26 limitation per codex holistic-R1 P2-5.
+  - Commit: (pre-implementation); Artifact: MODEL_SPECIFICATION_MACKENZIE.md Section 4; body Part III Section 8.1 (codex holistic-R1 corrected text)
+
+- **2026-04-06: Collapse the RUSLE soil-erosion intermediate nodes into a single soil_erosion_hg_release node**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The RUSLE intermediates are not directly observed in FRDR; the aggregate is, and the BN needs only the aggregate
+  - Commit: (pre-implementation); Artifact: MODEL_SPECIFICATION_MACKENZIE.md Section 4
+
+- **2026-04-06: Exclude freshwater discharge as a BN parent**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Discharge is a hydrological transport variable, not a contaminant source; including it would conflate transport with deposition
+  - Commit: (pre-implementation); Artifact: crosswalk.md exclusion table
+
+- **2026-04-06: Exclude wildfire C-factor as ancillary**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The published paper treats C-factor as a wildfire-impact ancillary; our build does not model wildfires
+  - Commit: (pre-implementation); Artifact: crosswalk.md exclusion table
+
+- **2026-04-06: Adopt all discretization breaks from Jermilova Table S4 verbatim**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: Borrowing the published thresholds is what makes the comparison meaningful; deriving our own would compare two different models
+  - Commit: (pre-implementation); Artifact: Appendix C Section C.2; dag_definition_mackenzie_hg.py:240-287
+
+- **2026-04-06: Add Health Canada pTWI thresholds (0.7 / 1.4 / 3.3 ug Hg/kgbw/wk) as the regulatory anchor for ptwi_exceedance**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The pTWI is the most-protective regulatory standard for human dietary mercury; using US EPA child (0.7) as the default is the most-conservative choice
+  - Commit: (pre-implementation); Artifact: canonical_mackenzie.py:38-57 (PTWI_THRESHOLDS)
+
+- **2026-04-06: Adopt 100 g/day fish consumption, 60 kg body weight, 0.95 MeHg fraction as the subsistence-scenario parameters**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: These are the Indigenous-subsistence-scenario default parameters from the public-health literature; they MUST be surfaced as scenario-conditioning per Part II Section 6.6 and Section 26.9
+  - Commit: (pre-implementation); Artifact: fit_mackenzie_model.py:84-88
+
+- **2026-04-06: Author the 5-dimension comparison protocol (structural; CPT JSD < 0.15; per-region marginal Pearson r > 0.7, MAD < 0.15; sensitivity Spearman rho > 0.6 or top-3 >= 2/3; Minamata counterfactual within +/- 0.5x of 1.2x) and FREEZE the thresholds before fitting**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Freezing thresholds before any fitting prevents post-hoc tuning to pass the gate; this is the structural defense of the comparison's integrity
+  - Commit: (pre-implementation); Artifact: COMPARISON_PROTOCOL.md:35,50,81,109,127
 
 ## F.3 M3 -- Architecture spike (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Cherry-pick the BDeu / empirical-prior / forward-inference / topological-sort code from fit_causal_model.py into a standalone fit_mackenzie_model.py rather than parameterizing the canonical sediment fitter | Claude orchestrator | Claude Opus 4.7 | HITL | The canonical fitter has 15 sediment-specific hardcoded references; standalone is faster, more inspectable, and keeps the case-study build independent of any future canonical refactoring | (pre-implementation) | M4_FIT_REFACTORING_ANALYSIS.md Section 5 |
-| 2026-04-06 | Inference engine is already generic; no Mackenzie-specific changes needed | Claude orchestrator | Claude Opus 4.7 | HITL | The published forward-inference algorithm (topological-sort exact enumeration) is DAG-agnostic; M3 spike confirmed it works on the 14-node Mackenzie DAG without modification | (pre-implementation) | M3_ARCHITECTURE_SPIKE_REPORT.md GO decision |
+- **2026-04-06: Cherry-pick the BDeu / empirical-prior / forward-inference / topological-sort code from fit_causal_model.py into a standalone fit_mackenzie_model.py rather than parameterizing the canonical sediment fitter**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The canonical fitter has 15 sediment-specific hardcoded references; standalone is faster, more inspectable, and keeps the case-study build independent of any future canonical refactoring
+  - Commit: (pre-implementation); Artifact: M4_FIT_REFACTORING_ANALYSIS.md Section 5
+
+- **2026-04-06: Inference engine is already generic; no Mackenzie-specific changes needed**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The published forward-inference algorithm (topological-sort exact enumeration) is DAG-agnostic; M3 spike confirmed it works on the 14-node Mackenzie DAG without modification
+  - Commit: (pre-implementation); Artifact: M3_ARCHITECTURE_SPIKE_REPORT.md GO decision
 
 ## F.4 M4 -- BDeu CPT fitting, validation, sensitivity (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Set BDeu ESS = 1.0 (DEFAULT_ESS) as the per-CPT smoothing constant | HITL | n/a | HITL | ESS = 1.0 is the standard "uninformative" choice; on the FRDR data volumes per CPT (584-1,589 LOO-eligible rows depending on submodel and target) the posterior is data-dominated; anticipated peer-review pushback is addressed in Part IV Section 11.2 | `ba88a72e` | fit_mackenzie_model.py:60 (DEFAULT_ESS) |
-| 2026-04-06 | Apply per-CPT soft-edging to deterministic CPTs: 0.90/0.10 (multi-state: degree_of_injury, mehg_ingested) and 0.95/0.05 (binary: eligible_commercial_catch, ptwi_exceedance) | HITL | n/a | HITL | Hard zeros block belief propagation in forward inference; soft-edging preserves propagation while keeping the deterministic mapping dominant; binary nodes get tighter edges (0.05) so no off-target state has a higher floor than necessary | `ba88a72e` | Appendix B Section B.0.6; fit_mackenzie_model.py:347-349,377-378,402-407,442-443 |
-| 2026-04-06 | Use partial LOO (refit only the target node's CPT per held-out observation) rather than full-network LOO | HITL | n/a | HITL | Full-network LOO would be order-of-magnitude slower; partial LOO validates the target conditional structure which is the primary concern; documented as a methodological limitation in Section 26.7 | `ba88a72e` | fit_mackenzie_model.py:802-808 (partial-LOO comment); Section 26.7 |
-| 2026-04-06 | Accept freshwater_thg LOO kappa = 0.0 result in both submodels rather than tuning the BDeu prior or rebalancing the training set | HITL | n/a | HITL | The kappa = 0.0 result correctly reports that the model collapses to majority-class prediction; it is a statistical signal of the data structure, not a defect; surfacing it honestly is more valuable than hiding it | `ba88a72e` | validation-gsl.json; validation-gbs.json; Part V Section 15.7; Section 26.1 |
-| 2026-04-06 | Use mutual information (KL divergence) for sensitivity analysis rather than perturbation-based or variance-based methods | Claude orchestrator | Claude Opus 4.7 | HITL | MI is the most-direct measure of statistical dependence and is well-defined on discrete CPTs; the published paper uses slope coefficients from lme() which we compare against in Part VII Section 23.2 | `ba88a72e` | fit_mackenzie_model.py:662-728 |
+- **2026-04-06: Set BDeu ESS = 1.0 (DEFAULT_ESS) as the per-CPT smoothing constant**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: ESS = 1.0 is the standard "uninformative" choice; on the FRDR data volumes per CPT (584-1,589 LOO-eligible rows depending on submodel and target) the posterior is data-dominated; anticipated peer-review pushback is addressed in Part IV Section 11.2
+  - Commit: `ba88a72e`; Artifact: fit_mackenzie_model.py:60 (DEFAULT_ESS)
+
+- **2026-04-06: Apply per-CPT soft-edging to deterministic CPTs: 0.90/0.10 (multi-state: degree_of_injury, mehg_ingested) and 0.95/0.05 (binary: eligible_commercial_catch, ptwi_exceedance)**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Hard zeros block belief propagation in forward inference; soft-edging preserves propagation while keeping the deterministic mapping dominant; binary nodes get tighter edges (0.05) so no off-target state has a higher floor than necessary
+  - Commit: `ba88a72e`; Artifact: Appendix B Section B.0.6; fit_mackenzie_model.py:347-349,377-378,402-407,442-443
+
+- **2026-04-06: Use partial LOO (refit only the target node's CPT per held-out observation) rather than full-network LOO**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: Full-network LOO would be order-of-magnitude slower; partial LOO validates the target conditional structure which is the primary concern; documented as a methodological limitation in Section 26.7
+  - Commit: `ba88a72e`; Artifact: fit_mackenzie_model.py:802-808 (partial-LOO comment); Section 26.7
+
+- **2026-04-06: Accept freshwater_thg LOO kappa = 0.0 result in both submodels rather than tuning the BDeu prior or rebalancing the training set**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The kappa = 0.0 result correctly reports that the model collapses to majority-class prediction; it is a statistical signal of the data structure, not a defect; surfacing it honestly is more valuable than hiding it
+  - Commit: `ba88a72e`; Artifact: validation-gsl.json; validation-gbs.json; Part V Section 15.7; Section 26.1
+
+- **2026-04-06: Use mutual information (KL divergence) for sensitivity analysis rather than perturbation-based or variance-based methods**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: MI is the most-direct measure of statistical dependence and is well-defined on discrete CPTs; the published paper uses slope coefficients from lme() which we compare against in Part VII Section 23.2
+  - Commit: `ba88a72e`; Artifact: fit_mackenzie_model.py:662-728
 
 ## F.5 M5 -- Export and pack assembly (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Use the generic-bn-rrm-v1 schema for the pack rather than extending the canonical bnrrm-v1 schema | HITL | n/a | HITL | The Mackenzie BN-RRM is structurally different from the canonical 20-node sediment BN-RRM; a separate schema avoids polluting the canonical with case-study-specific fields | `898059f1` | bn_learning/packs/.../pack.json (schema field); SSTAC trained-network.ts createGenericNetwork |
-| 2026-04-06 | Generate the core pack with 4 review JSONs (comparison_results, model_overview, published_reference, validation) and NO map/ folder | Claude orchestrator | Claude Opus 4.7 | HITL | The 4 review JSONs are the artifacts the RR pipeline can produce; map layers are dashboard-side augmentations; documented in Section 19.1 and Appendix D Section 7 | `898059f1`, `5fe3cb85` | bn_learning/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/ |
+- **2026-04-06: Use the generic-bn-rrm-v1 schema for the pack rather than extending the canonical bnrrm-v1 schema**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The Mackenzie BN-RRM is structurally different from the canonical 20-node sediment BN-RRM; a separate schema avoids polluting the canonical with case-study-specific fields
+  - Commit: `898059f1`; Artifact: bn_learning/packs/.../pack.json (schema field); SSTAC trained-network.ts createGenericNetwork
+
+- **2026-04-06: Generate the core pack with 4 review JSONs (comparison_results, model_overview, published_reference, validation) and NO map/ folder**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The 4 review JSONs are the artifacts the RR pipeline can produce; map layers are dashboard-side augmentations; documented in Section 19.1 and Appendix D Section 7
+  - Commit: `898059f1`, `5fe3cb85`; Artifact: bn_learning/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/
 
 ## F.6 M6 -- Dashboard generalization (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Add `createGenericNetwork` to `trained-network.ts` so the dashboard can render any generic-bn-rrm-v1 pack, not just the canonical 20-node | Claude orchestrator | Claude Opus 4.7 | HITL | The benchmark-pack pattern requires runtime polymorphism on the network schema; canonical-only rendering would lock the dashboard to a single DAG forever | SSTAC `6cae8a5` | SSTAC src/lib/bn-rrm/trained-network.ts |
-| 2026-04-06 | Add the 12 GeoJSON map layers as dashboard-side augmentations (not RR-pipeline outputs) | Claude orchestrator | Claude Opus 4.7 | HITL | The map layers are dashboard-only because they live in the SSTAC repo's design space; RR has no GIS toolchain | SSTAC `6cae8a5` | SSTAC public/bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/ |
+- **2026-04-06: Add `createGenericNetwork` to `trained-network.ts` so the dashboard can render any generic-bn-rrm-v1 pack, not just the canonical 20-node**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The benchmark-pack pattern requires runtime polymorphism on the network schema; canonical-only rendering would lock the dashboard to a single DAG forever
+  - Commit: SSTAC `6cae8a5`; Artifact: SSTAC src/lib/bn-rrm/trained-network.ts
+
+- **2026-04-06: Add the 12 GeoJSON map layers as dashboard-side augmentations (not RR-pipeline outputs)**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The map layers are dashboard-only because they live in the SSTAC repo's design space; RR has no GIS toolchain
+  - Commit: SSTAC `6cae8a5`; Artifact: SSTAC public/bn-rrm/packs/bnrrm-casestudy-jermilova2025-mackenzie-hg/map/
 
 ## F.7 M7 -- PublishedComparison and HowItWorksView (2026-04-06)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-04-06 | Add PublishedComparison.tsx for side-by-side display of our vs published model | Claude orchestrator | Claude Opus 4.7 | HITL | The comparison artifact (`comparison_results.json`) is dense; a dedicated view makes the comparison legible to dashboard users | SSTAC `2ec2f4f` | SSTAC src/components/bn-rrm/casestudies/PublishedComparison.tsx |
-| 2026-04-06 | Add HowItWorksView.tsx with tier-based progressive disclosure | Claude orchestrator | Claude Opus 4.7 | HITL | Three audience tiers (everyone / practitioner / technical); the Jermilova-Table-S4 discretization is exposed at the technical tier | SSTAC `75f4581` | SSTAC src/components/bn-rrm/casestudies/HowItWorksView.tsx |
-| 2026-04-06 | Register the Jermilova pack in the dashboard pack-store so it appears in the Case Studies tab | Claude orchestrator | Claude Opus 4.7 | HITL | Without registration the pack would not be discoverable in the UI | SSTAC `62430da` | SSTAC src/stores/bn-rrm/packStore.ts |
+- **2026-04-06: Add PublishedComparison.tsx for side-by-side display of our vs published model**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: The comparison artifact (`comparison_results.json`) is dense; a dedicated view makes the comparison legible to dashboard users
+  - Commit: SSTAC `2ec2f4f`; Artifact: SSTAC src/components/bn-rrm/casestudies/PublishedComparison.tsx
+
+- **2026-04-06: Add HowItWorksView.tsx with tier-based progressive disclosure**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: Three audience tiers (everyone / practitioner / technical); the Jermilova-Table-S4 discretization is exposed at the technical tier
+  - Commit: SSTAC `75f4581`; Artifact: SSTAC src/components/bn-rrm/casestudies/HowItWorksView.tsx
+
+- **2026-04-06: Register the Jermilova pack in the dashboard pack-store so it appears in the Case Studies tab**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL
+  - Why: Without registration the pack would not be discoverable in the UI
+  - Commit: SSTAC `62430da`; Artifact: SSTAC src/stores/bn-rrm/packStore.ts
 
 ## F.8 Methodology paper construction (2026-05-17)
 
-| Date | Decision | Proposer | Tool/Version | Decider | Why | Commit | Artifact |
-|------|----------|----------|--------------|---------|-----|--------|----------|
-| 2026-05-17 | Author this methodology paper as a peer-review-grade construction record for the AI-assisted workflow | HITL | n/a | HITL | The parent paper's research question requires a complete construction record that another reviewer can audit decision-by-decision | (uncommitted) | methodology_paper/PLAN.md; this document |
-| 2026-05-17 | Spawn four Claude Code Explore subagents (subagent type=Explore; Claude Opus 4.7 model) to map the codebase before drafting | Claude orchestrator | Claude Opus 4.7 + Claude Code subagent type=Explore | HITL | The orchestrator's context budget is limited; subagent exploration is the standing context-protection pattern | (uncommitted) | methodology_paper/PLAN.md Section 9.2 |
-| 2026-05-17 | Run the codex-review skill on the PLAN through three mutual-agreement rounds before drafting any deliverable content | Claude orchestrator | Codex CLI 0.130.0 (xhigh reasoning + tool use) + Claude Opus 4.7 | HITL | The PLAN must be GREEN before drafting begins; otherwise body Parts will inherit PLAN defects | (uncommitted) | methodology_paper/PLAN.md Section 13 sign-off |
-| 2026-05-17 | Argue back on codex's R1 P1-3 finding (comparison artifact path) with file:line evidence of the dual-location reality | Claude orchestrator | Claude Opus 4.7 | HITL (via mutual-agreement methodology) | Silent acceptance of an incorrect finding would have removed the RR-pack reference; codex withdrew on R2 after reading the RR folder | (uncommitted) | methodology_paper/PLAN.md Section 13 sign-off |
-| 2026-05-17 | Draft Appendices D, A, C, B (in that order; fact-pinning ledgers) BEFORE the body Parts | Claude orchestrator | Claude Opus 4.7 | HITL (per codex PLAN R1 P2-4 finding accepted) | Appendices A-D pin the empirical facts the body Parts will cite; drafting them first reduces drift in the body | (uncommitted) | methodology_paper/appendices/*.md |
-| 2026-05-17 | Spawn four Claude Code subagents (subagent type=general-purpose; Claude Opus 4.7 model) to draft the body Parts in parallel: Parts I-III, Part IV alone (deepest), Part V alone, Parts VI-IX | Claude orchestrator | Claude Opus 4.7 + Claude Code subagent type=general-purpose | HITL | Part IV is the deepest chapter (BDeu math, deterministic CPTs, per-CPT soft-edging); dedicated subagent attention is warranted | (uncommitted) | methodology_paper/body/*.md |
-| 2026-05-17 | Run targeted codex reviews per appendix-set and per body-set with mutual-agreement methodology | Claude orchestrator | Codex CLI 0.130.0 + Claude Opus 4.7 | HITL | Each round catches a different class of defect; mutual-agreement prevents both silent acceptance and silent rejection | (uncommitted) | .tmp_codex_*_out.txt audit trail |
+- **2026-05-17: Author this methodology paper as a peer-review-grade construction record for the AI-assisted workflow**
+  - Proposer: HITL; Tool/Version: n/a; Decider: HITL
+  - Why: The parent paper's research question requires a complete construction record that another reviewer can audit decision-by-decision
+  - Commit: (uncommitted); Artifact: methodology_paper/PLAN.md; this document
+
+- **2026-05-17: Spawn four Claude Code Explore subagents (subagent type=Explore; Claude Opus 4.7 model) to map the codebase before drafting**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7 + Claude Code subagent type=Explore; Decider: HITL
+  - Why: The orchestrator's context budget is limited; subagent exploration is the standing context-protection pattern
+  - Commit: (uncommitted); Artifact: methodology_paper/PLAN.md Section 9.2
+
+- **2026-05-17: Run the codex-review skill on the PLAN through three mutual-agreement rounds before drafting any deliverable content**
+  - Proposer: Claude orchestrator; Tool/Version: Codex CLI 0.130.0 (xhigh reasoning + tool use) + Claude Opus 4.7; Decider: HITL
+  - Why: The PLAN must be GREEN before drafting begins; otherwise body Parts will inherit PLAN defects
+  - Commit: (uncommitted); Artifact: methodology_paper/PLAN.md Section 13 sign-off
+
+- **2026-05-17: Argue back on codex's R1 P1-3 finding (comparison artifact path) with file:line evidence of the dual-location reality**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL (via mutual-agreement methodology)
+  - Why: Silent acceptance of an incorrect finding would have removed the RR-pack reference; codex withdrew on R2 after reading the RR folder
+  - Commit: (uncommitted); Artifact: methodology_paper/PLAN.md Section 13 sign-off
+
+- **2026-05-17: Draft Appendices D, A, C, B (in that order; fact-pinning ledgers) BEFORE the body Parts**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7; Decider: HITL (per codex PLAN R1 P2-4 finding accepted)
+  - Why: Appendices A-D pin the empirical facts the body Parts will cite; drafting them first reduces drift in the body
+  - Commit: (uncommitted); Artifact: methodology_paper/appendices/*.md
+
+- **2026-05-17: Spawn four Claude Code subagents (subagent type=general-purpose; Claude Opus 4.7 model) to draft the body Parts in parallel: Parts I-III, Part IV alone (deepest), Part V alone, Parts VI-IX**
+  - Proposer: Claude orchestrator; Tool/Version: Claude Opus 4.7 + Claude Code subagent type=general-purpose; Decider: HITL
+  - Why: Part IV is the deepest chapter (BDeu math, deterministic CPTs, per-CPT soft-edging); dedicated subagent attention is warranted
+  - Commit: (uncommitted); Artifact: methodology_paper/body/*.md
+
+- **2026-05-17: Run targeted codex reviews per appendix-set and per body-set with mutual-agreement methodology**
+  - Proposer: Claude orchestrator; Tool/Version: Codex CLI 0.130.0 + Claude Opus 4.7; Decider: HITL
+  - Why: Each round catches a different class of defect; mutual-agreement prevents both silent acceptance and silent rejection
+  - Commit: (uncommitted); Artifact: .tmp_codex_*_out.txt audit trail
 
 ## F.9 Open / deferred decisions (HITL pending)
 
-| Decision pending | Status | Source |
-|------------------|--------|--------|
-| PLAN Q6: ESS sensitivity analysis (re-run LOO at ESS = 0.5, 1.0, 5.0, 10.0) | OPEN -- HITL to authorize | PLAN Section 12 Q6; Part IX Section 27.5 item (a) |
-| PLAN Q7: forward-inference soft-edging bias quantification | OPEN -- HITL to authorize | PLAN Section 12 Q7; Part VIII Section 26.8; Part IX Section 27.5 item (b) |
-| Comparison Protocol Dimension 4 metric receipts (Spearman rho, top-3 agreement, rank displacement) | OPEN -- required to upgrade Dimension 4 from PARTIAL to FULLY RUN; the artifact currently stores ranking lists but no metric values | Part VII Section 23.0; Part VIII Section 26.10D; Part IX Section 27.5 item (b2) (ADDED per codex holistic-R4 IMPORTANT) |
-| Comparison Protocol Dimension 2 (CPT JSD) execution | OPEN -- requires per-parent-config digitization of published CPTs | Part VIII Section 26.10; Part IX Section 27.5 item (e) |
-| Comparison Protocol Dimension 3 (per-region marginal-belief Pearson r) execution | OPEN -- requires preserving `_region` in `training_data_{model}.json` (one-line `strip_audit()` change at `prepare_mackenzie_data.py:649-652`) plus per-record region consumption in `fit_mackenzie_model.py`. The region label is already in the processed CSVs; FRDR re-extraction is NOT required. (Scope NARROWED per codex holistic-R1/R3.) | Part VIII Section 26.10; Part IX Section 27.5 item (c) |
-| Comparison Protocol Dimension 5 (Minamata counterfactual fold-change) execution | OPEN -- requires applying the published Minamata reduction scenario | Part VIII Section 26.10; Part IX Section 27.5 item (f) |
-| Full-network LOO (refit every CPT per held-out observation) | OPEN -- HITL to decide cost / benefit | Part VIII Section 26.7; Part IX Section 27.5 item (d) |
-| Held-out spatial or temporal validation dataset | OPEN -- requires re-acquisition of additional FRDR-equivalent data | Part VIII Section 26.6; Part IX Section 27.5 item (g) |
-| pgmpy side-by-side runtime fixture in tests/ | OPEN -- optional verification | Appendix B Section B.3.6; Part IX Section 27.5 item (h) |
-| "What we would do differently" items (Section 27.5) | OPEN -- HITL curation pending final sign-off | PLAN Section 12 Q4; Part IX Section 27.5 |
+- **PLAN Q6: ESS sensitivity analysis (re-run LOO at ESS = 0.5, 1.0, 5.0, 10.0)**
+  - Status: OPEN -- HITL to authorize
+  - Source: PLAN Section 12 Q6; Part IX Section 27.5 item (a)
+
+- **PLAN Q7: forward-inference soft-edging bias quantification**
+  - Status: OPEN -- HITL to authorize
+  - Source: PLAN Section 12 Q7; Part VIII Section 26.8; Part IX Section 27.5 item (b)
+
+- **Comparison Protocol Dimension 4 metric receipts (Spearman rho, top-3 agreement, rank displacement)**
+  - Status: OPEN -- required to upgrade Dimension 4 from PARTIAL to FULLY RUN; the artifact currently stores ranking lists but no metric values
+  - Source: Part VII Section 23.0; Part VIII Section 26.10D; Part IX Section 27.5 item (b2) (ADDED per codex holistic-R4 IMPORTANT)
+
+- **Comparison Protocol Dimension 2 (CPT JSD) execution**
+  - Status: OPEN -- requires per-parent-config digitization of published CPTs
+  - Source: Part VIII Section 26.10; Part IX Section 27.5 item (e)
+
+- **Comparison Protocol Dimension 3 (per-region marginal-belief Pearson r) execution**
+  - Status: OPEN -- requires preserving `_region` in `training_data_{model}.json` (one-line `strip_audit()` change at `prepare_mackenzie_data.py:649-652`) plus per-record region consumption in `fit_mackenzie_model.py`. The region label is already in the processed CSVs; FRDR re-extraction is NOT required. (Scope NARROWED per codex holistic-R1/R3.)
+  - Source: Part VIII Section 26.10; Part IX Section 27.5 item (c)
+
+- **Comparison Protocol Dimension 5 (Minamata counterfactual fold-change) execution**
+  - Status: OPEN -- requires applying the published Minamata reduction scenario
+  - Source: Part VIII Section 26.10; Part IX Section 27.5 item (f)
+
+- **Full-network LOO (refit every CPT per held-out observation)**
+  - Status: OPEN -- HITL to decide cost / benefit
+  - Source: Part VIII Section 26.7; Part IX Section 27.5 item (d)
+
+- **Held-out spatial or temporal validation dataset**
+  - Status: OPEN -- requires re-acquisition of additional FRDR-equivalent data
+  - Source: Part VIII Section 26.6; Part IX Section 27.5 item (g)
+
+- **pgmpy side-by-side runtime fixture in tests/**
+  - Status: OPEN -- optional verification
+  - Source: Appendix B Section B.3.6; Part IX Section 27.5 item (h)
+
+- **"What we would do differently" items (Section 27.5)**
+  - Status: OPEN -- HITL curation pending final sign-off
+  - Source: PLAN Section 12 Q4; Part IX Section 27.5
 
 ## F.10 Methodology paper version history
 
