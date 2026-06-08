@@ -6,7 +6,7 @@
 
 import React from 'react';
 import { describe, it, expect } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent } from '@testing-library/react';
 import { MatrixMapSelectionStats } from '../MatrixMapSelectionStats';
 import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
 import { DEFAULT_MATRIX_MAP_FILTER_STATE } from '@/stores/matrix-map/filterStore';
@@ -232,6 +232,8 @@ describe('MatrixMapSelectionStats -- DL/2 basis label', () => {
       makeRow({ sample_id: 'b', value: null, censored: true, detection_limit: 20.0 }),
     ];
     renderStats({ rows, ready: true });
+    const select = screen.getByLabelText('Censored Data Method');
+    fireEvent.change(select, { target: { value: 'DL2' } });
     const basisEl = screen.getByTestId('matrix-map-stats-ucl-basis');
     expect(basisEl.textContent).toContain('DL/2 substitution');
   });

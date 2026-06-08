@@ -91,6 +91,7 @@ import {
   DL_SUBSTITUTION_FACTOR,
   DL_SUBSTITUTION_LABEL,
 } from '../stats';
+import { normalInverse } from '../gof';
 import { DEFAULT_MATRIX_MAP_FILTER_STATE } from '@/stores/matrix-map/filterStore';
 import type { MatrixMapMeasurementRow } from '@/stores/matrix-map/measurementStore';
 import type { MatrixMapFilterState } from '@/stores/matrix-map/filterStore';
@@ -393,7 +394,7 @@ describe('computeSelectionStats -- all-censored rows (DL/2 substitution)', () =>
       makeRow({ value: null, censored: true, detection_limit: 10.0, sample_id: 'a' }),
       makeRow({ value: null, censored: true, detection_limit: 20.0, sample_id: 'b' }),
     ];
-    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'DL2' });
     const d = result.buckets[0].descriptive;
     expect(d.n).toBe(2);
     expect(d.nonDetects).toBe(2);
@@ -414,10 +415,35 @@ describe('computeSelectionStats -- all-censored rows (DL/2 substitution)', () =>
       makeRow({ value: null, censored: true, detection_limit: 10.0, sample_id: 'a' }),
       makeRow({ value: null, censored: true, detection_limit: 20.0, sample_id: 'b' }),
     ];
-    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'DL2' });
     expect(result.buckets[0].ucl.basis).toContain(DL_SUBSTITUTION_LABEL);
   });
+
+  it('falls back to DL/2 substitution in ROS mode when detects = 0', () => {
+    const rows = [
+      makeRow({ value: null, censored: true, detection_limit: 10.0, sample_id: 'a' }),
+      makeRow({ value: null, censored: true, detection_limit: 20.0, sample_id: 'b' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'ROS' });
+    expect(result.buckets[0].ucl.basis).toContain(DL_SUBSTITUTION_LABEL);
+    expect(result.buckets[0].flags).toContain('dl_substitution_used');
+  });
+
+  it('falls back to DL/2 substitution in ROS mode when there are non-positive detected values', () => {
+    const rows = [
+      makeRow({ value: 0.0, censored: false, sample_id: 'a' }),
+      makeRow({ value: 10.0, censored: false, sample_id: 'b' }),
+      makeRow({ value: null, censored: true, detection_limit: 5.0, sample_id: 'c' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'ROS' });
+    expect(result.buckets[0].ucl.basis).toContain(DL_SUBSTITUTION_LABEL);
+    expect(result.buckets[0].flags).toContain('dl_substitution_used');
+    // Censored value is 5.0 * 0.5 = 2.5. Detected values are 0.0 and 10.0.
+    // Mean = (0.0 + 10.0 + 2.5) / 3 = 4.1667
+    expect(result.buckets[0].descriptive.mean).toBeCloseTo(4.1667, 3);
+  });
 });
+
 
 describe('computeSelectionStats -- mixed units -> separate buckets', () => {
   it('two different units -> two buckets, never aggregated', () => {
@@ -590,6 +616,261 @@ describe('computeSelectionStats -- DL_SUBSTITUTION_FACTOR constant', () => {
 // confirm bit-for-bit parity.  This scaffold marks the gap; Phase 2/3
 // completes the parity gate.
 // ---------------------------------------------------------------------------
+
+describe('computeSelectionStats -- KM log transformation with zero values', () => {
+  it('does not throw or produce NaN/Infinity when some non-detect values are 0.0', () => {
+    const rows = [
+      makeRow({ value: null, censored: true, detection_limit: 0.0, sample_id: 'a' }),
+      makeRow({ value: 10.0, censored: false, sample_id: 'b' }),
+      makeRow({ value: 20.0, censored: false, sample_id: 'c' }),
+      makeRow({ value: 30.0, censored: false, sample_id: 'd' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const ucl = result.buckets[0].ucl;
+    // hUcl should be computed using logParsed which filters out the 0.0 detection limit since log(0) is invalid
+    expect(ucl.hUcl).not.toBeNull();
+    expect(Number.isFinite(ucl.hUcl)).toBe(true);
+  });
+});
+
+describe('computeSelectionStats -- empty KM fit', () => {
+  it('returns null for all UCLs in KM mode when detects = 0 (empty KM fit)', () => {
+    const rows = [
+      makeRow({ value: null, censored: true, detection_limit: 10.0, sample_id: 'a' }),
+      makeRow({ value: null, censored: true, detection_limit: 20.0, sample_id: 'b' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const bucket = result.buckets[0];
+    
+    // UCLs should be nulled out
+    expect(bucket.ucl.hUcl).toBeNull();
+    expect(bucket.ucl.studentT95).toBeNull();
+    expect(bucket.ucl.approximateGamma).toBeNull();
+    expect(bucket.ucl.adjustedGamma).toBeNull();
+    expect(bucket.ucl.chebyshev).toHaveLength(0);
+
+    // Descriptive stats should be NaN / null
+    expect(bucket.descriptive.mean).toBeNaN();
+    expect(bucket.descriptive.sd).toBeNaN();
+    expect(bucket.descriptive.cv).toBeNull();
+    expect(bucket.descriptive.min).toBeNaN();
+    expect(bucket.descriptive.max).toBeNaN();
+    expect(bucket.descriptive.median).toBeNaN();
+    expect(bucket.descriptive.p90).toBeNaN();
+    expect(bucket.descriptive.p95).toBeNaN();
+
+    // Accepted values array should be empty
+    expect(bucket.acceptedValues).toHaveLength(0);
+  });
+});
+
+describe('computeSelectionStats -- single-row empty KM fit', () => {
+  it('clears descriptives and acceptedValues to avoid leaking DL/2 values when n = 1 in KM mode', () => {
+    const rows = [
+      makeRow({ value: null, censored: true, detection_limit: 10.0, sample_id: 'a' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const bucket = result.buckets[0];
+    
+    expect(bucket.descriptive.mean).toBeNaN();
+    expect(bucket.descriptive.sd).toBeNaN();
+    expect(bucket.acceptedValues).toHaveLength(0);
+  });
+});
+
+describe('computeSelectionStats -- KM bootstrap prevention', () => {
+  it('returns empty acceptedValues for censored KM buckets with detects to prevent bootstrap overrides', () => {
+    const rows = [
+      makeRow({ value: 10.0, censored: false, sample_id: 'a' }),
+      makeRow({ value: 12.0, censored: false, sample_id: 'b' }),
+      makeRow({ value: null, censored: true, detection_limit: 8.0, sample_id: 'c' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const bucket = result.buckets[0];
+    
+    // KM fit should succeed (mean, sd are numbers)
+    expect(bucket.descriptive.mean).not.toBeNaN();
+    expect(bucket.descriptive.sd).not.toBeNaN();
+    // But acceptedValues must be empty
+    expect(bucket.acceptedValues).toHaveLength(0);
+  });
+});
+
+describe('computeSelectionStats -- outlier mapping to original indices', () => {
+  it('correctly maps outliers to original row indices rather than sorted bucket offsets', () => {
+    // Rosner test requires n >= 25. Create 26 values where the outlier is at index 3.
+    const values = [
+      10, 11, 12, 1000, 13, 14, 15, 16, 17, 18, 19, 20, 21,
+      22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34
+    ];
+    const rows = values.map((val, idx) =>
+      makeRow({
+        value: val,
+        censored: false,
+        sample_id: `sample-${idx}`,
+        measurement_id: `meas-${idx}`
+      })
+    );
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    const bucket = result.buckets[0];
+    
+    // Rosner test should run (n=26 >= 25) and flag 1000 as an outlier.
+    expect(bucket.outliers).toBeDefined();
+    expect(bucket.outliers.length).toBeGreaterThan(0);
+    
+    // The outlier 1000 is at index 3 in the original values array.
+    const outlierRow = bucket.outliers.find(o => o.value === 1000);
+    expect(outlierRow).toBeDefined();
+    expect(outlierRow!.index).toBe(3);
+  });
+});
+
+describe('computeSelectionStats -- method-specific log SD in recommendation', () => {
+  it('recommends the correct UCL method in DL2 mode when completed log SD >= 1.5 but detects-only log SD < 1.5', () => {
+    // n = 21 (small sample size).
+    // Detects (11 values): constructed to reject Normality (last value is 50.0, skewing the data)
+    // while keeping log SD < 1.5 (log SD is approx 1.34).
+    const detects = [0.316, 0.449, 0.705, 0.896, 1.094, 1.419, 1.878, 2.460, 3.456, 5.003, 50.0];
+    const censors = Array.from({ length: 10 }, () => 0.0001);
+
+    const rows = [
+      ...detects.map((v, i) => makeRow({ value: v, censored: false, sample_id: `d-${i}`, substance_key: 'gof-test', substance_display_name: 'GOF Test' })),
+      ...censors.map((v, i) => makeRow({ value: null, censored: true, detection_limit: v, sample_id: `c-${i}`, substance_key: 'gof-test', substance_display_name: 'GOF Test' }))
+    ];
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'DL2' });
+    const bucket = result.buckets[0];
+    
+    // Gof should reject Normality (due to 50.0)
+    expect(bucket.gof.verdict).not.toBe('Normal');
+    
+    // Total n = 21 (< 28)
+    expect(bucket.descriptive.n).toBe(21);
+    
+    // The detects-only log SD (sigmaHat) is approx 1.34 < 1.5
+    expect(bucket.descriptive.sigmaHat).toBeLessThan(1.5);
+    
+    // If it used detects-only log SD (1.34):
+    // - Lognormal recommends hUcl
+    // - Nonparametric recommends chebyshev975
+    // Because it correctly uses completed log SD (which is stretched to >= 2.0 by censors):
+    // - Lognormal recommends studentT95
+    // - Nonparametric recommends chebyshev99
+    const expectedMethod = bucket.gof.verdict === 'Lognormal' ? 'kmT' : 'kmChebyshev99';
+    expect(bucket.recommendation.recommendedMethod).toBe(expectedMethod);
+  });
+});
+
+describe('computeSelectionStats -- lognormal filtered sample size in recommendation', () => {
+  it('uses positive-only log sample size to recommend kmT instead of kmH when total n >= 28 but positive logs n < 28 with high log SD', () => {
+    // 27 positive lognormal values with log SD >= 1.5 (evaluates to Lognormal verdict)
+    const detects = [
+      0.1, 0.5, 1.0, 1.5, 2.0, 2.2, 2.4, 2.6, 2.8, 3.0, 3.2, 3.4, 3.6, 3.8,
+      4.0, 4.5, 5.0, 6.0, 7.0, 8.0, 10.0, 15.0, 20.0, 30.0, 50.0, 100.0, 250.0
+    ];
+    const rows = [
+      ...detects.map((v, i) => makeRow({ value: v, censored: false, sample_id: `d-${i}`, substance_key: 'gof-test-ln', substance_display_name: 'GOF Test LN' })),
+      makeRow({ value: null, censored: true, detection_limit: 0.0, sample_id: 'c-0', substance_key: 'gof-test-ln', substance_display_name: 'GOF Test LN' })
+    ];
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const bucket = result.buckets[0];
+
+    // Total n is 28
+    expect(bucket.descriptive.n).toBe(28);
+    // But positive log n is 27 (< 28)
+    // If it used total n = 28, it would recommend kmH.
+    // Because it correctly uses positive log n = 27 < 28 and log SD >= 1.5, it recommends kmT.
+    expect(bucket.recommendation.recommendedMethod).toBe('kmT');
+  });
+});
+
+describe('computeSelectionStats -- lognormal extreme censoring on zero-DL buckets', () => {
+  it('correctly recommends none due to NDs > 95% when total n = 101 but detects = 5 with zero-DL non-detects', () => {
+    const detects = [10.0, 11.0, 12.0, 13.0, 14.0]; // 5 detects
+    const censors = Array.from({ length: 96 }, () => 0.0); // 96 zero-DL non-detects
+    const rows = [
+      ...detects.map((v, i) => makeRow({ value: v, censored: false, sample_id: `d-${i}`, substance_key: 'gof-test-ec', substance_display_name: 'GOF Test EC' })),
+      ...censors.map((v, i) => makeRow({ value: null, censored: true, detection_limit: v, sample_id: `c-${i}`, substance_key: 'gof-test-ec', substance_display_name: 'GOF Test EC' }))
+    ];
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'KM' });
+    const bucket = result.buckets[0];
+
+    // Total n is 101
+    expect(bucket.descriptive.n).toBe(101);
+    // Detects is 5
+    expect(bucket.descriptive.detects).toBe(5);
+    // Since detects/n = 5/101 ~ 4.95% < 5%, it should trigger extreme censoring guard (NDs > 95%) and recommend 'none'
+    expect(bucket.recommendation.recommendedMethod).toBe('none');
+    expect(bucket.recommendation.basisString).toContain('NDs > 95%');
+  });
+});
+
+describe('computeSelectionStats -- lognormal ROS Imputation pathway', () => {
+  it('imputes censored values using lognormal regression line when detects >= 2 and positive detects are present', () => {
+    // 5 detects: 10, 15, 20, 25, 30
+    // 2 censors: both with DL = 12.0
+    const detects = [10.0, 15.0, 20.0, 25.0, 30.0];
+    const censors = [12.0, 12.0];
+    const rows = [
+      ...detects.map((v, i) => makeRow({ value: v, censored: false, sample_id: `d-${i}`, substance_key: 'gof-test-ros', substance_display_name: 'GOF Test ROS' })),
+      ...censors.map((v, i) => makeRow({ value: null, censored: true, detection_limit: v, sample_id: `c-${i}`, substance_key: 'gof-test-ros', substance_display_name: 'GOF Test ROS' }))
+    ];
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER, censoredMethod: 'ROS' });
+    const bucket = result.buckets[0];
+
+    expect(bucket.descriptive.n).toBe(7);
+    expect(bucket.descriptive.detects).toBe(5);
+    expect(bucket.descriptive.nonDetects).toBe(2);
+
+    // Let's verify that no DL/2 substitution warning/flag is set
+    expect(bucket.flags).not.toContain('dl_substitution_used');
+
+    // Imputed values should be strictly positive, and should be <= their detection limits (12.0)
+    // The rawParsed values are order-based. Let's make sure the mean is calculated using imputed values.
+    // If DL/2 substitution were used, the mean would be:
+    // (10 + 15 + 20 + 25 + 30 + 6 + 6) / 7 = 112 / 7 = 16
+    // If ROS is used, it should compute regression of ln(detects) vs normal quantiles and impute.
+    // Let's verify that the mean is not 16.
+    expect(bucket.descriptive.mean).not.toBeCloseTo(16.0, 4);
+    expect(bucket.descriptive.mean).toBeGreaterThan(10.0);
+    expect(bucket.descriptive.mean).toBeLessThan(30.0);
+  });
+});
+
+describe('computeSelectionStats -- H-UCL fallback on extreme skewness', () => {
+  it('falls back to Chebyshev (95%) when H-UCL solver fails to find a root on highly skewed Lognormal datasets', () => {
+    const n = 30;
+    const logMean = 1.0;
+    const logSd = 10.0;
+    const values = Array.from({ length: n }, (_, i) => {
+      const p = (i + 1 - 0.375) / (n + 0.25);
+      const z = normalInverse(p);
+      return Math.exp(logMean + logSd * z);
+    });
+    const rows = values.map((val, idx) =>
+      makeRow({
+        value: val,
+        censored: false,
+        sample_id: `sample-${idx}`,
+        substance_key: 'high-skew-ln',
+        substance_display_name: 'High Skew LN'
+      })
+    );
+
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    const bucket = result.buckets[0];
+
+    // Lognormal verdict should pass due to collinear quantiles
+    expect(bucket.gof.verdict).toBe('Lognormal');
+    expect(bucket.ucl.hUcl).toBeNull();
+    expect(bucket.recommendation.recommendedMethod).toBe('chebyshev95');
+    expect(bucket.recommendation.basisString).toContain('H-UCL solver failed to converge, fell back to Chebyshev (95%)');
+  });
+});
 
 describe.skip('ProUCL v5.2 parity scaffold (TODO -- owner supplies values)', () => {
   it('TODO: worked-example dataset from Tech Guide section X', () => {

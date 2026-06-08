@@ -41,13 +41,15 @@ export function MatrixMapSelectionStats({
   ready,
 }: MatrixMapSelectionStatsProps) {
   const [selectedMethod, setSelectedMethod] = useState<string>('recommended');
+  const [censoredMethod, setCensoredMethod] = useState<'KM' | 'ROS' | 'DL2'>('KM');
   const [bootstrapCache, setBootstrapCache] = useState<Record<string, BootstrapResults>>({});
   const [calculatingKeys, setCalculatingKeys] = useState<Record<string, boolean>>({});
 
   const result = useMemo(() => {
     if (!ready || isLoading) return null;
-    return computeSelectionStats({ rows, filterState });
-  }, [rows, filterState, isLoading, ready]);
+    return computeSelectionStats({ rows, filterState, censoredMethod });
+  }, [rows, filterState, isLoading, ready, censoredMethod]);
+
 
   // Effect to run bootstrap calculation asynchronously if the active method is a bootstrap method
   useEffect(() => {
@@ -154,30 +156,49 @@ export function MatrixMapSelectionStats({
   // Render stats with dropdown
   return (
     <div className="space-y-3">
-      {/* Dropdown method selector */}
-      <div className="flex flex-col gap-1.5 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30">
-        <label htmlFor="ucl-method-selector" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-          UCL Method Selector
-        </label>
-        <select
-          id="ucl-method-selector"
-          value={selectedMethod}
-          onChange={(e) => setSelectedMethod(e.target.value)}
-          className="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs px-2.5 py-1.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
-        >
-          <option value="recommended">ProUCL Recommended (Default)</option>
-          <option value="studentT95">{"Student's-t (95%)"}</option>
-          <option value="approximateGamma">Approximate Gamma (Wilson-Hilferty)</option>
-          <option value="adjustedGamma">Adjusted Gamma (Grice-Bain)</option>
-          <option value="hUcl">H-UCL</option>
-          <option value="chebyshev95">Chebyshev 95%</option>
-          <option value="chebyshev975">Chebyshev 97.5%</option>
-          <option value="chebyshev99">Chebyshev 99%</option>
-          <option value="percentile95">Percentile Bootstrap</option>
-          <option value="bca95">BCA Bootstrap</option>
-          <option value="bootstrapT">Bootstrap-t</option>
-        </select>
+      {/* Dropdown selectors */}
+      <div className="grid grid-cols-2 gap-3 p-3 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900/30">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="ucl-method-selector" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            UCL Method Selector
+          </label>
+          <select
+            id="ucl-method-selector"
+            value={selectedMethod}
+            onChange={(e) => setSelectedMethod(e.target.value)}
+            className="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs px-2.5 py-1.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="recommended">ProUCL Recommended (Default)</option>
+            <option value="studentT95">{"Student's-t (95%)"}</option>
+            <option value="approximateGamma">Approximate Gamma (Wilson-Hilferty)</option>
+            <option value="adjustedGamma">Adjusted Gamma (Grice-Bain)</option>
+            <option value="hUcl">H-UCL</option>
+            <option value="chebyshev95">Chebyshev 95%</option>
+            <option value="chebyshev975">Chebyshev 97.5%</option>
+            <option value="chebyshev99">Chebyshev 99%</option>
+            <option value="percentile95">Percentile Bootstrap</option>
+            <option value="bca95">BCA Bootstrap</option>
+            <option value="bootstrapT">Bootstrap-t</option>
+          </select>
+        </div>
+
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="censored-method-selector" className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
+            Censored Data Method
+          </label>
+          <select
+            id="censored-method-selector"
+            value={censoredMethod}
+            onChange={(e) => setCensoredMethod(e.target.value as 'KM' | 'ROS' | 'DL2')}
+            className="w-full rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs px-2.5 py-1.5 text-slate-900 dark:text-slate-100 focus:outline-none focus:ring-1 focus:ring-blue-500"
+          >
+            <option value="KM">Kaplan-Meier (KM)</option>
+            <option value="ROS">Lognormal ROS</option>
+            <option value="DL2">DL/2 Substitution</option>
+          </select>
+        </div>
       </div>
+
 
       <div data-testid="matrix-map-stats-buckets" className="space-y-3">
         {result.buckets.map((bucket) => (
@@ -185,6 +206,7 @@ export function MatrixMapSelectionStats({
             key={bucket.bucketKey}
             bucket={bucket}
             selectedMethod={selectedMethod}
+            censoredMethod={censoredMethod}
             bootstrapCache={bootstrapCache}
             calculatingKeys={calculatingKeys}
           />
@@ -201,6 +223,7 @@ export function MatrixMapSelectionStats({
 interface BucketCardProps {
   bucket: StatsBucket;
   selectedMethod: string;
+  censoredMethod: string;
   bootstrapCache: Record<string, BootstrapResults>;
   calculatingKeys: Record<string, boolean>;
 }
@@ -208,9 +231,11 @@ interface BucketCardProps {
 function BucketCard({
   bucket,
   selectedMethod,
+  censoredMethod,
   bootstrapCache,
   calculatingKeys,
 }: BucketCardProps) {
+
   const d = bucket.descriptive;
   const u = bucket.ucl;
 
@@ -223,31 +248,36 @@ function BucketCard({
   const isCalculating = calculatingKeys[cacheKey];
   const bData = bootstrapCache[cacheKey];
 
+  const isKm = censoredMethod === 'KM' && bucket.descriptive.nonDetects > 0;
+  const isRos = censoredMethod === 'ROS' && bucket.descriptive.nonDetects > 0;
+  const isDl2 = censoredMethod === 'DL2' && bucket.descriptive.nonDetects > 0;
+  const prefix = isKm ? 'KM ' : isRos ? 'ROS ' : isDl2 ? 'DL/2 ' : '';
+
   let uclValue: number | null = null;
   let isBootstrap = false;
   let methodLabel = '';
 
-  if (activeMethod === 'studentT95') {
+  if (activeMethod === 'studentT95' || activeMethod === 'kmT') {
     uclValue = u.studentT95;
-    methodLabel = "Student's-t (95%)";
-  } else if (activeMethod === 'chebyshev95') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + "Student's-t (95%)" : "Student's-t (95%)";
+  } else if (activeMethod === 'chebyshev95' || activeMethod === 'kmChebyshev95') {
     uclValue = u.chebyshev.find((e) => e.level === 0.95)?.ucl ?? null;
-    methodLabel = 'Chebyshev 95%';
-  } else if (activeMethod === 'chebyshev975') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + 'Chebyshev 95%' : 'Chebyshev 95%';
+  } else if (activeMethod === 'chebyshev975' || activeMethod === 'kmChebyshev975') {
     uclValue = u.chebyshev.find((e) => e.level === 0.975)?.ucl ?? null;
-    methodLabel = 'Chebyshev 97.5%';
-  } else if (activeMethod === 'chebyshev99') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + 'Chebyshev 97.5%' : 'Chebyshev 97.5%';
+  } else if (activeMethod === 'chebyshev99' || activeMethod === 'kmChebyshev99') {
     uclValue = u.chebyshev.find((e) => e.level === 0.99)?.ucl ?? null;
-    methodLabel = 'Chebyshev 99%';
-  } else if (activeMethod === 'approximateGamma') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + 'Chebyshev 99%' : 'Chebyshev 99%';
+  } else if (activeMethod === 'approximateGamma' || activeMethod === 'kmApproxGamma') {
     uclValue = u.approximateGamma;
-    methodLabel = 'Approximate Gamma (Wilson-Hilferty)';
-  } else if (activeMethod === 'adjustedGamma') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + 'Approximate Gamma (Wilson-Hilferty)' : 'Approximate Gamma (Wilson-Hilferty)';
+  } else if (activeMethod === 'adjustedGamma' || activeMethod === 'kmAdjustedGamma') {
     uclValue = u.adjustedGamma;
-    methodLabel = 'Adjusted Gamma (Grice-Bain)';
-  } else if (activeMethod === 'hUcl') {
+    methodLabel = activeMethod.startsWith('km') ? prefix + 'Adjusted Gamma (Grice-Bain)' : 'Adjusted Gamma (Grice-Bain)';
+  } else if (activeMethod === 'hUcl' || activeMethod === 'kmH') {
     uclValue = u.hUcl;
-    methodLabel = 'H-UCL';
+    methodLabel = isKm ? '95% H-UCL (KM-Log)' : isRos ? '95% H-UCL (ROS-Log)' : isDl2 ? '95% H-UCL (DL/2-Log)' : 'H-UCL';
   } else if (activeMethod === 'percentile95') {
     isBootstrap = true;
     uclValue = bData ? bData.percentile95 : null;
@@ -275,16 +305,17 @@ function BucketCard({
 
   let basisText = bucket.ucl.basis;
   if (selectedMethod !== 'recommended') {
-    const censoredSuffix = bucket.flags.includes('dl_substitution_used')
-      ? ' [DL/2 substitution (interim, Phase 3: KM)]'
+    const censoredSuffix = bucket.descriptive.nonDetects > 0
+      ? ` [Censored Method: ${censoredMethod}]`
       : '';
     basisText = `Manual Override -> ${methodLabel}${censoredSuffix}`;
   }
 
+
   let uclHeader = 'UCL 95%';
-  if (activeMethod === 'chebyshev975') {
+  if (activeMethod === 'chebyshev975' || activeMethod === 'kmChebyshev975') {
     uclHeader = 'UCL 97.5%';
-  } else if (activeMethod === 'chebyshev99') {
+  } else if (activeMethod === 'chebyshev99' || activeMethod === 'kmChebyshev99') {
     uclHeader = 'UCL 99%';
   }
 
@@ -376,6 +407,20 @@ function BucketCard({
         </div>
       )}
 
+      {/* Outliers list */}
+      {bucket.outliers.length > 0 && (
+        <div data-testid="matrix-map-stats-outliers" className="flex flex-wrap gap-1">
+          {bucket.outliers.map((o) => (
+            <span
+              key={o.index + '-' + o.value}
+              className="inline-block rounded border bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800 px-1.5 py-0.5 text-xs font-mono"
+            >
+              Outlier Candidate: {o.value} ({o.testUsed} Test)
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Excluded-count footer */}
       {bucket.excludedCount > 0 && (
         <p
@@ -386,6 +431,7 @@ function BucketCard({
         </p>
       )}
     </div>
+
   );
 }
 
@@ -416,6 +462,7 @@ const FLAG_LABEL: Record<StatFlag, string> = {
   high_skew: 'High skew',
   dl_substitution_used: 'DL/2 used',
   excluded_rows: 'Rows excluded',
+  outliers_detected: 'Outliers detected',
 };
 
 const FLAG_STYLE: Record<StatFlag, string> = {
@@ -424,7 +471,9 @@ const FLAG_STYLE: Record<StatFlag, string> = {
   high_skew: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
   dl_substitution_used: 'bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
   excluded_rows: 'bg-slate-50 dark:bg-slate-800/40 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+  outliers_detected: 'bg-amber-50 dark:bg-amber-950/40 text-amber-700 dark:text-amber-300 border-amber-200 dark:border-amber-800',
 };
+
 
 function FlagChip({ flag }: { flag: StatFlag }) {
   return (
