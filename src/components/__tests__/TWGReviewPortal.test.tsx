@@ -219,4 +219,10 @@ second body
     expect(printSpy).toHaveBeenCalledTimes(1)
     printSpy.mockRestore()
   })
+
+  it('includes print:max-w-none on the inner wrapper div to allow full-width printing', () => {
+    const { container } = render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const innerWrapper = container.querySelector('.print\\:max-w-none')
+    expect(innerWrapper).toBeInTheDocument()
+  })
 })

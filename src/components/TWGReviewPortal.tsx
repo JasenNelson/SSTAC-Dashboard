@@ -246,7 +246,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           container so the full paper expands instead of clipping to the
           visible scrollport. */}
       <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:flex-none print:overflow-visible print:h-auto print:p-0">
-        <div className="max-w-4xl mx-auto space-y-8">
+        <div className="max-w-4xl mx-auto space-y-8 print:max-w-none">
           {/* Header card with title + Download (PDF) action. The whole card
               is hidden in print so the PDF starts at the paper body. */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
