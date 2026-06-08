@@ -3,7 +3,7 @@
 /* Tailwind v4: use class-based dark mode (not OS media query) */
 @custom-variant dark (&:where(.dark, .dark *));
 
-/* Government/Public Service palette — design-tokens.ts is the source of truth */
+/* Government/Public Service palette - design-tokens.ts is the source of truth */
 
 :root {
   /* System stacks keep local/offline builds independent from Google Fonts. */
@@ -176,7 +176,7 @@
   }
 }
 
-/* Colored gradient containers — white text stays white */
+/* Colored gradient containers - white text stays white */
 .bg-gradient-to-br.from-red-500.to-red-600 *,
 .bg-gradient-to-br.from-orange-500.to-orange-600 *,
 .bg-gradient-to-br.from-yellow-500.to-yellow-600 *,
@@ -237,7 +237,7 @@ html.dark select {
  * they don't apply on print and need not be defeated specifically by
  * the print block. Codex 2026-05-18 R11. */
 @media screen {
-  /* Status badges — keep semantic colors visible */
+  /* Status badges - keep semantic colors visible */
   html.dark .bg-green-100 { background-color: #064e3b !important; }
   html.dark .bg-red-50    { background-color: #450a0a !important; }
   html.dark .bg-blue-50   { background-color: #0c4a6e !important; }
@@ -255,7 +255,7 @@ html.dark select {
     color: #7dd3fc !important;
   }
 
-  /* Indigo → sky migration for dark mode */
+  /* Indigo -> sky migration for dark mode */
   html.dark .text-indigo-700 { color: #7dd3fc !important; }
   html.dark .text-indigo-600 { color: #7dd3fc !important; }
   html.dark .text-indigo-500 { color: #38bdf8 !important; }
@@ -506,6 +506,13 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
   html.dark pre code, pre code {
     background-color: transparent !important;
     color: #0f172a !important;
+  }
+
+  pre {
+    overflow: visible !important;
+    white-space: pre-wrap !important;
+    overflow-wrap: anywhere !important;
+    max-height: none !important;
   }
 
   /* Tables: visible cell borders + light header bg on print. */
