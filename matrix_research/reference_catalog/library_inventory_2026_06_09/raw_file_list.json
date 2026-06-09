@@ -1,0 +1,842 @@
+[
+  {
+    "name": "eDNA in Ecological Risk Assessment .gdoc",
+    "relpath": "eDNA in Ecological Risk Assessment .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "eDNA in standards.gdoc",
+    "relpath": "eDNA in standards.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "eDNA for Sediment Quality Standards .gdoc",
+    "relpath": "eDNA for Sediment Quality Standards .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "how could eDNA be incorporated into the derivatio....gdoc",
+    "relpath": "how could eDNA be incorporated into the derivatio....gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "AI Agent for Aquatic Toxicity.gdoc",
+    "relpath": "AI Agent for Aquatic Toxicity.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "SABCS-ENV Session at CEW 2025 in Victoria.gdoc",
+    "relpath": "SABCS-ENV Session at CEW 2025 in Victoria.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Proposed Approaches for Updating BC CSR Sediment Standards.gdoc",
+    "relpath": "Proposed Approaches for Updating BC CSR Sediment Standards.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "SSTAC Sediment Standards Project  Technical Working Group (TWG) Engagement Plan.gdoc",
+    "relpath": "SSTAC Sediment Standards Project  Technical Working Group (TWG) Engagement Plan.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Preliminary Analysis of Public Survey Results.gdoc",
+    "relpath": "Preliminary Analysis of Public Survey Results.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWG Engagement Plan - Small Groups (July 2025).gdoc",
+    "relpath": "TWG Engagement Plan - Small Groups (July 2025).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Outline for TWG Small Group Meetings July 9-14 2025.gdoc",
+    "relpath": "Outline for TWG Small Group Meetings July 9-14 2025.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt to analyse TWG feedback.gdoc",
+    "relpath": "Prompt to analyse TWG feedback.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Draft TWG email (July 15 2025).gdoc",
+    "relpath": "Draft TWG email (July 15 2025).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWG small group meeting questions.gdoc",
+    "relpath": "TWG small group meeting questions.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWG Strategic Engagement Plan - Phase 3 (sml grp mtg follow-up).gdoc",
+    "relpath": "TWG Strategic Engagement Plan - Phase 3 (sml grp mtg follow-up).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWG feedback to June-July Poll Questions.gdoc",
+    "relpath": "TWG feedback to June-July Poll Questions.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Consolidated Questions for TWG Review.gdoc",
+    "relpath": "Consolidated Questions for TWG Review.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "SSTAC Survey Analysis Part 2 (n=66).gdoc",
+    "relpath": "SSTAC Survey Analysis Part 2 (n=66).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWG July 18 2025 email request for CEW support.gdoc",
+    "relpath": "TWG July 18 2025 email request for CEW support.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Gauging TWG interest on the draft presentation  Use of Artificial Intelligence in the Sediment Standards Project  for CEW.gform",
+    "relpath": "Gauging TWG interest on the draft presentation  Use of Artificial Intelligence in the Sediment Standards Project  for CEW.gform",
+    "ext": ".gform",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Consolidated Questions for TWG Review (Responses).gsheet",
+    "relpath": "Consolidated Questions for TWG Review (Responses).gsheet",
+    "ext": ".gsheet",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Detailed Analysis of Survey Responses  Consolidated Questions for TWG Review.gdoc",
+    "relpath": "Detailed Analysis of Survey Responses  Consolidated Questions for TWG Review.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BSAF Database Source Identification.gdoc",
+    "relpath": "BSAF\\BSAF Database Source Identification.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Bioavailability in Aquatic Sediments.gdoc",
+    "relpath": "Bioavailability\\Bioavailability in Aquatic Sediments.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for bioavailability in aquatic envt.gdoc",
+    "relpath": "Bioavailability\\Prompt for bioavailability in aquatic envt.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Bioavailability Deep Research.gdoc",
+    "relpath": "Bioavailability\\Bioavailability Deep Research.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Perplexity Strategic Research Framework for Developing Numerical Environmental Standards in Aquatic Bioaccumulation Assessment.gdoc",
+    "relpath": "Bioaccumulation sediment standards\\Perplexity Strategic Research Framework for Developing Numerical Environmental Standards in Aquatic Bioaccumulation Assessment.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Gemini Strategic Research Plan for Bioacc Stds.gdoc",
+    "relpath": "Bioaccumulation sediment standards\\Gemini Strategic Research Plan for Bioacc Stds.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "AI-Accelerated Sediment Standards Framework .gdoc",
+    "relpath": "Bioaccumulation sediment standards\\AI-Accelerated Sediment Standards Framework .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Bioaccumulation - Strategic Plan for AI Deep Research.gdoc",
+    "relpath": "Bioaccumulation sediment standards\\Bioaccumulation - Strategic Plan for AI Deep Research.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Bayesian Sediment Quality Framework.gdoc",
+    "relpath": "Bayesian Network Model\\Bayesian Sediment Quality Framework.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "AI Sediment Quality Framework .gdoc",
+    "relpath": "Bayesian Network Model\\AI Sediment Quality Framework .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "prompt to develop BN AI app.gdoc",
+    "relpath": "Bayesian Network Model\\prompt to develop BN AI app.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN Framework for Sediment Standards.gdoc",
+    "relpath": "Bayesian Network Model\\BN Framework for Sediment Standards.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Deep Seek - Landis BN DR.gdoc",
+    "relpath": "Bayesian Network Model\\Deep Seek - Landis BN DR.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Gem Landis DR - Bayesian Network Model Deconstruction.gdoc",
+    "relpath": "Bayesian Network Model\\Gem Landis DR - Bayesian Network Model Deconstruction.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Dr_Wayne_Landis_BN-RRM_Report_FULL.md",
+    "relpath": "Bayesian Network Model\\Dr_Wayne_Landis_BN-RRM_Report_FULL.md",
+    "ext": ".md",
+    "size_kb": 7.0
+  },
+  {
+    "name": "Revised BN model development .gdoc",
+    "relpath": "Bayesian Network Model\\Revised BN model development .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Dr_Wayne_Landis_BN-RRM_Report_FULL.gdoc",
+    "relpath": "Bayesian Network Model\\Dr_Wayne_Landis_BN-RRM_Report_FULL.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Strategic plan - Upgrade BN_Sed_model to Landis BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\Strategic plan - Upgrade BN_Sed_model to Landis BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "prompt for windsurf to upgrade BN_Sed_model.gdoc",
+    "relpath": "Bayesian Network Model\\prompt for windsurf to upgrade BN_Sed_model.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "prompt for coding AI to upgrade BN model to Landix",
+    "relpath": "Bayesian Network Model\\prompt for coding AI to upgrade BN model to Landix",
+    "ext": "",
+    "size_kb": 9.8
+  },
+  {
+    "name": "instruction mark down for windsurf to upgrade BN_Sed_model to Landis BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\instruction mark down for windsurf to upgrade BN_Sed_model to Landis BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "revised prompt for upgrading BN model to BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\revised prompt for upgrading BN model to BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Consolidated Strategic Plan  Upgrading the BN_Sed_Model to a Landis BN-RRM Framework.gdoc",
+    "relpath": "Bayesian Network Model\\Consolidated Strategic Plan  Upgrading the BN_Sed_Model to a Landis BN-RRM Framework.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Master Prompt for AI Coding Assistant (Revised).gdoc",
+    "relpath": "Bayesian Network Model\\Master Prompt for AI Coding Assistant (Revised).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Fix pgmpy exclude torch.gdoc",
+    "relpath": "Bayesian Network Model\\Fix pgmpy exclude torch.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Master Prompt for AI Coding Assistant (pyAgrum Version).gdoc",
+    "relpath": "Bayesian Network Model\\Master Prompt for AI Coding Assistant (pyAgrum Version).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Master Prompt for AI Coding Assistant  Clean Redeployment and Upgrade of the BN_Sed_model to a Full BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\Master Prompt for AI Coding Assistant  Clean Redeployment and Upgrade of the BN_Sed_model to a Full BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Comprehensive Strategic Plan  Evolving the Deployed BN_Sed_model to a Full BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\Comprehensive Strategic Plan  Evolving the Deployed BN_Sed_model to a Full BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for BN-RRM dashboard .gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for BN-RRM dashboard .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for AI Assistant  A Comprehensive Plan for Deriving Risk-Based Sediment Standards in British Columbia.gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for AI Assistant  A Comprehensive Plan for Deriving Risk-Based Sediment Standards in British Columbia.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Project Description  Interactive Bayesian Network Dashboard for Sediment Quality.gdoc",
+    "relpath": "Bayesian Network Model\\Project Description  Interactive Bayesian Network Dashboard for Sediment Quality.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Conceptual Plan  From CSV to Integrated Map Analysis.gdoc",
+    "relpath": "Bayesian Network Model\\Conceptual Plan  From CSV to Integrated Map Analysis.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for AI Assistant  Comprehensive Development Plan for an Interactive, Data-Driven BN-RRM Dashboard.gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for AI Assistant  Comprehensive Development Plan for an Interactive, Data-Driven BN-RRM Dashboard.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Comprehensive plan to upgrade BN-RRM web app to V3 .gdoc",
+    "relpath": "Bayesian Network Model\\Comprehensive plan to upgrade BN-RRM web app to V3 .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN-RRM v2 to v3 - Step 1  Processing Raw EMS Data.gdoc",
+    "relpath": "Bayesian Network Model\\BN-RRM v2 to v3 - Step 1  Processing Raw EMS Data.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Project  Parameterizing a Bayesian Network with BC EMS Data Phase 1 Troubleshooting Summary.gdoc",
+    "relpath": "Bayesian Network Model\\Project  Parameterizing a Bayesian Network with BC EMS Data Phase 1 Troubleshooting Summary.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Project  Parameterizing a Bayesian Network with BC EMS Data Phase 1 Troubleshooting Summary - updated.gdoc",
+    "relpath": "Bayesian Network Model\\Project  Parameterizing a Bayesian Network with BC EMS Data Phase 1 Troubleshooting Summary - updated.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN RRM Data Filtering Guide.gdoc",
+    "relpath": "Bayesian Network Model\\BN RRM Data Filtering Guide.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "README.md.gdoc",
+    "relpath": "Bayesian Network Model\\README.md.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for Generating a Report on Best Approaches for Discretization in BN-RRM v4.gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for Generating a Report on Best Approaches for Discretization in BN-RRM v4.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN-RRM v4  Analysis of Discretization Strategies.gdoc",
+    "relpath": "Bayesian Network Model\\BN-RRM v4  Analysis of Discretization Strategies.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN-RRM v4  Analysis of Discretization Strategies EMS & CABIN.gdoc",
+    "relpath": "Bayesian Network Model\\BN-RRM v4  Analysis of Discretization Strategies EMS & CABIN.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt to upgrade to BN-RRM v4 (multi-COPCs).gdoc",
+    "relpath": "Bayesian Network Model\\Prompt to upgrade to BN-RRM v4 (multi-COPCs).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "BN-RRM V4.2 upgrade with Dynamic Node Analyzer.gdoc",
+    "relpath": "Bayesian Network Model\\BN-RRM V4.2 upgrade with Dynamic Node Analyzer.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for BN-RRM v4.3 (June 29).gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for BN-RRM v4.3 (June 29).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Grok Process for Web App to use long CSV for upload.gdoc",
+    "relpath": "Bayesian Network Model\\Grok Process for Web App to use long CSV for upload.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Preparing for CABIN to BN-RRM v4.gdoc",
+    "relpath": "Bayesian Network Model\\Preparing for CABIN to BN-RRM v4.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt to tackle CABIN data processing.gdoc",
+    "relpath": "Bayesian Network Model\\Prompt to tackle CABIN data processing.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Wayne G. Landis\u2019s Relative Risk Model (RRM) & Bayesian-Network RRM (BN-RRM) - A 25-Year Evolutionary Arc.gdoc",
+    "relpath": "Bayesian Network Model\\Wayne G. Landis\u2019s Relative Risk Model (RRM) & Bayesian-Network RRM (BN-RRM) - A 25-Year Evolutionary Arc.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for v4 to v5 (Landis Conversion).gdoc",
+    "relpath": "Bayesian Network Model\\Prompt for v4 to v5 (Landis Conversion).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Conditional Probability Tables (CPTs) for BN-RRM (Starting Point).gdoc",
+    "relpath": "Bayesian Network Model\\Conditional Probability Tables (CPTs) for BN-RRM (Starting Point).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "JN CARE package 07062025.zip",
+    "relpath": "Bayesian Network Model\\JN CARE package 07062025.zip",
+    "ext": ".zip",
+    "size_kb": 24281.6
+  },
+  {
+    "name": "Comprehensive Plan  A Data-Driven Approach to Training the BN-RRM v5 (Landis Edition).gdoc",
+    "relpath": "Bayesian Network Model\\Comprehensive Plan  A Data-Driven Approach to Training the BN-RRM v5 (Landis Edition).gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Comprehensive Plan  A Data-Driven Approach to Training the BN-RRM.gdoc",
+    "relpath": "Bayesian Network Model\\Comprehensive Plan  A Data-Driven Approach to Training the BN-RRM.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Brix Bioavailability CPT Construction .gdoc",
+    "relpath": "Bayesian Network Model\\Brix Bioavailability CPT Construction .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Bayesian Network Parameterization Research Plan .gdoc",
+    "relpath": "Bayesian Network Model\\Bayesian Network Parameterization Research Plan .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Data Requirements  SABCS-ENV Sediment Standards Project.gdoc",
+    "relpath": "Bayesian Network Model\\Data Requirements  SABCS-ENV Sediment Standards Project.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Dr. Landis Meeting Walkthrough Guide.gdoc",
+    "relpath": "Bayesian Network Model\\Dr. Landis Meeting Walkthrough Guide.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Draft BN-RRM Methodology Paper.pdf",
+    "relpath": "Bayesian Network Model\\Draft BN-RRM Methodology Paper.pdf",
+    "ext": ".pdf",
+    "size_kb": 39149.8
+  },
+  {
+    "name": "Awuahetal.2020_EcosystemServices.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\Awuahetal.2020_EcosystemServices.pdf",
+    "ext": ".pdf",
+    "size_kb": 5723.4
+  },
+  {
+    "name": "32. Ecological risk assesment_lake St Charles.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\32. Ecological risk assesment_lake St Charles.pdf",
+    "ext": ".pdf",
+    "size_kb": 8823.4
+  },
+  {
+    "name": "BN-RRM & AI Manuscript from Gemini.gdoc",
+    "relpath": "Bayesian Network Model\\JN CARE package\\BN-RRM & AI Manuscript from Gemini.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Colnar and Landis_2007 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Colnar and Landis_2007 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 665.3
+  },
+  {
+    "name": "Landis and Wiegers 2005 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Landis and Wiegers 2005 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 466.8
+  },
+  {
+    "name": "Landis and Wiegers 1997 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Landis and Wiegers 1997 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 649.5
+  },
+  {
+    "name": "Wiegers et al 1998 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Wiegers et al 1998 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 226.7
+  },
+  {
+    "name": "Anderson and Landis 2012 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Anderson and Landis 2012 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 786.2
+  },
+  {
+    "name": "Landis et al. 2013. Ecological risk assessment in the context of global climate change copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Landis et al. 2013. Ecological risk assessment in the context of global climate change copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 454.0
+  },
+  {
+    "name": "Ayre_et al_2014 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Ayre_et al_2014 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 1449.4
+  },
+  {
+    "name": "Ayre and Landis 2012 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Ayre and Landis 2012 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 1529.5
+  },
+  {
+    "name": "Kaikkonen 2021 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Kaikkonen 2021 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 1060.2
+  },
+  {
+    "name": "Landis 2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Landis 2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 1568.6
+  },
+  {
+    "name": "Kaikkonen et al 2021 review.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Kaikkonen et al 2021 review.pdf",
+    "ext": ".pdf",
+    "size_kb": 1060.7
+  },
+  {
+    "name": "MItchell-et-al-2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\MItchell-et-al-2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 2393.3
+  },
+  {
+    "name": "Graham_et_al-2019-Integrated_Environmental_Assessment_and_Management.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Graham_et_al-2019-Integrated_Environmental_Assessment_and_Management.pdf",
+    "ext": ".pdf",
+    "size_kb": 3129.7
+  },
+  {
+    "name": "Landis_et_al-2017-Integrated_Environmental_Assessment_and_Management.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Landis_et_al-2017-Integrated_Environmental_Assessment_and_Management.pdf",
+    "ext": ".pdf",
+    "size_kb": 317.2
+  },
+  {
+    "name": "Moe et al 2021 BN and AOP.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Moe et al 2021 BN and AOP.pdf",
+    "ext": ".pdf",
+    "size_kb": 3964.1
+  },
+  {
+    "name": "Carriger et al 2019.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Carriger et al 2019.pdf",
+    "ext": ".pdf",
+    "size_kb": 1072.9
+  },
+  {
+    "name": "Carriger and parker 2021-.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Carriger and parker 2021-.pdf",
+    "ext": ".pdf",
+    "size_kb": 3957.6
+  },
+  {
+    "name": "Carriger and wildfires 2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Carriger and wildfires 2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 805.2
+  },
+  {
+    "name": "Brown et al 2022 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Brown et al 2022 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 941.8
+  },
+  {
+    "name": "Jermilova et al 2025 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\Jermilova et al 2025 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 2309.8
+  },
+  {
+    "name": ".DS_Store",
+    "relpath": "Bayesian Network Model\\JN CARE package\\CARE package 07062025\\.DS_Store",
+    "ext": "",
+    "size_kb": 6.0
+  },
+  {
+    "name": "._CARE package 07062025",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\._CARE package 07062025",
+    "ext": "",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Colnar and Landis_2007 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Colnar and Landis_2007 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Landis and Wiegers 2005 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Landis and Wiegers 2005 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Landis and Wiegers 1997 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Landis and Wiegers 1997 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Wiegers et al 1998 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Wiegers et al 1998 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Anderson and Landis 2012 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Anderson and Landis 2012 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Landis et al. 2013. Ecological risk assessment in the context of global climate change copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Landis et al. 2013. Ecological risk assessment in the context of global climate change copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Ayre_et al_2014 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Ayre_et al_2014 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Ayre and Landis 2012 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Ayre and Landis 2012 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.2
+  },
+  {
+    "name": "._Kaikkonen 2021 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Kaikkonen 2021 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.4
+  },
+  {
+    "name": "._Landis 2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Landis 2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Kaikkonen et al 2021 review.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Kaikkonen et al 2021 review.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._MItchell-et-al-2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._MItchell-et-al-2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Graham_et_al-2019-Integrated_Environmental_Assessment_and_Management.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Graham_et_al-2019-Integrated_Environmental_Assessment_and_Management.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Landis_et_al-2017-Integrated_Environmental_Assessment_and_Management.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Landis_et_al-2017-Integrated_Environmental_Assessment_and_Management.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Moe et al 2021 BN and AOP.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Moe et al 2021 BN and AOP.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Carriger et al 2019.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Carriger et al 2019.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Carriger and parker 2021-.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Carriger and parker 2021-.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Carriger and wildfires 2021.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Carriger and wildfires 2021.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.3
+  },
+  {
+    "name": "._Brown et al 2022 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Brown et al 2022 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.4
+  },
+  {
+    "name": "._Jermilova et al 2025 copy.pdf",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._Jermilova et al 2025 copy.pdf",
+    "ext": ".pdf",
+    "size_kb": 0.6
+  },
+  {
+    "name": "._.DS_Store",
+    "relpath": "Bayesian Network Model\\JN CARE package\\__MACOSX\\CARE package 07062025\\._.DS_Store",
+    "ext": ".ds_store",
+    "size_kb": 0.1
+  },
+  {
+    "name": "Gemini IK summary and outline.gdoc",
+    "relpath": "IK\\Gemini IK summary and outline.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Gemini IK presentation .gdoc",
+    "relpath": "IK\\Gemini IK presentation .gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Integrating Indigenous Knowledges  BC Sediment.gdoc",
+    "relpath": "IK\\Integrating Indigenous Knowledges  BC Sediment.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Draft FN Engagement Strategy for Discussion.gdoc",
+    "relpath": "IK\\Draft FN Engagement Strategy for Discussion.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "ChatGPT TWN IK for sediment standards.gdoc",
+    "relpath": "IK\\ChatGPT TWN IK for sediment standards.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Integrating Indigenous Water Quality Standards.gdoc",
+    "relpath": "IK\\Integrating Indigenous Water Quality Standards.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "TWN Deep Research on Braiding IK&S.gdoc",
+    "relpath": "IK\\TWN Deep Research on Braiding IK&S.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "WIKS page questions.gdoc",
+    "relpath": "IK\\WIKS page questions.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Prompt for WQCIU into White Paper.gdoc",
+    "relpath": "IK\\Prompt for WQCIU into White Paper.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Strategy for Integrating WQCIU into White Paper.gdoc",
+    "relpath": "IK\\Strategy for Integrating WQCIU into White Paper.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Integrating WQCIU into White Paper.gdoc",
+    "relpath": "IK\\Integrating WQCIU into White Paper.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "WQCIU.md.gdoc",
+    "relpath": "IK\\WQCIU.md.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  },
+  {
+    "name": "Poll Questions for the Interactive Discussion  Weaving Indigenous Knowledge & Science into the Sediment Standards Framework.gdoc",
+    "relpath": "IK\\Poll Questions for the Interactive Discussion  Weaving Indigenous Knowledge & Science into the Sediment Standards Framework.gdoc",
+    "ext": ".gdoc",
+    "size_kb": 0.2
+  }
+]
