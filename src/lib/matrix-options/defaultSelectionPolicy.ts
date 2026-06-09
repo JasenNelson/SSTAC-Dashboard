@@ -242,6 +242,42 @@ function classifyCandidate(
   };
 }
 
+/**
+ * Per-record default-candidate eligibility for the frame-default SEED layer
+ * (frameDefaults.ts). Reuses the canonical classifyCandidate gate so the seed path
+ * cannot drift from the default-selection policy: it applies the SAME blocks
+ * (jurisdiction, policy-compilation / reference-mining source roles, not_default,
+ * non-single_value, current-calculator scaffold, non-source-backed / unverified
+ * canonical, missing QA / direct-current source). A record is seed-eligible only at
+ * disposition 'eligible_pending_approval' (fully source-backed, source-verified,
+ * QA-approved, scalar, non-excluded, jurisdiction-eligible). The owner's act of
+ * authoring the FRAME_DEFAULT_PROFILES row is the activation step. Read-only.
+ */
+export function getFrameSeedCandidateEligibility(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  record: ParameterValueRecord,
+): {
+  eligible: boolean;
+  disposition: DefaultSelectionCandidateDisposition;
+  rationale: string;
+} {
+  const candidate = classifyCandidate(
+    {
+      frameId,
+      pathway,
+      substanceKey: record.substance_key,
+      inputKey: record.input_key,
+    },
+    record,
+  );
+  return {
+    eligible: candidate.canBecomeDefaultWithApproval,
+    disposition: candidate.disposition,
+    rationale: candidate.rationale,
+  };
+}
+
 function compareCandidates(
   left: DefaultSelectionCandidate,
   right: DefaultSelectionCandidate,
