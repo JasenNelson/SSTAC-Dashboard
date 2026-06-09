@@ -4244,7 +4244,7 @@
     "equation_ids": [
       "eq-human-health-food-web"
     ],
-    "jurisdiction": "BC_provincial",
+    "jurisdiction": "BC",
     "applicability": "BC subsistence fisher adult fish ingestion rate (WLRS 2023, Table 2; = Health Canada consumption rate for Indigenous Groups in Canada). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
     "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
     "evidence_items": [
@@ -4290,7 +4290,7 @@
       "food ingestion",
       "exposure factor"
     ],
-    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC_provincial"
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
   },
   {
     "parameter_value_id": "pv-wlrs-2023-ir-food-recreational-bc",
@@ -4311,7 +4311,7 @@
     "equation_ids": [
       "eq-human-health-food-web"
     ],
-    "jurisdiction": "BC_provincial",
+    "jurisdiction": "BC",
     "applicability": "BC recreational fisher adult fish ingestion rate (WLRS 2023, Table 2; = general Canadian population; BC general-public receptor). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
     "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
     "evidence_items": [
@@ -4357,7 +4357,7 @@
       "food ingestion",
       "exposure factor"
     ],
-    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC_provincial"
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
   },
   {
     "parameter_value_id": "pv-wlrs-2023-ir-food-low-level-bc",
@@ -4378,7 +4378,7 @@
     "equation_ids": [
       "eq-human-health-food-web"
     ],
-    "jurisdiction": "BC_provincial",
+    "jurisdiction": "BC",
     "applicability": "BC low-level (general) fisher adult fish ingestion rate (WLRS 2023, Table 2; = Health Canada 2011 two servings/week). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
     "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
     "evidence_items": [
@@ -4424,6 +4424,6 @@
       "food ingestion",
       "exposure factor"
     ],
-    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC_provincial"
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
   }
 ]
