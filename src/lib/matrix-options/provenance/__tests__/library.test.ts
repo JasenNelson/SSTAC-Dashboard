@@ -36,17 +36,22 @@ describe('matrix options evidence library helpers', () => {
     // parameter_values.json) -> 1599 groups, because multi-endpoint candidate families
     // intentionally share one group id. (2026-06-03: -1 from 1600 -- the asbestos IUR was a
     // singleton candidate_group, deleted as a non-convertible fiber-unit defect.)
-    expect(view.valueGroups).toHaveLength(1599);
+    // 2026-06-09: +1 (1599 -> 1600) -- the 3 BC WLRS 2023 fish-ingestion-rate candidates
+    // (subsistence/recreational/low-level) share ONE candidate_group_id
+    // (human-health-food__generic__IR_food_kg_per_day__BC_provincial), so they add 1 slot, not 3.
+    expect(view.valueGroups).toHaveLength(1600);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     expect(view.audit.values.approvedSourceBacked).toBe(1218);
-    // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370 (unchanged).
-    expect(view.audit.values.pendingSourceLocator).toBe(370);
+    // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
+    // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373.
+    expect(view.audit.values.pendingSourceLocator).toBe(373);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
-    expect(view.audit.values.availableOptions).toBe(1579);
+    // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
+    expect(view.audit.values.availableOptions).toBe(1582);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
