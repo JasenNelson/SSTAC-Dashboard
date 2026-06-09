@@ -185,11 +185,27 @@ explicit HITL approval. While empty: standard code-review flow applies.
 1. Owner provides `(frameId, pathway)` pair + parameter values + verified
    `catalog_sources` UUIDs (Stream D landed in production Supabase).
 2. Add `EquationVariantId` member + variant function to `equationDispatch.ts`
-   in the same commit as the new `FrameVariantRow` (no orphaned data rows).
+   in the same commit as the new `FrameVariantRow` (no orphaned data rows). A
+   `parameterOverrides` row MUST use a NON-baseline variant id --
+   `validateFrameVariants()` rejects a `baseline` + `parameterOverrides` row
+   (a baseline+overrides row would suppress the fallback notice while running the
+   baseline equation with injected values).
 3. Append row to `FRAME_VARIANTS` with non-empty `sourceIds`.
-4. Test: variant returns `usedBaselineFallback: false`; `sedS` differs from
-   baseline for the same substance and site inputs.
-5. Codex iterate-to-GREEN + 4 gates GREEN + PR merge. One variant per PR.
+4. Wire each affected calculator component (`EcoDirectEqPCalculator`,
+   `EcoFoodBSAFCalculator`, `HHDirectContactCalculator`, `HHFoodWebCalculator`)
+   to apply the variant's overrides at INPUT CONSTRUCTION: read
+   `DispatchResult.parameterOverrides` and merge via `applyFrameVariantOverrides`
+   BEFORE the calculator validates inputs and builds "values used in this
+   calculation" provenance, so the validated/displayed values match the values
+   that produced `sedS` (`run()` also applies them, idempotently). The
+   override-injection infrastructure PR deliberately leaves calculators consuming
+   only `run()`; this wiring is REQUIRED before the first override row is safe to
+   surface. Until then the empty table + the non-baseline-variant guard keep it
+   safe.
+5. Test: variant returns `usedBaselineFallback: false`; `sedS` differs from
+   baseline for the same substance and site inputs; the calculator's displayed
+   provenance + validation use the override-effective values.
+6. Codex iterate-to-GREEN + 4 gates GREEN + PR merge. One variant per PR.
 
 ---
 

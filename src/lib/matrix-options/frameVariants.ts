@@ -6,11 +6,28 @@
 //
 // An absent row causes equationDispatch.getEquation() to fall back to the
 // BC Protocol 1 v5 DRA baseline and set usedBaselineFallback: true.
+//
+// The override-injection MECHANISM is implemented (applyFrameVariantOverrides +
+// getEquation routing + DispatchResult.parameterOverrides), but no override row
+// can ship while this table is empty: validateFrameVariants() requires a
+// parameterOverrides row to declare a NON-baseline variant id, and only
+// 'baseline' is registered. Adding the first override row is the migration that
+// also wires the calculator consumers (step 3 below).
+//
 // Adding a real row requires:
 //   1. HITL-provided parameter values + verified catalog_sources UUIDs (Stream D).
-//   2. EquationVariantId member + registered function added to equationDispatch.ts.
-//   3. Test asserting the variant produces different output from baseline.
-//   4. Codex iterate-to-GREEN + 4 gates GREEN + PR merge. One variant per PR.
+//   2. EquationVariantId member + registered function added to equationDispatch.ts
+//      (a parameterOverrides row MUST use a non-baseline variant id -- the
+//      validateFrameVariants() guard rejects a baseline+overrides row).
+//   3. Wire each affected calculator component to apply the variant's overrides
+//      at INPUT CONSTRUCTION: read DispatchResult.parameterOverrides and merge via
+//      applyFrameVariantOverrides BEFORE the calculator validates inputs and builds
+//      "values used in this calculation" provenance, so the validated/displayed
+//      values match the values that produced sedS (run() also applies them,
+//      idempotently). Until this wiring lands, calculators consume only run(); the
+//      empty table + the non-baseline-variant guard keep that safe.
+//   4. Test asserting the variant produces different output from baseline.
+//   5. Codex iterate-to-GREEN + 4 gates GREEN + PR merge. One variant per PR.
 //
 // Design authority: docs/PHASE_4_FRAMEVARIANTS_SHAPE_SPEC.md
 //                   docs/STREAM_C_EQUATION_DISPATCH_DESIGN.md sections 3.2 and 5
