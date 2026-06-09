@@ -38,7 +38,7 @@ describe('matrix options evidence library helpers', () => {
     // singleton candidate_group, deleted as a non-convertible fiber-unit defect.)
     // 2026-06-09: +1 (1599 -> 1600) -- the 3 BC WLRS 2023 fish-ingestion-rate candidates
     // (subsistence/recreational/low-level) share ONE candidate_group_id
-    // (human-health-food__generic__IR_food_kg_per_day__BC_provincial), so they add 1 slot, not 3.
+    // (human-health-food__generic__IR_food_kg_per_day__BC), so they add 1 slot, not 3.
     expect(view.valueGroups).toHaveLength(1600);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
