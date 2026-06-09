@@ -65,11 +65,14 @@ jobs:
     needs: unit-tests
     steps:
       - uses: actions/checkout@v6
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          # Node 22 to match the Vercel deploy runtime (engines.node "22.x").
+          # Build jobs must mirror production; CI cannot otherwise catch a
+          # Vercel-only build/OOM failure (our GitHub build gate runs ~16GB).
+          node-version: '22'
           cache: 'npm'
       
       - name: Install dependencies
@@ -166,7 +169,10 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          # Node 22 to match the Vercel deploy runtime: this job also runs
+          # `npm run build`, so its bundle metrics must reflect the production
+          # build, and a Node-24-only build path is not left in CI.
+          node-version: '22'
           cache: 'npm'
 
       - name: Install dependencies
