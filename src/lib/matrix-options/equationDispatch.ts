@@ -25,7 +25,7 @@ import type {
   HumanHealthFoodWebResult,
 } from './types';
 import { FRAME_VARIANTS } from './frameVariants';
-import type { FrameVariantRow } from './frameVariants';
+import type { FrameVariantRow, FrameVariantOverrides } from './frameVariants';
 
 // ---------------------------------------------------------------------------
 // EquationVariantId: closed union.
@@ -85,6 +85,23 @@ export interface DispatchResult<P extends ProvenancePathway> {
   fallbackReason?: string;
   /** The callable equation function bound to the resolved variant. */
   run: (input: PathwayInput<P>) => PathwayResult<P>;
+  /**
+   * The matched variant's frame-level parameter overrides, when present
+   * (undefined on the baseline-fallback path and for override-less variants).
+   *
+   * IMPORTANT for callers (calculator wiring): run() applies these overrides to
+   * the equation input internally, but a caller that ALSO validates inputs or
+   * builds "values used in this calculation" provenance rows MUST first compute
+   * the effective input via
+   *   applyFrameVariantOverrides(pathway, input, parameterOverrides)
+   * and validate / build provenance from THAT, so the displayed values match the
+   * values that actually produced sedS. (run() re-applying the same value
+   * overrides is idempotent, so there is no double-application hazard.) Exposing
+   * the overrides here -- rather than hiding them solely inside run() -- also
+   * lets a frame supply a value the user left blank without the caller's
+   * pre-override validation wrongly rejecting it.
+   */
+  parameterOverrides?: FrameVariantOverrides;
 }
 
 // ---------------------------------------------------------------------------
@@ -111,6 +128,107 @@ const VARIANT_FUNCTIONS: Record<
 > = {
   baseline: BASELINE_FUNCTIONS,
 };
+
+// ---------------------------------------------------------------------------
+// Frame-variant parameter-override injection.
+//
+// applyFrameVariantOverrides merges a frame variant's parameterOverrides onto
+// the equation input BEFORE the variant function runs. Only the per-pathway
+// ALLOWLISTED keys are copied; site-measured / per-assessment inputs are never
+// frame-overridable (shape spec section 5 "NOT overridable" column). An
+// override value of `undefined` is skipped (the key was not overridden); a
+// `null` is preserved -- a null rfd/sf is a MEANINGFUL "risk driver not
+// applicable" override, not an absence.
+// ---------------------------------------------------------------------------
+
+type DispatchPathway = Exclude<ProvenancePathway, 'background-adjustment'>;
+
+// The camelCase property on a FrameVariantOverrides block that holds each
+// pathway's override values (frameVariants.ts discriminated union).
+const OVERRIDE_BLOCK_KEY: Record<DispatchPathway, string> = {
+  'eco-direct-eqp': 'ecoDirectEqp',
+  'eco-food-bsaf': 'ecoFoodBsaf',
+  'human-health-direct': 'humanHealthDirect',
+  'human-health-food': 'humanHealthFood',
+};
+
+// The keys a frame variant MAY override, per pathway (shape spec section 5).
+// Iterating this explicit allowlist (rather than the block's own keys) means a
+// malformed (as-cast) override block carrying a non-overridable key cannot
+// smuggle it into the equation input. Note human-health-food is a DISTINCT set
+// from human-health-direct: it has no abs_dermal and no IR_sed_mg_per_day.
+const OVERRIDABLE_KEYS: Record<DispatchPathway, readonly string[]> = {
+  'eco-direct-eqp': ['fcv_ug_per_L', 'acknowledgeBlackCarbon'],
+  'eco-food-bsaf': [
+    'BSAF_loc_freshwater',
+    'TRV_eco_mg_per_kg_bw_day',
+    'Fsite',
+    'BW_eco_kg',
+    'IR_eco_kg_per_day',
+  ],
+  'human-health-direct': [
+    'rfd_oral_mg_per_kg_bw_day',
+    'sf_oral_per_mg_per_kg_bw_per_day',
+    'abs_dermal',
+    'ba_oral',
+    'IR_sed_mg_per_day',
+  ],
+  'human-health-food': [
+    'rfd_oral_mg_per_kg_bw_day',
+    'sf_oral_per_mg_per_kg_bw_per_day',
+    'IR_food_kg_per_day',
+    'BSAF_loc_freshwater',
+    'ba_oral',
+  ],
+};
+
+/**
+ * Merge a frame variant's parameterOverrides onto an equation input.
+ *
+ * Pure function (no side effects; does not mutate `input`). Returns a new input
+ * with only the per-pathway allowlisted keys replaced by the override values.
+ * Exported so it can be unit-tested directly with synthetic override blocks
+ * without populating FRAME_VARIANTS.
+ *
+ * Throws TypeError when overrides.pathway does not match the requested pathway
+ * (a programming error; the FRAME_VARIANTS validator already blocks such rows,
+ * but this guard protects direct callers).
+ */
+export function applyFrameVariantOverrides<P extends DispatchPathway>(
+  pathway: P,
+  input: PathwayInput<P>,
+  overrides: FrameVariantOverrides,
+): PathwayInput<P> {
+  if (overrides.pathway !== pathway) {
+    throw new TypeError(
+      'applyFrameVariantOverrides: overrides.pathway "' +
+        overrides.pathway +
+        '" does not match the requested pathway "' +
+        pathway +
+        '". A pathway-mismatched override block must not be applied.',
+    );
+  }
+
+  const blockKey = OVERRIDE_BLOCK_KEY[pathway];
+  const block = (overrides as unknown as Record<string, unknown>)[blockKey] as
+    | Record<string, unknown>
+    | undefined;
+  if (block === undefined) {
+    // No override block present: run with the user inputs unchanged.
+    return input;
+  }
+
+  const merged: Record<string, unknown> = {
+    ...(input as unknown as Record<string, unknown>),
+  };
+  for (const key of OVERRIDABLE_KEYS[pathway]) {
+    const value = block[key];
+    if (value !== undefined) {
+      merged[key] = value;
+    }
+  }
+  return merged as unknown as PathwayInput<P>;
+}
 
 // ---------------------------------------------------------------------------
 // resolveBaselineFallbackReason: produce a consistent fallback reason string.
@@ -151,6 +269,7 @@ function resolveBaselineFallbackReason(
 export function getEquation<P extends Exclude<ProvenancePathway, 'background-adjustment'>>(
   frameId: RegulatoryFrameId,
   pathway: P,
+  rows: readonly FrameVariantRow[] = FRAME_VARIANTS,
 ): DispatchResult<P> {
   // Guard: background-adjustment is not a dispatch target.
   if ((pathway as string) === 'background-adjustment') {
@@ -161,24 +280,23 @@ export function getEquation<P extends Exclude<ProvenancePathway, 'background-adj
     );
   }
 
-  // Look up a frame-specific variant entry.
-  const match: FrameVariantRow | undefined = (FRAME_VARIANTS as readonly FrameVariantRow[]).find(
+  // Look up a frame-specific variant entry. `rows` defaults to the module-level
+  // FRAME_VARIANTS (empty at commit 1); the parameter is a test seam so the
+  // injection path can be exercised with synthetic rows while FRAME_VARIANTS
+  // stays empty in production.
+  const match: FrameVariantRow | undefined = rows.find(
     (row) => row.frameId === frameId && row.pathway === pathway,
   );
 
   if (match !== undefined) {
     // A real variant is defined. Resolve its function.
-    // NOTE: match.parameterOverrides is NOT yet injected into the input here.
-    // The shape spec (PHASE_4_FRAMEVARIANTS_SHAPE_SPEC.md section 3) calls for
-    // overrides to be merged into the equation input before call; that injection
-    // is deferred to the variant-wiring commit. validateFrameVariants() blocks
-    // any row carrying parameterOverrides until that injection lands, so an
-    // overrides-bearing row cannot reach this branch and silently compute with
-    // un-overridden inputs.
+    // match.parameterOverrides (when present) ARE injected into the equation
+    // input below, via applyFrameVariantOverrides, before the variant function
+    // runs (shape spec PHASE_4_FRAMEVARIANTS_SHAPE_SPEC.md section 3).
     const variantFns = VARIANT_FUNCTIONS[match.variant];
     if (variantFns === undefined || variantFns[pathway] === undefined) {
-      // Programmer error: FRAME_VARIANTS references a variant id that has no
-      // registered function. Fail loudly so it is caught before it reaches prod.
+      // Programmer error: a row references a variant id that has no registered
+      // function. Fail loudly so it is caught before it reaches prod.
       throw new ReferenceError(
         'getEquation: variant "' +
           match.variant +
@@ -188,10 +306,21 @@ export function getEquation<P extends Exclude<ProvenancePathway, 'background-adj
           'Add the function in the same commit as the FRAME_VARIANTS row.',
       );
     }
+    const variantFn = variantFns[pathway] as (
+      input: PathwayInput<P>,
+    ) => PathwayResult<P>;
+    const overrides: FrameVariantOverrides | undefined = match.parameterOverrides;
     return {
       variant: match.variant,
       usedBaselineFallback: false,
-      run: variantFns[pathway] as (input: PathwayInput<P>) => PathwayResult<P>,
+      run:
+        overrides === undefined
+          ? variantFn
+          : (input: PathwayInput<P>) =>
+              variantFn(applyFrameVariantOverrides(pathway, input, overrides)),
+      // Surface the overrides so callers can build the effective input for
+      // validation + provenance (see DispatchResult.parameterOverrides).
+      parameterOverrides: overrides,
     };
   }
 
@@ -269,18 +398,34 @@ export function validateFrameVariants(
       );
     }
 
-    // TEMPORARY TRIPWIRE (remove in the commit that implements override
-    // injection): getEquation does not yet inject parameterOverrides into the
-    // equation input (shape spec: "injected into the equation input before
-    // call"). Until that injection lands, a row carrying parameterOverrides
-    // would silently compute with un-overridden inputs. Fail loudly so no such
-    // row ships before the dispatcher applies overrides.
-    if (row.parameterOverrides !== undefined) {
+    // Provenance guard: a row carrying parameterOverrides is real frame-level
+    // parameter data and therefore requires HITL-verified catalog_sources IDs
+    // (shape spec stop-condition 3), REGARDLESS of variant id. The
+    // variant !== 'baseline' sourceIds check above does not cover an
+    // overrides-bearing baseline row, so enforce non-empty sourceIds explicitly
+    // here now that getEquation injects overrides.
+    if (row.parameterOverrides !== undefined && row.sourceIds.length === 0) {
       errors.push(
-        'Index ' + i + ': parameterOverrides are not yet applied by getEquation ' +
-          '(input injection unimplemented). Do not ship a row with ' +
-          'parameterOverrides until the dispatcher injects them. See the ' +
-          'variant-resolution branch in equationDispatch.ts.',
+        'Index ' + i + ': row carries parameterOverrides but has empty ' +
+          'sourceIds. Every parameter-override row requires HITL-verified ' +
+          'catalog_sources IDs.',
+      );
+    }
+
+    // A parameterOverrides row MUST declare a non-baseline variant id. A
+    // baseline-variant row carrying overrides would make getEquation return
+    // usedBaselineFallback: false (suppressing FrameVariantFallbackNotice, which
+    // keys only off that flag) while still running the baseline equation with
+    // injected values -- a frame-specific parameter change shipping invisibly
+    // with no real variant id. Real override rows add an EquationVariantId member
+    // + registered function in the same commit (shape spec section 8 migration
+    // checklist), so a baseline+overrides row is always a contract error.
+    if (row.parameterOverrides !== undefined && row.variant === 'baseline') {
+      errors.push(
+        'Index ' + i + ': row carries parameterOverrides but uses variant ' +
+          '"baseline". An override row must declare a non-baseline variant id ' +
+          '(add the EquationVariantId member + registered function in the same ' +
+          'commit, per the migration checklist).',
       );
     }
   }
