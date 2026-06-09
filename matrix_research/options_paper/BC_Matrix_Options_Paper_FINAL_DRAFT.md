@@ -195,13 +195,13 @@ Phase 2 is defined as the **design and operationalization of the multi-pathway m
 
 ### 9.4 Phase 2 Governance and Roles
 
-Phase 2 distinguishes between internal bodies and advisory Technical Working Groups, with clearly separated decision authority and advisory roles:
+Phase 2 separates decision authority from advisory input. The specific bodies that fill these roles, their names, and their membership are formalized at Phase 2 adoption; this section describes the functional roles, not yet-constituted bodies.
 
-- **Internal (Standards Review Panel and Policy):**  Hold decision authority. The Standards Review Panel (SRP) sets scientific direction and approves methodological choices; Policy owns the CSR/Schedule 3.4 regulatory framing and approves the expansion concept.
-- **Technical Working Groups (TWGs):**  Advisory. TWGs (Bioavailability, Bioaccumulation Classification, Data Compilation, Matrix Framework) develop technical content, options, and draft deliverables for internal review and decision.
-- **Decision vs advisory boundary:**  TWGs recommend; internal bodies decide. Each deliverable in Section 9.2 is produced by a TWG (advisory) and accepted or revised by the relevant internal body (decision authority).
+- **Decision authority (standards and policy roles):**  A standards-decision role sets scientific direction and approves methodological choices. A policy role owns the CSR/Schedule 3.4 regulatory framing and approves the expansion concept. Together these roles hold final decision authority over Phase 2 deliverables.
+- **Technical Working Groups (TWGs) -- advisory:**  TWGs aligned to the Phase 2 workstreams (Bioavailability, Bioaccumulation Classification, Data Compilation, Matrix Framework) develop technical content, options, and draft deliverables for review. TWGs recommend; they do not decide.
+- **Decision vs advisory boundary:**  Each deliverable in Section 9.2 is produced by a TWG (advisory) and accepted or revised by the relevant decision role (decision authority).
 
-*(Owner to confirm the exact internal body names, membership, and the formal decision/advisory split.)*
+*(The named decision bodies, their membership, and the formal decision/advisory split are confirmed when the Phase 2 governance is constituted at adoption.)*
 
 ## 10.0 Phased Implementation Roadmap (2025-2028+)
 
