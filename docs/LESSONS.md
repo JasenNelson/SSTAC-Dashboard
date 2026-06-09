@@ -1847,8 +1847,199 @@ repo JSON is the effective source of truth for `qa_status`.
 
 ---
 
-**Last Updated:** June 4, 2026 (IRIS qa-promotion apply sheet + owner-run tool + structural catalog test rework; the qa_status flip itself remains owner-gated)
-**Lesson Count (2026-06-02 session added 4):** running totals not re-tallied; this session added 1 high (orphaned-tab) and 3 medium (saved-view coercion lockstep, .tmp eslint ignore, codex/cursor-agent fallback); 2026-06-04 added 1 high (qa-promotion coupling + Supabase audit-only)
-**Security Status:** ✓ Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
-**Refactoring Status:** ✓ TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
+## 2026-06-08 - AGY Autonomous Subagent: Settings, Permissions, and Orchestration Pattern [HIGH]
+
+**Date:** June 8, 2026
+**Area:** Agentic OS / autonomous subagent orchestration
+**Impact:** HIGH (defines the safe, reproducible pattern for unattended AGY runs; avoids stalls and off-script subagent behavior)
+**Status:** Documented
+
+### Problem or Discovery
+
+Running AGY (Antigravity CLI) as an autonomous subagent requires several non-obvious setup and
+orchestration steps. Getting any of them wrong causes either a silent stall or off-script behavior
+(e.g., the subagent running gates or opening PRs instead of just committing).
+
+### Root Cause or Context
+
+1. AGY reads settings.json exactly once at launch. A running session never reloads it.
+   Changing the file while AGY is running has no effect.
+2. Headless `agy -p` is the only mode with no interactive plan-approval gate and no
+   per-command prompts. Other invocation modes block waiting for user input.
+3. Sonnet ship-subagents scope-crept twice: they ran gates and codex review instead of
+   just "edit + commit", and left work committed-but-unpushed. Subagent claims about push
+   and PR state must always be verified directly.
+
+### Solution or Pattern
+
+**AGY safe-autonomous permission pattern:**
+- Allow all commands with `command(*)`.
+- Deny list in `~/.gemini/antigravity-cli/settings.json`: force/mirror push, `gh pr merge`,
+  `gh api`, `git worktree remove`, `fsutil`, `mklink`, `npm ci`, `npm install`, recursive
+  deleters, and system-admin commands.
+- Orchestrator PRE-CREATES the worktree and node_modules junction (`mklink`) before handing
+  off to AGY (both are on the deny list for the subagent).
+- Deliver task briefs to AGY via `.tmp` files; never rely on inline long prompts.
+- After any AGY closeout, verify every claim directly (grep the files; never trust the
+  subagent's self-report). Finish push/PR/merge in the main orchestrator session.
+
+**Ship-subagent scope rule:** scope ship-subagents to "edit + commit only". Push, PR, and
+merge always happen in the main session so the orchestrator can verify gate status and
+push/PR state before proceeding.
+
+### Key Takeaway
+
+Restart AGY after every settings.json change (it reads once at launch). Use `agy -p` for
+unattended runs. Pre-create worktrees and junctions before the subagent starts. Scope
+ship-subagents to commit-only; do push/PR/merge in the main session after direct verification.
+
+---
+
+## 2026-06-08 - Vercel OOM: engines.node Range Causes Vercel to Pick Node 24, Causing SIGKILL [HIGH]
+
+**Date:** June 8, 2026
+**Area:** Deployment / Vercel / CI-CD environment mismatch
+**Impact:** HIGH (deploy fails silently with SIGKILL on Vercel 8 GB machine; push-protocol
+Production Build gate on GitHub Actions 16 GB cannot catch it)
+**Status:** Fixed (PR #270 verified READY on Vercel)
+
+### Problem or Discovery
+
+A Vercel production deploy OOMed (SIGKILL) during next build lint+typecheck phase. The push-
+protocol Production Build gate had passed (GitHub Actions, ~16 GB) and the local build had passed,
+so the failure was invisible until the deploy itself ran.
+
+### Root Cause or Context
+
+Two compounding issues:
+
+1. `package.json` `engines.node` was `">=20.0.0"` (a version range). Vercel reads this field and
+   picks the newest available major matching the range. With Node 24 available, Vercel overrode
+   the project's configured "22.x" Node version and ran the build on Node 24.
+2. Node 24 increased memory footprint in `next build` lint+typecheck phase exceeded Vercel's
+   8 GB build machine limit, producing a SIGKILL.
+
+The GitHub Actions build machine has ~16 GB; our gate runs there. Vercel deploy machines have
+8 GB. This environment mismatch means the gate CANNOT catch Vercel-only OOM failures.
+
+### Solution or Pattern
+
+Two changes, both verified with a deploy READY result:
+
+1. Pin `engines.node` to `"22.x"` (exact major, not a range). Vercel picks the pinned major and
+   does not escalate to a newer Node version.
+2. Set `eslint.ignoreDuringBuilds: true` in `next.config.ts`. This removes the lint phase from
+   `next build`, reducing peak memory. The `eslint .` step in CI still runs lint on every PR.
+
+**Do NOT disable TypeScript build checks.** `next typegen` + CI `tsc --noEmit` do NOT generate
+the per-page `.next/types/app` route guards that a full `next build` does. Disabling the
+typecheck opens a real type-safety gap that tsc alone cannot catch.
+
+**Fallback if OOM recurs:** Vercel Enhanced Builds (larger machine), not disabling the typecheck.
+
+### File References
+- `package.json` (`engines.node`)
+- `next.config.ts` (`eslint.ignoreDuringBuilds`)
+
+### Key Takeaway
+
+Pin `engines.node` to a specific major (`"22.x"`) not a floor range (`">=20.0.0"`). A range lets
+Vercel pick the newest available Node, which can OOM on the 8 GB build machine. Add
+`eslint.ignoreDuringBuilds: true` to reduce build memory; CI `eslint .` covers the gap. Never
+disable the TypeScript build check: `tsc --noEmit` misses per-page route type guards that only
+`next build` generates.
+
+---
+
+## 2026-06-08 - codex-review Discipline: Opus Adversarial Leg-1 Always First [MEDIUM]
+
+**Date:** June 8, 2026
+**Area:** Process / codex-review discipline (L0 rule 1.3)
+**Impact:** MEDIUM (prevents whack-a-mole codex loops; surfaces holistic issues earlier)
+**Status:** Documented (updated review discipline added to L0 1.3)
+
+### Problem or Discovery
+
+After ~5 rounds of targeted codex review on a single PR, the session was still finding and fixing
+individual findings without converging. Codex was acting as a whack-a-mole linter rather than a
+holistic reviewer.
+
+### Root Cause or Context
+
+The review sequence was codex-first, Opus-second. Codex in targeted mode finds specific line-level
+issues well but can miss systemic or architectural patterns. Running codex first means the first
+~5 rounds are often fixing individual symptoms rather than understanding the design.
+
+### Solution or Pattern
+
+Updated codex-review discipline (2026-06-08):
+
+1. **Leg-1 always first:** Opus reviewer subagent adversarial loop (3 lenses: correctness,
+   architecture, security). Run this BEFORE any codex round.
+2. **Leg-2 after Leg-1:** codex Spark grind until Spark GREEN, then gpt-5.5 xhigh ship gate.
+3. **Three modes:** targeted (specific change), strategic (PR-level), holistic (branch audit).
+4. **Escalation trigger:** after ~5 whack-a-mole codex rounds with no convergence, escalate to
+   an informed Opus holistic pass (show Opus the diff AND prior codex findings).
+5. **Skip rubric:** skip Leg-1 only per the explicit rubric (docs-only, trivial mechanical fix)
+   and state the reason.
+
+### Key Takeaway
+
+Run Opus adversarial Leg-1 BEFORE codex Leg-2 on any substantive change. ~5 whack-a-mole codex
+rounds without convergence is the escalation trigger for an informed Opus holistic pass.
+
+---
+
+## 2026-06-08 - Junction-Safe Worktree Teardown: Verify Count Before and After [HIGH]
+
+**Date:** June 8, 2026
+**Area:** Git worktree / node_modules junction cleanup (L0 rule 1.15)
+**Impact:** HIGH (recursive delete on a junction empties the shared node_modules store; this guard
+prevented data loss and correctly identified one real-copy worktree)
+**Status:** Documented
+
+### Problem or Discovery
+
+Worktree teardown with a node_modules junction requires explicit junction removal before any
+recursive delete. Getting the sequence wrong empties the shared node_modules store for the entire
+project (happened twice on 2026-05-30 and 2026-06-01).
+
+### Root Cause or Context
+
+- Junctions (Windows reparse points) are followed by recursive deleters. `Remove-Item -Recurse`,
+  `rm -rf`, and `git worktree remove` all follow the junction and delete the shared target.
+- One worktree (m1b-wizard) had a REAL node_modules directory (not a junction). Running
+  `fsutil reparsepoint delete` on a real directory errors "not empty". The guard must detect
+  this case and skip fsutil, removing the real copy via `git worktree remove` instead.
+
+### Solution or Pattern
+
+Junction-safe teardown sequence (per L0 rule 1.15):
+
+1. Capture shared node_modules dir count: `(Get-ChildItem <shared>/node_modules).Count`.
+2. For each worktree to remove:
+   a. Attempt `fsutil reparsepoint delete "<wt>\node_modules"`.
+   b. If it errors "not empty" -> real copy (not a junction); skip fsutil, proceed to step c.
+   c. Verify the shared node_modules count is UNCHANGED. ABORT if count changed.
+   d. `git worktree remove <wt>` (now safe; junction already gone or real copy will be removed).
+3. After all removals: `git worktree prune`.
+
+Never run `Remove-Item -Recurse` or `git worktree remove` before the junction is confirmed deleted.
+
+### File References
+- L0 rule 1.15 (`C:/Projects/CLAUDE.md`)
+- `[[feedback-never-remove-item-recurse-on-junction]]`
+
+### Key Takeaway
+
+Capture the shared node_modules count BEFORE, delete each junction with fsutil, re-verify the
+count is UNCHANGED (abort if changed), THEN git worktree remove. If fsutil errors "not empty",
+the entry is a real copy; skip fsutil and remove directly.
+
+---
+
+**Last Updated:** June 8, 2026 (AGY autonomy pattern, Vercel OOM fix, Opus-first review discipline, junction-safe teardown)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); prior totals not re-tallied.
+**Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
+**Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
