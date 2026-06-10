@@ -43,7 +43,10 @@ describe('matrix options evidence library helpers', () => {
     // 355 P28 rows retag jurisdiction BC_provincial -> BC and their candidate_group_id suffix
     // __BC_provincial -> __BC; 4 of those normalized groups (arsenic_inorganic hh-food rfd+sf,
     // benzo_a_pyrene hh-direct+hh-food sf) MERGE into pre-existing identical-value __BC groups.
-    expect(view.valueGroups).toHaveLength(1596);
+    // 2026-06-10: +1 (1596 -> 1597) -- US EPA IR_food general candidate (needs_review):
+    // pv-epa-2000-ir-food-general-us adds candidate_group_id
+    // human-health-food__generic__IR_food_kg_per_day__US_federal (new group, not shared).
+    expect(view.valueGroups).toHaveLength(1597);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -52,13 +55,15 @@ describe('matrix options evidence library helpers', () => {
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
-    expect(view.audit.values.pendingSourceLocator).toBe(372);
+    // 2026-06-10: +1 US EPA IR_food general candidate (needs_review / pending_source_locator) = 373.
+    expect(view.audit.values.pendingSourceLocator).toBe(373);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
-    expect(view.audit.values.availableOptions).toBe(1582);
+    // 2026-06-10: +1 US EPA IR_food general candidate (available_option) = 1583.
+    expect(view.audit.values.availableOptions).toBe(1583);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);

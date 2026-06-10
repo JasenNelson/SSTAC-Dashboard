@@ -4425,5 +4425,72 @@
       "exposure factor"
     ],
     "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
+  },
+  {
+    "parameter_value_id": "pv-epa-2000-ir-food-general-us",
+    "substance_key": "generic",
+    "pathway": "human-health-food",
+    "input_key": "IR_food_kg_per_day",
+    "display_name": "Fish ingestion rate - general adult population (US EPA 2000 AWQC default)",
+    "value": 0.0175,
+    "unit": "kg/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-epa-2000-awqc-human-health"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA 2000 AWQC general adult population fish ingestion rate (17.5 g/day). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
+    "evidence_items": [
+      {
+        "source_id": "src-epa-2000-awqc-human-health",
+        "locator": "EPA 2000 AWQC Human Health Methodology (general population fish ingestion rate)",
+        "value_text": "general adult population: 17.5 g/day = 0.0175 kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-sonnet-4-6",
+        "extracted_at": "2026-06-10",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "US EPA 2000 AWQC default general population adult fish ingestion rate; pending direct-source verification. g/day converted to kg/day (base calculator unit IR_food_kg_per_day).",
+        "evidence_id": "ev-pv-epa-2000-ir-food-general-us-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA 2000 AWQC default adult fish consumption rate (general population), 17.5 g/day. Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2000-12-31",
+    "source_relationships": [
+      {
+        "source_id": "src-epa-2000-awqc-human-health",
+        "role": "canonical_candidate",
+        "note": "EPA 2000 AWQC is the cited source for this US general-population fish-ingestion rate."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "general adult"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "food web",
+      "food ingestion",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__US_federal"
   }
 ]
