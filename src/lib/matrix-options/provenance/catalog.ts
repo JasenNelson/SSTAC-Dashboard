@@ -58,6 +58,17 @@ export function getParameterValueRecord(
   );
 }
 
+// Resolve a parameter value by its EXACT id. Needed when a single record must be
+// identified within a multi-candidate group (e.g. a frame-default seed citing one
+// of several rows that share substance_key/pathway/input_key).
+export function getParameterValueRecordById(
+  parameterValueId: string,
+): ParameterValueRecord | undefined {
+  return PARAMETER_VALUE_RECORDS.find(
+    (record) => record.parameter_value_id === parameterValueId,
+  );
+}
+
 export function getParameterValueRecordsForSubstance(
   substanceKey: string,
   pathway: CatalogPathway,

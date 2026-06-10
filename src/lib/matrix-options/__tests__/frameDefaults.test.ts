@@ -106,26 +106,41 @@ const APPROVED_IR_RECORD = makeRecord({
   candidate_group_id: 'cg-ir-food-hh',
   qa_status: 'approved',
   jurisdiction: 'general',
+  source_ids: ['src-test-001'],
 });
 
+// Synthetic source seam for validateFrameDefaultProfiles (so the profile's
+// sourceId resolves without coupling tests to the live catalog).
+const TEST_SOURCES = [
+  { source_id: 'src-test-001' },
+] as unknown as Parameters<typeof validateFrameDefaultProfiles>[2];
+
 // ---------------------------------------------------------------------------
-// 1. Empty-table invariants
+// 1. Live-table invariants (C-BC: the table now has exactly one row)
 // ---------------------------------------------------------------------------
 
-describe('FRAME_DEFAULT_PROFILES empty-table invariants', () => {
-  it('FRAME_DEFAULT_PROFILES is an empty array', () => {
-    expect(FRAME_DEFAULT_PROFILES).toEqual([]);
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(0);
+describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
+  it('has exactly the C-BC row (bc-protocol1-v5-dra + human-health-food)', () => {
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(1);
+    const row = FRAME_DEFAULT_PROFILES[0];
+    expect(row.frameId).toBe('bc-protocol1-v5-dra');
+    expect(row.pathway).toBe('human-health-food');
+    expect(row.defaults[0].parameterValueId).toBe(
+      'pv-wlrs-2023-ir-food-recreational-bc',
+    );
   });
 
-  it('validateFrameDefaultProfiles() returns [] against the live empty table', () => {
+  it('validateFrameDefaultProfiles() returns [] against the live table', () => {
+    // The real C-BC row must structurally validate against the live catalog +
+    // sources (resolves, subset, generic, kg/day, candidate_group match).
     const errors = validateFrameDefaultProfiles();
     expect(errors).toEqual([]);
   });
 
-  it('getFrameDefaults on a non-unsupported frame/pathway returns [] (no profile rows)', () => {
-    // bc-protocol1-v5-dra + human-health-food is needs_review (not unsupported).
-    const results = getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food');
+  it('getFrameDefaults with no profile row for the (frame, pathway) returns []', () => {
+    const results = getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      profiles: [],
+    });
     expect(results).toEqual([]);
   });
 });
@@ -450,8 +465,46 @@ describe('getFrameDefaults: no matching profile row', () => {
 describe('validateFrameDefaultProfiles', () => {
   it('a fully-valid synthetic profile returns no errors', () => {
     const profile = makeProfile();
-    const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [APPROVED_IR_RECORD],
+      TEST_SOURCES,
+    );
     expect(errors).toEqual([]);
+  });
+
+  it('sourceId that does not resolve to a catalog source -> error', () => {
+    const profile = makeProfile({ sourceIds: ['src-does-not-exist'] });
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [APPROVED_IR_RECORD],
+      TEST_SOURCES,
+    );
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /does not resolve to a catalog source/i.test(e))).toBe(
+      true,
+    );
+  });
+
+  it('sourceId not in the cited record source_ids -> error', () => {
+    // src-test-001 resolves, but the record does not claim it.
+    const record = makeRecord({
+      parameter_value_id: 'pvid-test-ir',
+      source_ids: ['src-other'],
+    });
+    const profile = makeProfile();
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [record],
+      [
+        { source_id: 'src-test-001' },
+        { source_id: 'src-other' },
+      ] as unknown as Parameters<typeof validateFrameDefaultProfiles>[2],
+    );
+    expect(errors.length).toBeGreaterThan(0);
+    expect(
+      errors.some((e) => /not in the cited record source_ids/i.test(e)),
+    ).toBe(true);
   });
 
   it('duplicate (frameId, pathway) pair -> error', () => {

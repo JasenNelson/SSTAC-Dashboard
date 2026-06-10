@@ -1,5 +1,5 @@
 import React from 'react';
-import { describe, it, expect, vi } from 'vitest';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 vi.mock('@/components/MathRenderer', () => ({
@@ -8,10 +8,47 @@ vi.mock('@/components/MathRenderer', () => ({
   ),
 }));
 
+// Mock ONLY the active-default resolver so the calculator's frame-seeding is
+// deterministic (and decoupled from the live catalog). Default: no active default
+// (the calculator opens on the unsourced baseline), preserving the pre-C-BC tests.
+// The C-BC block below overrides it with an active 0.111 seed.
+vi.mock('@/lib/matrix-options/frameDefaults', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/lib/matrix-options/frameDefaults')>();
+  return { ...actual, getActiveFrameDefaults: vi.fn(() => []) };
+});
+
 import HHFoodWebCalculator from '../HHFoodWebCalculator';
-import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
+import {
+  REGULATORY_FRAME_IDS,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
+import { getActiveFrameDefaults } from '@/lib/matrix-options/frameDefaults';
+
+const mockGetActiveFrameDefaults = vi.mocked(getActiveFrameDefaults);
+
+// Build an active WLRS IR frame default (what getActiveFrameDefaults returns once
+// the BC frame is selected and the WLRS recreational value is promoted).
+function activeWlrsIr() {
+  return [
+    {
+      inputKey: 'IR_food_kg_per_day',
+      parameterValueId: 'pv-wlrs-2023-ir-food-recreational-bc',
+      candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      status: 'active' as const,
+      value: 0.111,
+      unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
 
 describe('HHFoodWebCalculator', () => {
+  beforeEach(() => {
+    mockGetActiveFrameDefaults.mockReturnValue([]);
+  });
+
   it('renders a functioning Human Health food-web calculator', () => {
     render(
       <HHFoodWebCalculator
@@ -105,5 +142,110 @@ describe('HHFoodWebCalculator', () => {
       expect(baselineMentions).toBe(1);
       unmount();
     }
+  });
+});
+
+describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
+  beforeEach(() => {
+    mockGetActiveFrameDefaults.mockImplementation((frameId) =>
+      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIr() : [],
+    );
+  });
+
+  function renderBc(
+    jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra',
+  ) {
+    return render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction={jurisdiction}
+      />,
+    );
+  }
+
+  it('opens on the seeded 0.111 (lazy seed, no 0.142 flash) with the frame-default label', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    expect(input.value).toBe('0.111');
+    expect(
+      screen.getByTestId('hh-food-ir-frame-default-label'),
+    ).toHaveTextContent(/Frame default 0\.111 kg\/day/);
+  });
+
+  it('attributes the seeded IR to the WLRS source in the provenance panel', () => {
+    renderBc();
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    // The IR value is now an approved source-backed default (not a scaffold):
+    // at least one approved value appears once the WLRS IR is attributed.
+    expect(panel).not.toHaveTextContent(/0 approved/);
+  });
+
+  it('a user edit drops the attribution and shows the reset button', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-food-ir-reset-to-frame-default')).toBeNull();
+    fireEvent.change(input, { target: { value: '0.2' } });
+    expect(input.value).toBe('0.2');
+    expect(
+      screen.getByTestId('hh-food-ir-reset-to-frame-default'),
+    ).toBeInTheDocument();
+  });
+
+  it('reset-to-frame-default restores 0.111 and hides the button', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '0.388' } });
+    fireEvent.click(screen.getByTestId('hh-food-ir-reset-to-frame-default'));
+    expect(input.value).toBe('0.111');
+    expect(screen.queryByTestId('hh-food-ir-reset-to-frame-default')).toBeNull();
+  });
+
+  it('hand-typing 0.111 attributes (value match) and shows no reset button', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '0.2' } });
+    expect(
+      screen.getByTestId('hh-food-ir-reset-to-frame-default'),
+    ).toBeInTheDocument();
+    fireEvent.change(input, { target: { value: '0.111' } });
+    expect(screen.queryByTestId('hh-food-ir-reset-to-frame-default')).toBeNull();
+  });
+
+  it('a non-BC frame seeds nothing (baseline 0.142, no label)', () => {
+    renderBc('us-epa-usace-sediment');
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    expect(input.value).toBe('0.142');
+    expect(screen.queryByTestId('hh-food-ir-frame-default-label')).toBeNull();
+  });
+
+  it('switching BC -> a no-default frame resets the seed to 0.142', () => {
+    const { rerender } = renderBc();
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.142');
+  });
+
+  it('a deliberate off-default edit survives a frame switch (do not clobber)', () => {
+    const { rerender } = renderBc();
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '0.25' } });
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.25');
   });
 });

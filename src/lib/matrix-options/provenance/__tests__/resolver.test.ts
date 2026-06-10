@@ -24,6 +24,7 @@ const mockGetSourceRecord = vi.fn();
 const mockGetEquationRecord = vi.fn();
 const mockGetPathwayEquationRecords = vi.fn();
 const mockGetParameterValueRecord = vi.fn();
+const mockGetParameterValueRecordById = vi.fn();
 
 vi.mock('../catalog', () => ({
   getSourceRecord: (id: string) => mockGetSourceRecord(id),
@@ -31,6 +32,8 @@ vi.mock('../catalog', () => ({
   getPathwayEquationRecords: (p: string) => mockGetPathwayEquationRecords(p),
   getParameterValueRecord: (s: string, p: string, i: string) =>
     mockGetParameterValueRecord(s, p, i),
+  getParameterValueRecordById: (id: string) =>
+    mockGetParameterValueRecordById(id),
 }));
 
 function source(id: string): SourceRecord {
@@ -111,6 +114,7 @@ beforeEach(() => {
   mockGetEquationRecord.mockReset();
   mockGetPathwayEquationRecords.mockReset();
   mockGetParameterValueRecord.mockReset();
+  mockGetParameterValueRecordById.mockReset();
 });
 
 describe('resolveSourceRecords', () => {
@@ -185,6 +189,39 @@ describe('resolveProvenanceRows -- catalog lookup gating', () => {
       'lead',
       'human-health-direct',
       'rfd',
+    );
+  });
+
+  it('resolves by EXACT parameter_value_id when present (disambiguates a candidate group)', () => {
+    // Two records share substance/pathway/input but differ by id + value. The
+    // id-based lookup must return the EXACT cited record, not the ambiguous
+    // (substance, pathway, input) .find() that getParameterValueRecord would do.
+    const recreational = paramRecord({
+      parameter_value_id: 'pv-wlrs-2023-ir-food-recreational-bc',
+      value: 0.111,
+      source_ids: ['src-wlrs'],
+    });
+    mockGetParameterValueRecordById.mockReturnValue(recreational);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    const used: CalculatorUsedValue[] = [
+      {
+        input_key: 'IR_food_kg_per_day',
+        label: 'Food ingestion',
+        value: 0.111,
+        role: 'source-backed default',
+        pathway: 'human-health-food',
+        substance_key: 'generic',
+        parameter_value_id: 'pv-wlrs-2023-ir-food-recreational-bc',
+      },
+    ];
+    const [row] = resolveProvenanceRows(used);
+    // id lookup used; the ambiguous substance/pathway lookup NOT used.
+    expect(mockGetParameterValueRecordById).toHaveBeenCalledWith(
+      'pv-wlrs-2023-ir-food-recreational-bc',
+    );
+    expect(mockGetParameterValueRecord).not.toHaveBeenCalled();
+    expect(row.catalog_record?.parameter_value_id).toBe(
+      'pv-wlrs-2023-ir-food-recreational-bc',
     );
   });
 });
