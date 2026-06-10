@@ -178,6 +178,17 @@ describe('getEquation dispatch surface', () => {
     const directOut = humanHealthFoodWeb(HH_FOOD_FIXTURE);
     expect(dispatchOut.sedS).toBeCloseTo(directOut.sedS, 10);
   });
+
+  it('A-11: getEquation throws ReferenceError for a pathway with no baseline function registered', () => {
+    // Cast required: TypeScript rejects unknown pathways at compile time.
+    // The runtime guard at ~line 330 fires when BASELINE_FUNCTIONS[pathway] is undefined.
+    expect(() =>
+      getEquation('bc-protocol1-v5-dra', 'nonexistent-pathway' as never),
+    ).toThrow(ReferenceError);
+    expect(() =>
+      getEquation('bc-protocol1-v5-dra', 'nonexistent-pathway' as never),
+    ).toThrow(/no baseline function registered for pathway/);
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -307,6 +318,51 @@ describe('FRAME_VARIANTS table integrity', () => {
       sourceIds: [],
     } as FrameVariantRow;
     expect(validateFrameVariants([cleanRow])).toEqual([]);
+  });
+
+  it('B-13: validateFrameVariants flags two rows sharing (frameId, pathway)', () => {
+    const row1 = {
+      frameId: 'ccme-sediment-quality',
+      pathway: 'eco-direct-eqp',
+      variant: 'baseline',
+      note: 'first row',
+      sourceIds: [],
+    } as FrameVariantRow;
+    const row2 = {
+      frameId: 'ccme-sediment-quality',
+      pathway: 'eco-direct-eqp',
+      variant: 'baseline',
+      note: 'duplicate row',
+      sourceIds: [],
+    } as FrameVariantRow;
+    const errors = validateFrameVariants([row1, row2]);
+    expect(errors.some((e) => /Duplicate \(frameId, pathway\) pair/.test(e))).toBe(true);
+  });
+
+  it('B-14: validateFrameVariants flags a row whose variant is unregistered', () => {
+    const row = {
+      frameId: 'ccme-sediment-quality',
+      pathway: 'eco-direct-eqp',
+      variant: 'unregistered-variant-xyz',
+      note: 'synthetic unregistered variant',
+      sourceIds: [],
+    } as unknown as FrameVariantRow;
+    const errors = validateFrameVariants([row]);
+    expect(errors.some((e) => /has no registered function for pathway/.test(e))).toBe(true);
+  });
+
+  it('B-15: validateFrameVariants flags a non-baseline variant row with empty sourceIds', () => {
+    // variant 'baseline' bypasses the sourceIds check; use a non-baseline string.
+    // The validator checks variant !== 'baseline' && sourceIds.length === 0.
+    const row = {
+      frameId: 'ccme-sediment-quality',
+      pathway: 'eco-food-bsaf',
+      variant: 'ccme-bsaf-v1',
+      note: 'synthetic non-baseline variant with no sources',
+      sourceIds: [],
+    } as unknown as FrameVariantRow;
+    const errors = validateFrameVariants([row]);
+    expect(errors.some((e) => /has empty sourceIds/.test(e))).toBe(true);
   });
 });
 

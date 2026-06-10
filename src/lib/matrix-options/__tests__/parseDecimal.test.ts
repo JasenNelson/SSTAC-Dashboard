@@ -95,4 +95,12 @@ describe('parseDecimalInput', () => {
     });
     expect(parseDecimalInput('1e6')).toEqual({ value: 1_000_000, state: 'valid' });
   });
+
+  it('returns invalid state for out-of-range exponents that produce Infinity', () => {
+    // '1e999' passes the regex (valid decimal-scientific form) but
+    // Number('1e999') === Infinity, which is not finite -> { value: NaN, state: 'invalid' }.
+    expect(parseDecimalInput('1e999')).toEqual({ value: Number.NaN, state: 'invalid' });
+    // Same for large negative exponent: Number('-1e9999') === -Infinity.
+    expect(parseDecimalInput('-1e9999')).toEqual({ value: Number.NaN, state: 'invalid' });
+  });
 });

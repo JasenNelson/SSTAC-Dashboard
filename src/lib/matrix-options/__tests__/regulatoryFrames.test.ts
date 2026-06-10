@@ -8,6 +8,8 @@ import {
   coerceRegulatoryFrameId,
   getPathwayApplicability,
   getRegulatoryFrame,
+  pathwayApplicabilityLabel,
+  pathwayApplicabilityTone,
   regulatoryFrameEvidenceFilter,
 } from '../regulatoryFrames';
 
@@ -73,5 +75,19 @@ describe('regulatoryFrames', () => {
     expect(REGULATORY_FRAMES.map((frame) => frame.id)).toEqual(
       REGULATORY_FRAME_IDS,
     );
+  });
+
+  it('pathwayApplicabilityLabel returns the correct label for all 4 statuses', () => {
+    expect(pathwayApplicabilityLabel('calculation_ready')).toBe('Calculation-ready');
+    expect(pathwayApplicabilityLabel('needs_review')).toBe('Needs review');
+    expect(pathwayApplicabilityLabel('reference_only')).toBe('Reference-only');
+    expect(pathwayApplicabilityLabel('unsupported')).toBe('Unsupported');
+  });
+
+  it('pathwayApplicabilityTone returns the correct tone token for all 4 statuses', () => {
+    expect(pathwayApplicabilityTone('calculation_ready')).toBe('emerald');
+    expect(pathwayApplicabilityTone('needs_review')).toBe('amber');
+    expect(pathwayApplicabilityTone('reference_only')).toBe('sky');
+    expect(pathwayApplicabilityTone('unsupported')).toBe('slate');
   });
 });

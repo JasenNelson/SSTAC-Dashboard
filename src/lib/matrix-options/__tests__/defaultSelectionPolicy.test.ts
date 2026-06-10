@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import {
   DEFAULT_SELECTION_READ_ONLY_INVARIANTS,
   buildDefaultSelectionPolicyDecision,
+  getFrameSeedCandidateEligibility,
   isUnitBlocked,
   type DefaultSelectionPolicyDecision,
 } from '../defaultSelectionPolicy';
@@ -182,5 +183,56 @@ describe('matrix options default selection policy', () => {
     expect(isUnitBlocked(true, 2, true)).toBe(false);
     // never blocks: no recommendation to withhold
     expect(isUnitBlocked(false, 2, false)).toBe(false);
+  });
+
+  it('DSP-1: getFrameSeedCandidateEligibility returns eligible + eligible_pending_approval for pv-hc-bap-hh-food-sf', () => {
+    const record = PARAMETER_VALUE_RECORDS.find(
+      (r) => r.parameter_value_id === 'pv-hc-bap-hh-food-sf',
+    );
+    expect(record).toBeDefined();
+    const result = getFrameSeedCandidateEligibility(
+      'bc-protocol1-v5-dra',
+      'human-health-food',
+      record!,
+    );
+    expect(result.eligible).toBe(true);
+    expect(result.disposition).toBe('eligible_pending_approval');
+  });
+
+  it('DSP-2: getFrameSeedCandidateEligibility returns not eligible + blocked_policy_compilation for pv-p28-bap-hh-food-slope', () => {
+    const record = PARAMETER_VALUE_RECORDS.find(
+      (r) => r.parameter_value_id === 'pv-p28-bap-hh-food-slope',
+    );
+    expect(record).toBeDefined();
+    const result = getFrameSeedCandidateEligibility(
+      'bc-protocol1-v5-dra',
+      'human-health-food',
+      record!,
+    );
+    expect(result.eligible).toBe(false);
+    expect(result.disposition).toBe('blocked_policy_compilation');
+  });
+
+  it('DSP-3: buildDefaultSelectionPolicyDecision returns pathway_unsupported for bc-csr-sediment-numerical + eco-food-bsaf', () => {
+    // eco-food-bsaf is marked unsupported in the bc-csr-sediment-numerical frame.
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'bc-csr-sediment-numerical',
+      pathway: 'eco-food-bsaf',
+      substanceKey: 'benzo_a_pyrene',
+      inputKey: 'BSAF_loc_freshwater',
+    });
+    expect(decision.status).toBe('pathway_unsupported');
+  });
+
+  it('DSP-4: buildDefaultSelectionPolicyDecision returns keep_current_default_no_eligible_candidate when zero eligible candidates exist', () => {
+    // ccme-sediment-quality + eco-direct-eqp + benzo_a_pyrene + logKow has no
+    // eligible (approved, direct-source) candidates -- confirmed by probe script.
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'ccme-sediment-quality',
+      pathway: 'eco-direct-eqp',
+      substanceKey: 'benzo_a_pyrene',
+      inputKey: 'logKow',
+    });
+    expect(decision.status).toBe('keep_current_default_no_eligible_candidate');
   });
 });

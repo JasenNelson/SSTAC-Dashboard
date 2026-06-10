@@ -623,4 +623,78 @@ describe('humanHealthFoodWeb', () => {
     expect(result.sedS).toBeCloseTo(0.000243, 6);
     expect(result.driver).toBe('non-cancer');
   });
+
+  it('D-1: fLipid above FLIPID_MAX emits a screening warning but does not block the calc', () => {
+    // FLIPID_MAX = 0.15; use 0.20 to exceed it.
+    // The fLipid-out-of-range branch is a screening WARNING, not a block (derivations.ts:
+    // "fLipid outside [0.01, 0.15] -> screening warning, not blocked"). foc 0.02 is valid,
+    // so blocked must stay false and a finite sedS is still produced.
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.20,
+      foc: 0.02,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-halogenated',
+    });
+    // Warning must reference the screening range.
+    expect(result.warnings.some((w) => /outside the typical screening range/.test(w))).toBe(true);
+    // Calc is NOT blocked (the load-bearing assertion: a blocked result can also have a
+    // finite sedS, so blocked===false is what proves the warning-not-block behavior).
+    expect(result.blocked).toBe(false);
+    expect(Number.isFinite(result.sedS)).toBe(true);
+  });
+
+  it('D-2: non-organic-PAH class in coastal-marine uses M_eco = 1 and emits a warning', () => {
+    // Section 8.2 rule: M_eco > 1 applies only to organic-PAH.
+    // coastal-marine + organic-halogenated -> M_eco = 1 + warning.
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'coastal-marine',
+      contaminantClass: 'organic-halogenated',
+    });
+    expect(result.M_eco).toBe(1);
+    // Warning must mention the class restriction.
+    expect(
+      result.warnings.some((w) => /organic-PAH class only/.test(w)),
+    ).toBe(true);
+  });
+
+  it('D-3: rfd_oral null with a non-null slope factor -> cancer driver, non-cancer tissue null, warning', () => {
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: null,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-halogenated',
+    });
+    expect(result.driver).toBe('cancer');
+    expect(result.nonCancerTissue_mg_per_kg).toBeNull();
+    // The non-cancer-not-available warning must be present.
+    expect(
+      result.warnings.some((w) => /Non-cancer endpoint not available/.test(w)),
+    ).toBe(true);
+  });
 });
