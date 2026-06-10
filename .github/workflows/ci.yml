@@ -49,7 +49,14 @@ jobs:
       
       - name: Run unit tests with coverage
         run: npm run test:ci
-      
+        # vitest.config already pins maxWorkers=1 on CI, but on Node 24 the single
+        # v8-coverage worker exceeds the default V8 old-space heap and the forks pool
+        # crashes with `write EPIPE` (worker OOM) -- intermittently, as the suite sits
+        # near the ceiling (observed reproducibly on PR #290, 2026-06-10). ubuntu-latest
+        # has 16GB RAM; raise the worker heap so it stays under physical memory.
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v6
