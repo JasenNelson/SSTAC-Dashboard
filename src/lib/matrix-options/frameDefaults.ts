@@ -31,8 +31,8 @@
 import type { RegulatoryFrameId } from './regulatoryFrames';
 import { getPathwayApplicability } from './regulatoryFrames';
 import type { ProvenancePathway } from './provenance/types';
-import type { ParameterValueRecord } from './provenance/types';
-import { PARAMETER_VALUE_RECORDS } from './provenance/catalog';
+import type { ParameterValueRecord, SourceRecord } from './provenance/types';
+import { PARAMETER_VALUE_RECORDS, SOURCE_RECORDS } from './provenance/catalog';
 import { getFrameSeedCandidateEligibility } from './defaultSelectionPolicy';
 
 // ---------------------------------------------------------------------------
@@ -89,18 +89,43 @@ export interface FrameDefaultProfileRow {
   readonly pathway: ProvenancePathway;
   /** Brief plain-ASCII note for UI surfacing. No markdown. */
   readonly note: string;
-  /** catalog_sources UUIDs (Stream D). Non-empty required for every row. */
+  /**
+   * The cited catalog source(s). Use the in-repo catalog_sources `source_id`
+   * (resolvable via getSourceRecord) -- or a Stream D Supabase UUID once one
+   * exists. Non-empty required, every id must resolve to a real source, and
+   * the set must be a subset of the cited record's own source_ids
+   * (validateFrameDefaultProfiles enforces all three).
+   */
   readonly sourceIds: readonly string[];
   /** The cited per-input defaults for this frame + pathway. Non-empty required. */
   readonly defaults: readonly FrameDefaultSeed[];
 }
 
 // ---------------------------------------------------------------------------
-// FRAME_DEFAULT_PROFILES: the canonical seed table. STARTS EMPTY.
-// First real row lands with C-BC (BC Protocol 1 HH-food seeded from the
-// owner-PROMOTED WLRS recreational rate). Until then, empty -> no seeding.
+// FRAME_DEFAULT_PROFILES: the canonical seed table.
+// Tier 2 protected (see CLAUDE.md) now that it has a real entry.
+// C-BC: BC Protocol 1 v5 DRA HH-food seeds IR_food from the owner-PROMOTED
+// (PR #285, HITL) BC WLRS 2023 recreational fish-ingestion rate.
 // ---------------------------------------------------------------------------
-export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [];
+export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
+  {
+    frameId: 'bc-protocol1-v5-dra',
+    pathway: 'human-health-food',
+    note:
+      'BC WLRS 2023 recreational fish-ingestion rate (0.111 kg/day). ' +
+      'Owner-promoted, user-adjustable seed for the BC Protocol 1 frame.',
+    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of
+    // the cited record source_ids). No Supabase UUID exists for this source yet.
+    sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
+    defaults: [
+      {
+        inputKey: 'IR_food_kg_per_day',
+        parameterValueId: 'pv-wlrs-2023-ir-food-recreational-bc',
+        candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      },
+    ],
+  },
+];
 
 // ---------------------------------------------------------------------------
 // Resolution.
@@ -303,8 +328,10 @@ export function getActiveFrameDefaults(
 export function validateFrameDefaultProfiles(
   profiles: readonly FrameDefaultProfileRow[] = FRAME_DEFAULT_PROFILES,
   records: readonly ParameterValueRecord[] = PARAMETER_VALUE_RECORDS,
+  sources: readonly SourceRecord[] = SOURCE_RECORDS,
 ): string[] {
   const errors: string[] = [];
+  const knownSourceIds = new Set(sources.map((s) => s.source_id));
   const seenKeys = new Set<string>();
   profiles.forEach((row, i) => {
     const at = 'Index ' + i + ' (' + row.frameId + ', ' + row.pathway + '): ';
@@ -317,6 +344,13 @@ export function validateFrameDefaultProfiles(
     if (row.sourceIds.length === 0) {
       errors.push(at + 'sourceIds must be non-empty (every profile cites catalog_sources).');
     }
+    // Every cited sourceId must resolve to a real catalog source (no dangling /
+    // placeholder ids). The per-seed subset check below ties them to the record.
+    row.sourceIds.forEach((sid) => {
+      if (!knownSourceIds.has(sid)) {
+        errors.push(at + 'sourceId "' + sid + '" does not resolve to a catalog source.');
+      }
+    });
     if (row.defaults.length === 0) {
       errors.push(at + 'defaults must be non-empty.');
     }
@@ -351,6 +385,16 @@ export function validateFrameDefaultProfiles(
           dat + 'cited record unit "' + record.unit + '" must be the canonical seed unit "' + expectedUnit + '".',
         );
       }
+      // The profile must not cite a source the record itself does not claim:
+      // every profile sourceId has to be in the cited record's own source_ids.
+      const recordSourceIds = new Set(record.source_ids ?? []);
+      row.sourceIds.forEach((sid) => {
+        if (!recordSourceIds.has(sid)) {
+          errors.push(
+            dat + 'profile sourceId "' + sid + '" is not in the cited record source_ids.',
+          );
+        }
+      });
     });
   });
   return errors;

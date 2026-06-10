@@ -6,6 +6,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
+import { getActiveFrameDefaults } from '@/lib/matrix-options/frameDefaults';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type {
   Ecosystem,
@@ -30,6 +31,29 @@ const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'estuarine', label: 'Estuarine' },
   { value: 'coastal-marine', label: 'Coastal-Marine' },
 ];
+
+// Unsourced calculator baseline IR, used when the selected frame has no active
+// frame-default (C1 may later source/replace this; out of C-BC scope).
+const BASELINE_IR_KG_PER_DAY = '0.142';
+
+// The active frame-default IR_food seed for a jurisdiction (or null when the
+// frame has no active default for the HH food-web pathway).
+function activeIrDefaultFor(jurisdiction: Jurisdiction) {
+  return (
+    getActiveFrameDefaults(jurisdiction, 'human-health-food').find(
+      (d) => d.inputKey === 'IR_food_kg_per_day',
+    ) ?? null
+  );
+}
+
+// The string IR value to seed for a jurisdiction: the active frame default,
+// else the baseline. Deterministic (static catalog) -> SSR == CSR.
+function seedIrFor(jurisdiction: Jurisdiction): string {
+  const active = activeIrDefaultFor(jurisdiction);
+  return active && active.value != null
+    ? String(active.value)
+    : BASELINE_IR_KG_PER_DAY;
+}
 
 export interface HHFoodWebCalculatorProps {
   substanceKey?: string;
@@ -64,7 +88,12 @@ export default function HHFoodWebCalculator({
   const substance = findSubstance(substanceKey);
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
   const [bwInput, setBwInput] = useState('70');
-  const [foodIrInput, setFoodIrInput] = useState('0.142');
+  // LAZY seed from the active frame default for the initial frame (no 0.142 flash;
+  // SSR == CSR because the catalog is static). The frame-switch re-seed happens
+  // DURING render (below) -- not in an effect -- so the new frame never paints with
+  // the previous frame's IR.
+  const [foodIrInput, setFoodIrInput] = useState(() => seedIrFor(jurisdiction));
+  const [prevJurisdiction, setPrevJurisdiction] = useState(jurisdiction);
   const [fLipidPercent, setFLipidPercent] = useState(5);
   const [focPercent, setFocPercent] = useState(2);
   const [targetRiskInput, setTargetRiskInput] = useState('0.00001');
@@ -107,6 +136,31 @@ export default function HHFoodWebCalculator({
     );
     setBaOralInput(next ? String(next.ba_oral) : '1');
   }, [substanceKey]);
+
+  // Re-seed IR_food on frame change (C-BC), DURING render (React "adjust state when
+  // a prop changes" pattern) so the new frame never paints with the previous frame's
+  // IR. Re-seed only when the field still holds the PREVIOUS frame's seed (the user
+  // has NOT moved it off-default); otherwise preserve the user's edit. The guard makes
+  // this run once per jurisdiction change (no render loop).
+  if (jurisdiction !== prevJurisdiction) {
+    const oldSeed = seedIrFor(prevJurisdiction);
+    const newSeed = seedIrFor(jurisdiction);
+    setPrevJurisdiction(jurisdiction);
+    if (foodIrInput === oldSeed) {
+      setFoodIrInput(newSeed);
+    }
+  }
+
+  // The active frame-default IR for the current frame (drives the label, the
+  // reset button, and provenance attribution -- all pure functions of render state).
+  const activeIrDefault = useMemo(
+    () => activeIrDefaultFor(jurisdiction),
+    [jurisdiction],
+  );
+  const irIsFrameDefault =
+    activeIrDefault != null &&
+    activeIrDefault.value != null &&
+    foodIrInput === String(activeIrDefault.value);
 
   // Resolve the equation for the selected regulatory frame (empty FRAME_VARIANTS
   // -> baseline + usedBaselineFallback: true). Call site below is unchanged.
@@ -222,7 +276,17 @@ export default function HHFoodWebCalculator({
         label: 'Food ingestion',
         value: foodIrInput,
         unit: 'kg/day',
-        role: 'screening assumption',
+        // When the field holds the active frame default, attribute it to the EXACT
+        // cited catalog record (by id) so the panel shows its source/evidence.
+        // Otherwise it is a plain user-adjustable screening assumption.
+        ...(irIsFrameDefault && activeIrDefault
+          ? {
+              role: 'source-backed default' as const,
+              pathway: 'human-health-food' as const,
+              substance_key: 'generic',
+              parameter_value_id: activeIrDefault.parameterValueId,
+            }
+          : { role: 'screening assumption' as const }),
       },
       {
         input_key: 'targetRisk',
@@ -258,6 +322,7 @@ export default function HHFoodWebCalculator({
       },
     ],
     [
+      activeIrDefault,
       baOralInput,
       bsafInput,
       bwInput,
@@ -266,6 +331,7 @@ export default function HHFoodWebCalculator({
       focPercent,
       foodIrInput,
       hazardQuotientInput,
+      irIsFrameDefault,
       rfdInput,
       slopeInput,
       substanceKey,
@@ -345,8 +411,13 @@ export default function HHFoodWebCalculator({
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Food ingestion (kg/day)
             <input data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            {activeIrDefault && activeIrDefault.value != null && (
+              <p data-testid="hh-food-ir-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
+                Frame default {activeIrDefault.value} kg/day (BC WLRS 2023, recreational). Adjustable.
+              </p>
+            )}
           </label>
-          <div className="flex items-end gap-2">
+          <div className="flex items-end gap-2 flex-wrap">
             <button type="button" onClick={() => setFoodIrInput('0.032')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
               32 g/day
             </button>
@@ -356,6 +427,11 @@ export default function HHFoodWebCalculator({
             <button type="button" onClick={() => setFoodIrInput('0.388')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
               388 g/day
             </button>
+            {activeIrDefault && activeIrDefault.value != null && !irIsFrameDefault && (
+              <button type="button" data-testid="hh-food-ir-reset-to-frame-default" onClick={() => setFoodIrInput(String(activeIrDefault.value))} className="px-2.5 py-2 text-xs rounded-md border border-sky-400 dark:border-sky-600 bg-sky-50 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
+                Reset to frame default
+              </button>
+            )}
           </div>
         </div>
 

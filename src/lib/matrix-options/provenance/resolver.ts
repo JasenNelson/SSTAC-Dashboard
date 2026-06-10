@@ -1,6 +1,7 @@
 import {
   getEquationRecord,
   getParameterValueRecord,
+  getParameterValueRecordById,
   getPathwayEquationRecords,
   getSourceRecord,
 } from './catalog';
@@ -77,8 +78,9 @@ export function resolveProvenanceRows(
   usedValues: CalculatorUsedValue[],
 ): ResolvedProvenanceRow[] {
   return usedValues.map((usedValue) => {
-    const catalogRecord =
-      usedValue.substance_key && usedValue.pathway
+    const catalogRecord = usedValue.parameter_value_id
+      ? getParameterValueRecordById(usedValue.parameter_value_id) ?? null
+      : usedValue.substance_key && usedValue.pathway
         ? getParameterValueRecord(
             usedValue.substance_key,
             usedValue.pathway,

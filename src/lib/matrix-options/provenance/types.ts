@@ -233,6 +233,13 @@ export interface CalculatorUsedValue {
   role: CalculatorValueRole;
   pathway?: ProvenancePathway;
   substance_key?: string;
+  /**
+   * Optional EXACT catalog record id. When set, the resolver attributes this
+   * used value to that specific parameter_values record (by id), bypassing the
+   * ambiguous (substance_key, pathway, input_key) lookup. Used for frame-default
+   * seeds that cite one record within a multi-candidate group.
+   */
+  parameter_value_id?: string;
   note?: string;
 }
 
