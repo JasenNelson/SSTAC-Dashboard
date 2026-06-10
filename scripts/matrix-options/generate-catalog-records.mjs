@@ -173,7 +173,9 @@ function srcLabel(s) {
 function jurisdictionFor(s) {
   if (s.includes('iris')) return 'US_federal';
   if (s.includes('health-canada')) return 'Canada_federal';
-  if (s.includes('protocol-28')) return 'BC_provincial';
+  // 'BC' is the canonical CatalogJurisdiction member; 'BC_provincial' was
+  // off-vocabulary and was normalized out of the catalog 2026-06-09.
+  if (s.includes('protocol-28')) return 'BC';
   return 'general';
 }
 function bcAlignmentFor(s) {

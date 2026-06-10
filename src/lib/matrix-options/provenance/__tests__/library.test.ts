@@ -39,7 +39,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-09: +1 (1599 -> 1600) -- the 3 BC WLRS 2023 fish-ingestion-rate candidates
     // (subsistence/recreational/low-level) share ONE candidate_group_id
     // (human-health-food__generic__IR_food_kg_per_day__BC), so they add 1 slot, not 3.
-    expect(view.valueGroups).toHaveLength(1600);
+    // 2026-06-09: -4 (1600 -> 1596) -- BC_provincial -> BC jurisdiction normalization. The
+    // 355 P28 rows retag jurisdiction BC_provincial -> BC and their candidate_group_id suffix
+    // __BC_provincial -> __BC; 4 of those normalized groups (arsenic_inorganic hh-food rfd+sf,
+    // benzo_a_pyrene hh-direct+hh-food sf) MERGE into pre-existing identical-value __BC groups.
+    expect(view.valueGroups).toHaveLength(1596);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -185,9 +189,10 @@ describe('matrix options evidence library helpers', () => {
       'pv-p28-arsenic-hh-food-rfd',
       'pv-p28-arsenic_inorganic-hh-food-rfd',
     ]);
+    // 2026-06-09: the __BC_provincial group merged into __BC after the
+    // BC_provincial -> BC jurisdiction normalization (identical-value duplicate).
     expect(view.valueGroups.map((group) => group.groupId).sort()).toEqual([
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC',
-      'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__BC_provincial',
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__US_federal',
       'human-health-food__arsenic_inorganic__rfd_oral_mg_per_kg_bw_day__general',
     ]);
