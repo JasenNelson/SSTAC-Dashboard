@@ -4558,5 +4558,70 @@
       "exposure factor"
     ],
     "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-epa-2000-bw-adult-us",
+    "substance_key": "generic",
+    "pathway": "human-health-food",
+    "input_key": "BW_kg",
+    "display_name": "Adult body weight - general adult population (US EPA 2000 AWQC default)",
+    "value": 70,
+    "unit": "kg",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-epa-2000-awqc-human-health"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA 2000 AWQC default adult body weight (70 kg, general adult population). Equation parameter key (Chapter 1, p.1-9) and Section 4.3.1.1 (p.4-19); EPA retained 70 kg for AWQC consistency with IRIS-embedded dose-response factors. Substance-independent exposure factor (substance_key=generic). Pairs with the 0.0175 kg/day (17.5 g/day) general-population fish ingestion rate from the same document. needs_review candidate; not a calculator default.",
+    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. The 70 kg adult body weight is the EPA 2000 AWQC default (general adult); the 2011 Exposure Factors Handbook updated the adult body weight to 80 kg, but EPA's 2015 AWQC update retained 70 kg for consistency with IRIS dose-response factors -- so 70 kg is the matching value for the 0.0175 kg/day ingestion rate from the same 2000 methodology.",
+    "evidence_items": [
+      {
+        "source_id": "src-epa-2000-awqc-human-health",
+        "locator": "Equation parameter key (Chapter 1, p.1-9: 'BW = Human body weight (default = 70 kg for adults)') + Section 4.3.1.1, p.4-19",
+        "value_text": "general adult population: 70 kg",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-sonnet-4-6",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "US EPA 2000 AWQC default adult body weight (70 kg); same document + receptor as the 17.5 g/day fish ingestion rate. Confirmed by direct read of the primary PDF (EPA-822-B-00-004).",
+        "evidence_id": "ev-pv-epa-2000-bw-adult-us-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA 2000 AWQC default adult body weight (70 kg, general population). Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2000-12-31",
+    "source_relationships": [
+      {
+        "source_id": "src-epa-2000-awqc-human-health",
+        "role": "canonical_candidate",
+        "note": "EPA 2000 AWQC is the cited source for this US adult body weight."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "general adult"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "food web",
+      "body weight",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-food__generic__BW_kg__US_federal"
   }
 ]

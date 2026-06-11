@@ -159,20 +159,28 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     frameId: 'us-epa-usace-sediment',
     pathway: 'human-health-food',
     note:
-      'US EPA 2000 AWQC general adult population fish-ingestion rate (0.0175 kg/day = ' +
-      '17.5 g/day). Owner-promoted, user-adjustable seed for the US EPA frame. NOTE: a ' +
-      'general-population receptor (vs the BC frame recreational receptor) -- a deliberate ' +
-      'cross-frame delta, not a like-for-like comparison.',
+      'US EPA 2000 AWQC general adult population, from one methodology (EPA-822-B-00-004): ' +
+      'fish-ingestion rate 0.0175 kg/day (17.5 g/day) + adult body weight 70 kg. ' +
+      'Owner-promoted, user-adjustable seeds for the US EPA frame. NOTE: a general-population ' +
+      'receptor (vs the BC frame recreational receptor) -- a deliberate cross-frame delta.',
     label: 'US EPA 2000 AWQC, general adult population',
-    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of the
-    // cited record source_ids). us-epa-usace-sediment lists US_federal in
-    // eligibleCatalogJurisdictions, so the seed resolves 'active' once promoted.
+    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of BOTH
+    // cited records' source_ids). us-epa-usace-sediment lists US_federal in
+    // eligibleCatalogJurisdictions, so the seeds resolve 'active' once promoted.
     sourceIds: ['src-epa-2000-awqc-human-health'],
     defaults: [
       {
         inputKey: 'IR_food_kg_per_day',
         parameterValueId: 'pv-epa-2000-ir-food-general-us',
         candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__US_federal',
+      },
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-epa-2000-bw-adult-us',
+        candidateGroupId: 'human-health-food__generic__BW_kg__US_federal',
+        // No per-seed label override: the row label "US EPA 2000 AWQC, general adult
+        // population" is already correct for the 70 kg general-adult body weight (unlike
+        // the BC row, where the "recreational" label needed a BW override).
       },
     ],
   },
