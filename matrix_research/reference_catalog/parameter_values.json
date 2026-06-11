@@ -4436,9 +4436,9 @@
     "unit": "kg/day",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-epa-2000-awqc-human-health"
     ],
@@ -4446,8 +4446,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA 2000 AWQC general adult population fish ingestion rate (17.5 g/day). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
+    "applicability": "US EPA 2000 AWQC general adult population fish ingestion rate (17.5 g/day). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-10 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-10 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-epa-2000-awqc-human-health",
@@ -4456,17 +4456,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-sonnet-4-6",
         "extracted_at": "2026-06-10",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-10",
         "note": "US EPA 2000 AWQC default general population adult fish ingestion rate; pending direct-source verification. g/day converted to kg/day (base calculator unit IR_food_kg_per_day).",
         "evidence_id": "ev-pv-epa-2000-ir-food-general-us-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA 2000 AWQC default adult fish consumption rate (general population), 17.5 g/day. Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "US EPA 2000 AWQC default adult fish consumption rate (general population), 17.5 g/day. Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-10 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2000-12-31",
