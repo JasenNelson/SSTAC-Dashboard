@@ -49,7 +49,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: +1 (1597 -> 1598) -- C-3 BC WLRS adult body weight (needs_review):
     // pv-wlrs-2023-bw-adult-bc adds candidate_group_id
     // human-health-food__generic__BW_kg__BC (new group, not shared).
-    expect(view.valueGroups).toHaveLength(1598);
+    // 2026-06-11: +1 (1598 -> 1599) -- C-4 US EPA adult body weight (needs_review):
+    // pv-epa-2000-bw-adult-us adds candidate_group_id
+    // human-health-food__generic__BW_kg__US_federal (new group, not shared).
+    expect(view.valueGroups).toHaveLength(1599);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -64,7 +67,9 @@ describe('matrix options evidence library helpers', () => {
     // -1 -- US EPA general candidate promoted out of pending (C-nonBC, HITL, J. Nelson) = 372.
     // 2026-06-11: +1 -- C-3 BC WLRS adult body weight (pv-wlrs-2023-bw-adult-bc,
     // needs_review / pending_source_locator; promoted out later by owner --apply) = 373.
-    expect(view.audit.values.pendingSourceLocator).toBe(373);
+    // 2026-06-11: +1 -- C-4 US EPA adult body weight (pv-epa-2000-bw-adult-us,
+    // needs_review / pending_source_locator; promoted out later by owner --apply) = 374.
+    expect(view.audit.values.pendingSourceLocator).toBe(374);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -72,7 +77,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
     // 2026-06-10: +1 US EPA IR_food general candidate (available_option) = 1583.
     // 2026-06-11: +1 C-3 BC WLRS adult body weight (available_option) = 1584.
-    expect(view.audit.values.availableOptions).toBe(1584);
+    // 2026-06-11: +1 C-4 US EPA adult body weight (available_option) = 1585.
+    expect(view.audit.values.availableOptions).toBe(1585);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);

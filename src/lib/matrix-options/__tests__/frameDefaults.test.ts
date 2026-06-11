@@ -142,6 +142,14 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     expect(usEpa?.pathway).toBe('human-health-food');
     expect(usEpa?.label).toBe('US EPA 2000 AWQC, general adult population');
     expect(usEpa?.defaults[0].parameterValueId).toBe('pv-epa-2000-ir-food-general-us');
+    // C-4: the US EPA row now also seeds adult body weight (BW_kg = 70 kg). No per-seed
+    // label override here -- the row label "general adult population" is already correct
+    // for the body weight (unlike the BC row's "recreational" descriptor).
+    expect(usEpa?.defaults).toHaveLength(2);
+    const usBw = usEpa?.defaults.find((d) => d.inputKey === 'BW_kg');
+    expect(usBw?.parameterValueId).toBe('pv-epa-2000-bw-adult-us');
+    expect(usBw?.candidateGroupId).toBe('human-health-food__generic__BW_kg__US_federal');
+    expect(usBw?.label).toBeUndefined();
   });
 
   it('validateFrameDefaultProfiles() returns [] against the live table', () => {
