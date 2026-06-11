@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "session_2026_06_11_matrix_options_cnonbc": {
+      "status": "complete",
+      "session_date": "2026-06-11",
+      "work_summary": "C-nonBC complete: PR #294 (af393cc) owner-run HITL promotion of the US EPA 2000 AWQC general-population fish-ingestion rate (pv-epa-2000-ir-food-general-us, 0.0175 kg/day, US_federal) to approved/direct_source_verified via the new owner-run helper scripts/matrix-options/promote-epa-ir-food.mjs (31 tests, fail-closed + idempotent); PR #295 (2a6dfc0) added the us-epa-usace-sediment frame-default profile row + generalized the hardcoded BC frame-default label to a per-frame label field. Both merged to main (tip 2a6dfc0). library.test.ts audit counts: approvedSourceBacked 1219->1220, pendingSourceLocator 373->372. Lessons captured in LESSONS.md: monitored-build vs e2e .next collision; pending_owner_export source-location workflow.",
+      "last_verified": "2026-06-11"
+    },
     "phase4_performance_optimization": {
       "status": "COMPLETE",
       "session_date": "2026-01-26",

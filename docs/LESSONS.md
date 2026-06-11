@@ -10,6 +10,85 @@
 
 ---
 
+## 2026-06-11 - Never run the monitored build and e2e concurrently in one worktree [CRITICAL]
+
+**Date:** June 11, 2026
+**Area:** Testing / Gate execution
+**Impact:** CRITICAL (false-RED build gate; wastes a ~3-5 min build + can mask a real green)
+**Status:** Documented
+**Session:** Matrix-options C-nonBC (PR #294/#295)
+
+### Problem or Discovery
+
+Launching `npm run build:monitored:clean` and `npm run test:e2e` at the same time in the SAME
+worktree made the build die almost immediately with:
+
+```
+unhandledRejection [Error [PageNotFoundError]: Cannot find module for page: /_document]
+```
+
+and the monitored-build wrapper reported `root_alive=False` at the very first tick (`exit=1`). A clean
+re-run of the build ALONE was GREEN. The e2e run itself passed.
+
+### Root Cause or Context
+
+Playwright's config starts its own Next webServer, and `build:monitored:clean` first wipes and rebuilds
+`.next`. Run concurrently in one worktree they collide on `.next` (and the dev-server port): the e2e
+server is reading/writing `.next` while the clean build deletes + regenerates it, so the build's
+"Collecting page data" step cannot resolve `/_document`. The Supabase Edge-Runtime `process.versions`
+warnings in the same log are PRE-EXISTING noise, not the failure.
+
+### Solution or Pattern
+
+SERIALIZE the gates: run the monitored build to completion, THEN run e2e (or vice versa). Do not fan
+them out as parallel background tasks against the same worktree. (Different worktrees that share the
+node_modules junction are fine because each has its own `.next`.)
+
+### File References
+
+- Gate sequence authority: `C:/Projects/SSTAC-Dashboard/docs/GATE_MODE_SOP.md`
+- Build wrapper: `C:/Projects/SSTAC-Dashboard/scripts/verify/monitored-build.ps1`
+
+### Key Takeaway
+
+`.next` is a single shared build dir per worktree; the monitored build and Playwright's webServer both
+own it, so they must run one-at-a-time within a worktree. A `/_document` PageNotFoundError +
+`root_alive=False` on first tick is the signature of this collision, not a code defect.
+
+---
+
+## 2026-06-11 - A pending_owner_export catalog source means the primary may not be filed yet [MEDIUM]
+
+**Date:** June 11, 2026
+**Area:** Reference-catalog provenance / source location
+**Impact:** MEDIUM (avoids a stalled promotion + avoids asking the owner to "remember" a source)
+**Status:** Documented
+**Session:** Matrix-options C-nonBC (PR #294)
+
+### Problem or Discovery
+
+A catalog source row whose `zotero_status` is `pending_owner_export` with `url: null` was authored by a
+prior session as a SECONDARY citation -- the canonical value was recorded from knowledge, but the
+PRIMARY document was never filed in Zotero or the reference library. The owner's promotion `--apply`
+correctly fails closed (provenance guard) until a durable locator is supplied.
+
+### Solution or Pattern
+
+When a source is `pending_owner_export` / url=null, the AI should LOCATE the primary itself rather than
+ask the owner to recall it:
+1. Query the Zotero local API (`http://localhost:23119/api/users/0/items?q=...`).
+2. Search the reference library on disk (`G:\My Drive\SABCS - Sediment Project\References`).
+3. If not filed, WebSearch the document NUMBER/title (restrict to the publisher domain) and verify the
+   URL resolves (`curl -sIL` -> HTTP 200, `Content-Type: application/pdf`).
+
+EPA-822-B-00-004 ("Methodology for Deriving Ambient Water Quality Criteria for the Protection of Human
+Health, 2000") was found at epa.gov this way and HTTP-verified, then the owner re-ran `--apply` with it.
+
+### Key Takeaway
+
+`pending_owner_export` is a signal that the primary PDF is probably NOT in the library yet -- search
+Zotero + the Drive References folder, then WebSearch the doc number; do not block on owner recall.
+
 ## 2026-01-26 - Advanced Lazy Loading with Suspense for Performance Optimization [HIGH]
 
 **Date:** January 26, 2026
