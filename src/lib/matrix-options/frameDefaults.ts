@@ -76,6 +76,14 @@ export interface FrameDefaultSeed {
   readonly parameterValueId: string;
   /** The candidate_group_id (slot) the cited record belongs to (the alternatives). */
   readonly candidateGroupId: string;
+  /**
+   * Optional per-seed source descriptor that OVERRIDES the profile row's label for
+   * THIS input's calculator hint. Use when one input has a different provenance nuance
+   * than the row label -- e.g. an adult body weight is the GENERAL adult value (Table 1),
+   * not the row's "recreational" receptor, so it must not render "recreational". Falls
+   * back to the row label when omitted (validateFrameDefaultProfiles rejects an empty string).
+   */
+  readonly label?: string;
 }
 
 // ---------------------------------------------------------------------------
@@ -123,17 +131,27 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     frameId: 'bc-protocol1-v5-dra',
     pathway: 'human-health-food',
     note:
-      'BC WLRS 2023 recreational fish-ingestion rate (0.111 kg/day). ' +
-      'Owner-promoted, user-adjustable seed for the BC Protocol 1 frame.',
+      'BC WLRS 2023: recreational fish-ingestion rate (0.111 kg/day, Table 2) + adult ' +
+      'body weight (70.7 kg, Table 1). Owner-promoted, user-adjustable seeds for the BC ' +
+      'Protocol 1 frame.',
     label: 'BC WLRS 2023, recreational',
-    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of
-    // the cited record source_ids). No Supabase UUID exists for this source yet.
+    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of BOTH
+    // cited records' source_ids). No Supabase UUID exists for this source yet.
     sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
     defaults: [
       {
         inputKey: 'IR_food_kg_per_day',
         parameterValueId: 'pv-wlrs-2023-ir-food-recreational-bc',
         candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      },
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+        candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+        // Per-seed label override: the body weight is the GENERAL adult value (Table 1,
+        // 70.7 kg), shared across all fisher receptors -- so it must not render the row's
+        // "recreational" descriptor, which is specific to the fish-ingestion rate.
+        label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
       },
     ],
   },
@@ -223,9 +241,10 @@ function resolveSeed(
     inputKey: seed.inputKey,
     parameterValueId: seed.parameterValueId,
     candidateGroupId: seed.candidateGroupId,
-    // The label is a per-profile-row property (not per-seed), threaded through so every
-    // resolved status carries the correct per-frame source descriptor for the UI.
-    label,
+    // The label defaults to the per-profile-row descriptor, but a seed MAY override it
+    // (seed.label) when one input's provenance differs from the row -- threaded through so
+    // every resolved status carries the correct per-frame, per-input source descriptor.
+    label: seed.label ?? label,
   };
   if (!seedableKeys.includes(seed.inputKey)) {
     return {
@@ -402,6 +421,11 @@ export function validateFrameDefaultProfiles(
       const dat = at + 'default ' + j + ' (' + seed.inputKey + '): ';
       if (seenInputKeys.has(seed.inputKey)) errors.push(dat + 'duplicate input_key within profile.');
       seenInputKeys.add(seed.inputKey);
+      // Optional per-seed label override: when present it must be a non-empty string
+      // (it falls back to the row label when omitted; an empty override would blank the UI).
+      if (seed.label !== undefined && (typeof seed.label !== 'string' || seed.label.trim().length === 0)) {
+        errors.push(dat + 'label override, when present, must be a non-empty string.');
+      }
       if (!seedableKeys.includes(seed.inputKey)) {
         errors.push(dat + 'input_key is not in the seedable allowlist for ' + row.pathway + '.');
       }

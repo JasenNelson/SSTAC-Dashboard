@@ -46,7 +46,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-10: +1 (1596 -> 1597) -- US EPA IR_food general candidate (needs_review):
     // pv-epa-2000-ir-food-general-us adds candidate_group_id
     // human-health-food__generic__IR_food_kg_per_day__US_federal (new group, not shared).
-    expect(view.valueGroups).toHaveLength(1597);
+    // 2026-06-11: +1 (1597 -> 1598) -- C-3 BC WLRS adult body weight (needs_review):
+    // pv-wlrs-2023-bw-adult-bc adds candidate_group_id
+    // human-health-food__generic__BW_kg__BC (new group, not shared).
+    expect(view.valueGroups).toHaveLength(1598);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -59,14 +62,17 @@ describe('matrix options evidence library helpers', () => {
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
     // 2026-06-10: +1 US EPA IR_food general candidate (needs_review / pending_source_locator) = 373;
     // -1 -- US EPA general candidate promoted out of pending (C-nonBC, HITL, J. Nelson) = 372.
-    expect(view.audit.values.pendingSourceLocator).toBe(372);
+    // 2026-06-11: +1 -- C-3 BC WLRS adult body weight (pv-wlrs-2023-bw-adult-bc,
+    // needs_review / pending_source_locator; promoted out later by owner --apply) = 373.
+    expect(view.audit.values.pendingSourceLocator).toBe(373);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
     // 2026-06-10: +1 US EPA IR_food general candidate (available_option) = 1583.
-    expect(view.audit.values.availableOptions).toBe(1583);
+    // 2026-06-11: +1 C-3 BC WLRS adult body weight (available_option) = 1584.
+    expect(view.audit.values.availableOptions).toBe(1584);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
