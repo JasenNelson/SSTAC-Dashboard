@@ -80,6 +80,7 @@ function makeProfile(
     frameId: 'bc-protocol1-v5-dra',
     pathway: 'human-health-food',
     note: 'Test profile',
+    label: 'Test label',
     sourceIds: ['src-test-001'],
     defaults: [
       {
@@ -120,14 +121,20 @@ const TEST_SOURCES = [
 // ---------------------------------------------------------------------------
 
 describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
-  it('has exactly the C-BC row (bc-protocol1-v5-dra + human-health-food)', () => {
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(1);
-    const row = FRAME_DEFAULT_PROFILES[0];
-    expect(row.frameId).toBe('bc-protocol1-v5-dra');
-    expect(row.pathway).toBe('human-health-food');
-    expect(row.defaults[0].parameterValueId).toBe(
+  it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(2);
+    const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
+    expect(bc).toBeDefined();
+    expect(bc?.pathway).toBe('human-health-food');
+    expect(bc?.label).toBe('BC WLRS 2023, recreational');
+    expect(bc?.defaults[0].parameterValueId).toBe(
       'pv-wlrs-2023-ir-food-recreational-bc',
     );
+    const usEpa = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'us-epa-usace-sediment');
+    expect(usEpa).toBeDefined();
+    expect(usEpa?.pathway).toBe('human-health-food');
+    expect(usEpa?.label).toBe('US EPA 2000 AWQC, general adult population');
+    expect(usEpa?.defaults[0].parameterValueId).toBe('pv-epa-2000-ir-food-general-us');
   });
 
   it('validateFrameDefaultProfiles() returns [] against the live table', () => {
@@ -410,6 +417,7 @@ describe('getFrameDefaults: unsupported pathway short-circuits to []', () => {
     frameId: 'bc-csr-sediment-numerical',
     pathway: 'human-health-food',
     note: 'Test unsupported pathway',
+    label: 'Test label',
     sourceIds: ['src-x'],
     defaults: [
       {
@@ -486,6 +494,16 @@ describe('validateFrameDefaultProfiles', () => {
     );
   });
 
+  it('empty label -> error (the per-frame source descriptor must be non-empty)', () => {
+    const profile = makeProfile({ label: '   ' });
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [APPROVED_IR_RECORD],
+      TEST_SOURCES,
+    );
+    expect(errors.some((e) => /label must be a non-empty string/i.test(e))).toBe(true);
+  });
+
   it('sourceId not in the cited record source_ids -> error', () => {
     // src-test-001 resolves, but the record does not claim it.
     const record = makeRecord({
@@ -523,6 +541,7 @@ describe('validateFrameDefaultProfiles', () => {
       frameId: 'bc-csr-sediment-numerical',
       pathway: 'human-health-food',
       note: 'bad',
+      label: 'Test label',
       sourceIds: ['src-x'],
       defaults: [
         {
@@ -706,6 +725,7 @@ describe('getFrameDefaults: approved -> blocked (mock-driven eligibility)', () =
       frameId: 'us-epa-usace-sediment',
       pathway: 'human-health-food',
       note: 'Test us-epa blocked jurisdiction via mock',
+      label: 'Test label',
       sourceIds: ['src-us-001'],
       defaults: [
         {

@@ -413,7 +413,7 @@ export default function HHFoodWebCalculator({
             <input data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
             {activeIrDefault && activeIrDefault.value != null && (
               <p data-testid="hh-food-ir-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
-                Frame default {activeIrDefault.value} kg/day (BC WLRS 2023, recreational). Adjustable.
+                Frame default {activeIrDefault.value} kg/day ({activeIrDefault.label}). Adjustable.
               </p>
             )}
           </label>
