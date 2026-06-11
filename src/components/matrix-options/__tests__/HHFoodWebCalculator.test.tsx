@@ -63,6 +63,26 @@ function activeEpaIr() {
   ];
 }
 
+// Build the C-3 BC frame defaults: the WLRS IR seed PLUS the adult body-weight seed
+// (once promoted). The BW seed carries its OWN per-seed label (the general adult value,
+// not the row's "recreational" descriptor).
+function activeWlrsIrAndBw() {
+  return [
+    ...activeWlrsIr(),
+    {
+      inputKey: 'BW_kg',
+      parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+      candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+      label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+      status: 'active' as const,
+      value: 70.7,
+      unit: 'kg',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
+
 describe('HHFoodWebCalculator', () => {
   beforeEach(() => {
     mockGetActiveFrameDefaults.mockReturnValue([]);
@@ -348,5 +368,55 @@ describe('HHFoodWebCalculator C-nonBC frame default (US EPA IR seed)', () => {
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.3');
+  });
+});
+
+describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
+  beforeEach(() => {
+    mockGetActiveFrameDefaults.mockImplementation((frameId) =>
+      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIrAndBw() : [],
+    );
+  });
+
+  function renderBc(
+    jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra',
+  ) {
+    return render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction={jurisdiction}
+      />,
+    );
+  }
+
+  it('opens on the seeded 70.7 BW with the per-seed frame-default label', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-bw-input') as HTMLInputElement;
+    expect(input.value).toBe('70.7');
+    const label = screen.getByTestId('hh-food-bw-frame-default-label');
+    expect(label).toHaveTextContent(/Frame default 70\.7 kg/);
+    // The BW seed renders its OWN label override, NOT the row "recreational" descriptor.
+    expect(label).toHaveTextContent('(BC WLRS 2023, adult 70.7 kg (Table 1))');
+  });
+
+  it('a user edit shows the BW reset button; reset restores 70.7', () => {
+    renderBc();
+    const input = screen.getByTestId('hh-food-bw-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-food-bw-reset-to-frame-default')).toBeNull();
+    fireEvent.change(input, { target: { value: '80' } });
+    expect(input.value).toBe('80');
+    expect(
+      screen.getByTestId('hh-food-bw-reset-to-frame-default'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-food-bw-reset-to-frame-default'));
+    expect(input.value).toBe('70.7');
+    expect(screen.queryByTestId('hh-food-bw-reset-to-frame-default')).toBeNull();
+  });
+
+  it('a no-default frame leaves BW at baseline 70 with no label', () => {
+    renderBc('ccme-sediment-quality');
+    const input = screen.getByTestId('hh-food-bw-input') as HTMLInputElement;
+    expect(input.value).toBe('70');
+    expect(screen.queryByTestId('hh-food-bw-frame-default-label')).toBeNull();
   });
 });

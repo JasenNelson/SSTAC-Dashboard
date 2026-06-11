@@ -130,6 +130,13 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     expect(bc?.defaults[0].parameterValueId).toBe(
       'pv-wlrs-2023-ir-food-recreational-bc',
     );
+    // C-3: the BC row now also seeds adult body weight (BW_kg), with a per-seed label
+    // override (the body weight is the general adult value, not "recreational").
+    expect(bc?.defaults).toHaveLength(2);
+    const bcBw = bc?.defaults.find((d) => d.inputKey === 'BW_kg');
+    expect(bcBw?.parameterValueId).toBe('pv-wlrs-2023-bw-adult-bc');
+    expect(bcBw?.candidateGroupId).toBe('human-health-food__generic__BW_kg__BC');
+    expect(bcBw?.label).toBe('BC WLRS 2023, adult 70.7 kg (Table 1)');
     const usEpa = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'us-epa-usace-sediment');
     expect(usEpa).toBeDefined();
     expect(usEpa?.pathway).toBe('human-health-food');
@@ -171,6 +178,54 @@ describe('SEEDABLE_KEYS', () => {
     for (const pathway of others) {
       expect(SEEDABLE_KEYS[pathway]).toEqual([]);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Per-seed label override (C-3)
+// ---------------------------------------------------------------------------
+
+describe('getFrameDefaults: per-seed label override', () => {
+  const BW_RECORD = makeRecord({
+    parameter_value_id: 'pvid-test-bw',
+    input_key: 'BW_kg',
+    value: 70.7,
+    unit: 'kg',
+    candidate_group_id: 'cg-bw-hh',
+    qa_status: 'approved',
+  });
+
+  it('uses the seed label when present, and the row label when omitted', () => {
+    mockEligibility.mockReturnValue({
+      eligible: true,
+      disposition: 'eligible_pending_approval',
+      rationale: 'ok',
+    });
+    const profile = makeProfile({
+      label: 'ROW LABEL',
+      defaults: [
+        // no seed label -> inherits the row label
+        { inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-test-ir', candidateGroupId: 'cg-ir-food-hh' },
+        // seed label -> overrides the row label for THIS input only
+        { inputKey: 'BW_kg', parameterValueId: 'pvid-test-bw', candidateGroupId: 'cg-bw-hh', label: 'SEED LABEL' },
+      ],
+    });
+    const results = getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      profiles: [profile],
+      records: [APPROVED_IR_RECORD, BW_RECORD],
+    });
+    expect(results.find((r) => r.inputKey === 'IR_food_kg_per_day')?.label).toBe('ROW LABEL');
+    expect(results.find((r) => r.inputKey === 'BW_kg')?.label).toBe('SEED LABEL');
+  });
+
+  it('validateFrameDefaultProfiles rejects an empty-string seed label override', () => {
+    const profile = makeProfile({
+      defaults: [
+        { inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-test-ir', candidateGroupId: 'cg-ir-food-hh', label: '   ' },
+      ],
+    });
+    const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD], TEST_SOURCES);
+    expect(errors.some((e) => /label override, when present, must be a non-empty/.test(e))).toBe(true);
   });
 });
 

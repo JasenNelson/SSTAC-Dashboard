@@ -36,6 +36,10 @@ const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
 // frame-default (C1 may later source/replace this; out of C-BC scope).
 const BASELINE_IR_KG_PER_DAY = '0.142';
 
+// Unsourced calculator baseline body weight (kg), used when the selected frame has no
+// active frame-default BW_kg seed. Adult default; preserves the prior hardcoded '70'.
+const BASELINE_BW_KG = '70';
+
 // The active frame-default IR_food seed for a jurisdiction (or null when the
 // frame has no active default for the HH food-web pathway).
 function activeIrDefaultFor(jurisdiction: Jurisdiction) {
@@ -53,6 +57,25 @@ function seedIrFor(jurisdiction: Jurisdiction): string {
   return active && active.value != null
     ? String(active.value)
     : BASELINE_IR_KG_PER_DAY;
+}
+
+// The active frame-default BW_kg seed for a jurisdiction (or null when the frame
+// has no active BW default for the HH food-web pathway).
+function activeBwDefaultFor(jurisdiction: Jurisdiction) {
+  return (
+    getActiveFrameDefaults(jurisdiction, 'human-health-food').find(
+      (d) => d.inputKey === 'BW_kg',
+    ) ?? null
+  );
+}
+
+// The string BW value to seed for a jurisdiction: the active frame default, else the
+// baseline. Deterministic (static catalog) -> SSR == CSR.
+function seedBwFor(jurisdiction: Jurisdiction): string {
+  const active = activeBwDefaultFor(jurisdiction);
+  return active && active.value != null
+    ? String(active.value)
+    : BASELINE_BW_KG;
 }
 
 export interface HHFoodWebCalculatorProps {
@@ -87,7 +110,10 @@ export default function HHFoodWebCalculator({
 }: HHFoodWebCalculatorProps) {
   const substance = findSubstance(substanceKey);
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
-  const [bwInput, setBwInput] = useState('70');
+  // LAZY seed BW from the active frame default for the initial frame (no flash; SSR ==
+  // CSR because the catalog is static). The frame-switch re-seed happens DURING render
+  // (below), mirroring IR_food, so a new frame never paints the previous frame's BW.
+  const [bwInput, setBwInput] = useState(() => seedBwFor(jurisdiction));
   // LAZY seed from the active frame default for the initial frame (no 0.142 flash;
   // SSR == CSR because the catalog is static). The frame-switch re-seed happens
   // DURING render (below) -- not in an effect -- so the new frame never paints with
@@ -143,11 +169,18 @@ export default function HHFoodWebCalculator({
   // has NOT moved it off-default); otherwise preserve the user's edit. The guard makes
   // this run once per jurisdiction change (no render loop).
   if (jurisdiction !== prevJurisdiction) {
-    const oldSeed = seedIrFor(prevJurisdiction);
-    const newSeed = seedIrFor(jurisdiction);
+    const oldIrSeed = seedIrFor(prevJurisdiction);
+    const newIrSeed = seedIrFor(jurisdiction);
+    const oldBwSeed = seedBwFor(prevJurisdiction);
+    const newBwSeed = seedBwFor(jurisdiction);
     setPrevJurisdiction(jurisdiction);
-    if (foodIrInput === oldSeed) {
-      setFoodIrInput(newSeed);
+    // Re-seed each input only when it still holds the PREVIOUS frame's seed (user has
+    // not moved it off-default); otherwise preserve the user's edit.
+    if (foodIrInput === oldIrSeed) {
+      setFoodIrInput(newIrSeed);
+    }
+    if (bwInput === oldBwSeed) {
+      setBwInput(newBwSeed);
     }
   }
 
@@ -161,6 +194,17 @@ export default function HHFoodWebCalculator({
     activeIrDefault != null &&
     activeIrDefault.value != null &&
     foodIrInput === String(activeIrDefault.value);
+
+  // The active frame-default BW for the current frame (drives the label, the reset
+  // button, and provenance attribution -- all pure functions of render state).
+  const activeBwDefault = useMemo(
+    () => activeBwDefaultFor(jurisdiction),
+    [jurisdiction],
+  );
+  const bwIsFrameDefault =
+    activeBwDefault != null &&
+    activeBwDefault.value != null &&
+    bwInput === String(activeBwDefault.value);
 
   // Resolve the equation for the selected regulatory frame (empty FRAME_VARIANTS
   // -> baseline + usedBaselineFallback: true). Call site below is unchanged.
@@ -269,7 +313,17 @@ export default function HHFoodWebCalculator({
         label: 'Body weight',
         value: bwInput,
         unit: 'kg',
-        role: 'screening assumption',
+        // When the field holds the active frame default, attribute it to the EXACT cited
+        // catalog record (by id) so the panel shows its source/evidence. Otherwise it is a
+        // plain user-adjustable screening assumption.
+        ...(bwIsFrameDefault && activeBwDefault
+          ? {
+              role: 'source-backed default' as const,
+              pathway: 'human-health-food' as const,
+              substance_key: 'generic',
+              parameter_value_id: activeBwDefault.parameterValueId,
+            }
+          : { role: 'screening assumption' as const }),
       },
       {
         input_key: 'IR_food_kg_per_day',
@@ -322,10 +376,12 @@ export default function HHFoodWebCalculator({
       },
     ],
     [
+      activeBwDefault,
       activeIrDefault,
       baOralInput,
       bsafInput,
       bwInput,
+      bwIsFrameDefault,
       ecosystem,
       fLipidPercent,
       focPercent,
@@ -406,7 +462,17 @@ export default function HHFoodWebCalculator({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Body weight (kg)
-            <input value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            {activeBwDefault && activeBwDefault.value != null && (
+              <p data-testid="hh-food-bw-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
+                Frame default {activeBwDefault.value} kg ({activeBwDefault.label}). Adjustable.
+              </p>
+            )}
+            {activeBwDefault && activeBwDefault.value != null && !bwIsFrameDefault && (
+              <button type="button" data-testid="hh-food-bw-reset-to-frame-default" onClick={() => setBwInput(String(activeBwDefault.value))} className="mt-1 px-2.5 py-1 text-xs rounded-md border border-sky-400 dark:border-sky-600 bg-sky-50 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
+                Reset to frame default
+              </button>
+            )}
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Food ingestion (kg/day)
