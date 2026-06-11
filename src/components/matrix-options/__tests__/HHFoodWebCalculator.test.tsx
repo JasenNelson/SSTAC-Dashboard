@@ -35,8 +35,27 @@ function activeWlrsIr() {
       inputKey: 'IR_food_kg_per_day',
       parameterValueId: 'pv-wlrs-2023-ir-food-recreational-bc',
       candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      label: 'BC WLRS 2023, recreational',
       status: 'active' as const,
       value: 0.111,
+      unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
+
+// Build an active US EPA IR frame default (C-nonBC: us-epa-usace-sediment frame, once the EPA
+// general-population value is promoted). A DIFFERENT receptor + label than the BC frame.
+function activeEpaIr() {
+  return [
+    {
+      inputKey: 'IR_food_kg_per_day',
+      parameterValueId: 'pv-epa-2000-ir-food-general-us',
+      candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__US_federal',
+      label: 'US EPA 2000 AWQC, general adult population',
+      status: 'active' as const,
+      value: 0.0175,
       unit: 'kg/day',
       qaStatus: 'approved' as const,
       reason: 'ok',
@@ -167,9 +186,10 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     renderBc();
     const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
     expect(input.value).toBe('0.111');
-    expect(
-      screen.getByTestId('hh-food-ir-frame-default-label'),
-    ).toHaveTextContent(/Frame default 0\.111 kg\/day/);
+    const label = screen.getByTestId('hh-food-ir-frame-default-label');
+    expect(label).toHaveTextContent(/Frame default 0\.111 kg\/day/);
+    // The per-frame source descriptor must render byte-identical to pre-PR2 (C-BC behavior).
+    expect(label).toHaveTextContent('(BC WLRS 2023, recreational)');
   });
 
   it('attributes the seeded IR to the WLRS source in the provenance panel', () => {
@@ -211,8 +231,10 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     expect(screen.queryByTestId('hh-food-ir-reset-to-frame-default')).toBeNull();
   });
 
-  it('a non-BC frame seeds nothing (baseline 0.142, no label)', () => {
-    renderBc('us-epa-usace-sediment');
+  it('a no-default frame seeds nothing (baseline 0.142, no label)', () => {
+    // ccme-sediment-quality has no frame default (the mock returns [] for it). Note: this stand-in
+    // changed from us-epa-usace-sediment, which now HAS a default (C-nonBC) and is covered below.
+    renderBc('ccme-sediment-quality');
     const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
     expect(input.value).toBe('0.142');
     expect(screen.queryByTestId('hh-food-ir-frame-default-label')).toBeNull();
@@ -226,7 +248,7 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     rerender(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="us-epa-usace-sediment"
+        jurisdiction="ccme-sediment-quality"
       />,
     );
     expect(
@@ -241,11 +263,90 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     rerender(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="us-epa-usace-sediment"
+        jurisdiction="ccme-sediment-quality"
       />,
     );
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.25');
+  });
+});
+
+describe('HHFoodWebCalculator C-nonBC frame default (US EPA IR seed)', () => {
+  beforeEach(() => {
+    mockGetActiveFrameDefaults.mockImplementation((frameId) => {
+      if (frameId === 'bc-protocol1-v5-dra') return activeWlrsIr();
+      if (frameId === 'us-epa-usace-sediment') return activeEpaIr();
+      return [];
+    });
+  });
+
+  function renderFrame(jurisdiction: RegulatoryFrameId) {
+    return render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction={jurisdiction}
+      />,
+    );
+  }
+
+  it('US EPA frame seeds 0.0175 and labels the EPA source (NOT BC WLRS)', () => {
+    renderFrame('us-epa-usace-sediment');
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    expect(input.value).toBe('0.0175');
+    const label = screen.getByTestId('hh-food-ir-frame-default-label');
+    expect(label).toHaveTextContent(/Frame default 0\.0175 kg\/day/);
+    expect(label).toHaveTextContent('(US EPA 2000 AWQC, general adult population)');
+    expect(label).not.toHaveTextContent('BC WLRS');
+  });
+
+  it('switching US EPA -> BC reseeds 0.0175 -> 0.111 and swaps the label', () => {
+    const { rerender } = renderFrame('us-epa-usace-sediment');
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.0175');
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+    expect(
+      screen.getByTestId('hh-food-ir-frame-default-label'),
+    ).toHaveTextContent('(BC WLRS 2023, recreational)');
+  });
+
+  it('switching BC -> US EPA reseeds 0.111 -> 0.0175', () => {
+    const { rerender } = renderFrame('bc-protocol1-v5-dra');
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.0175');
+  });
+
+  it('a deliberate off-default edit survives the BC -> US EPA switch (do not clobber)', () => {
+    const { rerender } = renderFrame('bc-protocol1-v5-dra');
+    const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    fireEvent.change(input, { target: { value: '0.3' } });
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.3');
   });
 });

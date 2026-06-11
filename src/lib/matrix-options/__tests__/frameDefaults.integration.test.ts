@@ -40,12 +40,39 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
   });
 
   it('a frame with no profile row seeds nothing', () => {
+    // ccme-sediment-quality has no FRAME_DEFAULT_PROFILES row (us-epa-usace-sediment now does -- C-nonBC).
     expect(
-      getActiveFrameDefaults('us-epa-usace-sediment', 'human-health-food'),
+      getActiveFrameDefaults('ccme-sediment-quality', 'human-health-food'),
     ).toEqual([]);
   });
 
-  it('the table contains exactly the one C-BC row', () => {
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(1);
+  it('the table contains exactly the C-BC and C-nonBC rows', () => {
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(2);
+  });
+});
+
+describe('C-nonBC frame default (live catalog, real eligibility)', () => {
+  it('US EPA frame HH-food seeds an ACTIVE IR_food default of 0.0175 kg/day', () => {
+    const active = getActiveFrameDefaults(
+      'us-epa-usace-sediment',
+      'human-health-food',
+    );
+    const ir = active.find((d) => d.inputKey === 'IR_food_kg_per_day');
+    expect(ir).toBeTruthy();
+    expect(ir?.status).toBe('active');
+    expect(ir?.value).toBe(0.0175);
+    expect(ir?.parameterValueId).toBe('pv-epa-2000-ir-food-general-us');
+    expect(ir?.unit).toBe('kg/day');
+    // Per-frame label: the EPA source descriptor, NOT BC WLRS.
+    expect(ir?.label).toBe('US EPA 2000 AWQC, general adult population');
+  });
+
+  it('the cited EPA row is reachable via the frame-default path (no orphan)', () => {
+    const all = getFrameDefaults('us-epa-usace-sediment', 'human-health-food');
+    const ir = all.find((d) => d.inputKey === 'IR_food_kg_per_day');
+    expect(ir?.parameterValueId).toBe('pv-epa-2000-ir-food-general-us');
+    expect(ir?.candidateGroupId).toBe(
+      'human-health-food__generic__IR_food_kg_per_day__US_federal',
+    );
   });
 });

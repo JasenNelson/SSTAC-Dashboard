@@ -90,6 +90,14 @@ export interface FrameDefaultProfileRow {
   /** Brief plain-ASCII note for UI surfacing. No markdown. */
   readonly note: string;
   /**
+   * Short plain-ASCII source descriptor rendered in the calculator's frame-default
+   * label, e.g. "BC WLRS 2023, recreational". A pure function of the profile (NOT
+   * derived from the cited record), so each frame shows its OWN provenance label --
+   * a US EPA default must not render "BC WLRS 2023". Non-empty required
+   * (validateFrameDefaultProfiles enforces it).
+   */
+  readonly label: string;
+  /**
    * The cited catalog source(s). Use the in-repo catalog_sources `source_id`
    * (resolvable via getSourceRecord) -- or a Stream D Supabase UUID once one
    * exists. Non-empty required, every id must resolve to a real source, and
@@ -106,6 +114,9 @@ export interface FrameDefaultProfileRow {
 // Tier 2 protected (see CLAUDE.md) now that it has a real entry.
 // C-BC: BC Protocol 1 v5 DRA HH-food seeds IR_food from the owner-PROMOTED
 // (PR #285, HITL) BC WLRS 2023 recreational fish-ingestion rate.
+// C-nonBC: us-epa-usace-sediment HH-food seeds IR_food from the owner-PROMOTED
+// (HITL) US EPA 2000 AWQC general-population fish-ingestion rate -- the cross-frame
+// smoke test (a non-BC frame, a different receptor: general adult vs BC recreational).
 // ---------------------------------------------------------------------------
 export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
   {
@@ -114,6 +125,7 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     note:
       'BC WLRS 2023 recreational fish-ingestion rate (0.111 kg/day). ' +
       'Owner-promoted, user-adjustable seed for the BC Protocol 1 frame.',
+    label: 'BC WLRS 2023, recreational',
     // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of
     // the cited record source_ids). No Supabase UUID exists for this source yet.
     sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
@@ -122,6 +134,27 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
         inputKey: 'IR_food_kg_per_day',
         parameterValueId: 'pv-wlrs-2023-ir-food-recreational-bc',
         candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      },
+    ],
+  },
+  {
+    frameId: 'us-epa-usace-sediment',
+    pathway: 'human-health-food',
+    note:
+      'US EPA 2000 AWQC general adult population fish-ingestion rate (0.0175 kg/day = ' +
+      '17.5 g/day). Owner-promoted, user-adjustable seed for the US EPA frame. NOTE: a ' +
+      'general-population receptor (vs the BC frame recreational receptor) -- a deliberate ' +
+      'cross-frame delta, not a like-for-like comparison.',
+    label: 'US EPA 2000 AWQC, general adult population',
+    // In-repo catalog_sources source_id (resolves via getSourceRecord; subset of the
+    // cited record source_ids). us-epa-usace-sediment lists US_federal in
+    // eligibleCatalogJurisdictions, so the seed resolves 'active' once promoted.
+    sourceIds: ['src-epa-2000-awqc-human-health'],
+    defaults: [
+      {
+        inputKey: 'IR_food_kg_per_day',
+        parameterValueId: 'pv-epa-2000-ir-food-general-us',
+        candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__US_federal',
       },
     ],
   },
@@ -162,6 +195,8 @@ export interface ResolvedFrameDefault {
   readonly inputKey: string;
   readonly parameterValueId: string;
   readonly candidateGroupId: string;
+  /** Per-frame source descriptor (the profile row's label), for the calculator UI. */
+  readonly label: string;
   readonly status: FrameDefaultStatus;
   /** Numeric seed value when status is 'active' or 'pending'; null otherwise. */
   readonly value: number | null;
@@ -182,11 +217,15 @@ function resolveSeed(
   pathway: ProvenancePathway,
   seedableKeys: readonly string[],
   records: readonly ParameterValueRecord[],
+  label: string,
 ): ResolvedFrameDefault {
   const base = {
     inputKey: seed.inputKey,
     parameterValueId: seed.parameterValueId,
     candidateGroupId: seed.candidateGroupId,
+    // The label is a per-profile-row property (not per-seed), threaded through so every
+    // resolved status carries the correct per-frame source descriptor for the UI.
+    label,
   };
   if (!seedableKeys.includes(seed.inputKey)) {
     return {
@@ -308,7 +347,7 @@ export function getFrameDefaults(
   const row = profiles.find((p) => p.frameId === frameId && p.pathway === pathway);
   if (!row) return [];
   const seedableKeys = SEEDABLE_KEYS[pathway] ?? [];
-  return row.defaults.map((seed) => resolveSeed(frameId, seed, pathway, seedableKeys, records));
+  return row.defaults.map((seed) => resolveSeed(frameId, seed, pathway, seedableKeys, records, row.label));
 }
 
 /** Convenience: only the entries that actually seed (status 'active'). */
@@ -340,6 +379,9 @@ export function validateFrameDefaultProfiles(
     seenKeys.add(key);
     if (getPathwayApplicability(row.frameId, row.pathway).status === 'unsupported') {
       errors.push(at + 'pathway is unsupported for this frame; no frame default allowed.');
+    }
+    if (typeof row.label !== 'string' || row.label.trim().length === 0) {
+      errors.push(at + 'label must be a non-empty string (rendered as the per-frame source descriptor).');
     }
     if (row.sourceIds.length === 0) {
       errors.push(at + 'sourceIds must be non-empty (every profile cites catalog_sources).');
