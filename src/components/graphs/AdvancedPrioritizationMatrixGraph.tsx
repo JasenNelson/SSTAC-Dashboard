@@ -192,7 +192,7 @@ export default function AdvancedPrioritizationMatrixGraph({
         <h3 className="text-base font-semibold text-center text-slate-900 dark:text-white flex-1">{title}</h3>
         
         {/* Visualization Mode Selector */}
-        <div className="flex gap-1 ml-2">
+        <div className="flex gap-1 ml-2" role="group" aria-label="Visualization mode">
           {(['jittered', 'size-scaled', 'heatmap', 'concentric'] as VisualizationMode[]).map((mode) => (
             <button
               key={mode}
@@ -203,6 +203,7 @@ export default function AdvancedPrioritizationMatrixGraph({
                   : 'bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-300 dark:hover:bg-slate-600'
               }`}
               title={`Switch to ${mode.replace('-', ' ')} visualization`}
+              aria-pressed={visualizationMode === mode}
             >
               {mode.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
             </button>
