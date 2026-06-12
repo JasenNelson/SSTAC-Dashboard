@@ -89,6 +89,142 @@ Health, 2000") was found at epa.gov this way and HTTP-verified, then the owner r
 `pending_owner_export` is a signal that the primary PDF is probably NOT in the library yet -- search
 Zotero + the Drive References folder, then WebSearch the doc number; do not block on owner recall.
 
+## 2026-06-10 - Node-24 CI vitest v8-coverage worker OOM: heap bump required [CRITICAL]
+
+**Date:** June 10, 2026
+**Area:** CI / Node runtime / vitest
+**Impact:** CRITICAL (blocks CI Unit Tests job with write EPIPE crashes; not reproducible locally)
+**Status:** Fixed (#291, owner-authorized)
+
+### Problem or Discovery
+
+On Node 24 CI, the vitest v8-coverage worker OOM-kills with `write EPIPE` errors even with
+`maxWorkers=1` already set in vitest.config. The default V8 heap ceiling (~1.4 GB) is too low
+for the full serial coverage run once the test suite is large enough. PRs #285-289 passed by
+luck (suite size below the ceiling); #290 hit it twice.
+
+### Root Cause or Context
+
+v8 coverage instrumentation multiplies per-module heap use. With maxWorkers=1 the suite runs
+serially (reducing peak parallelism) but each worker still operates at the full V8 default heap.
+Local `npm run test:ci` did NOT reproduce in the 2026-06-10 environment because local Node was
+not Node 24; local-GREEN does not guarantee CI-GREEN after the heap ceiling is hit. (Check
+`node --version` first: if your LOCAL Node is also 24, local test:ci CAN reproduce the OOM, and
+local-GREEN is then meaningful evidence -- do not blanket-dismiss local reproduction.)
+
+### Solution or Pattern
+
+Add `NODE_OPTIONS=--max-old-space-size=8192` to the Unit Tests `test:ci` step in
+`.github/workflows/ci.yml`. This was the only safe fix; reducing coverage scope would hide real
+failures.
+
+CONSEQUENCE: the Unit Tests CI job now takes ~30 min (suite completes serially to completion
+instead of crashing at ~17 min). This is EXPECTED, not a hang. Pace PR merges ~one per ~30-min
+CI cycle while the suite is this large.
+
+### File References
+- `.github/workflows/ci.yml` -- Unit Tests job step: `NODE_OPTIONS=--max-old-space-size=8192`
+- `vitest.config.ts` -- `maxWorkers: 1` (CI path; necessary but not sufficient alone)
+
+### Key Takeaway
+On Node 24 CI with v8 coverage, `maxWorkers=1` alone is not enough once the suite hits the
+default heap ceiling. Add `NODE_OPTIONS=--max-old-space-size=8192` and expect ~30-min CI runs.
+Local test:ci will NOT reproduce the OOM -- do not use local-GREEN as proof.
+
+---
+
+## 2026-06-10 - C-BC frame-default SEED pattern: exact pv-id attribution + render-phase reseed [HIGH]
+
+**Date:** June 10, 2026
+**Area:** Matrix Options / frame-default architecture / React
+**Impact:** HIGH (reusable for every future C-* frame; avoids stale-frame flash + mis-citation)
+**Status:** Implemented + dogfood-confirmed (#286)
+
+### Problem or Discovery
+
+Frame defaults that seed user-editable inputs need to: (1) attribute by exact parameter_value_id
+so the panel never mis-cites a value to the wrong source, (2) run during render
+(adjust-state-on-prop-change) not in a post-render effect, and (3) use per-frame labels not
+hardcoded text.
+
+### Root Cause or Context
+
+Three failure modes if the pattern is done incorrectly:
+1. Seeding by substance/pathway/input lookup is ambiguous when multiple catalog rows share those
+   keys; exact `parameter_value_id` removes ambiguity and provides a direct audit trail.
+2. Seeding in a `useEffect` fires AFTER render, causing a one-render stale-frame flash visible to
+   the user (old frame's seed briefly shows for the new frame).
+3. Hardcoding a label string (e.g. "(BC WLRS 2023, recreational)") in the component means a
+   second frame (US EPA) would show the wrong source text. codex caught this as a P2 on the
+   C-nonBC prep review -- it must be fixed before shipping a second frame default.
+
+### Solution or Pattern
+
+`frameDefaults.ts` SEED layer: keyed rows with `{ frameId, calc, parameterValueId, value,
+label }`. The panel calls `setState` during render (prop-change guard) using the active frame's
+row. `getEquation` never invokes the seed layer. `label` is derived per-frame from the cited
+source's `short_citation`, not hardcoded.
+
+### File References
+- `src/lib/matrix-options/frameDefaults.ts` -- seed layer (the FRAME_DEFAULT_PROFILES
+  table + getActiveFrameDefaults helper). (Corrected 2026-06-12: the module is under `src/lib/`,
+  not `src/components/`.)
+- `src/components/matrix-options/HHFoodWebCalculator.tsx` -- the frame-default label render (search
+  the `hh-food-...-frame-default-label` data-testid; ~lines 466-482 as of #302, not ~414) -- derive
+  per-frame before adding any second frame default.
+- C-nonBC prep spec: `docs/MATRIX_OPTIONS_C_NONBC_PREP_2026_06_10.md`
+
+### Key Takeaway
+Frame-default seeds: exact pv-id, per-frame label, adjust-state-on-prop-change (not useEffect).
+All three must hold before shipping a second frame's default.
+
+---
+
+## 2026-06-10 - gh API 401 mid-session = token propagation lag, not auth failure [LOW]
+
+**Date:** June 10, 2026
+**Area:** gh CLI / GitHub API
+**Impact:** LOW (causes unnecessary re-auth loops if misdiagnosed)
+**Status:** Documented
+
+### Problem or Discovery
+
+`gh api` returned 401 mid-session during normal PR workflow (not at session start). The token
+was valid; the issue was propagation lag after a recent auth refresh.
+
+### Solution or Pattern
+
+Probe with `gh api user` and wait ~30 s before concluding auth is broken. Do not re-auth-loop
+or switch tokens. A fresh probe returning 200 confirms the token is fine.
+
+### Key Takeaway
+gh API 401 mid-session is usually propagation lag. Probe `gh api user` once and retry; do not
+trigger a re-auth flow on a single 401.
+
+---
+
+## 2026-06-09 - Multi-source reference research: Zotero/Drive/WebFetch + process-hygiene pitfalls [MEDIUM]
+
+**Date:** June 9, 2026
+**Area:** Research tooling / Subagents / Process hygiene
+**Impact:** MEDIUM (reusable for any reference-sourcing or library-inventory work; avoids token + zombie-process waste)
+**Status:** Documented
+
+### Discoveries (reusable patterns + pitfalls)
+1. **Zotero LOCAL API** (no key, desktop app must be open): `http://localhost:23119/api/users/0/items` with `?q=<enc>&qmode=everything&format=json`; `/<key>/children` for attachments. Call it with `curl.exe` and a PRE-BUILT URL string -- PowerShell `Invoke-RestMethod` mis-parsed the hostname, and inline backtick-escaping of `&` produced a malformed URL (curl exit 3). Imported attachments live at `<Zotero data dir>\storage\<key>\<filename>` with a `.zotero-ft-cache` (grep-able fulltext) alongside.
+2. **WebFetch can't parse binary gov PDFs**, but it SAVES the file locally (under the session `tool-results\` dir) and returns the path -- then use the Read tool for proper PDF rendering. Good for gov.bc.ca / canada.ca PDFs.
+3. **Subagent 1M-context tier needs `/usage-credits`.** A large-folder inventory agent died immediately with "Usage credits required for 1M context" (145 tokens, 6 tool-uses). Re-launch on the INHERITED standard-context model with filename-first + capped PDF reads, or enable credits.
+4. **Do NOT use `until <grep>; do sleep N; done` wait-loops in the Bash tool.** If they poll for a string that never appears (e.g. a literal `VERDICT:` that codex did not print), they background-zombie and `sleep` forever. 8 accumulated this session; killed by CommandLine match (`bash|sleep` + `until|do sleep`). Rely on background-task completion notifications instead.
+
+### File / artifact references
+- Reference-library inventory + HH-food consumption-rate sourcing: `matrix_research/reference_catalog/reference_library_inventory_2026_06_09.md` + `matrix_research/reference_catalog/library_inventory_2026_06_09/` (per-folder manifests).
+- Zotero scripts: `scripts/matrix-options/zotero-api-smoke.mjs` (read, web API+key), `scripts/matrix-options/zotero-write-queue.mjs` (write, web API+key, metadata-only, dry-run + dedup).
+
+### Key Takeaway
+For reference research: curl.exe (pre-built URL) for the Zotero local API; WebFetch to capture binary PDFs to disk then Read them; standard-context subagents for big-folder inventory; never `until/sleep` wait-loops -- use completion notifications.
+
+---
+
 ## 2026-01-26 - Advanced Lazy Loading with Suspense for Performance Optimization [HIGH]
 
 **Date:** January 26, 2026
