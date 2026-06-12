@@ -107,8 +107,10 @@ luck (suite size below the ceiling); #290 hit it twice.
 
 v8 coverage instrumentation multiplies per-module heap use. With maxWorkers=1 the suite runs
 serially (reducing peak parallelism) but each worker still operates at the full V8 default heap.
-Local `npm run test:ci` does NOT reproduce because local Node is not Node 24; local-GREEN does
-not guarantee CI-GREEN after the heap ceiling is hit.
+Local `npm run test:ci` did NOT reproduce in the 2026-06-10 environment because local Node was
+not Node 24; local-GREEN does not guarantee CI-GREEN after the heap ceiling is hit. (Check
+`node --version` first: if your LOCAL Node is also 24, local test:ci CAN reproduce the OOM, and
+local-GREEN is then meaningful evidence -- do not blanket-dismiss local reproduction.)
 
 ### Solution or Pattern
 
@@ -164,10 +166,12 @@ row. `getEquation` never invokes the seed layer. `label` is derived per-frame fr
 source's `short_citation`, not hardcoded.
 
 ### File References
-- `src/components/matrix-options/frameDefaults.ts` -- seed layer (the FRAME_DEFAULT_PROFILES
-  table + getActiveFrameDefaults helper)
-- `src/components/matrix-options/HHFoodWebCalculator.tsx` ~line 414 -- label render (fix to
-  derive per-frame before adding any second frame default)
+- `src/lib/matrix-options/frameDefaults.ts` -- seed layer (the FRAME_DEFAULT_PROFILES
+  table + getActiveFrameDefaults helper). (Corrected 2026-06-12: the module is under `src/lib/`,
+  not `src/components/`.)
+- `src/components/matrix-options/HHFoodWebCalculator.tsx` -- the frame-default label render (search
+  the `hh-food-...-frame-default-label` data-testid; ~lines 466-482 as of #302, not ~414) -- derive
+  per-frame before adding any second frame default.
 - C-nonBC prep spec: `docs/MATRIX_OPTIONS_C_NONBC_PREP_2026_06_10.md`
 
 ### Key Takeaway
