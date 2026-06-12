@@ -52,7 +52,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: +1 (1598 -> 1599) -- C-4 US EPA adult body weight (needs_review):
     // pv-epa-2000-bw-adult-us adds candidate_group_id
     // human-health-food__generic__BW_kg__US_federal (new group, not shared).
-    expect(view.valueGroups).toHaveLength(1599);
+    // 2026-06-11: +3 (1599 -> 1602) -- Phase D HC PQRA v4.0 direct-contact exposure
+    // factors (needs_review): three new candidate groups
+    // human-health-direct__generic__{EF_days_per_year,ED_years,AT_cancer_years}__general
+    // (EF and ED each hold two land-use variants that SHARE one group; AT holds one).
+    expect(view.valueGroups).toHaveLength(1602);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -69,7 +73,9 @@ describe('matrix options evidence library helpers', () => {
     // needs_review / pending_source_locator; promoted out later by owner --apply) = 373.
     // 2026-06-11: +1 -- C-4 US EPA adult body weight (pv-epa-2000-bw-adult-us,
     // needs_review / pending_source_locator; promoted out later by owner --apply) = 374.
-    expect(view.audit.values.pendingSourceLocator).toBe(374);
+    // 2026-06-11: +5 -- Phase D HC PQRA v4.0 direct-contact EF/ED/AT rows (5 records,
+    // all needs_review / pending_source_locator) = 379.
+    expect(view.audit.values.pendingSourceLocator).toBe(379);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -78,7 +84,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-10: +1 US EPA IR_food general candidate (available_option) = 1583.
     // 2026-06-11: +1 C-3 BC WLRS adult body weight (available_option) = 1584.
     // 2026-06-11: +1 C-4 US EPA adult body weight (available_option) = 1585.
-    expect(view.audit.values.availableOptions).toBe(1585);
+    // 2026-06-11: +5 Phase D HC PQRA v4.0 direct-contact EF/ED/AT rows (available_option) = 1590.
+    expect(view.audit.values.availableOptions).toBe(1590);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
@@ -103,10 +110,14 @@ describe('matrix options evidence library helpers', () => {
       'eq-human-health-direct-contact',
     );
     // sources order updated 2026-05-31: src-bc-protocol-28-2021-jan added by d0c00003 HH-direct records.
+    // 2026-06-11: src-health-canada-pqra-v4-2024 added by the Phase D HC PQRA v4.0
+    // direct-contact EF/ED/AT rows (needs_review); appears in source order after the
+    // US EPA IRIS sources and before src-health-canada-trv-v4-2025.
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
       'src-bc-protocol-28-2021-jan',
       'src-us-epa-iris-rfd-table-live',
       'src-us-epa-iris-chemical-details-live',
+      'src-health-canada-pqra-v4-2024',
       'src-health-canada-trv-v4-2025',
       'src-bc-protocol-28-v3-0-2024',
     ]);

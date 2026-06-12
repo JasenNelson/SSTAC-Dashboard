@@ -4623,5 +4623,339 @@
       "exposure factor"
     ],
     "candidate_group_id": "human-health-food__generic__BW_kg__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ef-residential-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "EF_days_per_year",
+    "display_name": "Exposure frequency - residential/agricultural land use (HC PQRA v4.0)",
+    "value": 364,
+    "unit": "days/year",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 exposure frequency for agricultural and residential land use: 7 days/week x 52 weeks/year = 364 days/year. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Health Canada Box 1 decomposes exposure frequency as D2 (days per week exposed / 7) and D3 (weeks per year exposed / 52); the days/year value here is the product 7 x 52 = 364. Table 2 footnote 1: no assumptions are provided for remote/other land uses (camping, hunting/fishing), which require site-specific values.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Table 2 (Exposure Duration and Frequency Assumptions for PQRAs), p.27: Days per week on site = 7 and Weeks per year on site = 52 (agricultural, residential)",
+        "value_text": "agricultural/residential: 7 days/week x 52 weeks/year = 364 days/year",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Table 2 days/week x weeks/year for agricultural/residential land use. Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ef-residential-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 residential/agricultural exposure frequency (364 days/year). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) is the cited source for this exposure-duration/frequency assumption."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "residential",
+      "agricultural"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "exposure frequency",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__EF_days_per_year__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ef-commercial-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "EF_days_per_year",
+    "display_name": "Exposure frequency - commercial/industrial land use (HC PQRA v4.0)",
+    "value": 240,
+    "unit": "days/year",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 exposure frequency for commercial and industrial land use: 5 days/week x 48 weeks/year = 240 days/year. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Health Canada Box 1 decomposes exposure frequency as D2 (days per week exposed / 7) and D3 (weeks per year exposed / 52); the days/year value here is the product 5 x 48 = 240. Table 2 footnote 4: industrial receptors are assumed to be adults only.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Table 2 (Exposure Duration and Frequency Assumptions for PQRAs), p.27: Days per week on site = 5 and Weeks per year on site = 48 (commercial, industrial)",
+        "value_text": "commercial/industrial: 5 days/week x 48 weeks/year = 240 days/year",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Table 2 days/week x weeks/year for commercial/industrial land use. Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ef-commercial-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure frequency (240 days/year). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) is the cited source for this exposure-duration/frequency assumption."
+      }
+    ],
+    "population_groups": [
+      "worker",
+      "commercial",
+      "industrial"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "exposure frequency",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__EF_days_per_year__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ed-residential-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "ED_years",
+    "display_name": "Exposure duration - residential/agricultural land use (HC PQRA v4.0)",
+    "value": 80,
+    "unit": "years",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 \"Total years exposed\" = 80 years for agricultural and residential land use (a lifetime-residency assumption). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Table 2 footnote 2: dose averaging is not acceptable for substances with developmental and/or reproductive effects, or for which concentration or peak exposure drives toxicity.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Table 2 (Exposure Duration and Frequency Assumptions for PQRAs), p.27: Total years exposed = 80 (agricultural, residential)",
+        "value_text": "agricultural/residential total years exposed: 80 years",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Table 2 \"Total years exposed\" for agricultural/residential land use. Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ed-residential-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 residential/agricultural exposure duration (80 years). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) is the cited source for this exposure-duration/frequency assumption."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "residential",
+      "agricultural"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "exposure duration",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__ED_years__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ed-commercial-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "ED_years",
+    "display_name": "Exposure duration - commercial/industrial land use (HC PQRA v4.0)",
+    "value": 35,
+    "unit": "years",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 \"Total years exposed\" = 35 years for commercial and industrial land use. Table 2 footnote 3: the 35-year commercial duration assumes an employee (rather than a member of the general public) will be most exposed. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Table 2 footnote 2: dose averaging is not acceptable for substances with developmental and/or reproductive effects, or for which concentration or peak exposure drives toxicity.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Table 2 (Exposure Duration and Frequency Assumptions for PQRAs), p.27: Total years exposed = 35 (commercial, industrial); footnote 3",
+        "value_text": "commercial/industrial total years exposed: 35 years",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Table 2 \"Total years exposed\" for commercial/industrial land use (employee). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ed-commercial-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure duration (35 years). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) is the cited source for this exposure-duration/frequency assumption."
+      }
+    ],
+    "population_groups": [
+      "worker",
+      "commercial",
+      "industrial"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "exposure duration",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__ED_years__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-at-cancer-lifetime-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "AT_cancer_years",
+    "display_name": "Averaging time, cancer - lifetime (HC PQRA v4.0)",
+    "value": 80,
+    "unit": "years",
+    "applicability": "Health Canada PQRA v4.0 (2024) lifetime averaging time for non-threshold carcinogenic (cancer) endpoints: life expectancy = 80 years (Table 2, all land uses), the lifetime over which the lifetime average daily dose (LADD) is averaged. This is a documented averaging CONVENTION, not a measured datum. Substance-independent (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Box 4 (Incremental Lifetime Cancer Risk equations) defines the fraction of time exposed for a life stage as (yr / 80 yr), confirming the 80-year lifetime-averaging basis. Health Canada's lifetime-averaging convention (80 years) differs from the US EPA 70-year convention. Table 2 footnote 2: dose averaging is not acceptable for substances with developmental and/or reproductive effects, or for which concentration or peak exposure drives toxicity.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Table 2 (Exposure Duration and Frequency Assumptions for PQRAs), p.27: Life expectancy = 80 years (all land uses); corroborated by Box 4 (Incremental Lifetime Cancer Risk equations), p.36: \"TR = fraction of time exposed for lifestage i (yr/80 yr)\"",
+        "value_text": "life expectancy / lifetime averaging: 80 years",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-11",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 lifetime-averaging basis for cancer (LADD), Table 2 life expectancy + Box 4. Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-at-cancer-lifetime-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 cancer lifetime averaging time (80 years, life expectancy). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) is the cited source for this exposure-duration/frequency assumption."
+      }
+    ],
+    "population_groups": [
+      "composite lifetime receptor"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "averaging time",
+      "cancer",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__AT_cancer_years__general"
   }
 ]
