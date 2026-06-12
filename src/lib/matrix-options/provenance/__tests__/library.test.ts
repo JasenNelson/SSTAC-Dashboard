@@ -73,7 +73,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: +2 -- C-3/C-4 adult body weights promoted to approved_source_backed
     // (pv-wlrs-2023-bw-adult-bc + pv-epa-2000-bw-adult-us; HITL J. Nelson, inline-approved
     // --apply) = 1222.
-    expect(view.audit.values.approvedSourceBacked).toBe(1222);
+    // 2026-06-12: +7 -- C-HH-direct HC PQRA v4.0 toddler receptor exposure factors promoted
+    // to approved_source_backed (BW/IR_sed/EF/ED/AT_cancer/SA/AF; HITL J. Nelson, inline-
+    // approved --apply via promote-hc-pqra-direct.mjs) = 1229.
+    expect(view.audit.values.approvedSourceBacked).toBe(1229);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -91,7 +94,10 @@ describe('matrix options evidence library helpers', () => {
     // inline-approved --apply) = 385.
     // 2026-06-12: +8 -- HC PQRA v4.0 Appendix E dermal receptor characteristics (6 SA_cm2 +
     // 2 AF_sed_mg_per_cm2, all needs_review / pending_source_locator) = 393.
-    expect(view.audit.values.pendingSourceLocator).toBe(393);
+    // 2026-06-12: -7 -- C-HH-direct HC PQRA v4.0 toddler receptor exposure factors promoted
+    // out of pending (BW/IR_sed/EF/ED/AT_cancer/SA/AF; HITL J. Nelson, inline-approved
+    // --apply via promote-hc-pqra-direct.mjs) = 386.
+    expect(view.audit.values.pendingSourceLocator).toBe(386);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value

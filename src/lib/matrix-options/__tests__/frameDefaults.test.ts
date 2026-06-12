@@ -122,7 +122,9 @@ const TEST_SOURCES = [
 
 describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
   it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(2);
+    // C-HH-direct (2026-06-12): the table now also has the canada-fcsap-aquatic
+    // human-health-direct row (HC PQRA v4.0 toddler receptor, 7 seeds).
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(3);
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
     expect(bc?.pathway).toBe('human-health-food');
@@ -179,9 +181,22 @@ describe('SEEDABLE_KEYS', () => {
     ]);
   });
 
+  it('human-health-direct has exactly the 7 HC PQRA exposure-factor keys', () => {
+    expect(SEEDABLE_KEYS['human-health-direct']).toEqual([
+      'BW_kg',
+      'IR_sed_mg_per_day',
+      'EF_days_per_year',
+      'ED_years',
+      'AT_cancer_years',
+      'SA_cm2',
+      'AF_sed_mg_per_cm2',
+    ]);
+  });
+
   it('every other ProvenancePathway has an empty seedable-key list', () => {
+    // human-health-food and human-health-direct now have seeds; all others are [].
     const others = PROVENANCE_PATHWAYS.filter(
-      (p) => p !== 'human-health-food',
+      (p) => p !== 'human-health-food' && p !== 'human-health-direct',
     );
     for (const pathway of others) {
       expect(SEEDABLE_KEYS[pathway]).toEqual([]);

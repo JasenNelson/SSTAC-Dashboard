@@ -46,7 +46,18 @@ import { getFrameSeedCandidateEligibility } from './defaultSelectionPolicy';
 export const SEEDABLE_KEYS: Record<ProvenancePathway, readonly string[]> = {
   'eco-direct-eqp': [],
   'eco-food-bsaf': [],
-  'human-health-direct': [],
+  // Owner-approved for HH-direct (2026-06-12): the HC PQRA v4.0 receptor exposure
+  // factors. abs_dermal / ba_oral are substance-specific and stay user-entered;
+  // targetRisk / hazardQuotient are policy constants, not receptor assumptions.
+  'human-health-direct': [
+    'BW_kg',
+    'IR_sed_mg_per_day',
+    'EF_days_per_year',
+    'ED_years',
+    'AT_cancer_years',
+    'SA_cm2',
+    'AF_sed_mg_per_cm2',
+  ],
   // Owner-approved for HH-food: fish ingestion rate + body weight (receptor
   // assumptions). foc / fLipid are site-measured and intentionally excluded.
   'human-health-food': ['IR_food_kg_per_day', 'BW_kg'],
@@ -64,6 +75,14 @@ export const SEEDABLE_KEYS: Record<ProvenancePathway, readonly string[]> = {
 export const SEEDABLE_KEY_UNITS: Record<string, string> = {
   IR_food_kg_per_day: 'kg/day',
   BW_kg: 'kg',
+  // HC PQRA v4.0 direct-contact receptor factors (units are input-key-scoped, not
+  // pathway-scoped; BW_kg above is shared with HH-food).
+  IR_sed_mg_per_day: 'mg/day',
+  EF_days_per_year: 'days/year',
+  ED_years: 'years',
+  AT_cancer_years: 'years',
+  SA_cm2: 'cm2',
+  AF_sed_mg_per_cm2: 'mg/cm2',
 };
 
 // ---------------------------------------------------------------------------
@@ -181,6 +200,66 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
         // No per-seed label override: the row label "US EPA 2000 AWQC, general adult
         // population" is already correct for the 70 kg general-adult body weight (unlike
         // the BC row, where the "recreational" label needed a BW override).
+      },
+    ],
+  },
+  {
+    // C-HH-direct (2026-06-12): the Canada FCSAP frame seeds the HH direct-contact
+    // calculator with the HC PQRA v4.0 (2024) RESIDENTIAL TODDLER receptor (the
+    // critical receptor for incidental soil/sediment ingestion + dermal contact).
+    // PQRA is FCSAP guidance, so the federal Canada FCSAP frame is its native home.
+    // Owner-promoted (inline-approved 2026-06-12) via promote-hc-pqra-direct.mjs;
+    // user-adjustable seeds. Until promotion they resolve 'pending' and never drive
+    // the calculation (promote-first guardrail).
+    frameId: 'canada-fcsap-aquatic',
+    pathway: 'human-health-direct',
+    note:
+      'HC PQRA v4.0 (2024) residential toddler receptor: BW 16.5 kg, IR_sed 80 mg/day, ' +
+      'EF 364 days/yr, ED 80 yr, AT_cancer 80 yr, SA(total body) 6130 cm2, AF 0.01 mg/cm2.',
+    label: 'HC PQRA v4.0 2024, residential toddler',
+    sourceIds: ['src-health-canada-pqra-v4-2024'],
+    defaults: [
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-hc-pqra-v4-2024-bw-toddler-ca',
+        candidateGroupId: 'human-health-direct__generic__BW_kg__general',
+        label: 'HC PQRA v4.0 2024, residential toddler (16.5 kg, Appendix E)',
+      },
+      {
+        inputKey: 'IR_sed_mg_per_day',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ir-sed-toddler-ca',
+        candidateGroupId: 'human-health-direct__generic__IR_sed_mg_per_day__general',
+        label: 'HC PQRA v4.0 2024, toddler incidental ingestion (80 mg/day)',
+      },
+      {
+        inputKey: 'EF_days_per_year',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ef-residential-ca',
+        candidateGroupId: 'human-health-direct__generic__EF_days_per_year__general',
+        label: 'HC PQRA v4.0 2024, residential exposure frequency (364 days/yr)',
+      },
+      {
+        inputKey: 'ED_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ed-residential-ca',
+        candidateGroupId: 'human-health-direct__generic__ED_years__general',
+        label: 'HC PQRA v4.0 2024, residential exposure duration (80 yr)',
+      },
+      {
+        inputKey: 'AT_cancer_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-at-cancer-lifetime-ca',
+        candidateGroupId: 'human-health-direct__generic__AT_cancer_years__general',
+        label: 'HC PQRA v4.0 2024, lifetime cancer averaging time (80 yr)',
+      },
+      {
+        inputKey: 'SA_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-sa-total-toddler-ca',
+        candidateGroupId: 'human-health-direct__generic__SA_cm2__general',
+        label: 'HC PQRA v4.0 2024, toddler total-body skin surface area (6130 cm2)',
+      },
+      {
+        inputKey: 'AF_sed_mg_per_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-af-sed-other-general-ca',
+        candidateGroupId: 'human-health-direct__generic__AF_sed_mg_per_cm2__general',
+        label: 'HC PQRA v4.0 2024, non-hand soil loading (0.01 mg/cm2)',
       },
     ],
   },

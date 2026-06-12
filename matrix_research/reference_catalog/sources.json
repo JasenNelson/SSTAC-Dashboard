@@ -355,14 +355,15 @@
     "zotero_status": "linked",
     "external_file_hint": "Zotero metadata-only webpage record added from Health Canada current-guidance queue.",
     "file_storage": "zotero_or_external",
-    "notes": "Current federal PQRA guidance. Requires BC hierarchy check before applying to Matrix Options defaults.",
+    "notes": "Current federal PQRA guidance. Requires BC hierarchy check before applying to Matrix Options defaults. [Source promoted to direct_source_verified on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "authority_scope": "federal-guidance",
     "currentness_status": "current",
     "version": "4.0",
     "page_last_modified": "2026-03-12",
     "checked_at": "2026-05-23",
     "conflict_rule": "BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.",
-    "supersedes_source_ids": []
+    "supersedes_source_ids": [],
+    "canonical_source_status": "direct_source_verified"
   },
   {
     "source_id": "src-health-canada-trv-v4-2025",
