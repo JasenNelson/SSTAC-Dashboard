@@ -112,3 +112,68 @@ describe('HHDirectContactCalculator', () => {
     }
   });
 });
+
+// C-HH-direct (2026-06-12): the canada-fcsap-aquatic frame seeds the seven HC PQRA v4.0
+// toddler exposure factors. NO frameDefaults mock here -- this exercises the LIVE catalog
+// (the cited records are promoted to approved, so they resolve 'active' and seed the
+// fields). Mirrors HHFoodWebCalculator's BW frame-default test.
+describe('HHDirectContactCalculator C-HH-direct frame default (live catalog)', () => {
+  function renderFcsap() {
+    return render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+  }
+
+  it('opens on the seeded toddler exposure factors with frame-default labels', () => {
+    renderFcsap();
+    // BW seeds 16.5 kg (toddler) with its per-seed source descriptor.
+    const bw = screen.getByTestId('hh-direct-bw-input') as HTMLInputElement;
+    expect(bw.value).toBe('16.5');
+    const bwLabel = screen.getByTestId('hh-direct-bw-frame-default-label');
+    expect(bwLabel).toHaveTextContent(/Frame default 16\.5 kg/);
+    expect(bwLabel).toHaveTextContent('HC PQRA v4.0 2024');
+    // IR_sed seeds 80 mg/day, SA 6130 cm2, AF 0.01 mg/cm2.
+    expect(
+      (screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement).value,
+    ).toBe('80');
+    expect(
+      (screen.getByTestId('hh-direct-sa-input') as HTMLInputElement).value,
+    ).toBe('6130');
+    expect(
+      (screen.getByTestId('hh-direct-af-input') as HTMLInputElement).value,
+    ).toBe('0.01');
+    expect(
+      screen.getByTestId('hh-direct-ir-sed-frame-default-label'),
+    ).toBeInTheDocument();
+  });
+
+  it('a user edit shows the BW reset button; reset restores 16.5', () => {
+    renderFcsap();
+    const bw = screen.getByTestId('hh-direct-bw-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-bw-reset-to-frame-default')).toBeNull();
+    fireEvent.change(bw, { target: { value: '70' } });
+    expect(bw.value).toBe('70');
+    expect(
+      screen.getByTestId('hh-direct-bw-reset-to-frame-default'),
+    ).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-bw-reset-to-frame-default'));
+    expect(bw.value).toBe('16.5');
+    expect(screen.queryByTestId('hh-direct-bw-reset-to-frame-default')).toBeNull();
+  });
+
+  it('a no-default frame leaves the inputs at their baselines with no label', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="ccme-sediment-quality"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value,
+    ).toBe('15');
+    expect(screen.queryByTestId('hh-direct-bw-frame-default-label')).toBeNull();
+  });
+});
