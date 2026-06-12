@@ -5952,7 +5952,12 @@
       }
     ],
     "population_groups": [
-      "general population"
+      "general population",
+      "infant",
+      "toddler",
+      "child",
+      "teen",
+      "general adult"
     ],
     "assumption_tags": [
       "direct contact",
