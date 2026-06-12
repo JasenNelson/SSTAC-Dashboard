@@ -4369,9 +4369,9 @@
     "unit": "kg",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-bc-wlrs-fish-tissue-screening-2023"
     ],
@@ -4379,8 +4379,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "BC",
-    "applicability": "BC HHRA adult body weight (WLRS 2023, Section 2 / Table 1, document page 2; mean adult Canadian body weight 70.7 kg, age >=20; sourced to Health Canada 2021a). Substance-independent exposure factor (substance_key=generic). Pairs with the recreational fisher ingestion rate (0.111 kg/day, Table 2). needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. The 70.7 kg adult body weight is the general Canadian adult value (males and females combined, age >=20) used in BC fish-tissue screening calculations; the same body weight applies across the recreational, subsistence, and low-level fisher receptors (only the ingestion rate differs).",
+    "applicability": "BC HHRA adult body weight (WLRS 2023, Section 2 / Table 1, document page 2; mean adult Canadian body weight 70.7 kg, age >=20; sourced to Health Canada 2021a). Substance-independent exposure factor (substance_key=generic). Pairs with the recreational fisher ingestion rate (0.111 kg/day, Table 2). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. The 70.7 kg adult body weight is the general Canadian adult value (males and females combined, age >=20) used in BC fish-tissue screening calculations; the same body weight applies across the recreational, subsistence, and low-level fisher receptors (only the ingestion rate differs). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-bc-wlrs-fish-tissue-screening-2023",
@@ -4389,17 +4389,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-sonnet-4-6",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "BC WLRS 2023 Table 1 mean adult Canadian body weight; sourced to Health Canada 2021a. Confirmed by direct read of the primary PDF (Zotero attachment PN49R8X7).",
         "evidence_id": "ev-pv-wlrs-2023-bw-adult-bc-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "BC WLRS 2023 adult body weight (70.7 kg, general Canadian adult). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "BC WLRS 2023 adult body weight (70.7 kg, general Canadian adult). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
     "bc_protocol_basis": "BC provincial government source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance control where conflicts exist.",
     "source_crystallization_date": "2023-12-31",
@@ -4569,9 +4569,9 @@
     "unit": "kg",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-epa-2000-awqc-human-health"
     ],
@@ -4579,8 +4579,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA 2000 AWQC default adult body weight (70 kg, general adult population). Equation parameter key (Chapter 1, p.1-9) and Section 4.3.1.1 (p.4-19); EPA retained 70 kg for AWQC consistency with IRIS-embedded dose-response factors. Substance-independent exposure factor (substance_key=generic). Pairs with the 0.0175 kg/day (17.5 g/day) general-population fish ingestion rate from the same document. needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. The 70 kg adult body weight is the EPA 2000 AWQC default (general adult); the 2011 Exposure Factors Handbook updated the adult body weight to 80 kg, but EPA's 2015 AWQC update retained 70 kg for consistency with IRIS dose-response factors -- so 70 kg is the matching value for the 0.0175 kg/day ingestion rate from the same 2000 methodology.",
+    "applicability": "US EPA 2000 AWQC default adult body weight (70 kg, general adult population). Equation parameter key (Chapter 1, p.1-9) and Section 4.3.1.1 (p.4-19); EPA retained 70 kg for AWQC consistency with IRIS-embedded dose-response factors. Substance-independent exposure factor (substance_key=generic). Pairs with the 0.0175 kg/day (17.5 g/day) general-population fish ingestion rate from the same document. needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. The 70 kg adult body weight is the EPA 2000 AWQC default (general adult); the 2011 Exposure Factors Handbook updated the adult body weight to 80 kg, but EPA's 2015 AWQC update retained 70 kg for consistency with IRIS dose-response factors -- so 70 kg is the matching value for the 0.0175 kg/day ingestion rate from the same 2000 methodology. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-epa-2000-awqc-human-health",
@@ -4589,17 +4589,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-sonnet-4-6",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "US EPA 2000 AWQC default adult body weight (70 kg); same document + receptor as the 17.5 g/day fish ingestion rate. Confirmed by direct read of the primary PDF (EPA-822-B-00-004).",
         "evidence_id": "ev-pv-epa-2000-bw-adult-us-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA 2000 AWQC default adult body weight (70 kg, general population). Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "US EPA 2000 AWQC default adult body weight (70 kg, general population). Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2000-12-31",
@@ -5492,5 +5492,547 @@
       "receptor characteristic"
     ],
     "candidate_group_id": "human-health-direct__generic__IR_sed_mg_per_day__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-infant-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - infant (0 to <6 mo) (HC PQRA v4.0 Appendix E)",
+    "value": 3620,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the infant (0 to <6 mo): 3620 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, infant column",
+        "value_text": "infant (0 to <6 mo) total body: 3620 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (infant (0 to <6 mo)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-infant-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (infant (0 to <6 mo), 3620 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "infant"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-toddler-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - toddler (6 mo to <5 yr) (HC PQRA v4.0 Appendix E)",
+    "value": 6130,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the toddler (6 mo to <5 yr): 6130 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, toddler column",
+        "value_text": "toddler (6 mo to <5 yr) total body: 6130 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (toddler (6 mo to <5 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-toddler-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (toddler (6 mo to <5 yr), 6130 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "toddler"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-child-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - child (5 to <12 yr) (HC PQRA v4.0 Appendix E)",
+    "value": 10140,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the child (5 to <12 yr): 10140 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, child column",
+        "value_text": "child (5 to <12 yr) total body: 10140 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (child (5 to <12 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-child-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (child (5 to <12 yr), 10140 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "child"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-teen-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - teen (12 to <20 yr) (HC PQRA v4.0 Appendix E)",
+    "value": 15470,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the teen (12 to <20 yr): 15470 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, teen column",
+        "value_text": "teen (12 to <20 yr) total body: 15470 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (teen (12 to <20 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-teen-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (teen (12 to <20 yr), 15470 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "teen"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-adult-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - adult (>=20 yr) (HC PQRA v4.0 Appendix E)",
+    "value": 17640,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the adult (>=20 yr): 17640 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, adult column",
+        "value_text": "adult (>=20 yr) total body: 17640 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (adult (>=20 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-adult-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (adult (>=20 yr), 17640 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "general adult"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-sa-total-worker-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "SA_cm2",
+    "display_name": "Skin surface area, total body - construction/utility worker (HC PQRA v4.0 Appendix E)",
+    "value": 1640,
+    "unit": "cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the construction/utility worker: 1640 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). NOTE: the Appendix E construction/utility-worker total-body value (1640 cm2) is NOT an anatomical whole-body area -- it reflects the limited skin assumed exposed for that worker class (PPE/clothing coverage), and is lower than all general-population age groups.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, construction/utility worker column",
+        "value_text": "construction/utility worker total body: 1640 cm2",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (construction/utility worker); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-worker-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (construction/utility worker, 1640 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Richardson 1997) for this total-body skin surface area."
+      }
+    ],
+    "population_groups": [
+      "worker",
+      "commercial",
+      "industrial"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "skin surface area",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__SA_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-af-sed-other-general-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "AF_sed_mg_per_cm2",
+    "display_name": "Soil/sediment loading to skin, surfaces other than hands - the general population (all ages) (HC PQRA v4.0 Appendix E)",
+    "value": 0.01,
+    "unit": "mg/cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the general population (all ages): 1 x 10^-8 kg/cm2-event = 0.01 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-8 kg/cm2-event -> 0.01 mg/cm2. HC splits soil loading into HANDS (1 x 10^-7 kg/cm2-event, ~0.1 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Soil loading to exposed skin (kg/cm2-event) Surfaces other than hands\" row, (infant-adult columns)",
+        "value_text": "the general population (all ages) (other surfaces): 1 x 10^-8 kg/cm2-event = 0.01 mg/cm2-event",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E soil loading to non-hand skin (the general population (all ages)); underlying source Kissel et al. (1996, 1998); converted kg/cm2-event -> mg/cm2 (x1e6). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-af-sed-other-general-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E non-hand soil loading (the general population (all ages), 0.01 mg/cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Kissel et al. 1996, 1998) for this soil-to-skin loading."
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "infant",
+      "toddler",
+      "child",
+      "teen",
+      "general adult"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "soil loading",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__AF_sed_mg_per_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-af-sed-other-worker-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "AF_sed_mg_per_cm2",
+    "display_name": "Soil/sediment loading to skin, surfaces other than hands - the construction/utility worker (HC PQRA v4.0 Appendix E)",
+    "value": 0.1,
+    "unit": "mg/cm2",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the construction/utility worker: 1 x 10^-7 kg/cm2-event = 0.1 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
+    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-7 kg/cm2-event -> 0.1 mg/cm2. HC splits soil loading into HANDS (1 x 10^-6 kg/cm2-event, ~1.0 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Soil loading to exposed skin (kg/cm2-event) Surfaces other than hands\" row, construction/utility worker column",
+        "value_text": "the construction/utility worker (other surfaces): 1 x 10^-7 kg/cm2-event = 0.1 mg/cm2-event",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-fable-5",
+        "extracted_at": "2026-06-12",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E soil loading to non-hand skin (the construction/utility worker); underlying source Kissel et al. (1996, 1998); converted kg/cm2-event -> mg/cm2 (x1e6). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-af-sed-other-worker-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E non-hand soil loading (the construction/utility worker, 0.1 mg/cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the cited source (tabulating Kissel et al. 1996, 1998) for this soil-to-skin loading."
+      }
+    ],
+    "population_groups": [
+      "worker",
+      "commercial",
+      "industrial"
+    ],
+    "assumption_tags": [
+      "direct contact",
+      "dermal contact",
+      "soil loading",
+      "receptor characteristic"
+    ],
+    "candidate_group_id": "human-health-direct__generic__AF_sed_mg_per_cm2__general"
   }
 ]

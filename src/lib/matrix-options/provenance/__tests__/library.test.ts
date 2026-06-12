@@ -60,14 +60,20 @@ describe('matrix options evidence library helpers', () => {
     // direct-contact receptor characteristics (needs_review): two new candidate groups
     // human-health-direct__generic__{BW_kg,IR_sed_mg_per_day}__general (BW holds 5 age-group
     // variants sharing one group; IR_sed holds 3 age/land-use variants sharing one).
-    expect(view.valueGroups).toHaveLength(1604);
+    // 2026-06-12: +2 (1604 -> 1606) -- HC PQRA v4.0 Appendix E dermal receptor characteristics
+    // (needs_review): two new candidate groups human-health-direct__generic__{SA_cm2,
+    // AF_sed_mg_per_cm2}__general (SA holds 6 total-body age/worker variants; AF holds 2).
+    expect(view.valueGroups).toHaveLength(1606);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
     // recreational-bc) promoted to approved_source_backed (HITL, J. Nelson) = 1219.
     // 2026-06-10: +1 -- US EPA general-population fish-ingestion-rate (pv-epa-2000-ir-food-
     // general-us) promoted to approved_source_backed (C-nonBC, HITL, J. Nelson) = 1220.
-    expect(view.audit.values.approvedSourceBacked).toBe(1220);
+    // 2026-06-12: +2 -- C-3/C-4 adult body weights promoted to approved_source_backed
+    // (pv-wlrs-2023-bw-adult-bc + pv-epa-2000-bw-adult-us; HITL J. Nelson, inline-approved
+    // --apply) = 1222.
+    expect(view.audit.values.approvedSourceBacked).toBe(1222);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -81,7 +87,11 @@ describe('matrix options evidence library helpers', () => {
     // all needs_review / pending_source_locator) = 379.
     // 2026-06-11: +8 -- Phase D follow-on HC PQRA v4.0 Appendix E receptor characteristics
     // (5 BW_kg + 3 IR_sed_mg_per_day, all needs_review / pending_source_locator) = 387.
-    expect(view.audit.values.pendingSourceLocator).toBe(387);
+    // 2026-06-12: -2 -- C-3/C-4 adult body weights promoted out of pending (HITL J. Nelson,
+    // inline-approved --apply) = 385.
+    // 2026-06-12: +8 -- HC PQRA v4.0 Appendix E dermal receptor characteristics (6 SA_cm2 +
+    // 2 AF_sed_mg_per_cm2, all needs_review / pending_source_locator) = 393.
+    expect(view.audit.values.pendingSourceLocator).toBe(393);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -93,7 +103,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: +5 Phase D HC PQRA v4.0 direct-contact EF/ED/AT rows (available_option) = 1590.
     // 2026-06-11: +8 Phase D follow-on HC PQRA v4.0 Appendix E receptor characteristics
     // (5 BW_kg + 3 IR_sed_mg_per_day, available_option) = 1598.
-    expect(view.audit.values.availableOptions).toBe(1598);
+    // 2026-06-12: +8 HC PQRA v4.0 Appendix E dermal receptor characteristics
+    // (6 SA_cm2 + 2 AF_sed_mg_per_cm2, available_option) = 1606.
+    expect(view.audit.values.availableOptions).toBe(1606);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
