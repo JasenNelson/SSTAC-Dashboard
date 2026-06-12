@@ -56,7 +56,11 @@ describe('matrix options evidence library helpers', () => {
     // factors (needs_review): three new candidate groups
     // human-health-direct__generic__{EF_days_per_year,ED_years,AT_cancer_years}__general
     // (EF and ED each hold two land-use variants that SHARE one group; AT holds one).
-    expect(view.valueGroups).toHaveLength(1602);
+    // 2026-06-11: +2 (1602 -> 1604) -- Phase D follow-on HC PQRA v4.0 Appendix E
+    // direct-contact receptor characteristics (needs_review): two new candidate groups
+    // human-health-direct__generic__{BW_kg,IR_sed_mg_per_day}__general (BW holds 5 age-group
+    // variants sharing one group; IR_sed holds 3 age/land-use variants sharing one).
+    expect(view.valueGroups).toHaveLength(1604);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -75,7 +79,9 @@ describe('matrix options evidence library helpers', () => {
     // needs_review / pending_source_locator; promoted out later by owner --apply) = 374.
     // 2026-06-11: +5 -- Phase D HC PQRA v4.0 direct-contact EF/ED/AT rows (5 records,
     // all needs_review / pending_source_locator) = 379.
-    expect(view.audit.values.pendingSourceLocator).toBe(379);
+    // 2026-06-11: +8 -- Phase D follow-on HC PQRA v4.0 Appendix E receptor characteristics
+    // (5 BW_kg + 3 IR_sed_mg_per_day, all needs_review / pending_source_locator) = 387.
+    expect(view.audit.values.pendingSourceLocator).toBe(387);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -85,7 +91,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: +1 C-3 BC WLRS adult body weight (available_option) = 1584.
     // 2026-06-11: +1 C-4 US EPA adult body weight (available_option) = 1585.
     // 2026-06-11: +5 Phase D HC PQRA v4.0 direct-contact EF/ED/AT rows (available_option) = 1590.
-    expect(view.audit.values.availableOptions).toBe(1590);
+    // 2026-06-11: +8 Phase D follow-on HC PQRA v4.0 Appendix E receptor characteristics
+    // (5 BW_kg + 3 IR_sed_mg_per_day, available_option) = 1598.
+    expect(view.audit.values.availableOptions).toBe(1598);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
