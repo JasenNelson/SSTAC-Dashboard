@@ -4369,9 +4369,9 @@
     "unit": "kg",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-bc-wlrs-fish-tissue-screening-2023"
     ],
@@ -4379,8 +4379,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "BC",
-    "applicability": "BC HHRA adult body weight (WLRS 2023, Section 2 / Table 1, document page 2; mean adult Canadian body weight 70.7 kg, age >=20; sourced to Health Canada 2021a). Substance-independent exposure factor (substance_key=generic). Pairs with the recreational fisher ingestion rate (0.111 kg/day, Table 2). needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. The 70.7 kg adult body weight is the general Canadian adult value (males and females combined, age >=20) used in BC fish-tissue screening calculations; the same body weight applies across the recreational, subsistence, and low-level fisher receptors (only the ingestion rate differs).",
+    "applicability": "BC HHRA adult body weight (WLRS 2023, Section 2 / Table 1, document page 2; mean adult Canadian body weight 70.7 kg, age >=20; sourced to Health Canada 2021a). Substance-independent exposure factor (substance_key=generic). Pairs with the recreational fisher ingestion rate (0.111 kg/day, Table 2). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. The 70.7 kg adult body weight is the general Canadian adult value (males and females combined, age >=20) used in BC fish-tissue screening calculations; the same body weight applies across the recreational, subsistence, and low-level fisher receptors (only the ingestion rate differs). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-bc-wlrs-fish-tissue-screening-2023",
@@ -4389,17 +4389,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-sonnet-4-6",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "BC WLRS 2023 Table 1 mean adult Canadian body weight; sourced to Health Canada 2021a. Confirmed by direct read of the primary PDF (Zotero attachment PN49R8X7).",
         "evidence_id": "ev-pv-wlrs-2023-bw-adult-bc-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "BC WLRS 2023 adult body weight (70.7 kg, general Canadian adult). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "BC WLRS 2023 adult body weight (70.7 kg, general Canadian adult). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
     "bc_protocol_basis": "BC provincial government source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance control where conflicts exist.",
     "source_crystallization_date": "2023-12-31",
@@ -4569,9 +4569,9 @@
     "unit": "kg",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-epa-2000-awqc-human-health"
     ],
@@ -4579,8 +4579,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA 2000 AWQC default adult body weight (70 kg, general adult population). Equation parameter key (Chapter 1, p.1-9) and Section 4.3.1.1 (p.4-19); EPA retained 70 kg for AWQC consistency with IRIS-embedded dose-response factors. Substance-independent exposure factor (substance_key=generic). Pairs with the 0.0175 kg/day (17.5 g/day) general-population fish ingestion rate from the same document. needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. The 70 kg adult body weight is the EPA 2000 AWQC default (general adult); the 2011 Exposure Factors Handbook updated the adult body weight to 80 kg, but EPA's 2015 AWQC update retained 70 kg for consistency with IRIS dose-response factors -- so 70 kg is the matching value for the 0.0175 kg/day ingestion rate from the same 2000 methodology.",
+    "applicability": "US EPA 2000 AWQC default adult body weight (70 kg, general adult population). Equation parameter key (Chapter 1, p.1-9) and Section 4.3.1.1 (p.4-19); EPA retained 70 kg for AWQC consistency with IRIS-embedded dose-response factors. Substance-independent exposure factor (substance_key=generic). Pairs with the 0.0175 kg/day (17.5 g/day) general-population fish ingestion rate from the same document. needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the EPA 2000 AWQC methodology primary. The 70 kg adult body weight is the EPA 2000 AWQC default (general adult); the 2011 Exposure Factors Handbook updated the adult body weight to 80 kg, but EPA's 2015 AWQC update retained 70 kg for consistency with IRIS dose-response factors -- so 70 kg is the matching value for the 0.0175 kg/day ingestion rate from the same 2000 methodology. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-epa-2000-awqc-human-health",
@@ -4589,17 +4589,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-sonnet-4-6",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "US EPA 2000 AWQC default adult body weight (70 kg); same document + receptor as the 17.5 g/day fish ingestion rate. Confirmed by direct read of the primary PDF (EPA-822-B-00-004).",
         "evidence_id": "ev-pv-epa-2000-bw-adult-us-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA 2000 AWQC default adult body weight (70 kg, general population). Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "US EPA 2000 AWQC default adult body weight (70 kg, general population). Read-only library candidate; verify against the EPA 2000 methodology primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2000-12-31",

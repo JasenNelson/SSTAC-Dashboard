@@ -67,7 +67,10 @@ describe('matrix options evidence library helpers', () => {
     // recreational-bc) promoted to approved_source_backed (HITL, J. Nelson) = 1219.
     // 2026-06-10: +1 -- US EPA general-population fish-ingestion-rate (pv-epa-2000-ir-food-
     // general-us) promoted to approved_source_backed (C-nonBC, HITL, J. Nelson) = 1220.
-    expect(view.audit.values.approvedSourceBacked).toBe(1220);
+    // 2026-06-12: +2 -- C-3/C-4 adult body weights promoted to approved_source_backed
+    // (pv-wlrs-2023-bw-adult-bc + pv-epa-2000-bw-adult-us; HITL J. Nelson, inline-approved
+    // --apply) = 1222.
+    expect(view.audit.values.approvedSourceBacked).toBe(1222);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -81,7 +84,9 @@ describe('matrix options evidence library helpers', () => {
     // all needs_review / pending_source_locator) = 379.
     // 2026-06-11: +8 -- Phase D follow-on HC PQRA v4.0 Appendix E receptor characteristics
     // (5 BW_kg + 3 IR_sed_mg_per_day, all needs_review / pending_source_locator) = 387.
-    expect(view.audit.values.pendingSourceLocator).toBe(387);
+    // 2026-06-12: -2 -- C-3/C-4 adult body weights promoted out of pending (HITL J. Nelson,
+    // inline-approved --apply) = 385.
+    expect(view.audit.values.pendingSourceLocator).toBe(385);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
