@@ -5278,8 +5278,11 @@
       }
     ],
     "population_groups": [
+      "general population",
       "general adult",
-      "worker"
+      "worker",
+      "commercial",
+      "industrial"
     ],
     "assumption_tags": [
       "direct contact",
@@ -5479,7 +5482,9 @@
       }
     ],
     "population_groups": [
-      "worker"
+      "worker",
+      "commercial",
+      "industrial"
     ],
     "assumption_tags": [
       "direct contact",
