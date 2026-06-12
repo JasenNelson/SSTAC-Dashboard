@@ -5926,7 +5926,7 @@
     "value": 0.01,
     "unit": "mg/cm2",
     "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the general population (all ages): 1 x 10^-8 kg/cm2-event = 0.01 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-8 kg/cm2-event -> 0.01 mg/cm2. HC splits soil loading into HANDS (1 x 10^-7 kg/cm2-event, ~0.01 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
+    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-8 kg/cm2-event -> 0.01 mg/cm2. HC splits soil loading into HANDS (1 x 10^-7 kg/cm2-event, ~0.1 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5992,7 +5992,7 @@
     "value": 0.1,
     "unit": "mg/cm2",
     "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the construction/utility worker: 1 x 10^-7 kg/cm2-event = 0.1 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-7 kg/cm2-event -> 0.1 mg/cm2. HC splits soil loading into HANDS (1 x 10^-6 kg/cm2-event, ~0.1 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
+    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-7 kg/cm2-event -> 0.1 mg/cm2. HC splits soil loading into HANDS (1 x 10^-6 kg/cm2-event, ~1.0 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
