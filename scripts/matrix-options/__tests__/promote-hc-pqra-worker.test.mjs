@@ -416,6 +416,25 @@ describe('promote-hc-pqra-worker: idempotency', () => {
     expect(plan.valueResults.every((vr) => !vr.promoteValue && vr.valueAlreadyDone)).toBe(true);
     expect(plan.promoteSource).toBe(false);
   });
+  it('rejects an approved record whose evidence is missing the owner attestation (reviewed_by/reviewed_at)', () => {
+    // Attestation guard (uniform backport 2026-06-13): an approved-but-UNATTESTED evidence item must
+    // NOT be accepted as "already done" -- it is a drift that fails closed, so re-running cannot
+    // silently skip a record that never carried the owner attestation.
+    const target = HC_PQRA_WORKER_PROMOTION_VALUE_IDS[0];
+    const base = BASE_VALUE_FIXTURES.find((b) => b.parameter_value_id === target);
+    const done = doneValue(base);
+    const unattested = {
+      ...done,
+      evidence_items: done.evidence_items.map((ev) => {
+        const copy = { ...ev };
+        delete copy.reviewed_by;
+        delete copy.reviewed_at;
+        return copy;
+      }),
+    };
+    const { records, sources } = makeFixture({ [target]: unattested });
+    expect(() => planPromotion(records, sources, APPLY_OPTS)).toThrow(/drifted\/partially-promoted/);
+  });
   it('throws on a partially-promoted record (top-level done, evidence still needs_review)', () => {
     const { records, sources } = makeFixture({
       'pv-hc-pqra-v4-2024-ef-commercial-ca': {

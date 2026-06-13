@@ -168,7 +168,12 @@ export function planPromotion(paramValues, sources, _opts) {
   // DRIFT: classifying it as already-done would skip approveEvidence() and leave the Evidence Library
   // rendering stale evidence QA. So the already-done / expected-pre states require the evidence items
   // to agree, and any mixed state is rejected (fail-closed) rather than silently treated as a no-op.
-  const allEvidenceApproved = valueRecord.evidence_items.every((ev) => ev.qa_status === 'approved');
+  // Attestation guard (uniform backport 2026-06-13): an approved evidence item MUST carry the owner
+  // attestation (reviewed_by + reviewed_at); an approved-but-unattested item is NOT counted approved
+  // here, so the record fails closed (drift) rather than being silently skipped as already-done.
+  const allEvidenceApproved = valueRecord.evidence_items.every(
+    (ev) => ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at),
+  );
   const allEvidenceNeedsReview = valueRecord.evidence_items.every((ev) => ev.qa_status === 'needs_review');
   const valueAlreadyDone =
     valueRecord.qa_status === 'approved' &&
