@@ -85,10 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 3618,
-        "source": "npm run test:ci output (2026-06-12)",
-        "last_verified": "2026-06-12",
-        "note": "npm run test:ci total on the #306 baseline (origin/main 60403b1): 3618 passed | 11 skipped | 2 todo (3631). CI runs this sharded 4x per #306; the passed count is shard-invariant (sharding partitions the same test-file set), so this single-process total equals the CI sharded sum. Prior live value 3340 moved to facts_history.vitest_test_count_2026_06_08."
+        "value": 3758,
+        "source": "npm run test:ci output (2026-06-13)",
+        "last_verified": "2026-06-13"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -856,6 +855,20 @@
       "last_verified": "2026-06-08",
       "superseded_by": "facts.testing.vitest_test_count = 3618 (npm run test:ci on the #306 baseline, origin/main 60403b1, 2026-06-12)",
       "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 3618 after PRs #294-#306 (Phase D HC PQRA v4.0 direct-contact catalog + calculator wiring + the CI shard fix) added unit tests."
+    },
+    "vitest_test_count_2026_06_13": {
+      "status": "superseded",
+      "superseded_value": 3618,
+      "source": "npm run test:ci output (2026-06-12)",
+      "last_verified": "2026-06-12",
+      "superseded_by": "facts.testing.vitest_test_count = 3758 (npm run test:ci on origin/main ac44595, 2026-06-13)",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 3758 after PRs #307-#313 (Phase D closeout + residential-adult and commercial/industrial-worker receptor scenarios + added test coverage) added unit tests. NOTE: the updater (scripts/verify/update-manifest-facts.mjs --vitest) overwrites the live fact in place and does NOT create this history entry; added by hand per facts_policy."
+    },
+    "session_2026_06_13_matrix_options_worker": {
+      "status": "complete",
+      "session_date": "2026-06-13",
+      "work_summary": "PR #313 (ac44595) added the HC PQRA v4.0 commercial/industrial WORKER receptor -- the 3rd direct-contact scenario alongside residential toddler/adult. Owner-attested correction of the worker total-body SA record (pv-hc-pqra-v4-2024-sa-total-worker-ca) 1640 -> 16640 cm2 (apparent HC Appendix E typesetting error; impossible as printed -- smaller than the same 70.7 kg body's hands+arms+legs; supersedes the prior PR #302 PPE/limited-skin framing). Promoted 5 worker records to approved via the new owner-run scripts/matrix-options/promote-hc-pqra-worker.mjs (37-case test; BW-adult 70.7 + AT-cancer 80 reused from #308): EF 240 d/yr, ED 35 yr, IR_sed 100 mg/day, SA 16640 cm2, AF 0.1 mg/cm2. Added the worker FRAME_DEFAULT_PROFILES row + generalized the receptor-scenario selector helper text. library.test.ts audit counts: approvedSourceBacked 1232 -> 1237, pendingSourceLocator 383 -> 378 (valueGroups 1606, availableOptions 1606, currentDefaults 57 UNCHANGED -- worker reuses existing candidate-group slots). Reviewed: Opus subagent GREEN + codex gpt-5.5-xhigh GREEN (mutual agreement; one RED on valueAlreadyDone attestation withdrawn as inherited/unreachable/CI-backstopped). All 6 gates GREEN. DEFERRED: uniform backport of the valueAlreadyDone reviewed_by/reviewed_at attestation check across promote-hc-pqra-{worker,adult,direct}.mjs. This closeout PR refreshes facts.testing.vitest_test_count 3618 -> 3758 and adds 2 LESSONS (regulatory-value correction-on-attestation discipline; codex-review capture via the codex MCP session for non-diff artifacts).",
+      "last_verified": "2026-06-13"
     },
     "session_2026_06_10_matrix_options": {
       "status": "complete",

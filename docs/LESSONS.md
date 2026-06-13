@@ -10,6 +10,71 @@
 
 ---
 
+## 2026-06-13 - Correcting a published regulatory value: HITL-attested, evidence-backed, note-superseding [HIGH]
+
+**Date:** June 13, 2026
+**Area:** matrix-options / reference catalog / data integrity
+**Impact:** HIGH (the discipline for ever changing a primary-source-as-printed value)
+**Status:** Shipped (#313 -- HC PQRA v4.0 worker SA 1640 -> 16640)
+**Session:** Matrix-options worker receptor
+
+### Problem or Discovery
+The HC PQRA v4.0 Appendix E table prints "1 640" cm2 for the construction/utility worker total-body
+skin surface area. That value is physically impossible: the worker shares the adult 70.7 kg body, whose
+own Appendix E regional rows (hands ~890 + arms ~2500 + legs ~5720) already total ~9110 cm2 -- a total
+body cannot be smaller than three of its own regions. It is an apparent typesetting error for 16,640
+(which sits just below the adult 17,640). A prior PR (#302) had rationalized 1,640 as an intentional
+PPE/limited-skin value -- an over-interpretation not grounded in Appendix E.
+
+### Solution or Pattern
+Overriding a primary-source-as-printed Government-of-Canada figure is a HITL data-integrity decision,
+not an AI one. The discipline that shipped it:
+- AI FINDS + VERIFIES first: searched Zotero (localhost), G:\References, and the web for an HC erratum or
+  the Richardson (1997) primary; none accessible -> the correction rests on a physical/internal-
+  consistency inference, which AI SURFACES but does not act on unilaterally.
+- HITL ATTESTS inline: the owner's explicit "correct to 16640" is the attestation (per
+  feedback_inline_approval_is_the_attestation). A re-confirm immediately before the edit is the gate.
+- The record note must EXPLICITLY SUPERSEDE the prior interpretation (not silently overwrite it), label
+  any derived figure (the 9110 sum) as domain reasoning rather than a catalog-sourced value, and update
+  EVERY field carrying the number (value, value_text, applicability, uncertainty, review_notes) so the
+  record is not internally contradictory (codex caught the value_text omission).
+- The promote script's identity check expects the CORRECTED value, so the value edit must precede promotion.
+
+### Key Takeaway
+Never let AI flip a published regulatory figure on its own judgment. AI surfaces the impossibility with
+evidence and verifies the alternative is not findable; the HITL attests; the record note documents the
+override AND supersedes the prior reading; update every field that carries the value.
+
+---
+
+## 2026-06-13 - codex review of a NON-diff artifact: use the codex MCP session, not the `codex review` CLI [MEDIUM]
+
+**Date:** June 13, 2026
+**Area:** tooling / codex-review / gates
+**Impact:** MEDIUM (saves a wasted review loop when reviewing plans/design docs)
+**Status:** Observed (#313 plan + diff reviews)
+**Session:** Matrix-options worker receptor
+
+### Problem or Discovery
+`codex review -` (the shimmed CLI) reviewing a NON-diff target -- a plan/design .md not in the git diff --
+streams the file/context it reads to stdout but does NOT land a capturable VERDICT line at the tail
+(exit 0, no backend error, but the synthesized verdict never appears in the piped capture). Three CLI
+attempts on a plan, plus one on a clean staged diff, all hit this; cursor-agent was out of usage.
+
+### Solution or Pattern
+Use the codex MCP session (mcp__codex__codex) for the gate verdict: sandbox read-only + cwd = repo so it
+inspects the diff/files itself (e.g. `git diff --cached`) and RETURNS its final message as the tool
+result -- a clean, captured VERDICT every time. Embed the already-verified facts (from the Leg-1 Opus
+pass) so the one-shot MCP review is grounded. Continue the same thread (mcp__codex__codex-reply) for
+adversarial argue-back rounds to mutual agreement.
+
+### Key Takeaway
+The `codex review` CLI is diff-oriented and its stdout capture is unreliable for non-diff artifacts (and
+even some clean diffs) in this environment. For a captured, gate-quality codex verdict, prefer the codex
+MCP session (read-only, repo cwd, facts embedded); it returns the verdict as the tool result.
+
+---
+
 ## 2026-06-13 - Multi-receptor scenario contract: backward-compatible + fail-closed [HIGH]
 
 **Date:** June 13, 2026
