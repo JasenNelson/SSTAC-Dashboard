@@ -10,6 +10,161 @@
 
 ---
 
+## 2026-06-12 - CI v8-coverage OOM is STRUCTURAL: shard, do not raise the heap [CRITICAL]
+
+**Date:** June 12, 2026
+**Area:** CI / Node runtime / vitest / coverage
+**Impact:** CRITICAL (intermittently blocks the CI Unit Tests job with write EPIPE; survives heap bumps)
+**Status:** Fixed (#306)
+**Session:** Matrix-options Phase D direct-contact closeout (#300-#306)
+
+### Problem or Discovery
+
+After the 2026-06-10 heap bump to `--max-old-space-size=8192`, the Unit Tests job STILL
+intermittently OOM-killed with `write EPIPE` near the END of the run as the suite + reference
+catalog kept growing across #294-#305. Raising the heap had only bought time, not a fix.
+
+### Root Cause or Context
+
+`maxWorkers=1` runs ALL test files in ONE process. v8 coverage accumulates an END-OF-RUN remap
+spike proportional to the TOTAL number of modules loaded -- this is NOT a per-file leak (with
+`isolate:true` each file's memory is reclaimed; the spike is the final whole-run remap). The 8 GB
+heap and `maxWorkers=1` were both ceiling-raises against a RISING floor (suite + catalog grow every
+PR), so each was eventually re-crossed. It presents as intermittent because v8 GC timing varies run
+to run.
+
+### Solution or Pattern
+
+#306 runs vitest in 4 SEQUENTIAL shards -- a FRESH node process per shard
+(`npm run test:ci -- --shard=$i/4 --coverage.reportsDirectory=coverage/shard-$i`), so each process
+retains ~1/4 of the modules and frees it on exit. Key constraints:
+- MUST stay ONE "Unit Tests" job. Branch protection requires that check BY NAME; a CI matrix would
+  rename the check and block every PR until the owner edits branch protection.
+- Coverage = per-shard `coverage/shard-N/coverage-final.json` -> ONE multi-file Codecov upload.
+  Do NOT use `blob` + `--merge-reports` (that yields EMPTY coverage in vitest 4).
+- `NODE_OPTIONS=--max-old-space-size=8192` is RETAINED per shard (belt-and-suspenders), but the
+  sharding is what actually bounds retention.
+- Shard-by-FILE is imbalanced (shard 4 took ~19 of ~24 min) -- a future balance/tuning item, not
+  required for correctness.
+
+### File References
+- `.github/workflows/ci.yml` -- the sharded Unit Tests job (4x `--shard=$i/4`, per-shard coverage dir,
+  single Codecov upload of the 4 files).
+- `vitest.config.ts` -- `maxWorkers: 1` (CI path).
+
+### Key Takeaway
+
+A `maxWorkers=1` coverage run OOMs on TOTAL-module retention, not a leak; raising the heap chases a
+rising floor. Shard into fresh processes to bound retention, and keep the single "Unit Tests" check
+name. A RED unit job with `write EPIPE` and no test summary is this OOM near the ceiling, not a code
+failure -> `gh run rerun <id> --failed`.
+
+---
+
+## 2026-06-12 - ff-pull collision: use plain `git restore`, not `--source=origin/main` [HIGH]
+
+**Date:** June 12, 2026
+**Area:** git / working-tree hygiene / parallel sessions
+**Impact:** HIGH (a wrong restore leaves the primary checkout permanently unable to ff-pull)
+**Status:** Documented (codex/Opus sandbox-proved the mechanics)
+**Session:** Matrix-options Phase D closeout (#303)
+
+### Problem or Discovery
+
+The primary checkout could not fast-forward `git pull` because tracked docs were dirty locally AND
+the incoming origin/main commits had changed those same files. There was also net-new local work in
+those files that must not be lost.
+
+### Root Cause or Context
+
+`git restore --source=origin/main -- <files>` writes the origin/main version into the WORKING TREE
+but does not touch HEAD/index, so the files end up dirty-vs-HEAD again -- and the ff-pull STILL
+aborts. It feels like it should clean the collision, but it just swaps which version is "dirty."
+
+### Solution or Pattern
+
+1. Preserve net-new local work by RE-AUTHORING it in a worktree + gated PR (NOT `git stash`/`pop` on
+   a shared main -- a parallel session may be mid-edit there).
+2. Confirm nothing is staged: `git diff --cached --quiet`.
+3. Discard the now-redundant dirty tracked files with PLAIN `git restore -- <files>` (restores from
+   HEAD/index -> clean vs HEAD).
+4. `git pull` now fast-forwards.
+READ THE WHOLE DIFF before discarding -- this collision hid 4 stranded lessons, not 1.
+
+### Key Takeaway
+
+Plain `git restore -- <f>` restores from HEAD/index (clean vs HEAD, ff-pull proceeds);
+`--source=origin/main` does NOT (still dirty vs HEAD). Re-author net-new work through a PR; never
+stash/pop on a shared main.
+
+---
+
+## 2026-06-12 - Never batch-remove git worktrees (node_modules junction trap) [HIGH]
+
+**Date:** June 12, 2026
+**Area:** git worktrees / Windows junctions / process hygiene
+**Impact:** HIGH (empties the SHARED node_modules store; every other worktree + the primary lose deps)
+**Status:** Documented (recovered via `npm ci`)
+**Session:** Matrix-options Phase D closeout
+
+### Problem or Discovery
+
+`git worktree remove` run WITHOUT first deleting the worktree's `node_modules` JUNCTION causes git to
+FOLLOW the junction and EMPTY the shared store. This recurred during a batch cleanup -- even
+immediately after a sibling worktree had been removed safely.
+
+### Root Cause or Context
+
+A recursive delete (`git worktree remove`, `Remove-Item -Recurse`, `rm -rf`) that encounters a
+directory junction follows it and deletes the TARGET's contents. The shared `node_modules` is a
+single store that every worktree junctions to; emptying it breaks them all.
+
+### Solution or Pattern
+
+EVERY worktree removal must, on its OWN:
+1. Delete that worktree's `node_modules` junction FIRST (PowerShell `Remove-Item` the junction link,
+   or `fsutil reparsepoint delete`).
+2. VERIFY the junction is gone AND the shared target dir count is unchanged.
+3. THEN `git worktree remove` + `git worktree prune`.
+Do NOT batch-remove worktrees -- the junction-delete-first step is per-worktree and cannot be
+amortized across a batch. Recovery if the store is emptied: `npm ci` in the primary checkout. (L0 1.15.)
+
+### Key Takeaway
+
+A recursive delete that hits a junction follows it. Junction-delete-first is per-worktree, never
+shared across a batch removal.
+
+---
+
+## 2026-06-12 - Fetching GoC-archived PDFs: bypass the publications.gc.ca interstitial [MEDIUM]
+
+**Date:** June 12, 2026
+**Area:** Reference sourcing / government PDFs
+**Impact:** MEDIUM (reusable for any Health Canada / GoC archived-doc retrieval)
+**Status:** Documented
+**Session:** Matrix-options Phase D HC PQRA v4.0 sourcing
+
+### Problem or Discovery
+
+canada.ca 403s an automated fetch of the HC PQRA v4.0 guidance, and the publications.gc.ca copy
+returns the "Information Archived on the Web" interstitial to bare automated requests, so neither
+yields the PDF directly.
+
+### Solution or Pattern
+
+Fetch the publications.gc.ca DIRECT PDF with a browser `User-Agent` plus an
+`-e https://publications.gc.ca/` referer to bypass the archival interstitial. PQRA v4.0 =
+`publications.gc.ca/collections/collection_2024/sc-hc/H129-114-2023-eng.pdf` (Cat. H129-114/2023E-PDF).
+Do NOT copy source PDFs into the repo (L0 1.14) -- fetch to TEMP, read, delete; the repo stores
+locators + structured data only.
+
+### Key Takeaway
+
+GoC archived docs need a browser User-Agent + a gc.ca referer; canada.ca 403s automated fetches.
+Keep the PDFs out of the repo -- locator + extracted data only.
+
+---
+
 ## 2026-06-11 - Never run the monitored build and e2e concurrently in one worktree [CRITICAL]
 
 **Date:** June 11, 2026
@@ -94,7 +249,10 @@ Zotero + the Drive References folder, then WebSearch the doc number; do not bloc
 **Date:** June 10, 2026
 **Area:** CI / Node runtime / vitest
 **Impact:** CRITICAL (blocks CI Unit Tests job with write EPIPE crashes; not reproducible locally)
-**Status:** Fixed (#291, owner-authorized)
+**Status:** Fixed (#291, owner-authorized). SUPERSEDED by the 2026-06-12 "CI v8-coverage OOM is
+STRUCTURAL: shard, do not raise the heap [CRITICAL]" lesson above -- the heap bump was a ceiling-raise
+that the growing suite re-crossed; #306 shards into fresh processes as the durable fix. Retained as
+the audit trail of why heap-bump-alone was insufficient.
 
 ### Problem or Discovery
 
@@ -117,6 +275,11 @@ local-GREEN is then meaningful evidence -- do not blanket-dismiss local reproduc
 Add `NODE_OPTIONS=--max-old-space-size=8192` to the Unit Tests `test:ci` step in
 `.github/workflows/ci.yml`. This was the only safe fix; reducing coverage scope would hide real
 failures.
+
+> SUPERSEDED 2026-06-12: the heap bump alone did NOT durably fix this -- the growing suite re-crossed
+> the raised ceiling. Do NOT re-apply heap-bump-alone. The durable fix (#306) is to SHARD the Unit
+> Tests job into 4 sequential fresh-process runs; the heap option is retained per shard but the
+> sharding is what bounds retention. See the 2026-06-12 structural-OOM lesson above.
 
 CONSEQUENCE: the Unit Tests CI job now takes ~30 min (suite completes serially to completion
 instead of crashing at ~17 min). This is EXPECTED, not a hang. Pace PR merges ~one per ~30-min
