@@ -4697,9 +4697,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -4708,7 +4708,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -4720,8 +4720,8 @@
     "display_name": "Exposure frequency - commercial/industrial land use (HC PQRA v4.0)",
     "value": 240,
     "unit": "days/year",
-    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 exposure frequency for commercial and industrial land use: 5 days/week x 48 weeks/year = 240 days/year. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Health Canada Box 1 decomposes exposure frequency as D2 (days per week exposed / 7) and D3 (weeks per year exposed / 52); the days/year value here is the product 5 x 48 = 240. Table 2 footnote 4: industrial receptors are assumed to be adults only.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 exposure frequency for commercial and industrial land use: 5 days/week x 48 weeks/year = 240 days/year. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Health Canada Box 1 decomposes exposure frequency as D2 (days per week exposed / 7) and D3 (weeks per year exposed / 52); the days/year value here is the product 5 x 48 = 240. Table 2 footnote 4: industrial receptors are assumed to be adults only. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -4730,15 +4730,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-13",
         "note": "Health Canada PQRA v4.0 Table 2 days/week x weeks/year for commercial/industrial land use. Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-ef-commercial-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure frequency (240 days/year). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure frequency (240 days/year). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -4831,9 +4831,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -4842,7 +4842,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -4854,8 +4854,8 @@
     "display_name": "Exposure duration - commercial/industrial land use (HC PQRA v4.0)",
     "value": 35,
     "unit": "years",
-    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 \"Total years exposed\" = 35 years for commercial and industrial land use. Table 2 footnote 3: the 35-year commercial duration assumes an employee (rather than a member of the general public) will be most exposed. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Table 2 footnote 2: dose averaging is not acceptable for substances with developmental and/or reproductive effects, or for which concentration or peak exposure drives toxicity.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Table 2 \"Total years exposed\" = 35 years for commercial and industrial land use. Table 2 footnote 3: the 35-year commercial duration assumes an employee (rather than a member of the general public) will be most exposed. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Table 2 footnote 2: dose averaging is not acceptable for substances with developmental and/or reproductive effects, or for which concentration or peak exposure drives toxicity. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -4864,15 +4864,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-13",
         "note": "Health Canada PQRA v4.0 Table 2 \"Total years exposed\" for commercial/industrial land use (employee). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-ed-commercial-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure duration (35 years). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 commercial/industrial exposure duration (35 years). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5432,9 +5432,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5443,7 +5443,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5455,8 +5455,8 @@
     "display_name": "Incidental soil/sediment ingestion rate - the construction/utility worker (HC PQRA v4.0 Appendix E)",
     "value": 100,
     "unit": "mg/day",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E incidental soil ingestion rate for the construction/utility worker: 100 mg/day. Underlying source MassDEP (2002), tabulated in Appendix E. Appendix E footnote +: the construction-worker soil ingestion rate is from MassDEP (2002). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Mapped to the dashboard IR_sed_mg_per_day (mg/day) key. HC PQRA v4.0 Appendix E ALSO tabulates SEDIMENT-specific ingestion rates in mg/HOUR (hand-to-mouth: toddler 72, child 57, teen 18, adult 20; near-shore surface-water 7.7; Wilson et al. 2015) -- a different time-based exposure model NOT represented by this mg/day key.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E incidental soil ingestion rate for the construction/utility worker: 100 mg/day. Underlying source MassDEP (2002), tabulated in Appendix E. Appendix E footnote +: the construction-worker soil ingestion rate is from MassDEP (2002). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Mapped to the dashboard IR_sed_mg_per_day (mg/day) key. HC PQRA v4.0 Appendix E ALSO tabulates SEDIMENT-specific ingestion rates in mg/HOUR (hand-to-mouth: toddler 72, child 57, teen 18, adult 20; near-shore surface-water 7.7; Wilson et al. 2015) -- a different time-based exposure model NOT represented by this mg/day key. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5465,15 +5465,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-13",
         "note": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the construction/utility worker); underlying source MassDEP (2002). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-ir-sed-worker-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the construction/utility worker, 100 mg/day). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the construction/utility worker, 100 mg/day). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5834,9 +5834,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5845,7 +5845,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5855,27 +5855,27 @@
     "species_groups": [],
     "input_key": "SA_cm2",
     "display_name": "Skin surface area, total body - construction/utility worker (HC PQRA v4.0 Appendix E)",
-    "value": 1640,
+    "value": 16640,
     "unit": "cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the construction/utility worker: 1640 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). NOTE: the Appendix E construction/utility-worker total-body value (1640 cm2) is NOT an anatomical whole-body area -- it reflects the limited skin assumed exposed for that worker class (PPE/clothing coverage), and is lower than all general-population age groups.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the construction/utility worker: 16640 cm2 (owner-attested correction, see below). The PQRA v4.0 Appendix E table prints '1 640' cm2 for this cell; that figure is an apparent Health Canada typesetting error for 16,640 cm2 (a dropped leading '16') and is impossible as printed: the construction/utility worker shares the adult 70.7 kg body, whose own Appendix E regional rows (hands ~890 + arms ~2500 + legs ~5720 -- owner/domain reasoning summing the regional cells, NOT a separate catalog record) already total ~9110 cm2, so a total body of 1,640 would be smaller than three of its own regions; 16,640 sits just below the adult total-body 17,640, the expected magnitude. Corrected to 16640 cm2 on owner attestation 2026-06-13. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). DATA-INTEGRITY NOTE (2026-06-13, owner-attested): the PQRA v4.0 Appendix E cell prints '1 640' cm2 for the worker total body; this value is corrected to 16640 cm2 as an apparent HC typesetting error (a dropped leading '16'), being internally impossible as printed (smaller than its own hands+arms+legs regional sum) while 16,640 is the expected magnitude for the 70.7 kg adult-bodied worker receptor. This SUPERSEDES the prior interpretation (PR #302) that framed 1,640 as an intentional PPE / limited-exposed-skin value; that reading is not grounded in Appendix E, which has no exposed-skin row and pairs anatomical total-body / regional areas with separate per-region soil-loading factors. No independent HC erratum or accessible Richardson (1997) primary was located; the correction rests on physical / internal-consistency inference plus owner attestation. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
         "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: \"Skin surface area (cm2) Total body\" row, construction/utility worker column",
-        "value_text": "construction/utility worker total body: 1640 cm2",
+        "value_text": "construction/utility worker total body: as printed '1 640' cm2 (apparent HC typesetting error); owner-attested corrected catalog value 16640 cm2",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-13",
         "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (construction/utility worker); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-worker-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (construction/utility worker, 1640 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (construction/utility worker). Appendix E prints '1 640' cm2; corrected to 16640 cm2 as an apparent HC typesetting error on owner attestation 2026-06-13 (impossible as printed; supersedes the prior PR #302 PPE / limited-skin framing). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5973,9 +5973,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5984,7 +5984,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5996,8 +5996,8 @@
     "display_name": "Soil/sediment loading to skin, surfaces other than hands - the construction/utility worker (HC PQRA v4.0 Appendix E)",
     "value": 0.1,
     "unit": "mg/cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the construction/utility worker: 1 x 10^-7 kg/cm2-event = 0.1 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-7 kg/cm2-event -> 0.1 mg/cm2. HC splits soil loading into HANDS (1 x 10^-6 kg/cm2-event, ~1.0 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998).",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E soil loading to exposed skin (surfaces OTHER THAN HANDS) for the construction/utility worker: 1 x 10^-7 kg/cm2-event = 0.1 mg/cm2-event. Underlying source Kissel et al. (1996, 1998), tabulated in Appendix E. Paired with the total-body SA per owner direction (hands carry a higher loading, handled separately in a refined model). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Unit converted from HC Appendix E kg/cm2-event to the dashboard mg/cm2 key (x 1e6 mg/kg): 1 x 10^-7 kg/cm2-event -> 0.1 mg/cm2. HC splits soil loading into HANDS (1 x 10^-6 kg/cm2-event, ~1.0 mg/cm2, one order higher) vs surfaces other than hands (this row). Measure of central tendency: geometric mean (Kissel et al. 1996, 1998). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -6006,15 +6006,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-13",
         "note": "Health Canada PQRA v4.0 Appendix E soil loading to non-hand skin (the construction/utility worker); underlying source Kissel et al. (1996, 1998); converted kg/cm2-event -> mg/cm2 (x1e6). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-af-sed-other-worker-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E non-hand soil loading (the construction/utility worker, 0.1 mg/cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E non-hand soil loading (the construction/utility worker, 0.1 mg/cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-13 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",

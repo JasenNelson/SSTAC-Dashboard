@@ -80,7 +80,12 @@ describe('matrix options evidence library helpers', () => {
     // seeds promoted to approved_source_backed (pv-hc-pqra-v4-2024-bw-adult-ca 70.7 kg +
     // ir-sed-general 20 mg/day + sa-total-adult 17640 cm2; primary-source + codex verified,
     // HITL J. Nelson inline-approved --apply via promote-hc-pqra-adult.mjs) = 1232.
-    expect(view.audit.values.approvedSourceBacked).toBe(1232);
+    // 2026-06-13: +5 -- C-HH-direct 3rd receptor scenario (commercial/industrial worker)
+    // worker-specific seeds promoted to approved_source_backed (ef-commercial 240 days/yr +
+    // ed-commercial 35 yr + ir-sed-worker 100 mg/day + sa-total-worker 16640 cm2 +
+    // af-sed-other-worker 0.1 mg/cm2; HITL J. Nelson inline-approved --apply via
+    // promote-hc-pqra-worker.mjs) = 1237.
+    expect(view.audit.values.approvedSourceBacked).toBe(1237);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -104,7 +109,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: -3 -- C-HH-direct residential-adult scenario adult-specific seeds promoted
     // out of pending (bw-adult + ir-sed-general + sa-total-adult; HITL J. Nelson, inline-
     // approved --apply via promote-hc-pqra-adult.mjs) = 383.
-    expect(view.audit.values.pendingSourceLocator).toBe(383);
+    // 2026-06-13: -5 -- C-HH-direct commercial/industrial worker scenario 5 worker-specific
+    // seeds promoted out of pending (ef-commercial + ed-commercial + ir-sed-worker +
+    // sa-total-worker + af-sed-other-worker; HITL J. Nelson inline-approved --apply via
+    // promote-hc-pqra-worker.mjs) = 378.
+    expect(view.audit.values.pendingSourceLocator).toBe(378);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value

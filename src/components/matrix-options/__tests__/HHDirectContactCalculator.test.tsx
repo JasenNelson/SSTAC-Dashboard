@@ -43,7 +43,9 @@ describe('HHDirectContactCalculator', () => {
       />,
     );
     const before = screen.getByTestId('hh-direct-preliminary-standard').textContent;
-    fireEvent.change(screen.getByLabelText(/Exposure frequency/i), {
+    // Use testid instead of getByLabelText to avoid ambiguity now that the receptor-scenario
+    // selector label also contains "exposure frequency" in its descriptive paragraph text.
+    fireEvent.change(screen.getByTestId('hh-direct-ef-input'), {
       target: { value: '100' },
     });
     expect(screen.getByTestId('hh-direct-preliminary-standard').textContent).not.toBe(
@@ -207,10 +209,10 @@ describe('HHDirectContactCalculator C-HH-direct frame default (live catalog)', (
   });
 });
 
-// C-HH-direct receptor scenarios (2026-06-12): canada-fcsap-aquatic now offers two SELECTABLE
-// receptor scenarios (residential toddler [default] + residential adult). LIVE catalog (both
-// scenarios' seeds are promoted/approved -> selectable). Switching reseeds the receptor-specific
-// exposure factors while the shared EF/ED/AT/AF stay put.
+// C-HH-direct receptor scenarios (2026-06-13): canada-fcsap-aquatic now offers THREE SELECTABLE
+// receptor scenarios (residential toddler [default] + residential adult + commercial/industrial
+// worker). LIVE catalog (all scenarios' seeds are promoted/approved -> selectable). Switching
+// reseeds the receptor-specific exposure factors while the shared AT_cancer stays put.
 describe('HHDirectContactCalculator receptor-scenario selector (live catalog)', () => {
   function renderFcsap() {
     return render(
@@ -221,13 +223,14 @@ describe('HHDirectContactCalculator receptor-scenario selector (live catalog)', 
     );
   }
 
-  it('renders the selector defaulting to residential toddler with both options', () => {
+  it('renders the selector defaulting to residential toddler with all three options', () => {
     renderFcsap();
     const select = screen.getByTestId('hh-direct-receptor-scenario-select') as HTMLSelectElement;
     expect(select.value).toBe('residential-toddler');
     const optionLabels = Array.from(select.options).map((o) => o.textContent);
     expect(optionLabels).toContain('Residential toddler');
     expect(optionLabels).toContain('Residential adult');
+    expect(optionLabels).toContain('Commercial/industrial worker');
     // Default opens on the toddler receptor values.
     expect((screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value).toBe('16.5');
   });
@@ -246,6 +249,26 @@ describe('HHDirectContactCalculator receptor-scenario selector (live catalog)', 
     // Shared receptor-independent factors (EF/ED/AT/AF) are identical across scenarios -> unchanged.
     expect((screen.getByTestId('hh-direct-ef-input') as HTMLInputElement).value).toBe('364');
     expect((screen.getByTestId('hh-direct-af-input') as HTMLInputElement).value).toBe('0.01');
+  });
+
+  it('switching to Commercial/industrial worker reseeds BW/IR_sed/EF/ED/SA/AF to the worker values', () => {
+    renderFcsap();
+    const select = screen.getByTestId('hh-direct-receptor-scenario-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'commercial-industrial-worker' } });
+    // BW and AT_cancer are shared with adult scenario (same approved records).
+    expect((screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value).toBe('70.7');
+    expect((screen.getByTestId('hh-direct-at-cancer-input') as HTMLInputElement).value).toBe('80');
+    // Worker-specific receptor seeds from HC PQRA v4.0.
+    expect((screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement).value).toBe('100');
+    expect((screen.getByTestId('hh-direct-ef-input') as HTMLInputElement).value).toBe('240');
+    expect((screen.getByTestId('hh-direct-ed-input') as HTMLInputElement).value).toBe('35');
+    expect((screen.getByTestId('hh-direct-sa-input') as HTMLInputElement).value).toBe('16640');
+    expect((screen.getByTestId('hh-direct-af-input') as HTMLInputElement).value).toBe('0.1');
+    // Frame-default label reflects the worker receptor for BW (which reuses the approved
+    // adult 70.7 kg record; the worker-specific seeds carry their own ids).
+    expect(screen.getByTestId('hh-direct-bw-frame-default-label')).toHaveTextContent(
+      /Frame default 70\.7 kg/,
+    );
   });
 
   it('preserves a user edit when switching scenarios (does not clobber an off-default value)', () => {

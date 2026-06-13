@@ -584,8 +584,9 @@ export default function HHDirectContactCalculator({
               ))}
             </select>
             <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
-              Switches the HC PQRA v4.0 receptor exposure-factor defaults (body weight,
-              incidental ingestion, skin surface area). Each factor stays adjustable.
+              Switches the HC PQRA v4.0 receptor exposure-factor defaults (e.g. body weight,
+              incidental ingestion, skin surface area, and -- for the worker receptor -- exposure
+              frequency, exposure duration, and soil adherence). Each factor stays adjustable.
             </p>
           </label>
         </div>
