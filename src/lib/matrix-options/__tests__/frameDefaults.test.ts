@@ -127,10 +127,10 @@ const TEST_SOURCES = [
 
 describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
   it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
-    // C-HH-direct (2026-06-12): the table now has the canada-fcsap-aquatic human-health-direct
-    // frame as TWO receptor-scenario rows (residential toddler [default] + residential adult),
-    // so the live table is 4 rows.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(4);
+    // C-HH-direct (2026-06-13): the table now has the canada-fcsap-aquatic human-health-direct
+    // frame as THREE receptor-scenario rows (residential toddler [default] + residential adult
+    // + commercial/industrial worker), so the live table is 5 rows.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(5);
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
     expect(bc?.pathway).toBe('human-health-food');
@@ -165,6 +165,19 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     // sources (resolves, subset, generic, kg/day, candidate_group match).
     const errors = validateFrameDefaultProfiles();
     expect(errors).toEqual([]);
+  });
+
+  it('the commercial-industrial-worker scenario is present in getSelectableFrameScenarios for canada-fcsap-aquatic/human-health-direct', () => {
+    // C-HH-direct 3rd scenario (2026-06-13): assert the worker scenario is a named, COMPLETE
+    // scenario on the live FRAME_DEFAULT_PROFILES table. Eligibility is MOCKED to eligible=true
+    // (below), so this is a table-shape check: the worker row is a named scenario whose every
+    // seed resolves once eligible. Real-catalog eligibility (the worker records actually being
+    // promoted/approved) is covered by frameDefaults.integration.test.ts, the canonical
+    // live-catalog test.
+    mockEligibility.mockImplementation(() => ({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'mock' }));
+    const scenarios = getSelectableFrameScenarios('canada-fcsap-aquatic', 'human-health-direct');
+    const ids = scenarios.map((s) => s.scenarioId);
+    expect(ids).toContain('commercial-industrial-worker');
   });
 
   it('getFrameDefaults with no profile row for the (frame, pathway) returns []', () => {

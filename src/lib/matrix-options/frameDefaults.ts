@@ -351,6 +351,73 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
       },
     ],
   },
+  {
+    // C-HH-direct 3rd scenario (2026-06-13): the Canada FCSAP frame also offers the HC PQRA v4.0
+    // (2024) COMMERCIAL/INDUSTRIAL WORKER receptor. Differs from the residential scenarios in five
+    // seeds: IR_sed (100 mg/day, Appendix E worker col; MassDEP 2002), EF (240 days/yr, Table 2:
+    // 5 d/wk x 48 wk/yr), ED (35 yr, Table 2 commercial/industrial), SA (16640 cm2 total body --
+    // OWNER-ATTESTED correction of the Appendix E '1 640' typesetting error; see the SA record note),
+    // and AF (0.1 mg/cm2, surfaces other than hands; Kissel). BW (70.7 kg, shared with the adult) and
+    // AT_cancer (80 yr) reuse the SAME already-approved records the adult scenario cites. Owner-promoted
+    // (inline-attested 2026-06-13) the 5 worker-specific records via promote-hc-pqra-worker.mjs; until
+    // promotion they resolve 'pending' and this scenario is NOT selectable (completeness gate -> no
+    // hybrid calc).
+    frameId: 'canada-fcsap-aquatic',
+    pathway: 'human-health-direct',
+    receptorScenarioId: 'commercial-industrial-worker',
+    scenarioLabel: 'Commercial/industrial worker',
+    note:
+      'HC PQRA v4.0 (2024) commercial/industrial worker receptor: BW 70.7 kg, IR_sed 100 mg/day, ' +
+      'EF 240 days/yr, ED 35 yr, AT_cancer 80 yr, SA(total body) 16640 cm2, AF 0.1 mg/cm2.',
+    label: 'HC PQRA v4.0 2024, commercial/industrial worker',
+    sourceIds: ['src-health-canada-pqra-v4-2024'],
+    defaults: [
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-hc-pqra-v4-2024-bw-adult-ca',
+        candidateGroupId: 'human-health-direct__generic__BW_kg__general',
+        // Body weight is the GENERAL adult value (Appendix E, 70.7 kg), shared by the adult and the
+        // construction/utility worker -- so it carries the adult/worker descriptor, not "worker only".
+        label: 'HC PQRA v4.0 2024, adult/worker body weight (70.7 kg, Appendix E)',
+      },
+      {
+        inputKey: 'IR_sed_mg_per_day',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ir-sed-worker-ca',
+        candidateGroupId: 'human-health-direct__generic__IR_sed_mg_per_day__general',
+        label: 'HC PQRA v4.0 2024, worker incidental ingestion (100 mg/day)',
+      },
+      {
+        inputKey: 'EF_days_per_year',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ef-commercial-ca',
+        candidateGroupId: 'human-health-direct__generic__EF_days_per_year__general',
+        label: 'HC PQRA v4.0 2024, commercial/industrial exposure frequency (240 days/yr)',
+      },
+      {
+        inputKey: 'ED_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ed-commercial-ca',
+        candidateGroupId: 'human-health-direct__generic__ED_years__general',
+        label: 'HC PQRA v4.0 2024, commercial/industrial exposure duration (35 yr)',
+      },
+      {
+        inputKey: 'AT_cancer_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-at-cancer-lifetime-ca',
+        candidateGroupId: 'human-health-direct__generic__AT_cancer_years__general',
+        label: 'HC PQRA v4.0 2024, lifetime cancer averaging time (80 yr)',
+      },
+      {
+        inputKey: 'SA_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-sa-total-worker-ca',
+        candidateGroupId: 'human-health-direct__generic__SA_cm2__general',
+        label: 'HC PQRA v4.0 2024, worker total-body skin surface area (16640 cm2)',
+      },
+      {
+        inputKey: 'AF_sed_mg_per_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-af-sed-other-worker-ca',
+        candidateGroupId: 'human-health-direct__generic__AF_sed_mg_per_cm2__general',
+        label: 'HC PQRA v4.0 2024, worker non-hand soil loading (0.1 mg/cm2)',
+      },
+    ],
+  },
 ];
 
 // ---------------------------------------------------------------------------

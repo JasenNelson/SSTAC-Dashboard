@@ -50,11 +50,12 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
     ).toEqual([]);
   });
 
-  it('the table contains the C-BC, C-nonBC, and both C-HH-direct receptor-scenario rows', () => {
-    // C-HH-direct (2026-06-12): the canada-fcsap-aquatic human-health-direct frame now has TWO
-    // receptor-scenario rows (residential toddler [default] + residential adult), so the live
-    // table is 4 rows: BC HH-food, US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(4);
+  it('the table contains the C-BC, C-nonBC, and all C-HH-direct receptor-scenario rows', () => {
+    // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame now has THREE
+    // receptor-scenario rows (residential toddler [default] + residential adult +
+    // commercial/industrial worker), so the live table is 5 rows:
+    // BC HH-food, US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult, FCSAP HH-direct worker.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(5);
   });
 });
 
@@ -118,12 +119,12 @@ describe('C-HH-direct frame default (live catalog, real eligibility)', () => {
 });
 
 describe('C-HH-direct receptor scenarios (live catalog, real eligibility)', () => {
-  it('exposes residential toddler (default) + residential adult as SELECTABLE scenarios', () => {
+  it('exposes residential toddler (default) + residential adult + commercial/industrial worker as SELECTABLE scenarios', () => {
     const scenarios = getSelectableFrameScenarios('canada-fcsap-aquatic', 'human-health-direct');
     const ids = scenarios.map((s) => s.scenarioId).sort();
-    expect(ids).toEqual(['residential-adult', 'residential-toddler']);
-    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> both are offered.
-    expect(getFrameScenarios('canada-fcsap-aquatic', 'human-health-direct')).toHaveLength(2);
+    expect(ids).toEqual(['commercial-industrial-worker', 'residential-adult', 'residential-toddler']);
+    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> all 3 are offered.
+    expect(getFrameScenarios('canada-fcsap-aquatic', 'human-health-direct')).toHaveLength(3);
   });
 
   it('the default selectable scenario is the residential toddler', () => {
@@ -176,12 +177,12 @@ describe('getReceptorScenarioFrame (integration, live FRAME_DEFAULT_PROFILES)', 
     );
   });
 
-  it('the resolved provider frame exposes 2 selectable receptor scenarios (the selector is reachable from a non-FCSAP frame)', () => {
-    // Confirm the full round-trip: a non-FCSAP frame -> provider -> scenario selector has 2 options.
+  it('the resolved provider frame exposes 3 selectable receptor scenarios (the selector is reachable from a non-FCSAP frame)', () => {
+    // Confirm the full round-trip: a non-FCSAP frame -> provider -> scenario selector has 3 options.
     const providerFrame = getReceptorScenarioFrame('bc-protocol1-v5-dra', 'human-health-direct');
     const scenarios = getSelectableFrameScenarios(providerFrame, 'human-health-direct');
-    expect(scenarios).toHaveLength(2);
+    expect(scenarios).toHaveLength(3);
     const ids = scenarios.map((s) => s.scenarioId).sort();
-    expect(ids).toEqual(['residential-adult', 'residential-toddler']);
+    expect(ids).toEqual(['commercial-industrial-worker', 'residential-adult', 'residential-toddler']);
   });
 });
