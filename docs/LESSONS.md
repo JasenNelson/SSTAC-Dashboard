@@ -10,6 +10,124 @@
 
 ---
 
+## 2026-06-13 - Multi-receptor scenario contract: backward-compatible + fail-closed [HIGH]
+
+**Date:** June 13, 2026
+**Area:** matrix-options / frameDefaults contract / calculator seeding
+**Impact:** HIGH (the reusable mechanism for adding receptor/age/land-use variants to a calculator)
+**Status:** Shipped (#308 adult; the contract)
+**Session:** Matrix-options Phase D receptor scenarios
+
+### Problem or Discovery
+A calculator frame default (`FRAME_DEFAULT_PROFILES`) was one row per `(frameId, pathway)`. Real
+HHRAs need MULTIPLE receptors (toddler, adult, worker) sharing a frame -- a second dimension.
+
+### Solution or Pattern
+Add an OPTIONAL scenario dimension to `FrameDefaultProfileRow` so existing single-profile rows
+(and all existing callers) are unchanged:
+- `receptorScenarioId?` + `scenarioLabel?` + `isDefaultScenario?`. No-scenario lookup returns the
+  sole row, else the `isDefaultScenario` one -> every existing caller keeps its behavior.
+- `getSelectableFrameScenarios` is a COMPLETENESS GATE: a scenario is offered ONLY if EVERY one of
+  its seeds resolves `active`. An incomplete scenario (e.g. before its records are promoted, or if a
+  seed is later superseded) is structurally unreachable -> never a HYBRID calc (some seeds
+  source-backed, some falling back to baselines).
+- `getActiveScenarioFrameDefaults` is the calculator's FAIL-CLOSED resolver: a named-scenario frame
+  with no selected/selectable scenario seeds NOTHING (baselines), never a partial-active default.
+- `validateFrameDefaultProfiles`: a multi-profile `(frameId,pathway)` group must be all-named with
+  EXACTLY ONE `isDefaultScenario`. Fails closed.
+
+### Key Takeaway
+Add a new dimension to a curated contract as OPTIONAL fields + a "no-dimension" default path, and gate
+selection on COMPLETENESS so a half-built variant can never partially drive a calculation. codex caught
+both the hybrid-calc risk (design holistic) and a residual fail-closed gap (impl targeted) -- the gate
+must hold at BOTH the selector and the resolver.
+
+---
+
+## 2026-06-13 - Frame-independent provider: a property orthogonal to the keyed dimension [MEDIUM]
+
+**Date:** June 13, 2026
+**Area:** matrix-options / frameDefaults / calculator UX
+**Impact:** MEDIUM (when a default belongs to a different axis than the table is keyed on)
+**Status:** Shipped (#309)
+**Session:** Matrix-options receptor selector (owner feedback: "can't change age")
+
+### Problem or Discovery
+The receptor/age selector only showed under the one frame that stored the HC PQRA profiles
+(`canada-fcsap-aquatic`), but the calculator defaults to BC Protocol 1 -- so users never saw it. The
+receptor's exposure factors (BW/IR/SA/...) are a property of the RECEPTOR, not the regulatory FRAME.
+
+### Solution or Pattern
+Introduce a PROVIDER indirection: `RECEPTOR_SCENARIO_PROVIDER_FRAME[pathway]` + `getReceptorScenarioFrame
+(frameId, pathway)` -> the selected frame if it has its OWN scenarios, else the pathway's provider
+frame. The calculator resolves the selector + seeds under the PROVIDER (so they appear under EVERY
+frame), while `jurisdiction` still drives the equation, the frame notices, and the provenance frame.
+Resolving under the provider is also REQUIRED for eligibility (the HC PQRA records are jurisdiction
+`general`, eligible under the provider frame; resolving under a frame that does not list `general`
+would block them).
+
+### Key Takeaway
+When a default is orthogonal to the dimension your table is keyed on, do not duplicate it across keys
+or change the default key -- add a provider indirection so the orthogonal property is resolved from its
+source-of-record regardless of the key, and keep the key governing only what it actually owns.
+
+---
+
+## 2026-06-13 - Regulatory values: dual-verify, then BANK (do not flip) a source-vs-reality conflict [HIGH]
+
+**Date:** June 13, 2026
+**Area:** Catalog data integrity / HITL boundary / verification
+**Impact:** HIGH (prevents silently overriding a published regulatory figure)
+**Status:** Documented (worker-SA banked for owner)
+**Session:** Worker receptor verification
+
+### Problem or Discovery
+Verifying the HC PQRA v4.0 worker total-body skin surface area: the PRIMARY PDF literally prints
+"1 640", but that is internally impossible (the worker is a 70.7 kg adult; its own hands+arms+legs sum
+to 9110 > 1640; total body must be the largest figure). It is almost certainly an HC typesetting error
+for 16,640 -- but that is physical INFERENCE, with no erratum to cite.
+
+### Solution or Pattern
+- DUAL-VERIFY regulatory values: a subagent reads the PRIMARY source + codex independently confirms;
+  when both are clean, the value is confirmed and AI proceeds (owner delegated value-finding).
+- But when the primary-AS-PRINTED contradicts physical reality, OVERRIDING a published figure (1640 ->
+  16640) is a HITL call, not an AI one -- even when the correct value is "obvious." BANK it with the
+  evidence (a dedicated BANKED_HITL doc), do NOT flip it autonomously, and pivot to other work. Do not
+  block the whole session on it either.
+
+### Key Takeaway
+"AI finds + verifies values" has a ceiling: a value that fails verification because the SOURCE ITSELF
+is wrong is a judgment call the human owns. Verify rigorously, surface the evidence, bank the decision.
+
+---
+
+## 2026-06-13 - PDF table extraction mangles spaced-thousands; cross-check against internal consistency [MEDIUM]
+
+**Date:** June 13, 2026
+**Area:** Source extraction / verification tooling
+**Impact:** MEDIUM (avoids trusting a mis-extracted tabular number)
+**Status:** Documented
+**Session:** Worker receptor verification
+
+### Problem or Discovery
+HC PQRA tables use a SPACE thousands-separator ("17 640", "10 140"). pypdf text extraction can split or
+drop a leading group, so a cell can read "1 640" (whether that is the true source content or an artifact
+is itself ambiguous). Trusting the raw extracted number alone is unsafe. Also: pypdf parsing of large
+gov PDFs can segfault a python.exe (native fault) -- avoid python-heavy subagents when avoidable.
+
+### Solution or Pattern
+Cross-check any extracted tabular figure against INTERNAL CONSISTENCY before trusting it: a total must
+exceed the sum of its own parts; a column should be the expected magnitude vs adjacent columns (worker
+total-body SA ~ adult 17,640, not 1/10 of it). Use layout-mode extraction to confirm column alignment.
+Fetch GoC archived PDFs from publications.gc.ca with a browser User-Agent + a gc.ca referer; read to
+TEMP and delete (never commit the PDF).
+
+### Key Takeaway
+A tabular number from PDF text extraction is a hypothesis, not a fact -- validate it against the table's
+own arithmetic/magnitude relationships before recording or promoting it.
+
+---
+
 ## 2026-06-12 - CI v8-coverage OOM is STRUCTURAL: shard, do not raise the heap [CRITICAL]
 
 **Date:** June 12, 2026
