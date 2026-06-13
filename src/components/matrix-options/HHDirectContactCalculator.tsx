@@ -6,7 +6,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
-import { getActiveFrameDefaults } from '@/lib/matrix-options/frameDefaults';
+import {
+  getActiveScenarioFrameDefaults,
+  getSelectableFrameScenarios,
+  getDefaultSelectableScenarioId,
+} from '@/lib/matrix-options/frameDefaults';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { HumanHealthDirectContactResult } from '@/lib/matrix-options/types';
 import type {
@@ -34,24 +38,33 @@ const BASELINE_IR_SED_MG_PER_DAY = '200';
 const BASELINE_SA_CM2 = '2800';
 const BASELINE_AF_SED = '0.2';
 
-// The active human-health-direct frame default for a given input key (or null when the
-// frame has no active default for that key). One shared helper for all seven seeds.
-function activeDirectDefaultFor(jurisdiction: Jurisdiction, inputKey: string) {
+// The active human-health-direct frame default for a given input key under a given
+// receptor scenario (or null when the frame/scenario has no active default for that
+// key). One shared helper for all seven seeds. scenarioId undefined -> the frame's
+// default profile (backward compatible for any frame without named scenarios).
+function activeDirectDefaultFor(
+  jurisdiction: Jurisdiction,
+  scenarioId: string | undefined,
+  inputKey: string,
+) {
+  // Fail-closed scenario resolver: a named-scenario frame with no selectable/selected scenario
+  // seeds NOTHING (baselines), never a partial-active default (hybrid). See frameDefaults.ts.
   return (
-    getActiveFrameDefaults(jurisdiction, 'human-health-direct').find(
+    getActiveScenarioFrameDefaults(jurisdiction, 'human-health-direct', scenarioId).find(
       (d) => d.inputKey === inputKey,
     ) ?? null
   );
 }
 
-// The string value to seed an input for a jurisdiction: the active frame default, else
-// the input's baseline. Deterministic (static catalog) -> SSR == CSR.
+// The string value to seed an input for a jurisdiction + scenario: the active frame
+// default, else the input's baseline. Deterministic (static catalog) -> SSR == CSR.
 function seedDirectFor(
   jurisdiction: Jurisdiction,
+  scenarioId: string | undefined,
   inputKey: string,
   baseline: string,
 ): string {
-  const active = activeDirectDefaultFor(jurisdiction, inputKey);
+  const active = activeDirectDefaultFor(jurisdiction, scenarioId, inputKey);
   return active && active.value != null ? String(active.value) : baseline;
 }
 
@@ -86,32 +99,45 @@ export default function HHDirectContactCalculator({
   onOpenEvidenceLibrary,
 }: HHDirectContactCalculatorProps) {
   const substance = findSubstance(substanceKey);
-  // LAZY seed each exposure factor from the active frame default for the initial frame
-  // (no flash; SSR == CSR because the catalog is static). The frame-switch re-seed
-  // happens DURING render (below), mirroring HHFoodWebCalculator, so a new frame never
-  // paints the previous frame's value.
+  // The selectable receptor scenarios for the current frame (only scenarios whose every
+  // seed resolves ACTIVE -> an incomplete scenario is never offered, so no hybrid calc).
+  const selectableScenarios = useMemo(
+    () => getSelectableFrameScenarios(jurisdiction, 'human-health-direct'),
+    [jurisdiction],
+  );
+  // The receptor scenario currently selected. Initialized to the frame's default
+  // selectable scenario (undefined when the frame has none -> the legacy default profile
+  // / baselines). Declared BEFORE the input seeds, which read it.
+  const [scenarioId, setScenarioId] = useState<string | undefined>(() =>
+    getDefaultSelectableScenarioId(jurisdiction, 'human-health-direct'),
+  );
+  // LAZY seed each exposure factor from the active frame default for the initial frame +
+  // scenario (no flash; SSR == CSR because the catalog is static). The frame- AND
+  // scenario-switch re-seed happens DURING render (below), so a new frame/scenario never
+  // paints the previous one's value.
   const [bwInput, setBwInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'BW_kg', BASELINE_BW_DIRECT_KG),
+    seedDirectFor(jurisdiction, scenarioId, 'BW_kg', BASELINE_BW_DIRECT_KG),
   );
   const [edInput, setEdInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'ED_years', BASELINE_ED_YEARS),
+    seedDirectFor(jurisdiction, scenarioId, 'ED_years', BASELINE_ED_YEARS),
   );
   const [efInput, setEfInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'EF_days_per_year', BASELINE_EF_DAYS),
+    seedDirectFor(jurisdiction, scenarioId, 'EF_days_per_year', BASELINE_EF_DAYS),
   );
   const [atCancerInput, setAtCancerInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'AT_cancer_years', BASELINE_AT_CANCER_YEARS),
+    seedDirectFor(jurisdiction, scenarioId, 'AT_cancer_years', BASELINE_AT_CANCER_YEARS),
   );
   const [irSedInput, setIrSedInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'IR_sed_mg_per_day', BASELINE_IR_SED_MG_PER_DAY),
+    seedDirectFor(jurisdiction, scenarioId, 'IR_sed_mg_per_day', BASELINE_IR_SED_MG_PER_DAY),
   );
   const [skinAreaInput, setSkinAreaInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'SA_cm2', BASELINE_SA_CM2),
+    seedDirectFor(jurisdiction, scenarioId, 'SA_cm2', BASELINE_SA_CM2),
   );
   const [adherenceInput, setAdherenceInput] = useState(() =>
-    seedDirectFor(jurisdiction, 'AF_sed_mg_per_cm2', BASELINE_AF_SED),
+    seedDirectFor(jurisdiction, scenarioId, 'AF_sed_mg_per_cm2', BASELINE_AF_SED),
   );
   const [prevJurisdiction, setPrevJurisdiction] = useState(jurisdiction);
+  const [prevScenarioId, setPrevScenarioId] = useState<string | undefined>(scenarioId);
   const [targetRiskInput, setTargetRiskInput] = useState('0.00001');
   const [hazardQuotientInput, setHazardQuotientInput] = useState('1');
   const [rfdInput, setRfdInput] = useState(
@@ -147,65 +173,78 @@ export default function HHDirectContactCalculator({
     setBaOralInput(next ? String(next.ba_oral) : '1');
   }, [substanceKey]);
 
-  // Re-seed each exposure factor on frame change, DURING render (React "adjust state
-  // when a prop changes" pattern) so the new frame never paints the previous frame's
-  // value. Re-seed an input only when it still holds the PREVIOUS frame's seed (the user
-  // has NOT moved it off-default); otherwise preserve the user's edit. The guard makes
-  // this run once per jurisdiction change (no render loop).
+  // Re-seed each exposure factor when the FRAME or the RECEPTOR SCENARIO changes, DURING
+  // render (React "adjust state when a prop/state changes" pattern) so the new frame /
+  // scenario never paints the previous value. Re-seed an input only when it still holds
+  // the PREVIOUS (frame, scenario) seed (the user has NOT moved it off-default); otherwise
+  // preserve the user's edit. The guards make each branch run once per change (no loop).
+  const reseedDirectInputs = (
+    fromJurisdiction: Jurisdiction,
+    fromScenario: string | undefined,
+    toJurisdiction: Jurisdiction,
+    toScenario: string | undefined,
+  ) => {
+    const reseed = (
+      current: string,
+      setter: (v: string) => void,
+      inputKey: string,
+      baseline: string,
+    ) => {
+      if (current === seedDirectFor(fromJurisdiction, fromScenario, inputKey, baseline)) {
+        setter(seedDirectFor(toJurisdiction, toScenario, inputKey, baseline));
+      }
+    };
+    reseed(bwInput, setBwInput, 'BW_kg', BASELINE_BW_DIRECT_KG);
+    reseed(edInput, setEdInput, 'ED_years', BASELINE_ED_YEARS);
+    reseed(efInput, setEfInput, 'EF_days_per_year', BASELINE_EF_DAYS);
+    reseed(atCancerInput, setAtCancerInput, 'AT_cancer_years', BASELINE_AT_CANCER_YEARS);
+    reseed(irSedInput, setIrSedInput, 'IR_sed_mg_per_day', BASELINE_IR_SED_MG_PER_DAY);
+    reseed(skinAreaInput, setSkinAreaInput, 'SA_cm2', BASELINE_SA_CM2);
+    reseed(adherenceInput, setAdherenceInput, 'AF_sed_mg_per_cm2', BASELINE_AF_SED);
+  };
   if (jurisdiction !== prevJurisdiction) {
+    // Frame changed: scenarios are frame-specific, so reset to the new frame's default
+    // selectable scenario BEFORE reseeding (no stale scenarioId carried across frames).
+    const nextScenario = getDefaultSelectableScenarioId(jurisdiction, 'human-health-direct');
     setPrevJurisdiction(jurisdiction);
-    if (bwInput === seedDirectFor(prevJurisdiction, 'BW_kg', BASELINE_BW_DIRECT_KG)) {
-      setBwInput(seedDirectFor(jurisdiction, 'BW_kg', BASELINE_BW_DIRECT_KG));
-    }
-    if (edInput === seedDirectFor(prevJurisdiction, 'ED_years', BASELINE_ED_YEARS)) {
-      setEdInput(seedDirectFor(jurisdiction, 'ED_years', BASELINE_ED_YEARS));
-    }
-    if (efInput === seedDirectFor(prevJurisdiction, 'EF_days_per_year', BASELINE_EF_DAYS)) {
-      setEfInput(seedDirectFor(jurisdiction, 'EF_days_per_year', BASELINE_EF_DAYS));
-    }
-    if (atCancerInput === seedDirectFor(prevJurisdiction, 'AT_cancer_years', BASELINE_AT_CANCER_YEARS)) {
-      setAtCancerInput(seedDirectFor(jurisdiction, 'AT_cancer_years', BASELINE_AT_CANCER_YEARS));
-    }
-    if (irSedInput === seedDirectFor(prevJurisdiction, 'IR_sed_mg_per_day', BASELINE_IR_SED_MG_PER_DAY)) {
-      setIrSedInput(seedDirectFor(jurisdiction, 'IR_sed_mg_per_day', BASELINE_IR_SED_MG_PER_DAY));
-    }
-    if (skinAreaInput === seedDirectFor(prevJurisdiction, 'SA_cm2', BASELINE_SA_CM2)) {
-      setSkinAreaInput(seedDirectFor(jurisdiction, 'SA_cm2', BASELINE_SA_CM2));
-    }
-    if (adherenceInput === seedDirectFor(prevJurisdiction, 'AF_sed_mg_per_cm2', BASELINE_AF_SED)) {
-      setAdherenceInput(seedDirectFor(jurisdiction, 'AF_sed_mg_per_cm2', BASELINE_AF_SED));
-    }
+    setPrevScenarioId(nextScenario);
+    setScenarioId(nextScenario);
+    reseedDirectInputs(prevJurisdiction, prevScenarioId, jurisdiction, nextScenario);
+  } else if (scenarioId !== prevScenarioId) {
+    // Receptor scenario changed within the same frame.
+    setPrevScenarioId(scenarioId);
+    reseedDirectInputs(jurisdiction, prevScenarioId, jurisdiction, scenarioId);
   }
 
   // The active frame default per input for the current frame (drives the label, the
   // reset button, and provenance attribution -- all pure functions of render state).
   const activeBwDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'BW_kg'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'BW_kg'),
+    [jurisdiction, scenarioId],
   );
   const activeEdDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'ED_years'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'ED_years'),
+    [jurisdiction, scenarioId],
   );
   const activeEfDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'EF_days_per_year'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'EF_days_per_year'),
+    [jurisdiction, scenarioId],
   );
   const activeAtCancerDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'AT_cancer_years'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'AT_cancer_years'),
+    [jurisdiction, scenarioId],
   );
   const activeIrSedDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'IR_sed_mg_per_day'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'IR_sed_mg_per_day'),
+    [jurisdiction, scenarioId],
   );
   const activeSaDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'SA_cm2'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'SA_cm2'),
+    [jurisdiction, scenarioId],
   );
   const activeAfDefault = useMemo(
-    () => activeDirectDefaultFor(jurisdiction, 'AF_sed_mg_per_cm2'),
-    [jurisdiction],
+    () => activeDirectDefaultFor(jurisdiction, scenarioId, 'AF_sed_mg_per_cm2'),
+    [jurisdiction, scenarioId],
   );
 
   const bwIsFrameDefault =
@@ -518,6 +557,30 @@ export default function HHDirectContactCalculator({
         usedBaselineFallback={usedBaselineFallback}
         fallbackReason={fallbackReason}
       />
+
+      {selectableScenarios.length >= 2 && (
+        <div className="mb-4" data-testid="hh-direct-receptor-scenario">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Receptor scenario
+            <select
+              data-testid="hh-direct-receptor-scenario-select"
+              value={scenarioId ?? ''}
+              onChange={(e) => setScenarioId(e.target.value || undefined)}
+              className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+            >
+              {selectableScenarios.map((s) => (
+                <option key={s.scenarioId} value={s.scenarioId}>
+                  {s.scenarioLabel}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
+              Switches the HC PQRA v4.0 receptor exposure-factor defaults (body weight,
+              incidental ingestion, skin surface area). Each factor stays adjustable.
+            </p>
+          </label>
+        </div>
+      )}
 
       <div
         className="space-y-4 mb-6"

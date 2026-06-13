@@ -11,6 +11,10 @@ import {
   FRAME_DEFAULT_PROFILES,
   getFrameDefaults,
   getActiveFrameDefaults,
+  getFrameScenarios,
+  getSelectableFrameScenarios,
+  getDefaultSelectableScenarioId,
+  getActiveScenarioFrameDefaults,
   validateFrameDefaultProfiles,
 } from '../frameDefaults';
 import { PROVENANCE_PATHWAYS } from '../provenance/pathways';
@@ -122,9 +126,10 @@ const TEST_SOURCES = [
 
 describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
   it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
-    // C-HH-direct (2026-06-12): the table now also has the canada-fcsap-aquatic
-    // human-health-direct row (HC PQRA v4.0 toddler receptor, 7 seeds).
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(3);
+    // C-HH-direct (2026-06-12): the table now has the canada-fcsap-aquatic human-health-direct
+    // frame as TWO receptor-scenario rows (residential toddler [default] + residential adult),
+    // so the live table is 4 rows.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(4);
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
     expect(bc?.pathway).toBe('human-health-food');
@@ -249,6 +254,155 @@ describe('getFrameDefaults: per-seed label override', () => {
     });
     const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD], TEST_SOURCES);
     expect(errors.some((e) => /label override, when present, must be a non-empty/.test(e))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 2b. Receptor scenarios: multi-profile (frameId, pathway) selection + discovery
+// ---------------------------------------------------------------------------
+
+describe('receptor scenarios: getFrameDefaults scenarioId selection', () => {
+  // Two scenarios for the same (frameId, pathway): a default + a named alternative.
+  const toddler = makeProfile({
+    receptorScenarioId: 'toddler',
+    scenarioLabel: 'Toddler',
+    isDefaultScenario: true,
+    defaults: [{ inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-toddler', candidateGroupId: 'cg-ir-food-hh' }],
+  });
+  const adult = makeProfile({
+    receptorScenarioId: 'adult',
+    scenarioLabel: 'Adult',
+    defaults: [{ inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-adult', candidateGroupId: 'cg-ir-food-hh' }],
+  });
+  const records = [
+    makeRecord({ parameter_value_id: 'pvid-toddler', value: 0.05, candidate_group_id: 'cg-ir-food-hh' }),
+    makeRecord({ parameter_value_id: 'pvid-adult', value: 0.2, candidate_group_id: 'cg-ir-food-hh' }),
+  ];
+
+  it('a passed scenarioId resolves THAT scenario profile', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    const adultDefaults = getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      profiles: [toddler, adult],
+      records,
+      scenarioId: 'adult',
+    });
+    expect(adultDefaults[0].parameterValueId).toBe('pvid-adult');
+    expect(adultDefaults[0].value).toBe(0.2);
+  });
+
+  it('no scenarioId resolves the isDefaultScenario profile (not the first)', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    // Order adult-first to prove it picks by the isDefaultScenario flag, not position.
+    const def = getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      profiles: [adult, toddler],
+      records,
+    });
+    expect(def[0].parameterValueId).toBe('pvid-toddler');
+  });
+
+  it('an unknown scenarioId resolves to [] (no silent fallback)', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    expect(
+      getFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+        profiles: [toddler, adult],
+        records,
+        scenarioId: 'nope',
+      }),
+    ).toEqual([]);
+  });
+
+  it('getFrameScenarios lists every NAMED scenario; getSelectableFrameScenarios gates on completeness', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    const named = getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records });
+    expect(named.map((s) => s.scenarioId).sort()).toEqual(['adult', 'toddler']);
+    // Both records approved + eligible -> both scenarios selectable.
+    const selectable = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records });
+    expect(selectable.map((s) => s.scenarioId).sort()).toEqual(['adult', 'toddler']);
+    expect(getDefaultSelectableScenarioId('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records })).toBe('toddler');
+  });
+
+  it('a scenario with a non-active (needs_review) seed is EXCLUDED from selectable (no hybrid)', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    const recordsAdultPending = [
+      makeRecord({ parameter_value_id: 'pvid-toddler', value: 0.05, candidate_group_id: 'cg-ir-food-hh', qa_status: 'approved' }),
+      makeRecord({ parameter_value_id: 'pvid-adult', value: 0.2, candidate_group_id: 'cg-ir-food-hh', qa_status: 'needs_review' }),
+    ];
+    const selectable = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food', {
+      profiles: [toddler, adult],
+      records: recordsAdultPending,
+    });
+    expect(selectable.map((s) => s.scenarioId)).toEqual(['toddler']);
+    // The default selectable scenario is still the (complete) toddler.
+    expect(getDefaultSelectableScenarioId('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records: recordsAdultPending })).toBe('toddler');
+  });
+
+  // getActiveScenarioFrameDefaults fail-closed semantics (the calculator's resolver).
+  it('getActiveScenarioFrameDefaults resolves a valid scenarioId to that scenario actives', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    const active = getActiveScenarioFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', 'adult', { profiles: [toddler, adult], records });
+    expect(active).toHaveLength(1);
+    expect(active[0].parameterValueId).toBe('pvid-adult');
+  });
+
+  it('getActiveScenarioFrameDefaults FAILS CLOSED: named frame + no scenarioId selectable -> [] (no hybrid)', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    // Both scenarios incomplete (every record needs_review) -> none selectable; the calculator
+    // resolves no scenarioId, and the legacy fallback would have seeded the active subset.
+    const pendingRecords = [
+      makeRecord({ parameter_value_id: 'pvid-toddler', value: 0.05, candidate_group_id: 'cg-ir-food-hh', qa_status: 'needs_review' }),
+      makeRecord({ parameter_value_id: 'pvid-adult', value: 0.2, candidate_group_id: 'cg-ir-food-hh', qa_status: 'needs_review' }),
+    ];
+    expect(
+      getActiveScenarioFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', undefined, { profiles: [toddler, adult], records: pendingRecords }),
+    ).toEqual([]);
+  });
+
+  it('getActiveScenarioFrameDefaults keeps legacy behavior for a frame with NO named scenarios', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    // A sole scenario-less profile (no receptorScenarioId) -> undefined resolves it normally.
+    const sole = makeProfile({ defaults: [{ inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-test-ir', candidateGroupId: 'cg-ir-food-hh' }] });
+    const active = getActiveScenarioFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', undefined, { profiles: [sole], records: [APPROVED_IR_RECORD] });
+    expect(active).toHaveLength(1);
+    expect(active[0].parameterValueId).toBe('pvid-test-ir');
+  });
+});
+
+describe('receptor scenarios: validateFrameDefaultProfiles multi-profile invariants', () => {
+  const seedDefaults = [{ inputKey: 'IR_food_kg_per_day', parameterValueId: 'pvid-test-ir', candidateGroupId: 'cg-ir-food-hh' }];
+  const records = [APPROVED_IR_RECORD];
+
+  it('rejects two scenario-less rows for the same (frameId, pathway)', () => {
+    const a = makeProfile({ defaults: seedDefaults });
+    const b = makeProfile({ defaults: seedDefaults });
+    const errors = validateFrameDefaultProfiles([a, b], records, TEST_SOURCES);
+    expect(errors.some((e) => e.includes('duplicate (frameId, pathway, receptorScenarioId)'))).toBe(true);
+  });
+
+  it('rejects a multi-scenario group with ZERO isDefaultScenario', () => {
+    const a = makeProfile({ receptorScenarioId: 's1', scenarioLabel: 'S1', defaults: seedDefaults });
+    const b = makeProfile({ receptorScenarioId: 's2', scenarioLabel: 'S2', defaults: seedDefaults });
+    const errors = validateFrameDefaultProfiles([a, b], records, TEST_SOURCES);
+    expect(errors.some((e) => e.includes('EXACTLY ONE isDefaultScenario; found 0'))).toBe(true);
+  });
+
+  it('rejects a multi-scenario group with TWO isDefaultScenario', () => {
+    const a = makeProfile({ receptorScenarioId: 's1', scenarioLabel: 'S1', isDefaultScenario: true, defaults: seedDefaults });
+    const b = makeProfile({ receptorScenarioId: 's2', scenarioLabel: 'S2', isDefaultScenario: true, defaults: seedDefaults });
+    const errors = validateFrameDefaultProfiles([a, b], records, TEST_SOURCES);
+    expect(errors.some((e) => e.includes('EXACTLY ONE isDefaultScenario; found 2'))).toBe(true);
+  });
+
+  it('rejects a named scenario missing its scenarioLabel', () => {
+    const a = makeProfile({ receptorScenarioId: 's1', scenarioLabel: 'S1', isDefaultScenario: true, defaults: seedDefaults });
+    const b = makeProfile({ receptorScenarioId: 's2', defaults: seedDefaults } as Partial<FrameDefaultProfileRow>);
+    const errors = validateFrameDefaultProfiles([a, b], records, TEST_SOURCES);
+    expect(errors.some((e) => e.includes('scenarioLabel must be a non-empty string'))).toBe(true);
+  });
+
+  it('accepts a well-formed two-scenario group', () => {
+    const a = makeProfile({ receptorScenarioId: 's1', scenarioLabel: 'S1', isDefaultScenario: true, defaults: seedDefaults });
+    const b = makeProfile({ receptorScenarioId: 's2', scenarioLabel: 'S2', defaults: seedDefaults });
+    expect(validateFrameDefaultProfiles([a, b], records, TEST_SOURCES)).toEqual([]);
   });
 });
 
