@@ -15,6 +15,7 @@ import {
   getSelectableFrameScenarios,
   getDefaultSelectableScenarioId,
   getActiveScenarioFrameDefaults,
+  getReceptorScenarioFrame,
   validateFrameDefaultProfiles,
 } from '../frameDefaults';
 import { PROVENANCE_PATHWAYS } from '../provenance/pathways';
@@ -1090,5 +1091,40 @@ describe('getFrameDefaults: approved+eligible except unit mismatch -> invalid', 
     expect(r.reason).toMatch(/unit/i);
     // Mismatch path exits before qa_status check, so eligibility gate not called.
     expect(mockEligibility).not.toHaveBeenCalled();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 14. getReceptorScenarioFrame -- frame-independent receptor provider routing
+// Tests use the LIVE FRAME_DEFAULT_PROFILES (no opts override) so the mock
+// for getFrameSeedCandidateEligibility is NOT relevant here (getFrameScenarios
+// only reads the profiles, not records). The mock is active from beforeEach but
+// does not interfere because getFrameScenarios skips the eligibility gate.
+// ---------------------------------------------------------------------------
+
+describe('getReceptorScenarioFrame', () => {
+  it('(a) a frame WITHOUT its own named direct-contact scenarios resolves to the provider canada-fcsap-aquatic', () => {
+    // bc-protocol1-v5-dra has no human-health-direct profile rows in FRAME_DEFAULT_PROFILES,
+    // so getFrameScenarios returns [] -> falls back to the fixed provider for this pathway.
+    const resolved = getReceptorScenarioFrame('bc-protocol1-v5-dra', 'human-health-direct');
+    expect(resolved).toBe('canada-fcsap-aquatic');
+  });
+
+  it('(b) the provider frame canada-fcsap-aquatic (which HAS named scenarios) resolves to itself', () => {
+    // canada-fcsap-aquatic has two direct-contact scenario rows -> getFrameScenarios returns 2
+    // -> the frame defines its own scenarios -> returns itself (no provider redirect).
+    const resolved = getReceptorScenarioFrame('canada-fcsap-aquatic', 'human-health-direct');
+    expect(resolved).toBe('canada-fcsap-aquatic');
+  });
+
+  it('(c) a pathway with no provider entry (human-health-food) resolves to the passed frame unchanged', () => {
+    // human-health-food has no entry in RECEPTOR_SCENARIO_PROVIDER_FRAME, so the fallback
+    // is the selected frame itself regardless of whether it has named scenarios.
+    expect(getReceptorScenarioFrame('bc-protocol1-v5-dra', 'human-health-food')).toBe(
+      'bc-protocol1-v5-dra',
+    );
+    expect(getReceptorScenarioFrame('ccme-sediment-quality', 'human-health-food')).toBe(
+      'ccme-sediment-quality',
+    );
   });
 });

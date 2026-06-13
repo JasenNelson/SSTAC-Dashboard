@@ -6,6 +6,7 @@ import {
   getFrameScenarios,
   getSelectableFrameScenarios,
   getDefaultSelectableScenarioId,
+  getReceptorScenarioFrame,
   validateFrameDefaultProfiles,
 } from '../frameDefaults';
 
@@ -163,5 +164,24 @@ describe('C-HH-direct receptor scenarios (live catalog, real eligibility)', () =
         scenarioId: 'no-such-scenario',
       }),
     ).toEqual([]);
+  });
+});
+
+describe('getReceptorScenarioFrame (integration, live FRAME_DEFAULT_PROFILES)', () => {
+  it('bc-protocol1-v5-dra resolves to canada-fcsap-aquatic for human-health-direct', () => {
+    // bc-protocol1-v5-dra has no direct-contact profile rows, so it falls back to the
+    // fixed HC PQRA provider. This is the key frame-independence invariant.
+    expect(getReceptorScenarioFrame('bc-protocol1-v5-dra', 'human-health-direct')).toBe(
+      'canada-fcsap-aquatic',
+    );
+  });
+
+  it('the resolved provider frame exposes 2 selectable receptor scenarios (the selector is reachable from a non-FCSAP frame)', () => {
+    // Confirm the full round-trip: a non-FCSAP frame -> provider -> scenario selector has 2 options.
+    const providerFrame = getReceptorScenarioFrame('bc-protocol1-v5-dra', 'human-health-direct');
+    const scenarios = getSelectableFrameScenarios(providerFrame, 'human-health-direct');
+    expect(scenarios).toHaveLength(2);
+    const ids = scenarios.map((s) => s.scenarioId).sort();
+    expect(ids).toEqual(['residential-adult', 'residential-toddler']);
   });
 });
