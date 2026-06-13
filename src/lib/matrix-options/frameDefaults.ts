@@ -107,13 +107,36 @@ export interface FrameDefaultSeed {
 
 // ---------------------------------------------------------------------------
 // FrameDefaultProfileRow: one entry in the FRAME_DEFAULT_PROFILES table.
-// One row per (frameId, pathway). Authored only from owner-provided content
-// (verified catalog_sources UUIDs + promoted catalog records). Tier 2 protected
-// once the table has real entries (see CLAUDE.md), same as FRAME_VARIANTS.
+// One row per (frameId, pathway, receptorScenarioId) -- a (frameId, pathway) may
+// carry MULTIPLE rows when it offers more than one receptor scenario (e.g. the
+// HC PQRA direct-contact frame offers residential toddler + residential adult),
+// distinguished by receptorScenarioId; a single-scenario (frameId, pathway) omits
+// the scenario fields. Authored only from owner-provided content (verified
+// catalog_sources + promoted catalog records). Tier 2 curated content, same as
+// FRAME_VARIANTS.
 // ---------------------------------------------------------------------------
 export interface FrameDefaultProfileRow {
   readonly frameId: RegulatoryFrameId;
   readonly pathway: ProvenancePathway;
+  /**
+   * Optional stable id for a named RECEPTOR SCENARIO within a (frameId, pathway)
+   * -- e.g. 'residential-toddler', 'residential-adult'. Omitted on a sole/legacy
+   * profile (the single-scenario case). When a (frameId, pathway) has more than one
+   * profile, EVERY row must carry a distinct non-empty receptorScenarioId (enforced
+   * by validateFrameDefaultProfiles).
+   */
+  readonly receptorScenarioId?: string;
+  /**
+   * Short plain-ASCII label for the receptor-scenario selector (e.g. 'Residential
+   * adult'). Required + non-empty when receptorScenarioId is present.
+   */
+  readonly scenarioLabel?: string;
+  /**
+   * Marks the profile selected when no scenarioId is requested. Required to be set on
+   * EXACTLY ONE profile when a (frameId, pathway) has more than one profile; ignored
+   * (optional) for a single-profile (frameId, pathway).
+   */
+  readonly isDefaultScenario?: boolean;
   /** Brief plain-ASCII note for UI surfacing. No markdown. */
   readonly note: string;
   /**
@@ -213,6 +236,9 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     // the calculation (promote-first guardrail).
     frameId: 'canada-fcsap-aquatic',
     pathway: 'human-health-direct',
+    receptorScenarioId: 'residential-toddler',
+    scenarioLabel: 'Residential toddler',
+    isDefaultScenario: true,
     note:
       'HC PQRA v4.0 (2024) residential toddler receptor: BW 16.5 kg, IR_sed 80 mg/day, ' +
       'EF 364 days/yr, ED 80 yr, AT_cancer 80 yr, SA(total body) 6130 cm2, AF 0.01 mg/cm2.',
@@ -254,6 +280,68 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
         parameterValueId: 'pv-hc-pqra-v4-2024-sa-total-toddler-ca',
         candidateGroupId: 'human-health-direct__generic__SA_cm2__general',
         label: 'HC PQRA v4.0 2024, toddler total-body skin surface area (6130 cm2)',
+      },
+      {
+        inputKey: 'AF_sed_mg_per_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-af-sed-other-general-ca',
+        candidateGroupId: 'human-health-direct__generic__AF_sed_mg_per_cm2__general',
+        label: 'HC PQRA v4.0 2024, non-hand soil loading (0.01 mg/cm2)',
+      },
+    ],
+  },
+  {
+    // C-HH-direct 2nd scenario (2026-06-12): the Canada FCSAP frame also offers the
+    // HC PQRA v4.0 (2024) RESIDENTIAL ADULT receptor. It differs from the toddler
+    // scenario only in the three receptor-specific seeds (BW, IR_sed, SA); the
+    // residential EF/ED/AT and the non-hand AF are receptor-independent and reuse the
+    // SAME already-approved records the toddler scenario cites. Owner-promoted (inline-
+    // approved) the 3 adult-specific records; until promotion they resolve 'pending' and
+    // this scenario is NOT selectable (scenario-completeness gate -> no hybrid calc).
+    frameId: 'canada-fcsap-aquatic',
+    pathway: 'human-health-direct',
+    receptorScenarioId: 'residential-adult',
+    scenarioLabel: 'Residential adult',
+    note:
+      'HC PQRA v4.0 (2024) residential adult receptor: BW 70.7 kg, IR_sed 20 mg/day, ' +
+      'EF 364 days/yr, ED 80 yr, AT_cancer 80 yr, SA(total body) 17640 cm2, AF 0.01 mg/cm2.',
+    label: 'HC PQRA v4.0 2024, residential adult',
+    sourceIds: ['src-health-canada-pqra-v4-2024'],
+    defaults: [
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-hc-pqra-v4-2024-bw-adult-ca',
+        candidateGroupId: 'human-health-direct__generic__BW_kg__general',
+        label: 'HC PQRA v4.0 2024, residential adult (70.7 kg, Table 1)',
+      },
+      {
+        inputKey: 'IR_sed_mg_per_day',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ir-sed-general-ca',
+        candidateGroupId: 'human-health-direct__generic__IR_sed_mg_per_day__general',
+        label: 'HC PQRA v4.0 2024, general-population incidental ingestion (20 mg/day)',
+      },
+      {
+        inputKey: 'EF_days_per_year',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ef-residential-ca',
+        candidateGroupId: 'human-health-direct__generic__EF_days_per_year__general',
+        label: 'HC PQRA v4.0 2024, residential exposure frequency (364 days/yr)',
+      },
+      {
+        inputKey: 'ED_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-ed-residential-ca',
+        candidateGroupId: 'human-health-direct__generic__ED_years__general',
+        label: 'HC PQRA v4.0 2024, residential exposure duration (80 yr)',
+      },
+      {
+        inputKey: 'AT_cancer_years',
+        parameterValueId: 'pv-hc-pqra-v4-2024-at-cancer-lifetime-ca',
+        candidateGroupId: 'human-health-direct__generic__AT_cancer_years__general',
+        label: 'HC PQRA v4.0 2024, lifetime cancer averaging time (80 yr)',
+      },
+      {
+        inputKey: 'SA_cm2',
+        parameterValueId: 'pv-hc-pqra-v4-2024-sa-total-adult-ca',
+        candidateGroupId: 'human-health-direct__generic__SA_cm2__general',
+        label: 'HC PQRA v4.0 2024, adult total-body skin surface area (17640 cm2)',
       },
       {
         inputKey: 'AF_sed_mg_per_cm2',
@@ -314,6 +402,13 @@ export interface ResolvedFrameDefault {
 interface ResolveOptions {
   readonly profiles?: readonly FrameDefaultProfileRow[];
   readonly records?: readonly ParameterValueRecord[];
+  /**
+   * Optional receptor-scenario selector. When provided, resolve the profile whose
+   * receptorScenarioId matches (no match -> []). When omitted, resolve the DEFAULT
+   * profile for the (frameId, pathway): the sole row if there is one, else the row
+   * flagged isDefaultScenario. Existing callers that omit it keep their behavior.
+   */
+  readonly scenarioId?: string;
 }
 
 function resolveSeed(
@@ -450,10 +545,29 @@ export function getFrameDefaults(
   const records = opts.records ?? PARAMETER_VALUE_RECORDS;
   // A frame that does not support the pathway never seeds it.
   if (getPathwayApplicability(frameId, pathway).status === 'unsupported') return [];
-  const row = profiles.find((p) => p.frameId === frameId && p.pathway === pathway);
+  const candidates = profiles.filter((p) => p.frameId === frameId && p.pathway === pathway);
+  const row = selectFrameProfile(candidates, opts.scenarioId);
   if (!row) return [];
   const seedableKeys = SEEDABLE_KEYS[pathway] ?? [];
   return row.defaults.map((seed) => resolveSeed(frameId, seed, pathway, seedableKeys, records, row.label));
+}
+
+/**
+ * Pick the profile for a (frameId, pathway) candidate set given an optional scenarioId.
+ *  - scenarioId provided -> the profile with that receptorScenarioId (or undefined).
+ *  - omitted -> the sole profile if there is one, else the isDefaultScenario profile.
+ * Returns undefined when nothing matches (caller -> []).
+ */
+function selectFrameProfile(
+  candidates: readonly FrameDefaultProfileRow[],
+  scenarioId?: string,
+): FrameDefaultProfileRow | undefined {
+  if (candidates.length === 0) return undefined;
+  if (scenarioId !== undefined) {
+    return candidates.find((p) => p.receptorScenarioId === scenarioId);
+  }
+  if (candidates.length === 1) return candidates[0];
+  return candidates.find((p) => p.isDefaultScenario === true);
 }
 
 /** Convenience: only the entries that actually seed (status 'active'). */
@@ -463,6 +577,95 @@ export function getActiveFrameDefaults(
   opts: ResolveOptions = {},
 ): readonly ResolvedFrameDefault[] {
   return getFrameDefaults(frameId, pathway, opts).filter((d) => d.status === 'active');
+}
+
+// ---------------------------------------------------------------------------
+// Receptor-scenario discovery (for the calculator's scenario selector).
+// ---------------------------------------------------------------------------
+
+/** One named receptor scenario available for a (frameId, pathway). */
+export interface FrameScenarioOption {
+  readonly scenarioId: string;
+  readonly scenarioLabel: string;
+  readonly isDefault: boolean;
+}
+
+/**
+ * ALL named receptor scenarios for a (frameId, pathway) -- i.e. every profile that
+ * carries a receptorScenarioId (a sole/legacy scenario-less profile is not a "named
+ * scenario" and is excluded). Order follows FRAME_DEFAULT_PROFILES. For introspection;
+ * the UI should use getSelectableFrameScenarios so an INCOMPLETE scenario is never offered.
+ */
+export function getFrameScenarios(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  opts: ResolveOptions = {},
+): readonly FrameScenarioOption[] {
+  const profiles = opts.profiles ?? FRAME_DEFAULT_PROFILES;
+  if (getPathwayApplicability(frameId, pathway).status === 'unsupported') return [];
+  return profiles
+    .filter((p) => p.frameId === frameId && p.pathway === pathway && p.receptorScenarioId !== undefined)
+    .map((p) => ({
+      scenarioId: p.receptorScenarioId as string,
+      scenarioLabel: p.scenarioLabel ?? (p.receptorScenarioId as string),
+      isDefault: p.isDefaultScenario === true,
+    }));
+}
+
+/**
+ * Named scenarios whose EVERY seed currently resolves to status 'active'. A scenario
+ * with any pending/blocked/invalid seed is EXCLUDED so it can never be selected and
+ * drive a HYBRID calculation (some seeds source-backed, some falling back to baseline).
+ * This is the scenario-completeness gate: an incomplete scenario (e.g. before its
+ * receptor-specific records are promoted, or if a seed is later superseded) is unreachable.
+ */
+export function getSelectableFrameScenarios(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  opts: ResolveOptions = {},
+): readonly FrameScenarioOption[] {
+  return getFrameScenarios(frameId, pathway, opts).filter((s) => {
+    const resolved = getFrameDefaults(frameId, pathway, { ...opts, scenarioId: s.scenarioId });
+    return resolved.length > 0 && resolved.every((d) => d.status === 'active');
+  });
+}
+
+/**
+ * The scenarioId a calculator should select by default for a (frameId, pathway): the
+ * flagged default scenario when it is SELECTABLE (complete), else the first selectable
+ * scenario, else undefined (no selectable named scenario -> the calculator falls back to
+ * the sole/legacy profile via getActiveFrameDefaults with no scenarioId, or to baselines).
+ */
+export function getDefaultSelectableScenarioId(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  opts: ResolveOptions = {},
+): string | undefined {
+  const selectable = getSelectableFrameScenarios(frameId, pathway, opts);
+  if (selectable.length === 0) return undefined;
+  return (selectable.find((s) => s.isDefault) ?? selectable[0]).scenarioId;
+}
+
+/**
+ * Calculator-facing active-default resolver that FAILS CLOSED for named-scenario frames.
+ * Returns the active defaults for `scenarioId`. If `scenarioId` is undefined AND the frame has
+ * NAMED receptor scenarios, "no scenario" is NOT a legacy sole-profile case -- it means no
+ * scenario is selected/selectable -- so this returns [] rather than falling back to an incomplete
+ * named default profile (which would seed only its active subset and baseline the rest = a HYBRID
+ * calculation the completeness gate exists to prevent). A frame with NO named scenarios keeps the
+ * legacy behavior (undefined -> the sole/default profile). Use THIS (not getActiveFrameDefaults)
+ * wherever a scenario-aware calculator seeds inputs.
+ */
+export function getActiveScenarioFrameDefaults(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  scenarioId: string | undefined,
+  opts: ResolveOptions = {},
+): readonly ResolvedFrameDefault[] {
+  if (scenarioId === undefined && getFrameScenarios(frameId, pathway, opts).length > 0) {
+    return [];
+  }
+  return getActiveFrameDefaults(frameId, pathway, { ...opts, scenarioId });
 }
 
 // ---------------------------------------------------------------------------
@@ -480,9 +683,25 @@ export function validateFrameDefaultProfiles(
   const seenKeys = new Set<string>();
   profiles.forEach((row, i) => {
     const at = 'Index ' + i + ' (' + row.frameId + ', ' + row.pathway + '): ';
-    const key = row.frameId + '__' + row.pathway;
-    if (seenKeys.has(key)) errors.push(at + 'duplicate (frameId, pathway) pair.');
+    // Dedup key includes the scenario so two scenario-less rows for the same
+    // (frameId, pathway) is still an error, while distinct named scenarios are allowed.
+    const key = row.frameId + '__' + row.pathway + '__' + (row.receptorScenarioId ?? '__sole__');
+    if (seenKeys.has(key)) {
+      errors.push(at + 'duplicate (frameId, pathway, receptorScenarioId) profile.');
+    }
     seenKeys.add(key);
+    // Per-row scenario field shape.
+    if (row.receptorScenarioId !== undefined) {
+      if (typeof row.receptorScenarioId !== 'string' || row.receptorScenarioId.trim().length === 0) {
+        errors.push(at + 'receptorScenarioId, when present, must be a non-empty string.');
+      }
+      if (typeof row.scenarioLabel !== 'string' || row.scenarioLabel.trim().length === 0) {
+        errors.push(at + 'scenarioLabel must be a non-empty string when receptorScenarioId is present.');
+      }
+    }
+    if (row.isDefaultScenario !== undefined && typeof row.isDefaultScenario !== 'boolean') {
+      errors.push(at + 'isDefaultScenario, when present, must be a boolean.');
+    }
     if (getPathwayApplicability(row.frameId, row.pathway).status === 'unsupported') {
       errors.push(at + 'pathway is unsupported for this frame; no frame default allowed.');
     }
@@ -549,6 +768,34 @@ export function validateFrameDefaultProfiles(
         }
       });
     });
+  });
+
+  // Multi-profile (frameId, pathway) group invariants: when a (frameId, pathway) offers
+  // more than one receptor scenario, every row must be a NAMED scenario (distinct
+  // receptorScenarioId + scenarioLabel) and EXACTLY ONE must be flagged isDefaultScenario
+  // (so getFrameDefaults with no scenarioId resolves deterministically).
+  const groups = new Map<string, FrameDefaultProfileRow[]>();
+  profiles.forEach((row) => {
+    const gkey = row.frameId + '__' + row.pathway;
+    const list = groups.get(gkey) ?? [];
+    list.push(row);
+    groups.set(gkey, list);
+  });
+  groups.forEach((rows, gkey) => {
+    if (rows.length < 2) return;
+    const at = 'Group (' + gkey + '): ';
+    const namedCount = rows.filter(
+      (r) => typeof r.receptorScenarioId === 'string' && r.receptorScenarioId.trim().length > 0,
+    ).length;
+    if (namedCount !== rows.length) {
+      errors.push(at + 'every profile in a multi-scenario (frameId, pathway) must have a receptorScenarioId.');
+    }
+    const defaultCount = rows.filter((r) => r.isDefaultScenario === true).length;
+    if (defaultCount !== 1) {
+      errors.push(
+        at + 'a multi-scenario (frameId, pathway) must have EXACTLY ONE isDefaultScenario; found ' + defaultCount + '.',
+      );
+    }
   });
   return errors;
 }

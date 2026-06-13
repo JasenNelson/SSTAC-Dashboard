@@ -5228,9 +5228,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5239,7 +5239,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5251,8 +5251,8 @@
     "display_name": "Body weight - adult and construction/utility worker (HC PQRA v4.0 Appendix E)",
     "value": 70.7,
     "unit": "kg",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the adult and construction/utility worker (>=20 yr): 70.7 kg. Underlying source Richardson (1997), tabulated in Appendix E. Appendix E lists the same 70.7 kg for the adult and the construction/utility worker. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the adult and construction/utility worker (>=20 yr): 70.7 kg. Underlying source Richardson (1997), tabulated in Appendix E. Appendix E lists the same 70.7 kg for the adult and the construction/utility worker. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5261,15 +5261,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "Health Canada PQRA v4.0 Appendix E recommended receptor body weight (adult and construction/utility worker); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-bw-adult-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (adult and construction/utility worker, 70.7 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (adult and construction/utility worker, 70.7 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5297,9 +5297,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5308,7 +5308,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5320,8 +5320,8 @@
     "display_name": "Incidental soil/sediment ingestion rate - the general-population age groups (infant, child, teen, adult) (HC PQRA v4.0 Appendix E)",
     "value": 20,
     "unit": "mg/day",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E incidental soil ingestion rate for the general-population age groups (infant, child, teen, adult): 20 mg/day. Underlying source CCME (2006), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Mapped to the dashboard IR_sed_mg_per_day (mg/day) key. HC PQRA v4.0 Appendix E ALSO tabulates SEDIMENT-specific ingestion rates in mg/HOUR (hand-to-mouth: toddler 72, child 57, teen 18, adult 20; near-shore surface-water 7.7; Wilson et al. 2015) -- a different time-based exposure model NOT represented by this mg/day key.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E incidental soil ingestion rate for the general-population age groups (infant, child, teen, adult): 20 mg/day. Underlying source CCME (2006), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Mapped to the dashboard IR_sed_mg_per_day (mg/day) key. HC PQRA v4.0 Appendix E ALSO tabulates SEDIMENT-specific ingestion rates in mg/HOUR (hand-to-mouth: toddler 72, child 57, teen 18, adult 20; near-shore surface-water 7.7; Wilson et al. 2015) -- a different time-based exposure model NOT represented by this mg/day key. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5330,15 +5330,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the general-population age groups (infant, child, teen, adult)); underlying source CCME (2006). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-ir-sed-general-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the general-population age groups (infant, child, teen, adult), 20 mg/day). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E incidental soil ingestion rate (the general-population age groups (infant, child, teen, adult), 20 mg/day). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5767,9 +5767,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5778,7 +5778,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5790,8 +5790,8 @@
     "display_name": "Skin surface area, total body - adult (>=20 yr) (HC PQRA v4.0 Appendix E)",
     "value": 17640,
     "unit": "cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the adult (>=20 yr): 17640 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the adult (>=20 yr): 17640 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5800,15 +5800,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-12",
         "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (adult (>=20 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-adult-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (adult (>=20 yr), 17640 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (adult (>=20 yr), 17640 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-12 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",

@@ -177,3 +177,57 @@ describe('HHDirectContactCalculator C-HH-direct frame default (live catalog)', (
     expect(screen.queryByTestId('hh-direct-bw-frame-default-label')).toBeNull();
   });
 });
+
+// C-HH-direct receptor scenarios (2026-06-12): canada-fcsap-aquatic now offers two SELECTABLE
+// receptor scenarios (residential toddler [default] + residential adult). LIVE catalog (both
+// scenarios' seeds are promoted/approved -> selectable). Switching reseeds the receptor-specific
+// exposure factors while the shared EF/ED/AT/AF stay put.
+describe('HHDirectContactCalculator receptor-scenario selector (live catalog)', () => {
+  function renderFcsap() {
+    return render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+  }
+
+  it('renders the selector defaulting to residential toddler with both options', () => {
+    renderFcsap();
+    const select = screen.getByTestId('hh-direct-receptor-scenario-select') as HTMLSelectElement;
+    expect(select.value).toBe('residential-toddler');
+    const optionLabels = Array.from(select.options).map((o) => o.textContent);
+    expect(optionLabels).toContain('Residential toddler');
+    expect(optionLabels).toContain('Residential adult');
+    // Default opens on the toddler receptor values.
+    expect((screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value).toBe('16.5');
+  });
+
+  it('switching to Residential adult reseeds BW/IR_sed/SA to the adult values', () => {
+    renderFcsap();
+    const select = screen.getByTestId('hh-direct-receptor-scenario-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'residential-adult' } });
+    expect((screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value).toBe('70.7');
+    expect((screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement).value).toBe('20');
+    expect((screen.getByTestId('hh-direct-sa-input') as HTMLInputElement).value).toBe('17640');
+    // The frame-default label now reflects the adult receptor.
+    expect(screen.getByTestId('hh-direct-bw-frame-default-label')).toHaveTextContent(
+      /Frame default 70\.7 kg/,
+    );
+    // Shared receptor-independent factors (EF/ED/AT/AF) are identical across scenarios -> unchanged.
+    expect((screen.getByTestId('hh-direct-ef-input') as HTMLInputElement).value).toBe('364');
+    expect((screen.getByTestId('hh-direct-af-input') as HTMLInputElement).value).toBe('0.01');
+  });
+
+  it('preserves a user edit when switching scenarios (does not clobber an off-default value)', () => {
+    renderFcsap();
+    const bw = screen.getByTestId('hh-direct-bw-input') as HTMLInputElement;
+    fireEvent.change(bw, { target: { value: '50' } });
+    const select = screen.getByTestId('hh-direct-receptor-scenario-select') as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'residential-adult' } });
+    // BW was user-edited (off the toddler seed) -> the scenario switch must NOT overwrite it.
+    expect(bw.value).toBe('50');
+    // An untouched receptor-specific input (IR_sed) still reseeds to the adult value.
+    expect((screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement).value).toBe('20');
+  });
+});

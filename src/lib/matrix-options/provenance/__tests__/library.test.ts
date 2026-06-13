@@ -76,7 +76,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: +7 -- C-HH-direct HC PQRA v4.0 toddler receptor exposure factors promoted
     // to approved_source_backed (BW/IR_sed/EF/ED/AT_cancer/SA/AF; HITL J. Nelson, inline-
     // approved --apply via promote-hc-pqra-direct.mjs) = 1229.
-    expect(view.audit.values.approvedSourceBacked).toBe(1229);
+    // 2026-06-12: +3 -- C-HH-direct 2nd receptor scenario (residential adult) adult-specific
+    // seeds promoted to approved_source_backed (pv-hc-pqra-v4-2024-bw-adult-ca 70.7 kg +
+    // ir-sed-general 20 mg/day + sa-total-adult 17640 cm2; primary-source + codex verified,
+    // HITL J. Nelson inline-approved --apply via promote-hc-pqra-adult.mjs) = 1232.
+    expect(view.audit.values.approvedSourceBacked).toBe(1232);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -97,7 +101,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: -7 -- C-HH-direct HC PQRA v4.0 toddler receptor exposure factors promoted
     // out of pending (BW/IR_sed/EF/ED/AT_cancer/SA/AF; HITL J. Nelson, inline-approved
     // --apply via promote-hc-pqra-direct.mjs) = 386.
-    expect(view.audit.values.pendingSourceLocator).toBe(386);
+    // 2026-06-12: -3 -- C-HH-direct residential-adult scenario adult-specific seeds promoted
+    // out of pending (bw-adult + ir-sed-general + sa-total-adult; HITL J. Nelson, inline-
+    // approved --apply via promote-hc-pqra-adult.mjs) = 383.
+    expect(view.audit.values.pendingSourceLocator).toBe(383);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value

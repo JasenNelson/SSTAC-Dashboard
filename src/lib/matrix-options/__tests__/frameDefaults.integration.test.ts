@@ -3,6 +3,9 @@ import {
   FRAME_DEFAULT_PROFILES,
   getActiveFrameDefaults,
   getFrameDefaults,
+  getFrameScenarios,
+  getSelectableFrameScenarios,
+  getDefaultSelectableScenarioId,
   validateFrameDefaultProfiles,
 } from '../frameDefaults';
 
@@ -46,9 +49,11 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
     ).toEqual([]);
   });
 
-  it('the table contains the C-BC, C-nonBC, and C-HH-direct rows', () => {
-    // C-HH-direct (2026-06-12): +1 for the canada-fcsap-aquatic human-health-direct row.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(3);
+  it('the table contains the C-BC, C-nonBC, and both C-HH-direct receptor-scenario rows', () => {
+    // C-HH-direct (2026-06-12): the canada-fcsap-aquatic human-health-direct frame now has TWO
+    // receptor-scenario rows (residential toddler [default] + residential adult), so the live
+    // table is 4 rows: BC HH-food, US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(4);
   });
 });
 
@@ -108,5 +113,55 @@ describe('C-HH-direct frame default (live catalog, real eligibility)', () => {
     expect(bw?.candidateGroupId).toBe(
       'human-health-direct__generic__BW_kg__general',
     );
+  });
+});
+
+describe('C-HH-direct receptor scenarios (live catalog, real eligibility)', () => {
+  it('exposes residential toddler (default) + residential adult as SELECTABLE scenarios', () => {
+    const scenarios = getSelectableFrameScenarios('canada-fcsap-aquatic', 'human-health-direct');
+    const ids = scenarios.map((s) => s.scenarioId).sort();
+    expect(ids).toEqual(['residential-adult', 'residential-toddler']);
+    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> both are offered.
+    expect(getFrameScenarios('canada-fcsap-aquatic', 'human-health-direct')).toHaveLength(2);
+  });
+
+  it('the default selectable scenario is the residential toddler', () => {
+    expect(
+      getDefaultSelectableScenarioId('canada-fcsap-aquatic', 'human-health-direct'),
+    ).toBe('residential-toddler');
+    // No scenarioId -> the default (toddler) profile, identical to pre-scenario behavior.
+    const bwDefault = getActiveFrameDefaults('canada-fcsap-aquatic', 'human-health-direct').find(
+      (d) => d.inputKey === 'BW_kg',
+    );
+    expect(bwDefault?.value).toBe(16.5);
+  });
+
+  it('the residential-adult scenario seeds 7 ACTIVE adult exposure-factor defaults', () => {
+    const active = getActiveFrameDefaults('canada-fcsap-aquatic', 'human-health-direct', {
+      scenarioId: 'residential-adult',
+    });
+    expect(active).toHaveLength(7);
+    expect(active.every((d) => d.status === 'active')).toBe(true);
+    const byKey = (k: string) => active.find((d) => d.inputKey === k);
+    // The 3 adult-specific receptor seeds resolve to the verified HC PQRA v4.0 Appendix E values.
+    expect(byKey('BW_kg')?.value).toBe(70.7);
+    expect(byKey('BW_kg')?.parameterValueId).toBe('pv-hc-pqra-v4-2024-bw-adult-ca');
+    expect(byKey('IR_sed_mg_per_day')?.value).toBe(20);
+    expect(byKey('IR_sed_mg_per_day')?.parameterValueId).toBe('pv-hc-pqra-v4-2024-ir-sed-general-ca');
+    expect(byKey('SA_cm2')?.value).toBe(17640);
+    expect(byKey('SA_cm2')?.parameterValueId).toBe('pv-hc-pqra-v4-2024-sa-total-adult-ca');
+    // The 4 shared seeds (EF/ED/AT/AF) match the toddler scenario (receptor-independent).
+    expect(byKey('EF_days_per_year')?.value).toBe(364);
+    expect(byKey('ED_years')?.value).toBe(80);
+    expect(byKey('AT_cancer_years')?.value).toBe(80);
+    expect(byKey('AF_sed_mg_per_cm2')?.value).toBe(0.01);
+  });
+
+  it('an unknown scenarioId resolves to no defaults (does not silently fall back)', () => {
+    expect(
+      getActiveFrameDefaults('canada-fcsap-aquatic', 'human-health-direct', {
+        scenarioId: 'no-such-scenario',
+      }),
+    ).toEqual([]);
   });
 });
