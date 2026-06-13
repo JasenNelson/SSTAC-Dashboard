@@ -69,7 +69,11 @@ describe('HHDirectContactCalculator', () => {
     );
   });
 
-  it('renders conservative provenance scaffolds for HH direct inputs', () => {
+  // Renamed from "renders conservative provenance scaffolds for HH direct inputs"
+  // because the behavior changed: the 7 receptor inputs are now source-backed HC PQRA
+  // defaults even under the BC frame (frame-independent receptor provider). The substance
+  // toxicity inputs (Oral RfD, slope, abs_dermal, ba_oral) remain calculator defaults.
+  it('seeds source-backed HC PQRA receptor defaults under any frame', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
@@ -86,12 +90,19 @@ describe('HHDirectContactCalculator', () => {
     expect(panel).toHaveTextContent(/Cancer averaging time/);
     expect(panel).toHaveTextContent(/Skin surface area/);
     expect(panel).toHaveTextContent(/Sediment adherence/);
+    // The 7 HC PQRA receptor inputs are now source-backed under any frame, so the
+    // audit summary shows non-zero approved count (7 approved) + scaffold count drops.
+    // We assert positively rather than guarding exact counts to be tolerant of catalog drift.
+    expect(panel).toHaveTextContent(/7 approved/);
+    expect(panel).toHaveTextContent(/5 current calculator scaffolds/);
+    // The substance toxicity inputs (Oral RfD, slope, abs_dermal, ba_oral) are still
+    // calculator scaffolds (needs review) -- confirm the scaffold role is still present.
     expect(panel).toHaveTextContent(/current default/);
     expect(panel).toHaveTextContent(/needs review/);
-    expect(panel).toHaveTextContent(/0 approved/);
-    expect(panel).toHaveTextContent(
-      /current calculator scaffold only/i,
-    );
+    // The 7 receptor inputs now carry the source-backed role (not "screening assumption").
+    expect(panel).toHaveTextContent(/source-backed default/);
+    // Confirm at least one approved source is shown (the HC PQRA source record).
+    expect(panel).toHaveTextContent(/Health Canada PQRA/i);
   });
 
   it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
@@ -164,17 +175,35 @@ describe('HHDirectContactCalculator C-HH-direct frame default (live catalog)', (
     expect(screen.queryByTestId('hh-direct-bw-reset-to-frame-default')).toBeNull();
   });
 
-  it('a no-default frame leaves the inputs at their baselines with no label', () => {
+  // Renamed from "a no-default frame leaves the inputs at their baselines with no label"
+  // because that premise is now obsolete: there is NO "no-default frame" for direct-contact.
+  // Every frame falls back to the HC PQRA receptor provider (canada-fcsap-aquatic), so even a
+  // frame with no direct-contact profiles of its own (e.g. ccme-sediment-quality) seeds BW=16.5
+  // (toddler) via the frame-independent receptor provider.
+  it('frame-independence: ccme-sediment-quality still seeds HC PQRA toddler receptor and shows the scenario selector', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="arsenic_inorganic"
         jurisdiction="ccme-sediment-quality"
       />,
     );
+    // BW is now 16.5 kg (toddler) even under a frame with no direct-contact profile.
     expect(
       (screen.getByTestId('hh-direct-bw-input') as HTMLInputElement).value,
-    ).toBe('15');
-    expect(screen.queryByTestId('hh-direct-bw-frame-default-label')).toBeNull();
+    ).toBe('16.5');
+    // The frame-default label is present (the receptor provider seeded it).
+    expect(screen.getByTestId('hh-direct-bw-frame-default-label')).toBeInTheDocument();
+    expect(screen.getByTestId('hh-direct-bw-frame-default-label')).toHaveTextContent(
+      /Frame default 16\.5 kg/,
+    );
+    // The receptor-scenario selector is rendered (both scenarios are selectable).
+    const select = screen.getByTestId(
+      'hh-direct-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    const labels = Array.from(select.options).map((o) => o.textContent);
+    expect(labels).toContain('Residential toddler');
+    expect(labels).toContain('Residential adult');
   });
 });
 

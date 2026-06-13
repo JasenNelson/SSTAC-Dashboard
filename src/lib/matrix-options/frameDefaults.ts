@@ -669,6 +669,40 @@ export function getActiveScenarioFrameDefaults(
 }
 
 // ---------------------------------------------------------------------------
+// Receptor-scenario PROVIDER frame (frame-independent receptor selection).
+//
+// A receptor's exposure factors (body weight, ingestion rate, skin area, ...) are a property of the
+// RECEPTOR (age / land-use), not of the regulatory FRAME -- a toddler is 16.5 kg whether the policy
+// frame is BC, FCSAP, or US EPA. The frame governs the EQUATION + policy; the receptor governs the
+// exposure factors. So for pathways whose receptor scenarios live under a single source-of-record
+// frame, the calculator resolves the scenario selector + seeds from that PROVIDER frame regardless of
+// the selected regulatory frame. human-health-direct receptors come from HC PQRA v4.0, stored under
+// canada-fcsap-aquatic. (Resolving under the provider is also REQUIRED for eligibility: the HC PQRA
+// records are jurisdiction 'general', eligible under canada-fcsap-aquatic; resolving them under a frame
+// that does not list 'general' could block them.)
+// ---------------------------------------------------------------------------
+const RECEPTOR_SCENARIO_PROVIDER_FRAME: Partial<Record<ProvenancePathway, RegulatoryFrameId>> = {
+  'human-health-direct': 'canada-fcsap-aquatic',
+};
+
+/**
+ * The frame to resolve receptor scenarios + their seeds from for a (selected frame, pathway):
+ *  - the SELECTED frame, if it defines its own named scenarios for the pathway (a frame with its own
+ *    receptor profiles takes precedence); else
+ *  - the pathway's fixed receptor-PROVIDER frame (so the selector + seeds are frame-INDEPENDENT); else
+ *  - the selected frame (pathways with no provider keep frame-scoped behavior).
+ * Use this (not the raw selected frame) wherever a scenario-aware calculator resolves receptor seeds.
+ */
+export function getReceptorScenarioFrame(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  opts: ResolveOptions = {},
+): RegulatoryFrameId {
+  if (getFrameScenarios(frameId, pathway, opts).length > 0) return frameId;
+  return RECEPTOR_SCENARIO_PROVIDER_FRAME[pathway] ?? frameId;
+}
+
+// ---------------------------------------------------------------------------
 // Structural validation (dev/test). Fails CLOSED: a malformed profile is an error,
 // never a silent skip. Called with the live table by default; tests pass synthetic
 // rows + records.
