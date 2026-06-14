@@ -235,4 +235,30 @@ describe('matrix options default selection policy', () => {
     });
     expect(decision.status).toBe('keep_current_default_no_eligible_candidate');
   });
+
+  // Candidate 3: buildDefaultSelectionPolicyDecision end-to-end unit-blocked path.
+  // The BW_kg slot in bc-protocol1-v5-dra / human-health-food / generic is the ONLY
+  // real catalog slot that fires unitBlocked===true (two competing body-weight candidates,
+  // both in 'kg', which normalizeToBase returns null for -> allNormalizable=false ->
+  // comparable=false -> unitBlocked=true with 2 eligible candidates).
+  // This integration wiring (recommendedCandidate===null, status=manual_decision_required,
+  // rationale matches /A1 unit guard/) is never driven by any existing test.
+  it('Candidate 3: BW_kg slot fires the A1 unit-blocked path -- recommendation suppressed', () => {
+    const decision = buildDefaultSelectionPolicyDecision({
+      frameId: 'bc-protocol1-v5-dra',
+      pathway: 'human-health-food',
+      substanceKey: 'generic',
+      inputKey: 'BW_kg',
+    });
+
+    // The A1 guard must have fired: recommendedCandidate suppressed.
+    expect(decision.recommendedCandidate).toBeNull();
+    expect(decision.status).toBe('manual_decision_required');
+    // At least 2 eligible candidates must be present (two body-weight rows).
+    expect(decision.eligibleCandidates.length).toBeGreaterThanOrEqual(2);
+    // unitConsistency must report non-comparable (the reason the guard fires).
+    expect(decision.unitConsistency.comparable).toBe(false);
+    // Rationale must name the A1 guard so a reviewer can identify why no pick was made.
+    expect(decision.rationale).toMatch(/A1 unit guard/);
+  });
 });
