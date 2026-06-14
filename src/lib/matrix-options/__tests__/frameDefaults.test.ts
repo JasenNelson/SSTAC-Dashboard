@@ -127,10 +127,13 @@ const TEST_SOURCES = [
 
 describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
   it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
-    // C-HH-direct (2026-06-13): the table now has the canada-fcsap-aquatic human-health-direct
-    // frame as THREE receptor-scenario rows (residential toddler [default] + residential adult
-    // + commercial/industrial worker), so the live table is 5 rows.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(5);
+    // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame is THREE
+    // receptor-scenario rows (residential toddler [default] + residential adult + commercial/
+    // industrial worker). HH-food food-web (2026-06-13): the bc-protocol1-v5-dra human-health-food
+    // frame is now TWO receptor-scenario rows (recreational [default] + subsistence fisher), so the
+    // live table is 6 rows.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(6);
+    // .find returns the FIRST bc-protocol1-v5-dra row -> the recreational (default) scenario.
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
     expect(bc?.pathway).toBe('human-health-food');

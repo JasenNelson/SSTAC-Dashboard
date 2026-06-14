@@ -6,7 +6,12 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
-import { getActiveFrameDefaults } from '@/lib/matrix-options/frameDefaults';
+import {
+  getActiveScenarioFrameDefaults,
+  getSelectableFrameScenarios,
+  getDefaultSelectableScenarioId,
+  getReceptorScenarioFrame,
+} from '@/lib/matrix-options/frameDefaults';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type {
   Ecosystem,
@@ -32,47 +37,59 @@ const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'coastal-marine', label: 'Coastal-Marine' },
 ];
 
-// Unsourced calculator baseline IR, used when the selected frame has no active
+// Unsourced calculator baseline IR, used when the selected frame / scenario has no active
 // frame-default (C1 may later source/replace this; out of C-BC scope).
 const BASELINE_IR_KG_PER_DAY = '0.142';
 
-// Unsourced calculator baseline body weight (kg), used when the selected frame has no
+// Unsourced calculator baseline body weight (kg), used when the selected frame / scenario has no
 // active frame-default BW_kg seed. Adult default; preserves the prior hardcoded '70'.
 const BASELINE_BW_KG = '70';
 
-// The active frame-default IR_food seed for a jurisdiction (or null when the
-// frame has no active default for the HH food-web pathway).
-function activeIrDefaultFor(jurisdiction: Jurisdiction) {
+// The active frame-default IR_food seed for a receptor frame + scenario (or null when the
+// frame/scenario has no active default for the HH food-web pathway).
+function activeIrDefaultFor(
+  receptorFrame: Jurisdiction,
+  scenarioId: string | undefined,
+) {
   return (
-    getActiveFrameDefaults(jurisdiction, 'human-health-food').find(
+    getActiveScenarioFrameDefaults(receptorFrame, 'human-health-food', scenarioId).find(
       (d) => d.inputKey === 'IR_food_kg_per_day',
     ) ?? null
   );
 }
 
-// The string IR value to seed for a jurisdiction: the active frame default,
-// else the baseline. Deterministic (static catalog) -> SSR == CSR.
-function seedIrFor(jurisdiction: Jurisdiction): string {
-  const active = activeIrDefaultFor(jurisdiction);
+// The string IR value to seed for a receptor frame + scenario: the active default, else the baseline.
+// Deterministic (static catalog) -> SSR == CSR.
+function seedIrFor(
+  receptorFrame: Jurisdiction,
+  scenarioId: string | undefined,
+): string {
+  const active = activeIrDefaultFor(receptorFrame, scenarioId);
   return active && active.value != null
     ? String(active.value)
     : BASELINE_IR_KG_PER_DAY;
 }
 
-// The active frame-default BW_kg seed for a jurisdiction (or null when the frame
-// has no active BW default for the HH food-web pathway).
-function activeBwDefaultFor(jurisdiction: Jurisdiction) {
+// The active frame-default BW_kg seed for a receptor frame + scenario (or null when the frame
+// / scenario has no active BW default for the HH food-web pathway).
+function activeBwDefaultFor(
+  receptorFrame: Jurisdiction,
+  scenarioId: string | undefined,
+) {
   return (
-    getActiveFrameDefaults(jurisdiction, 'human-health-food').find(
+    getActiveScenarioFrameDefaults(receptorFrame, 'human-health-food', scenarioId).find(
       (d) => d.inputKey === 'BW_kg',
     ) ?? null
   );
 }
 
-// The string BW value to seed for a jurisdiction: the active frame default, else the
-// baseline. Deterministic (static catalog) -> SSR == CSR.
-function seedBwFor(jurisdiction: Jurisdiction): string {
-  const active = activeBwDefaultFor(jurisdiction);
+// The string BW value to seed for a receptor frame + scenario: the active default, else the baseline.
+// Deterministic (static catalog) -> SSR == CSR.
+function seedBwFor(
+  receptorFrame: Jurisdiction,
+  scenarioId: string | undefined,
+): string {
+  const active = activeBwDefaultFor(receptorFrame, scenarioId);
   return active && active.value != null
     ? String(active.value)
     : BASELINE_BW_KG;
@@ -109,17 +126,39 @@ export default function HHFoodWebCalculator({
   onOpenEvidenceLibrary,
 }: HHFoodWebCalculatorProps) {
   const substance = findSubstance(substanceKey);
+  // The frame that PROVIDES the receptor scenarios + their seeds. The receptor (fisher
+  // type) exposure factors are frame-INDEPENDENT for the scenarios defined so far, so
+  // they are sourced from the receptor-scenario provider frame regardless of the selected
+  // regulatory `jurisdiction`. `jurisdiction` still drives the equation, the frame
+  // notices, and the provenance frame below.
+  const receptorFrame = useMemo(
+    () => getReceptorScenarioFrame(jurisdiction, 'human-health-food'),
+    [jurisdiction],
+  );
+  // The selectable receptor scenarios (only scenarios whose every seed resolves ACTIVE
+  // -> an incomplete scenario is never offered). Resolved under receptorFrame.
+  const selectableScenarios = useMemo(
+    () => getSelectableFrameScenarios(receptorFrame, 'human-health-food'),
+    [receptorFrame],
+  );
+  // The receptor scenario currently selected. Initialized to the provider frame's
+  // default selectable scenario (undefined when there are none -> baselines). Declared
+  // BEFORE the input seeds, which read it.
+  const [scenarioId, setScenarioId] = useState<string | undefined>(() =>
+    getDefaultSelectableScenarioId(receptorFrame, 'human-health-food'),
+  );
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
-  // LAZY seed BW from the active frame default for the initial frame (no flash; SSR ==
-  // CSR because the catalog is static). The frame-switch re-seed happens DURING render
-  // (below), mirroring IR_food, so a new frame never paints the previous frame's BW.
-  const [bwInput, setBwInput] = useState(() => seedBwFor(jurisdiction));
-  // LAZY seed from the active frame default for the initial frame (no 0.142 flash;
-  // SSR == CSR because the catalog is static). The frame-switch re-seed happens
-  // DURING render (below) -- not in an effect -- so the new frame never paints with
-  // the previous frame's IR.
-  const [foodIrInput, setFoodIrInput] = useState(() => seedIrFor(jurisdiction));
-  const [prevJurisdiction, setPrevJurisdiction] = useState(jurisdiction);
+  // LAZY seed BW from the active receptor default for the initial receptor frame +
+  // scenario (no flash; SSR == CSR because the catalog is static). The receptor-frame-
+  // AND scenario-switch re-seed happens DURING render (below), so a change never paints
+  // the prior value.
+  const [bwInput, setBwInput] = useState(() => seedBwFor(receptorFrame, scenarioId));
+  // LAZY seed IR from the active receptor default for the initial frame + scenario (no
+  // 0.142 flash; SSR == CSR because the catalog is static). Re-seed happens DURING
+  // render (below) so a new frame / scenario never paints with the previous seed.
+  const [foodIrInput, setFoodIrInput] = useState(() => seedIrFor(receptorFrame, scenarioId));
+  const [prevReceptorFrame, setPrevReceptorFrame] = useState(receptorFrame);
+  const [prevScenarioId, setPrevScenarioId] = useState<string | undefined>(scenarioId);
   const [fLipidPercent, setFLipidPercent] = useState(5);
   const [focPercent, setFocPercent] = useState(2);
   const [targetRiskInput, setTargetRiskInput] = useState('0.00001');
@@ -163,43 +202,55 @@ export default function HHFoodWebCalculator({
     setBaOralInput(next ? String(next.ba_oral) : '1');
   }, [substanceKey]);
 
-  // Re-seed IR_food on frame change (C-BC), DURING render (React "adjust state when
-  // a prop changes" pattern) so the new frame never paints with the previous frame's
-  // IR. Re-seed only when the field still holds the PREVIOUS frame's seed (the user
-  // has NOT moved it off-default); otherwise preserve the user's edit. The guard makes
-  // this run once per jurisdiction change (no render loop).
-  if (jurisdiction !== prevJurisdiction) {
-    const oldIrSeed = seedIrFor(prevJurisdiction);
-    const newIrSeed = seedIrFor(jurisdiction);
-    const oldBwSeed = seedBwFor(prevJurisdiction);
-    const newBwSeed = seedBwFor(jurisdiction);
-    setPrevJurisdiction(jurisdiction);
-    // Re-seed each input only when it still holds the PREVIOUS frame's seed (user has
-    // not moved it off-default); otherwise preserve the user's edit.
-    if (foodIrInput === oldIrSeed) {
-      setFoodIrInput(newIrSeed);
+  // Re-seed IR_food and BW_kg when the RECEPTOR FRAME or the RECEPTOR SCENARIO changes,
+  // DURING render (React "adjust state when a prop/state changes" pattern) so the new
+  // frame / scenario never paints the previous value. Re-seed an input only when it
+  // still holds the PREVIOUS (frame, scenario) seed (user has NOT moved it off-default);
+  // otherwise preserve the user's edit. The guards make each branch run once per change.
+  const reseedFoodInputs = (
+    fromFrame: Jurisdiction,
+    fromScenario: string | undefined,
+    toFrame: Jurisdiction,
+    toScenario: string | undefined,
+  ) => {
+    if (foodIrInput === seedIrFor(fromFrame, fromScenario)) {
+      setFoodIrInput(seedIrFor(toFrame, toScenario));
     }
-    if (bwInput === oldBwSeed) {
-      setBwInput(newBwSeed);
+    if (bwInput === seedBwFor(fromFrame, fromScenario)) {
+      setBwInput(seedBwFor(toFrame, toScenario));
     }
+  };
+  if (receptorFrame !== prevReceptorFrame) {
+    // The receptor frame changed. For human-health-food there is no provider override
+    // (getReceptorScenarioFrame returns the selected frame), so the receptor frame always
+    // equals the selected regulatory frame and this is the ONLY frame-change branch. Reset
+    // to the new frame's default selectable scenario BEFORE reseeding (no stale scenarioId).
+    const nextScenario = getDefaultSelectableScenarioId(receptorFrame, 'human-health-food');
+    setPrevReceptorFrame(receptorFrame);
+    setPrevScenarioId(nextScenario);
+    setScenarioId(nextScenario);
+    reseedFoodInputs(prevReceptorFrame, prevScenarioId, receptorFrame, nextScenario);
+  } else if (scenarioId !== prevScenarioId) {
+    // Receptor scenario changed within the same frame.
+    setPrevScenarioId(scenarioId);
+    reseedFoodInputs(receptorFrame, prevScenarioId, receptorFrame, scenarioId);
   }
 
-  // The active frame-default IR for the current frame (drives the label, the
-  // reset button, and provenance attribution -- all pure functions of render state).
+  // The active receptor default per input for the current receptor frame + scenario
+  // (drives the label, the reset button, and provenance attribution -- all pure functions
+  // of render state).
   const activeIrDefault = useMemo(
-    () => activeIrDefaultFor(jurisdiction),
-    [jurisdiction],
+    () => activeIrDefaultFor(receptorFrame, scenarioId),
+    [receptorFrame, scenarioId],
   );
   const irIsFrameDefault =
     activeIrDefault != null &&
     activeIrDefault.value != null &&
     foodIrInput === String(activeIrDefault.value);
 
-  // The active frame-default BW for the current frame (drives the label, the reset
-  // button, and provenance attribution -- all pure functions of render state).
   const activeBwDefault = useMemo(
-    () => activeBwDefaultFor(jurisdiction),
-    [jurisdiction],
+    () => activeBwDefaultFor(receptorFrame, scenarioId),
+    [receptorFrame, scenarioId],
   );
   const bwIsFrameDefault =
     activeBwDefault != null &&
@@ -429,6 +480,30 @@ export default function HHFoodWebCalculator({
         usedBaselineFallback={usedBaselineFallback}
         fallbackReason={fallbackReason}
       />
+
+      {selectableScenarios.length >= 2 && (
+        <div className="mb-4" data-testid="hh-food-receptor-scenario">
+          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            Receptor scenario
+            <select
+              data-testid="hh-food-receptor-scenario-select"
+              value={scenarioId ?? ''}
+              onChange={(e) => setScenarioId(e.target.value || undefined)}
+              className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+            >
+              {selectableScenarios.map((s) => (
+                <option key={s.scenarioId} value={s.scenarioId}>
+                  {s.scenarioLabel}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
+              Switches the fish-ingestion rate and body weight defaults (recreational vs.
+              subsistence fisher receptor). Each input stays adjustable.
+            </p>
+          </label>
+        </div>
+      )}
 
       <div
         className="space-y-4 mb-6"
