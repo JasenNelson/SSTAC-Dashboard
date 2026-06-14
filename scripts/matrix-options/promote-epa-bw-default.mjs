@@ -143,7 +143,12 @@ export function planPromotion(paramValues, sources, _opts) {
     );
   }
   // Evidence-state coherence + pre/already-done states (fail-closed; reject partial promotion).
-  const allEvidenceApproved = valueRecord.evidence_items.every((ev) => ev.qa_status === 'approved');
+  // Attestation guard (uniform backport 2026-06-13): an approved evidence item MUST carry the owner
+  // attestation (reviewed_by + reviewed_at); an approved-but-unattested item is NOT counted approved
+  // here, so the record fails closed (drift) rather than being silently skipped as already-done.
+  const allEvidenceApproved = valueRecord.evidence_items.every(
+    (ev) => ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at),
+  );
   const allEvidenceNeedsReview = valueRecord.evidence_items.every((ev) => ev.qa_status === 'needs_review');
   const valueAlreadyDone =
     valueRecord.qa_status === 'approved' &&

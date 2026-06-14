@@ -234,6 +234,22 @@ describe('promote-wlrs-default: idempotency', () => {
     expect(plan.promoteValue).toBe(false);
     expect(plan.promoteSource).toBe(false);
   });
+  // Attestation guard (uniform backport 2026-06-13): an approved-but-UNATTESTED evidence item must
+  // NOT be accepted as "already done" -- it is a drift that fails closed, so re-running cannot
+  // silently skip a record that never carried the owner attestation.
+  it('rejects an approved record whose evidence is missing the owner attestation (reviewed_by/reviewed_at)', () => {
+    const unattested = {
+      ...DONE_VALUE,
+      evidence_items: DONE_VALUE.evidence_items.map((ev) => {
+        const copy = { ...ev };
+        delete copy.reviewed_by;
+        delete copy.reviewed_at;
+        return copy;
+      }),
+    };
+    const { records, sources } = makeFixture(unattested, { canonical_source_status: 'direct_source_verified' });
+    expect(() => planPromotion(records, sources, APPLY_OPTS)).toThrow(/drifted\/partially-promoted/);
+  });
   // Fail-closed: a top-level-promoted record whose evidence items are still needs_review is a
   // partially-promoted drift and must be rejected, not treated as already-done (which would skip
   // approveEvidence and leave stale evidence QA in the Evidence Library).

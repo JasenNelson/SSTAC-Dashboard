@@ -216,7 +216,14 @@ function planOneValueRecord(paramValues, valueId, expectedIdentity) {
   }
   // Fail-closed: accept ONLY the exact documented pre-promotion state or the exact already-promoted
   // state. Evidence items must move WITH the top-level statuses; a partial-promotion is rejected.
-  const allEvidenceApproved = valueRecord.evidence_items.every((ev) => ev.qa_status === 'approved');
+  // Attestation guard (uniform backport 2026-06-13): an approved evidence item MUST carry the owner
+  // attestation (reviewed_by + reviewed_at). An approved-but-unattested evidence item is NOT counted
+  // as approved here, so the record fails BOTH valueAlreadyDone and valueExpectedPre and trips the
+  // drifted/partially-promoted throw below (fail closed). catalog.test.ts backstops the EMITTED
+  // catalog; this guards the promotion-script invariant itself for future reuse of this tooling.
+  const allEvidenceApproved = valueRecord.evidence_items.every(
+    (ev) => ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at),
+  );
   const allEvidenceNeedsReview = valueRecord.evidence_items.every((ev) => ev.qa_status === 'needs_review');
   const valueAlreadyDone =
     valueRecord.qa_status === 'approved' &&

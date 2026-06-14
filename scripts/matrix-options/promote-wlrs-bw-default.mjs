@@ -157,7 +157,12 @@ export function planPromotion(paramValues, sources, _opts) {
   // already-promoted state. Evidence items must move WITH the top-level statuses; a record
   // whose top-level statuses are promoted but whose evidence_items still hold needs_review
   // (or vice versa) is a partially-promoted DRIFT and is rejected.
-  const allEvidenceApproved = valueRecord.evidence_items.every((ev) => ev.qa_status === 'approved');
+  // Attestation guard (uniform backport 2026-06-13): an approved evidence item MUST carry the owner
+  // attestation (reviewed_by + reviewed_at); an approved-but-unattested item is NOT counted approved
+  // here, so the record fails closed (drift) rather than being silently skipped as already-done.
+  const allEvidenceApproved = valueRecord.evidence_items.every(
+    (ev) => ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at),
+  );
   const allEvidenceNeedsReview = valueRecord.evidence_items.every((ev) => ev.qa_status === 'needs_review');
   const valueAlreadyDone =
     valueRecord.qa_status === 'approved' &&
