@@ -184,6 +184,31 @@ function planOneValueRecord(paramValues, valueId, expectedIdentity) {
       'classifyCandidate would block but this single-source helper would miss. Refusing to promote.',
     );
   }
+  // Nested-source provenance guard (backport 2026-06-14): the top-level source_ids check above does
+  // NOT cover evidence_items[*].source_id or source_relationships[*].source_id. A row forked from
+  // another record could carry a stale nested source_id while its top-level source_ids is correct;
+  // applyPromotion preserves those nested ids and stamps QA approved, so a stale nested ref would
+  // survive as approved provenance. Require every nested source reference to be the HC PQRA source.
+  const nestedSourceRefs = [
+    ...(Array.isArray(valueRecord.evidence_items)
+      ? valueRecord.evidence_items.map((ev) => (ev ? ev.source_id : undefined))
+      : []),
+    ...(Array.isArray(valueRecord.source_relationships)
+      ? valueRecord.source_relationships.map((rel) => (rel ? rel.source_id : undefined))
+      : []),
+  ];
+  const staleNestedSourceRefs = nestedSourceRefs.filter(
+    (sid) => sid !== HC_PQRA_ADULT_PROMOTION_SOURCE_ID,
+  );
+  if (staleNestedSourceRefs.length > 0) {
+    throw new Error(
+      'Precondition failed: ' + valueId + ' has nested provenance source ' +
+      'reference(s) that are not the expected source (' + JSON.stringify(staleNestedSourceRefs) + '). ' +
+      'Every evidence_items[*].source_id and source_relationships[*].source_id must be "' +
+      HC_PQRA_ADULT_PROMOTION_SOURCE_ID + '"; a stale nested source reference ' +
+      'would otherwise survive as approved provenance. Refusing to promote.',
+    );
+  }
   // Fail-closed: accept ONLY the exact documented pre-promotion state or the exact already-promoted
   // state. Evidence items must move WITH the top-level statuses; a partial-promotion is rejected.
   // Attestation guard (uniform backport 2026-06-13): an approved evidence item MUST carry the owner

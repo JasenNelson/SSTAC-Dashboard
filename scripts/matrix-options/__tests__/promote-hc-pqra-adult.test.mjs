@@ -342,6 +342,13 @@ describe('promote-hc-pqra-adult: planPromotion -- fail-closed preconditions', ()
     const filteredSrc = sources.filter((s) => s.source_id !== HC_PQRA_ADULT_PROMOTION_SOURCE_ID);
     expect(() => planPromotion(records, filteredSrc, APPLY_OPTS)).toThrow(/not found in sources.json/);
   });
+  it('throws when evidence_items[0].source_id is a stale foreign reference (nested-source guard)', () => {
+    const target = HC_PQRA_ADULT_PROMOTION_VALUE_IDS[0];
+    const base = BASE_VALUE_FIXTURES[0];
+    const staleEv = { ...base.evidence_items[0], source_id: 'src-FOREIGN-stale' };
+    const { records, sources } = makeFixture({ [target]: { evidence_items: [staleEv] } });
+    expect(() => planPromotion(records, sources, APPLY_OPTS)).toThrow(/nested provenance source/);
+  });
 });
 
 describe('promote-hc-pqra-adult: idempotency', () => {

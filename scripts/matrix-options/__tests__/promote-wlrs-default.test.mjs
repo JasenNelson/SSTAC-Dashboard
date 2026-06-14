@@ -222,6 +222,12 @@ describe('promote-wlrs-default: planPromotion preconditions (fail-closed)', () =
     const { records, sources } = makeFixture({}, { file_storage: 'repo_metadata_only' });
     expect(() => planPromotion(records, sources, APPLY_OPTS)).toThrow(/direct-current eligible/);
   });
+  it('throws when evidence_items[0].source_id is a stale foreign reference (nested-source guard)', () => {
+    const base = makeValueRecord();
+    const staleEv = { ...base.evidence_items[0], source_id: 'src-FOREIGN-stale' };
+    const { records, sources } = makeFixture({ evidence_items: [staleEv] });
+    expect(() => planPromotion(records, sources, APPLY_OPTS)).toThrow(/nested provenance source/);
+  });
 });
 
 describe('promote-wlrs-default: idempotency', () => {
