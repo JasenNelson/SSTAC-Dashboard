@@ -10,6 +10,141 @@
 
 ---
 
+## 2026-06-14 - Per-seed mixed-source frame-default rows: provenance is per-seed, not per-row [HIGH]
+
+**Date:** June 14, 2026
+**Area:** matrix-options / frameDefaults contract / provenance
+**Impact:** HIGH (the reusable template for any frame-default row that cites different sources for different seeds)
+**Status:** Shipped (#317 -- ACFN food-web receptor)
+**Session:** Matrix-options ACFN receptor + M3 closeout
+
+### Problem or Discovery
+
+Prior to PR #317, every `FrameDefaultProfileRow` carried a single `sourceIds` array that applied
+uniformly to all of its seeds. The ACFN receptor row was the first to need DIFFERENT sources per seed:
+the ACFN individual fish-intake rate (IR) is sourced to WQCIU 2023, while the body-weight (BW) seed
+reuses the shared BC WLRS 2023 70.7 kg record whose source is already on that catalog row.
+
+### Solution or Pattern
+
+PR #317 added an optional `sourceIds` field directly on each `FrameDefaultSeed` object. The
+`validateFrameDefaultProfiles` function (and the UI provenance label resolver) now resolve provenance
+as `seed.sourceIds ?? row.sourceIds` -- the seed-level override wins; if absent, the row-level
+fallback applies. The first mixed-source row (ACFN: IR -> WQCIU 2023, BW -> WLRS 2023) is the
+canonical template.
+
+### Key Takeaway
+
+Frame-default rows are no longer single-source. Provenance is per-seed when sources differ across
+seeds in the same row. Use `seed.sourceIds ?? row.sourceIds` as the resolver pattern; document the
+first mixed-source row (ACFN) as the template for future receptors that reuse shared catalog records
+alongside receptor-specific evidence.
+
+---
+
+## 2026-06-14 - Hydrate a cloud-placeholder Zotero attachment via the publisher URL [MEDIUM]
+
+**Date:** June 14, 2026
+**Area:** Reference sourcing / Zotero / verification
+**Impact:** MEDIUM (unblocks value verification when a Zotero attachment is offline or a cloud placeholder)
+**Status:** Documented (used to verify the ACFN WQCIU 2023 consumption rate)
+**Session:** Matrix-options ACFN receptor
+
+### Problem or Discovery
+
+A Zotero reference showed as a linked attachment with no locally accessible file -- a "cloud
+placeholder" not present on disk. Without the actual document, the ACFN individual fish-intake
+rate (388 g/day from WQCIU 2023) could not be verified against the primary source.
+
+### Solution or Pattern
+
+Do not treat a cloud-placeholder attachment as an unverifiable source. Instead, hydrate the document
+by fetching its publisher or canonical URL directly (obtained from the Zotero item metadata: `url`,
+`DOI`, or the `attachment.url` field). Fetch it with a browser User-Agent where needed, read the
+relevant section, and verify the value against the primary text. This was used successfully to verify
+the ACFN 388 g/day consumption rate against the WQCIU 2023 document before promotion.
+
+### Key Takeaway
+
+A cloud-placeholder Zotero attachment is not an unverifiable source -- it has a publisher URL in its
+metadata. Fetch the publisher URL directly, verify the value in the primary text, and treat the
+verified value as source-confirmed. Only escalate to HITL if the document is genuinely inaccessible
+after the URL fetch.
+
+---
+
+## 2026-06-14 - `codex review -` under-emits a verdict on a non-diff .md; use the diff gate [HIGH]
+
+**Date:** June 14, 2026
+**Area:** tooling / codex-review / gates
+**Impact:** HIGH (saves a wasted long-running review loop when reviewing plan/design docs)
+**Status:** Documented (#317 plan review session)
+**Session:** Matrix-options M3 closeout
+
+### Problem or Discovery
+
+Pointing `codex review -` at a plan or design .md that is NOT in the git diff tends to (i) not emit
+an explicit `VERDICT:` line at the tail of its output, and (ii) run away on exhaustive tool-use --
+a ~50-minute run was observed because the checkout was behind origin and codex ran `git show` on
+every referenced commit to satisfy itself. The CLI is diff-oriented; piping a non-diff artifact
+through stdin bypasses its native diff-parsing path and it has no built-in depth bound.
+
+### Solution or Pattern
+
+The binding codex gate must be the per-commit DIFF review (`codex review --uncommitted` or
+`--commit`). This reads the diff natively, stays bounded, and emits a clean `VERDICT:` line. For a
+non-diff artifact (a plan, design doc, or spec), bound the prompt hard: name the exact files to
+read, set an explicit time budget, and treat the result as advisory -- not a gate-quality verdict.
+The codex MCP session (`mcp__codex__codex`) is an alternative for non-diff reviews: it operates
+in read-only sandbox mode with the repo as cwd and returns its conclusion as the tool result (a
+capturable verdict). See the 2026-06-13 lesson on codex MCP session vs CLI for non-diff artifacts.
+
+### Key Takeaway
+
+`codex review -` is diff-oriented. On a non-diff .md it may not emit `VERDICT:` and may run
+unboundedly via `git show` tool-use. The gate must be the diff review. For advisory non-diff
+reviews, bound the prompt hard or use the codex MCP session.
+
+---
+
+## 2026-06-14 - The promote-script nested-source-guard class (PR #318): distinguish co-located guards [HIGH]
+
+**Date:** June 14, 2026
+**Area:** matrix-options / promote scripts / defensive programming
+**Impact:** HIGH (avoids a near-no-op backport; generalizes a guard correctly before shipping it to 8 scripts)
+**Status:** Shipped (#318 -- generic nested-source provenance guard across all 8 owner-run promote scripts)
+**Session:** Matrix-options M3 closeout
+
+### Problem or Discovery
+
+After PR #317 shipped the ACFN receptor, the plan called for backporting the "#317 guard" to the
+other 8 promote scripts. The #317 guard checked that every `evidence_items[*].source_id` and
+`source_relationships[*].source_id` in the row being promoted matched the ACFN script's expected
+source_id (`src-acfn-wqciu-2023`, the value of `ACFN_FOODWEB_PROMOTION_SOURCE_ID` -- a `source_id`,
+not the `parameter_value_id`). Literally backporting that guard to scripts whose rows have a
+DIFFERENT source shape -- a single module-level `_SOURCE_ID`, no per-seed mixed sources -- would
+have been a near-no-op: the ACFN-specific check would never fire against those rows.
+
+### Solution or Pattern
+
+Before backporting, verify WHAT the guard generalizes to in the target context. The correct
+generalization for single-source scripts is: every nested reference in the row (in
+`evidence_items`, `source_relationships`, or analogous nested arrays) must resolve to the
+script's own module-level `_SOURCE_ID`. This is a generic anti-copy-paste-drift check (ensures
+a row pasted from a different script does not carry a foreign source reference) that has real
+defensive value for all 8 scripts. PR #318 shipped this generalized form. The ACFN per-seed
+mixed-source guard and the #318 single-source nested-ref guard are DISTINCT, co-located guards
+that look similar but protect against different failure modes.
+
+### Key Takeaway
+
+Before backporting a guard, ask: what does this guard generalize to in the target context? Two
+co-located guards that look similar (both check `source_id` on nested objects) can protect against
+entirely different failure modes. Distinguish them, then write the target-context form rather than
+copy-pasting the source-context literal.
+
+---
+
 ## 2026-06-13 - Correcting a published regulatory value: HITL-attested, evidence-backed, note-superseding [HIGH]
 
 **Date:** June 13, 2026
