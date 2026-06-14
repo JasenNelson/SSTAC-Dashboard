@@ -51,3 +51,24 @@ export function parseDecimalInput(
   }
   return { value: n, state: 'valid' };
 }
+
+// Shared calculator input validators used by HHFoodWebCalculator and
+// HHDirectContactCalculator. Defined here to avoid byte-identical copies in
+// each component.
+
+export function positiveInput(value: string, label: string): number | { error: string } {
+  const parsed = parseDecimalInput(value, { allowNegative: false });
+  if (parsed.state !== 'valid' || parsed.value <= 0) {
+    return { error: `${label} must be a positive decimal number.` };
+  }
+  return parsed.value;
+}
+
+export function optionalPositiveInput(value: string, label: string): number | null | { error: string } {
+  const parsed = parseDecimalInput(value, { allowNegative: false });
+  if (parsed.state === 'blank') return null;
+  if (parsed.state !== 'valid' || parsed.value <= 0) {
+    return { error: `${label} must be blank or a positive decimal number.` };
+  }
+  return parsed.value;
+}
