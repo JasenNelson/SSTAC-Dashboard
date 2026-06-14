@@ -490,6 +490,35 @@
     "calculator_source_role": "reference_mining"
   },
   {
+    "source_id": "src-acfn-wqciu-2023",
+    "short_citation": "ACFN WQCIU (Olsgard et al., 2023)",
+    "title": "Lower Athabasca Surface Water and Sediment Quality Criteria for Protection of Indigenous Use",
+    "year": 2023,
+    "publisher": "Athabasca Chipewyan First Nation",
+    "doi": null,
+    "url": "https://acfn.com/wp-content/uploads/2023/10/wqciu_report.pdf",
+    "zotero_item_key": "BHHDGZI9",
+    "zotero_collection_path": "Sediment Project",
+    "zotero_attachment_keys": [
+      "T7T5IV8S"
+    ],
+    "zotero_status": "linked",
+    "external_file_hint": "Canonical PDF is the publisher copy at acfn.com (https://acfn.com/wp-content/uploads/2023/10/wqciu_report.pdf; 296 pp; verified by direct read 2026-06-14). Zotero attachment T7T5IV8S (item BHHDGZI9) is a linked file; OneDrive / Google Drive reference folders also hold WQCIU Report.pdf.",
+    "file_storage": "zotero_or_external",
+    "notes": "Canonical source for the WQCIU OWN community-survey-derived fish consumption rate (0.388 kg/d) used as a clearly-labeled ACFN/FMFN/MCFN community-specific receptor scenario input. The rate is WQCIU's own traditional-food survey datum (Chapter 3, Section 3.4.5; adopted in Equation 3.2 at document p.154; Figure 3.2 at document p.206), with no upstream canonical source -- so WQCIU is cited canonically for THIS value with an exact locator, distinct from src-acfn-wqciu (the reference_mining / source-of-sources record that anchors the report's equation leads). Indigenous-community traditional-food survey (Lower Athabasca; Athabasca Chipewyan, Mikisew Cree, and Fort McKay First Nations; method per Chan et al. 2016). Community-specific exposure factor, NOT a generic BC default; per WQCIU's own next-actions, used only as a WQCIU / local Indigenous-use scenario input. [Source promoted to direct_source_verified on 2026-06-14 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "authority_scope": "supporting-science",
+    "source_authority_tier": "tier_3_supporting_science",
+    "currentness_status": "current",
+    "version": "2023",
+    "page_last_modified": null,
+    "checked_at": "2026-06-14",
+    "conflict_rule": "Community-specific Indigenous-use exposure factor; applies only as a clearly-labeled community-specific scenario input, not a generic BC default. BC legal requirements, protocols, ministry guidance, and project-specific Indigenous engagement requirements control application.",
+    "supersedes_source_ids": [],
+    "calculator_source_role": "canonical_candidate",
+    "canonical_source_status": "direct_source_verified",
+    "source_crystallization_date": "2023-12-31"
+  },
+  {
     "source_id": "src-us-epa-esb-pah-mixtures-2003",
     "short_citation": "US EPA ESB PAH mixtures, 2003",
     "title": "Procedures for the Derivation of Equilibrium Partitioning Sediment Benchmarks (ESBs) for the Protection of Benthic Organisms: PAH Mixtures",

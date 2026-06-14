@@ -54,12 +54,13 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
     // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame now has THREE
     // receptor-scenario rows (residential toddler [default] + residential adult +
     // commercial/industrial worker).
-    // Phase D food-web (2026-06-13): bc-protocol1-v5-dra human-health-food now has TWO
-    // receptor-scenario rows (recreational-fisher [default] + subsistence-fisher).
-    // Live table total = 6 rows:
-    // BC HH-food recreational, BC HH-food subsistence, US EPA HH-food,
-    // FCSAP HH-direct toddler, FCSAP HH-direct adult, FCSAP HH-direct worker.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(6);
+    // Phase D food-web (2026-06-14): bc-protocol1-v5-dra human-health-food now has THREE
+    // receptor-scenario rows (recreational-fisher [default] + subsistence-fisher +
+    // ACFN community-specific).
+    // Live table total = 7 rows:
+    // BC HH-food recreational, BC HH-food subsistence, BC HH-food ACFN community-specific,
+    // US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult, FCSAP HH-direct worker.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(7);
   });
 });
 
@@ -173,12 +174,12 @@ describe('C-HH-direct receptor scenarios (live catalog, real eligibility)', () =
 });
 
 describe('C-BC food-web receptor scenarios (live catalog, real eligibility)', () => {
-  it('exposes recreational (default) + subsistence fishers as SELECTABLE scenarios', () => {
+  it('exposes recreational (default) + subsistence + ACFN community-specific fishers as SELECTABLE scenarios', () => {
     const scenarios = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
     const ids = scenarios.map((s) => s.scenarioId).sort();
-    expect(ids).toEqual(['recreational-fisher', 'subsistence-fisher']);
-    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> both are offered.
-    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(2);
+    expect(ids).toEqual(['acfn-community-specific', 'recreational-fisher', 'subsistence-fisher']);
+    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> all 3 are offered.
+    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(3);
   });
 
   it('the default selectable scenario is the recreational fisher (IR 0.111 kg/day, BW 70.7 kg)', () => {
@@ -206,6 +207,25 @@ describe('C-BC food-web receptor scenarios (live catalog, real eligibility)', ()
     expect(byKey('IR_food_kg_per_day')?.value).toBe(0.22);
     expect(byKey('IR_food_kg_per_day')?.parameterValueId).toBe('pv-wlrs-2023-ir-food-subsistence-bc');
     // Body weight reuses the SAME approved general adult record as the recreational scenario.
+    expect(byKey('BW_kg')?.value).toBe(70.7);
+    expect(byKey('BW_kg')?.parameterValueId).toBe('pv-wlrs-2023-bw-adult-bc');
+  });
+
+  it('the acfn-community-specific scenario seeds the ACTIVE 0.388 kg/day (388 g/day) rate + the shared 70.7 kg BW', () => {
+    // Depends on the ACFN IR record (pv-acfn-wqciu-2023-ir-food-community-specific) being
+    // promoted to approved (qa_status=approved + evidence_support_status=approved_source_backed).
+    // Written for the post-promotion state; asserts fail pre-promotion by design (PENDING).
+    const active = getActiveFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      scenarioId: 'acfn-community-specific',
+    });
+    expect(active.every((d) => d.status === 'active')).toBe(true);
+    const byKey = (k: string) => active.find((d) => d.inputKey === k);
+    // ACFN community-specific IR: 0.388 kg/day (WQCIU 2023, Lower Athabasca 95th-pct).
+    expect(byKey('IR_food_kg_per_day')?.value).toBe(0.388);
+    expect(byKey('IR_food_kg_per_day')?.parameterValueId).toBe(
+      'pv-acfn-wqciu-2023-ir-food-community-specific',
+    );
+    // Body weight reuses the SAME approved general adult record as the other BC scenarios.
     expect(byKey('BW_kg')?.value).toBe(70.7);
     expect(byKey('BW_kg')?.parameterValueId).toBe('pv-wlrs-2023-bw-adult-bc');
   });

@@ -129,10 +129,10 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
   it('has the C-BC and C-nonBC rows (found by frameId, not positional)', () => {
     // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame is THREE
     // receptor-scenario rows (residential toddler [default] + residential adult + commercial/
-    // industrial worker). HH-food food-web (2026-06-13): the bc-protocol1-v5-dra human-health-food
-    // frame is now TWO receptor-scenario rows (recreational [default] + subsistence fisher), so the
-    // live table is 6 rows.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(6);
+    // industrial worker). HH-food food-web (2026-06-14): the bc-protocol1-v5-dra human-health-food
+    // frame is now THREE receptor-scenario rows (recreational [default] + subsistence fisher +
+    // ACFN community-specific), so the live table is 7 rows.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(7);
     // .find returns the FIRST bc-protocol1-v5-dra row -> the recreational (default) scenario.
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
@@ -181,6 +181,18 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     const scenarios = getSelectableFrameScenarios('canada-fcsap-aquatic', 'human-health-direct');
     const ids = scenarios.map((s) => s.scenarioId);
     expect(ids).toContain('commercial-industrial-worker');
+  });
+
+  it('the acfn-community-specific scenario is present in getSelectableFrameScenarios for bc-protocol1-v5-dra/human-health-food', () => {
+    // ACFN row (2026-06-14): assert the ACFN community-specific scenario is a named, COMPLETE
+    // scenario on the live FRAME_DEFAULT_PROFILES table. Eligibility is MOCKED to eligible=true
+    // so this is a table-shape + seed-resolution check, independent of live-catalog promotion
+    // state. Real-catalog eligibility (ACFN IR approved) is covered by
+    // frameDefaults.integration.test.ts (post-promotion).
+    mockEligibility.mockImplementation(() => ({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'mock' }));
+    const scenarios = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const ids = scenarios.map((s) => s.scenarioId);
+    expect(ids).toContain('acfn-community-specific');
   });
 
   it('getFrameDefaults with no profile row for the (frame, pathway) returns []', () => {
@@ -932,6 +944,122 @@ describe('validateFrameDefaultProfiles', () => {
     const errors = validateFrameDefaultProfiles([profile], [record]);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => /unit/i.test(e))).toBe(true);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// 11b. validateFrameDefaultProfiles: per-seed sourceIds override (mixed-source rows)
+// Tests the new FrameDefaultSeed.sourceIds path added for the ACFN scenario, where
+// the IR seed and BW seed cite DIFFERENT sources (no common source on the row).
+// ---------------------------------------------------------------------------
+
+describe('validateFrameDefaultProfiles: per-seed sourceIds override', () => {
+  // Two source fixtures for the mixed-source tests below.
+  const MIXED_SOURCES = [
+    { source_id: 'src-acfn-wqciu-2023' },
+    { source_id: 'src-bc-wlrs-fish-tissue-screening-2023' },
+  ] as unknown as Parameters<typeof validateFrameDefaultProfiles>[2];
+
+  // IR record sourced to ACFN WQCIU.
+  const IR_ACFN_RECORD = makeRecord({
+    parameter_value_id: 'pvid-acfn-ir',
+    input_key: 'IR_food_kg_per_day',
+    value: 0.388,
+    unit: 'kg/day',
+    candidate_group_id: 'cg-ir-food-hh',
+    qa_status: 'approved',
+    source_ids: ['src-acfn-wqciu-2023'],
+  });
+
+  // BW record sourced to BC WLRS (a DIFFERENT source from the IR record).
+  const BW_WLRS_RECORD = makeRecord({
+    parameter_value_id: 'pvid-wlrs-bw',
+    input_key: 'BW_kg',
+    value: 70.7,
+    unit: 'kg',
+    candidate_group_id: 'cg-bw-hh',
+    qa_status: 'approved',
+    source_ids: ['src-bc-wlrs-fish-tissue-screening-2023'],
+  });
+
+  it('(a) a mixed-source row whose seeds cite DIFFERENT sources each with a matching seed.sourceIds subset returns no errors', () => {
+    // The row's sourceIds cite only WQCIU. The BW seed carries its own sourceIds override
+    // pointing at WLRS. validateFrameDefaultProfiles must use the per-seed effective sourceIds
+    // for each seed's subset check, not the row sourceIds for both.
+    const profile = makeProfile({
+      sourceIds: ['src-acfn-wqciu-2023'],
+      defaults: [
+        {
+          inputKey: 'IR_food_kg_per_day',
+          parameterValueId: 'pvid-acfn-ir',
+          candidateGroupId: 'cg-ir-food-hh',
+          // no seed.sourceIds -> uses row.sourceIds = ['src-acfn-wqciu-2023']
+        },
+        {
+          inputKey: 'BW_kg',
+          parameterValueId: 'pvid-wlrs-bw',
+          candidateGroupId: 'cg-bw-hh',
+          // per-seed override: the BW record is sourced to WLRS, not WQCIU
+          sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
+        },
+      ],
+    });
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [IR_ACFN_RECORD, BW_WLRS_RECORD],
+      MIXED_SOURCES,
+    );
+    expect(errors).toEqual([]);
+  });
+
+  it('(b) a seed with sourceIds: [] (empty override) produces a non-empty sourceIds error', () => {
+    // An explicitly-empty seed.sourceIds override is always invalid: the validator must reject
+    // it before the per-id subset check so the error points at the override itself.
+    const profile = makeProfile({
+      sourceIds: ['src-acfn-wqciu-2023'],
+      defaults: [
+        {
+          inputKey: 'IR_food_kg_per_day',
+          parameterValueId: 'pvid-acfn-ir',
+          candidateGroupId: 'cg-ir-food-hh',
+          sourceIds: [], // invalid: empty override
+        },
+      ],
+    });
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [IR_ACFN_RECORD],
+      MIXED_SOURCES,
+    );
+    expect(errors.length).toBeGreaterThan(0);
+    expect(
+      errors.some((e) => /sourceIds override.*non-empty|non-empty.*sourceIds/i.test(e)),
+    ).toBe(true);
+  });
+
+  it('(c) a seed with sourceIds: ["does-not-exist"] produces a "does not resolve" error', () => {
+    // An unknown source id in a seed.sourceIds override must produce a resolve error,
+    // just like an unknown row-level sourceId.
+    const profile = makeProfile({
+      sourceIds: ['src-acfn-wqciu-2023'],
+      defaults: [
+        {
+          inputKey: 'IR_food_kg_per_day',
+          parameterValueId: 'pvid-acfn-ir',
+          candidateGroupId: 'cg-ir-food-hh',
+          sourceIds: ['does-not-exist'],
+        },
+      ],
+    });
+    const errors = validateFrameDefaultProfiles(
+      [profile],
+      [IR_ACFN_RECORD],
+      MIXED_SOURCES,
+    );
+    expect(errors.length).toBeGreaterThan(0);
+    expect(
+      errors.some((e) => /does not resolve to a catalog source/i.test(e)),
+    ).toBe(true);
   });
 });
 

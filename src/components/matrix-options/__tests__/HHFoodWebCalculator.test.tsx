@@ -72,6 +72,23 @@ function activeWlrsIrSubsistence() {
   ];
 }
 
+// Build an active ACFN community-specific IR frame-default (ACFN Lower Athabasca, 388 g/day).
+function activeWlrsIrAcfn() {
+  return [
+    {
+      inputKey: 'IR_food_kg_per_day',
+      parameterValueId: 'pv-acfn-wqciu-2023-ir-food-community-specific',
+      candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__general',
+      label: 'ACFN WQCIU 2023, community-specific 388 g/day',
+      status: 'active' as const,
+      value: 0.388,
+      unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
+
 // Build an active US EPA IR frame default (C-nonBC: us-epa-usace-sediment frame).
 function activeEpaIr() {
   return [
@@ -108,11 +125,12 @@ function activeWlrsIrAndBwRecreational() {
   ];
 }
 
-// Selectable-scenario options for the BC food-web frame (recreational + subsistence).
+// Selectable-scenario options for the BC food-web frame (recreational + subsistence + ACFN).
 function bcFoodWebScenarios() {
   return [
     { scenarioId: 'recreational-fisher', scenarioLabel: 'Recreational fisher', isDefault: true },
     { scenarioId: 'subsistence-fisher', scenarioLabel: 'Subsistence fisher', isDefault: false },
+    { scenarioId: 'acfn-community-specific', scenarioLabel: 'ACFN subsistence (Lower Athabasca)', isDefault: false },
   ];
 }
 
@@ -495,6 +513,22 @@ describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', (
             },
           ];
         }
+        if (scenarioId === 'acfn-community-specific') {
+          return [
+            ...activeWlrsIrAcfn(),
+            {
+              inputKey: 'BW_kg',
+              parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+              candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+              label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+              status: 'active' as const,
+              value: 70.7,
+              unit: 'kg',
+              qaStatus: 'approved' as const,
+              reason: 'ok',
+            },
+          ];
+        }
         // Default: recreational-fisher (also handles undefined)
         return activeWlrsIrAndBwRecreational();
       },
@@ -584,5 +618,29 @@ describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', (
     // Switch to subsistence; the user-edited IR must NOT be overwritten.
     fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
     expect(irInput.value).toBe('0.3');
+  });
+
+  it('renders the ACFN subsistence option labeled "ACFN subsistence (Lower Athabasca)"', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    const labels = Array.from(select.options).map((o) => o.textContent);
+    expect(labels).toContain('ACFN subsistence (Lower Athabasca)');
+  });
+
+  it('switching to acfn-community-specific reseeds IR to 0.388 and BW stays 70.7', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'acfn-community-specific' } });
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.388');
+    // BW is the same shared adult record (70.7 kg) across all scenarios.
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
   });
 });
