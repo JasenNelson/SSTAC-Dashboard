@@ -62,6 +62,46 @@ describe('normalizeToBase', () => {
     // numerator 'kg' is not a valid mass prefix -> fail closed, no spurious x1000
     expect(normalizeToBase('1.0', 'kg/day')).toBeNull();
   });
+
+  // Candidate 10: g (1e3) and ng (1e-6) mass-prefix factors are never exercised
+  // by any existing test. g is the LARGEST factor in MASS_PREFIX_TO_MG; ng the smallest.
+  // A mis-set g or ng, or a broken reciprocal inversion for a g-based slope factor,
+  // would silently scale a regulatory TRV by up to 1000x and mis-rank the slot --
+  // exactly the defect class this module exists to prevent.
+  it('Candidate 10: g/m3 forward air concentration normalizes to mg/m3 with factor 1000', () => {
+    // 1.0 g/m3 = 1000 mg/m3
+    const result = normalizeToBase('1.0', 'g/m3');
+    expect(result).not.toBeNull();
+    expect(result!.baseUnit).toBe('mg/m3');
+    expect(result!.value).toBeCloseTo(1000, 10);
+  });
+
+  it('Candidate 10: per g/kg-d reciprocal slope factor normalizes correctly (inverse of 1e3)', () => {
+    // 'per g/kg-d' is a reciprocal dose unit -> factorToBase = 1 / 1e3 = 1e-3
+    // 1.0 per g/kg-d = 0.001 per mg/kg-d = 0.001 (mg/kg-d)-1
+    const result = normalizeToBase('1.0', 'per g/kg-d');
+    expect(result).not.toBeNull();
+    expect(result!.baseUnit).toBe('(mg/kg-d)-1');
+    expect(result!.value).toBeCloseTo(1e-3, 12);
+  });
+
+  it('Candidate 10: ng/m3 air concentration normalizes to mg/m3 with factor 1e-6', () => {
+    // 1000 ng/m3 = 1000 * 1e-6 mg/m3 = 0.001 mg/m3
+    const result = normalizeToBase('1000', 'ng/m3');
+    expect(result).not.toBeNull();
+    expect(result!.baseUnit).toBe('mg/m3');
+    expect(result!.value).toBeCloseTo(1e-3, 12);
+  });
+
+  it('Candidate 10: g/m3 and mg/m3 for the same quantity normalize to the same base value', () => {
+    // 0.001 g/m3 and 1.0 mg/m3 must be equal in base units.
+    const fromG = normalizeToBase('0.001', 'g/m3');
+    const fromMg = normalizeToBase('1.0', 'mg/m3');
+    expect(fromG).not.toBeNull();
+    expect(fromMg).not.toBeNull();
+    expect(fromG!.baseUnit).toBe(fromMg!.baseUnit);
+    expect(fromG!.value).toBeCloseTo(fromMg!.value, 12);
+  });
 });
 
 describe('assessSlotUnitConsistency', () => {

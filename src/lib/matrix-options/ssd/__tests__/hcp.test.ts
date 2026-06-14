@@ -218,4 +218,117 @@ describe('SSD HCp preview', () => {
       ),
     ).toThrow(/at least 5 species/i);
   });
+
+  // Candidate 1: single_distribution mode falls back to empiricalHcp when
+  // selectedFit === null (species count < MIN_SPECIES_FOR_SSDTOOLS_FIT = 6).
+  // FIVE_SPECIES_ROWS has exactly 5 species which satisfies hasMinimumSpecies
+  // (>= 5) but fitSsdDistributions returns [] so selectedFit is always null.
+  // The hcp ternary at hcp.ts:306-310 falls back to empiricalHcp. This branch
+  // is distinct from the model_averaging fallback test at line 154 above.
+  it('Candidate 1: single_distribution with no valid fit falls back to empiricalHcp and warns', () => {
+    const result = buildSsdAnalysis(FIVE_SPECIES_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Zinc'],
+      analysisMode: 'single_distribution',
+      selectedDistribution: 'Log-Normal',
+    });
+
+    // 5 species -> hasMinimumSpecies true, empiricalHcp is finite.
+    expect(result.speciesCount).toBe(5);
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(Number.isFinite(result.hcp)).toBe(true);
+
+    // A Log-Normal fit cannot succeed on 5 species (needs >= 6).
+    // The fallback must match calculateEmpiricalHcp directly.
+    const expectedEmpiricalHcp = calculateEmpiricalHcp(
+      result.speciesAggregates,
+      BASE_SETTINGS.pValue,
+    );
+    expect(result.hcp).toBeCloseTo(expectedEmpiricalHcp, 10);
+
+    // The soft warning about the failed fit must be present.
+    expect(result.warnings.join(' ')).toMatch(/Log-Normal did not produce a valid fit/i);
+  });
+
+  // Candidate 2: inferAnalysisUnit 'mixed reported units' warning branch.
+  // aggregateSpeciesValues operates on raw record.concentration with no unit
+  // normalization; when records carry mixed units the only signal is the
+  // 'mixed reported units' label + the convert-units warning. No existing test
+  // drives the units.length > 1 branch (hcp.ts:86-92).
+  it('Candidate 2: mixed reported units sets unit label and emits convert-units warning', () => {
+    const mixedUnitRows: RawEcotoxRecord[] = [
+      ...Array.from({ length: 4 }, (_, i) => ({
+        chemical_name: 'Copper',
+        species_scientific_name: `Species_mgL_${i + 1}`,
+        conc1_mean: 0.1 + i * 0.05,
+        unit: 'mg/L',
+        species_group: 'Fish' as const,
+        media_type: 'FW',
+        endpoint: 'Mortality',
+      })),
+      // One record with a different unit (ug/L) -- forces units.length === 2.
+      {
+        chemical_name: 'Copper',
+        species_scientific_name: 'Species_ugL_1',
+        conc1_mean: 50.0,
+        unit: 'ug/L',
+        species_group: 'Fish' as const,
+        media_type: 'FW',
+        endpoint: 'Mortality',
+      },
+    ];
+
+    const result = buildSsdAnalysis(mixedUnitRows, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Copper'],
+    });
+
+    // Must reach the mixed-units branch (>= 1 species needed).
+    expect(result.speciesCount).toBeGreaterThanOrEqual(1);
+    expect(result.unit).toBe('mixed reported units');
+    expect(result.warnings.some((w) => w.includes('convert units before interpreting'))).toBe(true);
+  });
+
+  // Candidate 11: calculateEmpiricalHcp log-space interpolation value pinned.
+  // Existing tests only assert > 0 or toThrow. Neither the exact-index short-circuit
+  // nor the log-space interpolation result is ever asserted by value.
+  it('Candidate 11: exact-index short-circuit returns the species value without interpolation', () => {
+    // 5 values [1,2,4,8,16] pValue=0.5:
+    // position = (5-1)*0.5 = 2.0 -> integer -> exact-index branch -> exp(log(4)) = 4
+    const aggregates = [1, 2, 4, 8, 16].map((v, i) => ({
+      speciesScientificName: `S${i + 1}`,
+      broadGroup: 'Other' as const,
+      value: v,
+      valueCount: 1,
+      sourceRecordCount: 1,
+      minValue: v,
+      maxValue: v,
+    }));
+    const result = calculateEmpiricalHcp(aggregates, 0.5);
+    // Exact-index branch: lowerIndex === upperIndex === 2 -> exp(log(4)) = 4 exactly.
+    expect(result).toBeCloseTo(4, 10);
+  });
+
+  it('Candidate 11: log-space interpolation is distinguishable from linear-in-value interpolation', () => {
+    // 5 values [1, 10, 100, 1000, 10000] pValue=0.05:
+    // position = (5-1)*0.05 = 0.2 -> lowerIndex=0, upperIndex=1, fraction=0.2
+    // log-space: exp(log(1) + (log(10)-log(1))*0.2)
+    //          = exp(0 + 2.302585*0.2) = exp(0.460517) ~= 1.5849
+    // linear-in-value: 1 + (10 - 1)*0.2 = 1 + 1.8 = 2.8  (very different)
+    // This distinguishes a log-space regression from a linear-in-value regression.
+    const aggregates = [1, 10, 100, 1000, 10000].map((v, i) => ({
+      speciesScientificName: `S${i + 1}`,
+      broadGroup: 'Other' as const,
+      value: v,
+      valueCount: 1,
+      sourceRecordCount: 1,
+      minValue: v,
+      maxValue: v,
+    }));
+    const result = calculateEmpiricalHcp(aggregates, 0.05);
+    // Log-space result ~= 1.585; linear-in-value would give 2.8 -- not close.
+    expect(result).toBeCloseTo(Math.exp(Math.log(1) + (Math.log(10) - Math.log(1)) * 0.2), 10);
+    // Confirm it is NOT the linear-in-value answer (regression guard).
+    expect(result).not.toBeCloseTo(2.8, 1);
+  });
 });

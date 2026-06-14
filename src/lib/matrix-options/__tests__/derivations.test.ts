@@ -240,6 +240,43 @@ describe('ecoDirectEqP', () => {
     });
     expect(result.warnings.length).toBeGreaterThan(0);
   });
+
+  // Candidate 6: fcv_ug_per_L <= 0 guard is unexercised by all 11 existing tests
+  // (they all use fcv_ug_per_L: 0.014). A zero FCV yields sedS=0 (over-protective by
+  // unbounded factor); a negative FCV yields a negative benchmark. The guard is the
+  // only protection on this direct linear multiplier of the regulatory sedS.
+  it('Candidate 6: throws RangeError when fcv_ug_per_L is zero', () => {
+    expect(() =>
+      ecoDirectEqP({
+        Cs_mg_per_kg: Number.NaN,
+        foc: 0.020,
+        logKow: 6.13,
+        fcv_ug_per_L: 0,
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 6: throws RangeError when fcv_ug_per_L is negative', () => {
+    expect(() =>
+      ecoDirectEqP({
+        Cs_mg_per_kg: Number.NaN,
+        foc: 0.020,
+        logKow: 6.13,
+        fcv_ug_per_L: -0.01,
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 6: throws RangeError when fcv_ug_per_L is NaN', () => {
+    expect(() =>
+      ecoDirectEqP({
+        Cs_mg_per_kg: Number.NaN,
+        foc: 0.020,
+        logKow: 6.13,
+        fcv_ug_per_L: Number.NaN,
+      }),
+    ).toThrow(RangeError);
+  });
 });
 
 describe('avsSemCheck', () => {
@@ -253,6 +290,37 @@ describe('avsSemCheck', () => {
     const result = avsSemCheck({ semSum_umol_per_g: 8.0, avs_umol_per_g: 2.5 });
     expect(result.deltaSEMminusAVS).toBeCloseTo(5.5, 6);
     expect(result.nonToxic).toBe(false);
+  });
+
+  // Candidate 5: negative / non-finite input guards.
+  // A negative semSum would make delta = semSum - avs artificially negative ->
+  // nonToxic=true, falsely clearing a toxic sediment. The guards throw instead.
+  // Neither guard path is exercised by the two existing arithmetic tests.
+  it('Candidate 5: throws RangeError for negative semSum_umol_per_g', () => {
+    expect(() =>
+      avsSemCheck({ semSum_umol_per_g: -1, avs_umol_per_g: 5.0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 5: throws RangeError for non-finite semSum_umol_per_g', () => {
+    expect(() =>
+      avsSemCheck({ semSum_umol_per_g: Number.NaN, avs_umol_per_g: 5.0 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      avsSemCheck({ semSum_umol_per_g: Infinity, avs_umol_per_g: 5.0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 5: throws RangeError for negative avs_umol_per_g', () => {
+    expect(() =>
+      avsSemCheck({ semSum_umol_per_g: 2.0, avs_umol_per_g: -5.0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 5: throws RangeError for non-finite avs_umol_per_g', () => {
+    expect(() =>
+      avsSemCheck({ semSum_umol_per_g: 2.0, avs_umol_per_g: Number.NaN }),
+    ).toThrow(RangeError);
   });
 });
 
@@ -531,6 +599,23 @@ describe('ecoFoodBSAF', () => {
 });
 
 describe('humanHealthDirectContact', () => {
+  // Shared valid base fixture used by guard tests (candidates 4, 7, 8, 9).
+  const DC_BASE = {
+    rfd_oral_mg_per_kg_bw_day: 3.0e-4 as number | null,
+    sf_oral_per_mg_per_kg_bw_per_day: 1.5 as number | null,
+    targetRisk: 1.0e-5,
+    hazardQuotient: 1,
+    BW_kg: 15,
+    ED_years: 6,
+    EF_days_per_year: 40,
+    AT_cancer_years: 70,
+    IR_sed_mg_per_day: 200,
+    SA_cm2: 2800,
+    AF_sed_mg_per_cm2: 0.2,
+    abs_dermal: 0.03,
+    ba_oral: 0.6,
+  };
+
   it('computes the lower of non-cancer and cancer direct-contact values', () => {
     const result = humanHealthDirectContact({
       rfd_oral_mg_per_kg_bw_day: 3.0e-4,
@@ -575,6 +660,113 @@ describe('humanHealthDirectContact', () => {
     expect(result.driver).toBe('non-cancer');
     expect(result.cancerSedS).toBeNull();
     expect(result.warnings.some((w) => w.includes('Cancer endpoint'))).toBe(true);
+  });
+
+  // Candidate 4 + 7: SF-only (rfd null, sf present) -- cancer as sole driver.
+  // This composition (direct-contact caller + SF-only selection path) is
+  // distinct from the food-web D-3 test which exercises the same pickHumanHealthEndpoint
+  // arm through a different caller. Pins that cancerSedS is the returned sedS,
+  // driver is 'cancer', and nonCancerSedS is null.
+  //
+  // contactRate = IR_sed * ba_oral + SA * AF * abs_dermal
+  //             = 200 * 0.6 + 2800 * 0.2 * 0.03 = 120 + 16.8 = 136.8 mg/day
+  // exposureDays = 40 * 6 = 240 days
+  // cancerATDays = 70 * 365 = 25550 days
+  // cancerSedS = (1e-5 * 15 * 25550) / (1.5 * 1e-6 * 240 * 136.8)
+  //            = 3.8325 / (1.5 * 1e-6 * 32832) = 3.8325 / 0.049248 ~= 77.82 mg/kg
+  it('Candidate 4+7: SF-only path drives cancer endpoint as sole direct-contact result', () => {
+    const result = humanHealthDirectContact({
+      ...DC_BASE,
+      rfd_oral_mg_per_kg_bw_day: null,
+      sf_oral_per_mg_per_kg_bw_per_day: 1.5,
+    });
+
+    expect(result.driver).toBe('cancer');
+    expect(result.nonCancerSedS).toBeNull();
+    expect(result.cancerSedS).not.toBeNull();
+    // sedS must equal cancerSedS exactly -- cancer is the only driver.
+    expect(result.sedS).toBeCloseTo(result.cancerSedS as number, 10);
+    // Magnitude: same cancer formula as test 1, same inputs -> same cancerSedS ~77.82
+    expect(result.sedS).toBeCloseTo(77.82, 2);
+    expect(result.warnings.some((w) => w.includes('Non-cancer endpoint'))).toBe(true);
+  });
+
+  // Candidate 8: both endpoints present with NON-CANCER as the selected (lower) value.
+  // The both-present tie-break (nonCancerSedS <= cancerSedS -> pick non-cancer) is
+  // only tested in the cancer-wins direction in the existing tests. We make cancerSedS
+  // large by using a very small slope factor so nonCancerSedS < cancerSedS.
+  //
+  // Use sf = 0.001 (very weak carcinogen):
+  // cancerSedS = (1e-5 * 15 * 25550) / (0.001 * 1e-6 * 240 * 136.8) ~= 116,731 mg/kg
+  // nonCancerSedS (rfd=3.0e-4, same DC_BASE) ~= 300.16 mg/kg  (as in test 1)
+  // 300.16 < 116,731 -> non-cancer wins (this test asserts cancerSedS > sedS, not the exact magnitude)
+  it('Candidate 8: both-endpoints with non-cancer as the lower (selected) value', () => {
+    const result = humanHealthDirectContact({
+      ...DC_BASE,
+      rfd_oral_mg_per_kg_bw_day: 3.0e-4,
+      sf_oral_per_mg_per_kg_bw_per_day: 0.001,
+    });
+
+    expect(result.driver).toBe('non-cancer');
+    expect(result.nonCancerSedS).not.toBeNull();
+    expect(result.cancerSedS).not.toBeNull();
+    // sedS must equal the non-cancer value, not the cancer value
+    expect(result.sedS).toBeCloseTo(result.nonCancerSedS as number, 10);
+    // cancerSedS must be strictly larger (confirming it was not selected)
+    expect((result.cancerSedS as number)).toBeGreaterThan(result.sedS);
+    // Magnitude: nonCancerSedS uses rfd=3.0e-4 (same as test 1) -> ~300.16
+    expect(result.sedS).toBeCloseTo(300.16, 2);
+  });
+
+  // Candidate 9: RangeError input guards for humanHealthDirectContact.
+  // None of these guard paths are exercised by the two existing happy-path tests.
+  it('Candidate 9: throws RangeError for abs_dermal or ba_oral out of [0,1] unit fraction', () => {
+    expect(() =>
+      humanHealthDirectContact({ ...DC_BASE, abs_dermal: 1.1 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthDirectContact({ ...DC_BASE, abs_dermal: -0.01 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthDirectContact({ ...DC_BASE, ba_oral: 1.5 }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 9: throws RangeError when ba_oral is exactly zero (div-by-zero guard)', () => {
+    expect(() =>
+      humanHealthDirectContact({ ...DC_BASE, ba_oral: 0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('Candidate 9: throws RangeError for non-null non-positive RfD or slope factor', () => {
+    expect(() =>
+      humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: 0,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+      }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: -1e-5,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+      }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: null,
+        sf_oral_per_mg_per_kg_bw_per_day: 0,
+      }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: null,
+        sf_oral_per_mg_per_kg_bw_per_day: -0.5,
+      }),
+    ).toThrow(RangeError);
   });
 });
 
