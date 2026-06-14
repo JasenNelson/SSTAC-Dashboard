@@ -103,6 +103,17 @@ export interface FrameDefaultSeed {
    * back to the row label when omitted (validateFrameDefaultProfiles rejects an empty string).
    */
   readonly label?: string;
+  /**
+   * Optional per-seed source override. When present, THIS seed's source-subset check
+   * (every id must be in the cited record's own source_ids) uses these ids instead of
+   * the row's sourceIds, and the ids must be non-empty + each resolve to a real catalog
+   * source. Use when a row's seeds cite DIFFERENT sources -- e.g. the ACFN community-
+   * specific food-web scenario seeds an IR record sourced to WQCIU and a BW record
+   * sourced to BC WLRS, which share no common source. Omitted -> the seed uses the row's
+   * sourceIds (the single-source case). Validation/provenance only; resolveSeed resolves
+   * the seed by parameterValueId, so this does not change which value is seeded.
+   */
+  readonly sourceIds?: readonly string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -150,9 +161,10 @@ export interface FrameDefaultProfileRow {
   /**
    * The cited catalog source(s). Use the in-repo catalog_sources `source_id`
    * (resolvable via getSourceRecord) -- or a Stream D Supabase UUID once one
-   * exists. Non-empty required, every id must resolve to a real source, and
-   * the set must be a subset of the cited record's own source_ids
-   * (validateFrameDefaultProfiles enforces all three).
+   * exists. Non-empty required, every id must resolve to a real source, and (for each
+   * seed that does NOT set its own FrameDefaultSeed.sourceIds) the set must be a subset
+   * of that cited record's own source_ids. A seed MAY override this per-seed when the
+   * row's seeds cite different sources (validateFrameDefaultProfiles enforces all three).
    */
   readonly sourceIds: readonly string[];
   /** The cited per-input defaults for this frame + pathway. Non-empty required. */
@@ -234,6 +246,47 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
         candidateGroupId: 'human-health-food__generic__BW_kg__BC',
         // Body weight is the GENERAL adult value (70.7 kg, Table 1), shared with the recreational
         // scenario -- so it must not render the row's "subsistence" descriptor.
+        label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+      },
+    ],
+  },
+  {
+    // BC food-web ACFN COMMUNITY-SPECIFIC scenario (2026-06-14). The 0.388 kg/day (388 g/day) adult
+    // fish-ingestion rate is the Athabasca Chipewyan First Nation community-specific rate from WQCIU
+    // 2023 (Olsgard et al.; the First Nation's OWN Lower Athabasca traditional-food survey -- highest
+    // community 95th-percentile; fish as a surrogate for traditional foods). It is jurisdiction
+    // 'general' in its OWN candidate_group slot (...__IR_food_kg_per_day__general), clearly separated
+    // from the generic BC rates -- NOT a generic BC default (cultural-data labeling). This is the
+    // FIRST mixed-source row: the IR seed is sourced to WQCIU (src-acfn-wqciu-2023) while the BW seed
+    // reuses the shared BC 70.7 kg record (sourced to WLRS), which share no common source -- so the BW
+    // seed carries its OWN sourceIds override (the row's sourceIds cite only WQCIU). WQCIU contributes
+    // the community-specific INGESTION RATE; the BC / Health Canada receptor BODY WEIGHT (70.7 kg) is
+    // retained per owner scope. Owner-promoted the IR record; until promotion it resolves 'pending'
+    // and this scenario is NOT selectable (completeness gate -> no hybrid calc).
+    frameId: 'bc-protocol1-v5-dra',
+    pathway: 'human-health-food',
+    receptorScenarioId: 'acfn-community-specific',
+    scenarioLabel: 'ACFN subsistence (Lower Athabasca)',
+    note:
+      'WQCIU 2023 (Lower Athabasca): ACFN/FMFN/MCFN community-specific adult fish-ingestion rate ' +
+      '(0.388 kg/day, 388 g/day; highest-community 95th-percentile traditional-food survey rate) + ' +
+      'BC / Health Canada adult body weight (70.7 kg, Table 1). Lower-Athabasca / ACFN ' +
+      'community-specific scenario, NOT a generic BC default. User-adjustable seeds.',
+    label: 'ACFN WQCIU 2023, community-specific',
+    sourceIds: ['src-acfn-wqciu-2023'],
+    defaults: [
+      {
+        inputKey: 'IR_food_kg_per_day',
+        parameterValueId: 'pv-acfn-wqciu-2023-ir-food-community-specific',
+        candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__general',
+      },
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+        candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+        // Mixed-source row: the BW seed reuses the shared BC 70.7 kg record (sourced to WLRS),
+        // which the row's WQCIU sourceIds do not cover -- so it carries its OWN source override.
+        sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
         label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
       },
     ],
@@ -899,10 +952,25 @@ export function validateFrameDefaultProfiles(
           dat + 'cited record unit "' + record.unit + '" must be the canonical seed unit "' + expectedUnit + '".',
         );
       }
-      // The profile must not cite a source the record itself does not claim:
-      // every profile sourceId has to be in the cited record's own source_ids.
+      // The profile must not cite a source the record itself does not claim: every
+      // effective sourceId has to be in the cited record's own source_ids. A seed MAY
+      // override the row's sourceIds with its OWN sourceIds when the row's seeds cite
+      // DIFFERENT sources (e.g. an ACFN IR sourced to WQCIU + a BC BW sourced to WLRS,
+      // which share no source). When present, seed.sourceIds must be non-empty and every
+      // id must resolve to a real catalog source.
+      if (seed.sourceIds !== undefined) {
+        if (seed.sourceIds.length === 0) {
+          errors.push(dat + 'sourceIds override, when present, must be non-empty.');
+        }
+        seed.sourceIds.forEach((sid) => {
+          if (!knownSourceIds.has(sid)) {
+            errors.push(dat + 'sourceId "' + sid + '" does not resolve to a catalog source.');
+          }
+        });
+      }
+      const effectiveSourceIds = seed.sourceIds ?? row.sourceIds;
       const recordSourceIds = new Set(record.source_ids ?? []);
-      row.sourceIds.forEach((sid) => {
+      effectiveSourceIds.forEach((sid) => {
         if (!recordSourceIds.has(sid)) {
           errors.push(
             dat + 'profile sourceId "' + sid + '" is not in the cited record source_ids.',

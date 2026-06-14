@@ -4293,6 +4293,71 @@
     "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
   },
   {
+    "parameter_value_id": "pv-acfn-wqciu-2023-ir-food-community-specific",
+    "substance_key": "generic",
+    "pathway": "human-health-food",
+    "input_key": "IR_food_kg_per_day",
+    "display_name": "Fish ingestion rate - ACFN community-specific subsistence (WQCIU 2023, Lower Athabasca)",
+    "value": 0.388,
+    "unit": "kg/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-acfn-wqciu-2023"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "general",
+    "applicability": "ACFN/FMFN/MCFN community-specific adult fish ingestion rate (WQCIU 2023, Olsgard et al.; Chapter 3, Section 3.4.5; adopted in Equation 3.2 at document p.154; Figure 3.2 and discussion at document p.206). 388.1 g/day = 0.388 kg/day is the HIGHEST community (Community 1) 95th-percentile heavy-consumer rate, adopted by WQCIU as protective for traditional-food consumers; fish is used as a surrogate for traditional foods. Derived from a Lower Athabasca traditional-food consumption survey of Athabasca Chipewyan First Nation, Mikisew Cree First Nation, and Fort McKay First Nation members (method per Chan et al. 2016). LOWER-ATHABASCA / ACFN COMMUNITY-SPECIFIC scenario input, NOT a generic BC default (cultural-data labeling care). The WQCIU receptor pairs this rate with an 80 kg adult body weight (US EPA 2015c) and RSC 0.2; in this calculator the rate is used only as the IR_food exposure factor and is paired with the BC / Health Canada receptor body weight (70.7 kg, WLRS 2023) per owner scope -- WQCIU contributes the community-specific ingestion rate and traditional-food types, and BC receptor body characteristics are retained. Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-14 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Community-specific upper-range (95th-percentile heavy-consumer) estimate for the highest of three surveyed communities; not a generic or population-mean default. Verified by direct read of the WQCIU primary PDF (publisher copy, acfn.com, 296 pp) on 2026-06-14. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-14 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "evidence_items": [
+      {
+        "source_id": "src-acfn-wqciu-2023",
+        "locator": "Chapter 3, Section 3.4.5 (Local Indigenous Community Food and Medicine Ingestion Rates); Equation 3.2 at document p.154; fish consumption rate discussion and Figure 3.2 at document p.206",
+        "value_text": "ACFN/FMFN/MCFN community 1 (highest) 95th-percentile fish ingestion rate: 388.1 g/day = 0.388 kg/day (adopted FCR in Equation 3.2)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-14",
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-14",
+        "note": "WQCIU 2023 adopted fish consumption rate (0.388 kg/d) for the traditional-foods and drinking-water health risk criteria (Equation 3.2); fish as a surrogate for traditional foods. Verified by direct read of the WQCIU primary PDF (publisher copy, acfn.com).",
+        "evidence_id": "ev-pv-acfn-wqciu-2023-ir-food-community-specific-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "WQCIU 2023 ACFN community-specific receptor fish-ingestion rate. Read-only library candidate; clearly-labeled Lower-Athabasca / ACFN community-specific scenario input, NOT a generic BC default. Verified against the WQCIU primary by direct read 2026-06-14. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-14 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "source_authority_tier": "tier_3_supporting_science",
+    "canonical_source_status": "direct_source_verified",
+    "source_crystallization_date": "2023-12-31",
+    "source_relationships": [
+      {
+        "source_id": "src-acfn-wqciu-2023",
+        "role": "canonical_candidate",
+        "note": "WQCIU 2023 (the First Nation's own Lower Athabasca traditional-food survey) is the cited canonical source for this community-specific fish-ingestion rate."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "subsistence consumer adult (ACFN/FMFN/MCFN community-specific)"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "food web",
+      "food ingestion",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__general"
+  },
+  {
     "parameter_value_id": "pv-wlrs-2023-ir-food-recreational-bc",
     "substance_key": "generic",
     "pathway": "human-health-food",

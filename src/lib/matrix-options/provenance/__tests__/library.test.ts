@@ -63,7 +63,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: +2 (1604 -> 1606) -- HC PQRA v4.0 Appendix E dermal receptor characteristics
     // (needs_review): two new candidate groups human-health-direct__generic__{SA_cm2,
     // AF_sed_mg_per_cm2}__general (SA holds 6 total-body age/worker variants; AF holds 2).
-    expect(view.valueGroups).toHaveLength(1606);
+    // 2026-06-14: +1 (1606 -> 1607) -- ACFN community-specific food-web IR_food record
+    // (pv-acfn-wqciu-2023-ir-food-community-specific) adds candidate_group_id
+    // human-health-food__generic__IR_food_kg_per_day__general (new __general slot, NOT shared
+    // with the BC / US_federal IR_food groups). Its BW seed reuses the existing BW_kg__BC group.
+    expect(view.valueGroups).toHaveLength(1607);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -89,7 +93,10 @@ describe('matrix options evidence library helpers', () => {
     // approved_source_backed (pv-wlrs-2023-ir-food-subsistence-bc, 0.22 kg/day; HITL
     // J. Nelson, BC WLRS 2023 Table 2 + TWN corroboration; promote-wlrs-subsistence.mjs
     // --apply) = 1238.
-    expect(view.audit.values.approvedSourceBacked).toBe(1238);
+    // 2026-06-14: +1 -- Phase D food-web ACFN community-specific IR_food record promoted to
+    // approved_source_backed (pv-acfn-wqciu-2023-ir-food-community-specific, 0.388 kg/day;
+    // HITL J. Nelson, WQCIU 2023 primary verified; promote-acfn-foodweb.mjs --apply) = 1239.
+    expect(view.audit.values.approvedSourceBacked).toBe(1239);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -133,7 +140,8 @@ describe('matrix options evidence library helpers', () => {
     // (5 BW_kg + 3 IR_sed_mg_per_day, available_option) = 1598.
     // 2026-06-12: +8 HC PQRA v4.0 Appendix E dermal receptor characteristics
     // (6 SA_cm2 + 2 AF_sed_mg_per_cm2, available_option) = 1606.
-    expect(view.audit.values.availableOptions).toBe(1606);
+    // 2026-06-14: +1 ACFN community-specific food-web IR_food record (available_option) = 1607.
+    expect(view.audit.values.availableOptions).toBe(1607);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
