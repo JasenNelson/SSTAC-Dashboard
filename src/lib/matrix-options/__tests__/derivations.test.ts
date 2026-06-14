@@ -697,4 +697,158 @@ describe('humanHealthFoodWeb', () => {
       result.warnings.some((w) => /Non-cancer endpoint not available/.test(w)),
     ).toBe(true);
   });
+
+  it('D-4: organic-PAH in ESTUARINE gets M_ECO_ESTUARINE = 5 and correct sedS', () => {
+    // M_eco = 5 -> BSAF_effective = BSAF_loc * (fLipid / foc) * 5
+    //   = 2 * (0.05 / 0.02) * 5 = 25
+    // cancerTissue = (1e-5 * 70) / (2.0 * 0.142 * 1) = 7e-4 / 0.284 = 0.0024648
+    // cancerSedS = 0.0024648 / 25 = 0.000098592
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'estuarine',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.M_eco).toBe(5);
+    expect(result.BSAF_effective).toBeCloseTo(25, 6);
+    expect(result.cancerTissue_mg_per_kg).toBeCloseTo(0.002465, 6);
+    expect(result.sedS).toBeCloseTo(0.000098592, 8);
+    // The asserted sedS is the CANCER-endpoint value; pin endpoint selection so a future
+    // pickHumanHealthEndpoint regression cannot pass this magnitude for the wrong reason.
+    expect(result.driver).toBe('cancer');
+    expect(result.blocked).toBe(false);
+    expect(result.warnings).toHaveLength(0);
+  });
+
+  it('D-5: organic-PAH in COASTAL-MARINE gets M_ECO_COASTAL_PAH = 15 and sedS 3x lower than estuarine', () => {
+    // M_eco = 15 -> BSAF_effective = 2 * (0.05 / 0.02) * 15 = 75
+    // cancerSedS = cancerTissue / 75; estuarine had / 25; ratio = 25/75 = 1/3.
+    const estuarine = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'estuarine',
+      contaminantClass: 'organic-PAH',
+    });
+    const coastal = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'coastal-marine',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(coastal.M_eco).toBe(15);
+    expect(coastal.BSAF_effective).toBeCloseTo(75, 6);
+    // sedS ratio: estuarine/coastal = M_coastal/M_estuarine = 15/5 = 3
+    expect(estuarine.sedS! / coastal.sedS!).toBeCloseTo(3, 6);
+    expect(coastal.blocked).toBe(false);
+  });
+
+  it('D-6: foc below 0.002 sets blocked = true and sedS is still finite', () => {
+    // EqP validity window: FOC_MIN = 0.002; foc = 0.001 is below it.
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.001,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-halogenated',
+    });
+    expect(result.blocked).toBe(true);
+    expect(result.warnings.some((w) => /below EqP validity/.test(w))).toBe(true);
+    // Diagnostic sedS still finite for UI display.
+    expect(Number.isFinite(result.sedS)).toBe(true);
+  });
+
+  it('D-7: foc above 0.10 sets blocked = true', () => {
+    // FOC_MAX = 0.10; foc = 0.15 is above it.
+    const result = humanHealthFoodWeb({
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.15,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-halogenated',
+    });
+    expect(result.blocked).toBe(true);
+    expect(result.warnings.some((w) => /above EqP validity/.test(w))).toBe(true);
+    expect(Number.isFinite(result.sedS)).toBe(true);
+  });
+
+  it('D-8: non-null RfD of zero or negative throws RangeError; non-null slope factor of zero throws RangeError', () => {
+    const base = {
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'freshwater' as const,
+      contaminantClass: 'organic-halogenated' as const,
+    };
+    expect(() =>
+      humanHealthFoodWeb({ ...base, rfd_oral_mg_per_kg_bw_day: 0, sf_oral_per_mg_per_kg_bw_per_day: null }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthFoodWeb({ ...base, rfd_oral_mg_per_kg_bw_day: -1e-5, sf_oral_per_mg_per_kg_bw_per_day: null }),
+    ).toThrow(RangeError);
+    expect(() =>
+      humanHealthFoodWeb({ ...base, rfd_oral_mg_per_kg_bw_day: null, sf_oral_per_mg_per_kg_bw_per_day: 0 }),
+    ).toThrow(RangeError);
+  });
+
+  it('D-9: ba_oral === 0 throws RangeError', () => {
+    expect(() =>
+      humanHealthFoodWeb({
+        rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+        sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+        targetRisk: 1.0e-5,
+        hazardQuotient: 1,
+        BW_kg: 70,
+        IR_food_kg_per_day: 0.142,
+        ba_oral: 0,
+        BSAF_loc_freshwater: 2,
+        fLipid: 0.05,
+        foc: 0.02,
+        ecosystem: 'freshwater',
+        contaminantClass: 'organic-halogenated',
+      }),
+    ).toThrow(RangeError);
+  });
 });

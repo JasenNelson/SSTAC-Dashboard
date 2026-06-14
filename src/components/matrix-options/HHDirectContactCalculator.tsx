@@ -18,7 +18,7 @@ import type {
   CalculatorUsedValue,
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
-import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
+import { positiveInput, optionalPositiveInput } from '@/lib/matrix-options/parseDecimal';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -74,23 +74,6 @@ export interface HHDirectContactCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
-}
-
-function positiveInput(value: string, label: string): number | { error: string } {
-  const parsed = parseDecimalInput(value, { allowNegative: false });
-  if (parsed.state !== 'valid' || parsed.value <= 0) {
-    return { error: `${label} must be a positive decimal number.` };
-  }
-  return parsed.value;
-}
-
-function optionalPositiveInput(value: string, label: string): number | null | { error: string } {
-  const parsed = parseDecimalInput(value, { allowNegative: false });
-  if (parsed.state === 'blank') return null;
-  if (parsed.state !== 'valid' || parsed.value <= 0) {
-    return { error: `${label} must be blank or a positive decimal number.` };
-  }
-  return parsed.value;
 }
 
 export default function HHDirectContactCalculator({

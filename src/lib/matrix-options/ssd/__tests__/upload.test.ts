@@ -61,4 +61,28 @@ describe('SSD upload parsing', () => {
       media_type: 'freshwater',
     });
   });
+
+  it('throws on CSV with an unterminated quoted field', () => {
+    // A quote opened in a data row that is never closed leaves the parser
+    // in quoted=true at EOF, which must be rejected fail-closed.
+    const bad = [
+      'chemical,species,value,unit',
+      'Copper,"Daphnia magna,0.01,mg/L',
+    ].join('\n');
+    expect(() => parseSsdUpload(bad, 'bad.csv')).toThrow(
+      'unterminated quoted field',
+    );
+  });
+
+  it('parses CSV with a properly balanced quoted field without throwing', () => {
+    // Confirm that a correctly quoted cell containing a comma does not
+    // trigger the guard.
+    const good = [
+      'chemical,species,value,unit',
+      '"Copper, ionic","Daphnia magna",0.01,mg/L',
+    ].join('\n');
+    const rows = parseSsdUpload(good, 'good.csv');
+    expect(rows).toHaveLength(1);
+    expect(rows[0].chemical_name).toBe('Copper, ionic');
+  });
 });

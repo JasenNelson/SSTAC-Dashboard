@@ -197,6 +197,10 @@ function parseCsvRows(text: string): string[][] {
   row.push(cell.trim());
   rows.push(row);
 
+  if (quoted) {
+    throw new Error('CSV parse error: unterminated quoted field');
+  }
+
   return rows.filter((candidate) =>
     candidate.some((value) => value.trim().length > 0),
   );
