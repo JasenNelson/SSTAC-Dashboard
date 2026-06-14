@@ -85,7 +85,11 @@ describe('matrix options evidence library helpers', () => {
     // ed-commercial 35 yr + ir-sed-worker 100 mg/day + sa-total-worker 16640 cm2 +
     // af-sed-other-worker 0.1 mg/cm2; HITL J. Nelson inline-approved --apply via
     // promote-hc-pqra-worker.mjs) = 1237.
-    expect(view.audit.values.approvedSourceBacked).toBe(1237);
+    // 2026-06-13: +1 -- Phase D food-web subsistence-fisher IR_food record promoted to
+    // approved_source_backed (pv-wlrs-2023-ir-food-subsistence-bc, 0.22 kg/day; HITL
+    // J. Nelson, BC WLRS 2023 Table 2 + TWN corroboration; promote-wlrs-subsistence.mjs
+    // --apply) = 1238.
+    expect(view.audit.values.approvedSourceBacked).toBe(1238);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -113,7 +117,9 @@ describe('matrix options evidence library helpers', () => {
     // seeds promoted out of pending (ef-commercial + ed-commercial + ir-sed-worker +
     // sa-total-worker + af-sed-other-worker; HITL J. Nelson inline-approved --apply via
     // promote-hc-pqra-worker.mjs) = 378.
-    expect(view.audit.values.pendingSourceLocator).toBe(378);
+    // 2026-06-13: -1 -- subsistence-fisher IR_food promoted out of pending
+    // (pv-wlrs-2023-ir-food-subsistence-bc; promote-wlrs-subsistence.mjs --apply) = 377.
+    expect(view.audit.values.pendingSourceLocator).toBe(377);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value

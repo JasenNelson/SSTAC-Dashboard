@@ -8,14 +8,20 @@ vi.mock('@/components/MathRenderer', () => ({
   ),
 }));
 
-// Mock ONLY the active-default resolver so the calculator's frame-seeding is
+// Mock the scenario-aware active-default resolver so the calculator's frame-seeding is
 // deterministic (and decoupled from the live catalog). Default: no active default
 // (the calculator opens on the unsourced baseline), preserving the pre-C-BC tests.
-// The C-BC block below overrides it with an active 0.111 seed.
+// The C-BC block below overrides it with an active 0.111 (recreational) seed.
+// Also mock getSelectableFrameScenarios so selector visibility is test-controlled.
+// getReceptorScenarioFrame and getDefaultSelectableScenarioId use the real module.
 vi.mock('@/lib/matrix-options/frameDefaults', async (importOriginal) => {
   const actual =
     await importOriginal<typeof import('@/lib/matrix-options/frameDefaults')>();
-  return { ...actual, getActiveFrameDefaults: vi.fn(() => []) };
+  return {
+    ...actual,
+    getActiveScenarioFrameDefaults: vi.fn(() => []),
+    getSelectableFrameScenarios: vi.fn(() => []),
+  };
 });
 
 import HHFoodWebCalculator from '../HHFoodWebCalculator';
@@ -23,13 +29,17 @@ import {
   REGULATORY_FRAME_IDS,
   type RegulatoryFrameId,
 } from '@/lib/matrix-options/regulatoryFrames';
-import { getActiveFrameDefaults } from '@/lib/matrix-options/frameDefaults';
+import {
+  getActiveScenarioFrameDefaults,
+  getSelectableFrameScenarios,
+} from '@/lib/matrix-options/frameDefaults';
 
-const mockGetActiveFrameDefaults = vi.mocked(getActiveFrameDefaults);
+const mockGetActiveScenarioFrameDefaults = vi.mocked(getActiveScenarioFrameDefaults);
+const mockGetSelectableFrameScenarios = vi.mocked(getSelectableFrameScenarios);
 
-// Build an active WLRS IR frame default (what getActiveFrameDefaults returns once
-// the BC frame is selected and the WLRS recreational value is promoted).
-function activeWlrsIr() {
+// Build an active WLRS IR frame-default entry (what getActiveScenarioFrameDefaults returns
+// under the recreational-fisher scenario once that record is promoted).
+function activeWlrsIrRecreational() {
   return [
     {
       inputKey: 'IR_food_kg_per_day',
@@ -45,8 +55,24 @@ function activeWlrsIr() {
   ];
 }
 
-// Build an active US EPA IR frame default (C-nonBC: us-epa-usace-sediment frame, once the EPA
-// general-population value is promoted). A DIFFERENT receptor + label than the BC frame.
+// Build an active WLRS IR frame-default for the subsistence-fisher scenario.
+function activeWlrsIrSubsistence() {
+  return [
+    {
+      inputKey: 'IR_food_kg_per_day',
+      parameterValueId: 'pv-wlrs-2023-ir-food-subsistence-bc',
+      candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      label: 'BC WLRS 2023, subsistence',
+      status: 'active' as const,
+      value: 0.22,
+      unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
+
+// Build an active US EPA IR frame default (C-nonBC: us-epa-usace-sediment frame).
 function activeEpaIr() {
   return [
     {
@@ -64,11 +90,10 @@ function activeEpaIr() {
 }
 
 // Build the C-3 BC frame defaults: the WLRS IR seed PLUS the adult body-weight seed
-// (once promoted). The BW seed carries its OWN per-seed label (the general adult value,
-// not the row's "recreational" descriptor).
-function activeWlrsIrAndBw() {
+// (for the recreational scenario).
+function activeWlrsIrAndBwRecreational() {
   return [
-    ...activeWlrsIr(),
+    ...activeWlrsIrRecreational(),
     {
       inputKey: 'BW_kg',
       parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
@@ -83,9 +108,18 @@ function activeWlrsIrAndBw() {
   ];
 }
 
+// Selectable-scenario options for the BC food-web frame (recreational + subsistence).
+function bcFoodWebScenarios() {
+  return [
+    { scenarioId: 'recreational-fisher', scenarioLabel: 'Recreational fisher', isDefault: true },
+    { scenarioId: 'subsistence-fisher', scenarioLabel: 'Subsistence fisher', isDefault: false },
+  ];
+}
+
 describe('HHFoodWebCalculator', () => {
   beforeEach(() => {
-    mockGetActiveFrameDefaults.mockReturnValue([]);
+    mockGetActiveScenarioFrameDefaults.mockReturnValue([]);
+    mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
   it('renders a functioning Human Health food-web calculator', () => {
@@ -182,13 +216,24 @@ describe('HHFoodWebCalculator', () => {
       unmount();
     }
   });
+
+  it('does not render the receptor-scenario selector when scenarios < 2', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.queryByTestId('hh-food-receptor-scenario-select')).toBeNull();
+  });
 });
 
 describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
   beforeEach(() => {
-    mockGetActiveFrameDefaults.mockImplementation((frameId) =>
-      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIr() : [],
+    mockGetActiveScenarioFrameDefaults.mockImplementation((frameId, _pathway, _scenarioId) =>
+      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIrRecreational() : [],
     );
+    mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
   function renderBc(
@@ -294,11 +339,12 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
 
 describe('HHFoodWebCalculator C-nonBC frame default (US EPA IR seed)', () => {
   beforeEach(() => {
-    mockGetActiveFrameDefaults.mockImplementation((frameId) => {
-      if (frameId === 'bc-protocol1-v5-dra') return activeWlrsIr();
+    mockGetActiveScenarioFrameDefaults.mockImplementation((frameId, _pathway, _scenarioId) => {
+      if (frameId === 'bc-protocol1-v5-dra') return activeWlrsIrRecreational();
       if (frameId === 'us-epa-usace-sediment') return activeEpaIr();
       return [];
     });
+    mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
   function renderFrame(jurisdiction: RegulatoryFrameId) {
@@ -373,9 +419,10 @@ describe('HHFoodWebCalculator C-nonBC frame default (US EPA IR seed)', () => {
 
 describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
   beforeEach(() => {
-    mockGetActiveFrameDefaults.mockImplementation((frameId) =>
-      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIrAndBw() : [],
+    mockGetActiveScenarioFrameDefaults.mockImplementation((frameId, _pathway, _scenarioId) =>
+      frameId === 'bc-protocol1-v5-dra' ? activeWlrsIrAndBwRecreational() : [],
     );
+    mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
   function renderBc(
@@ -418,5 +465,124 @@ describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
     const input = screen.getByTestId('hh-food-bw-input') as HTMLInputElement;
     expect(input.value).toBe('70');
     expect(screen.queryByTestId('hh-food-bw-frame-default-label')).toBeNull();
+  });
+});
+
+// Phase D receptor-scenario selector (2026-06-13): the BC food-web frame now offers
+// TWO selectable receptor scenarios -- recreational-fisher (default, 0.111 kg/day) and
+// subsistence-fisher (0.22 kg/day) -- both with the shared adult BW 70.7 kg.
+// The selector renders only when scenarios.length >= 2.
+describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', () => {
+  // The mock returns scenario-specific defaults: recreational gets 0.111, subsistence 0.22.
+  // BW 70.7 is shared across both scenarios (same parameterValueId).
+  beforeEach(() => {
+    mockGetActiveScenarioFrameDefaults.mockImplementation(
+      (frameId, _pathway, scenarioId) => {
+        if (frameId !== 'bc-protocol1-v5-dra') return [];
+        if (scenarioId === 'subsistence-fisher') {
+          return [
+            ...activeWlrsIrSubsistence(),
+            {
+              inputKey: 'BW_kg',
+              parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+              candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+              label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+              status: 'active' as const,
+              value: 70.7,
+              unit: 'kg',
+              qaStatus: 'approved' as const,
+              reason: 'ok',
+            },
+          ];
+        }
+        // Default: recreational-fisher (also handles undefined)
+        return activeWlrsIrAndBwRecreational();
+      },
+    );
+    mockGetSelectableFrameScenarios.mockImplementation((frameId, _pathway) =>
+      frameId === 'bc-protocol1-v5-dra' ? bcFoodWebScenarios() : [],
+    );
+  });
+
+  function renderBc() {
+    return render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+  }
+
+  it('renders the selector with Recreational fisher and Subsistence fisher options', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    expect(select).toBeInTheDocument();
+    const labels = Array.from(select.options).map((o) => o.textContent);
+    expect(labels).toContain('Recreational fisher');
+    expect(labels).toContain('Subsistence fisher');
+  });
+
+  it('defaults to recreational fisher and seeds IR 0.111', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    expect(select.value).toBe('recreational-fisher');
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+  });
+
+  it('BW defaults to 70.7 under the recreational scenario', () => {
+    renderBc();
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+  });
+
+  it('switching to subsistence-fisher reseeds IR to 0.22 and BW stays 70.7', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.22');
+    // BW is the same record under both scenarios (70.7 kg adult).
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+  });
+
+  it('switching back from subsistence to recreational reseeds IR to 0.111', () => {
+    renderBc();
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.22');
+    fireEvent.change(select, { target: { value: 'recreational-fisher' } });
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+  });
+
+  it('a user IR edit is preserved when switching scenarios (does not clobber an off-default value)', () => {
+    renderBc();
+    const irInput = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    // Edit off the recreational default.
+    fireEvent.change(irInput, { target: { value: '0.3' } });
+    expect(irInput.value).toBe('0.3');
+    const select = screen.getByTestId(
+      'hh-food-receptor-scenario-select',
+    ) as HTMLSelectElement;
+    // Switch to subsistence; the user-edited IR must NOT be overwritten.
+    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    expect(irInput.value).toBe('0.3');
   });
 });

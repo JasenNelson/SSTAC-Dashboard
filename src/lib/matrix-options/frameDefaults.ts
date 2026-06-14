@@ -170,10 +170,16 @@ export interface FrameDefaultProfileRow {
 // ---------------------------------------------------------------------------
 export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
   {
+    // BC food-web RECREATIONAL fisher scenario (default). 2026-06-13: the single BC food-web
+    // profile became a named receptor scenario when the subsistence fisher was added (the BC frame
+    // now offers a recreational-vs-subsistence selector, mirroring the HH-direct receptor selector).
     frameId: 'bc-protocol1-v5-dra',
     pathway: 'human-health-food',
+    receptorScenarioId: 'recreational-fisher',
+    scenarioLabel: 'Recreational fisher',
+    isDefaultScenario: true,
     note:
-      'BC WLRS 2023: recreational fish-ingestion rate (0.111 kg/day, Table 2) + adult ' +
+      'BC WLRS 2023: recreational fish-ingestion rate (0.111 kg/day, 111 g/day, Table 2) + adult ' +
       'body weight (70.7 kg, Table 1). Owner-promoted, user-adjustable seeds for the BC ' +
       'Protocol 1 frame.',
     label: 'BC WLRS 2023, recreational',
@@ -193,6 +199,41 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
         // Per-seed label override: the body weight is the GENERAL adult value (Table 1,
         // 70.7 kg), shared across all fisher receptors -- so it must not render the row's
         // "recreational" descriptor, which is specific to the fish-ingestion rate.
+        label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+      },
+    ],
+  },
+  {
+    // BC food-web SUBSISTENCE fisher scenario (2026-06-13). The adult subsistence fish-ingestion
+    // rate (0.22 kg/day, 220 g/day) is the aspirational Indigenous-subsistence rate (Richardson
+    // 1997), DOUBLE-SOURCED in BC: BC WLRS 2023 Table 2 AND the Tsleil-Waututh Nation Burrard Inlet
+    // Water Quality Objectives Tissue Quality Objectives report (ENV and HLTH 2021, Table 1). Body
+    // weight reuses the SAME approved 70.7 kg adult record (the IR is the receptor differentiator).
+    // The IR record cites WLRS for the promote path; the TWN BIWQO is recorded as a corroborating
+    // source. Owner-promoted the subsistence IR record; until promotion it resolves 'pending' and
+    // this scenario is NOT selectable (completeness gate -> no hybrid calc).
+    frameId: 'bc-protocol1-v5-dra',
+    pathway: 'human-health-food',
+    receptorScenarioId: 'subsistence-fisher',
+    scenarioLabel: 'Subsistence fisher',
+    note:
+      'BC WLRS 2023 / TWN Burrard Inlet WQO 2021: adult subsistence fish-ingestion rate ' +
+      '(0.22 kg/day, 220 g/day; aspirational Indigenous-subsistence basis, Richardson 1997) + adult ' +
+      'body weight (70.7 kg, Table 1). User-adjustable seeds.',
+    label: 'BC WLRS 2023 / TWN BIWQO, subsistence',
+    sourceIds: ['src-bc-wlrs-fish-tissue-screening-2023'],
+    defaults: [
+      {
+        inputKey: 'IR_food_kg_per_day',
+        parameterValueId: 'pv-wlrs-2023-ir-food-subsistence-bc',
+        candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      },
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+        candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+        // Body weight is the GENERAL adult value (70.7 kg, Table 1), shared with the recreational
+        // scenario -- so it must not render the row's "subsistence" descriptor.
         label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
       },
     ],
