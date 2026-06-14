@@ -321,6 +321,69 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     ],
   },
   {
+    // BC food-web TWN TODDLER SUBSISTENCE scenario (2026-06-14). The Tsleil-Waututh Nation
+    // Burrard Inlet Water Quality Objectives Tissue Quality Objectives report (ENV and HLTH 2021,
+    // Table 1) provides a toddler subsistence fish-ingestion rate of 94 g/day = 0.094 kg/day.
+    // CAVEAT: the TWN BIWQO report states its tissue screening VALUES are derived for ambient
+    // water quality objectives and should NOT be used to derive remediation or BC Contaminated
+    // Sites Regulation guidelines; this calculator cites only the receptor consumption-rate
+    // EXPOSURE FACTOR (IR_food), not the tissue screening values.
+    //
+    // MIXED-SOURCE receptor (mirrors the ACFN precedent, #316/2026-06-14):
+    //  - IR seed: TWN BIWQO 2021 (src-bc-twn-burrard-inlet-wqo-tissue-2021); 94 g/day toddler
+    //    subsistence fish-ingestion rate from ENV and HLTH 2021 Table 1.
+    //  - BW seed: HC PQRA v4.0 (src-health-canada-pqra-v4-2024); standard Canadian toddler BW
+    //    16.5 kg from Appendix E (Richardson 1997). TWN only tabulates an ADULT BW (76.5 kg) as
+    //    a distinct TWN-sourced value; 16.5 kg is the standard HC value, not TWN-sourced.
+    // The row-level sourceIds lists BOTH sources. Each seed carries its own sourceIds override
+    // so the Evidence Library resolves each seed's provenance correctly.
+    //
+    // PRE-PROMOTION / PENDING: the TWN source (src-bc-twn-burrard-inlet-wqo-tissue-2021) has
+    // canonical_source_status=needs_direct_source_check (owner must file the PDF in Zotero +
+    // run promote-twn-foodweb-toddler.mjs --apply); the TWN IR seed resolves 'pending'
+    // (qa_status=needs_review) and this scenario is NOT selectable (completeness gate). The BW
+    // seed (HC PQRA v4.0, already direct_source_verified) resolves 'pending' only because its
+    // own qa_status=needs_review; it is NOT a pending-source-locator (source is verified).
+    frameId: 'bc-protocol1-v5-dra',
+    pathway: 'human-health-food',
+    receptorScenarioId: 'twn-toddler-subsistence',
+    scenarioLabel: 'TWN toddler subsistence (Burrard Inlet)',
+    note:
+      'TWN Burrard Inlet WQO 2021 (ENV and HLTH 2021): toddler subsistence fish-ingestion rate ' +
+      '(0.094 kg/day, 94 g/day; aspirational Indigenous-subsistence basis, Richardson 1997) + ' +
+      'standard HC PQRA v4.0 toddler body weight (16.5 kg, Appendix E). Mixed-source receptor: ' +
+      'IR=TWN BIWQO 2021, BW=HC PQRA v4.0. CAVEAT: TWN tissue screening values are for ambient ' +
+      'WQO and must not be used to derive remediation or CSR guidelines; this calculator uses ' +
+      'only the receptor consumption-rate exposure factor (IR_food). User-adjustable seeds. ' +
+      'PRE-PROMOTION: pending owner filing the TWN BIWQO 2021 PDF in Zotero + running ' +
+      'promote-twn-foodweb-toddler.mjs --apply (TWN IR seed; HC BW source already verified).',
+    label: 'TWN BIWQO 2021, toddler subsistence',
+    // Row-level sourceIds = the scenario's primary (IR) source, matching the ACFN mixed-source row
+    // precedent. Each seed carries its own sourceIds override (IR -> TWN, BW -> HC PQRA v4.0), so the
+    // per-seed source-subset validation uses those, not this row-level fallback.
+    sourceIds: ['src-bc-twn-burrard-inlet-wqo-tissue-2021'],
+    defaults: [
+      {
+        inputKey: 'IR_food_kg_per_day',
+        parameterValueId: 'pv-twn-biwqo-2021-ir-food-toddler-bc',
+        candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+        // IR seed is TWN-sourced; per-seed sourceIds matches the row's primary TWN source.
+        sourceIds: ['src-bc-twn-burrard-inlet-wqo-tissue-2021'],
+      },
+      {
+        inputKey: 'BW_kg',
+        parameterValueId: 'pv-hc-pqra-v4-2024-bw-toddler-food-bc',
+        candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+        // Mixed-source: BW seed reuses the standard HC PQRA v4.0 toddler BW (16.5 kg, Appendix E),
+        // which the row's primary TWN sourceIds does not cover -- so it carries its OWN source
+        // override (mirrors the ACFN BW seed pattern). TWN only tabulates ADULT BW (76.5 kg);
+        // 16.5 kg is the standard HC value.
+        sourceIds: ['src-health-canada-pqra-v4-2024'],
+        label: 'HC PQRA v4.0, toddler 16.5 kg (Appendix E)',
+      },
+    ],
+  },
+  {
     // C-HH-direct (2026-06-12): the Canada FCSAP frame seeds the HH direct-contact
     // calculator with the HC PQRA v4.0 (2024) RESIDENTIAL TODDLER receptor (the
     // critical receptor for incidental soil/sediment ingestion + dermal contact).

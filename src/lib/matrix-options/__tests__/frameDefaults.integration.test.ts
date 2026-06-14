@@ -54,13 +54,14 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
     // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame now has THREE
     // receptor-scenario rows (residential toddler [default] + residential adult +
     // commercial/industrial worker).
-    // Phase D food-web (2026-06-14): bc-protocol1-v5-dra human-health-food now has THREE
+    // Phase D food-web (2026-06-14): bc-protocol1-v5-dra human-health-food now has FOUR
     // receptor-scenario rows (recreational-fisher [default] + subsistence-fisher +
-    // ACFN community-specific).
-    // Live table total = 7 rows:
+    // ACFN community-specific + TWN toddler subsistence [pre-promotion: needs_review]).
+    // Live table total = 8 rows:
     // BC HH-food recreational, BC HH-food subsistence, BC HH-food ACFN community-specific,
+    // BC HH-food TWN toddler subsistence (pre-promotion),
     // US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult, FCSAP HH-direct worker.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(7);
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(8);
   });
 });
 
@@ -178,8 +179,26 @@ describe('C-BC food-web receptor scenarios (live catalog, real eligibility)', ()
     const scenarios = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
     const ids = scenarios.map((s) => s.scenarioId).sort();
     expect(ids).toEqual(['acfn-community-specific', 'recreational-fisher', 'subsistence-fisher']);
-    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> all 3 are offered.
-    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(3);
+    // 4 named scenarios total (includes TWN toddler pre-promotion row), but only 3 are selectable.
+    // TWN toddler seeds are needs_review/pending_source_locator -> excluded from selectable.
+    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(4);
+  });
+
+  it('the TWN toddler subsistence scenario is named but NOT selectable (seeds pending promotion)', () => {
+    // Pre-promotion: both seeds are qa_status=needs_review / pending_source_locator (uniform
+    // pre-promotion shape; catalog-invariant fix 2026-06-14). IR seed (pv-twn-biwqo-2021-ir-food-
+    // toddler-bc) is pending TWN source filing. BW seed (pv-hc-pqra-v4-2024-bw-toddler-food-bc)
+    // cites HC PQRA v4.0 source but the catalog record is needs_review / pending_source_locator
+    // until the owner runs promote-twn-foodweb-toddler.mjs --apply for the whole scenario.
+    // getSelectableFrameScenarios excludes any scenario where a seed does not resolve 'active'.
+    // Both seeds return 'pending' (needs_review qa_status) so the scenario is NOT selectable.
+    const selectable = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const selectableIds = selectable.map((s) => s.scenarioId);
+    expect(selectableIds).not.toContain('twn-toddler-subsistence');
+    // Named scenarios (all rows) includes it.
+    const all = getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const twnRow = all.find((s) => s.scenarioId === 'twn-toddler-subsistence');
+    expect(twnRow).toBeTruthy();
   });
 
   it('the default selectable scenario is the recreational fisher (IR 0.111 kg/day, BW 70.7 kg)', () => {
