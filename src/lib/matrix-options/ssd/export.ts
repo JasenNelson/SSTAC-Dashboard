@@ -7,6 +7,12 @@ function escapeCsvValue(value: string | number | null): string {
 }
 
 export function buildSsdSpeciesCsv(result: SsdAnalysisResult): string {
+  if (result.isBlocked) {
+    return (
+      '# ANALYSIS BLOCKED\n' +
+      `# Reason: ${result.blockReason ?? 'Mixed concentration units.'}\n`
+    );
+  }
   const header = [
     'species_scientific_name',
     'broad_group',
@@ -36,9 +42,11 @@ export function buildSsdSpeciesCsv(result: SsdAnalysisResult): string {
 export function buildSsdReceiptJson(result: SsdAnalysisResult): string {
   return JSON.stringify(
     {
-      hcp: Number.isFinite(result.hcp) ? result.hcp : null,
+      blocked: result.isBlocked,
+      blockReason: result.blockReason,
+      hcp: result.isBlocked || !Number.isFinite(result.hcp) ? null : result.hcp,
       pValue: result.pValue,
-      unit: result.unit,
+      unit: result.isBlocked ? 'invalid' : result.unit,
       speciesCount: result.speciesCount,
       cleanedRecordCount: result.cleanedRecordCount,
       excludedRecordCount: result.excludedRecordCount,

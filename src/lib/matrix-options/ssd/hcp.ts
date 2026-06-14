@@ -21,6 +21,10 @@ const MIN_SPECIES_FOR_PREVIEW = 5;
 const RECOMMENDED_SPECIES_COUNT = 8;
 const BOOTSTRAP_CONFIDENCE_LEVEL = 0.95;
 
+const MIXED_UNIT_BLOCK_REASON =
+  'SSD requires a single consistent concentration unit. Convert all source records to ' +
+  'one unit before computing the SSD/HCp.';
+
 function assertPValue(pValue: number): void {
   if (!Number.isFinite(pValue) || pValue < 0.01 || pValue > 0.5) {
     throw new RangeError('SSD pValue must be between 0.01 and 0.50.');
@@ -73,7 +77,12 @@ function normalizeReportedUnit(value: string | null | undefined): string | null 
 function inferAnalysisUnit(
   cleanedRecords: SsdCleanedRecord[],
   settings: SsdWorkbenchSettings,
-): { unit: string; warning: string | null } {
+): {
+  unit: string;
+  warning: string | null;
+  blocked: boolean;
+  blockReason: string | null;
+} {
   const units = Array.from(
     new Set(
       cleanedRecords
@@ -82,18 +91,33 @@ function inferAnalysisUnit(
     ),
   );
 
-  if (units.length === 1) return { unit: units[0], warning: null };
+  if (units.length === 1) {
+    return { unit: units[0], warning: null, blocked: false, blockReason: null };
+  }
   if (units.length > 1) {
     return {
       unit: 'mixed reported units',
       warning:
         'Multiple concentration units are present in the selected SSD records; convert units before interpreting the HCp candidate.',
+      blocked: true,
+      blockReason: MIXED_UNIT_BLOCK_REASON,
     };
   }
 
+  // units.length === 0: no record carried a reported unit. SCOPE LIMITATION (codex review
+  // 2026-06-14): this is the case for the LIVE ecotox_mirror source -- ECOTOX_OPERATIONAL_COLUMNS
+  // in ssd/supabase.ts does NOT select a unit column, so live rows have raw.unit === undefined and
+  // reach here regardless of their true underlying units. The mixed-unit fail-closed guard above
+  // therefore only protects UPLOADED CSV input (which carries per-row units); it does NOT yet protect
+  // the live mirror path, where mixed underlying units could still be blended silently.
+  // KNOWN FOLLOW-UP (owner-filed, AUTONOMOUS_APPROVAL_QUEUE_2026_06_14.md): fetch the mirror's unit
+  // column into RawEcotoxRecord.unit so this guard covers the live route too. Until then, do NOT rely
+  // on the absence of a block to mean "units are consistent" for live ecotox_mirror analyses.
   return {
     unit: settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L',
     warning: null,
+    blocked: false,
+    blockReason: null,
   };
 }
 
@@ -207,14 +231,25 @@ export function buildSsdAnalysis(
     environmentFilter: settings.environmentFilter,
     endpointFilters: settings.endpointFilters,
   });
-  const speciesAggregates = aggregateSpeciesValues(
-    cleanedRecords,
-    settings.aggregationMethod,
-  );
   const warnings: string[] = [];
   const inferredUnit = inferAnalysisUnit(cleanedRecords, settings);
 
   if (inferredUnit.warning) warnings.push(inferredUnit.warning);
+
+  // FAIL-CLOSED DATA-LAYER BLOCK: when source records carry more than one
+  // distinct concentration unit, the aggregation step would silently blend
+  // values across scales (e.g. mg/L + ng/L are 1e6 apart) and every per-species
+  // value / HCp would be unit-ambiguous and wrong. Rather than trust the UI to
+  // hide those numbers, we remove them at the source: an empty species set means
+  // no finite HCp, no aggregates, no curve points, no bootstrap interval, and
+  // empty CSV/JSON exports -- there is no plausible-but-wrong number left to leak.
+  const isBlocked = inferredUnit.blocked;
+  if (isBlocked && inferredUnit.blockReason) {
+    warnings.push(inferredUnit.blockReason);
+  }
+  const speciesAggregates = isBlocked
+    ? []
+    : aggregateSpeciesValues(cleanedRecords, settings.aggregationMethod);
 
   if (speciesAggregates.length < MIN_SPECIES_FOR_PREVIEW) {
     warnings.push(
@@ -329,6 +364,8 @@ export function buildSsdAnalysis(
 
   return {
     hcp,
+    isBlocked,
+    blockReason: isBlocked ? inferredUnit.blockReason : null,
     pValue: settings.pValue,
     unit,
     speciesCount: speciesAggregates.length,
