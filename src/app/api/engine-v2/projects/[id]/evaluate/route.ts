@@ -78,6 +78,28 @@ function getOllamaModel(): string {
   );
 }
 
+// Phase 2 LightRAG graph-retrieval env readers. Each returns undefined when the
+// env var is unset or empty so the caller can conditionally omit the field --
+// keeping the YAML / CLI arg list byte-identical to the pre-Phase-2 path.
+function getRetrievalBackend(): string | undefined {
+  const v = process.env.ENGINE_V2_RETRIEVAL_BACKEND;
+  return v && v.length > 0 ? v : undefined;
+}
+
+function getRetrievalWorkspace(): string | undefined {
+  const v = process.env.ENGINE_V2_RETRIEVAL_WORKSPACE;
+  return v && v.length > 0 ? v : undefined;
+}
+
+function getDerivePolicyText(): boolean | undefined {
+  return process.env.ENGINE_V2_DERIVE_POLICY_TEXT === "true" ? true : undefined;
+}
+
+function getPolicyTextWorkspace(): string | undefined {
+  const v = process.env.ENGINE_V2_POLICY_TEXT_WORKSPACE;
+  return v && v.length > 0 ? v : undefined;
+}
+
 // Preflight Ollama for live backend. Returns null on success, or an
 // inline {error, ollama_url} payload on failure (timeout / network / non-2xx).
 async function preflightOllama(
@@ -467,6 +489,10 @@ export async function POST(
       scriptPath: getScenarioScriptPath(),
       scenarioConfigPath: scenarioYamlPath,
       outputDir: evalRunDir,
+      retrievalBackend: getRetrievalBackend(),
+      retrievalWorkspace: getRetrievalWorkspace(),
+      derivePolicyText: getDerivePolicyText(),
+      policyTextWorkspace: getPolicyTextWorkspace(),
     });
   } catch (err) {
     const msg = (err as Error).message ?? "unknown";
