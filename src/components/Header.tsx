@@ -10,7 +10,7 @@ import ThemeToggle from './ThemeToggle';
 import { MENU_LINKS, MENU_CATEGORIES } from './header/menuConfig';
 
 export default function Header() {
-  const { session, isLoading: authLoading, signOut } = useAuth();
+  const { session, isLoading: authLoading, authError, authUnverified, signOut } = useAuth();
   const { isAdmin, clearAdminStatus } = useAdmin();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isDesktopMenuOpen, setIsDesktopMenuOpen] = useState(false);
@@ -34,51 +34,36 @@ export default function Header() {
     };
   }, [isDesktopMenuOpen]);
 
-  // Handle protected route redirects when session is lost
+  // Handle protected route redirects when session is definitively lost.
+  //
+  // The server middleware is the authoritative auth gate for protected routes.
+  // This client-side effect is a SECONDARY guard only. It must NOT fire on a
+  // transient network failure (authUnverified=true) because that would bounce
+  // a logged-in user to /login even though the server would have let them
+  // through. We only redirect when auth state is conclusively resolved AND the
+  // user is genuinely absent with no active error or unverified state.
   useEffect(() => {
     const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025', '/bn-rrm'];
     const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
 
-    if (!isProtectedRoute) return; // Not a protected route, no action needed
+    if (!isProtectedRoute) return;
 
-    let timeoutId: NodeJS.Timeout | null = null;
+    // Do nothing while auth is still loading or unverified (transient failure).
+    // The server middleware already blocks unauthenticated server-side renders;
+    // let it do its job rather than racing on a stale client state.
+    if (authLoading || authUnverified) return;
 
-    // If auth is still loading, set a timeout fallback to prevent indefinite waiting
-    // This ensures we don't wait forever if auth loading gets stuck
-    if (authLoading) {
-      // Set a 5-second timeout fallback
-      timeoutId = setTimeout(() => {
-        // After 5 seconds, if still loading and no session, redirect to login
-        // This handles edge cases where auth loading might hang
-        if (!session) {
-          const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-          router.push(loginUrl);
-        }
-      }, 5000);
+    // If there was a non-retryable auth error but we have a session preserved
+    // from onAuthStateChange, trust it -- an error during getUser() does not
+    // mean the session token is invalid if the event listener kept it live.
+    if (session) return;
 
-      return () => {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
-      };
-    }
-
-    // Auth loading is complete - add a small delay to ensure session state is stable
-    // This prevents race conditions where authLoading becomes false before session is set
-    const checkDelay = setTimeout(() => {
-      if (!session) {
-        const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
-        router.push(loginUrl);
-      }
-    }, 100); // Small delay to allow session state to stabilize
-
-    return () => {
-      clearTimeout(checkDelay);
-      if (timeoutId) {
-        clearTimeout(timeoutId);
-      }
-    };
-  }, [session, authLoading, pathname, router]);
+    // authError present (terminal error) AND no session: the token is gone.
+    // No session AND no error AND not loading: clean "logged out" signal.
+    // In both cases redirect to login.
+    const loginUrl = `/login?redirect=${encodeURIComponent(pathname)}`;
+    router.push(loginUrl);
+  }, [session, authLoading, authError, authUnverified, pathname, router]);
 
   const handleLogout = useCallback(async () => {
     try {
