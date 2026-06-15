@@ -8,6 +8,7 @@ import {
   ECOTOX_SEARCH_LIMIT,
   ECOTOX_TABLE_NAME,
   buildEcotoxFetchRequest,
+  buildEcotoxSelectColumns,
   checkEcotoxMirrorHealth,
   fetchEcotoxRows,
   getEcotoxClientConfig,
@@ -202,6 +203,252 @@ function createReferenceFallbackFetchClient() {
           endpoint: 'Mortality',
           reference_db: 'ECOTOX-123',
           test_id: 'T-1',
+        },
+      ],
+      error: null,
+    },
+  ];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        const query = {
+          select(columns: string) {
+            call.select = columns;
+            return this;
+          },
+          in(column: string, values: string[]) {
+            call.in = { column, values };
+            return this;
+          },
+          range(start: number, end: number) {
+            call.range = { start, end };
+            return this;
+          },
+          eq(column: string, value: string) {
+            call.eq = { column, value };
+            return this;
+          },
+          or(expression: string) {
+            call.or = [...(call.or ?? []), expression];
+            return this;
+          },
+          then(
+            resolve: (value: {
+              data: RawEcotoxRecord[] | null;
+              error: unknown;
+            }) => unknown,
+            reject?: (reason: unknown) => unknown,
+          ) {
+            return Promise.resolve(
+              responses.shift() ?? { data: [], error: null },
+            ).then(resolve, reject);
+          },
+        };
+        return query;
+      },
+    },
+  };
+}
+
+// Mirror that lacks the 'unit' column: the preferred query fails with a 42703
+// error whose message mentions 'column "unit" does not exist', then the
+// fallback query (which omits 'unit') succeeds and returns rows.
+function createUnitFallbackFetchClient() {
+  const calls: QueryCall[] = [];
+  const responses: Array<{
+    data: RawEcotoxRecord[] | null;
+    error: unknown;
+  }> = [
+    {
+      data: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.unit does not exist',
+      },
+    },
+    {
+      data: [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'Species 1',
+          conc1_mean: 0.01,
+          species_group: 'Fish',
+          media_type: 'FW',
+          endpoint: 'Mortality',
+          reference_db: 'ECOTOX-456',
+          test_id: 'T-2',
+        },
+      ],
+      error: null,
+    },
+  ];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        const query = {
+          select(columns: string) {
+            call.select = columns;
+            return this;
+          },
+          in(column: string, values: string[]) {
+            call.in = { column, values };
+            return this;
+          },
+          range(start: number, end: number) {
+            call.range = { start, end };
+            return this;
+          },
+          eq(column: string, value: string) {
+            call.eq = { column, value };
+            return this;
+          },
+          or(expression: string) {
+            call.or = [...(call.or ?? []), expression];
+            return this;
+          },
+          then(
+            resolve: (value: {
+              data: RawEcotoxRecord[] | null;
+              error: unknown;
+            }) => unknown,
+            reject?: (reason: unknown) => unknown,
+          ) {
+            return Promise.resolve(
+              responses.shift() ?? { data: [], error: null },
+            ).then(resolve, reject);
+          },
+        };
+        return query;
+      },
+    },
+  };
+}
+
+// Mirror has 'unit' but lacks 'reference_number'. The preferred query fails with
+// a 42703 error naming reference_number; the retry must keep 'unit' and switch
+// to the reference fallback columns. This is the key regression case that the
+// coarse single-fallback code got wrong (it dropped unit too).
+function createReferenceNumberOnlyMissingFetchClient() {
+  const calls: QueryCall[] = [];
+  const responses: Array<{
+    data: RawEcotoxRecord[] | null;
+    error: unknown;
+  }> = [
+    {
+      data: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.reference_number does not exist',
+      },
+    },
+    {
+      data: [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'RefOnlyMissing 1',
+          conc1_mean: 0.05,
+          unit: 'mg/L',
+          species_group: 'Fish',
+          media_type: 'FW',
+          endpoint: 'Mortality',
+          reference_db: 'ECOTOX-REF-789',
+          test_id: 'T-3',
+        },
+      ],
+      error: null,
+    },
+  ];
+
+  return {
+    calls,
+    client: {
+      from(table: string) {
+        const call: QueryCall = { table };
+        calls.push(call);
+        const query = {
+          select(columns: string) {
+            call.select = columns;
+            return this;
+          },
+          in(column: string, values: string[]) {
+            call.in = { column, values };
+            return this;
+          },
+          range(start: number, end: number) {
+            call.range = { start, end };
+            return this;
+          },
+          eq(column: string, value: string) {
+            call.eq = { column, value };
+            return this;
+          },
+          or(expression: string) {
+            call.or = [...(call.or ?? []), expression];
+            return this;
+          },
+          then(
+            resolve: (value: {
+              data: RawEcotoxRecord[] | null;
+              error: unknown;
+            }) => unknown,
+            reject?: (reason: unknown) => unknown,
+          ) {
+            return Promise.resolve(
+              responses.shift() ?? { data: [], error: null },
+            ).then(resolve, reject);
+          },
+        };
+        return query;
+      },
+    },
+  };
+}
+
+// Mirror lacks both 'unit' and 'reference_number'. The preferred query fails
+// naming one column, retry fails naming the other, second retry succeeds.
+// Both flags must flip independently (at most once each).
+function createBothColumnsMissingFetchClient() {
+  const calls: QueryCall[] = [];
+  const responses: Array<{
+    data: RawEcotoxRecord[] | null;
+    error: unknown;
+  }> = [
+    // First attempt: preferred columns -> fails on reference_number.
+    {
+      data: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.reference_number does not exist',
+      },
+    },
+    // Second attempt: reference fallback + still has unit -> fails on unit.
+    {
+      data: null,
+      error: {
+        code: '42703',
+        message: 'column toxicology_data.unit does not exist',
+      },
+    },
+    // Third attempt: both flags set -> succeeds.
+    {
+      data: [
+        {
+          chemical_name: 'Copper',
+          species_scientific_name: 'BothMissing 1',
+          conc1_mean: 0.07,
+          species_group: 'Fish',
+          media_type: 'FW',
+          endpoint: 'Mortality',
+          reference_db: 'ECOTOX-BOTH-001',
+          test_id: 'T-4',
         },
       ],
       error: null,
@@ -534,9 +781,147 @@ describe('SSD ECOTOX Supabase query shaping', () => {
         reference_number: 'ECOTOX-123',
       }),
     ]);
+    // With independent degradation: reference_number missing -> only the
+    // reference fallback columns are substituted; 'unit' is KEPT because the
+    // mirror has it. The retry select must include 'unit'.
+    const retrySelect = buildEcotoxSelectColumns({
+      useReferenceFallback: true,
+      dropUnit: false,
+    }).join(',');
     expect(calls.map((call) => call.select)).toEqual([
       ECOTOX_PREFERRED_SELECT_COLUMNS.join(','),
-      ECOTOX_FALLBACK_SELECT_COLUMNS.join(','),
+      retrySelect,
     ]);
+    // The retry select must include 'unit' (mirror has it; must not be stripped).
+    expect((calls[1].select ?? '').split(',')).toContain('unit');
+    // The retry select must NOT include 'reference_number' (it is missing).
+    expect((calls[1].select ?? '').split(',')).not.toContain('reference_number');
+  });
+
+  it('ECOTOX_PREFERRED_SELECT_COLUMNS includes the unit column', () => {
+    // The unit column must be in the preferred select list so that mirrors
+    // carrying it supply raw.unit to the mixed-unit guard in hcp.ts.
+    expect(ECOTOX_PREFERRED_SELECT_COLUMNS).toContain('unit');
+  });
+
+  it('drops only unit (not reference_number) when the mirror omits the unit column', async () => {
+    // Independent degradation: a 42703 error naming 'unit' must drop ONLY
+    // 'unit' from the retry select. 'reference_number' is still present in the
+    // mirror, so the retry must keep it -- stripping it would silently disable
+    // the mixed-unit guard in hcp.ts (the P2 regression codex caught).
+    //
+    // fetchEcotoxRows must:
+    //   1. trigger EXACTLY ONE retry (not loop/retry indefinitely),
+    //   2. issue the retry with 'unit' dropped but 'reference_number' kept, and
+    //   3. return rows without throwing.
+    const { client, calls } = createUnitFallbackFetchClient();
+
+    const result = await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      maxRows: 25,
+    });
+
+    // No error is thrown and rows are returned.
+    expect(result.rows.length).toBeGreaterThan(0);
+
+    // Exactly two queries: preferred (fails) then retry (succeeds).
+    expect(calls).toHaveLength(2);
+
+    // First call used PREFERRED columns (includes both unit and reference_number).
+    expect(calls[0].select).toBe(ECOTOX_PREFERRED_SELECT_COLUMNS.join(','));
+
+    // Retry select omits 'unit' (the missing column).
+    const retryCols = (calls[1].select ?? '').split(',');
+    expect(retryCols).not.toContain('unit');
+
+    // CRITICAL: retry select KEEPS 'reference_number' (it is not missing;
+    // the coarse single-fallback code wrongly dropped it too).
+    expect(retryCols).toContain('reference_number');
+
+    // The retry select must match buildEcotoxSelectColumns({useReferenceFallback:false, dropUnit:true}).
+    expect(calls[1].select).toBe(
+      buildEcotoxSelectColumns({ useReferenceFallback: false, dropUnit: true }).join(','),
+    );
+  });
+
+  // This is the key regression case: mirror has 'unit' but lacks 'reference_number'.
+  // The coarse single-fallback code dropped BOTH columns, silently disabling the
+  // mixed-unit guard in hcp.ts. With independent degradation, only reference_number
+  // is substituted; unit is kept.
+  it('keeps unit in the retry select when only reference_number is missing', async () => {
+    const { client, calls } = createReferenceNumberOnlyMissingFetchClient();
+
+    const result = await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      maxRows: 25,
+    });
+
+    // No error is thrown and rows are returned.
+    expect(result.rows.length).toBeGreaterThan(0);
+
+    // Exactly two queries: preferred (fails on reference_number) then retry.
+    expect(calls).toHaveLength(2);
+
+    // First call: preferred columns (both unit and reference_number present).
+    expect(calls[0].select).toBe(ECOTOX_PREFERRED_SELECT_COLUMNS.join(','));
+
+    // CRITICAL: retry select MUST include 'unit' so the mixed-unit guard in
+    // hcp.ts continues to receive raw.unit. The coarse code wrongly stripped it.
+    const retryCols = (calls[1].select ?? '').split(',');
+    expect(retryCols).toContain('unit');
+
+    // Retry select must NOT include 'reference_number' (it is missing).
+    expect(retryCols).not.toContain('reference_number');
+
+    // The retry select must match buildEcotoxSelectColumns({useReferenceFallback:true, dropUnit:false}).
+    expect(calls[1].select).toBe(
+      buildEcotoxSelectColumns({ useReferenceFallback: true, dropUnit: false }).join(','),
+    );
+
+    // deriveReferenceNumbers must still be applied.
+    expect(result.rows[0]).toMatchObject({
+      reference_db: 'ECOTOX-REF-789',
+      reference_number: 'ECOTOX-REF-789',
+    });
+  });
+
+  it('handles both unit and reference_number missing with two independent retries', async () => {
+    const { client, calls } = createBothColumnsMissingFetchClient();
+
+    const result = await fetchEcotoxRows(client as never, {
+      chemicalNames: ['Copper'],
+      maxRows: 25,
+    });
+
+    // No error is thrown and rows are returned.
+    expect(result.rows.length).toBeGreaterThan(0);
+
+    // Three queries: preferred (fails on reference_number), retry-1 (fails on
+    // unit), retry-2 (both flags set, succeeds).
+    expect(calls).toHaveLength(3);
+
+    // First call: preferred columns.
+    expect(calls[0].select).toBe(ECOTOX_PREFERRED_SELECT_COLUMNS.join(','));
+
+    // Second call: reference fallback applied but unit still present.
+    const secondCols = (calls[1].select ?? '').split(',');
+    expect(secondCols).not.toContain('reference_number');
+    expect(secondCols).toContain('unit');
+
+    // Third call: both flags set -> matches ECOTOX_FALLBACK_SELECT_COLUMNS
+    // (reference fallback + unit dropped).
+    expect(calls[2].select).toBe(ECOTOX_FALLBACK_SELECT_COLUMNS.join(','));
+    const thirdCols = (calls[2].select ?? '').split(',');
+    expect(thirdCols).not.toContain('unit');
+    expect(thirdCols).not.toContain('reference_number');
+
+    // Each flag flips at most once: no fourth call.
+    expect(calls).toHaveLength(3);
+
+    // deriveReferenceNumbers must still be applied.
+    expect(result.rows[0]).toMatchObject({
+      reference_db: 'ECOTOX-BOTH-001',
+      reference_number: 'ECOTOX-BOTH-001',
+    });
   });
 });

@@ -104,15 +104,17 @@ function inferAnalysisUnit(
     };
   }
 
-  // units.length === 0: no record carried a reported unit. SCOPE LIMITATION (codex review
-  // 2026-06-14): this is the case for the LIVE ecotox_mirror source -- ECOTOX_OPERATIONAL_COLUMNS
-  // in ssd/supabase.ts does NOT select a unit column, so live rows have raw.unit === undefined and
-  // reach here regardless of their true underlying units. The mixed-unit fail-closed guard above
-  // therefore only protects UPLOADED CSV input (which carries per-row units); it does NOT yet protect
-  // the live mirror path, where mixed underlying units could still be blended silently.
-  // KNOWN FOLLOW-UP (owner-filed, AUTONOMOUS_APPROVAL_QUEUE_2026_06_14.md): fetch the mirror's unit
-  // column into RawEcotoxRecord.unit so this guard covers the live route too. Until then, do NOT rely
-  // on the absence of a block to mean "units are consistent" for live ecotox_mirror analyses.
+  // units.length === 0: no record carried a reported unit. This is the benign no-unit-source
+  // fallback and is safe to proceed. Two cases reach here:
+  //   1. LIVE ecotox_mirror path when the mirror carries a unit column: ECOTOX_PREFERRED_SELECT_COLUMNS
+  //      in ssd/supabase.ts now includes 'unit', so live rows will carry raw.unit and the >1-distinct-unit
+  //      guard above will fire on mixed units. The guard covers both the upload AND the live mirror path
+  //      when the mirror has a unit column.
+  //   2. LIVE ecotox_mirror path when the mirror does NOT have a unit column: the preferred query fails
+  //      with a column-not-found error (42703) and the fetch falls back to ECOTOX_FALLBACK_SELECT_COLUMNS
+  //      (which omits unit). Rows then have raw.unit===undefined and reach this branch. The guard is
+  //      inactive on that older mirror schema, but no hard error is thrown (graceful degradation).
+  // Do NOT treat units.length===0 as "units are confirmed consistent"; it means "no unit data available".
   return {
     unit: settings.mediaFilter === 'sediment' ? 'reported unit' : 'mg/L',
     warning: null,
