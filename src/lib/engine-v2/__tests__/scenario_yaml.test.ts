@@ -178,4 +178,56 @@ describe("composeScenarioYaml", () => {
     });
     expect(explicitUndefined).toBe(omitted);
   });
+
+  // Phase 2: scenario_yaml never emits retrieval_ keys (retrieval is CLI-only
+  // in run_owner_scenario.py; emitting them as YAML keys is silently inert).
+
+  it("never emits retrieval_backend or retrieval_workspace keys", () => {
+    // retrieval wiring is passed as CLI flags in spawn_scenario.ts, not as YAML
+    // keys. Confirm the composer does not emit them under any circumstance.
+    const yaml = composeScenarioYaml({
+      scenarioId: "scn",
+      extractPath: "C:/x.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off",
+      evaluationBackend: "stub",
+      embedderBackend: "stub",
+      rerankerBackend: "disabled",
+      model: "",
+      variant: "graph_v2_default",
+    });
+    expect(yaml).not.toContain("retrieval_backend");
+    expect(yaml).not.toContain("retrieval_workspace");
+  });
+
+  it("byte-identity: output is byte-identical to pre-Phase-2 baseline (no retrieval_ keys)", () => {
+    // Golden equality: the composer output is byte-for-byte unchanged from
+    // the pre-Phase-2 baseline when no optional fields are supplied. Any future
+    // addition to the fixed lines would break this test intentionally, forcing a
+    // conscious baseline update.
+    const yaml = composeScenarioYaml({
+      scenarioId: "abc-123",
+      extractPath: "C:/data/extract.json",
+      benchFixture: "bench_43_full",
+      applicabilityMode: "off",
+      evaluationBackend: "stub",
+      embedderBackend: "stub",
+      rerankerBackend: "disabled",
+      model: "",
+      variant: "graph_v2_default",
+    });
+    const expectedPrePhase2 =
+      'scenario_id: "abc-123"\n' +
+      'extract_path: "C:/data/extract.json"\n' +
+      'bench_fixture: "bench_43_full"\n' +
+      'applicability_mode: "off"\n' +
+      'evaluation_backend: "stub"\n' +
+      'embedder_backend: "stub"\n' +
+      'reranker_backend: "disabled"\n' +
+      'model: ""\n' +
+      'variant: "graph_v2_default"\n' +
+      'rerank: "off"\n' +
+      'pathway_notes_mode: "annotation_only"\n';
+    expect(yaml).toBe(expectedPrePhase2);
+  });
 });

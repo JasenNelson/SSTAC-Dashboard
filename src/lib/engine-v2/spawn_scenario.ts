@@ -22,6 +22,16 @@ export interface SpawnScenarioArgs {
   scriptPath: string;
   scenarioConfigPath: string;
   outputDir: string;
+  // Phase 2 LightRAG graph-retrieval wiring. All four flags are omitted from the
+  // subprocess CLI when not supplied (backward-compatible: absent => byte-identical
+  // arg list to the pre-Phase-2 spawn). Retrieval flags driven by
+  // ENGINE_V2_RETRIEVAL_BACKEND and ENGINE_V2_RETRIEVAL_WORKSPACE env vars.
+  // Policy-text flags driven by ENGINE_V2_DERIVE_POLICY_TEXT and
+  // ENGINE_V2_POLICY_TEXT_WORKSPACE env vars in the evaluate route.
+  derivePolicyText?: boolean;
+  policyTextWorkspace?: string;
+  retrievalBackend?: string;
+  retrievalWorkspace?: string;
 }
 
 export async function spawnScenarioRunner(
@@ -34,6 +44,18 @@ export async function spawnScenarioRunner(
     "--output-dir",
     args.outputDir,
   ];
+  if (args.retrievalBackend) {
+    cli.push("--retrieval-backend", args.retrievalBackend);
+  }
+  if (args.retrievalWorkspace) {
+    cli.push("--retrieval-workspace", args.retrievalWorkspace);
+  }
+  if (args.derivePolicyText) {
+    cli.push("--derive-policy-text");
+  }
+  if (args.policyTextWorkspace) {
+    cli.push("--policy-text-workspace", args.policyTextWorkspace);
+  }
 
   // Capture subprocess stdout/stderr to log files in the run dir so a crash
   // is diagnosable from the dashboard (previously stdio:'ignore' threw away
