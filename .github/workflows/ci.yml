@@ -53,31 +53,38 @@ jobs:
       # OOM-crashes the Node-24 worker with `write EPIPE` (no test summary) once the suite sits
       # near the heap ceiling -- observed on #290 and #305. maxWorkers=1 (vitest.config) and an
       # 8GB heap were ceiling-raises against a rising floor (suite + catalog grow every PR).
-      # Fix: run vitest in 4 SEQUENTIAL shards -- each a FRESH node process covering ~1/4 of the
-      # test files, so the retained coverage is bounded to ~1/4 and freed when the process exits.
+      # Fix: run vitest in 6 SEQUENTIAL shards -- each a FRESH node process covering ~1/6 of the
+      # test files, so the retained coverage is bounded to ~1/6 and freed when the process exits.
+      # Bumped 4 -> 6 on 2026-06-14/15: this lane keeps hitting the ceiling (#290, #305, and again
+      # after another batch of tests landed) -- 4 shards no longer fit. STOPGAP, not a structural
+      # cure: --shard splits TEST FILES not source modules and is order-sensitive, so a single
+      # oversized test file (or two heavy modules co-located in one slice) can still blow a shard.
+      # The durable fix (bigger-RAM runner, or move coverage off the required Unit gate into a
+      # separate non-blocking job) is an owner decision. Escalation if 6 OOMs: 8 shards, never
+      # maxWorkers=2 (known Node-20 OOM).
       # MUST stay a single "Unit Tests" job (not a matrix): branch protection requires the
       # "Unit Tests" check by name; a matrix would rename it to "Unit Tests (i)" and block all
       # PRs. maxWorkers=1 + the 8GB heap are retained for now (change one variable at a time).
       - name: Run unit tests (sharded -- fresh process per shard, per-shard coverage)
         run: |
           set -e
-          for i in 1 2 3 4; do
-            echo "::group::vitest shard $i/4"
-            npm run test:ci -- --shard=$i/4 --coverage.reportsDirectory=coverage/shard-$i
+          for i in 1 2 3 4 5 6; do
+            echo "::group::vitest shard $i/6"
+            npm run test:ci -- --shard=$i/6 --coverage.reportsDirectory=coverage/shard-$i
             echo "::endgroup::"
           done
         env:
           NODE_OPTIONS: --max-old-space-size=8192
 
       # vitest.config coverage.reporter already includes 'json', so each shard writes a
-      # non-empty coverage/shard-N/coverage-final.json. Codecov ingests + merges the 4 files in
+      # non-empty coverage/shard-N/coverage-final.json. Codecov ingests + merges the 6 files in
       # one upload (a single flags: would apply to the whole upload, so none is set). Non-blocking
       # (fail_ci_if_error:false + continue-on-error) -- coverage never fails the gate.
       - name: Upload coverage to Codecov
         if: always()
         uses: codecov/codecov-action@v6
         with:
-          files: ./coverage/shard-1/coverage-final.json,./coverage/shard-2/coverage-final.json,./coverage/shard-3/coverage-final.json,./coverage/shard-4/coverage-final.json
+          files: ./coverage/shard-1/coverage-final.json,./coverage/shard-2/coverage-final.json,./coverage/shard-3/coverage-final.json,./coverage/shard-4/coverage-final.json,./coverage/shard-5/coverage-final.json,./coverage/shard-6/coverage-final.json
           fail_ci_if_error: false
           token: ${{ secrets.CODECOV_TOKEN }}
         continue-on-error: true
