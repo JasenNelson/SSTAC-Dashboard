@@ -32,6 +32,29 @@ const FIVE_SPECIES_ROWS: RawEcotoxRecord[] = Array.from(
   }),
 );
 
+const SIX_SPECIES_MG_PER_L_ROWS: RawEcotoxRecord[] = Array.from(
+  { length: 6 },
+  (_, index) => ({
+    chemical_name: 'Zinc',
+    species_scientific_name: `Species ${index + 1}`,
+    conc1_mean: 0.1 + index * 0.01,
+    unit: 'mg/L',
+    species_group: 'Fish',
+    media_type: 'FW',
+    endpoint: 'Mortality',
+  }),
+);
+
+// Same six species, but the last record reports ng/L instead of mg/L. Two
+// distinct units are 1e6 apart; blending them would corrupt every per-species
+// value and the HCp.
+const SIX_SPECIES_MIXED_UNIT_ROWS: RawEcotoxRecord[] =
+  SIX_SPECIES_MG_PER_L_ROWS.map((row, index) =>
+    index === SIX_SPECIES_MG_PER_L_ROWS.length - 1
+      ? { ...row, unit: 'ng/L' }
+      : row,
+  );
+
 describe('SSD HCp preview', () => {
   it('builds a deterministic fixture-backed derived candidate receipt', () => {
     const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, BASE_SETTINGS);
@@ -200,6 +223,72 @@ describe('SSD HCp preview', () => {
     expect(result.hcp).toBeGreaterThan(0);
   });
 
+  it('blocks the analysis when records carry mixed concentration units', () => {
+    const result = buildSsdAnalysis(SIX_SPECIES_MIXED_UNIT_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Zinc'],
+    });
+
+    expect(result.isBlocked).toBe(true);
+    expect(result.blockReason).toMatch(/single consistent/i);
+    expect(result.warnings.join(' ')).toMatch(/single consistent/i);
+
+    // ROBUSTNESS: no finite blended HCp or per-species value may remain anywhere.
+    expect(result.hcp).toBeNaN();
+    expect(Number.isFinite(result.hcp)).toBe(false);
+    expect(result.derivedCandidate.value).toBeNaN();
+    expect(result.derivedCandidate.canDriveCalculations).toBe(false);
+    expect(result.derivedCandidate.qaStatus).toBe('needs_review');
+    expect(result.speciesAggregates).toEqual([]);
+    expect(result.speciesCount).toBe(0);
+    expect(result.empiricalPoints).toEqual([]);
+    expect(result.fittedCurvePoints).toEqual([]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.bootstrapInterval).toBeNull();
+    expect(
+      result.speciesAggregates.every((aggregate) =>
+        Number.isFinite(aggregate.value),
+      ),
+    ).toBe(true);
+  });
+
+  it('does not block or alter behavior for a single-unit dataset (regression)', () => {
+    const single = buildSsdAnalysis(SIX_SPECIES_MG_PER_L_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Zinc'],
+    });
+
+    expect(single.isBlocked).toBe(false);
+    expect(single.blockReason).toBeNull();
+    expect(single.unit).toBe('mg/L');
+    expect(single.speciesCount).toBe(6);
+    expect(single.hcp).toBeGreaterThan(0);
+    expect(Number.isFinite(single.hcp)).toBe(true);
+
+    // The single-unit result must be byte-identical to pre-fix behavior: rebuild
+    // it and confirm every numeric surface matches (the fix must touch only the
+    // mixed-unit path).
+    const repeated = buildSsdAnalysis(SIX_SPECIES_MG_PER_L_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Zinc'],
+    });
+    expect(single.hcp).toBe(repeated.hcp);
+    expect(single.speciesAggregates).toEqual(repeated.speciesAggregates);
+    expect(single.derivedCandidate.value).toBe(repeated.derivedCandidate.value);
+    expect(single.warnings.join(' ')).not.toMatch(/single consistent/i);
+  });
+
+  it('also keeps the existing fixture single-unit case unblocked and unchanged', () => {
+    const result = buildSsdAnalysis(SSD_FIXTURE_ROWS, BASE_SETTINGS);
+
+    expect(result.isBlocked).toBe(false);
+    expect(result.blockReason).toBeNull();
+    expect(result.unit).toBe('mg/L');
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(result.speciesCount).toBe(10);
+    expect(result.speciesAggregates.length).toBe(10);
+  });
+
   it('keeps the numeric helper strict for parity tests', () => {
     expect(() =>
       calculateEmpiricalHcp(
@@ -250,12 +339,11 @@ describe('SSD HCp preview', () => {
     expect(result.warnings.join(' ')).toMatch(/Log-Normal did not produce a valid fit/i);
   });
 
-  // Candidate 2: inferAnalysisUnit 'mixed reported units' warning branch.
-  // aggregateSpeciesValues operates on raw record.concentration with no unit
-  // normalization; when records carry mixed units the only signal is the
-  // 'mixed reported units' label + the convert-units warning. No existing test
-  // drives the units.length > 1 branch (hcp.ts:86-92).
-  it('Candidate 2: mixed reported units sets unit label and emits convert-units warning', () => {
+  // Candidate 2: the inferAnalysisUnit units.length > 1 branch (hcp.ts:86-92).
+  // Originally this only warned and blended values across scales; the fail-closed
+  // fix now BLOCKS the analysis on mixed units (see the dedicated block test above).
+  // This test pins that the >1-distinct-unit branch reaches the blocked state.
+  it('Candidate 2: the >1-distinct-unit branch fails closed (blocked) with the convert-units warning', () => {
     const mixedUnitRows: RawEcotoxRecord[] = [
       ...Array.from({ length: 4 }, (_, i) => ({
         chemical_name: 'Copper',
@@ -283,10 +371,12 @@ describe('SSD HCp preview', () => {
       chemicalNames: ['Copper'],
     });
 
-    // Must reach the mixed-units branch (>= 1 species needed).
-    expect(result.speciesCount).toBeGreaterThanOrEqual(1);
-    expect(result.unit).toBe('mixed reported units');
+    // The >1-distinct-unit branch now fails closed: blocked, with the convert-units
+    // warning, and (robustness) no finite blended HCp or per-species value remains.
+    expect(result.isBlocked).toBe(true);
     expect(result.warnings.some((w) => w.includes('convert units before interpreting'))).toBe(true);
+    expect(Number.isFinite(result.hcp)).toBe(false);
+    expect(result.speciesAggregates).toEqual([]);
   });
 
   // Candidate 11: calculateEmpiricalHcp log-space interpolation value pinned.

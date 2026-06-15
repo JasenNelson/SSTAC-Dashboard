@@ -160,6 +160,8 @@ export interface SsdBootstrapInterval {
 
 export interface SsdAnalysisResult {
   hcp: number;
+  isBlocked: boolean;
+  blockReason: string | null;
   pValue: number;
   unit: string;
   speciesCount: number;

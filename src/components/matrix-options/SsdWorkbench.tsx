@@ -592,7 +592,14 @@ export default function SsdWorkbench({
     percentAffected: point.percentAffected,
   }));
   const canPlotPreview = chartData.length >= 2;
-  const hasHcpPreview = Number.isFinite(result.hcp);
+  // When the analysis is blocked (mixed concentration units), the data layer has
+  // already cleared hcp (NaN), speciesAggregates ([]), curve/empirical points,
+  // and the bootstrap interval, so nothing finite-and-wrong reaches the UI. These
+  // guards add an explicit blocked-state presentation on top of that.
+  const isResultBlocked = result.isBlocked;
+  const canUseResult = !isResultBlocked;
+  const hasHcpPreview = canUseResult && Number.isFinite(result.hcp);
+  const displayUnit = isResultBlocked ? 'invalid' : result.unit;
   const concentrationTicks = buildConcentrationTicks(chartData);
   const canPlotFittedCurve =
     showFittedCurve && result.fittedCurvePoints.length >= 2;
@@ -1405,6 +1412,24 @@ export default function SsdWorkbench({
         </aside>
 
         <div className="min-w-0 space-y-5">
+          {isResultBlocked && (
+            <div
+              data-testid="ssd-blocked-banner"
+              role="alert"
+              className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-950 dark:border-red-800 dark:bg-red-900/20 dark:text-red-100"
+            >
+              <div className="flex items-center gap-2 font-bold">
+                <AlertTriangle className="h-4 w-4" />
+                SSD blocked -- mixed concentration units
+              </div>
+              <p className="mt-1 leading-relaxed">
+                {result.blockReason ??
+                  'SSD requires a single consistent concentration unit.'}{' '}
+                No HCp, per-species value, plot, or export is shown until the
+                source records use one unit.
+              </p>
+            </div>
+          )}
           {hasPendingRunChanges && (
             <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
               <div className="font-bold">Pending SSD settings</div>
@@ -1417,7 +1442,14 @@ export default function SsdWorkbench({
           )}
           <div className="grid gap-3 md:grid-cols-4">
             {[
-              ['HCp', hasHcpPreview ? `${formatNumber(result.hcp)} ${result.unit}` : 'Needs data'],
+              [
+                'HCp',
+                isResultBlocked
+                  ? 'Invalid -- mixed units'
+                  : hasHcpPreview
+                    ? `${formatNumber(result.hcp)} ${result.unit}`
+                    : 'Needs data',
+              ],
               ['Species', String(result.speciesCount)],
               ['Records used', String(result.cleanedRecordCount)],
               ['Excluded', String(result.excludedRecordCount)],
@@ -1484,7 +1516,7 @@ export default function SsdWorkbench({
                   <div className="flex justify-between gap-4">
                     <dt>Unit</dt>
                     <dd className="font-semibold text-slate-900 dark:text-white">
-                      {result.unit}
+                      {displayUnit}
                     </dd>
                   </div>
                 </dl>
@@ -2012,7 +2044,18 @@ export default function SsdWorkbench({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {result.speciesAggregates.length > 0 ? (
+                  {isResultBlocked ? (
+                    <tr>
+                      <td
+                        colSpan={5}
+                        data-testid="ssd-species-blocked-row"
+                        className="px-3 py-6 text-center text-sm font-semibold text-red-700 dark:text-red-300"
+                      >
+                        Species values are hidden: {result.blockReason ??
+                          'SSD requires a single consistent concentration unit.'}
+                      </td>
+                    </tr>
+                  ) : result.speciesAggregates.length > 0 ? (
                     result.speciesAggregates.map((aggregate) => (
                       <tr key={aggregate.speciesScientificName}>
                         <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
