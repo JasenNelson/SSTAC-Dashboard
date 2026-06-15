@@ -98,11 +98,12 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-14: +1 -- Phase D food-web ACFN community-specific IR_food record promoted to
     // approved_source_backed (pv-acfn-wqciu-2023-ir-food-community-specific, 0.388 kg/day;
     // HITL J. Nelson, WQCIU 2023 primary verified; promote-acfn-foodweb.mjs --apply) = 1239.
-    // 2026-06-14: +0 -- TWN toddler subsistence food-web BW record (pv-hc-pqra-v4-2024-bw-
-    // toddler-food-bc) is needs_review / pending_source_locator (uniform pre-promotion shape;
-    // catalog-invariant fix 2026-06-14). Both IR and BW are standard needs_review candidates
-    // pending promote-twn-foodweb-toddler.mjs --apply. = 1239.
-    expect(view.audit.values.approvedSourceBacked).toBe(1239);
+    // 2026-06-14: +0 -- TWN toddler subsistence food-web records (IR + BW) added as needs_review /
+    // pending_source_locator (uniform pre-promotion shape; catalog-invariant fix 2026-06-14) = 1239.
+    // 2026-06-15: +2 -- TWN toddler subsistence IR + BW promoted out of pending to
+    // approved_source_backed (HITL J. Nelson, inline-approved --apply via
+    // promote-twn-foodweb-toddler.mjs; IR verified vs TWN BIWQO 2021 Table 1, p.11) = 1241.
+    expect(view.audit.values.approvedSourceBacked).toBe(1241);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -135,7 +136,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-14: +2 -- TWN toddler subsistence food-web records (IR + BW, both
     // needs_review / pending_source_locator; uniform pre-promotion shape; catalog-invariant
     // fix 2026-06-14 makes BW standard needs_review matching IR). = 379.
-    expect(view.audit.values.pendingSourceLocator).toBe(379);
+    // 2026-06-15: -2 -- TWN toddler subsistence IR + BW promoted out of pending (HITL J. Nelson,
+    // inline-approved --apply via promote-twn-foodweb-toddler.mjs) = 377.
+    expect(view.audit.values.pendingSourceLocator).toBe(377);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value

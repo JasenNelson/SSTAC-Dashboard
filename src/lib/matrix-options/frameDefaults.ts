@@ -338,12 +338,11 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
     // The row-level sourceIds lists BOTH sources. Each seed carries its own sourceIds override
     // so the Evidence Library resolves each seed's provenance correctly.
     //
-    // PRE-PROMOTION / PENDING: the TWN source (src-bc-twn-burrard-inlet-wqo-tissue-2021) has
-    // canonical_source_status=needs_direct_source_check (owner must file the PDF in Zotero +
-    // run promote-twn-foodweb-toddler.mjs --apply); the TWN IR seed resolves 'pending'
-    // (qa_status=needs_review) and this scenario is NOT selectable (completeness gate). The BW
-    // seed (HC PQRA v4.0, already direct_source_verified) resolves 'pending' only because its
-    // own qa_status=needs_review; it is NOT a pending-source-locator (source is verified).
+    // ACTIVATED 2026-06-15 (HITL J. Nelson): the TWN source
+    // (src-bc-twn-burrard-inlet-wqo-tissue-2021) is direct_source_verified and both seeds (TWN IR +
+    // HC PQRA v4.0 BW) are qa_status=approved (promote-twn-foodweb-toddler.mjs --apply; IR verified
+    // vs TWN BIWQO 2021 Table 1, p.11). Both seeds resolve 'active', so this scenario is SELECTABLE
+    // in the food-web receptor dropdown (completeness gate passes).
     frameId: 'bc-protocol1-v5-dra',
     pathway: 'human-health-food',
     receptorScenarioId: 'twn-toddler-subsistence',
@@ -355,8 +354,8 @@ export const FRAME_DEFAULT_PROFILES: readonly FrameDefaultProfileRow[] = [
       'IR=TWN BIWQO 2021, BW=HC PQRA v4.0. CAVEAT: TWN tissue screening values are for ambient ' +
       'WQO and must not be used to derive remediation or CSR guidelines; this calculator uses ' +
       'only the receptor consumption-rate exposure factor (IR_food). User-adjustable seeds. ' +
-      'PRE-PROMOTION: pending owner filing the TWN BIWQO 2021 PDF in Zotero + running ' +
-      'promote-twn-foodweb-toddler.mjs --apply (TWN IR seed; HC BW source already verified).',
+      'Activated 2026-06-15 (HITL J. Nelson): IR + BW promoted to approved and the TWN source ' +
+      'verified; this scenario is selectable.',
     label: 'TWN BIWQO 2021, toddler subsistence',
     // Row-level sourceIds = the scenario's primary (IR) source, matching the ACFN mixed-source row
     // precedent. Each seed carries its own sourceIds override (IR -> TWN, BW -> HC PQRA v4.0), so the

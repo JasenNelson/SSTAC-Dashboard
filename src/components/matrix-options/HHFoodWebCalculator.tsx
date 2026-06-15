@@ -482,8 +482,9 @@ export default function HHFoodWebCalculator({
             </select>
             <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
               Switches the fish-ingestion rate and body weight defaults across the available
-              receptor scenarios (recreational, subsistence, and the ACFN Lower-Athabasca
-              community-specific receptor). Each input stays adjustable.
+              receptor scenarios (recreational, subsistence, the ACFN Lower-Athabasca
+              community-specific receptor, and the TWN Burrard Inlet toddler subsistence
+              receptor). Each input stays adjustable.
             </p>
           </label>
         </div>

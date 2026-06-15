@@ -236,14 +236,17 @@ describe('matrix options default selection policy', () => {
     expect(decision.status).toBe('keep_current_default_no_eligible_candidate');
   });
 
-  // Candidate 3: buildDefaultSelectionPolicyDecision end-to-end unit-blocked path.
-  // The BW_kg slot in bc-protocol1-v5-dra / human-health-food / generic is the ONLY
-  // real catalog slot that fires unitBlocked===true (two competing body-weight candidates,
-  // both in 'kg', which normalizeToBase returns null for -> allNormalizable=false ->
-  // comparable=false -> unitBlocked=true with 2 eligible candidates).
-  // This integration wiring (recommendedCandidate===null, status=manual_decision_required,
-  // rationale matches /A1 unit guard/) is never driven by any existing test.
-  it('Candidate 3: BW_kg slot fires the A1 unit-blocked path -- recommendation suppressed', () => {
+  // Candidate 3: buildDefaultSelectionPolicyDecision end-to-end suppression path.
+  // The BW_kg slot in bc-protocol1-v5-dra / human-health-food / generic has multiple competing
+  // body-weight candidates (all 'kg', which normalizeToBase returns null for -> comparable=false).
+  // 2026-06-15: activating the TWN toddler subsistence receptor added a 3rd approved BW candidate
+  // (pv-hc-pqra-v4-2024-bw-toddler-food-bc, 16.5 kg) alongside the adult rows, creating a top-rank
+  // TIE -> initialRecommended===null -> unitBlocked===false (isUnitBlocked requires a single top
+  // pick). The slot is now suppressed via the multiple-top-ranked path rather than the A1 unit
+  // guard. Either way the recommendation is withheld (recommendedCandidate===null,
+  // status=manual_decision_required) -- the safety-critical property. The A1 unitBlocked LOGIC is
+  // still covered directly by the isUnitBlocked unit test above (multi-candidate, non-comparable).
+  it('Candidate 3: BW_kg slot is suppressed (manual decision) with multiple top-ranked approved candidates', () => {
     const decision = buildDefaultSelectionPolicyDecision({
       frameId: 'bc-protocol1-v5-dra',
       pathway: 'human-health-food',
@@ -251,14 +254,15 @@ describe('matrix options default selection policy', () => {
       inputKey: 'BW_kg',
     });
 
-    // The A1 guard must have fired: recommendedCandidate suppressed.
+    // The recommendation must be suppressed (no auto-pick across competing receptor body weights).
     expect(decision.recommendedCandidate).toBeNull();
     expect(decision.status).toBe('manual_decision_required');
-    // At least 2 eligible candidates must be present (two body-weight rows).
+    // Multiple eligible body-weight rows compete in this slot (adult + toddler receptors).
     expect(decision.eligibleCandidates.length).toBeGreaterThanOrEqual(2);
-    // unitConsistency must report non-comparable (the reason the guard fires).
+    // Units remain non-comparable (kg is non-normalizable), though the top-rank tie now drives
+    // the suppression rather than the unit guard.
     expect(decision.unitConsistency.comparable).toBe(false);
-    // Rationale must name the A1 guard so a reviewer can identify why no pick was made.
-    expect(decision.rationale).toMatch(/A1 unit guard/);
+    // Rationale must explain that a reviewer has to choose among the top-ranked candidates.
+    expect(decision.rationale).toMatch(/Multiple top-ranked approved direct-source candidates/);
   });
 });
