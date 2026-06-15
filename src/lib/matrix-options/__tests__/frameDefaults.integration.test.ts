@@ -54,13 +54,14 @@ describe('C-BC frame default (live catalog, real eligibility)', () => {
     // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame now has THREE
     // receptor-scenario rows (residential toddler [default] + residential adult +
     // commercial/industrial worker).
-    // Phase D food-web (2026-06-14): bc-protocol1-v5-dra human-health-food now has THREE
+    // Phase D food-web (2026-06-14): bc-protocol1-v5-dra human-health-food now has FOUR
     // receptor-scenario rows (recreational-fisher [default] + subsistence-fisher +
-    // ACFN community-specific).
-    // Live table total = 7 rows:
+    // ACFN community-specific + TWN toddler subsistence [approved/selectable 2026-06-15]).
+    // Live table total = 8 rows:
     // BC HH-food recreational, BC HH-food subsistence, BC HH-food ACFN community-specific,
+    // BC HH-food TWN toddler subsistence (approved/selectable),
     // US EPA HH-food, FCSAP HH-direct toddler, FCSAP HH-direct adult, FCSAP HH-direct worker.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(7);
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(8);
   });
 });
 
@@ -174,12 +175,38 @@ describe('C-HH-direct receptor scenarios (live catalog, real eligibility)', () =
 });
 
 describe('C-BC food-web receptor scenarios (live catalog, real eligibility)', () => {
-  it('exposes recreational (default) + subsistence + ACFN community-specific fishers as SELECTABLE scenarios', () => {
+  it('exposes recreational (default) + subsistence + ACFN + TWN toddler as SELECTABLE scenarios', () => {
     const scenarios = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
     const ids = scenarios.map((s) => s.scenarioId).sort();
-    expect(ids).toEqual(['acfn-community-specific', 'recreational-fisher', 'subsistence-fisher']);
-    // Every scenario's seeds resolve ACTIVE (the completeness gate) -> all 3 are offered.
-    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(3);
+    // Post-promotion (2026-06-15): the TWN toddler subsistence seeds (IR pv-twn-biwqo-2021-ir-food-
+    // toddler-bc, BW pv-hc-pqra-v4-2024-bw-toddler-food-bc) were promoted to approved via
+    // promote-twn-foodweb-toddler.mjs --apply, so the scenario is now SELECTABLE.
+    expect(ids).toEqual([
+      'acfn-community-specific', 'recreational-fisher', 'subsistence-fisher', 'twn-toddler-subsistence',
+    ]);
+    // 4 named scenarios total, all 4 now selectable.
+    expect(getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food')).toHaveLength(4);
+  });
+
+  it('the TWN toddler subsistence scenario is SELECTABLE post-promotion (IR 0.094 kg/day + BW 16.5 kg ACTIVE)', () => {
+    // Post-promotion (2026-06-15): both seeds were promoted to approved via
+    // promote-twn-foodweb-toddler.mjs --apply (IR seed pv-twn-biwqo-2021-ir-food-toddler-bc = TWN
+    // BIWQO 2021 94 g/day, verified against Table 1; BW seed pv-hc-pqra-v4-2024-bw-toddler-food-bc =
+    // standard HC PQRA v4.0 16.5 kg). Both resolve 'active' so the scenario is now selectable.
+    const selectable = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const selectableIds = selectable.map((s) => s.scenarioId);
+    expect(selectableIds).toContain('twn-toddler-subsistence');
+    // Named scenarios (all rows) includes it.
+    const all = getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    expect(all.find((s) => s.scenarioId === 'twn-toddler-subsistence')).toBeTruthy();
+    // The scenario seeds the ACTIVE 0.094 kg/day (94 g/day) rate + the standard 16.5 kg toddler BW.
+    const active = getActiveFrameDefaults('bc-protocol1-v5-dra', 'human-health-food', {
+      scenarioId: 'twn-toddler-subsistence',
+    });
+    expect(active.every((d) => d.status === 'active')).toBe(true);
+    const byKey = (k: string) => active.find((d) => d.inputKey === k);
+    expect(byKey('IR_food_kg_per_day')?.value).toBe(0.094);
+    expect(byKey('BW_kg')?.value).toBe(16.5);
   });
 
   it('the default selectable scenario is the recreational fisher (IR 0.111 kg/day, BW 70.7 kg)', () => {

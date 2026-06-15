@@ -130,9 +130,9 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     // C-HH-direct (2026-06-13): the canada-fcsap-aquatic human-health-direct frame is THREE
     // receptor-scenario rows (residential toddler [default] + residential adult + commercial/
     // industrial worker). HH-food food-web (2026-06-14): the bc-protocol1-v5-dra human-health-food
-    // frame is now THREE receptor-scenario rows (recreational [default] + subsistence fisher +
-    // ACFN community-specific), so the live table is 7 rows.
-    expect(FRAME_DEFAULT_PROFILES.length).toBe(7);
+    // frame is now FOUR receptor-scenario rows (recreational [default] + subsistence fisher +
+    // ACFN community-specific + TWN toddler subsistence), so the live table is 8 rows.
+    expect(FRAME_DEFAULT_PROFILES.length).toBe(8);
     // .find returns the FIRST bc-protocol1-v5-dra row -> the recreational (default) scenario.
     const bc = FRAME_DEFAULT_PROFILES.find((r) => r.frameId === 'bc-protocol1-v5-dra');
     expect(bc).toBeDefined();
@@ -192,6 +192,36 @@ describe('FRAME_DEFAULT_PROFILES live-table invariants', () => {
     mockEligibility.mockImplementation(() => ({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'mock' }));
     const scenarios = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
     const ids = scenarios.map((s) => s.scenarioId);
+    expect(ids).toContain('acfn-community-specific');
+  });
+
+  it('the twn-toddler-subsistence scenario is a named PROFILE row in FRAME_DEFAULT_PROFILES', () => {
+    // TWN toddler subsistence row (2026-06-14): assert the scenario is registered as a named
+    // profile. Mixed-source receptor: IR=TWN BIWQO 2021, BW=HC PQRA v4.0 (standard value).
+    // Eligibility is MOCKED (like the ACFN test). The scenario is registered as a named profile
+    // and is visible in getFrameScenarios (all named profiles). Post-promotion selectability is
+    // asserted by the dedicated test below.
+    // First confirm the scenario exists as a named profile.
+    const allScenarios = getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const ids = allScenarios.map((s) => s.scenarioId);
+    expect(ids).toContain('twn-toddler-subsistence');
+  });
+
+  it('the twn-toddler-subsistence scenario IS in getSelectableFrameScenarios (post-promotion: IR + BW seeds approved)', () => {
+    // POST-PROMOTION ASSERTION (2026-06-15): both seeds were promoted to approved via
+    // promote-twn-foodweb-toddler.mjs --apply. IR seed (pv-twn-biwqo-2021-ir-food-toddler-bc, TWN
+    // BIWQO 2021 94 g/day) and BW seed (pv-hc-pqra-v4-2024-bw-toddler-food-bc, standard HC PQRA v4.0
+    // 16.5 kg) both resolve 'active', so the scenario is now selectable (completeness gate passes).
+    // Eligibility mock is set to eligible=true to isolate the qa_status gate.
+    mockEligibility.mockImplementation(() => ({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'mock' }));
+    const selectable = getSelectableFrameScenarios('bc-protocol1-v5-dra', 'human-health-food');
+    const ids = selectable.map((s) => s.scenarioId);
+    // The TWN toddler scenario IS now selectable (its records are approved).
+    expect(ids).toContain('twn-toddler-subsistence');
+    // The recreational and subsistence-fisher scenarios ARE selectable (their records are approved).
+    // The ACFN scenario IS selectable (ACFN IR approved). None of these are affected.
+    expect(ids).toContain('recreational-fisher');
+    expect(ids).toContain('subsistence-fisher');
     expect(ids).toContain('acfn-community-specific');
   });
 

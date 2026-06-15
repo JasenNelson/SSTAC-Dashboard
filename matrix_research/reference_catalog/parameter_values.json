@@ -6099,5 +6099,139 @@
       "receptor characteristic"
     ],
     "candidate_group_id": "human-health-direct__generic__AF_sed_mg_per_cm2__general"
+  },
+  {
+    "parameter_value_id": "pv-twn-biwqo-2021-ir-food-toddler-bc",
+    "substance_key": "generic",
+    "pathway": "human-health-food",
+    "input_key": "IR_food_kg_per_day",
+    "display_name": "Fish ingestion rate - toddler subsistence (TWN Burrard Inlet WQO 2021)",
+    "value": 0.094,
+    "unit": "kg/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-bc-twn-burrard-inlet-wqo-tissue-2021"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "TWN Burrard Inlet WQO toddler subsistence fish ingestion rate (ENV and HLTH 2021, Table 1; 94 g/day = 0.094 kg/day; aspirational Indigenous-subsistence basis, Richardson 1997). Tsleil-Waututh Nation (TWN) + Province of B.C. co-governance source. CAVEAT (report Sec 2.1.1): the TWN BIWQO tissue screening VALUES are derived for ambient water quality objectives and the report states they should NOT be used to derive remediation or BC Contaminated Sites Regulation guidelines; this catalog cites only the receptor consumption-rate EXPOSURE FACTOR (94 g/day), not the report's tissue screening values. Substance-independent exposure factor (substance_key=generic). Toddler subsistence receptor (DIFFERENT from the adult subsistence rate of 220 g/day). needs_review candidate; not a calculator default pending owner promotion. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the TWN BIWQO 2021 primary PDF (open gov.bc.ca URL; owner to file in Zotero before approval). Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "evidence_items": [
+      {
+        "source_id": "src-bc-twn-burrard-inlet-wqo-tissue-2021",
+        "locator": "Table 1 (Receptor fish ingestion rates, g/day; Richardson 1997 aspirational Indigenous-subsistence basis)",
+        "value_text": "toddler subsistence: 94 g/day = 0.094 kg/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-sonnet-4-6",
+        "extracted_at": "2026-06-14",
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-15",
+        "evidence_support_status": "approved_source_backed",
+        "note": "TWN BIWQO 2021 Table 1 toddler subsistence fish ingestion rate; verified in #316 session against the TWN primary (reported in handoff section 0). g/day converted to kg/day (base calculator unit IR_food_kg_per_day).",
+        "evidence_id": "ev-pv-twn-biwqo-2021-ir-food-toddler-bc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "TWN BIWQO 2021 toddler subsistence fish-ingestion rate (94 g/day = 0.094 kg/day). Read-only library candidate; verify against the TWN BIWQO 2021 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "BC co-governance source (Tsleil-Waututh Nation + Province of B.C.); BC legal requirements and ministry guidance control where conflicts exist.",
+    "source_crystallization_date": "2021-06-30",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-twn-burrard-inlet-wqo-tissue-2021",
+        "role": "canonical_candidate",
+        "note": "TWN BIWQO 2021 (ENV and HLTH 2021) is the cited canonical source for this toddler subsistence fish-ingestion rate."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "subsistence consumer toddler (TWN Burrard Inlet)"
+    ],
+    "species_groups": [
+      "fish or shellfish"
+    ],
+    "assumption_tags": [
+      "food web",
+      "food ingestion",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-food__generic__IR_food_kg_per_day__BC"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-bw-toddler-food-bc",
+    "substance_key": "generic",
+    "pathway": "human-health-food",
+    "input_key": "BW_kg",
+    "display_name": "Toddler body weight - subsistence food-web receptor (HC PQRA v4.0 Appendix E, food-web pathway)",
+    "value": 16.5,
+    "unit": "kg",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "approved",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "BC",
+    "applicability": "Standard Canadian toddler body weight (16.5 kg) per Health Canada PQRA v4.0 (2024) Appendix E (Table: Recommended Receptor Characteristics for HHRAs; underlying source Richardson 1997). This is the STANDARD HC toddler body weight adopted as the food-web pathway BW for the TWN Burrard Inlet WQO toddler subsistence receptor. It is PAIRED WITH the TWN BIWQO 2021 toddler subsistence fish-ingestion rate (pv-twn-biwqo-2021-ir-food-toddler-bc; 0.094 kg/day, 94 g/day from ENV and HLTH 2021 Table 1): the TWN source defines the community-specific consumption rate; the toddler body weight is the standard HC PQRA v4.0 value (same value as pv-hc-pqra-v4-2024-bw-toddler-ca under the human-health-direct pathway). This is a MIXED-SOURCE receptor: IR_food=TWN BIWQO 2021, BW=HC PQRA v4.0. Substance-independent exposure factor (substance_key=generic). NOTE on provenance: the TWN BIWQO 2021 report does NOT tabulate a toddler body weight; it tabulates only an ADULT body weight (76.5 kg) as a distinct TWN-sourced value. The 16.5 kg toddler body weight here is the standard HC PQRA v4.0 value (not a TWN figure), which is why this record is sourced to HC PQRA v4.0. needs_review candidate; not a calculator default pending owner promotion. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "The 16.5 kg toddler body weight is the Health Canada PQRA v4.0 (2024) Appendix E standard value (Richardson 1997 basis). This food-web record reuses the same HC value under the human-health-food pathway for pairing with the TWN BIWQO 2021 toddler subsistence IR_food. Secondary citation pending direct-source verification against the HC PQRA v4.0 primary PDF before any HITL promotion. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs), p.69-70: Body weight (kg) row, toddler column",
+        "value_text": "toddler (6 mo to <5 yr): 16.5 kg",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-sonnet-4-6",
+        "extracted_at": "2026-06-14",
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-15",
+        "note": "Health Canada PQRA v4.0 Appendix E recommended receptor body weight (toddler); underlying source Richardson (1997). This food-web pathway record (human-health-food) reuses the same HC PQRA v4.0 value paired with the TWN BIWQO 2021 toddler subsistence IR_food (94 g/day). The 16.5 kg BW is the STANDARD HC value; the TWN source (ENV and HLTH 2021) contributed the ingestion rate, not the body weight. needs_review pending owner promotion via promote-twn-foodweb-toddler.mjs --apply. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-bw-toddler-food-bc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Health Canada PQRA v4.0 Appendix E toddler body weight (16.5 kg) under human-health-food pathway, paired with the TWN BIWQO 2021 toddler subsistence IR_food (0.094 kg/day). Read-only library candidate. qa_status=needs_review. HITL must run promote-twn-foodweb-toddler.mjs --apply to approve the TWN toddler food-web scenario as a whole. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-15 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Health Canada PQRA v4.0 (federal guidance, 2024); applicable as the standard Canadian toddler body weight for BC assessments paired with a BC-specific subsistence ingestion rate.",
+    "source_crystallization_date": "2024-03-31",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 (2024) Appendix E is the canonical source for this toddler body weight (16.5 kg). The TWN BIWQO 2021 source (src-bc-twn-burrard-inlet-wqo-tissue-2021) provides the paired ingestion rate (IR_food seed); it does not provide the BW value for this record."
+      }
+    ],
+    "receptor_groups": [
+      "human"
+    ],
+    "population_groups": [
+      "subsistence consumer toddler (TWN Burrard Inlet)",
+      "toddler"
+    ],
+    "species_groups": [],
+    "assumption_tags": [
+      "food web",
+      "body weight",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-food__generic__BW_kg__BC"
   }
 ]

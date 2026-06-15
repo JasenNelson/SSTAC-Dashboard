@@ -67,6 +67,8 @@ describe('matrix options evidence library helpers', () => {
     // (pv-acfn-wqciu-2023-ir-food-community-specific) adds candidate_group_id
     // human-health-food__generic__IR_food_kg_per_day__general (new __general slot, NOT shared
     // with the BC / US_federal IR_food groups). Its BW seed reuses the existing BW_kg__BC group.
+    // 2026-06-14: +0 (1607 -> 1607) -- TWN toddler subsistence records (IR + BW) both use
+    // EXISTING BC candidate_group_ids (IR_food_kg_per_day__BC + BW_kg__BC); no new groups.
     expect(view.valueGroups).toHaveLength(1607);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
@@ -96,7 +98,12 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-14: +1 -- Phase D food-web ACFN community-specific IR_food record promoted to
     // approved_source_backed (pv-acfn-wqciu-2023-ir-food-community-specific, 0.388 kg/day;
     // HITL J. Nelson, WQCIU 2023 primary verified; promote-acfn-foodweb.mjs --apply) = 1239.
-    expect(view.audit.values.approvedSourceBacked).toBe(1239);
+    // 2026-06-14: +0 -- TWN toddler subsistence food-web records (IR + BW) added as needs_review /
+    // pending_source_locator (uniform pre-promotion shape; catalog-invariant fix 2026-06-14) = 1239.
+    // 2026-06-15: +2 -- TWN toddler subsistence IR + BW promoted out of pending to
+    // approved_source_backed (HITL J. Nelson, inline-approved --apply via
+    // promote-twn-foodweb-toddler.mjs; IR verified vs TWN BIWQO 2021 Table 1, p.11) = 1241.
+    expect(view.audit.values.approvedSourceBacked).toBe(1241);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -126,6 +133,11 @@ describe('matrix options evidence library helpers', () => {
     // promote-hc-pqra-worker.mjs) = 378.
     // 2026-06-13: -1 -- subsistence-fisher IR_food promoted out of pending
     // (pv-wlrs-2023-ir-food-subsistence-bc; promote-wlrs-subsistence.mjs --apply) = 377.
+    // 2026-06-14: +2 -- TWN toddler subsistence food-web records (IR + BW, both
+    // needs_review / pending_source_locator; uniform pre-promotion shape; catalog-invariant
+    // fix 2026-06-14 makes BW standard needs_review matching IR). = 379.
+    // 2026-06-15: -2 -- TWN toddler subsistence IR + BW promoted out of pending (HITL J. Nelson,
+    // inline-approved --apply via promote-twn-foodweb-toddler.mjs) = 377.
     expect(view.audit.values.pendingSourceLocator).toBe(377);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
@@ -141,7 +153,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-12: +8 HC PQRA v4.0 Appendix E dermal receptor characteristics
     // (6 SA_cm2 + 2 AF_sed_mg_per_cm2, available_option) = 1606.
     // 2026-06-14: +1 ACFN community-specific food-web IR_food record (available_option) = 1607.
-    expect(view.audit.values.availableOptions).toBe(1607);
+    // 2026-06-14: +2 TWN toddler subsistence food-web records (IR + BW, both available_option,
+    // needs_review pre-promotion) = 1609.
+    expect(view.audit.values.availableOptions).toBe(1609);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
