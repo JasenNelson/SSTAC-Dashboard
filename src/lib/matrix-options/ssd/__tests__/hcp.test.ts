@@ -252,6 +252,83 @@ describe('SSD HCp preview', () => {
     ).toBe(true);
   });
 
+  // Guard pin: records that carry mixed reported units are blocked regardless of sourceMode.
+  // ECOTOX_PREFERRED_SELECT_COLUMNS now includes 'unit', so rows fetched from a mirror
+  // that carries the unit column will arrive with raw.unit populated and hit this guard.
+  // sourceMode is INERT in buildSsdAnalysis (never read); these tests pin the mixed-unit
+  // guard, not any live-path-specific analysis branch.
+  it('blocks analysis when rows carry mixed concentration units (ecotox_mirror sourceMode, guard pin)', () => {
+    // 5 rows reporting mg/L + 1 row reporting ng/L -- two distinct units are 1e6
+    // apart; blending them would corrupt every per-species value and the HCp.
+    const LIVE_MIXED_UNIT_ROWS: RawEcotoxRecord[] = [
+      ...Array.from({ length: 5 }, (_, index) => ({
+        chemical_name: 'Copper',
+        species_scientific_name: `LiveSpecies ${index + 1}`,
+        conc1_mean: 0.1 + index * 0.02,
+        unit: 'mg/L',
+        species_group: 'Fish' as const,
+        media_type: 'FW',
+        endpoint: 'Mortality',
+      })),
+      {
+        chemical_name: 'Copper',
+        species_scientific_name: 'LiveSpecies 6',
+        conc1_mean: 80000,
+        unit: 'ng/L',
+        species_group: 'Invertebrate' as const,
+        media_type: 'FW',
+        endpoint: 'Mortality',
+      },
+    ];
+
+    const result = buildSsdAnalysis(LIVE_MIXED_UNIT_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Copper'],
+      sourceMode: 'ecotox_mirror',
+    });
+
+    expect(result.isBlocked).toBe(true);
+    expect(result.blockReason).toMatch(/single consistent/i);
+    expect(result.warnings.join(' ')).toMatch(/single consistent/i);
+    expect(result.hcp).toBeNaN();
+    expect(Number.isFinite(result.hcp)).toBe(false);
+    expect(result.speciesAggregates).toEqual([]);
+    expect(result.speciesCount).toBe(0);
+    expect(result.empiricalPoints).toEqual([]);
+    expect(result.fittedCurvePoints).toEqual([]);
+    expect(result.diagnostics).toEqual([]);
+    expect(result.bootstrapInterval).toBeNull();
+  });
+
+  it('does not block analysis when all rows report the same unit (ecotox_mirror sourceMode, guard pin)', () => {
+    const LIVE_SINGLE_UNIT_ROWS: RawEcotoxRecord[] = Array.from(
+      { length: 6 },
+      (_, index) => ({
+        chemical_name: 'Copper',
+        species_scientific_name: `LiveSpecies ${index + 1}`,
+        conc1_mean: 0.05 + index * 0.03,
+        unit: 'mg/L',
+        species_group: index < 3 ? ('Fish' as const) : ('Invertebrate' as const),
+        media_type: 'FW',
+        endpoint: 'Mortality',
+      }),
+    );
+
+    const result = buildSsdAnalysis(LIVE_SINGLE_UNIT_ROWS, {
+      ...BASE_SETTINGS,
+      chemicalNames: ['Copper'],
+      sourceMode: 'ecotox_mirror',
+    });
+
+    expect(result.isBlocked).toBe(false);
+    expect(result.blockReason).toBeNull();
+    expect(result.unit).toBe('mg/L');
+    expect(result.speciesCount).toBe(6);
+    expect(result.hcp).toBeGreaterThan(0);
+    expect(Number.isFinite(result.hcp)).toBe(true);
+    expect(result.warnings.join(' ')).not.toMatch(/single consistent/i);
+  });
+
   it('does not block or alter behavior for a single-unit dataset (regression)', () => {
     const single = buildSsdAnalysis(SIX_SPECIES_MG_PER_L_ROWS, {
       ...BASE_SETTINGS,

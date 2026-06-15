@@ -26,14 +26,38 @@ export const ECOTOX_REFERENCE_FALLBACK_COLUMNS = [
   'doi',
   'title',
 ] as const;
-export const ECOTOX_PREFERRED_SELECT_COLUMNS = [
-  ...ECOTOX_OPERATIONAL_COLUMNS,
-  'reference_number',
-] as const;
-export const ECOTOX_FALLBACK_SELECT_COLUMNS = [
-  ...ECOTOX_OPERATIONAL_COLUMNS,
-  ...ECOTOX_REFERENCE_FALLBACK_COLUMNS,
-] as const;
+// buildEcotoxSelectColumns assembles the column list for a page query.
+// Each optional column is controlled independently so that a missing-column
+// error for one column does not strip the other.
+//
+// useReferenceFallback=false -> include ECOTOX_REFERENCE_NUMBER_COLUMN
+// useReferenceFallback=true  -> include ECOTOX_REFERENCE_FALLBACK_COLUMNS instead
+// dropUnit=false             -> include 'unit'
+// dropUnit=true              -> omit 'unit'
+export function buildEcotoxSelectColumns(opts: {
+  useReferenceFallback: boolean;
+  dropUnit: boolean;
+}): string[] {
+  return [
+    ...ECOTOX_OPERATIONAL_COLUMNS,
+    ...(opts.useReferenceFallback
+      ? ECOTOX_REFERENCE_FALLBACK_COLUMNS
+      : [ECOTOX_REFERENCE_NUMBER_COLUMN]),
+    ...(opts.dropUnit ? [] : ['unit']),
+  ];
+}
+
+// ECOTOX_PREFERRED_SELECT_COLUMNS and ECOTOX_FALLBACK_SELECT_COLUMNS are kept
+// exported for consumers and tests that reference them directly.
+// PREFERRED = both optional columns present; FALLBACK = both dropped/substituted.
+export const ECOTOX_PREFERRED_SELECT_COLUMNS = buildEcotoxSelectColumns({
+  useReferenceFallback: false,
+  dropUnit: false,
+}) as unknown as readonly string[];
+export const ECOTOX_FALLBACK_SELECT_COLUMNS = buildEcotoxSelectColumns({
+  useReferenceFallback: true,
+  dropUnit: true,
+}) as unknown as readonly string[];
 export const ECOTOX_REQUIRED_COLUMNS = [
   ...ECOTOX_OPERATIONAL_COLUMNS,
   'reference_number_or_reference_metadata',
@@ -338,6 +362,24 @@ export async function searchEcotoxChemicals(
   return Array.from(new Set(names)).sort((a, b) => a.localeCompare(b));
 }
 
+// identifyMissingColumn returns 'unit', 'reference_number', or null depending
+// on which optional preferred column the error message names. Uses word-boundary
+// matching to avoid false matches on column names that contain these words as
+// substrings.
+function identifyMissingColumn(error: unknown): 'unit' | 'reference_number' | null {
+  if (!error || typeof error !== 'object') return null;
+  const candidate = error as { code?: unknown; message?: unknown };
+  const code = typeof candidate.code === 'string' ? candidate.code : '';
+  const message =
+    typeof candidate.message === 'string' ? candidate.message.toLowerCase() : '';
+  const isMissingColumn =
+    code === '42703' || message.includes('does not exist');
+  if (!isMissingColumn) return null;
+  if (/\bunit\b/.test(message)) return 'unit';
+  if (/\breference_number\b/.test(message)) return 'reference_number';
+  return null;
+}
+
 export async function fetchEcotoxRows(
   client: SupabaseClient,
   request: EcotoxFetchRequest,
@@ -349,51 +391,81 @@ export async function fetchEcotoxRows(
   const rows: RawEcotoxRecord[] = [];
   let page = 0;
   let truncated = false;
-  let useReferenceFallbackColumns = false;
+  // Both flags start false. Each flips at most once (bounded degradation).
+  // Once set they persist across all subsequent pages.
+  let useReferenceFallback = false;
+  let dropUnit = false;
 
   while (rows.length < maxRows) {
     const start = page * ECOTOX_PAGE_SIZE;
     const remaining = maxRows - rows.length;
     const pageSize = Math.min(ECOTOX_PAGE_SIZE, remaining);
     const end = start + pageSize - 1;
-    const response = await executeEcotoxPageQuery(
+
+    // Build the column list from current flag state.
+    const columns = buildEcotoxSelectColumns({ useReferenceFallback, dropUnit });
+    let response = await executeEcotoxPageQuery(
       client,
       request,
       chemicalNames,
       start,
       end,
-      useReferenceFallbackColumns
-        ? ECOTOX_FALLBACK_SELECT_COLUMNS
-        : ECOTOX_PREFERRED_SELECT_COLUMNS,
+      columns,
     );
 
-    if (
-      response.error &&
-      !useReferenceFallbackColumns &&
-      shouldTryReferenceFallback(response.error, response.status)
-    ) {
-      useReferenceFallbackColumns = true;
-      const fallbackResponse = await executeEcotoxPageQuery(
-        client,
-        request,
-        chemicalNames,
-        start,
-        end,
-        ECOTOX_FALLBACK_SELECT_COLUMNS,
-      );
-      if (fallbackResponse.error) throw fallbackResponse.error;
-      const pageRows = deriveReferenceNumbers(
-        (fallbackResponse.data ?? []) as unknown as RawEcotoxRecord[],
-      );
-      rows.push(...pageRows);
+    // Inner retry loop: flip at most one new flag per iteration.
+    // Bounded: each flag flips at most once (useReferenceFallback, dropUnit),
+    // so at most 2 retries per page. Flags persist across pages once set.
+    while (response.error) {
+      // Check for the blank-head-400 case (triggers reference fallback).
+      if (
+        response.status === 400 &&
+        isBlankSupabaseHeadError(response.error) &&
+        !useReferenceFallback
+      ) {
+        useReferenceFallback = true;
+        response = await executeEcotoxPageQuery(
+          client,
+          request,
+          chemicalNames,
+          start,
+          end,
+          buildEcotoxSelectColumns({ useReferenceFallback, dropUnit }),
+        );
+        continue;
+      }
 
-      if (pageRows.length < pageSize) break;
-      if (rows.length >= maxRows) truncated = true;
-      page += 1;
-      continue;
+      // Check for a named missing-optional-column error.
+      const missing = identifyMissingColumn(response.error);
+      if (missing === 'unit' && !dropUnit) {
+        dropUnit = true;
+        response = await executeEcotoxPageQuery(
+          client,
+          request,
+          chemicalNames,
+          start,
+          end,
+          buildEcotoxSelectColumns({ useReferenceFallback, dropUnit }),
+        );
+        continue;
+      }
+      if (missing === 'reference_number' && !useReferenceFallback) {
+        useReferenceFallback = true;
+        response = await executeEcotoxPageQuery(
+          client,
+          request,
+          chemicalNames,
+          start,
+          end,
+          buildEcotoxSelectColumns({ useReferenceFallback, dropUnit }),
+        );
+        continue;
+      }
+
+      // Already degraded on this column, or an unrelated error: propagate.
+      throw response.error;
     }
 
-    if (response.error) throw response.error;
     const pageRows = deriveReferenceNumbers(
       (response.data ?? []) as unknown as RawEcotoxRecord[],
     );
@@ -414,7 +486,7 @@ function shouldTryReferenceFallback(
   if (status === 400 && isBlankSupabaseHeadError(error)) {
     return true;
   }
-  return isMissingReferenceNumberError(error);
+  return isMissingOptionalPreferredColumnError(error);
 }
 
 function isBlankSupabaseHeadError(error: unknown): boolean {
@@ -423,15 +495,28 @@ function isBlankSupabaseHeadError(error: unknown): boolean {
   return candidate.message === '';
 }
 
-function isMissingReferenceNumberError(error: unknown): boolean {
+// Columns that, when absent from the mirror, trigger a graceful fallback to
+// ECOTOX_FALLBACK_SELECT_COLUMNS rather than a hard error. 'unit' is included
+// so that mirrors that predate the unit column still work; the mixed-unit guard
+// in hcp.ts becomes inactive (units.length===0 path) rather than hard-breaking.
+const ECOTOX_OPTIONAL_PREFERRED_COLUMNS: readonly string[] = [
+  ECOTOX_REFERENCE_NUMBER_COLUMN,
+  'unit',
+];
+
+function isMissingOptionalPreferredColumnError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false;
   const candidate = error as { code?: unknown; message?: unknown };
   const code = typeof candidate.code === 'string' ? candidate.code : '';
   const message =
     typeof candidate.message === 'string' ? candidate.message.toLowerCase() : '';
+  const isMissingColumn =
+    code === '42703' || message.includes('does not exist');
   return (
-    (code === '42703' || message.includes('does not exist')) &&
-    message.includes(ECOTOX_REFERENCE_NUMBER_COLUMN)
+    isMissingColumn &&
+    ECOTOX_OPTIONAL_PREFERRED_COLUMNS.some((col) =>
+      new RegExp(`\\b${col}\\b`).test(message),
+    )
   );
 }
 
