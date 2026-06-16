@@ -9,6 +9,7 @@ import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { spawn } from 'child_process';
 import { openSync, closeSync, existsSync } from 'fs';
 import path from 'path';
+import { safeFilename } from '@/lib/regulatory-review/safe-path';
 import {
   getReviewProjectById,
   getUnprocessedFiles,
@@ -70,11 +71,24 @@ export async function POST(
       '--progress-file', progressFile,
     ];
 
-    // If mode is 'new', only process unprocessed files
+    // If mode is 'new', only process unprocessed files.
+    // SECURITY: the client-supplied body.files list is user-controlled and the
+    // stored DB filenames could be poisoned, so reduce every name to a safe
+    // single segment before passing it as a --files argument to the spawned
+    // Python process (defense against "../" escaping the source directory).
     if (mode === 'new') {
-      const filenames = body.files as string[] | undefined;
-      if (filenames && filenames.length > 0) {
-        args.push('--files', ...filenames);
+      const requested = body.files as string[] | undefined;
+      if (requested && requested.length > 0) {
+        const safeNames = requested
+          .map((f) => safeFilename(f))
+          .filter((f): f is string => f !== null);
+        if (safeNames.length === 0) {
+          return NextResponse.json(
+            { error: 'No valid files provided' },
+            { status: 400 }
+          );
+        }
+        args.push('--files', ...safeNames);
       } else {
         // Get unprocessed files from DB
         const unprocessed = getUnprocessedFiles(id);
@@ -84,7 +98,16 @@ export async function POST(
             { status: 400 }
           );
         }
-        args.push('--files', ...unprocessed.map((f) => f.filename));
+        const safeNames = unprocessed
+          .map((f) => safeFilename(f.filename))
+          .filter((f): f is string => f !== null);
+        if (safeNames.length === 0) {
+          return NextResponse.json(
+            { error: 'No valid files to extract' },
+            { status: 400 }
+          );
+        }
+        args.push('--files', ...safeNames);
       }
     }
 

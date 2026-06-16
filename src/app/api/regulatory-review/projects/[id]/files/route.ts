@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { writeFile, mkdir } from 'fs/promises';
 import path from 'path';
+import { safeFilename, resolveWithinBase } from '@/lib/regulatory-review/safe-path';
 import {
   getReviewProjectById,
   getProjectFiles,
@@ -103,12 +104,29 @@ export async function POST(
         continue;
       }
 
-      const filename = entry.name;
+      // SECURITY: never trust the multipart filename. Reduce it to a safe
+      // single path segment (strips "../", "..\\", and absolute prefixes) and
+      // assert the resolved target stays inside sourceDir before writing.
+      const filename = safeFilename(entry.name);
+      if (!filename) {
+        return NextResponse.json(
+          { error: 'Invalid file name' },
+          { status: 400 }
+        );
+      }
+      const filePath = resolveWithinBase(sourceDir, filename);
+      if (!filePath) {
+        return NextResponse.json(
+          { error: 'Invalid file name' },
+          { status: 400 }
+        );
+      }
       const buffer = Buffer.from(await entry.arrayBuffer());
-      const filePath = path.join(sourceDir, filename);
 
       await writeFile(filePath, buffer);
 
+      // Persist the sanitized name so downstream delete/extract sinks read a
+      // clean segment, not a poisoned one.
       const fileRecord = addProjectFile(
         id,
         filename,
