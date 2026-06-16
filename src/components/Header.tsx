@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAdmin } from '@/contexts/AdminContext';
 import ThemeToggle from './ThemeToggle';
 import { MENU_LINKS, MENU_CATEGORIES } from './header/menuConfig';
+import { GATED_ROUTE_PREFIXES } from '@/lib/auth/route-access';
 
 export default function Header() {
   const { session, isLoading: authLoading, authError, authUnverified, signOut } = useAuth();
@@ -43,8 +44,10 @@ export default function Header() {
   // through. We only redirect when auth state is conclusively resolved AND the
   // user is genuinely absent with no active error or unverified state.
   useEffect(() => {
-    const protectedRoutes = ['/dashboard', '/twg', '/survey-results', '/cew-2025', '/bn-rrm'];
-    const isProtectedRoute = protectedRoutes.some(route => pathname.startsWith(route));
+    // Use the single source of truth (mirrors the middleware matcher) so the
+    // client secondary guard stays in sync with the server gate (incl. the
+    // newly-gated /demo-matrix-graph and /regulatory-review).
+    const isProtectedRoute = GATED_ROUTE_PREFIXES.some(route => pathname.startsWith(route));
 
     if (!isProtectedRoute) return;
 

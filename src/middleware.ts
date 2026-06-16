@@ -44,11 +44,33 @@ function isRetryableAuthError(error: { name?: string; status?: number }): boolea
 // Returns true for errors that definitively indicate the refresh token is dead.
 // Only on these do we call signOut() to clear stale cookies.
 function isTerminalAuthError(error: { message?: string; status?: number }): boolean {
-  const msg = error.message ?? ''
-  if (msg.includes('Invalid Refresh Token') || msg.includes('refresh_token_not_found')) return true
-  // 401/403 with no user and not a retryable status -- genuinely expired/revoked.
+  // Case-insensitive: Supabase emits both 'Invalid Refresh Token' and the
+  // lowercase 'Invalid refresh token' variant (the latter often with status 400),
+  // plus the 'refresh_token_not_found' code. All are dead-token = terminal.
+  const msg = (error.message ?? '').toLowerCase()
+  if (
+    msg.includes('invalid refresh token') ||
+    msg.includes('refresh_token_not_found') ||
+    msg.includes('refresh token not found')
+  ) {
+    return true
+  }
+  // 401/403 (not a retryable status) -- genuinely expired/revoked.
   if ((error.status === 401 || error.status === 403) && !isRetryableAuthError(error)) return true
   return false
+}
+
+// Build a redirect to /login that CARRIES any cookies setAll wrote onto `carryFrom`
+// (e.g. the signOut() expirations on the terminal path) so the browser actually
+// receives the Set-Cookie removals. On paths where setAll did not fire (retryable,
+// clean no-user), carryFrom.cookies is empty -- nothing is copied, so the browser's
+// existing cookies are preserved (which is what the retryable path wants).
+function redirectToLogin(request: NextRequest, carryFrom: NextResponse): NextResponse {
+  const loginUrl = new URL('/login', request.url)
+  loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+  const redirectRes = NextResponse.redirect(loginUrl)
+  carryFrom.cookies.getAll().forEach((cookie) => redirectRes.cookies.set(cookie))
+  return applySecurityHeaders(redirectRes)
 }
 
 export async function middleware(request: NextRequest) {
@@ -67,6 +89,9 @@ export async function middleware(request: NextRequest) {
           // Propagate updated cookies into the request (for downstream server components)
           // then recreate the response so the Set-Cookie headers are written to the client.
           // Security headers are applied to the final response object before return.
+          // Forward-compat: @supabase/ssr@0.6.1 SetAllCookies yields only { name, value,
+          // options }. If a future @supabase/ssr passes cache-control headers into setAll,
+          // forward them to the response to avoid CDN cache poisoning / cross-user leakage.
           cookiesToSet.forEach(({ name, value }) => request.cookies.set(name, value))
           response = NextResponse.next({ request })
           cookiesToSet.forEach(({ name, value, options }) =>
@@ -96,9 +121,8 @@ export async function middleware(request: NextRequest) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[Middleware] Retryable auth error -- redirecting without signOut:', error.name ?? error.status)
       }
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      return applySecurityHeaders(NextResponse.redirect(loginUrl))
+      // setAll did not fire (getUser errored, no refresh) -> no cookies carried -> session preserved.
+      return redirectToLogin(request, response)
     }
 
     if (isTerminalAuthError(error)) {
@@ -112,17 +136,15 @@ export async function middleware(request: NextRequest) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[Middleware] Terminal auth error -- signed out and redirecting to login')
       }
-      const loginUrl = new URL('/login', request.url)
-      loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
-      return applySecurityHeaders(NextResponse.redirect(loginUrl))
+      // signOut() wrote cookie EXPIRATIONS onto `response` via setAll; carry them
+      // onto the redirect so the browser actually clears the dead token cookies.
+      return redirectToLogin(request, response)
     }
   }
 
   // Clean no-session case: no error, just no authenticated user.
   if (!user) {
-    const loginUrl = new URL('/login', request.url)
-    loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
-    return applySecurityHeaders(NextResponse.redirect(loginUrl))
+    return redirectToLogin(request, response)
   }
 
   // Authenticated pass-through. response may have been recreated by setAll above.

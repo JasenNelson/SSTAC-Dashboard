@@ -64,12 +64,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (error) {
         if (isRetryableAuthError(error)) {
-          // Transient failure: preserve whatever session we already have.
-          // If we have no prior session we cannot show a valid logged-in UI
-          // anyway, so session stays null (or whatever it was).
-          setAuthUnverified(true);
-          setAuthError(null);
-          // Do NOT call setSession -- preserve the prior value.
+          if (sessionRef.current) {
+            // Transient failure WITH a prior session to preserve: keep the
+            // session live and flag it unverified (UI stays logged in; the
+            // online/visibilitychange re-sync will reconfirm). Do NOT setSession.
+            setAuthUnverified(true);
+            setAuthError(null);
+          } else {
+            // No prior session to preserve: a transient failure here is just
+            // "not logged in and could not verify". Treat it as a definitive
+            // no-session state so the secondary client-side redirect is NOT
+            // suppressed (authUnverified would otherwise block it).
+            setSession(null);
+            setAuthUnverified(false);
+            setAuthError(null);
+          }
           return;
         }
         // Terminal auth error (e.g. invalid JWT, refresh token revoked).
