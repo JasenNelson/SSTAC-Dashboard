@@ -190,9 +190,11 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
+    // SECURITY: log the full error server-side but do not return raw error text
+    // to the client (information disclosure).
     console.error('Search error:', error);
     return NextResponse.json(
-      { error: 'Search failed', details: String(error) },
+      { error: 'Search failed' },
       { status: 500 }
     );
   }

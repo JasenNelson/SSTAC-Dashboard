@@ -101,13 +101,10 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
         userId
       });
       
-      // Return more detailed error for debugging
+      // SECURITY: the underlying survey/CEW errors are logged server-side above;
+      // do not return raw error text or codes to the client (information disclosure).
       return NextResponse.json(
-        { 
-          error: 'Failed to fetch poll results',
-          details: surveyData.error?.message || cewData.error?.message,
-          code: surveyData.error?.code || cewData.error?.code
-        },
+        { error: 'Failed to fetch poll results' },
         { status: 500 }
       );
     }
@@ -223,13 +220,11 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     });
 
   } catch (error) {
+    // SECURITY: log the full error server-side but do not return raw error text
+    // to the client (information disclosure).
     console.error('Wordcloud poll results error:', error);
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json(
-      { 
-        error: 'Internal server error',
-        details: errorMessage
-      },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
