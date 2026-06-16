@@ -8,6 +8,7 @@ import {
   coerceRegulatoryFrameId,
   getPathwayApplicability,
   getRegulatoryFrame,
+  isRegulatoryFrameId,
   pathwayApplicabilityLabel,
   pathwayApplicabilityTone,
   regulatoryFrameEvidenceFilter,
@@ -89,5 +90,36 @@ describe('regulatoryFrames', () => {
     expect(pathwayApplicabilityTone('needs_review')).toBe('amber');
     expect(pathwayApplicabilityTone('reference_only')).toBe('sky');
     expect(pathwayApplicabilityTone('unsupported')).toBe('slate');
+  });
+});
+
+describe('isRegulatoryFrameId', () => {
+  it('returns true for every id in REGULATORY_FRAME_IDS', () => {
+    for (const id of REGULATORY_FRAME_IDS) {
+      expect(isRegulatoryFrameId(id)).toBe(true);
+    }
+  });
+
+  it('returns true for known individual frame ids', () => {
+    expect(isRegulatoryFrameId('bc-protocol1-v5-dra')).toBe(true);
+    expect(isRegulatoryFrameId('ccme-sediment-quality')).toBe(true);
+  });
+
+  it('returns false for an unknown or empty string', () => {
+    expect(isRegulatoryFrameId('unknown-frame')).toBe(false);
+    expect(isRegulatoryFrameId('')).toBe(false);
+  });
+
+  it('returns false for the legacy jurisdiction key bc-csr (not a RegulatoryFrameId)', () => {
+    // 'bc-csr' is a legacy jurisdiction key handled by coerceRegulatoryFrameId,
+    // NOT a member of REGULATORY_FRAME_IDS (only 'bc-csr-sediment-numerical' is).
+    expect(isRegulatoryFrameId('bc-csr')).toBe(false);
+  });
+
+  it('returns false for non-string values (number, null, undefined, object)', () => {
+    expect(isRegulatoryFrameId(42)).toBe(false);
+    expect(isRegulatoryFrameId(null)).toBe(false);
+    expect(isRegulatoryFrameId(undefined)).toBe(false);
+    expect(isRegulatoryFrameId({ id: 'bc-protocol1-v5-dra' })).toBe(false);
   });
 });
