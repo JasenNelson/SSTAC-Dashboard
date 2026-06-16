@@ -8,6 +8,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { requireAdmin, requireLocalEngine } from '@/lib/api-guards';
 import { unlink } from 'fs/promises';
 import path from 'path';
+import { resolveWithinBase } from '@/lib/regulatory-review/safe-path';
 import {
   getReviewProjectById,
   getProjectFiles,
@@ -69,19 +70,24 @@ export async function DELETE(
       );
     }
 
-    // Try to remove from disk
+    // Try to remove from disk. SECURITY (defense-in-depth): the stored
+    // filename could be a poisoned pre-fix DB row, so re-sanitize and assert
+    // the resolved target stays inside the project's source directory before
+    // unlinking -- never let a stored name escape via "../".
     if (fileRecord.filename && project.folder_path) {
-      const filePath = path.join(
+      const sourceDir = path.join(
         ACTIVE_REVIEWS_BASE,
         project.folder_path,
-        '0_Source_Documents',
-        fileRecord.filename
+        '0_Source_Documents'
       );
-      try {
-        await unlink(filePath);
-      } catch (fsError) {
-        // File may already be gone - don't fail the request
-        console.error('Error deleting file from disk:', fsError);
+      const filePath = resolveWithinBase(sourceDir, fileRecord.filename);
+      if (filePath) {
+        try {
+          await unlink(filePath);
+        } catch (fsError) {
+          // File may already be gone - don't fail the request
+          console.error('Error deleting file from disk:', fsError);
+        }
       }
     }
 
