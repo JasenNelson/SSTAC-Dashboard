@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
 import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 export async function POST(request: NextRequest) {
@@ -14,10 +15,12 @@ export async function POST(request: NextRequest) {
     
     if (isCEWPage) {
       // CEW pages: Generate unique user_id for each CEW submission to count unique participants
-      // This allows multiple people to submit and be counted as separate responses
-      // Note: Using inline generation to maintain exact backward compatibility with existing format
+      // This allows multiple people to submit and be counted as separate responses.
+      // SECURITY: use a cryptographically secure random suffix (randomBytes) rather
+      // than Math.random(), which is predictable. The "<code>_<timestamp>_<hex>" shape
+      // is preserved for backward compatibility.
       const timestamp = Date.now();
-      const randomSuffix = Math.random().toString(36).substring(2, 8);
+      const randomSuffix = randomBytes(4).toString('hex');
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
       if (process.env.NODE_ENV === 'development') {
         console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);
@@ -95,7 +98,9 @@ export async function POST(request: NextRequest) {
     if (voteError) {
       console.error('Error submitting ranking votes:', voteError);
       console.error(`[Ranking Poll Submit] Vote error details:`, JSON.stringify(voteError, null, 2));
-      return NextResponse.json({ error: 'Failed to submit ranking votes', details: voteError.message }, { status: 500 });
+      // SECURITY: do not leak the raw Postgres/Supabase error text to the client
+      // (information disclosure). The full error is logged server-side above.
+      return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
     }
 
     if (process.env.NODE_ENV === 'development') {

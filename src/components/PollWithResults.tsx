@@ -49,7 +49,9 @@ export default function PollWithResults({
     if (typeof window !== 'undefined') {
       let sessionId = sessionStorage.getItem('cew-session-id');
       if (!sessionId) {
-        sessionId = `session_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
+        // SECURITY: seed the anonymous CEW session id with the Web Crypto UUID
+        // generator rather than Math.random(), which is predictable.
+        sessionId = `session_${crypto.randomUUID()}`;
         sessionStorage.setItem('cew-session-id', sessionId);
       }
       return sessionId;
