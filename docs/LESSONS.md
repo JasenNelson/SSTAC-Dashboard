@@ -10,6 +10,63 @@
 
 ---
 
+## 2026-06-15 - Auth gating + access-control corrections (matrix-options lane) [HIGH]
+
+**Date:** June 15, 2026
+**Area:** auth / access control / matrix-options / review process
+**Impact:** HIGH (access-control posture + review discipline for security code)
+**Status:** Shipped (#320, #328, #329, #330)
+**Session:** MO activations + auth investigation/hardening
+
+### 1. Never present a codex-review decision baked into a code comment as "owner-approved"
+A `// Codex P1 (2026-05-20)` comment in `matrix-options/page.tsx` declared the route "public by design."
+That was a codex-review decision, NOT owner approval. The intended design is that the `(dashboard)`
+route group is authenticated-only. When fixing access-control anomalies, use the EXISTING gating pattern
+-- the middleware `config.matcher` (`src/middleware.ts`) and/or per-page `supabase.auth.getUser()` +
+`redirect('/login')` -- do NOT invent a new gating mechanism. #330 gated /matrix-options by adding
+`'/matrix-options/:path*'` to the matcher (covers the page + its `/private-data-access` child). Public
+routes are ONLY `/`, `/login`, `/signup`, `/cew-polls` (anonymous conference voting). An access audit
+that flags middleware-gated routes (bn-rrm, twg/*, survey-results/*) as "anomalies" for lacking a
+redundant per-page check is over-flagging -- the matcher already gates them.
+
+### 2. Subagent-authored auth/security code needs the FULL Opus + codex pipeline
+On #329 (auth middleware refactor) Opus Leg-1 returned GREEN but codex took 4 rounds to catch 3 real
+bugs: (a) the terminal-error check was case-sensitive and missed Supabase's lowercase
+`Invalid refresh token` variant; (b) `signOut()` cookie expirations were dropped on the terminal redirect
+(it returned a fresh `NextResponse.redirect` instead of the setAll-mutated `response`) -- a pre-existing
+stuck-logout bug; (c) the client set `authUnverified` with no prior session to preserve. Never ship
+subagent-authored security code on a single green review. Files: `src/middleware.ts`
+(getAll/setAll + isRetryableAuthError/isTerminalAuthError + redirectToLogin), `src/contexts/AuthContext.tsx`,
+`src/components/Header.tsx`.
+
+### 3. Promoting a record into a candidate_group_id slot can flip defaultSelectionPolicy
+On #320, promoting the TWN toddler BW (16.5 kg) into the `human-health-food__generic__BW_kg__BC` slot
+(already holding the adult 70.7 kg) created a top-rank TIE, flipping the slot's suppression from the
+"A1 unit guard" path to "multiple top-ranked". Static review (Opus, codex) CANNOT see this -- only the
+live-catalog `test:ci` caught it (`defaultSelectionPolicy.test.ts`). Expect live-catalog policy tests to
+shift when promoting into an occupied slot; bump BOTH frameDefaults.test + integration.test on a new scenario.
+
+### 4. Gating a route breaks e2e specs that navigated it anonymously
+#330 broke `e2e/matrix-options.spec.ts` + `e2e/ssd-workbench.spec.ts`, which did
+`page.goto('/matrix-options')` without auth (exploiting the public access). Fix: switch them to the
+existing skip-if-redirected convention (`if (page.url().includes('/login')) test.skip(...)`, per
+`e2e/admin-agentic-os.spec.ts`) so they run locally-with-auth and skip in CI (no shared auth fixture).
+
+### 5. Reference-only source rows: do not stamp site-specific assumptions as source-backed
+On #328 (HC 2017 sediment, Option B), HC 2017 gives only the 72 mg/hr ingestion rate + the mg/hr-times-
+hours/day formula + body weights; the hours/day, AF, EF, ED are SITE-SPECIFIC per HC (not HC defaults).
+Stamping them `approved_source_backed` citing HC 2017 would be a source-fidelity violation. Option B keeps
+HC 2017 as a documented reference source row (currentness -> current, owner-attested) with NO
+parameter_value records / scenario / promote script.
+
+### Key Takeaway
+Access control: intended design is (dashboard)=authenticated; fix anomalies with the existing matcher /
+per-page pattern, never new mechanisms, and never treat a codex-in-comment decision as owner-approved.
+Security code gets the full Opus+codex pipeline. Catalog promotions + route gating ripple into
+live-catalog tests and e2e -- run the full gates.
+
+---
+
 ## 2026-06-14 - Per-seed mixed-source frame-default rows: provenance is per-seed, not per-row [HIGH]
 
 **Date:** June 14, 2026
