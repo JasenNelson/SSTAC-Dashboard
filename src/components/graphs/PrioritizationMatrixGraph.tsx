@@ -213,9 +213,11 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
     <div className="p-3 border rounded-lg shadow-md bg-white dark:bg-slate-800">
       <div className="flex justify-between items-center mb-2 h-10">
         {/* Visualization Mode Selector - Top Left */}
-        <div className="flex gap-1">
+        <div role="group" aria-label="Visualization mode" className="flex gap-1">
           <button
             onClick={() => setVisualizationMode('jittered')}
+            aria-label="Jittered clustering"
+            aria-pressed={visualizationMode === 'jittered'}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'jittered'
                 ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
@@ -227,6 +229,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           </button>
           <button
             onClick={() => setVisualizationMode('size-scaled')}
+            aria-label="Size-scaled"
+            aria-pressed={visualizationMode === 'size-scaled'}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'size-scaled'
                 ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
@@ -238,6 +242,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           </button>
           <button
             onClick={() => setVisualizationMode('heatmap')}
+            aria-label="Heatmap"
+            aria-pressed={visualizationMode === 'heatmap'}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'heatmap'
                 ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'
@@ -249,6 +255,8 @@ export default function PrioritizationMatrixGraph({ title, avgImportance, avgFea
           </button>
           <button
             onClick={() => setVisualizationMode('concentric')}
+            aria-label="Concentric circles"
+            aria-pressed={visualizationMode === 'concentric'}
             className={`p-2 rounded-md transition-all ${
               visualizationMode === 'concentric'
                 ? 'bg-sky-100 dark:bg-sky-900 text-sky-700 dark:text-sky-300'

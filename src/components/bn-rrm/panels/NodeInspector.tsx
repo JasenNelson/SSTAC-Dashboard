@@ -163,6 +163,7 @@ export const NodeInspector = memo(function NodeInspector({
                 selectNode(null);
                 toggleContainer(containerId!);
               }}
+              aria-label={`Back to ${container.label}`}
               className="flex items-center gap-1 text-slate-400 hover:text-slate-600 transition-colors"
             >
               <ArrowLeft className="w-3 h-3" />
@@ -187,6 +188,7 @@ export const NodeInspector = memo(function NodeInspector({
           </div>
           <button
             onClick={() => selectNode(null)}
+            aria-label="Deselect node"
             className="p-1 text-slate-400 dark:text-slate-500 hover:text-slate-600 transition-colors"
             title="Deselect node"
           >
@@ -205,6 +207,7 @@ export const NodeInspector = memo(function NodeInspector({
             </div>
             <button
               onClick={handleClearEvidence}
+              aria-label="Clear evidence"
               className="text-xs text-blue-600 dark:text-blue-400 hover:text-blue-800 flex items-center gap-1"
             >
               <EyeOff className="w-3 h-3" />

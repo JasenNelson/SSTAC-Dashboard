@@ -420,14 +420,16 @@ export default function AnnouncementsManagement() {
                   <div className="flex items-center space-x-2 ml-4">
                     <button
                       onClick={() => setEditingAnnouncement(announcement)}
-                      className="p-2 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors"
+                      aria-label="Edit announcement"
+                      className="p-2 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Edit announcement"
                     >
                       <Edit className="w-4 h-4" />
                     </button>
                     <button
                       onClick={() => handleDeleteAnnouncement(announcement.id)}
-                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors"
+                      aria-label="Delete announcement"
+                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Delete announcement"
                     >
                       <Trash2 className="w-4 h-4" />
