@@ -288,35 +288,53 @@ export default function LikeButton({
 
   return (
     <div className={`relative ${className}`} style={{ overflow: 'visible' }}>
-      <button
-        onClick={handleLike}
-        disabled={isLoading}
+      <div
         data-like-button={actualDiscussionId || actualReplyId}
         className={`
-          flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
+          inline-flex items-center rounded-lg transition-all duration-200
           ${liked
-            ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400 hover:bg-green-200 dark:hover:bg-green-900/30'
-            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-600'
+            ? 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+            : 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300'
           }
-          ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          ${isLoading ? 'opacity-50' : ''}
         `}
       >
-        <Heart 
-          className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} 
-        />
-        <span className="text-sm font-medium">{formatLikeText(likes)}</span>
+        <button
+          type="button"
+          onClick={handleLike}
+          disabled={isLoading}
+          aria-label={liked ? 'Unlike this post' : 'Like this post'}
+          aria-pressed={liked}
+          className={`
+            flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
+            ${liked
+              ? 'hover:bg-green-200 dark:hover:bg-green-900/30'
+              : 'hover:bg-slate-200 dark:hover:bg-slate-600'
+            }
+            ${isLoading ? 'cursor-not-allowed' : 'cursor-pointer'}
+            focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1
+          `}
+        >
+          <Heart
+            className={`w-4 h-4 ${liked ? 'fill-current' : ''}`}
+          />
+          <span className="text-sm font-medium">{formatLikeText(likes)}</span>
+        </button>
         {likes > 0 && (
-          <div
+          <button
+            type="button"
             onClick={(e) => {
               e.stopPropagation();
               setShowDetails(!showDetails);
             }}
-            className="ml-1 p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors cursor-pointer"
+            aria-label={showDetails ? 'Hide who liked this' : 'Show who liked this'}
+            aria-expanded={showDetails}
+            className="ml-1 p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           >
             <Users className="w-3 h-3" />
-          </div>
+          </button>
         )}
-      </button>
+      </div>
 
       {/* Like Details Popup */}
       {showDetails && likes > 0 && (

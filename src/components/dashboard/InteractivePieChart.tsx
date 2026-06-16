@@ -186,12 +186,17 @@ export default function InteractivePieChart({
             {slices.map((slice, index) => (
               <div
                 key={index}
-                className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 ${
+                role="button"
+                tabIndex={0}
+                aria-label={`${slice.label}: ${slice.percentage.toFixed(1)}%`}
+                aria-pressed={selectedSlice === index}
+                className={`flex items-center space-x-3 p-2 rounded-lg transition-all duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 ${
                   hoveredSlice === index ? 'bg-slate-100' : ''
                 } ${selectedSlice === index ? 'bg-sky-50 border border-sky-200' : ''}`}
                 onMouseEnter={() => handleSliceHover(index)}
                 onMouseLeave={() => handleSliceHover(null)}
                 onClick={() => handleSliceClick(index)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); handleSliceClick(index); } }}
               >
                 <div
                   className="w-4 h-4 rounded-full"

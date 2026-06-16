@@ -145,10 +145,14 @@ export default function ProjectTimeline() {
           {milestones.map((milestone, _index) => (
             <div
               key={milestone.id}
-              className="relative flex items-start group cursor-pointer"
+              role="button"
+              tabIndex={0}
+              aria-expanded={expandedMilestone === milestone.id}
+              className="relative flex items-start group cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
               onMouseEnter={() => setHoveredMilestone(milestone.id)}
               onMouseLeave={() => setHoveredMilestone(null)}
               onClick={() => toggleMilestone(milestone.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggleMilestone(milestone.id); } }}
             >
               {/* Timeline Dot */}
               <div className="relative z-10 flex-shrink-0 w-12 h-12 bg-white dark:bg-slate-800 rounded-full border-4 border-slate-200 dark:border-slate-700 flex items-center justify-center">
