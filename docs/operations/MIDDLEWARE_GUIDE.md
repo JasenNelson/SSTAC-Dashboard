@@ -21,10 +21,11 @@ matcher: [
   '/cew-2025/:path*',
   '/regulatory-review/:path*',
   '/bn-rrm/:path*',
+  '/demo-matrix-graph/:path*',
 ]
 ```
 
-Source: `src/middleware.ts:128-137`. Routes outside this set bypass middleware entirely — no auth check, no header set. API routes (`/api/**`) are not in the matcher; per-route guards (e.g. `requireAdmin()` in `src/lib/api-guards.ts`) handle their auth.
+Source: `src/middleware.ts` (`config.matcher`), mirrored in `src/lib/auth/route-access.ts` (`GATED_ROUTE_PREFIXES`) with a drift test in `src/lib/auth/__tests__/route-access.test.ts`. Routes outside this set bypass middleware entirely -- no auth check, no header set. NOTE: some routes outside the matcher are still gated by per-page server checks (e.g. `/admin`, `/matrix-map`, `/hitl-packets` call `getUser()` + redirect), and `/matrix-options` is intentionally PUBLIC (educational content; its live-map RPC is gated separately) -- see `docs/operations/ROUTE_ACCESS_ALLOWLIST.md`. API routes (`/api/**`) are not in the matcher; per-route guards (e.g. `requireAdmin()` in `src/lib/api-guards.ts`) handle their auth.
 
 ## Request flow
 
@@ -82,20 +83,17 @@ if (!isExpectedAnonymous) {
 
 `Auth session missing!` is now silent; every other auth error is still logged with `message`, `status`, and `path`. The redirect-to-login behavior below runs regardless of what was logged.
 
-### Refresh-token / JWT / 401 errors
+### Retryable (transient) auth errors
 
-If the error matches any of:
+If `getUser()` returns a RETRYABLE error -- `error.name === 'AuthRetryableFetchError'`, `error.status === 0` (network failure), or `error.status` in {502, 503, 504} -- middleware redirects to `/login?redirect=<path>` WITHOUT calling `signOut()`. Cookies are preserved so a valid session survives a transient network blip and recovers on the next request. Source: `src/middleware.ts` (`isRetryableAuthError`).
 
-- `error.message?.includes('Refresh Token')`
-- `error.message?.includes('Invalid refresh token')`
-- `error.message?.includes('JWT')`
-- `error.status === 401`
+### Terminal auth errors
 
-Middleware calls `supabase.auth.signOut()` (errors swallowed — we're redirecting anyway), then redirects to `/login?redirect=<path>`. This forces a clean re-authentication when a session is broken or stale, instead of leaving the client in a half-valid state. Source: `src/middleware.ts:94-114`.
+If the error is TERMINAL -- `error.message` includes `Invalid Refresh Token` or `refresh_token_not_found`, or a non-retryable `error.status` of 401/403 -- middleware calls `supabase.auth.signOut()` (errors swallowed) and redirects to `/login?redirect=<path>` to force a clean re-authentication. Source: `src/middleware.ts` (`isTerminalAuthError`). NOTE (2026-06-15): the prior broad classification (any `includes('Refresh Token')` / `includes('JWT')` / `status === 401`) was narrowed because it destroyed valid sessions on transient errors (the random-logout symptom).
 
 ### Other auth errors
 
-Non-refresh, non-401 errors fall through to the "no user" path below — redirect to login without the explicit `signOut()`.
+Errors that are neither retryable nor terminal fall through to the "no user" path below -- redirect to login WITHOUT `signOut()` (cookies preserved). The `!user` check is the fail-closed backstop.
 
 ## "No user" redirect
 
@@ -103,7 +101,7 @@ If `getUser()` succeeded but `user` is null, middleware redirects to `/login?red
 
 ## Cookies
 
-The Supabase server client is wired to the request/response cookie store via `get` / `set` / `remove` adapters. `set` and `remove` write to the response so the new cookie reaches the browser. Source: `src/middleware.ts:60-71`.
+The Supabase server client uses the current `@supabase/ssr` `getAll` / `setAll` cookie adapters (NOT the deprecated `get` / `set` / `remove`, which `@supabase/ssr` documents as a cause of random logouts / early session termination). `setAll` propagates refreshed cookies into the request AND recreates the response so the new Set-Cookie reaches the browser; security headers are then applied to the final response on every return path (including redirects). Source: `src/middleware.ts`.
 
 ## What this middleware does NOT do
 
