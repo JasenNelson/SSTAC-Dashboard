@@ -5,6 +5,8 @@ import { describe, it, expect } from 'vitest';
 import {
   DECIMAL_NUMBER_RE,
   parseDecimalInput,
+  positiveInput,
+  optionalPositiveInput,
 } from '../parseDecimal';
 
 describe('DECIMAL_NUMBER_RE', () => {
@@ -102,5 +104,86 @@ describe('parseDecimalInput', () => {
     expect(parseDecimalInput('1e999')).toEqual({ value: Number.NaN, state: 'invalid' });
     // Same for large negative exponent: Number('-1e9999') === -Infinity.
     expect(parseDecimalInput('-1e9999')).toEqual({ value: Number.NaN, state: 'invalid' });
+  });
+});
+
+describe('positiveInput', () => {
+  it('returns an error object for blank / whitespace-only input', () => {
+    expect(positiveInput('', 'Dose')).toEqual({ error: 'Dose must be a positive decimal number.' });
+    expect(positiveInput('   ', 'Dose')).toEqual({ error: 'Dose must be a positive decimal number.' });
+  });
+
+  it('returns an error object for non-numeric input', () => {
+    expect(positiveInput('abc', 'Rate')).toEqual({ error: 'Rate must be a positive decimal number.' });
+    expect(positiveInput('1.2.3', 'Rate')).toEqual({ error: 'Rate must be a positive decimal number.' });
+  });
+
+  it('returns an error object for zero (not strictly positive)', () => {
+    expect(positiveInput('0', 'BW')).toEqual({ error: 'BW must be a positive decimal number.' });
+  });
+
+  it('returns an error object for negative numbers (incl. negative scientific)', () => {
+    expect(positiveInput('-1', 'BW')).toEqual({ error: 'BW must be a positive decimal number.' });
+    expect(positiveInput('-1e3', 'BW')).toEqual({ error: 'BW must be a positive decimal number.' });
+  });
+
+  it('returns the parsed number for positive integers and decimals', () => {
+    expect(positiveInput('5', 'Dose')).toBe(5);
+    expect(positiveInput('0.0001', 'IR')).toBe(0.0001);
+  });
+
+  it('returns the parsed number for positive scientific notation', () => {
+    expect(positiveInput('1e-3', 'Cs')).toBe(0.001);
+    expect(positiveInput('2.5E+2', 'Cs')).toBe(250);
+  });
+
+  it('returns an error object for Infinity-producing exponents', () => {
+    expect(positiveInput('1e999', 'Dose')).toEqual({ error: 'Dose must be a positive decimal number.' });
+  });
+
+  it('uses the label argument verbatim in the error message', () => {
+    const label = 'Ingestion Rate (kg/day)';
+    expect(positiveInput('', label)).toEqual({ error: `${label} must be a positive decimal number.` });
+  });
+});
+
+describe('optionalPositiveInput', () => {
+  it('returns null for blank and whitespace-only input', () => {
+    expect(optionalPositiveInput('', 'AF')).toBeNull();
+    expect(optionalPositiveInput('   ', 'AF')).toBeNull();
+    expect(optionalPositiveInput('\t', 'AF')).toBeNull();
+  });
+
+  it('returns an error object for non-numeric input (not blank)', () => {
+    expect(optionalPositiveInput('abc', 'AF')).toEqual({
+      error: 'AF must be blank or a positive decimal number.',
+    });
+  });
+
+  it('returns an error object for zero (not strictly positive)', () => {
+    expect(optionalPositiveInput('0', 'AF')).toEqual({
+      error: 'AF must be blank or a positive decimal number.',
+    });
+  });
+
+  it('returns an error object for negative numbers (incl. negative scientific)', () => {
+    expect(optionalPositiveInput('-5', 'EF')).toEqual({
+      error: 'EF must be blank or a positive decimal number.',
+    });
+    expect(optionalPositiveInput('-1e3', 'EF')).toEqual({
+      error: 'EF must be blank or a positive decimal number.',
+    });
+  });
+
+  it('returns the parsed number for valid positive inputs', () => {
+    expect(optionalPositiveInput('7.5', 'AF')).toBe(7.5);
+    expect(optionalPositiveInput('1e-3', 'Cs')).toBe(0.001);
+  });
+
+  it('uses the label argument verbatim in the error message', () => {
+    const label = 'Absorption Factor (unitless)';
+    expect(optionalPositiveInput('bad', label)).toEqual({
+      error: `${label} must be blank or a positive decimal number.`,
+    });
   });
 });
