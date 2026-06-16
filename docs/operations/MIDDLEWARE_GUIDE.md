@@ -22,10 +22,11 @@ matcher: [
   '/regulatory-review/:path*',
   '/bn-rrm/:path*',
   '/demo-matrix-graph/:path*',
+  '/matrix-options/:path*',
 ]
 ```
 
-Source: `src/middleware.ts` (`config.matcher`), mirrored in `src/lib/auth/route-access.ts` (`GATED_ROUTE_PREFIXES`) with a drift test in `src/lib/auth/__tests__/route-access.test.ts`. Routes outside this set bypass middleware entirely -- no auth check, no header set. NOTE: some routes outside the matcher are still gated by per-page server checks (e.g. `/admin`, `/matrix-map`, `/hitl-packets` call `getUser()` + redirect), and `/matrix-options` is intentionally PUBLIC (educational content; its live-map RPC is gated separately) -- see `docs/operations/ROUTE_ACCESS_ALLOWLIST.md`. API routes (`/api/**`) are not in the matcher; per-route guards (e.g. `requireAdmin()` in `src/lib/api-guards.ts`) handle their auth.
+Source: `src/middleware.ts` (`config.matcher`), mirrored in `src/lib/auth/route-access.ts` (`GATED_ROUTE_PREFIXES`) with a drift test in `src/lib/auth/__tests__/route-access.test.ts`. Routes outside this set bypass middleware entirely -- no auth check, no header set. NOTE: some routes outside the matcher are still gated by per-page server checks (e.g. `/admin`, `/matrix-map`, `/hitl-packets` call `getUser()` + redirect). `/matrix-options` is now GATED via the matcher (2026-06-15, owner directive -- the 2026-05-20 "public by design" decision was reverted). See `docs/operations/ROUTE_ACCESS_ALLOWLIST.md`. API routes (`/api/**`) are not in the matcher; per-route guards (e.g. `requireAdmin()` in `src/lib/api-guards.ts`) handle their auth.
 
 ## Request flow
 

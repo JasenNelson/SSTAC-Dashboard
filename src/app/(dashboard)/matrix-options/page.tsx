@@ -72,14 +72,13 @@ export default async function MatrixOptionsPage() {
   // MatrixMapLoader receives the same initialMapData prop shape it gets
   // on /matrix-map/page.tsx.
   //
-  // Codex P1 (2026-05-20): /matrix-options is NOT in src/middleware.ts
-  // matcher (only /dashboard, /twg, /survey-results, /cew-2025,
-  // /regulatory-review, /bn-rrm are). Historically anon-accessible.
-  // We preserve that behavior by gating the RPC call on having an
-  // authenticated user; anon callers see the same matrix-options
-  // content they always saw, with the Interactive Map tab showing the
-  // empty-data fallback (no RPC fetch fires, no log noise, no widened
-  // request surface). Authenticated users get the live map data.
+  // /matrix-options is GATED by the middleware matcher ('/matrix-options/:path*')
+  // as of 2026-06-15 (owner directive: the (dashboard) group is authenticated-only;
+  // the earlier 2026-05-20 "public by design" decision was NOT owner-approved and
+  // was reverted). The getUser() + conditional RPC fetch below is now defense-in-depth:
+  // middleware redirects anon to /login before this page renders, so `user` is present
+  // here -- but the guard stays so the live-map RPC never fires without an authenticated
+  // user. The RPC also enforces matrix_map.is_email_allowlisted (JWT sub).
   let initialMapData: MatrixMapData = EMPTY_MATRIX_MAP_DATA;
   let fetchErrorMessage: string | null = null;
   const supabase = await buildSupabase();

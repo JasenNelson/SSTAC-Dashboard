@@ -12,10 +12,8 @@ Middleware: src/middleware.ts (config.matcher mirrors GATED_ROUTE_PREFIXES)
 | /                | Public landing page                                                       |
 | /login           | Auth entry point                                                          |
 | /signup          | Auth entry point                                                          |
-| /matrix-options  | Public by design: Codex P1 decision 2026-05-20. Educational reference    |
-|                  | content; anyone may read Protocol 28 policy evidence. The live map data  |
-|                  | RPC is gated separately at the database layer (Supabase RLS).            |
-| /cew-polls       | Public poll participation; respondents must not be required to log in    |
+| /cew-polls       | Anonymous conference-poll participation (CEW): respondents have no        |
+|                  | accounts and use a 6-digit access code, not login.                       |
 
 ---
 
@@ -36,6 +34,9 @@ The middleware is the FIRST layer only -- sensitive data is also protected by:
 | /bn-rrm/:path*         | BN-RRM interactive maps and HITL packet views      |
 | /demo-matrix-graph/:path* | Matrix graph demo (hardcoded data but not a   |
 |                        | public route; added 2026-06-15 hardening PR)       |
+| /matrix-options/:path* | Matrix Options calculators + Guide + private-data- |
+|                        | access (gated 2026-06-15, owner directive -- the   |
+|                        | 2026-05-20 "public by design" decision reverted)   |
 
 ---
 
