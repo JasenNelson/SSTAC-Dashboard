@@ -203,28 +203,32 @@ function ProjectCard({
       <div className="flex items-center gap-2 pt-3 border-t border-slate-100 dark:border-slate-800">
         <Link
           href={`/regulatory-review/${project.id}`}
-          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors"
+          aria-label="View project"
+          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           title="View project"
         >
           <Eye className="h-4 w-4" />
         </Link>
         <button
           onClick={onEdit}
-          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors"
+          aria-label="Edit site info"
+          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           title="Edit site info"
         >
           <Pencil className="h-4 w-4" />
         </button>
         <button
           onClick={onEditServices}
-          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors"
+          aria-label="Edit services"
+          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 hover:bg-sky-50 dark:hover:bg-sky-900/30 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           title="Edit services"
         >
           <Settings className="h-4 w-4" />
         </button>
         <button
           onClick={onUpload}
-          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors"
+          aria-label="Manage files"
+          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-emerald-600 dark:hover:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           title="Manage files"
         >
           <Upload className="h-4 w-4" />
@@ -232,7 +236,8 @@ function ProjectCard({
         <div className="flex-1" />
         <button
           onClick={onDelete}
-          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors"
+          aria-label="Delete project"
+          className="inline-flex items-center justify-center p-2 text-sm text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-lg transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           title="Delete project"
         >
           <Trash2 className="h-4 w-4" />
