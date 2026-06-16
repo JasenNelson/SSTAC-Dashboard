@@ -23,12 +23,22 @@ async function clickUntilVisible(
   await expect(target).toBeVisible();
 }
 
+// /matrix-options is auth-gated (middleware matcher) as of 2026-06-15. CI has no
+// shared auth storageState, so navigate and skip the authenticated assertions when
+// the dev server bounces us to /login (same convention as admin-agentic-os.spec.ts).
+async function gotoMatrixOptionsOrSkip(page: Page) {
+  await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
+  if (page.url().includes('/login')) {
+    test.skip(true, 'Not authenticated; /matrix-options is gated. Skipping authenticated assertions.');
+  }
+  await page.waitForTimeout(3000);
+}
+
 test.describe('Matrix Options default-policy review shortcuts', () => {
   test('opens References & Values from the calculator candidate-default shortcut', async ({
     page,
   }) => {
-    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
+    await gotoMatrixOptionsOrSkip(page);
 
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
     await page.getByTestId('category-selector-hh-food').click();
@@ -52,8 +62,7 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
   test('filters References by candidate defaults without promotion language', async ({
     page,
   }) => {
-    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
+    await gotoMatrixOptionsOrSkip(page);
 
     await clickUntilVisible(page, 'References & Values', 'references-values-tab');
 
@@ -76,8 +85,7 @@ test.describe('Calculator pathway navigation', () => {
   test('HH Food Web shows substance values and provenance panel', async ({
     page,
   }) => {
-    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-    await page.waitForTimeout(3000);
+    await gotoMatrixOptionsOrSkip(page);
 
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
     await page.getByTestId('category-selector-hh-food').click();

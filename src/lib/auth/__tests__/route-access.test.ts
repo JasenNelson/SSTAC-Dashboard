@@ -29,7 +29,7 @@ function extractMiddlewarePrefixes(): string[] {
 }
 
 describe('GATED_ROUTE_PREFIXES', () => {
-  it('contains all 7 expected gated routes including demo-matrix-graph', () => {
+  it('contains all 8 expected gated routes including demo-matrix-graph and matrix-options', () => {
     expect(GATED_ROUTE_PREFIXES).toContain('/dashboard')
     expect(GATED_ROUTE_PREFIXES).toContain('/twg')
     expect(GATED_ROUTE_PREFIXES).toContain('/survey-results')
@@ -37,7 +37,8 @@ describe('GATED_ROUTE_PREFIXES', () => {
     expect(GATED_ROUTE_PREFIXES).toContain('/regulatory-review')
     expect(GATED_ROUTE_PREFIXES).toContain('/bn-rrm')
     expect(GATED_ROUTE_PREFIXES).toContain('/demo-matrix-graph')
-    expect(GATED_ROUTE_PREFIXES).toHaveLength(7)
+    expect(GATED_ROUTE_PREFIXES).toContain('/matrix-options')
+    expect(GATED_ROUTE_PREFIXES).toHaveLength(8)
   })
 
   it('matches the config.matcher prefixes in middleware.ts exactly', () => {
@@ -47,13 +48,13 @@ describe('GATED_ROUTE_PREFIXES', () => {
 })
 
 describe('PUBLIC_ROUTES', () => {
-  it('contains matrix-options and cew-polls', () => {
-    expect(PUBLIC_ROUTES).toContain('/matrix-options')
+  it('contains cew-polls but NOT matrix-options (matrix-options gated 2026-06-15)', () => {
     expect(PUBLIC_ROUTES).toContain('/cew-polls')
+    expect(PUBLIC_ROUTES).not.toContain('/matrix-options')
   })
 
-  it('matrix-options is NOT in GATED_ROUTE_PREFIXES', () => {
-    expect(GATED_ROUTE_PREFIXES).not.toContain('/matrix-options')
+  it('matrix-options IS in GATED_ROUTE_PREFIXES (gated 2026-06-15, owner directive)', () => {
+    expect(GATED_ROUTE_PREFIXES).toContain('/matrix-options')
   })
 
   it('cew-polls is NOT in GATED_ROUTE_PREFIXES', () => {

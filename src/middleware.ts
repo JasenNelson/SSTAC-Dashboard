@@ -160,5 +160,6 @@ export const config = {
     '/regulatory-review/:path*',
     '/bn-rrm/:path*',
     '/demo-matrix-graph/:path*',
+    '/matrix-options/:path*',
   ],
 }
