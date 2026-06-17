@@ -77,6 +77,16 @@ const BC_ALIGNMENT_BY_TIER = {
   tier_3_supporting_science: 'protocol_1_v5_0_tier_3_supporting_science',
 };
 
+// Record-level bc_protocol_basis prose, kept consistent with the row's tier (codex holistic 2026-06-17).
+const BC_BASIS_BY_TIER = {
+  tier_1_government_or_regulatory:
+    'Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.',
+  tier_2_peer_reviewed_literature:
+    'Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.',
+  tier_3_supporting_science:
+    'Supporting-science source under the Protocol 1 hierarchy (not a primary regulatory authority); verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.',
+};
+
 const ECO_DIRECT_INELIGIBLE = new Set([
   'arsenic_inorganic', 'cadmium', 'chromium', 'chromium_hexavalent', 'chromium_trivalent',
   'copper', 'lead', 'mercury_inorganic', 'methylmercury', 'nickel', 'selenium', 'thallium',
@@ -249,8 +259,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
     source_authority_tier: tier,
     canonical_source_status: 'needs_direct_source_check',
     bc_protocol_alignment: BC_ALIGNMENT_BY_TIER[tier],
-    bc_protocol_basis:
-      'Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.',
+    bc_protocol_basis: BC_BASIS_BY_TIER[tier],
     source_crystallization_date: row.source_date || extractedAt,
     source_relationships: [
       {

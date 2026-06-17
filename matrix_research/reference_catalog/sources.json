@@ -983,8 +983,8 @@
     "supersedes_source_ids": [],
     "calculator_source_role": "canonical_candidate",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
-    "bc_protocol_basis": "US EPA aquatic-life criteria are a recognized government source under the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "US EPA aquatic-life criteria (304(a)) are a recognized government source, held at tier 2 under the Protocol 1 hierarchy while this live fetch is unpinned; re-align to tier 1 after a dated PDF is pinned. BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17"
   },
   {
