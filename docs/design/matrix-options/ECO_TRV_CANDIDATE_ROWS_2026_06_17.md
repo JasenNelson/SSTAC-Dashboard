@@ -2,11 +2,15 @@
 
 Authored 2026-06-17. AI has found + verified these from US EPA / FCSAP sources in the LOCAL Zotero
 library; per the no-AI-promotion / no-QA-promotion rules NOTHING here is written to the live catalog,
-frameDefaults, or qa_status until the owner approves. This sheet is the input for the (owner-run)
-`generate-catalog-records.mjs` pipeline + the eco frame-default wiring. Companion:
-`ECO_DEFAULTS_CANDIDATE_PACKET_2026_06_17.md`.
+frameDefaults, or qa_status until the owner approves. This sheet is the data source for the SEPARATE
+eco generator `scripts/matrix-options/generate-eco-catalog-records.mjs` (NOT the HH-only
+`generate-catalog-records.mjs`), via the reviewed staging file
+`matrix_research/reference_catalog/eco_staging/eco_values_staging_2026_06_17.json`, + the eco
+frame-default wiring. Companion: `ECO_DEFAULTS_CANDIDATE_PACKET_2026_06_17.md`.
 
-Pathway: `eco-food-bsaf` (dietary food-web). input_key for the TRV: `TRV_eco_mg_per_kg_bw_day`.
+Pathway: `eco-food-bsaf` (dietary food-web). The catalog input_key for the TRV is the lowercase
+`trv_eco_mg_per_kg_bw_day` (matches the EcoFoodBSAFCalculator lookup + existing catalog rows; the
+calc-engine equation-input field `TRV_eco_mg_per_kg_bw_day` is a separate namespace).
 All candidate rows are `qa_status: needs_review`, `default_status: available_option`.
 
 ## A. Universal eco frame-default seed candidates (single scalar)
