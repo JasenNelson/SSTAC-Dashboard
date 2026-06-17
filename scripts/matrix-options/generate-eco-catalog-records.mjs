@@ -63,13 +63,29 @@ const EQUATION_FOR_PATHWAY = {
 };
 const CANONICAL = {
   fcv_ug_per_L: { unit: 'ug/L', short: 'fcv' },
-  TRV_eco_mg_per_kg_bw_day: { unit: 'mg/kg-bw/day', short: 'trveco' },
+  trv_eco_mg_per_kg_bw_day: { unit: 'mg/kg-bw/day', short: 'trveco' },
 };
 const PATHWAY_FOR_INPUT = {
   fcv_ug_per_L: 'eco-direct-eqp',
-  TRV_eco_mg_per_kg_bw_day: 'eco-food-bsaf',
+  trv_eco_mg_per_kg_bw_day: 'eco-food-bsaf',
 };
 const VALID_RECEPTORS = new Set(['aquatic', 'mammal', 'bird']);
+
+const BC_ALIGNMENT_BY_TIER = {
+  tier_1_government_or_regulatory: 'protocol_1_v5_0_tier_1_government_source',
+  tier_2_peer_reviewed_literature: 'protocol_1_v5_0_tier_2_peer_reviewed_literature',
+  tier_3_supporting_science: 'protocol_1_v5_0_tier_3_supporting_science',
+};
+
+const ECO_DIRECT_INELIGIBLE = new Set([
+  'arsenic_inorganic', 'cadmium', 'chromium_vi', 'chromium_total', 'copper', 'lead',
+  'mercury_inorganic', 'methylmercury', 'nickel', 'selenium', 'thallium', 'uranium', 'vanadium',
+  'zinc', 'barium', 'silver', 'aluminum', 'iron', 'boron', 'manganese',
+  'antimony', 'beryllium', 'cobalt', 'molybdenum', 'tin', 'strontium',
+  'chloride', 'cyanide', 'free_cyanide', 'chlorine', 'sulfide', 'ammonia',
+  'pentachlorophenol', 'glyphosate', 'trichlorfon', 'tributyltin', 'pfoa', 'pfos',
+  'methanol', 'acrolein',
+]);
 
 // --- unit normalization (fail closed) ---------------------------------------
 const RE_MU_G = new RegExp('\\u03bcg|\\u00b5g', 'gi'); // greek mu + micro sign -> ug; \\u escapes keep this file plain-ASCII (CLAUDE.md 1.1)
@@ -103,7 +119,7 @@ export function normalizeToCanonical(rawValue, rawUnit, targetInputKey) {
     if (!m) throw new Error('Bad FCV concentration unit "' + rawUnit + '" (expected mass/L)');
     return { value: num * MASS_TO_UG[m[1]], unit: CANONICAL[targetInputKey].unit };
   }
-  if (targetInputKey === 'TRV_eco_mg_per_kg_bw_day') {
+  if (targetInputKey === 'trv_eco_mg_per_kg_bw_day') {
     // dose-based wildlife TRV: mass/kg/day -> mg/kg-bw/day. Require kg + a /day rate.
     const isDose = u.includes('kg') && (u.includes('day') || /(^|[^a-z])d($|[^a-z])/.test(u));
     if (!isDose) throw new Error('Bad eco-TRV dose unit "' + rawUnit + '" (expected mass/kg/day)');
@@ -149,7 +165,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
   const id = 'pv-eco-' + row.substance_key + '-' + (pathway === 'eco-direct-eqp' ? 'direct' : 'food') + '-' + short + receptorTag;
   const extractedAt = dateOnly(row.extracted_at);
   const framing = receptorFraming(pathway, row.receptor);
-  const jurisdiction = resolvedSource.jurisdiction;
+  const jurisdiction = row.jurisdiction || 'general';
   const tier = resolvedSource.source_authority_tier;
 
   return {
@@ -197,7 +213,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
       (row.grade ? ' Grade ' + row.grade + '.' : ''),
     source_authority_tier: tier,
     canonical_source_status: 'needs_direct_source_check',
-    bc_protocol_alignment: 'protocol_1_v5_0_tier_1_government_source',
+    bc_protocol_alignment: BC_ALIGNMENT_BY_TIER[tier] || 'protocol_1_v5_0_tier_1_government_source',
     bc_protocol_basis:
       'Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.',
     source_crystallization_date: row.source_date || extractedAt,
@@ -223,13 +239,32 @@ export function generate(input, sourcesById) {
   const seen = new Set();
   for (const row of input.rows) {
     if (row.hold === true) { skipped.hold++; continue; }
-    if (row.raw_value == null || row.raw_value === '' || /^n\/?[sa]$/i.test(String(row.raw_value))) {
+    if (row.raw_value == null || row.raw_value === '' || /^n\/?[sa]\b/i.test(String(row.raw_value).trim())) {
       skipped.no_value++; continue;
     }
     if (isTeqUnit(row.raw_unit)) { skipped.teq++; warnings.push('TEQ row excluded: ' + row.substance_key); continue; }
     if (!CANONICAL[row.input_key]) throw new Error('Unknown eco input_key "' + row.input_key + '" for ' + row.substance_key);
+    if (row.input_key === 'fcv_ug_per_L') {
+      // eco-direct EqP is nonionic-organics-ONLY. FAIL CLOSED: every fcv_ug_per_L row MUST be
+      // explicitly marked eco_direct_eligible:true in the reviewed staging file (the FCV sheet's
+      // "EqP-usable" column). The metal/ion/ionizable denylist below is a SECONDARY tripwire only --
+      // a denylist can never be exhaustive, so the explicit eligibility flag is the load-bearing
+      // guard (a mis-flagged known metal is still caught by the denylist).
+      if (ECO_DIRECT_INELIGIBLE.has(row.substance_key)) {
+        throw new Error('Substance ' + row.substance_key + ' is ineligible for eco-direct fcv_ug_per_L (metal/ion/ionizable; route to eco-food TRV)');
+      }
+      if (row.eco_direct_eligible !== true) {
+        throw new Error('fcv_ug_per_L row for ' + row.substance_key + ' must set eco_direct_eligible:true (nonionic-organic EqP only; reviewed against the FCV sheet)');
+      }
+    }
     const resolvedSource = sourcesById.get(row.source_id);
     if (!resolvedSource) throw new Error('Unresolved source_id "' + row.source_id + '" for ' + row.substance_key + ' (add it to sources.json)');
+    if (resolvedSource.calculator_source_role === 'reference_mining') {
+      throw new Error('Source ' + row.source_id + ' is reference_mining and cannot back a value row (' + row.substance_key + ')');
+    }
+    if (!row.locator || String(row.locator).trim() === '') {
+      throw new Error('Empty locator for ' + row.substance_key + ' (' + row.input_key + ')');
+    }
     const normalized = normalizeToCanonical(row.raw_value, row.raw_unit, row.input_key);
     const rec = buildEcoRecord(row, resolvedSource, normalized);
     if (seen.has(rec.parameter_value_id)) throw new Error('Duplicate parameter_value_id ' + rec.parameter_value_id);
