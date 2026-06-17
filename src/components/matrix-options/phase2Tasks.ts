@@ -172,7 +172,7 @@ export const phase2Tasks: Phase2Task[] = [
     subtasks: [
       {
         id: "5.1",
-        subtask: "Review BSAF approaches and jurisdictional practices",
+        subtask: "Review BSAF approaches and regulatory practices",
         deadline: "Month 4",
         estHours: 50,
         lead: "TWG"

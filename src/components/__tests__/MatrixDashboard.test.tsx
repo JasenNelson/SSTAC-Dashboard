@@ -513,14 +513,14 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(/Protocol 28/);
   });
 
-  it('shows jurisdictional quick-reference copy on Jurisdictional Frameworks', () => {
+  it('shows methodology quick-reference copy on Methodology by pathway', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(
-      screen.getByRole('button', { name: /^Jurisdictional Frameworks$/ }),
+      screen.getByRole('button', { name: /^Methodology by pathway$/ }),
     );
 
     expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
-      /Jurisdictional Quick Reference/i,
+      /Methodology Quick Reference/i,
     );
     expect(screen.getByText(/Start with the selected pathway group/i)).toHaveTextContent(
       /Ecological: EqP & AVS/i,
@@ -528,13 +528,13 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
   });
 
-  // P2-2: retired Equations content now renders in the Jurisdictional Frameworks
+  // P2-2: retired Equations content now renders in the Methodology by pathway
   // right-drawer Quick Reference, filtered to the active side-tab's pathway(s).
   // The cross-cutting background-adjustment equation is intentionally omitted.
-  it('shows pathway-filtered derivation equations in the Jurisdictional Frameworks drawer', () => {
+  it('shows pathway-filtered derivation equations in the Methodology by pathway drawer', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(
-      screen.getByRole('button', { name: /^Jurisdictional Frameworks$/ }),
+      screen.getByRole('button', { name: /^Methodology by pathway$/ }),
     );
 
     // Default side-tab (Ecological: EqP & AVS) -> one EqP equation.
@@ -579,10 +579,10 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(wrapper.className).toMatch(/\bprint:hidden\b/);
   });
 
-  it('does NOT apply print:hidden on the left sidebar when on Jurisdictional Frameworks tab', () => {
+  it('does NOT apply print:hidden on the left sidebar when on Methodology by pathway tab', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     const jurisTab = screen.getByRole('button', {
-      name: /^Jurisdictional Frameworks$/,
+      name: /^Methodology by pathway$/,
     });
     fireEvent.click(jurisTab);
     const wrapper = screen.getByTestId('left-sidebar-wrapper');

@@ -1,7 +1,11 @@
 // Regulatory-frame options for the matrix-options calculator shared
-// global inputs. This file preserves the historical Jurisdiction export
-// name for component compatibility while the underlying model has moved
-// to framework-level records in src/lib/matrix-options/regulatoryFrames.ts.
+// global inputs. The user-selectable concept is a "regulatory frame";
+// "jurisdiction" is now reserved for source provenance (catalog columns,
+// CatalogJurisdiction). The canonical exports here are the RegulatoryFrame
+// names; the historical Jurisdiction exports are kept as @deprecated
+// re-export aliases so the ~15 importing files do not all churn at once.
+//
+// Underlying model lives in src/lib/matrix-options/regulatoryFrames.ts.
 //
 // Plain ASCII only.
 
@@ -14,49 +18,82 @@ import {
   type RegulatoryFrameId,
 } from '@/lib/matrix-options/regulatoryFrames';
 
-export type Jurisdiction = RegulatoryFrameId;
+// --- Canonical RegulatoryFrame vocabulary (preferred) ---
 
-const ALL_JURISDICTIONS_TUPLE = REGULATORY_FRAME_IDS;
+export type RegulatoryFrame = RegulatoryFrameId;
 
-export const ALL_JURISDICTIONS: ReadonlyArray<Jurisdiction> =
-  ALL_JURISDICTIONS_TUPLE;
+const ALL_REGULATORY_FRAMES_TUPLE = REGULATORY_FRAME_IDS;
 
-export const DEFAULT_JURISDICTION: Jurisdiction =
+export const REGULATORY_FRAME_OPTIONS_IDS: ReadonlyArray<RegulatoryFrame> =
+  ALL_REGULATORY_FRAMES_TUPLE;
+
+export const DEFAULT_REGULATORY_FRAME: RegulatoryFrame =
   DEFAULT_REGULATORY_FRAME_ID;
 
-export interface JurisdictionOption {
-  id: Jurisdiction;
+export interface RegulatoryFrameOption {
+  id: RegulatoryFrame;
   label: string;
   description: string;
 }
 
-const JURISDICTION_OPTIONS_TUPLE = REGULATORY_FRAMES.map((frame) => ({
+const REGULATORY_FRAME_OPTIONS_TUPLE = REGULATORY_FRAMES.map((frame) => ({
   id: frame.id,
   label: frame.label,
   description: frame.description,
-})) as readonly JurisdictionOption[];
+})) as readonly RegulatoryFrameOption[];
 
-export const JURISDICTION_OPTIONS: ReadonlyArray<JurisdictionOption> =
-  JURISDICTION_OPTIONS_TUPLE;
+export const REGULATORY_FRAME_OPTIONS: ReadonlyArray<RegulatoryFrameOption> =
+  REGULATORY_FRAME_OPTIONS_TUPLE;
 
-export function isJurisdiction(value: unknown): value is Jurisdiction {
+export function isRegulatoryFrame(value: unknown): value is RegulatoryFrame {
   return isRegulatoryFrameId(value);
 }
 
-export function coerceJurisdiction(value: unknown): Jurisdiction | null {
+export function coerceRegulatoryFrame(
+  value: unknown,
+): RegulatoryFrame | null {
   return coerceRegulatoryFrameId(value);
 }
 
-type AllJurisdictionsExhaustive =
-  Exclude<Jurisdiction, (typeof ALL_JURISDICTIONS_TUPLE)[number]> extends never
-    ? true
-    : false;
-const _allJurisdictionsExhaustive: AllJurisdictionsExhaustive = true;
-void _allJurisdictionsExhaustive;
+// --- Deprecated Jurisdiction aliases (kept to avoid churning ~15 imports) ---
 
-type OptionsCoverAllJurisdictions =
-  Exclude<Jurisdiction, (typeof JURISDICTION_OPTIONS_TUPLE)[number]['id']> extends never
+/** @deprecated Use RegulatoryFrame. Reserved name "jurisdiction" now means source provenance. */
+export type Jurisdiction = RegulatoryFrame;
+
+/** @deprecated Use REGULATORY_FRAME_OPTIONS_IDS. */
+export const ALL_JURISDICTIONS: ReadonlyArray<Jurisdiction> =
+  REGULATORY_FRAME_OPTIONS_IDS;
+
+/** @deprecated Use DEFAULT_REGULATORY_FRAME. */
+export const DEFAULT_JURISDICTION: Jurisdiction = DEFAULT_REGULATORY_FRAME;
+
+/** @deprecated Use RegulatoryFrameOption. */
+export type JurisdictionOption = RegulatoryFrameOption;
+
+/** @deprecated Use REGULATORY_FRAME_OPTIONS. */
+export const JURISDICTION_OPTIONS: ReadonlyArray<JurisdictionOption> =
+  REGULATORY_FRAME_OPTIONS;
+
+/** @deprecated Use isRegulatoryFrame. */
+export function isJurisdiction(value: unknown): value is Jurisdiction {
+  return isRegulatoryFrame(value);
+}
+
+/** @deprecated Use coerceRegulatoryFrame. */
+export function coerceJurisdiction(value: unknown): Jurisdiction | null {
+  return coerceRegulatoryFrame(value);
+}
+
+type AllFramesExhaustive =
+  Exclude<RegulatoryFrame, (typeof ALL_REGULATORY_FRAMES_TUPLE)[number]> extends never
     ? true
     : false;
-const _optionsCoverAll: OptionsCoverAllJurisdictions = true;
+const _allFramesExhaustive: AllFramesExhaustive = true;
+void _allFramesExhaustive;
+
+type OptionsCoverAllFrames =
+  Exclude<RegulatoryFrame, (typeof REGULATORY_FRAME_OPTIONS_TUPLE)[number]['id']> extends never
+    ? true
+    : false;
+const _optionsCoverAll: OptionsCoverAllFrames = true;
 void _optionsCoverAll;

@@ -233,6 +233,7 @@ export default function EcoDirectEqPCalculator({
 
       <FrameVariantFallbackNotice
         usedBaselineFallback={usedBaselineFallback}
+        frameId={jurisdiction}
         fallbackReason={fallbackReason}
       />
 

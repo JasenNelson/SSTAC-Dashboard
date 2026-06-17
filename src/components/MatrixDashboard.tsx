@@ -38,12 +38,12 @@ import {
   type MatrixCategory,
 } from './matrix-options/guide/content/types';
 import {
-  ALL_JURISDICTIONS,
-  DEFAULT_JURISDICTION,
-  JURISDICTION_OPTIONS,
-  coerceJurisdiction,
-  isJurisdiction,
-  type Jurisdiction,
+  REGULATORY_FRAME_OPTIONS_IDS,
+  DEFAULT_REGULATORY_FRAME,
+  REGULATORY_FRAME_OPTIONS,
+  coerceRegulatoryFrame,
+  isRegulatoryFrame,
+  type RegulatoryFrame,
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
@@ -85,7 +85,7 @@ const GUIDE_TIER_CONTENT: Record<
   general: {
     title: 'What this calculator can tell you',
     summary:
-      'Use this tab to compare screening-level sediment standards by pathway, substance, and jurisdictional frame.',
+      'Use this tab to compare screening-level sediment standards by pathway, substance, and regulatory frame.',
     bullets: [
       'All four pathways provide screening calculations today.',
       'Each pathway shows the assumptions behind the result.',
@@ -95,7 +95,7 @@ const GUIDE_TIER_CONTENT: Record<
   practitioner: {
     title: 'Review workflow',
     summary:
-      'Pick the pathway, confirm the shared substance and jurisdiction, then read the hero result before expanding the technical details.',
+      'Pick the pathway, confirm the shared substance and regulatory frame, then read the hero result before expanding the technical details.',
     bullets: [
       'Changing the substance refreshes defaults unless you typed your own value.',
       'If a measured sediment concentration is entered, read the PASS/FAIL pill as a screening signal.',
@@ -119,6 +119,9 @@ const GUIDE_TIER_CONTENT: Record<
 const LS_KEY_CATEGORY = 'matrix-options-active-category-v1';
 const LS_KEY_TIER = 'matrix-options-guide-tier-v1';
 const LS_KEY_SUBSTANCE = 'matrix-options-substance-v1';
+// Legacy localStorage key name -- kept stable so existing user sessions retain
+// their selected regulatory frame across the jurisdiction->regulatory-frame
+// relabel. The stored value is a RegulatoryFrameId; only the key NAME is legacy.
 const LS_KEY_JURISDICTION = 'matrix-options-jurisdiction-v1';
 const MATRIX_ADMIN_CONTACT_EMAIL =
   process.env.NEXT_PUBLIC_MATRIX_ADMIN_CONTACT_EMAIL;
@@ -179,19 +182,19 @@ function restoreSubstanceKey(): string {
   return DEFAULT_SUBSTANCE_KEY;
 }
 
-function restoreJurisdiction(): Jurisdiction {
-  if (typeof window === 'undefined') return DEFAULT_JURISDICTION;
+function restoreJurisdiction(): RegulatoryFrame {
+  if (typeof window === 'undefined') return DEFAULT_REGULATORY_FRAME;
   const raw = window.localStorage.getItem(LS_KEY_JURISDICTION);
-  const coerced = coerceJurisdiction(raw);
+  const coerced = coerceRegulatoryFrame(raw);
   if (
     coerced &&
-    isJurisdiction(coerced) &&
-    (ALL_JURISDICTIONS as readonly string[]).includes(coerced)
+    isRegulatoryFrame(coerced) &&
+    (REGULATORY_FRAME_OPTIONS_IDS as readonly string[]).includes(coerced)
   ) {
     return coerced;
   }
   if (raw !== null) window.localStorage.removeItem(LS_KEY_JURISDICTION);
-  return DEFAULT_JURISDICTION;
+  return DEFAULT_REGULATORY_FRAME;
 }
 
 interface MatrixDashboardProps {
@@ -222,6 +225,14 @@ interface MatrixDashboardProps {
 }
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
+// Display labels for the top tabs. The internal tab IDENTIFIER strings in TABS
+// are load-bearing (compared against activeTopTab in control flow throughout
+// this file), so they MUST stay stable. Render the user-facing label via this
+// lookup instead of renaming the identifier. Only entries that differ from the
+// identifier need listing; unlisted tabs render their identifier verbatim.
+const TAB_LABELS: Record<string, string> = {
+  'Jurisdictional Frameworks': 'Methodology by pathway',
+};
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 // Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
 // in its Quick Reference drawer. The cross-cutting 'background-adjustment' equation is
@@ -285,8 +296,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   const [substanceKey, setSubstanceKey] = useState<string>(
     DEFAULT_SUBSTANCE_KEY,
   );
-  const [jurisdiction, setJurisdiction] = useState<Jurisdiction>(
-    DEFAULT_JURISDICTION,
+  const [jurisdiction, setJurisdiction] = useState<RegulatoryFrame>(
+    DEFAULT_REGULATORY_FRAME,
   );
   const [evidenceLibraryFilters, setEvidenceLibraryFilters] =
     useState<EvidenceLibraryFilters>(() => createEvidenceLibraryFilters());
@@ -538,7 +549,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
   }, [showLeftPanel, showRightPanel]);
 
   const selectedSubstance = findSubstance(substanceKey);
-  const selectedJurisdiction = JURISDICTION_OPTIONS.find(
+  const selectedJurisdiction = REGULATORY_FRAME_OPTIONS.find(
     (option) => option.id === jurisdiction,
   );
   const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
@@ -650,7 +661,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
     activeTopTab === 'Calculator'
       ? 'CALCULATOR GUIDE'
       : activeTopTab === 'Jurisdictional Frameworks'
-        ? 'JURISDICTION / REGION'
+        ? 'PATHWAY / APPROACH'
         : 'CONTEXT';
 
   const renderToolReference = () => {
@@ -672,10 +683,10 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
       <div className="space-y-4" data-testid="matrix-options-right-reference">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-            Jurisdictional Quick Reference
+            Methodology Quick Reference
           </p>
           <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            Use the jurisdictional material to compare method choices, not to
+            Use the methodology material to compare method choices, not to
             copy a single standard.
           </p>
         </div>
@@ -739,7 +750,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
           <div className="space-y-6">
             <div className="bg-sky-50 dark:bg-sky-900/20 border-l-4 border-sky-500 p-4 rounded-r-lg">
               <p className="text-sm text-sky-800 dark:text-sky-200 font-medium">
-                Currently reviewing the <span className="font-bold">{activeSideTab}</span> methodology. Scroll to locate specific jurisdictional derivations within the document below.
+                Currently reviewing the <span className="font-bold">{activeSideTab}</span> methodology. Scroll to locate specific regulatory derivations within the document below.
               </p>
             </div>
             <MathRenderer content={contentToRender} />
@@ -1042,7 +1053,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 onClick={() => setActiveTopTab(tab)}
                 className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap', activeTopTab === tab ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
               >
-                <span>{tab}</span>
+                <span>{TAB_LABELS[tab] ?? tab}</span>
               </button>
             ))}
           </nav>

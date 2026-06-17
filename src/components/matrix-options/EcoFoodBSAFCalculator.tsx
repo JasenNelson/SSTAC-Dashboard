@@ -343,6 +343,7 @@ export default function EcoFoodBSAFCalculator({
 
       <FrameVariantFallbackNotice
         usedBaselineFallback={usedBaselineFallback}
+        frameId={jurisdiction}
         fallbackReason={fallbackReason}
       />
 
