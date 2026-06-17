@@ -1440,6 +1440,22 @@
       "eco_direct_eligible": false,
       "hold": false,
       "note": "CCME CWS fraction F4 (group surrogate)"
+    },
+    {
+      "substance_key": "chloroform",
+      "input_key": "fcv_ug_per_L",
+      "receptor": "aquatic",
+      "raw_value": 1.8,
+      "raw_unit": "ug/L",
+      "source_id": "src-ccme-cwqg-aquatic-life",
+      "jurisdiction": "Canada_federal",
+      "locator": "CCME CWQG aquatic-life summary table",
+      "source_excerpt": "CCME CWQG 1.8 ug/L (chloroform)",
+      "source_date": "2026-06-17",
+      "grade": null,
+      "eco_direct_eligible": true,
+      "hold": true,
+      "note": "CCME CWQG 1.8 ug/L; EqP-usable per the candidate sheet but the CCME water-source provenance is unverified (Zotero item mislabeled) -> HELD pending a pinned CCME factsheet + value verification."
     }
   ]
 }
