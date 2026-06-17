@@ -74,6 +74,11 @@ describe('eco_values.json data file', () => {
       'alpha_bhc',
       'tribromomethane',
       'total_pcbs',
+      'butyl_benzyl_phthalate',
+      'di_n_butyl_phthalate',
+      'diethyl_phthalate',
+      'pentachlorobenzene',
+      'chlordane',
     ]);
     for (const r of ecoValues) {
       expect(orphanAliases.has(r.substance_key)).toBe(false);

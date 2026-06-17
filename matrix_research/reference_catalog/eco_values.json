@@ -340,11 +340,11 @@
     "candidate_group_id": "eco-direct-eqp__bromophenyl_phenyl_ether_4__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-butyl_benzyl_phthalate-direct-fcv",
-    "substance_key": "butyl_benzyl_phthalate",
+    "parameter_value_id": "pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv",
+    "substance_key": "butyl_benzyl_phthalate_bbp",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "butyl_benzyl_phthalate fcv",
+    "display_name": "butyl_benzyl_phthalate_bbp fcv",
     "value": 19,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -359,19 +359,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for butyl_benzyl_phthalate; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for butyl_benzyl_phthalate_bbp; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-        "value_text": "ESB SCV 19 ug/L (butyl_benzyl_phthalate)",
+        "value_text": "ESB SCV 19 ug/L (butyl_benzyl_phthalate_bbp)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-butyl_benzyl_phthalate-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv-1",
         "locator_type": "source_table"
       }
     ],
@@ -405,7 +405,7 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__butyl_benzyl_phthalate__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__butyl_benzyl_phthalate_bbp__fcv_ug_per_L__US_federal"
   },
   {
     "parameter_value_id": "pv-eco-chlorobenzene-direct-fcv",
@@ -816,11 +816,11 @@
     "candidate_group_id": "eco-direct-eqp__dichlorobenzene_1_4__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-di_n_butyl_phthalate-direct-fcv",
-    "substance_key": "di_n_butyl_phthalate",
+    "parameter_value_id": "pv-eco-dibutyl_phthalate_dbp-direct-fcv",
+    "substance_key": "dibutyl_phthalate_dbp",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "di_n_butyl_phthalate fcv",
+    "display_name": "dibutyl_phthalate_dbp fcv",
     "value": 35,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -835,19 +835,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for di_n_butyl_phthalate; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dibutyl_phthalate_dbp; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-        "value_text": "ESB SCV 35 ug/L (di_n_butyl_phthalate)",
+        "value_text": "ESB SCV 35 ug/L (dibutyl_phthalate_dbp)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-di_n_butyl_phthalate-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dibutyl_phthalate_dbp-direct-fcv-1",
         "locator_type": "source_table"
       }
     ],
@@ -881,14 +881,14 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__di_n_butyl_phthalate__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__dibutyl_phthalate_dbp__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-diethyl_phthalate-direct-fcv",
-    "substance_key": "diethyl_phthalate",
+    "parameter_value_id": "pv-eco-diethyl_phthalate_dep-direct-fcv",
+    "substance_key": "diethyl_phthalate_dep",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "diethyl_phthalate fcv",
+    "display_name": "diethyl_phthalate_dep fcv",
     "value": 270,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -903,19 +903,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for diethyl_phthalate; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for diethyl_phthalate_dep; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-        "value_text": "ESB SCV 270 ug/L (diethyl_phthalate)",
+        "value_text": "ESB SCV 270 ug/L (diethyl_phthalate_dep)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. DEP SCV revised 210->270 (Mount 2008)",
-        "evidence_id": "ev-pv-eco-diethyl_phthalate-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-diethyl_phthalate_dep-direct-fcv-1",
         "locator_type": "source_table"
       }
     ],
@@ -949,7 +949,7 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__diethyl_phthalate__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__diethyl_phthalate_dep__fcv_ug_per_L__US_federal"
   },
   {
     "parameter_value_id": "pv-eco-endosulfan-direct-fcv",
@@ -1428,11 +1428,11 @@
     "candidate_group_id": "eco-direct-eqp__methoxychlor__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-pentachlorobenzene-direct-fcv",
-    "substance_key": "pentachlorobenzene",
+    "parameter_value_id": "pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv",
+    "substance_key": "pentachlorobenzene_1_2_3_4_5",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "pentachlorobenzene fcv",
+    "display_name": "pentachlorobenzene_1_2_3_4_5 fcv",
     "value": 0.47,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -1447,19 +1447,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for pentachlorobenzene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for pentachlorobenzene_1_2_3_4_5; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-        "value_text": "ESB SCV 0.47 ug/L (pentachlorobenzene)",
+        "value_text": "ESB SCV 0.47 ug/L (pentachlorobenzene_1_2_3_4_5)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-pentachlorobenzene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv-1",
         "locator_type": "source_table"
       }
     ],
@@ -1493,7 +1493,7 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__pentachlorobenzene__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__pentachlorobenzene_1_2_3_4_5__fcv_ug_per_L__US_federal"
   },
   {
     "parameter_value_id": "pv-eco-tetrachloroethane_1_1_2_2-direct-fcv",
@@ -2176,11 +2176,11 @@
     "candidate_group_id": "eco-direct-eqp__carbaryl__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chlordane-direct-fcv",
-    "substance_key": "chlordane",
+    "parameter_value_id": "pv-eco-chlordane_technical-direct-fcv",
+    "substance_key": "chlordane_technical",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "chlordane fcv",
+    "display_name": "chlordane_technical fcv",
     "value": 0.0043,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -2195,19 +2195,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for chlordane; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for chlordane_technical; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-nrwqc-aquatic-life-live",
         "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
-        "value_text": "NRWQC CCC 0.0043 ug/L (chlordane)",
+        "value_text": "NRWQC CCC 0.0043 ug/L (chlordane_technical)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chlordane-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-chlordane_technical-direct-fcv-1",
         "locator_type": "source_table"
       }
     ],
@@ -2241,7 +2241,7 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__chlordane__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__chlordane_technical__fcv_ug_per_L__US_federal"
   },
   {
     "parameter_value_id": "pv-eco-chlorpyrifos-direct-fcv",

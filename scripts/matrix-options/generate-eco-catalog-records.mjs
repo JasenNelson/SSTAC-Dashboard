@@ -102,6 +102,11 @@ const NONCANONICAL_ALIASES = {
   alpha_bhc: 'alpha_hexachlorocyclohexane_alpha_hch',
   tribromomethane: 'bromoform',
   total_pcbs: 'polychlorinated_biphenyls_total_pcbs',
+  butyl_benzyl_phthalate: 'butyl_benzyl_phthalate_bbp',
+  di_n_butyl_phthalate: 'dibutyl_phthalate_dbp',
+  diethyl_phthalate: 'diethyl_phthalate_dep',
+  pentachlorobenzene: 'pentachlorobenzene_1_2_3_4_5',
+  chlordane: 'chlordane_technical',
 };
 
 // --- unit normalization (fail closed) ---------------------------------------

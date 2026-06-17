@@ -82,7 +82,7 @@
       "note": ""
     },
     {
-      "substance_key": "butyl_benzyl_phthalate",
+      "substance_key": "butyl_benzyl_phthalate_bbp",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 19,
@@ -90,7 +90,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 19 ug/L (butyl_benzyl_phthalate)",
+      "source_excerpt": "ESB SCV 19 ug/L (butyl_benzyl_phthalate_bbp)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -194,7 +194,7 @@
       "note": ""
     },
     {
-      "substance_key": "di_n_butyl_phthalate",
+      "substance_key": "dibutyl_phthalate_dbp",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 35,
@@ -202,7 +202,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 35 ug/L (di_n_butyl_phthalate)",
+      "source_excerpt": "ESB SCV 35 ug/L (dibutyl_phthalate_dbp)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -210,7 +210,7 @@
       "note": ""
     },
     {
-      "substance_key": "diethyl_phthalate",
+      "substance_key": "diethyl_phthalate_dep",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 270,
@@ -218,7 +218,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 270 ug/L (diethyl_phthalate)",
+      "source_excerpt": "ESB SCV 270 ug/L (diethyl_phthalate_dep)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -338,7 +338,7 @@
       "note": "ESB SCV (more conservative than NRWQC CCC 0.03, older FRV basis) -- verify at promotion"
     },
     {
-      "substance_key": "pentachlorobenzene",
+      "substance_key": "pentachlorobenzene_1_2_3_4_5",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 0.47,
@@ -346,7 +346,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 0.47 ug/L (pentachlorobenzene)",
+      "source_excerpt": "ESB SCV 0.47 ug/L (pentachlorobenzene_1_2_3_4_5)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -514,7 +514,7 @@
       "note": ""
     },
     {
-      "substance_key": "chlordane",
+      "substance_key": "chlordane_technical",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 0.0043,
@@ -522,7 +522,7 @@
       "source_id": "src-us-epa-nrwqc-aquatic-life-live",
       "jurisdiction": "US_federal",
       "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
-      "source_excerpt": "NRWQC CCC 0.0043 ug/L (chlordane)",
+      "source_excerpt": "NRWQC CCC 0.0043 ug/L (chlordane_technical)",
       "source_date": "2026-06-17",
       "grade": null,
       "eco_direct_eligible": true,
