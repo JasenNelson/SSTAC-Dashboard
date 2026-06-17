@@ -19,7 +19,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for benzene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for benzene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -35,7 +35,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -87,7 +87,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for alpha_hexachlorocyclohexane_alpha_hch; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for alpha_hexachlorocyclohexane_alpha_hch; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -103,7 +103,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -155,7 +155,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for hexachlorocyclohexane_gamma; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for hexachlorocyclohexane_gamma; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -171,7 +171,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -223,7 +223,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for biphenyl; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for biphenyl; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -239,7 +239,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -291,7 +291,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for bromophenyl_phenyl_ether_4; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for bromophenyl_phenyl_ether_4; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -307,7 +307,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -359,7 +359,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for butyl_benzyl_phthalate_bbp; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for butyl_benzyl_phthalate_bbp; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -375,7 +375,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -427,7 +427,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for chlorobenzene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for chlorobenzene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -443,7 +443,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -495,7 +495,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for diazinon; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for diazinon; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -511,7 +511,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -563,7 +563,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dibenzofuran; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for dibenzofuran; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -579,7 +579,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -631,7 +631,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dichlorobenzene_1_2; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for dichlorobenzene_1_2; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -647,7 +647,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -699,7 +699,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dichlorobenzene_1_3; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for dichlorobenzene_1_3; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -715,7 +715,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -767,7 +767,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dichlorobenzene_1_4; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for dichlorobenzene_1_4; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -783,7 +783,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -835,7 +835,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for dibutyl_phthalate_dbp; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for dibutyl_phthalate_dbp; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -851,7 +851,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -903,7 +903,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for diethyl_phthalate_dep; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for diethyl_phthalate_dep; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -919,7 +919,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -971,7 +971,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for endosulfan; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for endosulfan; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -987,7 +987,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1039,7 +1039,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for endosulfan_alpha; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for endosulfan_alpha; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1055,7 +1055,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1107,7 +1107,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for endosulfan_beta; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for endosulfan_beta; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1123,7 +1123,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1175,7 +1175,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for ethylbenzene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for ethylbenzene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1191,7 +1191,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1243,7 +1243,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for hexachloroethane; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for hexachloroethane; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1259,7 +1259,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1311,7 +1311,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for malathion; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for malathion; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1327,7 +1327,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1379,7 +1379,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for methoxychlor; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for methoxychlor; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1395,7 +1395,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1447,7 +1447,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for pentachlorobenzene_1_2_3_4_5; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for pentachlorobenzene_1_2_3_4_5; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1463,7 +1463,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1515,7 +1515,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for tetrachloroethane_1_1_2_2; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for tetrachloroethane_1_1_2_2; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1531,7 +1531,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1583,7 +1583,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for tetrachloroethylene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for tetrachloroethylene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1599,7 +1599,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1651,7 +1651,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for carbon_tetrachloride; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for carbon_tetrachloride; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1667,7 +1667,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1719,7 +1719,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for toluene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for toluene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1735,7 +1735,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1787,7 +1787,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for bromoform; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for bromoform; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1803,7 +1803,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1855,7 +1855,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for trichlorobenzene_1_2_4; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for trichlorobenzene_1_2_4; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1871,7 +1871,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1923,7 +1923,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for trichloroethane_1_1_1; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for trichloroethane_1_1_1; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -1939,7 +1939,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -1991,7 +1991,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for trichloroethylene; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for trichloroethylene; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2007,7 +2007,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -2059,7 +2059,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV for xylene_m; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for xylene_m; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2075,7 +2075,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -2127,7 +2127,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for carbaryl; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for carbaryl; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2143,10 +2143,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2195,7 +2195,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for chlordane_technical; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for chlordane_technical; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2211,10 +2211,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2263,7 +2263,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for chlorpyrifos; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for chlorpyrifos; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2279,10 +2279,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2331,7 +2331,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for demeton; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for demeton; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2347,10 +2347,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2399,7 +2399,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for dieldrin; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for dieldrin; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2415,10 +2415,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2467,7 +2467,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for azinphos_methyl; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for azinphos_methyl; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2483,10 +2483,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2535,7 +2535,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for heptachlor; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for heptachlor; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2551,10 +2551,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2603,7 +2603,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for heptachlor_epoxide; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for heptachlor_epoxide; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2619,10 +2619,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2671,7 +2671,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for mirex; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for mirex; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2687,10 +2687,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2739,7 +2739,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for nonylphenol; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for nonylphenol; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2755,10 +2755,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2807,7 +2807,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for parathion; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for parathion; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2823,10 +2823,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2875,7 +2875,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV for p_p_dichlorodiphenyltrichloroethane_ddt; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for p_p_dichlorodiphenyltrichloroethane_ddt; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2891,10 +2891,10 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
-    "source_authority_tier": "tier_1_government_or_regulatory",
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
     "canonical_source_status": "needs_direct_source_check",
-    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17",
     "source_relationships": [
@@ -2943,7 +2943,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for arsenic_inorganic (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for arsenic_inorganic (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -2959,7 +2959,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3009,7 +3009,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for arsenic_inorganic (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for arsenic_inorganic (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3025,7 +3025,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3075,7 +3075,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for barium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for barium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3091,7 +3091,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3141,7 +3141,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for barium (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for barium (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3157,7 +3157,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3207,7 +3207,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for cadmium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for cadmium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3223,7 +3223,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3273,7 +3273,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for cadmium (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for cadmium (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3289,7 +3289,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3339,7 +3339,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for chromium_hexavalent (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for chromium_hexavalent (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3355,7 +3355,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3405,7 +3405,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for chromium_hexavalent (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for chromium_hexavalent (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3421,7 +3421,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3471,7 +3471,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for chromium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for chromium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3487,7 +3487,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3537,7 +3537,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for chromium (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for chromium (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3553,7 +3553,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3603,7 +3603,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for copper (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for copper (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3619,7 +3619,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3669,7 +3669,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for copper (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for copper (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3685,7 +3685,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3735,7 +3735,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for lead (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for lead (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3751,7 +3751,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3801,7 +3801,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for lead (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for lead (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3817,7 +3817,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3867,7 +3867,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for mercury_inorganic (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for mercury_inorganic (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3883,7 +3883,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3933,7 +3933,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for mercury_inorganic (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for mercury_inorganic (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -3949,7 +3949,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -3999,7 +3999,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for nickel (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for nickel (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4015,7 +4015,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4065,7 +4065,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for nickel (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for nickel (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4081,7 +4081,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4131,7 +4131,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for selenium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for selenium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4147,7 +4147,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4197,7 +4197,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for selenium (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for selenium (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4213,7 +4213,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4263,7 +4263,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for thallium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for thallium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4279,7 +4279,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4329,7 +4329,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for uranium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for uranium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4345,7 +4345,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4395,7 +4395,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for vanadium (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for vanadium (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4411,7 +4411,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4461,7 +4461,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for vanadium (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for vanadium (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4477,7 +4477,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4527,7 +4527,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for zinc (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for zinc (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4543,7 +4543,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4593,7 +4593,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for zinc (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for zinc (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4609,7 +4609,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4659,7 +4659,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for naphthalene (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for naphthalene (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4675,7 +4675,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4725,7 +4725,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for naphthalene (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for naphthalene (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4741,7 +4741,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4791,7 +4791,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for lmw_pahs (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for lmw_pahs (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4807,7 +4807,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4857,7 +4857,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for lmw_pahs (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for lmw_pahs (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4873,7 +4873,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4923,7 +4923,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for benz_a_anthracene (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for benz_a_anthracene (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -4939,7 +4939,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -4989,7 +4989,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for benzo_a_pyrene (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for benzo_a_pyrene (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5005,7 +5005,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5055,7 +5055,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for benzo_a_pyrene (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for benzo_a_pyrene (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5071,7 +5071,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5121,7 +5121,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for pyrene (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for pyrene (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5137,7 +5137,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5187,7 +5187,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for hmw_pahs (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for hmw_pahs (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5203,7 +5203,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5253,7 +5253,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for benzene (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for benzene (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5269,7 +5269,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade B.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5319,7 +5319,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for ethylbenzene (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for ethylbenzene (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5335,7 +5335,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5385,7 +5385,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for toluene (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for toluene (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5401,7 +5401,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5451,7 +5451,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for xylenes (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for xylenes (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5467,7 +5467,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5517,7 +5517,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for total_phcs (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for total_phcs (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5533,7 +5533,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5583,7 +5583,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for total_phcs (bird); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for total_phcs (bird); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5599,7 +5599,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5649,7 +5649,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for phc_f1 (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for phc_f1 (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5665,7 +5665,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5715,7 +5715,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for phc_f2 (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for phc_f2 (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5731,7 +5731,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5781,7 +5781,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for phc_f3 (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for phc_f3 (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5797,7 +5797,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
@@ -5847,7 +5847,7 @@
       "eq-eco-food-bsaf"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO for phc_f4 (mammal); ecological screening candidate (needs review before default use).",
+    "applicability": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV for phc_f4 (mammal); ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -5863,7 +5863,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 TRVECO ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
+    "review_notes": "FCSAP ERA Module 7 default wildlife TRVs, 2021 eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade C.",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",

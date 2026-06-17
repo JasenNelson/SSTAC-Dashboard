@@ -186,6 +186,11 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
   const inputKey = row.input_key;
   const pathway = PATHWAY_FOR_INPUT[inputKey];
   const short = CANONICAL[inputKey].short;
+  // Human-facing VALUE-CLASS label for applicability/review text. The eco-direct input mixes true
+  // FCVs, ESB SCVs, and NRWQC CCCs -- all used AS the fcv_ug_per_L EqP input, so label them
+  // "FCV-equivalent" rather than asserting plain "FCV"; the exact basis (SCV/CCC/FCV/CWQG) is preserved
+  // in the evidence value_text/source_excerpt. (codex holistic 2026-06-17.)
+  const valueClassLabel = inputKey === 'fcv_ug_per_L' ? 'FCV-equivalent' : 'eco-TRV';
   const receptorTag = pathway === 'eco-food-bsaf' ? '-' + row.receptor : '';
   const id = 'pv-eco-' + row.substance_key + '-' + (pathway === 'eco-direct-eqp' ? 'direct' : 'food') + '-' + short + receptorTag;
   const extractedAt = dateOnly(row.extracted_at);
@@ -215,7 +220,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
     equation_ids: [EQUATION_FOR_PATHWAY[pathway]],
     jurisdiction,
     applicability:
-      (resolvedSource.short_citation || row.source_id) + ' ' + short.toUpperCase() + ' for ' + row.substance_key +
+      (resolvedSource.short_citation || row.source_id) + ' ' + valueClassLabel + ' for ' + row.substance_key +
       (pathway === 'eco-food-bsaf' ? ' (' + row.receptor + ')' : '') +
       '; ecological screening candidate (needs review before default use).',
     uncertainty: null,
@@ -237,7 +242,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
       },
     ],
     review_notes:
-      (resolvedSource.short_citation || row.source_id) + ' ' + short.toUpperCase() +
+      (resolvedSource.short_citation || row.source_id) + ' ' + valueClassLabel +
       ' ecological candidate, extracted ' + extractedAt +
       '. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.' +
       (row.grade ? ' Grade ' + row.grade + '.' : ''),
