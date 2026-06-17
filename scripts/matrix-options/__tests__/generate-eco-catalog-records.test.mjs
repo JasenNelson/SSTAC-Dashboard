@@ -65,6 +65,18 @@ describe('normalizeToCanonical', () => {
       normalizeToCanonical('abc', 'ug/L', 'fcv_ug_per_L');
     }).toThrow(/Non-numeric/i);
   });
+
+  it('throws on zero value (fail closed)', () => {
+    expect(() => {
+      normalizeToCanonical('0', 'ug/L', 'fcv_ug_per_L');
+    }).toThrow(/Non-positive/i);
+  });
+
+  it('throws on negative value (fail closed)', () => {
+    expect(() => {
+      normalizeToCanonical('-5', 'ug/L', 'fcv_ug_per_L');
+    }).toThrow(/Non-positive/i);
+  });
 });
 
 describe('buildEcoRecord', () => {
@@ -142,6 +154,20 @@ describe('buildEcoRecord', () => {
       buildEcoRecord(row, resolvedSource, normalized);
     }).toThrow(/requires receptor mammal\|bird/i);
   });
+
+  it('throws when the source has no recognized authority tier (fail closed)', () => {
+    const row = {
+      substance_key: 'benzene',
+      input_key: 'fcv_ug_per_L',
+      receptor: 'aquatic',
+      source_id: 'src-x',
+      locator: 'T',
+      eco_direct_eligible: true,
+    };
+    expect(() => {
+      buildEcoRecord(row, { short_citation: 'X' }, { value: 130, unit: 'ug/L' });
+    }).toThrow(/source_authority_tier/i);
+  });
 });
 
 describe('generate', () => {
@@ -217,6 +243,25 @@ describe('generate', () => {
     };
     const res = generate(input, SRC);
     expect(res.skipped.no_value).toBe(5);
+    expect(res.records.length).toBe(0);
+  });
+
+  it('treats a whitespace-only raw_value as no_value (fail closed)', () => {
+    const input = {
+      rows: [
+        {
+          substance_key: 'benzene',
+          input_key: 'fcv_ug_per_L',
+          eco_direct_eligible: true,
+          raw_value: '   ',
+          raw_unit: 'ug/L',
+          source_id: 'src-esb',
+          locator: 'Table 2',
+        },
+      ],
+    };
+    const res = generate(input, SRC);
+    expect(res.skipped.no_value).toBe(1);
     expect(res.records.length).toBe(0);
   });
 

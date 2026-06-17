@@ -125,6 +125,9 @@ function isTeqUnit(rawUnit) {
 export function normalizeToCanonical(rawValue, rawUnit, targetInputKey) {
   const num = Number(String(rawValue).trim());
   if (!Number.isFinite(num)) throw new Error('Non-numeric value "' + rawValue + '"');
+  // FAIL CLOSED: eco FCV concentrations + TRV doses are strictly positive. A whitespace-only value
+  // coerces to 0 and a negative typo is finite; both would silently emit a bogus benchmark. (codex.)
+  if (num <= 0) throw new Error('Non-positive eco value "' + rawValue + '" (FCV/TRV must be > 0)');
   if (isTeqUnit(rawUnit)) {
     throw new Error('TEQ-basis unit "' + rawUnit + '" is not convertible to ' + targetInputKey + ' (exclude TEQ rows)');
   }
@@ -184,6 +187,11 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
   const framing = receptorFraming(pathway, row.receptor);
   const jurisdiction = row.jurisdiction || 'general';
   const tier = resolvedSource.source_authority_tier;
+  // FAIL CLOSED: an unknown/missing source tier must not masquerade as tier_1. Require the source entry
+  // to declare a recognized source_authority_tier before this row is emitted. (codex holistic 2026-06-17.)
+  if (!BC_ALIGNMENT_BY_TIER[tier]) {
+    throw new Error('Source ' + (row.source_id || '(none)') + ' has missing/unrecognized source_authority_tier "' + tier + '"; set it on the source entry in sources.json');
+  }
 
   return {
     parameter_value_id: id,
@@ -230,7 +238,7 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
       (row.grade ? ' Grade ' + row.grade + '.' : ''),
     source_authority_tier: tier,
     canonical_source_status: 'needs_direct_source_check',
-    bc_protocol_alignment: BC_ALIGNMENT_BY_TIER[tier] || 'protocol_1_v5_0_tier_1_government_source',
+    bc_protocol_alignment: BC_ALIGNMENT_BY_TIER[tier],
     bc_protocol_basis:
       'Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.',
     source_crystallization_date: row.source_date || extractedAt,
@@ -256,7 +264,7 @@ export function generate(input, sourcesById) {
   const seen = new Set();
   for (const row of input.rows) {
     if (row.hold === true) { skipped.hold++; continue; }
-    if (row.raw_value == null || row.raw_value === '' || /^n\/?[sa]\b/i.test(String(row.raw_value).trim())) {
+    if (row.raw_value == null || String(row.raw_value).trim() === '' || /^n\/?[sa]\b/i.test(String(row.raw_value).trim())) {
       skipped.no_value++; continue;
     }
     if (isTeqUnit(row.raw_unit)) { skipped.teq++; warnings.push('TEQ row excluded: ' + row.substance_key); continue; }
