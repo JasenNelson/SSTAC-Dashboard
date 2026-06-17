@@ -217,8 +217,21 @@ describe('HHFoodWebCalculator', () => {
     );
   });
 
-  it('renders the frame-variant fallback notice for every frame (empty FRAME_VARIANTS, Week 8)', () => {
+  it('suppresses the frame-variant fallback notice for the default baseline frame', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      screen.queryByTestId('frame-variant-fallback-notice'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('renders the frame-variant fallback notice for non-default frames that fall back to baseline', () => {
     for (const j of REGULATORY_FRAME_IDS) {
+      if (j === 'bc-protocol1-v5-dra') continue;
       const { unmount } = render(
         <HHFoodWebCalculator substanceKey="total_pcbs_aroclor_1254" jurisdiction={j} />,
       );

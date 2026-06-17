@@ -24,10 +24,10 @@ import {
   findSubstance,
 } from '@/lib/matrix-options/substanceLibrary';
 import {
-  JURISDICTION_OPTIONS,
-  coerceJurisdiction,
-  isJurisdiction,
-  type Jurisdiction,
+  REGULATORY_FRAME_OPTIONS,
+  coerceRegulatoryFrame,
+  isRegulatoryFrame,
+  type RegulatoryFrame,
 } from './guide/content/jurisdictions';
 
 // Default substance key: the first library entry that has both logKow AND
@@ -42,9 +42,9 @@ export const DEFAULT_SUBSTANCE_KEY: string =
 
 export interface SharedGlobalInputsProps {
   substanceKey: string;
-  jurisdiction: Jurisdiction;
+  jurisdiction: RegulatoryFrame;
   onSubstanceKeyChange: (key: string) => void;
-  onJurisdictionChange: (jurisdiction: Jurisdiction) => void;
+  onJurisdictionChange: (jurisdiction: RegulatoryFrame) => void;
   className?: string;
 }
 
@@ -56,7 +56,7 @@ export default function SharedGlobalInputs({
   className,
 }: SharedGlobalInputsProps) {
   const substance = findSubstance(substanceKey);
-  const currentJurisdiction = JURISDICTION_OPTIONS.find(
+  const currentJurisdiction = REGULATORY_FRAME_OPTIONS.find(
     (j) => j.id === jurisdiction,
   );
 
@@ -75,8 +75,8 @@ export default function SharedGlobalInputs({
   const handleJurisdictionChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
   ): void => {
-    const next = coerceJurisdiction(e.target.value);
-    if (isJurisdiction(next)) {
+    const next = coerceRegulatoryFrame(e.target.value);
+    if (isRegulatoryFrame(next)) {
       onJurisdictionChange(next);
     }
   };
@@ -95,7 +95,7 @@ export default function SharedGlobalInputs({
           Shared inputs
         </h3>
         <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
-          Substance and jurisdictional frame apply to every active pathway
+          Substance and regulatory frame apply to every active pathway
           calculator below.
         </p>
       </header>
@@ -137,7 +137,7 @@ export default function SharedGlobalInputs({
             htmlFor="shared-jurisdiction"
             className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Jurisdiction / regulatory frame
+            Regulatory frame
           </label>
           <select
             id="shared-jurisdiction"
@@ -146,7 +146,7 @@ export default function SharedGlobalInputs({
             onChange={handleJurisdictionChange}
             className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
           >
-            {JURISDICTION_OPTIONS.map((j) => (
+            {REGULATORY_FRAME_OPTIONS.map((j) => (
               <option key={j.id} value={j.id}>
                 {j.label}
               </option>

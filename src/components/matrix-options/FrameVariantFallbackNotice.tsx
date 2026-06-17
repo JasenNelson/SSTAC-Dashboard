@@ -10,6 +10,10 @@
 
 import { memo } from 'react';
 import { cn } from '@/utils/cn';
+import {
+  DEFAULT_REGULATORY_FRAME_ID,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 
 interface FrameVariantFallbackNoticeProps {
   /**
@@ -21,6 +25,15 @@ interface FrameVariantFallbackNoticeProps {
    * value from getEquation() rather than silently omitting it.
    */
   usedBaselineFallback: boolean;
+
+  /**
+   * The currently selected regulatory frame. When this is the default
+   * baseline frame (bc-protocol1-v5-dra), the notice is suppressed even if
+   * usedBaselineFallback is true: the baseline frame using the baseline
+   * equation is the expected state, not a fallback worth flagging. Required
+   * so every call site forwards the selected frame.
+   */
+  frameId: RegulatoryFrameId;
 
   /**
    * Optional human-readable explanation returned by getEquation() in its
@@ -41,15 +54,17 @@ interface FrameVariantFallbackNoticeProps {
  * FrameVariantFallbackNotice
  *
  * Renders null when usedBaselineFallback is false (a frame+pathway that has a
- * defined variant). While FRAME_VARIANTS is empty (Phase 4 commit 1) every
- * frame -- including the default bc-protocol1-v5-dra -- falls back to the
- * baseline, so the notice renders for all of them; once a frame ships a
- * variant, usedBaselineFallback becomes false and the notice renders null
- * for that frame.
+ * defined variant) OR when the selected frameId is the default baseline frame
+ * (bc-protocol1-v5-dra). The baseline frame using the baseline equation is the
+ * expected, unremarkable state -- flagging it as a "fallback" is noise. The
+ * notice is therefore reserved for a NON-baseline frame that had no specialized
+ * variant and silently fell back to the baseline equation. Once a non-baseline
+ * frame ships a variant, usedBaselineFallback becomes false and the notice
+ * renders null for that frame too.
  *
- * When usedBaselineFallback is true, renders a compact muted slate notice
- * block informing the HITL that the result on screen is the BC Protocol 1
- * baseline, not a frame-specific derivation.
+ * When usedBaselineFallback is true and the frame is non-default, renders a
+ * compact muted slate notice block informing the HITL that the result on screen
+ * is the BC Protocol 1 baseline, not a frame-specific derivation.
  *
  * Uses role="note" (not role="status") because the fallback state is static
  * during a calculation session and does not need a live-region interrupt
@@ -60,10 +75,11 @@ interface FrameVariantFallbackNoticeProps {
  */
 const FrameVariantFallbackNotice = memo(function FrameVariantFallbackNotice({
   usedBaselineFallback,
+  frameId,
   fallbackReason,
   className,
 }: FrameVariantFallbackNoticeProps) {
-  if (!usedBaselineFallback) {
+  if (!usedBaselineFallback || frameId === DEFAULT_REGULATORY_FRAME_ID) {
     return null;
   }
 
