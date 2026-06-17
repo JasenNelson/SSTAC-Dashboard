@@ -18,7 +18,7 @@
       "note": ""
     },
     {
-      "substance_key": "alpha_bhc",
+      "substance_key": "alpha_hexachlorocyclohexane_alpha_hch",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 2.2,
@@ -26,7 +26,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 2.2 ug/L (alpha_bhc)",
+      "source_excerpt": "ESB SCV 2.2 ug/L (alpha_hexachlorocyclohexane_alpha_hch)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -34,7 +34,7 @@
       "note": ""
     },
     {
-      "substance_key": "lindane",
+      "substance_key": "hexachlorocyclohexane_gamma",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 0.08,
@@ -42,7 +42,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB FCV 0.080 ug/L (lindane)",
+      "source_excerpt": "ESB FCV 0.080 ug/L (hexachlorocyclohexane_gamma)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -370,7 +370,7 @@
       "note": ""
     },
     {
-      "substance_key": "tetrachloroethene",
+      "substance_key": "tetrachloroethylene",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 98,
@@ -378,7 +378,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 98 ug/L (tetrachloroethene)",
+      "source_excerpt": "ESB SCV 98 ug/L (tetrachloroethylene)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -386,7 +386,7 @@
       "note": "ESB SCV (more conservative than CCME CWQG 110)"
     },
     {
-      "substance_key": "tetrachloromethane",
+      "substance_key": "carbon_tetrachloride",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 240,
@@ -394,7 +394,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 240 ug/L (tetrachloromethane)",
+      "source_excerpt": "ESB SCV 240 ug/L (carbon_tetrachloride)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -418,7 +418,7 @@
       "note": ""
     },
     {
-      "substance_key": "tribromomethane",
+      "substance_key": "bromoform",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 320,
@@ -426,7 +426,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 320 ug/L (tribromomethane)",
+      "source_excerpt": "ESB SCV 320 ug/L (bromoform)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -466,7 +466,7 @@
       "note": ""
     },
     {
-      "substance_key": "trichloroethene",
+      "substance_key": "trichloroethylene",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 47,
@@ -474,7 +474,7 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 47 ug/L (trichloroethene)",
+      "source_excerpt": "ESB SCV 47 ug/L (trichloroethylene)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
@@ -674,7 +674,7 @@
       "note": ""
     },
     {
-      "substance_key": "ddt_4_4",
+      "substance_key": "p_p_dichlorodiphenyltrichloroethane_ddt",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 0.001,
@@ -682,7 +682,7 @@
       "source_id": "src-us-epa-nrwqc-aquatic-life-live",
       "jurisdiction": "US_federal",
       "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
-      "source_excerpt": "NRWQC CCC 0.001 ug/L (ddt_4_4)",
+      "source_excerpt": "NRWQC CCC 0.001 ug/L (p_p_dichlorodiphenyltrichloroethane_ddt)",
       "source_date": "2026-06-17",
       "grade": null,
       "eco_direct_eligible": true,
@@ -706,7 +706,7 @@
       "note": "HOLD: ESB FCV 0.039 vs NRWQC CCC 0.0002 (~195x split); owner picks basis before promotion"
     },
     {
-      "substance_key": "total_pcbs",
+      "substance_key": "polychlorinated_biphenyls_total_pcbs",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 0.014,
@@ -714,7 +714,7 @@
       "source_id": "src-us-epa-nrwqc-aquatic-life-live",
       "jurisdiction": "US_federal",
       "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
-      "source_excerpt": "NRWQC CCC 0.014 ug/L (total_pcbs)",
+      "source_excerpt": "NRWQC CCC 0.014 ug/L (polychlorinated_biphenyls_total_pcbs)",
       "source_date": "2026-06-17",
       "grade": null,
       "eco_direct_eligible": true,
@@ -818,7 +818,7 @@
       "note": ""
     },
     {
-      "substance_key": "chromium_vi",
+      "substance_key": "chromium_hexavalent",
       "input_key": "trv_eco_mg_per_kg_bw_day",
       "receptor": "mammal",
       "raw_value": 9.24,
@@ -826,7 +826,7 @@
       "source_id": "src-fcsap-era-module7-wildlife-trv-2021",
       "jurisdiction": "Canada_federal",
       "locator": "FCSAP ERA Module 7 v1.0, Table 1 (pp.25-26)",
-      "source_excerpt": "FCSAP eco-TRV 9.24 mg/kg-bw/day (chromium_vi, mammal)",
+      "source_excerpt": "FCSAP eco-TRV 9.24 mg/kg-bw/day (chromium_hexavalent, mammal)",
       "source_date": "2021-04-01",
       "grade": "B",
       "eco_direct_eligible": false,
@@ -834,7 +834,7 @@
       "note": ""
     },
     {
-      "substance_key": "chromium_vi",
+      "substance_key": "chromium_hexavalent",
       "input_key": "trv_eco_mg_per_kg_bw_day",
       "receptor": "bird",
       "raw_value": 16,
@@ -842,7 +842,7 @@
       "source_id": "src-fcsap-era-module7-wildlife-trv-2021",
       "jurisdiction": "Canada_federal",
       "locator": "FCSAP ERA Module 7 v1.0, Table 1 (pp.25-26)",
-      "source_excerpt": "FCSAP eco-TRV 16 mg/kg-bw/day (chromium_vi, bird)",
+      "source_excerpt": "FCSAP eco-TRV 16 mg/kg-bw/day (chromium_hexavalent, bird)",
       "source_date": "2021-04-01",
       "grade": "C",
       "eco_direct_eligible": false,
@@ -850,7 +850,7 @@
       "note": ""
     },
     {
-      "substance_key": "chromium_total",
+      "substance_key": "chromium",
       "input_key": "trv_eco_mg_per_kg_bw_day",
       "receptor": "mammal",
       "raw_value": 2.4,
@@ -858,7 +858,7 @@
       "source_id": "src-fcsap-era-module7-wildlife-trv-2021",
       "jurisdiction": "Canada_federal",
       "locator": "FCSAP ERA Module 7 v1.0, Table 1 (pp.25-26)",
-      "source_excerpt": "FCSAP eco-TRV 2.4 mg/kg-bw/day (chromium_total, mammal)",
+      "source_excerpt": "FCSAP eco-TRV 2.4 mg/kg-bw/day (chromium, mammal)",
       "source_date": "2021-04-01",
       "grade": "C",
       "eco_direct_eligible": false,
@@ -866,7 +866,7 @@
       "note": ""
     },
     {
-      "substance_key": "chromium_total",
+      "substance_key": "chromium",
       "input_key": "trv_eco_mg_per_kg_bw_day",
       "receptor": "bird",
       "raw_value": 2.66,
@@ -874,7 +874,7 @@
       "source_id": "src-fcsap-era-module7-wildlife-trv-2021",
       "jurisdiction": "Canada_federal",
       "locator": "FCSAP ERA Module 7 v1.0, Table 1 (pp.25-26)",
-      "source_excerpt": "FCSAP eco-TRV 2.66 mg/kg-bw/day (chromium_total, bird)",
+      "source_excerpt": "FCSAP eco-TRV 2.66 mg/kg-bw/day (chromium, bird)",
       "source_date": "2021-04-01",
       "grade": "C",
       "eco_direct_eligible": false,

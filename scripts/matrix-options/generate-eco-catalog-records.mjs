@@ -78,14 +78,31 @@ const BC_ALIGNMENT_BY_TIER = {
 };
 
 const ECO_DIRECT_INELIGIBLE = new Set([
-  'arsenic_inorganic', 'cadmium', 'chromium_vi', 'chromium_total', 'copper', 'lead',
-  'mercury_inorganic', 'methylmercury', 'nickel', 'selenium', 'thallium', 'uranium', 'vanadium',
-  'zinc', 'barium', 'silver', 'aluminum', 'iron', 'boron', 'manganese',
+  'arsenic_inorganic', 'cadmium', 'chromium', 'chromium_hexavalent', 'chromium_trivalent',
+  'copper', 'lead', 'mercury_inorganic', 'methylmercury', 'nickel', 'selenium', 'thallium',
+  'uranium', 'vanadium', 'zinc', 'barium', 'silver', 'aluminum', 'iron', 'boron', 'manganese',
   'antimony', 'beryllium', 'cobalt', 'molybdenum', 'tin', 'strontium',
   'chloride', 'cyanide', 'free_cyanide', 'chlorine', 'sulfide', 'ammonia',
   'pentachlorophenol', 'glyphosate', 'trichlorfon', 'tributyltin', 'pfoa', 'pfos',
   'methanol', 'acrolein',
 ]);
+
+// Known non-canonical substance_key aliases -> the existing catalog's canonical key. FAIL CLOSED so a
+// future staging file cannot re-orphan an eco value from its existing catalog substance (which would
+// break the cross-pathway comparison join + provenance/filter joins). The reviewed staging uses the
+// canonical keys directly; this guard rejects the aliases. (codex holistic 2026-06-17 finding.)
+const NONCANONICAL_ALIASES = {
+  chromium_vi: 'chromium_hexavalent',
+  chromium_total: 'chromium',
+  tetrachloroethene: 'tetrachloroethylene',
+  tetrachloromethane: 'carbon_tetrachloride',
+  trichloroethene: 'trichloroethylene',
+  ddt_4_4: 'p_p_dichlorodiphenyltrichloroethane_ddt',
+  lindane: 'hexachlorocyclohexane_gamma',
+  alpha_bhc: 'alpha_hexachlorocyclohexane_alpha_hch',
+  tribromomethane: 'bromoform',
+  total_pcbs: 'polychlorinated_biphenyls_total_pcbs',
+};
 
 // --- unit normalization (fail closed) ---------------------------------------
 const RE_MU_G = new RegExp('\\u03bcg|\\u00b5g', 'gi'); // greek mu + micro sign -> ug; \\u escapes keep this file plain-ASCII (CLAUDE.md 1.1)
@@ -243,6 +260,9 @@ export function generate(input, sourcesById) {
       skipped.no_value++; continue;
     }
     if (isTeqUnit(row.raw_unit)) { skipped.teq++; warnings.push('TEQ row excluded: ' + row.substance_key); continue; }
+    if (NONCANONICAL_ALIASES[row.substance_key]) {
+      throw new Error('Non-canonical substance_key "' + row.substance_key + '"; use the existing catalog key "' + NONCANONICAL_ALIASES[row.substance_key] + '" so eco values join the existing substance');
+    }
     if (!CANONICAL[row.input_key]) throw new Error('Unknown eco input_key "' + row.input_key + '" for ' + row.substance_key);
     if (row.input_key === 'fcv_ug_per_L') {
       // eco-direct EqP is nonionic-organics-ONLY. FAIL CLOSED: every fcv_ug_per_L row MUST be
