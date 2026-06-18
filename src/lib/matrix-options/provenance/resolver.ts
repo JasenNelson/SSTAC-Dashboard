@@ -1,7 +1,7 @@
 import {
   getEquationRecord,
-  getParameterValueRecord,
   getParameterValueRecordById,
+  getParameterValueRecordsForSubstance,
   getPathwayEquationRecords,
   getSourceRecord,
 } from './catalog';
@@ -10,6 +10,7 @@ import type {
   CalculatorValueRole,
   EvidenceSupportStatus,
   EquationRecord,
+  ParameterValueRecord,
   ProvenancePathway,
   ResolvedProvenanceRow,
   SourceRecord,
@@ -74,19 +75,68 @@ export function resolveEquationsForPathway(
   return getPathwayEquationRecords(pathway);
 }
 
+// True only when the catalog value and the used value are the SAME magnitude (unit-aware). Provenance
+// passes used values as strings or numbers; compare numerically when both parse, else string-equal.
+// Used to disambiguate multi-source candidate rows without mis-attributing a library-seeded value.
+function valuesMatch(
+  catalogValue: number | string,
+  usedValue: number | string | null,
+  catalogUnit?: string,
+  usedUnit?: string,
+): boolean {
+  if (usedValue === null || usedValue === '') return false;
+  if (usedUnit && catalogUnit && usedUnit !== catalogUnit) return false;
+  const a = Number(catalogValue);
+  const b = Number(usedValue);
+  if (Number.isFinite(a) && Number.isFinite(b)) return a === b;
+  return String(catalogValue) === String(usedValue);
+}
+
+// Tuple (substance, pathway, input) fallback when the used value cites no exact parameter_value_id.
+// VALUE-AWARE for every candidate count: a catalog row is attributed to the used value ONLY when its
+// value matches (unit-aware). This is the safety contract wiring needs_review rows depends on -- a row
+// is NEVER attributed to a not-provided or non-matching value, even when it is the only candidate for
+// the tuple. Resolution: the single value-matching candidate; else (on a value tie) the current_default
+// among the matches; else null (no attribution). NOTE: HH-direct TRV rows (rfd/sf/abs/ba) flow through
+// here without an id and seed from the substanceLibrary -- their default-load value matches the
+// current_default row, and the tie-break keeps that attribution when a same-valued IRIS/P28 sibling
+// also shares the tuple.
+function resolveTupleRecord(
+  usedValue: CalculatorUsedValue,
+): ParameterValueRecord | null {
+  const substanceKey = usedValue.substance_key;
+  const pathway = usedValue.pathway;
+  if (!substanceKey || !pathway) return null;
+  const candidates = getParameterValueRecordsForSubstance(
+    substanceKey,
+    pathway,
+  ).filter((r) => r.input_key === usedValue.input_key);
+  if (candidates.length === 0) return null;
+  const matches = candidates.filter((c) =>
+    valuesMatch(c.value, usedValue.value, c.unit, usedValue.unit),
+  );
+  if (matches.length === 1) return matches[0];
+  if (matches.length > 1) {
+    // Several candidates share the used value (e.g. a wired current_default scaffold + a same-valued
+    // IRIS/P28 sibling, as for HH-direct arsenic/zinc/cadmium/methylmercury). Prefer the
+    // current_default so HH default-load rows keep their catalog attribution; give up (null) only when
+    // the tie cannot be broken that way. Eco rows are all available_option, so this never resurrects
+    // an eco mis-attribution.
+    const currentDefaults = matches.filter(
+      (c) => c.default_status === 'current_default',
+    );
+    if (currentDefaults.length === 1) return currentDefaults[0];
+  }
+  return null;
+}
+
 export function resolveProvenanceRows(
   usedValues: CalculatorUsedValue[],
 ): ResolvedProvenanceRow[] {
   return usedValues.map((usedValue) => {
     const catalogRecord = usedValue.parameter_value_id
       ? getParameterValueRecordById(usedValue.parameter_value_id) ?? null
-      : usedValue.substance_key && usedValue.pathway
-        ? getParameterValueRecord(
-            usedValue.substance_key,
-            usedValue.pathway,
-            usedValue.input_key,
-          ) ?? null
-        : null;
+      : resolveTupleRecord(usedValue);
     const unit = usedValue.unit ?? catalogRecord?.unit;
 
     return {
