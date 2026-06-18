@@ -23,16 +23,24 @@ type EcoRecord = {
 const ecoValues = ecoValuesRaw as EcoRecord[];
 
 describe('eco_values.json data file', () => {
-  it('has 88 records (43 eco-direct fcv + 45 eco-food trv)', () => {
-    expect(ecoValues.length).toBe(88);
+  it('has 96 records (51 eco-direct fcv + 45 eco-food trv)', () => {
+    expect(ecoValues.length).toBe(96);
     const fcv = ecoValues.filter(
       (r) => r.pathway === 'eco-direct-eqp' && r.input_key === 'fcv_ug_per_L',
     );
     const trv = ecoValues.filter(
       (r) => r.pathway === 'eco-food-bsaf' && r.input_key === 'trv_eco_mg_per_kg_bw_day',
     );
-    expect(fcv.length).toBe(43);
+    expect(fcv.length).toBe(51);
     expect(trv.length).toBe(45);
+  });
+
+  it('emits per-source eco-direct candidates for multi-source substances (e.g. diazinon ESB + NRWQC)', () => {
+    const diazinon = ecoValues.filter(
+      (r) => r.substance_key === 'diazinon' && r.pathway === 'eco-direct-eqp',
+    );
+    expect(diazinon.length).toBe(2);
+    expect(new Set(diazinon.map((r) => r.parameter_value_id)).size).toBe(2);
   });
 
   it('every record is a needs_review available_option with a tier and no undefined jurisdiction', () => {
