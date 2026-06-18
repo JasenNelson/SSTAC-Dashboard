@@ -32,14 +32,18 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(summary.textContent).toMatch(/organic-PAH/);
   });
 
-  it('seeds TRV and BSAF_loc from the substance library on initial render', () => {
+  it('seeds TRV from the provisional eco catalog (mammal) and BSAF from the substance library on initial render', () => {
     render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
-    // B[a]P library TRV = 0.0025 mg/kg-bw/day; BSAF_loc_freshwater = 0.5.
+    // Eco-wiring Step 5: B[a]P TRV now seeds from the eco catalog mammal row (3.6 mg/kg-bw/day, FCSAP,
+    // needs_review) instead of the library 0.0025; BSAF still seeds from the substance library (0.5).
     const trv = screen.getByTestId('ecofood-trv-input') as HTMLInputElement;
     const bsaf = screen.getByTestId('ecofood-bsaf-input') as HTMLInputElement;
-    expect(trv.value).toBe('0.0025');
+    expect(trv.value).toBe('3.6');
     expect(bsaf.value).toBe('0.5');
-    // No override badges or Reset buttons on initial render.
+    // Provisional badge on the catalog-seeded TRV; no override badges/Reset on initial render.
+    expect(
+      screen.getByTestId('ecofood-trv-provisional-badge'),
+    ).toBeInTheDocument();
     expect(
       screen.queryByTestId('ecofood-trv-override-badge'),
     ).not.toBeInTheDocument();
@@ -138,7 +142,7 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     const { rerender } = render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
     expect(
       (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
-    ).toBe('0.0025');
+    ).toBe('3.6');
     rerender(
       <EcoFoodBSAFCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -204,7 +208,7 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     fireEvent.click(screen.getByTestId('ecofood-trv-reset'));
     expect(
       (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
-    ).toBe('0.0025');
+    ).toBe('3.6');
     expect(
       screen.queryByTestId('ecofood-trv-override-badge'),
     ).not.toBeInTheDocument();
@@ -358,9 +362,10 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     const panel = screen.getByTestId('calculator-provenance-panel');
     expect(panel).toHaveTextContent(/References and provenance/);
     expect(panel).toHaveTextContent(/Ecological TRV/);
-    expect(panel).toHaveTextContent(/0\.0025 mg\/kg-bw\/day/);
-    expect(panel).toHaveTextContent(/US EPA Eco-SSL, PAHs/);
-    expect(panel).toHaveTextContent(/current default/);
+    // Eco-wiring Step 5: B[a]P TRV now attributes to the FCSAP mammal eco-TRV catalog row (3.6), a
+    // provisional needs_review candidate, instead of the prior library-tuple EPA Eco-SSL attribution.
+    expect(panel).toHaveTextContent(/3\.6 mg\/kg-bw\/day/);
+    expect(panel).toHaveTextContent(/FCSAP ERA Module 7/);
     expect(panel).toHaveTextContent(/pending source locator/);
     expect(panel).toHaveTextContent(/0 approved/);
   });
@@ -372,5 +377,104 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     ).toBeInTheDocument();
     const summary = screen.getByTestId('ecofood-substance-summary');
     expect(summary.textContent).toMatch(/Benzo\[a\]pyrene/);
+  });
+
+  // Eco-wiring Step 5: receptor selector + catalog TRV seeding + relaxed BSAF gate.
+  it('offers a mammal/bird receptor selector and seeds the receptor-specific TRV (benzo_a_pyrene)', () => {
+    render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
+    const select = screen.getByTestId(
+      'ecofood-receptor-select',
+    ) as HTMLSelectElement;
+    expect(select.value).toBe('mammal');
+    expect(
+      (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
+    ).toBe('3.6');
+    // Switching to the bird receptor reseeds the TRV to the bird catalog row (0.001).
+    fireEvent.change(select, { target: { value: 'bird' } });
+    expect(
+      (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
+    ).toBe('0.001');
+  });
+
+  it('does not render the receptor selector for a substance with no eco-food catalog rows (library fallback)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      screen.queryByTestId('ecofood-receptor-select'),
+    ).not.toBeInTheDocument();
+    // TRV falls back to the library value; no provisional badge.
+    expect(
+      (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
+    ).toBe('0.00012');
+    expect(
+      screen.queryByTestId('ecofood-trv-provisional-badge'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('relaxed BSAF gate: a catalog-seeded TRV with a null library BSAF computes once a BSAF is entered (arsenic)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    // TRV seeds from the catalog mammal row (1.04); arsenic has no library BSAF, so the BSAF-missing
+    // error shows up front (it is no longer a hard pre-parse block on the substance).
+    expect(
+      (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
+    ).toBe('1.04');
+    expect(screen.getByTestId('ecofood-error')).toHaveTextContent(
+      /Enter a site-specific BSAF_loc/i,
+    );
+    // Supplying a site-specific BSAF lets the standard compute (error clears).
+    fireEvent.change(screen.getByTestId('ecofood-bsaf-input'), {
+      target: { value: '2.0' },
+    });
+    expect(screen.queryByTestId('ecofood-error')).not.toBeInTheDocument();
+  });
+
+  it('keeps the not-applicable block for a null-BSAF substance with no frame-eligible catalog TRV (lead under us-epa)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="lead"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    // lead has no library BSAF, and its FCSAP eco-TRV (Canada_federal) is not eligible under the
+    // US EPA frame -> no catalog TRV seeds -> the relaxed BSAF gate does NOT apply (Step 5 is scoped
+    // to catalog-backed substances); the legacy not-applicable block stays.
+    expect(screen.getByTestId('ecofood-error')).toHaveTextContent(
+      /not applicable/i,
+    );
+    expect(
+      screen.queryByTestId('ecofood-receptor-select'),
+    ).not.toBeInTheDocument();
+    // Entering a site-specific BSAF must NOT unlock a computation here (no catalog TRV driving it).
+    fireEvent.change(screen.getByTestId('ecofood-bsaf-input'), {
+      target: { value: '2.0' },
+    });
+    expect(screen.getByTestId('ecofood-error')).toHaveTextContent(
+      /not applicable/i,
+    );
+  });
+
+  it('a user override hides the provisional badge and shows the override badge (benzo_a_pyrene TRV)', () => {
+    render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
+    expect(
+      screen.getByTestId('ecofood-trv-provisional-badge'),
+    ).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('ecofood-trv-input'), {
+      target: { value: '0.01' },
+    });
+    expect(
+      screen.queryByTestId('ecofood-trv-provisional-badge'),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByTestId('ecofood-trv-override-badge'),
+    ).toBeInTheDocument();
   });
 });
