@@ -278,6 +278,72 @@ export function getFrameSeedCandidateEligibility(
   };
 }
 
+/**
+ * Provisional-seed eligibility for the ECO pathways (Path B; eco seed resolver in ecoSeed.ts).
+ * Eco fcv/trv rows are needs_review candidates that are deliberately seeded BEFORE source
+ * verification (build-first; owner directive 2026-06-17, badged "provisional" in the UI). This
+ * reuses classifyCandidate so it enforces EVERY STRUCTURAL exclusion (pathway unsupported,
+ * policy-compilation / reference-mining source roles, frame jurisdiction, not_default,
+ * non-single_value, current-calculator scaffold) but BYPASSES ONLY the qa-approval +
+ * direct-source-verification checks: a record blocked solely for 'needs_direct_source' or
+ * 'needs_qa' (i.e. it cleared every structural gate, only verification is outstanding) is
+ * provisional-eligible. A fully approved+verified record (eligible_pending_approval) is also
+ * eligible. Read-only; never promotes, never mutates qa_status.
+ */
+export function getEcoProvisionalEligibility(
+  frameId: RegulatoryFrameId,
+  pathway: ProvenancePathway,
+  record: ParameterValueRecord,
+): {
+  eligible: boolean;
+  disposition: DefaultSelectionCandidateDisposition;
+  rationale: string;
+} {
+  const candidate = classifyCandidate(
+    {
+      frameId,
+      pathway,
+      substanceKey: record.substance_key,
+      inputKey: record.input_key,
+    },
+    record,
+  );
+  const structurallyClear =
+    candidate.disposition === 'eligible_pending_approval' ||
+    candidate.disposition === 'blocked_needs_direct_source' ||
+    candidate.disposition === 'blocked_needs_qa';
+  // Structural clearance is necessary but NOT sufficient: classifyCandidate collapses several
+  // distinct states into blocked_needs_direct_source / blocked_needs_qa. Admit ONLY rows whose value
+  // is a real extracted source value that is merely pending verification/approval. Exclude:
+  //  - superseded qa rows (the value was REPLACED -- must never seed, even provisionally);
+  //  - non-source-backed evidence states (reference_mining_lead, user_entered_or_derived, and the
+  //    current_calculator_scaffold which is also structurally blocked) -- those are not "pending QA".
+  // (codex 5.5-xhigh P1: the disposition whitelist alone was too broad.)
+  const qaAdmissible =
+    record.qa_status === 'needs_review' || record.qa_status === 'approved';
+  const evidenceAdmissible =
+    record.evidence_support_status === 'pending_source_locator' ||
+    record.evidence_support_status === 'approved_source_backed';
+  const eligible = structurallyClear && qaAdmissible && evidenceAdmissible;
+  return {
+    eligible,
+    disposition: candidate.disposition,
+    rationale: candidate.rationale,
+  };
+}
+
+/**
+ * Frame jurisdiction rank for a record (lower = higher priority) per SOURCE_PRIORITY_BY_FRAME;
+ * null when the record's jurisdiction is not eligible for the frame. Exported so the eco seed
+ * resolver ranks candidates the same way the default-selection policy does.
+ */
+export function getFrameJurisdictionRank(
+  frameId: RegulatoryFrameId,
+  record: ParameterValueRecord,
+): number | null {
+  return hierarchyRank(frameId, record);
+}
+
 function compareCandidates(
   left: DefaultSelectionCandidate,
   right: DefaultSelectionCandidate,
