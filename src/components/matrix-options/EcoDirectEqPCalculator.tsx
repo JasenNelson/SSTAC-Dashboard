@@ -16,8 +16,12 @@
 // they are no longer tracking the library default.
 //
 // jurisdiction now carries the selected regulatory frame. It controls
-// source hierarchy and value lookup eligibility; calculator defaults stay
-// unchanged until frame-specific source values pass QA.
+// source hierarchy and value lookup eligibility.
+//
+// Eco-wiring Step 4 (2026-06-17): the FCV seed is now FRAME-AWARE. computeFcvSeed prefers the eco
+// References & Values catalog value for (substance, frame) -- a provisional, source-priority-selected
+// needs_review candidate via resolveEcoSeed -- and falls back to the substance-library FCV. The
+// header comment above describing a library-only re-seed is the pre-Step-4 contract.
 //
 // Plain ASCII only.
 
@@ -25,6 +29,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { resolveEcoSeed } from '@/lib/matrix-options/ecoSeed';
+import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
 import type { EcoDirectEqPResult } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
 import type {
@@ -54,6 +60,43 @@ export interface EcoDirectEqPCalculatorProps {
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
+interface FcvSeed {
+  value: string;
+  // The exact catalog row id when the seed came from the eco References & Values catalog (so
+  // provenance attributes the precise source row); null when it fell back to the substance library.
+  parameterValueId: string | null;
+  // true while the catalog row is a build-first needs_review candidate (not yet HITL-verified).
+  provisional: boolean;
+}
+
+// Resolve the FCV seed for (substance, frame): prefer the frame-aware, source-priority eco catalog
+// value (resolveEcoSeed, which honors the provisional gate + jurisdiction + reference-only guards),
+// else fall back to the substance-library FCV. Pure; deterministic (static catalog) so SSR == CSR.
+function computeFcvSeed(
+  substanceKey: string,
+  frameId: RegulatoryFrameId,
+): FcvSeed {
+  const seed = resolveEcoSeed(
+    substanceKey,
+    'eco-direct-eqp',
+    'fcv_ug_per_L',
+    frameId,
+  );
+  if (seed) {
+    return {
+      value: String(seed.value),
+      parameterValueId: seed.parameterValueId,
+      provisional: seed.provisional,
+    };
+  }
+  const lib = findSubstance(substanceKey);
+  return {
+    value: lib?.fcv_ug_per_L != null ? String(lib.fcv_ug_per_L) : '',
+    parameterValueId: null,
+    provisional: false,
+  };
+}
+
 export default function EcoDirectEqPCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction = DEFAULT_JURISDICTION,
@@ -69,25 +112,25 @@ export default function EcoDirectEqPCalculator({
   const [focPercent, setFocPercent] = useState<number>(2.0);
   const [csInput, setCsInput] = useState<string>('');
 
-  // FCV reset contract (plan v3 section 4.6). Initial seed: current
-  // substance's library FCV, or empty string when the substance has no
-  // library FCV (downstream "FCV must be a positive number" guard
-  // surfaces the missing value to the HITL).
-  const [fcvInput, setFcvInput] = useState<string>(
-    substance?.fcv_ug_per_L != null ? String(substance.fcv_ug_per_L) : '',
+  // FCV reset contract (plan v3 section 4.6), now FRAME-AWARE. The seed prefers the eco References &
+  // Values catalog value for (substance, frame) -- a provisional, source-priority-selected needs_review
+  // candidate -- and falls back to the substance-library FCV (empty when neither exists; the downstream
+  // "FCV must be a positive number" guard surfaces the gap to the HITL).
+  const fcvSeed = useMemo(
+    () => computeFcvSeed(substanceKey, jurisdiction),
+    [substanceKey, jurisdiction],
   );
+
+  const [fcvInput, setFcvInput] = useState<string>(() => fcvSeed.value);
   const [fcvIsOverride, setFcvIsOverride] = useState<boolean>(false);
 
-  // When substanceKey changes AND the user has NOT marked FCV as a manual
-  // override, re-seed FCV from the new substance's library default. The
-  // re-look-up happens inside the effect (rather than depending on the
-  // resolved SubstanceEntry) so the dep array is exactly the two reactive
-  // pieces of state.
+  // Re-seed FCV when the substance OR the regulatory frame changes, unless the user has marked FCV as
+  // a manual override. fcvSeed is a fresh object only when (substance, frame) changes, so this fires
+  // exactly on those transitions (and on the reset that clears fcvIsOverride).
   useEffect(() => {
     if (fcvIsOverride) return;
-    const next = findSubstance(substanceKey);
-    setFcvInput(next?.fcv_ug_per_L != null ? String(next.fcv_ug_per_L) : '');
-  }, [substanceKey, fcvIsOverride]);
+    setFcvInput(fcvSeed.value);
+  }, [fcvSeed, fcvIsOverride]);
 
   const handleFcvInput = (next: string): void => {
     setFcvInput(next);
@@ -98,9 +141,10 @@ export default function EcoDirectEqPCalculator({
 
   const handleResetFcv = (): void => {
     // Clearing the override flag triggers the useEffect on the next render
-    // (because fcvIsOverride is a dep), which re-seeds FCV from the
-    // current substance's library default. Single source of truth -- no
-    // need to set FCV here too.
+    // (because fcvIsOverride is a dep), which re-seeds FCV from the current
+    // (substance, frame) seed (fcvSeed -- eco catalog value when available, else
+    // the substance-library default). Single source of truth -- no need to set
+    // FCV here too.
     setFcvIsOverride(false);
   };
 
@@ -171,12 +215,23 @@ export default function EcoDirectEqPCalculator({
         unit: 'ug/L',
         role: fcvIsOverride
           ? 'user-entered value'
-          : 'current calculator default',
+          : fcvSeed.parameterValueId
+            ? 'source-backed default'
+            : 'current calculator default',
         pathway: 'eco-direct-eqp',
         substance_key: substanceKey,
+        // Attribute to the EXACT eco catalog row when the (non-override) seed came from the catalog,
+        // so the provenance panel shows that source row + its needs_review status. When the seed fell
+        // back to the substance library, no id is set and the resolver uses its value-aware tuple match.
+        parameter_value_id:
+          !fcvIsOverride && fcvSeed.parameterValueId
+            ? fcvSeed.parameterValueId
+            : undefined,
         note: fcvIsOverride
           ? 'User-edited FCV. Catalog source row remains visible for comparison.'
-          : undefined,
+          : fcvSeed.provisional && fcvSeed.parameterValueId
+            ? 'Provisional eco value -- needs_review catalog candidate, not yet HITL-verified.'
+            : undefined,
       },
       {
         input_key: 'foc',
@@ -195,7 +250,7 @@ export default function EcoDirectEqPCalculator({
         note: 'Optional site measurement used for comparison only.',
       },
     ],
-    [csInput, fcvInput, fcvIsOverride, focPercent, substance?.logKow, substanceKey],
+    [csInput, fcvInput, fcvIsOverride, focPercent, substance?.logKow, substanceKey, fcvSeed],
   );
 
   return (
@@ -305,6 +360,15 @@ export default function EcoDirectEqPCalculator({
                 User override
               </span>
             )}
+            {!fcvIsOverride && fcvSeed.provisional && fcvSeed.parameterValueId && (
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                data-testid="eqp-fcv-provisional-badge"
+                title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
+              >
+                Provisional -- needs review
+              </span>
+            )}
           </div>
           <input
             id="eqp-fcv"
@@ -318,8 +382,9 @@ export default function EcoDirectEqPCalculator({
           />
           <div className="flex items-center justify-between mt-1">
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Default seeded from substance library; HITL overrides per
-              site review.
+              Default seeded from the eco References &amp; Values catalog
+              (provisional, frame-aware) or the substance library; HITL
+              overrides per site review.
             </p>
             {fcvIsOverride && (
               <button
@@ -328,7 +393,7 @@ export default function EcoDirectEqPCalculator({
                 data-testid="eqp-fcv-reset"
                 className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
               >
-                Reset to library default
+                Reset to default
               </button>
             )}
           </div>

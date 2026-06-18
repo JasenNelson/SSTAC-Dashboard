@@ -395,4 +395,130 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
     ).toBe('0.014');
   });
+
+  // Eco-wiring Step 4: FCV now seeds from the eco References & Values catalog (frame-aware,
+  // provisional) before the substance library. benzene has NO library FCV (null) but an ESB
+  // eco-direct catalog row (130 ug/L, needs_review) eligible under bc-protocol1-v5-dra.
+  it('seeds FCV from the provisional eco catalog when the library has none (benzene)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('130');
+    expect(screen.getByTestId('eqp-fcv-provisional-badge')).toBeInTheDocument();
+    expect(
+      screen.queryByTestId('eqp-fcv-override-badge'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('attributes the provisional eco catalog row in the provenance panel (benzene ESB)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    expect(panel).toHaveTextContent(/130 ug\/L/);
+    expect(panel).toHaveTextContent(/ESB/i);
+  });
+
+  it('does NOT seed the eco catalog value under a reference_only frame (falls back; benzene)', () => {
+    // canada-fcsap-aquatic marks eco-direct reference_only -> resolveEcoSeed returns null ->
+    // fallback to the (null) benzene library FCV -> empty input, no provisional badge.
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('');
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
+  });
+
+  it('re-seeds FCV when the regulatory frame changes (eco catalog -> reference_only fallback)', () => {
+    const { rerender } = render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('130');
+    rerender(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('');
+  });
+
+  it('a user override hides the provisional badge and shows the override badge (benzene)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.getByTestId('eqp-fcv-provisional-badge')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.5' },
+    });
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
+    expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
+  });
+
+  it('does NOT clobber an override FCV when the regulatory frame changes (benzene)', () => {
+    const { rerender } = render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.077' },
+    });
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('0.077');
+    // Frame change must NOT reseed an overridden FCV (the override guard applies to frame changes
+    // exactly as it does to substance changes).
+    rerender(
+      <EcoDirectEqPCalculator
+        substanceKey="benzene"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('0.077');
+    expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
+  });
+
+  it('does NOT show the provisional badge for a current_default scaffold substance (benzo_a_pyrene)', () => {
+    // benzo_a_pyrene eco-direct catalog row is current_default -> excluded from provisional eligibility
+    // -> resolveEcoSeed returns null -> library fallback (0.014), no provisional badge. Regression
+    // guard that wiring did not change the current_default-backed substances.
+    render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('0.014');
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
+  });
 });
