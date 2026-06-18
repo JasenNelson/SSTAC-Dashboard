@@ -69,7 +69,14 @@ describe('matrix options evidence library helpers', () => {
     // with the BC / US_federal IR_food groups). Its BW seed reuses the existing BW_kg__BC group.
     // 2026-06-14: +0 (1607 -> 1607) -- TWN toddler subsistence records (IR + BW) both use
     // EXISTING BC candidate_group_ids (IR_food_kg_per_day__BC + BW_kg__BC); no new groups.
-    expect(view.valueGroups).toHaveLength(1607);
+    // 2026-06-17: +74 (1607 -> 1681) -- eco-wiring Step 2 wires eco_values.json (96 needs_review
+    // rows) into PARAMETER_VALUE_RECORDS: 45 unique eco-direct groups
+    // (eco-direct-eqp__{substance}__fcv_ug_per_L__US_federal; the 6 multi-source substances --
+    // diazinon/malathion/methoxychlor/endosulfan_alpha/endosulfan_beta/toxaphene -- each SHARE one
+    // group across their ESB+NRWQC rows) + 29 unique eco-food groups
+    // (eco-food-bsaf__{substance}__trv_eco_mg_per_kg_bw_day__Canada_federal; mammal+bird rows for a
+    // substance SHARE one group) = 74 new groups.
+    expect(view.valueGroups).toHaveLength(1681);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -138,7 +145,9 @@ describe('matrix options evidence library helpers', () => {
     // fix 2026-06-14 makes BW standard needs_review matching IR). = 379.
     // 2026-06-15: -2 -- TWN toddler subsistence IR + BW promoted out of pending (HITL J. Nelson,
     // inline-approved --apply via promote-twn-foodweb-toddler.mjs) = 377.
-    expect(view.audit.values.pendingSourceLocator).toBe(377);
+    // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry
+    // evidence_support_status=pending_source_locator (needs_review eco candidates) = 473.
+    expect(view.audit.values.pendingSourceLocator).toBe(473);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -155,7 +164,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-14: +1 ACFN community-specific food-web IR_food record (available_option) = 1607.
     // 2026-06-14: +2 TWN toddler subsistence food-web records (IR + BW, both available_option,
     // needs_review pre-promotion) = 1609.
-    expect(view.audit.values.availableOptions).toBe(1609);
+    // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry default_status=available_option = 1705.
+    expect(view.audit.values.availableOptions).toBe(1705);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
