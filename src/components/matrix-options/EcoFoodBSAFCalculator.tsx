@@ -28,6 +28,8 @@ import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { resolveEcoSeed, type EcoReceptor } from '@/lib/matrix-options/ecoSeed';
+import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
 import type {
   EcoFoodBSAFResult,
   Ecosystem,
@@ -64,6 +66,55 @@ export interface EcoFoodBSAFCalculatorProps {
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
 }
 
+// Eco-food TRVs are per-receptor (dose-based wildlife values). The receptor selector picks which
+// catalog TRV row seeds; BW/IR stay user-adjustable (the catalog carries only TRVs, not receptor
+// body weights / ingestion rates).
+const RECEPTORS: readonly EcoReceptor[] = ['mammal', 'bird'];
+const RECEPTOR_LABELS: Record<EcoReceptor, string> = {
+  mammal: 'Mammal',
+  bird: 'Bird',
+};
+
+interface TrvSeed {
+  value: string;
+  // Exact catalog row id when the seed came from the eco catalog (so provenance attributes the precise
+  // per-receptor source row); null when it fell back to the substance library.
+  parameterValueId: string | null;
+  provisional: boolean;
+}
+
+// Resolve the TRV seed for (substance, frame, receptor): prefer the frame-aware, source-priority,
+// provisional-gated eco catalog value (resolveEcoSeed), else fall back to the substance-library TRV.
+function computeTrvSeed(
+  substanceKey: string,
+  frameId: RegulatoryFrameId,
+  receptor: EcoReceptor,
+): TrvSeed {
+  const seed = resolveEcoSeed(
+    substanceKey,
+    'eco-food-bsaf',
+    'trv_eco_mg_per_kg_bw_day',
+    frameId,
+    receptor,
+  );
+  if (seed) {
+    return {
+      value: String(seed.value),
+      parameterValueId: seed.parameterValueId,
+      provisional: seed.provisional,
+    };
+  }
+  const lib = findSubstance(substanceKey);
+  return {
+    value:
+      lib?.trv_eco_mg_per_kg_bw_day != null
+        ? String(lib.trv_eco_mg_per_kg_bw_day)
+        : '',
+    parameterValueId: null,
+    provisional: false,
+  };
+}
+
 export default function EcoFoodBSAFCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
   jurisdiction = DEFAULT_JURISDICTION,
@@ -87,15 +138,49 @@ export default function EcoFoodBSAFCalculator({
   // F_site (default 1.0 resident; 0.2 quick-set for anadromous salmon). LOCAL.
   const [fsiteInput, setFsiteInput] = useState<string>('1.0');
 
-  // TRV + BSAF reset contract (plan v3 section 4.6). Both fields follow
-  // the same override pattern: user edit promotes to override; Reset
-  // clears it; useEffect on [substanceKey, *IsOverride] re-seeds from the
-  // current substance library row whenever override is false.
-  const [trvInput, setTrvInput] = useState<string>(
-    substance?.trv_eco_mg_per_kg_bw_day != null
-      ? String(substance.trv_eco_mg_per_kg_bw_day)
-      : '',
+  // Receptor selector for the per-receptor eco-food TRV (eco-wiring Step 5). availableReceptors = the
+  // receptors that have a frame-eligible catalog TRV for this substance; the dropdown only offers
+  // those. When none exist, TRV falls back to the substance-library value (legacy behavior).
+  const availableReceptors = useMemo(
+    () =>
+      RECEPTORS.filter(
+        (r) =>
+          resolveEcoSeed(
+            substanceKey,
+            'eco-food-bsaf',
+            'trv_eco_mg_per_kg_bw_day',
+            jurisdiction,
+            r,
+          ) !== null,
+      ),
+    [substanceKey, jurisdiction],
   );
+
+  const [receptor, setReceptor] = useState<EcoReceptor>('mammal');
+
+  // Snap the receptor to an available one when the current selection has no catalog TRV for this
+  // (substance, frame) but others do (e.g. a bird-only substance). Converges in one extra render.
+  useEffect(() => {
+    if (
+      availableReceptors.length > 0 &&
+      !availableReceptors.includes(receptor)
+    ) {
+      setReceptor(availableReceptors[0]);
+    }
+  }, [availableReceptors, receptor]);
+
+  // TRV seed for the CURRENT (substance, frame, receptor): prefer the provisional eco catalog value,
+  // else the substance-library TRV. BSAF stays library-seeded (MVP seeds fcv + trv only; fLipid/foc/
+  // BSAF remain user-entered until source-backed catalog rows exist).
+  const trvSeed = useMemo(
+    () => computeTrvSeed(substanceKey, jurisdiction, receptor),
+    [substanceKey, jurisdiction, receptor],
+  );
+
+  // TRV + BSAF reset contract (plan v3 section 4.6). Both fields follow the same override pattern:
+  // user edit promotes to override; Reset clears it. TRV re-seeds on substance/frame/receptor change;
+  // BSAF re-seeds on substance change. Both only while their override flag is false.
+  const [trvInput, setTrvInput] = useState<string>(() => trvSeed.value);
   const [trvIsOverride, setTrvIsOverride] = useState<boolean>(false);
 
   const [bsafInput, setBsafInput] = useState<string>(
@@ -107,13 +192,8 @@ export default function EcoFoodBSAFCalculator({
 
   useEffect(() => {
     if (trvIsOverride) return;
-    const next = findSubstance(substanceKey);
-    setTrvInput(
-      next?.trv_eco_mg_per_kg_bw_day != null
-        ? String(next.trv_eco_mg_per_kg_bw_day)
-        : '',
-    );
-  }, [substanceKey, trvIsOverride]);
+    setTrvInput(trvSeed.value);
+  }, [trvSeed, trvIsOverride]);
 
   useEffect(() => {
     if (bsafIsOverride) return;
@@ -161,7 +241,15 @@ export default function EcoFoodBSAFCalculator({
     if (!substance) {
       return { error: 'No substance selected.' };
     }
-    if (substance.bsaf_loc_freshwater === null) {
+    // Relaxed BSAF gate (eco-wiring Step 5), SCOPED to catalog-backed substances. The legacy
+    // "no freshwater BSAF -> path not applicable" block is kept for substances that have NEITHER a
+    // library BSAF NOR a frame-eligible catalog TRV driving the calc (e.g. a metal under a frame whose
+    // eco-food TRV jurisdiction is ineligible). Only when a catalog TRV seeded this slot
+    // (trvSeed.parameterValueId != null) do we allow a site-specific BSAF to drive a computation.
+    if (
+      substance.bsaf_loc_freshwater === null &&
+      trvSeed.parameterValueId === null
+    ) {
       return {
         error:
           'Selected substance has no freshwater BSAF; the Eco-Food path ' +
@@ -188,9 +276,18 @@ export default function EcoFoodBSAFCalculator({
           'Ingestion rate must be a positive decimal number (kg-wet/day).',
       };
     }
+    // Relaxed BSAF gate (eco-wiring Step 5): a null-library-BSAF substance is no longer hard-blocked
+    // up front -- a catalog-seeded TRV can compute once the user supplies a site-specific BSAF. The
+    // error only fires when BSAF is actually missing/invalid, and is context-aware for null-library
+    // substances.
     const bsafParse = parseDecimalInput(bsafInput, { allowNegative: false });
     if (bsafParse.state !== 'valid' || bsafParse.value <= 0) {
-      return { error: 'BSAF_loc must be a positive decimal number.' };
+      return {
+        error:
+          substance.bsaf_loc_freshwater === null
+            ? 'Enter a site-specific BSAF_loc to compute (this substance has no library BSAF; the AVS/SEM path is out of scope in v1).'
+            : 'BSAF_loc must be a positive decimal number.',
+      };
     }
     const fsiteParse = parseDecimalInput(fsiteInput, { allowNegative: false });
     if (fsiteParse.state !== 'valid' || fsiteParse.value <= 0) {
@@ -214,6 +311,7 @@ export default function EcoFoodBSAFCalculator({
     }
   }, [
     substance,
+    trvSeed,
     trvInput,
     bwInput,
     irInput,
@@ -236,12 +334,22 @@ export default function EcoFoodBSAFCalculator({
         unit: 'mg/kg-bw/day',
         role: trvIsOverride
           ? 'user-entered value'
-          : 'current calculator default',
+          : trvSeed.parameterValueId
+            ? 'source-backed default'
+            : 'current calculator default',
         pathway: 'eco-food-bsaf',
         substance_key: substanceKey,
+        // Attribute to the EXACT per-receptor eco catalog row when the (non-override) seed came from
+        // the catalog; else no id (library fallback -> resolver value-aware tuple match).
+        parameter_value_id:
+          !trvIsOverride && trvSeed.parameterValueId
+            ? trvSeed.parameterValueId
+            : undefined,
         note: trvIsOverride
           ? 'User-edited TRV. Catalog source row remains visible for comparison.'
-          : undefined,
+          : trvSeed.provisional && trvSeed.parameterValueId
+            ? `Provisional eco TRV (${RECEPTOR_LABELS[receptor]} receptor) -- needs_review catalog candidate, not yet HITL-verified.`
+            : undefined,
       },
       {
         input_key: 'bsaf_loc_freshwater',
@@ -303,9 +411,11 @@ export default function EcoFoodBSAFCalculator({
       focPercent,
       fsiteInput,
       irInput,
+      receptor,
       substanceKey,
       trvInput,
       trvIsOverride,
+      trvSeed,
     ],
   );
 
@@ -387,6 +497,34 @@ export default function EcoFoodBSAFCalculator({
             ))}
           </div>
         </fieldset>
+
+        {availableReceptors.length >= 1 && (
+          <div data-testid="ecofood-receptor">
+            <label
+              htmlFor="ecofood-receptor-select"
+              className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
+            >
+              Wildlife receptor (TRV basis)
+            </label>
+            <select
+              id="ecofood-receptor-select"
+              data-testid="ecofood-receptor-select"
+              value={receptor}
+              onChange={(e) => setReceptor(e.target.value as EcoReceptor)}
+              className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
+            >
+              {availableReceptors.map((r) => (
+                <option key={r} value={r}>
+                  {RECEPTOR_LABELS[r]}
+                </option>
+              ))}
+            </select>
+            <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+              Selects which per-receptor eco-TRV catalog value seeds TRV_eco below. Body weight and
+              ingestion rate stay adjustable.
+            </p>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <div>
@@ -548,6 +686,17 @@ export default function EcoFoodBSAFCalculator({
                   User override
                 </span>
               )}
+              {!trvIsOverride &&
+                trvSeed.provisional &&
+                trvSeed.parameterValueId && (
+                  <span
+                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                    data-testid="ecofood-trv-provisional-badge"
+                    title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
+                  >
+                    Provisional -- needs review
+                  </span>
+                )}
             </div>
             <input
               id="ecofood-trv"
@@ -561,7 +710,8 @@ export default function EcoFoodBSAFCalculator({
             />
             <div className="flex items-center justify-between mt-1">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                Seeded from substance library; HITL overrides.
+                Seeded from the eco catalog (provisional, per receptor) or the
+                substance library; HITL overrides.
               </p>
               {trvIsOverride && (
                 <button
