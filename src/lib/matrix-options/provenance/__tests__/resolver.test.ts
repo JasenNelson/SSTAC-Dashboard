@@ -25,6 +25,7 @@ const mockGetEquationRecord = vi.fn();
 const mockGetPathwayEquationRecords = vi.fn();
 const mockGetParameterValueRecord = vi.fn();
 const mockGetParameterValueRecordById = vi.fn();
+const mockGetParameterValueRecordsForSubstance = vi.fn();
 
 vi.mock('../catalog', () => ({
   getSourceRecord: (id: string) => mockGetSourceRecord(id),
@@ -34,6 +35,8 @@ vi.mock('../catalog', () => ({
     mockGetParameterValueRecord(s, p, i),
   getParameterValueRecordById: (id: string) =>
     mockGetParameterValueRecordById(id),
+  getParameterValueRecordsForSubstance: (s: string, p: string) =>
+    mockGetParameterValueRecordsForSubstance(s, p),
 }));
 
 function source(id: string): SourceRecord {
@@ -90,7 +93,7 @@ function paramRecord(
     pathway: 'human-health-direct',
     input_key: 'rfd',
     display_name: 'Reference dose',
-    value: 0.0036,
+    value: 1,
     unit: 'mg/kg-bw/day',
     value_type: 'single_value',
     candidate_group_id: 'lead::human-health-direct::rfd',
@@ -115,6 +118,8 @@ beforeEach(() => {
   mockGetPathwayEquationRecords.mockReset();
   mockGetParameterValueRecord.mockReset();
   mockGetParameterValueRecordById.mockReset();
+  mockGetParameterValueRecordsForSubstance.mockReset();
+  mockGetParameterValueRecordsForSubstance.mockReturnValue([]);
 });
 
 describe('resolveSourceRecords', () => {
@@ -164,31 +169,30 @@ describe('resolveProvenanceRows -- catalog lookup gating', () => {
       { input_key: 'bw', label: 'Body weight', value: 70, role: 'user-entered value' },
     ];
     const [row] = resolveProvenanceRows(used);
-    expect(mockGetParameterValueRecord).not.toHaveBeenCalled();
+    expect(mockGetParameterValueRecordsForSubstance).not.toHaveBeenCalled();
     expect(row.catalog_record).toBeNull();
     expect(row.qa_status).toBe('not_cataloged');
     expect(row.default_status).toBe('not_cataloged');
     expect(row.candidate_group_id).toBeNull();
   });
 
-  it('looks up the catalog with substance/pathway/input when both keys present', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord());
+  it('looks up the catalog with substance/pathway when both keys present', () => {
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord()]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const used: CalculatorUsedValue[] = [
       {
         input_key: 'rfd',
         label: '',
-        value: 0.0036,
+        value: 1,
         role: 'source-backed default',
         pathway: 'human-health-direct',
         substance_key: 'lead',
       },
     ];
     resolveProvenanceRows(used);
-    expect(mockGetParameterValueRecord).toHaveBeenCalledWith(
+    expect(mockGetParameterValueRecordsForSubstance).toHaveBeenCalledWith(
       'lead',
       'human-health-direct',
-      'rfd',
     );
   });
 
@@ -256,7 +260,7 @@ describe('resolveProvenanceRows -- formatValue', () => {
   });
 
   it('prefers the used-value unit over the catalog unit', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord({ unit: 'catalog-unit' }));
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord({ unit: 'catalog-unit' })]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const used: CalculatorUsedValue[] = [
       {
@@ -273,7 +277,7 @@ describe('resolveProvenanceRows -- formatValue', () => {
   });
 
   it('falls back to the catalog unit when the used value omits a unit', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord({ unit: 'catalog-unit' }));
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord({ unit: 'catalog-unit' })]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const used: CalculatorUsedValue[] = [
       {
@@ -299,9 +303,9 @@ describe('resolveProvenanceRows -- label fallback chain', () => {
   });
 
   it('falls back to the catalog display_name when the label is blank', () => {
-    mockGetParameterValueRecord.mockReturnValue(
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([
       paramRecord({ display_name: 'Catalog name' }),
-    );
+    ]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const [row] = resolveProvenanceRows([
       {
@@ -330,7 +334,7 @@ describe('resolveProvenanceRows -- resolveRole', () => {
     usedRole: CalculatorUsedValue['role'],
     record: ParameterValueRecord | null,
   ) {
-    mockGetParameterValueRecord.mockReturnValue(record ?? undefined);
+    mockGetParameterValueRecordsForSubstance.mockReturnValue(record ? [record] : []);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     return resolveProvenanceRows([
       {
@@ -392,7 +396,7 @@ describe('resolveProvenanceRows -- resolveEvidenceSupportStatus', () => {
     usedRole: CalculatorUsedValue['role'],
     record: ParameterValueRecord | null,
   ) {
-    mockGetParameterValueRecord.mockReturnValue(record ?? undefined);
+    mockGetParameterValueRecordsForSubstance.mockReturnValue(record ? [record] : []);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     return resolveProvenanceRows([
       {
@@ -425,7 +429,7 @@ describe('resolveProvenanceRows -- resolveEvidenceSupportStatus', () => {
 
 describe('resolveProvenanceRows -- sources, note, and passthrough fields', () => {
   it('resolves catalog source_ids into source records', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord({ source_ids: ['s1', 's2'] }));
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord({ source_ids: ['s1', 's2'] })]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const [row] = resolveProvenanceRows([
       {
@@ -449,7 +453,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
   });
 
   it('prefers the used-value note over the catalog review_notes', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord({ review_notes: 'catalog note' }));
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord({ review_notes: 'catalog note' })]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const [row] = resolveProvenanceRows([
       {
@@ -466,7 +470,7 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
   });
 
   it('falls back to the catalog review_notes when there is no used-value note', () => {
-    mockGetParameterValueRecord.mockReturnValue(paramRecord({ review_notes: 'catalog note' }));
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([paramRecord({ review_notes: 'catalog note' })]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const [row] = resolveProvenanceRows([
       {
@@ -482,13 +486,13 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
   });
 
   it('carries qa_status / default_status / candidate_group_id from the catalog record', () => {
-    mockGetParameterValueRecord.mockReturnValue(
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([
       paramRecord({
         qa_status: 'approved',
         default_status: 'current_default',
         candidate_group_id: 'cg-7',
       }),
-    );
+    ]);
     mockGetSourceRecord.mockImplementation((id: string) => source(id));
     const [row] = resolveProvenanceRows([
       {
@@ -514,5 +518,111 @@ describe('resolveProvenanceRows -- sources, note, and passthrough fields', () =>
     ];
     const rows = resolveProvenanceRows(used);
     expect(rows.map((r) => r.input_key)).toEqual(['a', 'b', 'c']);
+  });
+});
+
+describe('resolveProvenanceRows -- value-aware multi-candidate tuple fallback', () => {
+  it('returns the single tuple match when only one candidate exists (legacy behavior)', () => {
+    const rec = paramRecord({ value: 0.0036 });
+    mockGetParameterValueRecord.mockReturnValue(rec);
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([rec]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.0036,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-1');
+  });
+
+  it('attributes to the candidate whose VALUE matches the used value (multi-source)', () => {
+    const esb = paramRecord({ parameter_value_id: 'pv-esb', value: 0.1699 });
+    const nrwqc = paramRecord({ parameter_value_id: 'pv-nrwqc', value: 0.17 });
+    mockGetParameterValueRecord.mockReturnValue(esb); // first-match = esb
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([esb, nrwqc]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.17, // matches nrwqc, NOT the first-match esb
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-nrwqc');
+  });
+
+  it('returns null (no mis-attribution) when the used value matches NO candidate', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 1.04 });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 4.4 });
+    mockGetParameterValueRecord.mockReturnValue(a);
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.043, // library-seeded value; matches neither catalog candidate
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(row.catalog_record).toBeNull();
+    expect(row.qa_status).toBe('not_cataloged');
+  });
+
+  it('returns null when the used value matches MORE THAN ONE candidate and none is current_default', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, default_status: 'available_option' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, default_status: 'available_option' });
+    mockGetParameterValueRecord.mockReturnValue(a);
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(row.catalog_record).toBeNull();
+  });
+
+  it('breaks a value tie toward the current_default candidate (HH default-load attribution)', () => {
+    // Mirrors the real HH-direct case: a current_default scaffold + a same-valued IRIS/P28 sibling.
+    // The default-load value matches BOTH; the current_default must keep the attribution.
+    const wired = paramRecord({
+      parameter_value_id: 'pv-arsenic-hh-direct-rfd',
+      value: 0.0003,
+      default_status: 'current_default',
+    });
+    const sibling = paramRecord({
+      parameter_value_id: 'pv-arsenic-iris-rfd',
+      value: 0.0003,
+      default_status: 'available_option',
+    });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([wired, sibling]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'Oral RfD',
+        value: 0.0003,
+        unit: 'mg/kg-bw/day',
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'arsenic_inorganic',
+      },
+    ]);
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-arsenic-hh-direct-rfd');
+    expect(row.default_status).toBe('current_default');
   });
 });
