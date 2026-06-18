@@ -71,6 +71,26 @@ const PATHWAY_FOR_INPUT = {
 };
 const VALID_RECEPTORS = new Set(['aquatic', 'mammal', 'bird']);
 
+// Short source discriminator for the parameter_value_id, so two sources giving a value for the same
+// substance/pathway/input do not collide on the id. Such rows SHARE a candidate_group_id (competing
+// candidates for one slot) but each needs a unique id. Keyed by source_id; falls back to a sanitized
+// short_citation so the unit tests + any future source keep working. (codex redesign 2026-06-17.)
+const SOURCE_SHORT = {
+  'src-us-epa-esb-tier2-nonionic-organics-2008': 'esb',
+  'src-us-epa-nrwqc-aquatic-life-live': 'nrwqc',
+  'src-ccme-cwqg-aquatic-life': 'ccme',
+  'src-fcsap-era-module7-wildlife-trv-2021': 'fcsap',
+};
+function sourceShortFor(sourceId, resolvedSource) {
+  return (
+    SOURCE_SHORT[sourceId] ||
+    String((resolvedSource && resolvedSource.short_citation) || sourceId || 'src')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '') ||
+    'src'
+  );
+}
+
 const BC_ALIGNMENT_BY_TIER = {
   tier_1_government_or_regulatory: 'protocol_1_v5_0_tier_1_government_source',
   tier_2_peer_reviewed_literature: 'protocol_1_v5_0_tier_2_peer_reviewed_literature',
@@ -202,7 +222,8 @@ export function buildEcoRecord(row, resolvedSource, normalized) {
   // in the evidence value_text/source_excerpt. (codex holistic 2026-06-17.)
   const valueClassLabel = inputKey === 'fcv_ug_per_L' ? 'FCV-equivalent' : 'eco-TRV';
   const receptorTag = pathway === 'eco-food-bsaf' ? '-' + row.receptor : '';
-  const id = 'pv-eco-' + row.substance_key + '-' + (pathway === 'eco-direct-eqp' ? 'direct' : 'food') + '-' + short + receptorTag;
+  const srcShort = sourceShortFor(row.source_id, resolvedSource);
+  const id = 'pv-eco-' + row.substance_key + '-' + (pathway === 'eco-direct-eqp' ? 'direct' : 'food') + '-' + short + receptorTag + '-' + srcShort;
   const extractedAt = dateOnly(row.extracted_at);
   const framing = receptorFraming(pathway, row.receptor);
   const jurisdiction = row.jurisdiction || 'general';
@@ -281,6 +302,12 @@ export function generate(input, sourcesById) {
   const skipped = { hold: 0, no_value: 0, teq: 0 };
   const warnings = [];
   const seen = new Set();
+  // Enforce a one-to-one source_id <-> source-short mapping across the run. The id suffix is a SOURCE
+  // discriminator; if two DIFFERENT source_ids ever resolve to the same short (e.g. a future source not
+  // in SOURCE_SHORT whose sanitized short_citation collides with another), the suffix silently stops
+  // discriminating sources. FAIL CLOSED here so the collision is a loud build error, not a quiet
+  // mis-attribution. (codex 5.5-xhigh 2026-06-17.)
+  const sourceByShort = new Map();
   for (const row of input.rows) {
     if (row.hold === true) { skipped.hold++; continue; }
     if (row.raw_value == null || String(row.raw_value).trim() === '' || /^n\/?[sa]\b/i.test(String(row.raw_value).trim())) {
@@ -312,6 +339,12 @@ export function generate(input, sourcesById) {
     if (!row.locator || String(row.locator).trim() === '') {
       throw new Error('Empty locator for ' + row.substance_key + ' (' + row.input_key + ')');
     }
+    const short = sourceShortFor(row.source_id, resolvedSource);
+    const priorSource = sourceByShort.get(short);
+    if (priorSource && priorSource !== row.source_id) {
+      throw new Error('Source-short collision: "' + short + '" maps to both ' + priorSource + ' and ' + row.source_id + ' (add a distinct SOURCE_SHORT entry for one of them)');
+    }
+    sourceByShort.set(short, row.source_id);
     const normalized = normalizeToCanonical(row.raw_value, row.raw_unit, row.input_key);
     const rec = buildEcoRecord(row, resolvedSource, normalized);
     if (seen.has(rec.parameter_value_id)) throw new Error('Duplicate parameter_value_id ' + rec.parameter_value_id);

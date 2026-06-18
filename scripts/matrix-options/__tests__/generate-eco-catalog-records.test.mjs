@@ -440,4 +440,35 @@ describe('generate', () => {
     expect(mammalRec.candidate_group_id).toBe(birdRec.candidate_group_id);
     expect(mammalRec.parameter_value_id).not.toBe(birdRec.parameter_value_id);
   });
+
+  it('emits distinct ids but a shared candidate_group_id for two sources of one substance', () => {
+    const input = {
+      rows: [
+        { substance_key: 'benzene', input_key: 'fcv_ug_per_L', eco_direct_eligible: true, raw_value: '130', raw_unit: 'ug/L', source_id: 'src-esb', locator: 'Table 2' },
+        { substance_key: 'benzene', input_key: 'fcv_ug_per_L', eco_direct_eligible: true, raw_value: '120', raw_unit: 'ug/L', source_id: 'src-nrwqc', locator: 'NRWQC CCC' },
+      ],
+    };
+    const res = generate(input, SRC);
+    expect(res.records.length).toBe(2);
+    const [a, b] = res.records;
+    expect(a.parameter_value_id).not.toBe(b.parameter_value_id);
+    expect(a.candidate_group_id).toBe(b.candidate_group_id);
+  });
+
+  it('throws when two different source_ids collide to the same source-short (one-to-one guard)', () => {
+    // Different substances (benzene, toluene) so the duplicate-id guard does NOT fire; only the
+    // one-to-one source-short guard catches the collision. Both unmapped sources sanitize to the
+    // same short via short_citation, so the suffix would silently stop discriminating sources.
+    const dupSources = new Map([
+      ['src-dup-a', { short_citation: 'Dup Source', source_authority_tier: 'tier_1_government_or_regulatory' }],
+      ['src-dup-b', { short_citation: 'Dup Source', source_authority_tier: 'tier_1_government_or_regulatory' }],
+    ]);
+    const input = {
+      rows: [
+        { substance_key: 'benzene', input_key: 'fcv_ug_per_L', eco_direct_eligible: true, raw_value: '130', raw_unit: 'ug/L', source_id: 'src-dup-a', locator: 'A' },
+        { substance_key: 'toluene', input_key: 'fcv_ug_per_L', eco_direct_eligible: true, raw_value: '9.8', raw_unit: 'ug/L', source_id: 'src-dup-b', locator: 'B' },
+      ],
+    };
+    expect(() => generate(input, dupSources)).toThrow(/Source-short collision/i);
+  });
 });

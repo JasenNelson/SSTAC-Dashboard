@@ -1,6 +1,6 @@
 [
   {
-    "parameter_value_id": "pv-eco-benzene-direct-fcv",
+    "parameter_value_id": "pv-eco-benzene-direct-fcv-esb",
     "substance_key": "benzene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -31,7 +31,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-benzene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-benzene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -68,7 +68,7 @@
     "candidate_group_id": "eco-direct-eqp__benzene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-alpha_hexachlorocyclohexane_alpha_hch-direct-fcv",
+    "parameter_value_id": "pv-eco-alpha_hexachlorocyclohexane_alpha_hch-direct-fcv-esb",
     "substance_key": "alpha_hexachlorocyclohexane_alpha_hch",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -99,7 +99,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-alpha_hexachlorocyclohexane_alpha_hch-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-alpha_hexachlorocyclohexane_alpha_hch-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -136,7 +136,7 @@
     "candidate_group_id": "eco-direct-eqp__alpha_hexachlorocyclohexane_alpha_hch__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-hexachlorocyclohexane_gamma-direct-fcv",
+    "parameter_value_id": "pv-eco-hexachlorocyclohexane_gamma-direct-fcv-esb",
     "substance_key": "hexachlorocyclohexane_gamma",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -167,7 +167,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-hexachlorocyclohexane_gamma-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-hexachlorocyclohexane_gamma-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -204,7 +204,7 @@
     "candidate_group_id": "eco-direct-eqp__hexachlorocyclohexane_gamma__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-biphenyl-direct-fcv",
+    "parameter_value_id": "pv-eco-biphenyl-direct-fcv-esb",
     "substance_key": "biphenyl",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -235,7 +235,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-biphenyl-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-biphenyl-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -272,7 +272,7 @@
     "candidate_group_id": "eco-direct-eqp__biphenyl__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-bromophenyl_phenyl_ether_4-direct-fcv",
+    "parameter_value_id": "pv-eco-bromophenyl_phenyl_ether_4-direct-fcv-esb",
     "substance_key": "bromophenyl_phenyl_ether_4",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -303,7 +303,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-bromophenyl_phenyl_ether_4-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-bromophenyl_phenyl_ether_4-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -340,7 +340,7 @@
     "candidate_group_id": "eco-direct-eqp__bromophenyl_phenyl_ether_4__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv",
+    "parameter_value_id": "pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv-esb",
     "substance_key": "butyl_benzyl_phthalate_bbp",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -371,7 +371,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-butyl_benzyl_phthalate_bbp-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -408,7 +408,7 @@
     "candidate_group_id": "eco-direct-eqp__butyl_benzyl_phthalate_bbp__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chlorobenzene-direct-fcv",
+    "parameter_value_id": "pv-eco-chlorobenzene-direct-fcv-esb",
     "substance_key": "chlorobenzene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -439,7 +439,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chlorobenzene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-chlorobenzene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -476,7 +476,7 @@
     "candidate_group_id": "eco-direct-eqp__chlorobenzene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-diazinon-direct-fcv",
+    "parameter_value_id": "pv-eco-diazinon-direct-fcv-esb",
     "substance_key": "diazinon",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -507,7 +507,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB FCV; NRWQC CCC 0.17 corroborates",
-        "evidence_id": "ev-pv-eco-diazinon-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-diazinon-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -544,7 +544,7 @@
     "candidate_group_id": "eco-direct-eqp__diazinon__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dibenzofuran-direct-fcv",
+    "parameter_value_id": "pv-eco-dibenzofuran-direct-fcv-esb",
     "substance_key": "dibenzofuran",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -575,7 +575,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dibenzofuran-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dibenzofuran-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -612,7 +612,7 @@
     "candidate_group_id": "eco-direct-eqp__dibenzofuran__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dichlorobenzene_1_2-direct-fcv",
+    "parameter_value_id": "pv-eco-dichlorobenzene_1_2-direct-fcv-esb",
     "substance_key": "dichlorobenzene_1_2",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -643,7 +643,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dichlorobenzene_1_2-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dichlorobenzene_1_2-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -680,7 +680,7 @@
     "candidate_group_id": "eco-direct-eqp__dichlorobenzene_1_2__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dichlorobenzene_1_3-direct-fcv",
+    "parameter_value_id": "pv-eco-dichlorobenzene_1_3-direct-fcv-esb",
     "substance_key": "dichlorobenzene_1_3",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -711,7 +711,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dichlorobenzene_1_3-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dichlorobenzene_1_3-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -748,7 +748,7 @@
     "candidate_group_id": "eco-direct-eqp__dichlorobenzene_1_3__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dichlorobenzene_1_4-direct-fcv",
+    "parameter_value_id": "pv-eco-dichlorobenzene_1_4-direct-fcv-esb",
     "substance_key": "dichlorobenzene_1_4",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -779,7 +779,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dichlorobenzene_1_4-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dichlorobenzene_1_4-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -816,7 +816,7 @@
     "candidate_group_id": "eco-direct-eqp__dichlorobenzene_1_4__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dibutyl_phthalate_dbp-direct-fcv",
+    "parameter_value_id": "pv-eco-dibutyl_phthalate_dbp-direct-fcv-esb",
     "substance_key": "dibutyl_phthalate_dbp",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -847,7 +847,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dibutyl_phthalate_dbp-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dibutyl_phthalate_dbp-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -884,7 +884,7 @@
     "candidate_group_id": "eco-direct-eqp__dibutyl_phthalate_dbp__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-diethyl_phthalate_dep-direct-fcv",
+    "parameter_value_id": "pv-eco-diethyl_phthalate_dep-direct-fcv-esb",
     "substance_key": "diethyl_phthalate_dep",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -915,7 +915,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. DEP SCV revised 210->270 (Mount 2008)",
-        "evidence_id": "ev-pv-eco-diethyl_phthalate_dep-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-diethyl_phthalate_dep-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -952,7 +952,7 @@
     "candidate_group_id": "eco-direct-eqp__diethyl_phthalate_dep__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-endosulfan-direct-fcv",
+    "parameter_value_id": "pv-eco-endosulfan-direct-fcv-esb",
     "substance_key": "endosulfan",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -983,7 +983,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-endosulfan-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-endosulfan-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1020,7 +1020,7 @@
     "candidate_group_id": "eco-direct-eqp__endosulfan__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-endosulfan_alpha-direct-fcv",
+    "parameter_value_id": "pv-eco-endosulfan_alpha-direct-fcv-esb",
     "substance_key": "endosulfan_alpha",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1051,7 +1051,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB FCV; NRWQC CCC 0.056 corroborates",
-        "evidence_id": "ev-pv-eco-endosulfan_alpha-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-endosulfan_alpha-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1088,7 +1088,7 @@
     "candidate_group_id": "eco-direct-eqp__endosulfan_alpha__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-endosulfan_beta-direct-fcv",
+    "parameter_value_id": "pv-eco-endosulfan_beta-direct-fcv-esb",
     "substance_key": "endosulfan_beta",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1119,7 +1119,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB FCV; NRWQC CCC 0.056 corroborates",
-        "evidence_id": "ev-pv-eco-endosulfan_beta-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-endosulfan_beta-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1156,7 +1156,7 @@
     "candidate_group_id": "eco-direct-eqp__endosulfan_beta__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-ethylbenzene-direct-fcv",
+    "parameter_value_id": "pv-eco-ethylbenzene-direct-fcv-esb",
     "substance_key": "ethylbenzene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1187,7 +1187,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-ethylbenzene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-ethylbenzene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1224,7 +1224,7 @@
     "candidate_group_id": "eco-direct-eqp__ethylbenzene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-hexachloroethane-direct-fcv",
+    "parameter_value_id": "pv-eco-hexachloroethane-direct-fcv-esb",
     "substance_key": "hexachloroethane",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1255,7 +1255,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-hexachloroethane-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-hexachloroethane-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1292,7 +1292,7 @@
     "candidate_group_id": "eco-direct-eqp__hexachloroethane__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-malathion-direct-fcv",
+    "parameter_value_id": "pv-eco-malathion-direct-fcv-esb",
     "substance_key": "malathion",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1323,7 +1323,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB SCV is the default; NRWQC CCC 0.1 (older FRV basis) corroborates -- verify EqP suitability at promotion",
-        "evidence_id": "ev-pv-eco-malathion-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-malathion-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1360,7 +1360,7 @@
     "candidate_group_id": "eco-direct-eqp__malathion__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-methoxychlor-direct-fcv",
+    "parameter_value_id": "pv-eco-methoxychlor-direct-fcv-esb",
     "substance_key": "methoxychlor",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1391,7 +1391,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB SCV (more conservative than NRWQC CCC 0.03, older FRV basis) -- verify at promotion",
-        "evidence_id": "ev-pv-eco-methoxychlor-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-methoxychlor-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1428,7 +1428,7 @@
     "candidate_group_id": "eco-direct-eqp__methoxychlor__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv",
+    "parameter_value_id": "pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv-esb",
     "substance_key": "pentachlorobenzene_1_2_3_4_5",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1459,7 +1459,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-pentachlorobenzene_1_2_3_4_5-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1496,7 +1496,7 @@
     "candidate_group_id": "eco-direct-eqp__pentachlorobenzene_1_2_3_4_5__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-tetrachloroethane_1_1_2_2-direct-fcv",
+    "parameter_value_id": "pv-eco-tetrachloroethane_1_1_2_2-direct-fcv-esb",
     "substance_key": "tetrachloroethane_1_1_2_2",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1527,7 +1527,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-tetrachloroethane_1_1_2_2-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-tetrachloroethane_1_1_2_2-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1564,7 +1564,7 @@
     "candidate_group_id": "eco-direct-eqp__tetrachloroethane_1_1_2_2__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-tetrachloroethylene-direct-fcv",
+    "parameter_value_id": "pv-eco-tetrachloroethylene-direct-fcv-esb",
     "substance_key": "tetrachloroethylene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1595,7 +1595,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB SCV (more conservative than CCME CWQG 110)",
-        "evidence_id": "ev-pv-eco-tetrachloroethylene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-tetrachloroethylene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1632,7 +1632,7 @@
     "candidate_group_id": "eco-direct-eqp__tetrachloroethylene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-carbon_tetrachloride-direct-fcv",
+    "parameter_value_id": "pv-eco-carbon_tetrachloride-direct-fcv-esb",
     "substance_key": "carbon_tetrachloride",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1663,7 +1663,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-carbon_tetrachloride-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-carbon_tetrachloride-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1700,7 +1700,7 @@
     "candidate_group_id": "eco-direct-eqp__carbon_tetrachloride__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-toluene-direct-fcv",
+    "parameter_value_id": "pv-eco-toluene-direct-fcv-esb",
     "substance_key": "toluene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1731,7 +1731,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-toluene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-toluene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1768,7 +1768,7 @@
     "candidate_group_id": "eco-direct-eqp__toluene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-bromoform-direct-fcv",
+    "parameter_value_id": "pv-eco-bromoform-direct-fcv-esb",
     "substance_key": "bromoform",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1799,7 +1799,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-bromoform-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-bromoform-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1836,7 +1836,7 @@
     "candidate_group_id": "eco-direct-eqp__bromoform__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-trichlorobenzene_1_2_4-direct-fcv",
+    "parameter_value_id": "pv-eco-trichlorobenzene_1_2_4-direct-fcv-esb",
     "substance_key": "trichlorobenzene_1_2_4",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1867,7 +1867,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-trichlorobenzene_1_2_4-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-trichlorobenzene_1_2_4-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1904,7 +1904,7 @@
     "candidate_group_id": "eco-direct-eqp__trichlorobenzene_1_2_4__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-trichloroethane_1_1_1-direct-fcv",
+    "parameter_value_id": "pv-eco-trichloroethane_1_1_1-direct-fcv-esb",
     "substance_key": "trichloroethane_1_1_1",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -1935,7 +1935,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-trichloroethane_1_1_1-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-trichloroethane_1_1_1-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -1972,7 +1972,7 @@
     "candidate_group_id": "eco-direct-eqp__trichloroethane_1_1_1__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-trichloroethylene-direct-fcv",
+    "parameter_value_id": "pv-eco-trichloroethylene-direct-fcv-esb",
     "substance_key": "trichloroethylene",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2003,7 +2003,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-trichloroethylene-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-trichloroethylene-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -2040,7 +2040,7 @@
     "candidate_group_id": "eco-direct-eqp__trichloroethylene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-xylene_m-direct-fcv",
+    "parameter_value_id": "pv-eco-xylene_m-direct-fcv-esb",
     "substance_key": "xylene_m",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2071,7 +2071,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. m-Xylene SCV (Mount 2006)",
-        "evidence_id": "ev-pv-eco-xylene_m-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-xylene_m-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -2108,7 +2108,7 @@
     "candidate_group_id": "eco-direct-eqp__xylene_m__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-carbaryl-direct-fcv",
+    "parameter_value_id": "pv-eco-carbaryl-direct-fcv-nrwqc",
     "substance_key": "carbaryl",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2139,7 +2139,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-carbaryl-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-carbaryl-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2176,7 +2176,7 @@
     "candidate_group_id": "eco-direct-eqp__carbaryl__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chlordane_technical-direct-fcv",
+    "parameter_value_id": "pv-eco-chlordane_technical-direct-fcv-nrwqc",
     "substance_key": "chlordane_technical",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2207,7 +2207,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chlordane_technical-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-chlordane_technical-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2244,7 +2244,7 @@
     "candidate_group_id": "eco-direct-eqp__chlordane_technical__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chlorpyrifos-direct-fcv",
+    "parameter_value_id": "pv-eco-chlorpyrifos-direct-fcv-nrwqc",
     "substance_key": "chlorpyrifos",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2275,7 +2275,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chlorpyrifos-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-chlorpyrifos-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2312,7 +2312,7 @@
     "candidate_group_id": "eco-direct-eqp__chlorpyrifos__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-demeton-direct-fcv",
+    "parameter_value_id": "pv-eco-demeton-direct-fcv-nrwqc",
     "substance_key": "demeton",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2343,7 +2343,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC, older FRV basis -- verify EqP suitability at promotion",
-        "evidence_id": "ev-pv-eco-demeton-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-demeton-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2380,7 +2380,7 @@
     "candidate_group_id": "eco-direct-eqp__demeton__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-dieldrin-direct-fcv",
+    "parameter_value_id": "pv-eco-dieldrin-direct-fcv-nrwqc",
     "substance_key": "dieldrin",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2411,7 +2411,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-dieldrin-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-dieldrin-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2448,7 +2448,7 @@
     "candidate_group_id": "eco-direct-eqp__dieldrin__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-azinphos_methyl-direct-fcv",
+    "parameter_value_id": "pv-eco-azinphos_methyl-direct-fcv-nrwqc",
     "substance_key": "azinphos_methyl",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2479,7 +2479,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. Guthion; NRWQC CCC, older FRV basis -- verify at promotion",
-        "evidence_id": "ev-pv-eco-azinphos_methyl-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-azinphos_methyl-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2516,7 +2516,7 @@
     "candidate_group_id": "eco-direct-eqp__azinphos_methyl__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-heptachlor-direct-fcv",
+    "parameter_value_id": "pv-eco-heptachlor-direct-fcv-nrwqc",
     "substance_key": "heptachlor",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2547,7 +2547,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-heptachlor-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-heptachlor-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2584,7 +2584,7 @@
     "candidate_group_id": "eco-direct-eqp__heptachlor__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-heptachlor_epoxide-direct-fcv",
+    "parameter_value_id": "pv-eco-heptachlor_epoxide-direct-fcv-nrwqc",
     "substance_key": "heptachlor_epoxide",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2615,7 +2615,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-heptachlor_epoxide-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-heptachlor_epoxide-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2652,7 +2652,7 @@
     "candidate_group_id": "eco-direct-eqp__heptachlor_epoxide__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-mirex-direct-fcv",
+    "parameter_value_id": "pv-eco-mirex-direct-fcv-nrwqc",
     "substance_key": "mirex",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2683,7 +2683,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC, older FRV basis -- verify EqP suitability at promotion",
-        "evidence_id": "ev-pv-eco-mirex-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-mirex-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2720,7 +2720,7 @@
     "candidate_group_id": "eco-direct-eqp__mirex__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-nonylphenol-direct-fcv",
+    "parameter_value_id": "pv-eco-nonylphenol-direct-fcv-nrwqc",
     "substance_key": "nonylphenol",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2751,7 +2751,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-nonylphenol-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-nonylphenol-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2788,7 +2788,7 @@
     "candidate_group_id": "eco-direct-eqp__nonylphenol__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-parathion-direct-fcv",
+    "parameter_value_id": "pv-eco-parathion-direct-fcv-nrwqc",
     "substance_key": "parathion",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2819,7 +2819,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-parathion-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-parathion-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2856,7 +2856,7 @@
     "candidate_group_id": "eco-direct-eqp__parathion__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-p_p_dichlorodiphenyltrichloroethane_ddt-direct-fcv",
+    "parameter_value_id": "pv-eco-p_p_dichlorodiphenyltrichloroethane_ddt-direct-fcv-nrwqc",
     "substance_key": "p_p_dichlorodiphenyltrichloroethane_ddt",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
@@ -2887,7 +2887,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-p_p_dichlorodiphenyltrichloroethane_ddt-direct-fcv-1",
+        "evidence_id": "ev-pv-eco-p_p_dichlorodiphenyltrichloroethane_ddt-direct-fcv-nrwqc-1",
         "locator_type": "source_table"
       }
     ],
@@ -2924,7 +2924,143 @@
     "candidate_group_id": "eco-direct-eqp__p_p_dichlorodiphenyltrichloroethane_ddt__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-arsenic_inorganic-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-toxaphene-direct-fcv-esb",
+    "substance_key": "toxaphene",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "toxaphene fcv",
+    "value": 0.039,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-esb-tier2-nonionic-organics-2008"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for toxaphene; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
+        "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
+        "value_text": "ESB FCV 0.039 ug/L (toxaphene)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. ESB FCV 0.039; NRWQC CCC 0.0002 emitted as a separate candidate (~195x split); owner picks basis at promotion",
+        "evidence_id": "ev-pv-eco-toxaphene-direct-fcv-esb-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
+    "bc_protocol_basis": "Government or regulatory source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2008-03-01",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
+        "role": "canonical_candidate",
+        "note": "US EPA ESB Tier 2 values for nonionic organics, 2008 is the source for this extracted eco value; source date 2008-03-01."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__toxaphene__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-polychlorinated_biphenyls_total_pcbs-direct-fcv-nrwqc",
+    "substance_key": "polychlorinated_biphenyls_total_pcbs",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "polychlorinated_biphenyls_total_pcbs fcv",
+    "value": 0.014,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for polychlorinated_biphenyls_total_pcbs; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.014 ug/L (polychlorinated_biphenyls_total_pcbs)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.014; the second-fetch 0.03 was a confirmed misread (do not use)",
+        "evidence_id": "ev-pv-eco-polychlorinated_biphenyls_total_pcbs-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__polychlorinated_biphenyls_total_pcbs__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-arsenic_inorganic-food-trveco-mammal-fcsap",
     "substance_key": "arsenic_inorganic",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -2955,7 +3091,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade A; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-arsenic_inorganic-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-arsenic_inorganic-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -2990,7 +3126,7 @@
     "candidate_group_id": "eco-food-bsaf__arsenic_inorganic__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-arsenic_inorganic-food-trveco-bird",
+    "parameter_value_id": "pv-eco-arsenic_inorganic-food-trveco-bird-fcsap",
     "substance_key": "arsenic_inorganic",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3021,7 +3157,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade A; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-arsenic_inorganic-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-arsenic_inorganic-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3056,7 +3192,7 @@
     "candidate_group_id": "eco-food-bsaf__arsenic_inorganic__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-barium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-barium-food-trveco-mammal-fcsap",
     "substance_key": "barium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3087,7 +3223,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-barium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-barium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3122,7 +3258,7 @@
     "candidate_group_id": "eco-food-bsaf__barium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-barium-food-trveco-bird",
+    "parameter_value_id": "pv-eco-barium-food-trveco-bird-fcsap",
     "substance_key": "barium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3153,7 +3289,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-barium-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-barium-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3188,7 +3324,7 @@
     "candidate_group_id": "eco-food-bsaf__barium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-cadmium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-cadmium-food-trveco-mammal-fcsap",
     "substance_key": "cadmium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3219,7 +3355,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade A; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-cadmium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-cadmium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3254,7 +3390,7 @@
     "candidate_group_id": "eco-food-bsaf__cadmium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-cadmium-food-trveco-bird",
+    "parameter_value_id": "pv-eco-cadmium-food-trveco-bird-fcsap",
     "substance_key": "cadmium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3285,7 +3421,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-cadmium-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-cadmium-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3320,7 +3456,7 @@
     "candidate_group_id": "eco-food-bsaf__cadmium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chromium_hexavalent-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-chromium_hexavalent-food-trveco-mammal-fcsap",
     "substance_key": "chromium_hexavalent",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3351,7 +3487,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chromium_hexavalent-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-chromium_hexavalent-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3386,7 +3522,7 @@
     "candidate_group_id": "eco-food-bsaf__chromium_hexavalent__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chromium_hexavalent-food-trveco-bird",
+    "parameter_value_id": "pv-eco-chromium_hexavalent-food-trveco-bird-fcsap",
     "substance_key": "chromium_hexavalent",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3417,7 +3553,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chromium_hexavalent-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-chromium_hexavalent-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3452,7 +3588,7 @@
     "candidate_group_id": "eco-food-bsaf__chromium_hexavalent__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chromium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-chromium-food-trveco-mammal-fcsap",
     "substance_key": "chromium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3483,7 +3619,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chromium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-chromium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3518,7 +3654,7 @@
     "candidate_group_id": "eco-food-bsaf__chromium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-chromium-food-trveco-bird",
+    "parameter_value_id": "pv-eco-chromium-food-trveco-bird-fcsap",
     "substance_key": "chromium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3549,7 +3685,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-chromium-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-chromium-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3584,7 +3720,7 @@
     "candidate_group_id": "eco-food-bsaf__chromium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-copper-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-copper-food-trveco-mammal-fcsap",
     "substance_key": "copper",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3615,7 +3751,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade A; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-copper-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-copper-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3650,7 +3786,7 @@
     "candidate_group_id": "eco-food-bsaf__copper__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-copper-food-trveco-bird",
+    "parameter_value_id": "pv-eco-copper-food-trveco-bird-fcsap",
     "substance_key": "copper",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3681,7 +3817,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade A; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-copper-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-copper-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3716,7 +3852,7 @@
     "candidate_group_id": "eco-food-bsaf__copper__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-lead-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-lead-food-trveco-mammal-fcsap",
     "substance_key": "lead",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3747,7 +3883,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-lead-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-lead-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3782,7 +3918,7 @@
     "candidate_group_id": "eco-food-bsaf__lead__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-lead-food-trveco-bird",
+    "parameter_value_id": "pv-eco-lead-food-trveco-bird-fcsap",
     "substance_key": "lead",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3813,7 +3949,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-lead-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-lead-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3848,7 +3984,7 @@
     "candidate_group_id": "eco-food-bsaf__lead__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-mercury_inorganic-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-mercury_inorganic-food-trveco-mammal-fcsap",
     "substance_key": "mercury_inorganic",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3879,7 +4015,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification. inorganic mercury -- distinct from methylmercury (do not merge)",
-        "evidence_id": "ev-pv-eco-mercury_inorganic-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-mercury_inorganic-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3914,7 +4050,7 @@
     "candidate_group_id": "eco-food-bsaf__mercury_inorganic__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-mercury_inorganic-food-trveco-bird",
+    "parameter_value_id": "pv-eco-mercury_inorganic-food-trveco-bird-fcsap",
     "substance_key": "mercury_inorganic",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -3945,7 +4081,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification. inorganic mercury -- distinct from methylmercury (do not merge)",
-        "evidence_id": "ev-pv-eco-mercury_inorganic-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-mercury_inorganic-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -3980,7 +4116,7 @@
     "candidate_group_id": "eco-food-bsaf__mercury_inorganic__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-nickel-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-nickel-food-trveco-mammal-fcsap",
     "substance_key": "nickel",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4011,7 +4147,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-nickel-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-nickel-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4046,7 +4182,7 @@
     "candidate_group_id": "eco-food-bsaf__nickel__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-nickel-food-trveco-bird",
+    "parameter_value_id": "pv-eco-nickel-food-trveco-bird-fcsap",
     "substance_key": "nickel",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4077,7 +4213,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-nickel-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-nickel-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4112,7 +4248,7 @@
     "candidate_group_id": "eco-food-bsaf__nickel__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-selenium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-selenium-food-trveco-mammal-fcsap",
     "substance_key": "selenium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4143,7 +4279,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-selenium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-selenium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4178,7 +4314,7 @@
     "candidate_group_id": "eco-food-bsaf__selenium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-selenium-food-trveco-bird",
+    "parameter_value_id": "pv-eco-selenium-food-trveco-bird-fcsap",
     "substance_key": "selenium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4209,7 +4345,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-selenium-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-selenium-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4244,7 +4380,7 @@
     "candidate_group_id": "eco-food-bsaf__selenium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-thallium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-thallium-food-trveco-mammal-fcsap",
     "substance_key": "thallium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4275,7 +4411,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-thallium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-thallium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4310,7 +4446,7 @@
     "candidate_group_id": "eco-food-bsaf__thallium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-uranium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-uranium-food-trveco-mammal-fcsap",
     "substance_key": "uranium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4341,7 +4477,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-uranium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-uranium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4376,7 +4512,7 @@
     "candidate_group_id": "eco-food-bsaf__uranium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-vanadium-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-vanadium-food-trveco-mammal-fcsap",
     "substance_key": "vanadium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4407,7 +4543,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-vanadium-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-vanadium-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4442,7 +4578,7 @@
     "candidate_group_id": "eco-food-bsaf__vanadium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-vanadium-food-trveco-bird",
+    "parameter_value_id": "pv-eco-vanadium-food-trveco-bird-fcsap",
     "substance_key": "vanadium",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4473,7 +4609,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-vanadium-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-vanadium-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4508,7 +4644,7 @@
     "candidate_group_id": "eco-food-bsaf__vanadium__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-zinc-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-zinc-food-trveco-mammal-fcsap",
     "substance_key": "zinc",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4539,7 +4675,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-zinc-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-zinc-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4574,7 +4710,7 @@
     "candidate_group_id": "eco-food-bsaf__zinc__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-zinc-food-trveco-bird",
+    "parameter_value_id": "pv-eco-zinc-food-trveco-bird-fcsap",
     "substance_key": "zinc",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4605,7 +4741,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-zinc-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-zinc-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4640,7 +4776,7 @@
     "candidate_group_id": "eco-food-bsaf__zinc__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-naphthalene-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-naphthalene-food-trveco-mammal-fcsap",
     "substance_key": "naphthalene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4671,7 +4807,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-naphthalene-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-naphthalene-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4706,7 +4842,7 @@
     "candidate_group_id": "eco-food-bsaf__naphthalene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-naphthalene-food-trveco-bird",
+    "parameter_value_id": "pv-eco-naphthalene-food-trveco-bird-fcsap",
     "substance_key": "naphthalene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4737,7 +4873,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-naphthalene-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-naphthalene-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4772,7 +4908,7 @@
     "candidate_group_id": "eco-food-bsaf__naphthalene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-lmw_pahs-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-lmw_pahs-food-trveco-mammal-fcsap",
     "substance_key": "lmw_pahs",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4803,7 +4939,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification. group surrogate (low-molecular-weight PAHs)",
-        "evidence_id": "ev-pv-eco-lmw_pahs-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-lmw_pahs-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4838,7 +4974,7 @@
     "candidate_group_id": "eco-food-bsaf__lmw_pahs__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-lmw_pahs-food-trveco-bird",
+    "parameter_value_id": "pv-eco-lmw_pahs-food-trveco-bird-fcsap",
     "substance_key": "lmw_pahs",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4869,7 +5005,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. group surrogate (low-molecular-weight PAHs)",
-        "evidence_id": "ev-pv-eco-lmw_pahs-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-lmw_pahs-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4904,7 +5040,7 @@
     "candidate_group_id": "eco-food-bsaf__lmw_pahs__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-benz_a_anthracene-food-trveco-bird",
+    "parameter_value_id": "pv-eco-benz_a_anthracene-food-trveco-bird-fcsap",
     "substance_key": "benz_a_anthracene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -4935,7 +5071,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. mammal N/S (no row)",
-        "evidence_id": "ev-pv-eco-benz_a_anthracene-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-benz_a_anthracene-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -4970,7 +5106,7 @@
     "candidate_group_id": "eco-food-bsaf__benz_a_anthracene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-benzo_a_pyrene-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-benzo_a_pyrene-food-trveco-mammal-fcsap",
     "substance_key": "benzo_a_pyrene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5001,7 +5137,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-benzo_a_pyrene-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-benzo_a_pyrene-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5036,7 +5172,7 @@
     "candidate_group_id": "eco-food-bsaf__benzo_a_pyrene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-benzo_a_pyrene-food-trveco-bird",
+    "parameter_value_id": "pv-eco-benzo_a_pyrene-food-trveco-bird-fcsap",
     "substance_key": "benzo_a_pyrene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5067,7 +5203,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification.",
-        "evidence_id": "ev-pv-eco-benzo_a_pyrene-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-benzo_a_pyrene-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5102,7 +5238,7 @@
     "candidate_group_id": "eco-food-bsaf__benzo_a_pyrene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-pyrene-food-trveco-bird",
+    "parameter_value_id": "pv-eco-pyrene-food-trveco-bird-fcsap",
     "substance_key": "pyrene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5133,7 +5269,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. mammal N/S (no row)",
-        "evidence_id": "ev-pv-eco-pyrene-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-pyrene-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5168,7 +5304,7 @@
     "candidate_group_id": "eco-food-bsaf__pyrene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-hmw_pahs-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-hmw_pahs-food-trveco-mammal-fcsap",
     "substance_key": "hmw_pahs",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5199,7 +5335,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification. group surrogate (high-molecular-weight PAHs); bird N/S",
-        "evidence_id": "ev-pv-eco-hmw_pahs-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-hmw_pahs-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5234,7 +5370,7 @@
     "candidate_group_id": "eco-food-bsaf__hmw_pahs__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-benzene-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-benzene-food-trveco-mammal-fcsap",
     "substance_key": "benzene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5265,7 +5401,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade B; pending direct-source verification. bird N/A",
-        "evidence_id": "ev-pv-eco-benzene-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-benzene-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5300,7 +5436,7 @@
     "candidate_group_id": "eco-food-bsaf__benzene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-ethylbenzene-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-ethylbenzene-food-trveco-mammal-fcsap",
     "substance_key": "ethylbenzene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5331,7 +5467,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. bird N/A",
-        "evidence_id": "ev-pv-eco-ethylbenzene-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-ethylbenzene-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5366,7 +5502,7 @@
     "candidate_group_id": "eco-food-bsaf__ethylbenzene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-toluene-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-toluene-food-trveco-mammal-fcsap",
     "substance_key": "toluene",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5397,7 +5533,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. bird N/A",
-        "evidence_id": "ev-pv-eco-toluene-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-toluene-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5432,7 +5568,7 @@
     "candidate_group_id": "eco-food-bsaf__toluene__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-xylenes-food-trveco-bird",
+    "parameter_value_id": "pv-eco-xylenes-food-trveco-bird-fcsap",
     "substance_key": "xylenes",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5463,7 +5599,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. total xylenes (group); mammal N/S",
-        "evidence_id": "ev-pv-eco-xylenes-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-xylenes-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5498,7 +5634,7 @@
     "candidate_group_id": "eco-food-bsaf__xylenes__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-total_phcs-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-total_phcs-food-trveco-mammal-fcsap",
     "substance_key": "total_phcs",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5529,7 +5665,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. group surrogate (total petroleum hydrocarbons)",
-        "evidence_id": "ev-pv-eco-total_phcs-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-total_phcs-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5564,7 +5700,7 @@
     "candidate_group_id": "eco-food-bsaf__total_phcs__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-total_phcs-food-trveco-bird",
+    "parameter_value_id": "pv-eco-total_phcs-food-trveco-bird-fcsap",
     "substance_key": "total_phcs",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5595,7 +5731,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. group surrogate (total petroleum hydrocarbons)",
-        "evidence_id": "ev-pv-eco-total_phcs-food-trveco-bird-1",
+        "evidence_id": "ev-pv-eco-total_phcs-food-trveco-bird-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5630,7 +5766,7 @@
     "candidate_group_id": "eco-food-bsaf__total_phcs__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-phc_f1-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-phc_f1-food-trveco-mammal-fcsap",
     "substance_key": "phc_f1",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5661,7 +5797,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. CCME CWS fraction F1 (group surrogate)",
-        "evidence_id": "ev-pv-eco-phc_f1-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-phc_f1-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5696,7 +5832,7 @@
     "candidate_group_id": "eco-food-bsaf__phc_f1__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-phc_f2-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-phc_f2-food-trveco-mammal-fcsap",
     "substance_key": "phc_f2",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5727,7 +5863,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. CCME CWS fraction F2 (group surrogate)",
-        "evidence_id": "ev-pv-eco-phc_f2-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-phc_f2-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5762,7 +5898,7 @@
     "candidate_group_id": "eco-food-bsaf__phc_f2__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-phc_f3-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-phc_f3-food-trveco-mammal-fcsap",
     "substance_key": "phc_f3",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5793,7 +5929,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. CCME CWS fraction F3 (group surrogate)",
-        "evidence_id": "ev-pv-eco-phc_f3-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-phc_f3-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5828,7 +5964,7 @@
     "candidate_group_id": "eco-food-bsaf__phc_f3__trv_eco_mg_per_kg_bw_day__Canada_federal"
   },
   {
-    "parameter_value_id": "pv-eco-phc_f4-food-trveco-mammal",
+    "parameter_value_id": "pv-eco-phc_f4-food-trveco-mammal-fcsap",
     "substance_key": "phc_f4",
     "pathway": "eco-food-bsaf",
     "input_key": "trv_eco_mg_per_kg_bw_day",
@@ -5859,7 +5995,7 @@
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
         "note": "Extracted from FCSAP ERA Module 7 default wildlife TRVs, 2021; FCSAP/Eco-SSL grade C; pending direct-source verification. CCME CWS fraction F4 (group surrogate)",
-        "evidence_id": "ev-pv-eco-phc_f4-food-trveco-mammal-1",
+        "evidence_id": "ev-pv-eco-phc_f4-food-trveco-mammal-fcsap-1",
         "locator_type": "source_table"
       }
     ],
@@ -5892,5 +6028,413 @@
       "TRV"
     ],
     "candidate_group_id": "eco-food-bsaf__phc_f4__trv_eco_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-diazinon-direct-fcv-nrwqc",
+    "substance_key": "diazinon",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "diazinon fcv",
+    "value": 0.17,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for diazinon; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.17 ug/L (diazinon)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC; alternative to the ESB FCV 0.1699 (corroborating) -- verify EqP suitability at promotion",
+        "evidence_id": "ev-pv-eco-diazinon-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__diazinon__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-malathion-direct-fcv-nrwqc",
+    "substance_key": "malathion",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "malathion fcv",
+    "value": 0.1,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for malathion; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.1 ug/L (malathion)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.1 (older FRV basis); alternative to the ESB SCV 0.097 -- verify EqP suitability at promotion",
+        "evidence_id": "ev-pv-eco-malathion-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__malathion__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-methoxychlor-direct-fcv-nrwqc",
+    "substance_key": "methoxychlor",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "methoxychlor fcv",
+    "value": 0.03,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for methoxychlor; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.03 ug/L (methoxychlor)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.03 (older FRV basis); alternative to the more conservative ESB SCV 0.019 -- verify EqP suitability at promotion",
+        "evidence_id": "ev-pv-eco-methoxychlor-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__methoxychlor__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-endosulfan_alpha-direct-fcv-nrwqc",
+    "substance_key": "endosulfan_alpha",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "endosulfan_alpha fcv",
+    "value": 0.056,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for endosulfan_alpha; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.056 ug/L (endosulfan_alpha)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.056; corroborates the ESB FCV 0.056",
+        "evidence_id": "ev-pv-eco-endosulfan_alpha-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__endosulfan_alpha__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-endosulfan_beta-direct-fcv-nrwqc",
+    "substance_key": "endosulfan_beta",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "endosulfan_beta fcv",
+    "value": 0.056,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for endosulfan_beta; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.056 ug/L (endosulfan_beta)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.056; corroborates the ESB FCV 0.056",
+        "evidence_id": "ev-pv-eco-endosulfan_beta-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__endosulfan_beta__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-toxaphene-direct-fcv-nrwqc",
+    "substance_key": "toxaphene",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "toxaphene fcv",
+    "value": 0.0002,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-us-epa-nrwqc-aquatic-life-live"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "US_federal",
+    "applicability": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent for toxaphene; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA NRWQC Aquatic Life Criteria Table (chronic CCC column)",
+        "value_text": "NRWQC CCC 0.0002 ug/L (toxaphene)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from US EPA National Recommended Water Quality Criteria - Aquatic Life (live); pending direct-source verification. NRWQC CCC 0.0002; ~195x below the ESB FCV 0.039 (both emitted as candidates; owner picks basis at promotion)",
+        "evidence_id": "ev-pv-eco-toxaphene-direct-fcv-nrwqc-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2026-06-17",
+    "source_relationships": [
+      {
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "role": "canonical_candidate",
+        "note": "US EPA National Recommended Water Quality Criteria - Aquatic Life (live) is the source for this extracted eco value; source date 2026-06-17."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__toxaphene__fcv_ug_per_L__US_federal"
   }
 ]
