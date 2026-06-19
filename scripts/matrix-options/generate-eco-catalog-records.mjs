@@ -29,6 +29,9 @@
 //   node scripts/matrix-options/generate-eco-catalog-records.mjs --dry-run
 //   node scripts/matrix-options/generate-eco-catalog-records.mjs --write
 //   node scripts/matrix-options/generate-eco-catalog-records.mjs --input <file> --out <file> --write
+//   node scripts/matrix-options/generate-eco-catalog-records.mjs --write --preserve-approvals
+//     (--preserve-approvals carries HITL-approved rows forward; without it the generator REFUSES to
+//      overwrite a catalog that already contains approved rows -- see reconcileApprovals below.)
 
 import fs from 'node:fs';
 import path from 'node:path';
@@ -51,6 +54,7 @@ export function parseArgs(argv) {
     else if (a === '--input') args.input = next();
     else if (a === '--out') args.out = next();
     else if (a === '--quiet') args.quiet = true;
+    else if (a === '--preserve-approvals') args.preserveApprovals = true;
     else throw new Error('Unknown flag: ' + a);
   }
   return args;
@@ -355,15 +359,110 @@ export function generate(input, sourcesById) {
   return { records, skipped, warnings };
 }
 
+// PRESERVE-APPROVALS guard (codex R3 P1). The generator emits EVERY row at qa_status=needs_review and
+// OVERWRITES eco_values.json WHOLESALE, so a regenerate AFTER a Step-6 promotion would silently erase
+// the HITL approvals (an attestation loss that does not look like an AI judgment change). This pure
+// helper reconciles a freshly-generated set against the existing on-disk catalog: an APPROVED existing
+// row (qa_status === 'approved') is carried forward WHOLESALE -- preserving qa_status, the evidence
+// reviewed_by/reviewed_at attestation, and ALL promotion prose (applicability / review_notes /
+// uncertainty / source_relationships / row-level tier + crystallization). main() enforces the policy:
+// it REFUSES to overwrite a catalog containing approved rows unless --preserve-approvals is passed, and
+// REFUSES to drop an approved row that staging no longer produces. needs_review rows are always
+// regenerated fresh (no preservation needed).
+export function reconcileApprovals(generatedRecords, existingRecords) {
+  const APPROVED = 'approved';
+  // FAIL CLOSED on a malformed existing catalog -- a safety guard must never fail OPEN. An unexpected
+  // shape (e.g. a recovery wrapper {records:[...]}) or duplicate ids could hide/shadow an approved row
+  // and silently un-approve it (codex 5.5-xhigh 2026-06-19).
+  if (!Array.isArray(existingRecords)) {
+    throw new Error('reconcileApprovals: existing catalog must be a JSON array (got ' +
+      (existingRecords === null ? 'null' : typeof existingRecords) +
+      '); refusing to reconcile approvals against an unexpected catalog shape.');
+  }
+  const seenIds = new Set();
+  const dupIds = new Set();
+  for (const r of existingRecords) {
+    const id = r && r.parameter_value_id;
+    if (id == null) continue;
+    if (seenIds.has(id)) dupIds.add(id);
+    else seenIds.add(id);
+  }
+  if (dupIds.size > 0) {
+    throw new Error('reconcileApprovals: existing catalog has duplicate parameter_value_id(s): ' +
+      [...dupIds].join(', ') + '; refusing to reconcile approvals against a corrupt catalog ' +
+      '(a duplicate could shadow an approved row and silently un-approve it).');
+  }
+  const existingById = new Map(existingRecords.map((r) => [r.parameter_value_id, r]));
+  const generatedIds = new Set(generatedRecords.map((r) => r.parameter_value_id));
+  const approvedExisting = existingRecords.filter((r) => r && r.qa_status === APPROVED);
+  const approvedExistingIds = approvedExisting.map((r) => r.parameter_value_id);
+  // An approved row with no matching freshly-generated row would be DROPPED on overwrite -> refuse.
+  const droppedApprovedIds = approvedExisting
+    .filter((r) => !generatedIds.has(r.parameter_value_id))
+    .map((r) => r.parameter_value_id);
+  // Merge: a matching APPROVED existing row wins wholesale; every other row uses the generated record.
+  const records = generatedRecords.map((g) => {
+    const prior = existingById.get(g.parameter_value_id);
+    return prior && prior.qa_status === APPROVED ? prior : g;
+  });
+  // preservedIds = the existing approved rows that were actually carried forward (had a generated
+  // match). preservedIds + droppedApprovedIds === approvedExistingIds.
+  const preservedIds = approvedExisting
+    .filter((r) => generatedIds.has(r.parameter_value_id))
+    .map((r) => r.parameter_value_id);
+  return { approvedExistingIds, droppedApprovedIds, preservedIds, records };
+}
+
+// Enforces the approval-preservation POLICY (the load-bearing safety wiring), separated from main() so
+// it is unit-testable without spawning the script. Throws on a real write that would erase or drop a
+// HITL approval; on dry-run it records a warning instead (dry-run never mutates). Returns the records
+// to write + any warnings + the count of preserved approved rows.
+export function applyApprovalGuard(generatedRecords, existingRecords, opts = {}) {
+  const { preserveApprovals = false, dryRun = false, outPath = 'eco_values.json' } = opts;
+  const recon = reconcileApprovals(generatedRecords, existingRecords);
+  const warnings = [];
+  if (recon.approvedExistingIds.length > 0 && !preserveApprovals) {
+    const msg = outPath + ' contains ' + recon.approvedExistingIds.length +
+      ' approved (HITL-promoted) eco row(s); a plain regenerate would reset them to needs_review and ' +
+      'erase the attestation. Re-run with --preserve-approvals to carry the approved rows forward, or ' +
+      'promote against the frozen catalog instead. Approved ids: ' + recon.approvedExistingIds.join(', ');
+    if (!dryRun) throw new Error('Refusing to overwrite: ' + msg);
+    warnings.push('WOULD REFUSE WRITE (run with --write to enforce): ' + msg);
+  }
+  if (recon.approvedExistingIds.length > 0 && preserveApprovals && recon.droppedApprovedIds.length > 0) {
+    const msg = recon.droppedApprovedIds.length + ' approved eco row(s) are no longer produced from ' +
+      'staging (substance_key/pathway/source changed) and would be DROPPED. Reconcile staging so every ' +
+      'approved row is still generated. Dropped ids: ' + recon.droppedApprovedIds.join(', ');
+    if (!dryRun) throw new Error('Refusing to drop approved rows: ' + msg);
+    warnings.push('WOULD REFUSE WRITE (run with --write to enforce): ' + msg);
+  }
+  const records = preserveApprovals ? recon.records : generatedRecords;
+  return { records, warnings, preservedCount: recon.preservedIds.length };
+}
+
 function main() {
   const args = parseArgs(process.argv);
   const sources = JSON.parse(fs.readFileSync(SOURCES_FILE, 'utf8'));
   const sourcesById = new Map(sources.map((s) => [s.source_id, s]));
   const input = JSON.parse(fs.readFileSync(args.input, 'utf8'));
-  const { records, skipped, warnings } = generate(input, sourcesById);
+  const { records: generated, skipped, warnings } = generate(input, sourcesById);
+
+  // Approval-preservation guard: never silently un-approve or drop HITL-promoted rows on a regenerate.
+  // Pass the parsed catalog through UNCOERCED so a malformed shape fails closed in reconcileApprovals
+  // (a missing file is the only [] default). (codex 5.5-xhigh 2026-06-19.)
+  const existing = fs.existsSync(args.out) ? JSON.parse(fs.readFileSync(args.out, 'utf8')) : [];
+  const guard = applyApprovalGuard(generated, existing, {
+    preserveApprovals: args.preserveApprovals,
+    dryRun: args.dryRun,
+    outPath: args.out,
+  });
+  const records = guard.records;
+  warnings.push(...guard.warnings);
+
   const summary = {
     input: args.input, out: args.out,
     emitted: records.length, skipped,
+    preserved_approved: args.preserveApprovals ? guard.preservedCount : 0,
     by_pathway: records.reduce((a, r) => ((a[r.pathway] = (a[r.pathway] || 0) + 1), a), {}),
     warnings,
   };

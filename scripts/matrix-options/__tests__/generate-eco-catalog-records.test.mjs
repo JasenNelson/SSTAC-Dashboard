@@ -7,7 +7,14 @@ import {
   normalizeToCanonical,
   buildEcoRecord,
   generate,
+  reconcileApprovals,
+  applyApprovalGuard,
 } from '../generate-eco-catalog-records.mjs';
+
+// Minimal eco-record fixtures for the approval-preservation guard (only the fields the guard reads).
+function rec(id, qa, extra = {}) {
+  return { parameter_value_id: id, substance_key: 's', pathway: 'eco-direct-eqp', qa_status: qa, ...extra };
+}
 
 const SRC = new Map([
   ['src-esb', { short_citation: 'ESB', source_authority_tier: 'tier_1_government_or_regulatory' }],
@@ -470,5 +477,127 @@ describe('generate', () => {
       ],
     };
     expect(() => generate(input, dupSources)).toThrow(/Source-short collision/i);
+  });
+});
+
+describe('parseArgs --preserve-approvals', () => {
+  it('defaults preserveApprovals to undefined (falsy)', () => {
+    expect(parseArgs(['node', 'gen', '--write']).preserveApprovals).toBeFalsy();
+  });
+  it('sets preserveApprovals when the flag is passed', () => {
+    expect(parseArgs(['node', 'gen', '--write', '--preserve-approvals']).preserveApprovals).toBe(true);
+  });
+});
+
+describe('reconcileApprovals (preserve-approvals guard)', () => {
+  it('is a no-op when no existing rows are approved: records === generated content', () => {
+    const generated = [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review')];
+    const existing = [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review')];
+    const r = reconcileApprovals(generated, existing);
+    expect(r.approvedExistingIds).toEqual([]);
+    expect(r.droppedApprovedIds).toEqual([]);
+    expect(r.preservedIds).toEqual([]);
+    expect(r.records).toEqual(generated);
+  });
+
+  it('flags approved existing rows and carries them forward WHOLESALE (preserving prose + attestation)', () => {
+    const generated = [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review')];
+    const approvedPrior = rec('pv-1', 'approved', {
+      applicability: 'PROMOTED applicability text',
+      review_notes: 'PROMOTED review note',
+      evidence_items: [{ qa_status: 'approved', reviewed_by: 'J. Nelson', reviewed_at: '2026-06-19' }],
+    });
+    const existing = [approvedPrior, rec('pv-2', 'needs_review')];
+    const r = reconcileApprovals(generated, existing);
+    expect(r.approvedExistingIds).toEqual(['pv-1']);
+    expect(r.droppedApprovedIds).toEqual([]);
+    expect(r.preservedIds).toEqual(['pv-1']);
+    // pv-1 is the EXISTING approved record (prose + attestation preserved), NOT the regenerated stub.
+    expect(r.records[0]).toBe(approvedPrior);
+    expect(r.records[0].applicability).toBe('PROMOTED applicability text');
+    expect(r.records[0].evidence_items[0].reviewed_by).toBe('J. Nelson');
+    // pv-2 (needs_review) is regenerated fresh.
+    expect(r.records[1]).toBe(generated[1]);
+  });
+
+  it('FAILS CLOSED when the existing catalog is not an array (corrupt/unexpected shape)', () => {
+    const generated = [rec('pv-1', 'needs_review')];
+    expect(() => reconcileApprovals(generated, { records: [rec('pv-1', 'approved')] }))
+      .toThrow(/must be a JSON array/i);
+    expect(() => reconcileApprovals(generated, null)).toThrow(/must be a JSON array/i);
+  });
+
+  it('FAILS CLOSED on duplicate existing parameter_value_ids (a dup could shadow an approved row)', () => {
+    const generated = [rec('pv-1', 'needs_review')];
+    const existing = [rec('pv-1', 'approved'), rec('pv-1', 'needs_review')];
+    expect(() => reconcileApprovals(generated, existing)).toThrow(/duplicate parameter_value_id/i);
+  });
+
+  it('reports an approved row that staging no longer produces as DROPPED', () => {
+    const generated = [rec('pv-2', 'needs_review')]; // pv-1 no longer generated
+    const existing = [rec('pv-1', 'approved'), rec('pv-2', 'needs_review')];
+    const r = reconcileApprovals(generated, existing);
+    expect(r.approvedExistingIds).toEqual(['pv-1']);
+    expect(r.droppedApprovedIds).toEqual(['pv-1']);
+  });
+
+  it('preserves multiple approved rows and leaves needs_review rows regenerated', () => {
+    const generated = [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review'), rec('pv-3', 'needs_review')];
+    const existing = [rec('pv-1', 'approved'), rec('pv-2', 'approved'), rec('pv-3', 'needs_review')];
+    const r = reconcileApprovals(generated, existing);
+    expect(r.preservedIds.sort()).toEqual(['pv-1', 'pv-2']);
+    expect(r.records[2]).toBe(generated[2]);
+  });
+
+  it('preservedIds counts only carried-forward existing approved rows (not generated rows)', () => {
+    // preservedIds + droppedApprovedIds === approvedExistingIds, by construction.
+    const generated = [rec('pv-1', 'needs_review')];
+    const existing = [rec('pv-1', 'approved'), rec('pv-gone', 'approved')];
+    const r = reconcileApprovals(generated, existing);
+    expect(r.approvedExistingIds.sort()).toEqual(['pv-1', 'pv-gone']);
+    expect(r.preservedIds).toEqual(['pv-1']);
+    expect(r.droppedApprovedIds).toEqual(['pv-gone']);
+  });
+});
+
+describe('applyApprovalGuard (policy enforcement)', () => {
+  const gen = [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review')];
+
+  it('no-op when no approved rows exist: returns generated, no warnings', () => {
+    const out = applyApprovalGuard(gen, [rec('pv-1', 'needs_review'), rec('pv-2', 'needs_review')], { dryRun: false });
+    expect(out.records).toBe(gen);
+    expect(out.warnings).toEqual([]);
+    expect(out.preservedCount).toBe(0);
+  });
+
+  it('REFUSES to overwrite (throws) when approved rows exist and --preserve-approvals is absent', () => {
+    const existing = [rec('pv-1', 'approved'), rec('pv-2', 'needs_review')];
+    expect(() => applyApprovalGuard(gen, existing, { preserveApprovals: false, dryRun: false }))
+      .toThrow(/Refusing to overwrite[\s\S]*approved/i);
+  });
+
+  it('dry-run WARNS instead of throwing when approvals would be erased (no write happens)', () => {
+    const existing = [rec('pv-1', 'approved'), rec('pv-2', 'needs_review')];
+    const out = applyApprovalGuard(gen, existing, { preserveApprovals: false, dryRun: true });
+    expect(out.warnings.length).toBe(1);
+    expect(out.warnings[0]).toMatch(/WOULD REFUSE WRITE/);
+    expect(out.records).toBe(gen);
+  });
+
+  it('with --preserve-approvals: carries approved rows forward, no throw', () => {
+    const approvedPrior = rec('pv-1', 'approved', { applicability: 'PROMOTED' });
+    const existing = [approvedPrior, rec('pv-2', 'needs_review')];
+    const out = applyApprovalGuard(gen, existing, { preserveApprovals: true, dryRun: false });
+    expect(out.records[0]).toBe(approvedPrior);
+    expect(out.records[0].applicability).toBe('PROMOTED');
+    expect(out.preservedCount).toBe(1);
+    expect(out.warnings).toEqual([]);
+  });
+
+  it('REFUSES to drop (throws) when --preserve-approvals is set but an approved row vanished from staging', () => {
+    const generatedMissingApproved = [rec('pv-2', 'needs_review')];
+    const existing = [rec('pv-1', 'approved'), rec('pv-2', 'needs_review')];
+    expect(() => applyApprovalGuard(generatedMissingApproved, existing, { preserveApprovals: true, dryRun: false }))
+      .toThrow(/Refusing to drop[\s\S]*pv-1/i);
   });
 });
