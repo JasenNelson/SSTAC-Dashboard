@@ -342,6 +342,220 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health oral RfD candidate is available in References & Values. ' +
       'Additional calculator defaults are pending owner-approved selection rules.',
   },
+  // ---------------------------------------------------------------------------
+  // Eco-registry pilot batch (2026-06-19). Added for ECO-pathway selectability
+  // (eco values are seeded from the eco catalog; the library is the fallback).
+  // logKow is the load-bearing field for eco-direct EqP organics; null for
+  // metals/metalloids. HH fields (rfd/sf) are null -> HH pathways do not
+  // compute until HITL supplies them; abs_dermal/ba_oral are RAGS Part E class
+  // defaults (inert for these eco-only substances). Identity (CAS) + logKow
+  // gathered + adversarially verified (workflow wf_3c7fd7aa-025, 2026-06-19).
+  // ---------------------------------------------------------------------------
+  {
+    key: 'nickel',
+    displayName: 'Nickel',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Nickel (total), CAS 7440-02-0, PubChem CID 935 (EC 231-111-4). ' +
+      'Eco-food TRV seeded from the eco catalog (FCSAP ERA Module 7).',
+    notes:
+      'Eco-food selectability. logKow not applicable (inorganic metal; metal ' +
+      'partitioning uses empirical BSAF, not Kow). Eco-Food BSAF is user-supplied ' +
+      'or catalog-seeded; abs_dermal/ba_oral are inert HH defaults.',
+  },
+  {
+    key: 'selenium',
+    displayName: 'Selenium',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Selenium (total), CAS 7782-49-2, PubChem CID 6326970 ' +
+      '(US EPA IRIS CASRN 7782-49-2). Eco-food TRV seeded from the eco catalog.',
+    notes:
+      'Eco-food selectability. logKow not applicable (metalloid; Se bioaccumulation ' +
+      'driven by trophic transfer/BSAF). HH fields null; abs_dermal/ba_oral inert.',
+  },
+  {
+    key: 'toluene',
+    displayName: 'Toluene',
+    contaminantClass: 'organic',
+    logKow: 2.73,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Toluene (methylbenzene), CAS 108-88-3, PubChem CID 1140. ' +
+      'logKow 2.73 (Hansch/Leo/Hoekman 1995, via HSDB/PubChem; corroborated ' +
+      'ATSDR, ECHA 2.73 at pH7/20C). Eco FCV/TRV seeded from the eco catalog.',
+    notes:
+      'Eco-direct + eco-food selectability. logKow 2.73 is load-bearing for ' +
+      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+  },
+  {
+    key: 'ethylbenzene',
+    displayName: 'Ethylbenzene',
+    contaminantClass: 'organic',
+    logKow: 3.15,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Ethylbenzene, CAS 100-41-4, PubChem CID 7500. logKow 3.15 ' +
+      '(Hansch/Leo/Hoekman 1995, p.43; ECHA experimental 3.15; HSDB/EPI Suite). ' +
+      'Eco FCV/TRV seeded from the eco catalog.',
+    notes:
+      'Eco-direct + eco-food selectability. logKow 3.15 load-bearing for ' +
+      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+  },
+  {
+    key: 'pyrene',
+    displayName: 'Pyrene',
+    contaminantClass: 'organic-PAH',
+    logKow: 4.88,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Pyrene (4-ring parent PAH), CAS 129-00-0, PubChem CID 31423 ' +
+      '(EPA CompTox DTXSID3024289). logKow 4.88 (Hansch/Leo/Hoekman 1995, p.137, ' +
+      'via HSDB). Eco-food TRV seeded from the eco catalog.',
+    notes:
+      'Eco-food selectability (logKow not seeded for its eco-food pathway). ' +
+      'CAVEAT: if eco-direct EqP is later activated for pyrene, prefer the EPA ' +
+      'PAH ESB logKow (~5.18) for EqP consistency; 4.88 is the PubChem/HSDB ' +
+      'experimental value. HH fields null; abs_dermal/ba_oral inert.',
+  },
+  {
+    key: 'benz_a_anthracene',
+    displayName: 'Benzo[a]anthracene',
+    contaminantClass: 'organic-PAH',
+    logKow: 5.76,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Benz[a]anthracene (= benzo[a]anthracene/tetraphene), CAS 56-55-3, ' +
+      'PubChem CID 5954. logKow 5.76 (HSDB, Wang et al. 1986; ICSC 0385 lists 5.61). ' +
+      'Eco-food TRV seeded from the eco catalog.',
+    notes:
+      'Eco-food selectability. logKow 5.76 is a single-study high-end value (range ' +
+      '5.18-5.92); not seeded for eco-food. HH fields null; abs_dermal/ba_oral inert.',
+  },
+  {
+    key: 'dieldrin',
+    displayName: 'Dieldrin',
+    contaminantClass: 'organic-halogenated',
+    logKow: 5.37,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Dieldrin (single organochlorine cyclodiene, epoxide of aldrin), ' +
+      'CAS 60-57-1, PubChem CID 969491. logKow 5.37 = EPA ESB EqP anchor ' +
+      '(Karickhoff & Long 1995; EPA-600-R-02-010 Table 2-1); experimental ' +
+      'measured 5.40 (de Bruijn et al. 1989) is within 0.03. Eco FCV from catalog.',
+    notes:
+      'Eco-direct selectability. logKow 5.37 chosen as the EPA-ESB EqP anchor for ' +
+      'sediment-benchmark consistency (vs 5.40 PubChem/HSDB; negligible delta). ' +
+      'HH fields null; abs_dermal/ba_oral inert HH defaults.',
+  },
+  {
+    key: 'p_p_dichlorodiphenyltrichloroethane_ddt',
+    displayName: 'DDT (p,p-)',
+    contaminantClass: 'organic-halogenated',
+    logKow: 6.91,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: p,p-DDT (4,4-DDT; the p,p isomer, CAS 50-29-3, PubChem CID 3036; ' +
+      'US EPA IRIS CASRN 50-29-3) -- NOT o,p-DDT (789-02-6) nor technical mixture. ' +
+      'logKow 6.91 (Hansch/Leo/Hoekman 1995, p.118; HMDB 6.91). Eco FCV from catalog.',
+    notes:
+      'Eco-direct selectability. Isomer-specific (p,p). logKow 6.91 load-bearing for ' +
+      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+  },
+  {
+    key: 'dibenzofuran',
+    displayName: 'Dibenzofuran',
+    contaminantClass: 'organic',
+    logKow: 4.12,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Dibenzofuran (unsubstituted parent O-heterocyclic aromatic), ' +
+      'CAS 132-64-9, PubChem CID 568 -- NOT a polychlorinated dibenzofuran (PCDF). ' +
+      'logKow 4.12 (Hansch/Leo/Hoekman 1995, p.96, via HSDB). Eco FCV from catalog.',
+    notes:
+      'Eco-direct selectability. Parent dibenzofuran, distinct from dioxin-like PCDFs. ' +
+      'logKow 4.12 load-bearing for eco-direct EqP. HH fields null; abs/ba inert.',
+  },
+  {
+    key: 'chlordane_technical',
+    displayName: 'Chlordane (technical)',
+    contaminantClass: 'organic-halogenated',
+    logKow: 5.54,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Chlordane (TECHNICAL MIXTURE), CAS 12789-03-6 (US EPA IRIS ' +
+      'DTXSID5023954) -- the mixture CAS, NOT general 57-74-9 nor cis/trans ' +
+      'congeners (5103-71-9 / 5103-74-2). logKow 5.54 (ATSDR 1994, via EPA IRIS ' +
+      'Tox Review; alt ~6.16 disclosed). Eco FCV from catalog.',
+    notes:
+      'Eco-direct selectability. Technical-mixture identity. logKow 5.54 is the ' +
+      'conservative regulatory value (ATSDR/IRIS; 6.16 alt exists). HH fields null; ' +
+      'abs_dermal/ba_oral inert HH defaults.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
