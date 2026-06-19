@@ -309,7 +309,11 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(screen.queryByLabelText(/^Substance$/i)).not.toBeInTheDocument();
     SUBSTANCE_LIBRARY.forEach((s) => {
       expect(
-        screen.queryByRole('option', { name: new RegExp(s.displayName, 'i') }),
+        // Escape regex metacharacters in displayName (e.g. "Benzo[a]anthracene",
+        // "DDT (p,p-)") so the match is literal and never throws SyntaxError.
+        screen.queryByRole('option', {
+          name: new RegExp(s.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+        }),
       ).not.toBeInTheDocument();
     });
   });

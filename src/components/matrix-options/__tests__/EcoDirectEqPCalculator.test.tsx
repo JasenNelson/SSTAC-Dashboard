@@ -289,7 +289,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     // SUBSTANCE_LIBRARY entries should not appear as <option> nodes here.
     SUBSTANCE_LIBRARY.forEach((s) => {
       expect(
-        screen.queryByRole('option', { name: new RegExp(s.displayName, 'i') }),
+        // Escape regex metacharacters in displayName (e.g. "Benzo[a]anthracene",
+        // "DDT (p,p-)") so the match is literal and never throws SyntaxError.
+        screen.queryByRole('option', {
+          name: new RegExp(s.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
+        }),
       ).not.toBeInTheDocument();
     });
   });
