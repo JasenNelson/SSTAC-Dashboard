@@ -1103,6 +1103,118 @@ export const SUBSTANCE_LIBRARY = [
     sources: 'Identity: Vanadium, CAS 7440-62-2. PubChem Compound CID 23990 (Vanadium, V), https://pubchem.ncbi.nlm.nih.gov/compound/23990 (record title \'Vanadium | V\'). CAS 7440-62-2 corroborated by Sigma-Aldrich product 262935/774065 (https://www.sigmaaldrich.com/US/en/product/aldrich/262935), Spectrum Chemi...',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): vanadate, not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
+  // ---------------------------------------------------------------------------
+  // Eco-registry reconciliation batch (PR B, 2026-06-19). The 4 owner-judgment
+  // keys -- all NEW library entries (NOT reconciled onto existing keys). Identity
+  // + logKow gathered then adversarially refuted; the 2 eco-direct organics carry
+  // a verified load-bearing logKow. xylene_m is collapsed to `xylenes` in the eco
+  // staging (intra-eco alias) so the eco-direct FCV joins this entry.
+  // ---------------------------------------------------------------------------
+  {
+    key: 'xylenes',
+    displayName: 'Xylenes',
+    contaminantClass: 'organic',
+    logKow: 2.75,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Xylenes. Eco-direct FCV basis = m-xylene (CAS 108-38-3, PubChem ' +
+      'CID 7929); eco-food TRV = total xylenes group (CAS 1330-20-7). logKow 2.75 ' +
+      'is the EPA ESB-internal value for m-xylene (EPA/600/R-02/016 Table 3-1), ' +
+      'chosen for EqP consistency with the ESB SCV that seeds the eco-direct FCV ' +
+      '(owner-attested 2026-06-19); the modern Hansch/PubChem m-xylene value is ' +
+      '3.20. Eco FCV/TRV seeded from the eco catalog.',
+    notes:
+      'Eco-direct + eco-food selectability. logKow 2.75 is load-bearing for ' +
+      'eco-direct EqP and is deliberately the EPA ESB-internal m-xylene Kow (not ' +
+      'the Hansch 3.20) so the sediment screen reproduces the EPA ESB EqP ' +
+      'derivation (the pyrene-note ESB-consistency principle). HH fields null; ' +
+      'abs_dermal/ba_oral inert HH defaults (organic class).',
+  },
+  {
+    key: 'polychlorinated_biphenyls_total_pcbs',
+    displayName: 'Total PCBs',
+    contaminantClass: 'organic-halogenated',
+    logKow: 6.5,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Total PCBs (polychlorinated biphenyl mixture; EPA NRWQC ' +
+      'total-PCBs criterion substance; the mixture has no single CAS). logKow 6.5 ' +
+      '= Aroclor 1254 representative (ATSDR Tox Profile for PCBs, Table 4-3, ' +
+      'citing Hansch and Leo 1985). Distinct from total_pcbs_aroclor_1254. ' +
+      'Eco-direct FCV 0.014 ug/L from EPA NRWQC. Eco-direct only -- no eco-food ' +
+      'TRV row exists in the eco catalog for this key.',
+    notes:
+      'Eco-direct-only selectability (no eco-food TRV seeded). logKow 6.5 ' +
+      '(Aroclor 1254 basis) is load-bearing for EqP. CAVEAT: PCBs are a congener ' +
+      'MIXTURE (congener logKow ~4.5-8.2) and the NRWQC FCV spans multiple ' +
+      'Aroclors incl. lower-chlorinated/lower-Kow. Because the EqP sediment screen ' +
+      'is sedS = FCV * Koc(logKow) * foc (Koc rises with logKow), pairing the FCV ' +
+      'with the high 6.5 yields a HIGHER, LESS-stringent sediment benchmark than a ' +
+      'lower-Kow representative would -- it is NOT over-protective; verify the site ' +
+      'congener/Aroclor profile before relying on it. Do not merge with ' +
+      'total_pcbs_aroclor_1254. HH fields null; abs_dermal/ba_oral inert ' +
+      '(organic-halogenated class).',
+  },
+  {
+    key: 'chromium',
+    displayName: 'Chromium',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Chromium (generic/total, unspeciated), CAS 7440-47-3, PubChem ' +
+      'CID 23976 (record title \'Chromium | Cr\'). logKow n/a (inorganic metal). ' +
+      'Eco-food TRV seeded from the eco catalog (FCSAP ERA Module 7).',
+    notes:
+      'Eco-food selectability (generic total-Cr). logKow null: metal partitioning ' +
+      'uses empirical BSAF/AVS-SEM, not Kow. contaminantClass divalent-metal is ' +
+      'the library convention for chromium (matches chromium_trivalent/hexavalent; ' +
+      'the enum has no plain-metal bucket and generic Cr is unspeciated -- Cr-VI ' +
+      'is not truly divalent). Distinct from chromium_trivalent + ' +
+      'chromium_hexavalent. HH fields null; abs_dermal/ba_oral inert.',
+  },
+  {
+    key: 'mercury_inorganic',
+    displayName: 'Mercury, inorganic',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Mercury, inorganic (divalent Hg(II)), CAS 7439-97-6, PubChem CID ' +
+      '23931 (the elemental-mercury record matching CAS 7439-97-6, the ATSDR/EPA ' +
+      'regulatory CASRN for inorganic mercury). logKow n/a (inorganic metal ion). ' +
+      'Eco-food TRV seeded from the eco catalog (FCSAP ERA Module 7).',
+    notes:
+      'Eco-food selectability (inorganic Hg(II) only). logKow null: Kow not ' +
+      'applicable to ionic metals. contaminantClass divalent-metal (Hg2+ is a ' +
+      'divalent cation); distinct from the methyl-Hg class used by the ' +
+      'methylmercury entry -- inorganic Hg and MeHg differ in trophic transfer. ' +
+      'HH fields null; abs_dermal/ba_oral inert.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

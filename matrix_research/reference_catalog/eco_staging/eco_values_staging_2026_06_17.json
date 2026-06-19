@@ -482,7 +482,7 @@
       "note": ""
     },
     {
-      "substance_key": "xylene_m",
+      "substance_key": "xylenes",
       "input_key": "fcv_ug_per_L",
       "receptor": "aquatic",
       "raw_value": 67,
@@ -490,12 +490,12 @@
       "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
       "jurisdiction": "US_federal",
       "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-      "source_excerpt": "ESB SCV 67 ug/L (xylene_m)",
+      "source_excerpt": "ESB SCV 67 ug/L (m-xylene)",
       "source_date": "2008-03-01",
       "grade": null,
       "eco_direct_eligible": true,
       "hold": false,
-      "note": "m-Xylene SCV (Mount 2006)"
+      "note": "m-Xylene SCV (Mount 2006); collapsed from key xylene_m to canonical xylenes (intra-eco alias, PR B 2026-06-19). Library logKow 2.75 = ESB-internal m-xylene Kow for EqP consistency."
     },
     {
       "substance_key": "carbaryl",

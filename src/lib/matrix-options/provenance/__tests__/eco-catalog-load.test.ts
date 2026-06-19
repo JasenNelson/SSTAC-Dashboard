@@ -87,6 +87,7 @@ describe('eco_values.json data file', () => {
       'diethyl_phthalate',
       'pentachlorobenzene',
       'chlordane',
+      'xylene_m',
     ]);
     for (const r of ecoValues) {
       expect(orphanAliases.has(r.substance_key)).toBe(false);
