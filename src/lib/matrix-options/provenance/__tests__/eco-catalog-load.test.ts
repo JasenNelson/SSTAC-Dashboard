@@ -23,15 +23,15 @@ type EcoRecord = {
 const ecoValues = ecoValuesRaw as EcoRecord[];
 
 describe('eco_values.json data file', () => {
-  it('has 96 records (51 eco-direct fcv + 45 eco-food trv)', () => {
-    expect(ecoValues.length).toBe(96);
+  it('has 97 records (52 eco-direct fcv + 45 eco-food trv)', () => {
+    expect(ecoValues.length).toBe(97);
     const fcv = ecoValues.filter(
       (r) => r.pathway === 'eco-direct-eqp' && r.input_key === 'fcv_ug_per_L',
     );
     const trv = ecoValues.filter(
       (r) => r.pathway === 'eco-food-bsaf' && r.input_key === 'trv_eco_mg_per_kg_bw_day',
     );
-    expect(fcv.length).toBe(51);
+    expect(fcv.length).toBe(52);
     expect(trv.length).toBe(45);
   });
 

@@ -76,7 +76,9 @@ describe('matrix options evidence library helpers', () => {
     // group across their ESB+NRWQC rows) + 29 unique eco-food groups
     // (eco-food-bsaf__{substance}__trv_eco_mg_per_kg_bw_day__Canada_federal; mammal+bird rows for a
     // substance SHARE one group) = 74 new groups.
-    expect(view.valueGroups).toHaveLength(1681);
+    // 2026-06-19: +1 -- CCME chloroform eco-direct row (new group
+    // eco-direct-eqp__chloroform__fcv_ug_per_L__Canada_federal) = 1682.
+    expect(view.valueGroups).toHaveLength(1682);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -147,7 +149,8 @@ describe('matrix options evidence library helpers', () => {
     // inline-approved --apply via promote-twn-foodweb-toddler.mjs) = 377.
     // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry
     // evidence_support_status=pending_source_locator (needs_review eco candidates) = 473.
-    expect(view.audit.values.pendingSourceLocator).toBe(473);
+    // 2026-06-19: +1 -- CCME chloroform eco-direct row (needs_review / pending_source_locator) = 474.
+    expect(view.audit.values.pendingSourceLocator).toBe(474);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -165,7 +168,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-14: +2 TWN toddler subsistence food-web records (IR + BW, both available_option,
     // needs_review pre-promotion) = 1609.
     // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry default_status=available_option = 1705.
-    expect(view.audit.values.availableOptions).toBe(1705);
+    // 2026-06-19: +1 -- CCME chloroform eco-direct row (available_option) = 1706.
+    expect(view.audit.values.availableOptions).toBe(1706);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);

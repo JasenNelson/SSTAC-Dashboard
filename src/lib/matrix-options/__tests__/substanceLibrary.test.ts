@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 68 entries', () => {
+  it('has 69 entries', () => {
     // 18 base + 10 pilot (2026-06-19) + 36 eco-registry fan-out (2026-06-19)
     // + 4 reconciliation (PR B, 2026-06-19: xylenes, total PCBs, chromium,
-    // mercury_inorganic) = 68.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(68);
+    // mercury_inorganic) + 1 CCME chloroform (2026-06-19) = 69.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(69);
   });
 
   it('every entry has a non-null key', () => {
