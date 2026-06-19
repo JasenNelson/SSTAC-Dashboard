@@ -137,6 +137,7 @@ const NONCANONICAL_ALIASES = {
   diethyl_phthalate: 'diethyl_phthalate_dep',
   pentachlorobenzene: 'pentachlorobenzene_1_2_3_4_5',
   chlordane: 'chlordane_technical',
+  xylene_m: 'xylenes',
 };
 
 // --- unit normalization (fail closed) ---------------------------------------

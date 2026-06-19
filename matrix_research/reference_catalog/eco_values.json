@@ -2040,11 +2040,11 @@
     "candidate_group_id": "eco-direct-eqp__trichloroethylene__fcv_ug_per_L__US_federal"
   },
   {
-    "parameter_value_id": "pv-eco-xylene_m-direct-fcv-esb",
-    "substance_key": "xylene_m",
+    "parameter_value_id": "pv-eco-xylenes-direct-fcv-esb",
+    "substance_key": "xylenes",
     "pathway": "eco-direct-eqp",
     "input_key": "fcv_ug_per_L",
-    "display_name": "xylene_m fcv",
+    "display_name": "xylenes fcv",
     "value": 67,
     "unit": "ug/L",
     "value_type": "single_value",
@@ -2059,19 +2059,19 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "US_federal",
-    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for xylene_m; ecological screening candidate (needs review before default use).",
+    "applicability": "US EPA ESB Tier 2 values for nonionic organics, 2008 FCV-equivalent for xylenes; ecological screening candidate (needs review before default use).",
     "uncertainty": null,
     "evidence_items": [
       {
         "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
         "locator": "EPA/600/R-02/016 ESB Compendium, Table 3-1",
-        "value_text": "ESB SCV 67 ug/L (xylene_m)",
+        "value_text": "ESB SCV 67 ug/L (m-xylene)",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
         "qa_status": "needs_review",
-        "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. m-Xylene SCV (Mount 2006)",
-        "evidence_id": "ev-pv-eco-xylene_m-direct-fcv-esb-1",
+        "note": "Extracted from US EPA ESB Tier 2 values for nonionic organics, 2008; pending direct-source verification. m-Xylene SCV (Mount 2006); collapsed from key xylene_m to canonical xylenes (intra-eco alias, PR B 2026-06-19). Library logKow 2.75 = ESB-internal m-xylene Kow for EqP consistency.",
+        "evidence_id": "ev-pv-eco-xylenes-direct-fcv-esb-1",
         "locator_type": "source_table"
       }
     ],
@@ -2105,7 +2105,7 @@
       "equilibrium partitioning",
       "FCV"
     ],
-    "candidate_group_id": "eco-direct-eqp__xylene_m__fcv_ug_per_L__US_federal"
+    "candidate_group_id": "eco-direct-eqp__xylenes__fcv_ug_per_L__US_federal"
   },
   {
     "parameter_value_id": "pv-eco-carbaryl-direct-fcv-nrwqc",
