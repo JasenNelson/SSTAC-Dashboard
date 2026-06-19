@@ -1215,6 +1215,30 @@ export const SUBSTANCE_LIBRARY = [
       'methylmercury entry -- inorganic Hg and MeHg differ in trophic transfer. ' +
       'HH fields null; abs_dermal/ba_oral inert.',
   },
+  {
+    key: 'chloroform',
+    displayName: 'Chloroform',
+    contaminantClass: 'organic-halogenated',
+    logKow: 1.97,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Identity: Chloroform (trichloromethane), CAS 67-66-3, PubChem CID 6212. ' +
+      'logKow 1.97 (CCME factsheet "low Kow (1.97)"; corroborated PubChem/HSDB ' +
+      'experimental 1.97). Eco-direct FCV 1.8 ug/L from CCME (interim CWQG ' +
+      'freshwater aquatic-life guideline, 1992) seeded from the eco catalog -- ' +
+      'NOT EPA NRWQC (EPA has no chloroform aquatic-life CCC).',
+    notes:
+      'Eco-direct selectability. logKow 1.97 is load-bearing for eco-direct EqP. ' +
+      'FCV 1.8 ug/L = CCME interim CWQG (LOEC 18 ug/L spring-peeper teratogenesis ' +
+      'x 0.1 safety factor; CCME 1992). Attribute to CCME only. HH fields null; ' +
+      'abs_dermal/ba_oral inert HH defaults (organic-halogenated class).',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

@@ -1545,13 +1545,13 @@
       "raw_unit": "ug/L",
       "source_id": "src-ccme-cwqg-aquatic-life",
       "jurisdiction": "Canada_federal",
-      "locator": "CCME CWQG aquatic-life summary table",
-      "source_excerpt": "CCME CWQG 1.8 ug/L (chloroform)",
-      "source_date": "2026-06-17",
+      "locator": "CCME CWQG for Aquatic Life: Halogenated Methanes (Trichloromethane), Table 1 (freshwater interim guideline)",
+      "source_excerpt": "The interim water quality guideline for trichloromethane for the protection of freshwater life is 1.8 ug/L. It was derived by multiplying the LOEC of 18 ug/L for teratogenesis in spring peepers by a safety factor of 0.1 (CCME 1991, 1992).",
+      "source_date": "1992-01-01",
       "grade": null,
       "eco_direct_eligible": true,
-      "hold": true,
-      "note": "CCME CWQG 1.8 ug/L; EqP-usable per the candidate sheet but the CCME water-source provenance is unverified (Zotero item mislabeled) -> HELD pending a pinned CCME factsheet + value verification."
+      "hold": false,
+      "note": "CCME interim CWQG 1.8 ug/L freshwater aquatic-life (trichloromethane, CAS 67-66-3); value + derivation verified 2026-06-19 against the CCME factsheet PDF (https://ccme.ca/en/res/halogenated-methanes-trichloromethane-en-canadian-water-quality-guidelines-for-the-protection-of-aquatic-life.pdf; compiled in the 1999 CEQG). Attribute to CCME only -- EPA NRWQC has no chloroform aquatic-life CCC."
     }
   ]
 }

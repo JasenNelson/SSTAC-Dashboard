@@ -6436,5 +6436,73 @@
       "FCV"
     ],
     "candidate_group_id": "eco-direct-eqp__toxaphene__fcv_ug_per_L__US_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-chloroform-direct-fcv-ccme",
+    "substance_key": "chloroform",
+    "pathway": "eco-direct-eqp",
+    "input_key": "fcv_ug_per_L",
+    "display_name": "chloroform fcv",
+    "value": 1.8,
+    "unit": "ug/L",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-ccme-cwqg-aquatic-life"
+    ],
+    "equation_ids": [
+      "eq-eco-direct-eqp-di-toro"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent for chloroform; ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-ccme-cwqg-aquatic-life",
+        "locator": "CCME CWQG for Aquatic Life: Halogenated Methanes (Trichloromethane), Table 1 (freshwater interim guideline)",
+        "value_text": "The interim water quality guideline for trichloromethane for the protection of freshwater life is 1.8 ug/L. It was derived by multiplying the LOEC of 18 ug/L for teratogenesis in spring peepers by a safety factor of 0.1 (CCME 1991, 1992).",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life; pending direct-source verification. CCME interim CWQG 1.8 ug/L freshwater aquatic-life (trichloromethane, CAS 67-66-3); value + derivation verified 2026-06-19 against the CCME factsheet PDF (https://ccme.ca/en/res/halogenated-methanes-trichloromethane-en-canadian-water-quality-guidelines-for-the-protection-of-aquatic-life.pdf; compiled in the 1999 CEQG). Attribute to CCME only -- EPA NRWQC has no chloroform aquatic-life CCC.",
+        "evidence_id": "ev-pv-eco-chloroform-direct-fcv-ccme-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "1992-01-01",
+    "source_relationships": [
+      {
+        "source_id": "src-ccme-cwqg-aquatic-life",
+        "role": "canonical_candidate",
+        "note": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life is the source for this extracted eco value; source date 1992-01-01."
+      }
+    ],
+    "receptor_groups": [
+      "aquatic life"
+    ],
+    "population_groups": [
+      "aquatic community (chronic)"
+    ],
+    "species_groups": [
+      "benthic invertebrate",
+      "fish",
+      "aquatic plant"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "aquatic life criterion",
+      "equilibrium partitioning",
+      "FCV"
+    ],
+    "candidate_group_id": "eco-direct-eqp__chloroform__fcv_ug_per_L__Canada_federal"
   }
 ]
