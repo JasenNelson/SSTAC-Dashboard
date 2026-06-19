@@ -2,11 +2,11 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 28 entries', () => {
-    // 18 base + 10 eco-registry pilot substances added 2026-06-19
+  it('has 64 entries', () => {
+    // 18 base + 10 pilot (2026-06-19) + 36 eco-registry fan-out (2026-06-19) = 64.
     // (nickel, selenium, toluene, ethylbenzene, pyrene, benz_a_anthracene,
     // dieldrin, p,p-DDT, dibenzofuran, chlordane technical).
-    expect(SUBSTANCE_LIBRARY).toHaveLength(28);
+    expect(SUBSTANCE_LIBRARY).toHaveLength(64);
   });
 
   it('every entry has a non-null key', () => {
