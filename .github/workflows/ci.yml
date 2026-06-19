@@ -136,15 +136,23 @@ jobs:
     runs-on: ubuntu-latest
     needs: build
     # Hard backstop so a stuck step can never hang for hours (default is 360 min).
-    timeout-minutes: 25
-    # NOTE: this job intentionally stays on Node 20 while lint/unit/build run on Node 24.
-    # E2E validates the built APP in a browser, not the Node runtime -- the Node-version-sensitive
-    # work (native modules, JS behavior, the production build) is covered by the Unit Tests and
-    # Build jobs, both green on Node 24. On Node 24 the e2e environment hit a cascade of issues
-    # (Playwright `--with-deps` apt postinst hang; then, in the Playwright container, browsers
-    # crashing on launch ~1/3 of tests), none of which reflect app/runtime correctness. Keeping
-    # e2e on Node 20 -- its known-good configuration -- is the pragmatic, well-scoped choice.
-    # Revisit only if the Node-24 browser-launch issue is worth a dedicated fix.
+    timeout-minutes: 30
+    # Run inside the OFFICIAL Playwright container so browsers + system deps are PREBAKED and apt
+    # never runs in this job. Root cause of the prior intermittent ~25-min CANCELLED runs (2026-06-18,
+    # confirmed from step-level timing + codex consult): `npx playwright install --with-deps` hung in
+    # the apt `needrestart` post-install hook until the job hit timeout-minutes, with the test step
+    # SKIPPED. The container removes that failure class entirely (no `--with-deps`, no apt).
+    #   - The image tag MUST match the @playwright/test version in package-lock.json; the version-check
+    #     step below fails the build if they drift (bump BOTH together on a Playwright upgrade).
+    #   - `--user 1001` is the image's pwuser, required so Chromium runs WITHOUT --no-sandbox (Chromium
+    #     refuses to run as root without it); `--ipc=host` is Playwright's recommended Chromium flag.
+    #   - Node still pinned to 20 (e2e's known-good runtime; Node-version-sensitive work is covered by
+    #     the Node-24 Unit Tests + Build jobs). setup-node overrides PATH and does not conflict with the
+    #     container's bundled Node. `cache: 'npm'` is intentionally omitted to avoid a cache-perm clash
+    #     under --user 1001.
+    container:
+      image: mcr.microsoft.com/playwright:v1.56.1-jammy
+      options: --user 1001 --ipc=host
     steps:
       - uses: actions/checkout@v6
 
@@ -152,13 +160,21 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: '20'
-          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
-        run: npx playwright install --with-deps
+      - name: Verify Playwright package matches the container image tag
+        # Fail loudly if @playwright/test (lockfile) drifts from the container image's baked browsers.
+        # EXPECTED must equal the container image tag version above.
+        run: |
+          EXPECTED=1.56.1
+          PKG=$(node -p "require('./package-lock.json').packages['node_modules/@playwright/test'].version")
+          echo "lockfile @playwright/test=$PKG ; container image=v$EXPECTED"
+          if [ "$PKG" != "$EXPECTED" ]; then
+            echo "::error::@playwright/test $PKG != container image v$EXPECTED -- bump the mcr.microsoft.com/playwright image tag in ci.yml to match the lockfile"
+            exit 1
+          fi
 
       - name: Run E2E tests
         run: npm run test:e2e
