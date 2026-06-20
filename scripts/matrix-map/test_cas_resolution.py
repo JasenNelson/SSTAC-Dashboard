@@ -87,11 +87,21 @@ class CasMapFileTest(unittest.TestCase):
 
     def test_loader_returns_curated_entries(self) -> None:
         cas_by_key, alias_overrides, exclude = _load_cas_map()
-        # 12 HIGH-confidence overlap substances seeded (nonylphenol omitted).
-        self.assertEqual(len(cas_by_key), 12)
+        # 49 HIGH-confidence entries (metals + PAHs + PCB Aroclors + 3
+        # chlorophenols); nonylphenol + mixed-isomer slugs intentionally omitted.
+        self.assertEqual(len(cas_by_key), 49)
         self.assertNotIn("nonylphenol", cas_by_key)
+        self.assertNotIn("total_pcbs", cas_by_key)
+        self.assertNotIn("benzob&jfluoranthene", cas_by_key)
         self.assertIn("- Paramete", exclude)
         self.assertEqual(alias_overrides, {})
+
+    def test_resolves_new_expansion_slugs(self) -> None:
+        # Mangled PAH slug, PCB Aroclor, and metal all resolve to verified CAS.
+        self.assertEqual(resolve_substance("Benzo(a)pyrene"), ("benzoapyrene", "50-32-8", True))
+        self.assertEqual(resolve_substance("PCB 1254"), ("pcb_1254", "11097-69-1", True))
+        self.assertEqual(resolve_substance("Arsenic"), ("arsenic", "7440-38-2", True))
+        self.assertEqual(resolve_substance("Pentachlorophenol"), ("pentachlorophenol", "87-86-5", True))
 
     def test_no_ambiguous_or_duplicate_cas(self) -> None:
         cas_values = list(self.data["cas_by_key"].values())
