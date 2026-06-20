@@ -2,14 +2,12 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 80 entries', () => {
-    // 18 base + 10 pilot (2026-06-19) + 36 eco-registry fan-out (2026-06-19)
-    // + 4 reconciliation (PR B, 2026-06-19: xylenes, total PCBs, chromium,
-    // mercury_inorganic) + 1 CCME chloroform (2026-06-19) = 69, + 5 BC
-    // Protocol 28 specialty metals (Batch A, 2026-06-20) = 74, + 6 HH-only PAHs
-    // (Batch B, 2026-06-20: anthracene, fluoranthene, phenanthrene, acenaphthene,
-    // fluorene, dibenzo_a_h_anthracene) = 80.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(80);
+  it('has 90 entries', () => {
+    // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
+    // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
+    // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
+    // pentachlorophenol, 1_4_dioxane) = 90.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(90);
   });
 
   it('every entry has a non-null key', () => {
@@ -144,4 +142,45 @@ describe('SUBSTANCE_LIBRARY -- Batch B HH-only PAHs', () => {
     expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
     expect(r?.logKow).toBeNull();
   });
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch C catalog WIRE substances', () => {
+  // Verified verbatim against human_health_trv_values.json.
+  const rfdSubs = [
+    { key: 'aluminum', rfd: 1.0, cls: 'divalent-metal' },
+    { key: 'boron', rfd: 0.2, cls: 'metalloid' },
+    { key: 'molybdenum', rfd: 0.005, cls: 'divalent-metal' },
+    { key: 'strontium', rfd: 0.6, cls: 'divalent-metal' },
+    { key: 'phenol', rfd: 0.3, cls: 'organic' },
+    { key: 'styrene', rfd: 0.2, cls: 'organic' },
+    { key: 'acetone', rfd: 0.9, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, cls } of rfdSubs) {
+    it(`${key} (${cls}) carries RfD ${rfd}, sf null`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe(cls);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+      expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+
+  // Carcinogens wired sf-only (rfd null), matching the benzo_a_pyrene convention.
+  const sfSubs = [
+    { key: 'hexachlorobenzene', sf: 1.6, cls: 'organic-halogenated' },
+    { key: 'pentachlorophenol', sf: 0.4, cls: 'organic-halogenated' },
+    { key: '1_4_dioxane', sf: 0.1, cls: 'organic' },
+  ] as const;
+
+  for (const { key, sf, cls } of sfSubs) {
+    it(`${key} (${cls}) is a carcinogen: sf ${sf}, rfd null`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe(cls);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+    });
+  }
 });
