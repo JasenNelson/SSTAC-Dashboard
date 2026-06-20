@@ -1470,6 +1470,212 @@ export const SUBSTANCE_LIBRARY = [
       'x 0.1 safety factor; CCME 1992). Attribute to CCME only. HH fields null; ' +
       'abs_dermal/ba_oral inert HH defaults (organic-halogenated class).',
   },
+  {
+    key: 'aluminum',
+    displayName: 'Aluminum',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 1.0,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 1.0 mg/kg-bw/day (CAS 7429-90-5).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-p28-aluminum-hh-direct-rfd / -food-rfd (value 1.0). Aluminum is trivalent ' +
+      '(Al3+); contaminantClass divalent-metal is the catalog non-metalloid-metal ' +
+      'bucket (descriptive only). No eco value in catalog -> eco pathways filtered. ' +
+      'abs_dermal/ba_oral are metal class defaults pending HITL.',
+  },
+  {
+    key: 'boron',
+    displayName: 'Boron',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.2,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.2 mg/kg-bw/day (CAS 7440-42-8).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-p28-boron-hh-direct-rfd / pv-iris-boron-... (value 0.2, agree). Boron is a ' +
+      'metalloid. No eco value in catalog -> eco pathways filtered. abs_dermal/ba_oral ' +
+      'are metalloid class defaults pending HITL.',
+  },
+  {
+    key: 'molybdenum',
+    displayName: 'Molybdenum',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (CAS 7439-98-7).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-iris-molybdenum-hh-direct-rfd / -food-rfd (value 0.005). Molybdenum is ' +
+      'multivalent; contaminantClass divalent-metal is the catalog non-metalloid-metal ' +
+      'bucket (descriptive). No eco value in catalog -> eco pathways filtered. ' +
+      'abs_dermal/ba_oral are metal class defaults pending HITL.',
+  },
+  {
+    key: 'strontium',
+    displayName: 'Strontium',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.6,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS oral RfD 0.6 mg/kg-bw/day (CAS 7440-24-6).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-iris-strontium-hh-direct-rfd / -food-rfd (value 0.6). Strontium is divalent ' +
+      '(Sr2+). No eco value in catalog -> eco pathways filtered. abs_dermal/ba_oral ' +
+      'are metal class defaults pending HITL.',
+  },
+  {
+    key: 'phenol',
+    displayName: 'Phenol',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.3 mg/kg-bw/day (CAS 108-95-2).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-p28-phenol-hh-direct-rfd / pv-iris-phenol-... (value 0.3, agree). logKow not ' +
+      'in catalog -> eco-direct EqP unavailable; no eco value -> Eco-Food filtered. ' +
+      'abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'styrene',
+    displayName: 'Styrene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.2,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.2 mg/kg-bw/day (CAS 100-42-5).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-p28-styrene-hh-direct-rfd / pv-iris-styrene-... (value 0.2, agree; an ' +
+      'inhalation RfC 1 mg/m3 also exists but is not a sediment-pathway input). logKow ' +
+      'not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic class ' +
+      'defaults pending HITL.',
+  },
+  {
+    key: 'acetone',
+    displayName: 'Acetone',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.9,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.9 mg/kg-bw/day (CAS 67-64-1).',
+    notes:
+      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'pv-p28-acetone-hh-direct-rfd / pv-iris-acetone-... (value 0.9, agree). logKow ' +
+      'not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic class ' +
+      'defaults pending HITL.',
+  },
+  {
+    key: 'hexachlorobenzene',
+    displayName: 'Hexachlorobenzene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 1.6,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 1.6 per mg/kg-bw/day (carcinogen) (CAS 118-74-1). ' +
+      'BC Protocol 28 lists 0.83; a non-cancer RfD 0.0008 mg/kg-bw/day also exists.',
+    notes:
+      'Human-health pathways only; carcinogen wired sf-only (cf. benzo_a_pyrene). SF ' +
+      'seeded build-first from pv-iris-hexachlorobenzene-hh-direct-sf (1.6, the more ' +
+      'conservative of the two catalog SFs; BC P28 = 0.83). A non-cancer RfD (0.0008) ' +
+      'is also in the catalog for HITL. logKow/eco not in catalog -> eco filtered. ' +
+      'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
+  },
+  {
+    key: 'pentachlorophenol',
+    displayName: 'Pentachlorophenol',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.4,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) + US EPA IRIS oral slope factor 0.4 per mg/kg-bw/day ' +
+      '(carcinogen) (CAS 87-86-5). A non-cancer RfD 0.005 mg/kg-bw/day also exists.',
+    notes:
+      'Human-health pathways only; carcinogen wired sf-only (cf. benzo_a_pyrene). SF ' +
+      'seeded build-first from pv-iris-pentachlorophenol-hh-direct-sf (0.4, P28+IRIS ' +
+      'agree). A non-cancer RfD (0.005) is also in the catalog for HITL. logKow/eco ' +
+      'not in catalog -> eco filtered. abs_dermal/ba_oral are organic-halogenated ' +
+      'class defaults pending HITL.',
+  },
+  {
+    key: '1_4_dioxane',
+    displayName: '1,4-Dioxane',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.1,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen) (CAS 123-91-1). ' +
+      'A non-cancer RfD 0.03 mg/kg-bw/day also exists.',
+    notes:
+      'Human-health pathways only; probable carcinogen wired sf-only (cf. ' +
+      'benzo_a_pyrene). SF seeded build-first from pv-iris-1_4_dioxane-hh-direct-sf ' +
+      '(0.1). A non-cancer RfD (0.03) is also in the catalog for HITL. 1,4-dioxane is ' +
+      'a cyclic ether (organic, not halogenated). logKow/eco not in catalog -> eco ' +
+      'filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
