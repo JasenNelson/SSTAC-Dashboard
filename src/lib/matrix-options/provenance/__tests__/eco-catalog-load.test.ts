@@ -14,10 +14,12 @@ type EcoRecord = {
   input_key: string;
   value: number;
   qa_status: string;
+  evidence_support_status: string;
+  canonical_source_status: string;
   default_status: string;
   jurisdiction: string;
   source_authority_tier?: string;
-  evidence_items: { locator?: string }[];
+  evidence_items: { locator?: string; qa_status: string; reviewed_by?: string; reviewed_at?: string }[];
 };
 
 const ecoValues = ecoValuesRaw as EcoRecord[];
@@ -43,12 +45,26 @@ describe('eco_values.json data file', () => {
     expect(new Set(diazinon.map((r) => r.parameter_value_id)).size).toBe(2);
   });
 
-  it('every record is a needs_review available_option with a tier and no undefined jurisdiction', () => {
+  it('every record is an available_option with a tier, no undefined jurisdiction, and a COHERENT qa shape', () => {
+    // Eco rows are emitted needs_review and may be HITL-promoted to approved (Step-6). Each row must be
+    // either the exact pre-promotion shape OR the exact promoted shape -- a partial/incoherent row fails.
     for (const r of ecoValues) {
-      expect(r.qa_status).toBe('needs_review');
       expect(r.default_status).toBe('available_option');
       expect(r.source_authority_tier).toBeTruthy();
       expect(String(r.jurisdiction)).not.toContain('undefined');
+      expect(['needs_review', 'approved']).toContain(r.qa_status);
+      if (r.qa_status === 'approved') {
+        expect(r.evidence_support_status).toBe('approved_source_backed');
+        expect(r.canonical_source_status).toBe('direct_source_verified');
+        for (const ev of r.evidence_items) {
+          expect(ev.qa_status).toBe('approved');
+          expect(ev.reviewed_by).toBeTruthy();
+          expect(ev.reviewed_at).toMatch(/^\d{4}-\d{2}-\d{2}$/);
+        }
+      } else {
+        expect(r.evidence_support_status).toBe('pending_source_locator');
+        expect(r.canonical_source_status).toBe('needs_direct_source_check');
+      }
     }
   });
 
