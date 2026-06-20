@@ -126,6 +126,7 @@ import subprocess
 import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
+from functools import lru_cache
 from pathlib import Path
 from typing import Any, Iterable
 
@@ -371,6 +372,82 @@ def substance_key(parameter: str) -> str:
     return text.strip("_") or "unknown_substance"
 
 
+# Curated canonical-key -> CAS map + raw-alias overrides + junk-param excludes.
+# CAS numbers are objective identifiers (verified against PubChem/EPA/NIST), NOT
+# value/policy judgments -- so AI may supply/verify them; owner/HITL reviews. The
+# map is intentionally PARTIAL: substances not listed resolve to their slug key
+# with cas_number=null and are reported as needs_review (no fuzzy auto-merge).
+_CAS_MAP_PATH = Path(__file__).resolve().parent / "substance_cas_map.json"
+
+
+def _parse_cas_map(
+    data: Any,
+) -> tuple[dict[str, str], dict[str, str], frozenset[str]]:
+    """Parse a loaded CAS-map JSON value into (cas_by_key, alias_overrides,
+    exclude_params), tolerating imperfect inputs (wrong root/section types,
+    null/blank values) by degrading rather than raising. A null or blank CAS is
+    treated as MISSING (the substance stays unmatched -> needs_review), never
+    emitted as the string 'None'.
+    """
+    if not isinstance(data, dict):
+        return {}, {}, frozenset()
+    raw_cas = data.get("cas_by_key")
+    raw_cas = raw_cas if isinstance(raw_cas, dict) else {}
+    cas_by_key = {
+        str(k): str(v).strip()
+        for k, v in raw_cas.items()
+        if v is not None and str(v).strip()
+    }
+    raw_alias = data.get("alias_overrides")
+    raw_alias = raw_alias if isinstance(raw_alias, dict) else {}
+    alias_overrides = {
+        str(k): str(v).strip()
+        for k, v in raw_alias.items()
+        if v is not None and str(v).strip()
+    }
+    raw_exclude = data.get("exclude_params")
+    raw_exclude = raw_exclude if isinstance(raw_exclude, (list, tuple)) else []
+    exclude = frozenset(str(p) for p in raw_exclude)
+    return cas_by_key, alias_overrides, exclude
+
+
+@lru_cache(maxsize=1)
+def _load_cas_map() -> tuple[dict[str, str], dict[str, str], frozenset[str]]:
+    """Load (cas_by_key, alias_overrides, exclude_params) from the curated JSON.
+
+    Missing/malformed file degrades to empty maps so the ETL still runs (every
+    substance then resolves to its slug with cas=None) rather than crashing.
+    """
+    try:
+        data = json.loads(_CAS_MAP_PATH.read_text(encoding="utf-8"))
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}, {}, frozenset()
+    return _parse_cas_map(data)
+
+
+def resolve_substance(parameter: str) -> tuple[str | None, str | None, bool]:
+    """Resolve a raw chemistry parameter to (canonical_key, cas_number, matched).
+
+    - A parameter in exclude_params -> (None, None, False): the caller SKIPS it
+      (e.g. the '- Paramete' header-leak artifact in DB2).
+    - alias_overrides remap a raw spelling to a canonical key BEFORE slugging
+      (for the rare case the slug would not already canonicalize it); otherwise
+      the canonical key is substance_key(parameter) (the slug already normalizes
+      punctuation/case, so most synonyms collapse without an override).
+    - cas_number comes from cas_by_key[canonical_key] when present; matched is
+      True only when a CAS was found (drives the needs_review CAS-coverage report).
+
+    Pure + deterministic; no fuzzy matching (never guess a merge).
+    """
+    cas_by_key, alias_overrides, exclude = _load_cas_map()
+    raw = (parameter or "").strip()
+    if raw in exclude:
+        return None, None, False
+    canonical = alias_overrides.get(raw) or substance_key(parameter)
+    cas = cas_by_key.get(canonical)
+    return canonical, cas, cas is not None
+
+
 # ---------------------------------------------------------------------------
 # Source database read
 # ---------------------------------------------------------------------------
@@ -566,19 +643,29 @@ def build_sql(
     # -- substances --------------------------------------------------------
     out.append("-- ===================== substances =====================")
     seen_substances: dict[str, dict[str, Any]] = {}
+    # Track real chemistry substances that resolved with NO CAS, for the
+    # needs_review CAS-coverage report (synthetic tox/community/envmod
+    # substances are CAS-less by design and are NOT tracked here).
+    chem_without_cas: set[str] = set()
     for row in src.sediment_chemistry:
         param = (row.get("parameter") or "").strip()
         if not param:
             continue
-        key = substance_key(param)
-        if key in seen_substances:
-            seen_substances[key].setdefault("aliases", set()).add(param)
+        canonical, cas, matched = resolve_substance(param)
+        if canonical is None:
+            # Excluded param (e.g. the '- Paramete' header-leak artifact).
             continue
-        seen_substances[key] = {
-            "key": key,
+        if not matched:
+            chem_without_cas.add(canonical)
+        if canonical in seen_substances:
+            seen_substances[canonical].setdefault("aliases", set()).add(param)
+            continue
+        seen_substances[canonical] = {
+            "key": canonical,
             "display_name": param,
             "contaminant_class": row.get("parameter_group"),
             "aliases": {param},
+            "cas_number": cas,
         }
 
     # Multi-medium extension: synthetic substances for toxicity tests,
@@ -632,18 +719,26 @@ def build_sql(
     for key in sorted(seen_substances):
         rec = seen_substances[key]
         aliases = sorted(rec["aliases"])
+        cas_val = rec.get("cas_number")
         out.append(
             "INSERT INTO matrix_map.substances "
             "(key, display_name, cas_number, aliases, contaminant_class) VALUES ("
             f"{sql_text(rec['key'])}, "
             f"{sql_text(rec['display_name'])}, "
-            "NULL, "
+            f"{sql_text(cas_val) if cas_val else 'NULL'}, "
             f"{sql_jsonb(aliases)}, "
             f"{sql_text(rec['contaminant_class'])}"
             ") ON CONFLICT (key) DO NOTHING;"
         )
         counters.substances += 1
     out.append("")
+    # needs_review CAS-coverage report (real chemistry substances only).
+    if chem_without_cas:
+        log_phase(
+            "cas_coverage.needs_review",
+            chem_substances_without_cas=len(chem_without_cas),
+            keys=sorted(chem_without_cas),
+        )
 
     # -- dras --------------------------------------------------------------
     out.append("-- ===================== dras =====================")
@@ -881,7 +976,12 @@ def build_sql(
             else:
                 counters.skipped_no_value += 1
                 continue
-        key = substance_key(param)
+        # Canonical key MUST match the substances-loop resolution (same FK).
+        key, _cas, _matched = resolve_substance(param)
+        if key is None:
+            # Excluded param (e.g. '- Paramete'); no substance row exists for it.
+            counters.skipped_no_value += 1
+            continue
         qualifier = (chem.get("qualifier") or "").strip() or None
         censored = qualifier == "<"
 
