@@ -6447,9 +6447,9 @@
     "unit": "ug/L",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-ccme-cwqg-aquatic-life"
     ],
@@ -6457,7 +6457,7 @@
       "eq-eco-direct-eqp-di-toro"
     ],
     "jurisdiction": "Canada_federal",
-    "applicability": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent for chloroform; ecological screening candidate (needs review before default use).",
+    "applicability": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent for chloroform; ecological screening candidate (needs review before default use). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-19 by J. Nelson; the pending / needs_review language above is superseded.]",
     "uncertainty": null,
     "evidence_items": [
       {
@@ -6467,15 +6467,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-17",
-        "qa_status": "needs_review",
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-19",
         "note": "Extracted from CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life; pending direct-source verification. CCME interim CWQG 1.8 ug/L freshwater aquatic-life (trichloromethane, CAS 67-66-3); value + derivation verified 2026-06-19 against the CCME factsheet PDF (https://ccme.ca/en/res/halogenated-methanes-trichloromethane-en-canadian-water-quality-guidelines-for-the-protection-of-aquatic-life.pdf; compiled in the 1999 CEQG). Attribute to CCME only -- EPA NRWQC has no chloroform aquatic-life CCC.",
         "evidence_id": "ev-pv-eco-chloroform-direct-fcv-ccme-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review.",
+    "review_notes": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life FCV-equivalent ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-19 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_2_peer_reviewed_literature",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "1992-01-01",
@@ -6483,7 +6485,7 @@
       {
         "source_id": "src-ccme-cwqg-aquatic-life",
         "role": "canonical_candidate",
-        "note": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life is the source for this extracted eco value; source date 1992-01-01."
+        "note": "CCME Canadian Water Quality Guidelines for the Protection of Aquatic Life is the source for this extracted eco value; source date 1992-01-01. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-19 by J. Nelson; the pending / needs_review language above is superseded.]"
       }
     ],
     "receptor_groups": [

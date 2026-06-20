@@ -1001,20 +1001,19 @@
     "zotero_status": "not_in_zotero",
     "external_file_hint": "CCME CWQG for Aquatic Life: Halogenated Methanes (Trichloromethane) factsheet PDF (the url above; compiled in the 1999 CEQG). Chloroform interim freshwater guideline 1.8 ug/L, Table 1.",
     "file_storage": "zotero_or_external",
-    "notes": "CCME freshwater interim aquatic-life water quality guideline. Used (eco-direct EqP) only for chloroform (1.8 ug/L), where neither EPA ESB nor NRWQC has a chronic value. Factsheet pinned and value/derivation verified 2026-06-19 (interim guideline = LOEC 18 ug/L spring-peeper teratogenesis x 0.1; CCME 1992). The chloroform eco row remains needs_review/provisional pending owner promotion -- the --apply step flips currentness_status and canonical_source_status.",
+    "notes": "CCME freshwater interim aquatic-life water quality guideline. Used (eco-direct EqP) only for chloroform (1.8 ug/L), where neither EPA ESB nor NRWQC has a chronic value. Factsheet pinned and value/derivation verified 2026-06-19 (interim guideline = LOEC 18 ug/L spring-peeper teratogenesis x 0.1; CCME 1992). The chloroform eco row remains needs_review/provisional pending owner promotion -- the --apply step flips currentness_status and canonical_source_status. [Source promoted to direct_source_verified + currentness_status current on 2026-06-19 by J. Nelson; the pending / needs_currentness language above is superseded.]",
     "authority_scope": "federal-guidance",
     "source_authority_tier": "tier_2_peer_reviewed_literature",
-    "currentness_status": "needs_currentness_check",
+    "currentness_status": "current",
     "version": null,
     "page_last_modified": null,
     "checked_at": "2026-06-17",
     "conflict_rule": "CCME guideline; where BC or US EPA guidance conflicts, BC legal requirements and ministry guidance control.",
     "supersedes_source_ids": [],
     "calculator_source_role": "canonical_candidate",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
     "bc_protocol_basis": "CCME water quality guidelines are a recognized intergovernmental source under the Protocol 1 hierarchy; BC legal requirements and ministry guidance still control where conflicts exist.",
     "source_crystallization_date": "2026-06-17"
   }
 ]
-
