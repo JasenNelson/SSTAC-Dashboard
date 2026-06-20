@@ -173,6 +173,112 @@ export const SUBSTANCE_LIBRARY = [
       'path with bioaccessibility correction.',
   },
   {
+    key: 'antimony',
+    displayName: 'Antimony',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 6.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.006 mg/kg-bw/day (CAS 7440-36-0)',
+    notes:
+      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
+      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
+      '(pv-p28-antimony-hh-direct-rfd / -food-rfd, value 0.006). Dermal RAF is ' +
+      'the metalloid (As-analogue) class default and ba_oral is the conservative ' +
+      '1.0 (no relative-bioavailability reduction), pending substance-specific ' +
+      'HITL review.',
+  },
+  {
+    key: 'cobalt',
+    displayName: 'Cobalt',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 3.0e-4,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.0003 mg/kg-bw/day (CAS 7440-48-4)',
+    notes:
+      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
+      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
+      '(pv-p28-cobalt-hh-direct-rfd / -food-rfd, value 0.0003). Dermal RAF is ' +
+      'the divalent-metal class default; ba_oral is the conservative 1.0, ' +
+      'pending substance-specific HITL review.',
+  },
+  {
+    key: 'manganese',
+    displayName: 'Manganese',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 1.4e-1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.14 mg/kg-bw/day (CAS 7439-96-5)',
+    notes:
+      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
+      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
+      '(pv-p28-manganese-hh-direct-rfd / -food-rfd, value 0.14); Health Canada ' +
+      'TRV v4.0 and US EPA IRIS alternatives also exist in the catalog. Dermal ' +
+      'RAF is the divalent-metal class default; ba_oral is the conservative 1.0, ' +
+      'pending substance-specific HITL review.',
+  },
+  {
+    key: 'silver',
+    displayName: 'Silver',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 5.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.005 mg/kg-bw/day (CAS 7440-22-4)',
+    notes:
+      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
+      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
+      '(pv-p28-silver-hh-direct-rfd / -food-rfd, value 0.005). NOTE silver is ' +
+      'monovalent (Ag+); contaminantClass divalent-metal is the catalog bucket ' +
+      'for non-metalloid metals (descriptive only, does not affect the RfD ' +
+      'calc). Dermal RAF is the metal class default; ba_oral is the conservative ' +
+      '1.0, pending substance-specific HITL review.',
+  },
+  {
+    key: 'tin',
+    displayName: 'Tin',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 6.0e-1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.6 mg/kg-bw/day (CAS 7440-31-5)',
+    notes:
+      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
+      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
+      '(pv-p28-tin-hh-direct-rfd / -food-rfd, value 0.6). Tin is a ' +
+      'post-transition metal (Sn2+/Sn4+); contaminantClass divalent-metal is ' +
+      'the catalog non-metalloid-metal bucket (descriptive only). Dermal RAF is ' +
+      'the metal class default; ba_oral is the conservative 1.0, pending ' +
+      'substance-specific HITL review.',
+  },
+  {
     key: 'barium',
     displayName: 'Barium',
     contaminantClass: 'divalent-metal',
