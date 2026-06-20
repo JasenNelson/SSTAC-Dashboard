@@ -37,6 +37,15 @@ import urllib.request
 from dataclasses import dataclass, field
 from pathlib import Path
 
+# Sibling module (script dir is on sys.path when run as a script). Single source
+# of the canonical DB2 SHA-256 + the pre-flight guards.
+from db2_guard import (
+    Db2IntegrityError,
+    check_venv,
+    decide_integrity_check,
+    verify_db2_integrity,
+)
+
 # --- Constants ----------------------------------------------------------------
 
 DEFAULT_SOURCE_DB = Path(
@@ -234,11 +243,40 @@ def main() -> int:
     ap.add_argument("--committed-csv", type=Path, default=DEFAULT_COMMITTED_CSV,
                     help="committed full geocoding CSV (same contract)")
     ap.add_argument("--out-summary", type=Path, default=DEFAULT_OUT_SUMMARY)
+    ap.add_argument(
+        "--expected-sha256", default=None,
+        help=(
+            "override the SHA-256 to verify --source-db against (default: the "
+            "recorded canonical DB2 hash). A custom hash is not size-gated."
+        ),
+    )
+    ap.add_argument(
+        "--skip-sha-check", action="store_true",
+        help="skip the DB2 integrity pre-flight (NOT recommended).",
+    )
     args = ap.parse_args()
+
+    check_venv(log=log)
 
     if not args.source_db.exists():
         log("error", msg="source DB missing", path=str(args.source_db))
         return 2
+
+    # Integrity pre-flight: this geocoder targets the canonical DB2 by default
+    # (default_enforce=True), so verify content before any WFS run whose coverage
+    # numbers drive a load decision. Hard-fail on mismatch (per DB2_ADOPTION.md).
+    if not args.skip_sha_check:
+        expected_sha, expected_size, should_check = decide_integrity_check(
+            args.expected_sha256, args.source_db, default_enforce=True,
+        )
+        if should_check:
+            try:
+                verify_db2_integrity(
+                    args.source_db, expected_sha256=expected_sha,
+                    expected_size=expected_size, log=log,
+                )
+            except Db2IntegrityError:
+                return 4
 
     log("start", source_db=str(args.source_db))
     conn = open_ro(args.source_db)

@@ -129,6 +129,15 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Iterable
 
+# Sibling module (script dir is on sys.path when run as a script). Single source
+# of the canonical DB2 SHA-256 + the pre-flight guards.
+from db2_guard import (
+    Db2IntegrityError,
+    check_venv,
+    decide_integrity_check,
+    verify_db2_integrity,
+)
+
 
 # ---------------------------------------------------------------------------
 # Constants (load-bearing decisions)
@@ -1225,6 +1234,21 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
             "owner-approved migration before use."
         ),
     )
+    parser.add_argument(
+        "--expected-sha256",
+        default=None,
+        help=(
+            "If set, verify --source-db against this SHA-256 and hard-fail on "
+            "mismatch. When omitted, the integrity check runs ONLY if --source-db "
+            "is the canonical DB2 (verified against the recorded DB2 hash); a "
+            "non-DB2 source is skipped with a log line."
+        ),
+    )
+    parser.add_argument(
+        "--skip-sha-check",
+        action="store_true",
+        help="skip the DB2 integrity pre-flight entirely (NOT recommended).",
+    )
     return parser.parse_args(argv)
 
 
@@ -1240,9 +1264,38 @@ def main(argv: list[str] | None = None) -> int:
         include_env_modifiers=args.include_env_modifiers,
     )
 
+    check_venv(log=log_phase)
+
     if not args.source_db.exists():
         log_phase("error", message=f"source DB not found: {args.source_db}")
         return 2
+
+    # Integrity pre-flight. The historical default source is the stale DB1, so
+    # enforce only when the source IS the canonical DB2 (or the caller pins an
+    # explicit --expected-sha256) -- default_enforce=False. A non-DB2 source is
+    # skipped with a log line so existing DB1 dry-runs are not broken; once the
+    # source repoints to DB2 (C3), enforcement becomes automatic.
+    if not args.skip_sha_check:
+        expected_sha, expected_size, should_check = decide_integrity_check(
+            args.expected_sha256, args.source_db, default_enforce=False,
+        )
+        if should_check:
+            try:
+                verify_db2_integrity(
+                    args.source_db,
+                    expected_sha256=expected_sha,
+                    expected_size=expected_size,
+                    log=log_phase,
+                )
+            except Db2IntegrityError:
+                return 4
+        else:
+            log_phase(
+                "db2_integrity_skipped",
+                reason="source is not the canonical DB2; no SHA check",
+                path=str(args.source_db),
+            )
+
     if not args.geocoding_csv.exists():
         log_phase("error", message=f"geocoding CSV not found: {args.geocoding_csv}")
         return 2
