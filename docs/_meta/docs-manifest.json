@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4201,
-        "source": "docs:manifest:update:vitest vitest run (2026-06-20): 4201 passing. Catalog Batch B adds +6 substanceLibrary tests (6 HH-only PAHs) on top of Batch A's 4195.",
+        "value": 4211,
+        "source": "docs:manifest:update:vitest vitest run (2026-06-20): 4211 passing. Catalog Batch C adds +10 substanceLibrary tests on top of Batch B's 4201.",
         "last_verified": "2026-06-20"
       },
       "playwright_test_count": {
@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "session_2026_06_20_catalog_batch_c_wire": {
+      "status": "complete",
+      "session_date": "2026-06-20",
+      "work_summary": "Catalog Batch C (matrix-options): consolidated WIRE batch -- added 10 catalog-ready substances to SUBSTANCE_LIBRARY (74->80 was Batch B; this is 80->90). 7 non-carcinogens with oral RfD: aluminum (1.0), boron (0.2, metalloid), molybdenum (0.005), strontium (0.6), phenol (0.3), styrene (0.2), acetone (0.9). 3 carcinogens wired sf-only (cf. benzo_a_pyrene; the catalog also has a non-cancer RfD for each, noted for HITL): hexachlorobenzene (sf 1.6 IRIS; BC P28 lists 0.83), pentachlorophenol (sf 0.4), 1_4_dioxane (sf 0.1). All values verified verbatim against human_health_trv_values.json (pv-p28-/pv-iris- rows, qa_status needs_review); build-first wiring, no qa_status written. CAS in the sources prose are web-verified HIGH-confidence (PubChem/CAS Common Chemistry/EPA). Metals use the divalent-metal non-metalloid-metal bucket (aluminum trivalent / molybdenum multivalent noted as descriptive); logKow/eco fields null -> eco pathways filtered (HH-only). substanceLibrary.test.ts count 80->90 + 10 per-substance tests. Refreshed facts.testing.vitest_test_count 4201 -> 4211. Deferred (carcinogen RfD-vs-SF endpoint, substance-specific bioavailability) flagged for HITL.",
+      "last_verified": "2026-06-20"
+    },
     "session_2026_06_20_catalog_batch_b_hh_pahs": {
       "status": "complete",
       "session_date": "2026-06-20",
