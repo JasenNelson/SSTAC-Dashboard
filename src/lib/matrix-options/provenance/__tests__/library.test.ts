@@ -115,7 +115,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-19: +1 -- CCME chloroform eco-direct row promoted to approved_source_backed (Step-6 4B
     // CCME pilot; HITL J. Nelson inline-approved --apply via promote-eco-source.mjs; 1.8 ug/L verified
     // vs the CCME factsheet PDF) = 1242.
-    expect(view.audit.values.approvedSourceBacked).toBe(1242);
+    // 2026-06-19: +96 -- the remaining 3 eco source batches promoted to approved_source_backed
+    // (Step-6 4B: ESB 32 + FCSAP 45 + NRWQC 19; HITL J. Nelson inline-approved --apply via
+    // promote-eco-source.mjs; all 96 machine-verified vs the pinned sources by an adversarial
+    // verify+refute workflow). The entire eco catalog (97 rows) is now approved. = 1338.
+    expect(view.audit.values.approvedSourceBacked).toBe(1338);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -154,7 +158,9 @@ describe('matrix options evidence library helpers', () => {
     // evidence_support_status=pending_source_locator (needs_review eco candidates) = 473.
     // 2026-06-19: +1 -- CCME chloroform eco-direct row (needs_review / pending_source_locator) = 474.
     // 2026-06-19: -1 -- CCME chloroform promoted out of pending (Step-6 4B CCME pilot --apply) = 473.
-    expect(view.audit.values.pendingSourceLocator).toBe(473);
+    // 2026-06-19: -96 -- ESB 32 + FCSAP 45 + NRWQC 19 promoted out of pending (Step-6 4B --apply);
+    // the entire eco catalog is now approved, so 0 eco rows remain pending. = 377.
+    expect(view.audit.values.pendingSourceLocator).toBe(377);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
