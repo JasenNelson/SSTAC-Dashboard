@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4195,
-        "source": "docs:manifest:update:vitest vitest run (2026-06-20): 4195 passing. The prior 4109 (2026-06-17) was stale vs main after the eco-backlog PRs landed between then and now; this PR (Batch A) adds +5 substanceLibrary tests and the remainder is catch-up to the current main count.",
+        "value": 4201,
+        "source": "docs:manifest:update:vitest vitest run (2026-06-20): 4201 passing. Catalog Batch B adds +6 substanceLibrary tests (6 HH-only PAHs) on top of Batch A's 4195.",
         "last_verified": "2026-06-20"
       },
       "playwright_test_count": {
@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "session_2026_06_20_catalog_batch_b_hh_pahs": {
+      "status": "complete",
+      "session_date": "2026-06-20",
+      "work_summary": "Catalog Batch B (matrix-options): added 6 HH-only PAHs to SUBSTANCE_LIBRARY -- anthracene (RfD 0.3), fluoranthene/phenanthrene/fluorene (0.04), acenaphthene (0.06), and the carcinogen dibenzo[a,h]anthracene (oral slope factor 7.3, rfd null). All contaminantClass organic-PAH, logKow/eco fields null (no logKow or eco value in the catalog -> eco-direct EqP unavailable + Eco-Food filtered out; HH pathways only). RfD/SF values verified verbatim against human_health_trv_values.json (pv-p28-<key>-hh-direct-rfd / -food-rfd + pv-iris-<key>; dibenzo[a,h]anthracene uses pv-p28-...-hh-direct-sf / -food-sf). Build-first wiring; no qa_status written. abs_dermal 0.13 / ba_oral 1.0 are organic-PAH class defaults pending HITL. CAS intentionally NOT placed in the library prose (the verification agent transposed anthracene's CAS; CAS belongs in the verified ETL cas_map). substanceLibrary.test.ts count 74 -> 80 + 6 new per-substance tests. Refreshed facts.testing.vitest_test_count 4195 -> 4201. 6 PAHs (acenaphthylene, chrysene, benzo[b/k]fluoranthene, benzo[ghi]perylene, indeno[123-cd]pyrene) deferred -- no catalog values (NEEDS_RESEARCH).",
+      "last_verified": "2026-06-20"
+    },
     "session_2026_06_20_catalog_batch_a_bcp28_metals": {
       "status": "complete",
       "session_date": "2026-06-20",

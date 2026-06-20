@@ -2,13 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 74 entries', () => {
+  it('has 80 entries', () => {
     // 18 base + 10 pilot (2026-06-19) + 36 eco-registry fan-out (2026-06-19)
     // + 4 reconciliation (PR B, 2026-06-19: xylenes, total PCBs, chromium,
     // mercury_inorganic) + 1 CCME chloroform (2026-06-19) = 69, + 5 BC
-    // Protocol 28 specialty metals (Batch A, 2026-06-20: antimony, cobalt,
-    // manganese, silver, tin) = 74.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(74);
+    // Protocol 28 specialty metals (Batch A, 2026-06-20) = 74, + 6 HH-only PAHs
+    // (Batch B, 2026-06-20: anthracene, fluoranthene, phenanthrene, acenaphthene,
+    // fluorene, dibenzo_a_h_anthracene) = 80.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(80);
   });
 
   it('every entry has a non-null key', () => {
@@ -108,4 +109,39 @@ describe('SUBSTANCE_LIBRARY -- Batch A BC Protocol 28 specialty metals', () => {
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
     });
   }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch B HH-only PAHs', () => {
+  // Verified verbatim against human_health_trv_values.json
+  // (pv-p28-<key>-hh-*-rfd / pv-iris-<key>-hh-*-rfd; dibenzo[a,h]anthracene -sf).
+  const rfdPahs = [
+    { key: 'anthracene', rfd: 0.3 },
+    { key: 'fluoranthene', rfd: 0.04 },
+    { key: 'phenanthrene', rfd: 0.04 },
+    { key: 'acenaphthene', rfd: 0.06 },
+    { key: 'fluorene', rfd: 0.04 },
+  ] as const;
+
+  for (const { key, rfd } of rfdPahs) {
+    it(`${key} is an organic-PAH with RfD ${rfd}, HH-only`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe('organic-PAH');
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+      // No logKow/eco in catalog -> eco pathways filtered out.
+      expect(r?.logKow).toBeNull();
+      expect(r?.fcv_ug_per_L).toBeNull();
+      expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+
+  it('dibenzo_a_h_anthracene is a carcinogenic PAH: sf set, rfd null', () => {
+    const r = findSubstance('dibenzo_a_h_anthracene');
+    expect(r).toBeDefined();
+    expect(r?.contaminantClass).toBe('organic-PAH');
+    expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(7.3);
+    expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+    expect(r?.logKow).toBeNull();
+  });
 });

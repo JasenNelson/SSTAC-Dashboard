@@ -579,6 +579,131 @@ export const SUBSTANCE_LIBRARY = [
       '5.18-5.92); not seeded for eco-food. HH fields null; abs_dermal/ba_oral inert.',
   },
   {
+    key: 'anthracene',
+    displayName: 'Anthracene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) oral RfD 0.3 mg/kg-bw/day (also US EPA IRIS). ' +
+      'Non-carcinogenic PAH.',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-p28-anthracene-hh-direct-rfd / -food-rfd (value 0.3). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
+    key: 'fluoranthene',
+    displayName: 'Fluoranthene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.04,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) oral RfD 0.04 mg/kg-bw/day (also US EPA IRIS). ' +
+      'Non-carcinogenic PAH.',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-p28-fluoranthene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
+    key: 'phenanthrene',
+    displayName: 'Phenanthrene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.04,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) oral RfD 0.04 mg/kg-bw/day. Non-carcinogenic PAH ' +
+      '(EPA IRIS lists no oral RfD; the BC P28 surrogate value is used).',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-p28-phenanthrene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
+    key: 'acenaphthene',
+    displayName: 'Acenaphthene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.06,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.06 mg/kg-bw/day. Non-carcinogenic PAH.',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-iris-acenaphthene-hh-direct-rfd / -food-rfd (value 0.06). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
+    key: 'fluorene',
+    displayName: 'Fluorene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.04,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.04 mg/kg-bw/day. Non-carcinogenic PAH.',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-iris-fluorene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
+    key: 'dibenzo_a_h_anthracene',
+    displayName: 'Dibenzo[a,h]anthracene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 7.3,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'BC Protocol 28 (Jan 2021) oral slope factor 7.3 per mg/kg-bw/day. ' +
+      'Carcinogenic PAH (uses a cancer slope factor, not an RfD).',
+    notes:
+      'Human-health pathways only, seeded build-first from the needs_review catalog ' +
+      'row pv-p28-dibenzo_a_h_anthracene-hh-direct-sf / -food-sf (sf 7.3). ' +
+      'Carcinogen: sf_oral set, rfd_oral null (cf. benzo_a_pyrene). logKow not in ' +
+      'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+  },
+  {
     key: 'dieldrin',
     displayName: 'Dieldrin',
     contaminantClass: 'organic-halogenated',
