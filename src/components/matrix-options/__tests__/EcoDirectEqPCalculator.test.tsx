@@ -400,10 +400,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     ).toBe('0.014');
   });
 
-  // Eco-wiring Step 4: FCV now seeds from the eco References & Values catalog (frame-aware,
-  // provisional) before the substance library. benzene has NO library FCV (null) but an ESB
-  // eco-direct catalog row (130 ug/L, needs_review) eligible under bc-protocol1-v5-dra.
-  it('seeds FCV from the provisional eco catalog when the library has none (benzene)', () => {
+  // Eco-wiring Step 4 + Step 6 promote: FCV seeds from the eco References & Values catalog
+  // (frame-aware) before the substance library. benzene has NO library FCV (null) but an ESB
+  // eco-direct catalog row (130 ug/L, approved after Step-6 4B) eligible under bc-protocol1-v5-dra.
+  // The seed is approved (provisional=false) so NO provisional badge renders.
+  it('seeds FCV from the approved eco catalog when the library has none (benzene)', () => {
     render(
       <EcoDirectEqPCalculator
         substanceKey="benzene"
@@ -413,7 +414,10 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
     ).toBe('130');
-    expect(screen.getByTestId('eqp-fcv-provisional-badge')).toBeInTheDocument();
+    // Approved seed: provisional badge must NOT be present.
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('eqp-fcv-override-badge'),
     ).not.toBeInTheDocument();
@@ -469,14 +473,19 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     ).toBe('');
   });
 
-  it('a user override hides the provisional badge and shows the override badge (benzene)', () => {
+  // After Step-6 4B promotion the benzene ESB seed is approved (provisional=false), so no provisional
+  // badge is present at any point. The test verifies that a user edit still shows the override badge.
+  it('shows the override badge when the user edits FCV (benzene, approved seed)', () => {
     render(
       <EcoDirectEqPCalculator
         substanceKey="benzene"
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
-    expect(screen.getByTestId('eqp-fcv-provisional-badge')).toBeInTheDocument();
+    // No provisional badge on an approved seed -- before or after the user edit.
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
       target: { value: '0.5' },
     });

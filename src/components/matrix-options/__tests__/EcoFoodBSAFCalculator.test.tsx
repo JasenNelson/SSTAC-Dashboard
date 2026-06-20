@@ -32,18 +32,19 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(summary.textContent).toMatch(/organic-PAH/);
   });
 
-  it('seeds TRV from the provisional eco catalog (mammal) and BSAF from the substance library on initial render', () => {
+  it('seeds TRV from the approved eco catalog (mammal) and BSAF from the substance library on initial render', () => {
     render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
-    // Eco-wiring Step 5: B[a]P TRV now seeds from the eco catalog mammal row (3.6 mg/kg-bw/day, FCSAP,
-    // needs_review) instead of the library 0.0025; BSAF still seeds from the substance library (0.5).
+    // Eco-wiring Step 5 + Step-6 4B promote: B[a]P TRV seeds from the eco catalog mammal row
+    // (3.6 mg/kg-bw/day, FCSAP, now approved) instead of the library 0.0025; BSAF still seeds from
+    // the substance library (0.5). The seed is approved (provisional=false) -> no provisional badge.
     const trv = screen.getByTestId('ecofood-trv-input') as HTMLInputElement;
     const bsaf = screen.getByTestId('ecofood-bsaf-input') as HTMLInputElement;
     expect(trv.value).toBe('3.6');
     expect(bsaf.value).toBe('0.5');
-    // Provisional badge on the catalog-seeded TRV; no override badges/Reset on initial render.
+    // Approved seed: provisional badge must NOT be present; no override badges/Reset on initial render.
     expect(
-      screen.getByTestId('ecofood-trv-provisional-badge'),
-    ).toBeInTheDocument();
+      screen.queryByTestId('ecofood-trv-provisional-badge'),
+    ).not.toBeInTheDocument();
     expect(
       screen.queryByTestId('ecofood-trv-override-badge'),
     ).not.toBeInTheDocument();
@@ -366,12 +367,13 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     const panel = screen.getByTestId('calculator-provenance-panel');
     expect(panel).toHaveTextContent(/References and provenance/);
     expect(panel).toHaveTextContent(/Ecological TRV/);
-    // Eco-wiring Step 5: B[a]P TRV now attributes to the FCSAP mammal eco-TRV catalog row (3.6), a
-    // provisional needs_review candidate, instead of the prior library-tuple EPA Eco-SSL attribution.
+    // Eco-wiring Step 5 + Step-6 4B promote: B[a]P TRV attributes to the FCSAP mammal eco-TRV catalog
+    // row (3.6), now approved (approved_source_backed). BSAF row is still needs_review -> pending source
+    // locator count stays non-zero. TRV approval lifts the "approved" count from 0 to 1.
     expect(panel).toHaveTextContent(/3\.6 mg\/kg-bw\/day/);
     expect(panel).toHaveTextContent(/FCSAP ERA Module 7/);
     expect(panel).toHaveTextContent(/pending source locator/);
-    expect(panel).toHaveTextContent(/0 approved/);
+    expect(panel).toHaveTextContent(/1 approved/);
   });
 
   it('renders successfully with NO props (defaults bridge to commit 6 wire-up)', () => {
@@ -466,11 +468,15 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     );
   });
 
-  it('a user override hides the provisional badge and shows the override badge (benzo_a_pyrene TRV)', () => {
+  // After Step-6 4B promotion the B[a]P FCSAP mammal TRV seed is approved (provisional=false), so no
+  // provisional badge is present at any point. The test verifies that a user edit still shows the
+  // override badge.
+  it('shows the override badge when the user edits TRV (benzo_a_pyrene, approved seed)', () => {
     render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
+    // No provisional badge on an approved seed -- before or after the user edit.
     expect(
-      screen.getByTestId('ecofood-trv-provisional-badge'),
-    ).toBeInTheDocument();
+      screen.queryByTestId('ecofood-trv-provisional-badge'),
+    ).not.toBeInTheDocument();
     fireEvent.change(screen.getByTestId('ecofood-trv-input'), {
       target: { value: '0.01' },
     });

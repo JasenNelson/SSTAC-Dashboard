@@ -6,8 +6,9 @@ import { describe, it, expect } from 'vitest';
 import { resolveEcoSeed } from '../ecoSeed';
 
 describe('resolveEcoSeed -- real wired catalog', () => {
-  it('seeds eco-direct fcv from the catalog for a frame+substance (provisional needs_review)', () => {
-    // bc-protocol1-v5-dra: eco-direct = needs_review, US_federal jurisdiction eligible.
+  it('seeds eco-direct fcv from the catalog for a frame+substance (approved -> not provisional)', () => {
+    // bc-protocol1-v5-dra: eco-direct benzene, US_federal jurisdiction eligible. The benzene ESB row
+    // was HITL-promoted to approved (Step-6 4B), so provisional is now false (the seed still resolves).
     const seed = resolveEcoSeed(
       'benzene',
       'eco-direct-eqp',
@@ -18,7 +19,7 @@ describe('resolveEcoSeed -- real wired catalog', () => {
     expect(seed?.value).toBe(130);
     expect(seed?.unit).toBe('ug/L');
     expect(seed?.parameterValueId).toBe('pv-eco-benzene-direct-fcv-esb');
-    expect(seed?.provisional).toBe(true);
+    expect(seed?.provisional).toBe(false);
   });
 
   it('breaks a multi-source eco-direct tie toward the preferred source (ESB over NRWQC)', () => {
