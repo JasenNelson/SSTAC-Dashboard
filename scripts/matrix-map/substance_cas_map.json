@@ -1,0 +1,28 @@
+{
+  "_meta": {
+    "purpose": "Curated canonical substance_key -> CAS number map for the matrix-map ETL (etl_bnrrm_to_supabase.py resolve_substance). CAS numbers are objective registry identifiers (verified against PubChem / US EPA / CAS Common Chemistry), NOT value or policy judgments, so they are AI-supplied + verified and owner/HITL-reviewed. This map is intentionally PARTIAL: a DB2 chemistry parameter whose canonical key is not listed in cas_by_key resolves to its slug with cas_number=null and is reported as needs_review (no fuzzy auto-merge).",
+    "verification": "12 entries verified HIGH confidence 2026-06-20 (EPA Method 200.8/6200 + CAS Common Chemistry + PubChem). Scope = the substances that overlap the matrix-options SUBSTANCE_LIBRARY (the keys that join to the calculators).",
+    "deferred": {
+      "nonylphenol": "INTENTIONALLY OMITTED -- ambiguous CAS. Options: 84852-15-3 (branched 4-nonylphenol technical; the usual environmental-monitoring default), 25154-52-3 (generic mixed-isomer class), 104-40-5 (pure linear 4-n-nonylphenol; NOT the technical product), 11066-49-2 (isononylphenol). Owner to pick the canonical form before pinning; until then nonylphenol flags needs_review.",
+      "other_145_params": "The ~145 DB2 chemistry parameters not in cas_by_key (pulp-mill chlorophenols / guaiacols / catechols / syringols / veratroles + dioxin/furan congeners) are not yet CAS-assigned; they flag needs_review. CAS for these is a future owner/HITL-gated batch."
+    }
+  },
+  "cas_by_key": {
+    "barium": "7440-39-3",
+    "beryllium": "7440-41-7",
+    "cadmium": "7440-43-9",
+    "chromium": "7440-47-3",
+    "copper": "7440-50-8",
+    "lead": "7439-92-1",
+    "naphthalene": "91-20-3",
+    "nickel": "7440-02-0",
+    "pyrene": "129-00-0",
+    "selenium": "7782-49-2",
+    "vanadium": "7440-62-2",
+    "zinc": "7440-66-6"
+  },
+  "alias_overrides": {},
+  "exclude_params": [
+    "- Paramete"
+  ]
+}
