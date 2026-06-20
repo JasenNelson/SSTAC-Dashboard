@@ -163,7 +163,32 @@ npm scripts:
 
 ## Session End
 
-Before ending any session, check for orphaned processes (per L0 rule 1.9):
+Two required close-out steps, in order.
+
+### 1. Continuity-doc refresh (MANDATORY at every checkpoint / close-out)
+
+The session-to-session handoff is the **primary** continuity mechanism; auto-memory and scattered
+per-feature plan docs are **supplements, not substitutes**. At every checkpoint or close-out:
+
+- Refresh the current handoff -- the DATED session-anchor continuity file, i.e. the newest
+  `*_HANDOFF_*.md` (this repo uses `FRESH_SESSION_HANDOFF_<date>_*.md` /
+  `NEXT_SESSION_HANDOFF_<date>_*.md`; matches L0's `*_HANDOFF_*.md` rule, not a bare `*_HANDOFF.md`) --
+  archive-before-edit + version/date bump, via `/handoff-update`.
+- **COMMIT it** (path-scoped). A handoff left untracked in the working tree does not survive as
+  continuity for the next session and is not visible to a fresh checkout.
+- This is a REQUIRED close-out step, not optional. Memory and per-feature plan docs do not discharge it.
+
+Drift incident (2026-06-19): a cross-project audit found this repo's ROOT-LEVEL session-anchor handoffs
+(`FRESH_SESSION_HANDOFF_*` / `NEXT_SESSION_HANDOFF_*`) lagging the code by ~19 days -- the newest such
+files were untracked working-tree scratch and the last *committed* root session-anchor handoff was
+2026-05-31, because the refresh was optional and these handoffs were left uncommitted. (Per-lane
+handoffs under `docs/` were committed more recently; this rule is about the ROOT continuity anchor.)
+This rule (mandatory refresh + commit) exists so that cannot recur silently. (Parallel to the
+Sediment-DRA-Pipeline / DRA-KB doc-drift fix.)
+
+### 2. Orphaned-process check (per L0 rule 1.9)
+
+Before ending any session, check for orphaned processes:
 
 ```powershell
 Get-Process node, python -ErrorAction SilentlyContinue
