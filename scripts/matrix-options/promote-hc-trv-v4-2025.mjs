@@ -533,7 +533,7 @@ const HELP = [
   'After --apply: npx tsc --noEmit; npm run lint; npm run test:ci',
 ].join('\n');
 
-function printPlan(plan, opts) {
+function printPlan(plan) {
   for (let i = 0; i < plan.valueResults.length; i++) {
     const vr = plan.valueResults[i];
     const valueId = HC_TRV_V4_2025_PROMOTION_VALUE_IDS[i];
@@ -578,7 +578,7 @@ function main() {
   const plan = planPromotion(paramValues, sources, opts);
 
   console.log('Before/after plan:');
-  printPlan(plan, opts);
+  printPlan(plan);
   console.log('');
 
   const totalToPromote =

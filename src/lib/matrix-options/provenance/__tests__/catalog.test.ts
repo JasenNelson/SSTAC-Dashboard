@@ -21,6 +21,9 @@ import {
   US_EPA_PFAS_PROMOTION_VALUE_IDS,
   US_EPA_PFAS_PROMOTION_SOURCE_IDS,
 } from '../../../../../scripts/matrix-options/promote-us-epa-pfas.mjs';
+// 2026-06-21: owner-attested Health Canada TRV v4.0 (2025) batch -- 92 HC TRV rows. Import its
+// exported id allowlist so the HH tripwire union below stays a single source of truth.
+import { HC_TRV_V4_2025_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-trv-v4-2025.mjs';
 // 2026-06-21: parameter_values.json mass-promotion tripwire -- union of the owner-run promote tools
 // that target the exposure-parameter catalog (one source of truth per tool, mirroring the HH TRV
 // tripwire). Adding a NEW parameter_values promote tool requires adding its allowlist below.
@@ -545,14 +548,16 @@ describe('matrix options provenance catalog', () => {
     // must fail here. And once promoted, the set must be EXACTLY those 20 (no more, no fewer, no
     // substitutions). This restores and tightens the catalog-wide tripwire the old hardcoded
     // 84-count test provided.
-    // Union of the THREE owner-attested promote tools' allowlists (single source of truth, imported
+    // Union of the FOUR owner-attested promote tools' allowlists (single source of truth, imported
     // from each tool): apply-qa-promotion.mjs (20 IRIS rows), promote-iris-carcinogen-rfd.mjs (6 IRIS
-    // HCB/PCP/1,4-dioxane RfD rows), promote-us-epa-pfas.mjs (4 US EPA PFOA/PFOS RfD rows). A swap-in
-    // of any non-sanctioned row or a bulk promotion still fails the set-equality below.
+    // HCB/PCP/1,4-dioxane RfD rows), promote-us-epa-pfas.mjs (4 US EPA PFOA/PFOS RfD rows), and
+    // promote-hc-trv-v4-2025.mjs (92 Health Canada TRV v4.0 rows). A swap-in of any non-sanctioned row
+    // or a bulk promotion still fails the set-equality below.
     const sanctionedPromotionIds = new Set([
       ...IRIS_QA_PROMOTION_TARGET_IDS,
       ...IRIS_CARCINOGEN_RFD_PROMOTION_VALUE_IDS,
       ...US_EPA_PFAS_PROMOTION_VALUE_IDS,
+      ...HC_TRV_V4_2025_PROMOTION_VALUE_IDS,
     ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(
@@ -561,13 +566,15 @@ describe('matrix options provenance catalog', () => {
     }
 
     const pfasPromotionIds = new Set(US_EPA_PFAS_PROMOTION_VALUE_IDS);
+    const hcTrvPromotionIds = new Set(HC_TRV_V4_2025_PROMOTION_VALUE_IDS);
     for (const record of promotedBeyondFrozen) {
       // Each promoted row is one of the sanctioned set (defense in depth with the set-equality above).
       expect(sanctionedPromotionIds.has(record.parameter_value_id), record.parameter_value_id).toBe(
         true,
       );
       // Source check: the IRIS apply-sheet + IRIS-carcinogen rows are EPA-IRIS-sourced; the US EPA
-      // PFOA/PFOS rows use their own per-document EPA sources (non-IRIS) -- constrain each to its tool.
+      // PFOA/PFOS rows use their own per-document EPA sources (non-IRIS); the HC TRV v4.0 rows use the
+      // single Health Canada source -- constrain each row to its tool's exact source.
       if (pfasPromotionIds.has(record.parameter_value_id)) {
         // Each PFAS value must carry EXACTLY its own per-document EPA source (PFOA->pfoa, PFOS->pfos):
         // catches an empty array, a cross-linked source, or both sources on one row.
@@ -576,6 +583,9 @@ describe('matrix options provenance catalog', () => {
           : 'src-us-epa-pfoa-2024';
         expect(US_EPA_PFAS_PROMOTION_SOURCE_IDS).toContain(expectedPfasSource);
         expect(record.source_ids, record.parameter_value_id).toEqual([expectedPfasSource]);
+      } else if (hcTrvPromotionIds.has(record.parameter_value_id)) {
+        // Each HC TRV v4.0 row must carry EXACTLY the single Health Canada source.
+        expect(record.source_ids, record.parameter_value_id).toEqual(['src-health-canada-trv-v4-2025']);
       } else {
         expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
       }
