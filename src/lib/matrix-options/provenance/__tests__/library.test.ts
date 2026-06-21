@@ -215,8 +215,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: src-health-canada-pqra-v4-2024 added by the Phase D HC PQRA v4.0
     // direct-contact EF/ED/AT rows (needs_review); appears in source order after the
     // US EPA IRIS sources and before src-health-canada-trv-v4-2025.
-    // 2026-06-20c: src-us-epa-pfoa-pfos-2024 added by the Batch F US EPA 2024 PFOA/PFOS
-    // hh-direct RfD rows (needs_review); sorts last in the HH-direct source list.
+    // 2026-06-20c: src-us-epa-pfoa-2024 + src-us-epa-pfos-2024 added by the Batch F US EPA
+    // 2024 PFOA/PFOS hh-direct RfD rows (needs_review; split per-substance source records so
+    // each links its own EPA assessment); both sort last in the HH-direct source list.
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
       'src-bc-protocol-28-2021-jan',
       'src-us-epa-iris-rfd-table-live',
@@ -224,7 +225,8 @@ describe('matrix options evidence library helpers', () => {
       'src-health-canada-pqra-v4-2024',
       'src-health-canada-trv-v4-2025',
       'src-bc-protocol-28-v3-0-2024',
-      'src-us-epa-pfoa-pfos-2024',
+      'src-us-epa-pfoa-2024',
+      'src-us-epa-pfos-2024',
     ]);
   });
 
