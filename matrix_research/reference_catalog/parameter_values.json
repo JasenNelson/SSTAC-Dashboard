@@ -4500,9 +4500,9 @@
     "unit": "kg/day",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-bc-wlrs-fish-tissue-screening-2023"
     ],
@@ -4510,8 +4510,8 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "BC",
-    "applicability": "BC low-level (general) fisher adult fish ingestion rate (WLRS 2023, Table 2; = Health Canada 2011 two servings/week). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day.",
+    "applicability": "BC low-level (general) fisher adult fish ingestion rate (WLRS 2023, Table 2; = Health Canada 2011 two servings/week). Substance-independent exposure factor (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Secondary citation pending direct-source verification against the WLRS 2023 primary. Unit kg/day is intentionally fail-closed for Evidence Library unit-normalization (the normalizer does not normalize kg/day); value_text records both g/day and kg/day. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-bc-wlrs-fish-tissue-screening-2023",
@@ -4520,17 +4520,17 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-opus-4-8",
         "extracted_at": "2026-06-09",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "BC WLRS 2023 Table 2 low-level (general BC) fisher adult rate; pending direct-source verification. g/day converted to kg/day (base calculator unit IR_food_kg_per_day).",
         "evidence_id": "ev-pv-wlrs-2023-ir-food-low-level-bc-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "BC WLRS 2023 receptor fish-ingestion rate (low-level (general BC) fisher). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "BC WLRS 2023 receptor fish-ingestion rate (low-level (general BC) fisher). Read-only library candidate; verify against the WLRS primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
     "bc_protocol_basis": "BC provincial government source aligned with the Protocol 1 source hierarchy; BC legal requirements and ministry guidance control where conflicts exist.",
     "source_crystallization_date": "2023-12-31",
@@ -5029,9 +5029,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5040,7 +5040,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5052,8 +5052,8 @@
     "display_name": "Body weight - infant (HC PQRA v4.0 Appendix E)",
     "value": 8.2,
     "unit": "kg",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the infant (0 to <6 mo): 8.2 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the infant (0 to <6 mo): 8.2 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5062,15 +5062,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E recommended receptor body weight (infant); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-bw-infant-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (infant, 8.2 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (infant, 8.2 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5161,9 +5161,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5172,7 +5172,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5184,8 +5184,8 @@
     "display_name": "Body weight - child (HC PQRA v4.0 Appendix E)",
     "value": 32.9,
     "unit": "kg",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the child (5 to <12 yr): 32.9 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the child (5 to <12 yr): 32.9 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5194,15 +5194,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E recommended receptor body weight (child); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-bw-child-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (child, 32.9 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (child, 32.9 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5227,9 +5227,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5238,7 +5238,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5250,8 +5250,8 @@
     "display_name": "Body weight - teen (HC PQRA v4.0 Appendix E)",
     "value": 59.7,
     "unit": "kg",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the teen (12 to <20 yr): 59.7 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions.",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended receptor body weight for the teen (12 to <20 yr): 59.7 kg. Underlying source Richardson (1997), tabulated in Appendix E. Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E footnote: the measure of central tendency for body weight (from Richardson et al. 1997) is the arithmetic mean of log-normal probability density functions. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5260,15 +5260,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-11",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E recommended receptor body weight (teen); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-bw-teen-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (teen, 59.7 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E body weight (teen, 59.7 kg). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5564,9 +5564,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5575,7 +5575,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5587,8 +5587,8 @@
     "display_name": "Skin surface area, total body - infant (0 to <6 mo) (HC PQRA v4.0 Appendix E)",
     "value": 3620,
     "unit": "cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the infant (0 to <6 mo): 3620 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the infant (0 to <6 mo): 3620 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5597,15 +5597,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (infant (0 to <6 mo)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-infant-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (infant (0 to <6 mo), 3620 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (infant (0 to <6 mo), 3620 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5698,9 +5698,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5709,7 +5709,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5721,8 +5721,8 @@
     "display_name": "Skin surface area, total body - child (5 to <12 yr) (HC PQRA v4.0 Appendix E)",
     "value": 10140,
     "unit": "cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the child (5 to <12 yr): 10140 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the child (5 to <12 yr): 10140 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5731,15 +5731,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (child (5 to <12 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-child-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (child (5 to <12 yr), 10140 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (child (5 to <12 yr), 10140 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5765,9 +5765,9 @@
     "pathway": "human-health-direct",
     "value_type": "single_value",
     "default_status": "available_option",
-    "evidence_support_status": "pending_source_locator",
+    "evidence_support_status": "approved_source_backed",
     "extraction_status": "extracted_from_source",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
       "src-health-canada-pqra-v4-2024"
     ],
@@ -5776,7 +5776,7 @@
     ],
     "jurisdiction": "general",
     "source_authority_tier": "tier_1_government_or_regulatory",
-    "canonical_source_status": "needs_direct_source_check",
+    "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
     "source_crystallization_date": "2024-03-31",
@@ -5788,8 +5788,8 @@
     "display_name": "Skin surface area, total body - teen (12 to <20 yr) (HC PQRA v4.0 Appendix E)",
     "value": 15470,
     "unit": "cm2",
-    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the teen (12 to <20 yr): 15470 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default.",
-    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997).",
+    "applicability": "Health Canada PQRA v4.0 (2024) Appendix E recommended TOTAL-BODY skin surface area for the teen (12 to <20 yr): 15470 cm2. Underlying source Richardson (1997), tabulated in Appendix E. Total-body region selected per owner direction (2026-06-12). Substance-independent receptor characteristic (substance_key=generic). needs_review candidate; not a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
+    "uncertainty": "Appendix E also tabulates surface area split by body region (hands, arms, legs, feet); this row is the total-body sum. For dermal dose, the total-body SA pairs with the \"surfaces other than hands\" soil-loading value (hands are ~5% of total-body area and carry a higher loading, a second-order refinement). Measure of central tendency: arithmetic mean of log-normal pdfs (Richardson 1997). [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "evidence_items": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
@@ -5798,15 +5798,15 @@
         "extraction_method": "manual_source_extraction",
         "extracted_by": "claude-fable-5",
         "extracted_at": "2026-06-12",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-06-20",
         "note": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (teen (12 to <20 yr)); underlying source Richardson (1997). Confirmed by direct read of the primary PDF (Health Canada PQRA v4.0, Cat. H129-114/2023E-PDF, ISBN 978-0-660-68497-0, March 2024).",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-sa-total-teen-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (teen (12 to <20 yr), 15470 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default.",
+    "review_notes": "Health Canada PQRA v4.0 Appendix E total-body skin surface area (teen (12 to <20 yr), 15470 cm2). Read-only library candidate; verify against the PQRA v4.0 primary before any default-selection. qa_status=needs_review. AI never sets a calculator default. [PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-06-20 by J. Nelson; the pending / needs_review language above is superseded.]",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
