@@ -124,6 +124,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import urllib.parse
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -1510,7 +1511,12 @@ def main(argv: list[str] | None = None) -> int:
             int(tok) for tok in str(args.site_ids).split(",") if tok.strip()
         ]
 
-    conn = sqlite3.connect(str(args.source_db))
+    # Open the source DB read-only + immutable: the canonical DB2 lives on a
+    # Google Drive (G:) custody path that is read-only, where a plain read/write
+    # connect raises OperationalError. Mirrors geocode_bc_csr.py. The ETL only
+    # ever reads the source; this never loads/writes it.
+    source_uri = "file:" + urllib.parse.quote(str(args.source_db)) + "?mode=ro&immutable=1"
+    conn = sqlite3.connect(source_uri, uri=True)
     try:
         site_ids = resolve_site_ids(conn, explicit_site_ids)
         log_phase(
