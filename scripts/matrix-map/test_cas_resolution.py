@@ -41,9 +41,10 @@ class ResolveSubstanceTest(unittest.TestCase):
         self.assertEqual((key, cas, matched), ("zinc", "7440-66-6", True))
 
     def test_unmapped_real_chemistry_resolves_to_slug_no_cas(self) -> None:
-        # A pulp-mill chlorophenol not in the curated map.
-        key, cas, matched = resolve_substance("2-Chlorophenol")
-        self.assertEqual(key, "2-chlorophenol")
+        # A pulp-mill guaiacol not in the curated map (guaiacols are an
+        # intentionally-deferred category pending isomer-specific verification).
+        key, cas, matched = resolve_substance("4-Chloroguaiacol")
+        self.assertEqual(key, "4-chloroguaiacol")
         self.assertIsNone(cas)
         self.assertFalse(matched)
 
@@ -57,6 +58,51 @@ class ResolveSubstanceTest(unittest.TestCase):
             resolve_substance("Nonylphenol"),
             ("nonylphenol", "84852-15-3", True),
         )
+
+    def test_chlorophenol_isomers_resolve_to_verified_cas(self) -> None:
+        # The full single-isomer chlorophenol set (batch2, 2026-06-20). DB2
+        # parameter spellings slugify by dropping commas + parens and keeping
+        # hyphens, mirroring the existing 246-trichlorophenol convention. Each
+        # CAS web-verified (EPA Method 8041A / ATSDR tp107 / AccuStandard /
+        # ChemicalBook).
+        cases = [
+            ("2-Chlorophenol", "2-chlorophenol", "95-57-8"),
+            ("3-Chlorophenol", "3-chlorophenol", "108-43-0"),
+            ("4-Chlorophenol", "4-chlorophenol", "106-48-9"),
+            ("2,3-Dichlorophenol", "23-dichlorophenol", "576-24-9"),
+            ("2,4-Dichlorophenol", "24-dichlorophenol", "120-83-2"),
+            ("2,5-Dichlorophenol", "25-dichlorophenol", "583-78-8"),
+            ("2,6-Dichlorophenol", "26-dichlorophenol", "87-65-0"),
+            ("3,4-Dichlorophenol", "34-dichlorophenol", "95-77-2"),
+            ("3,5-Dichlorophenol", "35-dichlorophenol", "591-35-5"),
+            ("2,3,4-Trichlorophenol", "234-trichlorophenol", "15950-66-0"),
+            ("2,3,5-Trichlorophenol", "235-trichlorophenol", "933-78-8"),
+            ("2,3,6-Trichlorophenol", "236-trichlorophenol", "933-75-5"),
+            ("2,4,5-Trichlorophenol", "245-trichlorophenol", "95-95-4"),
+            ("3,4,5-Trichlorophenol", "345-trichlorophenol", "609-19-8"),
+            ("2,3,4,5-Tetrachlorophenol", "2345-tetrachlorophenol", "4901-51-3"),
+            ("2,3,5,6-Tetrachlorophenol", "2356-tetrachlorophenol", "935-95-5"),
+        ]
+        for param, expected_key, expected_cas in cases:
+            with self.subTest(param=param):
+                self.assertEqual(
+                    resolve_substance(param),
+                    (expected_key, expected_cas, True),
+                )
+
+    def test_deferred_categories_stay_unmatched(self) -> None:
+        # Organotins + octylphenols + guaiacols are intentionally deferred:
+        # they resolve to a slug with no CAS (needs_review), never auto-assigned.
+        for param in (
+            "Tributyltin",
+            "Dibutyltin",
+            "4-tert-Octylphenol",
+            "4-Chloroguaiacol",
+        ):
+            with self.subTest(param=param):
+                _, cas, matched = resolve_substance(param)
+                self.assertIsNone(cas)
+                self.assertFalse(matched)
 
     def test_slug_canonicalizes_case_variants(self) -> None:
         # The two DB2 spellings of 2-methylnaphthalene collapse to one key.
@@ -88,12 +134,14 @@ class CasMapFileTest(unittest.TestCase):
 
     def test_loader_returns_curated_entries(self) -> None:
         cas_by_key, alias_overrides, exclude = _load_cas_map()
-        # 51 HIGH-confidence entries (metals + PAHs + PCB Aroclors + 3
-        # chlorophenols + nonylphenol + methyl_mercury); mixed-isomer slugs
-        # intentionally omitted.
-        self.assertEqual(len(cas_by_key), 51)
+        # 67 HIGH-confidence entries (metals + PAHs + PCB Aroclors + the full
+        # single-isomer chlorophenol set incl 3,4,5-trichlorophenol + nonylphenol
+        # + methyl_mercury); mixed-isomer slugs + deferred categories omitted.
+        self.assertEqual(len(cas_by_key), 67)
         self.assertIn("nonylphenol", cas_by_key)
         self.assertIn("methyl_mercury", cas_by_key)
+        self.assertIn("2-chlorophenol", cas_by_key)
+        self.assertIn("2345-tetrachlorophenol", cas_by_key)
         self.assertNotIn("total_pcbs", cas_by_key)
         self.assertNotIn("benzob&jfluoranthene", cas_by_key)
         self.assertIn("- Paramete", exclude)
