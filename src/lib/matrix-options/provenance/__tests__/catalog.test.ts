@@ -553,10 +553,13 @@ describe('matrix options provenance catalog', () => {
       // Source check: the IRIS apply-sheet + IRIS-carcinogen rows are EPA-IRIS-sourced; the US EPA
       // PFOA/PFOS rows use their own per-document EPA sources (non-IRIS) -- constrain each to its tool.
       if (pfasPromotionIds.has(record.parameter_value_id)) {
-        expect(
-          record.source_ids.every((s) => US_EPA_PFAS_PROMOTION_SOURCE_IDS.includes(s)),
-          record.parameter_value_id,
-        ).toBe(true);
+        // Each PFAS value must carry EXACTLY its own per-document EPA source (PFOA->pfoa, PFOS->pfos):
+        // catches an empty array, a cross-linked source, or both sources on one row.
+        const expectedPfasSource = record.parameter_value_id.includes('perfluorooctane_sulfonate')
+          ? 'src-us-epa-pfos-2024'
+          : 'src-us-epa-pfoa-2024';
+        expect(US_EPA_PFAS_PROMOTION_SOURCE_IDS).toContain(expectedPfasSource);
+        expect(record.source_ids, record.parameter_value_id).toEqual([expectedPfasSource]);
       } else {
         expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
       }
