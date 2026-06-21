@@ -42,6 +42,11 @@ export default defineConfig({
       'node_modules',
       'dist',
       '.next',
+      // Session worktrees live under .claude/worktrees/<wt>/ and carry their own copies
+      // of test files. Without this exclude, vitest scans them and inflates the local
+      // test count (a recurring pollution source; CI on a clean checkout is unaffected).
+      // Exclude the whole .claude tree so worktree dirs can never pollute test:ci again.
+      '.claude/**',
       'e2e/**',
       '**/e2e/**',
       // Performance tests require a build - run separately with `npm run build && npm test`

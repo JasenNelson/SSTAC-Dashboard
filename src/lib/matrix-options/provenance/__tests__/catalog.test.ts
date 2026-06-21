@@ -21,6 +21,22 @@ import {
   US_EPA_PFAS_PROMOTION_VALUE_IDS,
   US_EPA_PFAS_PROMOTION_SOURCE_IDS,
 } from '../../../../../scripts/matrix-options/promote-us-epa-pfas.mjs';
+// 2026-06-21: parameter_values.json mass-promotion tripwire -- union of the owner-run promote tools
+// that target the exposure-parameter catalog (one source of truth per tool, mirroring the HH TRV
+// tripwire). Adding a NEW parameter_values promote tool requires adding its allowlist below.
+import { WLRS_PROMOTION_VALUE_ID as WLRS_RECREATIONAL_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-wlrs-default.mjs';
+import { BW_PROMOTION_VALUE_ID as WLRS_BW_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-wlrs-bw-default.mjs';
+import { WLRS_SUBSISTENCE_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-wlrs-subsistence.mjs';
+import { WLRS_LOW_LEVEL_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-wlrs-low-level.mjs';
+import { EPA_PROMOTION_VALUE_ID as EPA_IR_FOOD_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-epa-ir-food.mjs';
+import { EPA_BW_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-epa-bw-default.mjs';
+import { ACFN_FOODWEB_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-acfn-foodweb.mjs';
+import { HC_PQRA_PROMOTION_VALUE_IDS as HC_PQRA_DIRECT_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-direct.mjs';
+import { HC_PQRA_ADULT_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-adult.mjs';
+import { HC_PQRA_WORKER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-worker.mjs';
+import { HC_PQRA_LIFESTAGE_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-lifestage.mjs';
+import { TWN_TODDLER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-twn-foodweb-toddler.mjs';
+import parameterValuesRaw from '../../../../../matrix_research/reference_catalog/parameter_values.json';
 import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
@@ -582,6 +598,37 @@ describe('matrix options provenance catalog', () => {
         );
       }
     }
+  });
+
+  it('constrains parameter_values.json approvals to the union of owner-run promote-script allowlists', () => {
+    // Mass-promotion tripwire for the exposure-parameter catalog (parameter_values.json), mirroring the
+    // human-health TRV tripwire above. Every approved row in parameter_values.json MUST be sanctioned by
+    // one of the owner-run promote-*.mjs tools (single source of truth: each tool's exported *_VALUE_ID(S)).
+    // Previously this catalog was guarded only by a count assertion in library.test.ts -- a lower-fidelity
+    // guard than set-equality. A bulk promotion or a swap-in of a non-sanctioned row now fails here.
+    // Adding a NEW parameter_values promote tool requires adding its allowlist to this union (by design).
+    const sanctionedParameterValueIds = new Set<string>([
+      WLRS_RECREATIONAL_PROMOTION_VALUE_ID,
+      WLRS_BW_PROMOTION_VALUE_ID,
+      WLRS_SUBSISTENCE_PROMOTION_VALUE_ID,
+      WLRS_LOW_LEVEL_PROMOTION_VALUE_ID,
+      EPA_IR_FOOD_PROMOTION_VALUE_ID,
+      EPA_BW_PROMOTION_VALUE_ID,
+      ACFN_FOODWEB_PROMOTION_VALUE_ID,
+      ...HC_PQRA_DIRECT_PROMOTION_VALUE_IDS,
+      ...HC_PQRA_ADULT_PROMOTION_VALUE_IDS,
+      ...HC_PQRA_WORKER_PROMOTION_VALUE_IDS,
+      ...HC_PQRA_LIFESTAGE_PROMOTION_VALUE_IDS,
+      ...TWN_TODDLER_PROMOTION_VALUE_IDS,
+    ]);
+    const approvedParameterValueIds = (
+      parameterValuesRaw as Array<{ qa_status: string; parameter_value_id: string }>
+    )
+      .filter((record) => record.qa_status === 'approved')
+      .map((record) => record.parameter_value_id);
+    // Set-equality: the approved set must be EXACTLY the sanctioned union -- no more (unsanctioned
+    // promotion), no fewer (a reverted/dropped --apply), no substitutions.
+    expect(new Set(approvedParameterValueIds)).toEqual(sanctionedParameterValueIds);
   });
 
   it('treats WQCIU as a source-of-sources lead, not a canonical value shortcut', () => {
