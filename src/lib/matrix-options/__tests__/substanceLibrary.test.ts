@@ -167,20 +167,21 @@ describe('SUBSTANCE_LIBRARY -- Batch C catalog WIRE substances', () => {
     });
   }
 
-  // Carcinogens wired sf-only (rfd null), matching the benzo_a_pyrene convention.
+  // Carcinogens with BOTH endpoints seeded build-first (cancer SF + non-cancer RfD), so the
+  // calculator can select the more conservative of the two (derivations.pickHumanHealthEndpoint).
   const sfSubs = [
-    { key: 'hexachlorobenzene', sf: 1.6, cls: 'organic-halogenated' },
-    { key: 'pentachlorophenol', sf: 0.4, cls: 'organic-halogenated' },
-    { key: '1_4_dioxane', sf: 0.1, cls: 'organic' },
+    { key: 'hexachlorobenzene', sf: 1.6, rfd: 8.0e-4, cls: 'organic-halogenated' },
+    { key: 'pentachlorophenol', sf: 0.4, rfd: 5.0e-3, cls: 'organic-halogenated' },
+    { key: '1_4_dioxane', sf: 0.1, rfd: 3.0e-2, cls: 'organic' },
   ] as const;
 
-  for (const { key, sf, cls } of sfSubs) {
-    it(`${key} (${cls}) is a carcinogen: sf ${sf}, rfd null`, () => {
+  for (const { key, sf, rfd, cls } of sfSubs) {
+    it(`${key} (${cls}) carries both endpoints: sf ${sf}, rfd ${rfd}`, () => {
       const r = findSubstance(key);
       expect(r).toBeDefined();
       expect(r?.contaminantClass).toBe(cls);
       expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
-      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
     });
   }
 });

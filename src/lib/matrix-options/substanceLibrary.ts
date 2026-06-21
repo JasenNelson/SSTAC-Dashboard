@@ -1615,7 +1615,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Hexachlorobenzene',
     contaminantClass: 'organic-halogenated',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 8.0e-4,
     sf_oral_per_mg_per_kg_bw_per_day: 1.6,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
@@ -1623,13 +1623,15 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral slope factor 1.6 per mg/kg-bw/day (carcinogen) (CAS 118-74-1). ' +
-      'BC Protocol 28 lists 0.83; a non-cancer RfD 0.0008 mg/kg-bw/day also exists.',
+      'US EPA IRIS oral slope factor 1.6 per mg/kg-bw/day (carcinogen) + non-cancer ' +
+      'oral RfD 0.0008 mg/kg-bw/day (CAS 118-74-1). BC Protocol 28 lists SF 0.83.',
     notes:
-      'Human-health pathways only; carcinogen wired sf-only (cf. benzo_a_pyrene). SF ' +
-      'seeded build-first from pv-iris-hexachlorobenzene-hh-direct-sf (1.6, the more ' +
-      'conservative of the two catalog SFs; BC P28 = 0.83). A non-cancer RfD (0.0008) ' +
-      'is also in the catalog for HITL. logKow/eco not in catalog -> eco filtered. ' +
+      'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
+      'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
+      'pv-iris-hexachlorobenzene-hh-direct-sf (1.6, the more conservative of the two ' +
+      'catalog SFs; BC P28 = 0.83); RfD from pv-iris-hexachlorobenzene-hh-direct-rfd / ' +
+      'pv-p28-hexachlorobenzene-hh-direct-rfd (0.0008, agree). Both rows remain ' +
+      'needs_review in the catalog. logKow/eco not in catalog -> eco filtered. ' +
       'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
   },
   {
@@ -1637,7 +1639,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Pentachlorophenol',
     contaminantClass: 'organic-halogenated',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 5.0e-3,
     sf_oral_per_mg_per_kg_bw_per_day: 0.4,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
@@ -1646,20 +1648,21 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral slope factor 0.4 per mg/kg-bw/day ' +
-      '(carcinogen) (CAS 87-86-5). A non-cancer RfD 0.005 mg/kg-bw/day also exists.',
+      '(carcinogen) + non-cancer oral RfD 0.005 mg/kg-bw/day (CAS 87-86-5).',
     notes:
-      'Human-health pathways only; carcinogen wired sf-only (cf. benzo_a_pyrene). SF ' +
-      'seeded build-first from pv-iris-pentachlorophenol-hh-direct-sf (0.4, P28+IRIS ' +
-      'agree). A non-cancer RfD (0.005) is also in the catalog for HITL. logKow/eco ' +
-      'not in catalog -> eco filtered. abs_dermal/ba_oral are organic-halogenated ' +
-      'class defaults pending HITL.',
+      'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
+      'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
+      'pv-iris-pentachlorophenol-hh-direct-sf (0.4, P28+IRIS agree); RfD from ' +
+      'pv-iris-pentachlorophenol-hh-direct-rfd (0.005). Both rows remain needs_review ' +
+      'in the catalog. logKow/eco not in catalog -> eco filtered. abs_dermal/ba_oral ' +
+      'are organic-halogenated class defaults pending HITL.',
   },
   {
     key: '1_4_dioxane',
     displayName: '1,4-Dioxane',
     contaminantClass: 'organic',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 3.0e-2,
     sf_oral_per_mg_per_kg_bw_per_day: 0.1,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
@@ -1667,14 +1670,15 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen) (CAS 123-91-1). ' +
-      'A non-cancer RfD 0.03 mg/kg-bw/day also exists.',
+      'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen) + non-cancer ' +
+      'oral RfD 0.03 mg/kg-bw/day (CAS 123-91-1).',
     notes:
-      'Human-health pathways only; probable carcinogen wired sf-only (cf. ' +
-      'benzo_a_pyrene). SF seeded build-first from pv-iris-1_4_dioxane-hh-direct-sf ' +
-      '(0.1). A non-cancer RfD (0.03) is also in the catalog for HITL. 1,4-dioxane is ' +
-      'a cyclic ether (organic, not halogenated). logKow/eco not in catalog -> eco ' +
-      'filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
+      'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
+      'pv-iris-1_4_dioxane-hh-direct-sf (0.1); RfD from pv-iris-1_4_dioxane-hh-direct-rfd ' +
+      '(0.03). Both rows remain needs_review in the catalog. 1,4-dioxane is a cyclic ' +
+      'ether (organic, not halogenated). logKow/eco not in catalog -> eco filtered. ' +
+      'abs_dermal/ba_oral are organic class defaults pending HITL.',
   },
 ] as const satisfies readonly SubstanceEntry[];
 
