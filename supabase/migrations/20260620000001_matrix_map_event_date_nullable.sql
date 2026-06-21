@@ -72,3 +72,12 @@ COMMENT ON COLUMN matrix_map.sample_events.date_precision IS
   'NULL. Lets UI / Selection Stats filter or annotate undated observations '
   '(D-dates Option B; enables loading ~6,742 additional undated '
   'measurements).';
+
+-- 3. Tie the precision tag to the date so undated rows cannot be silently
+--    misclassified as 'exact' (the column default). A NULL event_date MUST be
+--    'undated', and a present event_date MUST be 'exact'. Existing dated rows
+--    (all 'exact' with a real date) satisfy this; a bad undated load that omits
+--    date_precision (defaulting to 'exact' with a NULL date) fails instead.
+ALTER TABLE matrix_map.sample_events
+  ADD CONSTRAINT sample_events_date_precision_matches_date
+    CHECK ((event_date IS NULL) = (date_precision = 'undated'));
