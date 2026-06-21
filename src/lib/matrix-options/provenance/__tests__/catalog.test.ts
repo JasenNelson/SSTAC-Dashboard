@@ -24,6 +24,10 @@ import {
 // 2026-06-21: owner-attested Health Canada TRV v4.0 (2025) batch -- 92 HC TRV rows. Import its
 // exported id allowlist so the HH tripwire union below stays a single source of truth.
 import { HC_TRV_V4_2025_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-trv-v4-2025.mjs';
+// 2026-06-21: US EPA IRIS batch promotions (oral RfD + chemical-details). Both are IRIS-sourced, so the
+// existing /iris/i per-record source branch covers them; add their allowlists to the tripwire union.
+import { IRIS_RFD_BATCH_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-rfd-batch.mjs';
+import { IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-chemdetails.mjs';
 // 2026-06-21: parameter_values.json mass-promotion tripwire -- union of the owner-run promote tools
 // that target the exposure-parameter catalog (one source of truth per tool, mirroring the HH TRV
 // tripwire). Adding a NEW parameter_values promote tool requires adding its allowlist below.
@@ -551,13 +555,16 @@ describe('matrix options provenance catalog', () => {
     // Union of the FOUR owner-attested promote tools' allowlists (single source of truth, imported
     // from each tool): apply-qa-promotion.mjs (20 IRIS rows), promote-iris-carcinogen-rfd.mjs (6 IRIS
     // HCB/PCP/1,4-dioxane RfD rows), promote-us-epa-pfas.mjs (4 US EPA PFOA/PFOS RfD rows), and
-    // promote-hc-trv-v4-2025.mjs (92 Health Canada TRV v4.0 rows). A swap-in of any non-sanctioned row
-    // or a bulk promotion still fails the set-equality below.
+    // promote-hc-trv-v4-2025.mjs (92 Health Canada TRV v4.0 rows), promote-iris-rfd-batch.mjs (US EPA
+    // IRIS oral-RfD batch), promote-iris-chemdetails.mjs (US EPA IRIS chem-details batch). A swap-in of
+    // any non-sanctioned row or a bulk promotion still fails the set-equality below.
     const sanctionedPromotionIds = new Set([
       ...IRIS_QA_PROMOTION_TARGET_IDS,
       ...IRIS_CARCINOGEN_RFD_PROMOTION_VALUE_IDS,
       ...US_EPA_PFAS_PROMOTION_VALUE_IDS,
       ...HC_TRV_V4_2025_PROMOTION_VALUE_IDS,
+      ...IRIS_RFD_BATCH_PROMOTION_VALUE_IDS,
+      ...IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS,
     ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(

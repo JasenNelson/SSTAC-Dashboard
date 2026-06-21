@@ -1,0 +1,5442 @@
+[
+  {
+    "id": "pv-iris-1_2_4_5_tetrachlorobenzene-hh-direct-rfd",
+    "substanceKey": "1_2_4_5_tetrachlorobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_4_5_tetrachlorobenzene-hh-food-rfd",
+    "substanceKey": "1_2_4_5_tetrachlorobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_4_tribromobenzene-hh-direct-rfd",
+    "substanceKey": "1_2_4_tribromobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_4_tribromobenzene-hh-food-rfd",
+    "substanceKey": "1_2_4_tribromobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_3_5_trinitrobenzene-hh-direct-rfd",
+    "substanceKey": "1_3_5_trinitrobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_3_5_trinitrobenzene-hh-food-rfd",
+    "substanceKey": "1_3_5_trinitrobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dibromobenzene-hh-direct-rfd",
+    "substanceKey": "1_4_dibromobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dibromobenzene-hh-food-rfd",
+    "substanceKey": "1_4_dibromobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dithiane-hh-direct-rfd",
+    "substanceKey": "1_4_dithiane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dithiane-hh-food-rfd",
+    "substanceKey": "1_4_dithiane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-direct-rfd",
+    "substanceKey": "2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-food-rfd",
+    "substanceKey": "2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153-hh-direct-rfd",
+    "substanceKey": "2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153-hh-food-rfd",
+    "substanceKey": "2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_5_pentabromodiphenyl_ether_bde_99-hh-direct-rfd",
+    "substanceKey": "2_2_4_4_5_pentabromodiphenyl_ether_bde_99",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_5_pentabromodiphenyl_ether_bde_99-hh-food-rfd",
+    "substanceKey": "2_2_4_4_5_pentabromodiphenyl_ether_bde_99",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_tetrabromodiphenyl_ether_bde_47-hh-direct-rfd",
+    "substanceKey": "2_2_4_4_tetrabromodiphenyl_ether_bde_47",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_4_tetrabromodiphenyl_ether_bde_47-hh-food-rfd",
+    "substanceKey": "2_2_4_4_tetrabromodiphenyl_ether_bde_47",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp-hh-direct-rfd",
+    "substanceKey": "2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp-hh-food-rfd",
+    "substanceKey": "2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp-hh-direct-rfd",
+    "substanceKey": "2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp-hh-food-rfd",
+    "substanceKey": "2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_3_7_8_tetrachlorodibenzo_p_dioxin-hh-direct-rfd",
+    "substanceKey": "2_3_7_8_tetrachlorodibenzo_p_dioxin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 7e-10,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_3_7_8_tetrachlorodibenzo_p_dioxin-hh-food-rfd",
+    "substanceKey": "2_3_7_8_tetrachlorodibenzo_p_dioxin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 7e-10,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_3_dichloropropanol-hh-direct-rfd",
+    "substanceKey": "2_3_dichloropropanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_3_dichloropropanol-hh-food-rfd",
+    "substanceKey": "2_3_dichloropropanol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_5_trichlorophenoxyacetic_acid_2_4_5_t-hh-direct-rfd",
+    "substanceKey": "2_4_5_trichlorophenoxyacetic_acid_2_4_5_t",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_5_trichlorophenoxyacetic_acid_2_4_5_t-hh-food-rfd",
+    "substanceKey": "2_4_5_trichlorophenoxyacetic_acid_2_4_5_t",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_6_trinitrotoluene_tnt-hh-direct-rfd",
+    "substanceKey": "2_4_6_trinitrotoluene_tnt",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_6_trinitrotoluene_tnt-hh-food-rfd",
+    "substanceKey": "2_4_6_trinitrotoluene_tnt",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_dichlorophenoxyacetic_acid_2_4_d-hh-direct-rfd",
+    "substanceKey": "2_4_dichlorophenoxyacetic_acid_2_4_d",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_dichlorophenoxyacetic_acid_2_4_d-hh-food-rfd",
+    "substanceKey": "2_4_dichlorophenoxyacetic_acid_2_4_d",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_dinitrotoluene-hh-direct-rfd",
+    "substanceKey": "2_4_dinitrotoluene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_dinitrotoluene-hh-food-rfd",
+    "substanceKey": "2_4_dinitrotoluene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_hexanone-hh-direct-rfd",
+    "substanceKey": "2_hexanone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_hexanone-hh-food-rfd",
+    "substanceKey": "2_hexanone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_methyl_4_chlorophenoxyacetic_acid_mcpa-hh-direct-rfd",
+    "substanceKey": "2_methyl_4_chlorophenoxyacetic_acid_mcpa",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_methyl_4_chlorophenoxyacetic_acid_mcpa-hh-food-rfd",
+    "substanceKey": "2_methyl_4_chlorophenoxyacetic_acid_mcpa",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_methylnaphthalene-hh-direct-rfd",
+    "substanceKey": "2_methylnaphthalene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_methylnaphthalene-hh-food-rfd",
+    "substanceKey": "2_methylnaphthalene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_2_4_dichlorophenoxy_butyric_acid_2_4_db-hh-direct-rfd",
+    "substanceKey": "4_2_4_dichlorophenoxy_butyric_acid_2_4_db",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_2_4_dichlorophenoxy_butyric_acid_2_4_db-hh-food-rfd",
+    "substanceKey": "4_2_4_dichlorophenoxy_butyric_acid_2_4_db",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb-hh-direct-rfd",
+    "substanceKey": "4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb-hh-food-rfd",
+    "substanceKey": "4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_6_dinitro_o_cyclohexyl_phenol-hh-direct-rfd",
+    "substanceKey": "4_6_dinitro_o_cyclohexyl_phenol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_6_dinitro_o_cyclohexyl_phenol-hh-food-rfd",
+    "substanceKey": "4_6_dinitro_o_cyclohexyl_phenol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acenaphthene-hh-direct-rfd",
+    "substanceKey": "acenaphthene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acenaphthene-hh-food-rfd",
+    "substanceKey": "acenaphthene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acephate-hh-direct-rfd",
+    "substanceKey": "acephate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acephate-hh-food-rfd",
+    "substanceKey": "acephate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetochlor-hh-direct-rfd",
+    "substanceKey": "acetochlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetochlor-hh-food-rfd",
+    "substanceKey": "acetochlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetone-hh-direct-rfd",
+    "substanceKey": "acetone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetone-hh-food-rfd",
+    "substanceKey": "acetone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetophenone-hh-direct-rfd",
+    "substanceKey": "acetophenone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetophenone-hh-food-rfd",
+    "substanceKey": "acetophenone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acifluorfen_sodium-hh-direct-rfd",
+    "substanceKey": "acifluorfen_sodium",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acifluorfen_sodium-hh-food-rfd",
+    "substanceKey": "acifluorfen_sodium",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrolein-hh-direct-rfd",
+    "substanceKey": "acrolein",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrolein-hh-food-rfd",
+    "substanceKey": "acrolein",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-direct-rfd",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-food-rfd",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylic_acid-hh-direct-rfd",
+    "substanceKey": "acrylic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylic_acid-hh-food-rfd",
+    "substanceKey": "acrylic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-alachlor-hh-direct-rfd",
+    "substanceKey": "alachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-alachlor-hh-food-rfd",
+    "substanceKey": "alachlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-alar-hh-direct-rfd",
+    "substanceKey": "alar",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.15,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-alar-hh-food-rfd",
+    "substanceKey": "alar",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.15,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldicarb_sulfone-hh-direct-rfd",
+    "substanceKey": "aldicarb_sulfone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldicarb_sulfone-hh-food-rfd",
+    "substanceKey": "aldicarb_sulfone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldicarb-hh-direct-rfd",
+    "substanceKey": "aldicarb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldicarb-hh-food-rfd",
+    "substanceKey": "aldicarb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldrin-hh-direct-rfd",
+    "substanceKey": "aldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldrin-hh-food-rfd",
+    "substanceKey": "aldrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ally-hh-direct-rfd",
+    "substanceKey": "ally",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ally-hh-food-rfd",
+    "substanceKey": "ally",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-allyl_alcohol-hh-direct-rfd",
+    "substanceKey": "allyl_alcohol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-allyl_alcohol-hh-food-rfd",
+    "substanceKey": "allyl_alcohol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aluminum_phosphide-hh-direct-rfd",
+    "substanceKey": "aluminum_phosphide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aluminum_phosphide-hh-food-rfd",
+    "substanceKey": "aluminum_phosphide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-amdro-hh-direct-rfd",
+    "substanceKey": "amdro",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-amdro-hh-food-rfd",
+    "substanceKey": "amdro",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ametryn-hh-direct-rfd",
+    "substanceKey": "ametryn",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ametryn-hh-food-rfd",
+    "substanceKey": "ametryn",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-amitraz-hh-direct-rfd",
+    "substanceKey": "amitraz",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-amitraz-hh-food-rfd",
+    "substanceKey": "amitraz",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ammonium_sulfamate-hh-direct-rfd",
+    "substanceKey": "ammonium_sulfamate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ammonium_sulfamate-hh-food-rfd",
+    "substanceKey": "ammonium_sulfamate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-antimony-hh-direct-rfd",
+    "substanceKey": "antimony",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-antimony-hh-food-rfd",
+    "substanceKey": "antimony",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-apollo-hh-direct-rfd",
+    "substanceKey": "apollo",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-apollo-hh-food-rfd",
+    "substanceKey": "apollo",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aroclor_1016-hh-direct-rfd",
+    "substanceKey": "aroclor_1016",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aroclor_1016-hh-food-rfd",
+    "substanceKey": "aroclor_1016",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-assure-hh-direct-rfd",
+    "substanceKey": "assure",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-assure-hh-food-rfd",
+    "substanceKey": "assure",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-asulam-hh-direct-rfd",
+    "substanceKey": "asulam",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-asulam-hh-food-rfd",
+    "substanceKey": "asulam",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-atrazine-hh-direct-rfd",
+    "substanceKey": "atrazine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.035,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-atrazine-hh-food-rfd",
+    "substanceKey": "atrazine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.035,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-avermectin_b1-hh-direct-rfd",
+    "substanceKey": "avermectin_b1",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-avermectin_b1-hh-food-rfd",
+    "substanceKey": "avermectin_b1",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-baygon-hh-direct-rfd",
+    "substanceKey": "baygon",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-baygon-hh-food-rfd",
+    "substanceKey": "baygon",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bayleton-hh-direct-rfd",
+    "substanceKey": "bayleton",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bayleton-hh-food-rfd",
+    "substanceKey": "bayleton",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-baythroid-hh-direct-rfd",
+    "substanceKey": "baythroid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-baythroid-hh-food-rfd",
+    "substanceKey": "baythroid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benefin-hh-direct-rfd",
+    "substanceKey": "benefin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benefin-hh-food-rfd",
+    "substanceKey": "benefin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benomyl-hh-direct-rfd",
+    "substanceKey": "benomyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benomyl-hh-food-rfd",
+    "substanceKey": "benomyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bentazon_basagran-hh-direct-rfd",
+    "substanceKey": "bentazon_basagran",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bentazon_basagran-hh-food-rfd",
+    "substanceKey": "bentazon_basagran",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzaldehyde-hh-direct-rfd",
+    "substanceKey": "benzaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzaldehyde-hh-food-rfd",
+    "substanceKey": "benzaldehyde",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzidine-hh-direct-rfd",
+    "substanceKey": "benzidine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzidine-hh-food-rfd",
+    "substanceKey": "benzidine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzoic_acid-hh-direct-rfd",
+    "substanceKey": "benzoic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzoic_acid-hh-food-rfd",
+    "substanceKey": "benzoic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-beta_chloronaphthalene-hh-direct-rfd",
+    "substanceKey": "beta_chloronaphthalene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-beta_chloronaphthalene-hh-food-rfd",
+    "substanceKey": "beta_chloronaphthalene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bidrin-hh-direct-rfd",
+    "substanceKey": "bidrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bidrin-hh-food-rfd",
+    "substanceKey": "bidrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenthrin-hh-direct-rfd",
+    "substanceKey": "biphenthrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenthrin-hh-food-rfd",
+    "substanceKey": "biphenthrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenyl-hh-direct-rfd",
+    "substanceKey": "biphenyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenyl-hh-food-rfd",
+    "substanceKey": "biphenyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_chloro_1_methylethyl_ether-hh-direct-rfd",
+    "substanceKey": "bis_2_chloro_1_methylethyl_ether",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_chloro_1_methylethyl_ether-hh-food-rfd",
+    "substanceKey": "bis_2_chloro_1_methylethyl_ether",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-direct-rfd",
+    "substanceKey": "bis_2_ethylhexyl_phthalate_dehp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-food-rfd",
+    "substanceKey": "bis_2_ethylhexyl_phthalate_dehp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bisphenol_a-hh-direct-rfd",
+    "substanceKey": "bisphenol_a",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bisphenol_a-hh-food-rfd",
+    "substanceKey": "bisphenol_a",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-boron-hh-direct-rfd",
+    "substanceKey": "boron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-boron-hh-food-rfd",
+    "substanceKey": "boron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromate-hh-direct-rfd",
+    "substanceKey": "bromate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromate-hh-food-rfd",
+    "substanceKey": "bromate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromobenzene-hh-direct-rfd",
+    "substanceKey": "bromobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromobenzene-hh-food-rfd",
+    "substanceKey": "bromobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromodichloromethane-hh-direct-rfd",
+    "substanceKey": "bromodichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromodichloromethane-hh-food-rfd",
+    "substanceKey": "bromodichloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoform-hh-direct-rfd",
+    "substanceKey": "bromoform",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoform-hh-food-rfd",
+    "substanceKey": "bromoform",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromomethane-hh-direct-rfd",
+    "substanceKey": "bromomethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0014,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromomethane-hh-food-rfd",
+    "substanceKey": "bromomethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0014,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoxynil_octanoate-hh-direct-rfd",
+    "substanceKey": "bromoxynil_octanoate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoxynil_octanoate-hh-food-rfd",
+    "substanceKey": "bromoxynil_octanoate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoxynil-hh-direct-rfd",
+    "substanceKey": "bromoxynil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoxynil-hh-food-rfd",
+    "substanceKey": "bromoxynil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butyl_benzyl_phthalate_bbp-hh-direct-rfd",
+    "substanceKey": "butyl_benzyl_phthalate_bbp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butyl_benzyl_phthalate_bbp-hh-food-rfd",
+    "substanceKey": "butyl_benzyl_phthalate_bbp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butylate-hh-direct-rfd",
+    "substanceKey": "butylate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butylate-hh-food-rfd",
+    "substanceKey": "butylate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butylphthalyl_butylglycolate_bpbg-hh-direct-rfd",
+    "substanceKey": "butylphthalyl_butylglycolate_bpbg",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-butylphthalyl_butylglycolate_bpbg-hh-food-rfd",
+    "substanceKey": "butylphthalyl_butylglycolate_bpbg",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-calcium_cyanide-hh-direct-rfd",
+    "substanceKey": "calcium_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-calcium_cyanide-hh-food-rfd",
+    "substanceKey": "calcium_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-caprolactam-hh-direct-rfd",
+    "substanceKey": "caprolactam",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-caprolactam-hh-food-rfd",
+    "substanceKey": "caprolactam",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-captafol-hh-direct-rfd",
+    "substanceKey": "captafol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-captafol-hh-food-rfd",
+    "substanceKey": "captafol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-captan-hh-direct-rfd",
+    "substanceKey": "captan",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.13,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-captan-hh-food-rfd",
+    "substanceKey": "captan",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.13,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbaryl-hh-direct-rfd",
+    "substanceKey": "carbaryl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbaryl-hh-food-rfd",
+    "substanceKey": "carbaryl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbofuran-hh-direct-rfd",
+    "substanceKey": "carbofuran",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbofuran-hh-food-rfd",
+    "substanceKey": "carbofuran",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbon_disulfide-hh-direct-rfd",
+    "substanceKey": "carbon_disulfide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbon_disulfide-hh-food-rfd",
+    "substanceKey": "carbon_disulfide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbosulfan-hh-direct-rfd",
+    "substanceKey": "carbosulfan",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carbosulfan-hh-food-rfd",
+    "substanceKey": "carbosulfan",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carboxin-hh-direct-rfd",
+    "substanceKey": "carboxin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-carboxin-hh-food-rfd",
+    "substanceKey": "carboxin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloral_hydrate-hh-direct-rfd",
+    "substanceKey": "chloral_hydrate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloral_hydrate-hh-food-rfd",
+    "substanceKey": "chloral_hydrate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloramben-hh-direct-rfd",
+    "substanceKey": "chloramben",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloramben-hh-food-rfd",
+    "substanceKey": "chloramben",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-direct-rfd",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-food-rfd",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordecone_kepone-hh-direct-rfd",
+    "substanceKey": "chlordecone_kepone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordecone_kepone-hh-food-rfd",
+    "substanceKey": "chlordecone_kepone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorimuron_ethyl-hh-direct-rfd",
+    "substanceKey": "chlorimuron_ethyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorimuron_ethyl-hh-food-rfd",
+    "substanceKey": "chlorimuron_ethyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine_cyanide-hh-direct-rfd",
+    "substanceKey": "chlorine_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine_cyanide-hh-food-rfd",
+    "substanceKey": "chlorine_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine_dioxide-hh-direct-rfd",
+    "substanceKey": "chlorine_dioxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine_dioxide-hh-food-rfd",
+    "substanceKey": "chlorine_dioxide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine-hh-direct-rfd",
+    "substanceKey": "chlorine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine-hh-food-rfd",
+    "substanceKey": "chlorine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorite_sodium_salt-hh-direct-rfd",
+    "substanceKey": "chlorite_sodium_salt",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorite_sodium_salt-hh-food-rfd",
+    "substanceKey": "chlorite_sodium_salt",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorobenzilate-hh-direct-rfd",
+    "substanceKey": "chlorobenzilate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorobenzilate-hh-food-rfd",
+    "substanceKey": "chlorobenzilate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloroform-hh-direct-rfd",
+    "substanceKey": "chloroform",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chloroform-hh-food-rfd",
+    "substanceKey": "chloroform",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorophenol_2-hh-direct-rfd",
+    "substanceKey": "chlorophenol_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorophenol_2-hh-food-rfd",
+    "substanceKey": "chlorophenol_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorothalonil-hh-direct-rfd",
+    "substanceKey": "chlorothalonil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorothalonil-hh-food-rfd",
+    "substanceKey": "chlorothalonil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorotoluene_2-hh-direct-rfd",
+    "substanceKey": "chlorotoluene_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorotoluene_2-hh-food-rfd",
+    "substanceKey": "chlorotoluene_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorpropham-hh-direct-rfd",
+    "substanceKey": "chlorpropham",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorpropham-hh-food-rfd",
+    "substanceKey": "chlorpropham",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorsulfuron-hh-direct-rfd",
+    "substanceKey": "chlorsulfuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorsulfuron-hh-food-rfd",
+    "substanceKey": "chlorsulfuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cis_1_2_dichloroethylene-hh-direct-rfd",
+    "substanceKey": "cis_1_2_dichloroethylene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cis_1_2_dichloroethylene-hh-food-rfd",
+    "substanceKey": "cis_1_2_dichloroethylene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-copper_cyanide-hh-direct-rfd",
+    "substanceKey": "copper_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-copper_cyanide-hh-food-rfd",
+    "substanceKey": "copper_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanide_free-hh-direct-rfd",
+    "substanceKey": "cyanide_free",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00063,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanide_free-hh-food-rfd",
+    "substanceKey": "cyanide_free",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00063,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanogen_bromide-hh-direct-rfd",
+    "substanceKey": "cyanogen_bromide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanogen_bromide-hh-food-rfd",
+    "substanceKey": "cyanogen_bromide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanogen-hh-direct-rfd",
+    "substanceKey": "cyanogen",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyanogen-hh-food-rfd",
+    "substanceKey": "cyanogen",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyclohexanone-hh-direct-rfd",
+    "substanceKey": "cyclohexanone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyclohexanone-hh-food-rfd",
+    "substanceKey": "cyclohexanone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyclohexylamine-hh-direct-rfd",
+    "substanceKey": "cyclohexylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyclohexylamine-hh-food-rfd",
+    "substanceKey": "cyclohexylamine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyhalothrin_karate-hh-direct-rfd",
+    "substanceKey": "cyhalothrin_karate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyhalothrin_karate-hh-food-rfd",
+    "substanceKey": "cyhalothrin_karate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cypermethrin-hh-direct-rfd",
+    "substanceKey": "cypermethrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cypermethrin-hh-food-rfd",
+    "substanceKey": "cypermethrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyromazine-hh-direct-rfd",
+    "substanceKey": "cyromazine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-cyromazine-hh-food-rfd",
+    "substanceKey": "cyromazine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dacthal-hh-direct-rfd",
+    "substanceKey": "dacthal",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dacthal-hh-food-rfd",
+    "substanceKey": "dacthal",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dalapon_sodium_salt-hh-direct-rfd",
+    "substanceKey": "dalapon_sodium_salt",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dalapon_sodium_salt-hh-food-rfd",
+    "substanceKey": "dalapon_sodium_salt",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-danitol-hh-direct-rfd",
+    "substanceKey": "danitol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-danitol-hh-food-rfd",
+    "substanceKey": "danitol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-demeton-hh-direct-rfd",
+    "substanceKey": "demeton",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-demeton-hh-food-rfd",
+    "substanceKey": "demeton",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-di_2_ethylhexyl_adipate-hh-direct-rfd",
+    "substanceKey": "di_2_ethylhexyl_adipate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-di_2_ethylhexyl_adipate-hh-food-rfd",
+    "substanceKey": "di_2_ethylhexyl_adipate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromochloromethane-hh-direct-rfd",
+    "substanceKey": "dibromochloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromochloromethane-hh-food-rfd",
+    "substanceKey": "dibromochloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-direct-rfd",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-food-rfd",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibutyl_phthalate_dbp-hh-direct-rfd",
+    "substanceKey": "dibutyl_phthalate_dbp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibutyl_phthalate_dbp-hh-food-rfd",
+    "substanceKey": "dibutyl_phthalate_dbp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dicamba-hh-direct-rfd",
+    "substanceKey": "dicamba",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dicamba-hh-food-rfd",
+    "substanceKey": "dicamba",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroacetic_acid-hh-direct-rfd",
+    "substanceKey": "dichloroacetic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroacetic_acid-hh-food-rfd",
+    "substanceKey": "dichloroacetic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorobenzene_1_2-hh-direct-rfd",
+    "substanceKey": "dichlorobenzene_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorobenzene_1_2-hh-food-rfd",
+    "substanceKey": "dichlorobenzene_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorodifluoromethane-hh-direct-rfd",
+    "substanceKey": "dichlorodifluoromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorodifluoromethane-hh-food-rfd",
+    "substanceKey": "dichlorodifluoromethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroethylene_1_1-hh-direct-rfd",
+    "substanceKey": "dichloroethylene_1_1",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroethylene_1_1-hh-food-rfd",
+    "substanceKey": "dichloroethylene_1_1",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroethylene_1_2_trans-hh-direct-rfd",
+    "substanceKey": "dichloroethylene_1_2_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroethylene_1_2_trans-hh-food-rfd",
+    "substanceKey": "dichloroethylene_1_2_trans",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-direct-rfd",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-food-rfd",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorophenol_2_4-hh-direct-rfd",
+    "substanceKey": "dichlorophenol_2_4",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorophenol_2_4-hh-food-rfd",
+    "substanceKey": "dichlorophenol_2_4",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-direct-rfd",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-food-rfd",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorvos-hh-direct-rfd",
+    "substanceKey": "dichlorvos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorvos-hh-food-rfd",
+    "substanceKey": "dichlorvos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dieldrin-hh-direct-rfd",
+    "substanceKey": "dieldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dieldrin-hh-food-rfd",
+    "substanceKey": "dieldrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diethyl_ether-hh-direct-rfd",
+    "substanceKey": "diethyl_ether",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diethyl_ether-hh-food-rfd",
+    "substanceKey": "diethyl_ether",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diethyl_phthalate_dep-hh-direct-rfd",
+    "substanceKey": "diethyl_phthalate_dep",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.8,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diethyl_phthalate_dep-hh-food-rfd",
+    "substanceKey": "diethyl_phthalate_dep",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.8,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-difenzoquat-hh-direct-rfd",
+    "substanceKey": "difenzoquat",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-difenzoquat-hh-food-rfd",
+    "substanceKey": "difenzoquat",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diflubenzuron-hh-direct-rfd",
+    "substanceKey": "diflubenzuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diflubenzuron-hh-food-rfd",
+    "substanceKey": "diflubenzuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diisopropyl_methylphosphonate_dimp-hh-direct-rfd",
+    "substanceKey": "diisopropyl_methylphosphonate_dimp",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diisopropyl_methylphosphonate_dimp-hh-food-rfd",
+    "substanceKey": "diisopropyl_methylphosphonate_dimp",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethipin-hh-direct-rfd",
+    "substanceKey": "dimethipin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethipin-hh-food-rfd",
+    "substanceKey": "dimethipin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethoate-hh-direct-rfd",
+    "substanceKey": "dimethoate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethoate-hh-food-rfd",
+    "substanceKey": "dimethoate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethyl_terephthalate_dmt-hh-direct-rfd",
+    "substanceKey": "dimethyl_terephthalate_dmt",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethyl_terephthalate_dmt-hh-food-rfd",
+    "substanceKey": "dimethyl_terephthalate_dmt",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylaniline_n_n_dma-hh-direct-rfd",
+    "substanceKey": "dimethylaniline_n_n_dma",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylaniline_n_n_dma-hh-food-rfd",
+    "substanceKey": "dimethylaniline_n_n_dma",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_2_4-hh-direct-rfd",
+    "substanceKey": "dimethylphenol_2_4",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_2_4-hh-food-rfd",
+    "substanceKey": "dimethylphenol_2_4",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_2_6-hh-direct-rfd",
+    "substanceKey": "dimethylphenol_2_6",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_2_6-hh-food-rfd",
+    "substanceKey": "dimethylphenol_2_6",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_3_4-hh-direct-rfd",
+    "substanceKey": "dimethylphenol_3_4",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dimethylphenol_3_4-hh-food-rfd",
+    "substanceKey": "dimethylphenol_3_4",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dinitrophenol_2_4-hh-direct-rfd",
+    "substanceKey": "dinitrophenol_2_4",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dinitrophenol_2_4-hh-food-rfd",
+    "substanceKey": "dinitrophenol_2_4",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dinoseb-hh-direct-rfd",
+    "substanceKey": "dinoseb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dinoseb-hh-food-rfd",
+    "substanceKey": "dinoseb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diphenamid-hh-direct-rfd",
+    "substanceKey": "diphenamid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diphenamid-hh-food-rfd",
+    "substanceKey": "diphenamid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diphenylamine-hh-direct-rfd",
+    "substanceKey": "diphenylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diphenylamine-hh-food-rfd",
+    "substanceKey": "diphenylamine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diquat-hh-direct-rfd",
+    "substanceKey": "diquat",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0022,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diquat-hh-food-rfd",
+    "substanceKey": "diquat",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0022,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-disulfoton-hh-direct-rfd",
+    "substanceKey": "disulfoton",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-disulfoton-hh-food-rfd",
+    "substanceKey": "disulfoton",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diuron-hh-direct-rfd",
+    "substanceKey": "diuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diuron-hh-food-rfd",
+    "substanceKey": "diuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dodine-hh-direct-rfd",
+    "substanceKey": "dodine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dodine-hh-food-rfd",
+    "substanceKey": "dodine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endosulfan-hh-direct-rfd",
+    "substanceKey": "endosulfan",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endosulfan-hh-food-rfd",
+    "substanceKey": "endosulfan",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endothall-hh-direct-rfd",
+    "substanceKey": "endothall",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endothall-hh-food-rfd",
+    "substanceKey": "endothall",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endrin-hh-direct-rfd",
+    "substanceKey": "endrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-endrin-hh-food-rfd",
+    "substanceKey": "endrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethephon-hh-direct-rfd",
+    "substanceKey": "ethephon",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethephon-hh-food-rfd",
+    "substanceKey": "ethephon",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethion-hh-direct-rfd",
+    "substanceKey": "ethion",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethion-hh-food-rfd",
+    "substanceKey": "ethion",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_acetate-hh-direct-rfd",
+    "substanceKey": "ethyl_acetate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_acetate-hh-food-rfd",
+    "substanceKey": "ethyl_acetate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_p_nitrophenyl_phenylphosphorothioate_epn-hh-direct-rfd",
+    "substanceKey": "ethyl_p_nitrophenyl_phenylphosphorothioate_epn",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_p_nitrophenyl_phenylphosphorothioate_epn-hh-food-rfd",
+    "substanceKey": "ethyl_p_nitrophenyl_phenylphosphorothioate_epn",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_tertiary_butyl_ether_etbe-hh-direct-rfd",
+    "substanceKey": "ethyl_tertiary_butyl_ether_etbe",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethyl_tertiary_butyl_ether_etbe-hh-food-rfd",
+    "substanceKey": "ethyl_tertiary_butyl_ether_etbe",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylbenzene-hh-direct-rfd",
+    "substanceKey": "ethylbenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylbenzene-hh-food-rfd",
+    "substanceKey": "ethylbenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol-hh-direct-rfd",
+    "substanceKey": "ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol-hh-food-rfd",
+    "substanceKey": "ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_glycol-hh-direct-rfd",
+    "substanceKey": "ethylene_glycol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_glycol-hh-food-rfd",
+    "substanceKey": "ethylene_glycol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_thiourea_etu-hh-direct-rfd",
+    "substanceKey": "ethylene_thiourea_etu",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylene_thiourea_etu-hh-food-rfd",
+    "substanceKey": "ethylene_thiourea_etu",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylphthalyl_ethylglycolate_epeg-hh-direct-rfd",
+    "substanceKey": "ethylphthalyl_ethylglycolate_epeg",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ethylphthalyl_ethylglycolate_epeg-hh-food-rfd",
+    "substanceKey": "ethylphthalyl_ethylglycolate_epeg",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-express-hh-direct-rfd",
+    "substanceKey": "express",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-express-hh-food-rfd",
+    "substanceKey": "express",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fenamiphos-hh-direct-rfd",
+    "substanceKey": "fenamiphos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fenamiphos-hh-food-rfd",
+    "substanceKey": "fenamiphos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluometuron-hh-direct-rfd",
+    "substanceKey": "fluometuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluometuron-hh-food-rfd",
+    "substanceKey": "fluometuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluoranthene-hh-direct-rfd",
+    "substanceKey": "fluoranthene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluoranthene-hh-food-rfd",
+    "substanceKey": "fluoranthene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluorene-hh-direct-rfd",
+    "substanceKey": "fluorene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluorene-hh-food-rfd",
+    "substanceKey": "fluorene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluridone-hh-direct-rfd",
+    "substanceKey": "fluridone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluridone-hh-food-rfd",
+    "substanceKey": "fluridone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-flurprimidol-hh-direct-rfd",
+    "substanceKey": "flurprimidol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-flurprimidol-hh-food-rfd",
+    "substanceKey": "flurprimidol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-flutolanil-hh-direct-rfd",
+    "substanceKey": "flutolanil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-flutolanil-hh-food-rfd",
+    "substanceKey": "flutolanil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluvalinate-hh-direct-rfd",
+    "substanceKey": "fluvalinate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fluvalinate-hh-food-rfd",
+    "substanceKey": "fluvalinate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-folpet-hh-direct-rfd",
+    "substanceKey": "folpet",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-folpet-hh-food-rfd",
+    "substanceKey": "folpet",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fonofos-hh-direct-rfd",
+    "substanceKey": "fonofos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fonofos-hh-food-rfd",
+    "substanceKey": "fonofos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-formaldehyde-hh-direct-rfd",
+    "substanceKey": "formaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-formaldehyde-hh-food-rfd",
+    "substanceKey": "formaldehyde",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fosetyl_al-hh-direct-rfd",
+    "substanceKey": "fosetyl_al",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-fosetyl_al-hh-food-rfd",
+    "substanceKey": "fosetyl_al",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-furan-hh-direct-rfd",
+    "substanceKey": "furan",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-furan-hh-food-rfd",
+    "substanceKey": "furan",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-furfural-hh-direct-rfd",
+    "substanceKey": "furfural",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-furfural-hh-food-rfd",
+    "substanceKey": "furfural",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glufosinate_ammonium-hh-direct-rfd",
+    "substanceKey": "glufosinate_ammonium",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glufosinate_ammonium-hh-food-rfd",
+    "substanceKey": "glufosinate_ammonium",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glycidaldehyde-hh-direct-rfd",
+    "substanceKey": "glycidaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glycidaldehyde-hh-food-rfd",
+    "substanceKey": "glycidaldehyde",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glyphosate-hh-direct-rfd",
+    "substanceKey": "glyphosate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-glyphosate-hh-food-rfd",
+    "substanceKey": "glyphosate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-haloxyfop_methyl-hh-direct-rfd",
+    "substanceKey": "haloxyfop_methyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-haloxyfop_methyl-hh-food-rfd",
+    "substanceKey": "haloxyfop_methyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-harmony-hh-direct-rfd",
+    "substanceKey": "harmony",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-harmony-hh-food-rfd",
+    "substanceKey": "harmony",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor_epoxide-hh-direct-rfd",
+    "substanceKey": "heptachlor_epoxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.000013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor_epoxide-hh-food-rfd",
+    "substanceKey": "heptachlor_epoxide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.000013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor-hh-direct-rfd",
+    "substanceKey": "heptachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor-hh-food-rfd",
+    "substanceKey": "heptachlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexabromobenzene-hh-direct-rfd",
+    "substanceKey": "hexabromobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexabromobenzene-hh-food-rfd",
+    "substanceKey": "hexabromobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorocyclohexane_gamma-hh-direct-rfd",
+    "substanceKey": "hexachlorocyclohexane_gamma",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorocyclohexane_gamma-hh-food-rfd",
+    "substanceKey": "hexachlorocyclohexane_gamma",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorocyclopentadiene-hh-direct-rfd",
+    "substanceKey": "hexachlorocyclopentadiene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorocyclopentadiene-hh-food-rfd",
+    "substanceKey": "hexachlorocyclopentadiene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachloroethane-hh-direct-rfd",
+    "substanceKey": "hexachloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachloroethane-hh-food-rfd",
+    "substanceKey": "hexachloroethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorophene-hh-direct-rfd",
+    "substanceKey": "hexachlorophene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorophene-hh-food-rfd",
+    "substanceKey": "hexachlorophene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexazinone-hh-direct-rfd",
+    "substanceKey": "hexazinone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.033,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexazinone-hh-food-rfd",
+    "substanceKey": "hexazinone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.033,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hydrogen_cyanide_and_cyanide_salts-hh-direct-rfd",
+    "substanceKey": "hydrogen_cyanide_and_cyanide_salts",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hydrogen_cyanide_and_cyanide_salts-hh-food-rfd",
+    "substanceKey": "hydrogen_cyanide_and_cyanide_salts",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-imazalil-hh-direct-rfd",
+    "substanceKey": "imazalil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-imazalil-hh-food-rfd",
+    "substanceKey": "imazalil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-imazaquin-hh-direct-rfd",
+    "substanceKey": "imazaquin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-imazaquin-hh-food-rfd",
+    "substanceKey": "imazaquin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-iprodione-hh-direct-rfd",
+    "substanceKey": "iprodione",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-iprodione-hh-food-rfd",
+    "substanceKey": "iprodione",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isobutyl_alcohol-hh-direct-rfd",
+    "substanceKey": "isobutyl_alcohol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isobutyl_alcohol-hh-food-rfd",
+    "substanceKey": "isobutyl_alcohol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isophorone-hh-direct-rfd",
+    "substanceKey": "isophorone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isophorone-hh-food-rfd",
+    "substanceKey": "isophorone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropalin-hh-direct-rfd",
+    "substanceKey": "isopropalin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropalin-hh-food-rfd",
+    "substanceKey": "isopropalin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropyl_methyl_phosphonic_acid_impa-hh-direct-rfd",
+    "substanceKey": "isopropyl_methyl_phosphonic_acid_impa",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropyl_methyl_phosphonic_acid_impa-hh-food-rfd",
+    "substanceKey": "isopropyl_methyl_phosphonic_acid_impa",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropylbenzene-hh-direct-rfd",
+    "substanceKey": "isopropylbenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropylbenzene-hh-food-rfd",
+    "substanceKey": "isopropylbenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isoxaben-hh-direct-rfd",
+    "substanceKey": "isoxaben",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isoxaben-hh-food-rfd",
+    "substanceKey": "isoxaben",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-lactofen-hh-direct-rfd",
+    "substanceKey": "lactofen",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-lactofen-hh-food-rfd",
+    "substanceKey": "lactofen",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-linuron-hh-direct-rfd",
+    "substanceKey": "linuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-linuron-hh-food-rfd",
+    "substanceKey": "linuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-londax-hh-direct-rfd",
+    "substanceKey": "londax",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-londax-hh-food-rfd",
+    "substanceKey": "londax",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-m_dinitrobenzene-hh-direct-rfd",
+    "substanceKey": "m_dinitrobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-m_dinitrobenzene-hh-food-rfd",
+    "substanceKey": "m_dinitrobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-m_phenylenediamine-hh-direct-rfd",
+    "substanceKey": "m_phenylenediamine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-m_phenylenediamine-hh-food-rfd",
+    "substanceKey": "m_phenylenediamine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.006,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-malathion-hh-direct-rfd",
+    "substanceKey": "malathion",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-malathion-hh-food-rfd",
+    "substanceKey": "malathion",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maleic_anhydride-hh-direct-rfd",
+    "substanceKey": "maleic_anhydride",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maleic_anhydride-hh-food-rfd",
+    "substanceKey": "maleic_anhydride",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maleic_hydrazide-hh-direct-rfd",
+    "substanceKey": "maleic_hydrazide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maleic_hydrazide-hh-food-rfd",
+    "substanceKey": "maleic_hydrazide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.5,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maneb-hh-direct-rfd",
+    "substanceKey": "maneb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-maneb-hh-food-rfd",
+    "substanceKey": "maneb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-manganese-hh-direct-rfd",
+    "substanceKey": "manganese",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.14,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-manganese-hh-food-rfd",
+    "substanceKey": "manganese",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.14,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mepiquat_chloride-hh-direct-rfd",
+    "substanceKey": "mepiquat_chloride",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mepiquat_chloride-hh-food-rfd",
+    "substanceKey": "mepiquat_chloride",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mercuric_chloride_hgcl2-hh-direct-rfd",
+    "substanceKey": "mercuric_chloride_hgcl2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mercuric_chloride_hgcl2-hh-food-rfd",
+    "substanceKey": "mercuric_chloride_hgcl2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-merphos_oxide-hh-direct-rfd",
+    "substanceKey": "merphos_oxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-merphos_oxide-hh-food-rfd",
+    "substanceKey": "merphos_oxide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-merphos-hh-direct-rfd",
+    "substanceKey": "merphos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-merphos-hh-food-rfd",
+    "substanceKey": "merphos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metalaxyl-hh-direct-rfd",
+    "substanceKey": "metalaxyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metalaxyl-hh-food-rfd",
+    "substanceKey": "metalaxyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.06,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methacrylonitrile-hh-direct-rfd",
+    "substanceKey": "methacrylonitrile",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methacrylonitrile-hh-food-rfd",
+    "substanceKey": "methacrylonitrile",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methamidophos-hh-direct-rfd",
+    "substanceKey": "methamidophos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methamidophos-hh-food-rfd",
+    "substanceKey": "methamidophos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methanol-hh-direct-rfd",
+    "substanceKey": "methanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methanol-hh-food-rfd",
+    "substanceKey": "methanol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methidathion-hh-direct-rfd",
+    "substanceKey": "methidathion",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methidathion-hh-food-rfd",
+    "substanceKey": "methidathion",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methomyl-hh-direct-rfd",
+    "substanceKey": "methomyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methomyl-hh-food-rfd",
+    "substanceKey": "methomyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methoxychlor-hh-direct-rfd",
+    "substanceKey": "methoxychlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methoxychlor-hh-food-rfd",
+    "substanceKey": "methoxychlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_ethyl_ketone_mek-hh-direct-rfd",
+    "substanceKey": "methyl_ethyl_ketone_mek",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_ethyl_ketone_mek-hh-food-rfd",
+    "substanceKey": "methyl_ethyl_ketone_mek",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_methacrylate-hh-direct-rfd",
+    "substanceKey": "methyl_methacrylate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1.4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_methacrylate-hh-food-rfd",
+    "substanceKey": "methyl_methacrylate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1.4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_parathion-hh-direct-rfd",
+    "substanceKey": "methyl_parathion",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methyl_parathion-hh-food-rfd",
+    "substanceKey": "methyl_parathion",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methylphenol_2-hh-direct-rfd",
+    "substanceKey": "methylphenol_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methylphenol_2-hh-food-rfd",
+    "substanceKey": "methylphenol_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methylphenol_3-hh-direct-rfd",
+    "substanceKey": "methylphenol_3",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-methylphenol_3-hh-food-rfd",
+    "substanceKey": "methylphenol_3",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metolachlor-hh-direct-rfd",
+    "substanceKey": "metolachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.15,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metolachlor-hh-food-rfd",
+    "substanceKey": "metolachlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.15,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metribuzin-hh-direct-rfd",
+    "substanceKey": "metribuzin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-metribuzin-hh-food-rfd",
+    "substanceKey": "metribuzin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mirex-hh-direct-rfd",
+    "substanceKey": "mirex",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-mirex-hh-food-rfd",
+    "substanceKey": "mirex",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-molinate-hh-direct-rfd",
+    "substanceKey": "molinate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-molinate-hh-food-rfd",
+    "substanceKey": "molinate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-molybdenum-hh-direct-rfd",
+    "substanceKey": "molybdenum",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-molybdenum-hh-food-rfd",
+    "substanceKey": "molybdenum",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-monochloramine-hh-direct-rfd",
+    "substanceKey": "monochloramine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-monochloramine-hh-food-rfd",
+    "substanceKey": "monochloramine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_butanol-hh-direct-rfd",
+    "substanceKey": "n_butanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_butanol-hh-food-rfd",
+    "substanceKey": "n_butanol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-naled-hh-direct-rfd",
+    "substanceKey": "naled",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-naled-hh-food-rfd",
+    "substanceKey": "naled",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-napropamide-hh-direct-rfd",
+    "substanceKey": "napropamide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-napropamide-hh-food-rfd",
+    "substanceKey": "napropamide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nickel_soluble_salts-hh-direct-rfd",
+    "substanceKey": "nickel_soluble_salts",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nickel_soluble_salts-hh-food-rfd",
+    "substanceKey": "nickel_soluble_salts",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrate-hh-direct-rfd",
+    "substanceKey": "nitrate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrate-hh-food-rfd",
+    "substanceKey": "nitrate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrite-hh-direct-rfd",
+    "substanceKey": "nitrite",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrite-hh-food-rfd",
+    "substanceKey": "nitrite",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrobenzene-hh-direct-rfd",
+    "substanceKey": "nitrobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitrobenzene-hh-food-rfd",
+    "substanceKey": "nitrobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitroguanidine-hh-direct-rfd",
+    "substanceKey": "nitroguanidine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nitroguanidine-hh-food-rfd",
+    "substanceKey": "nitroguanidine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-norflurazon-hh-direct-rfd",
+    "substanceKey": "norflurazon",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-norflurazon-hh-food-rfd",
+    "substanceKey": "norflurazon",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nustar-hh-direct-rfd",
+    "substanceKey": "nustar",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nustar-hh-food-rfd",
+    "substanceKey": "nustar",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-octabromodiphenyl_ether-hh-direct-rfd",
+    "substanceKey": "octabromodiphenyl_ether",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-octabromodiphenyl_ether-hh-food-rfd",
+    "substanceKey": "octabromodiphenyl_ether",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx-hh-direct-rfd",
+    "substanceKey": "octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx-hh-food-rfd",
+    "substanceKey": "octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oryzalin-hh-direct-rfd",
+    "substanceKey": "oryzalin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oryzalin-hh-food-rfd",
+    "substanceKey": "oryzalin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxadiazon-hh-direct-rfd",
+    "substanceKey": "oxadiazon",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxadiazon-hh-food-rfd",
+    "substanceKey": "oxadiazon",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxamyl-hh-direct-rfd",
+    "substanceKey": "oxamyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxamyl-hh-food-rfd",
+    "substanceKey": "oxamyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxyfluorfen-hh-direct-rfd",
+    "substanceKey": "oxyfluorfen",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-oxyfluorfen-hh-food-rfd",
+    "substanceKey": "oxyfluorfen",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-p_chloroaniline-hh-direct-rfd",
+    "substanceKey": "p_chloroaniline",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-p_chloroaniline-hh-food-rfd",
+    "substanceKey": "p_chloroaniline",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-paclobutrazol-hh-direct-rfd",
+    "substanceKey": "paclobutrazol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-paclobutrazol-hh-food-rfd",
+    "substanceKey": "paclobutrazol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-paraquat-hh-direct-rfd",
+    "substanceKey": "paraquat",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0045,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-paraquat-hh-food-rfd",
+    "substanceKey": "paraquat",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0045,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pendimethalin-hh-direct-rfd",
+    "substanceKey": "pendimethalin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pendimethalin-hh-food-rfd",
+    "substanceKey": "pendimethalin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.04,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentabromodiphenyl_ether-hh-direct-rfd",
+    "substanceKey": "pentabromodiphenyl_ether",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentabromodiphenyl_ether-hh-food-rfd",
+    "substanceKey": "pentabromodiphenyl_ether",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachlorobenzene_1_2_3_4_5-hh-direct-rfd",
+    "substanceKey": "pentachlorobenzene_1_2_3_4_5",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachlorobenzene_1_2_3_4_5-hh-food-rfd",
+    "substanceKey": "pentachlorobenzene_1_2_3_4_5",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachloronitrobenzene_pcnb-hh-direct-rfd",
+    "substanceKey": "pentachloronitrobenzene_pcnb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachloronitrobenzene_pcnb-hh-food-rfd",
+    "substanceKey": "pentachloronitrobenzene_pcnb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-perchlorate_clo4_and_perchlorate_salts-hh-direct-rfd",
+    "substanceKey": "perchlorate_clo4_and_perchlorate_salts",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-perchlorate_clo4_and_perchlorate_salts-hh-food-rfd",
+    "substanceKey": "perchlorate_clo4_and_perchlorate_salts",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0007,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-permethrin_cis_trans-hh-direct-rfd",
+    "substanceKey": "permethrin_cis_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-permethrin_cis_trans-hh-food-rfd",
+    "substanceKey": "permethrin_cis_trans",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenmedipham-hh-direct-rfd",
+    "substanceKey": "phenmedipham",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenmedipham-hh-food-rfd",
+    "substanceKey": "phenmedipham",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenol-hh-direct-rfd",
+    "substanceKey": "phenol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenol-hh-food-rfd",
+    "substanceKey": "phenol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenylmercuric_acetate-hh-direct-rfd",
+    "substanceKey": "phenylmercuric_acetate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phenylmercuric_acetate-hh-food-rfd",
+    "substanceKey": "phenylmercuric_acetate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00008,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phosmet-hh-direct-rfd",
+    "substanceKey": "phosmet",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phosmet-hh-food-rfd",
+    "substanceKey": "phosmet",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phosphine-hh-direct-rfd",
+    "substanceKey": "phosphine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phosphine-hh-food-rfd",
+    "substanceKey": "phosphine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phthalic_anhydride-hh-direct-rfd",
+    "substanceKey": "phthalic_anhydride",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phthalic_anhydride-hh-food-rfd",
+    "substanceKey": "phthalic_anhydride",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-picloram-hh-direct-rfd",
+    "substanceKey": "picloram",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.07,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-picloram-hh-food-rfd",
+    "substanceKey": "picloram",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.07,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pirimiphos_methyl-hh-direct-rfd",
+    "substanceKey": "pirimiphos_methyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pirimiphos_methyl-hh-food-rfd",
+    "substanceKey": "pirimiphos_methyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-potassium_cyanide-hh-direct-rfd",
+    "substanceKey": "potassium_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-potassium_cyanide-hh-food-rfd",
+    "substanceKey": "potassium_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-potassium_silver_cyanide-hh-direct-rfd",
+    "substanceKey": "potassium_silver_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-potassium_silver_cyanide-hh-food-rfd",
+    "substanceKey": "potassium_silver_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prochloraz-hh-direct-rfd",
+    "substanceKey": "prochloraz",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prochloraz-hh-food-rfd",
+    "substanceKey": "prochloraz",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prometon-hh-direct-rfd",
+    "substanceKey": "prometon",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prometon-hh-food-rfd",
+    "substanceKey": "prometon",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.015,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prometryn-hh-direct-rfd",
+    "substanceKey": "prometryn",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prometryn-hh-food-rfd",
+    "substanceKey": "prometryn",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pronamide-hh-direct-rfd",
+    "substanceKey": "pronamide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pronamide-hh-food-rfd",
+    "substanceKey": "pronamide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propachlor-hh-direct-rfd",
+    "substanceKey": "propachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propachlor-hh-food-rfd",
+    "substanceKey": "propachlor",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propanil-hh-direct-rfd",
+    "substanceKey": "propanil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propanil-hh-food-rfd",
+    "substanceKey": "propanil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propargite-hh-direct-rfd",
+    "substanceKey": "propargite",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propargite-hh-food-rfd",
+    "substanceKey": "propargite",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propargyl_alcohol-hh-direct-rfd",
+    "substanceKey": "propargyl_alcohol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propargyl_alcohol-hh-food-rfd",
+    "substanceKey": "propargyl_alcohol",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propazine-hh-direct-rfd",
+    "substanceKey": "propazine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propazine-hh-food-rfd",
+    "substanceKey": "propazine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propham-hh-direct-rfd",
+    "substanceKey": "propham",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propham-hh-food-rfd",
+    "substanceKey": "propham",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propiconazole-hh-direct-rfd",
+    "substanceKey": "propiconazole",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propiconazole-hh-food-rfd",
+    "substanceKey": "propiconazole",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pursuit-hh-direct-rfd",
+    "substanceKey": "pursuit",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pursuit-hh-food-rfd",
+    "substanceKey": "pursuit",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.25,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pydrin-hh-direct-rfd",
+    "substanceKey": "pydrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pydrin-hh-food-rfd",
+    "substanceKey": "pydrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pyrene-hh-direct-rfd",
+    "substanceKey": "pyrene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pyrene-hh-food-rfd",
+    "substanceKey": "pyrene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pyridine-hh-direct-rfd",
+    "substanceKey": "pyridine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pyridine-hh-food-rfd",
+    "substanceKey": "pyridine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-quinalphos-hh-direct-rfd",
+    "substanceKey": "quinalphos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-quinalphos-hh-food-rfd",
+    "substanceKey": "quinalphos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-resmethrin-hh-direct-rfd",
+    "substanceKey": "resmethrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-resmethrin-hh-food-rfd",
+    "substanceKey": "resmethrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-rotenone-hh-direct-rfd",
+    "substanceKey": "rotenone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-rotenone-hh-food-rfd",
+    "substanceKey": "rotenone",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-s_ethyl_dipropylthiocarbamate_eptc-hh-direct-rfd",
+    "substanceKey": "s_ethyl_dipropylthiocarbamate_eptc",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-s_ethyl_dipropylthiocarbamate_eptc-hh-food-rfd",
+    "substanceKey": "s_ethyl_dipropylthiocarbamate_eptc",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-savey-hh-direct-rfd",
+    "substanceKey": "savey",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-savey-hh-food-rfd",
+    "substanceKey": "savey",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-selenious_acid-hh-direct-rfd",
+    "substanceKey": "selenious_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-selenious_acid-hh-food-rfd",
+    "substanceKey": "selenious_acid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-selenium-hh-direct-rfd",
+    "substanceKey": "selenium",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-selenium-hh-food-rfd",
+    "substanceKey": "selenium",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sethoxydim-hh-direct-rfd",
+    "substanceKey": "sethoxydim",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sethoxydim-hh-food-rfd",
+    "substanceKey": "sethoxydim",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.09,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-silver_cyanide-hh-direct-rfd",
+    "substanceKey": "silver_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-silver_cyanide-hh-food-rfd",
+    "substanceKey": "silver_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-silver-hh-direct-rfd",
+    "substanceKey": "silver",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-silver-hh-food-rfd",
+    "substanceKey": "silver",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-simazine-hh-direct-rfd",
+    "substanceKey": "simazine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-simazine-hh-food-rfd",
+    "substanceKey": "simazine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_azide-hh-direct-rfd",
+    "substanceKey": "sodium_azide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_azide-hh-food-rfd",
+    "substanceKey": "sodium_azide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_cyanide-hh-direct-rfd",
+    "substanceKey": "sodium_cyanide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_cyanide-hh-food-rfd",
+    "substanceKey": "sodium_cyanide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_diethyldithiocarbamate-hh-direct-rfd",
+    "substanceKey": "sodium_diethyldithiocarbamate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_diethyldithiocarbamate-hh-food-rfd",
+    "substanceKey": "sodium_diethyldithiocarbamate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_fluoroacetate-hh-direct-rfd",
+    "substanceKey": "sodium_fluoroacetate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-sodium_fluoroacetate-hh-food-rfd",
+    "substanceKey": "sodium_fluoroacetate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-strontium-hh-direct-rfd",
+    "substanceKey": "strontium",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-strontium-hh-food-rfd",
+    "substanceKey": "strontium",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.6,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-strychnine-hh-direct-rfd",
+    "substanceKey": "strychnine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-strychnine-hh-food-rfd",
+    "substanceKey": "strychnine",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-styrene-hh-direct-rfd",
+    "substanceKey": "styrene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-styrene-hh-food-rfd",
+    "substanceKey": "styrene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-systhane-hh-direct-rfd",
+    "substanceKey": "systhane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-systhane-hh-food-rfd",
+    "substanceKey": "systhane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tebuthiuron-hh-direct-rfd",
+    "substanceKey": "tebuthiuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.07,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tebuthiuron-hh-food-rfd",
+    "substanceKey": "tebuthiuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.07,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-terbacil-hh-direct-rfd",
+    "substanceKey": "terbacil",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-terbacil-hh-food-rfd",
+    "substanceKey": "terbacil",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-terbutryn-hh-direct-rfd",
+    "substanceKey": "terbutryn",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-terbutryn-hh-food-rfd",
+    "substanceKey": "terbutryn",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tert_butyl_alcohol_tba-hh-direct-rfd",
+    "substanceKey": "tert_butyl_alcohol_tba",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tert_butyl_alcohol_tba-hh-food-rfd",
+    "substanceKey": "tert_butyl_alcohol_tba",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.4,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_1_2-hh-direct-rfd",
+    "substanceKey": "tetrachloroethane_1_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_1_2-hh-food-rfd",
+    "substanceKey": "tetrachloroethane_1_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_2_2-hh-direct-rfd",
+    "substanceKey": "tetrachloroethane_1_1_2_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_2_2-hh-food-rfd",
+    "substanceKey": "tetrachloroethane_1_1_2_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachlorophenol_2_3_4_6-hh-direct-rfd",
+    "substanceKey": "tetrachlorophenol_2_3_4_6",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachlorophenol_2_3_4_6-hh-food-rfd",
+    "substanceKey": "tetrachlorophenol_2_3_4_6",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachlorovinphos-hh-direct-rfd",
+    "substanceKey": "tetrachlorovinphos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachlorovinphos-hh-food-rfd",
+    "substanceKey": "tetrachlorovinphos",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.03,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetraethyl_lead-hh-direct-rfd",
+    "substanceKey": "tetraethyl_lead",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1e-7,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetraethyl_lead-hh-food-rfd",
+    "substanceKey": "tetraethyl_lead",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 1e-7,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetraethyldithiopyrophosphate-hh-direct-rfd",
+    "substanceKey": "tetraethyldithiopyrophosphate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetraethyldithiopyrophosphate-hh-food-rfd",
+    "substanceKey": "tetraethyldithiopyrophosphate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrahydrofuran-hh-direct-rfd",
+    "substanceKey": "tetrahydrofuran",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrahydrofuran-hh-food-rfd",
+    "substanceKey": "tetrahydrofuran",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.9,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiobencarb-hh-direct-rfd",
+    "substanceKey": "thiobencarb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiobencarb-hh-food-rfd",
+    "substanceKey": "thiobencarb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiophanate_methyl-hh-direct-rfd",
+    "substanceKey": "thiophanate_methyl",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiophanate_methyl-hh-food-rfd",
+    "substanceKey": "thiophanate_methyl",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiram-hh-direct-rfd",
+    "substanceKey": "thiram",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-thiram-hh-food-rfd",
+    "substanceKey": "thiram",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-toluene-hh-direct-rfd",
+    "substanceKey": "toluene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-toluene-hh-food-rfd",
+    "substanceKey": "toluene",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.08,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tralomethrin-hh-direct-rfd",
+    "substanceKey": "tralomethrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tralomethrin-hh-food-rfd",
+    "substanceKey": "tralomethrin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-triallate-hh-direct-rfd",
+    "substanceKey": "triallate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-triallate-hh-food-rfd",
+    "substanceKey": "triallate",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.013,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-triasulfuron-hh-direct-rfd",
+    "substanceKey": "triasulfuron",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-triasulfuron-hh-food-rfd",
+    "substanceKey": "triasulfuron",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tributyltin_oxide_tbto-hh-direct-rfd",
+    "substanceKey": "tributyltin_oxide_tbto",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tributyltin_oxide_tbto-hh-food-rfd",
+    "substanceKey": "tributyltin_oxide_tbto",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloro_1_2_2_trifluoroethane_1_1_2-hh-direct-rfd",
+    "substanceKey": "trichloro_1_2_2_trifluoroethane_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 30,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloro_1_2_2_trifluoroethane_1_1_2-hh-food-rfd",
+    "substanceKey": "trichloro_1_2_2_trifluoroethane_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 30,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroacetic_acid-hh-direct-rfd",
+    "substanceKey": "trichloroacetic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroacetic_acid-hh-food-rfd",
+    "substanceKey": "trichloroacetic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.02,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorobenzene_1_2_4-hh-direct-rfd",
+    "substanceKey": "trichlorobenzene_1_2_4",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorobenzene_1_2_4-hh-food-rfd",
+    "substanceKey": "trichlorobenzene_1_2_4",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroethane_1_1_2-hh-direct-rfd",
+    "substanceKey": "trichloroethane_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroethane_1_1_2-hh-food-rfd",
+    "substanceKey": "trichloroethane_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorofluoromethane-hh-direct-rfd",
+    "substanceKey": "trichlorofluoromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorofluoromethane-hh-food-rfd",
+    "substanceKey": "trichlorofluoromethane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.3,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorophenol_2_4_5-hh-direct-rfd",
+    "substanceKey": "trichlorophenol_2_4_5",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichlorophenol_2_4_5-hh-food-rfd",
+    "substanceKey": "trichlorophenol_2_4_5",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.1,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_1_2-hh-direct-rfd",
+    "substanceKey": "trichloropropane_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_1_2-hh-food-rfd",
+    "substanceKey": "trichloropropane_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.005,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_2_3-hh-direct-rfd",
+    "substanceKey": "trichloropropane_1_2_3",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_2_3-hh-food-rfd",
+    "substanceKey": "trichloropropane_1_2_3",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tridiphane-hh-direct-rfd",
+    "substanceKey": "tridiphane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tridiphane-hh-food-rfd",
+    "substanceKey": "tridiphane",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trifluralin-hh-direct-rfd",
+    "substanceKey": "trifluralin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trifluralin-hh-food-rfd",
+    "substanceKey": "trifluralin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0075,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vanadium_pentoxide-hh-direct-rfd",
+    "substanceKey": "vanadium_pentoxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vanadium_pentoxide-hh-food-rfd",
+    "substanceKey": "vanadium_pentoxide",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.009,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vernam-hh-direct-rfd",
+    "substanceKey": "vernam",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vernam-hh-food-rfd",
+    "substanceKey": "vernam",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vinclozolin-hh-direct-rfd",
+    "substanceKey": "vinclozolin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vinclozolin-hh-food-rfd",
+    "substanceKey": "vinclozolin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.025,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-warfarin-hh-direct-rfd",
+    "substanceKey": "warfarin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-warfarin-hh-food-rfd",
+    "substanceKey": "warfarin",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0003,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-white_phosphorus-hh-direct-rfd",
+    "substanceKey": "white_phosphorus",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-white_phosphorus-hh-food-rfd",
+    "substanceKey": "white_phosphorus",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.00002,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-xylenes-hh-direct-rfd",
+    "substanceKey": "xylenes",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-xylenes-hh-food-rfd",
+    "substanceKey": "xylenes",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.2,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-zineb-hh-direct-rfd",
+    "substanceKey": "zineb",
+    "pathway": "human-health-direct",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-zineb-hh-food-rfd",
+    "substanceKey": "zineb",
+    "pathway": "human-health-food",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.05,
+    "unit": "mg/kg-bw/day"
+  }
+]
