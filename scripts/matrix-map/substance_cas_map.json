@@ -1,10 +1,10 @@
 {
   "_meta": {
     "purpose": "Curated canonical substance_key -> CAS number map for the matrix-map ETL (etl_bnrrm_to_supabase.py resolve_substance). CAS numbers are objective registry identifiers (verified against PubChem / US EPA / CAS Common Chemistry), NOT value or policy judgments, so they are AI-supplied + verified and owner/HITL-reviewed. This map is intentionally PARTIAL: a DB2 chemistry parameter whose canonical key is not listed in cas_by_key resolves to its slug with cas_number=null and is reported as needs_review (no fuzzy auto-merge). Keys are the slug substance_key() produces from the DB2 sediment_chemistry.parameter spelling (so PAH slugs are punctuation-stripped, e.g. benzoapyrene).",
-    "verification": "51 entries verified HIGH confidence (CAS Common Chemistry + PubChem + US EPA Method/IRIS/EPCRA + ATSDR Aroclor table). Original 12 (metals + naphthalene/pyrene) from C2; +37 added 2026-06-20: 12 more metals, 15 more PAHs, the 7 PCB Aroclors, and pentachlorophenol / 2,4,6-trichlorophenol / 2,3,4,6-tetrachlorophenol; anthracene corrected to 120-12-7 (catalog value_text had a 120-20-7 typo, fixed separately). +2 added 2026-06-20c: nonylphenol 84852-15-3 (owner-decided branched-technical form; PubChem/Sigma-Aldrich/TCI) and methyl_mercury 22967-92-6 (PubChem + US EPA IRIS DTXSID9024198).",
+    "verification": "66 entries verified HIGH confidence (CAS Common Chemistry + PubChem + US EPA Method/IRIS/EPCRA + ATSDR Aroclor + ATSDR Chlorophenols ToxProfile tp107). Original 12 (metals + naphthalene/pyrene) from C2; +37 added 2026-06-20: 12 more metals, 15 more PAHs, the 7 PCB Aroclors, and pentachlorophenol / 2,4,6-trichlorophenol / 2,3,4,6-tetrachlorophenol; anthracene corrected to 120-12-7 (catalog value_text had a 120-20-7 typo, fixed separately). +2 added 2026-06-20c: nonylphenol 84852-15-3 (owner-decided branched-technical form; PubChem/Sigma-Aldrich/TCI) and methyl_mercury 22967-92-6 (PubChem + US EPA IRIS DTXSID9024198). +15 added 2026-06-20 batch2: the remaining single-isomer chlorophenols (3 mono-, 5 di-, 4 tri-, 2 additional tetra-chlorophenol isomers), each cross-referenced against the EPA Method 8041A / ATSDR tp107 / AccuStandard / ChemicalBook analytical reference lists (each a single unambiguous CAS).",
     "deferred": {
       "mixed_isomer_slugs": "benzob&jfluoranthene / benzobplusjfluoranthene (co-eluting b+j mixtures) and total_pcbs / chlorinated_phenolics / non-chlorinated_phenolics (sums) have NO single CAS and are intentionally left to flag needs_review.",
-      "remaining_params": "Remaining DB2 chemistry parameters not listed (other dichloro/trichloro/tetrachlorophenol isomers, guaiacols / catechols / syringols / veratroles, dioxin/furan congeners, organotins, octylphenols) are not yet CAS-assigned; each needs isomer-specific verification (a future owner/HITL-gated batch)."
+      "remaining_params": "Remaining DB2 chemistry parameters not listed (guaiacols / catechols / syringols / veratroles, dioxin/furan congeners, organotins, octylphenols) are not yet CAS-assigned; each needs isomer-specific verification (a future owner/HITL-gated batch). Organotins (tributyltin, dibutyltin, triphenyltin) are intentionally deferred: the bare slug has multiple competing registry numbers (e.g. tributyltin cation 36643-28-4 vs tributyltin chloride 1461-22-9) and the DB2 reporting convention must be confirmed before assignment. Octylphenols likewise span 4-tert-octylphenol 140-66-9 vs technical mixtures -- isomer-specific verification pending."
     }
   },
   "cas_by_key": {
@@ -58,7 +58,22 @@
     "246-trichlorophenol": "88-06-2",
     "2346-tetrachlorophenol": "58-90-2",
     "nonylphenol": "84852-15-3",
-    "methyl_mercury": "22967-92-6"
+    "methyl_mercury": "22967-92-6",
+    "2-chlorophenol": "95-57-8",
+    "3-chlorophenol": "108-43-0",
+    "4-chlorophenol": "106-48-9",
+    "23-dichlorophenol": "576-24-9",
+    "24-dichlorophenol": "120-83-2",
+    "25-dichlorophenol": "583-78-8",
+    "26-dichlorophenol": "87-65-0",
+    "34-dichlorophenol": "95-77-2",
+    "35-dichlorophenol": "591-35-5",
+    "234-trichlorophenol": "15950-66-0",
+    "235-trichlorophenol": "933-78-8",
+    "236-trichlorophenol": "933-75-5",
+    "245-trichlorophenol": "95-95-4",
+    "2345-tetrachlorophenol": "4901-51-3",
+    "2356-tetrachlorophenol": "935-95-5"
   },
   "alias_overrides": {},
   "exclude_params": [
