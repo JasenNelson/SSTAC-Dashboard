@@ -124,7 +124,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-20c: US EPA 2024 PFOA/PFOS rows are needs_review + pending_source_locator
     // (source verified in sources.json but rows un-promoted), so approvedSourceBacked is
     // unchanged; they count under pendingSourceLocator instead = 1338.
-    expect(view.audit.values.approvedSourceBacked).toBe(1338);
+    // 2026-06-21: +11 -- owner-attested promotion of 17 rows; 11 move pending->approved_source_backed
+    // (4 US EPA PFOA/PFOS + 6 HC PQRA lifestage + 1 WLRS low-level; the 6 IRIS carcinogen RfD rows
+    // were already approved_source_backed so they do not add) = 1349.
+    expect(view.audit.values.approvedSourceBacked).toBe(1349);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -167,7 +170,9 @@ describe('matrix options evidence library helpers', () => {
     // the entire eco catalog is now approved, so 0 eco rows remain pending. = 377.
     // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (needs_review /
     // pending_source_locator; source verified, rows un-promoted) = 381.
-    expect(view.audit.values.pendingSourceLocator).toBe(381);
+    // 2026-06-21: -11 -- owner-attested promotion moves 11 rows out of pending (4 PFOA/PFOS +
+    // 6 HC PQRA lifestage + 1 WLRS low-level) = 370.
+    expect(view.audit.values.pendingSourceLocator).toBe(370);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
