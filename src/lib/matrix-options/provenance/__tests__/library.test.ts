@@ -121,9 +121,10 @@ describe('matrix options evidence library helpers', () => {
     // (Step-6 4B: ESB 32 + FCSAP 45 + NRWQC 19; HITL J. Nelson inline-approved --apply via
     // promote-eco-source.mjs; all 96 machine-verified vs the pinned sources by an adversarial
     // verify+refute workflow). The entire eco catalog (97 rows) is now approved. = 1338.
-    // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (approved_source_backed; source
-    // src-us-epa-pfoa-pfos-2024 direct_source_verified, rows still needs_review) = 1342.
-    expect(view.audit.values.approvedSourceBacked).toBe(1342);
+    // 2026-06-20c: US EPA 2024 PFOA/PFOS rows are needs_review + pending_source_locator
+    // (source verified in sources.json but rows un-promoted), so approvedSourceBacked is
+    // unchanged; they count under pendingSourceLocator instead = 1338.
+    expect(view.audit.values.approvedSourceBacked).toBe(1338);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -164,7 +165,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-19: -1 -- CCME chloroform promoted out of pending (Step-6 4B CCME pilot --apply) = 473.
     // 2026-06-19: -96 -- ESB 32 + FCSAP 45 + NRWQC 19 promoted out of pending (Step-6 4B --apply);
     // the entire eco catalog is now approved, so 0 eco rows remain pending. = 377.
-    expect(view.audit.values.pendingSourceLocator).toBe(377);
+    // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (needs_review /
+    // pending_source_locator; source verified, rows un-promoted) = 381.
+    expect(view.audit.values.pendingSourceLocator).toBe(381);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -212,6 +215,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-11: src-health-canada-pqra-v4-2024 added by the Phase D HC PQRA v4.0
     // direct-contact EF/ED/AT rows (needs_review); appears in source order after the
     // US EPA IRIS sources and before src-health-canada-trv-v4-2025.
+    // 2026-06-20c: src-us-epa-pfoa-pfos-2024 added by the Batch F US EPA 2024 PFOA/PFOS
+    // hh-direct RfD rows (needs_review); sorts last in the HH-direct source list.
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
       'src-bc-protocol-28-2021-jan',
       'src-us-epa-iris-rfd-table-live',
@@ -219,6 +224,7 @@ describe('matrix options evidence library helpers', () => {
       'src-health-canada-pqra-v4-2024',
       'src-health-canada-trv-v4-2025',
       'src-bc-protocol-28-v3-0-2024',
+      'src-us-epa-pfoa-pfos-2024',
     ]);
   });
 
