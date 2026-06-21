@@ -1680,6 +1680,299 @@ export const SUBSTANCE_LIBRARY = [
       'ether (organic, not halogenated). logKow/eco not in catalog -> eco filtered. ' +
       'abs_dermal/ba_oral are organic class defaults pending HITL.',
   },
+  // ---------------------------------------------------------------------------
+  // Catalog WIRE batch -- PFAS + HH-only sweep (2026-06-20). 13 substances added
+  // for HH selectability (build-first; values seeded verbatim from the catalog
+  // needs_review rows in human_health_trv_values.json). logKow/eco fields null ->
+  // eco pathways filtered out (HH only). abs_dermal/ba_oral are RAGS Part E class
+  // defaults (organic 0.03, organic-halogenated 0.1, organic-PAH 0.13); ba_oral
+  // the conservative 1.0. PFOA/PFOS use the US EPA 2024 RfD (owner precedence over
+  // Protocol 28); the remaining 11 are US EPA IRIS oral RfD/SF. Carcinogens
+  // (aldrin, hexachlorobutadiene, acrylonitrile) carry sf_oral with rfd null;
+  // aldrin + isophorone carry both endpoints so the calculator picks the more
+  // conservative (derivations.pickHumanHealthEndpoint).
+  // ---------------------------------------------------------------------------
+  {
+    key: 'perfluoroctanoic_acid_pfoa',
+    displayName: 'Perfluorooctanoic acid (PFOA)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 3.0e-8,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA 2024 final human health toxicity assessment for PFOA (EPA ' +
+      '815-R-24-006, April 2024) overall chronic oral RfD 3 x 10-8 mg/kg-bw/day ' +
+      '(CAS 335-67-1). Primary US federal source (precedence over BC Protocol 28 ' +
+      '2.0e-5; owner-decided 2026-06-20).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-us-epa-2024-perfluoroctanoic_acid_pfoa-hh-direct-rfd / -food-rfd (value ' +
+      '3.0e-8). Reuses the existing (misspelled) catalog key perfluoroctanoic_acid_pfoa. ' +
+      'PFOA is IARC Group 1; this RfD is the noncancer oral reference dose (EPA did ' +
+      'not adopt an oral SF here). logKow/eco not in catalog -> eco filtered. ' +
+      'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
+  },
+  {
+    key: 'perfluorooctane_sulfonate',
+    displayName: 'Perfluorooctane sulfonate (PFOS)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 1.0e-7,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA 2024 final human health toxicity assessment for PFOS (EPA ' +
+      '815-R-24-007, April 2024) overall chronic oral RfD 1 x 10-7 mg/kg-bw/day ' +
+      '(CAS 1763-23-1). Primary US federal source (precedence over BC Protocol 28 ' +
+      '3.0e-5; owner-decided 2026-06-20).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-us-epa-2024-perfluorooctane_sulfonate-hh-direct-rfd / -food-rfd (value ' +
+      '1.0e-7). Reuses the existing catalog key perfluorooctane_sulfonate. PFOS is ' +
+      'IARC Group 2B; this RfD is the noncancer oral reference dose. logKow/eco not ' +
+      'in catalog -> eco filtered. abs_dermal/ba_oral are organic-halogenated class ' +
+      'defaults pending HITL.',
+  },
+  {
+    key: 'aldrin',
+    displayName: 'Aldrin',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 3.0e-5,
+    sf_oral_per_mg_per_kg_bw_per_day: 17,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 1.7 x 10 1 (17) per mg/kg-bw/day (carcinogen) ' +
+      '+ non-cancer oral RfD 3 x 10-5 mg/kg-bw/day (organochlorine; CAS 309-00-2).',
+    notes:
+      'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
+      'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
+      'pv-iris-aldrin-hh-direct-sf / -food-sf (17); RfD from pv-iris-aldrin-hh-direct-rfd / ' +
+      '-food-rfd (3.0e-5). Both rows remain needs_review. logKow not in catalog -> ' +
+      'eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral ' +
+      'are organic-halogenated class defaults pending HITL.',
+  },
+  {
+    key: 'endrin',
+    displayName: 'Endrin',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 3.0e-4,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 3 x 10-4 mg/kg-bw/day (organochlorine; CAS 72-20-8).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-endrin-hh-direct-rfd / -food-rfd (value 3.0e-4). logKow not in catalog ' +
+      '-> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral ' +
+      'are organic-halogenated class defaults pending HITL.',
+  },
+  {
+    key: 'hexachlorobutadiene',
+    displayName: 'Hexachlorobutadiene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.078,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 7.8 x 10-2 (0.078) per mg/kg-bw/day ' +
+      '(carcinogen; CAS 87-68-3).',
+    notes:
+      'Human-health pathways only; SF seeded build-first from the needs_review row ' +
+      'pv-iris-hexachlorobutadiene-hh-direct-sf / -food-sf (value 0.078). Carcinogen: ' +
+      'sf_oral set, rfd_oral null. logKow not in catalog -> eco-direct EqP unavailable; ' +
+      'no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral are organic-halogenated ' +
+      'class defaults pending HITL.',
+  },
+  {
+    key: 'hexachlorocyclopentadiene',
+    displayName: 'Hexachlorocyclopentadiene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 6.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 6 x 10-3 mg/kg-bw/day (HCCPD; CAS 77-47-4).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-hexachlorocyclopentadiene-hh-direct-rfd / -food-rfd (value 0.006). logKow ' +
+      'not in catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. ' +
+      'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
+  },
+  {
+    key: 'isophorone',
+    displayName: 'Isophorone',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.2,
+    sf_oral_per_mg_per_kg_bw_per_day: 9.5e-4,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 9.5 x 10-4 (0.00095) per mg/kg-bw/day ' +
+      '(carcinogen) + non-cancer oral RfD 2 x 10-1 mg/kg-bw/day (CAS 78-59-1).',
+    notes:
+      'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
+      'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
+      'pv-iris-isophorone-hh-direct-sf / -food-sf (9.5e-4); RfD from ' +
+      'pv-iris-isophorone-hh-direct-rfd / -food-rfd (0.2). Both rows remain needs_review. ' +
+      'logKow not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic ' +
+      'class defaults pending HITL.',
+  },
+  {
+    key: 'acrylonitrile',
+    displayName: 'Acrylonitrile',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.54,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 5.4 x 10-1 (0.54) per mg/kg-bw/day ' +
+      '(carcinogen; CAS 107-13-1).',
+    notes:
+      'Human-health pathways only; SF seeded build-first from the needs_review row ' +
+      'pv-iris-acrylonitrile-hh-direct-sf / -food-sf (value 0.54). Carcinogen: sf_oral ' +
+      'set, rfd_oral null. logKow not in catalog -> eco pathways filtered. ' +
+      'abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'carbon_disulfide',
+    displayName: 'Carbon disulfide',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 1 x 10-1 mg/kg-bw/day (CAS 75-15-0).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-carbon_disulfide-hh-direct-rfd / -food-rfd (value 0.1; an inhalation RfC ' +
+      'also exists but is not a sediment-pathway input). logKow not in catalog -> eco ' +
+      'pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'bisphenol_a',
+    displayName: 'Bisphenol A',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 5 x 10-2 mg/kg-bw/day (CAS 80-05-7).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-bisphenol_a-hh-direct-rfd / -food-rfd (value 0.05). logKow not in catalog ' +
+      '-> eco pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'nitrobenzene',
+    displayName: 'Nitrobenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 2.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 2 x 10-3 mg/kg-bw/day (CAS 98-95-3).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-nitrobenzene-hh-direct-rfd / -food-rfd (value 0.002; an inhalation RfC + ' +
+      'IUR also exist but are not sediment-pathway inputs). logKow not in catalog -> eco ' +
+      'pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'pyridine',
+    displayName: 'Pyridine',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 1.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 1 x 10-3 mg/kg-bw/day (CAS 110-86-1).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-pyridine-hh-direct-rfd / -food-rfd (value 0.001). logKow not in catalog ' +
+      '-> eco pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+  },
+  {
+    key: 'methylnaphthalene_2_iris',
+    displayName: '2-Methylnaphthalene',
+    contaminantClass: 'organic-PAH',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 4.0e-3,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.13,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 4 x 10-3 mg/kg-bw/day (2-methylnaphthalene; CAS 91-57-6).',
+    notes:
+      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'pv-iris-2_methylnaphthalene-hh-direct-rfd / -food-rfd (value 0.004). Library key ' +
+      'is methylnaphthalene_2_iris because the catalog substance_key 2_methylnaphthalene ' +
+      'begins with a digit (not a valid TS identifier-style key) and a separate ' +
+      'BC-jurisdiction methylnaphthalene_2 catalog row also exists; the seeded value is ' +
+      'the US EPA IRIS one. organic-PAH; logKow not in catalog -> eco-direct EqP ' +
+      'unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral are organic-PAH ' +
+      'class defaults pending HITL.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

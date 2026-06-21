@@ -2,12 +2,16 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 90 entries', () => {
+  it('has 103 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
-    // pentachlorophenol, 1_4_dioxane) = 90.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(90);
+    // pentachlorophenol, 1_4_dioxane) = 90, + 13 PFAS + HH-only sweep (Batch D,
+    // 2026-06-20: perfluoroctanoic_acid_pfoa, perfluorooctane_sulfonate, aldrin,
+    // endrin, hexachlorobutadiene, hexachlorocyclopentadiene, isophorone,
+    // acrylonitrile, carbon_disulfide, bisphenol_a, nitrobenzene, pyridine,
+    // methylnaphthalene_2_iris) = 103.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(103);
   });
 
   it('every entry has a non-null key', () => {
@@ -182,6 +186,74 @@ describe('SUBSTANCE_LIBRARY -- Batch C catalog WIRE substances', () => {
       expect(r?.contaminantClass).toBe(cls);
       expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
       expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
+  // Verified verbatim against human_health_trv_values.json. PFOA/PFOS use the
+  // US EPA 2024 RfD (pv-us-epa-2024-*); the rest are US EPA IRIS (pv-iris-*).
+  // All HH-only: logKow/fcv/trv_eco null -> eco pathways filtered out.
+
+  // RfD-only substances (sf null).
+  const rfdOnly = [
+    { key: 'perfluoroctanoic_acid_pfoa', rfd: 3.0e-8, cls: 'organic-halogenated' },
+    { key: 'perfluorooctane_sulfonate', rfd: 1.0e-7, cls: 'organic-halogenated' },
+    { key: 'endrin', rfd: 3.0e-4, cls: 'organic-halogenated' },
+    { key: 'hexachlorocyclopentadiene', rfd: 6.0e-3, cls: 'organic-halogenated' },
+    { key: 'carbon_disulfide', rfd: 0.1, cls: 'organic' },
+    { key: 'bisphenol_a', rfd: 0.05, cls: 'organic' },
+    { key: 'nitrobenzene', rfd: 2.0e-3, cls: 'organic' },
+    { key: 'pyridine', rfd: 1.0e-3, cls: 'organic' },
+    { key: 'methylnaphthalene_2_iris', rfd: 4.0e-3, cls: 'organic-PAH' },
+  ] as const;
+
+  for (const { key, rfd, cls } of rfdOnly) {
+    it(`${key} (${cls}) carries RfD ${rfd}, sf null, HH-only`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe(cls);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+      expect(r?.logKow).toBeNull();
+      expect(r?.fcv_ug_per_L).toBeNull();
+      expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+
+  // Carcinogens with sf only (rfd null).
+  const sfOnly = [
+    { key: 'hexachlorobutadiene', sf: 0.078, cls: 'organic-halogenated' },
+    { key: 'acrylonitrile', sf: 0.54, cls: 'organic' },
+  ] as const;
+
+  for (const { key, sf, cls } of sfOnly) {
+    it(`${key} (${cls}) is a carcinogen: sf ${sf} set, rfd null, HH-only`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe(cls);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+      expect(r?.logKow).toBeNull();
+      expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+
+  // Both-endpoint substances (sf + rfd) so the calculator picks the conservative.
+  const both = [
+    { key: 'aldrin', sf: 17, rfd: 3.0e-5, cls: 'organic-halogenated' },
+    { key: 'isophorone', sf: 9.5e-4, rfd: 0.2, cls: 'organic' },
+  ] as const;
+
+  for (const { key, sf, rfd, cls } of both) {
+    it(`${key} (${cls}) carries both endpoints: sf ${sf}, rfd ${rfd}`, () => {
+      const r = findSubstance(key);
+      expect(r).toBeDefined();
+      expect(r?.contaminantClass).toBe(cls);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.logKow).toBeNull();
+      expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
     });
   }
 });
