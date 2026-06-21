@@ -707,6 +707,12 @@ class EmitCounters:
     tier_medium_samples: int = 0
     skipped_no_geom: int = 0
     skipped_no_event_date: int = 0
+    # C3.1 (2026-06-20): undated events EMITTED with event_date NULL +
+    # date_precision='undated' under --allow-undated (opt-in; gated on the
+    # nullable-event_date migration). Counts only the undated rows that were
+    # emitted (NOT the default-skip path, which still increments
+    # skipped_no_event_date).
+    undated_events_emitted: int = 0
     skipped_no_value: int = 0
     skipped_no_tox_value: int = 0
     skipped_no_community_metric: int = 0
@@ -720,12 +726,23 @@ def build_sql(
     geocoding_csv: Path,
     site_ids: Iterable[int],
     include_env_modifiers: bool = False,
+    allow_undated: bool = False,
 ) -> tuple[str, EmitCounters]:
     """Construct the transaction-bracketed SQL artifact.
 
     ``site_ids`` is the resolved site set (resolve_site_ids()): the explicit
     subset for tests/CLI, else all sites in the source DB. The build iterates
     THIS set, not the SEED_SITE_IDS global (C3 generalization).
+
+    ``allow_undated`` (default False) controls how events whose date does not
+    parse are handled (C3.1):
+      - False (default, backwards-compatible) -> undated events are SKIPPED and
+        tallied in skipped_no_event_date (the historical dated-only emit);
+      - True -> undated events are EMITTED with event_date NULL and
+        date_precision='undated', tallied in undated_events_emitted. Requires
+        the nullable-event_date migration to be applied before --apply, since
+        event_date is otherwise NOT NULL.
+    Dated events always emit date_precision='exact'.
     """
     site_ids = tuple(site_ids)
     counters = EmitCounters()
@@ -1014,9 +1031,17 @@ def build_sql(
             continue
         date_lit = sql_date(evt.get("date_sampled"))
         if date_lit == "NULL":
-            # event_date is NOT NULL -- skip undated events with a logged warning tally.
-            counters.skipped_no_event_date += 1
-            continue
+            # Undated / unparseable event_date. Default (backwards-compatible):
+            # SKIP, because event_date is NOT NULL until the nullable-event_date
+            # migration is applied. With --allow-undated, EMIT the row with
+            # event_date NULL + date_precision='undated' (opt-in load).
+            if not allow_undated:
+                counters.skipped_no_event_date += 1
+                continue
+            counters.undated_events_emitted += 1
+            date_precision = "undated"
+        else:
+            date_precision = "exact"
         pre_rem = evt.get("pre_remediation")
         if pre_rem is None:
             pre_rem_lit = "NULL"
@@ -1037,9 +1062,10 @@ def build_sql(
 
         out.append(
             "INSERT INTO matrix_map.sample_events ("
-            "bnrrm_event_id, sample_id, event_date, pre_remediation, depth_min_m, "
-            "depth_max_m, sampling_method, notes) "
-            f"SELECT {sql_text(event_id)}, {sample_clause}, {date_lit}, {pre_rem_lit}, "
+            "bnrrm_event_id, sample_id, event_date, date_precision, pre_remediation, "
+            "depth_min_m, depth_max_m, sampling_method, notes) "
+            f"SELECT {sql_text(event_id)}, {sample_clause}, {date_lit}, "
+            f"{sql_text(date_precision)}, {pre_rem_lit}, "
             f"{sql_text(depth_min)}, {sql_text(depth_max)}, "
             f"{sql_text(evt.get('sampling_method'))}, {sql_text(evt.get('notes'))} "
             f"WHERE {sample_clause} IS NOT NULL "
@@ -1295,6 +1321,7 @@ def build_sql(
             "dras": counters.dras,
             "samples": counters.samples,
             "sample_events": counters.sample_events,
+            "events_undated_emitted": counters.undated_events_emitted,
             "measurements": counters.measurements,
             "toxicity_measurements": counters.toxicity_measurements,
             "community_measurements": counters.community_measurements,
@@ -1437,6 +1464,18 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--allow-undated",
+        action="store_true",
+        default=False,
+        help=(
+            "Emit sample_events rows for events whose date does not parse, with "
+            "event_date NULL and date_precision='undated' (default OFF: undated "
+            "events are skipped, matching the historical dated-only emit). "
+            "REQUIRES the nullable-event_date migration to be applied before an "
+            "--allow-undated --apply load, since event_date is otherwise NOT NULL."
+        ),
+    )
+    parser.add_argument(
         "--expected-sha256",
         default=None,
         help=(
@@ -1464,6 +1503,7 @@ def main(argv: list[str] | None = None) -> int:
         dry_run=not args.apply,
         apply=args.apply,
         include_env_modifiers=args.include_env_modifiers,
+        allow_undated=args.allow_undated,
     )
 
     check_venv(log=log_phase)
@@ -1548,6 +1588,7 @@ def main(argv: list[str] | None = None) -> int:
     sql_body, counters = build_sql(
         src, centroids, args.source_db, args.geocoding_csv, site_ids,
         include_env_modifiers=args.include_env_modifiers,
+        allow_undated=args.allow_undated,
     )
     args.out_sql.parent.mkdir(parents=True, exist_ok=True)
     args.out_sql.write_text(sql_body, encoding="utf-8", newline="\n")
@@ -1559,6 +1600,7 @@ def main(argv: list[str] | None = None) -> int:
         dras=counters.dras,
         samples=counters.samples,
         sample_events=counters.sample_events,
+        undated_events_emitted=counters.undated_events_emitted,
         measurements=counters.measurements,
         toxicity_measurements=counters.toxicity_measurements,
         community_measurements=counters.community_measurements,
@@ -1594,6 +1636,7 @@ def main(argv: list[str] | None = None) -> int:
         "dras": counters.dras,
         "samples": counters.samples,
         "sample_events": counters.sample_events,
+        "undated_events_emitted": counters.undated_events_emitted,
         "measurements": counters.measurements,
         "toxicity_measurements": counters.toxicity_measurements,
         "community_measurements": counters.community_measurements,
