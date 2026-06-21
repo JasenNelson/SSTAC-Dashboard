@@ -279,9 +279,18 @@ class DryRunEmitTest(unittest.TestCase):
         self.assertEqual(self.counters.skipped_no_geom, 1)
 
     def test_undated_event_skipped(self) -> None:
-        # event 101 is undated -> skipped; events 100 + 102 load.
+        # event 101 is undated -> skipped by default; events 100 + 102 load.
         self.assertEqual(self.counters.skipped_no_event_date, 1)
         self.assertEqual(self.counters.sample_events, 2)
+        self.assertEqual(self.counters.undated_events_emitted, 0)
+
+    def test_default_emit_omits_date_precision(self) -> None:
+        # Default build (allow_undated=False) is backwards-compatible with the
+        # current committed schema: the sample_events INSERT must NOT name the
+        # date_precision column (it does not exist until the nullable-event_date
+        # migration is applied), and emits no 'undated' marker.
+        self.assertNotIn("date_precision", self.sql)
+        self.assertNotIn("'undated'", self.sql)
 
     def test_on_conflict_present(self) -> None:
         self.assertIn("ON CONFLICT (bnrrm_station_id) DO NOTHING", self.sql)
@@ -312,6 +321,67 @@ class DryRunEmitTest(unittest.TestCase):
         # Site 2's only station has no coords + no centroid -> 0 samples.
         self.assertEqual(counters.samples, 0)
         self.assertEqual(counters.skipped_no_geom, 1)
+
+
+# ---------------------------------------------------------------------------
+# AllowUndatedEmit (C3.1 -- undated events emitted with NULL date under flag)
+# ---------------------------------------------------------------------------
+
+
+class AllowUndatedEmitTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.db = _build_synthetic_db()
+        self.csv = _build_centroid_csv()
+        self.centroids = load_tier_b_centroids(self.csv)
+        conn = sqlite3.connect(str(self.db))
+        try:
+            self.site_ids = resolve_site_ids(conn, None)
+            self.src = fetch_source_data(conn, self.site_ids)
+        finally:
+            conn.close()
+
+    def tearDown(self) -> None:
+        self.db.unlink(missing_ok=True)
+        self.csv.unlink(missing_ok=True)
+
+    def test_default_skips_undated(self) -> None:
+        # Without --allow-undated the undated event 101 is skipped (regression
+        # guard alongside DryRunEmitTest -- the default stays dated-only).
+        _sql, counters = build_sql(
+            self.src, self.centroids, self.db, self.csv, self.site_ids,
+            allow_undated=False,
+        )
+        self.assertEqual(counters.undated_events_emitted, 0)
+        self.assertEqual(counters.skipped_no_event_date, 1)
+        self.assertEqual(counters.sample_events, 2)
+
+    def test_allow_undated_emits_null_date_and_precision(self) -> None:
+        # With --allow-undated the undated event 101 is EMITTED: all 3 events
+        # become sample_events rows; none are skipped for missing date.
+        sql, counters = build_sql(
+            self.src, self.centroids, self.db, self.csv, self.site_ids,
+            allow_undated=True,
+        )
+        self.assertEqual(counters.undated_events_emitted, 1)
+        self.assertEqual(counters.skipped_no_event_date, 0)
+        self.assertEqual(counters.sample_events, 3)
+        # The undated row carries a NULL event_date + date_precision='undated';
+        # dated rows carry date_precision='exact'.
+        self.assertIn("date_precision", sql)
+        self.assertIn("'undated'", sql)
+        self.assertIn("'exact'", sql)
+        # The undated event's INSERT SELECT must pass NULL for event_date next to
+        # the 'undated' precision marker (no DATE literal for that row).
+        self.assertIn("NULL, 'undated'", sql)
+
+    def test_allow_undated_reflected_in_audit_args_summary(self) -> None:
+        # The service_role_audit args_summary surfaces events_undated_emitted for
+        # transparency.
+        sql, _counters = build_sql(
+            self.src, self.centroids, self.db, self.csv, self.site_ids,
+            allow_undated=True,
+        )
+        self.assertIn("events_undated_emitted", sql)
 
 
 # ---------------------------------------------------------------------------
