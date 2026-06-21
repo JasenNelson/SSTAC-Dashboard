@@ -284,11 +284,12 @@ class DryRunEmitTest(unittest.TestCase):
         self.assertEqual(self.counters.sample_events, 2)
         self.assertEqual(self.counters.undated_events_emitted, 0)
 
-    def test_dated_event_emits_date_precision_exact(self) -> None:
-        # Dated events carry date_precision='exact' in the sample_events INSERT.
-        self.assertIn("date_precision", self.sql)
-        self.assertIn("'exact'", self.sql)
-        # Default build (allow_undated=False) emits no 'undated' precision marker.
+    def test_default_emit_omits_date_precision(self) -> None:
+        # Default build (allow_undated=False) is backwards-compatible with the
+        # current committed schema: the sample_events INSERT must NOT name the
+        # date_precision column (it does not exist until the nullable-event_date
+        # migration is applied), and emits no 'undated' marker.
+        self.assertNotIn("date_precision", self.sql)
         self.assertNotIn("'undated'", self.sql)
 
     def test_on_conflict_present(self) -> None:

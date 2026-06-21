@@ -1060,17 +1060,35 @@ def build_sql(
             f"(SELECT id FROM matrix_map.samples WHERE bnrrm_station_id = {evt['station_id']})"
         )
 
-        out.append(
-            "INSERT INTO matrix_map.sample_events ("
-            "bnrrm_event_id, sample_id, event_date, date_precision, pre_remediation, "
-            "depth_min_m, depth_max_m, sampling_method, notes) "
-            f"SELECT {sql_text(event_id)}, {sample_clause}, {date_lit}, "
-            f"{sql_text(date_precision)}, {pre_rem_lit}, "
-            f"{sql_text(depth_min)}, {sql_text(depth_max)}, "
-            f"{sql_text(evt.get('sampling_method'))}, {sql_text(evt.get('notes'))} "
-            f"WHERE {sample_clause} IS NOT NULL "
-            "ON CONFLICT (bnrrm_event_id) DO NOTHING;"
-        )
+        if allow_undated:
+            # date_precision column exists only after the nullable-event_date
+            # migration (20260620000001) is applied, which --allow-undated implies.
+            out.append(
+                "INSERT INTO matrix_map.sample_events ("
+                "bnrrm_event_id, sample_id, event_date, date_precision, pre_remediation, "
+                "depth_min_m, depth_max_m, sampling_method, notes) "
+                f"SELECT {sql_text(event_id)}, {sample_clause}, {date_lit}, "
+                f"{sql_text(date_precision)}, {pre_rem_lit}, "
+                f"{sql_text(depth_min)}, {sql_text(depth_max)}, "
+                f"{sql_text(evt.get('sampling_method'))}, {sql_text(evt.get('notes'))} "
+                f"WHERE {sample_clause} IS NOT NULL "
+                "ON CONFLICT (bnrrm_event_id) DO NOTHING;"
+            )
+        else:
+            # Default (backwards-compatible) emit: omit date_precision so the SQL
+            # applies against the current committed schema (event_date NOT NULL,
+            # no date_precision column). Only dated events reach here.
+            out.append(
+                "INSERT INTO matrix_map.sample_events ("
+                "bnrrm_event_id, sample_id, event_date, pre_remediation, "
+                "depth_min_m, depth_max_m, sampling_method, notes) "
+                f"SELECT {sql_text(event_id)}, {sample_clause}, {date_lit}, "
+                f"{pre_rem_lit}, "
+                f"{sql_text(depth_min)}, {sql_text(depth_max)}, "
+                f"{sql_text(evt.get('sampling_method'))}, {sql_text(evt.get('notes'))} "
+                f"WHERE {sample_clause} IS NOT NULL "
+                "ON CONFLICT (bnrrm_event_id) DO NOTHING;"
+            )
         counters.sample_events += 1
     out.append("")
 
