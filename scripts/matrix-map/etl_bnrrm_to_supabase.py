@@ -137,6 +137,7 @@ from db2_guard import (
     Db2IntegrityError,
     check_venv,
     decide_integrity_check,
+    looks_like_db2,
     verify_db2_integrity,
 )
 
@@ -1511,11 +1512,15 @@ def main(argv: list[str] | None = None) -> int:
             int(tok) for tok in str(args.site_ids).split(",") if tok.strip()
         ]
 
-    # Open the source DB read-only + immutable: the canonical DB2 lives on a
-    # Google Drive (G:) custody path that is read-only, where a plain read/write
-    # connect raises OperationalError. Mirrors geocode_bc_csr.py. The ETL only
-    # ever reads the source; this never loads/writes it.
-    source_uri = "file:" + urllib.parse.quote(str(args.source_db)) + "?mode=ro&immutable=1"
+    # Open the source DB read-only: the ETL only ever reads it. The canonical
+    # DB2 lives on a read-only Google Drive (G:) custody path where a plain
+    # read/write connect raises OperationalError, so it also needs immutable=1
+    # (mirrors geocode_bc_csr.py). Reserve immutable=1 for the canonical DB2
+    # ONLY -- on a custom --source-db that can still change, immutable=1 would
+    # skip locking/change-detection and risk a stale snapshot; plain mode=ro is
+    # correct there.
+    ro_params = "mode=ro&immutable=1" if looks_like_db2(args.source_db) else "mode=ro"
+    source_uri = "file:" + urllib.parse.quote(str(args.source_db)) + "?" + ro_params
     conn = sqlite3.connect(source_uri, uri=True)
     try:
         site_ids = resolve_site_ids(conn, explicit_site_ids)
