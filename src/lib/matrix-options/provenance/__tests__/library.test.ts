@@ -78,7 +78,9 @@ describe('matrix options evidence library helpers', () => {
     // substance SHARE one group) = 74 new groups.
     // 2026-06-19: +1 -- CCME chloroform eco-direct row (new group
     // eco-direct-eqp__chloroform__fcv_ug_per_L__Canada_federal) = 1682.
-    expect(view.valueGroups).toHaveLength(1682);
+    // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS hh-direct+hh-food RfD rows (4 new
+    // __US_federal candidate groups) = 1686.
+    expect(view.valueGroups).toHaveLength(1686);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -119,7 +121,9 @@ describe('matrix options evidence library helpers', () => {
     // (Step-6 4B: ESB 32 + FCSAP 45 + NRWQC 19; HITL J. Nelson inline-approved --apply via
     // promote-eco-source.mjs; all 96 machine-verified vs the pinned sources by an adversarial
     // verify+refute workflow). The entire eco catalog (97 rows) is now approved. = 1338.
-    expect(view.audit.values.approvedSourceBacked).toBe(1338);
+    // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (approved_source_backed; source
+    // src-us-epa-pfoa-pfos-2024 direct_source_verified, rows still needs_review) = 1342.
+    expect(view.audit.values.approvedSourceBacked).toBe(1342);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -179,7 +183,8 @@ describe('matrix options evidence library helpers', () => {
     // needs_review pre-promotion) = 1609.
     // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry default_status=available_option = 1705.
     // 2026-06-19: +1 -- CCME chloroform eco-direct row (available_option) = 1706.
-    expect(view.audit.values.availableOptions).toBe(1706);
+    // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (available_option) = 1710.
+    expect(view.audit.values.availableOptions).toBe(1710);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
