@@ -14,6 +14,13 @@ import {
 // The exactly-20 IRIS rows the 2026-06-04 apply sheet sanctions for qa-promotion. Imported from the
 // owner-run tool so the test and tool share ONE source of truth for the sanctioned set.
 import { TARGET_IDS as IRIS_QA_PROMOTION_TARGET_IDS } from '../../../../../scripts/matrix-options/apply-qa-promotion.mjs';
+// 2026-06-21: two further owner-attested promote tools sanction additional human-health TRV rows.
+// Import their exported id allowlists so this tripwire stays a single-source-of-truth union.
+import { IRIS_CARCINOGEN_RFD_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-carcinogen-rfd.mjs';
+import {
+  US_EPA_PFAS_PROMOTION_VALUE_IDS,
+  US_EPA_PFAS_PROMOTION_SOURCE_IDS,
+} from '../../../../../scripts/matrix-options/promote-us-epa-pfas.mjs';
 import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
 import erdcBsafSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/erdc_bsaf_reference_leads_2026_05_23.json';
@@ -522,20 +529,37 @@ describe('matrix options provenance catalog', () => {
     // must fail here. And once promoted, the set must be EXACTLY those 20 (no more, no fewer, no
     // substitutions). This restores and tightens the catalog-wide tripwire the old hardcoded
     // 84-count test provided.
-    const sanctionedPromotionIds = new Set(IRIS_QA_PROMOTION_TARGET_IDS);
+    // Union of the THREE owner-attested promote tools' allowlists (single source of truth, imported
+    // from each tool): apply-qa-promotion.mjs (20 IRIS rows), promote-iris-carcinogen-rfd.mjs (6 IRIS
+    // HCB/PCP/1,4-dioxane RfD rows), promote-us-epa-pfas.mjs (4 US EPA PFOA/PFOS RfD rows). A swap-in
+    // of any non-sanctioned row or a bulk promotion still fails the set-equality below.
+    const sanctionedPromotionIds = new Set([
+      ...IRIS_QA_PROMOTION_TARGET_IDS,
+      ...IRIS_CARCINOGEN_RFD_PROMOTION_VALUE_IDS,
+      ...US_EPA_PFAS_PROMOTION_VALUE_IDS,
+    ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(
         sanctionedPromotionIds,
       );
     }
 
+    const pfasPromotionIds = new Set(US_EPA_PFAS_PROMOTION_VALUE_IDS);
     for (const record of promotedBeyondFrozen) {
-      // Each promoted row is one of the sanctioned 20 (defense in depth with the set-equality above).
+      // Each promoted row is one of the sanctioned set (defense in depth with the set-equality above).
       expect(sanctionedPromotionIds.has(record.parameter_value_id), record.parameter_value_id).toBe(
         true,
       );
-      // The apply sheet covers EPA-IRIS-sourced rows only.
-      expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
+      // Source check: the IRIS apply-sheet + IRIS-carcinogen rows are EPA-IRIS-sourced; the US EPA
+      // PFOA/PFOS rows use their own per-document EPA sources (non-IRIS) -- constrain each to its tool.
+      if (pfasPromotionIds.has(record.parameter_value_id)) {
+        expect(
+          record.source_ids.every((s) => US_EPA_PFAS_PROMOTION_SOURCE_IDS.includes(s)),
+          record.parameter_value_id,
+        ).toBe(true);
+      } else {
+        expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
+      }
       // A qa promotion never makes a value a calculator default.
       expect(record.default_status, record.parameter_value_id).toBe('available_option');
       expect(record.source_authority_tier, record.parameter_value_id).toBe(
