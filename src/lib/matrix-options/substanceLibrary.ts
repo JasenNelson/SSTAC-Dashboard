@@ -1950,7 +1950,7 @@ export const SUBSTANCE_LIBRARY = [
       '-> eco pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
   },
   {
-    key: 'methylnaphthalene_2_iris',
+    key: '2_methylnaphthalene',
     displayName: '2-Methylnaphthalene',
     contaminantClass: 'organic-PAH',
     logKow: null,
@@ -1966,12 +1966,11 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
       'pv-iris-2_methylnaphthalene-hh-direct-rfd / -food-rfd (value 0.004). Library key ' +
-      'is methylnaphthalene_2_iris because the catalog substance_key 2_methylnaphthalene ' +
-      'begins with a digit (not a valid TS identifier-style key) and a separate ' +
-      'BC-jurisdiction methylnaphthalene_2 catalog row also exists; the seeded value is ' +
-      'the US EPA IRIS one. organic-PAH; logKow not in catalog -> eco-direct EqP ' +
-      'unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral are organic-PAH ' +
-      'class defaults pending HITL.',
+      'matches the catalog substance_key 2_methylnaphthalene exactly so provenance ' +
+      'resolves to these US EPA IRIS rows (a separate BC-jurisdiction methylnaphthalene_2 ' +
+      'catalog row exists under a different key and is not seeded here). organic-PAH; ' +
+      'logKow not in catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food ' +
+      'filtered. abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
   },
 ] as const satisfies readonly SubstanceEntry[];
 

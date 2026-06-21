@@ -10,7 +10,7 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-20: perfluoroctanoic_acid_pfoa, perfluorooctane_sulfonate, aldrin,
     // endrin, hexachlorobutadiene, hexachlorocyclopentadiene, isophorone,
     // acrylonitrile, carbon_disulfide, bisphenol_a, nitrobenzene, pyridine,
-    // methylnaphthalene_2_iris) = 103.
+    // 2_methylnaphthalene) = 103.
     expect(SUBSTANCE_LIBRARY).toHaveLength(103);
   });
 
@@ -184,8 +184,8 @@ describe('SUBSTANCE_LIBRARY -- Batch C catalog WIRE substances', () => {
       const r = findSubstance(key);
       expect(r).toBeDefined();
       expect(r?.contaminantClass).toBe(cls);
-      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
-      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
     });
   }
 });
@@ -205,7 +205,7 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
     { key: 'bisphenol_a', rfd: 0.05, cls: 'organic' },
     { key: 'nitrobenzene', rfd: 2.0e-3, cls: 'organic' },
     { key: 'pyridine', rfd: 1.0e-3, cls: 'organic' },
-    { key: 'methylnaphthalene_2_iris', rfd: 4.0e-3, cls: 'organic-PAH' },
+    { key: '2_methylnaphthalene', rfd: 4.0e-3, cls: 'organic-PAH' },
   ] as const;
 
   for (const { key, rfd, cls } of rfdOnly) {
@@ -213,7 +213,9 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
       const r = findSubstance(key);
       expect(r).toBeDefined();
       expect(r?.contaminantClass).toBe(cls);
-      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      // Exact equality: these are tiny scientific-notation constants (down to 3e-8),
+      // where toBeCloseTo's default 2-decimal precision would also accept 0.
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
       expect(r?.logKow).toBeNull();
       expect(r?.fcv_ug_per_L).toBeNull();
@@ -232,7 +234,7 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
       const r = findSubstance(key);
       expect(r).toBeDefined();
       expect(r?.contaminantClass).toBe(cls);
-      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
       expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
       expect(r?.logKow).toBeNull();
       expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
@@ -250,8 +252,8 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
       const r = findSubstance(key);
       expect(r).toBeDefined();
       expect(r?.contaminantClass).toBe(cls);
-      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBeCloseTo(sf);
-      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(rfd);
+      expect(r?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+      expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(r?.logKow).toBeNull();
       expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
     });
