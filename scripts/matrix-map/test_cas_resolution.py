@@ -50,12 +50,13 @@ class ResolveSubstanceTest(unittest.TestCase):
     def test_excluded_param_returns_none(self) -> None:
         self.assertEqual(resolve_substance("- Paramete"), (None, None, False))
 
-    def test_ambiguous_nonylphenol_not_auto_assigned(self) -> None:
-        # Intentionally omitted from cas_by_key (ambiguous CAS) -> needs_review.
-        key, cas, matched = resolve_substance("Nonylphenol")
-        self.assertEqual(key, "nonylphenol")
-        self.assertIsNone(cas)
-        self.assertFalse(matched)
+    def test_nonylphenol_resolves_to_branched_technical_cas(self) -> None:
+        # Owner-decided canonical form: 84852-15-3 (branched 4-nonylphenol
+        # technical, the usual environmental-monitoring default).
+        self.assertEqual(
+            resolve_substance("Nonylphenol"),
+            ("nonylphenol", "84852-15-3", True),
+        )
 
     def test_slug_canonicalizes_case_variants(self) -> None:
         # The two DB2 spellings of 2-methylnaphthalene collapse to one key.
@@ -87,10 +88,12 @@ class CasMapFileTest(unittest.TestCase):
 
     def test_loader_returns_curated_entries(self) -> None:
         cas_by_key, alias_overrides, exclude = _load_cas_map()
-        # 49 HIGH-confidence entries (metals + PAHs + PCB Aroclors + 3
-        # chlorophenols); nonylphenol + mixed-isomer slugs intentionally omitted.
-        self.assertEqual(len(cas_by_key), 49)
-        self.assertNotIn("nonylphenol", cas_by_key)
+        # 51 HIGH-confidence entries (metals + PAHs + PCB Aroclors + 3
+        # chlorophenols + nonylphenol + methyl_mercury); mixed-isomer slugs
+        # intentionally omitted.
+        self.assertEqual(len(cas_by_key), 51)
+        self.assertIn("nonylphenol", cas_by_key)
+        self.assertIn("methyl_mercury", cas_by_key)
         self.assertNotIn("total_pcbs", cas_by_key)
         self.assertNotIn("benzob&jfluoranthene", cas_by_key)
         self.assertIn("- Paramete", exclude)
