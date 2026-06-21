@@ -124,6 +124,7 @@ import shutil
 import sqlite3
 import subprocess
 import sys
+import urllib.parse
 from collections import defaultdict
 from dataclasses import dataclass, field
 from functools import lru_cache
@@ -136,6 +137,7 @@ from db2_guard import (
     Db2IntegrityError,
     check_venv,
     decide_integrity_check,
+    looks_like_db2,
     verify_db2_integrity,
 )
 
@@ -144,18 +146,32 @@ from db2_guard import (
 # Constants (load-bearing decisions)
 # ---------------------------------------------------------------------------
 
+# C3 (2026-06-20): default source repointed to the canonical DB2 in owner-managed
+# Google Drive custody (per docs/design/matrix-map/DB2_ADOPTION.md). Because this
+# filename is the canonical DB2 (looks_like_db2() True), the SHA-256 integrity
+# pre-flight now ARMS automatically on a default-path run.
 DEFAULT_SOURCE_DB = Path(
-    r"C:\Projects\Regulatory-Review\2026_Database_Development"
-    r"\data_acquisition\bnrrm_extraction\bnrrm_training.db"
+    r"G:\My Drive\SABCS - Sediment Project\Dashboard\matrix-map-data"
+    r"\bnrrm_training_DB2_20260503.db"
 )
 
 DEFAULT_OUT_SQL = Path(__file__).resolve().parent / "etl_bnrrm_to_supabase_output.sql"
 
+# C3 (2026-06-20): default geocoding CSV repointed to the committed FULL coverage
+# CSV (343 bc_csr_centroid rows). Surveyed (Tier A) coords now come from DB2
+# stations.lat/lon, NOT the CSV -- so the CSV is centroid-only by design.
 DEFAULT_GEOCODING_CSV = (
-    Path(__file__).resolve().parents[2] / ".tmp_pr_map_0_geocoding_data.csv"
+    Path(__file__).resolve().parents[2]
+    / "docs" / "design" / "matrix-map" / "PR_MAP_8_GEOCODING_DATA_FULL.csv"
 )
 
+# Seed v1 site_ids (1..9). Retained for documentation/back-compat but build_sql
+# no longer reads this global -- the site set is resolved via resolve_site_ids()
+# and threaded through as a parameter (C3 all-345-sites generalization).
 SEED_SITE_IDS: tuple[int, ...] = (1, 2, 3, 4, 5, 6, 7, 8, 9)
+# Legacy v1 hard-coded coordinate tiers. C3 replaces this frozenset logic with the
+# per-station resolve_station_coord() resolver (surveyed -> high; centroid ->
+# medium; else skip), which generalizes cleanly to all 345 sites.
 TIER_A_SITE_IDS: frozenset[int] = frozenset({2, 5, 6, 8})
 TIER_B_SITE_IDS: frozenset[int] = frozenset({1, 3, 4, 7, 9})
 
@@ -299,6 +315,79 @@ def load_tier_b_centroids(csv_path: Path) -> dict[int, TierBCentroid]:
                 bc_csr_site_name=(row.get("bc_csr_site_name") or "").strip() or None,
             )
     return result
+
+
+# ---------------------------------------------------------------------------
+# Site + per-station coordinate resolution (C3 all-345-sites generalization)
+# ---------------------------------------------------------------------------
+
+
+def resolve_site_ids(
+    conn: sqlite3.Connection, explicit: Iterable[int] | None = None,
+) -> tuple[int, ...]:
+    """Resolve the set of site_ids to process.
+
+    - ``explicit`` (a non-None iterable) -> exactly those ids, de-duplicated and
+      sorted (the test/CLI subset seam).
+    - else -> every site_id in the source ``sites`` table (the all-345-sites
+      default), sorted ascending.
+
+    Pure resolution of which sites to load -- no chemistry/skip decisions here.
+    """
+    if explicit is not None:
+        return tuple(sorted({int(s) for s in explicit}))
+    cur = conn.execute("SELECT site_id FROM sites ORDER BY site_id ASC")
+    return tuple(int(row[0]) for row in cur.fetchall())
+
+
+@dataclass(frozen=True)
+class StationCoord:
+    """Resolved coordinate for one station: lat/lon + provenance tier/source.
+
+    A None result (returned as None, not a StationCoord) means the station has
+    neither surveyed coords nor a site centroid and must be SKIPPED.
+    """
+    latitude: float
+    longitude: float
+    tier: str  # 'high' (surveyed) | 'medium' (centroid)
+    source: str  # 'surveyed' | 'bc_csr_centroid'
+    centroid: TierBCentroid | None  # set only for centroid resolutions
+
+
+def resolve_station_coord(
+    station: dict[str, Any], centroid: TierBCentroid | None,
+) -> StationCoord | None:
+    """Per-station coordinate tier resolver (generalizes TIER_A/B frozenset logic).
+
+    Resolution order (most-specific wins):
+      1. surveyed station lat/lon present -> tier 'high', source 'surveyed';
+      2. else a site centroid is available -> tier 'medium', source
+         'bc_csr_centroid' (the coordinate is the site centroid fanned out);
+      3. else -> None (caller skips + tallies skipped_no_geom).
+
+    BEHAVIOR CHANGE vs v1 (flag for review): a station that the v1 frozenset
+    treated as Tier A (surveyed) but which is MISSING surveyed coords now FALLS
+    BACK to the site centroid (medium) instead of being skipped, when a centroid
+    exists. Recommended: a medium-tier centroid point is more useful on the map
+    than dropping the station entirely; the tier/source columns keep the
+    provenance honest.
+    """
+    lat = station.get("latitude")
+    lon = station.get("longitude")
+    if lat is not None and lon is not None:
+        try:
+            return StationCoord(
+                latitude=float(lat), longitude=float(lon),
+                tier="high", source="surveyed", centroid=None,
+            )
+        except (TypeError, ValueError):
+            pass
+    if centroid is not None:
+        return StationCoord(
+            latitude=centroid.latitude, longitude=centroid.longitude,
+            tier="medium", source="bc_csr_centroid", centroid=centroid,
+        )
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -499,16 +588,21 @@ def fetch_source_data(
 
     sampling_events: dict[int, dict[str, Any]] = {}
     if station_ids:
-        chunked = list(station_ids)
-        evt_placeholders = ",".join("?" for _ in chunked)
-        cur = conn.execute(
-            f"SELECT event_id, station_id, date_sampled, media_type, pre_remediation, "
-            f"sampling_method, depth_top_cm, depth_bottom_cm, notes "
-            f"FROM sampling_events WHERE station_id IN ({evt_placeholders})",
-            chunked,
-        )
-        for row in cur:
-            sampling_events[row["event_id"]] = dict(row)
+        # SQLite has a 999-host-parameter default cap; chunk the station_ids the
+        # same way event_ids is chunked below. With all 345 sites the station set
+        # is far larger than 9-site seed runs, so a single IN(...) would overflow.
+        STATION_CHUNK = 800
+        for start in range(0, len(station_ids), STATION_CHUNK):
+            chunk = station_ids[start:start + STATION_CHUNK]
+            evt_placeholders = ",".join("?" for _ in chunk)
+            cur = conn.execute(
+                f"SELECT event_id, station_id, date_sampled, media_type, pre_remediation, "
+                f"sampling_method, depth_top_cm, depth_bottom_cm, notes "
+                f"FROM sampling_events WHERE station_id IN ({evt_placeholders})",
+                chunk,
+            )
+            for row in cur:
+                sampling_events[row["event_id"]] = dict(row)
     event_ids = tuple(sampling_events.keys())
 
     sediment_chemistry: list[dict[str, Any]] = []
@@ -607,6 +701,10 @@ class EmitCounters:
     toxicity_measurements: int = 0
     community_measurements: int = 0
     env_modifier_measurements: int = 0
+    # C3: dynamic per-station coordinate-tier tallies (replace the static
+    # frozenset-derived tier_a/tier_b site-id reporting).
+    tier_high_samples: int = 0
+    tier_medium_samples: int = 0
     skipped_no_geom: int = 0
     skipped_no_event_date: int = 0
     skipped_no_value: int = 0
@@ -620,9 +718,16 @@ def build_sql(
     centroids: dict[int, TierBCentroid],
     source_db: Path,
     geocoding_csv: Path,
+    site_ids: Iterable[int],
     include_env_modifiers: bool = False,
 ) -> tuple[str, EmitCounters]:
-    """Construct the transaction-bracketed SQL artifact."""
+    """Construct the transaction-bracketed SQL artifact.
+
+    ``site_ids`` is the resolved site set (resolve_site_ids()): the explicit
+    subset for tests/CLI, else all sites in the source DB. The build iterates
+    THIS set, not the SEED_SITE_IDS global (C3 generalization).
+    """
+    site_ids = tuple(site_ids)
     counters = EmitCounters()
     out: list[str] = []
 
@@ -632,7 +737,7 @@ def build_sql(
     out.append(f"-- generated: {timestamp}")
     out.append(f"-- source_db: {source_db}")
     out.append(f"-- geocoding_csv: {geocoding_csv}")
-    out.append(f"-- seed_sites: {list(SEED_SITE_IDS)}")
+    out.append(f"-- sites: {len(site_ids)} resolved (first 20: {list(site_ids[:20])})")
     out.append("-- Idempotent: each INSERT uses ON CONFLICT DO NOTHING.")
     out.append("")
     out.append("BEGIN;")
@@ -793,9 +898,9 @@ def build_sql(
     for st in src.stations.values():
         stations_by_site[st["site_id"]].append(st)
 
-    for site_id in SEED_SITE_IDS:
+    for site_id in site_ids:
         if site_id not in src.sites:
-            log_phase("warn", message=f"seed site {site_id} not present in source DB; skipping")
+            log_phase("warn", message=f"site {site_id} not present in source DB; skipping")
             continue
         site = src.sites[site_id]
         default_doc_id = src.site_default_doc.get(site_id)
@@ -804,59 +909,46 @@ def build_sql(
             doc = src.ra_documents[default_doc_id]
             default_citation = (doc.get("title") or doc.get("filename")
                                 or f"BN-RRM doc {default_doc_id}")
-        is_tier_a = site_id in TIER_A_SITE_IDS
-        centroid = centroids.get(site_id) if site_id in TIER_B_SITE_IDS else None
+        # C3: per-station tier is resolved by resolve_station_coord(); the site
+        # may have a centroid (used as a per-station fallback when a station has
+        # no surveyed coords).
+        centroid = centroids.get(site_id)
 
-        out.append(f"-- site {site_id}: {site['name']} (tier "
-                   f"{'A surveyed' if is_tier_a else 'B centroid'})")
+        out.append(f"-- site {site_id}: {site['name']}")
 
         for st in sorted(stations_by_site.get(site_id, []), key=lambda s: s["station_id"]):
             station_id_int = st["station_id"]
             display_name = (st.get("name") or f"station-{station_id_int}").strip()
             classification = classify_station(st.get("station_type"), default_citation)
 
-            # Coordinate resolution
-            lat: float | None = None
-            lon: float | None = None
-            tier: str | None = None
-            source: str | None = None
+            # Coordinate resolution (per-station tier resolver). surveyed -> high;
+            # else site centroid -> medium; else skip (no geometry available).
+            coord = resolve_station_coord(st, centroid)
+            if coord is None:
+                counters.skipped_no_geom += 1
+                log_phase(
+                    "warn",
+                    message="station has no surveyed coords and no site centroid; skipping",
+                    site_id=site_id,
+                    station_id=station_id_int,
+                )
+                continue
+            lat = coord.latitude
+            lon = coord.longitude
+            tier = coord.tier
+            source = coord.source
             registry_note: str | None = None
-
-            if is_tier_a:
-                lat = st.get("latitude")
-                lon = st.get("longitude")
-                if lat is None or lon is None:
-                    counters.skipped_no_geom += 1
-                    log_phase(
-                        "warn",
-                        message="Tier A station missing surveyed lat/lon; skipping",
-                        site_id=site_id,
-                        station_id=station_id_int,
-                    )
-                    continue
-                tier = "high"
-                source = "surveyed"
+            if coord.tier == "high":
+                counters.tier_high_samples += 1
             else:
-                if centroid is None:
-                    counters.skipped_no_geom += 1
-                    log_phase(
-                        "warn",
-                        message="Tier B site centroid missing in geocoding CSV; skipping",
-                        site_id=site_id,
-                        station_id=station_id_int,
-                    )
-                    continue
-                lat = centroid.latitude
-                lon = centroid.longitude
-                tier = "medium"
-                source = "bc_csr_centroid"
-                if centroid.registry_id:
-                    registry_note = (
-                        f"Coordinate inherited from BC Site Registry centroid "
-                        f"(registry_id={centroid.registry_id}, "
-                        f"name='{centroid.bc_csr_site_name or site['name']}'). "
-                        f"Approximate location only -- not surveyed."
-                    )
+                counters.tier_medium_samples += 1
+            if coord.centroid is not None and coord.centroid.registry_id:
+                registry_note = (
+                    f"Coordinate inherited from BC Site Registry centroid "
+                    f"(registry_id={coord.centroid.registry_id}, "
+                    f"name='{coord.centroid.bc_csr_site_name or site['name']}'). "
+                    f"Approximate location only -- not surveyed."
+                )
 
             # Receptor metadata (per-station: station_type + depth + habitat)
             receptor_meta: dict[str, Any] = {
@@ -1194,9 +1286,10 @@ def build_sql(
         "script_version": SCRIPT_VERSION,
         "source_db": str(source_db),
         "geocoding_csv": str(geocoding_csv),
-        "seed_site_ids": list(SEED_SITE_IDS),
-        "tier_a_site_ids": sorted(TIER_A_SITE_IDS),
-        "tier_b_site_ids": sorted(TIER_B_SITE_IDS),
+        "site_count": len(site_ids),
+        "site_ids": list(site_ids),
+        "tier_high_samples": counters.tier_high_samples,
+        "tier_medium_samples": counters.tier_medium_samples,
         "row_counts": {
             "substances": counters.substances,
             "dras": counters.dras,
@@ -1323,6 +1416,15 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         ),
     )
     parser.add_argument(
+        "--site-ids",
+        default=None,
+        help=(
+            "Comma-separated explicit subset of site_ids to process (e.g. "
+            "'1,2,3'). Default (omitted) = ALL sites in the source DB "
+            "(all-345-sites generalization). Mainly a test/CLI seam."
+        ),
+    )
+    parser.add_argument(
         "--include-env-modifiers",
         action="store_true",
         default=False,
@@ -1401,17 +1503,33 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     centroids = load_tier_b_centroids(args.geocoding_csv)
-    log_phase("geocoding.loaded", tier_b_sites=sorted(centroids.keys()),
-              tier_b_count=len(centroids))
+    log_phase("geocoding.loaded", centroid_sites=sorted(centroids.keys()),
+              centroid_count=len(centroids))
 
-    missing_centroids = [s for s in TIER_B_SITE_IDS if s not in centroids]
-    if missing_centroids:
-        log_phase("warn", message="Tier B sites missing centroid in CSV",
-                  missing=missing_centroids)
+    explicit_site_ids: list[int] | None = None
+    if args.site_ids is not None:
+        explicit_site_ids = [
+            int(tok) for tok in str(args.site_ids).split(",") if tok.strip()
+        ]
 
-    conn = sqlite3.connect(str(args.source_db))
+    # Open the source DB read-only: the ETL only ever reads it. The canonical
+    # DB2 lives on a read-only Google Drive (G:) custody path where a plain
+    # read/write connect raises OperationalError, so it also needs immutable=1
+    # (mirrors geocode_bc_csr.py). Reserve immutable=1 for the canonical DB2
+    # ONLY -- on a custom --source-db that can still change, immutable=1 would
+    # skip locking/change-detection and risk a stale snapshot; plain mode=ro is
+    # correct there.
+    ro_params = "mode=ro&immutable=1" if looks_like_db2(args.source_db) else "mode=ro"
+    source_uri = "file:" + urllib.parse.quote(str(args.source_db)) + "?" + ro_params
+    conn = sqlite3.connect(source_uri, uri=True)
     try:
-        src = fetch_source_data(conn, SEED_SITE_IDS,
+        site_ids = resolve_site_ids(conn, explicit_site_ids)
+        log_phase(
+            "sites.resolved",
+            mode="explicit" if explicit_site_ids is not None else "all",
+            site_count=len(site_ids),
+        )
+        src = fetch_source_data(conn, site_ids,
                                 include_env_modifiers=args.include_env_modifiers)
     finally:
         conn.close()
@@ -1428,7 +1546,7 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     sql_body, counters = build_sql(
-        src, centroids, args.source_db, args.geocoding_csv,
+        src, centroids, args.source_db, args.geocoding_csv, site_ids,
         include_env_modifiers=args.include_env_modifiers,
     )
     args.out_sql.parent.mkdir(parents=True, exist_ok=True)
@@ -1445,6 +1563,8 @@ def main(argv: list[str] | None = None) -> int:
         toxicity_measurements=counters.toxicity_measurements,
         community_measurements=counters.community_measurements,
         env_modifier_measurements=counters.env_modifier_measurements,
+        tier_high_samples=counters.tier_high_samples,
+        tier_medium_samples=counters.tier_medium_samples,
         skipped_no_geom=counters.skipped_no_geom,
         skipped_no_event_date=counters.skipped_no_event_date,
         skipped_no_value=counters.skipped_no_value,
@@ -1478,6 +1598,8 @@ def main(argv: list[str] | None = None) -> int:
         "toxicity_measurements": counters.toxicity_measurements,
         "community_measurements": counters.community_measurements,
         "env_modifier_measurements": counters.env_modifier_measurements,
+        "tier_high_samples": counters.tier_high_samples,
+        "tier_medium_samples": counters.tier_medium_samples,
         "skipped_no_geom": counters.skipped_no_geom,
         "skipped_no_event_date": counters.skipped_no_event_date,
         "skipped_no_value": counters.skipped_no_value,
