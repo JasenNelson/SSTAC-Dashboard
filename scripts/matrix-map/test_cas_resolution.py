@@ -79,6 +79,7 @@ class ResolveSubstanceTest(unittest.TestCase):
             ("2,3,5-Trichlorophenol", "235-trichlorophenol", "933-78-8"),
             ("2,3,6-Trichlorophenol", "236-trichlorophenol", "933-75-5"),
             ("2,4,5-Trichlorophenol", "245-trichlorophenol", "95-95-4"),
+            ("3,4,5-Trichlorophenol", "345-trichlorophenol", "609-19-8"),
             ("2,3,4,5-Tetrachlorophenol", "2345-tetrachlorophenol", "4901-51-3"),
             ("2,3,5,6-Tetrachlorophenol", "2356-tetrachlorophenol", "935-95-5"),
         ]
@@ -133,10 +134,10 @@ class CasMapFileTest(unittest.TestCase):
 
     def test_loader_returns_curated_entries(self) -> None:
         cas_by_key, alias_overrides, exclude = _load_cas_map()
-        # 66 HIGH-confidence entries (metals + PAHs + PCB Aroclors + the full
-        # single-isomer chlorophenol set + nonylphenol + methyl_mercury);
-        # mixed-isomer slugs and deferred categories intentionally omitted.
-        self.assertEqual(len(cas_by_key), 66)
+        # 67 HIGH-confidence entries (metals + PAHs + PCB Aroclors + the full
+        # single-isomer chlorophenol set incl 3,4,5-trichlorophenol + nonylphenol
+        # + methyl_mercury); mixed-isomer slugs + deferred categories omitted.
+        self.assertEqual(len(cas_by_key), 67)
         self.assertIn("nonylphenol", cas_by_key)
         self.assertIn("methyl_mercury", cas_by_key)
         self.assertIn("2-chlorophenol", cas_by_key)
