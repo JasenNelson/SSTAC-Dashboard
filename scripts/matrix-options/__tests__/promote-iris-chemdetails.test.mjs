@@ -108,7 +108,12 @@ function doneValue(base) {
 }
 
 describe('promote-iris-chemdetails: scope constants', () => {
-  it('exports a non-empty pv-iris-* id allowlist', () => { expect(IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS.length).toBeGreaterThan(200); });
+  it('exports EXACTLY the 275 clean ids (290 needs_review minus 15 dupe-candidate_group_id)', () => {
+    // Pinned scope: 290 needs_review src-us-epa-iris-chemical-details-live rows MINUS the 15
+    // dupe-candidate_group_id RfC rows (trimethylbenzenes/TCA), excluded + deferred. Exact count keeps
+    // the attestation scope honest.
+    expect(IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS).toHaveLength(275);
+  });
   it('every id is a pv-iris-* id', () => { for (const id of IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS) expect(id.startsWith('pv-iris-'), id).toBe(true); });
   it('has no duplicate ids', () => { expect(new Set(IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS).size).toBe(IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS.length); });
   it('has no duplicate candidate_group_id (the 15 dupe-cg rows are excluded)', () => {

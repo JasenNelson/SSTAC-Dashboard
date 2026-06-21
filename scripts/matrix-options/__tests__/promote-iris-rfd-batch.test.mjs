@@ -108,8 +108,12 @@ function doneValue(base) {
 }
 
 describe('promote-iris-rfd-batch: scope constants', () => {
-  it('exports a non-empty pv-iris-* RfD id allowlist', () => {
-    expect(IRIS_RFD_BATCH_PROMOTION_VALUE_IDS.length).toBeGreaterThan(600);
+  it('exports EXACTLY the 680 clean RfD ids (726 needs_review minus 46 dupe-candidate_group_id)', () => {
+    // Pinned scope: the data file is the 726 needs_review src-us-epa-iris-rfd-table-live rows MINUS the
+    // 46 dupe-candidate_group_id rows (trimethylbenzenes/TCA/RDX/short-chain PFAS multi-estimate RfDs),
+    // which are excluded + deferred for separate owner resolution. Asserting the exact count keeps the
+    // attestation scope honest (a silent truncation or expansion fails here).
+    expect(IRIS_RFD_BATCH_PROMOTION_VALUE_IDS).toHaveLength(680);
   });
   it('every id is a pv-iris-* id', () => {
     for (const id of IRIS_RFD_BATCH_PROMOTION_VALUE_IDS) expect(id.startsWith('pv-iris-'), id).toBe(true);

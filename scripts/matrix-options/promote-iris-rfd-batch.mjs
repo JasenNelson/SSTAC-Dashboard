@@ -1,28 +1,32 @@
 // Owner-run promotion helper for the US EPA IRIS oral-RfD batch (src-us-epa-iris-rfd-table-live):
-// 726 human-health oral-RfD value records across 348 substances (direct + food pathways). Plain ASCII.
+// 680 human-health oral-RfD value records (direct + food pathways). Plain ASCII.
 //
 // WHY THIS EXISTS
-// The Matrix Options Evidence Library carries 726 US EPA IRIS oral-RfD candidates, robot-extracted from
-// the live IRIS RfD table and validated against the EPA "Chemicals_Details" Excel export. Each row is
-// already evidence_support_status='approved_source_backed' but still qa_status='needs_review' with
-// canonical_source_status='needs_direct_source_check'. This tool performs the exact, coupled promotion
-// of EXACTLY those 726 pv-iris-* RfD records, fails closed on any precondition, and is idempotent.
+// The Matrix Options Evidence Library carries 726 needs_review US EPA IRIS oral-RfD candidates,
+// robot-extracted from the live IRIS RfD table and validated against the EPA "Chemicals_Details" Excel
+// export. Each row is already evidence_support_status='approved_source_backed' but still
+// qa_status='needs_review' with canonical_source_status='needs_direct_source_check'. This tool promotes
+// EXACTLY the 680 clean pv-iris-* RfD records in the data file (the 726 needs_review rows MINUS 46
+// duplicate-candidate_group_id rows -- multiple IRIS RfD estimates for the trimethylbenzenes,
+// 1,1,1-trichloroethane, RDX, and short-chain PFAS PFBA/PFDA/PFHxA -- which are EXCLUDED here because
+// two approved rows sharing one candidate_group_id would create ambiguous frame-seed candidates; they
+// need separate owner resolution of the canonical estimate). Fails closed; idempotent.
 //
 // VERIFICATION BASIS (differs from promote-hc-trv-v4-2025.mjs): value correctness is guarded by the
 // EPA IRIS canonical snapshot test (src/lib/matrix-options/provenance/__tests__/iris-canonical.test.ts +
 // epa_iris_canonical_snapshot.json), which asserts every IRIS catalog value is a member of the EPA
-// snapshot and self-consistently re-derives from its verbatim epa_raw. All 726 rows are snapshot-covered.
+// snapshot and self-consistently re-derives from its verbatim epa_raw. All 680 promoted rows are snapshot-covered.
 // This script ADDITIONALLY hard-codes the per-row identity (substance/pathway/input/value/unit, loaded
 // from the committed data file below) so the fail-closed check is real drift-detection, not a tautology.
 //
-// SCOPE: the exact 726 pv-iris-* ids in the data file ONLY. The 6 already-approved IRIS-carcinogen RfD
+// SCOPE: the exact 680 pv-iris-* ids in the data file ONLY (726 needs_review minus 46 dupe-cg). The 6 already-approved IRIS-carcinogen RfD
 // rows (HCB/PCP/1,4-dioxane, promoted by promote-iris-carcinogen-rfd.mjs) are NOT in this set.
 //
 // LOAD-BEARING RULES honored (same as promote-iris-carcinogen-rfd.mjs):
 //  - AI NEVER writes qa_status. Owner runs this; --reviewer/--date are the HITL attestation.
-//  - OWNER VERIFICATION (rule 1): the owner attests the 726 RfD values via the snapshot + the
+//  - OWNER VERIFICATION (rule 1): the owner attests the 680 RfD values via the snapshot + the
 //    2026-06-04 IRIS EPA-Excel data-integrity verification packet. Running --apply attests to that.
-//  - SCOPE (rule 2): only the 726 listed records; default_status NEVER modified (stays available_option).
+//  - SCOPE (rule 2): only the 680 listed records; default_status NEVER modified (stays available_option).
 //  - SOURCE (rule 3): src-us-epa-iris-rfd-table-live is expected ALREADY direct_source_verified -> the
 //    SOURCE step SKIPs (no-op). Logic handles already-done gracefully.
 //  - AFTER --apply (rule 4): npx tsc --noEmit; npm run lint; npm run test:ci.
@@ -44,7 +48,7 @@ const DATA_FILE = path.join(__dirname, 'data', 'iris-rfd-promotion-2026-06-21.js
 export const IRIS_RFD_BATCH_PROMOTION_SOURCE_ID = 'src-us-epa-iris-rfd-table-live';
 const JURISDICTION = 'US_federal';
 
-// The EXACT records this tool will ever touch, loaded from the committed data file (726 rows generated
+// The EXACT records this tool will ever touch, loaded from the committed data file (680 rows generated
 // from the catalog at authoring time; fixed + auditable scope). Read via fs (no import-attributes).
 export const PROMOTION_ROWS = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
 export const IRIS_RFD_BATCH_PROMOTION_VALUE_IDS = PROMOTION_ROWS.map((r) => r.id);
@@ -255,14 +259,14 @@ export function applyPromotion(paramValues, sources, opts) {
 const BANNER = [
   '=============================================================================',
   ' promote-iris-rfd-batch.mjs -- owner-run US EPA IRIS oral-RfD batch promotion',
-  '   (726 human-health oral-RfD rows across 348 substances; direct + food)',
+  '   (680 human-health oral-RfD rows; direct + food. 46 dupe-candidate_group_id rows EXCLUDED)',
   '=============================================================================',
   '',
   'OWNER VERIFICATION REQUIRED before --apply:',
-  '  The 726 oral-RfD values are guarded by the EPA IRIS canonical snapshot test and the 2026-06-04',
+  '  The 680 oral-RfD values are guarded by the EPA IRIS canonical snapshot test and the 2026-06-04',
   '  IRIS EPA-Excel data-integrity packet. Running --apply attests you accept that snapshot-backed basis.',
   '',
-  'SCOPE: the 726 pv-iris-* RfD ids in data/iris-rfd-promotion-2026-06-21.json ONLY. default_status is',
+  'SCOPE: the 680 pv-iris-* RfD ids in data/iris-rfd-promotion-2026-06-21.json ONLY. default_status is',
   '  NOT changed (stays available_option). The FRAME_DEFAULT_PROFILES row is the owner activation step.',
   '',
   'SOURCE NOTE: src-us-epa-iris-rfd-table-live is expected already direct_source_verified (SKIP/no-op).',
@@ -270,7 +274,7 @@ const BANNER = [
 ].join('\n');
 
 const HELP = [
-  'promote-iris-rfd-batch.mjs -- owner-run US EPA IRIS oral-RfD batch promotion (726 rows).',
+  'promote-iris-rfd-batch.mjs -- owner-run US EPA IRIS oral-RfD batch promotion (680 rows).',
   '',
   'Usage:',
   '  node scripts/matrix-options/promote-iris-rfd-batch.mjs --reviewer "<id>" --date YYYY-MM-DD [--apply]',
