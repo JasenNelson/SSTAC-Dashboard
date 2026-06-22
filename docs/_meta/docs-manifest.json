@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4448,
-        "source": "npm run test:ci on feat/matrix-options-iris-rfd-batch-2026-06-21 (2026-06-21): 4448 = 4407 + 41 from the 2 new US EPA IRIS promote-script tests (promote-iris-rfd-batch.test.mjs + promote-iris-chemdetails.test.mjs). Confirmed clean via npm run test:ci.",
+        "value": 4451,
+        "source": "npm run test:ci on feat/mo-evidence-note-backport-2026-06-21 (2026-06-21): 4451 = 4448 + 3 new apply-qa-promotion tests (evidence-note backport: repair-only-path under both --canonical variants; fail-safe that a partially-approved row is NOT stamped; fail-closed that an already-approved DRIFTED row is rejected -- the last two per codex P2 rounds). The carcinogen/hc-trv mirror tests added assertions into existing it() blocks, 0 new cases. Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-21"
       },
       "playwright_test_count": {

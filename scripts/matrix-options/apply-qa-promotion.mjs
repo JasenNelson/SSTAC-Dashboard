@@ -67,6 +67,9 @@ export const TARGET_IDS = [
 
 const SNAPSHOT_REL_TOL = 0.02; // 2% -- mirrors iris-canonical.test.ts REL_TOL.
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
+// Idempotency marker for the evidence-note stamp (mirrors promote-iris-rfd-batch.mjs). A stamped
+// note CONTAINS this substring so the repair check below cannot re-stamp it.
+const PROMOTION_STAMP_MARKER = 'PROMOTED to approved';
 
 // ---------------------------------------------------------------------------
 // Arg parsing
@@ -138,17 +141,16 @@ export function planPromotion(records, snapshotIndex, opts) {
     if (!Array.isArray(r.evidence_items) || r.evidence_items.length === 0) {
       throw new Error('Precondition failed: ' + id + ' has no evidence_items');
     }
-    if (r.qa_status === 'approved') {
-      skip.push(id); // already promoted -> idempotent no-op
-      continue;
-    }
-    if (r.qa_status !== 'needs_review') {
+    if (r.qa_status !== 'approved' && r.qa_status !== 'needs_review') {
       throw new Error(
         'Precondition failed: ' + id + ' has unexpected qa_status "' + r.qa_status +
         '" (expected needs_review or approved)',
       );
     }
-    // Data-integrity: the value must still match the committed EPA snapshot.
+    // Data-integrity gate -- applies to BOTH paths, because EITHER writes the catalog: a
+    // needs_review row is promoted, and an already-approved row is repaired (evidence-note stamp).
+    // The value must still match the committed EPA snapshot, else fail closed. "Validate against
+    // the EPA snapshot, not memory" -- a drifted/anchorless value is never written.
     const snap = snapshotIndex.get(r.substance_key + '::' + r.input_key);
     if (!snap) {
       throw new Error('Precondition failed: no EPA snapshot anchor for ' + id +
@@ -157,9 +159,10 @@ export function planPromotion(records, snapshotIndex, opts) {
     if (!matchesSnapshot(r.value, snap.epa_values)) {
       throw new Error('Precondition failed: ' + id + ' value ' + JSON.stringify(r.value) +
         ' is not within 2% of EPA snapshot ' + JSON.stringify(snap.epa_values) +
-        ' -- value has drifted from the EPA source; refusing to promote');
+        ' -- value has drifted from the EPA source; refusing to write');
     }
-    promote.push(id);
+    if (r.qa_status === 'approved') skip.push(id); // already promoted -> repair-only candidate
+    else promote.push(id);
   }
   return { promote, skip };
 }
@@ -191,7 +194,46 @@ function approveEvidence(ev, reviewer, date) {
     out.reviewed_by = reviewer;
     out.reviewed_at = date;
   }
+  // Supersede a stale "pending direct-source verification" note so approved evidence is not
+  // contradictory. An evidence item HITL-approved (reviewed_by/at set above) should not keep the
+  // robot-extraction "pending verification" caveat, independent of the --canonical choice.
+  if (typeof out.note === 'string' && out.note.length > 0 && !out.note.includes(PROMOTION_STAMP_MARKER)) {
+    out.note += buildEvidenceNoteStamp(date, reviewer);
+  }
   return out;
+}
+
+// Evidence-item note stamp (verbatim from promote-iris-rfd-batch.mjs). The stamp CONTAINS
+// PROMOTION_STAMP_MARKER so the idempotency check cannot re-stamp it. The stamp text deliberately
+// holds no local-path tokens (C:\ / Downloads / .xlsx), so it never trips the catalog.test
+// contamination check.
+function buildEvidenceNoteStamp(date, reviewer) {
+  return ' [Evidence PROMOTED to approved on ' + date + ' by ' + reviewer + '; the pending direct-source verification note above is superseded.]';
+}
+function stampEvidenceNotes(r, date, reviewer) {
+  if (!Array.isArray(r.evidence_items)) return false;
+  const stamp = buildEvidenceNoteStamp(date, reviewer);
+  let changed = false;
+  for (const ev of r.evidence_items) {
+    if (ev && typeof ev.note === 'string' && ev.note.length > 0 && !ev.note.includes(PROMOTION_STAMP_MARKER)) {
+      ev.note += stamp; changed = true;
+    }
+  }
+  return changed;
+}
+function evidenceNoteRepairNeeded(r) {
+  return Array.isArray(r.evidence_items) && r.evidence_items.some(
+    (ev) => ev && typeof ev.note === 'string' && ev.note.length > 0 && !ev.note.includes(PROMOTION_STAMP_MARKER),
+  );
+}
+// A repair-only stamp asserts the evidence was PROMOTED to approved, so only stamp rows whose
+// evidence is GENUINELY approved + attested (mirrors the valueAlreadyDone gate in the sibling
+// promote scripts). A top-level-approved row with a still-needs_review (or unattested) evidence
+// item is a drifted partial state -- do NOT stamp it; that would assert an approval that did not
+// happen. The real packet rows are fully approved, so this never withholds a legitimate repair.
+function evidenceFullyApproved(r) {
+  return Array.isArray(r.evidence_items) && r.evidence_items.length > 0 &&
+    r.evidence_items.every((ev) => ev && ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at));
 }
 
 export function applyPromotion(records, snapshotIndex, opts) {
@@ -205,7 +247,18 @@ export function applyPromotion(records, snapshotIndex, opts) {
     }
     r.evidence_items = r.evidence_items.map((ev) => approveEvidence(ev, opts.reviewer, opts.date));
   }
-  return { promote, skip };
+  // Evidence-note repair pass over the already-approved (skip) rows: stamp any stale
+  // "pending direct-source verification" note so an approved row is not contradictory. This is
+  // INDEPENDENT of --canonical (it never reads or writes canonical_source_status), so re-running
+  // under either --canonical verified or keep stays a no-op on canonical for these rows.
+  const repaired = [];
+  for (const id of skip) {
+    const r = byId.get(id);
+    // Only stamp rows whose evidence is genuinely approved + attested (see evidenceFullyApproved):
+    // never assert "PROMOTED to approved" on a still-needs_review evidence item.
+    if (evidenceFullyApproved(r) && stampEvidenceNotes(r, opts.date, opts.reviewer)) repaired.push(id);
+  }
+  return { promote, skip, repaired };
 }
 
 // ---------------------------------------------------------------------------
@@ -241,6 +294,12 @@ function main() {
 
   // Plan first (enforces every precondition before any write).
   const { promote, skip } = planPromotion(records, snapshotIndex, opts);
+  // Of the already-approved (skip) rows, which still carry an unstamped "pending" evidence note?
+  const byId = new Map(records.map((r) => [r.parameter_value_id, r]));
+  const repairNeededIds = skip.filter((id) => {
+    const r = byId.get(id);
+    return evidenceFullyApproved(r) && evidenceNoteRepairNeeded(r);
+  });
 
   console.log('IRIS qa-promotion -- ' + (opts.apply ? 'APPLY' : 'DRY RUN'));
   console.log('catalog : ' + HH_TRV_FILE);
@@ -253,9 +312,14 @@ function main() {
     console.log('  PROMOTE  ' + id + ': qa needs_review->approved; evidence qa->approved +reviewed_by/at'
       + (opts.canonical === 'verified' ? '; canonical->direct_source_verified' : '; canonical kept'));
   }
-  for (const id of skip) console.log('  SKIP     ' + id + ': already approved (no-op)');
+  for (const id of skip) {
+    const needsRepair = repairNeededIds.includes(id);
+    console.log('  SKIP     ' + id + ': already approved' +
+      (needsRepair ? '; evidence-note repair pending' : ' (no-op)'));
+  }
   console.log('');
-  console.log('Summary: ' + promote.length + ' to promote, ' + skip.length + ' already approved.');
+  console.log('Summary: ' + promote.length + ' to promote, ' + skip.length + ' already approved' +
+    (repairNeededIds.length ? ', ' + repairNeededIds.length + ' evidence-note repair(s)' : '') + '.');
 
   if (!opts.apply) {
     console.log('\nDRY RUN -- no file written. Re-run with --apply (plus --reviewer/--date/--canonical) to write.');
@@ -264,13 +328,14 @@ function main() {
 
   // Writing requires the full owner attestation.
   validateApplyOptions(opts);
-  if (promote.length === 0) {
-    console.log('\nNothing to promote (all targets already approved). No write.');
+  if (promote.length === 0 && repairNeededIds.length === 0) {
+    console.log('\nNothing to promote or repair (all targets already approved + stamped). No write.');
     return;
   }
-  applyPromotion(records, snapshotIndex, opts);
+  const { repaired } = applyPromotion(records, snapshotIndex, opts);
   fs.writeFileSync(HH_TRV_FILE, JSON.stringify(records, null, 2) + '\n', 'utf8');
-  console.log('\nWROTE ' + HH_TRV_FILE + ' (' + promote.length + ' rows promoted).');
+  console.log('\nWROTE ' + HH_TRV_FILE + ' (' + promote.length + ' rows promoted, ' +
+    repaired.length + ' evidence-note repair(s)).');
   console.log('Next: run the local gates: npx tsc --noEmit; npm run lint; npm run test:ci;');
   console.log('  npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10; npm run test:e2e');
   console.log('The reworked catalog.test.ts stays green for either --canonical variant.');

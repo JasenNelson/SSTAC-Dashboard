@@ -61,6 +61,7 @@ function baseRecord([id, substance, pathway, value]) {
       qa_status: 'needs_review',
       evidence_id: 'ev-' + id + '-1',
       locator_type: 'source_table',
+      note: 'Robot-extracted; pending direct-source verification.',
     }],
     source_relationships: [{
       source_id: SOURCE_ID,
@@ -340,6 +341,7 @@ describe('promote-iris-carcinogen-rfd: idempotency', () => {
     const second = applyPromotion(records, sources, APPLY_OPTS);
     expect(second.valueResults.every((vr) => !vr.promoteValue)).toBe(true);
     expect(second.promoteSource).toBe(false);
+    expect(records.find((x) => x.parameter_value_id === IRIS_CARCINOGEN_RFD_PROMOTION_VALUE_IDS[0]).evidence_items[0].note.match(/Evidence PROMOTED to approved/g)).toHaveLength(1);
   });
 });
 
@@ -355,6 +357,7 @@ describe('promote-iris-carcinogen-rfd: field edits on each of the 6 value record
       expect(r.default_status).toBe('available_option');
       const ev = r.evidence_items[0];
       expect(ev.qa_status).toBe('approved');
+      expect(r.evidence_items[0].note, valueId).toContain('Evidence PROMOTED to approved');
       expect(ev.reviewed_by).toBe('J. Nelson');
       expect(ev.reviewed_at).toBe('2026-06-20');
       const keys = Object.keys(ev);
@@ -392,8 +395,10 @@ describe('promote-iris-carcinogen-rfd: field edits on each of the 6 value record
     const stamped = ' [PROMOTED to approved on 2026-06-20 by J. Nelson]';
     const doneOverrides = {};
     for (const base of BASE_VALUE_FIXTURES) {
+      const dv = doneValue(base);
+      dv.evidence_items[0].note += stamped;
       doneOverrides[base.parameter_value_id] = {
-        ...doneValue(base),
+        ...dv,
         applicability: base.applicability + stamped,
         review_notes: base.review_notes + stamped,
       };
