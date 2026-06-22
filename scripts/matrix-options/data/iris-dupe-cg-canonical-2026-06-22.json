@@ -1,0 +1,156 @@
+[
+  {
+    "id": "pv-iris-1_1_1_trichloroethane-hh-direct-rfd-thane-oral-rfd-2",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_1_1_trichloroethane",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=197",
+    "irisDate": "2007-09-28"
+  },
+  {
+    "id": "pv-iris-1_1_1_trichloroethane-hh-food-rfd-thane-oral-rfd-2",
+    "pathway": "human-health-food",
+    "substanceKey": "1_1_1_trichloroethane",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=197",
+    "irisDate": "2007-09-28"
+  },
+  {
+    "id": "pv-iris-1_2_3_trimethylbenzene-hh-direct-rfd-nzene-oral-rfd-2",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_2_3_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1039",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_2_3_trimethylbenzene-hh-food-rfd-nzene-oral-rfd-2",
+    "pathway": "human-health-food",
+    "substanceKey": "1_2_3_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1039",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_2_4_trimethylbenzene-hh-direct-rfd",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_2_4_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1037",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_2_4_trimethylbenzene-hh-food-rfd",
+    "pathway": "human-health-food",
+    "substanceKey": "1_2_4_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1037",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_3_5_trimethylbenzene-hh-direct-rfd",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_3_5_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1038",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_3_5_trimethylbenzene-hh-food-rfd",
+    "pathway": "human-health-food",
+    "substanceKey": "1_3_5_trimethylbenzene",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.01,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1038",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-direct-rfd-e-rdx-oral-rfd-3",
+    "pathway": "human-health-direct",
+    "substanceKey": "hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=313",
+    "irisDate": "2018-08-30"
+  },
+  {
+    "id": "pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-food-rfd-e-rdx-oral-rfd-3",
+    "pathway": "human-health-food",
+    "substanceKey": "hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.004,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=313",
+    "irisDate": "2018-08-30"
+  },
+  {
+    "id": "pv-iris-1_1_1_trichloroethane-hh-direct-rfc-inhalation-rfc-2",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_1_1_trichloroethane",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 5,
+    "unit": "mg/m3",
+    "sourceId": "src-us-epa-iris-chemical-details-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=197",
+    "irisDate": "2007-09-28"
+  },
+  {
+    "id": "pv-iris-1_2_3_trimethylbenzene-hh-direct-rfc",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_2_3_trimethylbenzene",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.06,
+    "unit": "mg/m3",
+    "sourceId": "src-us-epa-iris-chemical-details-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1039",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_2_4_trimethylbenzene-hh-direct-rfc-inhalation-rfc-4",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_2_4_trimethylbenzene",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.06,
+    "unit": "mg/m3",
+    "sourceId": "src-us-epa-iris-chemical-details-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1037",
+    "irisDate": "2016-09-09"
+  },
+  {
+    "id": "pv-iris-1_3_5_trimethylbenzene-hh-direct-rfc",
+    "pathway": "human-health-direct",
+    "substanceKey": "1_3_5_trimethylbenzene",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.06,
+    "unit": "mg/m3",
+    "sourceId": "src-us-epa-iris-chemical-details-live",
+    "irisUrl": "https://cfpub.epa.gov/ncea/iris2/chemicalLanding.cfm?substance_nmbr=1038",
+    "irisDate": "2016-09-09"
+  }
+]

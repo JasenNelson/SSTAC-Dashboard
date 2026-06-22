@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4467,
-        "source": "npm run test:ci on feat/matrix-map-undated-consumer-2026-06-22 (2026-06-22): 4467 = 4463 + 4 new matrix-map undated-consumer tests (3 filter-measurements null-guard cases + 1 export-route undated case). Prior 4463 = 4460 + 3 EvidenceLibrary.pagination integration tests. Confirmed clean via npm run test:ci.",
+        "value": 4479,
+        "source": "npm run test:ci on feat/mo-iris-dupe-cg-canonical-2026-06-22 (2026-06-22): 4479 = 4467 + 12 new promote-iris-dupe-cg-canonical tests (14 EPA-verified canonical dupe-cg IRIS rows: scope, parse, fail-closed preconditions incl. value-only-lane source guard per codex P2, apply + idempotency). Catalog approved HH rows 1161 -> 1175. Prior 4467 = 4463 + 4 matrix-map undated-consumer tests. Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-22"
       },
       "playwright_test_count": {
