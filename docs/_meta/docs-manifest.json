@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4460,
-        "source": "npm run test:ci on feat/mo-evidence-library-pagination-2026-06-22 (2026-06-22): 4460 = 4451 + 9 new evidenceLibraryPagination unit tests (Values-table pagination: window math, clamping, partial/empty pages). The EvidenceLibrary component suite (58) is unchanged -- the 10-row fixture is below the page size so the un-paged path still renders all rows. Prior 4451 = 4448 + 3 apply-qa evidence-note/value-level tests. Confirmed clean via npm run test:ci.",
+        "value": 4463,
+        "source": "npm run test:ci on test/evidence-library-pagination-integration-2026-06-22 (2026-06-22): 4463 = 4460 + 3 new EvidenceLibrary.pagination integration tests (60-row catalog mock proving only one page of rows renders + the pager navigates + disabled-state). Prior 4460 = 4451 + 9 evidenceLibraryPagination unit tests. Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-22"
       },
       "playwright_test_count": {
