@@ -56,6 +56,67 @@ vi.mock('@/lib/matrix-options/provenance/saved-views-sync', () => ({
     .mockResolvedValue({ signedIn: false, error: false, views: [] }),
 }));
 
+// ---------------------------------------------------------------------------
+// Compact catalog fixture (performance). EvidenceLibrary reads the reference catalog
+// INDIRECTLY: it imports SOURCE_RECORDS from this module and buildEvidenceLibraryView from
+// library.ts, and library.ts reads the catalog's exports internally. Mocking the catalog
+// module therefore bounds the data the whole render tree sees. The live catalog grew to
+// ~1700 parameter-value rows; rendering it on all 58 tests pushed this file to ~10.7 min
+// locally / ~20 min on CI (one test tripping the 60s CI per-test cap). The fixture replaces
+// ONLY the data with a small representative set (see evidenceLibraryFixture.ts) -- the real
+// audit / filter / default-selection-policy / saved-views logic is untouched. The factory
+// mirrors the real catalog helpers (filters over the fixture arrays) so getter behavior is
+// identical. Async factory so it can import the fixture module after hoisting.
+vi.mock('@/lib/matrix-options/provenance/catalog', async () => {
+  const {
+    FIXTURE_PARAMETER_VALUE_RECORDS,
+    FIXTURE_SOURCE_RECORDS,
+    FIXTURE_EQUATION_RECORDS,
+    FIXTURE_SOURCE_LEAD_SETS,
+  } = await import('./evidenceLibraryFixture');
+
+  const SOURCE_RECORDS = FIXTURE_SOURCE_RECORDS;
+  const EQUATION_RECORDS = FIXTURE_EQUATION_RECORDS;
+  const PARAMETER_VALUE_RECORDS = FIXTURE_PARAMETER_VALUE_RECORDS;
+  const SOURCE_LEAD_SETS = FIXTURE_SOURCE_LEAD_SETS;
+
+  return {
+    SOURCE_RECORDS,
+    EQUATION_RECORDS,
+    PARAMETER_VALUE_RECORDS,
+    SOURCE_LEAD_SETS,
+    getSourceRecord: (sourceId: string) =>
+      SOURCE_RECORDS.find((source) => source.source_id === sourceId),
+    getEquationRecord: (equationId: string) =>
+      EQUATION_RECORDS.find((equation) => equation.equation_id === equationId),
+    getPathwayEquationRecords: (pathway: string) =>
+      EQUATION_RECORDS.filter((equation) => equation.pathway === pathway),
+    getParameterValueRecord: (
+      substanceKey: string,
+      pathway: string,
+      inputKey: string,
+    ) =>
+      PARAMETER_VALUE_RECORDS.find(
+        (record) =>
+          record.substance_key === substanceKey &&
+          record.pathway === pathway &&
+          record.input_key === inputKey,
+      ),
+    getParameterValueRecordById: (parameterValueId: string) =>
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === parameterValueId,
+      ),
+    getParameterValueRecordsForSubstance: (
+      substanceKey: string,
+      pathway: string,
+    ) =>
+      PARAMETER_VALUE_RECORDS.filter(
+        (record) =>
+          record.substance_key === substanceKey && record.pathway === pathway,
+      ),
+  };
+});
+
 function renderControlled(
   initialFilters = createEvidenceLibraryFilters(),
   regulatoryFrameId: RegulatoryFrameId = 'bc-protocol1-v5-dra',

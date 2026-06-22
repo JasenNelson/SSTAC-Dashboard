@@ -1,0 +1,2202 @@
+[
+  {
+    "id": "pv-iris-1_1_1_2_tetrafluoroethane-hh-direct-rfc",
+    "substanceKey": "1_1_1_2_tetrafluoroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 80,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-1_1_difluoroethane-hh-direct-rfc",
+    "substanceKey": "1_1_difluoroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 40,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-1_2_dichloroethane-hh-direct-iur",
+    "substanceKey": "1_2_dichloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000026,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-1_2_dichloroethane-hh-direct-sf",
+    "substanceKey": "1_2_dichloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.091,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_dichloroethane-hh-food-sf",
+    "substanceKey": "1_2_dichloroethane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.091,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_diphenylhydrazine-hh-direct-iur",
+    "substanceKey": "1_2_diphenylhydrazine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00022,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-1_2_diphenylhydrazine-hh-direct-sf",
+    "substanceKey": "1_2_diphenylhydrazine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_2_diphenylhydrazine-hh-food-sf",
+    "substanceKey": "1_2_diphenylhydrazine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dichlorobenzene-hh-direct-rfc",
+    "substanceKey": "1_4_dichlorobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.8,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-1_4_dioxane-hh-direct-iur",
+    "substanceKey": "1_4_dioxane",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000005,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-1_4_dioxane-hh-direct-rfc",
+    "substanceKey": "1_4_dioxane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.03,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-1_4_dioxane-hh-direct-sf",
+    "substanceKey": "1_4_dioxane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_4_dioxane-hh-food-sf",
+    "substanceKey": "1_4_dioxane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-1_6_hexamethylene_diisocyanate-hh-direct-rfc",
+    "substanceKey": "1_6_hexamethylene_diisocyanate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00001,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-direct-sf",
+    "substanceKey": "2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0007,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-food-sf",
+    "substanceKey": "2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0007,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_2_6_dinitrotoluene_mixture-hh-direct-sf",
+    "substanceKey": "2_4_2_6_dinitrotoluene_mixture",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.68,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_2_6_dinitrotoluene_mixture-hh-food-sf",
+    "substanceKey": "2_4_2_6_dinitrotoluene_mixture",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.68,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_2_6_toluene_diisocyanate_mixture_tdi-hh-direct-rfc",
+    "substanceKey": "2_4_2_6_toluene_diisocyanate_mixture_tdi",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00007,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_4_6_trichlorophenol-hh-direct-iur",
+    "substanceKey": "2_4_6_trichlorophenol",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000031,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-2_4_6_trichlorophenol-hh-direct-sf",
+    "substanceKey": "2_4_6_trichlorophenol",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.011,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_6_trichlorophenol-hh-food-sf",
+    "substanceKey": "2_4_6_trichlorophenol",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.011,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_6_trinitrotoluene_tnt-hh-direct-sf",
+    "substanceKey": "2_4_6_trinitrotoluene_tnt",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.03,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_4_6_trinitrotoluene_tnt-hh-food-sf",
+    "substanceKey": "2_4_6_trinitrotoluene_tnt",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.03,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-2_chloroacetophenone-hh-direct-rfc",
+    "substanceKey": "2_chloroacetophenone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_ethoxyethanol-hh-direct-rfc",
+    "substanceKey": "2_ethoxyethanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_hexanone-hh-direct-rfc",
+    "substanceKey": "2_hexanone",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.03,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_methoxyethanol-hh-direct-rfc",
+    "substanceKey": "2_methoxyethanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-2_nitropropane-hh-direct-rfc",
+    "substanceKey": "2_nitropropane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-3_3_dichlorobenzidine-hh-direct-sf",
+    "substanceKey": "3_3_dichlorobenzidine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.45,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-3_3_dichlorobenzidine-hh-food-sf",
+    "substanceKey": "3_3_dichlorobenzidine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.45,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_4_methylene_bis_n_n_dimethyl_aniline-hh-direct-sf",
+    "substanceKey": "4_4_methylene_bis_n_n_dimethyl_aniline",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.046,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-4_4_methylene_bis_n_n_dimethyl_aniline-hh-food-sf",
+    "substanceKey": "4_4_methylene_bis_n_n_dimethyl_aniline",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.046,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acetaldehyde-hh-direct-iur",
+    "substanceKey": "acetaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000022,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-acetaldehyde-hh-direct-rfc",
+    "substanceKey": "acetaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.009,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acetonitrile-hh-direct-rfc",
+    "substanceKey": "acetonitrile",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.06,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acrolein-hh-direct-rfc",
+    "substanceKey": "acrolein",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-direct-iur",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00017,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-direct-rfc",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.006,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-direct-sf",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.83,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylamide-hh-food-sf",
+    "substanceKey": "acrylamide",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.83,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylic_acid-hh-direct-rfc",
+    "substanceKey": "acrylic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.001,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acrylonitrile-hh-direct-iur",
+    "substanceKey": "acrylonitrile",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000068,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-acrylonitrile-hh-direct-rfc",
+    "substanceKey": "acrylonitrile",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-acrylonitrile-hh-direct-sf",
+    "substanceKey": "acrylonitrile",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.54,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-acrylonitrile-hh-food-sf",
+    "substanceKey": "acrylonitrile",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.54,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldrin-hh-direct-iur",
+    "substanceKey": "aldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0049,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-aldrin-hh-direct-sf",
+    "substanceKey": "aldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 17,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aldrin-hh-food-sf",
+    "substanceKey": "aldrin",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 17,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-allyl_chloride-hh-direct-rfc",
+    "substanceKey": "allyl_chloride",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.001,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-direct-iur",
+    "substanceKey": "alpha_hexachlorocyclohexane_alpha_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0018,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-direct-sf",
+    "substanceKey": "alpha_hexachlorocyclohexane_alpha_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 6.3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-food-sf",
+    "substanceKey": "alpha_hexachlorocyclohexane_alpha_hch",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 6.3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-ammonia-hh-direct-rfc",
+    "substanceKey": "ammonia",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.5,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-aniline-hh-direct-rfc",
+    "substanceKey": "aniline",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.001,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-aniline-hh-direct-sf",
+    "substanceKey": "aniline",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0057,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aniline-hh-food-sf",
+    "substanceKey": "aniline",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0057,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-antimony_trioxide-hh-direct-rfc",
+    "substanceKey": "antimony_trioxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-aramite-hh-direct-iur",
+    "substanceKey": "aramite",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000071,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-aramite-hh-direct-sf",
+    "substanceKey": "aramite",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.025,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-aramite-hh-food-sf",
+    "substanceKey": "aramite",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.025,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-arsenic_inorganic-hh-direct-iur",
+    "substanceKey": "arsenic_inorganic",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0043,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-arsine-hh-direct-rfc",
+    "substanceKey": "arsine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00005,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-azobenzene-hh-direct-iur",
+    "substanceKey": "azobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000031,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-azobenzene-hh-direct-sf",
+    "substanceKey": "azobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.11,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-azobenzene-hh-food-sf",
+    "substanceKey": "azobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.11,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzidine-hh-direct-iur",
+    "substanceKey": "benzidine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.067,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-benzidine-hh-direct-sf",
+    "substanceKey": "benzidine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 230,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzidine-hh-food-sf",
+    "substanceKey": "benzidine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 230,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzotrichloride-hh-direct-sf",
+    "substanceKey": "benzotrichloride",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 13,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzotrichloride-hh-food-sf",
+    "substanceKey": "benzotrichloride",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 13,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzyl_chloride-hh-direct-sf",
+    "substanceKey": "benzyl_chloride",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.17,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-benzyl_chloride-hh-food-sf",
+    "substanceKey": "benzyl_chloride",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.17,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-beta_hexachlorocyclohexane_beta_hch-hh-direct-iur",
+    "substanceKey": "beta_hexachlorocyclohexane_beta_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00053,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-beta_hexachlorocyclohexane_beta_hch-hh-direct-sf",
+    "substanceKey": "beta_hexachlorocyclohexane_beta_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-beta_hexachlorocyclohexane_beta_hch-hh-food-sf",
+    "substanceKey": "beta_hexachlorocyclohexane_beta_hch",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenyl-hh-direct-sf",
+    "substanceKey": "biphenyl",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.008,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-biphenyl-hh-food-sf",
+    "substanceKey": "biphenyl",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.008,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-direct-sf",
+    "substanceKey": "bis_2_ethylhexyl_phthalate_dehp",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.014,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-food-sf",
+    "substanceKey": "bis_2_ethylhexyl_phthalate_dehp",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.014,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_chloroethyl_ether_bcee-hh-direct-iur",
+    "substanceKey": "bis_chloroethyl_ether_bcee",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00033,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-bis_chloroethyl_ether_bcee-hh-direct-sf",
+    "substanceKey": "bis_chloroethyl_ether_bcee",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_chloroethyl_ether_bcee-hh-food-sf",
+    "substanceKey": "bis_chloroethyl_ether_bcee",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_chloromethyl_ether_bcme-hh-direct-iur",
+    "substanceKey": "bis_chloromethyl_ether_bcme",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.062,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-bis_chloromethyl_ether_bcme-hh-direct-sf",
+    "substanceKey": "bis_chloromethyl_ether_bcme",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 220,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bis_chloromethyl_ether_bcme-hh-food-sf",
+    "substanceKey": "bis_chloromethyl_ether_bcme",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 220,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromate-hh-direct-sf",
+    "substanceKey": "bromate",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.7,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromate-hh-food-sf",
+    "substanceKey": "bromate",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.7,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromobenzene-hh-direct-rfc",
+    "substanceKey": "bromobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-bromodichloromethane-hh-direct-sf",
+    "substanceKey": "bromodichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.062,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromodichloromethane-hh-food-sf",
+    "substanceKey": "bromodichloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.062,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoform-hh-direct-iur",
+    "substanceKey": "bromoform",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000011,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-bromoform-hh-direct-sf",
+    "substanceKey": "bromoform",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0079,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromoform-hh-food-sf",
+    "substanceKey": "bromoform",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0079,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-bromomethane-hh-direct-rfc",
+    "substanceKey": "bromomethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.005,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-butadiene_1_3-hh-direct-iur",
+    "substanceKey": "butadiene_1_3",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00003,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-butadiene_1_3-hh-direct-rfc",
+    "substanceKey": "butadiene_1_3",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-cadmium-hh-direct-iur",
+    "substanceKey": "cadmium",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0018,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-carbon_disulfide-hh-direct-rfc",
+    "substanceKey": "carbon_disulfide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.7,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-cerium_oxide_and_cerium_compounds-hh-direct-rfc",
+    "substanceKey": "cerium_oxide_and_cerium_compounds",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0009,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-direct-iur",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0001,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-direct-rfc",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0007,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-direct-sf",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.35,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordane_technical-hh-food-sf",
+    "substanceKey": "chlordane_technical",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.35,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordecone_kepone-hh-direct-sf",
+    "substanceKey": "chlordecone_kepone",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 10,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlordecone_kepone-hh-food-sf",
+    "substanceKey": "chlordecone_kepone",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 10,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-chlorine_dioxide-hh-direct-rfc",
+    "substanceKey": "chlorine_dioxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chloro_1_1_difluoroethane_1-hh-direct-rfc",
+    "substanceKey": "chloro_1_1_difluoroethane_1",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 50,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chlorodifluoromethane-hh-direct-rfc",
+    "substanceKey": "chlorodifluoromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 50,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chloroethane-hh-direct-rfc",
+    "substanceKey": "chloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 10,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chloroform-hh-direct-iur",
+    "substanceKey": "chloroform",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000023,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-chloromethane-hh-direct-rfc",
+    "substanceKey": "chloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.09,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-chloroprene-hh-direct-iur",
+    "substanceKey": "chloroprene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0003,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-chloroprene-hh-direct-rfc",
+    "substanceKey": "chloroprene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-coke_oven_emissions-hh-direct-iur",
+    "substanceKey": "coke_oven_emissions",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00062,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-cyclohexane-hh-direct-rfc",
+    "substanceKey": "cyclohexane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 6,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-di_2_ethylhexyl_adipate-hh-direct-sf",
+    "substanceKey": "di_2_ethylhexyl_adipate",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0012,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-di_2_ethylhexyl_adipate-hh-food-sf",
+    "substanceKey": "di_2_ethylhexyl_adipate",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0012,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromo_3_chloropropane_1_2-hh-direct-rfc",
+    "substanceKey": "dibromo_3_chloropropane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dibromochloromethane-hh-direct-sf",
+    "substanceKey": "dibromochloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.084,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromochloromethane-hh-food-sf",
+    "substanceKey": "dibromochloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.084,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-direct-iur",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0006,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-direct-rfc",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.009,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-direct-sf",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dibromoethane_1_2-hh-food-sf",
+    "substanceKey": "dibromoethane_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroacetic_acid-hh-direct-sf",
+    "substanceKey": "dichloroacetic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.05,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroacetic_acid-hh-food-sf",
+    "substanceKey": "dichloroacetic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.05,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloroethylene_1_1-hh-direct-rfc",
+    "substanceKey": "dichloroethylene_1_1",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-direct-iur",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 1.7e-8,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-direct-rfc",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.6,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-direct-sf",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0033,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloromethane-hh-food-sf",
+    "substanceKey": "dichloromethane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0033,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloropropane_1_2-hh-direct-rfc",
+    "substanceKey": "dichloropropane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.004,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-direct-iur",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000004,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-direct-rfc",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-direct-sf",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichloropropene_1_3_cis_trans-hh-food-sf",
+    "substanceKey": "dichloropropene_1_3_cis_trans",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorvos-hh-direct-rfc",
+    "substanceKey": "dichlorvos",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0005,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-dichlorvos-hh-direct-sf",
+    "substanceKey": "dichlorvos",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.29,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dichlorvos-hh-food-sf",
+    "substanceKey": "dichlorvos",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.29,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dieldrin-hh-direct-iur",
+    "substanceKey": "dieldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0046,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-dieldrin-hh-direct-sf",
+    "substanceKey": "dieldrin",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 16,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-dieldrin-hh-food-sf",
+    "substanceKey": "dieldrin",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 16,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-diesel_engine_exhaust-hh-direct-rfc",
+    "substanceKey": "diesel_engine_exhaust",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.005,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-epichlorohydrin-hh-direct-iur",
+    "substanceKey": "epichlorohydrin",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000012,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-epichlorohydrin-hh-direct-rfc",
+    "substanceKey": "epichlorohydrin",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.001,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-epichlorohydrin-hh-direct-sf",
+    "substanceKey": "epichlorohydrin",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0099,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-epichlorohydrin-hh-food-sf",
+    "substanceKey": "epichlorohydrin",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0099,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-epoxybutane_1_2-hh-direct-rfc",
+    "substanceKey": "epoxybutane_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-ethyl_tertiary_butyl_ether_etbe-hh-direct-iur",
+    "substanceKey": "ethyl_tertiary_butyl_ether_etbe",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 8e-8,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-ethyl_tertiary_butyl_ether_etbe-hh-direct-rfc",
+    "substanceKey": "ethyl_tertiary_butyl_ether_etbe",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 40,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-ethylbenzene-hh-direct-rfc",
+    "substanceKey": "ethylbenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 1,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol-hh-direct-rfc",
+    "substanceKey": "ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 1.6,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-ethylene_oxide-hh-direct-iur",
+    "substanceKey": "ethylene_oxide",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.005,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-formaldehyde-hh-direct-iur",
+    "substanceKey": "formaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000011,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-formaldehyde-hh-direct-rfc",
+    "substanceKey": "formaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.007,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-furmecyclox-hh-direct-sf",
+    "substanceKey": "furmecyclox",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.03,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-furmecyclox-hh-food-sf",
+    "substanceKey": "furmecyclox",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.03,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor_epoxide-hh-direct-iur",
+    "substanceKey": "heptachlor_epoxide",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0026,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-heptachlor_epoxide-hh-direct-sf",
+    "substanceKey": "heptachlor_epoxide",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 9.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor_epoxide-hh-food-sf",
+    "substanceKey": "heptachlor_epoxide",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 9.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor-hh-direct-iur",
+    "substanceKey": "heptachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0013,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-heptachlor-hh-direct-sf",
+    "substanceKey": "heptachlor",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 4.5,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-heptachlor-hh-food-sf",
+    "substanceKey": "heptachlor",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 4.5,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorobenzene-hh-direct-iur",
+    "substanceKey": "hexachlorobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00046,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-hexachlorobenzene-hh-direct-sf",
+    "substanceKey": "hexachlorobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.6,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorobenzene-hh-food-sf",
+    "substanceKey": "hexachlorobenzene",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.6,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorobutadiene-hh-direct-iur",
+    "substanceKey": "hexachlorobutadiene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000022,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-hexachlorobutadiene-hh-direct-sf",
+    "substanceKey": "hexachlorobutadiene",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.078,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorobutadiene-hh-food-sf",
+    "substanceKey": "hexachlorobutadiene",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.078,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorocyclopentadiene-hh-direct-rfc",
+    "substanceKey": "hexachlorocyclopentadiene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd-hh-direct-iur",
+    "substanceKey": "hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 1.3,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd-hh-direct-sf",
+    "substanceKey": "hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 6200,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd-hh-food-sf",
+    "substanceKey": "hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 6200,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachloroethane-hh-direct-rfc",
+    "substanceKey": "hexachloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.03,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-hexachloroethane-hh-direct-sf",
+    "substanceKey": "hexachloroethane",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.04,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexachloroethane-hh-food-sf",
+    "substanceKey": "hexachloroethane",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.04,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-direct-sf",
+    "substanceKey": "hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.08,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-food-sf",
+    "substanceKey": "hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.08,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hydrazine_hydrazine_sulfate-hh-direct-iur",
+    "substanceKey": "hydrazine_hydrazine_sulfate",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0049,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-hydrazine_hydrazine_sulfate-hh-direct-sf",
+    "substanceKey": "hydrazine_hydrazine_sulfate",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hydrazine_hydrazine_sulfate-hh-food-sf",
+    "substanceKey": "hydrazine_hydrazine_sulfate",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-hydrogen_chloride-hh-direct-rfc",
+    "substanceKey": "hydrogen_chloride",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.02,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-hydrogen_cyanide_and_cyanide_salts-hh-direct-rfc",
+    "substanceKey": "hydrogen_cyanide_and_cyanide_salts",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0008,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-hydrogen_sulfide-hh-direct-rfc",
+    "substanceKey": "hydrogen_sulfide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.002,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-isophorone-hh-direct-sf",
+    "substanceKey": "isophorone",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.00095,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isophorone-hh-food-sf",
+    "substanceKey": "isophorone",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.00095,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-isopropylbenzene-hh-direct-rfc",
+    "substanceKey": "isopropylbenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.4,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-manganese-hh-direct-rfc",
+    "substanceKey": "manganese",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.00005,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-mercury_elemental-hh-direct-rfc",
+    "substanceKey": "mercury_elemental",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methanol-hh-direct-rfc",
+    "substanceKey": "methanol",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 20,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methyl_ethyl_ketone_mek-hh-direct-rfc",
+    "substanceKey": "methyl_ethyl_ketone_mek",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 5,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methyl_isobutyl_ketone_mibk-hh-direct-rfc",
+    "substanceKey": "methyl_isobutyl_ketone_mibk",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 3,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methyl_methacrylate-hh-direct-rfc",
+    "substanceKey": "methyl_methacrylate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.7,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methyl_tert_butyl_ether_mtbe-hh-direct-rfc",
+    "substanceKey": "methyl_tert_butyl_ether_mtbe",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 3,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-methylene_diphenyl_diisocyanate_monomeric_mdi_and_polymeric_mdi_pmdi-hh-direct-rfc",
+    "substanceKey": "methylene_diphenyl_diisocyanate_monomeric_mdi_and_polymeric_mdi_pmdi",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0006,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-n_hexane-hh-direct-rfc",
+    "substanceKey": "n_hexane",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.7,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-n_n_dimethylformamide-hh-direct-rfc",
+    "substanceKey": "n_n_dimethylformamide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.03,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-n_nitroso_di_n_butylamine-hh-direct-iur",
+    "substanceKey": "n_nitroso_di_n_butylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0016,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-n_nitroso_di_n_butylamine-hh-direct-sf",
+    "substanceKey": "n_nitroso_di_n_butylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 5.4,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitroso_di_n_butylamine-hh-food-sf",
+    "substanceKey": "n_nitroso_di_n_butylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 5.4,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitroso_n_methylethylamine-hh-direct-sf",
+    "substanceKey": "n_nitroso_n_methylethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 22,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitroso_n_methylethylamine-hh-food-sf",
+    "substanceKey": "n_nitroso_n_methylethylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 22,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodi_n_propylamine-hh-direct-sf",
+    "substanceKey": "n_nitrosodi_n_propylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 7,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodi_n_propylamine-hh-food-sf",
+    "substanceKey": "n_nitrosodi_n_propylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 7,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiethanolamine-hh-direct-sf",
+    "substanceKey": "n_nitrosodiethanolamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiethanolamine-hh-food-sf",
+    "substanceKey": "n_nitrosodiethanolamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiethylamine-hh-direct-iur",
+    "substanceKey": "n_nitrosodiethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.043,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiethylamine-hh-direct-sf",
+    "substanceKey": "n_nitrosodiethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 150,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiethylamine-hh-food-sf",
+    "substanceKey": "n_nitrosodiethylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 150,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodimethylamine-hh-direct-iur",
+    "substanceKey": "n_nitrosodimethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.014,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-n_nitrosodimethylamine-hh-direct-sf",
+    "substanceKey": "n_nitrosodimethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 51,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodimethylamine-hh-food-sf",
+    "substanceKey": "n_nitrosodimethylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 51,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiphenylamine-hh-direct-sf",
+    "substanceKey": "n_nitrosodiphenylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0049,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosodiphenylamine-hh-food-sf",
+    "substanceKey": "n_nitrosodiphenylamine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0049,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosopyrrolidine-hh-direct-iur",
+    "substanceKey": "n_nitrosopyrrolidine",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00061,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-n_nitrosopyrrolidine-hh-direct-sf",
+    "substanceKey": "n_nitrosopyrrolidine",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-n_nitrosopyrrolidine-hh-food-sf",
+    "substanceKey": "n_nitrosopyrrolidine",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-nickel_refinery_dust-hh-direct-iur",
+    "substanceKey": "nickel_refinery_dust",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00024,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-nickel_subsulfide-hh-direct-iur",
+    "substanceKey": "nickel_subsulfide",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00048,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-nitrobenzene-hh-direct-iur",
+    "substanceKey": "nitrobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00004,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-nitrobenzene-hh-direct-rfc",
+    "substanceKey": "nitrobenzene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.009,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-p_p_dichlorodiphenyl_dichloroethane_ddd-hh-direct-sf",
+    "substanceKey": "p_p_dichlorodiphenyl_dichloroethane_ddd",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.24,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-p_p_dichlorodiphenyl_dichloroethane_ddd-hh-food-sf",
+    "substanceKey": "p_p_dichlorodiphenyl_dichloroethane_ddd",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.24,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-p_p_dichlorodiphenyldichloroethylene_dde-hh-direct-sf",
+    "substanceKey": "p_p_dichlorodiphenyldichloroethylene_dde",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.34,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-p_p_dichlorodiphenyldichloroethylene_dde-hh-food-sf",
+    "substanceKey": "p_p_dichlorodiphenyldichloroethylene_dde",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.34,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachlorophenol-hh-direct-sf",
+    "substanceKey": "pentachlorophenol",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.4,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-pentachlorophenol-hh-food-sf",
+    "substanceKey": "pentachlorophenol",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.4,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-phosgene-hh-direct-rfc",
+    "substanceKey": "phosgene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-phosphine-hh-direct-rfc",
+    "substanceKey": "phosphine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-phosphoric_acid-hh-direct-rfc",
+    "substanceKey": "phosphoric_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.01,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-polychlorinated_biphenyls_pcbs-hh-direct-iur",
+    "substanceKey": "polychlorinated_biphenyls_pcbs",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0001,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-polychlorinated_biphenyls_pcbs-hh-direct-sf",
+    "substanceKey": "polychlorinated_biphenyls_pcbs",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-polychlorinated_biphenyls_pcbs-hh-food-sf",
+    "substanceKey": "polychlorinated_biphenyls_pcbs",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prochloraz-hh-direct-sf",
+    "substanceKey": "prochloraz",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.15,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-prochloraz-hh-food-sf",
+    "substanceKey": "prochloraz",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.15,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propionaldehyde-hh-direct-rfc",
+    "substanceKey": "propionaldehyde",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.008,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-propylene_glycol_monomethyl_ether_pgme-hh-direct-rfc",
+    "substanceKey": "propylene_glycol_monomethyl_ether_pgme",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-propylene_oxide-hh-direct-iur",
+    "substanceKey": "propylene_oxide",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000037,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-propylene_oxide-hh-direct-rfc",
+    "substanceKey": "propylene_oxide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.03,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-propylene_oxide-hh-direct-sf",
+    "substanceKey": "propylene_oxide",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.24,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-propylene_oxide-hh-food-sf",
+    "substanceKey": "propylene_oxide",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.24,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-quinoline-hh-direct-sf",
+    "substanceKey": "quinoline",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-quinoline-hh-food-sf",
+    "substanceKey": "quinoline",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 3,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-styrene-hh-direct-rfc",
+    "substanceKey": "styrene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 1,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-technical_hexachlorocyclohexane_t_hch-hh-direct-iur",
+    "substanceKey": "technical_hexachlorocyclohexane_t_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00051,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-technical_hexachlorocyclohexane_t_hch-hh-direct-sf",
+    "substanceKey": "technical_hexachlorocyclohexane_t_hch",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-technical_hexachlorocyclohexane_t_hch-hh-food-sf",
+    "substanceKey": "technical_hexachlorocyclohexane_t_hch",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.8,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tert_butyl_alcohol_tba-hh-direct-rfc",
+    "substanceKey": "tert_butyl_alcohol_tba",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 5,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-tert_butyl_alcohol_tba-hh-direct-sf",
+    "substanceKey": "tert_butyl_alcohol_tba",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0005,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tert_butyl_alcohol_tba-hh-food-sf",
+    "substanceKey": "tert_butyl_alcohol_tba",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0005,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_1_2-hh-direct-iur",
+    "substanceKey": "tetrachloroethane_1_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.0000074,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_1_2-hh-direct-sf",
+    "substanceKey": "tetrachloroethane_1_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.026,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_1_2-hh-food-sf",
+    "substanceKey": "tetrachloroethane_1_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.026,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_2_2-hh-direct-sf",
+    "substanceKey": "tetrachloroethane_1_1_2_2",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrachloroethane_1_1_2_2-hh-food-sf",
+    "substanceKey": "tetrachloroethane_1_1_2_2",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.2,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-tetrahydrofuran-hh-direct-rfc",
+    "substanceKey": "tetrahydrofuran",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-toluene-hh-direct-rfc",
+    "substanceKey": "toluene",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 5,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-toxaphene-hh-direct-iur",
+    "substanceKey": "toxaphene",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.00032,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-toxaphene-hh-direct-sf",
+    "substanceKey": "toxaphene",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-toxaphene-hh-food-sf",
+    "substanceKey": "toxaphene",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 1.1,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroacetic_acid-hh-direct-sf",
+    "substanceKey": "trichloroacetic_acid",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.07,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroacetic_acid-hh-food-sf",
+    "substanceKey": "trichloroacetic_acid",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.07,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroethane_1_1_2-hh-direct-iur",
+    "substanceKey": "trichloroethane_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "unit_risk_inhalation_per_ug_m3",
+    "value": 0.000016,
+    "unit": "per ug/m3"
+  },
+  {
+    "id": "pv-iris-trichloroethane_1_1_2-hh-direct-sf",
+    "substanceKey": "trichloroethane_1_1_2",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.057,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloroethane_1_1_2-hh-food-sf",
+    "substanceKey": "trichloroethane_1_1_2",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.057,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_2_3-hh-direct-rfc",
+    "substanceKey": "trichloropropane_1_2_3",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.0003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_2_3-hh-direct-sf",
+    "substanceKey": "trichloropropane_1_2_3",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.5,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trichloropropane_1_2_3-hh-food-sf",
+    "substanceKey": "trichloropropane_1_2_3",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.5,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-triethylamine-hh-direct-rfc",
+    "substanceKey": "triethylamine",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.007,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-trifluralin-hh-direct-sf",
+    "substanceKey": "trifluralin",
+    "pathway": "human-health-direct",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0077,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-trifluralin-hh-food-sf",
+    "substanceKey": "trifluralin",
+    "pathway": "human-health-food",
+    "inputKey": "sf_oral_per_mg_per_kg_bw_per_day",
+    "value": 0.0077,
+    "unit": "per mg/kg-bw/day"
+  },
+  {
+    "id": "pv-iris-vinyl_acetate-hh-direct-rfc",
+    "substanceKey": "vinyl_acetate",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.2,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-vinyl_bromide-hh-direct-rfc",
+    "substanceKey": "vinyl_bromide",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.003,
+    "unit": "mg/m3"
+  },
+  {
+    "id": "pv-iris-xylenes-hh-direct-rfc",
+    "substanceKey": "xylenes",
+    "pathway": "human-health-direct",
+    "inputKey": "rfc_inhalation_mg_per_m3",
+    "value": 0.1,
+    "unit": "mg/m3"
+  }
+]
