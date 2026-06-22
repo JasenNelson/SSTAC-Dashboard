@@ -25,6 +25,7 @@ function makeRow(over: Partial<MatrixMapMeasurementRow> = {}): MatrixMapMeasurem
     sample_station_id: 'STA-1',
     sample_event_id: 'event-a',
     event_date: '2024-06-15',
+    date_precision: 'exact',
     measurement_id: 'meas-a',
     medium: 'sediment',
     substance_id: 'sub-copper',

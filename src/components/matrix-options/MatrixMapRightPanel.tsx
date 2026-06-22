@@ -465,6 +465,11 @@ function FilterControls({
           />
         </label>
       </div>
+      {(filterState.date_from || filterState.date_to) && (
+        <p className="text-[10px] text-slate-400 dark:text-slate-500">
+          Undated observations are excluded while a date filter is set.
+        </p>
+      )}
       {activeFilters && (
         <button
           type="button"
@@ -807,7 +812,15 @@ function MeasurementTable({
                 <td className="px-2 py-2 font-semibold text-slate-800 dark:text-slate-100">
                   {row.sample_station_id}
                 </td>
-                <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.event_date}</td>
+                <td className="px-2 py-2 text-slate-600 dark:text-slate-300">
+                  {row.date_precision === 'undated' || row.event_date === null ? (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      undated
+                    </span>
+                  ) : (
+                    row.event_date
+                  )}
+                </td>
                 <td className="px-2 py-2 capitalize text-slate-600 dark:text-slate-300">{row.medium}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.substance_display_name}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{formatCell(row.value)}</td>
@@ -875,7 +888,13 @@ function normalizeMeasurementRow(value: unknown): MeasurementRow | null {
     sample_display_name: stringField(row.sample_display_name) || stringField(row.display_name) || row.sample_id,
     sample_station_id: stringField(row.sample_station_id) || stringField(row.station_id) || row.sample_id,
     sample_event_id: nullableString(row.sample_event_id),
-    event_date: stringField(row.event_date),
+    // nullableString (NOT stringField): an undated row must stay null so the filter null-guard works.
+    event_date: nullableString(row.event_date),
+    // Honor the RPC's date_precision when present; otherwise derive it (null event_date -> undated).
+    // This keeps the UI correct even before the date_precision column is added to the RPC.
+    date_precision:
+      nullableString(row.date_precision) ??
+      (nullableString(row.event_date) === null ? 'undated' : 'exact'),
     measurement_id: nullableString(row.measurement_id),
     medium: stringField(row.medium),
     substance_id: nullableString(row.substance_id),
@@ -917,7 +936,18 @@ function createFilterKey(filterState: MatrixMapFilterState) {
 }
 
 function getMeasurementRowKey(row: MeasurementRow) {
-  return row.measurement_id ?? `${row.sample_id}-${row.substance_id ?? row.substance_display_name}-${row.event_date}`;
+  if (row.measurement_id) return row.measurement_id;
+  // No measurement_id (defensive fallback): event_date is null for undated rows, so use an explicit
+  // sentinel plus the event/unit/value discriminators to avoid React-key collisions among multiple
+  // undated rows for the same sample + substance.
+  return [
+    row.sample_id,
+    row.substance_id ?? row.substance_display_name,
+    row.event_date ?? 'undated',
+    row.sample_event_id ?? '',
+    row.unit ?? '',
+    row.value ?? '',
+  ].join('-');
 }
 
 function stringField(value: unknown) {

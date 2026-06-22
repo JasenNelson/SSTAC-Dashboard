@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4463,
-        "source": "npm run test:ci on test/evidence-library-pagination-integration-2026-06-22 (2026-06-22): 4463 = 4460 + 3 new EvidenceLibrary.pagination integration tests (60-row catalog mock proving only one page of rows renders + the pager navigates + disabled-state). Prior 4460 = 4451 + 9 evidenceLibraryPagination unit tests. Confirmed clean via npm run test:ci.",
+        "value": 4467,
+        "source": "npm run test:ci on feat/matrix-map-undated-consumer-2026-06-22 (2026-06-22): 4467 = 4463 + 4 new matrix-map undated-consumer tests (3 filter-measurements null-guard cases + 1 export-route undated case). Prior 4463 = 4460 + 3 EvidenceLibrary.pagination integration tests. Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-22"
       },
       "playwright_test_count": {

@@ -29,8 +29,11 @@ export function filterMeasurementRows(
     if (filterState.qa === 'detected' && row.censored) return false;
     if (filterState.qa === 'censored' && !row.censored) return false;
     if (filterState.classification !== 'all' && row.classification !== filterState.classification) return false;
-    if (filterState.date_from && row.event_date < filterState.date_from) return false;
-    if (filterState.date_to && row.event_date > filterState.date_to) return false;
+    // Undated rows (event_date === null) are EXCLUDED whenever a date filter is active -- the
+    // null-guard is explicit so the comparison never relies on accidental null coercion.
+    const eventDate = row.event_date;
+    if (filterState.date_from && (eventDate === null || eventDate < filterState.date_from)) return false;
+    if (filterState.date_to && (eventDate === null || eventDate > filterState.date_to)) return false;
     return true;
   });
 }

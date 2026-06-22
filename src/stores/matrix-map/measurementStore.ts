@@ -9,7 +9,10 @@ export interface MatrixMapMeasurementRow {
   sample_display_name: string;
   sample_station_id: string;
   sample_event_id: string | null;
-  event_date: string;
+  // event_date is null for "undated" rows (event_date IS NULL in the DB, date_precision='undated').
+  // Consumers MUST null-guard before any date comparison (see filter-measurements.ts).
+  event_date: string | null;
+  date_precision: 'exact' | 'undated' | string;
   measurement_id: string | null;
   medium: string;
   substance_id: string | null;
