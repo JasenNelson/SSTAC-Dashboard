@@ -197,9 +197,6 @@ export function MatrixMapRightPanel({
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const selectedSamples = initialMapData.visible_samples.filter((sample) =>
-    selectedSampleIds.includes(sample.id),
-  );
   const activeFilters = hasActiveMatrixMapFilters(filterState);
   const substanceOptions = useMemo(() => extractSubstanceOptions(rows), [rows]);
   // availableMedia is computed from UNFILTERED rows so selecting one medium
@@ -283,7 +280,7 @@ export function MatrixMapRightPanel({
           <div className="flex h-full min-h-0 flex-col gap-3">
             <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/30">
               <p className="text-xs text-slate-500 dark:text-slate-400">
-                {selectedSamples.length} selected samples, {filteredRows.length} matching measurements
+                {selectedSampleIds.length} selected samples, {filteredRows.length} matching measurements
               </p>
             </div>
 
