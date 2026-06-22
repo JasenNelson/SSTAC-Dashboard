@@ -21,6 +21,7 @@ Plain ASCII only.
 
 from __future__ import annotations
 
+import argparse
 import sys
 from pathlib import Path
 
@@ -32,8 +33,21 @@ MAX_BYTES = 1_500_000   # hard cap; if a single INSERT exceeds this we keep it w
 
 
 def main() -> int:
-    if not SOURCE.exists():
-        print(f"Source not found: {SOURCE}", file=sys.stderr)
+    parser = argparse.ArgumentParser(
+        description="Split the BN-RRM ETL output SQL into paste-sized chunks.",
+    )
+    parser.add_argument(
+        "--source",
+        type=Path,
+        default=SOURCE,
+        help="Path to the ETL output .sql to split "
+             "(default: etl_bnrrm_to_supabase_output.sql).",
+    )
+    args = parser.parse_args()
+    source = args.source
+
+    if not source.exists():
+        print(f"Source not found: {source}", file=sys.stderr)
         return 1
 
     OUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -41,7 +55,7 @@ def main() -> int:
     for old in OUT_DIR.glob("*.sql"):
         old.unlink()
 
-    text = SOURCE.read_text(encoding="utf-8")
+    text = source.read_text(encoding="utf-8")
     lines = text.split("\n")
 
     # Extract the file-level header comment block (top of file up to first BEGIN;)
@@ -127,7 +141,7 @@ def main() -> int:
             f"purpose-hint={purpose}"
         )
 
-    print(f"Source: {SOURCE} ({SOURCE.stat().st_size / 1024:.1f} KB)")
+    print(f"Source: {source} ({source.stat().st_size / 1024:.1f} KB)")
     print(f"Total statements: {len(statements)}")
     print(f"Chunks emitted: {len(chunks)}")
     print(f"Output dir: {OUT_DIR}")

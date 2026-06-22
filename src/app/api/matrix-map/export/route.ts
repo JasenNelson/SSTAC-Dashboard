@@ -38,7 +38,8 @@ interface ExportPayload {
 interface MeasurementRow {
   sample_id: string;
   sample_station_id: string;
-  event_date: string;
+  event_date: string | null;
+  date_precision: 'exact' | 'undated' | string;
   medium: string;
   substance_id: string | null;
   substance_key: string | null;
@@ -370,8 +371,11 @@ async function buildMeasurementsExport(
       filters.classification !== 'all' &&
       row.classification !== filters.classification
     ) return false;
-    if (filters.date_from && row.event_date < filters.date_from) return false;
-    if (filters.date_to && row.event_date > filters.date_to) return false;
+    // Undated rows (event_date === null) are excluded whenever a date filter is active (mirrors
+    // filter-measurements.ts); the null-guard is explicit, never relying on null coercion.
+    const eventDate = row.event_date;
+    if (filters.date_from && (eventDate === null || eventDate < filters.date_from)) return false;
+    if (filters.date_to && (eventDate === null || eventDate > filters.date_to)) return false;
     return true;
   });
 
@@ -380,6 +384,7 @@ async function buildMeasurementsExport(
       'sample_id',
       'sample_station_id',
       'event_date',
+      'date_precision',
       'medium',
       'substance_id',
       'substance_key',
@@ -397,7 +402,8 @@ async function buildMeasurementsExport(
     ...rows.map((row) => [
       row.sample_id,
       row.sample_station_id,
-      row.event_date,
+      row.event_date ?? '',
+      row.date_precision,
       row.medium,
       row.substance_id ?? '',
       row.substance_key ?? '',
@@ -453,7 +459,11 @@ function normalizeMeasurements(value: unknown): MeasurementRow[] {
     .map((item) => ({
       sample_id: stringField(item.sample_id),
       sample_station_id: stringField(item.sample_station_id) || stringField(item.station_id),
-      event_date: stringField(item.event_date),
+      // nullableString (NOT stringField): undated rows stay null so the date null-guard above works.
+      event_date: nullableString(item.event_date),
+      date_precision:
+        nullableString(item.date_precision) ??
+        (nullableString(item.event_date) === null ? 'undated' : 'exact'),
       medium: stringField(item.medium),
       substance_id: nullableString(item.substance_id),
       substance_key: nullableString(item.substance_key),

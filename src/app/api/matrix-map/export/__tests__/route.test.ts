@@ -170,6 +170,92 @@ describe('POST /api/matrix-map/export', () => {
     expect(serviceAuditPayload).not.toHaveProperty('client_ip');
   });
 
+  it('excludes undated rows under an active date filter and emits the date_precision column', async () => {
+    const roleQuery = chain({ data: { role: 'matrix_admin' }, error: null });
+    const rpc = vi.fn(async () => ({
+      data: [
+        {
+          sample_id: SAMPLE_ID,
+          sample_station_id: 'STA-1',
+          event_date: '2026-01-02',
+          date_precision: 'exact',
+          medium: 'sediment',
+          substance_id: COPPER_ID,
+          substance_key: 'copper',
+          substance_display_name: 'Copper',
+          value: 12.5,
+          unit: 'mg/kg',
+          detection_limit: null,
+          qualifier: null,
+          censored: false,
+          coordinate_quality_tier: 'high',
+          classification: 'reference',
+          source_dra_id: 'dra-1',
+          source_dra_title: 'Source DRA',
+        },
+        {
+          sample_id: SAMPLE_ID,
+          sample_station_id: 'STA-1',
+          event_date: null,
+          date_precision: 'undated',
+          medium: 'sediment',
+          substance_id: LEAD_ID,
+          substance_key: 'lead',
+          substance_display_name: 'Lead',
+          value: 3,
+          unit: 'mg/kg',
+          detection_limit: null,
+          qualifier: null,
+          censored: false,
+          coordinate_quality_tier: 'high',
+          classification: 'reference',
+          source_dra_id: 'dra-1',
+          source_dra_title: 'Source DRA',
+        },
+      ],
+      error: null,
+    }));
+    const authClient = {
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+          error: null,
+        })),
+      },
+      from: vi.fn(() => roleQuery),
+      schema: vi.fn(() => ({ rpc })),
+    };
+    const serviceClient = {
+      schema: vi.fn(() => ({
+        from: vi.fn((table: string) => ({ insert: vi.fn(async () => ({ error: null })), _t: table })),
+      })),
+    };
+    mocks.createServerClient.mockReturnValue(authClient);
+    mocks.createClient.mockReturnValue(serviceClient);
+
+    // (1) With a date filter active, the undated Lead row is excluded; only dated Copper exports.
+    const filtered = await POST(makeRequest({
+      export_type: 'measurements',
+      selected_sample_ids: [SAMPLE_ID],
+      filters: { date_from: '2026-01-01' },
+    }));
+    expect(filtered.status).toBe(200);
+    const filteredCsv = await filtered.text();
+    expect(filteredCsv).toContain('date_precision'); // header column present
+    expect(filteredCsv).toContain('Copper');
+    expect(filteredCsv).not.toContain('Lead');
+
+    // (2) With no date filter, the undated row IS included and carries date_precision=undated.
+    const unfiltered = await POST(makeRequest({
+      export_type: 'measurements',
+      selected_sample_ids: [SAMPLE_ID],
+      filters: {},
+    }));
+    const unfilteredCsv = await unfiltered.text();
+    expect(unfilteredCsv).toContain('Lead');
+    expect(unfilteredCsv).toContain('undated');
+  });
+
   it('rejects invalid sample ids before querying Supabase', async () => {
     const authClient = {
       auth: {

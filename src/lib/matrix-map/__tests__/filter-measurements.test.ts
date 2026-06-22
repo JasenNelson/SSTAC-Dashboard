@@ -22,6 +22,7 @@ function makeRow(over: Partial<MatrixMapMeasurementRow> = {}): MatrixMapMeasurem
     sample_station_id: 'STA-1',
     sample_event_id: 'event-a',
     event_date: '2024-06-15',
+    date_precision: 'exact',
     measurement_id: 'meas-a',
     medium: 'sediment',
     substance_id: 'sub-copper',
@@ -218,6 +219,35 @@ describe('filterMeasurementRows', () => {
     const result = filterMeasurementRows(rows, filter);
     expect(result).toHaveLength(2);
     expect(result.map((r) => r.event_date)).toEqual(['2024-03-01', '2024-06-15']);
+  });
+
+  it('excludes undated rows (event_date null) when date_from is active', () => {
+    const rows = [
+      makeRow({ event_date: null, date_precision: 'undated' }),
+      makeRow({ event_date: '2024-06-15' }),
+    ];
+    const result = filterMeasurementRows(rows, { ...EMPTY_FILTER, date_from: '2024-01-01' });
+    expect(result).toHaveLength(1);
+    expect(result[0].event_date).toBe('2024-06-15');
+  });
+
+  it('excludes undated rows when date_to is active', () => {
+    const rows = [
+      makeRow({ event_date: null, date_precision: 'undated' }),
+      makeRow({ event_date: '2024-06-15' }),
+    ];
+    const result = filterMeasurementRows(rows, { ...EMPTY_FILTER, date_to: '2024-12-31' });
+    expect(result).toHaveLength(1);
+    expect(result[0].event_date).toBe('2024-06-15');
+  });
+
+  it('INCLUDES undated rows when no date filter is active', () => {
+    const rows = [
+      makeRow({ event_date: null, date_precision: 'undated' }),
+      makeRow({ event_date: '2024-06-15' }),
+    ];
+    const result = filterMeasurementRows(rows, EMPTY_FILTER);
+    expect(result).toHaveLength(2);
   });
 
   // ---------------------------------------------------------------------------
