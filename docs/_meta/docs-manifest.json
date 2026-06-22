@@ -85,9 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4451,
-        "source": "npm run test:ci on feat/mo-evidence-note-backport-2026-06-21 (2026-06-21): 4451 = 4448 + 3 new apply-qa-promotion tests (evidence-note backport: repair-only-path under both --canonical variants; fail-safe that a partially-approved row is NOT stamped; fail-closed that an already-approved DRIFTED row is rejected -- the last two per codex P2 rounds). The carcinogen/hc-trv mirror tests added assertions into existing it() blocks, 0 new cases. Confirmed clean via npm run test:ci.",
-        "last_verified": "2026-06-21"
+        "value": 4460,
+        "source": "npm run test:ci on feat/mo-evidence-library-pagination-2026-06-22 (2026-06-22): 4460 = 4451 + 9 new evidenceLibraryPagination unit tests (Values-table pagination: window math, clamping, partial/empty pages). The EvidenceLibrary component suite (58) is unchanged -- the 10-row fixture is below the page size so the un-paged path still renders all rows. Prior 4451 = 4448 + 3 apply-qa evidence-note/value-level tests. Confirmed clean via npm run test:ci.",
+        "last_verified": "2026-06-22"
       },
       "playwright_test_count": {
         "status": "verified",
