@@ -27,6 +27,8 @@ function makeRecord(id, i, overrides = {}) {
     evidence_support_status: 'approved_source_backed',
     qa_status: 'needs_review',
     canonical_source_status: 'needs_direct_source_check',
+    applicability: 'TRV candidate (needs review before default use).',
+    review_notes: 'robot-extracted 2026-05-29; verify against the live source.',
     evidence_items: [
       {
         source_id: 'src-x',
@@ -154,9 +156,11 @@ describe('apply-qa-promotion: idempotency', () => {
     const second = applyPromotion(records, snapshotIndex, APPLY_OPTS);
     expect(second.promote).toHaveLength(0);
     expect(second.skip).toHaveLength(20);
-    // The note is stamped exactly once across two runs (the marker guard prevents double-stamping).
-    const ev0 = records.find((r) => r.parameter_value_id === TARGET_IDS[0]).evidence_items[0];
-    expect(ev0.note.match(/Evidence PROMOTED to approved/g)).toHaveLength(1);
+    // The note + value-level fields are each stamped exactly once across two runs (marker guard).
+    const r0 = records.find((r) => r.parameter_value_id === TARGET_IDS[0]);
+    expect(r0.evidence_items[0].note.match(/Evidence PROMOTED to approved/g)).toHaveLength(1);
+    expect(r0.applicability.match(/PROMOTED to approved/g)).toHaveLength(1);
+    expect(r0.review_notes.match(/PROMOTED to approved/g)).toHaveLength(1);
   });
 });
 
@@ -181,6 +185,10 @@ describe('apply-qa-promotion: field edits', () => {
       const qi = keys.indexOf('qa_status');
       expect(keys[qi + 1]).toBe('reviewed_by');
       expect(keys[qi + 2]).toBe('reviewed_at');
+      // Value-level provenance is stamped too; under verified the stamp asserts source verified.
+      expect(r.applicability, id).toContain('PROMOTED to approved');
+      expect(r.review_notes, id).toContain('PROMOTED to approved');
+      expect(r.applicability, id).toContain('source direct_source_verified');
     }
   });
   it('canonical=keep leaves canonical_source_status unchanged', () => {
@@ -192,6 +200,8 @@ describe('apply-qa-promotion: field edits', () => {
       expect(r.canonical_source_status).toBe('needs_direct_source_check');
       // The note stamp fires independent of --canonical (the caveat is superseded by HITL approval).
       expect(r.evidence_items[0].note, id).toContain('Evidence PROMOTED to approved');
+      // The value-level stamp under keep is honest that direct-source verification is still pending.
+      expect(r.applicability, id).toContain('direct-source verification still pending');
     }
   });
   it('never mutates a non-target record', () => {
@@ -226,6 +236,9 @@ describe('apply-qa-promotion: evidence-note repair on already-approved rows', ()
       for (const id of TARGET_IDS) {
         const r = records.find((x) => x.parameter_value_id === id);
         expect(r.evidence_items[0].note, id).toContain('Evidence PROMOTED to approved');
+        // Value-level provenance is repaired in the same pass.
+        expect(r.applicability, id).toContain('PROMOTED to approved');
+        expect(r.review_notes, id).toContain('PROMOTED to approved');
         // canonical_source_status is never read or written by the repair pass -> stays as-was.
         expect(r.canonical_source_status, id).toBe('direct_source_verified');
         expect(r.qa_status, id).toBe('approved');
@@ -254,9 +267,10 @@ describe('apply-qa-promotion: evidence-note repair on already-approved rows', ()
     delete partial.evidence_items[0].reviewed_at;
 
     const res = applyPromotion(records, snapshotIndex, APPLY_OPTS);
-    // The partial row is NOT stamped (we never assert approval on unapproved evidence).
+    // The partial row is NOT stamped on EITHER the note or the value-level fields (no false approval).
     expect(res.repaired).not.toContain(partialId);
     expect(partial.evidence_items[0].note).not.toContain('Evidence PROMOTED to approved');
+    expect(partial.applicability).not.toContain('PROMOTED to approved');
     // The fully-approved rows ARE still repaired.
     expect(res.repaired).toContain(TARGET_IDS[1]);
   });
