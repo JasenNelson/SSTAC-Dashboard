@@ -114,25 +114,24 @@ describe('filterMeasurementRows', () => {
   // QA filter
   // ---------------------------------------------------------------------------
 
-  it('qa=detected excludes censored rows', () => {
+  it('qa=detected keeps only confirmed detects (censored===false); excludes censored AND null', () => {
     const rows = [
       makeRow({ censored: false }),
       makeRow({ censored: true }),
       makeRow({ censored: null }),
     ];
     const filter = { ...EMPTY_FILTER, qa: 'detected' as const };
-    // censored=null is truthy? No -- null is falsy in JS, so !null=true, so !row.censored=true
-    // meaning null rows pass the qa=detected filter (same as detected).
     const result = filterMeasurementRows(rows, filter);
-    // censored===true is excluded; censored===false and censored===null pass.
-    expect(result).toHaveLength(2);
-    expect(result.every((r) => !r.censored)).toBe(true);
+    // Only the explicit detect passes; an unknown (null) censored status is NOT a detect.
+    expect(result).toHaveLength(1);
+    expect(result[0].censored).toBe(false);
   });
 
-  it('qa=censored excludes detected rows', () => {
+  it('qa=censored keeps only confirmed censored (censored===true); excludes detected AND null', () => {
     const rows = [
       makeRow({ censored: false }),
       makeRow({ censored: true }),
+      makeRow({ censored: null }),
     ];
     const filter = { ...EMPTY_FILTER, qa: 'censored' as const };
     const result = filterMeasurementRows(rows, filter);

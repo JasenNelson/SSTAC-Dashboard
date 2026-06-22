@@ -26,8 +26,10 @@ export function filterMeasurementRows(
   return rows.filter((row) => {
     if (substanceIds.size > 0 && (!row.substance_id || !substanceIds.has(row.substance_id))) return false;
     if (mediums.size > 0 && !mediums.has(row.medium as MatrixMapMedium)) return false;
-    if (filterState.qa === 'detected' && row.censored) return false;
-    if (filterState.qa === 'censored' && !row.censored) return false;
+    // censored is boolean | null. Use explicit comparisons so a null-censored row (unknown status)
+    // is excluded from BOTH "detected" and "censored" -- never silently counted as a detect.
+    if (filterState.qa === 'detected' && row.censored !== false) return false;
+    if (filterState.qa === 'censored' && row.censored !== true) return false;
     if (filterState.classification !== 'all' && row.classification !== filterState.classification) return false;
     // Undated rows (event_date === null) are EXCLUDED whenever a date filter is active -- the
     // null-guard is explicit so the comparison never relies on accidental null coercion.

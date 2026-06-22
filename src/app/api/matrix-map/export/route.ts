@@ -364,8 +364,10 @@ async function buildMeasurementsExport(
     if (substanceIdSet.size > 0 && (!row.substance_id || !substanceIdSet.has(row.substance_id))) return false;
     if (mediumSet.size > 0 && !mediumSet.has(row.medium as Exclude<MediumFilter, 'all'>)) return false;
     if (filters.medium && filters.medium !== 'all' && row.medium !== filters.medium) return false;
-    if (filters.qa === 'detected' && row.censored) return false;
-    if (filters.qa === 'censored' && !row.censored) return false;
+    // censored is boolean | null; use explicit comparisons so a null-censored row is excluded from
+    // BOTH "detected" and "censored" (mirrors filter-measurements.ts), never counted as a detect.
+    if (filters.qa === 'detected' && row.censored !== false) return false;
+    if (filters.qa === 'censored' && row.censored !== true) return false;
     if (
       filters.classification &&
       filters.classification !== 'all' &&
