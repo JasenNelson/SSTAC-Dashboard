@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { VALUES_PAGE_SIZE, computeValuesPagination } from './evidenceLibraryPagination';
 import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
@@ -456,6 +457,58 @@ function AllScaffoldsBanner() {
       source verification. Adjust filters to check for approved source-backed
       defaults.
     </div>
+  );
+}
+
+// Accessible pager for the Values table. Real <button>s + a <nav> landmark; disabled at the ends.
+// VALUES_PAGE_SIZE + the page math live in ./evidenceLibraryPagination (pure + unit-tested).
+function ValuesPagination({
+  page,
+  pageCount,
+  pageSize,
+  totalRows,
+  onPrev,
+  onNext,
+}: {
+  page: number;
+  pageCount: number;
+  pageSize: number;
+  totalRows: number;
+  onPrev: () => void;
+  onNext: () => void;
+}) {
+  const start = page * pageSize + 1;
+  const end = Math.min((page + 1) * pageSize, totalRows);
+  return (
+    <nav
+      aria-label="Parameter values pagination"
+      className="flex items-center justify-between gap-2 px-1 py-2 text-xs text-slate-600 dark:text-slate-300"
+    >
+      <span>
+        Rows {start}-{end} of {totalRows}
+      </span>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          onClick={onPrev}
+          disabled={page <= 0}
+          className="rounded border border-slate-300 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+        >
+          Prev
+        </button>
+        <span>
+          Page {page + 1} of {pageCount}
+        </span>
+        <button
+          type="button"
+          onClick={onNext}
+          disabled={page >= pageCount - 1}
+          className="rounded border border-slate-300 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+        >
+          Next
+        </button>
+      </div>
+    </nav>
   );
 }
 
@@ -3069,6 +3122,13 @@ export default function EvidenceLibrary({
   const [isAdmin, setIsAdmin] = useState(false);
   const [triageState, setTriageState] = useState<Record<string, SourceLeadTriageRow>>({});
   const [triageRefreshKey, setTriageRefreshKey] = useState(0);
+  // Values-table pagination. Reset to the first page whenever the filter inputs change BY VALUE
+  // (not object identity) so a parent that recreates `filters` each render does not pin us to page 1.
+  const [valuesPage, setValuesPage] = useState(0);
+  const valuesPageResetKey = `${viewMode}|${defaultPolicyStatusFilter ?? ''}|${JSON.stringify(filters)}`;
+  useEffect(() => {
+    setValuesPage(0);
+  }, [valuesPageResetKey]);
 
   // Resizable right panel state. Default to the SSR-safe constant; hydrate from localStorage
   // in a mount-only effect to avoid an SSR/CSR hydration mismatch (matrix-map pattern).
@@ -3337,6 +3397,22 @@ export default function EvidenceLibrary({
         ),
       )
     : valuesForView;
+  // Page the visible values so the table renders at most VALUES_PAGE_SIZE rows. The clamped page
+  // guards against a stale page index after the filter set shrinks (the reset effect also fires,
+  // but clamping avoids a one-render flash of an out-of-range empty page).
+  const valuesPagination = computeValuesPagination(
+    visibleValues.length,
+    valuesPage,
+    VALUES_PAGE_SIZE,
+  );
+  const {
+    pageCount: valuesPageCount,
+    clampedPage: clampedValuesPage,
+    isPaged: isValuesPaged,
+  } = valuesPagination;
+  const pagedVisibleValues = isValuesPaged
+    ? visibleValues.slice(valuesPagination.sliceStart, valuesPagination.sliceEnd)
+    : visibleValues;
   const visibleValueGroups = defaultPolicyStatusFilter
     ? library.valueGroups.filter((group) =>
         decisionMatchesDefaultPolicyStatus(
@@ -3923,7 +3999,7 @@ export default function EvidenceLibrary({
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {visibleValues.map((row) => {
+                {pagedVisibleValues.map((row) => {
                   const review = getParameterValueReviewDisposition(
                     row.record,
                     row.sources,
@@ -4086,6 +4162,20 @@ export default function EvidenceLibrary({
               </tbody>
             </table>
           </div>
+          {isValuesPaged && (
+            <ValuesPagination
+              page={clampedValuesPage}
+              pageCount={valuesPageCount}
+              pageSize={VALUES_PAGE_SIZE}
+              totalRows={visibleValues.length}
+              onPrev={() =>
+                setValuesPage(Math.max(0, clampedValuesPage - 1))
+              }
+              onNext={() =>
+                setValuesPage(Math.min(valuesPageCount - 1, clampedValuesPage + 1))
+              }
+            />
+          )}
         </section>
       )}
 
