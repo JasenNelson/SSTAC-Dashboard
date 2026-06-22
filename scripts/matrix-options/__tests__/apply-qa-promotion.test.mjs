@@ -129,6 +129,13 @@ describe('apply-qa-promotion: planPromotion preconditions (fail-closed)', () => 
     records.find((r) => r.parameter_value_id === TARGET_IDS[4]).value = 2; // anchor epa_values=[1]
     expect(() => planPromotion(records, snapshotIndex, APPLY_OPTS)).toThrow(/within 2%|drifted/);
   });
+  it('fails closed when an ALREADY-APPROVED target value has drifted (repair path is snapshot-guarded)', () => {
+    const { records, snapshotIndex } = makeFixture();
+    const r = records.find((x) => x.parameter_value_id === TARGET_IDS[5]);
+    r.qa_status = 'approved'; // routed to skip -> the snapshot gate still applies (repair writes it)
+    r.value = 2; // anchor epa_values=[1] -> drifted from the EPA source
+    expect(() => planPromotion(records, snapshotIndex, APPLY_OPTS)).toThrow(/within 2%|drifted/);
+  });
 });
 
 describe('apply-qa-promotion: idempotency', () => {
@@ -147,6 +154,9 @@ describe('apply-qa-promotion: idempotency', () => {
     const second = applyPromotion(records, snapshotIndex, APPLY_OPTS);
     expect(second.promote).toHaveLength(0);
     expect(second.skip).toHaveLength(20);
+    // The note is stamped exactly once across two runs (the marker guard prevents double-stamping).
+    const ev0 = records.find((r) => r.parameter_value_id === TARGET_IDS[0]).evidence_items[0];
+    expect(ev0.note.match(/Evidence PROMOTED to approved/g)).toHaveLength(1);
   });
 });
 
@@ -164,6 +174,8 @@ describe('apply-qa-promotion: field edits', () => {
       expect(ev.qa_status).toBe('approved');
       expect(ev.reviewed_by).toBe('J. Nelson');
       expect(ev.reviewed_at).toBe('2026-06-04');
+      // A promoted evidence item must not keep a "pending direct-source verification" note.
+      expect(ev.note, id).toContain('Evidence PROMOTED to approved');
       // reviewed_by/reviewed_at sit immediately AFTER qa_status (canonical schema order).
       const keys = Object.keys(ev);
       const qi = keys.indexOf('qa_status');
@@ -178,6 +190,8 @@ describe('apply-qa-promotion: field edits', () => {
       const r = records.find((x) => x.parameter_value_id === id);
       expect(r.qa_status).toBe('approved');
       expect(r.canonical_source_status).toBe('needs_direct_source_check');
+      // The note stamp fires independent of --canonical (the caveat is superseded by HITL approval).
+      expect(r.evidence_items[0].note, id).toContain('Evidence PROMOTED to approved');
     }
   });
   it('never mutates a non-target record', () => {
@@ -186,5 +200,64 @@ describe('apply-qa-promotion: field edits', () => {
     applyPromotion(records, snapshotIndex, APPLY_OPTS);
     const after = records.find((r) => r.parameter_value_id === 'pv-other-untouched');
     expect(after).toEqual(before);
+  });
+});
+
+describe('apply-qa-promotion: evidence-note repair on already-approved rows', () => {
+  // The backport must repair the contradiction (approved row + "pending" evidence note) on rows
+  // that were promoted by a PRIOR run, independent of the --canonical choice, and stay idempotent.
+  it('stamps a stale note on already-approved rows under BOTH canonical variants; canonical is a no-op', () => {
+    for (const canonical of ['verified', 'keep']) {
+      const { records, snapshotIndex } = makeFixture();
+      // Simulate a prior promotion: targets already approved + direct_source_verified, but their
+      // evidence note still carries the stale robot-extraction "pending" caveat (the contradiction).
+      for (const r of records) {
+        if (!TARGET_IDS.includes(r.parameter_value_id)) continue;
+        r.qa_status = 'approved';
+        r.canonical_source_status = 'direct_source_verified';
+        r.evidence_items[0].qa_status = 'approved';
+        r.evidence_items[0].reviewed_by = 'J. Nelson';
+        r.evidence_items[0].reviewed_at = '2026-06-04';
+        r.evidence_items[0].note = 'Robot-extracted; pending direct-source verification.';
+      }
+      const res = applyPromotion(records, snapshotIndex, { ...APPLY_OPTS, canonical });
+      expect(res.promote, canonical).toHaveLength(0); // nothing to promote -- repair-only
+      expect(res.repaired, canonical).toHaveLength(20);
+      for (const id of TARGET_IDS) {
+        const r = records.find((x) => x.parameter_value_id === id);
+        expect(r.evidence_items[0].note, id).toContain('Evidence PROMOTED to approved');
+        // canonical_source_status is never read or written by the repair pass -> stays as-was.
+        expect(r.canonical_source_status, id).toBe('direct_source_verified');
+        expect(r.qa_status, id).toBe('approved');
+      }
+      // Idempotent: a second repair run stamps nothing more.
+      const second = applyPromotion(records, snapshotIndex, { ...APPLY_OPTS, canonical });
+      expect(second.repaired, canonical).toHaveLength(0);
+    }
+  });
+
+  it('does NOT stamp a row whose evidence is only partially approved (fail-safe, no false approval)', () => {
+    const { records, snapshotIndex } = makeFixture();
+    const partialId = TARGET_IDS[0];
+    for (const r of records) {
+      if (!TARGET_IDS.includes(r.parameter_value_id)) continue;
+      r.qa_status = 'approved'; // top-level approved -> planPromotion routes it to skip
+      r.evidence_items[0].qa_status = 'approved';
+      r.evidence_items[0].reviewed_by = 'J. Nelson';
+      r.evidence_items[0].reviewed_at = '2026-06-04';
+      r.evidence_items[0].note = 'Robot-extracted; pending direct-source verification.';
+    }
+    // Drift ONE row into a partial state: its evidence is still needs_review (NOT approved/attested).
+    const partial = records.find((r) => r.parameter_value_id === partialId);
+    partial.evidence_items[0].qa_status = 'needs_review';
+    delete partial.evidence_items[0].reviewed_by;
+    delete partial.evidence_items[0].reviewed_at;
+
+    const res = applyPromotion(records, snapshotIndex, APPLY_OPTS);
+    // The partial row is NOT stamped (we never assert approval on unapproved evidence).
+    expect(res.repaired).not.toContain(partialId);
+    expect(partial.evidence_items[0].note).not.toContain('Evidence PROMOTED to approved');
+    // The fully-approved rows ARE still repaired.
+    expect(res.repaired).toContain(TARGET_IDS[1]);
   });
 });
