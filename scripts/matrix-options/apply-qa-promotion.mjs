@@ -236,6 +236,35 @@ function evidenceFullyApproved(r) {
     r.evidence_items.every((ev) => ev && ev.qa_status === 'approved' && Boolean(ev.reviewed_by) && Boolean(ev.reviewed_at));
 }
 
+// Value-level provenance stamp (mirrors the sibling promote scripts). The robot-extraction
+// "needs review" / "verify against the live source" language in applicability/uncertainty/
+// review_notes is contradictory once the row is HITL-approved; stamp a superseding note. The stamp
+// CONTAINS PROMOTION_STAMP_MARKER so it is idempotent, and contains no local-path tokens. The text
+// reflects the row's ACTUAL canonical_source_status so it stays accurate under --canonical keep
+// (where the source is NOT direct_source_verified).
+const STAMPED_PROVENANCE_FIELDS = ['applicability', 'uncertainty', 'review_notes'];
+function buildValueStamp(date, reviewer, sourceVerified) {
+  const src = sourceVerified ? ', source direct_source_verified' : '; direct-source verification still pending';
+  return ' [PROMOTED to approved (qa_status approved' + src + ') on ' + date + ' by ' + reviewer +
+    '; the needs_review language above is superseded.]';
+}
+function stampValueProvenance(r, date, reviewer) {
+  const stamp = buildValueStamp(date, reviewer, r.canonical_source_status === 'direct_source_verified');
+  let changed = false;
+  for (const field of STAMPED_PROVENANCE_FIELDS) {
+    const v = r[field];
+    if (typeof v === 'string' && v.length > 0 && !v.includes(PROMOTION_STAMP_MARKER)) {
+      r[field] = v + stamp; changed = true;
+    }
+  }
+  return changed;
+}
+function valueLevelRepairNeeded(r) {
+  return STAMPED_PROVENANCE_FIELDS.some(
+    (field) => typeof r[field] === 'string' && r[field].length > 0 && !r[field].includes(PROMOTION_STAMP_MARKER),
+  );
+}
+
 export function applyPromotion(records, snapshotIndex, opts) {
   const { promote, skip } = planPromotion(records, snapshotIndex, opts);
   const byId = new Map(records.map((r) => [r.parameter_value_id, r]));
@@ -246,17 +275,21 @@ export function applyPromotion(records, snapshotIndex, opts) {
       r.canonical_source_status = 'direct_source_verified';
     }
     r.evidence_items = r.evidence_items.map((ev) => approveEvidence(ev, opts.reviewer, opts.date));
+    // Stamp value-level provenance AFTER canonical is set, so the stamp text reflects the choice.
+    stampValueProvenance(r, opts.date, opts.reviewer);
   }
-  // Evidence-note repair pass over the already-approved (skip) rows: stamp any stale
-  // "pending direct-source verification" note so an approved row is not contradictory. This is
-  // INDEPENDENT of --canonical (it never reads or writes canonical_source_status), so re-running
-  // under either --canonical verified or keep stays a no-op on canonical for these rows.
+  // Repair pass over the already-approved (skip) rows: stamp any stale "needs review" /
+  // "pending direct-source verification" language on BOTH the evidence notes and the value-level
+  // provenance fields, so an approved row is not contradictory. Gated on evidenceFullyApproved
+  // (never assert approval on a still-needs_review evidence item) and bounded by the EPA-snapshot
+  // gate in planPromotion (a drifted value already fails closed before we get here).
   const repaired = [];
   for (const id of skip) {
     const r = byId.get(id);
-    // Only stamp rows whose evidence is genuinely approved + attested (see evidenceFullyApproved):
-    // never assert "PROMOTED to approved" on a still-needs_review evidence item.
-    if (evidenceFullyApproved(r) && stampEvidenceNotes(r, opts.date, opts.reviewer)) repaired.push(id);
+    if (!evidenceFullyApproved(r)) continue;
+    const noteChanged = stampEvidenceNotes(r, opts.date, opts.reviewer);
+    const provChanged = stampValueProvenance(r, opts.date, opts.reviewer);
+    if (noteChanged || provChanged) repaired.push(id);
   }
   return { promote, skip, repaired };
 }
@@ -298,7 +331,7 @@ function main() {
   const byId = new Map(records.map((r) => [r.parameter_value_id, r]));
   const repairNeededIds = skip.filter((id) => {
     const r = byId.get(id);
-    return evidenceFullyApproved(r) && evidenceNoteRepairNeeded(r);
+    return evidenceFullyApproved(r) && (evidenceNoteRepairNeeded(r) || valueLevelRepairNeeded(r));
   });
 
   console.log('IRIS qa-promotion -- ' + (opts.apply ? 'APPLY' : 'DRY RUN'));
@@ -315,11 +348,11 @@ function main() {
   for (const id of skip) {
     const needsRepair = repairNeededIds.includes(id);
     console.log('  SKIP     ' + id + ': already approved' +
-      (needsRepair ? '; evidence-note repair pending' : ' (no-op)'));
+      (needsRepair ? '; provenance repair pending (evidence note + value-level)' : ' (no-op)'));
   }
   console.log('');
   console.log('Summary: ' + promote.length + ' to promote, ' + skip.length + ' already approved' +
-    (repairNeededIds.length ? ', ' + repairNeededIds.length + ' evidence-note repair(s)' : '') + '.');
+    (repairNeededIds.length ? ', ' + repairNeededIds.length + ' provenance repair(s)' : '') + '.');
 
   if (!opts.apply) {
     console.log('\nDRY RUN -- no file written. Re-run with --apply (plus --reviewer/--date/--canonical) to write.');
