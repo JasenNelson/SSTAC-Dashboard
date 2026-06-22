@@ -201,6 +201,10 @@ function approveEvidence(ev, reviewer, date) {
     else { out[k] = v; }
   }
   if (!('qa_status' in out)) { out.qa_status = 'approved'; out.reviewed_by = reviewer; out.reviewed_at = date; }
+  // Supersede a stale "pending direct-source verification" note so approved evidence is not contradictory.
+  if (typeof out.note === 'string' && out.note.length > 0 && !out.note.includes(PROMOTION_STAMP_MARKER)) {
+    out.note += buildEvidenceNoteStamp(date, reviewer);
+  }
   return out;
 }
 
@@ -219,8 +223,31 @@ function stampValueProvenance(r, date, reviewer) {
   }
   return changed;
 }
+// Evidence-item note stamp: a promoted (approved + direct_source_verified) evidence item must not keep
+// a "pending direct-source verification" note (contradictory provenance). The stamp CONTAINS
+// PROMOTION_STAMP_MARKER so the idempotency check below cannot re-stamp it.
+function buildEvidenceNoteStamp(date, reviewer) {
+  return ' [Evidence PROMOTED to approved on ' + date + ' by ' + reviewer + '; the pending direct-source verification note above is superseded.]';
+}
+function stampEvidenceNotes(r, date, reviewer) {
+  if (!Array.isArray(r.evidence_items)) return false;
+  const stamp = buildEvidenceNoteStamp(date, reviewer);
+  let changed = false;
+  for (const ev of r.evidence_items) {
+    if (ev && typeof ev.note === 'string' && ev.note.length > 0 && !ev.note.includes(PROMOTION_STAMP_MARKER)) {
+      ev.note += stamp; changed = true;
+    }
+  }
+  return changed;
+}
+function evidenceNoteRepairNeeded(r) {
+  return Array.isArray(r.evidence_items) && r.evidence_items.some(
+    (ev) => ev && typeof ev.note === 'string' && ev.note.length > 0 && !ev.note.includes(PROMOTION_STAMP_MARKER),
+  );
+}
 function valueStampRepairNeeded(r) {
-  return STAMPED_PROVENANCE_FIELDS.some((field) => typeof r[field] === 'string' && r[field].length > 0 && !r[field].includes(PROMOTION_STAMP_MARKER));
+  return STAMPED_PROVENANCE_FIELDS.some((field) => typeof r[field] === 'string' && r[field].length > 0 && !r[field].includes(PROMOTION_STAMP_MARKER))
+    || evidenceNoteRepairNeeded(r);
 }
 
 export function applyPromotion(paramValues, sources, opts) {
@@ -235,7 +262,9 @@ export function applyPromotion(paramValues, sources, opts) {
       r.evidence_items = r.evidence_items.map((ev) => approveEvidence(ev, opts.reviewer, opts.date));
       stampValueProvenance(r, opts.date, opts.reviewer);
     } else if (vr.valueAlreadyDone) {
-      touched = stampValueProvenance(vr.valueRecord, opts.date, opts.reviewer);
+      const provChanged = stampValueProvenance(vr.valueRecord, opts.date, opts.reviewer);
+      const noteChanged = stampEvidenceNotes(vr.valueRecord, opts.date, opts.reviewer);
+      touched = provChanged || noteChanged;
     }
     valueTouchedFlags.push(touched);
   }

@@ -46,6 +46,7 @@ function baseRecord(spec) {
       qa_status: 'needs_review',
       evidence_id: 'ev-' + id + '-1',
       locator_type: 'source_table',
+      note: 'Robot-extracted from US EPA IRIS; pending direct-source verification.',
     }],
     source_relationships: [{ source_id: SOURCE_ID, role: 'canonical_candidate', note: 'IRIS source.' }],
   };
@@ -168,6 +169,8 @@ describe('promote-iris-chemdetails: apply + idempotency', () => {
       expect(r.qa_status, id).toBe('approved');
       expect(r.evidence_support_status, id).toBe('approved_source_backed');
       expect(r.canonical_source_status, id).toBe('direct_source_verified');
+      // A promoted evidence item must not keep a "pending direct-source verification" note (codex P2).
+      expect(r.evidence_items[0].note, id).toContain('Evidence PROMOTED to approved');
     }
     expect(sources.find((s) => s.source_id === SOURCE_ID).canonical_source_status).toBe('direct_source_verified');
   });
