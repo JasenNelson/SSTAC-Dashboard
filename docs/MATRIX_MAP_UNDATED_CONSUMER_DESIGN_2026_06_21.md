@@ -85,3 +85,32 @@ RPC changes from section 2; (c) paste PATH_B multimedium chunks; (d) run + paste
 ---
 Authored 2026-06-21 (design subagent + orchestrator synthesis). Supersedes the codex env_modifier flag
 with the medium='sediment' resolution. No files modified by this design.
+
+---
+
+## Open questions surfaced 2026-06-22 (implementation recon -- resolve before coding the app layer)
+
+A pre-implementation recon found three points this design does not cover. The app-layer change is
+otherwise autonomous and FULLY UNIT-TESTABLE without the data load (additive/backward-compatible: the
+RPC return is additive, so until the owner applies the RPC migration `date_precision` is simply absent
+and the normalizer returns null -- no crash). Get a one-line owner decision on these first:
+
+1. **(LOAD-BEARING) RightPanel has its OWN normalizer.** `MatrixMapRightPanel.tsx` (~line 878) defines
+   a local `normalizeMeasurementRow` that uses `stringField(row.event_date)`, collapsing `null -> ''`.
+   The Section 2 table only names the EXPORT route's `normalizeMeasurements`. After
+   `event_date: string | null`, the RightPanel normalizer MUST also switch to `nullableString`, or it
+   silently converts NULL -> '' and DEFEATS the `filter-measurements` null-guard this design relies on.
+   Add the RightPanel normalizer to the change set.
+
+2. **Row-key collision.** `MatrixMapRightPanel.tsx` (~line 920) uses `event_date` in the React fallback
+   row key. Multiple undated rows for the same sample+substance would share a key (`...-null`). Confirm
+   a stable disambiguator is in scope.
+
+3. **RPC migration SQL scope.** Author the (owner-paste-gated) `fetch_measurements_for_samples`
+   migration in the SAME app-layer PR, or as a separate migration-only PR? The app-layer code can ship
+   + merge before the migration is applied either way.
+
+Status 2026-06-22: TEED UP, not started. App-layer files (once confirmed): measurementStore.ts (type),
+filter-measurements.ts (+test), export/route.ts (+test), MatrixMapRightPanel.tsx (badge + normalizer +
+key), split_etl_output.py (--source). Owner-gated: apply RPC migration + PATH_B chunk paste + etl
+--allow-undated.
