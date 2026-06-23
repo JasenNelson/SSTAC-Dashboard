@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 103 entries', () => {
+  it('has 111 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -10,8 +10,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-20: perfluoroctanoic_acid_pfoa, perfluorooctane_sulfonate, aldrin,
     // endrin, hexachlorobutadiene, hexachlorocyclopentadiene, isophorone,
     // acrylonitrile, carbon_disulfide, bisphenol_a, nitrobenzene, pyridine,
-    // 2_methylnaphthalene) = 103.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(103);
+    // 2_methylnaphthalene) = 103, + 8 chlorinated VOCs / organics (Batch E) = 111.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(111);
   });
 
   it('every entry has a non-null key', () => {
@@ -256,6 +256,29 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
       expect(r?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(r?.logKow).toBeNull();
       expect(r?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch E chlorinated VOCs + organics', () => {
+  const expected = [
+    { key: 'dichloromethane', rfd: 0.014, sf: 0.002, cls: 'organic-halogenated' },
+    { key: 'dichloroethylene_1_1', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: '1_2_dichloroethane', rfd: null, sf: 0.091, cls: 'organic-halogenated' },
+    { key: 'trichloroethane_1_1_2', rfd: 0.004, sf: 0.057, cls: 'organic-halogenated' },
+    { key: 'tetrachloroethane_1_1_1_2', rfd: 0.03, sf: 0.026, cls: 'organic-halogenated' },
+    { key: 'bis_2_ethylhexyl_phthalate_dehp', rfd: 0.02, sf: 0.014, cls: 'organic' },
+    { key: '2_4_6_trinitrotoluene_tnt', rfd: 0.0005, sf: 0.03, cls: 'organic' },
+    { key: 'formaldehyde', rfd: 0.2, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
     });
   }
 });
