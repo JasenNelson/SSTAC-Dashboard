@@ -4,9 +4,10 @@
 **Status:** WORKING DRAFT. Sections 1-3 and 5-8 carried from owner's draft; Section 4 rebuilt for
 internal-vs-TWG capacity alignment and coverage of Section 1-2 objectives; Appendix A elevator pitch
 added for leadership briefing.
-**Open decisions (pending owner):** (D-1) whether to acknowledge existing built progress in the task
-estimates; (D-2) whether to state the SABCS baseline budget figure explicitly in the pitch.
-**Uncommitted** in the SSTAC-Dashboard working tree - owner to decide branch/commit.
+**Resolved decisions (owner, 2026-06-22):** (D-1) acknowledge the prototyping head-start in the
+Section 4 estimates note (the task hours already reflect it); keep Appendix A tooling-free per its
+stated rule. (D-2) keep the budget framing qualitative ("within SABCS's confirmed baseline budget");
+state a specific figure only once the owner confirms a number to cite.
 
 ---
 
@@ -169,6 +170,12 @@ defensible, scalable, and adaptable foundation for the contaminated sites regula
 > effort is genuinely hard to predict. They are targets to steer by, not commitments - the project
 > lead will manage them flexibly as scope clarifies. "TWG-led" means TWG carries the work with
 > internal review only; "Internal" means ENV-led.
+>
+> Several data- and framework-infrastructure subtasks (notably under Tasks 3 and 6) carry a head-start
+> from existing internal prototyping done during Phase 1 and inter-phase work; the hours below already
+> reflect that reduced remaining effort rather than a from-scratch estimate. This head-start is an
+> internal efficiency and is deliberately not surfaced in the Appendix A leadership pitch, which stays
+> tooling-agnostic.
 
 ### Task 1 - Project Mobilization and Governance Setup
 
