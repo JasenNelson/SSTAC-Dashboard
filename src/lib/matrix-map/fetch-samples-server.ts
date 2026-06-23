@@ -93,10 +93,11 @@ export async function fetchMatrixMapSamplesServerSide(
       // unknown so we are explicit about the boundary; the structural
       // validation below pins the contract per PR_MAP_3_PLAN section 2.2.
       const parsed = rpcData as unknown as Partial<MatrixMapData>;
+      const visible = Array.isArray(parsed.visible_samples)
+        ? parsed.visible_samples
+        : [];
       initialMapData = {
-        visible_samples: Array.isArray(parsed.visible_samples)
-          ? parsed.visible_samples
-          : [],
+        visible_samples: visible,
         hidden_sample_count:
           typeof parsed.hidden_sample_count === 'number'
             ? parsed.hidden_sample_count
@@ -112,6 +113,18 @@ export async function fetchMatrixMapSamplesServerSide(
           typeof parsed.data_snapshot_version === 'string'
             ? parsed.data_snapshot_version
             : 'unknown',
+        // bbox-lane Stage 1 additive fields. The pre-migration RPC omits these;
+        // fall back so a pre-deploy / old-RPC response still validates province-wide.
+        total_in_bbox:
+          typeof parsed.total_in_bbox === 'number'
+            ? parsed.total_in_bbox
+            : visible.length,
+        returned_sample_count:
+          typeof parsed.returned_sample_count === 'number'
+            ? parsed.returned_sample_count
+            : visible.length,
+        truncated: parsed.truncated === true,
+        bbox_applied: parsed.bbox_applied === true,
       };
     }
   } catch (thrownErr) {

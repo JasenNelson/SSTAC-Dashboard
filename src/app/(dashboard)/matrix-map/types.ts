@@ -117,6 +117,16 @@ export interface MatrixMapData {
   hidden_dra_count: number;
   hidden_dra_ids: string[];
   data_snapshot_version: string;
+  // bbox-lane Stage 1 (migration 20260623000001): additive + OPTIONAL so the
+  // pre-migration RPC (which omits them) + the empty fallback stay valid.
+  // total_in_bbox = visible-eligible samples in the current scope BEFORE the
+  // server-side cap; returned_sample_count = min(total_in_bbox, cap);
+  // truncated = total_in_bbox > cap (client should prompt "zoom in"); bbox_applied
+  // = whether a valid viewport bbox was used (false => province-wide).
+  total_in_bbox?: number;
+  returned_sample_count?: number;
+  truncated?: boolean;
+  bbox_applied?: boolean;
 }
 
 /**
