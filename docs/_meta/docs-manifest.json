@@ -85,9 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4502,
-        "source": "npm run test:ci on feat/matrix-options-bc-p28-curate-dedup-2026-06-22 (2026-06-22): 4502 = 4492 + 10 new curate-bc-protocol-28-dedup tests (BC P28 source dedup: retire mislabeled src-bc-protocol-28-2021-jan, delete 4 exact-duplicate HH twins of the verification-packet rows, re-key 351 HH rows to canonical src-bc-protocol-28-v3-0-2024). Test cases: plan/apply, delete + re-key counts, fail-closed, supersede, idempotency, dedupe. Catalog needs_review HH 398 -> 394 (4 deleted); approved unchanged at 1179. catalog.test + library.test assertions updated for the 357-row v3.0 set (structural blocked-guarantee over all 357; curated policy-compilation framing scoped to the 6). Confirmed clean via npm run test:ci.",
-        "last_verified": "2026-06-22"
+        "value": 4515,
+        "source": "npm run test:ci on feat/matrix-options-pfda-2e9-chronic-2026-06-23 (2026-06-23): 4515 = 4502 + 13 new promote-iris-pfda-dupe-cg-canonical tests (PFDA chronic 2e-9 oral RfD promotion: EPA IRIS 2024 final EPA/635/R-23/027f designates no single overall RfD; two chronic organ-specific RfDs both 2e-9, owner picked chronic as canonical; promote the 2 chronic base-id rows direct+food to approved, leave the 3 subchronic values 6e-7/1e-6/3e-6 as needs_review). Mirror of the PFAS dupe-cg test (scope/parseArgs/fail-closed/applyPromotion/idempotence). Catalog approved HH 1179 -> 1181 (2 promoted); needs_review 394 (subchronic untouched). Values verified live via dual WebFetch passes 2026-06-23. Confirmed clean via npm run test:ci (4515 passed / 11 skipped).",
+        "last_verified": "2026-06-23"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_06_22_pre_pfda_chronic": {
+      "status": "superseded",
+      "value": 4502,
+      "superseded_by": "facts.testing.vitest_test_count = 4515 (feat/matrix-options-pfda-2e9-chronic-2026-06-23: +13 from promote-iris-pfda-dupe-cg-canonical.test.mjs)",
+      "note": "Prior live vitest_test_count (post the BC P28 source dedup PR), moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4515 after the PFDA chronic 2e-9 promotion PR added promote-iris-pfda-dupe-cg-canonical.test.mjs (13 cases, mirror of the PFAS dupe-cg test). The 2 chronic PFDA promotions themselves add no new test cases (catalog data shift, asserted by existing guards + the catalog.test.ts sanctioned-union edit). Added by hand."
+    },
     "vitest_test_count_2026_06_22_pre_bc_p28_dedup": {
       "status": "superseded",
       "value": 4492,
