@@ -1,0 +1,30 @@
+[
+  {
+    "id": "pv-iris-perfluorodecanoic_acid_pfda-hh-direct-rfd",
+    "pathway": "human-health-direct",
+    "substanceKey": "perfluorodecanoic_acid_pfda",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2e-9,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=702",
+    "irisDate": "2024-07",
+    "irisDocId": "EPA/635/R-23/027f",
+    "criticalEffect": "Chronic oral RfD; immune (decreased child serum antibody tetanus/diphtheria, BMDL 6.04e-8, UF 30) + developmental (decreased birth weight, BMDL 5.44e-8, UF 30); both chronic endpoints converge on 2e-9. Subchronic alternatives (6e-7 hepatic, 1e-6 repro-F, 3e-6 repro-M) NOT promoted.",
+    "verifiedBy": "Claude WebFetch dual-blind-pass 2026-06-23 (cfpub.epa.gov + iris.epa.gov)"
+  },
+  {
+    "id": "pv-iris-perfluorodecanoic_acid_pfda-hh-food-rfd",
+    "pathway": "human-health-food",
+    "substanceKey": "perfluorodecanoic_acid_pfda",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 2e-9,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=702",
+    "irisDate": "2024-07",
+    "irisDocId": "EPA/635/R-23/027f",
+    "criticalEffect": "Chronic oral RfD; immune (decreased child serum antibody tetanus/diphtheria, BMDL 6.04e-8, UF 30) + developmental (decreased birth weight, BMDL 5.44e-8, UF 30); both chronic endpoints converge on 2e-9. Subchronic alternatives (6e-7 hepatic, 1e-6 repro-F, 3e-6 repro-M) NOT promoted.",
+    "verifiedBy": "Claude WebFetch dual-blind-pass 2026-06-23 (cfpub.epa.gov + iris.epa.gov)"
+  }
+]
