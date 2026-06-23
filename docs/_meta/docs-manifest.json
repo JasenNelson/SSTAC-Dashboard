@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4479,
-        "source": "npm run test:ci on feat/mo-iris-dupe-cg-canonical-2026-06-22 (2026-06-22): 4479 = 4467 + 12 new promote-iris-dupe-cg-canonical tests (14 EPA-verified canonical dupe-cg IRIS rows: scope, parse, fail-closed preconditions incl. value-only-lane source guard per codex P2, apply + idempotency). Catalog approved HH rows 1161 -> 1175. Prior 4467 = 4463 + 4 matrix-map undated-consumer tests. Confirmed clean via npm run test:ci.",
+        "value": 4492,
+        "source": "npm run test:ci on feat/matrix-options-pfas-dupe-cg-2026-06-22 (2026-06-22): 4492 = 4479 + 13 new promote-iris-pfas-dupe-cg-canonical tests (EPA-designated-primary PFBA 1e-3 + PFHxA 5e-4 chronic oral RfDs, direct + food = 4 rows; PFDA deferred -- no EPA primary). Test cases: scope (incl. PFDA-not-in-scope + RfD-only source guard per codex P2), parse, fail-closed preconditions, apply + idempotency. Catalog approved HH rows 1175 -> 1179. The 4 promotions themselves add no new test cases (catalog data shift, asserted by existing guards + the catalog.test.ts sanctioned-union edit). Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-22"
       },
       "playwright_test_count": {
@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_06_22_pre_pfas_dupe_cg": {
+      "status": "superseded",
+      "value": 4479,
+      "superseded_by": "facts.testing.vitest_test_count = 4492 (feat/matrix-options-pfas-dupe-cg-2026-06-22: +13 from promote-iris-pfas-dupe-cg-canonical.test.mjs)",
+      "note": "Prior live vitest_test_count (post the 14-row dupe-cg canonical PR #392), moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4492 after the PFAS dupe-cg PR added promote-iris-pfas-dupe-cg-canonical.test.mjs (13 cases). The 4 EPA-designated-primary PFBA/PFHxA promotions themselves add no new test cases (catalog data shift, asserted by existing guards + the catalog.test.ts sanctioned-union edit). Added by hand."
+    },
     "vitest_test_count_2026_06_21_pre_iris_us_epa_batch": {
       "status": "superseded",
       "value": 4407,

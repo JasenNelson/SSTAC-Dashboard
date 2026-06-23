@@ -29,6 +29,7 @@ import { HC_TRV_V4_2025_PROMOTION_VALUE_IDS } from '../../../../../scripts/matri
 import { IRIS_RFD_BATCH_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-rfd-batch.mjs';
 import { IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-chemdetails.mjs';
 import { IRIS_DUPE_CG_CANONICAL_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-dupe-cg-canonical.mjs';
+import { IRIS_PFAS_DUPE_CG_CANONICAL_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-iris-pfas-dupe-cg-canonical.mjs';
 // 2026-06-21: parameter_values.json mass-promotion tripwire -- union of the owner-run promote tools
 // that target the exposure-parameter catalog (one source of truth per tool, mirroring the HH TRV
 // tripwire). Adding a NEW parameter_values promote tool requires adding its allowlist below.
@@ -567,6 +568,7 @@ describe('matrix options provenance catalog', () => {
       ...IRIS_RFD_BATCH_PROMOTION_VALUE_IDS,
       ...IRIS_CHEMDETAILS_PROMOTION_VALUE_IDS,
       ...IRIS_DUPE_CG_CANONICAL_VALUE_IDS,
+      ...IRIS_PFAS_DUPE_CG_CANONICAL_VALUE_IDS,
     ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(

@@ -1,0 +1,46 @@
+[
+  {
+    "id": "pv-iris-perfluorobutanoic_acid_pfba-hh-direct-rfd--pfba-oral-rfd-3",
+    "pathway": "human-health-direct",
+    "substanceKey": "perfluorobutanoic_acid_pfba",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=701",
+    "irisDate": "2022-12-22"
+  },
+  {
+    "id": "pv-iris-perfluorobutanoic_acid_pfba-hh-food-rfd--pfba-oral-rfd-3",
+    "pathway": "human-health-food",
+    "substanceKey": "perfluorobutanoic_acid_pfba",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.001,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=701",
+    "irisDate": "2022-12-22"
+  },
+  {
+    "id": "pv-iris-perfluorohexanoic_acid_pfhxa-hh-direct-rfd-pfhxa-oral-rfd-3",
+    "pathway": "human-health-direct",
+    "substanceKey": "perfluorohexanoic_acid_pfhxa",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=704",
+    "irisDate": "2023-04-10"
+  },
+  {
+    "id": "pv-iris-perfluorohexanoic_acid_pfhxa-hh-food-rfd-pfhxa-oral-rfd-3",
+    "pathway": "human-health-food",
+    "substanceKey": "perfluorohexanoic_acid_pfhxa",
+    "inputKey": "rfd_oral_mg_per_kg_bw_day",
+    "value": 0.0005,
+    "unit": "mg/kg-bw/day",
+    "sourceId": "src-us-epa-iris-rfd-table-live",
+    "irisUrl": "https://iris.epa.gov/ChemicalLanding/&substance_nmbr=704",
+    "irisDate": "2023-04-10"
+  }
+]
