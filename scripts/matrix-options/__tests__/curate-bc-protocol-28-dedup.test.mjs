@@ -45,10 +45,11 @@ function makeSources(oldSuperseded = false) {
     source_id: CURATE_OLD_ID,
     short_citation: 'BC Protocol 28 Old',
     title: 'Old Title',
+    currentness_status: 'needs_currentness_check',
     notes: 'Existing notes.',
   };
   if (oldSuperseded) {
-    oldSource.status = 'superseded';
+    oldSource.currentness_status = 'superseded';
     oldSource.superseded_by = CURATE_NEW_ID;
     oldSource.notes = 'Existing notes. Superseded duplicate of src-bc-protocol-28-v3-0-2024 (same PDF; stored doc is v3.0 April 2024). 4 exact-duplicate HH rows removed (kept the verification-packet rows in parameter_values.json) and 351 HH rows re-keyed to the canonical id on 2026-06-22.';
   }
@@ -145,15 +146,18 @@ describe('curate-bc-protocol-28-dedup: applyCuration', () => {
     expect(afterRecord.source_relationships[0].source_id).toBe(CURATE_NEW_ID);
   });
 
-  it('marks OLD source superseded (+superseded_by NEW +notes appended) without deleting it or modifying NEW', () => {
+  it('marks OLD source superseded via the modeled currentness_status (+superseded_by NEW +notes appended) without deleting it or modifying NEW', () => {
     const { records, sources } = makeFixture();
     const beforeNew = clone(sources.find(s => s.source_id === CURATE_NEW_ID));
-    
+
     applyCuration(records, sources);
 
     const oldSource = sources.find(s => s.source_id === CURATE_OLD_ID);
     expect(oldSource).toBeDefined();
-    expect(oldSource.status).toBe('superseded');
+    // codex holistic P2: retired state must live in the MODELED currentness_status (app reads this),
+    // not an unmodeled 'status' key (which is dropped).
+    expect(oldSource.currentness_status).toBe('superseded');
+    expect('status' in oldSource).toBe(false);
     expect(oldSource.superseded_by).toBe(CURATE_NEW_ID);
     expect(oldSource.notes).toContain('Superseded duplicate of src-bc-protocol-28-v3-0-2024');
 

@@ -61,7 +61,7 @@ export function planCuration(paramValues, sources) {
   const sourcePlan = {
     oldSource,
     newSource,
-    action: oldSource ? (oldSource.status === 'superseded' ? 'none' : 'supersede') : 'none'
+    action: oldSource ? (oldSource.currentness_status === 'superseded' ? 'none' : 'supersede') : 'none'
   };
 
   return {
@@ -121,8 +121,16 @@ export function applyCuration(paramValues, sources) {
   const noteString = ' Superseded duplicate of src-bc-protocol-28-v3-0-2024 (same PDF; stored doc is v3.0 April 2024). 4 exact-duplicate HH rows removed (kept the verification-packet rows in parameter_values.json) and 351 HH rows re-keyed to the canonical id on 2026-06-22.';
 
   if (oldSource) {
-    if (oldSource.status !== 'superseded') {
-      oldSource.status = 'superseded';
+    // Mark retired via the MODELED currentness_status field -- the app's source facets / Evidence
+    // Library UI read currentness_status, NOT a custom 'status' key (codex holistic checkpoint P2,
+    // 2026-06-22). 'superseded' is a valid SourceCurrentnessStatus enum value.
+    if (oldSource.currentness_status !== 'superseded') {
+      oldSource.currentness_status = 'superseded';
+      sourceTouched = true;
+    }
+    // Drop the earlier unmodeled 'status' key (ignored by the app; superseded by currentness_status).
+    if ('status' in oldSource) {
+      delete oldSource.status;
       sourceTouched = true;
     }
     if (oldSource.superseded_by !== CURATE_NEW_ID) {
@@ -196,11 +204,11 @@ function main() {
     }
   }
   console.log(`re-key: ${plan.rekeyCount} rows`);
-  const oldSourceStatus = plan.sourcePlan.oldSource ? plan.sourcePlan.oldSource.status : 'not found';
-  if (oldSourceStatus === 'superseded') {
-    console.log(`source ${CURATE_OLD_ID} -> (already superseded)`);
+  const oldSourceCurrentness = plan.sourcePlan.oldSource ? plan.sourcePlan.oldSource.currentness_status : 'not found';
+  if (oldSourceCurrentness === 'superseded') {
+    console.log(`source ${CURATE_OLD_ID} -> (already superseded; currentness_status)`);
   } else {
-    console.log(`source ${CURATE_OLD_ID} -> superseded`);
+    console.log(`source ${CURATE_OLD_ID} -> superseded (currentness_status)`);
   }
   console.log('');
 
