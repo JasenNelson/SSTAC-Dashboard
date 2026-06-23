@@ -46,8 +46,10 @@ Migration `20260623000001` (CREATE OR REPLACE fetch_samples_with_hidden_summary)
 - Server helper surfaces the new fields (optional, pre-migration fallbacks); types extended.
 
 ## OWNER-GATED / NEXT
-1. **Apply migration 20260623000001 to the live DB** -- owner-gated. Backward-compatible (server still passes
-   null bbox), so it can apply anytime via the project-scoped MCP. Confirm a DB snapshot first.
+1. **Migration 20260623000001 -- APPLIED + verified live 2026-06-23** (via project-scoped MCP apply_migration;
+   verified SECDEF + owner matrix_map_owner + EXECUTE=authenticated-only + new bbox keys + fail-safe parse +
+   hidden_* province-wide). The server still passes null bbox (Stage 2 not done), so live behavior is
+   UNCHANGED (province-wide, capped at 2500 > current 290). DONE -- nothing further to apply for Stage 1.
 2. **bbox-lane Stage 2 (the real next lane; best as a FRESH session):** client viewport-debounced refetch on
    Leaflet moveend/zoomend + marker CLUSTERING + truncated->"zoom in" hint + min-zoom-for-fetch; thread the
    bbox through fetch-samples-server (it already accepts p_bbox); reconcile budget_caps for pan-heavy use;
