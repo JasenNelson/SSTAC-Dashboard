@@ -172,7 +172,9 @@ describe('matrix options evidence library helpers', () => {
     // pending_source_locator; source verified, rows un-promoted) = 381.
     // 2026-06-21: -11 -- owner-attested promotion moves 11 rows out of pending (4 PFOA/PFOS +
     // 6 HC PQRA lifestage + 1 WLRS low-level) = 370.
-    expect(view.audit.values.pendingSourceLocator).toBe(370);
+    // 2026-06-22: -4 -- BC P28 source dedup deleted 4 exact-duplicate HH rows (pending) that were
+    // twins of the verification-packet rows; the other 351 stay pending (re-keyed to v3.0). = 366.
+    expect(view.audit.values.pendingSourceLocator).toBe(366);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
     expect(view.audit.values.currentDefaults).toBe(57);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
@@ -192,7 +194,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-17: +96 -- eco-wiring Step 2: all 96 eco rows carry default_status=available_option = 1705.
     // 2026-06-19: +1 -- CCME chloroform eco-direct row (available_option) = 1706.
     // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (available_option) = 1710.
-    expect(view.audit.values.availableOptions).toBe(1710);
+    // 2026-06-22: -4 -- BC P28 source dedup deleted 4 exact-duplicate available_option HH rows = 1706.
+    expect(view.audit.values.availableOptions).toBe(1706);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
@@ -223,8 +226,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-20c: src-us-epa-pfoa-2024 + src-us-epa-pfos-2024 added by the Batch F US EPA
     // 2024 PFOA/PFOS hh-direct RfD rows (needs_review; split per-substance source records so
     // each links its own EPA assessment); both sort last in the HH-direct source list.
+    // 2026-06-22: src-bc-protocol-28-2021-jan REMOVED -- BC P28 source dedup retired the mislabeled
+    // id (HH-direct rows re-keyed to the canonical src-bc-protocol-28-v3-0-2024, which remains below).
     expect(view.sources.map((row) => row.record.source_id)).toEqual([
-      'src-bc-protocol-28-2021-jan',
       'src-us-epa-iris-rfd-table-live',
       'src-us-epa-iris-chemical-details-live',
       'src-health-canada-pqra-v4-2024',
@@ -326,11 +330,12 @@ describe('matrix options evidence library helpers', () => {
     );
 
     // values and valueGroups updated 2026-05-31: pv-p28-arsenic_inorganic-hh-food-rfd added by d0c00003.
+    // 2026-06-22: pv-p28-arsenic_inorganic-hh-food-rfd REMOVED -- BC P28 source dedup deleted it as an
+    // exact-duplicate twin of pv-p28-arsenic-hh-food-rfd (the verification-packet row kept on v3.0).
     expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual([
       'pv-arsenic-hh-food-rfd',
       'pv-iris-arsenic-hh-food-rfd',
       'pv-p28-arsenic-hh-food-rfd',
-      'pv-p28-arsenic_inorganic-hh-food-rfd',
     ]);
     // 2026-06-09: the __BC_provincial group merged into __BC after the
     // BC_provincial -> BC jurisdiction normalization (identical-value duplicate).
@@ -433,9 +438,11 @@ describe('matrix options evidence library helpers', () => {
     // candidateValueCount/blockedCandidateCount recomputed 2026-06-01:
     // 355 generated P28 records (soil + water/vapour, after class-1 collapse + 5 dirty exclusions)
     // + 6 other P28-aligned pending records = 361 human-health pending P28 records.
+    // 2026-06-22: -4 -- BC P28 source dedup deleted 4 exact-duplicate HH twins (the other 351 re-keyed
+    // to the canonical v3.0 id, still pending) so the P28 pending queue is 351 + 6 = 357.
     expect(summary).toMatchObject({
-      candidateValueCount: 361,
-      blockedCandidateCount: 361,
+      candidateValueCount: 357,
+      blockedCandidateCount: 357,
       currentDefaultCount: 0,
       sourceLeadSetCount: 1,
       canDriveCalculatorDefaults: false,

@@ -15,7 +15,7 @@
     "zotero_status": "linked",
     "external_file_hint": "Official BC PDF (Jan 2021 revisions). Zotero item LPZUVAC2 attachment HYNUIDR5. Appendix 8A holds the Human Health Soil Standard TRVs used by the d0c00003 extraction pass. Use metadata and locators only; do not copy the PDF into the repo.",
     "file_storage": "zotero_or_external",
-    "notes": "Protocol 28 Jan-2021 revisions. Appendix 8A (TRVs Used to Derive Human Health Soil Standards) and the water/vapour TRV tables are the extraction source for catalog passes d0c00003/d0c00004. Crystallized BC policy TRVs; verify against current Health Canada / US EPA IRIS before any default use.",
+    "notes": "Protocol 28 Jan-2021 revisions. Appendix 8A (TRVs Used to Derive Human Health Soil Standards) and the water/vapour TRV tables are the extraction source for catalog passes d0c00003/d0c00004. Crystallized BC policy TRVs; verify against current Health Canada / US EPA IRIS before any default use. Superseded duplicate of src-bc-protocol-28-v3-0-2024 (same PDF; stored doc is v3.0 April 2024). 4 exact-duplicate HH rows removed (kept the verification-packet rows in parameter_values.json) and 351 HH rows re-keyed to the canonical id on 2026-06-22.",
     "authority_scope": "bc-guidance",
     "source_authority_tier": "tier_1_government_or_regulatory",
     "currentness_status": "needs_currentness_check",
@@ -28,7 +28,9 @@
     "canonical_source_status": "needs_direct_source_check",
     "bc_protocol_alignment": "protocol_28_crystallized_bc_policy_trv",
     "bc_protocol_basis": "Protocol 28 Appendix 8A lists the TRVs used to derive Human Health Soil Standards; Protocol 1 v5.0 is the target hierarchy for standards work effective 2027-01-15.",
-    "source_crystallization_date": "2021-01-31"
+    "source_crystallization_date": "2021-01-31",
+    "status": "superseded",
+    "superseded_by": "src-bc-protocol-28-v3-0-2024"
   },
   {
     "source_id": "src-us-epa-iris-rfd-table-live",

@@ -144,12 +144,17 @@ const SOURCE_ID_REMAP_BY_INPUT = {
 };
 const SOURCE_ID_REMAP = {
   'src-health-canada': 'src-health-canada-trv-v4-2025',
-  'src-bc-protocol-28-2021-jan': 'src-bc-protocol-28-2021-jan',
+  // 2026-06-22: BC P28 source dedup -- the mislabeled "2021-jan" id was retired (superseded by the
+  // canonical v3.0 id; same PDF). Remap so any regeneration resolves P28 rows to the canonical id and
+  // collapses against the existing v3.0 rows (class-1 tuple-dedup + id-existence) -- it never re-emits
+  // the retired source or the 4 deleted duplicate twins of the verification-packet rows.
+  'src-bc-protocol-28-2021-jan': 'src-bc-protocol-28-v3-0-2024',
 };
 
 // Source-level metadata that differs from the per-value extraction context.
 const SOURCE_CRYSTALLIZATION_DATE = {
-  'src-bc-protocol-28-2021-jan': '2021-01-31',
+  // P28 rows carry the Jan-2021 revision content date even after the dedup to the canonical v3.0 id.
+  'src-bc-protocol-28-v3-0-2024': '2021-01-31',
 };
 
 // Source relationship role: policy compilations are not the canonical scientific source.
