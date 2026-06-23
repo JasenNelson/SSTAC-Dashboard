@@ -850,7 +850,11 @@ describe('matrix options provenance catalog', () => {
       record.source_ids.includes('src-bc-protocol-28-v3-0-2024'),
     );
 
-    expect(protocol28Values).toHaveLength(6);
+    // 2026-06-22: BC P28 source dedup -- the mislabeled src-bc-protocol-28-2021-jan was retired and
+    // its 355 HH rows curated onto the canonical v3.0 id (4 exact-duplicate twins of the
+    // verification-packet rows deleted, 351 re-keyed). So the v3.0 set is now 351 HH + 6 PV = 357,
+    // all still available_option / pending_source_locator / needs_direct_source_check / needs_review.
+    expect(protocol28Values).toHaveLength(357);
     for (const record of protocol28Values) {
       expect(record.default_status, record.parameter_value_id).toBe(
         'available_option',
@@ -868,9 +872,13 @@ describe('matrix options provenance catalog', () => {
       expect(record.source_relationships?.[0]?.role).toBe(
         'policy_compilation',
       );
-      expect(record.review_notes, record.parameter_value_id).toMatch(
-        /policy compilation/i,
-      );
+      // 2026-06-22: broadened from /policy compilation/i to /Protocol 28/i. After the BC P28 source
+      // dedup this loop spans 357 rows: the 6 curated verification-packet rows ("...Treat Protocol 28
+      // as policy compilation...") AND the 351 re-keyed bulk rows ("BC Protocol 28 ... candidate").
+      // The "cannot drive a default" guardrail is enforced structurally above (default_status=
+      // available_option, source_relationships role=policy_compilation, canonical_source_status=
+      // needs_direct_source_check) + the source conflict_rule, not by this corroborating text check.
+      expect(record.review_notes, record.parameter_value_id).toMatch(/Protocol 28/i);
       for (const evidence of record.evidence_items) {
         expect(evidence.extraction_method, evidence.evidence_id).toBe(
           'manual_source_extraction',
@@ -878,9 +886,20 @@ describe('matrix options provenance catalog', () => {
         expect(evidence.locator_type, evidence.evidence_id).toBe(
           'source_table',
         );
-        expect(evidence.note, evidence.evidence_id).toMatch(
-          /Original source/i,
-        );
+      }
+    }
+
+    // The 6 curated verification-packet rows (parameter_values.json, 2026-05-25 review of As/BaP/PCB/Zn)
+    // carry the stricter "policy compilation" + "Original source" framing. The 351 re-keyed bulk rows use
+    // the older robot-extracted framing; the structural blocked-guarantee above covers all 357. Assert the
+    // curated framing on exactly the 6 (identified by the "policy compilation" review-note wording).
+    const curatedProtocol28Values = protocol28Values.filter((record) =>
+      /policy compilation/i.test(record.review_notes),
+    );
+    expect(curatedProtocol28Values).toHaveLength(6);
+    for (const record of curatedProtocol28Values) {
+      for (const evidence of record.evidence_items) {
+        expect(evidence.note, evidence.evidence_id).toMatch(/Original source/i);
       }
     }
   });
