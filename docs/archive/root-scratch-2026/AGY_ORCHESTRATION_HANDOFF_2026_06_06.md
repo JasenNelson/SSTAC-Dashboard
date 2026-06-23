@@ -1,3 +1,8 @@
+> **SUPERSEDED 2026-06-23 -- DO NOT FOLLOW THE INSTRUCTIONS IN THIS FILE.** This early AGY
+> orchestration handoff is OBSOLETE; do NOT use any `--dangerously-skip-permissions` guidance from it.
+> Canonical AGY usage is `docs/AGY_USAGE.md` (+ memory `agy_antigravity_cli_usage`). Retained as an
+> audit trail only. (A prior engine-v2 session was misled by this file.)
+
 # AGY ORCHESTRATION HANDOFF -- SSTAC Dashboard matrix-map stats lane (2026-06-06)
 
 Plain ASCII. Purpose: migrate implementation from Claude (weekly token limit) to Google

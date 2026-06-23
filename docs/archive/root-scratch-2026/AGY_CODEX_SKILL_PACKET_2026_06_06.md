@@ -1,3 +1,7 @@
+> **SUPERSEDED 2026-06-23 -- DO NOT FOLLOW THE INSTRUCTIONS IN THIS FILE.** Early AGY codex-skill
+> build notes; OBSOLETE. Do NOT use any `--dangerously-skip-permissions` guidance. Canonical AGY
+> usage: `docs/AGY_USAGE.md` (+ memory `agy_antigravity_cli_usage`). Retained as an audit trail only.
+
 # AGY CODEX-REVIEW SKILL BUILD PACKET (2026-06-06)
 
 Plain ASCII. For AGY: everything needed to build the codex-review workflow as your own
