@@ -1972,6 +1972,150 @@ export const SUBSTANCE_LIBRARY = [
       'logKow not in catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food ' +
       'filtered. abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
   },
+  {
+    key: 'dichloromethane',
+    displayName: 'Dichloromethane (methylene chloride)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.014,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.002,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'dichloroethylene_1_1',
+    displayName: '1,1-Dichloroethylene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '1_2_dichloroethane',
+    displayName: '1,2-Dichloroethane',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.091,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'trichloroethane_1_1_2',
+    displayName: '1,1,2-Trichloroethane',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.004,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.057,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'tetrachloroethane_1_1_1_2',
+    displayName: '1,1,1,2-Tetrachloroethane',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.03,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.026,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'bis_2_ethylhexyl_phthalate_dehp',
+    displayName: 'Di(2-ethylhexyl) phthalate (DEHP)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.014,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '2_4_6_trinitrotoluene_tnt',
+    displayName: '2,4,6-Trinitrotoluene (TNT)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0005,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.03,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'formaldehyde',
+    displayName: 'Formaldehyde',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.2,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
