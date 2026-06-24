@@ -15,7 +15,9 @@ def extract_candidate_pages(pdf_path, output_dir):
     keywords = ["sample id", "date sampled", "sample depth", "analytical results"]
     
     saved_count = 0
-    for page_num in range(len(doc)):
+    scanned_count = len(doc)
+    
+    for page_num in range(scanned_count):
         page = doc[page_num]
         text = page.get_text("text").lower()
         
@@ -28,10 +30,13 @@ def extract_candidate_pages(pdf_path, output_dir):
             print(f"Saved {out_path}")
             saved_count += 1
             
-            # Cap exploration (let's say 10 candidate pages per doc max just so we don't blow up)
+            # Cap exploration
             if saved_count >= 15:
-                print("Reached maximum of 15 candidate pages for this doc.")
+                print(f"Reached maximum of 15 candidate pages for {doc_name}.")
                 break
+                
+    if saved_count == 0:
+        print(f"Scanned all {scanned_count} pages of {doc_name} but found 0 candidate pages.")
 
 if __name__ == "__main__":
     if len(sys.argv) < 3:
