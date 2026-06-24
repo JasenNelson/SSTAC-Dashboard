@@ -2116,6 +2116,150 @@ export const SUBSTANCE_LIBRARY = [
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
   },
+  {
+    key: '1_2_3_trimethylbenzene',
+    displayName: '1,2,3-Trimethylbenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '1_2_4_trimethylbenzene',
+    displayName: '1,2,4-Trimethylbenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '1_3_5_trimethylbenzene',
+    displayName: '1,3,5-Trimethylbenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'bromobenzene',
+    displayName: 'Bromobenzene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'isopropylbenzene',
+    displayName: 'Cumene (isopropylbenzene)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: 'chlorotoluene_2',
+    displayName: 'o-Chlorotoluene (2-chlorotoluene)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '1_2_4_5_tetrachlorobenzene',
+    displayName: '1,2,4,5-Tetrachlorobenzene',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
+  {
+    key: '2_4_dinitrotoluene',
+    displayName: '2,4-Dinitrotoluene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 111 entries', () => {
+  it('has 119 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -10,8 +10,11 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-20: perfluoroctanoic_acid_pfoa, perfluorooctane_sulfonate, aldrin,
     // endrin, hexachlorobutadiene, hexachlorocyclopentadiene, isophorone,
     // acrylonitrile, carbon_disulfide, bisphenol_a, nitrobenzene, pyridine,
-    // 2_methylnaphthalene) = 103, + 8 chlorinated VOCs / organics (Batch E) = 111.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(111);
+    // 2_methylnaphthalene) = 103, + 8 chlorinated VOCs / organics (Batch E) = 111,
+    // + 8 HH-only IRIS RfD substances (Batch F, 2026-06-24: 1_2_3/1_2_4/1_3_5
+    // trimethylbenzene, bromobenzene, isopropylbenzene, chlorotoluene_2,
+    // 1_2_4_5_tetrachlorobenzene, 2_4_dinitrotoluene) = 119.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(119);
   });
 
   it('every entry has a non-null key', () => {
@@ -279,6 +282,41 @@ describe('SUBSTANCE_LIBRARY -- Batch E chlorinated VOCs + organics', () => {
       expect(result?.contaminantClass).toBe(cls);
       expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch F HH-only IRIS RfD substances', () => {
+  // All values verified verbatim against the IRIS oral RfD rows carrying qa_status=approved in
+  // matrix_research/reference_catalog/human_health_trv_values.json (matched by value + approved
+  // status, NOT by a uniform parameter_value_id suffix). NOTE the trimethylbenzene IDs are not
+  // uniform: for 1_2_4 / 1_3_5 the approved 0.01 is the unsuffixed pv-iris-<key>-hh-direct-rfd /
+  // -hh-food-rfd row, but for 1_2_3 those unsuffixed IDs are a SUPERSEDED needs_review 0.04 and
+  // the approved 0.01 lives in the suffixed pv-iris-1_2_3_trimethylbenzene-hh-{direct,food}-rfd-
+  // nzene-oral-rfd-2 rows. All single-endpoint (RfD-only, sf null), HH-only (logKow/fcv/trv_eco
+  // null -> Eco pathways filtered), abs_dermal 0.03 / ba_oral 1.0.
+  const expected = [
+    { key: '1_2_3_trimethylbenzene', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: '1_2_4_trimethylbenzene', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: '1_3_5_trimethylbenzene', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: 'bromobenzene', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'isopropylbenzene', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'chlorotoluene_2', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: '1_2_4_5_tetrachlorobenzene', rfd: 0.0003, sf: null, cls: 'organic-halogenated' },
+    { key: '2_4_dinitrotoluene', rfd: 0.002, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+      // HH-only invariant: eco fields null so Eco pathways are filtered out.
+      expect(result?.logKow).toBeNull();
+      expect(result?.fcv_ug_per_L).toBeNull();
+      expect(result?.trv_eco_mg_per_kg_bw_day).toBeNull();
     });
   }
 });
