@@ -1,5 +1,8 @@
 // Unit tests for GET /api/matrix-map/samples (bbox-lane Stage 2 route).
-// Covers the pure bbox parser + the auth/role/fetch handler paths. Plain ASCII.
+// Covers the pure bbox parser + the auth/fetch handler paths. The route is
+// AUTH-ONLY by design (no user_roles gate): authorization is delegated to the
+// SECDEF RPC's email-allowlist so the client refetch matches the SSR fetch on
+// both consumer pages (codex IMPORTANT 2026-06-23). Plain ASCII.
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 
@@ -14,23 +17,10 @@ import { EMPTY_MATRIX_MAP_DATA } from '@/app/(dashboard)/matrix-map/types';
 import { parseBboxParams } from '@/lib/matrix-map/bbox';
 import { GET } from '../route';
 
-type RoleRow = { role: string };
-
-function mkSupabase(opts: {
-  user: { id: string } | null;
-  roleRows?: RoleRow[];
-  roleErr?: { message: string } | null;
-}) {
-  const { user, roleRows = [{ role: 'admin' }], roleErr = null } = opts;
+function mkSupabase(opts: { user: { id: string } | null }) {
+  const { user } = opts;
   return {
     auth: { getUser: async () => ({ data: { user } }) },
-    from: () => ({
-      select: () => ({
-        eq: () => ({
-          limit: async () => ({ data: roleRows, error: roleErr }),
-        }),
-      }),
-    }),
   } as unknown as ReturnType<typeof createServerClient>;
 }
 
@@ -83,23 +73,17 @@ describe('GET /api/matrix-map/samples', () => {
     expect(fetchMatrixMapSamplesServerSide).not.toHaveBeenCalled();
   });
 
-  it('403 when the user holds no role', async () => {
-    vi.mocked(createServerClient).mockReturnValue(mkSupabase({ user: { id: 'u1' }, roleRows: [] }));
+  it('200 for an authenticated user with NO role (auth-only gate; RPC is the authority)', async () => {
+    // Consistency fix: the route must not be stricter than the SSR fetch on the
+    // any-authenticated-user /matrix-options surface. A no-role authed user gets
+    // the (RPC-scoped) payload, not a 403 that would strand viewport refetches.
+    vi.mocked(createServerClient).mockReturnValue(mkSupabase({ user: { id: 'u1' } }));
     const res = await GET(mkReq(''));
-    expect(res.status).toBe(403);
-    expect(fetchMatrixMapSamplesServerSide).not.toHaveBeenCalled();
+    expect(res.status).toBe(200);
+    expect(fetchMatrixMapSamplesServerSide).toHaveBeenCalled();
   });
 
-  it('500 (fail-closed) on role lookup error', async () => {
-    vi.mocked(createServerClient).mockReturnValue(
-      mkSupabase({ user: { id: 'u1' }, roleErr: { message: 'boom' } }),
-    );
-    const res = await GET(mkReq(''));
-    expect(res.status).toBe(500);
-    expect(fetchMatrixMapSamplesServerSide).not.toHaveBeenCalled();
-  });
-
-  it('200 + forwards the parsed bbox to the helper for an authorized user', async () => {
+  it('200 + forwards the parsed bbox to the helper for an authenticated user', async () => {
     vi.mocked(createServerClient).mockReturnValue(mkSupabase({ user: { id: 'u1' } }));
     const res = await GET(mkReq('min_lng=-124&min_lat=48&max_lng=-122&max_lat=50'));
     expect(res.status).toBe(200);

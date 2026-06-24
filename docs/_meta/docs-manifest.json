@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4552,
-        "source": "feat/matrix-options-wire-batch-f-2026-06-24: 4552 = 4544 + 8 new per-substance assertions from the Batch F block in substanceLibrary.test.ts (8 HH-only IRIS RfD substances wired into SUBSTANCE_LIBRARY 111->119: 1_2_3/1_2_4/1_3_5_trimethylbenzene rfd 0.01, bromobenzene 0.02, isopropylbenzene 0.1, chlorotoluene_2 0.02, 1_2_4_5_tetrachlorobenzene 0.0003, 2_4_dinitrotoluene 0.002; all single-endpoint sf null, abs_dermal 0.03, ba_oral 1.0, eco null -> Eco pathways filtered). Values verified verbatim against the IRIS oral RfD rows carrying qa_status=approved in human_health_trv_values.json (matched by value + approved status, NOT by a uniform parameter_value_id suffix; the trimethylbenzene IDs are not uniform -- for 1_2_4 / 1_3_5 the approved 0.01 is the unsuffixed pv-iris-<key>-hh-direct-rfd / -hh-food-rfd row, but for 1_2_3 those unsuffixed IDs are a superseded needs_review 0.04 and the approved 0.01 is the suffixed pv-iris-1_2_3_trimethylbenzene-hh-{direct,food}-rfd-nzene-oral-rfd-2 row). Build-first wiring; no qa_status / catalog mutation. Confirmed via npm run test:ci.",
+        "value": 4553,
+        "source": "feat/matrix-map-bbox-stage2-client-2026-06-24: 4553 = 4552 + 1 net (bbox-lane Stage 2 CLIENT wiring of MatrixMap.tsx to /api/matrix-map/samples). route.test.ts -1 (dropped the now-removed user_roles 403 + role-lookup 500 cases, added 1 no-role-still-200 case: the route is auth-only by design so the client refetch matches the SSR fetch on both consumer pages; the SECDEF RPC email-allowlist is the data-access authority); MatrixMap.test.tsx +2 (truncated/capped-overview hint renders N-of-M + count-fallback; absent when not truncated). Debounced moveend/zoomend refetch + AbortController/sequence-id stale-drop + fire-once fit-bounds + non-blanking refetch error + capped province-wide min-zoom dedupe; behaviorally covered by e2e + browser visual QA. Confirmed via npm run test:ci.",
         "last_verified": "2026-06-24"
       },
       "playwright_test_count": {
@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_06_24_pre_bbox_stage2_client": {
+      "status": "superseded",
+      "value": 4552,
+      "superseded_by": "facts.testing.vitest_test_count = 4553 (feat/matrix-map-bbox-stage2-client-2026-06-24: +1 net from the bbox Stage 2 client wiring -- route.test.ts -1, MatrixMap.test.tsx +2)",
+      "note": "Prior live vitest_test_count (post Batch F wiring #412), moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4553 after the bbox-lane Stage 2 CLIENT wiring. The route was relaxed to auth-only (the user_roles 403/500 cases removed; a no-role-still-200 case added) so the client refetch matches the SSR fetch on both consumer pages; MatrixMap.test.tsx gained 2 truncated-hint render tests. Added by hand."
+    },
     "vitest_test_count_2026_06_24_pre_batch_f": {
       "status": "superseded",
       "value": 4544,
