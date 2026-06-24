@@ -31,25 +31,12 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { fetchMatrixMapSamplesServerSide } from '@/lib/matrix-map/fetch-samples-server';
-import type { MatrixMapBbox } from '@/lib/matrix-map/bbox';
+// parseBboxParams lives in @/lib/matrix-map/bbox -- a Next.js route module may
+// only export route handlers + config, so the bbox parser cannot be exported here.
+import { parseBboxParams } from '@/lib/matrix-map/bbox';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
-
-/**
- * Shape the 4 bbox query params into a MatrixMapBbox, or null (province-wide).
- * STRICT + fail-safe: any missing / blank / whitespace-only / non-finite edge
- * => null (codex P3: Number(" ") === 0 would otherwise forge a 0 coordinate).
- * Range / degenerate checks live in the helper's toRpcBbox.
- */
-export function parseBboxParams(sp: URLSearchParams): MatrixMapBbox | null {
-  const raw = ['min_lng', 'min_lat', 'max_lng', 'max_lat'].map((k) => sp.get(k)?.trim());
-  if (raw.some((v) => !v)) return null;
-  const nums = (raw as string[]).map((v) => Number(v));
-  if (nums.some((n) => !Number.isFinite(n))) return null;
-  const [minLng, minLat, maxLng, maxLat] = nums;
-  return { minLng, minLat, maxLng, maxLat };
-}
 
 export async function GET(request: NextRequest): Promise<NextResponse> {
   // Collect any cookies the auth layer wants to set (token refresh) and

@@ -11,7 +11,8 @@ vi.mock('@/lib/matrix-map/fetch-samples-server', () => ({
 import { createServerClient } from '@supabase/ssr';
 import { fetchMatrixMapSamplesServerSide } from '@/lib/matrix-map/fetch-samples-server';
 import { EMPTY_MATRIX_MAP_DATA } from '@/app/(dashboard)/matrix-map/types';
-import { GET, parseBboxParams } from '../route';
+import { parseBboxParams } from '@/lib/matrix-map/bbox';
+import { GET } from '../route';
 
 type RoleRow = { role: string };
 
