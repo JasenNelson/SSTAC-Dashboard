@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "session_2026_06_24_bnrrm_enrichment": {
+      "status": "complete",
+      "session_date": "2026-06-24",
+      "work_summary": "Big session. PRs #412 (Batch F substances 111->119), #413 (bbox Stage 2 client), #414 (enrichment plan), #415 (BN-RRM extraction-quality strategy + validated rebuild/salvage/multimodal tooling) merged. Schema migrations 20260620000001 + 20260622000001 applied live via MCP. Diagnosed a systemic BN-RRM extraction-quality failure (criteria cols as stations, dates/depth dropped, ~2,600-3,100 real merged-cell stations nearly discarded -- codex-confirmed). Rebuilt+salvaged the 132 VERBATIM docs (dates 304->5,051, golden-set holds, 37k quarantined-not-discarded). Validated Gemini-3.1 MULTIMODAL vision as the clean extraction engine (recovers what text-layer misses) + built the production tooling + a resilient resumable batch runner. The 433-doc multimodal batch + the codex-review-gated live-Supabase load are handed off to a fresh session via FRESH_SESSION_HANDOFF_2026_06_24_BNRRM_433_BATCH.md. Live Supabase UNTOUCHED; snapshot matrix_map_backup_20260624 in place. Memory: feedback_bnrrm_dataset_additive_only_and_lane_takeover, feedback_bnrrm_extraction_quality_systems_2026_06_24.",
+      "last_verified": "2026-06-24"
+    },
     "vitest_test_count_2026_06_24_pre_bbox_stage2_client": {
       "status": "superseded",
       "value": 4552,

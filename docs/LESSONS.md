@@ -10,6 +10,48 @@
 
 ---
 
+## 2026-06-24 - Multimodal vision beats text-layer for PDF tables; investigate "junk", don't discard [CRITICAL]
+
+**Date:** June 24, 2026
+**Area:** data extraction / BN-RRM enrichment / quality systems
+**Impact:** CRITICAL (data integrity; nearly discarded ~2,600-3,100 real samples)
+**Status:** Strategy + tooling shipped (#415); 433-doc batch handed off
+**Session:** BN-RRM date/depth enrichment (sstac temporarily owns the BN-RRM lane)
+
+### Discovery 1 -- multimodal vision >> text-layer for borderless environmental tables
+Text-layer PDF extraction (Docling, pdfplumber) FRAGMENTS borderless/merged tables -- it loses the
+visual grid, so depth values like `0.3`/`1.6` get misattributed as station IDs and regulatory-criteria
+columns get parsed as sampling stations. Gemini 3.1 Pro multimodal (via AGY's `view_file` image
+rendering) READS the table as an image, keeps station-id/date/depth correctly associated, and recovers
+data the text path misses entirely (one doc: text=0 stations -> multimodal=clean dated stations).
+Pipeline: PyMuPDF renders candidate pages -> Gemini vision transcribes -> gated normalized load.
+
+### Discovery 2 -- "junk" is often recoverable; quality-gate autonomous extraction
+A bulk extraction ran AUTONOMOUSLY WITH NO QUALITY GATE -> mis-parsed criteria cols as stations + a
+junk filter then nearly DISCARDED ~2,600-3,100 REAL stations whose cells were MERGED
+(`SEDIMENT 16-JUN-11 SED11-100A L1020263-1`). codex independently confirmed the loss. Owner: "investigate,
+don't throw out the baby with the bath water." Fix = a SALVAGE layer (de-concatenation) + QUARANTINE
+(never delete) + acceptance gates + golden-set regression. See
+`docs/design/matrix-map/BNRRM_EXTRACTION_QUALITY_STRATEGY_2026_06_24.md` (5 systems).
+
+### Discovery 3 -- verify subagent/AGY extraction against golden-set ground truth, NOT self-report
+AGY's first parser produced garbage (chemistry values as station ids, depths of 200000cm); its salvage
+"no junk" claim was false (7 lab-ids slipped through). Every AGY round was gated against an independent
+ground-truth check (SITE0141 SED11-137A=2011-06-16/0-30cm) + a station-name quality audit -- which caught
+each error for a few Claude tokens while AGY (unlimited tokens) did the heavy lifting.
+
+### File References
+- Strategy + 5 systems: `docs/design/matrix-map/BNRRM_EXTRACTION_QUALITY_STRATEGY_2026_06_24.md`
+- Tooling: `scripts/matrix-map/{rebuild_clean_db_from_verbatim,salvage_merged_stations,mm_extract_render,mm_db_load,mm_batch_runner}.py`
+- Handoff: `FRESH_SESSION_HANDOFF_2026_06_24_BNRRM_433_BATCH.md`
+
+### Key Takeaway
+For PDF table extraction prefer multimodal vision over text-layer; never auto-load extraction output
+without quality gates + golden-set regression; quarantine + investigate anomalies, never silently discard;
+verify autonomous-agent output against independent ground truth.
+
+---
+
 ## 2026-06-15 - Auth gating + access-control corrections (matrix-options lane) [HIGH]
 
 **Date:** June 15, 2026
