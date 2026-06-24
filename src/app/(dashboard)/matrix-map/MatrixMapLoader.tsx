@@ -59,16 +59,24 @@ export interface MatrixMapLoaderProps {
    * failed; renders as a small inline notice inside the map area.
    */
   fetchErrorMessage?: string | null;
+  /**
+   * bbox-lane Stage 2 pass-through: notifies an embedding parent of each
+   * viewport-refetch payload so sibling panels can accumulate a cumulative
+   * sample union (selection resolution must survive viewport changes).
+   */
+  onMapDataChange?: (data: MatrixMapData) => void;
 }
 
 export default function MatrixMapLoader({
   initialMapData,
   fetchErrorMessage,
+  onMapDataChange,
 }: MatrixMapLoaderProps) {
   return (
     <MatrixMap
       initialMapData={initialMapData}
       fetchErrorMessage={fetchErrorMessage}
+      onMapDataChange={onMapDataChange}
     />
   );
 }

@@ -27,9 +27,17 @@ import { MatrixMapStatsShell } from './MatrixMapStatsShell';
 
 interface MatrixMapLeftPanelProps {
   initialMapData: MatrixMapData;
+  /**
+   * bbox-lane Stage 2 (codex P1): the cumulative union of every sample the map
+   * has loaded across viewport refetches. Selection resolution MUST use this --
+   * not initialMapData.visible_samples -- or a marker selected from a viewport
+   * fetch (beyond the capped province-wide initial set) would resolve to "no
+   * selection". Falls back to the initial set when not provided (standalone use).
+   */
+  selectableSamples?: MatrixSample[];
 }
 
-export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) {
+export function MatrixMapLeftPanel({ initialMapData, selectableSamples }: MatrixMapLeftPanelProps) {
   const identifiedFeatures = useMatrixMapIdentifyStore((s) => s.identifiedFeatures);
   const primaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.primaryFeatureIndex);
   const setPrimaryFeatureIndex = useMatrixMapIdentifyStore((s) => s.setPrimaryFeatureIndex);
@@ -40,7 +48,8 @@ export function MatrixMapLeftPanel({ initialMapData }: MatrixMapLeftPanelProps) 
   const [exportError, setExportError] = useState<string | null>(null);
 
   const hasIdentified = identifiedFeatures.length > 0;
-  const selectedSamples = initialMapData.visible_samples.filter((sample) =>
+  const resolvableSamples = selectableSamples ?? initialMapData.visible_samples;
+  const selectedSamples = resolvableSamples.filter((sample) =>
     selectedSampleIds.includes(sample.id),
   );
   const composition = countSelectionComposition(selectedSamples);

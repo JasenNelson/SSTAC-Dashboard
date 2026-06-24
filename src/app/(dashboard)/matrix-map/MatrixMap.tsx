@@ -74,6 +74,9 @@ import type {
   MatrixMapData,
   MatrixSample,
 } from './types';
+// bbox-lane Stage 2: viewport refetch helpers. toRpcBbox is a fail-safe WGS84
+// guard (invalid/degenerate -> null -> province-wide).
+import { toRpcBbox, type MatrixMapBbox } from '@/lib/matrix-map/bbox';
 
 export interface MatrixMapProps {
   /** Server-fetched payload from matrix_map.fetch_samples_with_hidden_summary RPC. */
@@ -83,6 +86,14 @@ export interface MatrixMapProps {
   className?: string;
   initialCenter?: [number, number];
   initialZoom?: number;
+  /**
+   * bbox-lane Stage 2: called with each viewport-refetch payload so an embedding
+   * parent (e.g. MatrixDashboard on /matrix-options) can accumulate a cumulative
+   * sample union for sibling panels -- a selection made on a viewport-only marker
+   * must stay resolvable after the province-wide set is capped. The map renders
+   * its own current-viewport mapData; this is purely an upward notification.
+   */
+  onMapDataChange?: (data: MatrixMapData) => void;
 }
 
 // Layer definitions
@@ -113,6 +124,16 @@ const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
 const BC_WMS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wms-identify';
 const BC_WFS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wfs-identify';
 const BC_ATTR = '© Province of British Columbia';
+
+// bbox-lane Stage 2 -- viewport refetch tuning.
+// Debounce settle time after moveend/zoomend before a refetch fires.
+const VIEWPORT_REFETCH_DEBOUNCE_MS = 300;
+// At/below this zoom the viewport is so wide a bbox fetch is ~province-wide
+// anyway; fetch province-wide (null bbox) instead, deduped to once per snapshot,
+// so the capped overview is stable and reads are not amplified by panning.
+const VIEWPORT_MIN_BBOX_ZOOM = 7;
+// Sentinel dedupe key for the province-wide (null-bbox) fetch.
+const VIEWPORT_PROVINCE_KEY = 'province';
 
 interface OverlayDef {
   name: string;
@@ -261,7 +282,12 @@ export function MatrixMap({
   className,
   initialCenter = [54.7, -125.0],  // BC province center
   initialZoom = 5,                  // province-wide default
+  onMapDataChange,
 }: MatrixMapProps) {
+  // Latest onMapDataChange in a ref so the (mount-once) map-init effect's
+  // closure always calls the current callback without re-running the effect.
+  const onMapDataChangeRef = useRef(onMapDataChange);
+  onMapDataChangeRef.current = onMapDataChange;
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<MarkerClusterGroup | null>(null);
@@ -302,7 +328,60 @@ export function MatrixMap({
   // own internal timeoutMs but that does NOT discard stale successful replies.
   const identifyRequestIdRef = useRef<number>(0);
 
-  const allSamples = initialMapData.visible_samples;
+  // bbox-lane Stage 2 -- viewport refetch state + guards.
+  // mapData is reactive so a refetch re-renders markers. Chain (verified):
+  // setMapData -> reactive allSamples -> the `samples` useMemo recomputes
+  // (allSamples is in its dep array) -> the marker-render useEffect (keyed on
+  // `samples`) refires. Initial paint = the province-wide SSR payload.
+  const [mapData, setMapData] = useState<MatrixMapData>(initialMapData);
+  const allSamples = mapData.visible_samples;
+  // Transient refetch error: surfaced WITHOUT discarding good markers (a failed
+  // refetch returns empty + fetchErrorMessage; we keep the prior mapData).
+  const [refetchError, setRefetchError] = useState<string | null>(null);
+  // Monotonic viewport-fetch counter (mirrors identifyRequestIdRef): each fetch
+  // captures its id; a newer move advances it so the stale reply is dropped.
+  const viewportFetchSeqRef = useRef<number>(0);
+  const viewportAbortRef = useRef<AbortController | null>(null);
+  const viewportDebounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Dedupe against the last SUCCESSFULLY-LOADED viewport key (NOT an optimistic
+  // pre-fetch key): the same viewport must not refire on every low-zoom pan --
+  // the RPC recomputes uncapped province-wide hidden aggregates on every call.
+  // Tracking only loaded keys avoids the retry wedge where an aborted/failed
+  // fetch's key would otherwise mark a never-loaded viewport as "current".
+  const lastLoadedKeyRef = useRef<string | null>(null);
+  // The viewport key currently being fetched -- skip a duplicate concurrent
+  // fetch of the exact same viewport (cleared on settle by the owning fetch).
+  const inFlightKeyRef = useRef<string | null>(null);
+  const isMountedRef = useRef<boolean>(true);
+  // Fire-once auto-fit: fit-bounds must run only on the initial load, never on a
+  // viewport refetch (which would auto-zoom and fight the user's pan).
+  const hasFitBoundsRef = useRef<boolean>(false);
+
+  // P2 (codex): mapData is seeded via useState, which captures ONLY the first
+  // initialMapData. On /matrix-options the partial-visibility banner's Refresh
+  // calls router.refresh(), delivering a NEW initialMapData prop WITHOUT
+  // remounting this component -- without this sync, markers + the truncated hint
+  // would keep showing the pre-refresh state. Re-seed the reactive state on a
+  // genuine prop change (stable object identity across client re-renders means
+  // this does NOT clobber viewport refetches), reset the dedupe key (the server
+  // payload is province-wide), and clear any transient refetch error.
+  useEffect(() => {
+    // Invalidate any in-flight / pending viewport refetch first (codex P2 r2):
+    // otherwise a refetch that was mid-flight when the prop refreshed could still
+    // pass owns() and setMapData(stale), overwriting this fresh server payload.
+    // Advance the seq + abort + clear the debounce, mirroring cleanup/new-fetch.
+    viewportFetchSeqRef.current += 1;
+    viewportAbortRef.current?.abort();
+    viewportAbortRef.current = null;
+    if (viewportDebounceRef.current) {
+      clearTimeout(viewportDebounceRef.current);
+      viewportDebounceRef.current = null;
+    }
+    setMapData(initialMapData);
+    lastLoadedKeyRef.current = VIEWPORT_PROVINCE_KEY;
+    inFlightKeyRef.current = null;
+    setRefetchError(null);
+  }, [initialMapData]);
   // PR-MAP-10 (bugfix): identifiedFeatures lives in
   // src/stores/matrix-map/identifyStore.ts so MatrixMapLeftPanel can
   // subscribe to identify-tool / identify-area results across the
@@ -431,6 +510,11 @@ export function MatrixMap({
     if (typeof window === 'undefined' || !mapContainerRef.current || mapInstanceRef.current) return;
 
     let isMounted = true;
+    isMountedRef.current = true;
+    // The initial SSR payload (initialMapData) is province-wide (null bbox), so
+    // seed the last-LOADED key to province -- the first moveend at province zoom
+    // must not refetch data we already have.
+    lastLoadedKeyRef.current = VIEWPORT_PROVINCE_KEY;
 
     const initMap = async () => {
       const L = (await import('leaflet')).default;
@@ -545,6 +629,108 @@ export function MatrixMap({
       map.addLayer(markers);
       markersLayerRef.current = markers;
 
+      // ---- bbox-lane Stage 2: debounced viewport refetch --------------------
+      // Compute a stable dedupe key + the bbox for the current viewport. Below
+      // VIEWPORT_MIN_BBOX_ZOOM we fetch province-wide (null bbox) -- a capped
+      // overview -- rather than a near-province bbox, deduped so panning at low
+      // zoom does not re-trigger the uncapped province-wide hidden-aggregate scan.
+      const computeViewport = (): { key: string; bbox: MatrixMapBbox | null } => {
+        if (map.getZoom() < VIEWPORT_MIN_BBOX_ZOOM) {
+          return { key: VIEWPORT_PROVINCE_KEY, bbox: null };
+        }
+        const b = map.getBounds();
+        const bbox: MatrixMapBbox = {
+          minLng: b.getWest(),
+          minLat: b.getSouth(),
+          maxLng: b.getEast(),
+          maxLat: b.getNorth(),
+        };
+        const r = (n: number) => n.toFixed(3);
+        return {
+          key: `${r(bbox.minLng)},${r(bbox.minLat)},${r(bbox.maxLng)},${r(bbox.maxLat)}`,
+          bbox,
+        };
+      };
+
+      const runViewportFetch = async () => {
+        const { key, bbox } = computeViewport();
+        // Dedupe against the last LOADED viewport + any identical in-flight fetch.
+        // (codex P2): never dedupe against an optimistic key, or an aborted/failed
+        // fetch would wedge a never-loaded viewport as "current" and skip its retry.
+        if (key === lastLoadedKeyRef.current) return;
+        if (key === inFlightKeyRef.current) return;
+        const rpcBbox = toRpcBbox(bbox); // null => province-wide (capped) overview
+        const qs = rpcBbox
+          ? `?min_lng=${rpcBbox.min_lng}&min_lat=${rpcBbox.min_lat}` +
+            `&max_lng=${rpcBbox.max_lng}&max_lat=${rpcBbox.max_lat}`
+          : '';
+
+        // Drop any in-flight request; advance the sequence so its late reply is
+        // ignored. The new fetch now OWNS inFlightKeyRef; the aborted one's catch
+        // returns silently without touching it.
+        viewportAbortRef.current?.abort();
+        const controller = new AbortController();
+        viewportAbortRef.current = controller;
+        const seq = ++viewportFetchSeqRef.current;
+        inFlightKeyRef.current = key;
+
+        // owns(): this fetch is still the latest AND the component is mounted.
+        const owns = () => seq === viewportFetchSeqRef.current && isMountedRef.current;
+
+        try {
+          const res = await fetch(`/api/matrix-map/samples${qs}`, {
+            signal: controller.signal,
+            headers: { accept: 'application/json' },
+          });
+          if (!owns()) return; // superseded/unmounted -- a newer fetch owns state
+          if (!res.ok) {
+            // Keep prior markers; transient notice. Do NOT mark this viewport
+            // loaded, so the next move retries it. Clear our in-flight ownership.
+            inFlightKeyRef.current = null;
+            setRefetchError(
+              `Map data refresh failed (HTTP ${res.status}). Showing the last loaded samples.`,
+            );
+            return;
+          }
+          const body = (await res.json()) as MatrixMapData & {
+            fetchErrorMessage?: string | null;
+          };
+          if (!owns()) return;
+          if (body.fetchErrorMessage) {
+            // The RPC failed server-side (200 + empty + message). Do NOT blank
+            // good markers with the empty fallback; show the notice + allow retry.
+            inFlightKeyRef.current = null;
+            setRefetchError(body.fetchErrorMessage);
+            return;
+          }
+          // Success: mark this viewport loaded (dedupe future identical moves)
+          // and notify the embedding parent so sibling panels can accumulate the
+          // cumulative sample union (codex P1).
+          lastLoadedKeyRef.current = key;
+          inFlightKeyRef.current = null;
+          setRefetchError(null);
+          setMapData(body);
+          onMapDataChangeRef.current?.(body);
+        } catch (err) {
+          // A superseded request aborts -- silent (a newer fetch owns inFlightKey).
+          if (err instanceof DOMException && err.name === 'AbortError') return;
+          if (!owns()) return;
+          inFlightKeyRef.current = null;
+          setRefetchError('Map data refresh failed (network). Showing the last loaded samples.');
+        }
+      };
+
+      const onViewportSettle = () => {
+        if (viewportDebounceRef.current) clearTimeout(viewportDebounceRef.current);
+        viewportDebounceRef.current = setTimeout(() => {
+          void runViewportFetch();
+        }, VIEWPORT_REFETCH_DEBOUNCE_MS);
+      };
+
+      map.on('moveend', onViewportSettle);
+      map.on('zoomend', onViewportSettle);
+      // -----------------------------------------------------------------------
+
       mapInstanceRef.current = map;
       setIsLoaded(true);
     };
@@ -553,6 +739,16 @@ export function MatrixMap({
 
     return () => {
       isMounted = false;
+      // bbox-lane Stage 2: tear down the viewport refetch loop so no pending
+      // timer or in-flight fetch fires setState after unmount/navigation.
+      isMountedRef.current = false;
+      if (viewportDebounceRef.current) {
+        clearTimeout(viewportDebounceRef.current);
+        viewportDebounceRef.current = null;
+      }
+      viewportAbortRef.current?.abort();
+      viewportAbortRef.current = null;
+      viewportFetchSeqRef.current += 1; // invalidate any reply mid-flight
       if (mapInstanceRef.current) {
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
@@ -1172,13 +1368,19 @@ export function MatrixMap({
     };
   }, [interactionMode, isLoaded, leaflet, setIdentifiedFeatures]);
 
-  // Fit to samples on first load.
+  // Fit to samples on first load ONLY. bbox-lane Stage 2 made allSamples
+  // reactive, so without a fire-once guard this effect would re-fit (auto-zoom)
+  // on every viewport refetch that changes the sample count -- fighting the
+  // user's pan. hasFitBoundsRef is set TRUE only after a successful non-empty
+  // fitBounds, so an initial empty-then-populated load still fits exactly once.
   useEffect(() => {
+    if (hasFitBoundsRef.current) return;
     if (!mapInstanceRef.current || !isLoaded || !leaflet || allSamples.length === 0) return;
     const bounds = leaflet.latLngBounds(
       allSamples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
     );
     mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
+    hasFitBoundsRef.current = true;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [allSamples.length, isLoaded, leaflet]);
 
@@ -1300,6 +1502,32 @@ export function MatrixMap({
       {fetchErrorMessage && (
         <div className="absolute top-20 left-4 right-4 z-[1000] bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
           {fetchErrorMessage}
+        </div>
+      )}
+
+      {/* bbox-lane Stage 2: transient viewport-refetch error -- shown WITHOUT
+          discarding the last good markers; dismissable. */}
+      {refetchError && (
+        <div className="absolute top-32 left-4 right-4 z-[1000] flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+          <span>{refetchError}</span>
+          <button
+            type="button"
+            aria-label="Dismiss map refresh error"
+            onClick={() => setRefetchError(null)}
+            className="font-semibold leading-none hover:text-amber-950"
+          >
+            x
+          </button>
+        </div>
+      )}
+
+      {/* bbox-lane Stage 2: capped-overview / truncated hint. The RPC caps every
+          response (incl. the province-wide null-bbox overview), so when more
+          samples exist than were returned, prompt the user to zoom in. */}
+      {mapData.truncated && (
+        <div className="absolute bottom-6 left-1/2 -translate-x-1/2 z-[1000] bg-slate-900/85 text-white text-xs px-3 py-1.5 rounded-full shadow-lg">
+          Showing {mapData.returned_sample_count ?? allSamples.length} of{' '}
+          {mapData.total_in_bbox ?? mapData.returned_sample_count ?? allSamples.length} samples -- zoom in to see all
         </div>
       )}
 

@@ -52,4 +52,28 @@ describe('MatrixMap (Path-B fork)', () => {
     );
     expect(screen.getByText(/RPC unavailable/)).toBeInTheDocument();
   });
+
+  // bbox-lane Stage 2: the capped-overview / truncated hint renders from the
+  // (reactive) mapData seeded by initialMapData -- it is not gated on Leaflet
+  // having loaded, so it is assertable in jsdom.
+  it('shows the truncated "zoom in" hint with N-of-M counts when truncated', () => {
+    render(
+      <MatrixMap
+        initialMapData={{
+          ...EMPTY_MATRIX_MAP_DATA,
+          total_in_bbox: 9000,
+          returned_sample_count: 2500,
+          truncated: true,
+        }}
+      />,
+    );
+    const hint = screen.getByText(/zoom in to see all/i);
+    expect(hint).toBeInTheDocument();
+    expect(hint).toHaveTextContent('Showing 2500 of 9000 samples');
+  });
+
+  it('does not show the truncated hint when the payload is not truncated', () => {
+    render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+    expect(screen.queryByText(/zoom in to see all/i)).not.toBeInTheDocument();
+  });
 });

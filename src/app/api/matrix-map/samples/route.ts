@@ -12,10 +12,19 @@
 //   ?min_lng&min_lat&max_lng&max_lat  (WGS84 viewport edges)
 //
 // SECURITY POSTURE (carry the Stage 1 rigor):
-//   - Auth: must be a logged-in user (401) holding ANY user_roles row (403) --
-//     mirrors the reviewer gate on /matrix-map/page.tsx (R-5). The RPC ALSO
-//     enforces caller auth + email allowlist + the visibility predicate
-//     internally and keeps hidden_* PROVINCE-WIDE (no spatial oracle).
+//   - Auth: must be a logged-in user (401). NO user_roles gate here -- the route
+//     authorization is INTENTIONALLY aligned with the SSR fetch on BOTH consumer
+//     pages (fetchMatrixMapSamplesServerSide), so the client refetch can never be
+//     stricter than the initial server render. The real data-access authority is
+//     the SECDEF RPC, which enforces caller auth + matrix_map.is_email_allowlisted
+//     (JWT sub) + the visibility predicate internally and keeps hidden_* PROVINCE-
+//     WIDE (no spatial oracle). A non-allowlisted authed user gets exactly the
+//     RPC-scoped (public / empty) payload the SSR path already returns to them --
+//     no new exposure. Page-level reviewer gating (R-5: ANY user_roles row) stays
+//     where it belongs: on /matrix-map/page.tsx for PAGE access. Embedding the map
+//     on the any-authenticated-user /matrix-options surface (#330) is why a route
+//     user_roles 403 would mismatch that page's initial SSR fetch and strand
+//     refetches (codex IMPORTANT 2026-06-23).
 //   - GET read, no mutation => no CSRF token required (unlike the export POST).
 //   - COOKIES: this route is OUTSIDE the middleware matcher, so it owns its own
 //     getAll/setAll and PROPAGATES any auth-refresh Set-Cookie onto the response
@@ -66,25 +75,15 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return res;
   };
 
-  // Auth gate (mirrors /matrix-map/page.tsx, returns JSON instead of redirect).
+  // Auth gate (returns JSON instead of redirect). Auth-only by design: the RPC
+  // (matrix_map.is_email_allowlisted + visibility predicate) is the data-access
+  // authority and matches the SSR fetch on both consumer pages -- see the
+  // SECURITY POSTURE note above. No user_roles gate here.
   const {
     data: { user },
   } = await supabase.auth.getUser();
   if (!user) {
     return respond({ error: 'unauthorized' }, 401);
-  }
-
-  // Reviewer allowlist: ANY user_roles row (R-5). Fail CLOSED on lookup error.
-  const { data: roleRows, error: roleErr } = await supabase
-    .from('user_roles')
-    .select('role')
-    .eq('user_id', user.id)
-    .limit(1);
-  if (roleErr) {
-    return respond({ error: 'role_lookup_failed' }, 500);
-  }
-  if (!roleRows || roleRows.length === 0) {
-    return respond({ error: 'forbidden' }, 403);
   }
 
   const bbox = parseBboxParams(request.nextUrl.searchParams);

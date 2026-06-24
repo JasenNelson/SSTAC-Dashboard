@@ -6,7 +6,7 @@ import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
 import PartialVisibilityBanner from '@/app/(dashboard)/matrix-map/PartialVisibilityBanner';
-import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
+import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData, type MatrixSample } from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
@@ -245,6 +245,26 @@ const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
 
 export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
   const router = useRouter();
+  // bbox-lane Stage 2 (codex P1): MatrixMap refetches per-viewport, so a user can
+  // select a marker that exists only in a viewport-fetch payload -- not in the
+  // (capped) province-wide initialMapData. Keep a CUMULATIVE union of every sample
+  // seen so MatrixMapLeftPanel always resolves selected samples for its
+  // composition stats. The map still renders its own current-viewport set; this
+  // union is only for sibling-panel selection resolution.
+  const [knownSamples, setKnownSamples] = useState<MatrixSample[]>(
+    initialMapData.visible_samples,
+  );
+  // Re-seed on a genuine server refresh (router.refresh delivers a new prop).
+  useEffect(() => {
+    setKnownSamples(initialMapData.visible_samples);
+  }, [initialMapData]);
+  const handleViewportData = useCallback((data: MatrixMapData) => {
+    setKnownSamples((prev) => {
+      const byId = new Map(prev.map((s) => [s.id, s]));
+      for (const s of data.visible_samples) byId.set(s.id, s);
+      return Array.from(byId.values());
+    });
+  }, []);
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   // Both side panels open by default per owner UX preference 2026-05-19
@@ -939,6 +959,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 )}
                 <MatrixMapLeftPanel
                   initialMapData={initialMapData}
+                  selectableSamples={knownSamples}
                 />
               </div>
 
@@ -947,6 +968,7 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 <MatrixMapLoader
                   initialMapData={initialMapData}
                   fetchErrorMessage={fetchErrorMessage}
+                  onMapDataChange={handleViewportData}
                 />
               </div>
 
