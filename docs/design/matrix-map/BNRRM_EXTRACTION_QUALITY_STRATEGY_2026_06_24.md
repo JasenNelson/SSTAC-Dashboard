@@ -56,6 +56,27 @@ and ENFORCED in the extraction pipeline, where they were missing.
 - The salvage pass is built AS an instance of system #2 (reusable + quarantine-gated), not a one-off
   patch -- so it also becomes the prevention going forward.
 
+## VALIDATED production pipeline + 433-doc batch runbook (2026-06-24)
+The multimodal extraction engine is built + validated end-to-end (4 docs). Pipeline:
+1. **Render** -- `scripts/matrix-map/mm_extract_render.py` (PyMuPDF/fitz, installed in `.venv`):
+   scan a doc's pages for table keywords -> render candidate pages to PNG (200 dpi, 15-page cap).
+2. **Vision transcribe** -- AGY/Gemini 3.1 Pro (High) VIEWS the PNGs and transcribes per sample
+   `{station_id, date_sampled, depth_top_cm, depth_bottom_cm, media_type, parameters[]}` ->
+   `_enrichment_working/mm_<doc>.json`. (This step is AGY-session work, not headless-scriptable.)
+3. **Gated normalized load** -- `scripts/matrix-map/mm_db_load.py`: reuse the rebuild/salvage name
+   + plausibility gates (reject criteria/QA/lab-id/fragment/bare-prefix/numeric; depth [0,1000];
+   require letter+digit), normalize units to ASCII, load into stations/sampling_events/
+   sediment_chemistry; QUARANTINE rejects (never discard).
+Validated: clean codes (0 junk), working station->event->chemistry joins, ASCII units, and it
+RECOVERS data text-layer parsing misses entirely (site 10: text=0 -> multimodal=4 dated).
+
+**433-doc batch (the remaining big run -- monitored, per System #5):** iterate every doc in the
+574-doc registry that has NO clean data yet (not a seed site, not a salvaged VERBATIM doc): render
+-> AGY vision transcribe -> gated load into the enhanced DB. Apply the ACCEPTANCE GATE per doc
+(System #1): flag docs with 0 accepted stations / high quarantine for review. Then re-audit
+against the golden set + load the enhanced DB to live Supabase (snapshot-gated, via MCP) once the
+map artifact-filter is applied. Batch is multi-hour; run monitored, not autonomous.
+
 ## Status / anchors
 - Schema prereqs applied live (migrations 20260620000001 + 20260622000001); map FE shipped (bbox #413,
   Batch F #412); DB snapshot `matrix_map_backup_20260624`; clean-rebuild WIP in
