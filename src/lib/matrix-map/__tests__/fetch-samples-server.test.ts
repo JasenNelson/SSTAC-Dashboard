@@ -3,15 +3,15 @@
 // bbox_applied) pass through, fall back when the pre-migration RPC omits them,
 // and the error path returns the empty fallback. Plain ASCII.
 
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { fetchMatrixMapSamplesServerSide } from '../fetch-samples-server';
 import { EMPTY_MATRIX_MAP_DATA } from '@/app/(dashboard)/matrix-map/types';
 
 // Minimal mock of the supabase server client: only .schema(...).rpc(...) is used.
-function mockClient(rpcReturn: { data?: unknown; error?: unknown }) {
+function mockClient(rpcReturn: { data?: unknown; error?: unknown }, rpcFn?: any) {
   return {
     schema: () => ({
-      rpc: async () => rpcReturn,
+      rpc: rpcFn ?? (async () => rpcReturn),
     }),
   } as unknown as Parameters<typeof fetchMatrixMapSamplesServerSide>[0];
 }
@@ -86,5 +86,23 @@ describe('fetchMatrixMapSamplesServerSide -- bbox-lane Stage 1 fields', () => {
     const { initialMapData, fetchErrorMessage } = await fetchMatrixMapSamplesServerSide(supabase);
     expect(initialMapData).toEqual(EMPTY_MATRIX_MAP_DATA);
     expect(fetchErrorMessage).toMatch(/temporarily unavailable/);
+  });
+
+  it('forwards a valid bbox as snake_case p_bbox', async () => {
+    const rpcFn = vi.fn().mockResolvedValue({ data: null, error: null });
+    const supabase = mockClient({ data: null, error: null }, rpcFn);
+    await fetchMatrixMapSamplesServerSide(supabase, { minLng: -125, minLat: 48, maxLng: -120, maxLat: 50 });
+    expect(rpcFn).toHaveBeenCalledWith('fetch_samples_with_hidden_summary', {
+      p_bbox: { min_lng: -125, min_lat: 48, max_lng: -120, max_lat: 50 },
+    });
+  });
+
+  it('forwards p_bbox: null when called with no bbox or null', async () => {
+    const rpcFn = vi.fn().mockResolvedValue({ data: null, error: null });
+    const supabase = mockClient({ data: null, error: null }, rpcFn);
+    await fetchMatrixMapSamplesServerSide(supabase);
+    expect(rpcFn).toHaveBeenCalledWith('fetch_samples_with_hidden_summary', { p_bbox: null });
+    await fetchMatrixMapSamplesServerSide(supabase, null);
+    expect(rpcFn).toHaveBeenCalledWith('fetch_samples_with_hidden_summary', { p_bbox: null });
   });
 });

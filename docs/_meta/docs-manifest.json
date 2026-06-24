@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4526,
-        "source": "npm run test:ci on feat/matrix-map-bbox-pagination-stage1-2026-06-23 (2026-06-23): 4526 = 4523 + 3 new fetch-samples-server tests (bbox-lane Stage 1: matrix_map.fetch_samples_with_hidden_summary now honors p_bbox on visible_samples + caps at 2500 + returns total_in_bbox/truncated/bbox_applied; hidden_* kept PROVINCE-WIDE per codex P1 to avoid a spatial oracle; server helper surfaces the additive fields with pre-migration fallbacks). Migration 20260623000001 (CREATE OR REPLACE, all SECDEF/auth/admin/visibility invariants preserved; codex GREEN round 2). Live apply owner-gated. Confirmed clean via npm run test:ci.",
+        "value": 4534,
+        "source": "npm run test:ci on feat/matrix-map-bbox-stage-2a-typed-helper-2026-06-23 (2026-06-23): 4534 = 4526 + 8 new tests (bbox-lane Stage 2a backend: new src/lib/matrix-map/bbox.ts -- typed MatrixMapBbox + fail-safe toRpcBbox serializer (6 cases: valid->snake_case, null/undefined/out-of-range/min>=max/non-finite -> null province-wide); fetch-samples-server.ts now takes a typed MatrixMapBbox and serializes via toRpcBbox before the RPC (2 cases: bbox forwarded as p_bbox, null default unchanged)). Zero runtime change -- both call-sites still pass no bbox (null). Confirmed clean via npm run test:ci.",
         "last_verified": "2026-06-23"
       },
       "playwright_test_count": {

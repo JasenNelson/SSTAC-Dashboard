@@ -32,6 +32,7 @@
 
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
+import { type MatrixMapBbox, toRpcBbox } from './bbox';
 
 export interface FetchSamplesServerSideResult {
   initialMapData: MatrixMapData;
@@ -53,17 +54,18 @@ export interface FetchSamplesServerSideResult {
  * @param supabase  A server-side Supabase client with the user's JWT
  *                  attached via cookies (createServerClient from
  *                  @supabase/ssr). Helper does NOT construct one.
- * @param p_bbox    Optional bbox jsonb. v1 RPC ignores this; v1.x will
- *                  use it. Default: null (province-wide).
+ * @param bbox      Optional typed viewport bbox. The fail-safe
+ *                  serializer falls back to null (province-wide) on invalid.
  */
 export async function fetchMatrixMapSamplesServerSide(
   supabase: SupabaseClient,
-  p_bbox: unknown = null,
+  bbox: MatrixMapBbox | null = null,
 ): Promise<FetchSamplesServerSideResult> {
   let initialMapData: MatrixMapData = EMPTY_MATRIX_MAP_DATA;
   let fetchErrorMessage: string | null = null;
 
   try {
+    const p_bbox = toRpcBbox(bbox);
     // Schema-scoped per codex PR-MAP-3a R1 P1.2: the RPC lives in
     // matrix_map, which must be in Supabase Project Settings -> API ->
     // Exposed schemas. Without that setting, PostgREST returns PGRST106
