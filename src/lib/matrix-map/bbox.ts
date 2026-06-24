@@ -46,3 +46,22 @@ export function toRpcBbox(bbox: MatrixMapBbox | null | undefined): RpcBbox | nul
     max_lat: maxLat,
   };
 }
+
+/**
+ * Shape the 4 bbox query params (?min_lng&min_lat&max_lng&max_lat) into a
+ * MatrixMapBbox, or null (province-wide). STRICT + fail-safe: any missing /
+ * blank / whitespace-only / non-finite edge => null (Number(" ") === 0 would
+ * otherwise forge a 0 coordinate). Range / degenerate checks live in toRpcBbox.
+ *
+ * Lives here (not in the route module) because Next.js route files may only
+ * export route handlers + config -- exporting a helper from route.ts breaks the
+ * typed-routes build.
+ */
+export function parseBboxParams(sp: URLSearchParams): MatrixMapBbox | null {
+  const raw = ['min_lng', 'min_lat', 'max_lng', 'max_lat'].map((k) => sp.get(k)?.trim());
+  if (raw.some((v) => !v)) return null;
+  const nums = (raw as string[]).map((v) => Number(v));
+  if (nums.some((n) => !Number.isFinite(n))) return null;
+  const [minLng, minLat, maxLng, maxLat] = nums;
+  return { minLng, minLat, maxLng, maxLat };
+}
