@@ -8,7 +8,10 @@ import { fetchMatrixMapSamplesServerSide } from '../fetch-samples-server';
 import { EMPTY_MATRIX_MAP_DATA } from '@/app/(dashboard)/matrix-map/types';
 
 // Minimal mock of the supabase server client: only .schema(...).rpc(...) is used.
-function mockClient(rpcReturn: { data?: unknown; error?: unknown }, rpcFn?: any) {
+function mockClient(
+  rpcReturn: { data?: unknown; error?: unknown },
+  rpcFn?: (...args: unknown[]) => unknown,
+) {
   return {
     schema: () => ({
       rpc: rpcFn ?? (async () => rpcReturn),

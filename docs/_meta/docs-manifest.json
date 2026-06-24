@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_06_23_pre_stage2_backend": {
+      "status": "superseded",
+      "value": 4526,
+      "superseded_by": "facts.testing.vitest_test_count = 4534 (feat/matrix-map-bbox-stage2-backend-2026-06-23: +8 from bbox.test.ts (6) + 2 added to fetch-samples-server.test.ts)",
+      "note": "Prior live vitest_test_count (post bbox-lane Stage 1 #407), moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4534 after the bbox-lane Stage 2a backend (typed MatrixMapBbox + fail-safe toRpcBbox serializer in src/lib/matrix-map/bbox.ts; fetch-samples-server.ts takes a typed bbox). Zero runtime change (call-sites still pass null). Built by a parallel session + adopted into this lane; that session overwrote the live fact in place, so this history entry was added by hand on adoption."
+    },
     "vitest_test_count_2026_06_23_pre_bbox_lane": {
       "status": "superseded",
       "value": 4523,
