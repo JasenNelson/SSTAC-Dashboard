@@ -149,7 +149,7 @@ def _load_exclusion_manifest(manifest_path):
 
 
 def run_batch(db_path, doc_ids=None, limit=None, max_attempts=3, crash_after=None,
-              mock_agy=False, ledger_path=None, manifest_path=None):
+              mock_agy=False, ledger_path=None, manifest_path=None, passes=1):
     # A FULL run (no explicit --doc-ids) MUST have the exclusion manifest, or it would
     # re-process the 9 seed sites + the 132 VERBATIM-merged docs (wasted AGY + dup risk).
     if not doc_ids and not manifest_path:
@@ -258,65 +258,70 @@ def run_batch(db_path, doc_ids=None, limit=None, max_attempts=3, crash_after=Non
                 conn.commit()
                 write_heartbeat(doc_id, ts, ledger_path)
             else:
-                prompt = (
-                    f"view the PNGs in {temp_img_dir} and transcribe ONLY the SEDIMENT samples to "
-                    f"{json_out_path} as a JSON array; each sample = "
-                    f"{{station_id, date_sampled, depth_top_cm, depth_bottom_cm, media_type, "
-                    f"parameters:[{{name, value, unit}}]}}. For station_id use the FULL sample/station "
-                    f"identifier EXACTLY as printed (e.g. 'SED11-137A') -- it is usually the column "
-                    f"header or the 'Sample ID' row; NEVER use a single column letter (A,B,C), a row "
-                    f"number, or an abbreviation. ALWAYS include the measurement UNIT for each "
-                    f"parameter (e.g. mg/kg, ug/kg). Set media_type for every sample (sediment / soil "
-                    f"/ groundwater / surface water / tissue). SKIP soil, groundwater, and "
-                    f"surface-water samples and skip criteria/guideline/QA-QC/lab-id columns."
-                )
+                def _prompt(out):
+                    return (
+                        f"view the PNGs in {temp_img_dir} and transcribe ONLY the SEDIMENT samples to "
+                        f"{out} as a JSON array; each sample = {{station_id, date_sampled, "
+                        f"depth_top_cm, depth_bottom_cm, media_type, parameters:[{{name, value, unit}}]}}. "
+                        f"Transcribe EVERY sediment sample and EVERY data row COMPLETELY -- do not omit, "
+                        f"summarize, sample, or truncate. If a station was sampled on multiple DATES or "
+                        f"DEPTHS, include ALL of them as SEPARATE entries. For station_id use the FULL "
+                        f"sample/station identifier EXACTLY as printed (e.g. 'SED11-137A') from the column "
+                        f"header or 'Sample ID' row; NEVER a single column letter (A,B,C), a row number, or "
+                        f"an abbreviation. ALWAYS include the measurement UNIT for each parameter (e.g. "
+                        f"mg/kg, ug/kg). Set media_type per sample; SKIP soil, groundwater, surface-water "
+                        f"samples and criteria/guideline/QA-QC/lab-id columns."
+                    )
 
-                # STALE-JSON GUARD: delete any prior output FIRST, so a leftover file
-                # cannot be loaded and false-pass the live-AGY path (codex-R2). After the
-                # call, existence => the file was written by THIS run.
-                if os.path.exists(json_out_path):
-                    os.remove(json_out_path)
+                def _station_count():
+                    cc = sqlite3.connect(db_path)
+                    n = cc.execute("SELECT COUNT(*) FROM stations").fetchone()[0]
+                    cc.close()
+                    return n
 
-                if mock_agy:
-                    print(f"Mocking AGY for doc {doc_id}...")
-                    dummy_data = [{
-                        "station_id": f"TEST_ST_{doc_id}",
-                        "date_sampled": "2026-06-24",
-                        "depth_top_cm": 0,
-                        "depth_bottom_cm": 15,
-                        "media_type": "sediment",
-                        "parameters": [{"name": "Lead", "value": "10.5", "unit": "mg/kg"}]
-                    }]
-                    with open(json_out_path, "w") as f:
-                        json.dump(dummy_data, f)
-                else:
-                    agy_cmd = [
-                        "powershell.exe", "-Command",
-                        f"& 'C:\\Users\\jasen\\AppData\\Local\\agy\\bin\\agy.exe' --model \"Gemini 3.1 Pro (High)\" --print-timeout 15m -p \"{prompt}\""
-                    ]
-                    print(f"Running AGY for doc {doc_id}...")
-                    subprocess.run(agy_cmd, timeout=1200, check=True)
+                # MULTI-PASS UNION (reliability hardening 2026-06-25): vision is non-
+                # deterministic + may miss samples (the golden was captured in one run, missed
+                # in another). Run N passes; the loader dedups (station + ISO-date + depth), so
+                # the UNION recovers samples any single pass omitted. Stale-JSON guard per pass.
+                base = os.path.splitext(os.path.basename(json_out_path))[0]  # mm_<doc>
+                st_before = _station_count()
+                quarantine_all = []
+                any_output = False
+                last_err = None
+                for k in range(passes):
+                    out = os.path.join(working_dir, f"{base}_p{k}.json")
+                    if os.path.exists(out):
+                        os.remove(out)
+                    if mock_agy:
+                        with open(out, "w") as f:
+                            json.dump([{"station_id": f"TEST_ST_{doc_id}", "date_sampled": "2026-06-24",
+                                        "depth_top_cm": 0, "depth_bottom_cm": 15, "media_type": "sediment",
+                                        "parameters": [{"name": "Lead", "value": "10.5", "unit": "mg/kg"}]}], f)
+                    else:
+                        agy_cmd = ["powershell.exe", "-Command",
+                                   f"& 'C:\\Users\\jasen\\AppData\\Local\\agy\\bin\\agy.exe' --model "
+                                   f"\"Gemini 3.1 Pro (High)\" --print-timeout 15m -p \"{_prompt(out)}\""]
+                        print(f"Running AGY for doc {doc_id} pass {k + 1}/{passes}...")
+                        subprocess.run(agy_cmd, timeout=1200, check=True)
+                    if os.path.exists(out):  # fresh (we deleted any stale copy) -> load this pass
+                        any_output = True
+                        ok, err_msg, _acc, q = load_single_doc(db_path, doc_id, out)
+                        quarantine_all.extend(q)
+                        if not ok:
+                            last_err = err_msg
 
                 ts = datetime.now(timezone.utc).isoformat()
-                # Output must EXIST (we deleted any stale copy above); absence => AGY wrote
-                # nothing this run -> fail, never load a leftover.
-                if not os.path.exists(json_out_path):
+                if not any_output:
                     c.execute("UPDATE mm_batch_progress SET status='failed', last_error='agy_no_output', updated_at=? WHERE doc_id=?", (ts, doc_id))
-                    conn.commit()
-                    write_heartbeat(doc_id, ts, ledger_path)
                 else:
-                    success, err_msg, accepted, quarantine = load_single_doc(db_path, doc_id, json_out_path)
-                    _persist_quarantine(doc_id, quarantine, ts)
-                    if success:
-                        # ACCEPTANCE GATE: 0 accepted stations -> FLAG for review, never silent done.
-                        final_status = 'done' if accepted > 0 else 'review_zero'
-                        c.execute("UPDATE mm_batch_progress SET status=?, accepted=?, quarantined=?, updated_at=? WHERE doc_id=?",
-                                  (final_status, accepted, len(quarantine), ts, doc_id))
-                    else:
-                        c.execute("UPDATE mm_batch_progress SET status='failed', last_error=?, quarantined=?, updated_at=? WHERE doc_id=?",
-                                  (err_msg, len(quarantine), ts, doc_id))
-                    conn.commit()
-                    write_heartbeat(doc_id, ts, ledger_path)
+                    _persist_quarantine(doc_id, quarantine_all, ts)
+                    new_stations = _station_count() - st_before  # net-new across all passes
+                    # ACCEPTANCE GATE: 0 net-new sediment stations -> FLAG for review.
+                    final_status = 'done' if new_stations > 0 else 'review_zero'
+                    c.execute("UPDATE mm_batch_progress SET status=?, accepted=?, quarantined=?, last_error=?, updated_at=? WHERE doc_id=?",
+                              (final_status, new_stations, len(quarantine_all), last_err, ts, doc_id))
+                conn.commit()
+                write_heartbeat(doc_id, ts, ledger_path)
 
         except Exception as e:
             err = str(e)
@@ -342,8 +347,9 @@ if __name__ == "__main__":
     parser.add_argument("--crash-after", type=int)
     parser.add_argument("--mock-agy", action="store_true")
     parser.add_argument("--ledger", type=str, help="sidecar ops DB path (default: <workdir>/mm_batch_ops.db)")
-    parser.add_argument("--manifest", type=str, help="JSON of the 132 VERBATIM-merged doc_ids to exclude")
+    parser.add_argument("--manifest", type=str, help="JSON exclusion manifest (seed/VERBATIM doc_ids)")
+    parser.add_argument("--passes", type=int, default=1, help="vision passes per doc; union recovers samples a single pass misses")
     args = parser.parse_args()
 
     run_batch(args.db, args.doc_ids, args.limit, args.max_attempts, args.crash_after,
-              args.mock_agy, ledger_path=args.ledger, manifest_path=args.manifest)
+              args.mock_agy, ledger_path=args.ledger, manifest_path=args.manifest, passes=args.passes)
