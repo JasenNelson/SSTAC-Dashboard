@@ -1,34 +1,19 @@
+"""DEPRECATED standalone validation loader -- the CANONICAL load path is
+mm_batch_runner.load_single_doc (which uses mm_loader_common). Kept for the one-off
+4-doc validation flow; rewired to the shared, correctness-fixed helpers so it no
+longer carries the null-unit-drop / zero-depth-dup / silent-reject bugs."""
 import json
 import sqlite3
 import os
+import sys
 import glob
-import re
 
-def normalize_ascii(text):
-    if text is None: return None
-    t = str(text)
-    # the prompt specifies ug/g not µg/g
-    t = t.replace("µ", "u")
-    return "".join(c for c in t if ord(c) <= 127)
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+import mm_loader_common as L
 
-def passes_name_gate(sid_raw):
-    sid_norm = re.sub(r'[^A-Z0-9]', '', str(sid_raw).upper())
-    if not sid_norm:
-        return False, "Empty or punctuation only"
-    contains_bad = ["STANDARD", "GUIDELINE", "CRITERIA", "CSR", "BCCSR", "SEDQC", "SEDQL", "ISQG", "PEL", "TEL", "AWF", "AWM", "DRINKINGWATER", "RPD", "QA", "QC", "DUPLICATE", "BLANK", "MSVC", "BACKGROUND", "TYPICAL", "MEAN", "MEDIAN", "AVERAGE", "MAXIMUM", "MINIMUM", "DETECTION", "METHOD", "REPORTINGLIMIT", "REFERENCE", "COMMERCIAL", "INDUSTRIAL", "RESIDENTIAL", "AQUATICLIFE"]
-    for bad in contains_bad:
-        if bad in sid_norm:
-            return False, f"Contains {bad}"
-    is_bad = ["UNITS", "SAMPLE", "SAMPLEID", "SAMPLEDATE", "SAMPLELOCATION", "DESCRIPTION", "LOCATION", "LOCATIONID", "PARAMETER", "ANALYTE", "RESULT", "OF", "NA", "ND"]
-    if sid_norm in is_bad:
-        return False, f"Is {sid_norm}"
-    if sid_norm.isnumeric():
-        return False, "Purely numeric"
-    has_letter = any(c.isalpha() for c in sid_norm)
-    has_digit = any(c.isdigit() for c in sid_norm)
-    if not (has_letter and has_digit):
-        return False, "No alphanumeric structure (missing letter or digit)"
-    return True, ""
+normalize_ascii = L.normalize_ascii
+passes_name_gate = L.passes_name_gate
+
 
 def load_mm_results():
     db_src_path = "C:/Projects/sstac-dashboard/scripts/matrix-map/_enrichment_working/bnrrm_clean_rebuild.db"
@@ -55,96 +40,60 @@ def load_mm_results():
         cols = [d[0] for d in c_src.description]
         c_dest.executemany(f"INSERT INTO {t} VALUES ({','.join(['?']*len(cols))})", rows)
     db_dest.commit()
-    
-    c_dest.execute("SELECT MAX(station_id) FROM stations")
-    max_st = c_dest.fetchone()[0] or 0
-    c_dest.execute("SELECT MAX(event_id) FROM sampling_events")
-    max_ev = c_dest.fetchone()[0] or 0
-    
+
     quarantine = []
-    
+
     files = glob.glob("C:/Projects/sstac-dashboard/scripts/matrix-map/_enrichment_working/mm_*.json")
     for f in files:
-        doc_id_str = os.path.basename(f).replace("mm_doc", "").replace(".json", "")
+        # Runner emits mm_<doc>.json; legacy was mm_doc<doc>.json. Handle both.
+        base = os.path.basename(f)
+        doc_id_str = base.replace("mm_doc", "").replace("mm_", "").replace(".json", "")
         try:
             doc_id = int(doc_id_str)
         except ValueError:
             print(f"Skipping {f}, invalid doc_id format {doc_id_str}")
             continue
-            
-        c_dest.execute("SELECT site_id FROM ra_documents WHERE doc_id=?", (doc_id,))
-        res = c_dest.fetchone()
+
+        res = c_dest.execute("SELECT site_id FROM ra_documents WHERE doc_id=?", (doc_id,)).fetchone()
         if not res:
             print(f"Skipping {f}, no site_id found for doc_id {doc_id}")
             continue
         site_id = res[0]
-        
-        with open(f, 'r') as fp:
+
+        with open(f, 'r', encoding='utf-8') as fp:
             try:
                 data = json.load(fp)
             except json.JSONDecodeError:
                 continue
-                
+            if not isinstance(data, list):
+                continue
+
             for row in data:
+                if not isinstance(row, dict):
+                    continue
                 station_id_raw = row.get("station_id")
                 date_sampled = row.get("date_sampled")
-                
-                try:
-                    depth_top = row.get("depth_top_cm")
-                    if depth_top is not None: depth_top = float(depth_top)
-                except (ValueError, TypeError):
-                    depth_top = None
-                    
-                try:
-                    depth_bottom = row.get("depth_bottom_cm")
-                    if depth_bottom is not None: depth_bottom = float(depth_bottom)
-                except (ValueError, TypeError):
-                    depth_bottom = None
-                    
-                if depth_top is not None and (depth_top < 0 or depth_top > 1000):
-                    depth_top, depth_bottom = None, None
-                
-                passed, reason = passes_name_gate(station_id_raw)
+                depth_top, dt_reason = L.coerce_depth(row.get("depth_top_cm"))
+                depth_bottom, db_reason = L.coerce_depth(row.get("depth_bottom_cm"))
+                if dt_reason:
+                    quarantine.append({"doc_id": doc_id, "station_id": station_id_raw,
+                                       "reason": f"depth_top: {dt_reason}"})
+                if db_reason:
+                    quarantine.append({"doc_id": doc_id, "station_id": station_id_raw,
+                                       "reason": f"depth_bottom: {db_reason}"})
+
+                passed, reason = L.passes_name_gate(station_id_raw)
                 if not passed:
                     quarantine.append({"doc_id": doc_id, "station_id": station_id_raw, "reason": reason})
                     continue
-                    
-                # Get or create station
-                c_dest.execute("SELECT station_id FROM stations WHERE site_id=? AND name=?", (site_id, station_id_raw))
-                st_res = c_dest.fetchone()
-                if st_res:
-                    st_id = st_res[0]
-                else:
-                    max_st += 1
-                    st_id = max_st
-                    c_dest.execute("INSERT INTO stations (station_id, site_id, name) VALUES (?, ?, ?)", (max_st, site_id, station_id_raw))
-                    
-                # Get or create event
-                c_dest.execute("SELECT event_id FROM sampling_events WHERE station_id=? AND IFNULL(date_sampled,'')=? AND IFNULL(depth_top_cm,'')=? AND IFNULL(depth_bottom_cm,'')=?", 
-                               (st_id, date_sampled or '', depth_top or '', depth_bottom or ''))
-                ev_res = c_dest.fetchone()
-                if ev_res:
-                    ev_id = ev_res[0]
-                else:
-                    max_ev += 1
-                    ev_id = max_ev
-                    media_type = row.get("media_type") or "sediment"
-                    c_dest.execute("INSERT INTO sampling_events (event_id, station_id, date_sampled, depth_top_cm, depth_bottom_cm, media_type) VALUES (?, ?, ?, ?, ?, ?)", 
-                                   (ev_id, st_id, date_sampled, depth_top, depth_bottom, media_type))
-                                   
-                # Insert parameters
-                for param in row.get("parameters", []):
-                    p_name = normalize_ascii(param.get("name"))
-                    p_val = param.get("value")
-                    p_unit = normalize_ascii(param.get("unit"))
-                    
-                    try:
-                        v = float(str(p_val).replace(',', '').replace('<', '').replace('>', ''))
-                    except (ValueError, TypeError):
-                        v = None
-                        
-                    if p_name:
-                        c_dest.execute("INSERT OR IGNORE INTO sediment_chemistry (event_id, parameter, value, unit) VALUES (?, ?, ?, ?)", (ev_id, p_name, v, p_unit))
+
+                st_id = L.find_or_create_station(c_dest, site_id, station_id_raw)
+                ev_id = L.find_or_create_event(c_dest, st_id, date_sampled, depth_top,
+                                               depth_bottom, row.get("media_type") or "sediment")
+                for param in row.get("parameters", []) or []:
+                    L.insert_chemistry(c_dest, ev_id, param.get("name"),
+                                       L.coerce_value(param.get("value")), param.get("unit"),
+                                       quarantine, doc_id=doc_id, source="mm_db_load")
 
     db_dest.commit()
     db_dest.close()
