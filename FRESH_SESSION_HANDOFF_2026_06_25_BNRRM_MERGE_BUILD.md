@@ -1,0 +1,90 @@
+# Fresh-Session Handoff -- BN-RRM additive merge build (2026-06-25)
+
+Continue the BN-RRM date/depth enrichment. The DESIGN IS LOCKED (codex mutual-agreement AGREE-ALL).
+This session built + committed the foundation; the next session authors the merge adapter per the
+locked design, verifies, runs the smoke, and persists. Plain ASCII.
+
+Read first: this file; `C:\Users\jasen\.claude\plans\explore-code-base-and-piped-pond.md` (the
+5-round-codex-GREEN plan); memory `feedback_bnrrm_dataset_additive_only_and_lane_takeover` +
+`feedback_bnrrm_extraction_quality_systems_2026_06_24` (HIGH AUTHORITY).
+
+## DONE + committed this session (branch docs/bnrrm-433-batch-handoff-2026-06-24)
+- **f62e736** Part B0 + Part C runner: `mm_loader_common.py` (null-safe 0cm dedup; no silent
+  null-unit/conflict chemistry drop; single lastrowid allocation; row-level quarantine; blank-date
+  -> NULL) + 18 unit tests; `mm_batch_runner.py` rewired (SIDECAR ops ledger so the deliverable
+  stays SAME-SCHEMA; manifest-driven exclusion + refuse-full-run-without-manifest; per-doc
+  acceptance gate; stale-JSON guard; case/realpath-safe ledger!=db guard); `mm_db_load.py` rewired;
+  `test_golden.py`/`validate_db.py`/`audit_script.py` got `--db`. codex 5.5-xhigh GREEN.
+- **fac42a3** Part B manifest + probes (AGY-authored): `build_verbatim_manifest.py`,
+  `probe_partb.py`.
+- **Base built + sha256-verified:** `scripts/matrix-map/_enrichment_working/bnrrm_enhanced.db` ==
+  canonical DB2 (sha256 73a4aa9c..., 65,466,368 bytes; 7815 stations/166 sites/8354 events,304
+  dated/14583 chemistry). _enrichment_working/ is gitignored.
+- **Manifest built:** `_enrichment_working/mm_exclusion_manifest.json` = seed_site_docs[19] +
+  verbatim_docs (129) + verbatim_map. 3 unresolved (SITE1419 x2 -> site_id 11; SITE8859 ->
+  site_id 10) lack an ra_documents row.
+- **Quantified:** junk = 3478/7815 (1958 analyte-names-as-stations + 944 numeric + ~192 criteria/QA;
+  false-positive risk only 4). All verbatim sites have 0 dated events in DB2; VERBATIM stations are
+  NET-NEW -> duplication risk. (`_enrichment_working/mm_probe_report.json`.)
+
+## LOCKED MERGE DESIGN (codex mutual-agreement AGREE-ALL -- do NOT relitigate)
+1. **3478 junk is correct** (not the ~192 we assumed) -- real artifact classes; not a stop.
+2. **Junk handling = SIDECAR quarantine.** Record the 3478 junk station_ids (+reason) in a SIDECAR
+   store (e.g. `bnrrm_enhanced.ops.db` or a json), NOT in the deliverable. Deliverable stays
+   byte-additive + same-schema. The downstream map ETL must treat the sidecar as the authoritative
+   exclusion list (extends the old ~192 artifact-filter to the full 3478).
+3. **Reconciliation = INSERT-ONLY merge + SIDECAR supersession (codex HARD CONSTRAINT).** The merge
+   adapter must NOT mutate or delete any existing DB2 row -- INSERT-only. Add the VERBATIM clean
+   DATED stations/events/chemistry as net-new (via `mm_loader_common`). Where a DB2 station matches
+   a VERBATIM clean station by NORMALIZED name (same site; normalize spacing/hyphens/case), record
+   the superseded DB2 undated station/event id in the SIDECAR (exclusion), do NOT edit it. Value
+   conflicts -> quarantine, never overwrite. This keeps the per-table EXCEPT "existing-rows-
+   unchanged" proof clean while de-duplicating at the consumer.
+4. **3 unresolved docs = ADD the ra_documents rows additively** (doc_date/title/site_id from the
+   VERBATIM metadata) then merge -> 132/132.
+
+## NEXT STEPS (fresh session)
+1. **AGY authors the merge adapter** (owner: AGY is the Part B workhorse; Claude orchestrates thin;
+   codex gates). Brief AGY (file-based, `--model "Gemini 3.1 Pro (High)"`, BOUNDED by `timeout`,
+   cap exploration) to write `scripts/matrix-map/merge_verbatim_additive.py`:
+   - read the 132 VERBATIM jsons via the manifest (add the 3 ra_documents rows first);
+   - INSERT-only into bnrrm_enhanced.db using mm_loader_common (net-new clean dated stations/
+     events/chemistry; never overwrite the 304 seed dates);
+   - write the SIDECAR: junk-quarantine list (3478) + supersession-exclusion list (matched DB2
+     undated copies) + value-conflict quarantine;
+   - parse the VERBATIM table structure -- REUSE the proven logic in
+     `rebuild_clean_db_from_verbatim.py` (the table/header/depth parsing) but target bnrrm_enhanced
+     additively via mm_loader_common, NOT a fresh DB.
+2. **Verify (codex-R2/R3/R4 gates):** sqlite_master(enhanced)==DB2; per-table EXCEPT/PK-checksum
+   diff proving every existing DB2 row UNCHANGED (INSERT-only => clean); `PRAGMA foreign_key_check`
+   = 0; golden SITE0141 SED11-137A=2011-06-16/0-30cm via `test_golden.py --db bnrrm_enhanced.db`;
+   date coverage rises ~1,708+; EXHAUSTIVE no-dup scan (no (station,parameter,value) under two
+   events). codex-review the adapter to GREEN.
+3. **Part C smoke (real AGY, not mock):** build a curated `--doc-ids` set, copy bnrrm_enhanced.db
+   -> bnrrm_smoke.db, run `mm_batch_runner.py --db ...smoke.db --doc-ids <curated> --ledger
+   <sidecar>` (NO --mock-agy) to prove the live AGY-vision path end-to-end behind the stale-JSON
+   guard. (agy.exe at C:\Users\jasen\AppData\Local\agy\bin\agy.exe.)
+4. **Part D:** drop operational tables / confirm same-schema; checkpoint bnrrm_enhanced.db + the
+   sidecar + manifest to a DURABLE dated non-DB2-basename file under
+   `G:\My Drive\SABCS - Sediment Project\Dashboard\matrix-map-data\` (e.g.
+   bnrrm_enhanced_2026-06-25_<shortsha>.db); record sha256.
+5. Then the full 433-doc run (detached/monitored, REQUIRES --manifest) + the codex-gated live
+   Supabase load remain DEFERRED (owner-gated) per the plan.
+
+## DISCIPLINE REMINDERS (learned this session)
+- **MONITOR external CLIs properly:** every codex/AGY run is BOUNDED by a hard `timeout` wrapper +
+  the 10-min ceiling -- NEVER launch-and-forget (a codex review hung ~2h this session on a Windows
+  .pyc rename race before it was caught). Use `PYTHONDONTWRITEBYTECODE=1` for codex tool-use; tell
+  codex to review STATICALLY (don't run python that imports the module under review).
+- **AGY:** file-based brief (.tmp_agy_brief_*.md) -> "Read <path> and execute it"; closeout
+  (.tmp_agy_closeout_*.md); VERIFY outputs yourself (git diff + read), never trust the closeout;
+  no --dangerously-skip-permissions; cap exploration (rabbit-hole watch).
+- **Decision gates** go to codex (owner workflow): present options+recommendation+rationale, argue
+  to mutual agreement, then proceed autonomously. If something looks wrong, ask codex; agree-to-stop
+  or agree-on-fix-and-proceed.
+- Path-scoped staging only. Working DBs stay in _enrichment_working/ (gitignored); never commit DBs.
+
+## OPEN (owner)
+- Orphan PID 41052 (hung engine-v2 pytest, parent-dead) safe to clear:
+  `powershell -File C:\Projects\.claude\scripts\safe-cleanup-orphans.ps1 -Apply -SparePids 27988,60712,17552,59524`
+  (the 9 GB python 27988 + its tree is a LIVE parallel engine-v2 run -- leave it).
