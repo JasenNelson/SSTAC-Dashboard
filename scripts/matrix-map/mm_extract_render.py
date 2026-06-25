@@ -12,7 +12,15 @@ def extract_candidate_pages(pdf_path, output_dir):
         print(f"Error opening {pdf_path}: {e}")
         return
 
-    keywords = ["sample id", "date sampled", "sample depth", "analytical results"]
+    # Indicators of a sediment chemistry RESULTS table. Broadened 2026-06-25 after a
+    # sediment doc ("Lot 3 Sediment HHRA") returned 0 candidate pages with the original
+    # narrow list. The 15-page cap + the AGY sediment/name gates handle over-inclusion.
+    keywords = [
+        "sample id", "date sampled", "sample depth", "analytical results",
+        "station", "sampling date", "sample date", "date collected",
+        "mg/kg", "ug/kg", "concentration", "sediment quality",
+        "results of chemical", "depth (m)", "sed11", "sed0",
+    ]
     
     saved_count = 0
     scanned_count = len(doc)

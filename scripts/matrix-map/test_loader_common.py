@@ -71,6 +71,15 @@ def main():
     e3 = L.find_or_create_event(c, st, "2011-06-16", None, None)
     check("NULL depth is a DISTINCT event from 0 cm", e3 != e1)
 
+    # date normalized to ISO -> "6/16/2011" dedups with "2011-06-16"
+    db3 = fresh(); c3 = db3.cursor()
+    s3 = L.find_or_create_station(c3, 1, "S3")
+    eu = L.find_or_create_event(c3, s3, "6/16/2011", 0.0, 30.0)
+    ei = L.find_or_create_event(c3, s3, "2011-06-16", 0.0, 30.0)
+    check("US-format date normalized + dedups with ISO", eu == ei)
+    stored = c3.execute("SELECT date_sampled FROM sampling_events WHERE event_id=?", (eu,)).fetchone()[0]
+    check("date stored as ISO-8601 (2011-06-16)", stored == "2011-06-16")
+
     # blank/whitespace date collapses to NULL -> dedups with a None-date event (codex P2)
     db2 = fresh(); c2 = db2.cursor()
     s2 = L.find_or_create_station(c2, 1, "S2")
@@ -111,6 +120,14 @@ def main():
     check("conflict recorded to quarantine", len(q) == 1 and q[0]["reason"] == "value_conflict")
     val = c.execute("SELECT value FROM sediment_chemistry WHERE parameter='Copper'").fetchone()[0]
     check("original copper value preserved (not overwritten)", val == 5.0)
+
+    # --- media gate (sediment-only DB) ---
+    check("sediment accepted", L.is_sediment("Sediment") and L.is_sediment("sediment"))
+    check("None/blank media defaults to sediment", L.is_sediment(None) and L.is_sediment(""))
+    check("soil rejected", not L.is_sediment("Soil"))
+    check("groundwater rejected", not L.is_sediment("Groundwater"))
+    check("surface water rejected", not L.is_sediment("Surface Water"))
+    check("'marine sediment' accepted", L.is_sediment("Marine Sediment"))
 
     # --- P3-4: implausible top depth does not null a valid bottom depth ---
     dt, reason = L.coerce_depth(99999)

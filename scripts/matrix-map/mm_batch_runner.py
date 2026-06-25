@@ -54,6 +54,14 @@ def load_single_doc(db_path, doc_id, json_path):
             continue
         station_id_raw = row.get("station_id")
         date_sampled = row.get("date_sampled")
+        media = row.get("media_type")
+
+        # MEDIA GATE (owner 2026-06-25): sediment-only DB -> quarantine non-sediment
+        # (soil/groundwater/etc.), recorded not discarded.
+        if not L.is_sediment(media):
+            quarantine.append({"doc_id": doc_id, "station_id": station_id_raw,
+                               "reason": f"non_sediment_media: {media}"})
+            continue
 
         # Per-depth coercion: an implausible top depth does NOT null a valid bottom.
         depth_top, dt_reason = L.coerce_depth(row.get("depth_top_cm"))
@@ -74,7 +82,7 @@ def load_single_doc(db_path, doc_id, json_path):
         accepted_stations += 1
         st_id = L.find_or_create_station(c, site_id, station_id_raw)
         ev_id = L.find_or_create_event(c, st_id, date_sampled, depth_top, depth_bottom,
-                                       row.get("media_type") or "sediment")
+                                       media or "sediment")
 
         for param in row.get("parameters", []) or []:
             L.insert_chemistry(c, ev_id, param.get("name"),
@@ -251,9 +259,16 @@ def run_batch(db_path, doc_ids=None, limit=None, max_attempts=3, crash_after=Non
                 write_heartbeat(doc_id, ts, ledger_path)
             else:
                 prompt = (
-                    f"view the PNGs in {temp_img_dir} and transcribe each sample to {json_out_path} "
-                    f"per the {{station_id,date_sampled,depth_top_cm,depth_bottom_cm,media_type,parameters[]}} schema; "
-                    f"skip criteria/QA/lab-id/units columns"
+                    f"view the PNGs in {temp_img_dir} and transcribe ONLY the SEDIMENT samples to "
+                    f"{json_out_path} as a JSON array; each sample = "
+                    f"{{station_id, date_sampled, depth_top_cm, depth_bottom_cm, media_type, "
+                    f"parameters:[{{name, value, unit}}]}}. For station_id use the FULL sample/station "
+                    f"identifier EXACTLY as printed (e.g. 'SED11-137A') -- it is usually the column "
+                    f"header or the 'Sample ID' row; NEVER use a single column letter (A,B,C), a row "
+                    f"number, or an abbreviation. ALWAYS include the measurement UNIT for each "
+                    f"parameter (e.g. mg/kg, ug/kg). Set media_type for every sample (sediment / soil "
+                    f"/ groundwater / surface water / tissue). SKIP soil, groundwater, and "
+                    f"surface-water samples and skip criteria/guideline/QA-QC/lab-id columns."
                 )
 
                 # STALE-JSON GUARD: delete any prior output FIRST, so a leftover file

@@ -27,7 +27,26 @@ Read first: this file; `C:\Users\jasen\.claude\plans\explore-code-base-and-piped
   false-positive risk only 4). All verbatim sites have 0 dated events in DB2; VERBATIM stations are
   NET-NEW -> duplication risk. (`_enrichment_working/mm_probe_report.json`.)
 
-## LOCKED MERGE DESIGN (codex mutual-agreement AGREE-ALL -- do NOT relitigate)
+## !! STRATEGY PIVOT 2026-06-25 (codex AGREE-B + owner) -- text-parse merge SCRAPPED
+The text-layer VERBATIM parse is STRUCTURALLY UNRELIABLE: 14-18% garbage chemistry (numeric/
+concatenated-merged-cell param names, "Lab Report"/"Sample Depth" as params) in BOTH the AGY merge
+AND the original rebuild_clean_db_from_verbatim.py output; column-misalignment also threatens
+clean-named rows' values. codex agreed (VERDICT AGREE-B). DECISION: ABANDON the text-parse merge;
+route the 132 VERBATIM docs through the MULTIMODAL VISION pipeline too -> one uniform, gated
+**565-doc** (132 + 433, minus 19 seed) vision-extracted dataset via mm_batch_runner. The
+merge_verbatim_additive.py adapter + bnrrm_clean_rebuild.db are OBSOLETE. bnrrm_enhanced.db has been
+RESET to pristine DB2 (sha256-verified). The "LOCKED MERGE DESIGN" below is SUPERSEDED for chemistry
+(its junk-sidecar + INSERT-only + manifest principles still hold for the vision run).
+
+Real-AGY smoke (FINALLY validated the vision path): vision chemistry is CLEAN (0 garbage params),
+real dated stations + depths. BUT smoke docs 25/30 (HHERAs) were 100% SOIL+GROUNDWATER, not sediment
+-> owner decision: **SEDIMENT-ONLY**. Fixes applied this session: (1) media gate in
+mm_loader_common.is_sediment() + load_single_doc (quarantine non-sediment); (2) vision prompt now
+captures UNITS + requests sediment-only + media_type (the old prompt said "skip units columns" --
+that was why units were missing). Re-smoke (docs 28,22 sediment + 30 soil) in progress to confirm.
+NEXT after re-smoke GREEN: owner greenlights the multi-hour 565-doc detached/monitored vision run.
+
+## LOCKED MERGE DESIGN (SUPERSEDED for chemistry by the pivot above; principles still apply)
 1. **3478 junk is correct** (not the ~192 we assumed) -- real artifact classes; not a stop.
 2. **Junk handling = SIDECAR quarantine.** Record the 3478 junk station_ids (+reason) in a SIDECAR
    store (e.g. `bnrrm_enhanced.ops.db` or a json), NOT in the deliverable. Deliverable stays

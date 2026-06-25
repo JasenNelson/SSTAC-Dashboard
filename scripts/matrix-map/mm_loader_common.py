@@ -76,6 +76,20 @@ def passes_name_gate(sid_raw):
     return True, ""
 
 
+def is_sediment(media_type):
+    """Media gate for the SEDIMENT BN-RRM DB (owner 2026-06-25): accept only sediment
+    samples; quarantine soil / groundwater / surface-water / tissue / etc. (the HHERA
+    docs carry mostly soil+GW, and this schema has no soil/GW table). A missing/blank
+    media_type defaults to sediment (sediment tables commonly omit it); anything
+    explicitly named that is not sediment is rejected."""
+    if media_type is None:
+        return True
+    m = str(media_type).strip().lower()
+    if not m:
+        return True
+    return "sediment" in m
+
+
 def coerce_depth(raw):
     """Return (depth_float_or_None, reason_or_None). Out-of-range -> (None, reason)."""
     if raw is None:
@@ -137,6 +151,12 @@ def find_or_create_event(cur, station_id, date_sampled, depth_top, depth_bottom,
         date_sampled = date_sampled.strip() or None
     elif date_sampled is not None and not date_sampled:
         date_sampled = None
+    # Normalize recognized date formats to ISO-8601 so "6/16/2011" and "2011-06-16"
+    # dedup to one event (vision returns mixed formats). Unrecognized -> kept raw.
+    if date_sampled is not None:
+        iso = parse_date(date_sampled)
+        if iso:
+            date_sampled = iso
     row = cur.execute(
         """
         SELECT event_id FROM sampling_events
