@@ -1,8 +1,45 @@
 # Fresh-Session Handoff -- BN-RRM additive merge build (2026-06-25)
 
-Continue the BN-RRM date/depth enrichment. The DESIGN IS LOCKED (codex mutual-agreement AGREE-ALL).
-This session built + committed the foundation; the next session authors the merge adapter per the
-locked design, verifies, runs the smoke, and persists. Plain ASCII.
+## >>> CURRENT STATE (2026-06-25 ~09:xx PDT) -- 48-DOC VISION RUN IN PROGRESS <<<
+A DETACHED multimodal vision run is processing the 48 sediment-targeted docs into a COPY of the base.
+- Target DB: `scripts/matrix-map/_enrichment_working/bnrrm_subset.db` (copy of sha256-verified DB2).
+- Ledger/sidecar: `_enrichment_working/bnrrm_subset_ops.db` (per-doc status + quarantine).
+- Heartbeat: `_enrichment_working/mm_batch_heartbeat.json`; log: scratchpad/subset_run.log.
+- Command (3 passes, 48 likely-sediment doc_ids): see `scratchpad/run_subset.ps1`; launched detached
+  via WMI `Win32_Process.Create` (PID was 44136 this session). ETA ~12-15h; resumable.
+
+**RESUME (if PID dead / after reboot / fresh session) -- just re-launch; it skips `done` docs via the ledger:**
+```
+powershell -NoProfile -ExecutionPolicy Bypass -File <scratchpad>/run_subset.ps1
+```
+(or re-run mm_batch_runner.py --db bnrrm_subset.db --ledger bnrrm_subset_ops.db --doc-ids <48 ids
+ from mm_sediment_targets.json likely_sediment_doc_ids> --passes 3). Verified crash-resume: done docs
+skipped, no dupes (loader dedups station+ISO-date+depth). `review_zero`/`failed` re-attempt up to 3x.
+
+**ON COMPLETION (all 48 terminal, no pending/in_progress) -- do this:**
+1. `python scripts/matrix-map/verify_merge.py --enhanced .../bnrrm_subset.db` (same-schema,
+   existing-rows-unchanged EXCEPT diff, FK=0, golden SED11-137A=2011-06-16/0-30, no-dup).
+2. Audit yield: ledger done/review_zero/no_tables/failed; new stations/events/dated/chem; 0 garbage;
+   units captured. Expect MODEST yield (corpus is 78% HHERA; ~5-10% docs are sediment).
+3. **Part D durable checkpoint:** copy bnrrm_subset.db -> `G:\My Drive\SABCS - Sediment Project\
+   Dashboard\matrix-map-data\bnrrm_enhanced_2026-06-25_<shortsha>.db` (DATED, never the DB2 basename)
+   + the sidecar + mm_sediment_targets.json; record sha256.
+4. The codex-gated LIVE Supabase load is the only remaining HITL (NOT done; see Downstream section).
+
+## STRATEGY (final, this session): TEXT-PARSE MERGE SCRAPPED -> TARGETED MULTIMODAL VISION
+The text-layer VERBATIM parse was structurally unreliable (14-18% garbage chemistry in BOTH the AGY
+merge AND the original rebuild). codex AGREE-B -> use the validated VISION pipeline. Real-AGY testing
+then showed: (a) corpus is 78% HHERA/soil-GW -> built a TARGETING scanner (scan_sediment_docs.py):
+555 -> 48 likely-sediment docs (mm_sediment_targets.json); (b) vision is non-deterministic (drops
+samples; golden missed in one run) -> added MULTI-PASS UNION (--passes N; loader dedups -> union
+recovers missed samples; validated doc28 x3 recovers golden). Sediment-only MEDIA GATE quarantines
+soil/GW. Units + full-station-code prompt fixes landed. Commits: f62e736, fac42a3, 161a382, 28d953c,
+19bfa28. The OLD "locked merge design" + merge_verbatim_additive.py below are SUPERSEDED/obsolete.
+
+---
+
+Continue the BN-RRM date/depth enrichment. Plain ASCII. (Historical sections below predate the
+vision pivot -- the CURRENT STATE block above is authoritative.)
 
 Read first: this file; `C:\Users\jasen\.claude\plans\explore-code-base-and-piped-pond.md` (the
 5-round-codex-GREEN plan); memory `feedback_bnrrm_dataset_additive_only_and_lane_takeover` +
