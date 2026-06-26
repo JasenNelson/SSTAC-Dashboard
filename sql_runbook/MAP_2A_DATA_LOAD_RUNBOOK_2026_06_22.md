@@ -2,8 +2,9 @@
 
 > CORRECTION (2026-06-26): the "Supabase MCP is dead / owner pastes in Studio" framing below is
 > SUPERSEDED. The project-scoped MCP is LIVE (the seed was loaded via it); and the canonical BULK
-> load method is now: **AGY runs the load Postgres-side via psycopg2/psql + DATABASE_URL** (free
-> tokens; Claude must NOT push >100KB SQL through MCP). See
+> load method is CONFIRMED + the load is DONE (2026-06-26): **Claude runs
+> `scripts/matrix-map/apply_live_load.py` (psycopg2 + DATABASE_URL session pooler)**; AGY can run the
+> same. Claude must NOT push bulk SQL through MCP. See
 > `docs/design/matrix-map/LIVE_LOAD_APPLY_AGY_BRIEF_2026_06_26.md` +
 > `docs/design/matrix-map/MAP_2A_DATASET_INVESTIGATION_2026_06_23.md` (CORRECTED) + memory
 > `dashboard_supabase_project_scoped_mcp_live`. Studio-paste remains a valid token-free fallback.

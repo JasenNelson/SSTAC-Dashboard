@@ -1,5 +1,12 @@
 # AGY BRIEF -- Build the matrix-map LIVE-LOAD artifact from the enriched DB (codex-gated)
 
+> SUPERSEDED + RESOLVED 2026-06-26: the live load is DONE. The CONFIRMED apply method is the LOCAL
+> psycopg2 + DATABASE_URL session-pooler loader `scripts/matrix-map/apply_live_load.py` -- NOT the
+> `mcp__supabase-project-scoped__execute_sql` path this brief proposes. Bulk SQL through MCP is
+> token-fatal (~2.7M output tokens); MCP is reads/verify/small-writes only. Keep this brief only as a
+> historical record. Canonical: `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md`
+> (CONFIRMED section) + the `/supabase` skill.
+
 Plain ASCII only (<=127). You are the implementation workhorse. BUILD the load artifact + run the
 codex-review loop to GREEN; do NOT apply to Supabase (Claude applies via the project-scoped Supabase
 MCP). No destructive commands; no git push; no writes to any live database. Follow the AGY framework

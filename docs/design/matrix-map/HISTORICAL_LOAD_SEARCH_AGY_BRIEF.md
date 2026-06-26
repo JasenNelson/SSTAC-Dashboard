@@ -1,5 +1,13 @@
 # AGY BRIEF -- deep-search: HOW did prior sessions load matrix_map data to live Supabase?
 
+> ANSWERED + RESOLVED 2026-06-26: the question is settled. Method = the LOCAL psycopg2 + DATABASE_URL
+> session-pooler loader `scripts/matrix-map/apply_live_load.py` (SQL runs server-side; never enters
+> the agent context). Prior sessions had only loaded the 9-site seed; the enrichment load is now DONE.
+> The reason this was hard to determine: an unapplied Supabase password reset blocked every direct
+> connection, so no method could be confirmed-by-success. See
+> `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md` (CONFIRMED section). This search brief is
+> retained as a historical record; no further search is needed.
+
 Plain ASCII. READ-ONLY investigation; do NOT load/modify anything. Write findings to
 `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md` for the orchestrator to review.
 

@@ -1,10 +1,12 @@
 # AGY BRIEF -- APPLY the matrix-map live load to Supabase (AGY runs it, not Claude)
 
-> !! UNVERIFIED -- DO NOT RUN AS-IS (flagged 2026-06-26): this psycopg2/DATABASE_URL apply path is
-> Claude's UNCONFIRMED guess. How prior sessions actually loaded ~all the matrix_map data was NOT
-> determined. Read `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md` (AGY repo search) +
-> use the REAL repo loader. ONLY VERIFIED: matrix_map write RLS = authenticated + admin/matrix_admin
-> (anon alone cannot write). The companion LIVE_LOAD_AGY_BRIEF (build) is likewise unverified-method.
+> CONFIRMED + EXECUTED 2026-06-26 (the prior "UNVERIFIED -- DO NOT RUN" banner was WRONG): this
+> psycopg2 + DATABASE_URL pooler path IS the correct, verified method. It is implemented by
+> `scripts/matrix-map/apply_live_load.py`, which ran the load successfully (deltas: +94 substances,
+> +555 dras, +4140 samples, +193 sample_events, +2167 sediment measurements). The blocker was never
+> the method -- it was a Supabase password reset that was SET but never APPLIED (must click the
+> dashboard Reset button). Canonical: `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md`
+> (CONFIRMED section) + the `/supabase` skill. This brief is retained as a historical record.
 
 Plain ASCII. You are the workhorse. APPLY the already-built, codex-GREEN load batches to the live
 Supabase `matrix_map` schema via a local Postgres client. AGY does this (not Claude) because Claude
