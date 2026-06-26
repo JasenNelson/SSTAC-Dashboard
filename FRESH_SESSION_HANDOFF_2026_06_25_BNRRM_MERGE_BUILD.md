@@ -9,12 +9,20 @@ The 48-doc vision run FINISHED 48/48 (0 failed). Results in bnrrm_subset.db:
 - DURABLE CHECKPOINT (protected): `G:\My Drive\SABCS - Sediment Project\Dashboard\matrix-map-data\
   bnrrm_enhanced_2026-06-25_960a8b31.db` (+ .ops.db sidecar + mm_sediment_targets json).
 
+FORMAL VERIFY DONE (verify_merge.py): 44/45 gates PASS -- same-schema, every existing DB2 row
+UNCHANGED (INSERT-only), FK=0, golden=2011-06-16/0-30, dated=499. The one "FAIL" = 128 dup
+(site,station,param,value) tuples = 99 PRE-EXISTING in DB2 (out of scope) + 29 merge-introduced,
+and ALL 29 differ ONLY BY DEPTH (multi-pass read a sample's depth differently across passes; same
+chemistry values). So ~1% duplicate EVENTS w/ an alternate depth, not wrong/lost data. Deliverable
+is a valid additive superset.
+
 REMAINING (defer to Sunday post-reset; fresh Claude budget):
-1. FORMAL `verify_merge.py --enhanced bnrrm_subset.db` (full EXCEPT/FK/no-dup gate) -- the quick
-   audit passed; this is the rigorous confirmation.
-2. (optional) param-quality quarantine pass for the ~2% garbage + decide unknown-unit handling.
-3. The codex-gated LIVE Supabase load (the only true HITL) -- build ETL from the enhanced DB with the
-   artifact filter, /codex-review HARD, apply via MCP with pre/post snapshot.
+1. (optional cleanup) param-quality quarantine for the ~2% garbage params (49); decide unknown-unit
+   (190) handling; DEPTH-CONSENSUS pass to collapse the 29 depth-disagreement dup events (pick the
+   depth >=2 passes agree on). None block the deliverable.
+2. The codex-gated LIVE Supabase load (the only true HITL) -- build ETL from the enhanced DB with the
+   artifact filter, /codex-review HARD, apply via MCP with pre/post snapshot. The durable G:
+   checkpoint (bnrrm_enhanced_2026-06-25_960a8b31.db) is the source for delivery to the BN-RRM project.
 
 ## >>> (historical) 48-DOC VISION RUN IN PROGRESS <<<
 A DETACHED multimodal vision run is processing the 48 sediment-targeted docs into a COPY of the base.
