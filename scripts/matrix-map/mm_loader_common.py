@@ -41,6 +41,13 @@ def normalize_ascii(text):
     return "".join(c for c in t if ord(c) <= 127)
 
 
+def normalize_station_name(name):
+    """Normalize station names consistently: strip non-alphanumeric characters and uppercase."""
+    if name is None:
+        return ""
+    return re.sub(r"[^A-Z0-9]", "", str(name).upper())
+
+
 # The station-name gate is intentionally IDENTICAL to the gate the rebuild/runner
 # already used, so the golden-set behavior is preserved exactly. (The substring
 # rules over-reject some real codes -- a reporting caveat, not changed here.)
