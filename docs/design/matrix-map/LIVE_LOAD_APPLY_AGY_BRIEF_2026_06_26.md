@@ -1,15 +1,25 @@
 # AGY BRIEF -- APPLY the matrix-map live load to Supabase (AGY runs it, not Claude)
 
+> !! UNVERIFIED -- DO NOT RUN AS-IS (flagged 2026-06-26): this psycopg2/DATABASE_URL apply path is
+> Claude's UNCONFIRMED guess. How prior sessions actually loaded ~all the matrix_map data was NOT
+> determined. Read `docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md` (AGY repo search) +
+> use the REAL repo loader. ONLY VERIFIED: matrix_map write RLS = authenticated + admin/matrix_admin
+> (anon alone cannot write). The companion LIVE_LOAD_AGY_BRIEF (build) is likewise unverified-method.
+
 Plain ASCII. You are the workhorse. APPLY the already-built, codex-GREEN load batches to the live
 Supabase `matrix_map` schema via a local Postgres client. AGY does this (not Claude) because Claude
 pushing SQL through MCP would burn ~112k tokens PER 450 KB batch -- AGY runs it Postgres-side for free.
 
 ## Prerequisite (STOP if missing)
-- `DATABASE_URL` must be set in your env = the Supabase Postgres connection string (the OWNER provides
-  it; Supabase dashboard -> Settings -> Database -> Connection string -> URI; use the **Session
-  pooler or Direct** connection, NOT the transaction pooler, since each batch is a multi-statement
-  transaction). If `DATABASE_URL` is unset, STOP and tell the owner -- do not proceed.
-- Do NOT print, log, or commit the connection string.
+- The Supabase Postgres connection string. Read it as `DATABASE_URL` from **`.env.local`**
+  (gitignored; the owner stores it there ONCE so it is never re-hunted) -- have your apply script
+  load `.env.local` (simple line parse for `DATABASE_URL=...`) AND fall back to the process env.
+  (`.env.local` currently has only ANON keys; the owner adds the `DATABASE_URL=postgresql://...`
+  line: Supabase dashboard -> Settings -> Database -> Connection string -> URI, **Session pooler or
+  Direct**, NOT the transaction pooler, since each batch is a multi-statement transaction.)
+- If `DATABASE_URL` is found in neither `.env.local` nor the env, STOP and tell the owner to add it
+  to `.env.local` -- do not proceed.
+- Do NOT print, log, or commit the connection string (`.env.local` is gitignored -- keep it there).
 
 ## What to load
 - 27 batch files: `scripts/matrix-map/mm_live_load_batch_01_substances.sql` ...
