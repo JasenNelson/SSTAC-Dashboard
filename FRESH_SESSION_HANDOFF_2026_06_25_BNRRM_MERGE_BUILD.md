@@ -1,6 +1,22 @@
 # Fresh-Session Handoff -- BN-RRM additive merge build (2026-06-25)
 
-## >>> CURRENT STATE (2026-06-25 ~09:xx PDT) -- 48-DOC VISION RUN IN PROGRESS <<<
+## >>> RUN COMPLETE (2026-06-25) -- deliverable durably checkpointed to G: <<<
+The 48-doc vision run FINISHED 48/48 (0 failed). Results in bnrrm_subset.db:
+- 7 docs yielded sediment [28,53,263,264,315,362,497]; 39 review_zero (soil/GW, gated); 2 no_tables
+  (image-only). +171 stations, dated events 304 -> 499 (+195), chemistry +2,438. 100% sediment media
+  (gate held); golden SED11-137A=2011-06-16/0-30 PRESENT. Residual: ~2% garbage params (49/2438) +
+  ~8% unknown-unit (190) -- flagged, not lost; candidates for a param-quality quarantine pass later.
+- DURABLE CHECKPOINT (protected): `G:\My Drive\SABCS - Sediment Project\Dashboard\matrix-map-data\
+  bnrrm_enhanced_2026-06-25_960a8b31.db` (+ .ops.db sidecar + mm_sediment_targets json).
+
+REMAINING (defer to Sunday post-reset; fresh Claude budget):
+1. FORMAL `verify_merge.py --enhanced bnrrm_subset.db` (full EXCEPT/FK/no-dup gate) -- the quick
+   audit passed; this is the rigorous confirmation.
+2. (optional) param-quality quarantine pass for the ~2% garbage + decide unknown-unit handling.
+3. The codex-gated LIVE Supabase load (the only true HITL) -- build ETL from the enhanced DB with the
+   artifact filter, /codex-review HARD, apply via MCP with pre/post snapshot.
+
+## >>> (historical) 48-DOC VISION RUN IN PROGRESS <<<
 A DETACHED multimodal vision run is processing the 48 sediment-targeted docs into a COPY of the base.
 - Target DB: `scripts/matrix-map/_enrichment_working/bnrrm_subset.db` (copy of sha256-verified DB2).
 - Ledger/sidecar: `_enrichment_working/bnrrm_subset_ops.db` (per-doc status + quarantine).
