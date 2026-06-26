@@ -1,5 +1,17 @@
 # Fresh-Session Handoff -- BN-RRM live load (2026-06-26). Plain ASCII.
 
+## STATUS: LIVE LOAD COMPLETE (2026-06-26)
+
+The enriched BN-RRM sediment data is loaded into live Supabase `matrix_map` and verified via MCP.
+Method confirmed: `.venv/Scripts/python.exe scripts/matrix-map/apply_live_load.py` (DATABASE_URL ->
+IPv4 session pooler -> 27 idempotent FK-ordered batches server-side). Deltas: substances +94 (->276),
+dras +555 (->574), samples +4140 (->4430), sample_events +193 (->495), measurements +2167 sediment
+(->10148). Root-cause of the long block: the Supabase password reset had been SET but never APPLIED
+(must click the dashboard Reset button). Full confirmed method + gotcha:
+`docs/design/matrix-map/HISTORICAL_LOAD_METHOD_FINDINGS.md` (CONFIRMED section). Nothing left to load.
+
+---
+
 ONE task left: load the enriched BN-RRM sediment data into live Supabase `matrix_map`. Everything
 else (extraction, enrichment, verification, coordinate investigation) is DONE + committed.
 
