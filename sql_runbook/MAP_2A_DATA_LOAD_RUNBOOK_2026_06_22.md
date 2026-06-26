@@ -1,6 +1,14 @@
 # Matrix-Map data load -- Map-2a (env_modifiers EXCLUDED) -- 2026-06-22
 
-Self-contained runbook for the owner-pasted Matrix-Map multimedium data load. Plain ASCII.
+> CORRECTION (2026-06-26): the "Supabase MCP is dead / owner pastes in Studio" framing below is
+> SUPERSEDED. The project-scoped MCP is LIVE (the seed was loaded via it); and the canonical BULK
+> load method is now: **AGY runs the load Postgres-side via psycopg2/psql + DATABASE_URL** (free
+> tokens; Claude must NOT push >100KB SQL through MCP). See
+> `docs/design/matrix-map/LIVE_LOAD_APPLY_AGY_BRIEF_2026_06_26.md` +
+> `docs/design/matrix-map/MAP_2A_DATASET_INVESTIGATION_2026_06_23.md` (CORRECTED) + memory
+> `dashboard_supabase_project_scoped_mcp_live`. Studio-paste remains a valid token-free fallback.
+
+Self-contained runbook for the Matrix-Map multimedium data load. Plain ASCII.
 
 ## Decision (owner, 2026-06-22): Map-2a -- EXCLUDE env_modifiers
 

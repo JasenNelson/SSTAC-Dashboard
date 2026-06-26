@@ -140,6 +140,7 @@ from db2_guard import (
     looks_like_db2,
     verify_db2_integrity,
 )
+import mm_loader_common as L
 
 
 # ---------------------------------------------------------------------------
@@ -150,10 +151,7 @@ from db2_guard import (
 # Google Drive custody (per docs/design/matrix-map/DB2_ADOPTION.md). Because this
 # filename is the canonical DB2 (looks_like_db2() True), the SHA-256 integrity
 # pre-flight now ARMS automatically on a default-path run.
-DEFAULT_SOURCE_DB = Path(
-    r"G:\My Drive\SABCS - Sediment Project\Dashboard\matrix-map-data"
-    r"\bnrrm_training_DB2_20260503.db"
-)
+DEFAULT_SOURCE_DB = Path(__file__).resolve().parent / "_enrichment_working" / "bnrrm_enhanced.db"
 
 DEFAULT_OUT_SQL = Path(__file__).resolve().parent / "etl_bnrrm_to_supabase_output.sql"
 
@@ -717,6 +715,7 @@ class EmitCounters:
     skipped_no_tox_value: int = 0
     skipped_no_community_metric: int = 0
     skipped_no_env_modifier_value: int = 0
+    junk_filtered_stations: int = 0
 
 
 def build_sql(
@@ -748,6 +747,30 @@ def build_sql(
     counters = EmitCounters()
     out: list[str] = []
 
+    # Pre-calculate valid stations and emitted events to avoid junk references in substances
+    valid_station_ids = set()
+    for site_id in site_ids:
+        centroid = centroids.get(site_id)
+        for st in src.stations.values():
+            if st["site_id"] != site_id:
+                continue
+            ok, reason = L.passes_name_gate(st.get("name"))
+            if not ok:
+                continue
+            coord = resolve_station_coord(st, centroid)
+            if coord is None:
+                continue
+            valid_station_ids.add(st["station_id"])
+
+    emitted_event_ids = set()
+    for event_id, evt in src.sampling_events.items():
+        if evt["station_id"] not in valid_station_ids:
+            continue
+        date_lit = sql_date(evt.get("date_sampled"))
+        if date_lit == "NULL" and not allow_undated:
+            continue
+        emitted_event_ids.add(event_id)
+
     timestamp = dt.datetime.now(dt.timezone.utc).isoformat(timespec="seconds")
     out.append("-- PR-MAP-1 BN-RRM -> matrix_map ETL (auto-generated; DO NOT hand-edit)")
     out.append(f"-- script:  scripts/matrix-map/etl_bnrrm_to_supabase.py v{SCRIPT_VERSION}")
@@ -770,6 +793,8 @@ def build_sql(
     # substances are CAS-less by design and are NOT tracked here).
     chem_without_cas: set[str] = set()
     for row in src.sediment_chemistry:
+        if row["event_id"] not in emitted_event_ids:
+            continue
         param = (row.get("parameter") or "").strip()
         if not param:
             continue
@@ -794,6 +819,8 @@ def build_sql(
     # benthic community metrics, and env modifiers. Each uses a namespaced
     # key prefix so they cannot collide with real chemistry substances.
     for tox in src.toxicity_tests:
+        if tox["event_id"] not in emitted_event_ids:
+            continue
         test_type = (tox.get("test_type") or "").strip()
         endpoint = (tox.get("endpoint") or "").strip()
         if not test_type or not endpoint:
@@ -824,6 +851,8 @@ def build_sql(
 
     if include_env_modifiers:
         for em in src.env_modifiers:
+            if em["event_id"] not in emitted_event_ids:
+                continue
             param = (em.get("parameter") or "").strip()
             if not param:
                 continue
@@ -935,7 +964,16 @@ def build_sql(
 
         for st in sorted(stations_by_site.get(site_id, []), key=lambda s: s["station_id"]):
             station_id_int = st["station_id"]
-            display_name = (st.get("name") or f"station-{station_id_int}").strip()
+            raw_name = st.get("name")
+
+            # Junk filter gate (load-bearing)
+            ok, reason = L.passes_name_gate(raw_name)
+            if not ok:
+                counters.junk_filtered_stations += 1
+                continue
+
+            display_name = (raw_name or f"station-{station_id_int}").strip()
+
             classification = classify_station(st.get("station_type"), default_citation)
 
             # Coordinate resolution (per-station tier resolver). surveyed -> high;
@@ -1019,12 +1057,12 @@ def build_sql(
                 ") ON CONFLICT (bnrrm_station_id) DO NOTHING;"
             )
             counters.samples += 1
+            valid_station_ids.add(station_id_int)
     out.append("")
 
     # -- sample_events -----------------------------------------------------
     out.append("-- ===================== sample_events =====================")
     # Build event->station->site lookup so we can skip orphan events.
-    valid_station_ids = set(src.stations.keys())
     for event_id in sorted(src.sampling_events):
         evt = src.sampling_events[event_id]
         if evt["station_id"] not in valid_station_ids:
@@ -1090,13 +1128,13 @@ def build_sql(
                 "ON CONFLICT (bnrrm_event_id) DO NOTHING;"
             )
         counters.sample_events += 1
+        emitted_event_ids.add(event_id)
     out.append("")
 
     # -- measurements ------------------------------------------------------
     out.append("-- ===================== measurements =====================")
-    valid_event_ids = set(src.sampling_events.keys())
     for chem in src.sediment_chemistry:
-        if chem["event_id"] not in valid_event_ids:
+        if chem["event_id"] not in emitted_event_ids:
             continue
         param = (chem.get("parameter") or "").strip()
         value = chem.get("value")
@@ -1161,7 +1199,7 @@ def build_sql(
     # -- toxicity measurements --------------------------------------------
     out.append("-- ===================== toxicity measurements =====================")
     for tox in src.toxicity_tests:
-        if tox["event_id"] not in valid_event_ids:
+        if tox["event_id"] not in emitted_event_ids:
             continue
         test_type = (tox.get("test_type") or "").strip()
         endpoint = (tox.get("endpoint") or "").strip()
@@ -1226,7 +1264,7 @@ def build_sql(
     # -- community measurements -------------------------------------------
     out.append("-- ===================== community measurements =====================")
     for bc in src.benthic_community:
-        if bc["event_id"] not in valid_event_ids:
+        if bc["event_id"] not in emitted_event_ids:
             continue
         bc_id = bc.get("id")
         if bc_id is None:
@@ -1286,7 +1324,7 @@ def build_sql(
     out.append("-- ===================== env_modifier measurements =====================")
     if include_env_modifiers:
         for em in src.env_modifiers:
-            if em["event_id"] not in valid_event_ids:
+            if em["event_id"] not in emitted_event_ids:
                 continue
             em_id = em.get("id")
             if em_id is None:
@@ -1352,6 +1390,7 @@ def build_sql(
             "toxicity_missing_value": counters.skipped_no_tox_value,
             "community_missing_metric": counters.skipped_no_community_metric,
             "env_modifier_missing_value": counters.skipped_no_env_modifier_value,
+            "stations_junk_filtered": counters.junk_filtered_stations,
         },
         "generated_at_utc": timestamp,
     }
@@ -1631,6 +1670,7 @@ def main(argv: list[str] | None = None) -> int:
         skipped_no_tox_value=counters.skipped_no_tox_value,
         skipped_no_community_metric=counters.skipped_no_community_metric,
         skipped_no_env_modifier_value=counters.skipped_no_env_modifier_value,
+        junk_filtered_stations=counters.junk_filtered_stations,
     )
 
     if args.apply:
@@ -1667,6 +1707,7 @@ def main(argv: list[str] | None = None) -> int:
         "skipped_no_tox_value": counters.skipped_no_tox_value,
         "skipped_no_community_metric": counters.skipped_no_community_metric,
         "skipped_no_env_modifier_value": counters.skipped_no_env_modifier_value,
+        "junk_filtered_stations": counters.junk_filtered_stations,
     }
     log_phase("done", mode="apply" if args.apply else "dry-run", **summary)
     return 0
