@@ -1,12 +1,12 @@
 {
   "plan_rationale": "This live load migrates the enriched BN-RRM sediment dataset from bnrrm_enhanced.db to Supabase, filtering out ~3,478 junk stations (mis-parsed analytes/QA columns) to ensure data cleanliness. The SQL is split into transaction-bracketed, FK-ordered batches under 500 KB to fit within the execute_sql limits, preserving the integrity of the live schema with ON CONFLICT DO NOTHING idempotency.",
   "counts": {
-    "stations_loaded": 4428,
+    "stations_loaded": 4492,
     "stations_junk_filtered": 3478,
-    "dated_event_count": 493,
+    "dated_event_count": 557,
     "undated_event_count": 0,
     "medium_breakdown": {
-      "sediment": 9624,
+      "sediment": 13107,
       "toxicity": 334,
       "community": 171
     }
@@ -14,12 +14,12 @@
   "batches": [
     {
       "filename": "mm_live_load_batch_01_substances.sql",
-      "statements_count": 992,
-      "size_kb": 441.1,
+      "statements_count": 1037,
+      "size_kb": 441.0,
       "row_counts": {
-        "substances": 275,
+        "substances": 330,
         "dras": 574,
-        "samples": 143,
+        "samples": 133,
         "sample_events": 0,
         "measurements": 0,
         "service_role_audit": 0
@@ -28,7 +28,7 @@
     {
       "filename": "mm_live_load_batch_02_samples.sql",
       "statements_count": 408,
-      "size_kb": 439.9,
+      "size_kb": 440.5,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -41,7 +41,7 @@
     {
       "filename": "mm_live_load_batch_03_samples.sql",
       "statements_count": 414,
-      "size_kb": 440.3,
+      "size_kb": 440.1,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -53,12 +53,12 @@
     },
     {
       "filename": "mm_live_load_batch_04_samples.sql",
-      "statements_count": 410,
-      "size_kb": 440.3,
+      "statements_count": 411,
+      "size_kb": 440.7,
       "row_counts": {
         "substances": 0,
         "dras": 0,
-        "samples": 410,
+        "samples": 411,
         "sample_events": 0,
         "measurements": 0,
         "service_role_audit": 0
@@ -66,47 +66,8 @@
     },
     {
       "filename": "mm_live_load_batch_05_samples.sql",
-      "statements_count": 416,
-      "size_kb": 440.8,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 416,
-        "sample_events": 0,
-        "measurements": 0,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_06_samples.sql",
-      "statements_count": 413,
-      "size_kb": 440.2,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 413,
-        "sample_events": 0,
-        "measurements": 0,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_07_samples.sql",
-      "statements_count": 414,
-      "size_kb": 440.8,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 414,
-        "sample_events": 0,
-        "measurements": 0,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_08_samples.sql",
       "statements_count": 415,
-      "size_kb": 440.0,
+      "size_kb": 440.6,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -117,9 +78,48 @@
       }
     },
     {
+      "filename": "mm_live_load_batch_06_samples.sql",
+      "statements_count": 414,
+      "size_kb": 440.7,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 414,
+        "sample_events": 0,
+        "measurements": 0,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_07_samples.sql",
+      "statements_count": 413,
+      "size_kb": 440.6,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 413,
+        "sample_events": 0,
+        "measurements": 0,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_08_samples.sql",
+      "statements_count": 416,
+      "size_kb": 440.4,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 416,
+        "sample_events": 0,
+        "measurements": 0,
+        "service_role_audit": 0
+      }
+    },
+    {
       "filename": "mm_live_load_batch_09_samples.sql",
       "statements_count": 409,
-      "size_kb": 440.6,
+      "size_kb": 440.8,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -131,12 +131,12 @@
     },
     {
       "filename": "mm_live_load_batch_10_samples.sql",
-      "statements_count": 410,
-      "size_kb": 440.6,
+      "statements_count": 413,
+      "size_kb": 440.8,
       "row_counts": {
         "substances": 0,
         "dras": 0,
-        "samples": 410,
+        "samples": 413,
         "sample_events": 0,
         "measurements": 0,
         "service_role_audit": 0
@@ -144,12 +144,12 @@
     },
     {
       "filename": "mm_live_load_batch_11_samples.sql",
-      "statements_count": 398,
-      "size_kb": 440.6,
+      "statements_count": 396,
+      "size_kb": 440.5,
       "row_counts": {
         "substances": 0,
         "dras": 0,
-        "samples": 398,
+        "samples": 396,
         "sample_events": 0,
         "measurements": 0,
         "service_role_audit": 0
@@ -157,34 +157,34 @@
     },
     {
       "filename": "mm_live_load_batch_12_samples.sql",
-      "statements_count": 772,
-      "size_kb": 441.4,
+      "statements_count": 702,
+      "size_kb": 441.1,
       "row_counts": {
         "substances": 0,
         "dras": 0,
-        "samples": 178,
-        "sample_events": 493,
-        "measurements": 101,
+        "samples": 250,
+        "sample_events": 452,
+        "measurements": 0,
         "service_role_audit": 0
       }
     },
     {
-      "filename": "mm_live_load_batch_13_measurements.sql",
-      "statements_count": 724,
-      "size_kb": 441.5,
+      "filename": "mm_live_load_batch_13_sample_events.sql",
+      "statements_count": 762,
+      "size_kb": 441.1,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
-        "sample_events": 0,
-        "measurements": 724,
+        "sample_events": 105,
+        "measurements": 657,
         "service_role_audit": 0
       }
     },
     {
       "filename": "mm_live_load_batch_14_measurements.sql",
       "statements_count": 723,
-      "size_kb": 441.3,
+      "size_kb": 441.0,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -197,7 +197,7 @@
     {
       "filename": "mm_live_load_batch_15_measurements.sql",
       "statements_count": 722,
-      "size_kb": 441.0,
+      "size_kb": 441.2,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -222,6 +222,84 @@
     },
     {
       "filename": "mm_live_load_batch_17_measurements.sql",
+      "statements_count": 723,
+      "size_kb": 441.3,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 723,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_18_measurements.sql",
+      "statements_count": 720,
+      "size_kb": 441.1,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 720,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_19_measurements.sql",
+      "statements_count": 716,
+      "size_kb": 440.9,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 716,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_20_measurements.sql",
+      "statements_count": 717,
+      "size_kb": 441.1,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 717,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_21_measurements.sql",
+      "statements_count": 710,
+      "size_kb": 441.0,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 710,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_22_measurements.sql",
+      "statements_count": 705,
+      "size_kb": 441.0,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 705,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_23_measurements.sql",
       "statements_count": 722,
       "size_kb": 441.0,
       "row_counts": {
@@ -234,35 +312,48 @@
       }
     },
     {
-      "filename": "mm_live_load_batch_18_measurements.sql",
-      "statements_count": 718,
+      "filename": "mm_live_load_batch_24_measurements.sql",
+      "statements_count": 720,
+      "size_kb": 441.4,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 720,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_25_measurements.sql",
+      "statements_count": 714,
       "size_kb": 440.9,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
         "sample_events": 0,
-        "measurements": 718,
+        "measurements": 714,
         "service_role_audit": 0
       }
     },
     {
-      "filename": "mm_live_load_batch_19_measurements.sql",
-      "statements_count": 718,
-      "size_kb": 440.9,
+      "filename": "mm_live_load_batch_26_measurements.sql",
+      "statements_count": 714,
+      "size_kb": 441.0,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
         "sample_events": 0,
-        "measurements": 718,
+        "measurements": 714,
         "service_role_audit": 0
       }
     },
     {
-      "filename": "mm_live_load_batch_20_measurements.sql",
+      "filename": "mm_live_load_batch_27_measurements.sql",
       "statements_count": 715,
-      "size_kb": 441.5,
+      "size_kb": 441.2,
       "row_counts": {
         "substances": 0,
         "dras": 0,
@@ -273,93 +364,67 @@
       }
     },
     {
-      "filename": "mm_live_load_batch_21_measurements.sql",
-      "statements_count": 710,
-      "size_kb": 441.2,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 0,
-        "sample_events": 0,
-        "measurements": 710,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_22_measurements.sql",
-      "statements_count": 707,
-      "size_kb": 441.1,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 0,
-        "sample_events": 0,
-        "measurements": 707,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_23_measurements.sql",
-      "statements_count": 723,
-      "size_kb": 441.1,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 0,
-        "sample_events": 0,
-        "measurements": 723,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_24_measurements.sql",
-      "statements_count": 718,
-      "size_kb": 441.4,
-      "row_counts": {
-        "substances": 0,
-        "dras": 0,
-        "samples": 0,
-        "sample_events": 0,
-        "measurements": 718,
-        "service_role_audit": 0
-      }
-    },
-    {
-      "filename": "mm_live_load_batch_25_measurements.sql",
-      "statements_count": 710,
+      "filename": "mm_live_load_batch_28_measurements.sql",
+      "statements_count": 717,
       "size_kb": 440.9,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
         "sample_events": 0,
-        "measurements": 710,
+        "measurements": 717,
         "service_role_audit": 0
       }
     },
     {
-      "filename": "mm_live_load_batch_26_measurements.sql",
-      "statements_count": 617,
-      "size_kb": 440.6,
+      "filename": "mm_live_load_batch_29_measurements.sql",
+      "statements_count": 720,
+      "size_kb": 441.2,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
         "sample_events": 0,
-        "measurements": 617,
+        "measurements": 720,
         "service_role_audit": 0
       }
     },
     {
-      "filename": "mm_live_load_batch_27_measurements.sql",
-      "statements_count": 79,
-      "size_kb": 57.4,
+      "filename": "mm_live_load_batch_30_measurements.sql",
+      "statements_count": 704,
+      "size_kb": 441.1,
       "row_counts": {
         "substances": 0,
         "dras": 0,
         "samples": 0,
         "sample_events": 0,
-        "measurements": 78,
+        "measurements": 704,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_31_measurements.sql",
+      "statements_count": 629,
+      "size_kb": 441.1,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 629,
+        "service_role_audit": 0
+      }
+    },
+    {
+      "filename": "mm_live_load_batch_32_measurements.sql",
+      "statements_count": 142,
+      "size_kb": 101.1,
+      "row_counts": {
+        "substances": 0,
+        "dras": 0,
+        "samples": 0,
+        "sample_events": 0,
+        "measurements": 141,
         "service_role_audit": 1
       }
     }
@@ -377,7 +442,7 @@
     "mm_live_load_batch_10_samples.sql",
     "mm_live_load_batch_11_samples.sql",
     "mm_live_load_batch_12_samples.sql",
-    "mm_live_load_batch_13_measurements.sql",
+    "mm_live_load_batch_13_sample_events.sql",
     "mm_live_load_batch_14_measurements.sql",
     "mm_live_load_batch_15_measurements.sql",
     "mm_live_load_batch_16_measurements.sql",
@@ -391,6 +456,11 @@
     "mm_live_load_batch_24_measurements.sql",
     "mm_live_load_batch_25_measurements.sql",
     "mm_live_load_batch_26_measurements.sql",
-    "mm_live_load_batch_27_measurements.sql"
+    "mm_live_load_batch_27_measurements.sql",
+    "mm_live_load_batch_28_measurements.sql",
+    "mm_live_load_batch_29_measurements.sql",
+    "mm_live_load_batch_30_measurements.sql",
+    "mm_live_load_batch_31_measurements.sql",
+    "mm_live_load_batch_32_measurements.sql"
   ]
 }

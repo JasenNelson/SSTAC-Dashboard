@@ -1,19 +1,21 @@
 -- PR-MAP-1 BN-RRM -> matrix_map ETL (auto-generated; DO NOT hand-edit)
 -- script:  scripts/matrix-map/etl_bnrrm_to_supabase.py v1.1.0
--- generated: 2026-06-26T14:07:45+00:00
--- source_db: C:\Projects\SSTAC-Dashboard\scripts\matrix-map\_enrichment_working\bnrrm_enhanced.db
+-- generated: 2026-06-30T12:24:43+00:00
+-- source_db: scripts\matrix-map\_enrichment_working\bnrrm_fullrun.db
 -- geocoding_csv: C:\Projects\SSTAC-Dashboard\docs\design\matrix-map\PR_MAP_8_GEOCODING_DATA_FULL.csv
 -- sites: 345 resolved (first 20: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20])
 -- Idempotent: each INSERT uses ON CONFLICT DO NOTHING.
 
--- Batch 1 of 27
+-- Batch 1 of 32
 
 BEGIN;
 
 SET LOCAL search_path = matrix_map, public, extensions;
 
 -- ===================== substances =====================
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('1-methylnaphthalene', '1-methylnaphthalene', NULL, '["1-methylnaphthalene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('%_moisture', '% Moisture', NULL, '["% Moisture"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('1-methylnaphthalene', '1-Methylnaphthalene', NULL, '["1-Methylnaphthalene","1-methylnaphthalene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('1234678-hepta_cdd', '1,2,3,4,6,7,8-Hepta CDD', NULL, '["1,2,3,4,6,7,8-Hepta CDD"]'::jsonb, 'Dioxin/Furan') ON CONFLICT (key) DO NOTHING;
 
@@ -135,9 +137,17 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('6-chlorovanillin', '6-Chlorovanillin', NULL, '["6-Chlorovanillin"]'::jsonb, 'Phenolic') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('a-bhc', 'a-BHC', NULL, '["a-BHC"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('a-chlordane', 'a-Chlordane', NULL, '["a-Chlordane"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('acenaphthene', 'Acenaphthene', '83-32-9', '["Acenaphthene","acenaphthene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('acenaphthylene', 'Acenaphthylene', '208-96-8', '["Acenaphthylene","acenaphthylene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('acridine', 'Acridine', NULL, '["Acridine"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aldrin', 'Aldrin', NULL, '["Aldrin"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aluminum', 'Aluminum', '7429-90-5', '["Aluminum"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
@@ -145,17 +155,33 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('antimony', 'Antimony', '7440-36-0', '["Antimony"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('antimony_sb', 'Antimony (Sb)', NULL, '["Antimony (Sb)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('arachidic_acid', 'Arachidic Acid', NULL, '["Arachidic Acid"]'::jsonb, 'RAFA') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aroclor_1242', 'Aroclor 1242', NULL, '["Aroclor 1242"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aroclor_1248', 'Aroclor 1248', NULL, '["Aroclor 1248"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aroclor_1254', 'Aroclor 1254', NULL, '["Aroclor 1254"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('aroclor_1260', 'Aroclor 1260', NULL, '["Aroclor 1260"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('arsenic', 'Arsenic', '7440-38-2', '["Arsenic"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('arsenic_as', 'Arsenic (As)', NULL, '["Arsenic (As)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('b-bhc', 'b-BHC', NULL, '["b-BHC"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('barium', 'Barium', '7440-39-3', '["Barium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('barium_ba', 'Barium (Ba)', NULL, '["Barium (Ba)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('behenic_acid', 'Behenic Acid', NULL, '["Behenic Acid"]'::jsonb, 'RAFA') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('benzaanthracene', 'benz(a)anthracene', NULL, '["benz(a)anthracene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('benzaanthracene', 'benz(a)anthracene', NULL, '["Benz(a)anthracene","benz(a)anthracene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('benzene', 'benzene', NULL, '["benzene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('benzene', 'Benzene', NULL, '["Benzene","benzene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('benzoaanthracene', 'Benzo(a)anthracene', '56-55-3', '["Benzo(a)anthracene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
@@ -173,13 +199,21 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('beryllium', 'Beryllium', '7440-41-7', '["Beryllium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('beryllium_be', 'Beryllium (Be)', NULL, '["Beryllium (Be)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('bismuth', 'Bismuth', NULL, '["Bismuth"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('bismuth_bi', 'Bismuth (Bi)', NULL, '["Bismuth (Bi)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('bisphenol-a', 'Bisphenol-A', NULL, '["Bisphenol-A"]'::jsonb, 'Other') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('boron', 'Boron', '7440-42-8', '["Boron"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('boron_b', 'Boron (B)', NULL, '["Boron (B)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('cadmium', 'Cadmium', '7440-43-9', '["Cadmium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('cadmium_cd', 'Cadmium (Cd)', NULL, '["Cadmium (Cd)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('calcium', 'Calcium', NULL, '["Calcium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
@@ -189,6 +223,8 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('chromium', 'Chromium', '7440-47-3', '["Chromium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('chromium_cr', 'Chromium (Cr)', NULL, '["Chromium (Cr)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('chrysene', 'Chrysene', '218-01-9', '["Chrysene","chrysene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('clay', 'Clay', NULL, '["Clay"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
@@ -197,7 +233,11 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('clay_<0_004_mm_%', 'Clay (<0.004 mm) (%)', NULL, '["Clay (<0.004 mm) (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('clay_<_2um', 'Clay (< 2um)', NULL, '["Clay (< 2um)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('cobalt', 'Cobalt', '7440-48-4', '["Cobalt"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('cobalt_co', 'Cobalt (Co)', NULL, '["Cobalt (Co)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('comm_abundance', 'Benthic community: abundance', NULL, '["Benthic community: abundance"]'::jsonb, 'community_metric') ON CONFLICT (key) DO NOTHING;
 
@@ -225,15 +265,31 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('comm_taxa_richness', 'Benthic community: taxa_richness', NULL, '["Benthic community: taxa_richness"]'::jsonb, 'community_metric') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('conductivity', 'Conductivity', NULL, '["Conductivity"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('copper', 'Copper', '7440-50-8', '["Copper"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('copper_cu', 'Copper (Cu)', NULL, '["Copper (Cu)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('dibenzahanthracene', 'Dibenz(a,h)anthracene', '53-70-3', '["Dibenz(a,h)anthracene","dibenz(a,h)anthracene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('dibenzoahanthracene', 'Dibenzo(a,h)anthracene', NULL, '["Dibenzo(a,h)anthracene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('dibutyl-tin', 'Dibutyl-tin', NULL, '["Dibutyl-tin"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('dibutyltin_dichloride', 'Dibutyltin Dichloride', NULL, '["Dibutyltin Dichloride"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('dieldrin', 'Dieldrin', NULL, '["Dieldrin"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('diethylene_glycol', 'diethylene glycol', NULL, '["diethylene glycol"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('endosulfan_i', 'Endosulfan I', NULL, '["Endosulfan I"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('endosulfan_ii', 'Endosulfan II', NULL, '["Endosulfan II"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('endosulfan_sulfate', 'Endosulfan Sulfate', NULL, '["Endosulfan Sulfate"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('endrin', 'Endrin', NULL, '["Endrin"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('eph', 'EPH', NULL, '["EPH"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -243,27 +299,21 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc10-19', 'EPH(C10-19)', NULL, '["EPH(C10-19)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc10-192', 'EPH(C10-19)(2)', NULL, '["EPH(C10-19)(2)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc10-192', 'EPH(C10-19)(2)', NULL, '["EPH(C10-19)(2)","EPH(c10-19)(2)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc19-32', 'EPH(C19-32)', NULL, '["EPH(C19-32)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc19-322', 'EPH(C19-32)(2)', NULL, '["EPH(C19-32)(2)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephs10-19', 'EPHs10-19', NULL, '["EPHs10-19"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephs19-32', 'EPHs19-32', NULL, '["EPHs19-32"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephc19-322', 'EPH(C19-32)(2)', NULL, '["EPH(C19-32)(2)","EPH(c19-32)(2)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephw_c10-19', 'EPHw (C10-19)', NULL, '["EPHw (C10-19)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ephw_c19-32', 'EPHw (C19-32)', NULL, '["EPHw (C19-32)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ethylbenzene', 'ethylbenzene', NULL, '["ethylbenzene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ethylbenzene', 'Ethylbenzene', NULL, '["Ethylbenzene","ethylbenzene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('ethylene_glycol', 'ethylene glycol', NULL, '["ethylene glycol"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('f1_c6-c10', 'F1 (C6-C10)', NULL, '["F1 (C6-C10)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
-
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('f1_c6-c10_less_btex', 'F1 (C6-C10 less BTEX)', NULL, '["F1 (C6-C10 less BTEX)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('f2_c10-c16', 'F2 (C10-C16)', NULL, '["F2 (C10-C16)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -277,19 +327,29 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('fluorene', 'Fluorene', '86-73-7', '["Fluorene","fluorene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('g-bhc_lindane', 'g-BHC (Lindane)', NULL, '["g-BHC (Lindane)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('g-chlordane', 'g-Chlordane', NULL, '["g-Chlordane"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('gravel', 'Gravel', NULL, '["Gravel"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('gravel_>2_00_mm', 'Gravel (>2.00 mm)', NULL, '["Gravel (>2.00 mm)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('gravel_>2_00_mm_%', 'Gravel (>2.00 mm) (%)', NULL, '["Gravel (>2.00 mm) (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('heph', 'HEPH', NULL, '["HEPH"]'::jsonb, 'Hydrocarbon') ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('gravel_>_2_mm', 'Gravel (> 2 mm)', NULL, '["Gravel (> 2 mm)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('hephs', 'HEPHs', NULL, '["HEPHs"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('heph', 'HEPH', NULL, '["HEPH"]'::jsonb, 'Hydrocarbon') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('hephw', 'HEPHw', NULL, '["HEPHw"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('hsvl', 'HSVL', NULL, '["HSVL"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('heptachlor', 'Heptachlor', NULL, '["Heptachlor"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('indeno123-cdpyrene', 'Indeno(1,2,3-cd)pyrene', '193-39-5', '["Indeno(1,2,3-cd)pyrene","indeno(1,2,3-c,d)pyrene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('heptachlor_epoxide', 'Heptachlor Epoxide', NULL, '["Heptachlor Epoxide"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('hmw-pahs', 'HMW-PAHs', NULL, '["HMW-PAHs"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('indeno123-cdpyrene', 'Indeno(1,2,3-cd)pyrene', '193-39-5', '["Indeno(1,2,3-c,d)pyrene","Indeno(1,2,3-cd)pyrene","indeno(1,2,3-c,d)pyrene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('iron', 'Iron', NULL, '["Iron"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
@@ -297,15 +357,19 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lead', 'Lead', '7439-92-1', '["Lead"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('leph', 'LEPH', NULL, '["LEPH"]'::jsonb, 'Hydrocarbon') ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lead_pb', 'Lead (Pb)', NULL, '["Lead (Pb)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lephs', 'LEPHs', NULL, '["LEPHs"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('leph', 'LEPH', NULL, '["LEPH"]'::jsonb, 'Hydrocarbon') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lephw', 'LEPHw', NULL, '["LEPHw"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lignoceric_acid', 'Lignoceric Acid', NULL, '["Lignoceric Acid"]'::jsonb, 'RAFA') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lithium', 'Lithium', NULL, '["Lithium"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lithium_li', 'Lithium (Li)', NULL, '["Lithium (Li)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('lmw-pahs', 'LMW-PAHs', NULL, '["LMW-PAHs"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('m-cresol', 'm-Cresol', NULL, '["m-Cresol"]'::jsonb, 'Phenolic') ON CONFLICT (key) DO NOTHING;
 
@@ -315,17 +379,23 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('mercury', 'Mercury', '7439-97-6', '["Mercury"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('mercury_hg', 'Mercury (Hg)', NULL, '["Mercury (Hg)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('methoxychlor', 'Methoxychlor', NULL, '["Methoxychlor"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('methyl_mercury', 'Methyl Mercury', '22967-92-6', '["Methyl Mercury"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('methyl_tert-butyl_ether_mtbe', 'methyl tert-butyl ether (MTBE)', NULL, '["methyl tert-butyl ether (MTBE)","methyl tert-butyl ether [MTBE]"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('methyl_tert-butyl_ether_mtbe', 'methyl tert-butyl ether (MTBE)', NULL, '["methyl tert-butyl ether (MTBE)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('mineral_oil_&_grease', 'mineral oil & grease', NULL, '["mineral oil & grease"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('methylnaphthalene_2-', 'Methylnaphthalene, 2-', NULL, '["Methylnaphthalene, 2-"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('moisture', 'Moisture', NULL, '["Moisture"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('moisture_%', 'Moisture (%)', NULL, '["Moisture (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('molybdenum', 'Molybdenum', '7439-98-7', '["Molybdenum"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('molybdenum_mo', 'Molybdenum (Mo)', NULL, '["Molybdenum (Mo)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('monobutyl-tin', 'Monobutyl-tin', NULL, '["Monobutyl-tin"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
 
@@ -344,6 +414,8 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('national', '(National', NULL, '["(National"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('nickel', 'Nickel', '7440-02-0', '["Nickel"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('nickel_ni', 'Nickel (Ni)', NULL, '["Nickel (Ni)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('non-chlorinated_phenolics', 'Non-Chlorinated Phenolics', NULL, '["Non-Chlorinated Phenolics"]'::jsonb, 'Phenolic') ON CONFLICT (key) DO NOTHING;
 
@@ -393,9 +465,17 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('potassium', 'Potassium', NULL, '["Potassium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('pp-ddd', 'p,p''-DDD', NULL, '["p,p''-DDD"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('pp-dde', 'p,p''-DDE', NULL, '["p,p''-DDE"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('pp-ddt', 'p,p''-DDT', NULL, '["p,p''-DDT"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('propylene_glycol', 'propylene glycol', NULL, '["propylene glycol"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('pyrene', 'Pyrene', '129-00-0', '["Pyrene","pyrene"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('quinoline', 'Quinoline', NULL, '["Quinoline"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('r-metals', 'R-Metals', NULL, '["R-Metals"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -405,7 +485,11 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('sand_0_063-2_00_mm_%', 'Sand (0.063-2.00 mm) (%)', NULL, '["Sand (0.063-2.00 mm) (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('sand_2_0mm_-_0_05mm', 'Sand (2.0mm - 0.05mm)', NULL, '["Sand (2.0mm - 0.05mm)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('selenium', 'Selenium', '7782-49-2', '["Selenium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('selenium_se', 'Selenium (Se)', NULL, '["Selenium (Se)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('silicon', 'Silicon', NULL, '["Silicon"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -415,13 +499,19 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('silt_0_004-0_063_mm_%', 'Silt (0.004-0.063 mm) (%)', NULL, '["Silt (0.004-0.063 mm) (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('silt_0_05mm_-_2um', 'Silt (0.05mm - 2um)', NULL, '["Silt (0.05mm - 2um)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('silver', 'Silver', '7440-22-4', '["Silver"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('silver_ag', 'Silver (Ag)', NULL, '["Silver (Ag)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('sodium', 'Sodium', NULL, '["Sodium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('soluble_2_1_ph', 'Soluble (2:1) pH', NULL, '["Soluble (2:1) pH"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('strontium', 'Strontium', '7440-24-6', '["Strontium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('strontium_sr', 'Strontium (Sr)', NULL, '["Strontium (Sr)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('styrene', 'styrene', NULL, '["styrene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -445,13 +535,19 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('thallium', 'Thallium', NULL, '["Thallium"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('thallium_tl', 'Thallium (Tl)', NULL, '["Thallium (Tl)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('thorium', 'Thorium', NULL, '["Thorium"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tin', 'Tin', '7440-31-5', '["Tin"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tin_sn', 'Tin (Sn)', NULL, '["Tin (Sn)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('titanium', 'Titanium', '7440-32-6', '["Titanium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('toluene', 'toluene', NULL, '["toluene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('titanium_ti', 'Titanium (Ti)', NULL, '["Titanium (Ti)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('toluene', 'Toluene', NULL, '["Toluene","toluene"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('total_aluminum_al', 'Total Aluminum (Al)', NULL, '["Total Aluminum (Al)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -488,6 +584,8 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('total_organic_carbon', 'Total Organic Carbon', NULL, '["Total Organic Carbon"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('total_organic_carbon_%', 'Total Organic Carbon (%)', NULL, '["Total Organic Carbon (%)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('total_organic_carbon_toc', 'Total Organic Carbon (TOC)', NULL, '["Total Organic Carbon (TOC)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('total_pahs', 'Total PAHs', NULL, '["Total PAHs"]'::jsonb, 'PAH') ON CONFLICT (key) DO NOTHING;
 
@@ -539,9 +637,9 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tox_sea_urchin_normal_development', 'sea_urchin / normal_development', NULL, '["sea_urchin / normal_development"]'::jsonb, 'toxicity_test') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tributyl-tin', 'Tributyl-tin', NULL, '["Tributyl-tin"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('toxaphene_total', 'Toxaphene (Total)', NULL, '["Toxaphene (Total)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tributyltin', 'Tributyltin', NULL, '["Tributyltin"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tributyl-tin', 'Tributyl-tin', NULL, '["Tributyl-tin"]'::jsonb, 'Organotin') ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('tributyltin_chloride', 'Tributyltin Chloride', NULL, '["Tributyltin Chloride"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
@@ -549,19 +647,31 @@ INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, conta
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('uranium', 'Uranium', NULL, '["Uranium"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('uranium_u', 'Uranium (U)', NULL, '["Uranium (U)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vanadium', 'Vanadium', '7440-62-2', '["Vanadium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vhs6-10', 'VHs6-10', NULL, '["VHs6-10"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vanadium_v', 'Vanadium (V)', NULL, '["Vanadium (V)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
-INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vhsc6-10', 'VHs(C6-10)', NULL, '["VHs(C6-10)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vhsc6-10', 'VHs(C6-10)', NULL, '["VHs(C6-10)","VHs(c6-10)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vph', 'VPH', NULL, '["VPH"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vphs', 'VPHs', NULL, '["VPHs"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('vphw', 'VPHw', NULL, '["VPHw"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('xylenes', 'Xylenes', NULL, '["Xylenes"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('xylenes_total', 'Xylenes (Total)', NULL, '["Xylenes (Total)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('zinc', 'Zinc', '7440-66-6', '["Zinc"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
 
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('zinc_zn', 'Zinc (Zn)', NULL, '["Zinc (Zn)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
+
 INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('zirconium', 'Zirconium', NULL, '["Zirconium"]'::jsonb, 'Metal') ON CONFLICT (key) DO NOTHING;
+
+INSERT INTO matrix_map.substances (key, display_name, cas_number, aliases, contaminant_class) VALUES ('zirconium_zr', 'Zirconium (Zr)', NULL, '["Zirconium (Zr)"]'::jsonb, NULL) ON CONFLICT (key) DO NOTHING;
 
 
 -- ===================== dras =====================
@@ -1981,25 +2091,5 @@ INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geom
 INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (132, '132', 'SED07-12', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
 
 INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (133, '133', 'SED07-A1', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (134, '134', 'SED07-A2', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (135, '135', 'SED07-A3', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (136, '136', 'SED07-A4', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (137, '137', 'SED07-A6', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (138, '138', 'SED07-A7', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (139, '139', 'SED07-A9', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (140, '140', 'SED07-A10', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (141, '141', 'SED07-A12', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (142, '142', 'SED07-A14-1', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
-
-INSERT INTO matrix_map.samples (bnrrm_station_id, station_id, display_name, geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, classification_rationale, classification_confidence, receptor_metadata, source_site_id, bc_region, waterbody, waterbody_type, source_dra_id, public, notes) VALUES (143, '143', 'SED07-A15-1', ST_SetSRID(ST_MakePoint(-123.2536, 49.666858), 4326)::geography, 'medium', 'bc_csr_centroid', 'unknown', 'station_type', 'BN-RRM station_type=''sampling'' from Howe Sound Sediment Human Health and Ecological Risk Assessment; mapped to ''unknown'' per plan v3.4.2 R-1 (excluded from UTL pending steward override).', 'low', '{"bnrrm_station_type":"sampling","bnrrm_depth_m":null,"bnrrm_habitat_type":null,"bnrrm_site_id":1,"bnrrm_site_registry_id":"9930"}'::jsonb, 1, 'Sea-to-Sky', 'Howe Sound', 'Marine', (SELECT id FROM matrix_map.dras WHERE bnrrm_doc_id = 1), FALSE, 'Coordinate inherited from BC Site Registry centroid (registry_id=9930, name=''WOODFIBRE MILL NEAR SQUAMISH, SQUAMISH''). Approximate location only -- not surveyed.') ON CONFLICT (bnrrm_station_id) DO NOTHING;
 
 COMMIT;
