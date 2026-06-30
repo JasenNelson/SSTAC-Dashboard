@@ -149,3 +149,4 @@ cython_debug/
 # from bnrrm_training.db + PR_MAP_0_GEOCODING_DATA.csv; the .py source
 # is the canonical artifact).
 scripts/matrix-map/etl_bnrrm_to_supabase_output.sql
+scripts/matrix-map/_enrichment_working/

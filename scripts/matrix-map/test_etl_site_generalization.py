@@ -109,11 +109,11 @@ def _build_synthetic_db() -> Path:
             "latitude, longitude) VALUES (?,?,?,?,?,?)",
             [
                 # surveyed -> high
-                (10, 1, "ST-surveyed", "reference", 49.1, -123.1),
+                (10, 1, "ST-1-surveyed", "reference", 49.1, -123.1),
                 # no coords, site 1 has a centroid -> medium fallback
-                (11, 1, "ST-fallback", "exposure", None, None),
+                (11, 1, "ST-2-fallback", "exposure", None, None),
                 # no coords, site 2 has NO centroid -> skip
-                (20, 2, "ST-skip", "sampling", None, None),
+                (20, 2, "ST-3-skip", "sampling", None, None),
             ],
         )
         conn.executemany(
