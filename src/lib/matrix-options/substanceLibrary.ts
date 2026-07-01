@@ -2260,6 +2260,125 @@ export const SUBSTANCE_LIBRARY = [
       'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
   },
+  {
+    key: '2_4_dichlorophenoxyacetic_acid_2_4_d',
+    displayName: '2,4-Dichlorophenoxyacetic acid (2,4-D)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '4_2_4_dichlorophenoxy_butyric_acid_2_4_db',
+    displayName: '4-(2,4-Dichlorophenoxy)butyric acid (2,4-DB)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.008,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '2_4_5_trichlorophenoxyacetic_acid_2_4_5_t',
+    displayName: '2,4,5-Trichlorophenoxyacetic acid (2,4,5-T)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp',
+    displayName: '2-(2,4,5-Trichlorophenoxy)propionic acid (2,4,5-TP / Silvex)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.008,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '2_methyl_4_chlorophenoxyacetic_acid_mcpa',
+    displayName: '2-Methyl-4-chlorophenoxyacetic acid (MCPA)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb',
+    displayName: '4-(2-Methyl-4-chlorophenoxy)butyric acid (MCPB)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
+  {
+    key: '2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp',
+    displayName: '2-(2-Methyl-4-chlorophenoxy)propionic acid (MCPP / Mecoprop)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
