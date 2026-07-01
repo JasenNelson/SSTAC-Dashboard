@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4702,
-        "source": "Batch P: 4702 = 4682 + 20 (Batch P misc organics wired to SUBSTANCE_LIBRARY).",
+        "value": 4722,
+        "source": "Batch Q: 4722 = 4702 + 20 (Batch Q misc organics wired to SUBSTANCE_LIBRARY).",
         "last_verified": "2026-07-01"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_01_pre_batch_q": {
+      "status": "superseded",
+      "value": 4702,
+      "source": "Batch P: 4702 = 4682 + 20 (Batch P misc organics wired to SUBSTANCE_LIBRARY).",
+      "last_verified": "2026-07-01",
+      "superseded_by": "facts.testing.vitest_test_count = 4722 (Batch Q: +20 misc organics)",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4722 after Batch Q added 20 per-substance tests to substanceLibrary.test.ts (268->288)."
+    },
     "vitest_test_count_2026_07_01_pre_batch_p": {
       "status": "superseded",
       "value": 4682,
