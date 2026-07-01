@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 268 entries', () => {
+  it('has 308 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(288);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(308);
   });
 
   it('every entry has a non-null key', () => {
@@ -642,6 +642,41 @@ describe('SUBSTANCE_LIBRARY -- Batch Q misc organics', () => {
     { key: 'folpet', rfd: 0.1, sf: null, cls: 'organic-halogenated' },
     { key: 'fosetyl_al', rfd: 3, sf: null, cls: 'organic' },
     { key: 'furan', rfd: 0.001, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch R misc organics', () => {
+  const expected = [
+    { key: 'furfural', rfd: 0.003, sf: null, cls: 'organic' },
+    { key: 'furmecyclox', rfd: null, sf: 0.03, cls: 'organic' },
+    { key: 'glufosinate_ammonium', rfd: 0.0004, sf: null, cls: 'organic' },
+    { key: 'glycidaldehyde', rfd: 0.0004, sf: null, cls: 'organic' },
+    { key: 'haloxyfop_methyl', rfd: 0.00005, sf: null, cls: 'organic-halogenated' },
+    { key: 'harmony', rfd: 0.013, sf: null, cls: 'organic' },
+    { key: 'hexabromobenzene', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd', rfd: null, sf: 6200, cls: 'organic-halogenated' },
+    { key: 'hexachlorophene', rfd: 0.0003, sf: null, cls: 'organic-halogenated' },
+    { key: 'imazalil', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'imazaquin', rfd: 0.25, sf: null, cls: 'organic' },
+    { key: 'iprodione', rfd: 0.04, sf: null, cls: 'organic-halogenated' },
+    { key: 'isobutyl_alcohol', rfd: 0.3, sf: null, cls: 'organic' },
+    { key: 'isopropalin', rfd: 0.015, sf: null, cls: 'organic' },
+    { key: 'isoxaben', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'lactofen', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'londax', rfd: 0.2, sf: null, cls: 'organic' },
+    { key: 'm_phenylenediamine', rfd: 0.006, sf: null, cls: 'organic' },
+    { key: 'maleic_anhydride', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'maleic_hydrazide', rfd: 0.5, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
