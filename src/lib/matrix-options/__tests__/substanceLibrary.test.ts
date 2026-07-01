@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(268);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(288);
   });
 
   it('every entry has a non-null key', () => {
@@ -607,6 +607,41 @@ describe('SUBSTANCE_LIBRARY -- Batch P misc organics', () => {
     { key: 'dimethylphenol_2_6', rfd: 0.0006, sf: null, cls: 'organic' },
     { key: 'dimethylphenol_3_4', rfd: 0.001, sf: null, cls: 'organic' },
     { key: 'dinoseb', rfd: 0.001, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch Q misc organics', () => {
+  const expected = [
+    { key: 'benomyl', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'diphenamid', rfd: 0.03, sf: null, cls: 'organic' },
+    { key: 'diphenylamine', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 'diquat', rfd: 0.0022, sf: null, cls: 'organic' },
+    { key: 'dodine', rfd: 0.004, sf: null, cls: 'organic' },
+    { key: 'endothall', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'epichlorohydrin', rfd: null, sf: 0.0099, cls: 'organic-halogenated' },
+    { key: 'ethephon', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'ethyl_acetate', rfd: 0.9, sf: null, cls: 'organic' },
+    { key: 'ethyl_tertiary_butyl_ether_etbe', rfd: 1, sf: null, cls: 'organic' },
+    { key: 'ethylene_thiourea_etu', rfd: 0.00008, sf: null, cls: 'organic' },
+    { key: 'express', rfd: 0.008, sf: null, cls: 'organic' },
+    { key: 'fluometuron', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'fluridone', rfd: 0.08, sf: null, cls: 'organic-halogenated' },
+    { key: 'flurprimidol', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'flutolanil', rfd: 0.06, sf: null, cls: 'organic-halogenated' },
+    { key: 'fluvalinate', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: 'folpet', rfd: 0.1, sf: null, cls: 'organic-halogenated' },
+    { key: 'fosetyl_al', rfd: 3, sf: null, cls: 'organic' },
+    { key: 'furan', rfd: 0.001, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
