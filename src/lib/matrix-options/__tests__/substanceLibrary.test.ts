@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(186);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(206);
   });
 
   it('every entry has a non-null key', () => {
@@ -465,6 +465,41 @@ describe('SUBSTANCE_LIBRARY -- Batch L organophosphate pesticides', () => {
     { key: 'naled', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
     { key: 'tetrachlorovinphos', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
     { key: 'dichlorvos', rfd: 0.0005, sf: 0.29, cls: 'organic-halogenated' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch M misc organics', () => {
+  const expected = [
+    { key: '1_2_4_tribromobenzene', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: '1_4_dibromobenzene', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: '1_4_dithiane', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: '2_3_7_8_tetrachlorodibenzo_p_dioxin', rfd: 7e-10, sf: null, cls: 'organic-halogenated' },
+    { key: '2_3_dichloropropanol', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'acetochlor', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'acetophenone', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'acifluorfen_sodium', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'acrolein', rfd: 0.0005, sf: null, cls: 'organic' },
+    { key: 'acrylamide', rfd: 0.002, sf: 0.83, cls: 'organic' },
+    { key: 'acrylic_acid', rfd: 0.5, sf: null, cls: 'organic' },
+    { key: 'alachlor', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: 'allyl_alcohol', rfd: 0.005, sf: null, cls: 'organic' },
+    { key: 'benzaldehyde', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'benzidine', rfd: 0.003, sf: 230, cls: 'organic' },
+    { key: 'benzoic_acid', rfd: 4, sf: null, cls: 'organic' },
+    { key: 'beta_chloronaphthalene', rfd: 0.08, sf: null, cls: 'organic-halogenated' },
+    { key: 'bis_2_chloro_1_methylethyl_ether', rfd: 0.04, sf: null, cls: 'organic-halogenated' },
+    { key: 'bromodichloromethane', rfd: 0.02, sf: 0.062, cls: 'organic-halogenated' },
+    { key: 'bromomethane', rfd: 0.0014, sf: null, cls: 'organic-halogenated' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
