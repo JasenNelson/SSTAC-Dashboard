@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 308 entries', () => {
+  it('has 368 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(348);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(368);
   });
 
   it('every entry has a non-null key', () => {
@@ -747,6 +747,41 @@ describe('SUBSTANCE_LIBRARY -- Batch T misc organics', () => {
     { key: 'perfluorohexanoic_acid_pfhxa', rfd: 0.0005, sf: null, cls: 'organic-halogenated' },
     { key: 'permethrin_cis_trans', rfd: 0.05, sf: null, cls: 'organic-halogenated' },
     { key: 'phenmedipham', rfd: 0.25, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch U misc organics', () => {
+  const expected = [
+    { key: 'phthalic_anhydride', rfd: 2, sf: null, cls: 'organic' },
+    { key: 'picloram', rfd: 0.07, sf: null, cls: 'organic-halogenated' },
+    { key: 'prochloraz', rfd: 0.009, sf: 0.15, cls: 'organic-halogenated' },
+    { key: 'prometryn', rfd: 0.004, sf: null, cls: 'organic' },
+    { key: 'pronamide', rfd: 0.075, sf: null, cls: 'organic-halogenated' },
+    { key: 'propachlor', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'propanil', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'propargite', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'propargyl_alcohol', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'propham', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'propiconazole', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'propylene_oxide', rfd: null, sf: 0.24, cls: 'organic' },
+    { key: 'pursuit', rfd: 0.25, sf: null, cls: 'organic' },
+    { key: 'pydrin', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
+    { key: 'quinoline', rfd: null, sf: 3, cls: 'organic' },
+    { key: 'resmethrin', rfd: 0.03, sf: null, cls: 'organic' },
+    { key: 'rotenone', rfd: 0.004, sf: null, cls: 'organic' },
+    { key: 'savey', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
+    { key: 'sodium_fluoroacetate', rfd: 0.00002, sf: null, cls: 'organic-halogenated' },
+    { key: 'strychnine', rfd: 0.0003, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
