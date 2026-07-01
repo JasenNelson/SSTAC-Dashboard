@@ -2498,6 +2498,108 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
+  {
+    key: '2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209',
+    displayName: 'Decabromodiphenyl ether (BDE-209)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.007,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.0007,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.0007 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD/SF candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: '2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153',
+    displayName: 'Hexabromodiphenyl ether (BDE-153)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: '2_2_4_4_5_pentabromodiphenyl_ether_bde_99',
+    displayName: 'Pentabromodiphenyl ether (BDE-99)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: '2_2_4_4_tetrabromodiphenyl_ether_bde_47',
+    displayName: 'Tetrabromodiphenyl ether (BDE-47)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'octabromodiphenyl_ether',
+    displayName: 'Octabromodiphenyl ether',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'pentabromodiphenyl_ether',
+    displayName: 'Pentabromodiphenyl ether',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; PBDE flame retardant; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
