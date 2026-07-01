@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 119 entries', () => {
+  it('has 126 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -13,8 +13,9 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2_methylnaphthalene) = 103, + 8 chlorinated VOCs / organics (Batch E) = 111,
     // + 8 HH-only IRIS RfD substances (Batch F, 2026-06-24: 1_2_3/1_2_4/1_3_5
     // trimethylbenzene, bromobenzene, isopropylbenzene, chlorotoluene_2,
-    // 1_2_4_5_tetrachlorobenzene, 2_4_dinitrotoluene) = 119.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(119);
+    // 1_2_4_5_tetrachlorobenzene, 2_4_dinitrotoluene) = 119, + 7 chlorophenoxy
+    // herbicides (Batch G) = 126.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(126);
   });
 
   it('every entry has a non-null key', () => {
@@ -317,6 +318,27 @@ describe('SUBSTANCE_LIBRARY -- Batch F HH-only IRIS RfD substances', () => {
       expect(result?.logKow).toBeNull();
       expect(result?.fcv_ug_per_L).toBeNull();
       expect(result?.trv_eco_mg_per_kg_bw_day).toBeNull();
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch G chlorophenoxy herbicides', () => {
+  const expected = [
+    { key: '2_4_dichlorophenoxyacetic_acid_2_4_d', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: '4_2_4_dichlorophenoxy_butyric_acid_2_4_db', rfd: 0.008, sf: null, cls: 'organic-halogenated' },
+    { key: '2_4_5_trichlorophenoxyacetic_acid_2_4_5_t', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: '2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp', rfd: 0.008, sf: null, cls: 'organic-halogenated' },
+    { key: '2_methyl_4_chlorophenoxyacetic_acid_mcpa', rfd: 0.0005, sf: null, cls: 'organic-halogenated' },
+    { key: '4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: '2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp', rfd: 0.001, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
     });
   }
 });
