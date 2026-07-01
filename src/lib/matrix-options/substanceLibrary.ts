@@ -5648,6 +5648,357 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'HH-only build-first wiring; oral slope factor candidate approved in catalog (qa_status=approved). No approved oral RfD. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
+  // ---------------------------------------------------------------------------
+  // Catalog WIRE batch -- misc organics (Batch T, 2026-07-01). 20 substances
+  // continuing alphabetically after Batch S (n_nitrosodimethylamine). HH-only;
+  // logKow/eco fields null -> eco pathways filtered. abs_dermal/ba_oral are
+  // RAGS Part E class defaults (organic 0.1, organic-halogenated 0.1); ba_oral
+  // the conservative 1.0. paraquat + nustar retain their Cl/F counterpart
+  // atoms out of the core class call the same way mepiquat_chloride (Batch S)
+  // did: quaternary-ammonium counterion chlorides classed organic, covalently
+  // bonded ring/chain halogens classed organic-halogenated. nustar = flusilazole
+  // trade name (CAS 85509-19-9; bis(4-fluorophenyl) triazole fungicide).
+  // ---------------------------------------------------------------------------
+  {
+    key: 'n_nitrosodiphenylamine',
+    displayName: 'N-Nitrosodiphenylamine',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.0049,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 0.0049 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).',
+    notes:
+      'HH-only build-first wiring; oral slope factor candidate approved in catalog (qa_status=approved). No approved oral RfD. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'n_nitrosopyrrolidine',
+    displayName: 'N-Nitrosopyrrolidine',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 2.1,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral slope factor 2.1 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).',
+    notes:
+      'HH-only build-first wiring; oral slope factor candidate approved in catalog (qa_status=approved). No approved oral RfD. Catalog also carries an inhalation unit risk (0.00061 per ug/m3, same source) not represented in this HH-only schema. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'napropamide',
+    displayName: 'Napropamide',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'norflurazon',
+    displayName: 'Norflurazon',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.04,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Pyridazinone herbicide bearing a ring chlorine + trifluoromethyl group -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'nustar',
+    displayName: 'NuStar (Flusilazole)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0007,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; CASRN 85509-19-9).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). "NuStar" is the trade name for flusilazole, a bis(4-fluorophenyl) triazole fungicide -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'oryzalin',
+    displayName: 'Oryzalin',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Dinitroaniline sulfonamide herbicide, no ring halogens -> organic. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'oxadiazon',
+    displayName: 'Oxadiazon',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Dichlorophenyl oxadiazolone herbicide -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'oxyfluorfen',
+    displayName: 'Oxyfluorfen',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Chloro-trifluoromethyl diphenyl ether herbicide -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'p_chloroaniline',
+    displayName: 'p-Chloroaniline',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.004,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'p_p_dichlorodiphenyl_dichloroethane_ddd',
+    displayName: "p,p'-DDD (Dichlorodiphenyl Dichloroethane)",
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.24,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      "US EPA IRIS oral slope factor 0.24 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).",
+    notes:
+      'HH-only build-first wiring; oral slope factor candidate approved in catalog (qa_status=approved). No approved oral RfD. Organochlorine DDT metabolite -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'p_p_dichlorodiphenyldichloroethylene_dde',
+    displayName: "p,p'-DDE (Dichlorodiphenyldichloroethylene)",
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.34,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      "US EPA IRIS oral slope factor 0.34 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).",
+    notes:
+      'HH-only build-first wiring; oral slope factor candidate approved in catalog (qa_status=approved). No approved oral RfD. Organochlorine DDT metabolite -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'paclobutrazol',
+    displayName: 'Paclobutrazol',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.013,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Chlorophenyl triazole plant growth regulator -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'paraquat',
+    displayName: 'Paraquat',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0045,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0045 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Bipyridinium herbicide cation (commercial dichloride salt); the chloride is a counterion, not a ring/chain halogen -> organic, consistent with mepiquat_chloride (Batch S). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'pendimethalin',
+    displayName: 'Pendimethalin',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.04,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Dinitroaniline herbicide, no ring halogens -> organic. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'pentachloronitrobenzene_pcnb',
+    displayName: 'Pentachloronitrobenzene (PCNB)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'perfluorobutanoic_acid_pfba',
+    displayName: 'Perfluorobutanoic acid (PFBA)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). PFAS carboxylic acid -> organic-halogenated (consistent with PFOA/PFOS, Batch D). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'perfluorodecanoic_acid_pfda',
+    displayName: 'Perfluorodecanoic acid (PFDA)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 2.0e-9,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 2 x 10-9 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). EPA gives no single overall RfD, but both chronic non-cancer endpoints converge on 2e-9 (owner-confirmed 2026-06-23).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). PFAS carboxylic acid -> organic-halogenated (consistent with PFOA/PFOS, Batch D). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'perfluorohexanoic_acid_pfhxa',
+    displayName: 'Perfluorohexanoic acid (PFHxA)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). PFAS carboxylic acid -> organic-halogenated (consistent with PFOA/PFOS, Batch D). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'permethrin_cis_trans',
+    displayName: 'Permethrin (cis/trans)',
+    contaminantClass: 'organic-halogenated',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Dichlorovinyl cyclopropanecarboxylate pyrethroid -> organic-halogenated. abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'phenmedipham',
+    displayName: 'Phenmedipham',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.25,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.25 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Bis-carbamate herbicide, no ring halogens -> organic. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
