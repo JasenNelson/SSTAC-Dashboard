@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 226 entries', () => {
+  it('has 248 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(226);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(248);
   });
 
   it('every entry has a non-null key', () => {
@@ -535,6 +535,43 @@ describe('SUBSTANCE_LIBRARY -- Batch N misc organics', () => {
     { key: 'bidrin', rfd: 0.0001, sf: null, cls: 'organic' },
     { key: 'biphenthrin', rfd: 0.015, sf: null, cls: 'organic-halogenated' },
     { key: 'bromoxynil', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch O misc organics', () => {
+  const expected = [
+    { key: 'bromoxynil_octanoate', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'butylate', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'caprolactam', rfd: 0.5, sf: null, cls: 'organic' },
+    { key: 'captafol', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'captan', rfd: 0.13, sf: null, cls: 'organic-halogenated' },
+    { key: 'carbosulfan', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: 'carboxin', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'chloral_hydrate', rfd: 0.1, sf: null, cls: 'organic-halogenated' },
+    { key: 'chloramben', rfd: 0.015, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlordecone_kepone', rfd: 0.0003, sf: 10, cls: 'organic-halogenated' },
+    { key: 'chlorimuron_ethyl', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlorobenzilate', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlorothalonil', rfd: 0.015, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlorpropham', rfd: 0.2, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlorsulfuron', rfd: 0.05, sf: null, cls: 'organic-halogenated' },
+    { key: 'cis_1_2_dichloroethylene', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'cyclohexanone', rfd: 5, sf: null, cls: 'organic' },
+    { key: 'cyclohexylamine', rfd: 0.2, sf: null, cls: 'organic' },
+    { key: 'cyhalothrin_karate', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'cypermethrin', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: 'cyromazine', rfd: 0.0075, sf: null, cls: 'organic' },
+    { key: 'dacthal', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
