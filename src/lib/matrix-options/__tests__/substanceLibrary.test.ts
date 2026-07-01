@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 146 entries', () => {
+  it('has 186 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(164);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(186);
   });
 
   it('every entry has a non-null key', () => {
@@ -430,6 +430,43 @@ describe('SUBSTANCE_LIBRARY -- Batch K herbicides/chlorophenols/glycols', () => 
     { key: 'ethylphthalyl_ethylglycolate_epeg', rfd: 3, sf: null, cls: 'organic' },
     { key: 'sethoxydim', rfd: 0.09, sf: null, cls: 'organic' },
   ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch L organophosphate pesticides', () => {
+  const expected = [
+    { key: 'acephate', rfd: 0.004, sf: null, cls: 'organic' },
+    { key: 'dimethoate', rfd: 0.0002, sf: null, cls: 'organic' },
+    { key: 'disulfoton', rfd: 0.00004, sf: null, cls: 'organic' },
+    { key: 'ethion', rfd: 0.0005, sf: null, cls: 'organic' },
+    { key: 'ethyl_p_nitrophenyl_phenylphosphorothioate_epn', rfd: 0.00001, sf: null, cls: 'organic' },
+    { key: 'fenamiphos', rfd: 0.00025, sf: null, cls: 'organic' },
+    { key: 'fonofos', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'glyphosate', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'isopropyl_methyl_phosphonic_acid_impa', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'diisopropyl_methylphosphonate_dimp', rfd: 0.08, sf: null, cls: 'organic' },
+    { key: 'merphos', rfd: 0.00003, sf: null, cls: 'organic' },
+    { key: 'merphos_oxide', rfd: 0.00003, sf: null, cls: 'organic' },
+    { key: 'methamidophos', rfd: 0.00005, sf: null, cls: 'organic' },
+    { key: 'methidathion', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'methyl_parathion', rfd: 0.00025, sf: null, cls: 'organic' },
+    { key: 'phosmet', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'pirimiphos_methyl', rfd: 0.01, sf: null, cls: 'organic' },
+    { key: 'quinalphos', rfd: 0.0005, sf: null, cls: 'organic' },
+    { key: 'tetraethyldithiopyrophosphate', rfd: 0.0005, sf: null, cls: 'organic' },
+    { key: 'naled', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'tetrachlorovinphos', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
+    { key: 'dichlorvos', rfd: 0.0005, sf: 0.29, cls: 'organic-halogenated' },
+  ] as const;
+
   for (const { key, rfd, sf, cls } of expected) {
     it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
       const result = findSubstance(key);
