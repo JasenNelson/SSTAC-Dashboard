@@ -4,7 +4,7 @@ Supersedes FRESH_SESSION_HANDOFF_2026_06_30_FULLCORPUS_LIVE_LOAD.md.
 Lane: SSTAC-Dashboard BN-RRM sediment enrichment -> matrix_map.
 Branch: docs/bnrrm-433-batch-handoff-2026-06-24 (MERGED to main via PR #417).
 
-## STATUS: DONE / shipped + doc 264 RESOLVED -> corpus CLOSED (2026-06-30 eve).
+## STATUS: DONE / shipped. One small owner decision open (resume vs call-it-done).
 
 ## What is live + merged
 - 64 BN-RRM sediment stations + 64 sample_events + 3483 sediment measurements + 64 substances
@@ -24,32 +24,19 @@ cleanup in finally; best-effort (non-raising) heartbeat. Authored by AGY (6 fix 
 structural refactor + 2 small Opus fixes; codex adjudicated (incl. a mutual-agreement reversal where
 codex withdrew the multi-pass-union finding as by-design).
 
-## RESUME PASS -> CORPUS CLOSED (doc 264 RESOLVED; the "AGY quota" diagnosis was WRONG)
-- The review_zero resume (run_fullcorpus.ps1, launched 07:37) stopped at doc 264 with
-  `AgyNoOutputError: AGY exited with code 4294967295`. The earlier "likely AGY QUOTA" guess was WRONG --
-  AGY budget was healthy (weekly 55% / 5h 54%). Exit 4294967295 = -1 = process TERMINATED (external
-  kill), consistent with a closing parallel codex session tearing down the shared node/AGY process
-  (dashboard_codex_single_consumer_backend pattern; the Part C AGENTS.md guardrail addresses it).
-- A0 ledger diagnosis (read-only): there is NO unprocessed tail. Every doc_id>264 is already
-  review_zero (0 sediment). Doc 264 was the ONLY non-terminal REAL doc; the 148 'pending' rows are the
-  intentionally-excluded seed/VERBATIM docs (1-148). So "finish the corpus" reduced to doc 264 only.
-- Doc 264 ("2a - HHERA") data was ALREADY committed from a prior run: site 107 -> station Sed5 ->
-  events 8475/8476 -> 80 chem rows (73 ETL-loadable). Verified 73/73 ALREADY LIVE in matrix_map (S1a,
-  read-only pooler SELECT) -- nothing lost, no load needed. NOTE: site 107 holds TWO HHERA docs -- 263
-  (2022; the 8 corroborated stations Sed1/2/4 + SED13-01..05) and 264 (2023; Sed5 ONLY, on a SINGLE
-  uncorroborated vision pass -- p0 empty, p2 killed). Two fresh re-extraction attempts failed
-  ENVIRONMENTALLY (attempt A external kill; attempt B AGY pass-0 20-min timeout, 0 output) -- NOT a
-  runner/data bug.
-- RESOLUTION: accepted best-available single-pass extraction. Ledger row 264 manually repaired to
-  status='done', accepted=1 (+ resolution breadcrumb) on the snapshotted ops DB
-  (snapshot: bnrrm_fullrun_ops.pre_doc264_20260630_140908.db). Gate: Opus GREEN + codex 5.5-xhigh
-  RED->GREEN 2 rounds (codex ran the ETL and caught that a naive site-107 re-load emits 2 junk
-  pH-criteria rows 2623/2624 and DEFAULTS to bnrrm_enhanced.db -- so ANY future load MUST pin
-  --source-db bnrrm_fullrun.db and exclude the junk). RE-OPEN is trivial + additive: set 264 back to
-  'pending' + re-run PAGE-CHUNKED to dodge the 1200s AGY timeout.
-- Ledger state now (bnrrm_fullrun_ops.db, worklist=426): review_zero 392 / done 5 / no_tables 29 /
-  pending 148 (all intentional exclusions) / failed 0. No new live load (Sed5 already live 73/73);
-  live matrix_map counts unchanged.
+## RESUME PASS -- STOPPED on AGY quota (OWNER DECISION OPEN)
+- The review_zero resume (run_fullcorpus.ps1, launched 07:37) STOPPED ~17:15 UTC 2026-06-30:
+  `AgyNoOutputError: AGY exited with code 4294967295` at doc 264 -> durable fail-closed stop
+  (doc 264 left 'pending', failed=0, no corruption). Process EXITED. Likely AGY QUOTA (heavy AGY use
+  today: 6 hardening rounds + validation + the resume).
+- Recovery yield = ~0: it re-processed review_zero docs (low doc-ids up to 264, ~half) and found NO
+  new sediment -- accepted_sum still 64 / docs_with_accepted still 4. Corpus is HHERA-heavy / sediment-poor.
+- DECISION for next session/owner: (a) CALL IT DONE at 64 stations (recommended -- marginal yield ~0,
+  AGY likely tapped), OR (b) after AGY quota RESETS, re-launch `powershell -NoProfile -ExecutionPolicy
+  Bypass -File scripts\matrix-map\run_fullcorpus.ps1` (resume-safe; continues from doc 264). Any recovered
+  stations load additively the same idempotent apply_live_load.py way. Do NOT brute-force retry on quota.
+- Ledger state now (bnrrm_fullrun_ops.db, worklist=426): review_zero 392 / done 4 / no_tables 29 /
+  pending 1 (doc 264); review_zero-attempts<3 = 319; accepted 64; failed 0.
 
 ## Reusable wins this session
 - AGY-runs-codex VALIDATED: brief AGY the LITERAL `codex-review.ps1` command + capture $LASTEXITCODE
@@ -78,11 +65,5 @@ codex withdrew the multi-pass-union finding as by-design).
 ## Exact next commands (for the taking-over session)
 - Read this handoff + memory MEMORY.md (dashboard_bnrrm_fullcorpus_loaded + this lane).
 - Verify live: SELECT count(*) FROM matrix_map.samples; -> 4494 (via project-scoped MCP or pooler).
-- BN-RRM lane is CLOSED (doc 264 resolved, ledger done, Sed5 verified live). No resume needed -- there
-  is no unprocessed tail. If a future session ever wants FULLER doc-264 extraction, re-open is trivial:
-  set ledger 264 -> 'pending' + re-run PAGE-CHUNKED (fewer vision pages/AGY call, to dodge the 1200s
-  timeout that hung the whole-doc attempt), then gate + additive-load only if new sediment appears
-  (pin --source-db bnrrm_fullrun.db; exclude junk pH rows 2623/2624).
-- Forward lane = matrix-options substance WIRING (Batch G): recon done (scripts/matrix-options/wire-recon.mjs
-  -> _recon/wire_candidates.json; ~366 clean single-value oral-RfD candidates, join by substance_key,
-  select via candidate_group_id/default_status). Next: author one ~8-12 class cohort per PR #403 template.
+- If owner wants more sediment + AGY quota reset: run_fullcorpus.ps1 (resume-safe), then gate+load the
+  delta via apply_live_load.py (idempotent). Else: lane is closed at 64 stations.
