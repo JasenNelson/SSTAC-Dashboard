@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(308);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(328);
   });
 
   it('every entry has a non-null key', () => {
@@ -677,6 +677,41 @@ describe('SUBSTANCE_LIBRARY -- Batch R misc organics', () => {
     { key: 'm_phenylenediamine', rfd: 0.006, sf: null, cls: 'organic' },
     { key: 'maleic_anhydride', rfd: 0.1, sf: null, cls: 'organic' },
     { key: 'maleic_hydrazide', rfd: 0.5, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch S misc organics', () => {
+  const expected = [
+    { key: 'maneb', rfd: 0.005, sf: null, cls: 'organic' },
+    { key: 'mepiquat_chloride', rfd: 0.03, sf: null, cls: 'organic' },
+    { key: 'metalaxyl', rfd: 0.06, sf: null, cls: 'organic' },
+    { key: 'methacrylonitrile', rfd: 0.0001, sf: null, cls: 'organic' },
+    { key: 'methanol', rfd: 2, sf: null, cls: 'organic' },
+    { key: 'methyl_ethyl_ketone_mek', rfd: 0.6, sf: null, cls: 'organic' },
+    { key: 'methyl_methacrylate', rfd: 1.4, sf: null, cls: 'organic' },
+    { key: 'methylnaphthalene_2', rfd: 0.004, sf: null, cls: 'organic-PAH' },
+    { key: 'methylphenol_2', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'methylphenol_3', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'metolachlor', rfd: 0.15, sf: null, cls: 'organic-halogenated' },
+    { key: 'molinate', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'n_butanol', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'n_hexane', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'n_nitroso_di_n_butylamine', rfd: null, sf: 5.4, cls: 'organic' },
+    { key: 'n_nitroso_n_methylethylamine', rfd: null, sf: 22, cls: 'organic' },
+    { key: 'n_nitrosodi_n_propylamine', rfd: null, sf: 7, cls: 'organic' },
+    { key: 'n_nitrosodiethanolamine', rfd: null, sf: 2.8, cls: 'organic' },
+    { key: 'n_nitrosodiethylamine', rfd: null, sf: 150, cls: 'organic' },
+    { key: 'n_nitrosodimethylamine', rfd: null, sf: 51, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
