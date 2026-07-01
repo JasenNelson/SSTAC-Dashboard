@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 186 entries', () => {
+  it('has 226 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(206);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(226);
   });
 
   it('every entry has a non-null key', () => {
@@ -500,6 +500,41 @@ describe('SUBSTANCE_LIBRARY -- Batch M misc organics', () => {
     { key: 'bis_2_chloro_1_methylethyl_ether', rfd: 0.04, sf: null, cls: 'organic-halogenated' },
     { key: 'bromodichloromethane', rfd: 0.02, sf: 0.062, cls: 'organic-halogenated' },
     { key: 'bromomethane', rfd: 0.0014, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch N misc organics', () => {
+  const expected = [
+    { key: '1_1_1_trichloroethane', rfd: 2, sf: null, cls: 'organic-halogenated' },
+    { key: '2_hexanone', rfd: 0.005, sf: null, cls: 'organic' },
+    { key: 'alar', rfd: 0.15, sf: null, cls: 'organic' },
+    { key: 'ally', rfd: 0.25, sf: null, cls: 'organic' },
+    { key: 'amdro', rfd: 0.0003, sf: null, cls: 'organic-halogenated' },
+    { key: 'ametryn', rfd: 0.009, sf: null, cls: 'organic' },
+    { key: 'amitraz', rfd: 0.0025, sf: null, cls: 'organic' },
+    { key: 'apollo', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'aroclor_1016', rfd: 0.00007, sf: null, cls: 'organic-halogenated' },
+    { key: 'assure', rfd: 0.009, sf: null, cls: 'organic-halogenated' },
+    { key: 'asulam', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'avermectin_b1', rfd: 0.0004, sf: null, cls: 'organic' },
+    { key: 'baygon', rfd: 0.004, sf: null, cls: 'organic' },
+    { key: 'bayleton', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
+    { key: 'baythroid', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
+    { key: 'benefin', rfd: 0.3, sf: null, cls: 'organic-halogenated' },
+    { key: 'bentazon_basagran', rfd: 0.03, sf: null, cls: 'organic' },
+    { key: 'bidrin', rfd: 0.0001, sf: null, cls: 'organic' },
+    { key: 'biphenthrin', rfd: 0.015, sf: null, cls: 'organic-halogenated' },
+    { key: 'bromoxynil', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
