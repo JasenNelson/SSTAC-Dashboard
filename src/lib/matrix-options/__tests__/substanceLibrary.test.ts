@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(328);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(348);
   });
 
   it('every entry has a non-null key', () => {
@@ -712,6 +712,41 @@ describe('SUBSTANCE_LIBRARY -- Batch S misc organics', () => {
     { key: 'n_nitrosodiethanolamine', rfd: null, sf: 2.8, cls: 'organic' },
     { key: 'n_nitrosodiethylamine', rfd: null, sf: 150, cls: 'organic' },
     { key: 'n_nitrosodimethylamine', rfd: null, sf: 51, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch T misc organics', () => {
+  const expected = [
+    { key: 'n_nitrosodiphenylamine', rfd: null, sf: 0.0049, cls: 'organic' },
+    { key: 'n_nitrosopyrrolidine', rfd: null, sf: 2.1, cls: 'organic' },
+    { key: 'napropamide', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'norflurazon', rfd: 0.04, sf: null, cls: 'organic-halogenated' },
+    { key: 'nustar', rfd: 0.0007, sf: null, cls: 'organic-halogenated' },
+    { key: 'oryzalin', rfd: 0.05, sf: null, cls: 'organic' },
+    { key: 'oxadiazon', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'oxyfluorfen', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'p_chloroaniline', rfd: 0.004, sf: null, cls: 'organic-halogenated' },
+    { key: 'p_p_dichlorodiphenyl_dichloroethane_ddd', rfd: null, sf: 0.24, cls: 'organic-halogenated' },
+    { key: 'p_p_dichlorodiphenyldichloroethylene_dde', rfd: null, sf: 0.34, cls: 'organic-halogenated' },
+    { key: 'paclobutrazol', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'paraquat', rfd: 0.0045, sf: null, cls: 'organic' },
+    { key: 'pendimethalin', rfd: 0.04, sf: null, cls: 'organic' },
+    { key: 'pentachloronitrobenzene_pcnb', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'perfluorobutanoic_acid_pfba', rfd: 0.001, sf: null, cls: 'organic-halogenated' },
+    { key: 'perfluorodecanoic_acid_pfda', rfd: 2.0e-9, sf: null, cls: 'organic-halogenated' },
+    { key: 'perfluorohexanoic_acid_pfhxa', rfd: 0.0005, sf: null, cls: 'organic-halogenated' },
+    { key: 'permethrin_cis_trans', rfd: 0.05, sf: null, cls: 'organic-halogenated' },
+    { key: 'phenmedipham', rfd: 0.25, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
