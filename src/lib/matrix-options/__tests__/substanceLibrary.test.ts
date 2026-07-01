@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 133 entries', () => {
+  it('has 139 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -16,8 +16,9 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 1_2_4_5_tetrachlorobenzene, 2_4_dinitrotoluene) = 119, + 7 chlorophenoxy
     // herbicides (Batch G) = 126, + 7 nitroaromatic/energetic substances (Batch H,
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
-    // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(133);
+    // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
+    // + 6 PBDE flame retardants (Batch I) = 139.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(139);
   });
 
   it('every entry has a non-null key', () => {
@@ -354,6 +355,26 @@ describe('SUBSTANCE_LIBRARY -- Batch H nitroaromatics / energetics', () => {
     { key: 'm_dinitrobenzene', rfd: 0.0001, sf: null, cls: 'organic' },
     { key: 'nitroguanidine', rfd: 0.1, sf: null, cls: 'organic' },
     { key: 'octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx', rfd: 0.05, sf: null, cls: 'organic' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch I PBDE flame retardants', () => {
+  const expected = [
+    { key: '2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209', rfd: 0.007, sf: 0.0007, cls: 'organic-halogenated' },
+    { key: '2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153', rfd: 0.0002, sf: null, cls: 'organic-halogenated' },
+    { key: '2_2_4_4_5_pentabromodiphenyl_ether_bde_99', rfd: 0.0001, sf: null, cls: 'organic-halogenated' },
+    { key: '2_2_4_4_tetrabromodiphenyl_ether_bde_47', rfd: 0.0001, sf: null, cls: 'organic-halogenated' },
+    { key: 'octabromodiphenyl_ether', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'pentabromodiphenyl_ether', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
   ] as const;
   for (const { key, rfd, sf, cls } of expected) {
     it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
