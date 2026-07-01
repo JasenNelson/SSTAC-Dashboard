@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 139 entries', () => {
+  it('has 146 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -17,8 +17,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // herbicides (Batch G) = 126, + 7 nitroaromatic/energetic substances (Batch H,
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
-    // + 6 PBDE flame retardants (Batch I) = 139.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(139);
+    // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(146);
   });
 
   it('every entry has a non-null key', () => {
@@ -375,6 +375,27 @@ describe('SUBSTANCE_LIBRARY -- Batch I PBDE flame retardants', () => {
     { key: '2_2_4_4_tetrabromodiphenyl_ether_bde_47', rfd: 0.0001, sf: null, cls: 'organic-halogenated' },
     { key: 'octabromodiphenyl_ether', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
     { key: 'pentabromodiphenyl_ether', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch J carbamate pesticides', () => {
+  const expected = [
+    { key: 'aldicarb', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'aldicarb_sulfone', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'carbofuran', rfd: 0.005, sf: null, cls: 'organic' },
+    { key: 'methomyl', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 'oxamyl', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 's_ethyl_dipropylthiocarbamate_eptc', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 'sodium_diethyldithiocarbamate', rfd: 0.03, sf: null, cls: 'organic' },
   ] as const;
   for (const { key, rfd, sf, cls } of expected) {
     it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
