@@ -17,8 +17,9 @@ describe('SUBSTANCE_LIBRARY', () => {
     // herbicides (Batch G) = 126, + 7 nitroaromatic/energetic substances (Batch H,
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
-    // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(146);
+    // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(164);
   });
 
   it('every entry has a non-null key', () => {
@@ -396,6 +397,38 @@ describe('SUBSTANCE_LIBRARY -- Batch J carbamate pesticides', () => {
     { key: 'oxamyl', rfd: 0.025, sf: null, cls: 'organic' },
     { key: 's_ethyl_dipropylthiocarbamate_eptc', rfd: 0.025, sf: null, cls: 'organic' },
     { key: 'sodium_diethyldithiocarbamate', rfd: 0.03, sf: null, cls: 'organic' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch K herbicides/chlorophenols/glycols', () => {
+  const expected = [
+    { key: 'atrazine', rfd: 0.035, sf: null, cls: 'organic-halogenated' },
+    { key: 'simazine', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'propazine', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'diuron', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'linuron', rfd: 0.002, sf: null, cls: 'organic-halogenated' },
+    { key: 'chlorophenol_2', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'dichlorophenol_2_4', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'trichlorophenol_2_4_5', rfd: 0.1, sf: null, cls: 'organic-halogenated' },
+    { key: 'tetrachlorophenol_2_3_4_6', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
+    { key: 'hexazinone', rfd: 0.033, sf: null, cls: 'organic' },
+    { key: 'metribuzin', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 'prometon', rfd: 0.015, sf: null, cls: 'organic' },
+    { key: 'tebuthiuron', rfd: 0.07, sf: null, cls: 'organic' },
+    { key: 'ethylene_glycol', rfd: 2, sf: null, cls: 'organic' },
+    { key: 'ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'butylphthalyl_butylglycolate_bpbg', rfd: 1, sf: null, cls: 'organic' },
+    { key: 'ethylphthalyl_ethylglycolate_epeg', rfd: 3, sf: null, cls: 'organic' },
+    { key: 'sethoxydim', rfd: 0.09, sf: null, cls: 'organic' },
   ] as const;
   for (const { key, rfd, sf, cls } of expected) {
     it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
