@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 248 entries', () => {
+  it('has 268 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(248);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(268);
   });
 
   it('every entry has a non-null key', () => {
@@ -572,6 +572,41 @@ describe('SUBSTANCE_LIBRARY -- Batch O misc organics', () => {
     { key: 'cypermethrin', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
     { key: 'cyromazine', rfd: 0.0075, sf: null, cls: 'organic' },
     { key: 'dacthal', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch P misc organics', () => {
+  const expected = [
+    { key: 'dalapon_sodium_salt', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
+    { key: 'danitol', rfd: 0.025, sf: null, cls: 'organic' },
+    { key: 'di_2_ethylhexyl_adipate', rfd: 0.6, sf: 0.0012, cls: 'organic' },
+    { key: 'dibromochloromethane', rfd: 0.02, sf: 0.084, cls: 'organic-halogenated' },
+    { key: 'dibromoethane_1_2', rfd: 0.009, sf: 2, cls: 'organic-halogenated' },
+    { key: 'dicamba', rfd: 0.03, sf: null, cls: 'organic-halogenated' },
+    { key: 'dichloroacetic_acid', rfd: 0.004, sf: 0.05, cls: 'organic-halogenated' },
+    { key: 'dichlorodifluoromethane', rfd: 0.2, sf: null, cls: 'organic-halogenated' },
+    { key: 'dichloroethylene_1_2_trans', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'dichloropropene_1_3_cis_trans', rfd: 0.03, sf: 0.1, cls: 'organic-halogenated' },
+    { key: 'diethyl_ether', rfd: 0.2, sf: null, cls: 'organic' },
+    { key: 'difenzoquat', rfd: 0.08, sf: null, cls: 'organic' },
+    { key: 'diflubenzuron', rfd: 0.02, sf: null, cls: 'organic-halogenated' },
+    { key: 'dimethipin', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'dimethyl_terephthalate_dmt', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'dimethylaniline_n_n_dma', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'dimethylphenol_2_4', rfd: 0.02, sf: null, cls: 'organic' },
+    { key: 'dimethylphenol_2_6', rfd: 0.0006, sf: null, cls: 'organic' },
+    { key: 'dimethylphenol_3_4', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'dinoseb', rfd: 0.001, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
