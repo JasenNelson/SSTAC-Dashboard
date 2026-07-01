@@ -2379,6 +2379,125 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'HH-only build-first wiring; chlorophenoxy herbicide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF.',
   },
+  {
+    key: '1_3_5_trinitrobenzene',
+    displayName: '1,3,5-Trinitrobenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.03,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: '4_6_dinitro_o_cyclohexyl_phenol',
+    displayName: '4,6-Dinitro-o-cyclohexylphenol',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'dinitrophenol_2_4',
+    displayName: '2,4-Dinitrophenol',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx',
+    displayName: 'Hexahydro-1,3,5-trinitro-1,3,5-triazine (RDX)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.004,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.08,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.08 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD/SF candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'm_dinitrobenzene',
+    displayName: 'm-Dinitrobenzene',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'nitroguanidine',
+    displayName: 'Nitroguanidine',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
+  {
+    key: 'octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx',
+    displayName: 'Octahydro-1,3,5,7-tetranitro-1,3,5,7-tetrazocine (HMX)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live).',
+    notes:
+      'HH-only build-first wiring; nitroaromatic/energetic; oral RfD candidate(s) approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];
