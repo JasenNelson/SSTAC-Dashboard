@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 126 entries', () => {
+  it('has 133 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -14,8 +14,10 @@ describe('SUBSTANCE_LIBRARY', () => {
     // + 8 HH-only IRIS RfD substances (Batch F, 2026-06-24: 1_2_3/1_2_4/1_3_5
     // trimethylbenzene, bromobenzene, isopropylbenzene, chlorotoluene_2,
     // 1_2_4_5_tetrachlorobenzene, 2_4_dinitrotoluene) = 119, + 7 chlorophenoxy
-    // herbicides (Batch G) = 126.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(126);
+    // herbicides (Batch G) = 126, + 7 nitroaromatic/energetic substances (Batch H,
+    // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
+    // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(133);
   });
 
   it('every entry has a non-null key', () => {
@@ -331,6 +333,27 @@ describe('SUBSTANCE_LIBRARY -- Batch G chlorophenoxy herbicides', () => {
     { key: '2_methyl_4_chlorophenoxyacetic_acid_mcpa', rfd: 0.0005, sf: null, cls: 'organic-halogenated' },
     { key: '4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
     { key: '2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp', rfd: 0.001, sf: null, cls: 'organic-halogenated' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch H nitroaromatics / energetics', () => {
+  const expected = [
+    { key: '1_3_5_trinitrobenzene', rfd: 0.03, sf: null, cls: 'organic' },
+    { key: '4_6_dinitro_o_cyclohexyl_phenol', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'dinitrophenol_2_4', rfd: 0.002, sf: null, cls: 'organic' },
+    { key: 'hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx', rfd: 0.004, sf: 0.08, cls: 'organic' },
+    { key: 'm_dinitrobenzene', rfd: 0.0001, sf: null, cls: 'organic' },
+    { key: 'nitroguanidine', rfd: 0.1, sf: null, cls: 'organic' },
+    { key: 'octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx', rfd: 0.05, sf: null, cls: 'organic' },
   ] as const;
   for (const { key, rfd, sf, cls } of expected) {
     it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
