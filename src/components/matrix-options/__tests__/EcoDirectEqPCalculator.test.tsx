@@ -522,6 +522,42 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
   });
 
+  // Suppression regression (2026-07-02 fix): eco-direct is reference_only under canada-fcsap-aquatic
+  // for benzo_a_pyrene, and the substance library still carries a non-null FCV (0.014) that leaked
+  // into the input pre-fix. Post-fix, computeFcvSeed suppresses the static library fallback for
+  // reference_only/unsupported frames -- the input must render blank, with no provisional badge.
+  it('suppresses the static library FCV fallback under a reference_only frame (benzo_a_pyrene, canada-fcsap-aquatic)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzo_a_pyrene"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('');
+    expect(
+      screen.queryByTestId('eqp-fcv-provisional-badge'),
+    ).not.toBeInTheDocument();
+  });
+
+  // Supported-frame PRESERVATION guard (2026-07-02 fix companion): bc-protocol1-v5-dra keeps
+  // eco-direct-eqp at needs_review (supported, not reference_only/unsupported), so the static
+  // library FCV fallback must still show. This test would FAIL under a naive "suppress whenever
+  // resolveEcoSeed returns null" (catalog-presence) gate -- it proves the suppression is
+  // STATUS-only (reference_only/unsupported), not presence-only.
+  it('still shows the static library FCV fallback under a supported (needs_review) frame (benzo_a_pyrene, bc-protocol1-v5-dra)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="benzo_a_pyrene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
+    ).toBe('0.014');
+  });
+
   it('does NOT show the provisional badge for a current_default scaffold substance (benzo_a_pyrene)', () => {
     // benzo_a_pyrene eco-direct catalog row is current_default -> excluded from provisional eligibility
     // -> resolveEcoSeed returns null -> library fallback (0.014), no provisional badge. Regression

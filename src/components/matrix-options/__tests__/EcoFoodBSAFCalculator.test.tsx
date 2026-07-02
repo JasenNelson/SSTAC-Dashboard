@@ -468,6 +468,23 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     );
   });
 
+  // Suppression regression (2026-07-02 fix): eco-food-bsaf is unsupported under
+  // ccme-sediment-quality for total_pcbs_aroclor_1254. The substance library still carries a
+  // non-null TRV (0.00012) AND a non-null BSAF (2.0) -- the non-null BSAF means the legacy
+  // not-applicable block does NOT fire (bsaf_loc_freshwater !== null), so the TRV field renders
+  // and must be suppressed to blank rather than showing the static library TRV.
+  it('suppresses the static library TRV fallback under an unsupported frame (total_pcbs_aroclor_1254, ccme-sediment-quality)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="ccme-sediment-quality"
+      />,
+    );
+    expect(
+      (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
+    ).toBe('');
+  });
+
   // After Step-6 4B promotion the B[a]P FCSAP mammal TRV seed is approved (provisional=false), so no
   // provisional badge is present at any point. The test verifies that a user edit still shows the
   // override badge.

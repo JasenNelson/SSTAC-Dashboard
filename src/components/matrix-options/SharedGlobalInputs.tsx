@@ -12,8 +12,11 @@
 // state, regardless of whether the active pathway can derive it.
 //
 // Jurisdiction selector: regulatory-frame rows that control value lookup,
-// source hierarchy, and pathway applicability messaging. Calculator math
-// still uses the current input defaults until frame-specific values pass QA.
+// source hierarchy, and pathway applicability messaging. For the eco
+// pathways (EqP FCV, food-web TRV), a reference-only or unsupported frame
+// now suppresses the calculator input default (blank) instead of showing an
+// unsupported static value; other pathways still use the current input
+// defaults until frame-specific values pass QA.
 //
 // Plain ASCII only.
 
