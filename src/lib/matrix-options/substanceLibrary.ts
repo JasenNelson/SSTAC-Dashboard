@@ -549,13 +549,13 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, BOTH src-health-canada-trv-v4-2025 and src-us-epa-iris-rfd-table-live approve the identical value); Identity: Pyrene (4-ring parent PAH), CAS 129-00-0, PubChem CID 31423 ' +
       '(EPA CompTox DTXSID3024289). logKow 4.88 (Hansch/Leo/Hoekman 1995, p.137, ' +
-      'via HSDB). Eco-food TRV seeded from the eco catalog.',
+      'via HSDB). Eco-food TRV is resolved dynamically from the eco catalog at runtime; trv_eco_mg_per_kg_bw_day static field is intentionally null.',
     notes:
       'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
-      'Eco-food selectability (logKow not seeded for its eco-food pathway). ' +
+      'Eco-food selectability (logKow not seeded for its eco-food pathway; trv_eco_mg_per_kg_bw_day is resolved dynamically from the eco catalog at runtime, not held statically). ' +
       'CAVEAT: if eco-direct EqP is later activated for pyrene, prefer the EPA ' +
       'PAH ESB logKow (~5.18) for EqP consistency; 4.88 is the PubChem/HSDB ' +
-      'experimental value. HH fields null; abs_dermal/ba_oral inert.',
+      'experimental value. Oral RfD is wired (0.03); sf_oral_per_mg_per_kg_bw_per_day remains null (no catalog SF candidate). abs_dermal/ba_oral are the HH direct-contact defaults, active for the wired oral RfD pathway.',
   },
   {
     key: 'benz_a_anthracene',
@@ -572,7 +572,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'Identity: Benz[a]anthracene (= benzo[a]anthracene/tetraphene), CAS 56-55-3, ' +
       'PubChem CID 5954. logKow 5.76 (HSDB, Wang et al. 1986; ICSC 0385 lists 5.61). ' +
-      'Eco-food TRV seeded from the eco catalog.',
+      'Eco-food TRV is resolved dynamically from the eco catalog at runtime; trv_eco_mg_per_kg_bw_day static field is intentionally null.',
     notes:
       'Eco-food selectability. logKow 5.76 is a single-study high-end value (range ' +
       '5.18-5.92); not seeded for eco-food. HH fields null; abs_dermal/ba_oral inert.',
@@ -739,11 +739,12 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.34 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: p,p-DDT (4,4-DDT; the p,p isomer, CAS 50-29-3, PubChem CID 3036; ' +
       'US EPA IRIS CASRN 50-29-3) -- NOT o,p-DDT (789-02-6) nor technical mixture. ' +
-      'logKow 6.91 (Hansch/Leo/Hoekman 1995, p.118; HMDB 6.91). Eco FCV from catalog.',
+      'logKow 6.91 (Hansch/Leo/Hoekman 1995, p.118; HMDB 6.91). Eco FCV is resolved dynamically from the eco catalog at runtime; fcv_ug_per_L static field is intentionally null.',
     notes:
       'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
-      'Eco-direct selectability. Isomer-specific (p,p). logKow 6.91 load-bearing for ' +
-      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+      'Eco-direct selectability. Isomer-specific (p,p). logKow 6.91 load-bearing for eco-direct EqP; ' +
+      'fcv_ug_per_L is resolved dynamically from the eco catalog at runtime, not held statically. ' +
+      'Oral RfD (0.0005) and oral SF (0.34) are wired; abs_dermal/ba_oral are the HH direct-contact defaults, active for the wired oral RfD/SF pathways.',
   },
   {
     key: 'dibenzofuran',
@@ -781,7 +782,7 @@ export const SUBSTANCE_LIBRARY = [
       'Identity: Chlordane (TECHNICAL MIXTURE), CAS 12789-03-6 (US EPA IRIS ' +
       'DTXSID5023954) -- the mixture CAS, NOT general 57-74-9 nor cis/trans ' +
       'congeners (5103-71-9 / 5103-74-2). logKow 5.54 (ATSDR 1994, via EPA IRIS ' +
-      'Tox Review; alt ~6.16 disclosed). Eco FCV from catalog.',
+      'Tox Review; alt ~6.16 disclosed). Eco FCV is resolved dynamically from the eco catalog at runtime; fcv_ug_per_L static field is intentionally null.',
     notes:
       'Eco-direct selectability. Technical-mixture identity. logKow 5.54 is the ' +
       'conservative regulatory value (ATSDR/IRIS; 6.16 alt exists). HH fields null; ' +
@@ -1384,7 +1385,7 @@ export const SUBSTANCE_LIBRARY = [
       'total-PCBs criterion substance; the mixture has no single CAS). logKow 6.5 ' +
       '= Aroclor 1254 representative (ATSDR Tox Profile for PCBs, Table 4-3, ' +
       'citing Hansch and Leo 1985). Distinct from total_pcbs_aroclor_1254. ' +
-      'Eco-direct FCV 0.014 ug/L from EPA NRWQC. Eco-direct only -- no eco-food ' +
+      'Eco-direct FCV is resolved dynamically from the eco catalog at runtime (EPA NRWQC-sourced; currently resolves to 0.014 ug/L, but fcv_ug_per_L is intentionally null in this static row). Eco-direct only -- no eco-food ' +
       'TRV row exists in the eco catalog for this key.',
     notes:
       'Eco-direct-only selectability (no eco-food TRV seeded). logKow 6.5 ' +
@@ -1461,14 +1462,17 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'Identity: Chloroform (trichloromethane), CAS 67-66-3, PubChem CID 6212. ' +
       'logKow 1.97 (CCME factsheet "low Kow (1.97)"; corroborated PubChem/HSDB ' +
-      'experimental 1.97). Eco-direct FCV 1.8 ug/L from CCME (interim CWQG ' +
-      'freshwater aquatic-life guideline, 1992) seeded from the eco catalog -- ' +
-      'NOT EPA NRWQC (EPA has no chloroform aquatic-life CCC).',
+      'experimental 1.97). Eco-direct FCV is resolved dynamically from the eco ' +
+      'catalog at runtime (CCME interim CWQG freshwater aquatic-life guideline, ' +
+      '1992; NOT EPA NRWQC -- EPA has no chloroform aquatic-life CCC); ' +
+      'fcv_ug_per_L static field is intentionally null.',
     notes:
       'Eco-direct selectability. logKow 1.97 is load-bearing for eco-direct EqP. ' +
-      'FCV 1.8 ug/L = CCME interim CWQG (LOEC 18 ug/L spring-peeper teratogenesis ' +
-      'x 0.1 safety factor; CCME 1992). Attribute to CCME only. HH fields null; ' +
-      'abs_dermal/ba_oral inert HH defaults (organic-halogenated class).',
+      'Eco-direct FCV is resolved dynamically from the eco catalog at runtime ' +
+      '(CCME interim CWQG basis: LOEC 18 ug/L spring-peeper teratogenesis x 0.1 ' +
+      'safety factor; CCME 1992; currently resolves to 1.8 ug/L, but ' +
+      'fcv_ug_per_L is intentionally null in this static row). Attribute to CCME ' +
+      'only. HH fields null; abs_dermal/ba_oral inert HH defaults (organic-halogenated class).',
   },
   {
     key: 'aluminum',
@@ -1671,8 +1675,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen) + non-cancer ' +
-      'oral RfD 0.03 mg/kg-bw/day (CAS 123-91-1).',
+      'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen; approved catalog value, src-us-epa-iris-chemical-details-live) + non-cancer oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (CAS 123-91-1).',
     notes:
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
@@ -1841,8 +1844,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral slope factor 9.5 x 10-4 (0.00095) per mg/kg-bw/day ' +
-      '(carcinogen) + non-cancer oral RfD 2 x 10-1 mg/kg-bw/day (CAS 78-59-1).',
+      'US EPA IRIS oral slope factor 9.5 x 10-4 (0.00095) per mg/kg-bw/day (carcinogen; approved catalog value, src-us-epa-iris-chemical-details-live) + non-cancer oral RfD 2 x 10-1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (CAS 78-59-1).',
     notes:
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
@@ -2006,7 +2008,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'Health Canada TRVs v4.0 approved oral RfD 0.003 (the row the wired value matches; US EPA IRIS lists a different value 0.05, not used); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
-      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
   },
   {
@@ -2076,7 +2078,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.014 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 117-81-7); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
@@ -2094,7 +2096,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.03 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 118-96-7); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
@@ -2114,7 +2116,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
-      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
   },
   {
