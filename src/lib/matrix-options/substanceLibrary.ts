@@ -14,24 +14,24 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-PAH',
     logKow: 6.13,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: 1.0,
+    sf_oral_per_mg_per_kg_bw_per_day: 2.0,
     bsaf_loc_freshwater: 0.5,
     abs_dermal: 0.13,
     ba_oral: 1.0,
     // US EPA Tier II SCV for B[a]P narcosis, used as the EqP FCV anchor in
     // design doc section 7 Anchor Case A.
     fcv_ug_per_L: 0.014,
-    // US EPA Eco-SSL plant ingestion surrogate (NOAEL-derived). v1 starter
-    // value; HITL override expected for an avian/mammalian receptor.
-    trv_eco_mg_per_kg_bw_day: 0.0025,
+    trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS B[a]P (2017 reassessment); ERDC BSAF DB; ' +
-      'Indigenous-Consumption-Pacific-NW Section 4.3; ' +
-      'US EPA Eco-SSL for PAH (TRV)',
+      'US EPA IRIS B[a]P oral SF 2.0 per mg/kg-bw/day, ADAF-adjusted lifetime default (2017 reassessment), src-us-epa-iris-chemical-details-live (pv-iris-bap-hh-direct-sf); a non-ADAF adult-only IRIS alternate (1.0) and an HC alternate (1.289) also exist; ERDC BSAF DB; ' +
+      'Indigenous-Consumption-Pacific-NW Section 4.3',
     notes:
       'Coastal-marine bivalve scenarios: multiply freshwater BSAF by 15 ' +
       '(passive PAH accumulation; lack of hepatic CYP1A). See design ' +
-      'doc section 8.2.',
+      'doc section 8.2. SF corrected 1.0 -> 2.0 (IRIS 2017 ADAF-adjusted default); static eco TRV removed ' +
+      '(stale Eco-SSL; this was a LIVE defect because bsaf_loc_freshwater is non-null -- the wrong static ' +
+      'value was silently driving eco-food output; nulling forces the dynamic catalog resolver / explicit ' +
+      'HITL receptor choice).',
   },
   {
     key: 'total_pcbs_aroclor_1254',
@@ -50,7 +50,10 @@ export const SUBSTANCE_LIBRARY = [
     // NOAEL-derived). Used for the Eco-Food BSAF pathway.
     trv_eco_mg_per_kg_bw_day: 0.00012,
     sources:
-      'US EPA IRIS Aroclor 1254; BSAF-Translation Section 4; ' +
+      'US EPA IRIS Aroclor 1254 oral RfD (CASRN 11097-69-1, src-us-epa-iris-rfd-table-live); ' +
+      'oral SF borrowed from the generic US EPA IRIS PCBs entry (CASRN 1336-36-3, ' +
+      '"high risk and persistence" tier, src-us-epa-iris-chemical-details-live) -- IRIS has not ' +
+      'assessed Aroclor 1254 carcinogenicity under its own CASRN; BSAF-Translation Section 4; ' +
       'US EPA Eco-SSL mammalian wildlife TRV (PCBs)',
     notes:
       'Do not apply coastal PAH multiplier; PCBs biomagnify rather than ' +
@@ -84,37 +87,31 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Lead',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 3.5e-3,
+    rfd_oral_mg_per_kg_bw_per_day: 5.0e-4,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    // US EPA Eco-SSL avian TRV for Pb (NOAEL-derived). The eco-food
-    // pathway for Pb has limited BSAF support in v1 (bsaf_loc_freshwater
-    // is null) so the UI will filter Pb out of the Eco-Food dropdown; we
-    // still record the TRV for future HITL workflows.
-    trv_eco_mg_per_kg_bw_day: 0.0080,
+    trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Health Canada HHRA 2023; ANZG; Bioavailability TOC-AVS Section 5; ' +
-      'US EPA Eco-SSL avian TRV (Pb)',
-    notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
+      'Health Canada TRV v4.0 (2025) provisional risk-specific dose 5.0e-4 mg/kg-bw/day (IEUBK/blood-lead-based, NOT a classic NOAEL/UF RfD), src-health-canada-trv-v4-2025 (pv-hc-lead-hh-direct-risk-dose); ANZG; Bioavailability TOC-AVS Section 5',
+    notes: 'Use AVS/SEM path for ecological direct-contact derivation. note the RfD is HC\'s provisional risk-specific dose (corrected from a prior untraceable 0.0035); static eco TRV removed (stale Eco-SSL; dynamic catalog resolver supplies it).',
   },
   {
     key: 'copper',
     displayName: 'Copper',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 4.0e-2,
+    rfd_oral_mg_per_kg_bw_per_day: 0.426,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    // US EPA Eco-SSL avian TRV for Cu.
-    trv_eco_mg_per_kg_bw_day: 7.0,
-    sources: 'US EPA IRIS Cu; ANZG; US EPA Eco-SSL avian TRV (Cu)',
-    notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'Health Canada TRV v4.0 (2025) oral TDI 0.426 mg/kg-bw/day, src-health-canada-trv-v4-2025 (pv-hc-copper-hh-direct-rfd-tdi); ANZG',
+    notes: 'Use AVS/SEM path for ecological direct-contact derivation. the oral RfD is the approved HC TDI (corrected from a prior unsupported 0.04 that cited a non-existent IRIS copper row); the static eco TRV was removed (stale legacy Eco-SSL value not in the catalog; the eco-food calc resolves the catalog value dynamically).',
   },
   {
     key: 'cadmium',
@@ -129,12 +126,12 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    // US EPA Eco-SSL avian TRV for Cd.
-    trv_eco_mg_per_kg_bw_day: 0.0014,
-    sources: 'US EPA IRIS Cd; US EPA Eco-SSL avian TRV (Cd)',
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS Cd',
     notes:
       'Drinking-water RfD (5.0e-4) available for water-pathway scenarios; ' +
-      'default here is the dietary value (1.0e-3).',
+      'default here is the dietary value (1.0e-3). static eco TRV removed ' +
+      '(stale Eco-SSL not in catalog; dynamic resolver supplies it).',
   },
   {
     key: 'zinc',
@@ -147,10 +144,9 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    // US EPA Eco-SSL avian TRV for Zn.
-    trv_eco_mg_per_kg_bw_day: 14.0,
-    sources: 'US EPA IRIS Zn; US EPA Eco-SSL avian TRV (Zn)',
-    notes: 'Use AVS/SEM path for ecological direct-contact derivation.',
+    trv_eco_mg_per_kg_bw_day: null,
+    sources: 'US EPA IRIS Zn',
+    notes: 'Use AVS/SEM path for ecological direct-contact derivation. static eco TRV removed (stale Eco-SSL not in catalog; dynamic resolver supplies it).',
   },
   {
     key: 'arsenic_inorganic',
@@ -163,14 +159,14 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 0.60,
     fcv_ug_per_L: null,
-    // US EPA Eco-SSL avian TRV for inorganic As.
-    trv_eco_mg_per_kg_bw_day: 0.043,
+    trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS iAs; ANZG; ACFN-WQCIU; US EPA Eco-SSL avian TRV (iAs)',
+      'US EPA IRIS iAs; ANZG; ACFN-WQCIU',
     notes:
       'AVS/SEM framework does NOT apply to arsenic (not a divalent ' +
       'transition metal in the Cd-Cu-Pb-Ni-Zn family). Use bulk-sediment ' +
-      'path with bioaccessibility correction.',
+      'path with bioaccessibility correction. static eco TRV removed ' +
+      '(stale Eco-SSL not in catalog; dynamic resolver supplies it).',
   },
   {
     key: 'antimony',
