@@ -80,7 +80,10 @@ describe('matrix options evidence library helpers', () => {
     // eco-direct-eqp__chloroform__fcv_ug_per_L__Canada_federal) = 1682.
     // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS hh-direct+hh-food RfD rows (4 new
     // __US_federal candidate groups) = 1686.
-    expect(view.valueGroups).toHaveLength(1686);
+    // 2026-07-02: -1 (1686 -> 1685) -- current-default integrity fix deleted pv-bap-trv-eco
+    // (benzo_a_pyrene eco-food TRV nulled in the library by #444); it was the sole member of the
+    // unique eco-food-bsaf__benzo_a_pyrene__trv_eco_mg_per_kg_bw_day__general candidate group.
+    expect(view.valueGroups).toHaveLength(1685);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -174,9 +177,13 @@ describe('matrix options evidence library helpers', () => {
     // 6 HC PQRA lifestage + 1 WLRS low-level) = 370.
     // 2026-06-22: -4 -- BC P28 source dedup deleted 4 exact-duplicate HH rows (pending) that were
     // twins of the verification-packet rows; the other 351 stay pending (re-keyed to v3.0). = 366.
-    expect(view.audit.values.pendingSourceLocator).toBe(366);
+    // 2026-07-02: -1 (366 -> 365) -- pv-bap-trv-eco (pending_source_locator) deleted by the
+    // current-default integrity fix.
+    expect(view.audit.values.pendingSourceLocator).toBe(365);
     expect(view.audit.values.currentCalculatorScaffold).toBe(65);
-    expect(view.audit.values.currentDefaults).toBe(57);
+    // 2026-07-02: -1 (57 -> 56) -- pv-bap-trv-eco (a current_default row) deleted by the
+    // current-default integrity fix (nulled library field must have no current_default scaffold).
+    expect(view.audit.values.currentDefaults).toBe(56);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.

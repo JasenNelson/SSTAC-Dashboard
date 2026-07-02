@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4843,
-        "source": "eco static-fallback fix: 4843 = 4840 + 3 (eco-direct/eco-food reference_only+unsupported suppression + supported-frame preservation regression tests).",
+        "value": 4844,
+        "source": "current-default integrity fix: 4844 = 4843 + 1 (guard test asserting current_default catalog scaffolds mirror the live SUBSTANCE_LIBRARY).",
         "last_verified": "2026-07-02"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_02_pre_current_default_integrity": {
+      "status": "superseded",
+      "value": 4843,
+      "source": "eco static-fallback fix: 4843 = 4840 + 3 (eco-direct/eco-food suppression + preservation regression tests).",
+      "last_verified": "2026-07-02",
+      "superseded_by": "facts.testing.vitest_test_count = 4844 (current-default integrity: +1 guard test).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4844 after the current-default integrity fix added 1 guard test (current_default catalog scaffolds vs SUBSTANCE_LIBRARY)."
+    },
     "vitest_test_count_2026_07_02_pre_eco_fallback_fix": {
       "status": "superseded",
       "value": 4840,
