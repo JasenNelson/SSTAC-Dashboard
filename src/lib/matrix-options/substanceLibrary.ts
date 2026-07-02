@@ -296,16 +296,17 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Benzene',
     contaminantClass: 'organic',
     logKow: 2.13,
-    rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.004,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.083,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + Health Canada TRV v4.0 oral SF 0.083 per mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
-      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
+      'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
+      'Human-health RfC and inhalation unit risk ' +
       'candidates are available in References & Values.',
   },
   {
@@ -364,16 +365,17 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Naphthalene',
     contaminantClass: 'organic-PAH',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, BOTH src-us-epa-iris-rfd-table-live and src-health-canada-trv-v4-2025 approve the identical value); Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
-      'Human-health RfD and RfC candidates are available in References & Values. ' +
+      'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
+      'Human-health RfC candidate is available in References & Values. ' +
       'EqP/BSAF defaults are pending source-backed ecological values.',
   },
   {
@@ -537,7 +539,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Pyrene',
     contaminantClass: 'organic-PAH',
     logKow: 4.88,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.03,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.13,
@@ -545,10 +547,11 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Identity: Pyrene (4-ring parent PAH), CAS 129-00-0, PubChem CID 31423 ' +
+      'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, BOTH src-health-canada-trv-v4-2025 and src-us-epa-iris-rfd-table-live approve the identical value); Identity: Pyrene (4-ring parent PAH), CAS 129-00-0, PubChem CID 31423 ' +
       '(EPA CompTox DTXSID3024289). logKow 4.88 (Hansch/Leo/Hoekman 1995, p.137, ' +
       'via HSDB). Eco-food TRV seeded from the eco catalog.',
     notes:
+      'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
       'Eco-food selectability (logKow not seeded for its eco-food pathway). ' +
       'CAVEAT: if eco-direct EqP is later activated for pyrene, prefer the EPA ' +
       'PAH ESB logKow (~5.18) for EqP consistency; 4.88 is the PubChem/HSDB ' +
@@ -726,18 +729,19 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'DDT (p,p-)',
     contaminantClass: 'organic-halogenated',
     logKow: 6.91,
-    rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0005,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.34,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Identity: p,p-DDT (4,4-DDT; the p,p isomer, CAS 50-29-3, PubChem CID 3036; ' +
+      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.34 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: p,p-DDT (4,4-DDT; the p,p isomer, CAS 50-29-3, PubChem CID 3036; ' +
       'US EPA IRIS CASRN 50-29-3) -- NOT o,p-DDT (789-02-6) nor technical mixture. ' +
       'logKow 6.91 (Hansch/Leo/Hoekman 1995, p.118; HMDB 6.91). Eco FCV from catalog.',
     notes:
+      'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
       'Eco-direct selectability. Isomer-specific (p,p). logKow 6.91 load-bearing for ' +
       'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1140,45 +1144,45 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Malathion',
     contaminantClass: 'organic',
     logKow: 2.75,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Malathion, CAS 121-75-5. NPIC (National Pesticide Information Center, Oregon State University / US EPA), Malathion Technical Fact Sheet, http://npic.orst.edu/factsheets/archive/malatech.html (CAS 121-75-5; log Kow 2.75, range 2.36-2.89). CAS corroborated by PubChem CID 4004 (https://pub...',
-    notes: 'Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Malathion, CAS 121-75-5. NPIC (National Pesticide Information Center, Oregon State University / US EPA), Malathion Technical Fact Sheet, http://npic.orst.edu/factsheets/archive/malatech.html (CAS 121-75-5; log Kow 2.75, range 2.36-2.89). CAS corroborated by PubChem CID 4004 (https://pub...',
+    notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'methoxychlor',
     displayName: 'Methoxychlor',
     contaminantClass: 'organic-halogenated',
     logKow: 5.08,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Methoxychlor, CAS 72-43-5. PubChem CID 4115 (Methoxychlor), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4115/JSON?heading=LogP (experimental log Kow 5.08, source HSDB / Hansch, Leo & Hoekman 1995; ILO-WHO ICSC 4.68/5.08). PubChem identity/CAS:...',
-    notes: 'Eco selectability. logKow 5.08 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Methoxychlor, CAS 72-43-5. PubChem CID 4115 (Methoxychlor), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4115/JSON?heading=LogP (experimental log Kow 5.08, source HSDB / Hansch, Leo & Hoekman 1995; ILO-WHO ICSC 4.68/5.08). PubChem identity/CAS:...',
+    notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.08 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'mirex',
     displayName: 'Mirex',
     contaminantClass: 'organic-halogenated',
     logKow: 5.28,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0002,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Mirex, CAS 2385-85-5. PubChem CID 16945 (Mirex), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/16945/JSON?heading=LogP), citing HSDB / Veith GD et al., J. Fish. Res. Bd. Can. 36(9):1040-1048 (1979). CAS 2385-85-5 corroborated by PubChem com...',
-    notes: 'Eco selectability. logKow 5.28 (eco-direct EqP input). logKow 5.28 = ATSDR (Niimi 1991); PubChem/HSDB lists 6.89 (Veith 1979) -- large spread (~40x), flagged for review. HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Mirex, CAS 2385-85-5. PubChem CID 16945 (Mirex), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/16945/JSON?heading=LogP), citing HSDB / Veith GD et al., J. Fish. Res. Bd. Can. 36(9):1040-1048 (1979). CAS 2385-85-5 corroborated by PubChem com...',
+    notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.28 (eco-direct EqP input). logKow 5.28 = ATSDR (Niimi 1991); PubChem/HSDB lists 6.89 (Veith 1979) -- large spread (~40x), flagged for review. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'nonylphenol',
@@ -1215,30 +1219,30 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Pentachlorobenzene',
     contaminantClass: 'organic-halogenated',
     logKow: 5.18,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0008,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Pentachlorobenzene, CAS 608-93-5. CAS and identity: PubChem Compound CID 11855 (Pentachlorobenzene), CAS 608-93-5, https://pubchem.ncbi.nlm.nih.gov/compound/608-93-5 . log Kow = 5.18: PubChem PUG-View LogP heading for CID 11855 (Hazardous Substances Data Bank, citing Hansch C., Leo A., ...',
-    notes: 'Eco selectability. logKow 5.18 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.0008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Pentachlorobenzene, CAS 608-93-5. CAS and identity: PubChem Compound CID 11855 (Pentachlorobenzene), CAS 608-93-5, https://pubchem.ncbi.nlm.nih.gov/compound/608-93-5 . log Kow = 5.18: PubChem PUG-View LogP heading for CID 11855 (Hazardous Substances Data Bank, citing Hansch C., Leo A., ...',
+    notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.18 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'tetrachloroethane_1_1_2_2',
     displayName: '1,1,2,2-Tetrachloroethane',
     contaminantClass: 'organic-halogenated',
     logKow: 2.39,
-    rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.2,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,1,2,2-Tetrachloroethane, CAS 79-34-5. PubChem Compound CID 6591 (1,1,2,2-tetrachloroethane), LogP heading, experimental log Kow = 2.39 citing Hansch, Leo & Hoekman (1995), Exploring QSAR, ACS, p. 4; corroborated by ILO-WHO ICSC. Identity (CAS 79-34-5, SMILES, IUPAC name) verified via ...',
-    notes: 'Eco selectability. logKow 2.39 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.2 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: 1,1,2,2-Tetrachloroethane, CAS 79-34-5. PubChem Compound CID 6591 (1,1,2,2-tetrachloroethane), LogP heading, experimental log Kow = 2.39 citing Hansch, Leo & Hoekman (1995), Exploring QSAR, ACS, p. 4; corroborated by ILO-WHO ICSC. Identity (CAS 79-34-5, SMILES, IUPAC name) verified via ...',
+    notes: 'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.39 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'thallium',
@@ -1275,15 +1279,15 @@ export const SUBSTANCE_LIBRARY = [
     displayName: '1,2,4-Trichlorobenzene',
     contaminantClass: 'organic-halogenated',
     logKow: 4.02,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.01,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995) for log Ko...',
-    notes: 'Eco selectability. logKow 4.02 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995) for log Ko...',
+    notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 4.02 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'trichloroethane_1_1_1',
