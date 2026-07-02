@@ -8,6 +8,22 @@ Two lanes closed tonight:
    119 -> 389, manifest vitest_test_count -> 4823 (PRs #418-#434; lane-complete handoff #435).
 2. **Whole-library QA AUDIT** -- 4 multi-agent workflows over all 389 entries + the eco catalog,
    ~110 verified findings, capstone consolidated decisions doc + safe fixes shipped.
+3. **POST-AUDIT EXECUTION (2026-07-02, owner-greenlit lanes 2/1/3):** #444 value corrections
+   (copper/lead RfD, BaP SF; nulled 6 dead eco-TRVs), #445 wired 11 HH coverage gaps, #446 added
+   'inorganic' ContaminantClass + wired 17 inorganics (Batch W). SUBSTANCE_LIBRARY 389 -> 406,
+   manifest -> 4840. 14 PRs total tonight (#434-#446). Details: memory `dashboard_mo_audit_lane_2026_07_01`.
+
+## IMMEDIATE NEXT: Lane 1 ECO wiring (deferred, needs investigation FIRST)
+
+The 36 eco field-updates (fcv_ug_per_L / trv_eco_mg_per_kg_bw_day) from the audit are NOT yet wired.
+KEY: the eco static fields are FALLBACKS -- `resolveEcoSeed()` (src/lib/matrix-options/ecoSeed.ts)
+supplies the catalog value dynamically first; the static field is only used when the dynamic path
+returns null (and the eco-food BSAF gate blocks it when bsaf_loc_freshwater is null). So BEFORE wiring
+any eco field: analyze which of the 36 candidates the static value actually reaches (load-bearing) vs
+which are dynamic-redundant. The 7 eco TEXT-DATA CONTRADICTIONS (entry's own sources/notes claim a
+value that is null: chloroform fcv, chromium trv, benz_a_anthracene trv, chlordane fcv, total_pcbs fcv,
+pyrene trv, ddt fcv) are the clearest safe subset (wire to match the shipped provenance). Spec:
+scratchpad lane1_spec.md (this session).
 
 ## START HERE (next session)
 
