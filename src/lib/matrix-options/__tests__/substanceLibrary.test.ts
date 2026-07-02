@@ -862,3 +862,41 @@ describe('SUBSTANCE_LIBRARY -- Batch W inorganic substances', () => {
     });
   }
 });
+
+describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
+  // Verification basis: EPA RAGS Part E Exhibit 3-4 + EPA supplemental ABS_d table
+  // (Reifenrath et al. 2002) + HC TRV v4.0 Table 5. Each row's `source` documents which
+  // basis applies: the RAGS SVOC organic-class default (0.1), the HC VOC RAFDerm default
+  // (0.03), the chemical-specific EPA supplemental value for TNT (0.03, distinct from the
+  // VOC default even though the number matches), or the RAGS chemical-specific PCB value
+  // (0.14). abs_dermal is source-of-truth, not derived, so this is a plain field check.
+  const expected = [
+    // Reverted 0.03 -> 0.1: these are non-volatile SVOCs; the class default is RAGS 0.1,
+    // not the HC VOC RAFDerm 0.03 (the prior 0.03 label was a copy-paste error).
+    { key: 'bis_2_ethylhexyl_phthalate_dehp', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    { key: '2_4_dinitrotoluene', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    { key: '1_2_4_5_tetrachlorobenzene', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    { key: 'phenol', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    { key: 'bisphenol_a', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    { key: 'nitrobenzene', absDermal: 0.1, source: 'RAGS SVOC default 0.1' },
+    // Kept at 0.03: confirmed VOCs (HC VOC RAFDerm default), or TNT's own chemical-specific
+    // EPA supplemental value.
+    { key: '2_4_6_trinitrotoluene_tnt', absDermal: 0.03, source: 'EPA supplemental TNT 0.03' },
+    { key: 'acetone', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: '1_4_dioxane', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'acrylonitrile', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'carbon_disulfide', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'styrene', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'pyridine', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    // Kept at 0.14: RAGS chemical-specific PCB value (not the 0.1 organic-halogenated default).
+    { key: 'total_pcbs_aroclor_1254', absDermal: 0.14, source: 'RAGS PCB 0.14' },
+  ] as const;
+
+  for (const { key, absDermal, source } of expected) {
+    it(`${key} carries abs_dermal ${absDermal} (${source})`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.abs_dermal).toBe(absDermal);
+    });
+  }
+});

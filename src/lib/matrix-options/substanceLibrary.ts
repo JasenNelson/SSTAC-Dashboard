@@ -57,7 +57,8 @@ export const SUBSTANCE_LIBRARY = [
       'US EPA Eco-SSL mammalian wildlife TRV (PCBs)',
     notes:
       'Do not apply coastal PAH multiplier; PCBs biomagnify rather than ' +
-      'passively accumulate.',
+      'passively accumulate. abs_dermal 0.14 = EPA RAGS Part E Exhibit 3-4 chemical-specific ' +
+      'value for PCBs/Aroclor (not the 0.1 organic-halogenated default).',
   },
   {
     key: 'methylmercury',
@@ -1561,7 +1562,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -1571,7 +1572,8 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; seeded build-first from the needs_review row ' +
       'pv-p28-phenol-hh-direct-rfd / pv-iris-phenol-... (value 0.3, agree). logKow not ' +
       'in catalog -> eco-direct EqP unavailable; no eco value -> Eco-Food filtered. ' +
-      'abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'abs_dermal 0.1 = organic-class SVOC default (EPA RAGS Part E); prior 0.03 was ' +
+      'mislabeled as the class default (the true organic default is 0.1).',
   },
   {
     key: 'styrene',
@@ -1591,8 +1593,9 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; seeded build-first from the needs_review row ' +
       'pv-p28-styrene-hh-direct-rfd / pv-iris-styrene-... (value 0.2, agree; an ' +
       'inhalation RfC 1 mg/m3 also exists but is not a sediment-pathway input). logKow ' +
-      'not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic class ' +
-      'defaults pending HITL.',
+      'not in catalog -> eco pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC ' +
+      'RAFDerm default (0.03, MECP 2011); styrene is a confirmed VOC (bp 145 C) -- EPA ' +
+      'RAGS Part E has no ABS_d for VOCs (routes them via inhalation).',
   },
   {
     key: 'acetone',
@@ -1611,8 +1614,8 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Human-health pathways only; seeded build-first from the needs_review row ' +
       'pv-p28-acetone-hh-direct-rfd / pv-iris-acetone-... (value 0.9, agree). logKow ' +
-      'not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic class ' +
-      'defaults pending HITL.',
+      'not in catalog -> eco pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC ' +
+      'RAFDerm default (0.03, MECP 2011); acetone is a VOC (bp 56 C).',
   },
   {
     key: 'hexachlorobenzene',
@@ -1682,7 +1685,8 @@ export const SUBSTANCE_LIBRARY = [
       'pv-iris-1_4_dioxane-hh-direct-sf (0.1); RfD from pv-iris-1_4_dioxane-hh-direct-rfd ' +
       '(0.03). Both rows are now qa_status=approved in the catalog (promoted 2026-06). 1,4-dioxane is a cyclic ' +
       'ether (organic, not halogenated). logKow/eco not in catalog -> eco filtered. ' +
-      'abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm default (0.03, MECP 2011); ' +
+      '1,4-dioxane is a VOC (bp 101 C).',
   },
   // ---------------------------------------------------------------------------
   // Catalog WIRE batch -- PFAS + HH-only sweep (2026-06-20). 13 substances added
@@ -1872,7 +1876,8 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; SF seeded build-first from the needs_review row ' +
       'pv-iris-acrylonitrile-hh-direct-sf / -food-sf (value 0.54). Carcinogen: sf_oral ' +
       'set, rfd_oral null. logKow not in catalog -> eco pathways filtered. ' +
-      'abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm default (0.03, MECP 2011); ' +
+      'acrylonitrile is a VOC (bp 77 C).',
   },
   {
     key: 'carbon_disulfide',
@@ -1892,7 +1897,8 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
       'pv-iris-carbon_disulfide-hh-direct-rfd / -food-rfd (value 0.1; an inhalation RfC ' +
       'also exists but is not a sediment-pathway input). logKow not in catalog -> eco ' +
-      'pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm default ' +
+      '(0.03, MECP 2011); carbon disulfide is a VOC (bp 46 C).',
   },
   {
     key: 'bisphenol_a',
@@ -1902,7 +1908,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.05,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -1911,7 +1917,8 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
       'pv-iris-bisphenol_a-hh-direct-rfd / -food-rfd (value 0.05). logKow not in catalog ' +
-      '-> eco pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+      '-> eco pathways filtered. abs_dermal 0.1 = organic-class SVOC default (EPA RAGS ' +
+      'Part E); BPA is a non-volatile solid (mp ~158 C), not a VOC; prior 0.03 was mislabeled.',
   },
   {
     key: 'nitrobenzene',
@@ -1921,7 +1928,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 2.0e-3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -1931,7 +1938,8 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
       'pv-iris-nitrobenzene-hh-direct-rfd / -food-rfd (value 0.002; an inhalation RfC + ' +
       'IUR also exist but are not sediment-pathway inputs). logKow not in catalog -> eco ' +
-      'pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+      'pathways filtered. abs_dermal 0.1 = organic-class SVOC default (EPA RAGS Part E); ' +
+      'semivolatile, not a VOC; prior 0.03 was mislabeled.',
   },
   {
     key: 'pyridine',
@@ -1950,7 +1958,9 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
       'pv-iris-pyridine-hh-direct-rfd / -food-rfd (value 0.001). logKow not in catalog ' +
-      '-> eco pathways filtered. abs_dermal/ba_oral are organic class defaults pending HITL.',
+      '-> eco pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm ' +
+      'default (0.03, MECP 2011). Boundary case: volatile (bp 115 C) but Method ' +
+      '8270-classified; 0.03 kept as the VOC default pending a dedicated review.',
   },
   {
     key: '2_methylnaphthalene',
@@ -2073,15 +2083,17 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.02,
     sf_oral_per_mg_per_kg_bw_per_day: 0.014,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.014 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 117-81-7); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.014 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 117-81-7); EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
-      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal 0.1 = organic-class SVOC ' +
+      'default (EPA RAGS Part E). DEHP is a non-volatile SVOC (bp ~384 C), NOT a VOC; the ' +
+      'prior 0.03 VOC-RAF label was a copy-paste error (2026-07-02 source verification).',
   },
   {
     key: '2_4_6_trinitrotoluene_tnt',
@@ -2096,10 +2108,12 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.03 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 118-96-7); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.03 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 118-96-7); EPA RAGS Part E supplemental soil ABS_d for TNT (abs_dermal 0.03, Reifenrath et al. 2002)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
-      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal 0.03 = chemical-specific ' +
+      'EPA soil ABS_d for TNT (3.2%; EPA RAGS Part E supplemental ABS_d table, Reifenrath ' +
+      'et al. 2002), NOT a generic VOC RAF.',
   },
   {
     key: 'formaldehyde',
@@ -2235,15 +2249,17 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.0003,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS toxicity values; EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1)',
     notes:
       'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
-      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal 0.1 = organic-halogenated ' +
+      'SVOC default (EPA RAGS Part E); persistent low-volatility SVOC (bp ~246 C), no ' +
+      'chemical-specific ABS_d; prior 0.03 VOC-RAF label was wrong.',
   },
   {
     key: '2_4_dinitrotoluene',
@@ -2253,15 +2269,17 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.002,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'US EPA IRIS toxicity values; EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1)',
     notes:
       'HH-only build-first wiring; oral RfD candidate approved in References & Values. ' +
-      'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
+      'logKow/eco fields null -> Eco pathways filtered. abs_dermal 0.1 = organic-class SVOC ' +
+      'default (EPA RAGS Part E); 2,4-DNT is a semivolatile nitroaromatic, not a VOC (prior ' +
+      '0.03 VOC-RAF label was wrong).',
   },
   {
     key: '2_4_dichlorophenoxyacetic_acid_2_4_d',
