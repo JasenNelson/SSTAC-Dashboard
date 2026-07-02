@@ -30,7 +30,10 @@ import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { resolveEcoSeed } from '@/lib/matrix-options/ecoSeed';
-import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
+import {
+  getPathwayApplicability,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 import type { EcoDirectEqPResult } from '@/lib/matrix-options/types';
 import { parseDecimalInput } from '@/lib/matrix-options/parseDecimal';
 import type {
@@ -70,8 +73,11 @@ interface FcvSeed {
 }
 
 // Resolve the FCV seed for (substance, frame): prefer the frame-aware, source-priority eco catalog
-// value (resolveEcoSeed, which honors the provisional gate + jurisdiction + reference-only guards),
-// else fall back to the substance-library FCV. Pure; deterministic (static catalog) so SSR == CSR.
+// value (resolveEcoSeed, which honors the provisional gate + jurisdiction + reference-only guards).
+// When resolveEcoSeed returns null, fall back to the substance-library FCV ONLY if the pathway is
+// applicable for the frame; in reference_only / unsupported frames the static fallback is SUPPRESSED
+// (blank) so a library current-default value cannot leak into a frame meant to read reference-only.
+// Pure; deterministic (static catalog + static frame table) so SSR == CSR.
 function computeFcvSeed(
   substanceKey: string,
   frameId: RegulatoryFrameId,
@@ -88,6 +94,12 @@ function computeFcvSeed(
       parameterValueId: seed.parameterValueId,
       provisional: seed.provisional,
     };
+  }
+  // Suppress the static library fallback when the frame marks eco-direct reference_only/unsupported:
+  // no default should seed there (mirrors resolveEcoSeed's own reference_only/unsupported guard).
+  const status = getPathwayApplicability(frameId, 'eco-direct-eqp').status;
+  if (status === 'reference_only' || status === 'unsupported') {
+    return { value: '', parameterValueId: null, provisional: false };
   }
   const lib = findSubstance(substanceKey);
   return {
@@ -115,7 +127,8 @@ export default function EcoDirectEqPCalculator({
   // FCV reset contract (plan v3 section 4.6), now FRAME-AWARE. The seed prefers the eco References &
   // Values catalog value for (substance, frame) -- a provisional, source-priority-selected needs_review
   // candidate -- and falls back to the substance-library FCV (empty when neither exists; the downstream
-  // "FCV must be a positive number" guard surfaces the gap to the HITL).
+  // "FCV must be a positive number" guard surfaces the gap to the HITL). In reference_only / unsupported
+  // frames the static fallback is suppressed (blank) so a library current-default cannot leak.
   const fcvSeed = useMemo(
     () => computeFcvSeed(substanceKey, jurisdiction),
     [substanceKey, jurisdiction],

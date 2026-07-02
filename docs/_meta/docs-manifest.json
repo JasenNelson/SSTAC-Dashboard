@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4840,
-        "source": "Batch W: 4840 = 4823 + 17 (Batch W inorganic substances wired to SUBSTANCE_LIBRARY).",
+        "value": 4843,
+        "source": "eco static-fallback fix: 4843 = 4840 + 3 (eco-direct/eco-food reference_only+unsupported suppression + supported-frame preservation regression tests).",
         "last_verified": "2026-07-02"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_02_pre_eco_fallback_fix": {
+      "status": "superseded",
+      "value": 4840,
+      "source": "Batch W: 4840 = 4823 + 17 (Batch W inorganic substances wired to SUBSTANCE_LIBRARY).",
+      "last_verified": "2026-07-02",
+      "superseded_by": "facts.testing.vitest_test_count = 4843 (eco static-fallback suppression: +3 regression tests).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4843 after the eco static-fallback suppression fix added 3 regression tests (EcoDirect suppression + supported-frame preservation, EcoFood suppression)."
+    },
     "vitest_test_count_2026_07_02_pre_batch_w": {
       "status": "superseded",
       "value": 4823,

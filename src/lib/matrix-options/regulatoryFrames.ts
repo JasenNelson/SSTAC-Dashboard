@@ -216,7 +216,11 @@ export const REGULATORY_FRAMES = [
     valueEligibilityRule:
       'Canadian federal and general records are visible; values still require source-backed approval before they can become defaults.',
     safeUseNote:
-      'This frame filters the library to Canadian federal candidates without changing calculator math.',
+      'This frame filters the library to Canadian federal candidates. For the eco calculators ' +
+      '(eco-direct EqP, eco-food TRV), a reference-only or unsupported frame now suppresses the ' +
+      'calculator input default rather than showing an unsupported static value; on needs-review ' +
+      'eco frames they still seed from the source-priority catalog or the current default. Other ' +
+      'pathways are unaffected by this suppression.',
     pathwayApplicability: {
       'eco-direct-eqp': {
         status: 'reference_only',

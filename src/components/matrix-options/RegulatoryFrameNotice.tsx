@@ -36,6 +36,10 @@ export default function RegulatoryFrameNotice({
   const applicability = getPathwayApplicability(frameId, pathway);
   const tone = pathwayApplicabilityTone(applicability.status);
   const primarySource = frame.sourceHierarchy[0];
+  // The static-fallback suppression fix (2026-07-02) only affects the two eco calculators, so the
+  // suppression copy is scoped to eco pathways; other pathways keep the original default-behavior note.
+  const isEcoPathway =
+    pathway === 'eco-direct-eqp' || pathway === 'eco-food-bsaf';
 
   return (
     <section
@@ -76,8 +80,15 @@ export default function RegulatoryFrameNotice({
         data-testid={`regulatory-frame-effect-${pathway}`}
       >
         Current effect: frame selection changes value lookup filters, source
-        hierarchy, and pathway warnings. It does not change calculator input
-        defaults until a source-backed value is approved as the default.
+        hierarchy, and pathway warnings.{' '}
+        {isEcoPathway
+          ? 'For this eco pathway, a reference-only or unsupported frame now ' +
+            'suppresses the calculator input default (left blank) instead of ' +
+            'showing an unsupported static value; supported (needs-review or ' +
+            'better) frames still seed the input from the source-priority ' +
+            'catalog or the current default.'
+          : 'It does not change calculator input defaults until a source-backed ' +
+            'value is approved as the default.'}
       </p>
     </section>
   );

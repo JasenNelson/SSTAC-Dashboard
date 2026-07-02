@@ -19,8 +19,10 @@
 // details <details> disclosure (collapsed by default).
 //
 // jurisdiction now carries the selected regulatory frame. It controls
-// source hierarchy and value lookup eligibility; calculator defaults stay
-// unchanged until frame-specific source values pass QA.
+// source hierarchy and value lookup eligibility. For the eco-food TRV, a
+// reference-only or unsupported frame now suppresses the calculator input
+// default (blank) instead of showing an unsupported static value; supported
+// frames still seed from the catalog or the current default.
 //
 // Plain ASCII only.
 
@@ -29,7 +31,10 @@ import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { resolveEcoSeed, type EcoReceptor } from '@/lib/matrix-options/ecoSeed';
-import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
+import {
+  getPathwayApplicability,
+  type RegulatoryFrameId,
+} from '@/lib/matrix-options/regulatoryFrames';
 import type {
   EcoFoodBSAFResult,
   Ecosystem,
@@ -84,7 +89,10 @@ interface TrvSeed {
 }
 
 // Resolve the TRV seed for (substance, frame, receptor): prefer the frame-aware, source-priority,
-// provisional-gated eco catalog value (resolveEcoSeed), else fall back to the substance-library TRV.
+// provisional-gated eco catalog value (resolveEcoSeed). When it returns null, fall back to the
+// substance-library TRV ONLY if the pathway is applicable for the frame; in reference_only /
+// unsupported frames the static fallback is SUPPRESSED (blank) so a library current-default TRV
+// cannot leak into a frame meant to read reference-only.
 function computeTrvSeed(
   substanceKey: string,
   frameId: RegulatoryFrameId,
@@ -103,6 +111,12 @@ function computeTrvSeed(
       parameterValueId: seed.parameterValueId,
       provisional: seed.provisional,
     };
+  }
+  // Suppress the static library fallback when the frame marks eco-food reference_only/unsupported
+  // (mirrors resolveEcoSeed's own guard); no default should seed there.
+  const status = getPathwayApplicability(frameId, 'eco-food-bsaf').status;
+  if (status === 'reference_only' || status === 'unsupported') {
+    return { value: '', parameterValueId: null, provisional: false };
   }
   const lib = findSubstance(substanceKey);
   return {

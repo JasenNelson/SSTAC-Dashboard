@@ -238,7 +238,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     ).toHaveTextContent(/CCME SQG/);
     expect(
       screen.getByTestId('regulatory-frame-effect-eco-direct-eqp'),
-    ).toHaveTextContent(/does not change calculator input defaults/i);
+    ).toHaveTextContent(/suppresses the calculator input default/i);
     expect(screen.getByTestId('calculator-value-search-guidance')).toHaveTextContent(
       /filters lookup to Canada federal, general records/i,
     );
