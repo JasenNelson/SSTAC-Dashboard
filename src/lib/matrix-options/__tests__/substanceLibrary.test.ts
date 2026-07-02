@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(389);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(406);
   });
 
   it('every entry has a non-null key', () => {
@@ -818,6 +818,38 @@ describe('SUBSTANCE_LIBRARY -- Batch V misc organics', () => {
     { key: 'vernam', rfd: 0.001, sf: null, cls: 'organic' },
     { key: 'vinclozolin', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
     { key: 'warfarin', rfd: 0.0003, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch W inorganic substances', () => {
+  const expected = [
+    { key: 'aluminum_phosphide', rfd: 0.0004, sf: null, cls: 'inorganic' },
+    { key: 'ammonium_sulfamate', rfd: 0.2, sf: null, cls: 'inorganic' },
+    { key: 'bromate', rfd: 0.004, sf: 0.7, cls: 'inorganic' },
+    { key: 'chlorine', rfd: 0.1, sf: null, cls: 'inorganic' },
+    { key: 'chlorine_cyanide', rfd: 0.05, sf: null, cls: 'inorganic' },
+    { key: 'chlorine_dioxide', rfd: 0.03, sf: null, cls: 'inorganic' },
+    { key: 'chlorite_sodium_salt', rfd: 0.03, sf: null, cls: 'inorganic' },
+    { key: 'cyanogen', rfd: 0.001, sf: null, cls: 'inorganic' },
+    { key: 'cyanogen_bromide', rfd: 0.09, sf: null, cls: 'inorganic' },
+    { key: 'fluorine_soluble_fluoride', rfd: 0.06, sf: null, cls: 'inorganic' },
+    { key: 'monochloramine', rfd: 0.1, sf: null, cls: 'inorganic' },
+    { key: 'nitrate', rfd: 1.6, sf: null, cls: 'inorganic' },
+    { key: 'nitrite', rfd: 0.1, sf: null, cls: 'inorganic' },
+    { key: 'perchlorate_clo4_and_perchlorate_salts', rfd: 0.0007, sf: null, cls: 'inorganic' },
+    { key: 'phosphine', rfd: 0.0003, sf: null, cls: 'inorganic' },
+    { key: 'sodium_azide', rfd: 0.004, sf: null, cls: 'inorganic' },
+    { key: 'white_phosphorus', rfd: 0.00002, sf: null, cls: 'inorganic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {

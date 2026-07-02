@@ -8,7 +8,8 @@ export type ContaminantClass =
   | 'organic-halogenated'
   | 'divalent-metal'
   | 'methyl-Hg'
-  | 'metalloid';
+  | 'metalloid'
+  | 'inorganic';
 
 export type Ecosystem = 'freshwater' | 'estuarine' | 'coastal-marine';
 
