@@ -1653,8 +1653,8 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
       'pv-iris-pentachlorophenol-hh-direct-sf (0.4, P28+IRIS agree); RfD from ' +
-      'pv-iris-pentachlorophenol-hh-direct-rfd (0.005). Both rows remain needs_review ' +
-      'in the catalog. logKow/eco not in catalog -> eco filtered. abs_dermal/ba_oral ' +
+      'pv-iris-pentachlorophenol-hh-direct-rfd (0.005). Both rows are now qa_status=approved ' +
+      'in the catalog (promoted 2026-06). logKow/eco not in catalog -> eco filtered. abs_dermal/ba_oral ' +
       'are organic-halogenated class defaults pending HITL.',
   },
   {
@@ -1676,7 +1676,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
       'pv-iris-1_4_dioxane-hh-direct-sf (0.1); RfD from pv-iris-1_4_dioxane-hh-direct-rfd ' +
-      '(0.03). Both rows remain needs_review in the catalog. 1,4-dioxane is a cyclic ' +
+      '(0.03). Both rows are now qa_status=approved in the catalog (promoted 2026-06). 1,4-dioxane is a cyclic ' +
       'ether (organic, not halogenated). logKow/eco not in catalog -> eco filtered. ' +
       'abs_dermal/ba_oral are organic class defaults pending HITL.',
   },
@@ -1846,7 +1846,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
       'pv-iris-isophorone-hh-direct-sf / -food-sf (9.5e-4); RfD from ' +
-      'pv-iris-isophorone-hh-direct-rfd / -food-rfd (0.2). Both rows remain needs_review. ' +
+      'pv-iris-isophorone-hh-direct-rfd / -food-rfd (0.2). Both rows are now qa_status=approved. ' +
       'logKow not in catalog -> eco pathways filtered. abs_dermal/ba_oral are organic ' +
       'class defaults pending HITL.',
   },
