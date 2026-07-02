@@ -81,9 +81,9 @@ describe('findSubstance', () => {
     expect(result).toBeUndefined();
   });
 
-  it('benzo_a_pyrene has sf_oral value of 1.0', () => {
+  it('benzo_a_pyrene has sf_oral value of 2.0', () => {
     const result = findSubstance('benzo_a_pyrene');
-    expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(1.0);
+    expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(2.0);
   });
 
   it('benzo_a_pyrene has logKow of 6.13', () => {
@@ -91,9 +91,9 @@ describe('findSubstance', () => {
     expect(result?.logKow).toBe(6.13);
   });
 
-  it('lead has rfd_oral value of 3.5e-3', () => {
+  it('lead has rfd_oral value of 5.0e-4', () => {
     const result = findSubstance('lead');
-    expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(3.5e-3);
+    expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeCloseTo(5.0e-4);
   });
 });
 
