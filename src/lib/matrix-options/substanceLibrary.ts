@@ -1524,7 +1524,7 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (CAS 7439-98-7).',
     notes:
-      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'Human-health pathways only; seeded build-first from the (now qa_status=approved) row ' +
       'pv-iris-molybdenum-hh-direct-rfd / -food-rfd (value 0.005). Molybdenum is ' +
       'multivalent; contaminantClass divalent-metal is the catalog non-metalloid-metal ' +
       'bucket (descriptive). No eco value in catalog -> eco pathways filtered. ' +
@@ -1544,7 +1544,7 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS oral RfD 0.6 mg/kg-bw/day (CAS 7440-24-6).',
     notes:
-      'Human-health pathways only; seeded build-first from the needs_review row ' +
+      'Human-health pathways only; seeded build-first from the (now qa_status=approved) row ' +
       'pv-iris-strontium-hh-direct-rfd / -food-rfd (value 0.6). Strontium is divalent ' +
       '(Sr2+). No eco value in catalog -> eco pathways filtered. abs_dermal/ba_oral ' +
       'are metal class defaults pending HITL.',
@@ -1630,8 +1630,9 @@ export const SUBSTANCE_LIBRARY = [
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
       'pv-iris-hexachlorobenzene-hh-direct-sf (1.6, the more conservative of the two ' +
       'catalog SFs; BC P28 = 0.83); RfD from pv-iris-hexachlorobenzene-hh-direct-rfd / ' +
-      'pv-p28-hexachlorobenzene-hh-direct-rfd (0.0008, agree). Both rows remain ' +
-      'needs_review in the catalog. logKow/eco not in catalog -> eco filtered. ' +
+      'pv-p28-hexachlorobenzene-hh-direct-rfd (0.0008, agree). The IRIS SF and IRIS RfD rows are now ' +
+      'qa_status=approved; the co-cited BC P28 RfD duplicate (pv-p28-hexachlorobenzene-hh-direct-rfd, same value) remains needs_review. ' +
+      'logKow/eco not in catalog -> eco filtered. ' +
       'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
   },
   {
@@ -1761,7 +1762,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only; both endpoints seeded build-first so the calculator ' +
       'can select the more conservative of cancer (SF) vs non-cancer (RfD). SF from ' +
       'pv-iris-aldrin-hh-direct-sf / -food-sf (17); RfD from pv-iris-aldrin-hh-direct-rfd / ' +
-      '-food-rfd (3.0e-5). Both rows remain needs_review. logKow not in catalog -> ' +
+      '-food-rfd (3.0e-5). Both rows (all four related IRIS direct/food rows) are now qa_status=approved. logKow not in catalog -> ' +
       'eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral ' +
       'are organic-halogenated class defaults pending HITL.',
   },
@@ -1780,7 +1781,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'US EPA IRIS oral RfD 3 x 10-4 mg/kg-bw/day (organochlorine; CAS 72-20-8).',
     notes:
-      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'Human-health pathways only; RfD seeded build-first from the (now qa_status=approved) row ' +
       'pv-iris-endrin-hh-direct-rfd / -food-rfd (value 3.0e-4). logKow not in catalog ' +
       '-> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral ' +
       'are organic-halogenated class defaults pending HITL.',
@@ -1801,7 +1802,7 @@ export const SUBSTANCE_LIBRARY = [
       'US EPA IRIS oral slope factor 7.8 x 10-2 (0.078) per mg/kg-bw/day ' +
       '(carcinogen; CAS 87-68-3).',
     notes:
-      'Human-health pathways only; SF seeded build-first from the needs_review row ' +
+      'Human-health pathways only; SF seeded build-first from the (now qa_status=approved) row ' +
       'pv-iris-hexachlorobutadiene-hh-direct-sf / -food-sf (value 0.078). Carcinogen: ' +
       'sf_oral set, rfd_oral null. logKow not in catalog -> eco-direct EqP unavailable; ' +
       'no eco TRV -> Eco-Food filtered. abs_dermal/ba_oral are organic-halogenated ' +
@@ -1822,7 +1823,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'US EPA IRIS oral RfD 6 x 10-3 mg/kg-bw/day (HCCPD; CAS 77-47-4).',
     notes:
-      'Human-health pathways only; RfD seeded build-first from the needs_review row ' +
+      'Human-health pathways only; RfD seeded build-first from the (now qa_status=approved) row ' +
       'pv-iris-hexachlorocyclopentadiene-hh-direct-rfd / -food-rfd (value 0.006). logKow ' +
       'not in catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered. ' +
       'abs_dermal/ba_oral are organic-halogenated class defaults pending HITL.',
@@ -1985,7 +1986,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'Health Canada TRVs v4.0 approved oral RfD 0.014 + oral SF 0.002 (the rows the wired values match; US EPA IRIS lists different values 0.006/0.0033, not used); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
@@ -2003,7 +2004,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
+      'Health Canada TRVs v4.0 approved oral RfD 0.003 (the row the wired value matches; US EPA IRIS lists a different value 0.05, not used); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03)',
     notes:
       'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
