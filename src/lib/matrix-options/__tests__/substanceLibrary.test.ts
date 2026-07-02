@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(368);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(389);
   });
 
   it('every entry has a non-null key', () => {
@@ -782,6 +782,42 @@ describe('SUBSTANCE_LIBRARY -- Batch U misc organics', () => {
     { key: 'savey', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
     { key: 'sodium_fluoroacetate', rfd: 0.00002, sf: null, cls: 'organic-halogenated' },
     { key: 'strychnine', rfd: 0.0003, sf: null, cls: 'organic' },
+  ] as const;
+
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the expected rfd, sf, and class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Batch V misc organics', () => {
+  const expected = [
+    { key: 'systhane', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
+    { key: 'terbacil', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'terbutryn', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'tert_butyl_alcohol_tba', rfd: 0.4, sf: 0.0005, cls: 'organic' },
+    { key: 'tetrahydrofuran', rfd: 0.9, sf: null, cls: 'organic' },
+    { key: 'thiobencarb', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: 'thiophanate_methyl', rfd: 0.08, sf: null, cls: 'organic' },
+    { key: 'thiram', rfd: 0.005, sf: null, cls: 'organic' },
+    { key: 'tralomethrin', rfd: 0.0075, sf: null, cls: 'organic-halogenated' },
+    { key: 'triallate', rfd: 0.013, sf: null, cls: 'organic-halogenated' },
+    { key: 'triasulfuron', rfd: 0.01, sf: null, cls: 'organic-halogenated' },
+    { key: 'trichloro_1_2_2_trifluoroethane_1_1_2', rfd: 30, sf: null, cls: 'organic-halogenated' },
+    { key: 'trichloroacetic_acid', rfd: 0.02, sf: 0.07, cls: 'organic-halogenated' },
+    { key: 'trichlorofluoromethane', rfd: 0.3, sf: null, cls: 'organic-halogenated' },
+    { key: 'trichloropropane_1_1_2', rfd: 0.005, sf: null, cls: 'organic-halogenated' },
+    { key: 'trichloropropane_1_2_3', rfd: 0.004, sf: 0.5, cls: 'organic-halogenated' },
+    { key: 'tridiphane', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
+    { key: 'trifluralin', rfd: 0.0075, sf: 0.0077, cls: 'organic-halogenated' },
+    { key: 'vernam', rfd: 0.001, sf: null, cls: 'organic' },
+    { key: 'vinclozolin', rfd: 0.025, sf: null, cls: 'organic-halogenated' },
+    { key: 'warfarin', rfd: 0.0003, sf: null, cls: 'organic' },
   ] as const;
 
   for (const { key, rfd, sf, cls } of expected) {
