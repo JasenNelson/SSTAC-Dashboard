@@ -36,7 +36,7 @@ function audit() {
   const findings: Finding[] = [];
   const keySet = new Set<string>();
 
-  for (const entry of SUBSTANCE_LIBRARY as any[]) {
+  for (const entry of SUBSTANCE_LIBRARY as unknown as any[]) {
     if (keySet.has(entry.key)) {
       findings.push({
         key: entry.key,
@@ -53,7 +53,7 @@ function audit() {
     return Math.abs(a - b) <= 1e-9 * Math.max(1, Math.abs(a), Math.abs(b));
   }
 
-  for (const entry of SUBSTANCE_LIBRARY as any[]) {
+  for (const entry of SUBSTANCE_LIBRARY as unknown as any[]) {
     const key = entry.key;
 
     // 5. FIELD_TYPES
