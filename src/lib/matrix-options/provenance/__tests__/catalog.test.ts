@@ -46,6 +46,8 @@ import { HC_PQRA_ADULT_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix
 import { HC_PQRA_WORKER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-worker.mjs';
 import { HC_PQRA_LIFESTAGE_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-lifestage.mjs';
 import { TWN_TODDLER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-twn-foodweb-toddler.mjs';
+import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import type { SubstanceEntry } from '@/lib/matrix-options/types';
 import parameterValuesRaw from '../../../../../matrix_research/reference_catalog/parameter_values.json';
 import wqciuSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/wqciu_reference_leads_2026_05_23.json';
 import epaEcoSslSourceLeadsRaw from '../../../../../matrix_research/reference_catalog/source_leads/epa_ecossl_reference_leads_2026_05_23.json';
@@ -327,11 +329,13 @@ describe('matrix options provenance catalog', () => {
           record.evidence_support_status === 'pending_source_locator',
       ).length,
     ).toBeGreaterThan(0);
+    // pv-bap-trv-eco was deleted: benzo_a_pyrene's eco TRV was nulled in the library (#444), so no
+    // current_default scaffold should remain for it (integrity fix 2026-07-02).
     expect(
       PARAMETER_VALUE_RECORDS.find(
         (record) => record.parameter_value_id === 'pv-bap-trv-eco',
-      )?.qa_status,
-    ).toBe('needs_review');
+      ),
+    ).toBeUndefined();
     expect(
       PARAMETER_VALUE_RECORDS.find(
         (record) => record.parameter_value_id === 'pv-pcb-fcv',
@@ -1276,5 +1280,57 @@ describe('matrix options provenance catalog', () => {
     expect(rows[2].catalog_record?.default_status).toBe('current_default');
     expect(rows[2].evidence_support_status).toBe('current_calculator_scaffold');
     expect(rows[2].role).toBe('current calculator default');
+  });
+
+  it('keeps current_default catalog scaffolds in sync with the live substance library (integrity fix 2026-07-02)', () => {
+    // Map the catalog's input_key vocabulary to the corresponding SubstanceEntry field. A
+    // current_default row is supposed to be a scaffold MIRROR of whatever the live calculator
+    // (substanceLibrary.ts) currently ships -- if the library value moves (a correction) and the
+    // catalog scaffold isn't synced, or the library nulls the field entirely, the scaffold goes
+    // stale and misleads reviewers. This guard catches both cases going forward. See PR #444 (the
+    // copper/lead/BaP corrections) and the pv-bap-trv-eco deletion this same fix landed.
+    const INPUT_KEY_TO_LIBRARY_FIELD: Record<string, keyof SubstanceEntry> = {
+      rfd_oral_mg_per_kg_bw_day: 'rfd_oral_mg_per_kg_bw_per_day',
+      sf_oral_per_mg_per_kg_bw_per_day: 'sf_oral_per_mg_per_kg_bw_per_day',
+      fcv_ug_per_L: 'fcv_ug_per_L',
+      trv_eco_mg_per_kg_bw_day: 'trv_eco_mg_per_kg_bw_day',
+      logKow: 'logKow',
+      bsaf_loc_freshwater: 'bsaf_loc_freshwater',
+      abs_dermal: 'abs_dermal',
+      ba_oral: 'ba_oral',
+    };
+
+    const currentDefaultDriftFailures: string[] = [];
+
+    for (const record of PARAMETER_VALUE_RECORDS) {
+      if (record.default_status !== 'current_default') {
+        continue;
+      }
+      const libraryField = INPUT_KEY_TO_LIBRARY_FIELD[record.input_key];
+      if (!libraryField) {
+        continue;
+      }
+      const substance = findSubstance(record.substance_key);
+      const libraryValue = substance?.[libraryField];
+
+      if (typeof libraryValue !== 'number') {
+        currentDefaultDriftFailures.push(
+          `${record.parameter_value_id} (substance_key=${record.substance_key}, input_key=${record.input_key}): ` +
+            `catalog current_default value=${String(record.value)} but library field ` +
+            `'${String(libraryField)}' is ${String(libraryValue)} (null/missing) -- a current_default ` +
+            'scaffold must not exist for a nulled library field.',
+        );
+        continue;
+      }
+      if (libraryValue !== record.value) {
+        currentDefaultDriftFailures.push(
+          `${record.parameter_value_id} (substance_key=${record.substance_key}, input_key=${record.input_key}): ` +
+            `catalog current_default value=${String(record.value)} != library '${String(libraryField)}' ` +
+            `value=${String(libraryValue)}.`,
+        );
+      }
+    }
+
+    expect(currentDefaultDriftFailures).toEqual([]);
   });
 });
