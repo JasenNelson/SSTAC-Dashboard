@@ -900,3 +900,53 @@ describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
     });
   }
 });
+
+describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', () => {
+  // All 8 entries below have rfd_oral=null AND sf_oral=null (dormant: no wired
+  // HH output today), so these corrections have no output effect. VOC-consistent
+  // default is 0.03 (vinyl_chloride, mis-set to an unsupported 1.0); the
+  // divalent-metal class default is 0.001 (the other 7, previously 0.1 or 0.03).
+  const expected = [
+    { key: 'vinyl_chloride', absDermal: 0.03 },
+    { key: 'chromium_trivalent', absDermal: 0.001 },
+    { key: 'barium', absDermal: 0.001 },
+    { key: 'beryllium', absDermal: 0.001 },
+    { key: 'chromium_hexavalent', absDermal: 0.001 },
+    { key: 'chromium', absDermal: 0.001 },
+    { key: 'nickel', absDermal: 0.001 },
+    { key: 'mercury_inorganic', absDermal: 0.001 },
+  ] as const;
+
+  for (const { key, absDermal } of expected) {
+    it(`${key} carries corrected abs_dermal ${absDermal}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.abs_dermal).toBe(absDermal);
+      // Dormant: no wired RfD/SF, so this correction has no output effect today.
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+    });
+  }
+});
+
+describe('arsenic_inorganic IRIS 2025 update (2026-07-02)', () => {
+  // EPA finalized a new IRIS inorganic-arsenic assessment (Toxicological Review
+  // FINAL Jan 2025): oral RfD 6e-5 (tightened ~5x from the 1991/1998 value 3e-4)
+  // and oral slope factor 32 (more potent ~21x from the 1991/1998 value 1.5).
+  it('carries the IRIS 2025 oral RfD 0.00006 mg/kg-bw/day', () => {
+    const result = findSubstance('arsenic_inorganic');
+    expect(result).toBeDefined();
+    expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.00006);
+  });
+
+  it('carries the IRIS 2025 oral slope factor 32 per mg/kg-bw/day', () => {
+    const result = findSubstance('arsenic_inorganic');
+    expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(32);
+  });
+
+  it('leaves abs_dermal (0.03, metalloid) and ba_oral (0.60) unchanged', () => {
+    const result = findSubstance('arsenic_inorganic');
+    expect(result?.abs_dermal).toBe(0.03);
+    expect(result?.ba_oral).toBe(0.6);
+  });
+});
