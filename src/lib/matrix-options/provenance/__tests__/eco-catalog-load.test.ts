@@ -25,8 +25,8 @@ type EcoRecord = {
 const ecoValues = ecoValuesRaw as EcoRecord[];
 
 describe('eco_values.json data file', () => {
-  it('has 97 records (52 eco-direct fcv + 45 eco-food trv)', () => {
-    expect(ecoValues.length).toBe(97);
+  it('has 99 records (52 eco-direct fcv + 47 eco-food trv)', () => {
+    expect(ecoValues.length).toBe(99);
     const fcv = ecoValues.filter(
       (r) => r.pathway === 'eco-direct-eqp' && r.input_key === 'fcv_ug_per_L',
     );
@@ -34,7 +34,7 @@ describe('eco_values.json data file', () => {
       (r) => r.pathway === 'eco-food-bsaf' && r.input_key === 'trv_eco_mg_per_kg_bw_day',
     );
     expect(fcv.length).toBe(52);
-    expect(trv.length).toBe(45);
+    expect(trv.length).toBe(47);
   });
 
   it('emits per-source eco-direct candidates for multi-source substances (e.g. diazinon ESB + NRWQC)', () => {

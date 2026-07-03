@@ -6698,5 +6698,137 @@
       "FCV"
     ],
     "candidate_group_id": "eco-direct-eqp__chloroform__fcv_ug_per_L__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-methylmercury-food-trveco-mammal-ccmetrg",
+    "substance_key": "methylmercury",
+    "pathway": "eco-food-bsaf",
+    "input_key": "trv_eco_mg_per_kg_bw_day",
+    "display_name": "methylmercury trveco",
+    "value": 0.022,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-ccme-wildlife-trv-mehg"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "CCME methylmercury wildlife tissue residue guidelines eco-TRV for methylmercury (mammal); ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-ccme-wildlife-trv-mehg",
+        "locator": "CCME 2000, Methylmercury Canadian Tissue Residue Guidelines, mammalian TDI derivation",
+        "value_text": "mammalian TDI of 22 ug/kg-bw/day (0.022 mg/kg-bw/day) for methylmercury (mink; Chamberland et al. 1996)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from CCME methylmercury wildlife tissue residue guidelines; FCSAP/Eco-SSL grade A; pending direct-source verification. CCME wildlife TRV dose (TDI), mammalian receptor. Distinct from the 33 ug/kg tissue-residue guideline (not a dose). EqP invalid for MeHg; eco-food-bsaf only.",
+        "evidence_id": "ev-pv-eco-methylmercury-food-trveco-mammal-ccmetrg-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "CCME methylmercury wildlife tissue residue guidelines eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2000-01-01",
+    "source_relationships": [
+      {
+        "source_id": "src-ccme-wildlife-trv-mehg",
+        "role": "canonical_candidate",
+        "note": "CCME methylmercury wildlife tissue residue guidelines is the source for this extracted eco value; source date 2000-01-01."
+      }
+    ],
+    "receptor_groups": [
+      "wildlife"
+    ],
+    "population_groups": [
+      "generic mammal"
+    ],
+    "species_groups": [
+      "mammal"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "food web",
+      "dose-based wildlife TRV",
+      "TRV"
+    ],
+    "candidate_group_id": "eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__Canada_federal"
+  },
+  {
+    "parameter_value_id": "pv-eco-methylmercury-food-trveco-bird-ccmetrg",
+    "substance_key": "methylmercury",
+    "pathway": "eco-food-bsaf",
+    "input_key": "trv_eco_mg_per_kg_bw_day",
+    "display_name": "methylmercury trveco",
+    "value": 0.031,
+    "unit": "mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "available_option",
+    "evidence_support_status": "pending_source_locator",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-ccme-wildlife-trv-mehg"
+    ],
+    "equation_ids": [
+      "eq-eco-food-bsaf"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "CCME methylmercury wildlife tissue residue guidelines eco-TRV for methylmercury (bird); ecological screening candidate (needs review before default use).",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-ccme-wildlife-trv-mehg",
+        "locator": "CCME 2000, Methylmercury Canadian Tissue Residue Guidelines, avian TDI derivation",
+        "value_text": "avian TDI of 31 ug/kg-bw/day (0.031 mg/kg-bw/day) for methylmercury (mallard duck; Heinz 1979)",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "claude-opus-4-8",
+        "extracted_at": "2026-06-17",
+        "qa_status": "needs_review",
+        "note": "Extracted from CCME methylmercury wildlife tissue residue guidelines; FCSAP/Eco-SSL grade A; pending direct-source verification. CCME wildlife TRV dose (TDI), avian receptor. Distinct from the 33 ug/kg tissue-residue guideline (not a dose). EqP invalid for MeHg; eco-food-bsaf only.",
+        "evidence_id": "ev-pv-eco-methylmercury-food-trveco-bird-ccmetrg-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "CCME methylmercury wildlife tissue residue guidelines eco-TRV ecological candidate, extracted 2026-06-17. Read-only library value; verify against the source before any default-selection. qa_status=needs_review. Grade A.",
+    "source_authority_tier": "tier_2_peer_reviewed_literature",
+    "canonical_source_status": "needs_direct_source_check",
+    "bc_protocol_alignment": "protocol_1_v5_0_tier_2_peer_reviewed_literature",
+    "bc_protocol_basis": "Recognized regulatory or peer-reviewed source under the Protocol 1 hierarchy, held at tier 2 pending a pinned primary artifact; verify before default use. BC legal requirements and ministry guidance still control where conflicts exist.",
+    "source_crystallization_date": "2000-01-01",
+    "source_relationships": [
+      {
+        "source_id": "src-ccme-wildlife-trv-mehg",
+        "role": "canonical_candidate",
+        "note": "CCME methylmercury wildlife tissue residue guidelines is the source for this extracted eco value; source date 2000-01-01."
+      }
+    ],
+    "receptor_groups": [
+      "wildlife"
+    ],
+    "population_groups": [
+      "generic bird"
+    ],
+    "species_groups": [
+      "bird"
+    ],
+    "assumption_tags": [
+      "ecotoxicology endpoint",
+      "food web",
+      "dose-based wildlife TRV",
+      "TRV"
+    ],
+    "candidate_group_id": "eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__Canada_federal"
   }
 ]

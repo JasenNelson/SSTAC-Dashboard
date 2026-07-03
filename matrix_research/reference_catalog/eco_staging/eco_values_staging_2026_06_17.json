@@ -1552,6 +1552,38 @@
       "eco_direct_eligible": true,
       "hold": false,
       "note": "CCME interim CWQG 1.8 ug/L freshwater aquatic-life (trichloromethane, CAS 67-66-3); value + derivation verified 2026-06-19 against the CCME factsheet PDF (https://ccme.ca/en/res/halogenated-methanes-trichloromethane-en-canadian-water-quality-guidelines-for-the-protection-of-aquatic-life.pdf; compiled in the 1999 CEQG). Attribute to CCME only -- EPA NRWQC has no chloroform aquatic-life CCC."
+    },
+    {
+      "substance_key": "methylmercury",
+      "input_key": "trv_eco_mg_per_kg_bw_day",
+      "receptor": "mammal",
+      "raw_value": 0.022,
+      "raw_unit": "mg/kg-bw/day",
+      "source_id": "src-ccme-wildlife-trv-mehg",
+      "jurisdiction": "Canada_federal",
+      "locator": "CCME 2000, Methylmercury Canadian Tissue Residue Guidelines, mammalian TDI derivation",
+      "source_excerpt": "mammalian TDI of 22 ug/kg-bw/day (0.022 mg/kg-bw/day) for methylmercury (mink; Chamberland et al. 1996)",
+      "source_date": "2000-01-01",
+      "grade": "A",
+      "eco_direct_eligible": false,
+      "hold": false,
+      "note": "CCME wildlife TRV dose (TDI), mammalian receptor. Distinct from the 33 ug/kg tissue-residue guideline (not a dose). EqP invalid for MeHg; eco-food-bsaf only."
+    },
+    {
+      "substance_key": "methylmercury",
+      "input_key": "trv_eco_mg_per_kg_bw_day",
+      "receptor": "bird",
+      "raw_value": 0.031,
+      "raw_unit": "mg/kg-bw/day",
+      "source_id": "src-ccme-wildlife-trv-mehg",
+      "jurisdiction": "Canada_federal",
+      "locator": "CCME 2000, Methylmercury Canadian Tissue Residue Guidelines, avian TDI derivation",
+      "source_excerpt": "avian TDI of 31 ug/kg-bw/day (0.031 mg/kg-bw/day) for methylmercury (mallard duck; Heinz 1979)",
+      "source_date": "2000-01-01",
+      "grade": "A",
+      "eco_direct_eligible": false,
+      "hold": false,
+      "note": "CCME wildlife TRV dose (TDI), avian receptor. Distinct from the 33 ug/kg tissue-residue guideline (not a dose). EqP invalid for MeHg; eco-food-bsaf only."
     }
   ]
 }

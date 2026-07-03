@@ -216,9 +216,11 @@ describe('applyPromotion', () => {
 });
 
 describe('ECO_SOURCE_CONFIG', () => {
-  it('covers the 4 eco sources with the frozen 97-row counts (32+19+45+1)', () => {
+  it('covers the 5 eco sources with the frozen 99-row counts (32+19+45+1+2)', () => {
+    // 2026-07-03: +1 source (src-ccme-wildlife-trv-mehg, expectedCount 2) -- the CCME methylmercury
+    // wildlife TDIs (mammal 0.022 + bird 0.031 mg/kg-bw/day) added to eco-food-bsaf; 97 -> 99.
     const counts = Object.values(ECO_SOURCE_CONFIG).map((c) => c.expectedCount);
-    expect(counts.reduce((a, b) => a + b, 0)).toBe(97);
-    expect(Object.keys(ECO_SOURCE_CONFIG)).toHaveLength(4);
+    expect(counts.reduce((a, b) => a + b, 0)).toBe(99);
+    expect(Object.keys(ECO_SOURCE_CONFIG)).toHaveLength(5);
   });
 });
