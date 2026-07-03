@@ -145,7 +145,12 @@ export function planPromotion(paramValues, sources, _opts) {
         ev.qa_status === 'approved' &&
         ev.source_id === PCB_FCV_PROMOTION_SOURCE_ID &&
         ev.reviewed_by != null &&
-        ev.reviewed_at != null,
+        ev.reviewed_at != null &&
+        // Also require the promoted evidence shape (not the scaffold's current_calculator markers),
+        // so a partial promotion with stale extraction metadata is treated as drift and repaired
+        // rather than blessed as already-done (codex 2026-07-02).
+        ev.extraction_method === 'manual_source_extraction' &&
+        ev.locator_type === 'source_table',
     );
   const expectedPre =
     valueRecord.qa_status === 'needs_review' &&
