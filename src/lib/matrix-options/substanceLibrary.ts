@@ -1331,7 +1331,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995), p. 16, log Kow = 4.02 (a secondary ILO-WHO ICSC value of 3.98 is also on record for the same compound).',
+    sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995), p. 16, log Kow = 4.02 (a secondary ILO-WHO ICSC value of 3.98 is also on record for the same compound).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 4.02 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
