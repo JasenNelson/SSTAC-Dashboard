@@ -14,8 +14,11 @@ describe('resolveProvenanceRows -- real wired catalog (value-aware tuple fallbac
   // unit MUST mirror what HHDirectContactCalculator emits (rfd 'mg/kg-bw/day', sf
   // 'per mg/kg-bw/day') -- the value-aware match is unit-aware, so a wrong unit would (correctly) fail.
   const hhDefaultLoad: Array<{ substance: string; input: string; value: number; unit: string }> = [
-    { substance: 'arsenic_inorganic', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0003, unit: 'mg/kg-bw/day' },
-    { substance: 'arsenic_inorganic', input: 'sf_oral_per_mg_per_kg_bw_per_day', value: 1.5, unit: 'per mg/kg-bw/day' },
+    // Values updated 2026-07-02 for the IRIS 2025 inorganic-arsenic reassessment
+    // (RfD 3e-4 -> 6e-5, SF 1.5 -> 32); these must mirror the live catalog current_default
+    // rows (pv-arsenic-hh-direct-rfd / pv-arsenic-hh-direct-slope) for the tuple match to hold.
+    { substance: 'arsenic_inorganic', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.00006, unit: 'mg/kg-bw/day' },
+    { substance: 'arsenic_inorganic', input: 'sf_oral_per_mg_per_kg_bw_per_day', value: 32, unit: 'per mg/kg-bw/day' },
     { substance: 'zinc', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.3, unit: 'mg/kg-bw/day' },
     { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, unit: 'mg/kg-bw/day' },
     { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0001, unit: 'mg/kg-bw/day' },

@@ -87,7 +87,8 @@ describe('HHDirectContactCalculator', () => {
     expect(panel).toHaveTextContent(/References and provenance/);
     expect(panel).toHaveTextContent(/13 used values/);
     expect(panel).toHaveTextContent(/Oral RfD/);
-    expect(panel).toHaveTextContent(/0\.0003 mg\/kg-bw\/day/);
+    // Updated 2026-07-02 for the IRIS 2025 inorganic-arsenic reassessment (RfD 3e-4 -> 6e-5).
+    expect(panel).toHaveTextContent(/0\.00006 mg\/kg-bw\/day/);
     expect(panel).toHaveTextContent(/Exposure duration/);
     expect(panel).toHaveTextContent(/Cancer averaging time/);
     expect(panel).toHaveTextContent(/Skin surface area/);

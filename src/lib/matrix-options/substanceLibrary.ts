@@ -154,20 +154,30 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Arsenic (inorganic)',
     contaminantClass: 'metalloid',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 3.0e-4,
-    sf_oral_per_mg_per_kg_bw_per_day: 1.5,
+    rfd_oral_mg_per_kg_bw_per_day: 6.0e-5,
+    sf_oral_per_mg_per_kg_bw_per_day: 32,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 0.60,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'US EPA IRIS iAs; ANZG; ACFN-WQCIU',
+      'US EPA IRIS oral RfD 6e-5 mg/kg-bw/day + oral slope factor 32 per ' +
+      'mg/kg-bw/day (Inorganic Arsenic, IRIS Toxicological Review FINAL Jan 2025; ' +
+      'src-us-epa-iris-rfd-table-live / src-us-epa-iris-chemical-details-live; ' +
+      'pv-iris-arsenic-hh-direct-rfd / pv-iris-arsenic-hh-direct-sf). Supersedes ' +
+      'the 1991/1998 IRIS values (RfD 3e-4, SF 1.5). BC Protocol 28 alternative ' +
+      '(RfD 3e-4, SF 1.5) remains available as a needs_review option in the ' +
+      'catalog. ANZG; ACFN-WQCIU.',
     notes:
       'AVS/SEM framework does NOT apply to arsenic (not a divalent ' +
       'transition metal in the Cd-Cu-Pb-Ni-Zn family). Use bulk-sediment ' +
       'path with bioaccessibility correction. static eco TRV removed ' +
-      '(stale Eco-SSL not in catalog; dynamic resolver supplies it).',
+      '(stale Eco-SSL not in catalog; dynamic resolver supplies it). ' +
+      'RfD/SF updated to the IRIS 2025 inorganic-arsenic assessment (FINAL Jan ' +
+      '2025): RfD 3e-4 -> 6e-5 (~5x tighter) and SF 1.5 -> 32 (~21x more potent), ' +
+      'superseding the 1991/1998 IRIS values. abs_dermal (0.03, metalloid class) ' +
+      'and ba_oral (0.60) are unchanged.',
   },
   {
     key: 'antimony',
@@ -283,14 +293,16 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.1,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
       'Human-health TRV candidates are available in References & Values. ' +
-      'Calculator defaults remain unset until owner-approved selection rules land.',
+      'Calculator defaults remain unset until owner-approved selection rules land. ' +
+      'abs_dermal 0.001 = divalent-metal class default (no chemical-specific ' +
+      'soil ABSd). Corrected from 0.1. Dormant.',
   },
   {
     key: 'benzene',
@@ -318,14 +330,16 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.1,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
       'Human-health oral and inhalation TRV candidates are available in ' +
-      'References & Values; ecological defaults are pending.',
+      'References & Values; ecological defaults are pending. ' +
+      'abs_dermal 0.001 = divalent-metal class default (no chemical-specific ' +
+      'soil ABSd). Corrected from 0.1. Dormant.',
   },
   {
     key: 'chromium_trivalent',
@@ -335,14 +349,17 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.1,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
       'Human-health TRV candidates are available in References & Values. ' +
-      'Speciation matters; do not merge with hexavalent chromium.',
+      'Speciation matters; do not merge with hexavalent chromium. ' +
+      'abs_dermal 0.001 = divalent-metal class default (RAGS gives no ' +
+      'Cr-specific soil ABSd; Cr(III) skin penetration ~1-4%). Corrected ' +
+      'from 0.1. Dormant.',
   },
   {
     key: 'chromium_hexavalent',
@@ -352,14 +369,18 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.1,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
       'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values. Speciation matters.',
+      'candidates are available in References & Values. Speciation matters. ' +
+      'abs_dermal 0.001 = divalent-metal class default. Cr(VI) dermal ' +
+      'sensitization/potency is a hazard concern for endpoint/speciation ' +
+      'policy, NOT the absorption-fraction field (codex 2026-07-02); do not ' +
+      'encode it as an inflated ABSd. Corrected from 0.1. Dormant.',
   },
   {
     key: 'naphthalene',
@@ -421,14 +442,18 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 1.0,
+    abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
       'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values.',
+      'candidates are available in References & Values. ' +
+      'abs_dermal 0.03 = VOC-consistent default (vinyl chloride is a gas, bp -13 C; ' +
+      'EPA RAGS Part E gives no soil ABSd for VOCs and routes them via inhalation; ' +
+      '0.03 = HC VOC RAFDerm / matches sibling VOCs TCE/PCE). Corrected from an ' +
+      'unsupported 1.0 (data-entry defect). Dormant: no wired RfD/SF.',
   },
   {
     key: 'chlorobenzene',
@@ -464,7 +489,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -474,7 +499,10 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Eco-food selectability. logKow not applicable (inorganic metal; metal ' +
       'partitioning uses empirical BSAF, not Kow). Eco-Food BSAF is user-supplied ' +
-      'or catalog-seeded; abs_dermal/ba_oral are inert HH defaults.',
+      'or catalog-seeded; abs_dermal/ba_oral are inert HH defaults. ' +
+      'abs_dermal 0.001 = divalent-metal class default (Ni dermal SENSITIZATION ' +
+      'is a hazard, not an absorption fraction; RAGS gives no Ni soil ABSd). ' +
+      'Corrected from 0.03. Dormant.',
   },
   {
     key: 'selenium',
@@ -1408,7 +1436,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.1,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -1422,7 +1450,10 @@ export const SUBSTANCE_LIBRARY = [
       'the library convention for chromium (matches chromium_trivalent/hexavalent; ' +
       'the enum has no plain-metal bucket and generic Cr is unspeciated -- Cr-VI ' +
       'is not truly divalent). Distinct from chromium_trivalent + ' +
-      'chromium_hexavalent. HH fields null; abs_dermal/ba_oral inert.',
+      'chromium_hexavalent. HH fields null; abs_dermal/ba_oral inert. ' +
+      'abs_dermal 0.001 = divalent-metal class default; unspeciated Cr should ' +
+      'be speciated (or screened as Cr(VI)) rather than carry a Cr(VI)-motivated ' +
+      'dermal fraction. Corrected from 0.1. Dormant.',
   },
   {
     key: 'mercury_inorganic',
@@ -1432,7 +1463,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
@@ -1446,7 +1477,9 @@ export const SUBSTANCE_LIBRARY = [
       'applicable to ionic metals. contaminantClass divalent-metal (Hg2+ is a ' +
       'divalent cation); distinct from the methyl-Hg class used by the ' +
       'methylmercury entry -- inorganic Hg and MeHg differ in trophic transfer. ' +
-      'HH fields null; abs_dermal/ba_oral inert.',
+      'HH fields null; abs_dermal/ba_oral inert. ' +
+      'abs_dermal 0.001 = divalent-metal class default (no RAGS inorganic-Hg ' +
+      'soil ABSd). Corrected from 0.03. Dormant.',
   },
   {
     key: 'chloroform',

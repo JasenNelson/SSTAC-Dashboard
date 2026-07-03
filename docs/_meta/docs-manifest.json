@@ -85,9 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4858,
-        "source": "npm run test:ci output (2026-07-02)",
-        "last_verified": "2026-07-02"
+        "value": 4869,
+        "source": "npm run test:ci output (2026-07-03)",
+        "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_02_pre_clustere_arsenic": {
+      "status": "superseded",
+      "value": 4858,
+      "source": "Group 2 abs_dermal source-verified fixes: 4858 = 4844 + 14 (per-substance abs_dermal tests).",
+      "last_verified": "2026-07-02",
+      "superseded_by": "facts.testing.vitest_test_count = 4869 (Cluster E abs_dermal corrections + arsenic_inorganic IRIS 2025 update: +11 regression tests).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4869 after the fix/mo-clustere-arsenic-2026-07-02 branch added 2 new describe blocks to substanceLibrary.test.ts: 'Cluster E abs_dermal corrections (dormant substances, 2026-07-02)' (8 cases: vinyl_chloride, chromium_trivalent, barium, beryllium, chromium_hexavalent, chromium, nickel, mercury_inorganic) and 'arsenic_inorganic IRIS 2025 update (2026-07-02)' (3 cases: RfD 6e-5, SF 32, abs_dermal/ba_oral unchanged)."
+    },
     "vitest_test_count_2026_07_02_pre_group2_abs_dermal": {
       "status": "superseded",
       "value": 4844,
