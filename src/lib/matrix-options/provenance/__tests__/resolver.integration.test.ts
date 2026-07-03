@@ -63,3 +63,36 @@ describe('resolveProvenanceRows -- real wired catalog (value-aware tuple fallbac
     expect(row.qa_status).toBe('not_cataloged');
   });
 });
+
+describe('resolveProvenanceRows -- approved-tiebreak fallback (2026-07-03) + dual-approved current_default', () => {
+  // needs_review-dupe: exactly one approved IRIS/HC row + a same-valued needs_review BC P28 sibling.
+  // The approved-tiebreak fallback (scoped AFTER the current_default tiebreak) now attributes to the
+  // single approved row instead of returning null (unsourced scaffold).
+  const needsReviewDupe: Array<{ substance: string; value: number }> = [
+    { substance: 'manganese', value: 0.14 },
+    { substance: 'benzene', value: 0.004 },
+    { substance: 'hexachlorobenzene', value: 0.0008 },
+  ];
+  for (const c of needsReviewDupe) {
+    it(`attributes HH-direct ${c.substance} rfd to the single approved row (was unsourced)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+  // NOTE: the 2 genuinely dual-approved cases (naphthalene, pyrene -- IRIS + HC both approved at the
+  // same value) are NOT fixed here; no qa_status rule can break that tie. They need an owner
+  // jurisdiction pick (IRIS vs HC) + a current_default marker, deferred to a follow-up.
+});
