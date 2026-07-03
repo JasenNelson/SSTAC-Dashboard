@@ -136,6 +136,7 @@ export function planPromotion(paramValues, sources, _opts) {
     valueRecord.qa_status === 'approved' &&
     valueRecord.evidence_support_status === 'approved_source_backed' &&
     valueRecord.canonical_source_status === 'direct_source_verified' &&
+    valueRecord.extraction_status === 'extracted_from_source' &&
     Array.isArray(valueRecord.source_ids) &&
     valueRecord.source_ids.length === 1 &&
     valueRecord.source_ids[0] === PCB_FCV_PROMOTION_SOURCE_ID &&
@@ -215,6 +216,9 @@ export function applyPromotion(paramValues, sources, opts) {
     r.qa_status = 'approved';
     r.evidence_support_status = 'approved_source_backed';
     r.canonical_source_status = 'direct_source_verified';
+    // The value is now attributed to a real source extraction, not the current-calculator scaffold;
+    // reflect that on the parent row so the Evidence Library does not misclassify it (codex 2026-07-02).
+    r.extraction_status = 'extracted_from_source';
     r.evidence_items = r.evidence_items.map((ev) => ({
       ...ev,
       source_id: PCB_FCV_PROMOTION_SOURCE_ID,
@@ -226,6 +230,9 @@ export function applyPromotion(paramValues, sources, opts) {
       // catalog.test.ts "does not allow pending scaffold evidence to be marked approved" guard rejects
       // that combination).
       extraction_method: 'manual_source_extraction',
+      // Re-date the extraction to the recitation date (was the scaffold's 2026-05-23) so provenance
+      // metadata is not stale after promotion (codex 2026-07-02).
+      extracted_at: opts.date,
       locator_type: 'source_table',
       qa_status: 'approved',
       reviewed_by: opts.reviewer,
