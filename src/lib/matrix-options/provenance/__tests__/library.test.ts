@@ -83,7 +83,13 @@ describe('matrix options evidence library helpers', () => {
     // 2026-07-02: -1 (1686 -> 1685) -- current-default integrity fix deleted pv-bap-trv-eco
     // (benzo_a_pyrene eco-food TRV nulled in the library by #444); it was the sole member of the
     // unique eco-food-bsaf__benzo_a_pyrene__trv_eco_mg_per_kg_bw_day__general candidate group.
-    expect(view.valueGroups).toHaveLength(1685);
+    // 2026-07-02b: -3 (1685 -> 1682) -- eco-statics correction DELETED 3 more fabricated-source
+    // current_default scaffolds (pv-bap-fcv, pv-pcb-trv-eco, pv-mehg-trv-eco), each the sole member
+    // of its own candidate group (eco-direct-eqp__benzo_a_pyrene__fcv_ug_per_L__general,
+    // eco-food-bsaf__total_pcbs_aroclor_1254__trv_eco_mg_per_kg_bw_day__general,
+    // eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__general). The companion promotion
+    // (pv-pcb-fcv re-cited + approved) reuses its EXISTING candidate group, so it adds none.
+    expect(view.valueGroups).toHaveLength(1682);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -130,7 +136,10 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-21: +11 -- owner-attested promotion of 17 rows; 11 move pending->approved_source_backed
     // (4 US EPA PFOA/PFOS + 6 HC PQRA lifestage + 1 WLRS low-level; the 6 IRIS carcinogen RfD rows
     // were already approved_source_backed so they do not add) = 1349.
-    expect(view.audit.values.approvedSourceBacked).toBe(1349);
+    // 2026-07-02b: +1 -- eco-statics correction promoted pv-pcb-fcv (total_pcbs_aroclor_1254 eco-direct
+    // FCV) from current_calculator_scaffold to approved_source_backed (re-cited to the real US EPA
+    // NRWQC total-PCBs chronic criterion via promote-pcb-fcv-nrwqc.mjs) = 1350.
+    expect(view.audit.values.approvedSourceBacked).toBe(1350);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -179,11 +188,19 @@ describe('matrix options evidence library helpers', () => {
     // twins of the verification-packet rows; the other 351 stay pending (re-keyed to v3.0). = 366.
     // 2026-07-02: -1 (366 -> 365) -- pv-bap-trv-eco (pending_source_locator) deleted by the
     // current-default integrity fix.
-    expect(view.audit.values.pendingSourceLocator).toBe(365);
-    expect(view.audit.values.currentCalculatorScaffold).toBe(65);
+    // 2026-07-02b: -3 (365 -> 362) -- eco-statics correction DELETED 3 more fabricated-source
+    // current_default scaffolds, all pending_source_locator (pv-bap-fcv, pv-pcb-trv-eco,
+    // pv-mehg-trv-eco).
+    expect(view.audit.values.pendingSourceLocator).toBe(362);
+    // 2026-07-02b: -1 (65 -> 64) -- pv-pcb-fcv moved OUT of current_calculator_scaffold when promoted
+    // to approved_source_backed (see approvedSourceBacked above).
+    expect(view.audit.values.currentCalculatorScaffold).toBe(64);
     // 2026-07-02: -1 (57 -> 56) -- pv-bap-trv-eco (a current_default row) deleted by the
     // current-default integrity fix (nulled library field must have no current_default scaffold).
-    expect(view.audit.values.currentDefaults).toBe(56);
+    // 2026-07-02b: -3 (56 -> 53) -- eco-statics correction DELETED 3 more current_default scaffolds
+    // (pv-bap-fcv, pv-pcb-trv-eco, pv-mehg-trv-eco). pv-pcb-fcv's PROMOTION does not change this count
+    // -- default_status stays current_default (unchanged); only qa/evidence status moved.
+    expect(view.audit.values.currentDefaults).toBe(53);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
@@ -461,7 +478,10 @@ describe('matrix options evidence library helpers', () => {
   });
 
   it('keeps mixed calculator value and equation sources visible in drill-ins', () => {
-    const rows = ['pv-bap-logkow', 'pv-bap-fcv'].map((parameterValueId) => ({
+    // pv-bap-fcv was DELETED 2026-07-02 (fabricated-source demotion -- see substanceLibrary.ts
+    // benzo_a_pyrene notes). Use pv-pcb-logkow (a different eco-direct-eqp record, unaffected by the
+    // correction) so this test still exercises two distinct value records mixed with an equation.
+    const rows = ['pv-bap-logkow', 'pv-pcb-logkow'].map((parameterValueId) => ({
       catalog_record:
         PARAMETER_VALUE_RECORDS.find(
           (record) => record.parameter_value_id === parameterValueId,
@@ -482,13 +502,14 @@ describe('matrix options evidence library helpers', () => {
     const view = buildEvidenceLibraryView(createEvidenceLibraryFilters(request));
 
     expect(view.values.map((row) => row.record.parameter_value_id).sort()).toEqual(
-      ['pv-bap-fcv', 'pv-bap-logkow'],
+      ['pv-bap-logkow', 'pv-pcb-logkow'],
     );
     expect(view.equations.map((row) => row.record.equation_id)).toEqual([
       'eq-eco-direct-eqp-di-toro',
     ]);
     expect(view.sources.map((row) => row.record.source_id).sort()).toEqual([
       'src-us-epa-esb-tier2-nonionic-organics-2008',
+      'src-us-epa-iris-aroclor-1254',
     ]);
   });
 

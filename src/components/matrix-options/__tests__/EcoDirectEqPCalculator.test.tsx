@@ -34,8 +34,15 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
   });
 
   it('seeds FCV from the substance library on initial render', () => {
-    render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
-    // Benzo[a]pyrene library FCV = 0.014 ug/L.
+    // benzo_a_pyrene's fcv_ug_per_L was nulled 2026-07-02 (fabricated-source demotion -- see
+    // substanceLibrary.ts notes), so it no longer demonstrates the static-library-seed mechanic. Use
+    // total_pcbs_aroclor_1254 instead (library FCV = 0.014 ug/L, unaffected by the correction).
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
     const fcv = screen.getByTestId('eqp-fcv-input') as HTMLInputElement;
     expect(fcv.value).toBe('0.014');
     // No override badge on the initial seed.
@@ -56,6 +63,12 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
 
   it('surfaces warning AND suppresses verdict when foc drops below 0.2 percent', () => {
     render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
+    // B[a]P's FCV was nulled 2026-07-02 (fabricated-source demotion), so the default seed is blank.
+    // Supply a valid FCV so the result reaches the warnings/verdict path this test exercises, rather
+    // than short-circuiting on the "FCV must be a positive decimal number" error.
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.014' },
+    });
     const focSlider = screen.getByLabelText(
       /Fraction Organic Carbon/i,
     ) as HTMLInputElement;
@@ -67,6 +80,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
 
   it('rejects negative Cs with a clear error', () => {
     render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
+    // B[a]P's FCV was nulled 2026-07-02 (fabricated-source demotion), so the default seed is blank
+    // and the FCV-missing error would otherwise take priority over the Cs check this test exercises.
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.014' },
+    });
     const csInput = screen.getByLabelText(/Measured C/i) as HTMLInputElement;
     fireEvent.change(csInput, { target: { value: '-1' } });
     const errorBox = screen.getByTestId('eqp-error');
@@ -75,16 +93,21 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
 
   // Plan v3 section 4.6 + v6: substance-change re-seed contract.
   it('re-seeds FCV when substanceKey prop changes and override is OFF', () => {
-    const { rerender } = render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
-    // Initial: B[a]P, FCV = 0.014.
+    // benzo_a_pyrene's fcv_ug_per_L was nulled 2026-07-02 (fabricated-source demotion), so it can no
+    // longer demonstrate a non-blank -> blank transition. Start from total_pcbs_aroclor_1254 (library
+    // FCV 0.014, unaffected by the correction) instead.
+    const { rerender } = render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    // Initial: Total PCBs, FCV = 0.014.
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
     ).toBe('0.014');
-    // Switch to Total PCBs (Aroclor 1254), library FCV also 0.014 (substance
-    // library row 2). Use a substance with a DIFFERENT FCV would be more
-    // discriminating; the library currently only has 2 EqP-capable rows
-    // and both happen to use 0.014. Test the path with a substance whose
-    // FCV is null (MeHg) to prove the re-seed clears the prior value.
+    // Test the path with a substance whose FCV is null (MeHg) to prove the re-seed clears the prior
+    // value.
     rerender(
       <EcoDirectEqPCalculator
         substanceKey="methylmercury"
@@ -139,7 +162,15 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
   });
 
   it('Reset button clears the override and re-seeds FCV from current substance library', () => {
-    render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
+    // benzo_a_pyrene's fcv_ug_per_L was nulled 2026-07-02 (fabricated-source demotion), so it no
+    // longer has a non-blank library default to reset to. Use total_pcbs_aroclor_1254 (library FCV
+    // 0.014, unaffected by the correction) so the reset-to-default assertion stays meaningful.
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
     // Promote to override.
     fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
       target: { value: '0.5' },
@@ -149,7 +180,7 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     ).toBe('0.5');
     // Click Reset.
     fireEvent.click(screen.getByTestId('eqp-fcv-reset'));
-    // FCV returns to library default (0.014 for B[a]P); badge + button hide.
+    // FCV returns to library default (0.014 for Total PCBs); badge + button hide.
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
     ).toBe('0.014');
@@ -220,10 +251,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
   // not just the two halves in isolation.
   it('full state-machine: override -> substance change -> reset re-seeds from current substance', () => {
     const { rerender } = render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
-    // Start: B[a]P, FCV = 0.014, no override.
+    // Start: B[a]P, FCV = '' (nulled 2026-07-02 fabricated-source demotion -- see
+    // substanceLibrary.ts notes; no override yet).
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
-    ).toBe('0.014');
+    ).toBe('');
 
     // 1. User edits FCV -> override engaged.
     fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
@@ -245,9 +277,9 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
 
     // 3. Click Reset. Override clears AND FCV re-seeds from PCBs library
-    //    default (0.014 -- happens to match B[a]P; both are 0.014 in the
-    //    current library). The discriminating check is that the override
-    //    badge is GONE.
+    //    default (0.014; B[a]P's own FCV was separately nulled 2026-07-02, so this no longer
+    //    "happens to match" -- it is purely the PCB value). The discriminating check is that the
+    //    override badge is GONE.
     fireEvent.click(screen.getByTestId('eqp-fcv-reset'));
     expect(
       screen.queryByTestId('eqp-fcv-override-badge'),
@@ -354,7 +386,13 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     const panel = screen.getByTestId('calculator-provenance-panel');
     expect(panel).toHaveTextContent(/References and provenance/);
     expect(panel).toHaveTextContent(/Final Chronic Value/);
-    expect(panel).toHaveTextContent(/0\.014 ug\/L/);
+    // benzo_a_pyrene's fcv_ug_per_L was nulled 2026-07-02 (fabricated-source demotion -- see
+    // substanceLibrary.ts notes): no catalog value or library fallback remains, so the row renders
+    // "Not provided" and its evidence_support_status falls to "current calculator scaffold" (no
+    // catalog record to attribute) instead of the prior fabricated "0.014 ug/L" / pending source
+    // locator state.
+    expect(panel).toHaveTextContent(/Not provided/);
+    expect(panel).toHaveTextContent(/current calculator scaffold/);
     expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values for nonionic organics/);
     expect(panel).toHaveTextContent(
       /pending exact source locator/i,
@@ -367,7 +405,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.queryByTestId('provenance-source-records')).not.toBeInTheDocument();
   });
 
-  it('labels scaffold FCV defaults as current calculator defaults, not approved source-backed', () => {
+  it('labels the promoted Total PCBs FCV as approved source-backed (2026-07-02 re-citation)', () => {
+    // pv-pcb-fcv (total_pcbs_aroclor_1254 eco-direct FCV, 0.014 ug/L) was re-cited to the real US EPA
+    // NRWQC total-PCBs chronic criterion and promoted to approved_source_backed 2026-07-02 (was
+    // current_calculator_scaffold citing a placeholder source). default_status stays current_default
+    // (unchanged) and the value is unaffected.
     render(
       <EcoDirectEqPCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -377,8 +419,8 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     const panel = screen.getByTestId('calculator-provenance-panel');
     expect(panel).toHaveTextContent(/Final Chronic Value/);
     expect(panel).toHaveTextContent(/current default/);
-    expect(panel).toHaveTextContent(/current calculator scaffold/);
-    expect(panel).toHaveTextContent(/0 approved/);
+    expect(panel).toHaveTextContent(/approved source-backed/);
+    expect(panel).toHaveTextContent(/1 approved/);
   });
 
   // Codex review on Commit 4 (P3): the optional-props bridge keeps
@@ -391,10 +433,12 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(
       screen.getByTestId('eco-direct-eqp-calculator'),
     ).toBeInTheDocument();
-    // Default substance is the first EqP-capable library row (B[a]P).
+    // Default substance is the first EQP_CAPABLE library row. B[a]P's fcv_ug_per_L was nulled
+    // 2026-07-02 (fabricated-source demotion -- see substanceLibrary.ts notes), dropping it out of
+    // EQP_CAPABLE (logKow !== null && fcv_ug_per_L !== null); Total PCBs (Aroclor 1254) is now first.
     const summary = screen.getByTestId('eqp-substance-summary');
-    expect(summary.textContent).toMatch(/Benzo\[a\]pyrene/);
-    // FCV seeded from B[a]P library default = 0.014.
+    expect(summary.textContent).toMatch(/PCBs/);
+    // FCV seeded from Total PCBs' library default = 0.014.
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
     ).toBe('0.014');
@@ -522,14 +566,17 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
   });
 
-  // Suppression regression (2026-07-02 fix): eco-direct is reference_only under canada-fcsap-aquatic
-  // for benzo_a_pyrene, and the substance library still carries a non-null FCV (0.014) that leaked
-  // into the input pre-fix. Post-fix, computeFcvSeed suppresses the static library fallback for
-  // reference_only/unsupported frames -- the input must render blank, with no provisional badge.
-  it('suppresses the static library FCV fallback under a reference_only frame (benzo_a_pyrene, canada-fcsap-aquatic)', () => {
+  // Suppression regression (2026-07-02 fix, codex-hardened): eco-direct is reference_only under
+  // canada-fcsap-aquatic. total_pcbs_aroclor_1254 keeps a NON-null static library FCV (0.014) that
+  // leaked into the input pre-#449-fix. Post-fix, computeFcvSeed suppresses the static library
+  // fallback for reference_only/unsupported frames -- the input must render blank, with no
+  // provisional badge. This deliberately uses a non-null-static substance so the test FAILS if the
+  // suppression branch is removed (benzo_a_pyrene's FCV was later nulled 2026-07-02 as a
+  // fabricated-source demotion, so it can no longer discriminate here).
+  it('suppresses the static library FCV fallback under a reference_only frame (total_pcbs_aroclor_1254, canada-fcsap-aquatic)', () => {
     render(
       <EcoDirectEqPCalculator
-        substanceKey="benzo_a_pyrene"
+        substanceKey="total_pcbs_aroclor_1254"
         jurisdiction="canada-fcsap-aquatic"
       />,
     );
@@ -545,11 +592,13 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
   // eco-direct-eqp at needs_review (supported, not reference_only/unsupported), so the static
   // library FCV fallback must still show. This test would FAIL under a naive "suppress whenever
   // resolveEcoSeed returns null" (catalog-presence) gate -- it proves the suppression is
-  // STATUS-only (reference_only/unsupported), not presence-only.
-  it('still shows the static library FCV fallback under a supported (needs_review) frame (benzo_a_pyrene, bc-protocol1-v5-dra)', () => {
+  // STATUS-only (reference_only/unsupported), not presence-only. Uses total_pcbs_aroclor_1254 (not
+  // benzo_a_pyrene, whose library FCV was separately nulled 2026-07-02 as a fabricated-source
+  // demotion) so the fallback value stays non-blank and the guard remains discriminating.
+  it('still shows the static library FCV fallback under a supported (needs_review) frame (total_pcbs_aroclor_1254, bc-protocol1-v5-dra)', () => {
     render(
       <EcoDirectEqPCalculator
-        substanceKey="benzo_a_pyrene"
+        substanceKey="total_pcbs_aroclor_1254"
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
@@ -560,12 +609,14 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
 
   it('does NOT show the provisional badge for a current_default scaffold substance (benzo_a_pyrene)', () => {
     // benzo_a_pyrene eco-direct catalog row is current_default -> excluded from provisional eligibility
-    // -> resolveEcoSeed returns null -> library fallback (0.014), no provisional badge. Regression
+    // -> resolveEcoSeed returns null. The library fallback used to be 0.014; that value was nulled
+    // 2026-07-02 (fabricated-source demotion -- see substanceLibrary.ts notes), so the fallback is now
+    // blank. Either way, no provisional badge renders (nothing to be provisional about). Regression
     // guard that wiring did not change the current_default-backed substances.
     render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
     expect(
       (screen.getByTestId('eqp-fcv-input') as HTMLInputElement).value,
-    ).toBe('0.014');
+    ).toBe('');
     expect(
       screen.queryByTestId('eqp-fcv-provisional-badge'),
     ).not.toBeInTheDocument();

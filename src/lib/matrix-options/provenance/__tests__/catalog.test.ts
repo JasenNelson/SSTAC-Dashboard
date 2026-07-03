@@ -46,6 +46,10 @@ import { HC_PQRA_ADULT_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix
 import { HC_PQRA_WORKER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-worker.mjs';
 import { HC_PQRA_LIFESTAGE_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-hc-pqra-lifestage.mjs';
 import { TWN_TODDLER_PROMOTION_VALUE_IDS } from '../../../../../scripts/matrix-options/promote-twn-foodweb-toddler.mjs';
+// 2026-07-02: owner-approved eco-statics correction re-cited pv-pcb-fcv (total_pcbs_aroclor_1254
+// eco-direct FCV) to the real US EPA NRWQC total-PCBs criterion and promoted it. Import its allowlist
+// so the mass-promotion tripwire union stays a single source of truth.
+import { PCB_FCV_PROMOTION_VALUE_ID } from '../../../../../scripts/matrix-options/promote-pcb-fcv-nrwqc.mjs';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import type { SubstanceEntry } from '@/lib/matrix-options/types';
 import parameterValuesRaw from '../../../../../matrix_research/reference_catalog/parameter_values.json';
@@ -336,11 +340,32 @@ describe('matrix options provenance catalog', () => {
         (record) => record.parameter_value_id === 'pv-bap-trv-eco',
       ),
     ).toBeUndefined();
+    // Eco-statics correction (2026-07-02): pv-bap-fcv, pv-pcb-trv-eco, and pv-mehg-trv-eco cited
+    // fabricated/mismatched sources and were DELETED (their library fields nulled -- see
+    // substanceLibrary.ts benzo_a_pyrene / total_pcbs_aroclor_1254 / methylmercury notes). No
+    // current_default scaffold should remain for any of them.
+    expect(
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === 'pv-bap-fcv',
+      ),
+    ).toBeUndefined();
+    expect(
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === 'pv-pcb-trv-eco',
+      ),
+    ).toBeUndefined();
+    expect(
+      PARAMETER_VALUE_RECORDS.find(
+        (record) => record.parameter_value_id === 'pv-mehg-trv-eco',
+      ),
+    ).toBeUndefined();
+    // pv-pcb-fcv is the OPPOSITE correction: the value (0.014 ug/L) was verified against the real US
+    // EPA NRWQC total-PCBs chronic criterion, so it was re-cited and PROMOTED to approved (2026-07-02).
     expect(
       PARAMETER_VALUE_RECORDS.find(
         (record) => record.parameter_value_id === 'pv-pcb-fcv',
       )?.qa_status,
-    ).toBe('needs_review');
+    ).toBe('approved');
   });
 
   it('assigns candidate groups to every parameter value', () => {
@@ -647,6 +672,7 @@ describe('matrix options provenance catalog', () => {
       ...HC_PQRA_WORKER_PROMOTION_VALUE_IDS,
       ...HC_PQRA_LIFESTAGE_PROMOTION_VALUE_IDS,
       ...TWN_TODDLER_PROMOTION_VALUE_IDS,
+      PCB_FCV_PROMOTION_VALUE_ID,
     ]);
     const approvedParameterValueIds = (
       parameterValuesRaw as Array<{ qa_status: string; parameter_value_id: string }>
@@ -1224,13 +1250,15 @@ describe('matrix options provenance catalog', () => {
         'logKow',
       )?.value,
     ).toBe(6.13);
+    // fcv_ug_per_L: pv-bap-fcv was DELETED 2026-07-02 (fabricated-source demotion -- see
+    // substanceLibrary.ts benzo_a_pyrene notes). No catalog row remains for this tuple.
     expect(
       getParameterValueRecord(
         'benzo_a_pyrene',
         'eco-direct-eqp',
         'fcv_ug_per_L',
-      )?.value,
-    ).toBe(0.014);
+      ),
+    ).toBeUndefined();
   });
 
   it('provides pathway equation records for calculator panels', () => {
@@ -1242,11 +1270,15 @@ describe('matrix options provenance catalog', () => {
   });
 
   it('resolves display rows with catalog metadata and user-entered rows', () => {
+    // rows[0] used to cite benzo_a_pyrene's fcv_ug_per_L (pv-bap-fcv), but that row was DELETED
+    // 2026-07-02 (fabricated-source demotion). Use logKow instead -- still a current_default,
+    // pending_source_locator row (pv-bap-logkow) unaffected by the correction -- to keep exercising
+    // the "current calculator default" scaffold-attribution path this test covers.
     const rows = resolveProvenanceRows([
       {
-        input_key: 'fcv_ug_per_L',
-        label: 'FCV',
-        value: 0.014,
+        input_key: 'logKow',
+        label: 'log Kow',
+        value: 6.13,
         role: 'source-backed default',
         pathway: 'eco-direct-eqp',
         substance_key: 'benzo_a_pyrene',
@@ -1268,7 +1300,7 @@ describe('matrix options provenance catalog', () => {
       },
     ]);
 
-    expect(rows[0].catalog_record?.parameter_value_id).toBe('pv-bap-fcv');
+    expect(rows[0].catalog_record?.parameter_value_id).toBe('pv-bap-logkow');
     expect(rows[0].sources.length).toBeGreaterThan(0);
     expect(rows[0].evidence_items[0]?.locator).toMatch(/source page\/table pending/i);
     expect(rows[0].default_status).toBe('current_default');
@@ -1277,9 +1309,13 @@ describe('matrix options provenance catalog', () => {
     expect(rows[1].catalog_record).toBeNull();
     expect(rows[1].qa_status).toBe('not_cataloged');
     expect(rows[1].evidence_support_status).toBe('user_entered_or_derived');
+    // rows[2] (total_pcbs_aroclor_1254 fcv_ug_per_L, pv-pcb-fcv) was PROMOTED to approved_source_backed
+    // 2026-07-02 (re-cited to the real US EPA NRWQC total-PCBs chronic criterion). default_status stays
+    // current_default (unchanged); role stays the usedValue's own role since resolveRole no longer
+    // downgrades an approved_source_backed catalog record to "current calculator default".
     expect(rows[2].catalog_record?.default_status).toBe('current_default');
-    expect(rows[2].evidence_support_status).toBe('current_calculator_scaffold');
-    expect(rows[2].role).toBe('current calculator default');
+    expect(rows[2].evidence_support_status).toBe('approved_source_backed');
+    expect(rows[2].role).toBe('source-backed default');
   });
 
   it('keeps current_default catalog scaffolds in sync with the live substance library (integrity fix 2026-07-02)', () => {

@@ -18,9 +18,10 @@ export const SUBSTANCE_LIBRARY = [
     bsaf_loc_freshwater: 0.5,
     abs_dermal: 0.13,
     ba_oral: 1.0,
-    // US EPA Tier II SCV for B[a]P narcosis, used as the EqP FCV anchor in
-    // design doc section 7 Anchor Case A.
-    fcv_ug_per_L: 0.014,
+    // fcv_ug_per_L nulled 2026-07-02 (see notes below): the prior 0.014 cited EPA ESB Tier-2 as its
+    // source, but B[a]P is not covered by that document (PAHs are handled separately); the value was
+    // copy-pasted from the PCB NRWQC criterion. No verified BaP aquatic-life FCV exists in the catalog.
+    fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
       'US EPA IRIS B[a]P oral SF 2.0 per mg/kg-bw/day, ADAF-adjusted lifetime default (2017 reassessment), src-us-epa-iris-chemical-details-live (pv-iris-bap-hh-direct-sf); a non-ADAF adult-only IRIS alternate (1.0) and an HC alternate (1.289) also exist; ERDC BSAF DB; ' +
@@ -31,7 +32,9 @@ export const SUBSTANCE_LIBRARY = [
       'doc section 8.2. SF corrected 1.0 -> 2.0 (IRIS 2017 ADAF-adjusted default); static eco TRV removed ' +
       '(stale Eco-SSL; this was a LIVE defect because bsaf_loc_freshwater is non-null -- the wrong static ' +
       'value was silently driving eco-food output; nulling forces the dynamic catalog resolver / explicit ' +
-      'HITL receptor choice).',
+      'HITL receptor choice). fcv_ug_per_L nulled 2026-07-02: cited EPA ESB Tier-2 nonionic-organics ' +
+      '(2008), but benzo[a]pyrene is not in that document (PAHs are handled separately); 0.014 was ' +
+      'copy-pasted from the PCB NRWQC value. No verified BaP aquatic-life FCV exists in the catalog.',
   },
   {
     key: 'total_pcbs_aroclor_1254',
@@ -43,22 +46,31 @@ export const SUBSTANCE_LIBRARY = [
     bsaf_loc_freshwater: 2.0,
     abs_dermal: 0.14,
     ba_oral: 1.0,
-    // PCB FCV (chronic AWQC) is substance-specific; use a screening
-    // starter value. HITL overrides per congener mixture.
+    // PCB FCV (chronic AWQC) 0.014 ug/L is VERIFIED 2026-07-02 against the real US EPA NRWQC
+    // total-PCBs chronic criterion (CCC), which explicitly covers the sum of all congener / isomer /
+    // homolog / Aroclor analyses -- see src-us-epa-nrwqc-aquatic-life-live and the promoted catalog
+    // row pv-pcb-fcv (approved_source_backed). HITL still overrides per site congener mixture.
     fcv_ug_per_L: 0.014,
-    // US EPA Eco-SSL mammalian wildlife TRV (Aroclor 1254 oral chronic
-    // NOAEL-derived). Used for the Eco-Food BSAF pathway.
-    trv_eco_mg_per_kg_bw_day: 0.00012,
+    // trv_eco_mg_per_kg_bw_day nulled 2026-07-02 (see notes below): the prior 0.00012 cited a
+    // "US EPA Eco-SSL mammalian wildlife TRV (PCBs)" that does not exist as an EPA Eco-SSL document;
+    // the value is unverifiable and has been removed.
+    trv_eco_mg_per_kg_bw_day: null,
     sources:
       'US EPA IRIS Aroclor 1254 oral RfD (CASRN 11097-69-1, src-us-epa-iris-rfd-table-live); ' +
       'oral SF borrowed from the generic US EPA IRIS PCBs entry (CASRN 1336-36-3, ' +
       '"high risk and persistence" tier, src-us-epa-iris-chemical-details-live) -- IRIS has not ' +
       'assessed Aroclor 1254 carcinogenicity under its own CASRN; BSAF-Translation Section 4; ' +
-      'US EPA Eco-SSL mammalian wildlife TRV (PCBs)',
+      'FCV: US EPA National Recommended Water Quality Criteria - Aquatic Life Criteria Table, ' +
+      'total-PCBs chronic (CCC), src-us-epa-nrwqc-aquatic-life-live (verified 2026-07-02, ' +
+      'pv-pcb-fcv).',
     notes:
       'Do not apply coastal PAH multiplier; PCBs biomagnify rather than ' +
       'passively accumulate. abs_dermal 0.14 = EPA RAGS Part E Exhibit 3-4 chemical-specific ' +
-      'value for PCBs/Aroclor (not the 0.1 organic-halogenated default).',
+      'value for PCBs/Aroclor (not the 0.1 organic-halogenated default). trv_eco_mg_per_kg_bw_day ' +
+      'nulled 2026-07-02: cited a "US EPA Eco-SSL mammalian wildlife TRV (PCBs)" but no EPA Eco-SSL ' +
+      'document exists for PCBs; value unverifiable. Duplicate-PCB-key consolidation with the ' +
+      'separate polychlorinated_biphenyls_total_pcbs key (which already carries an approved NRWQC ' +
+      'FCV row for the same value) is a deferred HITL item -- do not merge or delete either entry.',
   },
   {
     key: 'methylmercury',
@@ -71,17 +83,20 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.55,
     fcv_ug_per_L: null,
-    // CCME wildlife TRV for MeHg (chronic mammalian piscivore reference);
-    // used directly with the protein-normalized BSAF path in the Eco-Food
-    // derivation.
-    trv_eco_mg_per_kg_bw_day: 0.000064,
+    // trv_eco_mg_per_kg_bw_day nulled 2026-07-02 (see notes below): the prior 0.000064 cited a CCME
+    // MeHg wildlife TRV, but CCME's actual published values are 22 (mammal) / 31 (avian) ug/kg-bw/day
+    // or a 33 ug/kg tissue guideline -- none equals 64; the value does not match the cited source.
+    trv_eco_mg_per_kg_bw_day: null,
     sources:
       'Health Canada HHRA 2023; Indigenous-Consumption-Pacific-NW ' +
-      'Section 5; BSAF-Translation Section 7; CCME wildlife TRV (MeHg)',
+      'Section 5; BSAF-Translation Section 7',
     notes:
       'MeHg binds covalently to protein thiols. Use protein-normalized ' +
       'BSAF path (f_protein default 0.18 fish muscle). Do not ' +
-      'lipid-normalize. EqP path is invalid for MeHg.',
+      'lipid-normalize. EqP path is invalid for MeHg. trv_eco_mg_per_kg_bw_day nulled 2026-07-02: ' +
+      'cited a CCME MeHg wildlife TRV, but CCME\'s actual values are 22 (mammal) / 31 (avian) ' +
+      'ug/kg-bw/day or a 33 ug/kg tissue guideline -- none equals the prior 0.000064 mg/kg-bw/day ' +
+      '(64 ug/kg-bw/day); value does not match the source.',
   },
   {
     key: 'lead',
