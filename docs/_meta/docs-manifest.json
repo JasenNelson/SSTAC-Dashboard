@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4869,
-        "source": "npm run test:ci output (2026-07-03)",
+        "value": 4871,
+        "source": "npm run test:ci output (2026-07-03; Lane 1 metals cohort, 4 substances: net +2 = Cluster E block -2 wired keys + new 4-key metals wiring block; beryllium/selenium deferred pending current_default provenance rows)",
         "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_lane1_metals": {
+      "status": "superseded",
+      "value": 4869,
+      "source": "Cluster E abs_dermal corrections + arsenic_inorganic IRIS 2025 update: 4869.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4871 (Lane 1 metals cohort HH wiring, 4 substances: net +2).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4871 after the fix/mo-lane1-metals-cohort-2026-07-02 branch wired chromium_hexavalent/mercury_inorganic/uranium (dormant backfills) + vanadium_pentoxide (new metalloid entry), removed chromium_hexavalent + mercury_inorganic from the 'Cluster E abs_dermal corrections' dormant block (8 -> 6 cases), and added a new 'SUBSTANCE_LIBRARY -- Lane 1 metals cohort HH wiring (2026-07-03)' describe block (4 cases). Net -2 + 4 = +2. beryllium + selenium were verified but DEFERRED (multiple same-value catalog candidates + no current_default row -> unsourced provenance); queued for owner-gated current_default curation (naphthalene/pyrene share this latent gap)."
+    },
     "vitest_test_count_2026_07_02_pre_clustere_arsenic": {
       "status": "superseded",
       "value": 4858,

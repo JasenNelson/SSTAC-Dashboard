@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 368 entries', () => {
+  it('has 407 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -18,8 +18,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(406);
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406. + 1 metalloid (Lane 1 metals cohort, 2026-07-03: vanadium_pentoxide) = 407.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(407);
   });
 
   it('every entry has a non-null key', () => {
@@ -902,19 +902,21 @@ describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
 });
 
 describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', () => {
-  // All 8 entries below have rfd_oral=null AND sf_oral=null (dormant: no wired
-  // HH output today), so these corrections have no output effect. VOC-consistent
-  // default is 0.03 (vinyl_chloride, mis-set to an unsupported 1.0); the
-  // divalent-metal class default is 0.001 (the other 7, previously 0.1 or 0.03).
+  // 6 of the original 8 entries remain dormant (rfd_oral=null AND sf_oral=null), so
+  // these corrections have no output effect. VOC-consistent default is 0.03
+  // (vinyl_chloride, mis-set to an unsupported 1.0); the divalent-metal class default
+  // is 0.001 (the others, previously 0.1 or 0.03). chromium_hexavalent and
+  // mercury_inorganic were moved OUT of this dormant block on 2026-07-03 when their
+  // oral RfD/SF were wired build-first (Lane 1 metals cohort). beryllium stays dormant
+  // here: its approved oral RfD was deferred pending a current_default provenance row
+  // (multiple same-value catalog candidates resolve to no source), so it is NOT wired.
   const expected = [
     { key: 'vinyl_chloride', absDermal: 0.03 },
     { key: 'chromium_trivalent', absDermal: 0.001 },
     { key: 'barium', absDermal: 0.001 },
     { key: 'beryllium', absDermal: 0.001 },
-    { key: 'chromium_hexavalent', absDermal: 0.001 },
     { key: 'chromium', absDermal: 0.001 },
     { key: 'nickel', absDermal: 0.001 },
-    { key: 'mercury_inorganic', absDermal: 0.001 },
   ] as const;
 
   for (const { key, absDermal } of expected) {
@@ -925,6 +927,35 @@ describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', ()
       // Dormant: no wired RfD/SF, so this correction has no output effect today.
       expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Lane 1 metals cohort HH wiring (2026-07-03)', () => {
+  // Backfills: chromium_hexavalent, mercury_inorganic, uranium (previously dormant,
+  // rfd_oral/sf_oral null). New: vanadium_pentoxide (no prior key). beryllium and
+  // selenium were verified but DEFERRED from this cohort: each has multiple same-value
+  // catalog candidates and no current_default row, so the provenance resolver returns
+  // no source (unsourced scaffold). They stay dormant pending an owner-gated
+  // current_default row (naphthalene/pyrene share this latent gap -- see handoff).
+  // All values verified verbatim against approved rows (qa_status=approved) in
+  // matrix_research/reference_catalog/human_health_trv_values.json. abs_dermal is
+  // asserted unchanged (class default) for every key.
+  const expected = [
+    { key: 'chromium_hexavalent', rfd: 0.0022, sf: 0.27, cls: 'divalent-metal', absDermal: 0.001 },
+    { key: 'mercury_inorganic', rfd: 0.0003, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
+    { key: 'uranium', rfd: 0.0006, sf: null, cls: 'metalloid', absDermal: 0.03 },
+    { key: 'vanadium_pentoxide', rfd: 0.009, sf: null, cls: 'metalloid', absDermal: 0.03 },
+  ] as const;
+
+  for (const { key, rfd, sf, cls, absDermal } of expected) {
+    it(`${key} carries the wired rfd/sf, unchanged class ${cls}, unchanged abs_dermal ${absDermal}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+      expect(result?.abs_dermal).toBe(absDermal);
     });
   }
 });

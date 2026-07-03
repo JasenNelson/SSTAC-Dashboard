@@ -381,21 +381,27 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Chromium, hexavalent',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0022,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.27,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources:
+      'Health Canada TRV v4.0 oral RfD 0.0022 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; the US EPA IRIS oral RfD candidate is a RANGE, 0.0007 to 0.07 mg/kg-bw/day, and is excluded as non-single-value) + US EPA IRIS oral SF 0.27 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
-      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values. Speciation matters. ' +
-      'abs_dermal 0.001 = divalent-metal class default. Cr(VI) dermal ' +
-      'sensitization/potency is a hazard concern for endpoint/speciation ' +
-      'policy, NOT the absorption-fraction field (codex 2026-07-02); do not ' +
-      'encode it as an inflated ABSd. Corrected from 0.1. Dormant.',
+      'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); ' +
+      'previously null (dormant per the 2026-07-02 Cluster E abs_dermal correction). RfD is ' +
+      'sourced from HC TRV v4.0 (single value); the US EPA IRIS oral RfD candidate is a ' +
+      'RANGE (0.0007-0.07 mg/kg-bw/day) and is excluded per the recon (non-single-value). SF ' +
+      'is sourced from US EPA IRIS (sole candidate; HC does not carry an oral SF row for ' +
+      'Cr(VI)). Human-health RfC and inhalation unit risk candidates are a US-vs-Canada ' +
+      'jurisdiction_conflict and remain deferred to References & Values -- out of scope for ' +
+      'this wiring pass. Speciation matters; do not merge with trivalent chromium. Cr(VI) ' +
+      'dermal sensitization/potency is a hazard concern for endpoint/speciation policy, NOT ' +
+      'the absorption-fraction field (codex 2026-07-02); do not encode it as an inflated ' +
+      'ABSd. abs_dermal 0.001 = divalent-metal class default; unchanged by this wiring.',
   },
   {
     key: 'naphthalene',
@@ -1354,15 +1360,21 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Uranium',
     contaminantClass: 'metalloid',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0006,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Uranium, CAS 7440-61-1. PubChem Compound Summary for CID 23989, Uranium, U.S. National Library of Medicine (https://pubchem.ncbi.nlm.nih.gov/compound/23989; PUG-REST property query confirming molecular formula U and IUPAC name \'uranium\'). U.S. EPA Integrated Risk Information System (IRIS), "Uranium, natural," CASRN 7440-61-1, DTXSID1042522 (https://iris.epa.gov/ChemicalLanding/&substance_nmbr=259): assessment status is "under development" with no oral RfD or slope factor currently posted for this CASRN -- distinct from the separate 1989 "Uranium, soluble salts" assessment (CASRN Various, DTXSID7024374, chronic oral RfD 0.003 mg/kg-day, nephrotoxicity endpoint), which does not apply to elemental/natural-uranium CAS 7440-61-1.',
-    notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): uranyl, not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources:
+      'Health Canada TRV v4.0 oral RfD 0.0006 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); a BC Protocol 28 v3.0 candidate exists at a different value (0.003 mg/kg-bw/day, pending_source_locator/needs_review) and is not cited as the wiring source -- no US EPA IRIS oral RfD candidate exists for uranium. Identity: Uranium, CAS 7440-61-1, PubChem CID 23989.',
+    notes:
+      'Oral RfD wired build-first from the approved catalog row (qa_status=approved); ' +
+      'previously null. No oral slope factor candidate exists in the catalog. Eco ' +
+      'selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): uranyl, ' +
+      'not a true M2+; avoids the divalent-metals AVS/SEM path. abs_dermal 0.03 = ' +
+      'metalloid class default; unchanged by this wiring.',
   },
   {
     key: 'vanadium',
@@ -1475,7 +1487,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Mercury, inorganic',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0003,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
@@ -1483,18 +1495,19 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Identity: Mercury, inorganic (divalent Hg(II)), CAS 7439-97-6, PubChem CID ' +
+      'Health Canada TRV v4.0 oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; no US EPA IRIS oral RfD candidate exists for mercury_inorganic). Identity: Mercury, inorganic (divalent Hg(II)), CAS 7439-97-6, PubChem CID ' +
       '23931 (the elemental-mercury record matching CAS 7439-97-6, the ATSDR/EPA ' +
       'regulatory CASRN for inorganic mercury). logKow n/a (inorganic metal ion). ' +
       'Eco-food TRV seeded from the eco catalog (FCSAP ERA Module 7).',
     notes:
-      'Eco-food selectability (inorganic Hg(II) only). logKow null: Kow not ' +
-      'applicable to ionic metals. contaminantClass divalent-metal (Hg2+ is a ' +
-      'divalent cation); distinct from the methyl-Hg class used by the ' +
-      'methylmercury entry -- inorganic Hg and MeHg differ in trophic transfer. ' +
-      'HH fields null; abs_dermal/ba_oral inert. ' +
-      'abs_dermal 0.001 = divalent-metal class default (no RAGS inorganic-Hg ' +
-      'soil ABSd). Corrected from 0.03. Dormant.',
+      'Oral RfD wired build-first from the approved catalog row (qa_status=approved); ' +
+      'previously null (dormant per the 2026-07-02 Cluster E abs_dermal correction). No ' +
+      'oral slope factor candidate exists in the catalog (sf_oral remains null). Eco-food ' +
+      'selectability (inorganic Hg(II) only). logKow null: Kow not applicable to ionic ' +
+      'metals. contaminantClass divalent-metal (Hg2+ is a divalent cation); distinct from ' +
+      'the methyl-Hg class used by the methylmercury entry -- inorganic Hg and MeHg differ ' +
+      'in trophic transfer. abs_dermal 0.001 = divalent-metal class default (no RAGS ' +
+      'inorganic-Hg soil ABSd); unchanged by this wiring.',
   },
   {
     key: 'chloroform',
@@ -7053,6 +7066,33 @@ export const SUBSTANCE_LIBRARY = [
       'US EPA IRIS oral RfD 0.00002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live).',
     notes:
       'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). Inorganic substance (cyanide/oxyanion/reactive-gas/elemental) -> contaminantClass inorganic (new descriptive non-organic/non-metal-cation class; behaves as M_eco=1 + standard dermal in derivations). abs_dermal 0.1 is a CONSERVATIVE PLACEHOLDER default, NOT a verified chemical-specific HC Table 5 RAF -- flagged for HITL refinement.',
+  },
+  {
+    key: 'vanadium_pentoxide',
+    displayName: 'Vanadium pentoxide',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.009,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, ' +
+      'src-us-epa-iris-rfd-table-live). Identity: Vanadium pentoxide (V2O5), ' +
+      'CAS 1314-62-1, PubChem CID 14814 (V2O5; EPA IRIS CASRN 1314-62-1, DTXSID2023806); distinct from the elemental vanadium entry (key: vanadium). No ' +
+      'Health Canada TRV v4.0 candidate exists for vanadium_pentoxide.',
+    notes:
+      'NEW library entry (no prior key; wireable_new in the wire-candidates recon). ' +
+      'Oral RfD wired build-first from the approved catalog row (qa_status=approved); ' +
+      'no oral slope factor candidate exists in the catalog. contaminantClass metalloid ' +
+      'follows the elemental-vanadium sibling precedent (key: vanadium) -- ' +
+      'vanadate/vanadyl speciation, not a true M2+, avoids the divalent-metals AVS/SEM ' +
+      'path. abs_dermal 0.03 = metalloid class default (no chemical-specific soil ABSd). ' +
+      'logKow n/a (metal oxide); eco fields left null pending eco-catalog seeding -- ' +
+      'HH-only entry today.',
   },
 ] as const satisfies readonly SubstanceEntry[];
 
