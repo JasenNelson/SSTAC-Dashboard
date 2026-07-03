@@ -1,6 +1,6 @@
 # Matrix-Options Owner-Decisions Queue (2026-07-02 overnight autonomous run)
 
-This is the consolidated worklist of MO items an autonomous overnight session identified but did NOT wire, because each needs an owner judgment (a value/source pick, a class call, a policy decision, or schema work). Nothing here was guessed or shipped. Items are grouped by lane. Cross-reference: the PCB-key ruling is detailed in `docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`; the full wiring pool is in `scripts/matrix-options/_recon/wire_candidates.json`.
+This is the consolidated worklist of MO items an autonomous overnight session identified but did NOT wire, because each needs an owner judgment (a value/source pick, a class call, a policy decision, or schema work). Nothing here was guessed or shipped. Items are grouped by lane. Cross-reference: the PCB-key ruling is detailed in `docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`; the full wiring pool can be regenerated with `node scripts/matrix-options/wire-recon.mjs`, which writes the gitignored analysis artifact `scripts/matrix-options/_recon/wire_candidates.json` (not committed; regenerate locally to follow the audit trail).
 
 ## Section A -- Lane 4: methylmercury eco TRV (highest-value single decision)
 
