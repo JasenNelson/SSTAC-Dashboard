@@ -342,19 +342,16 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Beryllium',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value; BOTH src-us-epa-iris-rfd-table-live and src-health-canada-trv-v4-2025 approve the identical value -- concordant IRIS/HC, so the displayed default follows the active regulatory frame per BC Protocol 1 v5.0 s4.4: Health Canada under BC/Canada/default frames, US EPA IRIS under US frames); Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
-      'Human-health oral and inhalation TRV candidates are available in ' +
-      'References & Values; ecological defaults are pending. ' +
-      'abs_dermal 0.001 = divalent-metal class default (no chemical-specific ' +
-      'soil ABSd). Corrected from 0.1. Dormant.',
+      'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (dormant per the 2026-07-02 Cluster E abs_dermal correction). Value is concordant across US EPA IRIS and Health Canada (both approve 0.002); the displayed default follows the active regulatory frame per BC Protocol 1 v5.0 s4.4 (Health Canada under BC/Canada/default frames, US EPA IRIS under US frames). No oral slope factor candidate exists in the catalog (sf_oral remains null); inhalation RfC and inhalation unit risk candidates are available in References & Values but are out of scope for this wiring pass. abs_dermal 0.001 = divalent-metal class default (no chemical-specific soil ABSd), corrected from 0.1 -- unchanged by this wiring.',
   },
   {
     key: 'chromium_trivalent',
@@ -530,7 +527,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Selenium',
     contaminantClass: 'metalloid',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
@@ -538,11 +535,9 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Identity: Selenium (total), CAS 7782-49-2, PubChem CID 6326970 ' +
-      '(US EPA IRIS CASRN 7782-49-2). Eco-food TRV seeded from the eco catalog.',
+      'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; a BC Protocol 28 v3.0 candidate agrees in value (0.005) but is pending_source_locator/needs_review and is not cited as the wiring source). Identity: Selenium (total), CAS 7782-49-2, PubChem CID 6326970 (US EPA IRIS CASRN 7782-49-2). Eco-food TRV seeded from the eco catalog.',
     notes:
-      'Eco-food selectability. logKow not applicable (metalloid; Se bioaccumulation ' +
-      'driven by trophic transfer/BSAF). HH fields null; abs_dermal/ba_oral inert.',
+      'Oral RfD wired build-first from the approved catalog row (qa_status=approved); previously null. No oral slope factor candidate exists in the catalog. Eco-food selectability. logKow not applicable (metalloid; Se bioaccumulation driven by trophic transfer/BSAF). abs_dermal 0.03 = metalloid class default; unchanged by this wiring.',
   },
   {
     key: 'toluene',

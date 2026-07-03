@@ -902,19 +902,19 @@ describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
 });
 
 describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', () => {
-  // 6 of the original 8 entries remain dormant (rfd_oral=null AND sf_oral=null), so
+  // 5 of the original 8 entries remain dormant (rfd_oral=null AND sf_oral=null), so
   // these corrections have no output effect. VOC-consistent default is 0.03
   // (vinyl_chloride, mis-set to an unsupported 1.0); the divalent-metal class default
-  // is 0.001 (the others, previously 0.1 or 0.03). chromium_hexavalent and
-  // mercury_inorganic were moved OUT of this dormant block on 2026-07-03 when their
-  // oral RfD/SF were wired build-first (Lane 1 metals cohort). beryllium stays dormant
-  // here: its approved oral RfD was deferred pending a current_default provenance row
-  // (multiple same-value catalog candidates resolve to no source), so it is NOT wired.
+  // is 0.001 (the others, previously 0.1 or 0.03). chromium_hexavalent,
+  // mercury_inorganic, and beryllium were moved OUT of this dormant block when their
+  // oral RfD/SF were wired build-first (Lane 1 metals cohort; beryllium on 2026-07-03,
+  // once the #461 approved-tiebreak and #462 frame-aware jurisdiction tiebreak made its
+  // dual-approved IRIS+HC value resolve SOURCED). Their abs_dermal invariants now ride
+  // in the Lane 1 wiring block below alongside their non-null rfd_oral/sf_oral.
   const expected = [
     { key: 'vinyl_chloride', absDermal: 0.03 },
     { key: 'chromium_trivalent', absDermal: 0.001 },
     { key: 'barium', absDermal: 0.001 },
-    { key: 'beryllium', absDermal: 0.001 },
     { key: 'chromium', absDermal: 0.001 },
     { key: 'nickel', absDermal: 0.001 },
   ] as const;
@@ -932,20 +932,21 @@ describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', ()
 });
 
 describe('SUBSTANCE_LIBRARY -- Lane 1 metals cohort HH wiring (2026-07-03)', () => {
-  // Backfills: chromium_hexavalent, mercury_inorganic, uranium (previously dormant,
-  // rfd_oral/sf_oral null). New: vanadium_pentoxide (no prior key). beryllium and
-  // selenium were verified but DEFERRED from this cohort: each has multiple same-value
-  // catalog candidates and no current_default row, so the provenance resolver returns
-  // no source (unsourced scaffold). They stay dormant pending an owner-gated
-  // current_default row (naphthalene/pyrene share this latent gap -- see handoff).
-  // All values verified verbatim against approved rows (qa_status=approved) in
-  // matrix_research/reference_catalog/human_health_trv_values.json. abs_dermal is
-  // asserted unchanged (class default) for every key.
+  // Backfills: chromium_hexavalent, mercury_inorganic, uranium, beryllium, selenium
+  // (previously dormant, rfd_oral/sf_oral null). New: vanadium_pentoxide (no prior key).
+  // beryllium and selenium were re-wired 2026-07-03 once the #461 approved-tiebreak and
+  // #462 frame-aware jurisdiction tiebreak made them resolve SOURCED (selenium -> IRIS
+  // via single-approved; beryllium -> Health Canada under BC/default frames, US EPA IRIS
+  // under US frames). All values verified verbatim against approved rows
+  // (qa_status=approved) in matrix_research/reference_catalog/human_health_trv_values.json.
+  // abs_dermal is asserted unchanged (class default) for every key.
   const expected = [
     { key: 'chromium_hexavalent', rfd: 0.0022, sf: 0.27, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'mercury_inorganic', rfd: 0.0003, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'uranium', rfd: 0.0006, sf: null, cls: 'metalloid', absDermal: 0.03 },
     { key: 'vanadium_pentoxide', rfd: 0.009, sf: null, cls: 'metalloid', absDermal: 0.03 },
+    { key: 'beryllium', rfd: 0.002, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
+    { key: 'selenium', rfd: 0.005, sf: null, cls: 'metalloid', absDermal: 0.03 },
   ] as const;
 
   for (const { key, rfd, sf, cls, absDermal } of expected) {
