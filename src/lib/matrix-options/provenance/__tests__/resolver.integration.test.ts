@@ -147,3 +147,76 @@ describe('resolveProvenanceRows -- approved-tiebreak fallback (2026-07-03) + dua
     });
   }
 });
+
+describe('resolveProvenanceRows -- Lane 1 metals cohort SOURCED (beryllium + selenium, 2026-07-03)', () => {
+  // selenium: exactly one approved IRIS row + a same-valued needs_review BC P28 sibling ->
+  // approved-tiebreak (#461) attributes to the IRIS row, frame-independent (SOURCED, not scaffold).
+  it('attributes HH-direct selenium rfd to the single approved IRIS row (SOURCED)', () => {
+    const used: CalculatorUsedValue[] = [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'rfd',
+        value: 0.005,
+        unit: 'mg/kg-bw/day',
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'selenium',
+      },
+    ];
+    const [row] = resolveProvenanceRows(used);
+    expect(row.catalog_record).not.toBeNull();
+    expect(row.catalog_record?.qa_status).toBe('approved');
+    expect(row.catalog_record?.evidence_support_status).toBe('approved_source_backed');
+    expect(row.catalog_record?.jurisdiction).toBe('US_federal');
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-iris-selenium-hh-direct-rfd');
+    expect(row.sources.length).toBeGreaterThan(0);
+  });
+
+  // beryllium: dual-approved IRIS (US_federal) + HC (Canada_federal) at the identical value 0.002,
+  // plus a needs_review P28 sibling -> the approved-tiebreak cannot break the 2-approved tie, so the
+  // frame-aware jurisdiction tiebreak (#462) decides: HC under the default (BC) frame.
+  it('attributes HH-direct beryllium rfd to the Health Canada row under the default (BC) frame (SOURCED)', () => {
+    const used: CalculatorUsedValue[] = [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'rfd',
+        value: 0.002,
+        unit: 'mg/kg-bw/day',
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'beryllium',
+      },
+    ];
+    const [row] = resolveProvenanceRows(used);
+    expect(row.catalog_record).not.toBeNull();
+    expect(row.catalog_record?.qa_status).toBe('approved');
+    expect(row.catalog_record?.evidence_support_status).toBe('approved_source_backed');
+    expect(row.catalog_record?.jurisdiction).toBe('Canada_federal');
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-hc-beryllium-hh-direct-rfd');
+    expect(row.sources.length).toBeGreaterThan(0);
+  });
+
+  // beryllium under a US regulatory frame: the same dual-approved tie must prefer the US_federal
+  // (IRIS) row so provenance agrees with the frame's evidence filter (BC Protocol 1 4.4 HC-default
+  // applies only to BC/Canada frames).
+  it('attributes HH-direct beryllium rfd to the US EPA IRIS row under a US frame (SOURCED)', () => {
+    const used: CalculatorUsedValue[] = [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'rfd',
+        value: 0.002,
+        unit: 'mg/kg-bw/day',
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'beryllium',
+      },
+    ];
+    const [row] = resolveProvenanceRows(used, 'us-epa-usace-sediment');
+    expect(row.catalog_record).not.toBeNull();
+    expect(row.catalog_record?.qa_status).toBe('approved');
+    expect(row.catalog_record?.evidence_support_status).toBe('approved_source_backed');
+    expect(row.catalog_record?.jurisdiction).toBe('US_federal');
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-iris-beryllium-hh-direct-rfd');
+    expect(row.sources.length).toBeGreaterThan(0);
+  });
+});

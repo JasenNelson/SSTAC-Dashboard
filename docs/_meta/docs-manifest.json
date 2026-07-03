@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4878,
-        "source": "npm run test:ci output (2026-07-03; provenance resolver FRAME-AWARE jurisdiction tiebreak per BC Protocol 1 v5.0 s4.4: +4 regression tests -- naphthalene/pyrene resolve to Health Canada under BC/default frames and to US EPA IRIS under a US frame)",
+        "value": 4882,
+        "source": "npm run test:ci output (2026-07-03; Lane 1 metals cohort completed 6/6 -- beryllium + selenium re-wired build-first now that the #461 approved-tiebreak and #462 frame-aware jurisdiction tiebreak resolve them SOURCED: net +4 = Cluster E -1 (beryllium removed) + Lane 1 wiring +2 (beryllium, selenium) + resolver.integration SOURCED cases +3)",
         "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_lane1_beryllium_selenium": {
+      "status": "superseded",
+      "value": 4878,
+      "source": "provenance resolver FRAME-AWARE jurisdiction tiebreak (naphthalene/pyrene): 4878.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4882 (Lane 1 metals cohort completed 6/6: beryllium + selenium re-wired, net +4).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4882 after fix/mo-lane1-beryllium-selenium-2026-07-03 re-wired the two substances deferred in #458. The #461 approved-tiebreak (selenium: single approved IRIS row + a same-valued needs_review BC P28 sibling) and the #462 frame-aware jurisdiction tiebreak (beryllium: dual-approved IRIS US_federal + HC Canada_federal at 0.002 -- HC under BC/default frames, US EPA IRIS under a US frame) now resolve both SOURCED, so their oral RfD was wired build-first (beryllium 0.002, selenium 0.005; sf_oral null for both). Net +4: removed beryllium from the Cluster E dormant block (-1), added beryllium + selenium to the Lane 1 metals cohort HH wiring block (+2), and added a new 'Lane 1 metals cohort SOURCED' describe block in resolver.integration.test.ts with 3 cases (+3). The metals cohort (chromium_hexavalent, mercury_inorganic, uranium, vanadium_pentoxide, beryllium, selenium) is now 6/6 wired."
+    },
     "vitest_test_count_2026_07_03_pre_provenance_jurisdiction_tiebreak": {
       "status": "superseded",
       "value": 4874,
