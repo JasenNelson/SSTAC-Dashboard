@@ -2,21 +2,30 @@
 
 This is the consolidated worklist of MO items an autonomous overnight session identified but did NOT wire, because each needs an owner judgment (a value/source pick, a class call, a policy decision, or schema work). Nothing here was guessed or shipped. Items are grouped by lane. Cross-reference: the PCB-key ruling is detailed in `docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`; the full wiring pool can be regenerated with `node scripts/matrix-options/wire-recon.mjs`, which writes the local analysis artifact `scripts/matrix-options/_recon/wire_candidates.json` (not committed; regenerate locally to follow the audit trail, then discard -- do not stage it).
 
-## Section A -- Lane 4: methylmercury eco TRV (highest-value single decision)
+## Section A -- Lane 4: methylmercury eco TRV -- RESOLVED 2026-07-03 (PR #466, Option 3 dynamic)
 
-`methylmercury.trv_eco_mg_per_kg_bw_day` is currently null (a fabricated 0.000064 CCME citation was removed 2026-07-02). It is an ECO-ACTIVATION decision, not a simple backfill: `methylmercury.bsaf_loc_freshwater` is non-null (15), so writing a static `trv_eco` value goes LIVE and drives eco-food output (the exact static-driven path #449/#453 suppressed). Prior research found real CCME wildlife TRVs: mammal 22 and avian 31 ug/kg-bw/day (i.e. 0.000022 / 0.000031), plus a 33 ug/kg tissue guideline.
+STATUS: RESOLVED. Owner chose Option 3 (dynamic catalog rows, selenium-parity). Shipped in PR #466
+(`fix/mo-mehg-eco-food-dynamic-2026-07-03`). Two eco-food-bsaf rows generated from the staging file +
+a fleshed-out CCME source: `pv-eco-methylmercury-food-trveco-mammal-ccmetrg` = 0.022 and
+`-bird-ccmetrg` = 0.031 mg/kg-bw/day. Rows land needs_review/provisional -> `resolveEcoSeed` seeds them
+per receptor build-first; the library scalar `methylmercury.trv_eco_mg_per_kg_bw_day` stays null (no
+static-fallback leak). Promotion to approved is a separate owner HITL step (`promote-eco-source.mjs
+--source src-ccme-wildlife-trv-mehg`).
 
-OWNER OPTIONS:
+CORRECTED VALUES (verified against the LIVE CCME 2000 source 2026-07-03 -- do NOT use the numbers that
+were in this section before): CCME wildlife TDIs are mammal 22 and avian 31 **ug**/kg-bw/day =
+**0.022 / 0.031 mg/kg-bw/day**. The earlier "(i.e. 0.000022 / 0.000031)" in this section was a 1000x
+unit error (ug misread as ng) and must never be wired. The separate 33 ug/kg value is a TISSUE-residue
+guideline (avian-derived), not a dietary dose, and is NOT the eco-food-bsaf TRV.
 
-| Option | Description |
-|---|---|
-| Option 1 | wire mammal 0.000022 as the static default. |
-| Option 2 | wire avian 0.000031 as the static default. |
-| Option 3 | keep null and force the dynamic catalog resolver / explicit HITL receptor choice (the direction the benzo_a_pyrene note endorses for eco statics). Receptor-specific "carry both" is NOT expressible in the single scalar field -- it needs catalog rows filtered by species_groups in resolveEcoSeed + resolver/test work, out of scope for a static wire. |
+PROVENANCE: `pv-mehg-trv-eco` (the fabricated 0.000064 row) stays deleted; the new dynamic rows use
+`src-ccme-wildlife-trv-mehg` (stub fleshed out with the real CCME PDF url, tier_2, pre-promotion state).
 
-PROVENANCE NOTE: `pv-mehg-trv-eco` was deliberately deleted (fabricated source). Wiring a value also requires re-establishing a real catalog/provenance row, or the library default has no evidence record.
-
-Recommendation: confirm the CCME value against the live CCME source before wiring; Option 1 (mammal 0.000022) is the conservative default if a static value is chosen.
+Historical context (pre-resolution): this was an ECO-ACTIVATION decision, not a simple backfill --
+`methylmercury.bsaf_loc_freshwater` is non-null (15), so any live `trv_eco` drives eco-food output
+(the static-driven path #449/#453 suppressed). Dynamic rows were chosen precisely because the two
+receptor TRVs (mammal + bird) cannot both live in the single library scalar; the catalog path carries
+both and `resolveEcoSeed` selects by receptor (as it does for selenium/arsenic).
 
 ## Section B -- Lane 4: verified-null records (no action needed unless a source is found)
 
