@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4882,
-        "source": "npm run test:ci output (2026-07-03; Lane 1 metals cohort completed 6/6 -- beryllium + selenium re-wired build-first now that the #461 approved-tiebreak and #462 frame-aware jurisdiction tiebreak resolve them SOURCED: net +4 = Cluster E -1 (beryllium removed) + Lane 1 wiring +2 (beryllium, selenium) + resolver.integration SOURCED cases +3)",
+        "value": 4883,
+        "source": "npm run test:ci output (2026-07-03; methylmercury eco-food wildlife TDIs wired dynamically -- CCME 2000 mammal 0.022 + bird 0.031 mg/kg-bw/day as 2 needs_review eco_values.json rows, selenium-parity: net +1 new ecoSeed.test.ts methylmercury case; the eco-catalog-load/library/promote-eco-source count assertions were value updates, not new tests)",
         "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_mehg_eco_food": {
+      "status": "superseded",
+      "value": 4882,
+      "source": "Lane 1 metals cohort completed 6/6 (beryllium + selenium): 4882.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4883 (methylmercury eco-food wildlife TDIs wired dynamically: +1 ecoSeed.test.ts case).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4883 after fix/mo-mehg-eco-food-dynamic-2026-07-03 wired methylmercury's ecological food-web wildlife TRV dynamically (owner chose dynamic catalog rows / selenium-parity over a static library scalar). Two eco_values.json rows were generated from a new staging entry + fleshed-out CCME source (pv-eco-methylmercury-food-trveco-mammal-ccmetrg 0.022 + -bird-ccmetrg 0.031 mg/kg-bw/day; CCME 2000 Canadian Tissue Residue Guidelines, live-verified 2026-07-03 -- the mammalian TDI 22 ug/kg-bw/day = 0.022 and avian TDI 31 ug/kg-bw/day = 0.031; the owner-decisions-queue mg conversion 0.000022/0.000031 was a 1000x error, corrected here). Rows land needs_review/provisional (build-first; resolveEcoSeed seeds them per receptor) pending owner promotion to approved via promote-eco-source.mjs. Net +1 test = a new ecoSeed.test.ts methylmercury mammal/bird case; the eco-catalog-load (97->99, trv 45->47), library audit (valueGroups 1682->1683, pendingSourceLocator 362->364, availableOptions 1706->1708), and promote-eco-source (4->5 sources, 97->99) assertions were value updates, not new tests. The deleted pv-mehg-trv-eco (fabricated 0.000064) stays deleted."
+    },
     "vitest_test_count_2026_07_03_pre_lane1_beryllium_selenium": {
       "status": "superseded",
       "value": 4878,

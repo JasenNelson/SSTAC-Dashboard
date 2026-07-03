@@ -59,6 +59,10 @@ export const ECO_SOURCE_CONFIG = {
     expectedCount: 1, pathway: 'eco-direct-eqp', inputKey: 'fcv_ug_per_L',
     label: 'CCME CWQG aquatic-life -- chloroform interim freshwater guideline (1992)',
   },
+  'src-ccme-wildlife-trv-mehg': {
+    expectedCount: 2, pathway: 'eco-food-bsaf', inputKey: 'trv_eco_mg_per_kg_bw_day',
+    label: 'CCME methylmercury wildlife TRVs (Canadian Tissue Residue Guidelines for the Protection of Wildlife Consumers of Aquatic Biota, 2000)',
+  },
 };
 
 export function parseArgs(argv) {

@@ -89,7 +89,11 @@ describe('matrix options evidence library helpers', () => {
     // eco-food-bsaf__total_pcbs_aroclor_1254__trv_eco_mg_per_kg_bw_day__general,
     // eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__general). The companion promotion
     // (pv-pcb-fcv re-cited + approved) reuses its EXISTING candidate group, so it adds none.
-    expect(view.valueGroups).toHaveLength(1682);
+    // 2026-07-03: +1 (1682 -> 1683) -- methylmercury eco-food wildlife TDIs wired dynamically
+    // (CCME 2000, mammal 0.022 + bird 0.031 mg/kg-bw/day). Both rows share ONE new candidate group
+    // eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__Canada_federal (distinct from the
+    // deleted __general scaffold group), so they add +1 unique group. needs_review/provisional.
+    expect(view.valueGroups).toHaveLength(1683);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -188,10 +192,14 @@ describe('matrix options evidence library helpers', () => {
     // twins of the verification-packet rows; the other 351 stay pending (re-keyed to v3.0). = 366.
     // 2026-07-02: -1 (366 -> 365) -- pv-bap-trv-eco (pending_source_locator) deleted by the
     // current-default integrity fix.
+    // 2026-07-03: +2 (362 -> 364) -- methylmercury eco-food wildlife TDIs wired dynamically (CCME
+    // 2000; pv-eco-methylmercury-food-trveco-mammal-ccmetrg 0.022 + -bird-ccmetrg 0.031). Generated
+    // needs_review, so both rows are pending_source_locator until owner promotion (--apply flips them
+    // to approved_source_backed).
     // 2026-07-02b: -3 (365 -> 362) -- eco-statics correction DELETED 3 more fabricated-source
     // current_default scaffolds, all pending_source_locator (pv-bap-fcv, pv-pcb-trv-eco,
     // pv-mehg-trv-eco).
-    expect(view.audit.values.pendingSourceLocator).toBe(362);
+    expect(view.audit.values.pendingSourceLocator).toBe(364);
     // 2026-07-02b: -1 (65 -> 64) -- pv-pcb-fcv moved OUT of current_calculator_scaffold when promoted
     // to approved_source_backed (see approvedSourceBacked above).
     expect(view.audit.values.currentCalculatorScaffold).toBe(64);
@@ -219,7 +227,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-06-19: +1 -- CCME chloroform eco-direct row (available_option) = 1706.
     // 2026-06-20c: +4 -- US EPA 2024 PFOA/PFOS RfD rows (available_option) = 1710.
     // 2026-06-22: -4 -- BC P28 source dedup deleted 4 exact-duplicate available_option HH rows = 1706.
-    expect(view.audit.values.availableOptions).toBe(1706);
+    // 2026-07-03: +2 (1706 -> 1708) -- methylmercury eco-food wildlife TDIs (CCME 2000; mammal 0.022
+    // + bird 0.031), both default_status available_option.
+    expect(view.audit.values.availableOptions).toBe(1708);
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
