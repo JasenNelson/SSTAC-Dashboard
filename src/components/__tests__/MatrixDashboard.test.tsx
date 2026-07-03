@@ -211,17 +211,20 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('substance change in SharedGlobalInputs flows through to the active EcoDirect calculator (substance summary updates)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    // Default substance = B[a]P.
-    expect(
-      screen.getByTestId('eqp-substance-summary').textContent,
-    ).toMatch(/Benzo\[a\]pyrene/);
-    // Change substance to PCBs.
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'total_pcbs_aroclor_1254' },
-    });
+    // Default substance = Total PCBs (Aroclor 1254). benzo_a_pyrene's fcv_ug_per_L was nulled
+    // 2026-07-02 (fabricated-source demotion -- see substanceLibrary.ts notes), which drops it out of
+    // SharedGlobalInputs' EQP_CAPABLE filter (logKow !== null && fcv_ug_per_L !== null); PCBs is the
+    // next EqP-capable library row and becomes DEFAULT_SUBSTANCE_KEY.
     expect(
       screen.getByTestId('eqp-substance-summary').textContent,
     ).toMatch(/PCBs/);
+    // Change substance to B[a]P.
+    fireEvent.change(screen.getByTestId('shared-substance-select'), {
+      target: { value: 'benzo_a_pyrene' },
+    });
+    expect(
+      screen.getByTestId('eqp-substance-summary').textContent,
+    ).toMatch(/Benzo\[a\]pyrene/);
   });
 
   it('jurisdiction change in SharedGlobalInputs persists to localStorage', () => {
@@ -309,12 +312,16 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     window.localStorage.setItem(LS_SUBSTANCE, 'made_up_substance');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    // Substance dropdown shows the default EqP-capable row.
+    // Substance dropdown shows the default EqP-capable row. benzo_a_pyrene's fcv_ug_per_L was nulled
+    // 2026-07-02 (fabricated-source demotion), dropping it out of the EQP_CAPABLE filter; Total PCBs
+    // (Aroclor 1254) is the next EqP-capable row and is now the default.
     expect(
       (screen.getByTestId('shared-substance-select') as HTMLSelectElement)
         .value,
-    ).toBe('benzo_a_pyrene');
-    expect(window.localStorage.getItem(LS_SUBSTANCE)).toBe('benzo_a_pyrene');
+    ).toBe('total_pcbs_aroclor_1254');
+    expect(window.localStorage.getItem(LS_SUBSTANCE)).toBe(
+      'total_pcbs_aroclor_1254',
+    );
   });
 
   it('falls back to default jurisdiction when an unknown jurisdiction is persisted', () => {
@@ -359,14 +366,25 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('shows active calculator value search instead of quick-reference copy', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
+    // Explicitly select benzo_a_pyrene: it is no longer the DEFAULT_SUBSTANCE_KEY (its fcv_ug_per_L
+    // was nulled 2026-07-02, dropping it out of the EQP_CAPABLE filter -- Total PCBs is now default),
+    // but this test's assertions are specifically about B[a]P's needs_review logKow scaffold, so
+    // select it explicitly to keep exercising the same content.
+    fireEvent.change(screen.getByTestId('shared-substance-select'), {
+      target: { value: 'benzo_a_pyrene' },
+    });
 
     const panel = screen.getByTestId('calculator-value-search-panel');
     expect(panel).toHaveTextContent(/Value lookup/i);
     expect(panel).toHaveTextContent(/Benzo\[a\]pyrene/i);
     expect(panel).toHaveTextContent(/Ecological Direct Contact/i);
     expect(panel).toHaveTextContent(/Choose the substance of interest/i);
+    // The FCV suggestion no longer matches B[a]P: pv-bap-fcv was DELETED 2026-07-02 (fabricated-
+    // source demotion -- see substanceLibrary.ts notes), so no eco-direct-eqp FCV catalog row exists
+    // for this substance at all. The remaining catalog row (logKow) still surfaces its own
+    // suggestion + needs_review / ESB Tier-2 provenance.
     expect(
-      within(panel).getByRole('button', { name: /^FCV$/ }),
+      within(panel).getByRole('button', { name: /^Log Kow$/ }),
     ).toBeInTheDocument();
     expect(panel).toHaveTextContent(/Needs original-source verification/i);
     expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
@@ -465,6 +483,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
 
+    // Default substance is now Total PCBs (Aroclor 1254): benzo_a_pyrene's fcv_ug_per_L was nulled
+    // 2026-07-02 (fabricated-source demotion), dropping it out of the EQP_CAPABLE filter. pv-pcb-fcv
+    // is the receipt's FCV row now (re-cited + promoted to approved_source_backed the same day).
     const calculatorPanel = screen.getAllByTestId('calculator-provenance-panel')[0];
     fireEvent.click(
       within(calculatorPanel).getByText(/References and provenance/),
@@ -476,10 +497,10 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     );
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
-    expect(screen.getByText(/Value: pv bap fcv/i)).toBeInTheDocument();
+    expect(screen.getByText(/Value: pv pcb fcv/i)).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
-      /Benzo\[a\]pyrene FCV/,
+      /Aroclor 1254 FCV/,
     );
   });
 

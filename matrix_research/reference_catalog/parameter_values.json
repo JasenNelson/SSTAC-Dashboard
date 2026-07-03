@@ -41,47 +41,6 @@
     "evidence_support_status": "pending_source_locator"
   },
   {
-    "parameter_value_id": "pv-bap-fcv",
-    "substance_key": "benzo_a_pyrene",
-    "pathway": "eco-direct-eqp",
-    "input_key": "fcv_ug_per_L",
-    "display_name": "Benzo[a]pyrene FCV",
-    "value": 0.014,
-    "unit": "ug/L",
-    "value_type": "single_value",
-    "default_status": "current_default",
-    "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
-    "source_ids": [
-      "src-us-epa-esb-tier2-nonionic-organics-2008"
-    ],
-    "equation_ids": [
-      "eq-eco-direct-eqp-di-toro"
-    ],
-    "jurisdiction": "general",
-    "applicability": "Eco-Direct EqP water chronic value anchor.",
-    "uncertainty": null,
-    "review_notes": "Current source-library comment calls this a US EPA Tier II SCV anchor. Needs exact source and table.",
-    "evidence_items": [
-      {
-        "source_id": "src-us-epa-esb-tier2-nonionic-organics-2008",
-        "locator": "Current calculator substance library; source page/table pending",
-        "value_text": "0.014 ug/L",
-        "extraction_method": "current_calculator_scaffold",
-        "extracted_by": "codex",
-        "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
-        "evidence_id": "ev-pv-bap-fcv-1",
-        "locator_type": "current_calculator"
-      }
-    ],
-    "candidate_group_id": "eco-direct-eqp__benzo_a_pyrene__fcv_ug_per_L__general",
-    "evidence_support_status": "pending_source_locator"
-  },
-  {
     "parameter_value_id": "pv-bap-bsaf-freshwater",
     "substance_key": "benzo_a_pyrene",
     "pathway": "eco-food-bsaf",
@@ -174,9 +133,9 @@
     "value_type": "single_value",
     "default_status": "current_default",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
+    "qa_status": "approved",
     "source_ids": [
-      "src-current-calculator-design-v1"
+      "src-us-epa-nrwqc-aquatic-life-live"
     ],
     "equation_ids": [
       "eq-eco-direct-eqp-di-toro"
@@ -184,66 +143,26 @@
     "jurisdiction": "general",
     "applicability": "Eco-Direct EqP screening placeholder.",
     "uncertainty": null,
-    "review_notes": "Current library says PCB FCV is substance-specific and this is a screening placeholder pending congener-mixture review.",
+    "review_notes": "Current library says PCB FCV is substance-specific and this is a screening placeholder pending congener-mixture review. [Re-cited to the real US EPA NRWQC total-PCBs chronic criterion (0.014 ug/L; covers Aroclor analyses) and PROMOTED to approved (evidence approved_source_backed, source direct_source_verified) on 2026-07-02 by J. Nelson; the prior placeholder-source language above is superseded.]",
     "evidence_items": [
       {
-        "source_id": "src-current-calculator-design-v1",
-        "locator": "Current calculator substance library; source page/table pending",
+        "source_id": "src-us-epa-nrwqc-aquatic-life-live",
+        "locator": "EPA National Recommended Water Quality Criteria - Aquatic Life Criteria Table, total PCBs chronic (CCC)",
         "value_text": "0.014 ug/L",
-        "extraction_method": "current_calculator_scaffold",
+        "extraction_method": "manual_source_extraction",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Placeholder needs owner confirmation before it can be promoted.",
+        "qa_status": "approved",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-07-02",
+        "note": "Re-verified 2026-07-02: the EPA NRWQC total-PCBs chronic criterion (CCC) is 0.014 ug/L and explicitly covers the sum of all congener/isomer/homolog/Aroclor analyses. The prior \"current calculator scaffold\" placeholder citation is superseded.",
         "evidence_id": "ev-pv-pcb-fcv-1",
-        "locator_type": "current_calculator"
+        "locator_type": "source_table"
       }
     ],
     "candidate_group_id": "eco-direct-eqp__total_pcbs_aroclor_1254__fcv_ug_per_L__general",
-    "evidence_support_status": "current_calculator_scaffold"
-  },
-  {
-    "parameter_value_id": "pv-pcb-trv-eco",
-    "substance_key": "total_pcbs_aroclor_1254",
-    "pathway": "eco-food-bsaf",
-    "input_key": "trv_eco_mg_per_kg_bw_day",
-    "display_name": "Aroclor 1254 mammalian wildlife TRV",
-    "value": 0.00012,
-    "unit": "mg/kg-bw/day",
-    "value_type": "single_value",
-    "default_status": "current_default",
-    "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
-    "source_ids": [
-      "src-us-epa-eco-ssl-pcb"
-    ],
-    "equation_ids": [
-      "eq-eco-food-bsaf"
-    ],
-    "jurisdiction": "general",
-    "applicability": "Eco-Food BSAF pathway.",
-    "uncertainty": null,
-    "review_notes": "Confirm exact Eco-SSL TRV derivation basis.",
-    "evidence_items": [
-      {
-        "source_id": "src-us-epa-eco-ssl-pcb",
-        "locator": "Current calculator substance library; source page/table pending",
-        "value_text": "0.00012 mg/kg-bw/day",
-        "extraction_method": "current_calculator_scaffold",
-        "extracted_by": "codex",
-        "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
-        "evidence_id": "ev-pv-pcb-trv-eco-1",
-        "locator_type": "current_calculator"
-      }
-    ],
-    "candidate_group_id": "eco-food-bsaf__total_pcbs_aroclor_1254__trv_eco_mg_per_kg_bw_day__general",
-    "evidence_support_status": "pending_source_locator"
+    "evidence_support_status": "approved_source_backed",
+    "canonical_source_status": "direct_source_verified"
   },
   {
     "parameter_value_id": "pv-pcb-bsaf-freshwater",
@@ -284,47 +203,6 @@
       }
     ],
     "candidate_group_id": "eco-food-bsaf__total_pcbs_aroclor_1254__bsaf_loc_freshwater__general",
-    "evidence_support_status": "pending_source_locator"
-  },
-  {
-    "parameter_value_id": "pv-mehg-trv-eco",
-    "substance_key": "methylmercury",
-    "pathway": "eco-food-bsaf",
-    "input_key": "trv_eco_mg_per_kg_bw_day",
-    "display_name": "Methylmercury wildlife TRV",
-    "value": 0.000064,
-    "unit": "mg/kg-bw/day",
-    "value_type": "single_value",
-    "default_status": "current_default",
-    "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
-    "source_ids": [
-      "src-ccme-wildlife-trv-mehg"
-    ],
-    "equation_ids": [
-      "eq-eco-food-bsaf"
-    ],
-    "jurisdiction": "general",
-    "applicability": "MeHg protein-normalized Eco-Food path.",
-    "uncertainty": null,
-    "review_notes": "Confirm exact CCME wildlife TRV source and receptor basis.",
-    "evidence_items": [
-      {
-        "source_id": "src-ccme-wildlife-trv-mehg",
-        "locator": "Current calculator substance library; source page/table pending",
-        "value_text": "0.000064 mg/kg-bw/day",
-        "extraction_method": "current_calculator_scaffold",
-        "extracted_by": "codex",
-        "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
-        "evidence_id": "ev-pv-mehg-trv-eco-1",
-        "locator_type": "current_calculator"
-      }
-    ],
-    "candidate_group_id": "eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__general",
     "evidence_support_status": "pending_source_locator"
   },
   {

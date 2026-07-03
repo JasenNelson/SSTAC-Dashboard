@@ -150,10 +150,12 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
-    // Total PCBs library TRV = 0.00012.
+    // Total PCBs library TRV was nulled 2026-07-02 (fabricated-source demotion -- see
+    // substanceLibrary.ts total_pcbs_aroclor_1254 notes: the prior 0.00012 cited a nonexistent EPA
+    // Eco-SSL PCB document), so the re-seed now clears to blank.
     expect(
       (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
-    ).toBe('0.00012');
+    ).toBe('');
     // BSAF re-seeds too (PCBs library = 2.0).
     expect(
       (screen.getByTestId('ecofood-bsaf-input') as HTMLInputElement).value,
@@ -381,8 +383,11 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(
       screen.getByTestId('eco-food-bsaf-calculator'),
     ).toBeInTheDocument();
+    // Default substance is DEFAULT_SUBSTANCE_KEY (SharedGlobalInputs' EQP_CAPABLE[0]). B[a]P's
+    // fcv_ug_per_L was nulled 2026-07-02 (fabricated-source demotion -- see substanceLibrary.ts
+    // notes), dropping it out of EQP_CAPABLE; Total PCBs (Aroclor 1254) is now first.
     const summary = screen.getByTestId('ecofood-substance-summary');
-    expect(summary.textContent).toMatch(/Benzo\[a\]pyrene/);
+    expect(summary.textContent).toMatch(/PCBs/);
   });
 
   // Eco-wiring Step 5: receptor selector + catalog TRV seeding + relaxed BSAF gate.
@@ -412,10 +417,12 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     expect(
       screen.queryByTestId('ecofood-receptor-select'),
     ).not.toBeInTheDocument();
-    // TRV falls back to the library value; no provisional badge.
+    // TRV falls back to the library value; no eco-food catalog rows exist for this substance, and the
+    // library value itself was nulled 2026-07-02 (fabricated-source demotion -- see
+    // substanceLibrary.ts total_pcbs_aroclor_1254 notes), so the fallback is now blank.
     expect(
       (screen.getByTestId('ecofood-trv-input') as HTMLInputElement).value,
-    ).toBe('0.00012');
+    ).toBe('');
     expect(
       screen.queryByTestId('ecofood-trv-provisional-badge'),
     ).not.toBeInTheDocument();
@@ -469,10 +476,13 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
   });
 
   // Suppression regression (2026-07-02 fix): eco-food-bsaf is unsupported under
-  // ccme-sediment-quality for total_pcbs_aroclor_1254. The substance library still carries a
-  // non-null TRV (0.00012) AND a non-null BSAF (2.0) -- the non-null BSAF means the legacy
-  // not-applicable block does NOT fire (bsaf_loc_freshwater !== null), so the TRV field renders
-  // and must be suppressed to blank rather than showing the static library TRV.
+  // ccme-sediment-quality for total_pcbs_aroclor_1254. At the time of this fix the substance library
+  // still carried a non-null TRV (0.00012, later nulled the same day as a SEPARATE fabricated-source
+  // demotion -- see substanceLibrary.ts notes) AND a non-null BSAF (2.0) -- the non-null BSAF means
+  // the legacy not-applicable block does NOT fire (bsaf_loc_freshwater !== null), so the TRV field
+  // renders and must be suppressed to blank rather than showing the static library TRV. The
+  // assertion below (blank) is unaffected by the later TRV nulling -- both routes now converge on
+  // blank for this frame.
   it('suppresses the static library TRV fallback under an unsupported frame (total_pcbs_aroclor_1254, ccme-sediment-quality)', () => {
     render(
       <EcoFoodBSAFCalculator
