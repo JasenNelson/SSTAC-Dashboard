@@ -51,7 +51,7 @@ Applying standard exposed tidal flat $AF_d$ inputs to purely submerged pathways 
 
 ## References
 
-*   [Health Canada: Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments](https://publications.gc.ca/site/eng/9.832535/publication.html)
+*   [Health Canada: Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments](https://publications.gc.ca/site/eng/9.833859/publication.html)
 *   [ACFN: Lower Athabasca Surface Water and Sediment Quality Criteria for Protection of Indigenous Use](https://acfn.com/wp-content/uploads/2023/10/wqciu_report.pdf)
 
 ---
