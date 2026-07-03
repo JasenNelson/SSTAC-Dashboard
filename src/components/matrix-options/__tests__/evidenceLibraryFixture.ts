@@ -803,7 +803,7 @@ export const FIXTURE_SOURCE_RECORDS: SourceRecord[] =
   },
   {
     "source_id": "src-health-canada-hhra-2023",
-    "short_citation": "Health Canada HHRA guidance, 2023",
+    "short_citation": "Health Canada HHRA guidance, 2017",
     "title": "Federal Contaminated Site Risk Assessment in Canada: Supplemental Guidance on Human Health Risk Assessment of Contaminated Sediments: Direct Contact Pathway",
     "year": 2017,
     "publisher": "Health Canada",
