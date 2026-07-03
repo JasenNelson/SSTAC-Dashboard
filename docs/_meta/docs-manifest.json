@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4871,
-        "source": "npm run test:ci output (2026-07-03; Lane 1 metals cohort, 4 substances: net +2 = Cluster E block -2 wired keys + new 4-key metals wiring block; beryllium/selenium deferred pending current_default provenance rows)",
+        "value": 4874,
+        "source": "npm run test:ci output (2026-07-03; provenance resolver approved-tiebreak fallback: +3 regression tests locking in manganese/benzene/hexachlorobenzene resolving to their single approved catalog row)",
         "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_provenance_resolver_fallback": {
+      "status": "superseded",
+      "value": 4871,
+      "source": "Lane 1 metals cohort (4 substances): 4871.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4874 (provenance resolver approved-tiebreak fallback: +3 regression tests).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4874 after fix/mo-provenance-resolver-fallback-2026-07-03 added the approved-tiebreak fallback to resolveTupleRecord (fixes 39 needs_review-dupe unsourced HH-direct endpoints; the 2 dual-approved cases naphthalene/pyrene remain deferred) and 3 regression tests in resolver.integration.test.ts."
+    },
     "vitest_test_count_2026_07_03_pre_lane1_metals": {
       "status": "superseded",
       "value": 4869,

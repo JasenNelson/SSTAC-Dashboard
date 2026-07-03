@@ -126,6 +126,16 @@ function resolveTupleRecord(
       (c) => c.default_status === 'current_default',
     );
     if (currentDefaults.length === 1) return currentDefaults[0];
+    // Fallback (2026-07-03): no current_default broke the tie. If exactly one match is
+    // qa_status='approved' (the common shape: one approved IRIS/HC row + a same-valued
+    // needs_review BC Protocol 28 sibling), prefer the approved row. Scoped as a fallback
+    // AFTER the current_default check -- never a pre-filter -- so a curated current_default
+    // scaffold is never reattributed away from its row (a pre-filter regresses
+    // arsenic/zinc/cadmium/methylmercury/etc.; see resolver.integration.test). Genuinely
+    // dual-approved ties (e.g. IRIS + HC both approved at the same value) stay null, awaiting
+    // a current_default row.
+    const approved = matches.filter((c) => c.qa_status === 'approved');
+    if (approved.length === 1) return approved[0];
   }
   return null;
 }
