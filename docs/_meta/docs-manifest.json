@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4874,
-        "source": "npm run test:ci output (2026-07-03; provenance resolver approved-tiebreak fallback: +3 regression tests locking in manganese/benzene/hexachlorobenzene resolving to their single approved catalog row)",
+        "value": 4878,
+        "source": "npm run test:ci output (2026-07-03; provenance resolver FRAME-AWARE jurisdiction tiebreak per BC Protocol 1 v5.0 s4.4: +4 regression tests -- naphthalene/pyrene resolve to Health Canada under BC/default frames and to US EPA IRIS under a US frame)",
         "last_verified": "2026-07-03"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_provenance_jurisdiction_tiebreak": {
+      "status": "superseded",
+      "value": 4874,
+      "source": "provenance resolver approved-tiebreak fallback: 4874.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4878 (FRAME-AWARE jurisdiction tiebreak per BC Protocol 1 s4.4: +4 regression tests).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4878 after fix/mo-provenance-jurisdiction-tiebreak-2026-07-03 made the dual-approved jurisdiction tiebreak FRAME-AWARE: it ranks the tied approved candidates by the active frame's source priority (defaultSelectionPolicy getFrameJurisdictionRank). Under BC/Canada/default frames Canada_federal (Health Canada) outranks US_federal per BC Protocol 1 v5.0 Section 4.4 (HC default where values are concordant); under a US frame (us-epa-usace-sediment) US_federal (IRIS) wins so provenance agrees with the frame. The explicit current_default tiebreak still overrides. Fixes the 2 dual-approved unsourced cases (naphthalene, pyrene) frame-appropriately; added 4 regression tests (2 HC-default + 2 US-frame)."
+    },
     "vitest_test_count_2026_07_03_pre_provenance_resolver_fallback": {
       "status": "superseded",
       "value": 4871,
