@@ -92,7 +92,58 @@ describe('resolveProvenanceRows -- approved-tiebreak fallback (2026-07-03) + dua
       expect(row.sources.length).toBeGreaterThan(0);
     });
   }
-  // NOTE: the 2 genuinely dual-approved cases (naphthalene, pyrene -- IRIS + HC both approved at the
-  // same value) are NOT fixed here; no qa_status rule can break that tie. They need an owner
-  // jurisdiction pick (IRIS vs HC) + a current_default marker, deferred to a follow-up.
+  // dual-approved: US EPA IRIS (US_federal) + Health Canada (Canada_federal) both approve the same
+  // value. The Canada_federal jurisdiction default (BC Protocol 1 v5.0 Section 4.4: Health Canada is
+  // the default source where values are concordant) now resolves these to the HC row.
+  const dualApprovedHC: Array<{ substance: string; value: number; pvid: string }> = [
+    { substance: 'naphthalene', value: 0.02, pvid: 'pv-hc-naphthalene-hh-direct-rfd' },
+    { substance: 'pyrene', value: 0.03, pvid: 'pv-hc-pyrene-hh-direct-rfd' },
+  ];
+  for (const c of dualApprovedHC) {
+    it(`attributes HH-direct ${c.substance} rfd to the Health Canada row (Protocol 1 4.4 default)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe('Canada_federal');
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+    });
+  }
+
+  // Frame-aware: under a US regulatory frame the same dual-approved tie must prefer the US_federal
+  // (IRIS) row instead of Health Canada, so the primary provenance agrees with the frame's evidence
+  // filter (BC Protocol 1 4.4 HC-default applies only to BC/Canada frames).
+  const usFrameDualApproved: Array<{ substance: string; value: number; pvid: string }> = [
+    { substance: 'naphthalene', value: 0.02, pvid: 'pv-iris-naphthalene-hh-direct-rfd' },
+    { substance: 'pyrene', value: 0.03, pvid: 'pv-iris-pyrene-hh-direct-rfd' },
+  ];
+  for (const c of usFrameDualApproved) {
+    it(`attributes HH-direct ${c.substance} rfd to the US EPA IRIS row under a US frame`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used, 'us-epa-usace-sediment');
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.jurisdiction).toBe('US_federal');
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+    });
+  }
 });

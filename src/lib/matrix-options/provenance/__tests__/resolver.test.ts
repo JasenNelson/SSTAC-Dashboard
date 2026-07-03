@@ -39,6 +39,15 @@ vi.mock('../catalog', () => ({
     mockGetParameterValueRecordsForSubstance(s, p),
 }));
 
+// resolver.ts imports getFrameJurisdictionRank from the frame source-priority policy (used only in
+// the dual-approved jurisdiction tiebreak, which the real-catalog scenarios cover in
+// resolver.integration.test.ts). Mock it here so this ISOLATED unit suite does not pull the policy
+// module's transitive `../catalog` (PARAMETER_VALUE_RECORDS) import through its own catalog mock.
+// Returning null = "no frame jurisdiction preference", so the tiebreak is inert in these unit cases.
+vi.mock('../../defaultSelectionPolicy', () => ({
+  getFrameJurisdictionRank: () => null,
+}));
+
 function source(id: string): SourceRecord {
   return {
     source_id: id,

@@ -5,6 +5,11 @@ import {
   getPathwayEquationRecords,
   getSourceRecord,
 } from './catalog';
+import { getFrameJurisdictionRank } from '../defaultSelectionPolicy';
+import {
+  DEFAULT_REGULATORY_FRAME_ID,
+  type RegulatoryFrameId,
+} from '../regulatoryFrames';
 import type {
   CalculatorUsedValue,
   CalculatorValueRole,
@@ -103,6 +108,7 @@ function valuesMatch(
 // also shares the tuple.
 function resolveTupleRecord(
   usedValue: CalculatorUsedValue,
+  frameId: RegulatoryFrameId,
 ): ParameterValueRecord | null {
   const substanceKey = usedValue.substance_key;
   const pathway = usedValue.pathway;
@@ -131,22 +137,43 @@ function resolveTupleRecord(
     // needs_review BC Protocol 28 sibling), prefer the approved row. Scoped as a fallback
     // AFTER the current_default check -- never a pre-filter -- so a curated current_default
     // scaffold is never reattributed away from its row (a pre-filter regresses
-    // arsenic/zinc/cadmium/methylmercury/etc.; see resolver.integration.test). Genuinely
-    // dual-approved ties (e.g. IRIS + HC both approved at the same value) stay null, awaiting
-    // a current_default row.
+    // arsenic/zinc/cadmium/methylmercury/etc.; see resolver.integration.test).
     const approved = matches.filter((c) => c.qa_status === 'approved');
     if (approved.length === 1) return approved[0];
+    // Frame-aware jurisdiction default (2026-07-03): still tied among >1 APPROVED candidates -- e.g.
+    // US EPA IRIS (US_federal) and Health Canada (Canada_federal) both approve the identical value, as
+    // for naphthalene and pyrene. Rank the tied candidates by the ACTIVE frame's source priority
+    // (defaultSelectionPolicy SOURCE_PRIORITY_BY_FRAME via getFrameJurisdictionRank; lower = higher
+    // priority). Under a BC/Canada frame this ranks Canada_federal (Health Canada) above US_federal
+    // (IRIS), matching BC Protocol 1 v5.0 (2026-04-13) Section 4.4 (HC is the default source where
+    // values are concordant; US EPA only where more scientifically defensible). Under a US frame (e.g.
+    // us-epa-usace-sediment) US_federal outranks, so IRIS wins -- the primary provenance now agrees
+    // with the selected frame's evidence filter. Pick the single best-ranked candidate; if the top
+    // rank is itself tied, fall through to null. The explicit current_default tiebreak (checked first,
+    // above) still overrides this per-substance for a professional-judgment source pick.
+    if (approved.length > 1) {
+      const rankOf = (c: ParameterValueRecord): number => {
+        const r = getFrameJurisdictionRank(frameId, c);
+        return r === null ? Number.POSITIVE_INFINITY : r;
+      };
+      const bestRank = Math.min(...approved.map(rankOf));
+      if (Number.isFinite(bestRank)) {
+        const bestOnes = approved.filter((c) => rankOf(c) === bestRank);
+        if (bestOnes.length === 1) return bestOnes[0];
+      }
+    }
   }
   return null;
 }
 
 export function resolveProvenanceRows(
   usedValues: CalculatorUsedValue[],
+  frameId: RegulatoryFrameId = DEFAULT_REGULATORY_FRAME_ID,
 ): ResolvedProvenanceRow[] {
   return usedValues.map((usedValue) => {
     const catalogRecord = usedValue.parameter_value_id
       ? getParameterValueRecordById(usedValue.parameter_value_id) ?? null
-      : resolveTupleRecord(usedValue);
+      : resolveTupleRecord(usedValue, frameId);
     const unit = usedValue.unit ?? catalogRecord?.unit;
 
     return {

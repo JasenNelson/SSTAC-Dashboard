@@ -181,7 +181,7 @@ export default function CalculatorProvenancePanel({
   className,
   onOpenEvidenceLibrary,
 }: CalculatorProvenancePanelProps) {
-  const rows = resolveProvenanceRows(usedValues);
+  const rows = resolveProvenanceRows(usedValues, regulatoryFrameId);
   const equations = equationIds
     ? resolveEquationRecords(equationIds)
     : resolveEquationsForPathway(pathway);
