@@ -851,7 +851,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: alpha-Hexachlorocyclohexane (alpha-HCH), CAS 319-84-6. ATSDR (Agency for Toxic Substances and Disease Registry), Toxicological Profile for Hexachlorocyclohexane (HCH), Chapter 4 Chemical and Physical Information, Table 4-1 (Chemical Identity) and Table 4-2 (Physical and Chemical Propert...',
+    sources: 'Identity: alpha-Hexachlorocyclohexane (alpha-HCH), CAS 319-84-6. ATSDR Toxicological Profile for Hexachlorocyclohexane (HCH), Chapter 4, Table 4-1 (Chemical Identity) and Table 4-2 (Physical and Chemical Properties): log Kow = 3.8, footnote citing Hansch, C., Leo, A. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society; https://www.atsdr.cdc.gov/toxprofiles/tp43.pdf (PubChem CID 727 resolves to this CAS but carries no PUG-View LogP heading, so ATSDR is the correct primary source).',
     notes: 'Eco selectability. logKow 3.8 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -866,7 +866,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Azinphos-methyl, CAS 86-50-0. PubChem Compound CID 2268 (Azinphos-Methyl), LogP heading via PUG-View REST API: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2268/JSON?heading=LogP -- log Kow = 2.75, sourced from Hansch, C., Leo, A., Hoekman, D. Exploring QSAR - Hydrophobi...',
+    sources: 'Identity: Azinphos-methyl, CAS 86-50-0. PubChem Compound CID 2268, LogP heading via PUG-View REST API: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2268/JSON?heading=LogP -- log Kow = 2.75, sourced from Hansch, C., Leo, A., Hoekman, D. Exploring QSAR (1995), ACS, p. 72; corroborated by ILO-WHO ICSC #0826 (log Kow = 2.75).',
     notes: 'Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -881,7 +881,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Biphenyl, CAS 92-52-4. PubChem CID 7095 (Biphenyl), Computed/Experimental Properties and LogP section, citing Hansch C., Leo A., Hoekman D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS, p.97 (via HSDB); log Kow = 4.01. Identity (CAS 92-52-4, IUPAC 1,1\'-biph...',
+    sources: 'Identity: Biphenyl, CAS 92-52-4. PubChem CID 7095, LogP section citing Hansch C., Leo A., Hoekman D. (1995) Exploring QSAR, ACS, p.97 (via HSDB); log Kow = 4.01. IUPAC 1,1\'-biphenyl; value confirmed via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7095/JSON?heading=LogP.',
     notes: 'Eco selectability. logKow 4.01 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -896,7 +896,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Bromoform, CAS 75-25-2. PubChem CID 5558 (Bromoform), LogP heading, citing HSDB (Chemicals Inspection and Testing Institute, CSCL Japan 1992) log Kow = 2.40 and ILO-WHO ICSC 0108 = 2.38: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5558/JSON?heading=LogP . Identity/CAS c...',
+    sources: 'Identity: Bromoform, CAS 75-25-2. PubChem CID 5558, LogP heading citing HSDB (Chemicals Inspection and Testing Institute, CSCL Japan 1992) log Kow = 2.40 and ILO-WHO ICSC 0108 = 2.38: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5558/JSON?heading=LogP . Identity/CAS confirmed against PubChem CID 5558 (CAS RN 75-25-2).',
     notes: 'Eco selectability. logKow 2.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -911,7 +911,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 4-Bromophenyl phenyl ether, CAS 101-55-3. PubChem CID 7565 (4-Bromodiphenyl Ether; 1-bromo-4-phenoxybenzene; CAS 101-55-3): https://pubchem.ncbi.nlm.nih.gov/compound/7565 -- computed XLogP3 = 4.4, MolecularFormula C12H9BrO, SMILES C1=CC=C(C=C1)OC2=CC=C(C=C2)Br. US EPA CompTox Chemicals ...',
+    sources: 'Identity: 4-Bromophenyl phenyl ether, CAS 101-55-3. PubChem CID 7565 (1-bromo-4-phenoxybenzene): https://pubchem.ncbi.nlm.nih.gov/compound/7565 -- computed XLogP3 = 4.4, formula C12H9BrO. US EPA CompTox (DTXSID8023927, CASRN 101-55-3) corroborates identity; no experimental log Kow is reported in PubChem PUG-View, so log Kow = 4.4 is the PubChem-computed XLogP3 (Cheng et al., J. Chem. Inf. Model. 2007, 47(6), 2140-2148).',
     notes: 'Eco selectability. logKow 4.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -926,7 +926,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Butyl benzyl phthalate (BBP), CAS 85-68-7. PubChem CID 2347 (Butyl benzyl phthalate), https://pubchem.ncbi.nlm.nih.gov/compound/2347 -- CAS 85-68-7; molecular formula C19H20O4. Log Kow = 4.73 from Ellington JJ, Floyd TL, Octanol/water partition coefficients for eight phthalate esters, E...',
+    sources: 'Identity: Butyl benzyl phthalate (BBP), CAS 85-68-7. PubChem CID 2347: https://pubchem.ncbi.nlm.nih.gov/compound/2347 -- formula C19H20O4. Log Kow = 4.73 from Ellington JJ, Floyd TL, Octanol/water partition coefficients for eight phthalate esters, EPA/600/S-96/006 (1996), USEPA National Exposure Research Laboratory, as cited in HSDB via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2347/JSON?heading=LogP ; corroborated by ILO-WHO ICSC #0834 (log Kow = 4.77).',
     notes: 'Eco selectability. logKow 4.73 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -941,7 +941,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Carbaryl, CAS 63-25-2. PubChem CID 6129 (Carbaryl), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6129/JSON?heading=LogP), citing Hansch, Leo & Hoekman, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical S...',
+    sources: 'Identity: Carbaryl, CAS 63-25-2. PubChem CID 6129, LogP heading via PUG-View (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6129/JSON?heading=LogP), citing Hansch, Leo & Hoekman, Exploring QSAR, ACS 1995, p. 98 (log Kow = 2.36, peer reviewed, experimental); ILO-WHO ICSC 0121 reports 1.59 (not used).',
     notes: 'Eco selectability. logKow 2.36 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -956,7 +956,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Carbon tetrachloride, CAS 56-23-5. CAS, identity, and structure: PubChem CID 5566 (Carbon Tetrachloride), IUPAC name tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride, Poten...',
+    sources: 'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024.',
     notes: 'Eco selectability. logKow 2.64 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -971,7 +971,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Chlorpyrifos, CAS 2921-88-2. PubChem CID 2730 (Chlorpyrifos), LogP heading via PUG-View REST, citing HSDB / Sangster LOGKOW Database (log Kow = 4.96); EPA CompTox Chemicals Dashboard DTXSID4020458; CAS 2921-88-2. Corroborating: ILO-WHO International Chemical Safety Cards and HMDB (log K...',
+    sources: 'Identity: Chlorpyrifos, CAS 2921-88-2. PubChem CID 2730, LogP heading via PUG-View (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2730/JSON?heading=LogP), citing HSDB / Sangster LOGKOW Database (log Kow = 4.96, peer reviewed); EPA CompTox DTXSID4020458; corroborated by ILO-WHO ICSC and HMDB (both 4.96).',
     notes: 'Eco selectability. logKow 4.96 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -986,7 +986,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Demeton (technical, O+S isomer mixture), CAS 8065-48-3. PPDB: Pesticide Properties DataBase, AERU, University of Hertfordshire -- Demeton (Ref: ENT 17295), CAS 8065-48-3: https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1537.htm (Log P 3.21 at pH 7, 20 C, quality V3; Pow 1.62 x 10^3 calcu...',
+    sources: 'Identity: Demeton (technical, O+S isomer mixture), CAS 8065-48-3. PPDB: Pesticide Properties DataBase, AERU, University of Hertfordshire -- Demeton (Ref: ENT 17295): https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1537.htm (Log P 3.21 at pH 7, 20 C, quality V3 [unverified data of known source], calculated from ChemID/ChemSpider/PubChem; Pow 1.62 x 10^3 calculated at pH 7, 20 C).',
     notes: 'Eco selectability. logKow 3.21 (eco-direct EqP input). logKow 3.21 is single-source (AERU PPDB, quality V3 calculated); plausible but not independently corroborated -- upgrade when a stronger source is found. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1001,7 +1001,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Diazinon, CAS 333-41-5. PubChem Compound CID 3017 (Diazinon), US NIH National Library of Medicine. LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3017/JSON?heading=LogP -- log Kow = 3.81 (Hansch C., Leo A., Hoekman D., Exploring QSAR, ACS 1995, p.106; peer re...',
+    sources: 'Identity: Diazinon, CAS 333-41-5. PubChem CID 3017, LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3017/JSON?heading=LogP -- log Kow = 3.81 (Hansch C., Leo A., Hoekman D., Exploring QSAR, ACS 1995, p.106; peer reviewed, HSDB, experimental); HMDB0032943 = 3.81; ILO-WHO ICSC 0137 reports 3.11 (not used).',
     notes: 'Eco selectability. logKow 3.81 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1016,7 +1016,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Dibutyl phthalate (DBP), CAS 84-74-2. PubChem Compound Summary for CID 3026, Dibutyl Phthalate, U.S. National Library of Medicine / National Center for Biotechnology Information (https://pubchem.ncbi.nlm.nih.gov/compound/3026). CAS Registry Number 84-74-2. Log Kow = 4.50 from PubChem Oc...',
+    sources: 'Identity: Dibutyl phthalate (DBP), CAS 84-74-2. PubChem CID 3026 (https://pubchem.ncbi.nlm.nih.gov/compound/3026), CAS 84-74-2. Log Kow = 4.50 from PubChem LogP heading citing HSDB: Ellington JJ, Floyd TL, Octanol/water partition coefficients for eight phthalate esters, EPA/600/S-96/006 (1996), USEPA National Exposure Research Lab (peer reviewed, experimental); HMDB = 4.50; ILO-WHO ICSC reports 4.72 (not used).',
     notes: 'Eco selectability. logKow 4.5 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1031,7 +1031,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,2-Dichlorobenzene (o-dichlorobenzene), CAS 95-50-1. PubChem CID 7239 (https://pubchem.ncbi.nlm.nih.gov/compound/7239) experimental LogP heading, citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS, p. 17 (log Kow = 3.43, p...',
+    sources: 'Identity: 1,2-Dichlorobenzene (o-dichlorobenzene), CAS 95-50-1. PubChem CID 7239 (https://pubchem.ncbi.nlm.nih.gov/compound/7239; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=CAS). Experimental LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.43, experimental, peer-reviewed). Secondary, non-conflicting value 3.38 per ILO-WHO International Chemical Safety Cards (ICSC); not used (Hansch/ACS value retained as primary).',
     notes: 'Eco selectability. logKow 3.43 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1046,7 +1046,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,3-Dichlorobenzene, CAS 541-73-1. CAS and identity: Wikipedia, 1,3-Dichlorobenzene (https://en.wikipedia.org/wiki/1,3-Dichlorobenzene); PubChem CID 10943 (https://pubchem.ncbi.nlm.nih.gov/compound/10943). LogP: PubChem PUG-View LogP heading for CID 10943 (https://pubchem.ncbi.nlm.nih.g...',
+    sources: 'Identity: 1,3-Dichlorobenzene, CAS 541-73-1. CAS and identity: Wikipedia, 1,3-Dichlorobenzene (https://en.wikipedia.org/wiki/1,3-Dichlorobenzene); PubChem CID 10943 (https://pubchem.ncbi.nlm.nih.gov/compound/10943; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10943/JSON?heading=CAS). LogP: PubChem PUG-View LogP heading for CID 10943 (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10943/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.53, experimental). Concordant value 3.53 also per ILO-WHO International Chemical Safety Cards (ICSC).',
     notes: 'Eco selectability. logKow 3.53 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1061,7 +1061,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,4-Dichlorobenzene, CAS 106-46-7. PubChem CID 4685 (1,4-Dichlorobenzene), Compound Summary and LogP record, https://pubchem.ncbi.nlm.nih.gov/compound/4685 ; PubChem PUG-View LogP heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4685/JSON?heading=LogP (experimental ...',
+    sources: 'Identity: 1,4-Dichlorobenzene, CAS 106-46-7. PubChem CID 4685 (1,4-Dichlorobenzene), Compound Summary and LogP record, https://pubchem.ncbi.nlm.nih.gov/compound/4685 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4685/JSON?heading=CAS). PubChem PUG-View LogP heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4685/JSON?heading=LogP, citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, via Hazardous Substances Data Bank (HSDB) (log Kow = 3.44, experimental). Concordant value 3.44 also per Human Metabolome Database (HMDB); secondary, lower value 3.37 per ILO-WHO ICSC, not used (Hansch/HSDB value retained as primary).',
     notes: 'Eco selectability. logKow 3.44 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1076,7 +1076,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Diethyl phthalate (DEP), CAS 84-66-2. PubChem CID 6781 (LogP record: Hansch, Leo & Hoekman 1995 via HSDB; ILO-WHO ICSC Card 0258), https://pubchem.ncbi.nlm.nih.gov/compound/6781 ; PubChem REST identity (IUPAC name diethyl benzene-1,2-dicarboxylate, CAS 84-66-2); US EPA EPI Suite KOWWIN ...',
+    sources: 'Identity: Diethyl phthalate (DEP), CAS 84-66-2. PubChem CID 6781, https://pubchem.ncbi.nlm.nih.gov/compound/6781 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6781/JSON?heading=CAS; IUPAC name diethyl benzene-1,2-dicarboxylate). LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6781/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, p. 101, via Hazardous Substances Data Bank (HSDB) (log Kow = 2.47, experimental, peer-reviewed). Concordant value 2.47 also per ILO-WHO International Chemical Safety Cards (ICSC).',
     notes: 'Eco selectability. logKow 2.47 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1091,7 +1091,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Endosulfan (technical, mixed isomers), CAS 115-29-7. PubChem CID 3224 (Endosulfan), Experimental Properties - LogP, citing Hazardous Substances Data Bank (HSDB) and Hansch, C., Leo, A., Hoekman, D., Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Societ...',
+    sources: 'Identity: Endosulfan (technical, mixed isomers), CAS 115-29-7. PubChem CID 3224 (Endosulfan), https://pubchem.ncbi.nlm.nih.gov/compound/3224 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3224/JSON?heading=CAS). Experimental Properties - LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3224/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society: this heading reports log Kow = 3.83 (alpha-isomer) and log Kow = 3.62 (beta-isomer) -- i.e. PubChem\'s own technical/mixed-isomer CID 3224 record carries isomer-specific values, not one single technical-mixture number. The library\'s 3.83 for this "technical, mixed isomers" row is therefore the alpha-isomer literature value, not a distinct technical-blend measurement; this is consistent with (and explains) the existing notes-field flag "logKow flagged disputed across sources; value is defensible/representative." Secondary, concordant value 3.55/3.62 per ILO-WHO International Chemical Safety Cards (ICSC) for Endosulfan (Mixed Isomers).',
     notes: 'Eco selectability. logKow 3.83 (eco-direct EqP input). logKow flagged disputed across sources; value is defensible/representative. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1106,7 +1106,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: alpha-Endosulfan, CAS 959-98-8. CAS and identity confirmed via PubChem (alpha-Endosulfan, CID 12309460, C9H6Cl6O3S; https://pubchem.ncbi.nlm.nih.gov/compound/alpha-Endosulfan), NIST Chemistry WebBook (ID C959988; https://webbook.nist.gov/cgi/cbook.cgi?ID=C959988), LGC Standards and Sigm...',
+    sources: 'Identity: alpha-Endosulfan, CAS 959-98-8. CAS and identity confirmed via PubChem CID 12309460 (alpha-Endosulfan, C9H6Cl6O3S; https://pubchem.ncbi.nlm.nih.gov/compound/alpha-Endosulfan; CAS heading https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/12309460/JSON?heading=CAS) and NIST Chemistry WebBook (ID C959988; https://webbook.nist.gov/cgi/cbook.cgi?ID=C959988) -- NEITHER of these two records carries an experimental LogP/log Kow heading for this CAS/CID (PubChem CID 12309460 LogP heading query returns no data; NIST WebBook lists only mass spectrum, IR, phase-change, and GC data, no Kow). The verified log Kow = 4.74 value traces to Shen, L., Wania, F. (2005) "Compilation, Evaluation, and Selection of Physical-Chemical Property Data for Organochlorine Pesticides," Journal of Chemical & Engineering Data, 50(3), 742-768, DOI 10.1021/je049693f (internally-thermodynamically-consistency-adjusted literature review; reports log Kow = 4.74 for alpha-endosulfan and 4.78 for beta-endosulfan). Independently corroborated by the University of Hertfordshire PPDB (Pesticide Properties DataBase) record for alpha-endosulfan (log P = 4.74; https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1661.htm), sourced there from manufacturer safety data sheets (PPDB reliability code E3: unverified data of known source). LGC Standards and Sigma-Aldrich analytical-standard product pages corroborate identity/CAS only, not the logKow value itself.',
     notes: 'Eco selectability. logKow 4.74 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1121,7 +1121,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: beta-Endosulfan, CAS 33213-65-9. ATSDR (2015), Toxicological Profile for Endosulfan, Chapter 4 Chemical and Physical Information, Table 4-3 (Chemical Identity of beta-Endosulfan, CAS 33213-65-9) and Table 4-7 (Physical and Chemical Properties of beta-Endosulfan: Log Kow 3.62, citing HSD...',
+    sources: 'Identity: beta-Endosulfan, CAS 33213-65-9. ATSDR (2015), Toxicological Profile for Endosulfan (NCBI Bookshelf NBK592006), Chapter 4 Chemical and Physical Information, Table 4-3 (Chemical Identity of beta-Endosulfan, CAS 33213-65-9, C9H6Cl6O3S) and Table 4-7 (Physical and Chemical Properties of beta-Endosulfan: Log Kow = 3.62, citing HSDB 2010). Identity corroborated via NIST Chemistry WebBook (ID C33213659, beta-Endosulfan, CAS 33213-65-9; https://webbook.nist.gov/cgi/cbook.cgi?ID=C33213659). Note: PubChem CID 12309460 (returned by name/CAS lookup for "beta-Endosulfan" and "33213-65-9") is actually the alpha-Endosulfan primary record (CAS 959-98-8) with 33213-65-9 listed only as a cross-referenced synonym -- do not cite this CID as a distinct beta-Endosulfan identity source. Value verified: log Kow 3.62 (experimental, HSDB 2010) matches the wired logKow field.',
     notes: 'Eco selectability. logKow 3.62 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1136,7 +1136,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Heptachlor, CAS 76-44-8. PubChem Compound Summary, Heptachlor, CID 3589 (https://pubchem.ncbi.nlm.nih.gov/compound/Heptachlor) for CAS 76-44-8, IUPAC name, and log Kow = 6.10 (HSDB; Simpson CD et al., Bull Environ Contam Toxicol 55:149-53, 1995); secondary ICSC 0743 range 5.27/5.44. CAS...',
+    sources: 'Identity: Heptachlor, CAS 76-44-8. PubChem Compound Summary, Heptachlor, CID 3589 (https://pubchem.ncbi.nlm.nih.gov/compound/3589; confirmed C10H5Cl7, matches CAS 76-44-8) for IUPAC name and log Kow = 6.10 (experimental; HSDB, citing Simpson CD et al., Bull Environ Contam Toxicol 55:149-53, 1995, PMID 7663085). Secondary source: ILO-WHO International Chemical Safety Card ICSC 0743 (CAS 76-44-8; https://chemicalsafety.ilo.org/dyn/icsc/showcard.display?p_lang=en&p_card_id=0743), log Pow range 5.27-5.44. Wired logKow = 5.44 uses the ICSC upper-range/regulatory value (EqP-apt), not the PubChem/HSDB 6.10 value; see notes field.',
     notes: 'Eco selectability. logKow 5.44 (eco-direct EqP input). logKow 5.44 = ATSDR regulatory value (EqP-apt); PubChem/HSDB lists 6.10. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1151,7 +1151,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Heptachlor epoxide, CAS 1024-57-3. ATSDR (2022) Toxicological Profile for Heptachlor and Heptachlor Epoxide, NCBI Bookshelf NBK598049 (Environmental Fate sec. 6.3.1), citing Mackay 1982: log Kow = 5.40. Identity/CAS confirmed via PubChem (CID 15559699, Heptachlor epoxide, C10H5Cl7O; htt...',
+    sources: 'Identity: Heptachlor epoxide, CAS 1024-57-3. ATSDR (2022), Toxicological Profile for Heptachlor and Heptachlor Epoxide, NCBI Bookshelf NBK598049 (Potential for Human Exposure, sec. 6.3.1 Environmental Fate): log Kow = 5.40, citing Mackay 1982. Identity/CAS confirmed via PubChem (CID 15559699, Heptachlor epoxide, C10H5Cl7O; https://pubchem.ncbi.nlm.nih.gov/compound/15559699), which independently lists log Kow = 5.40 citing HSDB (Garten CT Jr, Trabalka JR; Environ Sci Technol 17:590-5, 1983). Both primary citations converge on the same value; wired logKow = 5.4 matches.',
     notes: 'Eco selectability. logKow 5.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1166,7 +1166,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Lindane (gamma-hexachlorocyclohexane), CAS 58-89-9. CAS and identity: ATSDR/U.S. EPA ToxFAQs factsheet \'Hexachlorocyclohexane, gamma\' (CAS 58-89-9; lindane), https://archive.epa.gov/epawaste/hazard/wastemin/web/pdf/hexagama.pdf ; PubChem CID 727 \'Lindane\', https://pubchem.ncbi.nlm.nih.g...',
+    sources: 'Identity: Lindane (gamma-hexachlorocyclohexane), CAS 58-89-9. CAS and identity: ATSDR/U.S. EPA ToxFAQs factsheet "Hexachlorocyclohexane, gamma" (CAS 58-89-9; lindane), https://archive.epa.gov/epawaste/hazard/wastemin/web/pdf/hexagama.pdf ; PubChem CID 727 "Lindane" (https://pubchem.ncbi.nlm.nih.gov/compound/727) corroborates CAS 58-89-9 but its own computed value is XLogP3 = 3.8, not the wired 3.5. Value source: PPDB (Pesticide Properties DataBase, AERU, University of Hertfordshire), Lindane report (https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/370.htm): log P = 3.50, citing EU regulatory/evaluation data (EC/EFSA RAR, DAR and Conclusion dossiers; EMA Annex III PIC DGD) -- this is the value that matches the wired logKow field. Note: a newer 2024 ATSDR HCH Toxicological Profile (NCBI Bookshelf) reports gamma-HCH log Kow = 3.72, a different regulatory estimate not used here.',
     notes: 'Eco selectability. logKow 3.5 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1181,7 +1181,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Hexachloroethane, CAS 67-72-1. PubChem CID 6214 (LogP heading, REST pug_view) citing Hansch, Leo & Hoekman, Exploring QSAR (ACS 1995) via HSDB: log Kow = 4.14; PubChem REST property API for IUPAC name/SMILES/formula (1,1,1,2,2,2-hexachloroethane, C2Cl6); ATSDR Toxicological Profile for ...',
+    sources: 'Identity: Hexachloroethane, CAS 67-72-1. PubChem CID 6214 (LogP heading, REST pug_view; https://pubchem.ncbi.nlm.nih.gov/compound/6214) citing Hansch, Leo & Hoekman, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants (ACS 1995, p.3, ref #37) via HSDB: log Kow = 4.14. Confirmed compound identity: C2Cl6, IUPAC 1,1,1,2,2,2-hexachloroethane, matches CAS 67-72-1. Secondary value on the same PubChem record: LogP = 3.9 (ILO-WHO ICSC, ref #39) -- not used; 4.14 (HSDB/Hansch) matches the wired logKow field. ATSDR Toxicological Profile for Hexachloroethane provides CAS/identity corroboration for the regulatory-toxicology framing of this substance.',
     notes: 'Eco selectability. logKow 4.14 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1196,7 +1196,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Malathion, CAS 121-75-5. NPIC (National Pesticide Information Center, Oregon State University / US EPA), Malathion Technical Fact Sheet, http://npic.orst.edu/factsheets/archive/malatech.html (CAS 121-75-5; log Kow 2.75, range 2.36-2.89). CAS corroborated by PubChem CID 4004 (https://pub...',
+    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Malathion, CAS 121-75-5. NPIC (National Pesticide Information Center, Oregon State University / US EPA), Malathion Technical Fact Sheet, http://npic.orst.edu/factsheets/archive/malatech.html (CAS 121-75-5; Octanol-Water Partition Coefficient log Kow: 2.75, range 2.36-2.89, refs 5-6). CAS corroborated by PubChem CID 4004 (https://pubchem.ncbi.nlm.nih.gov/compound/4004; C10H19O6PS2), which independently lists log Kow = 2.36 (Hansch, Leo, Hoekman 1995, via HSDB), 2 (HMDB), and 2.89 (ICSC) -- consistent with the NPIC range. Wired logKow = 2.75 matches the NPIC fact sheet\'s primary cited value.',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1211,7 +1211,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Methoxychlor, CAS 72-43-5. PubChem CID 4115 (Methoxychlor), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4115/JSON?heading=LogP (experimental log Kow 5.08, source HSDB / Hansch, Leo & Hoekman 1995; ILO-WHO ICSC 4.68/5.08). PubChem identity/CAS:...',
+    sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Methoxychlor, CAS 72-43-5. PubChem CID 4115 (Methoxychlor), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4115/JSON?heading=LogP -- experimental log Kow = 5.08, cited to Hazardous Substances Data Bank (HSDB Ref No. 28), citing Hansch C., Leo A., Hoekman D., Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (1995), p. 139; secondary value 4.68/5.08 per ILO-WHO International Chemical Safety Cards (ICSC, Ref No. 32). CAS 72-43-5 and identity confirmed at https://pubchem.ncbi.nlm.nih.gov/compound/4115 (PubChem CID 4115 = Methoxychlor, C16H15Cl3O2).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.08 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1226,7 +1226,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Mirex, CAS 2385-85-5. PubChem CID 16945 (Mirex), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/16945/JSON?heading=LogP), citing HSDB / Veith GD et al., J. Fish. Res. Bd. Can. 36(9):1040-1048 (1979). CAS 2385-85-5 corroborated by PubChem com...',
+    sources: 'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Mirex, CAS 2385-85-5. WIRED logKow = 5.28: ATSDR Toxicological Profile for Mirex and Chlordecone (2020), Table 4-2 Physical and Chemical Properties, log Kow = 5.28, footnote citing Niimi 1991 (https://www.ncbi.nlm.nih.gov/books/NBK590723/table/ch4.tab2/). ALTERNATE candidate logKow = 6.89: PubChem CID 16945 (Mirex), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/16945/JSON?heading=LogP), sourced from Hazardous Substances Data Bank (HSDB), citing Veith GD et al., J. Fish. Res. Bd. Can. 36(9):1040-1048 (1979). The two values diverge by ~2.6 log units (~40x in linear Kow); flagged for review; wired value uses the lower ATSDR/Niimi 1991 figure. CAS 2385-85-5 and identity (C10Cl12) confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Mirex (PubChem CID 16945).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.28 (eco-direct EqP input). logKow 5.28 = ATSDR (Niimi 1991); PubChem/HSDB lists 6.89 (Veith 1979) -- large spread (~40x), flagged for review. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1241,7 +1241,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Nonylphenol, CAS 84852-15-3. PubChem CID 67296 (Nonylphenol mixture), LogP record sourced from Hazardous Substances Data Bank (HSDB, Ref No. 22) citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, p. 1...',
+    sources: 'Identity: Nonylphenol, CAS 84852-15-3. PubChem CID 67296 (Nonylphenol, C15H24O), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/67296/JSON?heading=LogP -- log Kow = 5.71 (average of 3 isomers), sourced from Hazardous Substances Data Bank (HSDB) citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, p. 137. Value flagged disputed: technical nonylphenol (CAS 84852-15-3) is a mixture of ring/chain isomers; 5.71 is a representative isomer-average, not a single-compound measurement. CAS and identity confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Nonylphenol (PubChem CID 67296).',
     notes: 'Eco selectability. logKow 5.71 (eco-direct EqP input). logKow flagged disputed (technical nonylphenol is an isomer mixture); value is representative. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1256,7 +1256,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Parathion, CAS 56-38-2. PubChem CID 991 (Parathion), https://pubchem.ncbi.nlm.nih.gov/compound/991 -- LogP heading via PubChem REST PUG-View. Primary log Kow source: Hansch C, Leo A, Hoekman D, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS (1995), p. 76 (cited by H...',
+    sources: 'Identity: Parathion, CAS 56-38-2. PubChem CID 991 (Parathion, C10H14NO5PS), LogP heading via PUG-View REST: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/991/JSON?heading=LogP -- log Kow = 3.83, sourced from Hazardous Substances Data Bank (HSDB) citing Hansch C, Leo A, Hoekman D, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS (1995), p. 76; corroborated by Human Metabolome Database (HMDB, LogP = 3.83) and ILO-WHO International Chemical Safety Cards (ICSC, LogP = 3.8). CAS 56-38-2 and identity confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Parathion (PubChem CID 991).',
     notes: 'Eco selectability. logKow 3.83 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1271,7 +1271,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.0008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Pentachlorobenzene, CAS 608-93-5. CAS and identity: PubChem Compound CID 11855 (Pentachlorobenzene), CAS 608-93-5, https://pubchem.ncbi.nlm.nih.gov/compound/608-93-5 . log Kow = 5.18: PubChem PUG-View LogP heading for CID 11855 (Hazardous Substances Data Bank, citing Hansch C., Leo A., ...',
+    sources: 'US EPA IRIS oral RfD 0.0008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Pentachlorobenzene, CAS 608-93-5. CAS and identity: PubChem Compound CID 11855 (Pentachlorobenzene, C6HCl5), CAS 608-93-5, https://pubchem.ncbi.nlm.nih.gov/compound/608-93-5. log Kow = 5.18: PubChem PUG-View LogP heading for CID 11855 (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/11855/JSON?heading=LogP), sourced from Hazardous Substances Data Bank (HSDB), citing Hansch C., Leo A., Hoekman D., Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS (1995), p. 16; secondary range 5.03/5.63 per ILO-WHO International Chemical Safety Cards (ICSC).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.18 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1286,7 +1286,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.2 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: 1,1,2,2-Tetrachloroethane, CAS 79-34-5. PubChem Compound CID 6591 (1,1,2,2-tetrachloroethane), LogP heading, experimental log Kow = 2.39 citing Hansch, Leo & Hoekman (1995), Exploring QSAR, ACS, p. 4; corroborated by ILO-WHO ICSC. Identity (CAS 79-34-5, SMILES, IUPAC name) verified via ...',
+    sources: 'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.2 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: 1,1,2,2-Tetrachloroethane, CAS 79-34-5. PubChem Compound CID 6591 (1,1,2,2-tetrachloroethane), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6591/JSON?heading=LogP -- experimental log Kow = 2.39, sourced from Hazardous Substances Data Bank (HSDB), citing Hansch, Leo & Hoekman (1995), Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS, p. 4; corroborated by ILO-WHO International Chemical Safety Cards (ICSC, value 2.39). Identity (CAS 79-34-5, molecular formula C2H2Cl4) verified via https://pubchem.ncbi.nlm.nih.gov/compound/6591 (PubChem CID 6591).',
     notes: 'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.39 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1301,7 +1301,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Thallium, CAS 7440-28-0. Identity and CAS: American Elements, "Thallium Metal | High Purity 99%-99.9999% | CAS 7440-28-0" (https://www.americanelements.com/thallium-metal-7440-28-0), confirming elemental thallium Tl, atomic number 81, atomic weight 204.38, CAS 7440-28-0. PubChem CID 535...',
+    sources: 'Identity: Thallium, CAS 7440-28-0. Identity and CAS: American Elements, "Thallium Metal | High Purity 99%-99.9999% | CAS 7440-28-0" (https://www.americanelements.com/thallium-metal-7440-28-0), confirming elemental thallium Tl, atomic number 81, atomic weight 204.38, CAS 7440-28-0. PubChem CID 5359464 (Thallium, Tl), https://pubchem.ncbi.nlm.nih.gov/compound/5359464 (element record title \'Thallium | Tl\'), corroborating CAS 7440-28-0. No logKow applicable (elemental metal); no US EPA IRIS oral RfD or slope factor is posted for thallium metal -- HH fields left null accordingly.',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): Tl is not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1316,7 +1316,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Toxaphene, CAS 8001-35-2. PubChem CID 5284469 (Toxaphene), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5284469/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Fisk AT et al., Chemosphere 39:2549-2562 (1999), median lo...',
+    sources: 'Identity: Toxaphene, CAS 8001-35-2. PubChem CID 5284469 (Toxaphene), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5284469/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Fisk AT et al., Chemosphere 39:2549-2562 (1999), median log Kow = 5.90.',
     notes: 'Eco selectability. logKow 5.9 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1331,7 +1331,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995) for log Ko...',
+    sources: 'Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995), p. 16, log Kow = 4.02 (a secondary ILO-WHO ICSC value of 3.98 is also on record for the same compound).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 4.02 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1346,7 +1346,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: 1,1,1-Trichloroethane, CAS 71-55-6. PubChem CID 6278 (1,1,1-Trichloroethane), pug_view CAS and LogP headings, https://pubchem.ncbi.nlm.nih.gov/compound/6278 ; LogP source: Hansch C, Leo A, Hoekman D. Exploring QSAR - Hydrophobic, Electronic, and Steric Constants. Washington, DC: America...',
+    sources: 'Identity: 1,1,1-Trichloroethane, CAS 71-55-6. PubChem CID 6278 (1,1,1-Trichloroethane), pug_view CAS and LogP headings, https://pubchem.ncbi.nlm.nih.gov/compound/6278 ; LogP source: Hansch C, Leo A, Hoekman D. Exploring QSAR - Hydrophobic, Electronic, and Steric Constants. Washington, DC: American Chemical Society, 1995, p. 4, log Kow = 2.49 (corroborated by Human Metabolome Database HMDB0041791 and ILO-WHO ICSC Card No. 0079).',
     notes: 'Eco selectability. logKow 2.49 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1361,7 +1361,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Uranium, CAS 7440-61-1. PubChem Compound Summary for CID 23989, Uranium, U.S. National Library of Medicine (https://pubchem.ncbi.nlm.nih.gov/compound/23989; PUG-REST property query confirming molecular formula U and IUPAC name \'uranium\'). U.S. EPA Integrated Risk Information System (IRI...',
+    sources: 'Identity: Uranium, CAS 7440-61-1. PubChem Compound Summary for CID 23989, Uranium, U.S. National Library of Medicine (https://pubchem.ncbi.nlm.nih.gov/compound/23989; PUG-REST property query confirming molecular formula U and IUPAC name \'uranium\'). U.S. EPA Integrated Risk Information System (IRIS), "Uranium, natural," CASRN 7440-61-1, DTXSID1042522 (https://iris.epa.gov/ChemicalLanding/&substance_nmbr=259): assessment status is "under development" with no oral RfD or slope factor currently posted for this CASRN -- distinct from the separate 1989 "Uranium, soluble salts" assessment (CASRN Various, DTXSID7024374, chronic oral RfD 0.003 mg/kg-day, nephrotoxicity endpoint), which does not apply to elemental/natural-uranium CAS 7440-61-1.',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): uranyl, not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   {
@@ -1376,7 +1376,7 @@ export const SUBSTANCE_LIBRARY = [
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Vanadium, CAS 7440-62-2. PubChem Compound CID 23990 (Vanadium, V), https://pubchem.ncbi.nlm.nih.gov/compound/23990 (record title \'Vanadium | V\'). CAS 7440-62-2 corroborated by Sigma-Aldrich product 262935/774065 (https://www.sigmaaldrich.com/US/en/product/aldrich/262935), Spectrum Chemi...',
+    sources: 'Identity: Vanadium, CAS 7440-62-2. PubChem Compound CID 23990 (Vanadium, V), https://pubchem.ncbi.nlm.nih.gov/compound/23990 (record title \'Vanadium | V\'). CAS 7440-62-2 corroborated by Sigma-Aldrich product 262935 (Vanadium powder, -325 mesh, 99.5% trace metals basis, CAS 7440-62-2, https://www.sigmaaldrich.com/US/en/product/aldrich/262935) and product 774065 (Vanadium powder, -100 mesh, 99.9% trace metals basis, CAS 7440-62-2, https://www.sigmaaldrich.com/US/en/product/aldrich/774065). No logKow applicable (elemental metal); no oral RfD/SF wired -- HH fields left null accordingly.',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): vanadate, not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
   // ---------------------------------------------------------------------------
