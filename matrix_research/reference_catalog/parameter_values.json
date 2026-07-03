@@ -132,7 +132,7 @@
     "unit": "ug/L",
     "value_type": "single_value",
     "default_status": "current_default",
-    "extraction_status": "extracted_from_current_calculator",
+    "extraction_status": "extracted_from_source",
     "qa_status": "approved",
     "source_ids": [
       "src-us-epa-nrwqc-aquatic-life-live"
@@ -151,7 +151,7 @@
         "value_text": "0.014 ug/L",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "codex",
-        "extracted_at": "2026-05-23",
+        "extracted_at": "2026-07-02",
         "qa_status": "approved",
         "reviewed_by": "J. Nelson",
         "reviewed_at": "2026-07-02",

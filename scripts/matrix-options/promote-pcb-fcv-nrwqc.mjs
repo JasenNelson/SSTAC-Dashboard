@@ -140,7 +140,11 @@ export function planPromotion(paramValues, sources, _opts) {
     valueRecord.source_ids.length === 1 &&
     valueRecord.source_ids[0] === PCB_FCV_PROMOTION_SOURCE_ID &&
     valueRecord.evidence_items.every(
-      (ev) => ev.qa_status === 'approved' && ev.source_id === PCB_FCV_PROMOTION_SOURCE_ID,
+      (ev) =>
+        ev.qa_status === 'approved' &&
+        ev.source_id === PCB_FCV_PROMOTION_SOURCE_ID &&
+        ev.reviewed_by != null &&
+        ev.reviewed_at != null,
     );
   const expectedPre =
     valueRecord.qa_status === 'needs_review' &&
