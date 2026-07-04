@@ -440,7 +440,7 @@ export default function EcoFoodBSAFCalculator({
     >
       <header className="mb-4">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-          Eco-Food (BSAF) -- Wildlife / Fish Receptor
+          Eco-Food (BSAF) -- Wildlife consumers (bird/mammal)
         </h3>
         <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
           Back-calculated sediment benchmark via the lipid+OC-normalized
@@ -448,6 +448,11 @@ export default function EcoFoodBSAFCalculator({
           protein-normalized branch (design doc section 8.3); coastal-marine
           PAH bivalves apply the x15 multiplier (design doc section 8.2);
           anadromous salmonids default F_site = 0.2 (design doc section 8.4).
+        </p>
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Dietary-dose pathway for wildlife consumers (bird / mammal receptors).
+          Fish here is BSAF prey, not a protected receptor. For aquatic life
+          (fish, invertebrates, aquatic plants) use the Eco-Direct (EqP) pathway.
         </p>
         {substance && (
           <p
