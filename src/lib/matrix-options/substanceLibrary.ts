@@ -136,18 +136,15 @@ export const SUBSTANCE_LIBRARY = [
     logKow: null,
     // Dietary value (1.0e-3); drinking-water value (5.0e-4) available if HITL
     // overrides for water-pathway exposures.
-    rfd_oral_mg_per_kg_bw_per_day: 1.0e-3,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0008,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS Cd',
-    notes:
-      'Drinking-water RfD (5.0e-4) available for water-pathway scenarios; ' +
-      'default here is the dietary value (1.0e-3). static eco TRV removed ' +
-      '(stale Eco-SSL not in catalog; dynamic resolver supplies it).',
+    sources: 'Health Canada FCSAP TRV v4.0 (2021) provisional oral TDI 0.0008 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; WHO 2011, nephrotoxicity/renal tubular dysfunction; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS values (dietary 0.001, water 0.0005; 1989) remain available as candidate options. Identity: Cadmium, CAS 7440-43-9, PubChem CID 23973.',
+    notes: 'Oral RfD re-picked 2026-07-04 from the prior IRIS dietary value 0.001 to the more-protective Health Canada provisional oral TDI 0.0008 (BC Protocol 1 v5.0 s4.4 HC default). contaminantClass divalent-metal (unchanged); abs_dermal class default unchanged.',
   },
   {
     key: 'zinc',
@@ -199,21 +196,15 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Antimony',
     contaminantClass: 'metalloid',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 6.0e-3,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0004,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.006 mg/kg-bw/day (CAS 7440-36-0)',
-    notes:
-      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
-      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
-      '(pv-p28-antimony-hh-direct-rfd / -food-rfd, value 0.006). Dermal RAF is ' +
-      'the metalloid (As-analogue) class default and ba_oral is the conservative ' +
-      '1.0 (no relative-bioavailability reduction), pending substance-specific ' +
-      'HITL review.',
+    sources: 'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS antimony, hematologic effects, RfD verified 1991; live-verified 2026-07-04). Identity: Antimony, CAS 7440-36-0, PubChem CID 5354495. Re-picked 2026-07-04 from the prior BC Protocol 28 value 0.006 mg/kg-bw/day, which was found to have NO basis in any live primary source (antimony is absent from Health Canada FCSAP TRV v4.0; the IRIS oral RfD is 0.0004, ~15x lower).',
+    notes: 'Oral RfD re-picked 2026-07-04 to the approved US EPA IRIS value (qa_status=approved) after live verification found the prior 0.006 (BC P28 needs_review) unsupported. contaminantClass metalloid; abs_dermal metalloid class default (unchanged). No Health Canada oral TDI exists for antimony.',
   },
   {
     key: 'cobalt',
@@ -240,21 +231,15 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Manganese',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 1.4e-1,
+    rfd_oral_mg_per_kg_bw_per_day: 0.025,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.14 mg/kg-bw/day (CAS 7439-96-5)',
-    notes:
-      'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
-      'out). RfD seeded build-first from the BC Protocol 28 needs_review row ' +
-      '(pv-p28-manganese-hh-direct-rfd / -food-rfd, value 0.14); Health Canada ' +
-      'TRV v4.0 and US EPA IRIS alternatives also exist in the catalog. Dermal ' +
-      'RAF is the divalent-metal class default; ba_oral is the conservative 1.0, ' +
-      'pending substance-specific HITL review.',
+    sources: 'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.025 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2019b, LOAEL 25 / UF 1000, neurodevelopmental; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.14 mg/kg-bw/day (1995, CNS effects) remains available as a candidate option. Identity: Manganese, CAS 7439-96-5, PubChem CID 23930.',
+    notes: 'Oral RfD re-picked 2026-07-04 from the prior 0.14 (US EPA IRIS 1995) to the more-protective Health Canada oral TDI 0.025 (BC Protocol 1 v5.0 s4.4 HC default; ~5.6x more protective). contaminantClass divalent-metal (unchanged); abs_dermal class default unchanged.',
   },
   {
     key: 'silver',
