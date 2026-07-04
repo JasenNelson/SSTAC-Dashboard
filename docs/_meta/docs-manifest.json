@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4960,
-        "source": "vitest run output (2026-07-04b; +16 over 4944: PR #488 cyanide-salts cohort, 8 new keys wired build-first to approved US EPA IRIS oral RfD -> SUBSTANCE_LIBRARY 423).",
+        "value": 4983,
+        "source": "vitest run output (2026-07-04d worktree off origin/main@35ec765; 4983 passed | 11 skipped | 2 todo; +23 over 4960: PR #491 backfilled oral slope factors for 12 carcinogens build-first, +23 net passing (12 library sf assertions + 12 resolver SOURCED cases, net of one non-passing delta)).",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_sf_backfills": {
+      "status": "superseded",
+      "value": 4960,
+      "source": "vitest run output (2026-07-04b; +16 over 4944: PR #488 cyanide-salts cohort, 8 new keys wired build-first to approved US EPA IRIS oral RfD -> SUBSTANCE_LIBRARY 423).",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4983 (PR #491 oral slope-factor backfills for 12 carcinogens: +23).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4983 after PR #491 (feat/mo-sf-backfills-2026-07-04c, merged 35ec765) backfilled sf_oral for 12 existing library substances that had a single approved catalog slope factor but sf_oral=null (alpha_HCH, biphenyl, bromoform, carbon_tetrachloride, chlordane_technical, dieldrin, heptachlor, heptachlor_epoxide, hexachloroethane, tetrachloroethylene, toxaphene -> US EPA IRIS; vinyl_chloride -> Health Canada). augment-existing only (no new keys; SUBSTANCE_LIBRARY unchanged at 423). Net +23 measured on a worktree cut from freshly-fetched origin/main (4983 passed of 4996 total). #491 left this shared docs-manifest line untouched (parallel-PR convention); this PR reconciles it. benzo_a_pyrene remains HELD pending HC-2016a (6.67e-5) live verification."
+    },
     "vitest_test_count_2026_07_04_pre_uxlanes_and_nickel_chloride": {
       "status": "superseded",
       "value": 4933,
