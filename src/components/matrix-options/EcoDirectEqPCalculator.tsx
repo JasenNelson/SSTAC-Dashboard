@@ -117,6 +117,13 @@ export default function EcoDirectEqPCalculator({
 }: EcoDirectEqPCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
+  const ecoDirectFrameStatus = useMemo(
+    () => getPathwayApplicability(jurisdiction, 'eco-direct-eqp').status,
+    [jurisdiction],
+  );
+  const isReferenceOnlyFrame =
+    ecoDirectFrameStatus === 'reference_only' || ecoDirectFrameStatus === 'unsupported';
+
   // foc as percent in the UI (0.2 -- 10.0), stored as fraction in derivation.
   // foc + Cs stay LOCAL to the calculator: they are per-pathway inputs that
   // do not generalize to other categories, so lifting them would couple
@@ -448,6 +455,17 @@ export default function EcoDirectEqPCalculator({
       )}
 
       {/* 3. PRELIMINARY TOXICITY-BASED STANDARD hero -- prominent result */}
+      {isReferenceOnlyFrame && (
+        <div
+          data-testid="eqp-reference-only-notice"
+          role="note"
+          className="mb-6 border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 rounded-lg p-3 text-sm"
+        >
+          {fcvIsOverride
+            ? "Diagnostic only: this result is computed from your manually entered FCV under a reference-only/unsupported regulatory frame. It is NOT a frame-supported standard."
+            : "Reference-only under the selected regulatory frame: no frame-supported default is seeded for the EqP pathway. Any value shown is for reference/diagnostic use only."}
+        </div>
+      )}
       <div
         className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
         data-testid="eqp-preliminary-standard"

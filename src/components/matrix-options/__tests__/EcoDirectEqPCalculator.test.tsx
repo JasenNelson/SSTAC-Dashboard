@@ -621,4 +621,48 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
       screen.queryByTestId('eqp-fcv-provisional-badge'),
     ).not.toBeInTheDocument();
   });
+  it('renders the reference-only notice under a reference_only frame with NO override', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    const notice = screen.getByTestId('eqp-reference-only-notice');
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveTextContent(/Reference-only under the selected regulatory frame/);
+  });
+
+  it('renders the diagnostic override notice and a numeric result when user supplies a manual FCV under a reference_only frame', () => {
+    const { rerender } = render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.05' },
+    });
+    rerender(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="canada-fcsap-aquatic"
+      />,
+    );
+    const notice = screen.getByTestId('eqp-reference-only-notice');
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveTextContent(/Diagnostic only: this result is computed from your manually entered FCV/);
+    const hero = screen.getByTestId('eqp-preliminary-standard');
+    expect(hero).toHaveTextContent(/\d/);
+  });
+
+  it('does NOT render the reference-only notice under a supported frame (needs_review or better)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.queryByTestId('eqp-reference-only-notice')).not.toBeInTheDocument();
+  });
 });

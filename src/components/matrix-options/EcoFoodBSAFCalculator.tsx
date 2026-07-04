@@ -137,6 +137,13 @@ export default function EcoFoodBSAFCalculator({
 }: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
+  const ecoFoodFrameStatus = useMemo(
+    () => getPathwayApplicability(jurisdiction, 'eco-food-bsaf').status,
+    [jurisdiction],
+  );
+  const isReferenceOnlyFrame =
+    ecoFoodFrameStatus === 'reference_only' || ecoFoodFrameStatus === 'unsupported';
+
   // Ecosystem selector (default freshwater per design doc 2.2). LOCAL.
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
 
@@ -801,6 +808,17 @@ export default function EcoFoodBSAFCalculator({
       )}
 
       {/* 3. PRELIMINARY TOXICITY-BASED STANDARD hero */}
+      {isReferenceOnlyFrame && (
+        <div
+          data-testid="ecofood-reference-only-notice"
+          role="note"
+          className="mb-6 border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 rounded-lg p-3 text-sm"
+        >
+          {trvIsOverride
+            ? "Diagnostic only: this result is computed from your manually entered wildlife dietary TRV under a reference-only/unsupported regulatory frame. It is NOT a frame-supported standard."
+            : "Reference-only under the selected regulatory frame: no frame-supported default is seeded for the BSAF pathway. Any value shown is for reference/diagnostic use only."}
+        </div>
+      )}
       <div
         className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
         data-testid="ecofood-preliminary-standard"
