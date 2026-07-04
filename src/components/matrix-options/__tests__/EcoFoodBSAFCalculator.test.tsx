@@ -514,4 +514,51 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
       screen.getByTestId('ecofood-trv-override-badge'),
     ).toBeInTheDocument();
   });
+  it('renders the reference-only notice under an unsupported frame with NO override', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="ccme-sediment-quality"
+      />,
+    );
+    const notice = screen.getByTestId('ecofood-reference-only-notice');
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveTextContent(/Reference-only under the selected regulatory frame/);
+  });
+
+  it('renders the diagnostic override notice and a numeric result when user supplies a manual TRV under an unsupported frame', () => {
+    const { rerender } = render(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('ecofood-trv-input'), {
+      target: { value: '0.05' },
+    });
+    fireEvent.change(screen.getByTestId('ecofood-bsaf-input'), {
+      target: { value: '2.0' },
+    });
+    rerender(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="ccme-sediment-quality"
+      />,
+    );
+    const notice = screen.getByTestId('ecofood-reference-only-notice');
+    expect(notice).toBeInTheDocument();
+    expect(notice).toHaveTextContent(/Diagnostic only: this result is computed from your manually entered wildlife dietary TRV/);
+    const hero = screen.getByTestId('ecofood-preliminary-standard');
+    expect(hero).toHaveTextContent(/\d/);
+  });
+
+  it('does NOT render the reference-only notice under a supported frame (needs_review or better)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.queryByTestId('ecofood-reference-only-notice')).not.toBeInTheDocument();
+  });
 });
