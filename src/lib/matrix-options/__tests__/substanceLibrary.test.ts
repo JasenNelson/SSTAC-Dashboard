@@ -917,7 +917,6 @@ describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', ()
   // chromium 0.3, barium 0.19). Their abs_dermal invariants now ride in the Lane 1 wiring
   // block below alongside their non-null rfd_oral.
   const expected = [
-    { key: 'vinyl_chloride', absDermal: 0.03 },
     { key: 'chromium', absDermal: 0.001 },
     { key: 'nickel', absDermal: 0.001 },
   ] as const;
@@ -1049,8 +1048,8 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A2 HC-default oral backfills (2026-
   // carbon_tetrachloride / tetrachloroethylene rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI
   // (BC Protocol 1 s4.4 Health Canada default); values live-verified 2026-07-04.
   const expected = [
-    { key: 'carbon_tetrachloride', rfd: 0.00071, sf: null },
-    { key: 'tetrachloroethylene', rfd: 0.0047, sf: null },
+    { key: 'carbon_tetrachloride', rfd: 0.00071, sf: 0.07 },
+    { key: 'tetrachloroethylene', rfd: 0.0047, sf: 0.0021 },
   ] as const;
   for (const { key, rfd, sf } of expected) {
     it(`${key} carries the HC-default rfd ${rfd}`, () => {
@@ -1093,6 +1092,35 @@ describe('SUBSTANCE_LIBRARY -- Morning M1a oral RfD re-picks (2026-07-04)', () =
       const result = findSubstance(key);
       expect(result).toBeDefined();
       expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- oral slope-factor backfills (2026-07-04c)', () => {
+  const expected = [
+    { key: 'alpha_hexachlorocyclohexane_alpha_hch', sf: 6.3 },
+    { key: 'biphenyl', sf: 0.008 },
+    { key: 'bromoform', sf: 0.0079 },
+    { key: 'carbon_tetrachloride', sf: 0.07 },
+    { key: 'chlordane_technical', sf: 0.35 },
+    { key: 'dieldrin', sf: 16 },
+    { key: 'heptachlor', sf: 4.5 },
+    { key: 'heptachlor_epoxide', sf: 9.1 },
+    { key: 'hexachloroethane', sf: 0.04 },
+    { key: 'tetrachloroethylene', sf: 0.0021 },
+    { key: 'toxaphene', sf: 1.1 },
+    { key: 'vinyl_chloride', sf: 0.24 },
+  ] as const;
+
+  for (const { key, sf } of expected) {
+    it(`${key} carries the backfilled sf ${sf}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+      if (key === 'vinyl_chloride') {
+        expect(result?.abs_dermal).toBe(0.03);
+        expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+      }
     });
   }
 });
