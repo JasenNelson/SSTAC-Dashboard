@@ -20,7 +20,7 @@ describe('resolveProvenanceRows -- real wired catalog (value-aware tuple fallbac
     { substance: 'arsenic_inorganic', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.00006, unit: 'mg/kg-bw/day' },
     { substance: 'arsenic_inorganic', input: 'sf_oral_per_mg_per_kg_bw_per_day', value: 32, unit: 'per mg/kg-bw/day' },
     { substance: 'zinc', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.3, unit: 'mg/kg-bw/day' },
-    { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, unit: 'mg/kg-bw/day' },
+    { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0008, unit: 'mg/kg-bw/day' },
     { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0001, unit: 'mg/kg-bw/day' },
   ];
 
@@ -345,6 +345,26 @@ describe('resolveProvenanceRows -- Phase 2 batch A3 SOURCED (2026-07-04)', () =>
       expect(row.catalog_record?.jurisdiction).toBe(c.jur);
       expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
       expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('resolveProvenanceRows -- Morning M1a re-picks SOURCED (2026-07-04)', () => {
+  // antimony -> IRIS 0.0004 (US_federal); cadmium -> HC 0.0008; manganese -> HC 0.025 (Canada_federal).
+  const cases: Array<{ substance: string; value: number; pvid: string; jur: string }> = [
+    { substance: 'antimony', value: 0.0004, pvid: 'pv-iris-antimony-hh-direct-rfd', jur: 'US_federal' },
+    { substance: 'manganese', value: 0.025, pvid: 'pv-hc-manganese-hh-direct-rfd', jur: 'Canada_federal' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} rfd to its approved row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        { input_key: 'rfd_oral_mg_per_kg_bw_day', label: 'rfd', value: c.value, unit: 'mg/kg-bw/day', role: 'current calculator default', pathway: 'human-health-direct', substance_key: c.substance },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe(c.jur);
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
     });
   }
 });

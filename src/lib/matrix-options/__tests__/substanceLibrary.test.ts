@@ -101,9 +101,9 @@ describe('SUBSTANCE_LIBRARY -- Batch A BC Protocol 28 specialty metals', () => {
   // Verified verbatim against matrix_research/reference_catalog/
   // human_health_trv_values.json (pv-p28-<key>-hh-direct-rfd / -food-rfd).
   const expected = [
-    { key: 'antimony', rfd: 6.0e-3, cls: 'metalloid' },
+    { key: 'antimony', rfd: 0.0004, cls: 'metalloid' }, // re-picked 2026-07-04 (prior 0.006 BC P28 unsupported -> IRIS)
     { key: 'cobalt', rfd: 3.0e-4, cls: 'divalent-metal' },
-    { key: 'manganese', rfd: 1.4e-1, cls: 'divalent-metal' },
+    { key: 'manganese', rfd: 0.025, cls: 'divalent-metal' }, // re-picked 2026-07-04 (0.14 IRIS -> HC 0.025, more protective)
     { key: 'silver', rfd: 5.0e-3, cls: 'divalent-metal' },
     { key: 'tin', rfd: 6.0e-1, cls: 'divalent-metal' },
   ] as const;
@@ -1058,6 +1058,23 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A3 oral backfills (2026-07-04)', ()
       expect(result).toBeDefined();
       expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Morning M1a oral RfD re-picks (2026-07-04)', () => {
+  // antimony -> IRIS 0.0004 (prior 0.006 unsupported); cadmium -> HC 0.0008 (more protective);
+  // manganese -> HC 0.025 (more protective). All live-verified 2026-07-04.
+  const expected = [
+    { key: 'antimony', rfd: 0.0004 },
+    { key: 'cadmium', rfd: 0.0008 },
+    { key: 'manganese', rfd: 0.025 },
+  ] as const;
+  for (const { key, rfd } of expected) {
+    it(`${key} carries the re-picked rfd ${rfd}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
     });
   }
 });

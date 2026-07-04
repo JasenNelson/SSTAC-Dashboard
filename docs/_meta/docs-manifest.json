@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4913,
-        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A3 -- chlorobenzene 0.43 + dichlorobenzene_1_2 0.43 (HC-default, HC newer than frozen-1989 IRIS) + trichloroethylene 0.0005 (most-protective override to IRIS 2011, newer+lower than HC 2005) rfd_oral backfills, live-verified: +6 = 3 substanceLibrary.test + 3 resolver.integration SOURCED)",
+        "value": 4918,
+        "source": "npm run test:ci output (2026-07-04; Morning M1a re-picks -- antimony 0.006->0.0004 (IRIS; prior BC P28 unsupported), cadmium 0.001->0.0008 (HC, more protective; current_default scaffold synced), manganese 0.14->0.025 (HC, more protective); +5 = 3 library + 2 resolver SOURCED (antimony/manganese; cadmium resolves via current_default scaffold))",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_morning_m1a": {
+      "status": "superseded",
+      "value": 4913,
+      "source": "Phase 2 A3: 4913.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4918 (Morning M1a re-picks: +5).",
+      "note": "Prior live vitest_test_count -> facts_history when refreshed to 4918 after fix/mo-morning-M1a-repicks-2026-07-04 re-picked antimony 0.006->IRIS 0.0004 (prior value had no basis), cadmium 0.001->HC 0.0008 + synced its current_default scaffold rows (pv-cadmium-hh-direct/food-rfd), manganese 0.14->HC 0.025. Live-verified via Lane B QA audit 2026-07-04. Net +5 = 3-case substanceLibrary.test block + 2-case resolver.integration SOURCED (antimony->IRIS, manganese->HC; cadmium resolves through its current_default scaffold, covered by the hhDefaultLoad test updated 0.001->0.0008). Also updated 2 frozen Batch-A assertions + the catalog.test current_default sync guard passes."
+    },
     "vitest_test_count_2026_07_04_pre_phase2_a3": {
       "status": "superseded",
       "value": 4907,
