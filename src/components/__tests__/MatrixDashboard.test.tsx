@@ -9,6 +9,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render, screen, fireEvent, waitFor, within } from '@testing-library/react';
+import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 
 // Mock heavy children we do not need full coverage of in this integration
 // suite. The Calculator-tab assertions exercise the real CategorySelector
@@ -84,6 +85,13 @@ function clickCalculatorTab() {
   // The Calculator top-tab nav button.
   const tabBtn = screen.getByRole('button', { name: /^Calculator$/ });
   fireEvent.click(tabBtn);
+}
+
+// Substance selection is a type-to-search combobox (item 1b), not a native select:
+// open it and click the target option.
+function selectSubstance(key: string) {
+  fireEvent.click(screen.getByTestId('substance-combobox-input'));
+  fireEvent.click(screen.getByTestId(`substance-option-${key}`));
 }
 
 describe('MatrixDashboard -- Matrix Options guide copy', () => {
@@ -219,9 +227,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       screen.getByTestId('eqp-substance-summary').textContent,
     ).toMatch(/PCBs/);
     // Change substance to B[a]P.
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'benzo_a_pyrene' },
-    });
+    selectSubstance('benzo_a_pyrene');
     expect(
       screen.getByTestId('eqp-substance-summary').textContent,
     ).toMatch(/Benzo\[a\]pyrene/);
@@ -252,9 +258,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     clickCalculatorTab();
     fireEvent.click(screen.getByTestId('category-selector-eco-food'));
     expect(window.localStorage.getItem(LS_CATEGORY)).toBe('eco-food');
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'total_pcbs_aroclor_1254' },
-    });
+    selectSubstance('total_pcbs_aroclor_1254');
     expect(window.localStorage.getItem(LS_SUBSTANCE)).toBe(
       'total_pcbs_aroclor_1254',
     );
@@ -271,9 +275,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       screen.getByTestId('eco-food-bsaf-calculator'),
     ).toBeInTheDocument();
     expect(
-      (screen.getByTestId('shared-substance-select') as HTMLSelectElement)
+      (screen.getByTestId('substance-combobox-input') as HTMLInputElement)
         .value,
-    ).toBe('total_pcbs_aroclor_1254');
+    ).toBe(findSubstance('total_pcbs_aroclor_1254')?.displayName);
     expect(
       (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
         .value,
@@ -316,9 +320,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // 2026-07-02 (fabricated-source demotion), dropping it out of the EQP_CAPABLE filter; Total PCBs
     // (Aroclor 1254) is the next EqP-capable row and is now the default.
     expect(
-      (screen.getByTestId('shared-substance-select') as HTMLSelectElement)
+      (screen.getByTestId('substance-combobox-input') as HTMLInputElement)
         .value,
-    ).toBe('total_pcbs_aroclor_1254');
+    ).toBe(findSubstance('total_pcbs_aroclor_1254')?.displayName);
     expect(window.localStorage.getItem(LS_SUBSTANCE)).toBe(
       'total_pcbs_aroclor_1254',
     );
@@ -370,9 +374,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // was nulled 2026-07-02, dropping it out of the EQP_CAPABLE filter -- Total PCBs is now default),
     // but this test's assertions are specifically about B[a]P's needs_review logKow scaffold, so
     // select it explicitly to keep exercising the same content.
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'benzo_a_pyrene' },
-    });
+    selectSubstance('benzo_a_pyrene');
 
     const panel = screen.getByTestId('calculator-value-search-panel');
     expect(panel).toHaveTextContent(/Value lookup/i);
@@ -398,20 +400,20 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
 
-    const substanceSelect = screen.getByTestId('shared-substance-select');
+    // Open the substance combobox and confirm expanded HH substances are offered.
+    fireEvent.click(screen.getByTestId('substance-combobox-input'));
+    const substanceListbox = screen.getByRole('listbox');
     expect(
-      within(substanceSelect).getByRole('option', { name: /^Benzene$/ }),
+      within(substanceListbox).getByRole('option', { name: /^Benzene$/ }),
     ).toBeInTheDocument();
     expect(
-      within(substanceSelect).getByRole('option', {
+      within(substanceListbox).getByRole('option', {
         name: /^Trichloroethylene$/,
       }),
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
-    fireEvent.change(substanceSelect, {
-      target: { value: 'benzene' },
-    });
+    selectSubstance('benzene');
 
     const panel = screen.getByTestId('calculator-value-search-panel');
     expect(panel).toHaveTextContent(/Benzene/i);
@@ -437,9 +439,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('filters calculator value search and opens exact reference details', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'arsenic_inorganic' },
-    });
+    selectSubstance('arsenic_inorganic');
     fireEvent.click(screen.getByTestId('category-selector-hh-food'));
 
     const panel = screen.getByTestId('calculator-value-search-panel');
@@ -507,9 +507,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('opens read-only alternatives from a calculator receipt row', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    fireEvent.change(screen.getByTestId('shared-substance-select'), {
-      target: { value: 'arsenic_inorganic' },
-    });
+    selectSubstance('arsenic_inorganic');
     fireEvent.click(screen.getByTestId('category-selector-hh-food'));
 
     const calculator = screen.getByTestId('hh-food-web-calculator');

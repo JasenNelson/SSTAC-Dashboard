@@ -2,13 +2,16 @@
 // Plain ASCII only.
 
 import { describe, it, expect, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, within } from '@testing-library/react';
 import React from 'react';
 
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from '../SharedGlobalInputs';
-import { SUBSTANCE_LIBRARY } from '@/lib/matrix-options/substanceLibrary';
+import {
+  SUBSTANCE_LIBRARY,
+  findSubstance,
+} from '@/lib/matrix-options/substanceLibrary';
 import {
   ALL_JURISDICTIONS,
   DEFAULT_JURISDICTION,
@@ -18,7 +21,7 @@ import {
 } from '../guide/content/jurisdictions';
 
 describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
-  it('renders both selects inside the shared-global-inputs section', () => {
+  it('renders the substance combobox + jurisdiction select inside the shared-global-inputs section', () => {
     render(
       <SharedGlobalInputs
         substanceKey={DEFAULT_SUBSTANCE_KEY}
@@ -28,13 +31,14 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
       />,
     );
     expect(screen.getByTestId('shared-global-inputs')).toBeInTheDocument();
-    expect(screen.getByTestId('shared-substance-select')).toBeInTheDocument();
+    // Substance selection is now a type-to-search combobox (item 1b) not a native select.
+    expect(screen.getByTestId('substance-combobox-input')).toBeInTheDocument();
     expect(
       screen.getByTestId('shared-jurisdiction-select'),
     ).toBeInTheDocument();
   });
 
-  it('populates the substance dropdown with every SUBSTANCE_LIBRARY entry', () => {
+  it('offers every SUBSTANCE_LIBRARY entry in the combobox listbox when opened', () => {
     render(
       <SharedGlobalInputs
         substanceKey={DEFAULT_SUBSTANCE_KEY}
@@ -43,12 +47,17 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
         onJurisdictionChange={() => {}}
       />,
     );
-    const select = screen.getByTestId(
-      'shared-substance-select',
-    ) as HTMLSelectElement;
-    expect(select.options).toHaveLength(SUBSTANCE_LIBRARY.length);
-    // Spot-check: first option matches first library row.
-    expect(select.options[0].value).toBe(SUBSTANCE_LIBRARY[0].key);
+    // Opening with an empty query lists all library rows (the combobox filters as you type).
+    fireEvent.click(screen.getByTestId('substance-combobox-input'));
+    // Scope to the combobox listbox so the jurisdiction native <select>'s
+    // <option> elements (also role="option") are not counted.
+    const listbox = screen.getByRole('listbox');
+    const options = within(listbox).getAllByRole('option');
+    expect(options).toHaveLength(SUBSTANCE_LIBRARY.length);
+    // Defense-in-depth: every offered option resolves to a real library row.
+    expect(
+      screen.getByTestId(`substance-option-${SUBSTANCE_LIBRARY[0].key}`),
+    ).toBeInTheDocument();
   });
 
   it('populates the jurisdiction dropdown with all regulatory frame options', () => {
@@ -68,7 +77,7 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     expect(select.value).toBe('bc-protocol1-v5-dra');
   });
 
-  it('emits onSubstanceKeyChange with the new key when the substance dropdown changes', () => {
+  it('emits onSubstanceKeyChange with the new key when a combobox option is chosen', () => {
     const onSubstanceKeyChange = vi.fn();
     render(
       <SharedGlobalInputs
@@ -78,12 +87,13 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
         onJurisdictionChange={() => {}}
       />,
     );
-    const select = screen.getByTestId('shared-substance-select');
     // Pick a substance that is NOT the default (any other library row works).
     const otherKey =
       SUBSTANCE_LIBRARY.find((s) => s.key !== DEFAULT_SUBSTANCE_KEY)?.key ??
       SUBSTANCE_LIBRARY[0].key;
-    fireEvent.change(select, { target: { value: otherKey } });
+    // Open the combobox, then click the target option.
+    fireEvent.click(screen.getByTestId('substance-combobox-input'));
+    fireEvent.click(screen.getByTestId(`substance-option-${otherKey}`));
     expect(onSubstanceKeyChange).toHaveBeenCalledWith(otherKey);
   });
 
@@ -158,19 +168,29 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
   // options from canonical arrays so this should never fire in normal UI
   // flow, but tests should prove the defensive guard works in case future
   // localStorage hydration or a schema migration ever injects an unknown.
-  it('silently drops substance change events when the new key is unknown (defense-in-depth)', () => {
-    const onSubstanceKeyChange = vi.fn();
+  it('substance combobox only offers real library keys (defense-in-depth; guard still wraps onChange)', () => {
+    // The substance selector is now a combobox that surfaces ONLY canonical
+    // SUBSTANCE_LIBRARY keys, so an unknown key cannot be chosen through the UI.
+    // The handleSubstanceKeySelect wrapper still applies the findSubstance guard
+    // (in case a future caller ever passes a bad key), but structurally every
+    // rendered option resolves to a real row -- assert that invariant.
     render(
       <SharedGlobalInputs
         substanceKey={DEFAULT_SUBSTANCE_KEY}
         jurisdiction={DEFAULT_JURISDICTION}
-        onSubstanceKeyChange={onSubstanceKeyChange}
+        onSubstanceKeyChange={() => {}}
         onJurisdictionChange={() => {}}
       />,
     );
-    const select = screen.getByTestId('shared-substance-select');
-    fireEvent.change(select, { target: { value: 'nonexistent_substance' } });
-    expect(onSubstanceKeyChange).not.toHaveBeenCalled();
+    fireEvent.click(screen.getByTestId('substance-combobox-input'));
+    const listbox = screen.getByRole('listbox');
+    const optionKeys = within(listbox)
+      .getAllByRole('option')
+      .map((el) => el.getAttribute('data-testid')?.replace('substance-option-', ''));
+    expect(optionKeys.length).toBeGreaterThan(0);
+    for (const key of optionKeys) {
+      expect(findSubstance(key as string)).toBeDefined();
+    }
   });
 
   it('silently drops jurisdiction change events when the new id is unknown', () => {
