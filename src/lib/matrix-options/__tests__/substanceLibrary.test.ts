@@ -911,10 +911,12 @@ describe('Cluster E abs_dermal corrections (dormant substances, 2026-07-02)', ()
   // once the #461 approved-tiebreak and #462 frame-aware jurisdiction tiebreak made its
   // dual-approved IRIS+HC value resolve SOURCED). Their abs_dermal invariants now ride
   // in the Lane 1 wiring block below alongside their non-null rfd_oral/sf_oral.
+  // chromium_trivalent and barium were moved OUT of this dormant block when their oral
+  // RfD was wired build-first on 2026-07-04b (HC v4.0 own values, owner source-selection:
+  // chromium 0.3, barium 0.19). Their abs_dermal invariants now ride in the Lane 1 wiring
+  // block below alongside their non-null rfd_oral.
   const expected = [
     { key: 'vinyl_chloride', absDermal: 0.03 },
-    { key: 'chromium_trivalent', absDermal: 0.001 },
-    { key: 'barium', absDermal: 0.001 },
     { key: 'chromium', absDermal: 0.001 },
     { key: 'nickel', absDermal: 0.001 },
   ] as const;
@@ -947,6 +949,11 @@ describe('SUBSTANCE_LIBRARY -- Lane 1 metals cohort HH wiring (2026-07-03)', () 
     { key: 'vanadium_pentoxide', rfd: 0.009, sf: null, cls: 'metalloid', absDermal: 0.03 },
     { key: 'beryllium', rfd: 0.002, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'selenium', rfd: 0.005, sf: null, cls: 'metalloid', absDermal: 0.03 },
+    // 2026-07-04b HC source-selection wiring (owner chose HC v4.0 own values as most-protective
+    // + BC frame-default; each value-matches only its Health Canada catalog row):
+    // chromium_trivalent 0.3 (provisional; vs IRIS 1.5), barium 0.19 (vs IRIS 0.2).
+    { key: 'chromium_trivalent', rfd: 0.3, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
+    { key: 'barium', rfd: 0.19, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
   ] as const;
 
   for (const { key, rfd, sf, cls, absDermal } of expected) {
