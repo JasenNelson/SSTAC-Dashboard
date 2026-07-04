@@ -1026,3 +1026,20 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A1 HC-default oral backfills (2026-
     });
   }
 });
+
+describe('SUBSTANCE_LIBRARY -- Phase 2 batch A2 HC-default oral backfills (2026-07-04)', () => {
+  // carbon_tetrachloride / tetrachloroethylene rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI
+  // (BC Protocol 1 s4.4 Health Canada default); values live-verified 2026-07-04.
+  const expected = [
+    { key: 'carbon_tetrachloride', rfd: 0.00071, sf: null },
+    { key: 'tetrachloroethylene', rfd: 0.0047, sf: null },
+  ] as const;
+  for (const { key, rfd, sf } of expected) {
+    it(`${key} carries the HC-default rfd ${rfd}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});

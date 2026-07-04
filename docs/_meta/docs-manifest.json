@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4903,
-        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A1 -- toluene/ethylbenzene/xylenes rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (0.0097/0.022/0.013; BC Protocol 1 s4.4 Health Canada default), live-verified: +6 = 3 substanceLibrary.test + 3 resolver.integration SOURCED cases)",
+        "value": 4907,
+        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A2 -- carbon_tetrachloride 0.00071 + tetrachloroethylene 0.0047 rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1 s4.4 HC default), live-verified: +4 = 2 substanceLibrary.test + 2 resolver.integration SOURCED)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_phase2_a2": {
+      "status": "superseded",
+      "value": 4903,
+      "source": "Phase 2 batch A1 (toluene/ethylbenzene/xylenes): 4903.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4907 (Phase 2 batch A2 carbon_tetrachloride/tetrachloroethylene HC-default: +4).",
+      "note": "Prior live vitest_test_count -> facts_history when refreshed to 4907 after fix/mo-phase2-A2-hc-default-2026-07-04 backfilled carbon_tetrachloride 0.00071 + tetrachloroethylene 0.0047 (HC FCSAP TRV v4.0 oral TDIs; BC Protocol 1 s4.4 HC default; IRIS 0.004/0.006 remain options). Live-verified vs HC v4.0 doc 2026-07-04. Net +4 = 2 substanceLibrary.test + 2 resolver.integration SOURCED cases. Backfills -- SUBSTANCE_LIBRARY length unchanged."
+    },
     "vitest_test_count_2026_07_04_pre_phase2_a1": {
       "status": "superseded",
       "value": 4897,
