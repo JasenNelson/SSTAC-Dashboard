@@ -26,6 +26,7 @@ import {
   SUBSTANCE_LIBRARY,
   findSubstance,
 } from '@/lib/matrix-options/substanceLibrary';
+import { SubstanceCombobox } from './SubstanceCombobox';
 import {
   REGULATORY_FRAME_OPTIONS,
   coerceRegulatoryFrame,
@@ -71,13 +72,16 @@ export default function SharedGlobalInputs({
   );
   const applicability = getSubstanceApplicability(substanceKey, jurisdiction);
 
-  const handleSubstanceChange = (
-    e: React.ChangeEvent<HTMLSelectElement>,
-  ): void => {
-    const next = e.target.value;
-    // Defense-in-depth: only emit if the new value resolves to a real
-    // library entry. Should never fire on stale dropdown options because
-    // the option list is sourced from SUBSTANCE_LIBRARY itself.
+  // Combobox option list: every library entry as {key, label}. Memoized so the
+  // ~414-row array is not rebuilt on every render.
+  const substanceOptions = React.useMemo(
+    () => SUBSTANCE_LIBRARY.map((s) => ({ key: s.key, label: s.displayName })),
+    [],
+  );
+
+  const handleSubstanceKeySelect = (next: string): void => {
+    // Defense-in-depth: only emit if the new value resolves to a real library
+    // entry. The combobox only offers real keys, so this should always pass.
     if (findSubstance(next)) {
       onSubstanceKeyChange(next);
     }
@@ -113,25 +117,13 @@ export default function SharedGlobalInputs({
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div>
-          <label
-            htmlFor="shared-substance"
-            className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
-          >
-            Substance
-          </label>
-          <select
+          <SubstanceCombobox
             id="shared-substance"
-            data-testid="shared-substance-select"
+            label="Substance"
+            options={substanceOptions}
             value={substanceKey}
-            onChange={handleSubstanceChange}
-            className="w-full bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
-          >
-            {SUBSTANCE_LIBRARY.map((s) => (
-              <option key={s.key} value={s.key}>
-                {s.displayName}
-              </option>
-            ))}
-          </select>
+            onChange={handleSubstanceKeySelect}
+          />
           {substance && (
             <p
               className="text-xs text-slate-500 dark:text-slate-400 mt-1"
