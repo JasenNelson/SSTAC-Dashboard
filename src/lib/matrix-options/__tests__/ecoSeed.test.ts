@@ -59,10 +59,10 @@ describe('resolveEcoSeed -- real wired catalog', () => {
     );
   });
 
-  it('selects the receptor-specific methylmercury eco-food TRV (CCME, provisional/needs_review)', () => {
+  it('selects the receptor-specific methylmercury eco-food TRV (CCME, approved)', () => {
     // MeHg wildlife TDIs from CCME 2000 (live-verified 2026-07-03): mammal 0.022, bird 0.031
-    // mg/kg-bw/day (22 / 31 ug/kg-bw/day). Rows are needs_review pending owner promotion, so they
-    // seed provisionally (provisional=true) -- build-first per the eco provisional-eligibility gate.
+    // mg/kg-bw/day (22 / 31 ug/kg-bw/day). Rows were HITL-promoted to approved (2026-07-03,
+    // J. Nelson, promote-eco-source.mjs --apply), so provisional is now false.
     const mammal = resolveEcoSeed(
       'methylmercury',
       'eco-food-bsaf',
@@ -81,12 +81,12 @@ describe('resolveEcoSeed -- real wired catalog', () => {
     expect(mammal?.parameterValueId).toBe(
       'pv-eco-methylmercury-food-trveco-mammal-ccmetrg',
     );
-    expect(mammal?.provisional).toBe(true);
+    expect(mammal?.provisional).toBe(false);
     expect(bird?.value).toBe(0.031);
     expect(bird?.parameterValueId).toBe(
       'pv-eco-methylmercury-food-trveco-bird-ccmetrg',
     );
-    expect(bird?.provisional).toBe(true);
+    expect(bird?.provisional).toBe(false);
   });
 
   it('returns null when the frame marks the pathway reference_only', () => {
