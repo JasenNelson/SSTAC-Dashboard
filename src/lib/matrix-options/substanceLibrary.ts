@@ -7175,6 +7175,32 @@ export const SUBSTANCE_LIBRARY = [
       'M2+); abs_dermal 0.03 = metalloid class default. logKow n/a; eco fields null (HH-only entry).',
   },
   {
+    key: 'nickel_chloride',
+    displayName: 'Nickel chloride',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0013,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Health Canada TRVs v4.0 oral TDI 0.0013 mg/kg-bw/day (approved catalog value, ' +
+      'pv-hc-nickel_chloride-hh-direct-rfd / src-health-canada-trv-v4-2025; HC Table 1 Nickel chloride ' +
+      'Oral TDI, page 38). Wired build-first per owner decision 2026-07-04b. The 0.02 value considered ' +
+      'earlier is the US EPA IRIS "Nickel, soluble salts" value (a different species, key ' +
+      'nickel_soluble_salts), NOT applicable to nickel chloride. Distinct salt entry from the elemental ' +
+      'nickel key and from nickel_soluble_salts / nickel_sulfate.',
+    notes:
+      'NEW own-key entry (Lane B, 2026-07-04b). Oral RfD wired build-first from the single approved ' +
+      'Health Canada TRV v4.0 catalog row (qa_status=approved), value 0.0013; the wired value uniquely ' +
+      'value-matches only pv-hc-nickel_chloride-hh-direct-rfd so it resolves SOURCED to Health Canada. ' +
+      'No oral slope factor candidate. contaminantClass divalent-metal (Ni2+); abs_dermal 0.001 = ' +
+      'divalent-metal class default. logKow n/a; eco fields null (HH-only entry).',
+  },
+  {
     key: 'nickel_soluble_salts',
     displayName: 'Nickel, soluble salts',
     contaminantClass: 'divalent-metal',

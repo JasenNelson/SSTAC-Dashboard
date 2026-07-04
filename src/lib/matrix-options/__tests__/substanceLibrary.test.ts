@@ -19,7 +19,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
     // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406. + 1 metalloid (Lane 1 metals cohort, 2026-07-03: vanadium_pentoxide) = 407. + 5 metal-salts + 2 organometallics (Phase 1a own-key oral wiring, 2026-07-04) = 414. (Phase 2 batch A1, 2026-07-04: backfilled toluene/ethylbenzene/xylenes rfd_oral -- EXISTING entries, so SUBSTANCE_LIBRARY length is unchanged at 414.)
-    expect(SUBSTANCE_LIBRARY).toHaveLength(414);
+    // + 1 metal-salt (Lane B 2026-07-04b: nickel_chloride own-key HC oral TDI wire) = 415.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(415);
   });
 
   it('every entry has a non-null key', () => {
@@ -999,6 +1000,8 @@ describe('SUBSTANCE_LIBRARY -- Phase 1a metal-salts + organometallics own-key or
     { key: 'uranium_soluble_salts', rfd: 0.003, sf: null, cls: 'metalloid', absDermal: 0.03 },
     { key: 'nickel_soluble_salts', rfd: 0.02, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'nickel_sulfate', rfd: 0.012, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
+    // Lane B 2026-07-04b: nickel_chloride HC v4.0 oral TDI (0.0013), new own-key entry.
+    { key: 'nickel_chloride', rfd: 0.0013, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'tetraethyl_lead', rfd: 0.0000001, sf: null, cls: 'organic', absDermal: 0.1 },
     { key: 'tributyltin_oxide_tbto', rfd: 0.0003, sf: null, cls: 'organic', absDermal: 0.1 },
   ] as const;
