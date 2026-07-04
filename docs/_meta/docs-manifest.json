@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4944,
-        "source": "vitest run output (2026-07-04b; final sync after the Lane D UX + Lane B nickel_chloride PRs landed. +11 over 4933: #484 FrameImpactCard +2, #485 SubstanceCombobox +7 (net of the SharedGlobalInputs/MatrixDashboard select->combobox test adaptations), #486 nickel_chloride own-key wiring +2.)",
+        "value": 4960,
+        "source": "vitest run output (2026-07-04b; +16 over 4944: PR #488 cyanide-salts cohort, 8 new keys wired build-first to approved US EPA IRIS oral RfD -> SUBSTANCE_LIBRARY 423).",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -1324,6 +1324,14 @@
       "last_verified": "2026-06-16",
       "superseded_by": "facts.testing.vitest_test_count = 4058 (npm run test:ci, 2026-06-16 matrix-options coverage PR)",
       "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4058. 4039 -> 4058 adds 19 pure unit tests in the matrix-options lane: 14 in parseDecimal.test.ts (positiveInput x8 + optionalPositiveInput x6 -- the previously-untested validation gatekeepers for all numeric inputs in HHDirectContactCalculator + HHFoodWebCalculator) and 5 in regulatoryFrames.test.ts (isRegulatoryFrameId direct coverage). Added by hand per facts_policy (the updater overwrites the live fact in place and does not create this history entry)."
+    },
+    "vitest_test_count_2026_07_04_pre_cyanides": {
+      "status": "superseded",
+      "value": 4944,
+      "source": "2026-07-04b UX + nickel_chloride: 4944.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4960 (cyanide-salts cohort +16).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4960 after PR #488 wired 8 build-first cyanide-salt substances (calcium/copper/potassium/potassium_silver/silver/sodium cyanide + cyanide_free + hydrogen_cyanide_and_cyanide_salts) to their single approved US EPA IRIS oral RfD rows. Net +16: 8 substanceLibrary wiring assertions + 8 resolver.integration SOURCED cases; SUBSTANCE_LIBRARY 415 -> 423. From the Lane C wire-recon clean-candidate backlog (uncontested single-approved values); no catalog data changed."
     }
   },
   "known_issues": {
