@@ -1,0 +1,16 @@
+description = "Update the docs affected by this session's changes -- end of session, after a feature lands, or after a bug fix"
+
+prompt = """
+## Steps
+
+1. Read .claude/skills/update-docs/SKILL.md (the canonical procedure).
+   - Done when its step list is loaded.
+2. Identify docs affected by the session's diff. Focus hints: {{args}}.
+   - Done when every changed area maps to a doc or is explicitly none.
+3. Update docs/_meta/docs-manifest.json facts (manifest-first, per the canonical skill).
+   - Done when the manifest validates.
+4. Capture lessons to docs/LESSONS.md.
+   - Done when each lesson has a dated entry.
+5. Run `npm run docs:gate` and perform archive-before-edit for any `*_HANDOFF*.md`.
+   - Done ONLY when it exits 0 (paste the tail) and handoff docs were archived before edit.
+"""

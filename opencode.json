@@ -1,0 +1,59 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md", "docs/AGENTS.md", "docs/GATE_MODE_SOP.md"],
+  "mcp": {
+    "supabase-project-scoped": {
+      "type": "remote",
+      "url": "https://mcp.supabase.com/mcp?project_ref=qyrhsieynzfgyuqzznap&features=docs%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage",
+      "enabled": true
+    }
+  },
+  "permission": {
+    "bash": {
+      "*": "allow",
+      "git add -A*": "deny",
+      "git add --all*": "deny",
+      "git add -u*": "deny",
+      "git add --update*": "deny",
+      "git add .": "deny",
+      "git add -- .*": "deny",
+      "git add ./*": "deny",
+      "git reset --hard*": "deny",
+      "git checkout .": "deny",
+      "git checkout -- .": "deny",
+      "git checkout -- ./*": "deny",
+      "git restore .": "deny",
+      "git restore -- .": "deny",
+      "git restore -- ./*": "deny",
+      "git clean*": "ask",
+      "git clean -n*": "allow",
+      "git clean --dry-run*": "allow",
+      "git clean -f*": "deny",
+      "git clean -*f*": "deny",
+      "git clean --force*": "deny",
+      "git clean * -f*": "deny",
+      "git clean * --force*": "deny",
+      "git commit --no-verify*": "deny",
+      "git commit * --no-verify*": "deny",
+      "git push*": "ask",
+      "git push --force*": "deny",
+      "git push -f*": "deny",
+      "git push * --force*": "deny",
+      "git push * -f": "deny",
+      "git push * -f *": "deny",
+      "gh pr merge*": "deny",
+      "npm run build*": "deny",
+      "npm run build:monitored*": "allow"
+    }
+  },
+  "command": {
+    "gate-check": {
+      "description": "Report ship-protocol gate status (read-only; authority: docs/GATE_MODE_SOP.md).",
+      "template": "Read docs/GATE_MODE_SOP.md. Report read-only: current branch, uncommitted changes, and which ship protocols apply -- COMMIT (codex mutual-agreement GREEN), PUSH (full gate suite on the final tip: lint, unit npm run test:ci, monitored build npm run build:monitored:clean, e2e), MERGE (push confirmed + GitHub CI green; the owner merges). Do not run any gate; just report state and what remains. $ARGUMENTS"
+    },
+    "update-docs": {
+      "description": "End-of-session documentation update per the repo's update-docs skill.",
+      "template": "Read .claude/skills/update-docs/SKILL.md and follow its manifest-aware end-of-session documentation procedure: capture lessons to docs/LESSONS.md, update docs/_meta/docs-manifest.json facts, and validate with npm run docs:gate. Archive-before-edit for any handoff/plan doc. $ARGUMENTS"
+    }
+  }
+}

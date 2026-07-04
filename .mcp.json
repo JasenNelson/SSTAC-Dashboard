@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "supabase-project-scoped": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=qyrhsieynzfgyuqzznap&features=docs%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    },
+    "supabase": {
+      "type": "http",
+      "url": "https://mcp.supabase.com/mcp?project_ref=qyrhsieynzfgyuqzznap&features=docs%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage",
+      "httpUrl": "https://mcp.supabase.com/mcp?project_ref=qyrhsieynzfgyuqzznap&features=docs%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    }
+  }
+}
