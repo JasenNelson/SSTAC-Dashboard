@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4918,
-        "source": "npm run test:ci output (2026-07-04; Morning M1a re-picks -- antimony 0.006->0.0004 (IRIS; prior BC P28 unsupported), cadmium 0.001->0.0008 (HC, more protective; current_default scaffold synced), manganese 0.14->0.025 (HC, more protective); +5 = 3 library + 2 resolver SOURCED (antimony/manganese; cadmium resolves via current_default scaffold))",
+        "value": 4930,
+        "source": "vitest run output (2026-07-04b; MO lanes A/C/D -- +12 over 4918: #479 applicability model +5, #480 eco reference-only states +6, catalog value/value_text integrity guard +1)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_ux_lanes_and_guard": {
+      "status": "superseded",
+      "value": 4918,
+      "source": "Morning M1a re-picks: 4918.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4930 (MO lanes A/C/D UX + integrity guard: +12).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4930 across the 2026-07-04b MO session. Net +12: PR #479 per-substance pathway applicability model + badges (substanceApplicability.ts) +5; PR #480 explicit reference-only/diagnostic eco states in both eco calculators +6; the catalog value/value_text same-unit integrity guard in catalog.test.ts (hardens against the stale-evidence-quote defect class the 2026-07-04 dual-codex plan review exposed; compares ~69 same-unit HC/P28 rows, 0 mismatches, with a coverage-floor assertion >=50) +1. No catalog data changed; Lane B value re-picks (chromium/barium/bap/nickel_chloride) remain owner-gated source-selection decisions."
+    },
     "vitest_test_count_2026_07_04_pre_morning_m1a": {
       "status": "superseded",
       "value": 4913,
