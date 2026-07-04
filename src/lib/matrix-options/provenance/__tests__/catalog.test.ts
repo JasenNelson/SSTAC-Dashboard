@@ -62,6 +62,35 @@ function expectUnique(values: string[]): void {
   expect(new Set(values).size).toBe(values.length);
 }
 
+function normalizeUnit(s: string | null | undefined): string {
+  if (!s) return '';
+  let norm = s.toLowerCase().replace(/[\s()]/g, '');
+  // Inverse notation "(X)-1" is equivalent to "per X" (e.g. an oral slope factor is written
+  // "(mg/kgBW-day)-1" in value_text but "per mg/kg-bw/day" in the catalog unit). Strip both the
+  // leading "per" and a trailing inverse marker so the two forms canonicalize identically. This
+  // does NOT collapse genuine unit conversions: an inhalation unit risk is "per ug/m3" vs
+  // "(mg/m3)-1", whose ug-vs-mg base-unit difference survives and keeps those rows excluded.
+  if (norm.startsWith('per')) {
+    norm = norm.substring(3);
+  }
+  norm = norm.replace(/-1$/, '');
+  if (norm === 'mg/kgbw-day' || norm === 'mg/kg-bw/day') norm = 'mg/kgbwday';
+  return norm;
+}
+
+function parseTrvValue(vt: string): { num: number; unit: string } | null {
+  const trvIdx = vt.toLowerCase().indexOf('trv value:');
+  if (trvIdx === -1) return null;
+  const targetText = vt.substring(trvIdx + 10);
+  const numMatch = targetText.match(/[-+]?\d*\.?\d+([eE][-+]?\d+)?/);
+  if (!numMatch || numMatch.index === undefined) return null;
+  const num = Number(numMatch[0]);
+  const afterNum = targetText.substring(numMatch.index + numMatch[0].length);
+  const pipeIdx = afterNum.indexOf('|');
+  const unit = pipeIdx !== -1 ? afterNum.substring(0, pipeIdx).trim() : afterNum.trim();
+  return { num, unit };
+}
+
 type WqciuLeadRecord = {
   lead_id: string;
   promotion_status?: string;
@@ -1368,5 +1397,34 @@ describe('matrix options provenance catalog', () => {
     }
 
     expect(currentDefaultDriftFailures).toEqual([]);
+  });
+
+  // Notes for value/value_text consistency guard:
+  // - This intentionally does NOT assert on rows without a "TRV Value:" label (P28 policy-compilation rows)
+  //   or unit-converted rows (IUR/RfC) -- the same scope as the audit's class-A.
+  it('keeps each single_value catalog row numeric value in sync with its evidence value_text (same-unit; integrity guard 2026-07-04)', () => {
+    const mismatches: string[] = [];
+    let compared = 0;
+    for (const record of PARAMETER_VALUE_RECORDS) {
+      if (record.value_type !== 'single_value') continue;
+      if (typeof record.value !== 'number' || !Number.isFinite(record.value)) continue;
+      const ev = Array.isArray(record.evidence_items) ? record.evidence_items[0] : undefined;
+      const vt = ev && typeof ev.value_text === 'string' ? ev.value_text : '';
+      // Only compare when the value_text has an explicit "TRV Value:" anchor (else unparseable -> skip).
+      const parsed = parseTrvValue(vt); // { num, unit } | null  -- ported from audit-hc-p28-integrity.mjs
+      if (!parsed || !Number.isFinite(parsed.num)) continue;
+      // Only compare when the published unit matches the canonical unit (no conversion).
+      if (normalizeUnit(parsed.unit) !== normalizeUnit(record.unit ?? '')) continue;
+      compared += 1;
+      const a = record.value, b = parsed.num;
+      if (Math.abs(a - b) > 0.01 * Math.max(Math.abs(a), Math.abs(b))) {
+        mismatches.push(`${record.parameter_value_id}: value=${a} != value_text=${b} (unit ${record.unit})`);
+      }
+    }
+    expect(mismatches, `value/value_text drift (same unit):\n${mismatches.join('\n')}`).toEqual([]);
+    // Coverage floor: guard against the parser silently going vacuous (e.g. a value_text
+    // format change). Currently ~69 same-unit rows are comparable; assert a conservative floor
+    // so a future regression that skips everything fails loudly rather than passing on 0 rows.
+    expect(compared).toBeGreaterThanOrEqual(50);
   });
 });
