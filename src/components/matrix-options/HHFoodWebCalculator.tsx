@@ -28,8 +28,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
-import RegulatoryFrameNotice from './RegulatoryFrameNotice';
-import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
+import FrameImpactCard from './FrameImpactCard';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -454,14 +453,10 @@ export default function HHFoodWebCalculator({
         )}
       </header>
 
-      <RegulatoryFrameNotice
+      <FrameImpactCard
         frameId={jurisdiction}
         pathway="human-health-food"
-      />
-
-      <FrameVariantFallbackNotice
         usedBaselineFallback={usedBaselineFallback}
-        frameId={jurisdiction}
         fallbackReason={fallbackReason}
       />
 

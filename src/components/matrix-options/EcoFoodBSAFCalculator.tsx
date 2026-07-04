@@ -45,8 +45,7 @@ import type {
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
-import RegulatoryFrameNotice from './RegulatoryFrameNotice';
-import FrameVariantFallbackNotice from './FrameVariantFallbackNotice';
+import FrameImpactCard from './FrameImpactCard';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -472,14 +471,10 @@ export default function EcoFoodBSAFCalculator({
         )}
       </header>
 
-      <RegulatoryFrameNotice
+      <FrameImpactCard
         frameId={jurisdiction}
         pathway="eco-food-bsaf"
-      />
-
-      <FrameVariantFallbackNotice
         usedBaselineFallback={usedBaselineFallback}
-        frameId={jurisdiction}
         fallbackReason={fallbackReason}
       />
 
