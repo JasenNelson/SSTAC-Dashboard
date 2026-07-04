@@ -32,6 +32,13 @@ import {
   isRegulatoryFrame,
   type RegulatoryFrame,
 } from './guide/content/jurisdictions';
+import {
+  getSubstanceApplicability,
+  PATHWAY4_LABELS,
+  applicabilityBadgeClass,
+  applicabilityShortLabel,
+  type PathwayId4,
+} from '@/lib/matrix-options/substanceApplicability';
 
 // Default substance key: the first library entry that has both logKow AND
 // FCV populated (i.e., the EqP path is applicable). Matches the prior
@@ -62,6 +69,7 @@ export default function SharedGlobalInputs({
   const currentJurisdiction = REGULATORY_FRAME_OPTIONS.find(
     (j) => j.id === jurisdiction,
   );
+  const applicability = getSubstanceApplicability(substanceKey, jurisdiction);
 
   const handleSubstanceChange = (
     e: React.ChangeEvent<HTMLSelectElement>,
@@ -133,6 +141,36 @@ export default function SharedGlobalInputs({
               {substance.logKow ?? 'n/a'}
             </p>
           )}
+          <ul
+            role="list"
+            data-testid="substance-applicability-badges"
+            className="mt-3 flex flex-wrap gap-2 text-xs"
+          >
+            {(Object.keys(applicability) as PathwayId4[]).map((pathway) => {
+              const result = applicability[pathway];
+              return (
+                <li
+                  key={pathway}
+                  data-testid={`applicability-${pathway}`}
+                  className="flex items-center gap-1.5"
+                  title={result.reason}
+                  aria-label={`${PATHWAY4_LABELS[pathway]}: ${applicabilityShortLabel(result.state)} - ${result.reason}`}
+                >
+                  <span className="text-slate-600 dark:text-slate-400">
+                    {PATHWAY4_LABELS[pathway]}
+                  </span>
+                  <span
+                    className={cn(
+                      'px-1.5 py-0.5 rounded font-medium',
+                      applicabilityBadgeClass(result.state)
+                    )}
+                  >
+                    {applicabilityShortLabel(result.state)}
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
         </div>
 
         <div>
