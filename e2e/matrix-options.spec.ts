@@ -94,7 +94,8 @@ test.describe('Calculator pathway navigation', () => {
       'Human Health Food Web',
     );
 
-    const substanceSelector = page.getByTestId('shared-substance-select');
+    // Substance selection is now a type-to-search combobox (item 1b) not a native select.
+    const substanceSelector = page.getByTestId('substance-combobox-input');
     await expect(substanceSelector).toBeVisible();
 
     const calculator = page.getByTestId('hh-food-web-calculator');
