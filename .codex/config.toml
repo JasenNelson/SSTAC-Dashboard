@@ -1,0 +1,15 @@
+# project-level Codex config for SSTAC-Dashboard
+#
+# LOADING MECHANISM: the Codex CLI reads $CODEX_HOME/config.toml (default ~/.codex);
+# it does NOT auto-load this repo-local file. To apply: MERGE these keys into
+# ~/.codex/config.toml (see .codex/README.md). Do NOT point CODEX_HOME at this tracked
+# directory -- Codex writes auth.json/history/state into CODEX_HOME.
+# Codex reads root AGENTS.md
+# gates authority is docs/GATE_MODE_SOP.md
+
+model = "gpt-5.5"
+approval_policy = "on-request"
+sandbox_mode = "workspace-write"
+web_search = "cached"
+model_reasoning_effort = "high"
+project_doc_fallback_filenames = ["AGENTS.md", "CLAUDE.md"]

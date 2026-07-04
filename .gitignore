@@ -150,3 +150,14 @@ cython_debug/
 # is the canonical artifact).
 scripts/matrix-map/etl_bnrrm_to_supabase_output.sql
 scripts/matrix-map/_enrichment_working/
+
+# Agent-surface dirs: WHITELIST the tracked config surfaces; ignore everything else
+# (defense-in-depth: if CODEX_HOME is ever mispointed at .codex/, Codex writes auth.json,
+# history, logs, *.sqlite, session/state files there -- all ignored by default here)
+.codex/*
+!.codex/config.toml
+!.codex/README.md
+.gemini/*
+!.gemini/GEMINI.md
+!.gemini/settings.json
+!.gemini/commands/

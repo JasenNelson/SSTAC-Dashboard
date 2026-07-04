@@ -1,0 +1,10 @@
+{
+  "general": { "approvalMode": "default" },
+  "context": { "fileFiltering": { "respectGitIgnore": true } },
+  "model": { "name": "gemini-2.5-pro" },
+  "mcpServers": {
+    "supabase-project-scoped": {
+      "httpUrl": "https://mcp.supabase.com/mcp?project_ref=qyrhsieynzfgyuqzznap&features=docs%2Cdatabase%2Cdebugging%2Cdevelopment%2Cfunctions%2Cbranching%2Cstorage"
+    }
+  }
+}
