@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4897,
-        "source": "npm run test:ci output (2026-07-04; Phase 1a oral wiring -- 5 metal-salts (mercuric_chloride_hgcl2, selenious_acid, uranium_soluble_salts, nickel_soluble_salts, nickel_sulfate) + 2 organometallics (tetraethyl_lead, tributyltin_oxide_tbto) wired as own keys, values live-verified vs IRIS/HC: +14 = 7 substanceLibrary.test cases + 7 resolver.integration SOURCED cases)",
+        "value": 4903,
+        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A1 -- toluene/ethylbenzene/xylenes rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (0.0097/0.022/0.013; BC Protocol 1 s4.4 Health Canada default), live-verified: +6 = 3 substanceLibrary.test + 3 resolver.integration SOURCED cases)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_phase2_a1": {
+      "status": "superseded",
+      "value": 4897,
+      "source": "Phase 1a metal-salts + organometallics own-key wiring: 4897.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4903 (Phase 2 batch A1 HC-default backfills toluene/ethylbenzene/xylenes: +6).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when refreshed to 4903 after fix/mo-phase2-A1-hc-default-2026-07-04 backfilled toluene 0.0097 / ethylbenzene 0.022 / xylenes 0.013 (HC FCSAP TRV v4.0 oral TDIs; BC Protocol 1 v5.0 s4.4 Health Canada default; the higher US EPA IRIS values 0.08/0.1/0.2 remain candidate options). Values live-verified against the HC v4.0 document 2026-07-04. Net +6 = a 3-case substanceLibrary.test block + a 3-case resolver.integration SOURCED block (each HC value uniquely value-matches its approved Canada_federal row -> SOURCED to Health Canada)."
+    },
     "vitest_test_count_2026_07_03_pre_phase1a_oral_wiring": {
       "status": "superseded",
       "value": 4883,

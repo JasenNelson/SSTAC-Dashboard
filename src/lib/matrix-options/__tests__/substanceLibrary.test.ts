@@ -18,7 +18,7 @@ describe('SUBSTANCE_LIBRARY', () => {
     // 2026-06-30: 1_3_5_trinitrobenzene, 4_6_dinitro_o_cyclohexyl_phenol,
     // dinitrophenol_2_4, rdx, m_dinitrobenzene, nitroguanidine, hmx) = 133,
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
-    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406. + 1 metalloid (Lane 1 metals cohort, 2026-07-03: vanadium_pentoxide) = 407. + 5 metal-salts + 2 organometallics (Phase 1a own-key oral wiring, 2026-07-04) = 414.
+    // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406. + 1 metalloid (Lane 1 metals cohort, 2026-07-03: vanadium_pentoxide) = 407. + 5 metal-salts + 2 organometallics (Phase 1a own-key oral wiring, 2026-07-04) = 414. (Phase 2 batch A1, 2026-07-04: backfilled toluene/ethylbenzene/xylenes rfd_oral -- EXISTING entries, so SUBSTANCE_LIBRARY length is unchanged at 414.)
     expect(SUBSTANCE_LIBRARY).toHaveLength(414);
   });
 
@@ -1004,6 +1004,25 @@ describe('SUBSTANCE_LIBRARY -- Phase 1a metal-salts + organometallics own-key or
       expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
       expect(result?.abs_dermal).toBe(absDermal);
+    });
+  }
+});
+
+describe('SUBSTANCE_LIBRARY -- Phase 2 batch A1 HC-default oral backfills (2026-07-04)', () => {
+  // toluene/ethylbenzene/xylenes rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1
+  // s4.4 Health Canada default); values live-verified 2026-07-04. class/abs_dermal unchanged (organic/0.1).
+  const expected = [
+    { key: 'toluene', rfd: 0.0097, sf: null, cls: 'organic' },
+    { key: 'ethylbenzene', rfd: 0.022, sf: null, cls: 'organic' },
+    { key: 'xylenes', rfd: 0.013, sf: null, cls: 'organic' },
+  ] as const;
+  for (const { key, rfd, sf, cls } of expected) {
+    it(`${key} carries the HC-default rfd ${rfd}, class ${cls}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe(cls);
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
     });
   }
 });
