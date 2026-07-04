@@ -7480,6 +7480,27 @@ export const SUBSTANCE_LIBRARY = [
       'this Sn-C organotin (no organotin class exists); NOT elemental tin. abs_dermal 0.1 = organic class ' +
       'default. logKow n/a here (HH-oral only; no eco pathway wired). eco fields null (HH-only entry).',
   },
+  {
+    key: 'zineb',
+    displayName: 'Zineb',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.05,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-zineb-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this ' +
+      'value, so it resolves SOURCED to US EPA IRIS by value-match). New own-key organic entry ' +
+      '(zinc ethylenebis(dithiocarbamate) fungicide; human-health pathways only). Build-first 2026-07-04d.',
+    notes:
+      'HH-direct/HH-food only; sf_oral null (no carcinogen slope factor in catalog). ' +
+      'abs_dermal/ba_oral are organic class defaults pending HITL. logKow/eco not in catalog -> eco filtered.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

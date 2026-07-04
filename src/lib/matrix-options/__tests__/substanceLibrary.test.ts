@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { SUBSTANCE_LIBRARY, findSubstance } from '../substanceLibrary';
 
 describe('SUBSTANCE_LIBRARY', () => {
-  it('has 407 entries', () => {
+  it('has 424 entries', () => {
     // 69 (through 2026-06-19) + 5 BC P28 metals (Batch A) = 74, + 6 HH-only PAHs
     // (Batch B) = 80, + 10 catalog WIRE substances (Batch C, 2026-06-20: aluminum,
     // boron, molybdenum, strontium, phenol, styrene, acetone, hexachlorobenzene,
@@ -20,7 +20,10 @@ describe('SUBSTANCE_LIBRARY', () => {
     // + 6 PBDE flame retardants (Batch I) = 139, + 7 carbamate pesticides (Batch J) = 146,
     // + 18 herbicides/chlorophenols/glycols (Batch K) = 164. + 22 organophosphate esters (Batch L) = 186. + 20 misc organics (Batch M) = 206. + 20 misc organics (Batch N) = 226. + 22 misc organics (Batch O) = 248. + 20 misc organics (Batch P) = 268. + 20 misc organics (Batch Q) = 288. + 20 misc organics (Batch R) = 308. + 20 misc organics (Batch S) = 328. + 20 misc organics (Batch T) = 348. + 20 misc organics (Batch U) = 368. + 21 misc organics (Batch V) = 389. + 17 inorganic substances (Batch W) = 406. + 1 metalloid (Lane 1 metals cohort, 2026-07-03: vanadium_pentoxide) = 407. + 5 metal-salts + 2 organometallics (Phase 1a own-key oral wiring, 2026-07-04) = 414. (Phase 2 batch A1, 2026-07-04: backfilled toluene/ethylbenzene/xylenes rfd_oral -- EXISTING entries, so SUBSTANCE_LIBRARY length is unchanged at 414.)
     // + 1 metal-salt (Lane B 2026-07-04b: nickel_chloride own-key HC oral TDI wire) = 415.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(423); // +8 cyanide salts (2026-07-04b)
+    // + 8 cyanide salts (2026-07-04b, PR #488: calcium/copper/free/HCN+salts/potassium/
+    //   potassium-silver/silver/sodium cyanide) = 423.
+    // + 1 zineb new-key organic oral RfD 0.05 (2026-07-04d) = 424.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(424);
   });
 
   it('every entry has a non-null key', () => {
@@ -1023,6 +1026,18 @@ describe('SUBSTANCE_LIBRARY -- Phase 1a metal-salts + organometallics own-key or
       expect(result?.abs_dermal).toBe(absDermal);
     });
   }
+});
+
+describe('SUBSTANCE_LIBRARY -- zineb new-key organic oral RfD (2026-07-04d)', () => {
+  it('zineb carries the wired rfd 0.05, sf null, class organic, abs_dermal 0.1', () => {
+    const result = findSubstance('zineb');
+    expect(result).toBeDefined();
+    expect(result?.contaminantClass).toBe('organic');
+    expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.05);
+    expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+    expect(result?.abs_dermal).toBe(0.1);
+    expect(result?.ba_oral).toBe(1.0);
+  });
 });
 
 describe('SUBSTANCE_LIBRARY -- Phase 2 batch A1 HC-default oral backfills (2026-07-04)', () => {
