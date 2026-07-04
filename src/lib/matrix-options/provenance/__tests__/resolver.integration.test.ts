@@ -447,3 +447,25 @@ describe('resolveProvenanceRows -- oral slope-factor backfills SOURCED (2026-07-
     });
   }
 });
+
+describe('resolveProvenanceRows -- zineb new-key rfd SOURCED (2026-07-04d)', () => {
+  it('attributes HH-direct zineb rfd to its single approved row (SOURCED)', () => {
+    const used: CalculatorUsedValue[] = [
+      {
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        label: 'rfd',
+        value: 0.05,
+        unit: 'mg/kg-bw/day',
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'zineb',
+      },
+    ];
+    const [row] = resolveProvenanceRows(used);
+    expect(row.catalog_record, 'zineb').not.toBeNull();
+    expect(row.catalog_record?.qa_status).toBe('approved');
+    expect(row.catalog_record?.jurisdiction).toBe('US_federal');
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-iris-zineb-hh-direct-rfd');
+    expect(row.sources.length).toBeGreaterThan(0);
+  });
+});
