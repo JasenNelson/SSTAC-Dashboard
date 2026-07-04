@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4907,
-        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A2 -- carbon_tetrachloride 0.00071 + tetrachloroethylene 0.0047 rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1 s4.4 HC default), live-verified: +4 = 2 substanceLibrary.test + 2 resolver.integration SOURCED)",
+        "value": 4913,
+        "source": "npm run test:ci output (2026-07-04; Phase 2 batch A3 -- chlorobenzene 0.43 + dichlorobenzene_1_2 0.43 (HC-default, HC newer than frozen-1989 IRIS) + trichloroethylene 0.0005 (most-protective override to IRIS 2011, newer+lower than HC 2005) rfd_oral backfills, live-verified: +6 = 3 substanceLibrary.test + 3 resolver.integration SOURCED)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_phase2_a3": {
+      "status": "superseded",
+      "value": 4907,
+      "source": "Phase 2 batch A2: 4907.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4913 (Phase 2 batch A3: +6).",
+      "note": "Prior live vitest_test_count -> facts_history when refreshed to 4913 after fix/mo-phase2-A3-conflict-2026-07-04 backfilled chlorobenzene 0.43 + dichlorobenzene_1_2 0.43 (HC FCSAP TRV v4.0, HC 1996 newer than the frozen-1989 IRIS 0.02/0.09 -> HC-default) + trichloroethylene 0.0005 (MOST-PROTECTIVE override to US EPA IRIS 2011, newer AND lower than the HC 2005 0.00146; logged for owner review). All live-verified 2026-07-04. Net +6 = 3 substanceLibrary.test + 3 resolver.integration SOURCED. Backfills -- length unchanged. NOTE: benzo_a_pyrene was PARKED (catalog HC row mislabeled: real HC 6.67e-5 has no catalog row; see OVERNIGHT_REPORT)."
+    },
     "vitest_test_count_2026_07_04_pre_phase2_a2": {
       "status": "superseded",
       "value": 4903,
