@@ -544,7 +544,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Toluene',
     contaminantClass: 'organic',
     logKow: 2.73,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0097,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
@@ -552,19 +552,21 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0097 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b drinking-water tech doc, Seeber 2004/2005 occupational NOAEL, PBPK oral-equivalent, UF 10; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.08 mg/kg-bw/day (NTP 1990) remains available as a candidate option. PubChem CID 1140. ' +
       'Identity: Toluene (methylbenzene), CAS 108-88-3, PubChem CID 1140. ' +
       'logKow 2.73 (Hansch/Leo/Hoekman 1995, via HSDB/PubChem; corroborated ' +
       'ATSDR, ECHA 2.73 at pH7/20C). Eco FCV/TRV seeded from the eco catalog.',
     notes:
+      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
       'Eco-direct + eco-food selectability. logKow 2.73 is load-bearing for ' +
-      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+      'eco-direct EqP. HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert HH defaults.',
   },
   {
     key: 'ethylbenzene',
     displayName: 'Ethylbenzene',
     contaminantClass: 'organic',
     logKow: 3.15,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.022,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
@@ -572,12 +574,14 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.022 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b, NTP 1999 chronic inhalation route-to-route PBPK, UF 25; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.1 mg/kg-bw/day (Wolf 1956) remains available as a candidate option. PubChem CID 7500. ' +
       'Identity: Ethylbenzene, CAS 100-41-4, PubChem CID 7500. logKow 3.15 ' +
       '(Hansch/Leo/Hoekman 1995, p.43; ECHA experimental 3.15; HSDB/EPI Suite). ' +
       'Eco FCV/TRV seeded from the eco catalog.',
     notes:
+      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
       'Eco-direct + eco-food selectability. logKow 3.15 load-bearing for ' +
-      'eco-direct EqP. HH fields null; abs_dermal/ba_oral inert HH defaults.',
+      'eco-direct EqP. HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert HH defaults.',
   },
   {
     key: 'pyrene',
@@ -1398,7 +1402,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Xylenes',
     contaminantClass: 'organic',
     logKow: 2.75,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.013,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
@@ -1406,6 +1410,7 @@ export const SUBSTANCE_LIBRARY = [
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.013 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b, Korsak 1994 subchronic inhalation PBPK oral-equivalent, UF 75, neurotoxicity; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.2 mg/kg-bw/day (NTP 1986) remains available as a candidate option. PubChem CID 1330 (mixed-isomer representative). ' +
       'Identity: Xylenes. Eco-direct FCV basis = m-xylene (CAS 108-38-3, PubChem ' +
       'CID 7929); eco-food TRV = total xylenes group (CAS 1330-20-7). logKow 2.75 ' +
       'is the EPA ESB-internal value for m-xylene (EPA/600/R-02/016 Table 3-1), ' +
@@ -1413,10 +1418,11 @@ export const SUBSTANCE_LIBRARY = [
       '(owner-attested 2026-06-19); the modern Hansch/PubChem m-xylene value is ' +
       '3.20. Eco FCV/TRV seeded from the eco catalog.',
     notes:
+      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
       'Eco-direct + eco-food selectability. logKow 2.75 is load-bearing for ' +
       'eco-direct EqP and is deliberately the EPA ESB-internal m-xylene Kow (not ' +
       'the Hansch 3.20) so the sediment screen reproduces the EPA ESB EqP ' +
-      'derivation (the pyrene-note ESB-consistency principle). HH fields null; ' +
+      'derivation (the pyrene-note ESB-consistency principle). HH sf_oral null (rfd now wired); ' +
       'abs_dermal/ba_oral inert HH defaults (organic class).',
   },
   {

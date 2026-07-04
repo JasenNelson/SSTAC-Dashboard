@@ -255,3 +255,35 @@ describe('resolveProvenanceRows -- Phase 1a metal-salts + organometallics SOURCE
     });
   }
 });
+
+describe('resolveProvenanceRows -- Phase 2 batch A1 HC-default backfills SOURCED (2026-07-04)', () => {
+  // toluene/ethylbenzene/xylenes seeded at the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1 s4.4
+  // Health Canada default). Each HC value uniquely value-matches the approved Canada_federal row
+  // (the IRIS/P28 rows sit at the higher IRIS value), so it resolves SOURCED to Health Canada.
+  const cases: Array<{ substance: string; value: number; pvid: string }> = [
+    { substance: 'toluene', value: 0.0097, pvid: 'pv-hc-toluene-hh-direct-rfd' },
+    { substance: 'ethylbenzene', value: 0.022, pvid: 'pv-hc-ethylbenzene-hh-direct-rfd' },
+    { substance: 'xylenes', value: 0.013, pvid: 'pv-hc-xylenes-hh-direct-rfd' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} rfd to the Health Canada row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe('Canada_federal');
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
