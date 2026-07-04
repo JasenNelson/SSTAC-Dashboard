@@ -423,15 +423,18 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Tetrachloroethylene',
     contaminantClass: 'organic-halogenated',
     logKow: 3.4,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0047,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0047 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; BMDL10 6.6 ppm Cavalleri 1994 occupational, PBPK external dose 4.7 mg/kg-bw/day, UF 1000, neurotoxicity/colour-confusion; HC 2015; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.006 mg/kg-bw/day remains available as a candidate option. PubChem CID 31373. ' +
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
     notes:
+      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
       'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
       'candidates are available in References & Values.',
   },
@@ -954,15 +957,19 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Carbon tetrachloride',
     contaminantClass: 'organic-halogenated',
     logKow: 2.64,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.00071,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024.',
-    notes: 'Eco selectability. logKow 2.64 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.00071 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; NOAEL 1 mg/kg-bw/day Bruckner 1986 rat gavage, NOAELadj 0.71, UF 1000, hepatotoxicity; HC 2010; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.004 mg/kg-bw/day remains available as a candidate option. PubChem CID 5943. ' +
+      'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024.',
+    notes:
+      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
+      'Eco selectability. logKow 2.64 (eco-direct EqP input). HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'chlorpyrifos',

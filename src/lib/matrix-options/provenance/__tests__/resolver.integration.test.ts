@@ -287,3 +287,33 @@ describe('resolveProvenanceRows -- Phase 2 batch A1 HC-default backfills SOURCED
     });
   }
 });
+
+describe('resolveProvenanceRows -- Phase 2 batch A2 HC-default backfills SOURCED (2026-07-04)', () => {
+  // carbon_tetrachloride/tetrachloroethylene seeded at the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1
+  // s4.4 HC default). Each HC value uniquely value-matches its approved Canada_federal row -> SOURCED.
+  const cases: Array<{ substance: string; value: number; pvid: string }> = [
+    { substance: 'carbon_tetrachloride', value: 0.00071, pvid: 'pv-hc-carbon_tetrachloride-hh-direct-rfd' },
+    { substance: 'tetrachloroethylene', value: 0.0047, pvid: 'pv-hc-tetrachloroethylene-hh-direct-rfd' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} rfd to the Health Canada row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe('Canada_federal');
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
