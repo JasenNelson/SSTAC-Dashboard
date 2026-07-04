@@ -85,9 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4883,
-        "source": "npm run test:ci output (2026-07-03; methylmercury eco-food wildlife TDIs wired dynamically -- CCME 2000 mammal 0.022 + bird 0.031 mg/kg-bw/day as 2 needs_review eco_values.json rows, selenium-parity: net +1 new ecoSeed.test.ts methylmercury case; the eco-catalog-load/library/promote-eco-source count assertions were value updates, not new tests)",
-        "last_verified": "2026-07-03"
+        "value": 4897,
+        "source": "npm run test:ci output (2026-07-04; Phase 1a oral wiring -- 5 metal-salts (mercuric_chloride_hgcl2, selenious_acid, uranium_soluble_salts, nickel_soluble_salts, nickel_sulfate) + 2 organometallics (tetraethyl_lead, tributyltin_oxide_tbto) wired as own keys, values live-verified vs IRIS/HC: +14 = 7 substanceLibrary.test cases + 7 resolver.integration SOURCED cases)",
+        "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_03_pre_phase1a_oral_wiring": {
+      "status": "superseded",
+      "value": 4883,
+      "source": "methylmercury eco-food dynamic wiring + promotion: 4883.",
+      "last_verified": "2026-07-03",
+      "superseded_by": "facts.testing.vitest_test_count = 4897 (Phase 1a oral wiring: 7 own-key metal-salt + organometallic entries, +14 tests).",
+      "note": "Prior live vitest_test_count, moved to facts_history per facts_policy.live_vs_history_rule when the live fact was refreshed to 4897 after fix/mo-oral-phase1-metalsalts-organometallics-2026-07-04 wired 7 substances as own keys (D3 metal-salts: mercuric_chloride_hgcl2 0.0003, selenious_acid 0.005, uranium_soluble_salts 0.003, nickel_soluble_salts 0.02, nickel_sulfate 0.012; D4 organometallics: tetraethyl_lead 1e-7, tributyltin_oxide_tbto 0.0003). All rfd_oral values live-verified against the primary IRIS assessment PDFs / HC FCSAP TRV v4.0 PDF 2026-07-04. Net +14 = a 7-case substanceLibrary.test describe block + a 7-case resolver.integration SOURCED describe block (each substance has a single approved catalog row at its wired value, so it resolves SOURCED by value-match). Organometallics use contaminantClass organic (no organometallic class exists in the closed union). aluminum_phosphide was found already wired (stale in the queue). nickel_chloride deferred: HC provides two endpoints (headline Oral TDI 0.02 + reproductive 0.0013) -- owner wants both surfaced as catalog options, handled separately."
+    },
     "vitest_test_count_2026_07_03_pre_mehg_eco_food": {
       "status": "superseded",
       "value": 4882,
