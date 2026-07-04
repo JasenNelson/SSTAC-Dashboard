@@ -7089,6 +7089,172 @@ export const SUBSTANCE_LIBRARY = [
       'logKow n/a (metal oxide); eco fields left null pending eco-catalog seeding -- ' +
       'HH-only entry today.',
   },
+  {
+    key: 'mercuric_chloride_hgcl2',
+    displayName: 'Mercuric chloride (HgCl2)',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Mercuric chloride (HgCl2)", CASRN 7487-94-7, autoimmune/renal, UF 1000; live-verified 2026-07-04). ' +
+      'Identity: Mercuric chloride, CAS 7487-94-7, PubChem CID 24085. Distinct salt entry from the elemental ' +
+      'mercury_inorganic key (same 0.0003 value, but a distinct CAS-specific substance).',
+    notes:
+      'NEW own-key entry (D3 metal-salt, wired as its own key rather than backfilling mercury_inorganic). ' +
+      'Oral RfD wired build-first from the single approved catalog row (qa_status=approved). No oral slope ' +
+      'factor candidate exists. contaminantClass divalent-metal (Hg2+ salt); abs_dermal 0.001 = divalent-metal ' +
+      'class default. logKow n/a (ionic metal salt); eco fields null (HH-only entry).',
+  },
+  {
+    key: 'selenious_acid',
+    displayName: 'Selenious acid',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS selenium/selenious acid, clinical selenosis, UF 3; live-verified 2026-07-04). Identity: Selenious ' +
+      'acid, CAS 7783-00-8, PubChem CID 1091. Distinct salt entry from the elemental selenium key (same 0.005 ' +
+      'value; selenium compounds share the IRIS selenosis basis).',
+    notes:
+      'NEW own-key entry (D3 metal-salt). Oral RfD wired build-first from the single approved catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate exists. contaminantClass metalloid (Se oxyanion); ' +
+      'abs_dermal 0.03 = metalloid class default. logKow n/a; eco fields null (HH-only entry).',
+  },
+  {
+    key: 'uranium_soluble_salts',
+    displayName: 'Uranium, soluble salts',
+    contaminantClass: 'metalloid',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.03,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Uranium, soluble salts", nephrotoxicity, UF 1000; live-verified 2026-07-04). Identity: Uranium ' +
+      'soluble salts; the IRIS class entry carries NO own CASRN (critical study used uranyl nitrate ' +
+      'hexahydrate) -- CAS 7440-61-1 (elemental U) / PubChem CID 23989 used as the proxy identifier. Distinct ' +
+      'from the elemental uranium key (which carries HC 0.0006; this soluble-salts entry is the higher/' +
+      'less-stringent IRIS 0.003 for the soluble salt form).',
+    notes:
+      'NEW own-key entry (D3 metal-salt; own key rather than backfilling uranium, whose wired HC value 0.0006 ' +
+      'differs from this IRIS soluble-salts 0.003). Oral RfD wired build-first from the single approved catalog ' +
+      'row (qa_status=approved). No oral slope factor candidate. contaminantClass metalloid (uranyl, not a true ' +
+      'M2+); abs_dermal 0.03 = metalloid class default. logKow n/a; eco fields null (HH-only entry).',
+  },
+  {
+    key: 'nickel_soluble_salts',
+    displayName: 'Nickel, soluble salts',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Nickel, soluble salts", Ambrose 1976 rat feeding, decreased body/organ weight, UF 300; ' +
+      'live-verified 2026-07-04). Identity: Nickel soluble salts, CAS 7440-02-0, PubChem CID 935. Distinct salt ' +
+      'entry from the elemental nickel key.',
+    notes:
+      'NEW own-key entry (D3 metal-salt). Oral RfD wired build-first from the single approved catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate. contaminantClass divalent-metal (Ni2+); abs_dermal ' +
+      '0.001 = divalent-metal class default (Ni dermal sensitization is a hazard, not an absorption fraction). ' +
+      'logKow n/a; eco fields null (HH-only entry).',
+  },
+  {
+    key: 'nickel_sulfate',
+    displayName: 'Nickel sulfate',
+    contaminantClass: 'divalent-metal',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.012,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.001,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.012 mg/kg-bw/day (approved catalog value, ' +
+      'src-health-canada-trv-v4-2025; epidemiological, dermal toxicity/eczema in Ni-sensitive subjects, ' +
+      'LOAEL 12 ug Ni/kg-bw/day, CCME 2015 / WHO 2007 / Nielsen 1999; live-verified against the HC v4.0 PDF ' +
+      '2026-07-04). Identity: Nickel sulfate, CAS 7786-81-4, PubChem CID 24586. Distinct salt entry from the ' +
+      'elemental nickel key.',
+    notes:
+      'NEW own-key entry (D3 metal-salt). Oral RfD wired build-first from the single approved catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate. contaminantClass divalent-metal (Ni2+); abs_dermal ' +
+      '0.001 = divalent-metal class default. logKow n/a; eco fields null (HH-only entry).',
+  },
+  {
+    key: 'tetraethyl_lead',
+    displayName: 'Tetraethyl lead',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0000001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 1e-7 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Tetraethyl lead", CASRN 78-00-2, Schepers 1964, UF 10000; the unusually low 1e-7 value is real ' +
+      'and live-verified 2026-07-04). Identity: Tetraethyl lead, CAS 78-00-2, PubChem CID 6511. ORGANOMETALLIC ' +
+      '(Pb-C bonds): contaminantClass organic is a pragmatic bucket (no organometallic class exists in the ' +
+      'closed ContaminantClass union) -- do NOT reuse the elemental lead (divalent-metal) entry.',
+    notes:
+      'NEW own-key entry (D4 organometallic). Oral RfD wired build-first from the single approved catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate. contaminantClass organic is a pragmatic bucket for ' +
+      'this Pb-C organometallic (no organometallic/organolead class exists); NOT elemental lead. abs_dermal 0.1 ' +
+      '= organic class default (no chemical-specific soil ABSd; note tetraethyl lead is in reality highly ' +
+      'dermally-absorbed/volatile -- flagged for a future chemical-specific ABSd). logKow n/a here (HH-oral ' +
+      'only; no eco pathway wired). eco fields null (HH-only entry).',
+  },
+  {
+    key: 'tributyltin_oxide_tbto',
+    displayName: 'Tributyltin oxide (TBTO)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0003,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Tributyltin oxide (TBTO)", CASRN 56-35-9, Vos 1990 immunotoxicity, BMD10, UF 100; live-verified ' +
+      '2026-07-04). Identity: Bis(tributyltin) oxide, CAS 56-35-9, PubChem CID 16682746. ORGANOMETALLIC ' +
+      '(Sn-C bonds): contaminantClass organic is a pragmatic bucket (no organometallic/organotin class exists) ' +
+      '-- do NOT reuse the elemental tin (divalent-metal) entry.',
+    notes:
+      'NEW own-key entry (D4 organometallic). Oral RfD wired build-first from the single approved catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate. contaminantClass organic is a pragmatic bucket for ' +
+      'this Sn-C organotin (no organotin class exists); NOT elemental tin. abs_dermal 0.1 = organic class ' +
+      'default. logKow n/a here (HH-oral only; no eco pathway wired). eco fields null (HH-only entry).',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

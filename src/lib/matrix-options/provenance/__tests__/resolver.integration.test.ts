@@ -220,3 +220,38 @@ describe('resolveProvenanceRows -- Lane 1 metals cohort SOURCED (beryllium + sel
     expect(row.sources.length).toBeGreaterThan(0);
   });
 });
+
+describe('resolveProvenanceRows -- Phase 1a metal-salts + organometallics SOURCED (2026-07-04)', () => {
+  // 7 own-key oral RfD wires, each with a single approved catalog row at the wired value -> resolves
+  // SOURCED by value-match (no tiebreak needed). Values live-verified against IRIS/HC 2026-07-04.
+  const cases: Array<{ substance: string; value: number; pvid: string; jurisdiction: string }> = [
+    { substance: 'mercuric_chloride_hgcl2', value: 0.0003, pvid: 'pv-iris-mercuric_chloride_hgcl2-hh-direct-rfd', jurisdiction: 'US_federal' },
+    { substance: 'selenious_acid', value: 0.005, pvid: 'pv-iris-selenious_acid-hh-direct-rfd', jurisdiction: 'US_federal' },
+    { substance: 'uranium_soluble_salts', value: 0.003, pvid: 'pv-iris-uranium_soluble_salts-hh-direct-rfd', jurisdiction: 'US_federal' },
+    { substance: 'nickel_soluble_salts', value: 0.02, pvid: 'pv-iris-nickel_soluble_salts-hh-direct-rfd', jurisdiction: 'US_federal' },
+    { substance: 'nickel_sulfate', value: 0.012, pvid: 'pv-hc-nickel_sulfate-hh-direct-rfd', jurisdiction: 'Canada_federal' },
+    { substance: 'tetraethyl_lead', value: 0.0000001, pvid: 'pv-iris-tetraethyl_lead-hh-direct-rfd', jurisdiction: 'US_federal' },
+    { substance: 'tributyltin_oxide_tbto', value: 0.0003, pvid: 'pv-iris-tributyltin_oxide_tbto-hh-direct-rfd', jurisdiction: 'US_federal' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} rfd to its single approved row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe(c.jurisdiction);
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
