@@ -230,6 +230,7 @@ describe('resolveProvenanceRows -- Phase 1a metal-salts + organometallics SOURCE
     { substance: 'uranium_soluble_salts', value: 0.003, pvid: 'pv-iris-uranium_soluble_salts-hh-direct-rfd', jurisdiction: 'US_federal' },
     { substance: 'nickel_soluble_salts', value: 0.02, pvid: 'pv-iris-nickel_soluble_salts-hh-direct-rfd', jurisdiction: 'US_federal' },
     { substance: 'nickel_sulfate', value: 0.012, pvid: 'pv-hc-nickel_sulfate-hh-direct-rfd', jurisdiction: 'Canada_federal' },
+    { substance: 'nickel_chloride', value: 0.0013, pvid: 'pv-hc-nickel_chloride-hh-direct-rfd', jurisdiction: 'Canada_federal' },
     { substance: 'tetraethyl_lead', value: 0.0000001, pvid: 'pv-iris-tetraethyl_lead-hh-direct-rfd', jurisdiction: 'US_federal' },
     { substance: 'tributyltin_oxide_tbto', value: 0.0003, pvid: 'pv-iris-tributyltin_oxide_tbto-hh-direct-rfd', jurisdiction: 'US_federal' },
   ];
