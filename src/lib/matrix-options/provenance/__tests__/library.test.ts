@@ -92,7 +92,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-07-03: +1 (1682 -> 1683) -- methylmercury eco-food wildlife TDIs wired dynamically
     // (CCME 2000, mammal 0.022 + bird 0.031 mg/kg-bw/day). Both rows share ONE new candidate group
     // eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__Canada_federal (distinct from the
-    // deleted __general scaffold group), so they add +1 unique group. needs_review/provisional.
+    // deleted __general scaffold group), so they add +1 unique group (unchanged by the 2026-07-03
+    // HITL promotion to approved -- promotion flips qa/evidence status, not the group count).
     expect(view.valueGroups).toHaveLength(1683);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
@@ -143,7 +144,9 @@ describe('matrix options evidence library helpers', () => {
     // 2026-07-02b: +1 -- eco-statics correction promoted pv-pcb-fcv (total_pcbs_aroclor_1254 eco-direct
     // FCV) from current_calculator_scaffold to approved_source_backed (re-cited to the real US EPA
     // NRWQC total-PCBs chronic criterion via promote-pcb-fcv-nrwqc.mjs) = 1350.
-    expect(view.audit.values.approvedSourceBacked).toBe(1350);
+    // 2026-07-03: +2 (1350 -> 1352) -- methylmercury eco-food wildlife TDIs (mammal 0.022 + bird
+    // 0.031) HITL-promoted to approved_source_backed (J. Nelson, promote-eco-source.mjs --apply).
+    expect(view.audit.values.approvedSourceBacked).toBe(1352);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -192,14 +195,15 @@ describe('matrix options evidence library helpers', () => {
     // twins of the verification-packet rows; the other 351 stay pending (re-keyed to v3.0). = 366.
     // 2026-07-02: -1 (366 -> 365) -- pv-bap-trv-eco (pending_source_locator) deleted by the
     // current-default integrity fix.
-    // 2026-07-03: +2 (362 -> 364) -- methylmercury eco-food wildlife TDIs wired dynamically (CCME
-    // 2000; pv-eco-methylmercury-food-trveco-mammal-ccmetrg 0.022 + -bird-ccmetrg 0.031). Generated
-    // needs_review, so both rows are pending_source_locator until owner promotion (--apply flips them
-    // to approved_source_backed).
+    // 2026-07-03: +2 then -2 (362 -> 364 -> 362) -- methylmercury eco-food wildlife TDIs wired
+    // dynamically (CCME 2000; pv-eco-methylmercury-food-trveco-mammal-ccmetrg 0.022 + -bird-ccmetrg
+    // 0.031). Generated needs_review (pending_source_locator, +2), then HITL-promoted to approved
+    // (2026-07-03, J. Nelson, promote-eco-source.mjs --apply) which moved both to
+    // approved_source_backed (-2). Net 0 on pendingSourceLocator; see approvedSourceBacked +2 above.
     // 2026-07-02b: -3 (365 -> 362) -- eco-statics correction DELETED 3 more fabricated-source
     // current_default scaffolds, all pending_source_locator (pv-bap-fcv, pv-pcb-trv-eco,
     // pv-mehg-trv-eco).
-    expect(view.audit.values.pendingSourceLocator).toBe(364);
+    expect(view.audit.values.pendingSourceLocator).toBe(362);
     // 2026-07-02b: -1 (65 -> 64) -- pv-pcb-fcv moved OUT of current_calculator_scaffold when promoted
     // to approved_source_backed (see approvedSourceBacked above).
     expect(view.audit.values.currentCalculatorScaffold).toBe(64);
