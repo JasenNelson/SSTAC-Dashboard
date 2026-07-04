@@ -469,3 +469,46 @@ describe('resolveProvenanceRows -- zineb new-key rfd SOURCED (2026-07-04d)', () 
     expect(row.sources.length).toBeGreaterThan(0);
   });
 });
+
+describe('resolveProvenanceRows -- oral RfD backfills SOURCED (2026-07-04d)', () => {
+  const cases = [
+    { key: 'biphenyl', value: 0.5, pvid: 'pv-iris-biphenyl-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'bromoform', value: 0.02, pvid: 'pv-iris-bromoform-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'butyl_benzyl_phthalate_bbp', value: 0.2, pvid: 'pv-iris-butyl_benzyl_phthalate_bbp-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'carbaryl', value: 0.1, pvid: 'pv-iris-carbaryl-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'chlordane_technical', value: 0.0005, pvid: 'pv-iris-chlordane_technical-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'chloroform', value: 0.01, pvid: 'pv-iris-chloroform-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'demeton', value: 0.00004, pvid: 'pv-iris-demeton-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'dibutyl_phthalate_dbp', value: 0.1, pvid: 'pv-iris-dibutyl_phthalate_dbp-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'dichlorobenzene_1_4', value: 0.11, pvid: 'pv-hc-dichlorobenzene_1_4-hh-direct-rfd', jur: 'Canada_federal' },
+    { key: 'dieldrin', value: 0.00005, pvid: 'pv-iris-dieldrin-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'diethyl_phthalate_dep', value: 0.8, pvid: 'pv-iris-diethyl_phthalate_dep-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'endosulfan', value: 0.006, pvid: 'pv-iris-endosulfan-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'heptachlor', value: 0.0005, pvid: 'pv-iris-heptachlor-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'heptachlor_epoxide', value: 0.000013, pvid: 'pv-iris-heptachlor_epoxide-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'hexachlorocyclohexane_gamma', value: 0.0003, pvid: 'pv-iris-hexachlorocyclohexane_gamma-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'hexachloroethane', value: 0.0007, pvid: 'pv-iris-hexachloroethane-hh-direct-rfd', jur: 'US_federal' },
+    { key: 'vinyl_chloride', value: 0.003, pvid: 'pv-iris-vinyl-chloride-hh-direct-rfd', jur: 'US_federal' },
+  ] as const;
+  for (const { key, value, pvid, jur } of cases) {
+    it(`${key} HH-direct rfd resolves SOURCED to ${pvid}`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: key,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, key).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe(jur);
+      expect(row.catalog_record?.parameter_value_id).toBe(pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});

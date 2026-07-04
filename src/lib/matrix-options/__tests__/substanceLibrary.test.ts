@@ -1040,6 +1040,35 @@ describe('SUBSTANCE_LIBRARY -- zineb new-key organic oral RfD (2026-07-04d)', ()
   });
 });
 
+describe('SUBSTANCE_LIBRARY -- oral RfD backfills for 17 existing substances (2026-07-04d)', () => {
+  const expected = [
+    { key: 'biphenyl', rfd: 0.5 },
+    { key: 'bromoform', rfd: 0.02 },
+    { key: 'butyl_benzyl_phthalate_bbp', rfd: 0.2 },
+    { key: 'carbaryl', rfd: 0.1 },
+    { key: 'chlordane_technical', rfd: 0.0005 },
+    { key: 'chloroform', rfd: 0.01 },
+    { key: 'demeton', rfd: 0.00004 },
+    { key: 'dibutyl_phthalate_dbp', rfd: 0.1 },
+    { key: 'dichlorobenzene_1_4', rfd: 0.11 },
+    { key: 'dieldrin', rfd: 0.00005 },
+    { key: 'diethyl_phthalate_dep', rfd: 0.8 },
+    { key: 'endosulfan', rfd: 0.006 },
+    { key: 'heptachlor', rfd: 0.0005 },
+    { key: 'heptachlor_epoxide', rfd: 0.000013 },
+    { key: 'hexachlorocyclohexane_gamma', rfd: 0.0003 },
+    { key: 'hexachloroethane', rfd: 0.0007 },
+    { key: 'vinyl_chloride', rfd: 0.003 },
+  ] as const;
+  for (const { key, rfd } of expected) {
+    it(`${key} carries the backfilled oral RfD ${rfd}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+    });
+  }
+});
+
 describe('SUBSTANCE_LIBRARY -- Phase 2 batch A1 HC-default oral backfills (2026-07-04)', () => {
   // toluene/ethylbenzene/xylenes rfd_oral backfilled with the HC FCSAP TRV v4.0 oral TDI (BC Protocol 1
   // s4.4 Health Canada default); values live-verified 2026-07-04. class/abs_dermal unchanged (organic/0.1).
@@ -1134,7 +1163,7 @@ describe('SUBSTANCE_LIBRARY -- oral slope-factor backfills (2026-07-04c)', () =>
       expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
       if (key === 'vinyl_chloride') {
         expect(result?.abs_dermal).toBe(0.03);
-        expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+        expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.003);
       }
     });
   }
