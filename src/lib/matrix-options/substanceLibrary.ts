@@ -426,7 +426,7 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 3.4,
     rfd_oral_mg_per_kg_bw_per_day: 0.0047,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.0021,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
@@ -434,11 +434,11 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0047 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; BMDL10 6.6 ppm Cavalleri 1994 occupational, PBPK external dose 4.7 mg/kg-bw/day, UF 1000, neurotoxicity/colour-confusion; HC 2015; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.006 mg/kg-bw/day remains available as a candidate option. PubChem CID 31373. ' +
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF US EPA IRIS oral slope factor 0.0021 per mg/kg-bw/day (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes:
       'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
-      'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values.',
+      'Human-health RfD, RfC, and inhalation unit risk ' +
+      'candidates are available in References & Values; oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'trichloroethylene',
@@ -463,20 +463,20 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: null,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.24,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF Health Canada oral slope factor 0.24 per mg/kg-bw/day (approved catalog value, pv-hc-vinyl_chloride-hh-direct-sf; single approved candidate -> resolves SOURCED to Health Canada; sf backfilled build-first 2026-07-04c).',
     notes:
       'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
       'candidates are available in References & Values. ' +
       'abs_dermal 0.03 = VOC-consistent default (vinyl chloride is a gas, bp -13 C; ' +
       'EPA RAGS Part E gives no soil ABSd for VOCs and routes them via inhalation; ' +
       '0.03 = HC VOC RAFDerm / matches sibling VOCs TCE/PCE). Corrected from an ' +
-      'unsupported 1.0 (data-entry defect). Dormant: no wired RfD/SF.',
+      'unsupported 1.0 (data-entry defect). RfD not wired (no catalog candidate); oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'chlorobenzene',
@@ -762,7 +762,7 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 5.37,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 16,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
@@ -772,11 +772,11 @@ export const SUBSTANCE_LIBRARY = [
       'Identity: Dieldrin (single organochlorine cyclodiene, epoxide of aldrin), ' +
       'CAS 60-57-1, PubChem CID 969491. logKow 5.37 = EPA ESB EqP anchor ' +
       '(Karickhoff & Long 1995; EPA-600-R-02-010 Table 2-1); experimental ' +
-      'measured 5.40 (de Bruijn et al. 1989) is within 0.03. Eco FCV from catalog.',
+      'measured 5.40 (de Bruijn et al. 1989) is within 0.03. Eco FCV from catalog. US EPA IRIS oral slope factor 16 per mg/kg-bw/day (approved catalog value, pv-iris-dieldrin-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes:
       'Eco-direct selectability. logKow 5.37 chosen as the EPA-ESB EqP anchor for ' +
       'sediment-benchmark consistency (vs 5.40 PubChem/HSDB; negligible delta). ' +
-      'HH fields null; abs_dermal/ba_oral inert HH defaults.',
+      'HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'p_p_dichlorodiphenyltrichloroethane_ddt',
@@ -826,7 +826,7 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 5.54,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.35,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
@@ -836,11 +836,11 @@ export const SUBSTANCE_LIBRARY = [
       'Identity: Chlordane (TECHNICAL MIXTURE), CAS 12789-03-6 (US EPA IRIS ' +
       'DTXSID5023954) -- the mixture CAS, NOT general 57-74-9 nor cis/trans ' +
       'congeners (5103-71-9 / 5103-74-2). logKow 5.54 (ATSDR 1994, via EPA IRIS ' +
-      'Tox Review; alt ~6.16 disclosed). Eco FCV is resolved dynamically from the eco catalog at runtime; fcv_ug_per_L static field is intentionally null.',
+      'Tox Review; alt ~6.16 disclosed). Eco FCV is resolved dynamically from the eco catalog at runtime; fcv_ug_per_L static field is intentionally null. US EPA IRIS oral slope factor 0.35 per mg/kg-bw/day (approved catalog value, pv-iris-chlordane_technical-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes:
       'Eco-direct selectability. Technical-mixture identity. logKow 5.54 is the ' +
-      'conservative regulatory value (ATSDR/IRIS; 6.16 alt exists). HH fields null; ' +
-      'abs_dermal/ba_oral inert HH defaults.',
+      'conservative regulatory value (ATSDR/IRIS; 6.16 alt exists). HH RfD not wired; oral slope factor now wired; ' +
+      'abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   // ---------------------------------------------------------------------------
   // Eco-registry fan-out batch (2026-06-19). 36 substances added for ECO-pathway
@@ -855,14 +855,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 3.8,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 6.3,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: alpha-Hexachlorocyclohexane (alpha-HCH), CAS 319-84-6. ATSDR Toxicological Profile for Hexachlorocyclohexane (HCH), Chapter 4, Table 4-1 (Chemical Identity) and Table 4-2 (Physical and Chemical Properties): log Kow = 3.8, footnote citing Hansch, C., Leo, A. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society; https://www.atsdr.cdc.gov/toxprofiles/tp43.pdf (PubChem CID 727 resolves to this CAS but carries no PUG-View LogP heading, so ATSDR is the correct primary source).',
-    notes: 'Eco selectability. logKow 3.8 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: alpha-Hexachlorocyclohexane (alpha-HCH), CAS 319-84-6. ATSDR Toxicological Profile for Hexachlorocyclohexane (HCH), Chapter 4, Table 4-1 (Chemical Identity) and Table 4-2 (Physical and Chemical Properties): log Kow = 3.8, footnote citing Hansch, C., Leo, A. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society; https://www.atsdr.cdc.gov/toxprofiles/tp43.pdf (PubChem CID 727 resolves to this CAS but carries no PUG-View LogP heading, so ATSDR is the correct primary source). US EPA IRIS oral slope factor 6.3 per mg/kg-bw/day (approved catalog value, pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 3.8 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'azinphos_methyl',
@@ -885,14 +885,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic',
     logKow: 4.01,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.008,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Biphenyl, CAS 92-52-4. PubChem CID 7095, LogP section citing Hansch C., Leo A., Hoekman D. (1995) Exploring QSAR, ACS, p.97 (via HSDB); log Kow = 4.01. IUPAC 1,1\'-biphenyl; value confirmed via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7095/JSON?heading=LogP.',
-    notes: 'Eco selectability. logKow 4.01 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Biphenyl, CAS 92-52-4. PubChem CID 7095, LogP section citing Hansch C., Leo A., Hoekman D. (1995) Exploring QSAR, ACS, p.97 (via HSDB); log Kow = 4.01. IUPAC 1,1\'-biphenyl; value confirmed via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7095/JSON?heading=LogP. US EPA IRIS oral slope factor 0.008 per mg/kg-bw/day (approved catalog value, pv-iris-biphenyl-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 4.01 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'bromoform',
@@ -900,14 +900,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 2.4,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.0079,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Bromoform, CAS 75-25-2. PubChem CID 5558, LogP heading citing HSDB (Chemicals Inspection and Testing Institute, CSCL Japan 1992) log Kow = 2.40 and ILO-WHO ICSC 0108 = 2.38: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5558/JSON?heading=LogP . Identity/CAS confirmed against PubChem CID 5558 (CAS RN 75-25-2).',
-    notes: 'Eco selectability. logKow 2.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Bromoform, CAS 75-25-2. PubChem CID 5558, LogP heading citing HSDB (Chemicals Inspection and Testing Institute, CSCL Japan 1992) log Kow = 2.40 and ILO-WHO ICSC 0108 = 2.38: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5558/JSON?heading=LogP . Identity/CAS confirmed against PubChem CID 5558 (CAS RN 75-25-2). US EPA IRIS oral slope factor 0.0079 per mg/kg-bw/day (approved catalog value, pv-iris-bromoform-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 2.4 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'bromophenyl_phenyl_ether_4',
@@ -960,7 +960,7 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 2.64,
     rfd_oral_mg_per_kg_bw_per_day: 0.00071,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.07,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
@@ -968,10 +968,10 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.00071 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; NOAEL 1 mg/kg-bw/day Bruckner 1986 rat gavage, NOAELadj 0.71, UF 1000, hepatotoxicity; HC 2010; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.004 mg/kg-bw/day remains available as a candidate option. PubChem CID 5943. ' +
-      'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024.',
+      'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024. US EPA IRIS oral slope factor 0.07 per mg/kg-bw/day (approved catalog value, pv-iris-carbon_tetrachloride-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes:
       'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
-      'Eco selectability. logKow 2.64 (eco-direct EqP input). HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert defaults.',
+      'Eco selectability. logKow 2.64 (eco-direct EqP input). oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'chlorpyrifos',
@@ -1144,14 +1144,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 5.44,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 4.5,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Heptachlor, CAS 76-44-8. PubChem Compound Summary, Heptachlor, CID 3589 (https://pubchem.ncbi.nlm.nih.gov/compound/3589; confirmed C10H5Cl7, matches CAS 76-44-8) for IUPAC name and log Kow = 6.10 (experimental; HSDB, citing Simpson CD et al., Bull Environ Contam Toxicol 55:149-53, 1995, PMID 7663085). Secondary source: ILO-WHO International Chemical Safety Card ICSC 0743 (CAS 76-44-8; https://chemicalsafety.ilo.org/dyn/icsc/showcard.display?p_lang=en&p_card_id=0743), log Pow range 5.27-5.44. Wired logKow = 5.44 uses the ICSC upper-range/regulatory value (EqP-apt), not the PubChem/HSDB 6.10 value; see notes field.',
-    notes: 'Eco selectability. logKow 5.44 (eco-direct EqP input). logKow 5.44 = ATSDR regulatory value (EqP-apt); PubChem/HSDB lists 6.10. HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Heptachlor, CAS 76-44-8. PubChem Compound Summary, Heptachlor, CID 3589 (https://pubchem.ncbi.nlm.nih.gov/compound/3589; confirmed C10H5Cl7, matches CAS 76-44-8) for IUPAC name and log Kow = 6.10 (experimental; HSDB, citing Simpson CD et al., Bull Environ Contam Toxicol 55:149-53, 1995, PMID 7663085). Secondary source: ILO-WHO International Chemical Safety Card ICSC 0743 (CAS 76-44-8; https://chemicalsafety.ilo.org/dyn/icsc/showcard.display?p_lang=en&p_card_id=0743), log Pow range 5.27-5.44. Wired logKow = 5.44 uses the ICSC upper-range/regulatory value (EqP-apt), not the PubChem/HSDB 6.10 value; see notes field. US EPA IRIS oral slope factor 4.5 per mg/kg-bw/day (approved catalog value, pv-iris-heptachlor-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 5.44 (eco-direct EqP input). logKow 5.44 = ATSDR regulatory value (EqP-apt); PubChem/HSDB lists 6.10. HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'heptachlor_epoxide',
@@ -1159,14 +1159,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 5.4,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 9.1,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Heptachlor epoxide, CAS 1024-57-3. ATSDR (2022), Toxicological Profile for Heptachlor and Heptachlor Epoxide, NCBI Bookshelf NBK598049 (Potential for Human Exposure, sec. 6.3.1 Environmental Fate): log Kow = 5.40, citing Mackay 1982. Identity/CAS confirmed via PubChem (CID 15559699, Heptachlor epoxide, C10H5Cl7O; https://pubchem.ncbi.nlm.nih.gov/compound/15559699), which independently lists log Kow = 5.40 citing HSDB (Garten CT Jr, Trabalka JR; Environ Sci Technol 17:590-5, 1983). Both primary citations converge on the same value; wired logKow = 5.4 matches.',
-    notes: 'Eco selectability. logKow 5.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Heptachlor epoxide, CAS 1024-57-3. ATSDR (2022), Toxicological Profile for Heptachlor and Heptachlor Epoxide, NCBI Bookshelf NBK598049 (Potential for Human Exposure, sec. 6.3.1 Environmental Fate): log Kow = 5.40, citing Mackay 1982. Identity/CAS confirmed via PubChem (CID 15559699, Heptachlor epoxide, C10H5Cl7O; https://pubchem.ncbi.nlm.nih.gov/compound/15559699), which independently lists log Kow = 5.40 citing HSDB (Garten CT Jr, Trabalka JR; Environ Sci Technol 17:590-5, 1983). Both primary citations converge on the same value; wired logKow = 5.4 matches. US EPA IRIS oral slope factor 9.1 per mg/kg-bw/day (approved catalog value, pv-iris-heptachlor_epoxide-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 5.4 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'hexachlorocyclohexane_gamma',
@@ -1189,14 +1189,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 4.14,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.04,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Hexachloroethane, CAS 67-72-1. PubChem CID 6214 (LogP heading, REST pug_view; https://pubchem.ncbi.nlm.nih.gov/compound/6214) citing Hansch, Leo & Hoekman, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants (ACS 1995, p.3, ref #37) via HSDB: log Kow = 4.14. Confirmed compound identity: C2Cl6, IUPAC 1,1,1,2,2,2-hexachloroethane, matches CAS 67-72-1. Secondary value on the same PubChem record: LogP = 3.9 (ILO-WHO ICSC, ref #39) -- not used; 4.14 (HSDB/Hansch) matches the wired logKow field. ATSDR Toxicological Profile for Hexachloroethane provides CAS/identity corroboration for the regulatory-toxicology framing of this substance.',
-    notes: 'Eco selectability. logKow 4.14 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Hexachloroethane, CAS 67-72-1. PubChem CID 6214 (LogP heading, REST pug_view; https://pubchem.ncbi.nlm.nih.gov/compound/6214) citing Hansch, Leo & Hoekman, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants (ACS 1995, p.3, ref #37) via HSDB: log Kow = 4.14. Confirmed compound identity: C2Cl6, IUPAC 1,1,1,2,2,2-hexachloroethane, matches CAS 67-72-1. Secondary value on the same PubChem record: LogP = 3.9 (ILO-WHO ICSC, ref #39) -- not used; 4.14 (HSDB/Hansch) matches the wired logKow field. ATSDR Toxicological Profile for Hexachloroethane provides CAS/identity corroboration for the regulatory-toxicology framing of this substance. US EPA IRIS oral slope factor 0.04 per mg/kg-bw/day (approved catalog value, pv-iris-hexachloroethane-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 4.14 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'malathion',
@@ -1324,14 +1324,14 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 5.9,
     rfd_oral_mg_per_kg_bw_per_day: null,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 1.1,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Identity: Toxaphene, CAS 8001-35-2. PubChem CID 5284469 (Toxaphene), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5284469/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Fisk AT et al., Chemosphere 39:2549-2562 (1999), median log Kow = 5.90.',
-    notes: 'Eco selectability. logKow 5.9 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    sources: 'Identity: Toxaphene, CAS 8001-35-2. PubChem CID 5284469 (Toxaphene), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5284469/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Fisk AT et al., Chemosphere 39:2549-2562 (1999), median log Kow = 5.90. US EPA IRIS oral slope factor 1.1 per mg/kg-bw/day (approved catalog value, pv-iris-toxaphene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
+    notes: 'Eco selectability. logKow 5.9 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
   {
     key: 'trichlorobenzene_1_2_4',

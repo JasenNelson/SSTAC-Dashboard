@@ -409,3 +409,41 @@ describe('resolveProvenanceRows -- Morning M1a re-picks SOURCED (2026-07-04)', (
     });
   }
 });
+
+describe('resolveProvenanceRows -- oral slope-factor backfills SOURCED (2026-07-04c)', () => {
+  const cases: Array<{ substance: string; value: number; pvid: string; jurisdiction: string }> = [
+    { substance: 'alpha_hexachlorocyclohexane_alpha_hch', value: 6.3, pvid: 'pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'biphenyl', value: 0.008, pvid: 'pv-iris-biphenyl-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'bromoform', value: 0.0079, pvid: 'pv-iris-bromoform-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'carbon_tetrachloride', value: 0.07, pvid: 'pv-iris-carbon_tetrachloride-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'chlordane_technical', value: 0.35, pvid: 'pv-iris-chlordane_technical-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'dieldrin', value: 16, pvid: 'pv-iris-dieldrin-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'heptachlor', value: 4.5, pvid: 'pv-iris-heptachlor-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'heptachlor_epoxide', value: 9.1, pvid: 'pv-iris-heptachlor_epoxide-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'hexachloroethane', value: 0.04, pvid: 'pv-iris-hexachloroethane-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'tetrachloroethylene', value: 0.0021, pvid: 'pv-iris-tetrachloroethylene-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'toxaphene', value: 1.1, pvid: 'pv-iris-toxaphene-hh-direct-sf', jurisdiction: 'US_federal' },
+    { substance: 'vinyl_chloride', value: 0.24, pvid: 'pv-hc-vinyl_chloride-hh-direct-sf', jurisdiction: 'Canada_federal' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} sf to its single approved row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'sf_oral_per_mg_per_kg_bw_per_day',
+          label: 'sf',
+          value: c.value,
+          unit: 'per mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe(c.jurisdiction);
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
