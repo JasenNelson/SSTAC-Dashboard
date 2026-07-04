@@ -344,6 +344,8 @@ function pickListField(
 interface EvidenceItemRef {
   evidence_item_id: string;
   evidence_type: string | null;
+  isSupportingOrNegating?: string | null;
+  rationale?: string | null;
   raw: Record<string, unknown>;
 }
 
@@ -413,6 +415,8 @@ function collectEvidenceItems(
       out.push({
         evidence_item_id: id,
         evidence_type: typeof et === "string" ? et : null,
+        isSupportingOrNegating: (item.is_supporting_or_negating as string | null) ?? null,
+        rationale: (typeof item.rationale === 'string' ? item.rationale : null),
         raw: item,
       });
       return;
@@ -1433,99 +1437,131 @@ export function PerPolicyResultsTable({
                                   </div>
                                 );
                               }
+                              // Evidential = SUPPORTING/NEGATING. is_supporting_or_negating is
+                              // authoritative when present (NEUTRAL -> folded); only fall back to
+                              // legacy evidence_type (POSITIVE/NEGATIVE) when the support signal is
+                              // absent/unrecognized, so older-shape evidence is not wrongly folded.
+                              const isEvidential = (r: EvidenceItemRef) => {
+                                const sn = (r.isSupportingOrNegating || "").toUpperCase();
+                                if (sn === "SUPPORTING" || sn === "NEGATING") return true;
+                                if (sn === "NEUTRAL") return false;
+                                const et = (r.evidence_type || "").toUpperCase();
+                                return et === "POSITIVE" || et === "NEGATIVE";
+                              };
+                              const evidential = items.filter(isEvidential);
+                              const nonEvidential = items.filter((r) => !isEvidential(r));
+
+                              const renderItem = (itemRef: EvidenceItemRef) => {
+                                const slice = dereferenceSlice(
+                                  evidenceSlices,
+                                  itemRef.evidence_item_id,
+                                );
+                                const isPulse =
+                                  activeHighlight !== null &&
+                                  activeHighlight ===
+                                    itemRef.evidence_item_id;
+                                const onPeek = sidePanel
+                                  ? () => {
+                                      sidePanel.openPeek({
+                                        evidenceItemId:
+                                          itemRef.evidence_item_id,
+                                        docSection: slice
+                                          ? slice.source.section
+                                          : null,
+                                        pageNum: slice
+                                          ? slice.source.page
+                                          : null,
+                                        content: slice
+                                          ? slice.content
+                                          : null,
+                                      });
+                                    }
+                                  : undefined;
+                                if (slice) {
+                                  return (
+                                    <EvidenceCitationCard
+                                      key={itemRef.evidence_item_id}
+                                      itemRef={itemRef}
+                                      slice={slice}
+                                      onPeek={onPeek}
+                                      pulseKey={isPulse ? pulseTick : 0}
+                                      isPulseTarget={isPulse}
+                                    />
+                                  );
+                                }
+                                if (evidenceSlices === null) {
+                                  return (
+                                    <div
+                                      key={
+                                        itemRef.evidence_item_id +
+                                        "::" +
+                                        (isPulse ? pulseTick : 0)
+                                      }
+                                      data-testid="per-policy-verbatim-older-schema"
+                                      data-evidence-item-id={
+                                        itemRef.evidence_item_id
+                                      }
+                                      data-eval-pulse={
+                                        isPulse ? "true" : undefined
+                                      }
+                                      onClick={onPeek}
+                                      className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] italic text-slate-500 dark:text-slate-400"
+                                    >
+                                      Verbatim text not available (this
+                                      evaluation was produced with engine
+                                      schema v0.0.1; re-run on schema
+                                      v0.1.0+ to surface verbatim evidence).
+                                    </div>
+                                  );
+                                }
+                                return (
+                                  <div
+                                    key={
+                                      itemRef.evidence_item_id +
+                                      "::" +
+                                      (isPulse ? pulseTick : 0)
+                                    }
+                                    data-testid="per-policy-verbatim-missing-slice"
+                                    data-evidence-item-id={
+                                      itemRef.evidence_item_id
+                                    }
+                                    data-eval-pulse={
+                                      isPulse ? "true" : undefined
+                                    }
+                                    onClick={onPeek}
+                                    className="rounded border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-2 text-[11px] text-amber-800 dark:text-amber-200"
+                                  >
+                                    Slice{" "}
+                                    <span className="font-mono">
+                                      {truncateHash(
+                                        itemRef.evidence_item_id,
+                                        18,
+                                      )}
+                                    </span>{" "}
+                                    not present in evidence_slices dict.
+                                  </div>
+                                );
+                              };
+
                               return (
                                 <div className="space-y-2">
-                                  {items.map((itemRef) => {
-                                    const slice = dereferenceSlice(
-                                      evidenceSlices,
-                                      itemRef.evidence_item_id,
-                                    );
-                                    const isPulse =
-                                      activeHighlight !== null &&
-                                      activeHighlight ===
-                                        itemRef.evidence_item_id;
-                                    const onPeek = sidePanel
-                                      ? () => {
-                                          sidePanel.openPeek({
-                                            evidenceItemId:
-                                              itemRef.evidence_item_id,
-                                            docSection: slice
-                                              ? slice.source.section
-                                              : null,
-                                            pageNum: slice
-                                              ? slice.source.page
-                                              : null,
-                                            content: slice
-                                              ? slice.content
-                                              : null,
-                                          });
-                                        }
-                                      : undefined;
-                                    if (slice) {
-                                      return (
-                                        <EvidenceCitationCard
-                                          key={itemRef.evidence_item_id}
-                                          itemRef={itemRef}
-                                          slice={slice}
-                                          onPeek={onPeek}
-                                          pulseKey={isPulse ? pulseTick : 0}
-                                          isPulseTarget={isPulse}
-                                        />
-                                      );
-                                    }
-                                    if (evidenceSlices === null) {
-                                      return (
-                                        <div
-                                          key={
-                                            itemRef.evidence_item_id +
-                                            "::" +
-                                            (isPulse ? pulseTick : 0)
-                                          }
-                                          data-testid="per-policy-verbatim-older-schema"
-                                          data-evidence-item-id={
-                                            itemRef.evidence_item_id
-                                          }
-                                          data-eval-pulse={
-                                            isPulse ? "true" : undefined
-                                          }
-                                          onClick={onPeek}
-                                          className="rounded border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-2 text-[11px] italic text-slate-500 dark:text-slate-400"
-                                        >
-                                          Verbatim text not available (this
-                                          evaluation was produced with engine
-                                          schema v0.0.1; re-run on schema
-                                          v0.1.0+ to surface verbatim evidence).
-                                        </div>
-                                      );
-                                    }
-                                    return (
-                                      <div
-                                        key={
-                                          itemRef.evidence_item_id +
-                                          "::" +
-                                          (isPulse ? pulseTick : 0)
-                                        }
-                                        data-testid="per-policy-verbatim-missing-slice"
-                                        data-evidence-item-id={
-                                          itemRef.evidence_item_id
-                                        }
-                                        data-eval-pulse={
-                                          isPulse ? "true" : undefined
-                                        }
-                                        onClick={onPeek}
-                                        className="rounded border border-amber-200 dark:border-amber-700 bg-amber-50 dark:bg-amber-900/20 p-2 text-[11px] text-amber-800 dark:text-amber-200"
-                                      >
-                                        Slice{" "}
-                                        <span className="font-mono">
-                                          {truncateHash(
-                                            itemRef.evidence_item_id,
-                                            18,
-                                          )}
-                                        </span>{" "}
-                                        not present in evidence_slices dict.
+                                  {evidential.length > 0 ? (
+                                    evidential.map(renderItem)
+                                  ) : (
+                                    <div className="text-xs italic text-slate-500 dark:text-slate-400">
+                                      No supporting or negating evidence found ({nonEvidential.length} chunk(s) reviewed, none evidential).
+                                    </div>
+                                  )}
+                                  {nonEvidential.length > 0 && (
+                                    <details className="group">
+                                      <summary className="cursor-pointer text-[11px] italic text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 select-none outline-none">
+                                        {nonEvidential.length} chunk(s) reviewed but not evidential (NEUTRAL)
+                                      </summary>
+                                      <div className="mt-2 space-y-2">
+                                        {nonEvidential.map(renderItem)}
                                       </div>
-                                    );
-                                  })}
+                                    </details>
+                                  )}
                                 </div>
                               );
                             })()}

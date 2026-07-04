@@ -375,6 +375,7 @@ interface EvidenceItemEntry {
   // evidence_type is POSITIVE / NEGATIVE / NEUTRAL per engine contract.
   // For the memo, NEGATIVE maps to "negating"; all others map to "supporting".
   evidence_type: string | null;
+  isSupportingOrNegating?: string | null;
   raw: Record<string, unknown>;
 }
 
@@ -434,6 +435,7 @@ function extractEvidencePacketItems(
       out.push({
         evidence_item_id: id,
         evidence_type: typeof et === "string" ? et : null,
+        isSupportingOrNegating: (item.is_supporting_or_negating as string | null) ?? null,
         raw: item,
       });
       return;
@@ -502,10 +504,28 @@ function buildEvidenceExcerptParagraphs(
   // Source line: title + page/section anchor + evidence type label.
   const sourceAnchor = buildSourceAnchor(slice);
   const titleLabel = slice.source.title || slice.source.doc_id || "(unknown source)";
-  const roleLabel =
-    entry.evidence_type && entry.evidence_type.toUpperCase() === "NEGATIVE"
-      ? "[negating]"
-      : "[supporting]";
+  // Role label from the authoritative real-data field (is_supporting_or_negating).
+  // is_supporting_or_negating WINS when present (incl. NEUTRAL -> [context]); only fall
+  // back to evidence_type (older shape / test fixtures) when the support signal is
+  // absent or unrecognized -- a contradictory fallback must never override the
+  // authoritative signal (else NEUTRAL could be over-claimed as [supporting]).
+  const snToken = (entry.isSupportingOrNegating || "").toUpperCase();
+  let roleLabel: string;
+  if (snToken === "NEGATING") {
+    roleLabel = "[negating]";
+  } else if (snToken === "SUPPORTING") {
+    roleLabel = "[supporting]";
+  } else if (snToken === "NEUTRAL") {
+    roleLabel = "[context]";
+  } else {
+    const etToken = (entry.evidence_type || "").toUpperCase();
+    roleLabel =
+      etToken === "NEGATIVE"
+        ? "[negating]"
+        : etToken === "POSITIVE"
+          ? "[supporting]"
+          : "[context]";
+  }
   const sourceLine = [titleLabel, sourceAnchor, roleLabel]
     .filter(Boolean)
     .join(" -- ");

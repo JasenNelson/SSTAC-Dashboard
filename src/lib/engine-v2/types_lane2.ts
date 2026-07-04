@@ -53,6 +53,26 @@ export type V2EvaluationListRow = Pick<
   | "errors"
 >;
 
+export type EvidenceSupportSignal = "SUPPORTING" | "NEGATING" | "NEUTRAL";
+export interface EvidencePacketItem {
+  evidence_item_id?: string;
+  is_supporting_or_negating?: EvidenceSupportSignal | string | null;
+  rationale?: string | null;
+  rank?: number | null;
+  weight?: number | null;
+  evidence_item_ref?: {
+    evidence_type?: string | null;
+    rerank_score?: number | null;
+    index_side?: string | null;
+    evidence_item_id?: string | null;
+  } | null;
+}
+// A packet item is "evidential" when its is_supporting_or_negating is SUPPORTING or NEGATING.
+export function isEvidentialPacketItem(it: EvidencePacketItem | Record<string, unknown>): boolean {
+  const s = (it as EvidencePacketItem).is_supporting_or_negating;
+  return s === "SUPPORTING" || s === "NEGATING";
+}
+
 export interface V2PerPolicyResult {
   id: string;
   evaluation_id: string;
