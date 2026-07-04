@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4930,
-        "source": "vitest run output (2026-07-04b; MO lanes A/C/D -- +12 over 4918: #479 applicability model +5, #480 eco reference-only states +6, catalog value/value_text integrity guard +1)",
+        "value": 4933,
+        "source": "vitest run output (2026-07-04b; Lane B HC source-selection wiring: chromium_trivalent 0.3 + barium 0.19 wired to their approved HC v4.0 rows (owner most-protective choice over IRIS 1.5/0.2). +3 over 4930: +2 resolver.integration SOURCED (chromium/barium -> pv-hc row) + 1 substanceApplicability wired-metal case; substanceLibrary net 0 (2 keys moved from the dormant null block to the Lane 1 wiring block). No catalog data changed -- the catalog already held these faithful HC values.)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_laneB_hc_wiring": {
+      "status": "superseded",
+      "value": 4930,
+      "source": "MO lanes A/C/D UX + integrity guard: 4930.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4933 (Lane B HC source-selection wiring chromium_trivalent 0.3 + barium 0.19: +3).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4933 after feat/mo-laneB-chromium-barium-wire-2026-07-04b wired chromium_trivalent (0.3) and barium (0.19) to their approved Health Canada TRV v4.0 catalog rows -- the owner's 2026-07-04b source-selection choice of the most-protective, BC-frame-default HC values over the less-protective US EPA IRIS (chromium 1.5, barium 0.2). PURE library wiring: NO catalog data changed (the catalog already held these page-cited, internally-faithful HC values, per the Lane C audit). Each wired value uniquely value-matches only its Health Canada Canada_federal row (IRIS/P28 sit at a different value), so both resolve SOURCED to Health Canada frame-independently. Net +3: +2 resolver.integration SOURCED cases + 1 substanceApplicability wired-metal case; substanceLibrary net 0 (chromium_trivalent + barium moved from the Cluster E dormant null block to the Lane 1 metals cohort wiring block). benzo_a_pyrene HELD pending HC-2016a verification; nickel_chloride (0.0013) wired in a separate PR."
+    },
     "vitest_test_count_2026_07_04_pre_ux_lanes_and_guard": {
       "status": "superseded",
       "value": 4918,

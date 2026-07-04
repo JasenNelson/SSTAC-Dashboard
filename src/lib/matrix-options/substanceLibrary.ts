@@ -290,19 +290,27 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Barium',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.19,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources:
+      'Health Canada TRVs v4.0 oral TDI 0.19 mg/kg-bw/day (approved catalog value, ' +
+      'pv-hc-barium-hh-direct-rfd / src-health-canada-trv-v4-2025). Wired as the most-protective ' +
+      'value per owner decision 2026-07-04b; the US EPA IRIS oral RfD (0.2, ' +
+      'pv-iris-barium-hh-direct-rfd) differs only by ~5% rounding and remains available as an ' +
+      'alternative. The wired value 0.19 uniquely value-matches the Health Canada row (IRIS and ' +
+      'a needs_review BC Protocol 28 candidate both sit at the different value 0.2), so provenance ' +
+      'resolves SOURCED to Health Canada frame-independently. Health Canada TRVs v4.0 Table 5 dermal RAF.',
     notes:
-      'Human-health TRV candidates are available in References & Values. ' +
-      'Calculator defaults remain unset until owner-approved selection rules land. ' +
-      'abs_dermal 0.001 = divalent-metal class default (no chemical-specific ' +
-      'soil ABSd). Corrected from 0.1. Dormant.',
+      'Oral RfD wired build-first from the approved Health Canada TRV v4.0 row ' +
+      '(qa_status=approved), value 0.19; previously null. Owner chose HC 0.19 (most-protective ' +
+      'and BC frame-default) over IRIS 0.2 on 2026-07-04b (immaterial ~5% difference). ' +
+      'abs_dermal 0.001 = divalent-metal class default (no chemical-specific soil ABSd), ' +
+      'unchanged by this wiring. No oral slope factor candidate in the catalog.',
   },
   {
     key: 'benzene',
@@ -343,20 +351,29 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Chromium, trivalent',
     contaminantClass: 'divalent-metal',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF',
+    sources:
+      'Health Canada TRVs v4.0 oral TDI 0.3 mg/kg-bw/day (approved catalog value, ' +
+      'pv-hc-chromium_trivalent-hh-direct-rfd / src-health-canada-trv-v4-2025; HC Table 1 ' +
+      'marks this value provisional). Wired as the most-protective value per owner decision ' +
+      '2026-07-04b: the US EPA IRIS oral RfD (1.5, pv-iris-chromium-trivalent-hh-direct-rfd) is ' +
+      '5x less protective and remains available as an alternative option but is NOT the default. ' +
+      'The wired value 0.3 uniquely value-matches the Health Canada row (IRIS sits at the ' +
+      'different value 1.5), so provenance resolves SOURCED to Health Canada frame-independently. ' +
+      'Health Canada TRVs v4.0 Table 5 dermal RAF.',
     notes:
-      'Human-health TRV candidates are available in References & Values. ' +
-      'Speciation matters; do not merge with hexavalent chromium. ' +
-      'abs_dermal 0.001 = divalent-metal class default (RAGS gives no ' +
-      'Cr-specific soil ABSd; Cr(III) skin penetration ~1-4%). Corrected ' +
-      'from 0.1. Dormant.',
+      'Oral RfD wired build-first from the approved Health Canada TRV v4.0 row ' +
+      '(qa_status=approved), value 0.3 (provisional per HC Table 1); previously null. Owner ' +
+      'chose HC (most-protective) over the less-protective IRIS 1.5 on 2026-07-04b. ' +
+      'Speciation matters; do not merge with hexavalent chromium. abs_dermal 0.001 = ' +
+      'divalent-metal class default (RAGS gives no Cr-specific soil ABSd; Cr(III) skin ' +
+      'penetration ~1-4%), unchanged by this wiring. No oral slope factor candidate in the catalog.',
   },
   {
     key: 'chromium_hexavalent',

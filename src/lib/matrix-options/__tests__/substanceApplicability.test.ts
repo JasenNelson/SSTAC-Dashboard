@@ -20,15 +20,26 @@ describe('getSubstanceApplicability', () => {
     ]);
   });
 
-  it('handles a metal like chromium_trivalent', () => {
-    const s = findSubstance('chromium_trivalent');
+  it('handles a dormant metal like nickel (missing HH input; EqP not-applicable for class)', () => {
+    // nickel is still dormant (unwired rfd/sf); chromium_trivalent/barium were wired 2026-07-04b.
+    const s = findSubstance('nickel');
     expect(s).toBeDefined();
     expect(s?.logKow).toBeNull();
     expect(s?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
-    
-    const res = getSubstanceApplicability('chromium_trivalent', DEFAULT_REGULATORY_FRAME_ID);
+
+    const res = getSubstanceApplicability('nickel', DEFAULT_REGULATORY_FRAME_ID);
     expect(res['human-health-direct'].state).toBe('missing-input');
     expect(res['human-health-food'].state).toBe('missing-input');
+    expect(res['eco-direct-eqp'].state).toBe('not-applicable-for-class');
+  });
+
+  it('marks a wired metal (chromium_trivalent 0.3) HH-computable but EqP not-applicable-for-class', () => {
+    const s = findSubstance('chromium_trivalent');
+    expect(s?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.3);
+    expect(s?.logKow).toBeNull();
+    const res = getSubstanceApplicability('chromium_trivalent', DEFAULT_REGULATORY_FRAME_ID);
+    expect(res['human-health-direct'].state).toBe('computable');
+    expect(res['human-health-food'].state).toBe('computable');
     expect(res['eco-direct-eqp'].state).toBe('not-applicable-for-class');
   });
 
