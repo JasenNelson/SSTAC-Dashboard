@@ -85,8 +85,8 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 4933,
-        "source": "vitest run output (2026-07-04b; Lane B HC source-selection wiring: chromium_trivalent 0.3 + barium 0.19 wired to their approved HC v4.0 rows (owner most-protective choice over IRIS 1.5/0.2). +3 over 4930: +2 resolver.integration SOURCED (chromium/barium -> pv-hc row) + 1 substanceApplicability wired-metal case; substanceLibrary net 0 (2 keys moved from the dormant null block to the Lane 1 wiring block). No catalog data changed -- the catalog already held these faithful HC values.)",
+        "value": 4944,
+        "source": "vitest run output (2026-07-04b; final sync after the Lane D UX + Lane B nickel_chloride PRs landed. +11 over 4933: #484 FrameImpactCard +2, #485 SubstanceCombobox +7 (net of the SharedGlobalInputs/MatrixDashboard select->combobox test adaptations), #486 nickel_chloride own-key wiring +2.)",
         "last_verified": "2026-07-04"
       },
       "playwright_test_count": {
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "vitest_test_count_2026_07_04_pre_uxlanes_and_nickel_chloride": {
+      "status": "superseded",
+      "value": 4933,
+      "source": "Lane B chromium/barium HC wiring: 4933.",
+      "last_verified": "2026-07-04",
+      "superseded_by": "facts.testing.vitest_test_count = 4944 (Lane D UX 3+1b + Lane B nickel_chloride: +11).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4944 (final sync PR) after the parallel 2026-07-04b UX + data PRs landed. Net +11: #484 FrameImpactCard (consolidates the two competing frame notices into one card across the 4 calculators) +2; #485 SubstanceCombobox (accessible type-to-search selector replacing the 414-option native select, with SharedGlobalInputs + MatrixDashboard test adaptations) +7 net; #486 nickel_chloride own-key HC v4.0 oral TDI 0.0013 wiring +2. These PRs intentionally left the shared docs-manifest line untouched to avoid 3-way merge conflicts; this PR reconciles the count in one place. benzo_a_pyrene remains HELD pending HC-2016a (6.67e-5) live verification."
+    },
     "vitest_test_count_2026_07_04_pre_laneB_hc_wiring": {
       "status": "superseded",
       "value": 4930,
