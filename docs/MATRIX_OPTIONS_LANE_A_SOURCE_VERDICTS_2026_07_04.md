@@ -1,10 +1,18 @@
 # Lane A source verdicts -- HC v4.0 vs IRIS vs HC-2016a (2026-07-04)
 
-Status: catalog-evidence-derived + IRIS-confirmed. Live HC v4.0 PDF re-acquisition attempted
-(the prior session's clean PDF was in a cleared scratchpad); a bounded live web re-confirmation
-is best-effort in progress. The catalog's own `evidence_items` are page-cited extractions of HC
-TRV v4.0 and were proven INTERNALLY FAITHFUL by the Lane C audit (class-A value-vs-value_text
-mismatch = 0 for all same-unit HC rows), so they are treated here as the authoritative v4.0 record.
+Status: catalog-evidence-derived + IRIS-confirmed. Live HC v4.0 PDF re-acquisition ATTEMPTED and
+BLOCKED in this environment: canada.ca returns HTTP 403 to automated fetch, publications.gc.ca serves
+an HTML wrapper instead of the raw `H129-108-2021-eng.pdf` bytes, and Zotero desktop is not running
+(localhost:23119 connection refused). The TRV v4.0 document's identity/existence and table structure
+were corroborated via search; the exact numeric cells were NOT independently machine-read. The
+catalog's own `evidence_items` are page-cited extractions of HC TRV v4.0 and were proven INTERNALLY
+FAITHFUL by the Lane C audit (class-A value-vs-value_text mismatch = 0 for all same-unit HC rows), so
+they are treated here as the authoritative v4.0 record.
+
+**To get a fresh live read** (owner-assisted): download `H129-108-2021-eng.pdf` (or the HC-2016 BaP
+guideline technical document) through a browser, or run `! curl` via the session `!` prefix, then I
+extract the relevant table with pdftotext/Docling. Until then the verdicts below rest on the
+page-cited catalog evidence (strong) rather than a fresh independent fetch.
 
 ## The reframe (why these are OWNER SOURCE-SELECTION decisions, not fixes)
 
