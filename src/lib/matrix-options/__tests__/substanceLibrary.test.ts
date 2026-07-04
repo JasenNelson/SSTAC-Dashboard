@@ -1043,3 +1043,21 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A2 HC-default oral backfills (2026-
     });
   }
 });
+
+describe('SUBSTANCE_LIBRARY -- Phase 2 batch A3 oral backfills (2026-07-04)', () => {
+  // chlorobenzene/dichlorobenzene_1_2 = HC-default (HC newer than frozen-1989 IRIS); trichloroethylene
+  // = most-protective override to IRIS 2011 (newer + lower than HC 2005). Values live-verified 2026-07-04.
+  const expected = [
+    { key: 'chlorobenzene', rfd: 0.43, sf: null },
+    { key: 'dichlorobenzene_1_2', rfd: 0.43, sf: null },
+    { key: 'trichloroethylene', rfd: 0.0005, sf: null },
+  ] as const;
+  for (const { key, rfd, sf } of expected) {
+    it(`${key} carries the wired rfd ${rfd}`, () => {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(rfd);
+      expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBe(sf);
+    });
+  }
+});

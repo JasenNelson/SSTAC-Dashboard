@@ -317,3 +317,34 @@ describe('resolveProvenanceRows -- Phase 2 batch A2 HC-default backfills SOURCED
     });
   }
 });
+
+describe('resolveProvenanceRows -- Phase 2 batch A3 SOURCED (2026-07-04)', () => {
+  // chlorobenzene/dichlorobenzene_1_2 = HC-default (SOURCED to Canada_federal); trichloroethylene =
+  // most-protective IRIS override (SOURCED to US_federal). Each value uniquely matches its approved row.
+  const cases: Array<{ substance: string; value: number; pvid: string; jur: string }> = [
+    { substance: 'chlorobenzene', value: 0.43, pvid: 'pv-hc-chlorobenzene-hh-direct-rfd', jur: 'Canada_federal' },
+    { substance: 'dichlorobenzene_1_2', value: 0.43, pvid: 'pv-hc-dichlorobenzene_1_2-hh-direct-rfd', jur: 'Canada_federal' },
+    { substance: 'trichloroethylene', value: 0.0005, pvid: 'pv-iris-trichloroethylene-hh-direct-rfd', jur: 'US_federal' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} rfd to its approved row (SOURCED)`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: 'rfd_oral_mg_per_kg_bw_day',
+          label: 'rfd',
+          value: c.value,
+          unit: 'mg/kg-bw/day',
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.jurisdiction).toBe(c.jur);
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
+      expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
