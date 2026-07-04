@@ -7175,6 +7175,190 @@ export const SUBSTANCE_LIBRARY = [
       'M2+); abs_dermal 0.03 = metalloid class default. logKow n/a; eco fields null (HH-only entry).',
   },
   {
+    key: 'calcium_cyanide',
+    displayName: 'Calcium cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-calcium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'copper_cyanide',
+    displayName: 'Copper cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-copper_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'cyanide_free',
+    displayName: 'Cyanide, free',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.00063,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.00063 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-cyanide_free-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'hydrogen_cyanide_and_cyanide_salts',
+    displayName: 'Hydrogen cyanide and cyanide salts',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0006,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.0006 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-hydrogen_cyanide_and_cyanide_salts-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'potassium_cyanide',
+    displayName: 'Potassium cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.002,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-potassium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'potassium_silver_cyanide',
+    displayName: 'Potassium silver cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.005,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-potassium_silver_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'silver_cyanide',
+    displayName: 'Silver cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.1,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-silver_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
+    key: 'sodium_cyanide',
+    displayName: 'Sodium cyanide',
+    contaminantClass: 'inorganic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.001,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, ' +
+      'pv-iris-sodium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
+      'resolves SOURCED to US EPA IRIS by value-match). New own-key inorganic cyanide-salt entry ' +
+      '(build-first, 2026-07-04b).',
+    notes:
+      'NEW own-key entry (cyanide-salts cohort, 2026-07-04b). Oral RfD wired build-first from the single ' +
+      'approved US EPA IRIS catalog row (qa_status=approved). No oral slope factor candidate. ' +
+      'contaminantClass inorganic; abs_dermal 0.1 = inorganic class default; logKow n/a; eco fields null ' +
+      '(HH-only entry).',
+  },
+  {
     key: 'nickel_chloride',
     displayName: 'Nickel chloride',
     contaminantClass: 'divalent-metal',
