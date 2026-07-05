@@ -380,6 +380,16 @@ describe('receptor scenarios: getFrameDefaults scenarioId selection', () => {
     expect(getDefaultSelectableScenarioId('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records })).toBe('toddler');
   });
 
+  it('getFrameScenarios falls back to scenarioId as label when scenarioLabel is omitted', () => {
+    const profileNoLabel = makeProfile({
+      receptorScenarioId: 'no-label-scenario',
+      scenarioLabel: undefined,
+    });
+    const named = getFrameScenarios('bc-protocol1-v5-dra', 'human-health-food', { profiles: [profileNoLabel] });
+    expect(named).toHaveLength(1);
+    expect(named[0].scenarioLabel).toBe('no-label-scenario');
+  });
+
   it('a scenario with a non-active (needs_review) seed is EXCLUDED from selectable (no hybrid)', () => {
     mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
     const recordsAdultPending = [
@@ -393,6 +403,20 @@ describe('receptor scenarios: getFrameDefaults scenarioId selection', () => {
     expect(selectable.map((s) => s.scenarioId)).toEqual(['toddler']);
     // The default selectable scenario is still the (complete) toddler.
     expect(getDefaultSelectableScenarioId('bc-protocol1-v5-dra', 'human-health-food', { profiles: [toddler, adult], records: recordsAdultPending })).toBe('toddler');
+  });
+
+  it('getDefaultSelectableScenarioId returns undefined when selectable is empty', () => {
+    mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: 'ok' });
+    const recordsPending = [
+      makeRecord({ parameter_value_id: 'pvid-toddler', value: 0.05, candidate_group_id: 'cg-ir-food-hh', qa_status: 'needs_review' }),
+      makeRecord({ parameter_value_id: 'pvid-adult', value: 0.2, candidate_group_id: 'cg-ir-food-hh', qa_status: 'needs_review' }),
+    ];
+    expect(
+      getDefaultSelectableScenarioId('bc-protocol1-v5-dra', 'human-health-food', {
+        profiles: [toddler, adult],
+        records: recordsPending,
+      }),
+    ).toBeUndefined();
   });
 
   // getActiveScenarioFrameDefaults fail-closed semantics (the calculator's resolver).
@@ -755,6 +779,23 @@ describe('getFrameDefaults: no matching profile row', () => {
     });
     expect(results).toEqual([]);
   });
+
+  it('handles query for pathway not in SEEDABLE_KEYS fallback correctly', () => {
+    const fallbackProfile = makeProfile({
+      frameId: 'ccme-sediment-quality',
+      pathway: 'background-adjustment',
+    });
+    const fallbackRecord = makeRecord({
+      parameter_value_id: 'pvid-test-ir',
+      pathway: 'background-adjustment',
+    });
+    const results = getFrameDefaults('ccme-sediment-quality', 'background-adjustment', {
+      profiles: [fallbackProfile],
+      records: [fallbackRecord],
+    });
+    expect(results.length).toBe(1);
+    expect(results[0].status).toBe('invalid');
+  });
 });
 
 // ---------------------------------------------------------------------------
@@ -974,6 +1015,81 @@ describe('validateFrameDefaultProfiles', () => {
     const errors = validateFrameDefaultProfiles([profile], [record]);
     expect(errors.length).toBeGreaterThan(0);
     expect(errors.some((e) => /unit/i.test(e))).toBe(true);
+  });
+
+  it('receptorScenarioId is empty string -> error', () => {
+    const profile = makeProfile({
+      receptorScenarioId: '',
+      scenarioLabel: 'Test',
+    });
+    const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /receptorScenarioId.*non-empty string/i.test(e))).toBe(true);
+  });
+
+  it('receptorScenarioId is not a string -> error', () => {
+    const profile = makeProfile({
+      receptorScenarioId: 123 as any,
+      scenarioLabel: 'Test',
+    });
+    const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /receptorScenarioId.*non-empty string/i.test(e))).toBe(true);
+  });
+
+  it('isDefaultScenario is not a boolean -> error', () => {
+    const profile = makeProfile({
+      isDefaultScenario: 'true' as any,
+    });
+    const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /isDefaultScenario.*must be a boolean/i.test(e))).toBe(true);
+  });
+
+  it('record input_key mismatch -> error', () => {
+    const record = makeRecord({
+      parameter_value_id: 'pvid-test-ir',
+      input_key: 'BW_kg',
+    });
+    const profile = makeProfile();
+    const errors = validateFrameDefaultProfiles([profile], [record]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /input_key mismatch/i.test(e))).toBe(true);
+  });
+
+  it('record source_ids is undefined -> error', () => {
+    const record = makeRecord({
+      parameter_value_id: 'pvid-test-ir',
+      source_ids: undefined as any,
+    });
+    const profile = makeProfile();
+    const errors = validateFrameDefaultProfiles([profile], [record]);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /is not in the cited record source_ids/i.test(e))).toBe(true);
+  });
+
+  it('pathway not in SEEDABLE_KEYS -> empty seedable allowlist error', () => {
+    const profile: FrameDefaultProfileRow = {
+      frameId: 'ccme-sediment-quality',
+      pathway: 'background-adjustment',
+      note: 'No defaults allowlist',
+      label: 'Test label',
+      sourceIds: ['src-test-001'],
+      defaults: [
+        {
+          inputKey: 'IR_food_kg_per_day',
+          parameterValueId: 'pvid-test-ir',
+          candidateGroupId: 'cg-ir-food-hh',
+        },
+      ],
+    };
+    const record = makeRecord({
+      parameter_value_id: 'pvid-test-ir',
+      pathway: 'background-adjustment',
+    });
+    const errors = validateFrameDefaultProfiles([profile], [record], TEST_SOURCES);
+    expect(errors.length).toBeGreaterThan(0);
+    expect(errors.some((e) => /not in the seedable allowlist/i.test(e))).toBe(true);
   });
 });
 
