@@ -102,6 +102,30 @@ describe('normalizeToBase', () => {
     expect(fromG!.baseUnit).toBe(fromMg!.baseUnit);
     expect(fromG!.value).toBeCloseTo(fromMg!.value, 12);
   });
+
+  it('handles non-finite number values by failing closed', () => {
+    expect(normalizeToBase(NaN, 'mg/m3')).toBeNull();
+    expect(normalizeToBase(Infinity, 'mg/m3')).toBeNull();
+  });
+
+  it('handles null/undefined rawUnit by failing closed', () => {
+    expect(normalizeToBase('1.0', null as any)).toBeNull();
+    expect(normalizeToBase('1.0', undefined as any)).toBeNull();
+  });
+
+  it('normalizes alternative dose unit patterns (hasDose sub-conditions)', () => {
+    // regex pattern test: mg/kg/d
+    const r1 = normalizeToBase('0.05', 'mg/kg/d');
+    expect(r1?.baseUnit).toBe('mg/kg-d');
+
+    // endsWith('-d') test: mg/kg-d
+    const r2 = normalizeToBase(0.05, 'mg/kg-d');
+    expect(r2?.baseUnit).toBe('mg/kg-d');
+
+    // includes('-d') test: ug/kg-d-site
+    const r3 = normalizeToBase('0.05', 'ug/kg-d-site');
+    expect(r3?.baseUnit).toBe('mg/kg-d');
+  });
 });
 
 describe('assessSlotUnitConsistency', () => {
@@ -132,5 +156,14 @@ describe('assessSlotUnitConsistency', () => {
     expect(c.baseUnits.length).toBe(2);
     expect(c.homogeneousBase).toBe(false);
     expect(c.comparable).toBe(false);
+  });
+
+  it('handles elements with missing unit safely by falling back to empty string', () => {
+    const c = assessSlotUnitConsistency([
+      { value: '1.0', unit: null as any },
+    ]);
+    expect(c.allNormalizable).toBe(false);
+    expect(c.comparable).toBe(false);
+    expect(c.units).toEqual(['']);
   });
 });

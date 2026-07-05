@@ -42,6 +42,10 @@ describe('utl9595', () => {
     expect(() => utl9595([NaN, Infinity])).toThrow(RangeError);
   });
 
+  it('throws TypeError when samples is not an array', () => {
+    expect(() => utl9595('not-an-array' as any)).toThrow(TypeError);
+  });
+
   it('returns an empty warnings array when n is at a tabulated row', () => {
     const samples = Array.from({ length: 10 }, (_, i) => 5 + (i - 4.5) * 0.1);
     const result = utl9595(samples);
@@ -276,6 +280,19 @@ describe('ecoDirectEqP', () => {
         fcv_ug_per_L: Number.NaN,
       }),
     ).toThrow(RangeError);
+  });
+
+  it('throws RangeError when foc is zero, negative, or non-finite', () => {
+    const base = { Cs_mg_per_kg: 1, logKow: 5, fcv_ug_per_L: 10 };
+    expect(() => ecoDirectEqP({ ...base, foc: 0 })).toThrow(RangeError);
+    expect(() => ecoDirectEqP({ ...base, foc: -0.01 })).toThrow(RangeError);
+    expect(() => ecoDirectEqP({ ...base, foc: NaN })).toThrow(RangeError);
+  });
+
+  it('throws RangeError when logKow is non-finite', () => {
+    const base = { Cs_mg_per_kg: 1, foc: 0.02, fcv_ug_per_L: 10 };
+    expect(() => ecoDirectEqP({ ...base, logKow: NaN })).toThrow(RangeError);
+    expect(() => ecoDirectEqP({ ...base, logKow: Infinity })).toThrow(RangeError);
   });
 });
 
@@ -534,6 +551,15 @@ describe('ecoFoodBSAF', () => {
     expect(() =>
       ecoFoodBSAF({ ...validBase, BSAF_loc_freshwater: 0 }),
     ).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, foc: 0 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, foc: -0.01 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, foc: NaN })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, fLipid: 0 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, fLipid: -0.01 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, fLipid: NaN })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, Fsite: 0 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, Fsite: -0.01 })).toThrow(RangeError);
+    expect(() => ecoFoodBSAF({ ...validBase, Fsite: NaN })).toThrow(RangeError);
   });
 
   it('anadromous Fsite = 0.2 produces a SedS 5x higher than Fsite = 1.0', () => {
@@ -596,6 +622,72 @@ describe('ecoFoodBSAF', () => {
       }),
     ).toThrow(RangeError);
   });
+
+  it('blocks (warns + sets blocked=true) when foc is above 0.10 but below or equal to 0.30', () => {
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.15,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(result.blocked).toBe(true);
+    expect(result.warnings.some((w) => w.includes('above'))).toBe(true);
+  });
+
+  it('warns when fLipid is outside typical screening range', () => {
+    const resultLow = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.005, // typical range is [0.01, 0.20]
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(resultLow.blocked).toBe(false);
+    expect(resultLow.warnings.some((w) => w.includes('fLipid'))).toBe(true);
+
+    const resultHigh = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.25,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater',
+      contaminantClass: 'organic-PAH',
+    });
+    expect(resultHigh.blocked).toBe(false);
+    expect(resultHigh.warnings.some((w) => w.includes('fLipid'))).toBe(true);
+  });
+
+  it('throws RangeError for negative or non-finite fProtein', () => {
+    const validBase = {
+      TRV_eco_mg_per_kg_bw_day: 0.0025,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 0.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'freshwater' as const,
+      contaminantClass: 'organic-PAH' as const,
+    };
+    expect(() =>
+      ecoFoodBSAF({ ...validBase, fProtein: -0.1 }),
+    ).toThrow(RangeError);
+    expect(() =>
+      ecoFoodBSAF({ ...validBase, fProtein: NaN }),
+    ).toThrow(RangeError);
+  });
 });
 
 describe('humanHealthDirectContact', () => {
@@ -615,6 +707,28 @@ describe('humanHealthDirectContact', () => {
     abs_dermal: 0.03,
     ba_oral: 0.6,
   };
+
+  it('throws RangeError for invalid input parameters (assertPositiveFinite & assertUnitFraction)', () => {
+    const base = {
+      rfd_oral_mg_per_kg_bw_day: 3.0e-4,
+      sf_oral_per_mg_per_kg_bw_per_day: 1.5,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 15,
+      ED_years: 6,
+      EF_days_per_year: 40,
+      AT_cancer_years: 70,
+      IR_sed_mg_per_day: 200,
+      SA_cm2: 2800,
+      AF_sed_mg_per_cm2: 0.2,
+      abs_dermal: 0.03,
+      ba_oral: 0.6,
+    };
+    expect(() => humanHealthDirectContact({ ...base, targetRisk: 0 })).toThrow(RangeError);
+    expect(() => humanHealthDirectContact({ ...base, BW_kg: -1 })).toThrow(RangeError);
+    expect(() => humanHealthDirectContact({ ...base, abs_dermal: -0.1 })).toThrow(RangeError);
+    expect(() => humanHealthDirectContact({ ...base, abs_dermal: 1.5 })).toThrow(RangeError);
+  });
 
   it('computes the lower of non-cancer and cancer direct-contact values', () => {
     const result = humanHealthDirectContact({
@@ -1042,5 +1156,49 @@ describe('humanHealthFoodWeb', () => {
         contaminantClass: 'organic-halogenated',
       }),
     ).toThrow(RangeError);
+  });
+
+  it('D-10: throws RangeError when both RfD and slope factor are null', () => {
+    expect(() =>
+      humanHealthFoodWeb({
+        rfd_oral_mg_per_kg_bw_day: null,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+        targetRisk: 1.0e-5,
+        hazardQuotient: 1,
+        BW_kg: 70,
+        IR_food_kg_per_day: 0.142,
+        ba_oral: 1,
+        BSAF_loc_freshwater: 2,
+        fLipid: 0.05,
+        foc: 0.02,
+        ecosystem: 'freshwater',
+        contaminantClass: 'organic-halogenated',
+      }),
+    ).toThrow(RangeError);
+  });
+
+  it('D-11: throws RangeError for negative/non-finite optional fProtein override', () => {
+    const base = {
+      rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+      sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+      targetRisk: 1.0e-5,
+      hazardQuotient: 1,
+      BW_kg: 70,
+      IR_food_kg_per_day: 0.142,
+      ba_oral: 1,
+      BSAF_loc_freshwater: 2,
+      fLipid: 0.05,
+      foc: 0.02,
+      ecosystem: 'freshwater' as const,
+      contaminantClass: 'organic-halogenated' as const,
+    };
+    // valid override
+    const result = humanHealthFoodWeb({ ...base, fProtein: 0.2 });
+    expect(result.blocked).toBe(false);
+
+    // invalid overrides
+    expect(() => humanHealthFoodWeb({ ...base, fProtein: 0 })).toThrow(RangeError);
+    expect(() => humanHealthFoodWeb({ ...base, fProtein: -0.1 })).toThrow(RangeError);
+    expect(() => humanHealthFoodWeb({ ...base, fProtein: NaN })).toThrow(RangeError);
   });
 });
