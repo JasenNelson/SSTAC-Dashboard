@@ -1645,7 +1645,7 @@ export const SUBSTANCE_LIBRARY = [
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.3 mg/kg-bw/day (CAS 108-95-2) (approved catalog value, pv-iris-phenol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
-      'Human-health pathways only; seeded build-first from the pv-p28-phenol-hh-direct-rfd row (needs_review) / ' +
+      'Human-health pathways only; seeded build-first from the pv-p28-phenol-hh-direct-rfd row (awaiting review) / ' +
       'pv-iris-phenol-hh-direct-rfd row (approved) (value 0.3, agree). logKow not ' +
       'in catalog -> eco-direct EqP unavailable; no eco value -> Eco-Food filtered. ' +
       'abs_dermal 0.1 = organic-class SVOC default (EPA RAGS Part E); prior 0.03 was ' +
@@ -1714,7 +1714,7 @@ export const SUBSTANCE_LIBRARY = [
       'pv-iris-hexachlorobenzene-hh-direct-sf (1.6, the more conservative of the two ' +
       'catalog SFs; BC P28 = 0.83); RfD from pv-iris-hexachlorobenzene-hh-direct-rfd / ' +
       'pv-p28-hexachlorobenzene-hh-direct-rfd (0.0008, agree). The IRIS SF and IRIS RfD rows are now ' +
-      'qa_status=approved; the co-cited BC P28 RfD duplicate (pv-p28-hexachlorobenzene-hh-direct-rfd, same value) remains needs_review. ' +
+      'qa_status=approved; the co-cited BC P28 RfD duplicate (pv-p28-hexachlorobenzene-hh-direct-rfd, same value) remains awaiting review. ' +
       'logKow/eco not in catalog -> eco filtered. ' +
       'abs_dermal/ba_oral are organic-halogenated class defaults awaiting HITL.',
   },
@@ -2036,7 +2036,7 @@ export const SUBSTANCE_LIBRARY = [
       'pv-iris-pyridine-hh-direct-rfd / -food-rfd (value 0.001). logKow not in catalog ' +
       '-> eco pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm ' +
       'default (0.03, MECP 2011). Boundary case: volatile (bp 115 C) but Method ' +
-      '8270-classified; 0.03 kept as the VOC default pending a dedicated review.',
+      '8270-classified; 0.03 kept as the VOC default awaiting a dedicated review.',
   },
   {
     key: '2_methylnaphthalene',
