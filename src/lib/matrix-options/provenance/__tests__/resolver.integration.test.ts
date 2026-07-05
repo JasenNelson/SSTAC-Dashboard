@@ -363,10 +363,10 @@ describe('resolveProvenanceRows -- Phase 2 batch A2 HC-default backfills SOURCED
 });
 
 describe('resolveProvenanceRows -- Phase 2 batch A3 SOURCED (2026-07-04)', () => {
-  // chlorobenzene/dichlorobenzene_1_2 = HC-default (SOURCED to Canada_federal); trichloroethylene =
+  // chlorobenzene = IRIS (US_federal); dichlorobenzene_1_2 = HC-default (SOURCED to Canada_federal); trichloroethylene =
   // most-protective IRIS override (SOURCED to US_federal). Each value uniquely matches its approved row.
   const cases: Array<{ substance: string; value: number; pvid: string; jur: string }> = [
-    { substance: 'chlorobenzene', value: 0.43, pvid: 'pv-hc-chlorobenzene-hh-direct-rfd', jur: 'Canada_federal' },
+    { substance: 'chlorobenzene', value: 0.02, pvid: 'pv-iris-chlorobenzene-hh-direct-rfd', jur: 'US_federal' },
     { substance: 'dichlorobenzene_1_2', value: 0.43, pvid: 'pv-hc-dichlorobenzene_1_2-hh-direct-rfd', jur: 'Canada_federal' },
     { substance: 'trichloroethylene', value: 0.0005, pvid: 'pv-iris-trichloroethylene-hh-direct-rfd', jur: 'US_federal' },
   ];
@@ -518,6 +518,7 @@ describe('resolveProvenanceRows -- oral RfD backfills SOURCED (2026-07-04d)', ()
 
 describe('resolveProvenanceRows -- current_default selections (2026-07-05)', () => {
   const cases = [
+    { substance: 'chlorobenzene', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.02, pvid: 'pv-iris-chlorobenzene-hh-direct-rfd' },
     { substance: 'barium', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.19, pvid: 'pv-hc-barium-hh-direct-rfd' },
     { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.0008, pvid: 'pv-hc-cadmium-hh-direct-rfd-tdi' },
     { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.0002, pvid: 'pv-hc-mehg-hh-direct-rfd-sensitive' },

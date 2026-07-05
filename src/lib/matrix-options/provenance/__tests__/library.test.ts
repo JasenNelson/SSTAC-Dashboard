@@ -212,7 +212,8 @@ describe('matrix options evidence library helpers', () => {
     // 2026-07-02b: -3 (56 -> 53) -- eco-statics correction DELETED 3 more current_default scaffolds
     // (pv-bap-fcv, pv-pcb-trv-eco, pv-mehg-trv-eco). pv-pcb-fcv's PROMOTION does not change this count
     // -- default_status stays current_default (unchanged); only qa/evidence status moved.
-    expect(view.audit.values.currentDefaults).toBe(81);
+    // 2026-07-05: +2 (81 -> 83) -- IRIS chlorobenzene oral RfD promoted to current_default.
+    expect(view.audit.values.currentDefaults).toBe(83);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
@@ -240,8 +241,10 @@ describe('matrix options evidence library helpers', () => {
     // current_default -> available_option (the old current-calculator placeholders that no
     // longer hold the default once a real catalog row was promoted). Net -36 + 8 = -28. See the
     // matching +28 on currentDefaults above.
-    expect(view.audit.values.availableOptions).toBe(1680);
-    expect(view.audit.values.notDefaults).toBe(17);
+    // 2026-07-05: -4 (1680 -> 1676) -- 2 HC chlorobenzene rows demoted to not_default, 2 IRIS rows promoted to current_default.
+    expect(view.audit.values.availableOptions).toBe(1676);
+    // 2026-07-05: +2 (17 -> 19) -- 2 HC chlorobenzene rows demoted to not_default.
+    expect(view.audit.values.notDefaults).toBe(19);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
     expect(view.audit.equations.currentCalculatorScaffold).toBe(3);

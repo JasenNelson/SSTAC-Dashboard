@@ -143,8 +143,8 @@ function allDoneOverrides() {
 // ---------------------------------------------------------------------------
 
 describe('promote-hc-trv-v4-2025: scope constants', () => {
-  it('exports exactly 92 value IDs', () => {
-    expect(HC_TRV_V4_2025_PROMOTION_VALUE_IDS).toHaveLength(92);
+  it('exports exactly 90 value IDs', () => {
+    expect(HC_TRV_V4_2025_PROMOTION_VALUE_IDS).toHaveLength(90);
   });
   it('every id is a pv-hc-* id (never a pv-iris-/pv-p28-/pv-us-epa- id)', () => {
     for (const id of HC_TRV_V4_2025_PROMOTION_VALUE_IDS) {
@@ -197,10 +197,10 @@ describe('promote-hc-trv-v4-2025: validateApplyOptions', () => {
 });
 
 describe('promote-hc-trv-v4-2025: planPromotion -- happy path', () => {
-  it('plans all 92 values to promote + skips the already-verified source', () => {
+  it('plans all 90 values to promote + skips the already-verified source', () => {
     const { records, sources } = makeFixture();
     const plan = planPromotion(records, sources, APPLY_OPTS);
-    expect(plan.valueResults).toHaveLength(92);
+    expect(plan.valueResults).toHaveLength(90);
     expect(plan.valueResults.every((vr) => vr.promoteValue)).toBe(true);
     expect(plan.promoteSource).toBe(false);
     expect(plan.sourceAlreadyDone).toBe(true);

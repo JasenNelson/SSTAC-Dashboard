@@ -610,6 +610,7 @@ describe('matrix options provenance catalog', () => {
       'pv-hc-cadmium-hh-direct-rfd-tdi', 'pv-hc-cadmium-hh-food-rfd-tdi',
       'pv-hc-mehg-hh-direct-rfd-sensitive', 'pv-hc-mehg-hh-food-rfd-sensitive',
       // US EPA IRIS oral RfD
+      'pv-iris-chlorobenzene-hh-direct-rfd', 'pv-iris-chlorobenzene-hh-food-rfd',
       'pv-iris-dichlorobenzene_1_2-hh-direct-rfd', 'pv-iris-dichlorobenzene_1_2-hh-food-rfd',
       'pv-iris-dichloromethane-hh-direct-rfd', 'pv-iris-dichloromethane-hh-food-rfd',
       'pv-iris-trichloroethylene-hh-direct-rfd', 'pv-iris-trichloroethylene-hh-food-rfd',
@@ -619,7 +620,7 @@ describe('matrix options provenance catalog', () => {
       'pv-iris-dichloromethane-hh-direct-sf', 'pv-iris-dichloromethane-hh-food-sf',
       'pv-iris-trichloroethylene-hh-direct-sf', 'pv-iris-trichloroethylene-hh-food-sf',
     ];
-    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(36);
+    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(38);
 
     for (const pvid of APPROVED_CURRENT_DEFAULT_IDS) {
       const record = PARAMETER_VALUE_RECORDS.find(
