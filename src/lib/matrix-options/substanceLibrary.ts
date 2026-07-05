@@ -489,16 +489,16 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Chlorobenzene',
     contaminantClass: 'organic-halogenated',
     logKow: 2.86,
-    rfd_oral_mg_per_kg_bw_per_day: 0.43,
+    rfd_oral_mg_per_kg_bw_per_day: 0.02,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.43 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 1996 based on NTP 1985a chronic gavage, NOAELadj 43, UF 100, hepatotoxicity; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default -- HC 1996 is the more-current assessment; the older US EPA IRIS value 0.02 mg/kg-bw/day (frozen 1989) remains available as a candidate option. PubChem CID 7964. US EPA IRIS RfD table; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-hc-chlorobenzene-hh-direct-rfd / src-health-canada-trv-v4-2025).',
+    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, pv-iris-chlorobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live; current_default; corroborated by BC Protocol 28). PubChem CID 7964. Health Canada TRVs v4.0 Table 5 dermal RAF.',
     notes:
-      'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4 (HC 1996 newer than the frozen-1989 IRIS). Human-health oral RfD candidate is available in References & Values. ' +
+      'oral RfD reseeded to US EPA IRIS 0.02 (current_default) after the prior HC 0.43 was found to be a 1,2-dichlorobenzene mis-attribution (quarantined/superseded 2026-07-05); real HC value pending owner FCSAP confirmation. Human-health oral RfD candidate is available in References & Values. ' +
       'Additional calculator defaults are pending owner-approved selection rules.',
   },
   // ---------------------------------------------------------------------------
