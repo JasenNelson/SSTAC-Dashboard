@@ -138,6 +138,35 @@ describe('HHDirectContactCalculator', () => {
       unmount();
     }
   });
+
+  it('updates the result when targetRisk, hazardQuotient, absDermal, or baOral changes', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const beforeRisk = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+    fireEvent.change(screen.getByLabelText(/Target risk/i), { target: { value: '1e-6' } });
+    const afterRisk = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+    expect(afterRisk).not.toBe(beforeRisk);
+
+    // Clear slope factor so only non-cancer calculation is active
+    fireEvent.change(screen.getByTestId('hh-direct-slope-input'), { target: { value: '' } });
+    const afterClearSlope = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+
+    fireEvent.change(screen.getByLabelText(/Hazard quotient/i), { target: { value: '0.2' } });
+    const afterHQ = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+    expect(afterHQ).not.toBe(afterClearSlope);
+
+    fireEvent.change(screen.getByLabelText(/Dermal absorption/i), { target: { value: '0.05' } });
+    const afterDermal = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+    expect(afterDermal).not.toBe(afterHQ);
+
+    fireEvent.change(screen.getByLabelText(/Oral bioavailability/i), { target: { value: '0.8' } });
+    const afterOral = screen.getByTestId('hh-direct-preliminary-standard').textContent;
+    expect(afterOral).not.toBe(afterDermal);
+  });
 });
 
 // C-HH-direct (2026-06-12): the canada-fcsap-aquatic frame seeds the seven HC PQRA v4.0
@@ -189,6 +218,54 @@ describe('HHDirectContactCalculator C-HH-direct frame default (live catalog)', (
     fireEvent.click(screen.getByTestId('hh-direct-bw-reset-to-frame-default'));
     expect(bw.value).toBe('16.5');
     expect(screen.queryByTestId('hh-direct-bw-reset-to-frame-default')).toBeNull();
+  });
+
+  it('user edits on other inputs show their reset buttons; resets restore defaults', () => {
+    renderFcsap();
+    // EF
+    const ef = screen.getByTestId('hh-direct-ef-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-ef-reset-to-frame-default')).toBeNull();
+    fireEvent.change(ef, { target: { value: '180' } });
+    expect(ef.value).toBe('180');
+    expect(screen.getByTestId('hh-direct-ef-reset-to-frame-default')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-ef-reset-to-frame-default'));
+    expect(ef.value).toBe('364');
+
+    // AT_cancer
+    const at = screen.getByTestId('hh-direct-at-cancer-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-at-cancer-reset-to-frame-default')).toBeNull();
+    fireEvent.change(at, { target: { value: '75' } });
+    expect(at.value).toBe('75');
+    expect(screen.getByTestId('hh-direct-at-cancer-reset-to-frame-default')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-at-cancer-reset-to-frame-default'));
+    expect(at.value).toBe('80');
+
+    // IR_sed
+    const ir = screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-ir-sed-reset-to-frame-default')).toBeNull();
+    fireEvent.change(ir, { target: { value: '50' } });
+    expect(ir.value).toBe('50');
+    expect(screen.getByTestId('hh-direct-ir-sed-reset-to-frame-default')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-ir-sed-reset-to-frame-default'));
+    expect(ir.value).toBe('80');
+
+    // SA
+    const sa = screen.getByTestId('hh-direct-sa-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-sa-reset-to-frame-default')).toBeNull();
+    fireEvent.change(sa, { target: { value: '5000' } });
+    expect(sa.value).toBe('5000');
+    expect(screen.getByTestId('hh-direct-sa-reset-to-frame-default')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-sa-reset-to-frame-default'));
+    expect(sa.value).toBe('6130');
+
+    // AF
+    const af = screen.getByTestId('hh-direct-af-input') as HTMLInputElement;
+    expect(screen.queryByTestId('hh-direct-af-reset-to-frame-default')).toBeNull();
+    fireEvent.change(af, { target: { value: '0.05' } });
+    expect(af.value).toBe('0.05');
+    expect(screen.getByTestId('hh-direct-af-reset-to-frame-default')).toBeInTheDocument();
+    fireEvent.click(screen.getByTestId('hh-direct-af-reset-to-frame-default'));
+    expect(af.value).toBe('0.01');
   });
 
   // Renamed from "a no-default frame leaves the inputs at their baselines with no label"
