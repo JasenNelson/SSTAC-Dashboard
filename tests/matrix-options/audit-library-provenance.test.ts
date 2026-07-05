@@ -254,4 +254,47 @@ describe('audit-library-provenance unit tests', () => {
     const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
     expect(findings.some(f => f.check === 'STALE_NOTES_QA_STATUS')).toBe(true);
   });
+  it('should catch cross-source value divergence >= 10x', () => {
+    const mockLibrary = [
+      {
+        key: 'substance_b',
+        displayName: 'Substance B',
+        contaminantClass: 'organic',
+        logKow: null,
+        rfd_oral_mg_per_kg_bw_per_day: 0.1,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+        bsaf_loc_freshwater: null,
+        abs_dermal: 0.1,
+        ba_oral: 1.0,
+        fcv_ug_per_L: null,
+        trv_eco_mg_per_kg_bw_day: null,
+        sources: 'pv-1',
+      }
+    ];
+
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-1',
+        substance_key: 'substance_b',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.1,
+        qa_status: 'approved',
+      },
+      {
+        parameter_value_id: 'pv-2',
+        substance_key: 'substance_b',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 1.5, // 1.5 / 0.1 = 15x, >= 10x
+        qa_status: 'approved',
+      }
+    ];
+
+    const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const divCheck = findings.find(f => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.severity).toBe('info');
+    expect(divCheck?.ratio).toBe(15);
+  });
 });

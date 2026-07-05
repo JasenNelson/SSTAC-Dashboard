@@ -11,7 +11,7 @@ export function generateReport(options = {}) {
   const findings = options.findings || runAudit();
   const reportPath = options.outputPath || path.join(REPO_ROOT, 'docs', 'MATRIX_OPTIONS_PROVENANCE_AUDIT_REPORT_2026_07_04.md');
 
-  const counts = { high: 0, medium: 0, low: 0 };
+  const counts = { high: 0, medium: 0, low: 0, info: 0 };
   const checkCounts = {};
 
   for (const f of findings) {
@@ -31,7 +31,7 @@ export function generateReport(options = {}) {
   md += `| :--- | :--- |\n`;
   md += `| **High** (Value Mismatch / Missing Approved Row / Type Error) | ${counts.high} |\n`;
   md += `| **Medium** (Missing Citation / Stale Notes) | ${counts.medium} |\n`;
-  md += `| **Low** / Info | ${counts.low} |\n`;
+  md += `| **Low** / Info | ${counts.low + counts.info} |\n`;
   md += `| **Total Findings** | **${findings.length}** |\n\n`;
 
   md += `### Breakdown by Check Type\n\n`;
@@ -42,11 +42,22 @@ export function generateReport(options = {}) {
   }
   md += `\n`;
 
-  md += `## 2. Details by Substance\n\n`;
+  const infoFindings = findings.filter(f => f.severity === 'info' && f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE');
+  if (infoFindings.length > 0) {
+    md += `## 2. Cross-source value divergences (review)\n\n`;
+    md += `| Substance | Input | Detail |\n`;
+    md += `| :--- | :--- | :--- |\n`;
+    for (const f of infoFindings.sort((a, b) => a.key.localeCompare(b.key))) {
+      md += `| \`${f.key}\` | \`${f.input_key}\` | ${f.message} (Ratio: ${f.ratio}x) |\n`;
+    }
+    md += `\n`;
+  }
 
-  // Group findings by substance key
+  md += `## ${infoFindings.length > 0 ? '3' : '2'}. Details by Substance\n\n`;
+
+  // Group findings by substance key (excluding the info ones we just printed)
   const grouped = {};
-  for (const f of findings) {
+  for (const f of findings.filter(f => f.severity !== 'info')) {
     const key = f.key || 'system';
     if (!grouped[key]) {
       grouped[key] = [];
