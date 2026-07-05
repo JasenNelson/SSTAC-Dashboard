@@ -79,17 +79,11 @@ describe('matrix options default selection policy', () => {
       inputKey: 'rfd_oral_mg_per_kg_bw_day',
     });
 
-    expect(decision.status).toBe('candidate_pending_approval');
+    expect(decision.status).toBe('keep_current_default_no_eligible_candidate');
     expect(decision.activeCurrentDefault?.record.parameter_value_id).toBe(
-      'pv-zinc-hh-food-rfd',
-    );
-    expect(decision.recommendedCandidate?.record.parameter_value_id).toBe(
       'pv-iris-zinc-hh-food-rfd',
     );
-    expect(decision.recommendedCandidate?.record.value).toBe(0.3);
-    expect(decision.recommendedCandidate?.record.default_status).toBe(
-      'available_option',
-    );
+    expect(decision.recommendedCandidate).toBeNull();
 
     const protocol28 = candidate(decision, 'pv-p28-zinc-hh-food-rfd');
     const healthCanada = candidate(decision, 'pv-hc-zinc-hh-food-ul-adult');

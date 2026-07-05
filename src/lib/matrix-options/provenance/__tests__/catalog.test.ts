@@ -562,8 +562,8 @@ describe('matrix options provenance catalog', () => {
     );
 
     for (const record of frozenBatch) {
-      expect(record.default_status, record.parameter_value_id).toBe(
-        'available_option',
+      expect(record.default_status, record.parameter_value_id).toMatch(
+        /^(available_option|current_default)$/,
       );
       expect(record.qa_status, record.parameter_value_id).toBe('approved');
       expect(record.source_authority_tier, record.parameter_value_id).toBe(
@@ -584,6 +584,63 @@ describe('matrix options provenance catalog', () => {
           /C:\\|Downloads|Chemicals_Details\.xlsx/i,
         );
       }
+    }
+  });
+
+  it('pins the owner-approved current_default row for each 2026-07-05 default-selection tuple', () => {
+    // 2026-07-05: owner approved a single current_default per (substance, input, pathway) for 18
+    // affected tuples x {human-health-direct, human-health-food} = 36 rows. The frozen-batch
+    // default_status checks above were widened to also accept 'current_default'; this test restores
+    // the lost guard by pinning EXACTLY which row may be the current_default in each affected tuple.
+    // A stray default flip (another row in the tuple flipping to current_default, or the wrong pvid
+    // holding it) fails here. NOTE: the catalog legitimately has ~81 current_default rows overall, so
+    // this does NOT assert "only these 36 are current_default catalog-wide" -- only that within each of
+    // these 36 tuples, the current_default is exactly the owner-approved pvid and there is only one.
+    const APPROVED_CURRENT_DEFAULT_IDS = [
+      // HC oral RfD
+      'pv-hc-barium-hh-direct-rfd', 'pv-hc-barium-hh-food-rfd',
+      'pv-hc-carbon_tetrachloride-hh-direct-rfd', 'pv-hc-carbon_tetrachloride-hh-food-rfd',
+      'pv-hc-chromium_trivalent-hh-direct-rfd', 'pv-hc-chromium_trivalent-hh-food-rfd',
+      'pv-hc-dichloroethylene_1_1-hh-direct-rfd', 'pv-hc-dichloroethylene_1_1-hh-food-rfd',
+      'pv-hc-ethylbenzene-hh-direct-rfd', 'pv-hc-ethylbenzene-hh-food-rfd',
+      'pv-hc-manganese-hh-direct-rfd', 'pv-hc-manganese-hh-food-rfd',
+      'pv-hc-tetrachloroethylene-hh-direct-rfd', 'pv-hc-tetrachloroethylene-hh-food-rfd',
+      'pv-hc-toluene-hh-direct-rfd', 'pv-hc-toluene-hh-food-rfd',
+      'pv-hc-xylenes-hh-direct-rfd', 'pv-hc-xylenes-hh-food-rfd',
+      'pv-hc-cadmium-hh-direct-rfd-tdi', 'pv-hc-cadmium-hh-food-rfd-tdi',
+      'pv-hc-mehg-hh-direct-rfd-sensitive', 'pv-hc-mehg-hh-food-rfd-sensitive',
+      // US EPA IRIS oral RfD
+      'pv-iris-dichlorobenzene_1_2-hh-direct-rfd', 'pv-iris-dichlorobenzene_1_2-hh-food-rfd',
+      'pv-iris-dichloromethane-hh-direct-rfd', 'pv-iris-dichloromethane-hh-food-rfd',
+      'pv-iris-trichloroethylene-hh-direct-rfd', 'pv-iris-trichloroethylene-hh-food-rfd',
+      'pv-iris-zinc-hh-direct-rfd', 'pv-iris-zinc-hh-food-rfd',
+      // US EPA IRIS oral slope factor
+      'pv-iris-arsenic-hh-direct-sf', 'pv-iris-arsenic-hh-food-sf',
+      'pv-iris-dichloromethane-hh-direct-sf', 'pv-iris-dichloromethane-hh-food-sf',
+      'pv-iris-trichloroethylene-hh-direct-sf', 'pv-iris-trichloroethylene-hh-food-sf',
+    ];
+    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(36);
+
+    for (const pvid of APPROVED_CURRENT_DEFAULT_IDS) {
+      const record = PARAMETER_VALUE_RECORDS.find(
+        (item) => item.parameter_value_id === pvid,
+      );
+      expect(record, pvid).toBeDefined();
+      expect(record!.default_status, pvid).toBe('current_default');
+      expect(record!.qa_status, pvid).toBe('approved');
+
+      // Exactly one row in this (substance, input, pathway) tuple is current_default, and it is pvid.
+      const tupleCurrentDefaults = PARAMETER_VALUE_RECORDS.filter(
+        (item) =>
+          item.substance_key === record!.substance_key &&
+          item.input_key === record!.input_key &&
+          item.pathway === record!.pathway &&
+          item.default_status === 'current_default',
+      );
+      expect(
+        tupleCurrentDefaults.map((item) => item.parameter_value_id),
+        `${record!.substance_key} / ${record!.input_key} / ${record!.pathway}`,
+      ).toEqual([pvid]);
     }
   });
 
@@ -661,7 +718,9 @@ describe('matrix options provenance catalog', () => {
         expect(record.source_ids.join(' '), record.parameter_value_id).toMatch(/iris/i);
       }
       // A qa promotion never makes a value a calculator default.
-      expect(record.default_status, record.parameter_value_id).toBe('available_option');
+      expect(record.default_status, record.parameter_value_id).toMatch(
+        /^(available_option|current_default)$/,
+      );
       expect(record.source_authority_tier, record.parameter_value_id).toBe(
         'tier_1_government_or_regulatory',
       );

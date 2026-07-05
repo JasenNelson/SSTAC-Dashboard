@@ -77,7 +77,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Methylmercury',
     contaminantClass: 'methyl-Hg',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 1.0e-4,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0002,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: 15,
     abs_dermal: 0.001,
@@ -89,8 +89,14 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null,
     sources:
       'Health Canada HHRA 2023; Indigenous-Consumption-Pacific-NW ' +
-      'Section 5; BSAF-Translation Section 7 (approved catalog value, pv-iris-mehg-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
+      'Section 5; BSAF-Translation Section 7. Oral RfD 0.0002 mg/kg-bw/day is the ' +
+      'Health Canada TRV v4.0 sensitive-population TDI (approved catalog value, ' +
+      'pv-hc-mehg-hh-direct-rfd-sensitive / src-health-canada-trv-v4-2025), set as ' +
+      'current_default per the BC Protocol 1 recency rule (HC newer than US EPA IRIS; ' +
+      'owner-approved 2026-07-05). The US EPA IRIS RfD 0.0001 ' +
+      '(pv-iris-mehg-hh-direct-rfd / src-us-epa-iris-rfd-table-live) remains available as a candidate option.',
     notes:
+      'RfD is the Health Canada sensitive-population TDI 0.0002 (current_default, owner-approved 2026-07-05). ' +
       'MeHg binds covalently to protein thiols. Use protein-normalized ' +
       'BSAF path (f_protein default 0.18 fish muscle). Do not ' +
       'lipid-normalize. EqP path is invalid for MeHg. trv_eco_mg_per_kg_bw_day nulled 2026-07-02: ' +
@@ -446,13 +452,13 @@ export const SUBSTANCE_LIBRARY = [
     contaminantClass: 'organic-halogenated',
     logKow: 2.71,
     rfd_oral_mg_per_kg_bw_per_day: 0.0005,
-    sf_oral_per_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.052,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
+    sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (US EPA IRIS 2011 oral slope factor; most-protective; current_default; owner-approved 2026-07-05; sources cite pv-iris-trichloroethylene-hh-direct-sf).',
     notes:
       'Oral RfD wired build-first (qa_status=approved). MOST-PROTECTIVE override to US EPA IRIS 2011 (0.0005) -- newer than and lower than the HC 2005 value (0.00146); logged for owner review. Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
       'candidates are available in References & Values.',
@@ -1041,15 +1047,15 @@ export const SUBSTANCE_LIBRARY = [
     displayName: '1,2-Dichlorobenzene (o-dichlorobenzene)',
     contaminantClass: 'organic-halogenated',
     logKow: 3.43,
-    rfd_oral_mg_per_kg_bw_per_day: 0.43,
+    rfd_oral_mg_per_kg_bw_per_day: 0.09,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.43 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 1996 based on NTP 1985b chronic gavage, NOAELadj 43, UF 100, nephrotoxicity; corroborated by WHO/IPCS SIDS 0.429; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default -- HC 1996 is the more-current assessment; the older US EPA IRIS value 0.09 mg/kg-bw/day (frozen 1989) remains available as a candidate option. PubChem CID 7239. Identity: 1,2-Dichlorobenzene (o-dichlorobenzene), CAS 95-50-1. PubChem CID 7239 (https://pubchem.ncbi.nlm.nih.gov/compound/7239; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=CAS). Experimental LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.43, experimental, peer-reviewed). Secondary, non-conflicting value 3.38 per ILO-WHO International Chemical Safety Cards (ICSC); not used (Hansch/ACS value retained as primary) (approved catalog value, pv-hc-dichlorobenzene_1_2-hh-direct-rfd / src-health-canada-trv-v4-2025).',
-    notes: 'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4 (HC 1996 newer than the frozen-1989 IRIS). Eco selectability. logKow 3.43 (eco-direct EqP input). HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert defaults.',
+    sources: 'US EPA IRIS oral RfD 0.09 mg/kg-bw/day (approved catalog value, pv-iris-dichlorobenzene_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live), set as current_default per the conflict rule (more protective than the Health Canada value; owner-approved 2026-07-05). The Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.43 mg/kg-bw/day (pv-hc-dichlorobenzene_1_2-hh-direct-rfd / src-health-canada-trv-v4-2025; HC 1996 based on NTP 1985b chronic gavage, NOAELadj 43, UF 100, nephrotoxicity; corroborated by WHO/IPCS SIDS 0.429; live-verified 2026-07-04) remains available as a candidate option. PubChem CID 7239. Identity: 1,2-Dichlorobenzene (o-dichlorobenzene), CAS 95-50-1. PubChem CID 7239 (https://pubchem.ncbi.nlm.nih.gov/compound/7239; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=CAS). Experimental LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.43, experimental, peer-reviewed). Secondary, non-conflicting value 3.38 per ILO-WHO International Chemical Safety Cards (ICSC); not used (Hansch/ACS value retained as primary).',
+    notes: 'Oral RfD is set to the US EPA IRIS current default 0.09 (owner-approved 2026-07-05). Eco selectability. logKow 3.43 (eco-direct EqP input). HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert defaults.',
   },
   {
     key: 'dichlorobenzene_1_3',
@@ -2066,17 +2072,17 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Dichloromethane (methylene chloride)',
     contaminantClass: 'organic-halogenated',
     logKow: null,
-    rfd_oral_mg_per_kg_bw_per_day: 0.014,
-    sf_oral_per_mg_per_kg_bw_per_day: 0.002,
+    rfd_oral_mg_per_kg_bw_per_day: 0.006,
+    sf_oral_per_mg_per_kg_bw_per_day: 0.0033,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
     sources:
-      'Health Canada TRVs v4.0 approved oral RfD 0.014 + oral SF 0.002 (the rows the wired values match; US EPA IRIS lists different values 0.006/0.0033, not used); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-hc-dichloromethane-hh-direct-rfd / src-health-canada-trv-v4-2025). (approved catalog value, pv-hc-dichloromethane-hh-direct-sf / src-health-canada-trv-v4-2025).',
+      'US EPA IRIS approved oral RfD 0.006 + oral SF 0.0033 (the rows the wired values match; approved catalog values pv-iris-dichloromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live and pv-iris-dichloromethane-hh-direct-sf / src-us-epa-iris-chemical-details-live), set as current_default (most-protective; owner-approved 2026-07-05). The Health Canada TRVs v4.0 values 0.014/0.002 (pv-hc-dichloromethane-hh-direct-rfd / pv-hc-dichloromethane-hh-direct-sf / src-health-canada-trv-v4-2025) remain available as candidate options. Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03).',
     notes:
-      'HH-only build-first wiring; oral RfD/SF candidates approved in References & Values. ' +
+      'Oral RfD and SF are set to the US EPA IRIS current defaults 0.006 and 0.0033 respectively (owner-approved 2026-07-05). ' +
       'logKow/eco fields null -> Eco pathways filtered. abs_dermal is the HC TRV v4.0 Table 5 VOC RAF (cf. benzene/TCE/PCE).',
   },
   {

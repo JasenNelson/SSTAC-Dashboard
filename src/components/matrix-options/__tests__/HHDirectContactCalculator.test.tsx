@@ -93,11 +93,11 @@ describe('HHDirectContactCalculator', () => {
     expect(panel).toHaveTextContent(/Cancer averaging time/);
     expect(panel).toHaveTextContent(/Skin surface area/);
     expect(panel).toHaveTextContent(/Sediment adherence/);
-    // The 7 HC PQRA receptor inputs are now source-backed under any frame, so the
-    // audit summary shows non-zero approved count (7 approved) + scaffold count drops.
+    // The 7 HC PQRA receptor inputs and 1 IRIS sf are now source-backed under any frame, so the
+    // audit summary shows non-zero approved count (8 approved) + scaffold count drops.
     // We assert positively rather than guarding exact counts to be tolerant of catalog drift.
-    expect(panel).toHaveTextContent(/7 approved/);
-    expect(panel).toHaveTextContent(/5 current calculator scaffolds/);
+    expect(panel).toHaveTextContent(/8 approved/);
+    expect(panel).toHaveTextContent(/4 current calculator scaffolds/);
     // The substance toxicity inputs (Oral RfD, slope, abs_dermal, ba_oral) are still
     // calculator scaffolds (needs review) -- confirm the scaffold role is still present.
     expect(panel).toHaveTextContent(/current default/);

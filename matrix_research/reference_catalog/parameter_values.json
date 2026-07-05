@@ -463,7 +463,7 @@
     "value": 32,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1419,7 +1419,7 @@
     "value": 0.0001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -1627,7 +1627,7 @@
     "value": 0.0001,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2583,7 +2583,7 @@
     "value": 0.0008,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2791,7 +2791,7 @@
     "value": 0.0008,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3007,7 +3007,7 @@
     "value": 0.3,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3215,7 +3215,7 @@
     "value": 0.3,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -3485,7 +3485,7 @@
     "value": 32,
     "unit": "per mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
