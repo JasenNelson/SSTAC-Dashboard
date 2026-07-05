@@ -249,6 +249,52 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
     }
   }
 
+  // 6. Cross-source value-divergence check
+  const targetInputs = new Set(['rfd_oral_mg_per_kg_bw_day', 'sf_oral_per_mg_per_kg_bw_per_day']);
+  const divergenceCandidates = parameterValueRecords.filter(r => 
+    r.qa_status === 'approved' &&
+    r.pathway === 'human-health-direct' &&
+    targetInputs.has(r.input_key) &&
+    typeof r.value === 'number' &&
+    r.value > 0
+  );
+
+  const groups = new Map();
+  for (const row of divergenceCandidates) {
+    const key = `${row.substance_key}|${row.input_key}`;
+    if (!groups.has(key)) {
+      groups.set(key, []);
+    }
+    groups.get(key).push(row);
+  }
+
+  for (const [groupKey, rows] of groups.entries()) {
+    const [substance_key, input_key] = groupKey.split('|');
+    const distinctValues = Array.from(new Set(rows.map(r => r.value))).sort((a, b) => a - b);
+    
+    if (distinctValues.length >= 2) {
+      const min = distinctValues[0];
+      const max = distinctValues[distinctValues.length - 1];
+      const ratio = max / min;
+      
+      if (ratio >= 10) {
+        const sourceMapping = rows.map(r => `${r.value}: src=${(r.source_ids || []).join(',')} pv=${r.parameter_value_id}`);
+        findings.push({
+          key: substance_key,
+          severity: 'info',
+          check: 'CROSS_SOURCE_VALUE_DIVERGENCE',
+          detail: `substance_key=${substance_key}, input_key=${input_key}, values=[${distinctValues.join(', ')}], ratio=${Math.round(ratio)}, sources=[${sourceMapping.join('; ')}]`,
+          substance_key,
+          input_key,
+          distinct_values: distinctValues,
+          ratio: Math.round(ratio),
+          sources: sourceMapping,
+          message: `Approved values span ${Math.round(ratio)}x across sources for this substance/input; verify no mis-attribution and confirm the divergence is intended (real alternative TRVs), not a copy/read-across error (cf. chlorobenzene 2026-07-05).`
+        });
+      }
+    }
+  }
+
   return findings;
 }
 
