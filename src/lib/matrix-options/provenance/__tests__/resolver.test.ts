@@ -26,6 +26,7 @@ const mockGetPathwayEquationRecords = vi.fn();
 const mockGetParameterValueRecord = vi.fn();
 const mockGetParameterValueRecordById = vi.fn();
 const mockGetParameterValueRecordsForSubstance = vi.fn();
+const mockGetFrameJurisdictionRank = vi.fn();
 
 vi.mock('../catalog', () => ({
   getSourceRecord: (id: string) => mockGetSourceRecord(id),
@@ -45,7 +46,7 @@ vi.mock('../catalog', () => ({
 // module's transitive `../catalog` (PARAMETER_VALUE_RECORDS) import through its own catalog mock.
 // Returning null = "no frame jurisdiction preference", so the tiebreak is inert in these unit cases.
 vi.mock('../../defaultSelectionPolicy', () => ({
-  getFrameJurisdictionRank: () => null,
+  getFrameJurisdictionRank: (frameId: unknown, record: unknown) => mockGetFrameJurisdictionRank(frameId, record),
 }));
 
 function source(id: string): SourceRecord {
@@ -129,6 +130,8 @@ beforeEach(() => {
   mockGetParameterValueRecordById.mockReset();
   mockGetParameterValueRecordsForSubstance.mockReset();
   mockGetParameterValueRecordsForSubstance.mockReturnValue([]);
+  mockGetFrameJurisdictionRank.mockReset();
+  mockGetFrameJurisdictionRank.mockReturnValue(null);
 });
 
 describe('resolveSourceRecords', () => {
@@ -633,5 +636,154 @@ describe('resolveProvenanceRows -- value-aware multi-candidate tuple fallback', 
     ]);
     expect(row.catalog_record?.parameter_value_id).toBe('pv-arsenic-hh-direct-rfd');
     expect(row.default_status).toBe('current_default');
+  });
+
+  it('falls back to null when parameter_value_id is provided but not found in catalog', () => {
+    mockGetParameterValueRecordById.mockReturnValue(undefined);
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'Oral RfD',
+        value: 0.0003,
+        role: 'current calculator default',
+        pathway: 'human-health-direct',
+        substance_key: 'arsenic_inorganic',
+        parameter_value_id: 'non-existent-id',
+      },
+    ]);
+    expect(row.catalog_record).toBeNull();
+  });
+
+  it('returns null when valuesMatch receives null or empty usedValue', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056 });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a]);
+    const [rowNull] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: null,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    const [rowEmpty] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: '',
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(rowNull.catalog_record).toBeNull();
+    expect(rowEmpty.catalog_record).toBeNull();
+  });
+
+  it('resolves to the single approved candidate when tie cannot be resolved by current_default', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, qa_status: 'approved', default_status: 'available_option' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, qa_status: 'needs_review', default_status: 'available_option' });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-a');
+  });
+
+  it('resolves by frame jurisdiction rank when multiple approved tie-breaker candidates exist', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, qa_status: 'approved', default_status: 'available_option', jurisdiction: 'Canada_federal' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, qa_status: 'approved', default_status: 'available_option', jurisdiction: 'US_federal' });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    mockGetFrameJurisdictionRank.mockImplementation((frameId, record) => {
+      if (record.jurisdiction === 'Canada_federal') return 1;
+      if (record.jurisdiction === 'US_federal') return 2;
+      return null;
+    });
+
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ], 'bc-protocol1-v5-dra');
+
+    expect(row.catalog_record?.parameter_value_id).toBe('pv-a');
+    expect(mockGetFrameJurisdictionRank).toHaveBeenCalledTimes(4); // 2 in map, plus repeats in rank comparison/filtering
+  });
+
+  it('returns null when top ranked candidates are tied', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, qa_status: 'approved', default_status: 'available_option', jurisdiction: 'Canada_federal' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, qa_status: 'approved', default_status: 'available_option', jurisdiction: 'US_federal' });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    mockGetFrameJurisdictionRank.mockReturnValue(1); // tied top rank
+
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+
+    expect(row.catalog_record).toBeNull();
+  });
+
+  it('returns null when frame jurisdiction rank returns null for all approved tied candidates', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, qa_status: 'approved', default_status: 'available_option' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, qa_status: 'approved', default_status: 'available_option' });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+    mockGetFrameJurisdictionRank.mockReturnValue(null); // non-finite rank for all
+
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+
+    expect(row.catalog_record).toBeNull();
+  });
+
+  it('returns null when multiple matching candidates exist but none are approved', () => {
+    const a = paramRecord({ parameter_value_id: 'pv-a', value: 0.056, qa_status: 'needs_review', default_status: 'available_option' });
+    const b = paramRecord({ parameter_value_id: 'pv-b', value: 0.056, qa_status: 'needs_review', default_status: 'available_option' });
+    mockGetParameterValueRecordsForSubstance.mockReturnValue([a, b]);
+    mockGetSourceRecord.mockImplementation((id: string) => source(id));
+
+    const [row] = resolveProvenanceRows([
+      {
+        input_key: 'rfd',
+        label: 'L',
+        value: 0.056,
+        role: 'user-entered value',
+        pathway: 'human-health-direct',
+        substance_key: 'lead',
+      },
+    ]);
+
+    expect(row.catalog_record).toBeNull();
   });
 });
