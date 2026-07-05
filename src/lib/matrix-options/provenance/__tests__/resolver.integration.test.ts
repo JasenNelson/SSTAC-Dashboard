@@ -21,7 +21,10 @@ describe('resolveProvenanceRows -- real wired catalog (value-aware tuple fallbac
     { substance: 'arsenic_inorganic', input: 'sf_oral_per_mg_per_kg_bw_per_day', value: 32, unit: 'per mg/kg-bw/day' },
     { substance: 'zinc', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.3, unit: 'mg/kg-bw/day' },
     { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0008, unit: 'mg/kg-bw/day' },
-    { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0001, unit: 'mg/kg-bw/day' },
+    // Value updated 2026-07-05 to the Health Canada TRV v4.0 sensitive-population TDI
+    // (0.0001 -> 0.0002), now the approved current_default (pv-hc-mehg-hh-direct-rfd-sensitive),
+    // superseding the older US EPA IRIS value.
+    { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', value: 0.0002, unit: 'mg/kg-bw/day' },
   ];
 
   for (const c of hhDefaultLoad) {
@@ -509,6 +512,38 @@ describe('resolveProvenanceRows -- oral RfD backfills SOURCED (2026-07-04d)', ()
       expect(row.catalog_record?.jurisdiction).toBe(jur);
       expect(row.catalog_record?.parameter_value_id).toBe(pvid);
       expect(row.sources.length).toBeGreaterThan(0);
+    });
+  }
+});
+
+describe('resolveProvenanceRows -- current_default selections (2026-07-05)', () => {
+  const cases = [
+    { substance: 'barium', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.19, pvid: 'pv-hc-barium-hh-direct-rfd' },
+    { substance: 'cadmium', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.0008, pvid: 'pv-hc-cadmium-hh-direct-rfd-tdi' },
+    { substance: 'methylmercury', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.0002, pvid: 'pv-hc-mehg-hh-direct-rfd-sensitive' },
+    { substance: 'dichlorobenzene_1_2', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.09, pvid: 'pv-iris-dichlorobenzene_1_2-hh-direct-rfd' },
+    { substance: 'dichloromethane', input: 'rfd_oral_mg_per_kg_bw_day', unit: 'mg/kg-bw/day', value: 0.006, pvid: 'pv-iris-dichloromethane-hh-direct-rfd' },
+    { substance: 'dichloromethane', input: 'sf_oral_per_mg_per_kg_bw_per_day', unit: 'per mg/kg-bw/day', value: 0.0033, pvid: 'pv-iris-dichloromethane-hh-direct-sf' },
+    { substance: 'trichloroethylene', input: 'sf_oral_per_mg_per_kg_bw_per_day', unit: 'per mg/kg-bw/day', value: 0.052, pvid: 'pv-iris-trichloroethylene-hh-direct-sf' },
+    { substance: 'arsenic_inorganic', input: 'sf_oral_per_mg_per_kg_bw_per_day', unit: 'per mg/kg-bw/day', value: 32, pvid: 'pv-iris-arsenic-hh-direct-sf' },
+  ];
+  for (const c of cases) {
+    it(`attributes HH-direct ${c.substance} ${c.input} to its current_default row`, () => {
+      const used: CalculatorUsedValue[] = [
+        {
+          input_key: c.input,
+          label: c.input,
+          value: c.value,
+          unit: c.unit,
+          role: 'current calculator default',
+          pathway: 'human-health-direct',
+          substance_key: c.substance,
+        },
+      ];
+      const [row] = resolveProvenanceRows(used);
+      expect(row.catalog_record, c.substance).not.toBeNull();
+      expect(row.catalog_record?.qa_status).toBe('approved');
+      expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
     });
   }
 });

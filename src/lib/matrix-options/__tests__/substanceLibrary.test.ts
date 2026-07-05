@@ -274,7 +274,7 @@ describe('SUBSTANCE_LIBRARY -- Batch D PFAS + HH-only sweep', () => {
 
 describe('SUBSTANCE_LIBRARY -- Batch E chlorinated VOCs + organics', () => {
   const expected = [
-    { key: 'dichloromethane', rfd: 0.014, sf: 0.002, cls: 'organic-halogenated' },
+    { key: 'dichloromethane', rfd: 0.006, sf: 0.0033, cls: 'organic-halogenated' },
     { key: 'dichloroethylene_1_1', rfd: 0.003, sf: null, cls: 'organic-halogenated' },
     { key: '1_2_dichloroethane', rfd: null, sf: 0.091, cls: 'organic-halogenated' },
     { key: 'trichloroethane_1_1_2', rfd: 0.004, sf: 0.057, cls: 'organic-halogenated' },
@@ -1110,8 +1110,8 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A3 oral backfills (2026-07-04)', ()
   // = most-protective override to IRIS 2011 (newer + lower than HC 2005). Values live-verified 2026-07-04.
   const expected = [
     { key: 'chlorobenzene', rfd: 0.43, sf: null },
-    { key: 'dichlorobenzene_1_2', rfd: 0.43, sf: null },
-    { key: 'trichloroethylene', rfd: 0.0005, sf: null },
+    { key: 'dichlorobenzene_1_2', rfd: 0.09, sf: null },
+    { key: 'trichloroethylene', rfd: 0.0005, sf: 0.052 },
   ] as const;
   for (const { key, rfd, sf } of expected) {
     it(`${key} carries the wired rfd ${rfd}`, () => {
