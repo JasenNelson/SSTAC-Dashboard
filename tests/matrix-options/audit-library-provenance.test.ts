@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import { runAudit, runAuditOnLibrary } from '../../scripts/matrix-options/audit-library-provenance.mjs';
-import { SUBSTANCE_LIBRARY } from '../../src/lib/matrix-options/substanceLibrary.ts';
+import { SUBSTANCE_LIBRARY } from '../../src/lib/matrix-options/substanceLibrary';
 
 describe('audit-library-provenance unit tests', () => {
   it('should run successfully on the live database and return findings', () => {
@@ -33,7 +33,7 @@ describe('audit-library-provenance unit tests', () => {
     ];
     for (const entry of SUBSTANCE_LIBRARY) {
       for (const field of fields) {
-        if (entry[field] !== null && entry[field] !== undefined) {
+        if ((entry as any)[field] !== null && (entry as any)[field] !== undefined) {
           expectedCount++;
         }
       }
