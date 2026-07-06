@@ -443,4 +443,60 @@ describe('audit-library-provenance unit tests', () => {
     // The good (non-null) item correctly names Benzene, so no mismatch is raised.
     expect(findings.some((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH')).toBe(false);
   });
+
+  it('parses the HC v4.0 locator variant that omits Type= (endpoint + PDF page) without false positive', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-benzo_a_pyrene-hh-direct-sf',
+        substance_key: 'benzo_a_pyrene',
+        display_name: 'Benzo[a]pyrene',
+        pathway: 'human-health-direct',
+        input_key: 'sf_oral_per_mg_per_kg_bw_day',
+        value: 2.0,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            // No "Type=" -- the live (b) shape: "..., <Name>, <endpoint>, PDF page <n>, ...".
+            locator:
+              'Health Canada TRVs v4.0, Table 1, Benzo[a]pyrene (BaP), Oral SF, PDF page 19, web page checked 2026-05-23',
+            value_text: '2.0 per mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    // Cited "Benzo[a]pyrene (BaP)" shares the "benzo" / "pyrene" tokens with the row -> no mismatch.
+    expect(findings.some((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH')).toBe(false);
+  });
+
+  it('flags a wrong-substance mismatch in the Type=-omitting locator variant', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-cadmium-hh-direct-rfd',
+        substance_key: 'cadmium',
+        display_name: 'Cadmium',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.0005,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            // Wrong substance cited, in the no-Type= shape -- must still be flagged now that the
+            // regex parses this variant.
+            locator:
+              'Health Canada TRVs v4.0, Table 1, Copper, Oral TDI, PDF page 27, web page checked 2026-05-23',
+            value_text: '5.0E-04 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const mismatch = findings.find((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.cited_name).toBe('Copper');
+  });
 });

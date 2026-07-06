@@ -305,13 +305,23 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   // "Dichlorobenzene, 1,2-", "Chromium, hexavalent") are captured whole -- codex caught this: the
   // original [^,]+ version stopped at the FIRST comma and silently skipped 23 of 92 real HC locators.
   //
-  // KNOWN BLIND SPOT (documented, not covered): this is a cross-COMPOUND check, not a cross-ISOMER
-  // one. nameTokens() drops isomer position markers ("1,2-" / "1,4-" become <=2-char tokens that are
-  // filtered), so an evidence locator that cites "Dichlorobenzene, 1,4-" on a "dichlorobenzene_1_2"
-  // row is NOT flagged -- both collapse to the shared token "dichlorobenzene". This guard catches
-  // chlorobenzene-vs-dichlorobenzene class errors; isomer-level mis-attribution needs a separate
-  // isomer-aware check and is out of scope here.
-  const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*Type\s*=/i;
+  // Two live HC v4.0 locator shapes exist and BOTH must be parsed (codex caught the 2nd being
+  // skipped -- 19 of 111 rows, incl. benzo_a_pyrene / arsenic / PCBs / methylmercury / cadmium):
+  //   (a) "... Table 1, <Name>, Type=<endpoint> ..."           -> terminate the name at ", Type="
+  //   (b) "... Table 1, <Name>, <endpoint>, PDF page <n> ..."  -> terminate at ", <endpoint>, PDF page"
+  // In shape (b) the endpoint segment (e.g. "Oral TDI", "adult Oral TDI", "UL age-band values") has no
+  // internal comma, so [^,]+ safely matches it while the non-greedy name capture still absorbs
+  // internal-comma names.
+  //
+  // KNOWN BLIND SPOT (documented, not covered): this is a cross-COMPOUND check, not a cross-ISOMER or
+  // cross-SPECIATION one. nameTokens() drops isomer/position markers ("1,2-" / "1,4-" become <=2-char
+  // tokens that are filtered) and the token-overlap test passes on any shared parent token, so a
+  // locator citing "Dichlorobenzene, 1,4-" on a "dichlorobenzene_1_2" row, or "Chromium, hexavalent"
+  // on a "chromium_trivalent" row, is NOT flagged -- both collapse to a shared token
+  // ("dichlorobenzene" / "chromium"). This guard catches chlorobenzene-vs-dichlorobenzene class
+  // errors; isomer/speciation-level mis-attribution needs a separate alias-aware check and is out of
+  // scope here.
+  const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*(?:Type\s*=|[^,]+,\s*PDF\s*page)/i;
   const STOPWORDS = new Set(['and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers']);
 
   function nameTokens(name) {
