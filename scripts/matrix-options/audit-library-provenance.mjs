@@ -322,7 +322,18 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   // errors; isomer/speciation-level mis-attribution needs a separate alias-aware check and is out of
   // scope here.
   const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*(?:Type\s*=|[^,]+,\s*PDF\s*page)/i;
-  const STOPWORDS = new Set(['and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers']);
+  // STOPWORDS excludes both grammar filler AND generic chemistry group/suffix words. The generic
+  // tokens matter for correctness: without them, two distinct HC substances that share only a
+  // functional-group word register as a match and a copy/paste swap is missed -- e.g. "Vinyl
+  // chloride" vs "Nickel chloride" both reduce to the shared token "chloride". Dropping the generic
+  // tokens forces the overlap to rest on a DISTINCTIVE token (vinyl vs nickel). Verified against the
+  // live HC v4.0 catalog: adding these leaves 0 rows empty-tokened and introduces 0 new mismatches.
+  const STOPWORDS = new Set([
+    'and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers',
+    // generic chemistry group / suffix words (not distinctive on their own)
+    'chloride', 'oxide', 'sulfate', 'sulphate', 'nitrate', 'acid', 'salt', 'salts',
+    'compound', 'compounds',
+  ]);
 
   function nameTokens(name) {
     return (name || '')

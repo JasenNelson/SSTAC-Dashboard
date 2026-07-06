@@ -499,4 +499,32 @@ describe('audit-library-provenance unit tests', () => {
     expect(mismatch).toBeDefined();
     expect(mismatch?.cited_name).toBe('Copper');
   });
+
+  it('flags a wrong-substance swap that shares only a generic chemistry token', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-vinyl_chloride-hh-direct-rfd',
+        substance_key: 'vinyl_chloride',
+        display_name: 'Vinyl chloride',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.003,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            // Wrong substance; shares only the generic group word "chloride" with the row. Must be
+            // flagged -- generic tokens are stopworded so the overlap must rest on a distinctive token.
+            locator: 'Health Canada TRVs v4.0, Table 1, Nickel chloride, Type=Oral TDI, PDF page 37',
+            value_text: '3.0E-03 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const mismatch = findings.find((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.cited_name).toBe('Nickel chloride');
+  });
 });
