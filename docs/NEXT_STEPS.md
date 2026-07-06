@@ -25,9 +25,13 @@ Session shipped PRs #522/#523/#524/#525 (two detection-only provenance guards + 
 + handoff). Re-grounded the three owner-gated lanes from the 2026-07-01/07-05 planning docs against the
 current catalog and found them ~90% already executed. Genuinely-open items are captured as an owner
 decision packet: `docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md`. Deferred (owner decisions):
-- **Lane 2 HC TRV v4.0 re-verification** (correctness-critical; the cited HC web page is dead, so no HC
-  value is currently re-verifiable). Tooling exists (#518 extractor + crosscheck). BLOCKED on the owner
-  supplying the canonical HC v4.0 PDF source pointer; then run as a focused lane.
+- **Lane 2 HC TRV v4.0 re-verification -- RESOLVED 2026-07-06.** Owner supplied the canonical HC 2025
+  PDF (`G:\My Drive\SABCS - Sediment Project\References\HC 2025 - Toxicological Reference Values TRV.pdf`).
+  Re-extraction is byte-identical to the committed table (0 drift) and the crosscheck found 0 value
+  errors across 111 HC rows (107 MATCH / 0 MISMATCH / 4 AMBIGUOUS: 1 benign + the 3 already-flagged
+  population/value tensions). See `docs/MATRIX_OPTIONS_HC_V4_REVERIFICATION_LEDGER_2026_07_06.md`.
+  Residual (small, non-blocking): parameterize the extractor's hardcoded `pdf_path`; stamp the PDF
+  locator into HC rows' evidence items in a later owner-attested pass.
 - **`dichlorobenzene_1_2` current_default** is IRIS-1989 0.09 but the recency rule wants HC-2025 0.43 --
   a real inconsistency awaiting an owner newer-vs-more-protective call.
 - **PCB policy** (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) and
