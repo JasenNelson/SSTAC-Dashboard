@@ -489,16 +489,16 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Chlorobenzene',
     contaminantClass: 'organic-halogenated',
     logKow: 2.86,
-    rfd_oral_mg_per_kg_bw_per_day: 0.02,
+    rfd_oral_mg_per_kg_bw_per_day: 0.43,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null,
-    sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, pv-iris-chlorobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live; current_default; corroborated by BC Protocol 28). PubChem CID 7964. Health Canada TRVs v4.0 Table 5 dermal RAF.',
+    sources: 'Health Canada TRV v4.0 (2025) oral TDI 0.43 mg/kg-bw/day (approved catalog value, pv-hc-chlorobenzene-hh-direct-rfd / src-health-canada-trv-v4-2025; current_default 2026-07-06, owner-approved per the recency rule). PubChem CID 7964. Health Canada TRVs v4.0 Table 5 dermal RAF.',
     notes:
-      'oral RfD reseeded to US EPA IRIS 0.02 (current_default) after the prior HC 0.43 was found to be a 1,2-dichlorobenzene mis-attribution (quarantined/superseded 2026-07-05); real HC value pending owner FCSAP confirmation. Human-health oral RfD candidate is available in References & Values. ' +
+      'oral RfD reseeded 2026-07-06 to Health Canada TRV v4.0 0.43 (current_default). PR #513 (2026-07-05) had reseeded this to US EPA IRIS 0.02, believing 0.43 was a 1,2-dichlorobenzene mis-attribution -- that belief was disproven by direct verification against the real HC v4.0 source PDF (page 25; see docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md): 0.43 is genuinely HC\'s correctly-derived Oral TDI. The EPA/IRIS 0.02 row remains an available candidate option. ' +
       'Additional calculator defaults are pending owner-approved selection rules.',
   },
   // ---------------------------------------------------------------------------

@@ -1108,8 +1108,11 @@ describe('SUBSTANCE_LIBRARY -- Phase 2 batch A2 HC-default oral backfills (2026-
 describe('SUBSTANCE_LIBRARY -- Phase 2 batch A3 oral backfills (2026-07-04)', () => {
   // chlorobenzene/dichlorobenzene_1_2 = HC-default (HC newer than frozen-1989 IRIS); trichloroethylene
   // = most-protective override to IRIS 2011 (newer + lower than HC 2005). Values live-verified 2026-07-04.
+  // chlorobenzene: 2026-07-06 CORRECTION -- reseeded to HC v4.0 0.43 (current_default); PR #513
+  // (2026-07-05) reseeded to interim EPA 0.02 believing 0.43 was a mis-attribution, which was disproven
+  // by direct verification against the real HC v4.0 source PDF.
   const expected = [
-    { key: 'chlorobenzene', rfd: 0.02, sf: null },
+    { key: 'chlorobenzene', rfd: 0.43, sf: null },
     { key: 'dichlorobenzene_1_2', rfd: 0.09, sf: null },
     { key: 'trichloroethylene', rfd: 0.0005, sf: 0.052 },
   ] as const;

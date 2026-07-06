@@ -609,8 +609,12 @@ describe('matrix options provenance catalog', () => {
       'pv-hc-xylenes-hh-direct-rfd', 'pv-hc-xylenes-hh-food-rfd',
       'pv-hc-cadmium-hh-direct-rfd-tdi', 'pv-hc-cadmium-hh-food-rfd-tdi',
       'pv-hc-mehg-hh-direct-rfd-sensitive', 'pv-hc-mehg-hh-food-rfd-sensitive',
+      // 2026-07-06 CORRECTION: chlorobenzene moved HERE (was under "US EPA IRIS oral RfD" below) --
+      // PR #513 (2026-07-05) had picked the interim EPA row believing HC's 0.43 was a mis-attribution;
+      // that was disproven by direct verification against the real HC v4.0 source PDF, so current_default
+      // now pins to the HC row per the recency rule (see docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md).
+      'pv-hc-chlorobenzene-hh-direct-rfd', 'pv-hc-chlorobenzene-hh-food-rfd',
       // US EPA IRIS oral RfD
-      'pv-iris-chlorobenzene-hh-direct-rfd', 'pv-iris-chlorobenzene-hh-food-rfd',
       'pv-iris-dichlorobenzene_1_2-hh-direct-rfd', 'pv-iris-dichlorobenzene_1_2-hh-food-rfd',
       'pv-iris-dichloromethane-hh-direct-rfd', 'pv-iris-dichloromethane-hh-food-rfd',
       'pv-iris-trichloroethylene-hh-direct-rfd', 'pv-iris-trichloroethylene-hh-food-rfd',
