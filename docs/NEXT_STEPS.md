@@ -34,6 +34,10 @@ decision packet: `docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md`. Deferred (
   **`phenylmercuric_acetate`** ContaminantClass -- policy decisions, not build gaps.
 - Confirm-after-fact: cadmium 0.0008 + methylmercury 0.0002 current_defaults (applied despite a hold
   flag; picks defensible). benzo_a_pyrene remains HELD.
+- **Future catalog source to ingest (owner-flagged 2026-07-06):** `2026 Ontario MECP TRVs.zip` at
+  `G:\My Drive\SABCS - Sediment Project\References\2026 Ontario MECP TRVs.zip` -- add Ontario MECP TRVs
+  + other parameters to the catalog in a later lane (per-source provenance, needs_review-then-promote,
+  same discipline as HC/EPA). Not started.
 
 ### 2026-07-04 -- From the MO current_default / provenance-guard lane
 
