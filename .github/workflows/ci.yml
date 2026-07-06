@@ -134,7 +134,15 @@ jobs:
   e2e-tests:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: build
+    # 2026-07-06: was `needs: build`, but this job starts its own `next dev` webServer
+    # (playwright.config.ts) and never consumes the Production Build job's `.next` output --
+    # the dependency was pure ordering, not an artifact. Depending on unit-tests instead lets
+    # E2E run in parallel with Production Build / Performance Analysis / Load Testing K6
+    # instead of waiting for Build to finish first (verified: E2E is the pipeline's longest
+    # job and was the tail of the critical path). Trade-off: E2E can now run even if
+    # Production Build later fails -- CI-minute/noise cost, not a correctness risk, since the
+    # final CI Status Check aggregator still requires both build and e2e-tests to pass.
+    needs: unit-tests
     # Hard backstop so a stuck step can never hang for hours (default is 360 min).
     timeout-minutes: 30
     # Run inside the OFFICIAL Playwright container so browsers + system deps are PREBAKED and apt
