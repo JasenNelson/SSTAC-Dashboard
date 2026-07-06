@@ -10,6 +10,46 @@
 
 ---
 
+## 2026-07-04 - A "HH oral RfD" can be a mis-filed inhalation TC; HC v4.0 (2025) trumps HC 2010; add provenance guards [HIGH]
+
+**Date:** July 4, 2026
+**Area:** matrix-options / substance data provenance / QA guards
+**Impact:** HIGH (data correctness; one shipped fix, one wrong quarantine caught before merge)
+**Status:** Shipped (#512, #513, #514); #516 closed unmerged as wrong
+**Session:** MO current_default selection + provenance-guard lane
+
+### Discovery 1 -- an "oral RfD" value can actually be an inhalation TC mis-mapped during extraction
+chlorobenzene's stored HC oral RfD of 0.43 was NOT an oral RfD at all -- it was the HC inhalation
+TC (tolerable concentration) that got mis-filed into the oral-RfD field during catalog extraction.
+The magnitude was the tell (an oral RfD of 0.43 mg/kg-d is implausibly high for chlorobenzene). Fix
+(#513): quarantine the mis-filed value and default to EPA IRIS oral RfD 0.02. LESSON: when an oral
+RfD looks out of family, check whether it is really an inhalation TC/RfC that was mapped into the
+wrong route/endpoint column; verify route + endpoint, not just the number.
+
+### Discovery 2 -- HC v4.0 (2025) supersedes HC 2010; do not quarantine a live value against a superseded source
+PR #516 quarantined 1,2-DCB and added an "HC-2010-Part-II cross-check" tool -- but the quarantine
+was justified against the SUPERSEDED HC 2010 value. Owner: "HC v4.0 (2025) trumps 2010." The PR was
+CLOSED UNMERGED. LESSON: before quarantining/flagging a value by cross-checking a secondary HC table,
+confirm that table is the CURRENT edition; an older HC edition is not evidence a v4.0 value is wrong.
+
+### Discovery 3 -- provenance guards as reusable tests (#514)
+Two guards shipped: (a) a cross-source >=10x divergence AUDIT that flags any substance whose values
+disagree by an order of magnitude across sources (would have surfaced the chlorobenzene mis-file), and
+(b) a library-seed == current_default CONSISTENCY test so a promoted current_default can never silently
+diverge from what the library seeds. LESSON: encode "the number that made it wrong" as a standing guard,
+not a one-off check -- divergence audits + seed/default consistency catch the whole bug class.
+
+### Recency policy applied (#512)
+current_default selection rule across the 18 multi-option substances + 5 library reseeds: prefer the
+HC value by default, but take EPA when it is the newer/more-recent authority. Document the picked
+source per key; never template pvid/source across substances (per-key exact provenance).
+
+### Key Takeaway
+Route/endpoint mis-mapping and superseded-source cross-checks are the two provenance failure modes this
+lane keeps hitting; guard both with automated divergence audits + edition-aware source checks.
+
+---
+
 ## 2026-06-24 - Multimodal vision beats text-layer for PDF tables; investigate "junk", don't discard [CRITICAL]
 
 **Date:** June 24, 2026
