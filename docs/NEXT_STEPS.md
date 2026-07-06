@@ -19,6 +19,22 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-07-06 -- MO provenance guards shipped; owner-gated lanes re-grounded
+
+Session shipped PRs #522/#523/#524/#525 (two detection-only provenance guards + zinc/mn tension flags
++ handoff). Re-grounded the three owner-gated lanes from the 2026-07-01/07-05 planning docs against the
+current catalog and found them ~90% already executed. Genuinely-open items are captured as an owner
+decision packet: `docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md`. Deferred (owner decisions):
+- **Lane 2 HC TRV v4.0 re-verification** (correctness-critical; the cited HC web page is dead, so no HC
+  value is currently re-verifiable). Tooling exists (#518 extractor + crosscheck). BLOCKED on the owner
+  supplying the canonical HC v4.0 PDF source pointer; then run as a focused lane.
+- **`dichlorobenzene_1_2` current_default** is IRIS-1989 0.09 but the recency rule wants HC-2025 0.43 --
+  a real inconsistency awaiting an owner newer-vs-more-protective call.
+- **PCB policy** (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) and
+  **`phenylmercuric_acetate`** ContaminantClass -- policy decisions, not build gaps.
+- Confirm-after-fact: cadmium 0.0008 + methylmercury 0.0002 current_defaults (applied despite a hold
+  flag; picks defensible). benzo_a_pyrene remains HELD.
+
 ### 2026-07-04 -- From the MO current_default / provenance-guard lane
 
 Surfaced during the current_default selection + provenance-guard session (PRs #512-#515; #516 closed

@@ -10,6 +10,35 @@
 
 ---
 
+## 2026-07-06 - Re-ground stale plans against live state; verify the RIGHT output stream [HIGH]
+
+**Area:** matrix-options / planning / verification discipline
+**Impact:** HIGH (nearly re-did completed work; nearly reported a false "0 findings")
+
+### Discovery 1 -- planning docs drift; RE-GROUND before acting on them
+The 2026-07-01 HITL-decisions doc and the 2026-07-05 recency proposal both framed large lanes as
+pending (add `'inorganic'` enum + wire ~37 substances; apply 20 current_defaults). Checking the LIVE
+catalog showed intervening sessions had already done ~90%: `'inorganic'` was long in the union with 25
+wired substances, and 18/20 current_defaults were already applied. A plan built from those docs would
+have re-done finished work and asked the owner to re-decide settled questions. LESSON: before drafting
+an owner packet or starting a "pending" lane, grep the CURRENT code/catalog for the end-state; a
+planning doc is a point-in-time snapshot, not live status. (An Opus plan review caught this for one
+lane; it generalized to all three.)
+
+### Discovery 2 -- a "0 findings" grep can be a measurement error, not a real zero
+`node audit-library-provenance.mjs | grep CROSS_SOURCE` returned 0, which looked like the extended
+divergence check found nothing. In fact the CLI writes findings to a `.tmp` JSON file + stderr, and
+stdout was empty -- the grep was reading the wrong stream. A direct `runAuditOnLibrary(...)` import
+showed 8 findings. LESSON: when a detection tool reports "nothing," confirm HOW it emits results
+(stdout vs stderr vs a file) before concluding zero; re-verify via the function's real return value.
+
+### Bonus -- durable tooling capture
+The cursor-agent codex-backup recipe (used when codex weekly quota ~99%) is documented in
+`C:\Projects\TOOLING_SETUP_FOR_NEW_PROJECT.md` B.5 (single source of truth), pointed to from the
+`/codex-review` skill -- not buried in memory, which truncates/recall-misses.
+
+---
+
 ## 2026-07-04 - A "HH oral RfD" can be a mis-filed inhalation TC; HC v4.0 (2025) trumps HC 2010; add provenance guards [HIGH]
 
 **Date:** July 4, 2026 (Discovery 1 CORRECTED 2026-07-06 -- see below; it was itself wrong)
