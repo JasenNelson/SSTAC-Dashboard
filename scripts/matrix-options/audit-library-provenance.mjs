@@ -250,10 +250,28 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   }
 
   // 6. Cross-source value-divergence check
-  const targetInputs = new Set(['rfd_oral_mg_per_kg_bw_day', 'sf_oral_per_mg_per_kg_bw_per_day']);
-  const divergenceCandidates = parameterValueRecords.filter(r => 
+  // 2026-07-06: extended beyond the original HH-direct rfd/sf scope to also cover HH-food (the same
+  // substance/input via the food-web route), the two HH inhalation input_keys (rfc, unit risk), and the
+  // two eco input_keys (fcv, eco TRV) across both eco pathways. Grouping is still keyed on
+  // (substance_key, input_key) only -- NOT pathway -- so a direct-vs-food divergence for the SAME
+  // input_key is still caught (this mirrors how a real source mix-up could show up on either route).
+  const targetInputs = new Set([
+    'rfd_oral_mg_per_kg_bw_day',
+    'sf_oral_per_mg_per_kg_bw_per_day',
+    'rfc_inhalation_mg_per_m3',
+    'unit_risk_inhalation_per_ug_m3',
+    'fcv_ug_per_L',
+    'trv_eco_mg_per_kg_bw_day',
+  ]);
+  const targetPathways = new Set([
+    'human-health-direct',
+    'human-health-food',
+    'eco-direct-eqp',
+    'eco-food-bsaf',
+  ]);
+  const divergenceCandidates = parameterValueRecords.filter(r =>
     r.qa_status === 'approved' &&
-    r.pathway === 'human-health-direct' &&
+    targetPathways.has(r.pathway) &&
     targetInputs.has(r.input_key) &&
     typeof r.value === 'number' &&
     r.value > 0
@@ -271,13 +289,42 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   for (const [groupKey, rows] of groups.entries()) {
     const [substance_key, input_key] = groupKey.split('|');
     const distinctValues = Array.from(new Set(rows.map(r => r.value))).sort((a, b) => a - b);
-    
+
     if (distinctValues.length >= 2) {
       const min = distinctValues[0];
       const max = distinctValues[distinctValues.length - 1];
       const ratio = max / min;
-      
-      if (ratio >= 10) {
+
+      // Flag only a genuine CROSS-source divergence: SOME pair of rows from DIFFERENT source
+      // provenance must disagree by >=10x. A same-source spread is a legitimate alternative (e.g.
+      // FCSAP Module 7 eco TRVs give a MAMMAL and a BIRD value for one substance from the SAME source
+      // -- a receptor difference, not a source disagreement) and must not be flagged under a check
+      // named CROSS_SOURCE_VALUE_DIVERGENCE.
+      //
+      // A full PAIRWISE test (not just the global min/max extremes) is exact: checking only the
+      // extremes would (a) MISS a real cross-source split that sits at an intermediate value while the
+      // global min and max happen to share a source, and (b) risk flagging a same-source spread that
+      // merely has a co-citation on one extreme. Verified on the live catalog: this keeps every genuine
+      // cross-source divergence (chlorobenzene HC-vs-EPA, toxaphene EPA-ESB-vs-NRWQC, ...) and drops the
+      // benzo_a_pyrene/vanadium eco mammal-vs-bird same-source pairs.
+      const srcKey = (r) => [...new Set(r.source_ids || [])].sort().join(',');
+      let hasCrossSourceDivergence = false;
+      for (let i = 0; i < rows.length && !hasCrossSourceDivergence; i++) {
+        for (let j = i + 1; j < rows.length; j++) {
+          if (rows[i].value === rows[j].value) continue;
+          const hi = Math.max(rows[i].value, rows[j].value);
+          const lo = Math.min(rows[i].value, rows[j].value);
+          // A pair is cross-source only if both rows carry a source AND those sources differ.
+          const ki = srcKey(rows[i]);
+          const kj = srcKey(rows[j]);
+          if (hi / lo >= 10 && ki !== '' && kj !== '' && ki !== kj) {
+            hasCrossSourceDivergence = true;
+            break;
+          }
+        }
+      }
+
+      if (ratio >= 10 && hasCrossSourceDivergence) {
         const sourceMapping = rows.map(r => `${r.value}: src=${(r.source_ids || []).join(',')} pv=${r.parameter_value_id}`);
         findings.push({
           key: substance_key,

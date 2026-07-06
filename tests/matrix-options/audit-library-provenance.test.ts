@@ -280,6 +280,7 @@ describe('audit-library-provenance unit tests', () => {
         input_key: 'rfd_oral_mg_per_kg_bw_day',
         value: 0.1,
         qa_status: 'approved',
+        source_ids: ['src-a'],
       },
       {
         parameter_value_id: 'pv-2',
@@ -288,6 +289,7 @@ describe('audit-library-provenance unit tests', () => {
         input_key: 'rfd_oral_mg_per_kg_bw_day',
         value: 1.5, // 1.5 / 0.1 = 15x, >= 10x
         qa_status: 'approved',
+        source_ids: ['src-b'], // distinct source -> genuine CROSS-source divergence
       }
     ];
 
@@ -526,5 +528,113 @@ describe('audit-library-provenance unit tests', () => {
     const mismatch = findings.find((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
     expect(mismatch).toBeDefined();
     expect(mismatch?.cited_name).toBe('Nickel chloride');
+  });
+
+  // 2026-07-06: extended the divergence check beyond HH-direct rfd/sf to also cover HH-food, the two
+  // HH inhalation input_keys, and the two eco input_keys/pathways.
+  it('catches cross-source divergence on rfc_inhalation_mg_per_m3 (HH inhalation)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.01, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.5, qa_status: 'approved', source_ids: ['src-b'] }, // 50x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_rfc');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(50);
+  });
+
+  it('catches cross-source divergence on unit_risk_inhalation_per_ug_m3 (HH inhalation)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.0001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.002, qa_status: 'approved', source_ids: ['src-b'] }, // 20x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_iur');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('catches cross-source divergence on eco pathways (fcv_ug_per_L, eco-direct-eqp)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 1, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 25, qa_status: 'approved', source_ids: ['src-b'] }, // 25x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(25);
+  });
+
+  it('catches cross-source divergence on eco-food-bsaf pathway (trv_eco_mg_per_kg_bw_day)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 10, qa_status: 'approved', source_ids: ['src-b'] }, // 20x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco_food');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('does not flag a pathway/input_key combination outside the extended scope', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_out_of_scope', pathway: 'eco-direct-eqp', input_key: 'bsaf_loc_freshwater', value: 1, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_out_of_scope', pathway: 'eco-direct-eqp', input_key: 'bsaf_loc_freshwater', value: 100, qa_status: 'approved' },
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_out_of_scope')).toBe(false);
+  });
+
+  it('catches a divergence across DIFFERENT pathways for the same (substance_key, input_key)', () => {
+    // The load-bearing new capability: grouping is keyed on (substance_key, input_key) WITHOUT
+    // pathway, so a direct-route value and a food-route value for the same oral toxicity input that
+    // disagree >=10x are still caught (an oral RfD should be identical whichever route it is applied
+    // on -- a >=10x split signals a source mix-up). Pins behavior: this test FAILS if pathway is
+    // re-added to the group key.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_xpath', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_xpath', pathway: 'human-health-food', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.02, qa_status: 'approved', source_ids: ['src-b'] }, // 20x, different route
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_xpath');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('flags an intermediate cross-source divergence even when the global min/max share a source', () => {
+    // False-negative guard (adversarial review catch): if the global min AND max both belong to one
+    // source (a same-source spread) but a THIRD row from a DIFFERENT source diverges >=10x from one of
+    // them, that is a genuine cross-source disagreement and must still be flagged. A min/max-extremes-
+    // only source test would miss it; the pairwise test catches it.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-a-lo', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-a-hi', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved', source_ids: ['src-a'] }, // global min & max both src-a
+      { parameter_value_id: 'pv-b-mid', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.05, qa_status: 'approved', source_ids: ['src-b'] }, // 50x vs src-a's 0.001, DIFFERENT source
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_mid');
+    expect(divCheck).toBeDefined();
+  });
+
+  it('does not flag a same-source spread (e.g. mammal vs bird eco TRV from one source)', () => {
+    // Receptor-specific alternatives from the SAME source are a legitimate difference, not a
+    // cross-source disagreement, so the CROSS_SOURCE_VALUE_DIVERGENCE check must NOT flag them --
+    // even at a huge ratio. Mirrors the live FCSAP benzo_a_pyrene/vanadium mammal-vs-bird eco TRVs.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-mammal', substance_key: 'substance_receptor', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 3.6, qa_status: 'approved', source_ids: ['src-fcsap-2021'] },
+      { parameter_value_id: 'pv-bird', substance_key: 'substance_receptor', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-fcsap-2021'] }, // 3600x but SAME source
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_receptor')).toBe(false);
+  });
+
+  it('does not flag agreeing values from different sources (ratio 1)', () => {
+    // Two sources reporting the SAME value must not be flagged (distinct-value dedup -> ratio 1).
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_agree', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.01, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_agree', pathway: 'human-health-food', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.01, qa_status: 'approved', source_ids: ['src-b'] },
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_agree')).toBe(false);
   });
 });
