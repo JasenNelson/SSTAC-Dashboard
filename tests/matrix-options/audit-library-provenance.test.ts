@@ -527,4 +527,59 @@ describe('audit-library-provenance unit tests', () => {
     expect(mismatch).toBeDefined();
     expect(mismatch?.cited_name).toBe('Nickel chloride');
   });
+
+  // 2026-07-06: extended the divergence check beyond HH-direct rfd/sf to also cover HH-food, the two
+  // HH inhalation input_keys, and the two eco input_keys/pathways.
+  it('catches cross-source divergence on rfc_inhalation_mg_per_m3 (HH inhalation)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.01, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.5, qa_status: 'approved' }, // 50x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_rfc');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(50);
+  });
+
+  it('catches cross-source divergence on unit_risk_inhalation_per_ug_m3 (HH inhalation)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.0001, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.002, qa_status: 'approved' }, // 20x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_iur');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('catches cross-source divergence on eco pathways (fcv_ug_per_L, eco-direct-eqp)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 1, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 25, qa_status: 'approved' }, // 25x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(25);
+  });
+
+  it('catches cross-source divergence on eco-food-bsaf pathway (trv_eco_mg_per_kg_bw_day)', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 10, qa_status: 'approved' }, // 20x
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco_food');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('does not flag a pathway/input_key combination outside the extended scope', () => {
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_out_of_scope', pathway: 'eco-direct-eqp', input_key: 'bsaf_loc_freshwater', value: 1, qa_status: 'approved' },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_out_of_scope', pathway: 'eco-direct-eqp', input_key: 'bsaf_loc_freshwater', value: 100, qa_status: 'approved' },
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_out_of_scope')).toBe(false);
+  });
 });

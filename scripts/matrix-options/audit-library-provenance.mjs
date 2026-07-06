@@ -250,10 +250,28 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   }
 
   // 6. Cross-source value-divergence check
-  const targetInputs = new Set(['rfd_oral_mg_per_kg_bw_day', 'sf_oral_per_mg_per_kg_bw_per_day']);
-  const divergenceCandidates = parameterValueRecords.filter(r => 
+  // 2026-07-06: extended beyond the original HH-direct rfd/sf scope to also cover HH-food (the same
+  // substance/input via the food-web route), the two HH inhalation input_keys (rfc, unit risk), and the
+  // two eco input_keys (fcv, eco TRV) across both eco pathways. Grouping is still keyed on
+  // (substance_key, input_key) only -- NOT pathway -- so a direct-vs-food divergence for the SAME
+  // input_key is still caught (this mirrors how a real source mix-up could show up on either route).
+  const targetInputs = new Set([
+    'rfd_oral_mg_per_kg_bw_day',
+    'sf_oral_per_mg_per_kg_bw_per_day',
+    'rfc_inhalation_mg_per_m3',
+    'unit_risk_inhalation_per_ug_m3',
+    'fcv_ug_per_L',
+    'trv_eco_mg_per_kg_bw_day',
+  ]);
+  const targetPathways = new Set([
+    'human-health-direct',
+    'human-health-food',
+    'eco-direct-eqp',
+    'eco-food-bsaf',
+  ]);
+  const divergenceCandidates = parameterValueRecords.filter(r =>
     r.qa_status === 'approved' &&
-    r.pathway === 'human-health-direct' &&
+    targetPathways.has(r.pathway) &&
     targetInputs.has(r.input_key) &&
     typeof r.value === 'number' &&
     r.value > 0
@@ -271,12 +289,12 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   for (const [groupKey, rows] of groups.entries()) {
     const [substance_key, input_key] = groupKey.split('|');
     const distinctValues = Array.from(new Set(rows.map(r => r.value))).sort((a, b) => a - b);
-    
+
     if (distinctValues.length >= 2) {
       const min = distinctValues[0];
       const max = distinctValues[distinctValues.length - 1];
       const ratio = max / min;
-      
+
       if (ratio >= 10) {
         const sourceMapping = rows.map(r => `${r.value}: src=${(r.source_ids || []).join(',')} pv=${r.parameter_value_id}`);
         findings.push({
