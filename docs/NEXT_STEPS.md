@@ -24,18 +24,27 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 Surfaced during the current_default selection + provenance-guard session (PRs #512-#515; #516 closed
 unmerged). See docs/LESSONS.md 2026-07-04 entry and the session handoff (#515).
 
-- **HC v4.0 (2025) catalog-wide re-confirmation is UNRESOLVED (NEW, correctness-critical).** The whole
-  catalog's HC values were extracted from a canada.ca page that is now empty/dead, so no HC value in the
-  library is currently re-verifiable against its cited source. The chlorobenzene mis-file (#513) shows
-  this class is real. Deferred: a catalog-wide HC v4.0 source re-verification plan (locate the live HC
-  v4.0 tables, re-confirm each HC-sourced value, repair mis-mapped route/endpoint fields).
+- **HC v4.0 (2025) catalog-wide re-confirmation -- CORRECTED and COMPLETED 2026-07-06.** The original
+  framing here (HC values extracted from a now-dead canada.ca page, unverifiable) was WRONG: the real
+  source PDF (`C:\Users\jasen\Downloads\HC 2025 - Toxicological Reference Values TRV.pdf`) still exists
+  and was the actual source of the original May 2026 extraction. Worse: #513's chlorobenzene "fix,"
+  cited here as evidence the mis-file class was real, turned out to be based on an unverified theory --
+  direct PDF verification (2026-07-06, confirmed independently twice) shows chlorobenzene's 0.43 Oral
+  TDI was never actually wrong. A row-level, type-and-qualifier-aware catalog-wide cross-check of all
+  111 HC-v4.0-sourced rows against the real PDF is now COMPLETE -- see
+  `docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md`: **zero confirmed catalog errors found**
+  beyond chlorobenzene (already corrected). 6 rows remain AMBIGUOUS (genuine source-document
+  population/exposure-scenario variants the catalog doesn't yet disambiguate -- zinc age-stratified UL,
+  methylmercury/vinyl_chloride population variants, one benign manganese extractor quirk); none require
+  a catalog edit. #513's chlorobenzene review_notes/qa_status are corrected; any `current_default`
+  change is deferred to owner sign-off per the no-default-promotion rule.
 - **Owner-gated value decisions still open:** benzo_a_pyrene (HELD), phenylmercuric_acetate (organomercury),
   PCBs (overlap w/ total_pcbs_aroclor_1254), and ~22 jurisdiction-conflict current_default picks. These
   need owner judgment (source priority / receptor), not autonomous promotion.
 - **1,2-DCB is NOT quarantined.** #516's quarantine was wrong (based on superseded HC 2010); do not
   re-open a 1,2-DCB quarantine without a CURRENT (v4.0) source justification.
-- **Manifest vitest fact is stale.** facts.testing.vitest_test_count = 5019 (2026-07-04d); `vitest list`
-  now reports 5080. Refresh via `npm run docs:manifest:update -- --vitest` on the current main tip.
+- **Manifest vitest fact -- RESOLVED via PR #517 (2026-07-05b).** facts.testing.vitest_test_count is now
+  5080 on main, with the prior 5019 snapshot correctly moved to facts_history. No action needed.
 
 ### 2026-06-02 -- From the engine_v2 S4 Tier-explainer neutralization pass
 

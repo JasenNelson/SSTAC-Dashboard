@@ -1,0 +1,758 @@
+[
+  {
+    "substance": "Arsenic (inorganic)",
+    "type_of_trv": "Oral SF",
+    "value": 1.8,
+    "value_raw_text": "1.8E+00",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "1 \u2013",
+    "page_1indexed": 18
+  },
+  {
+    "substance": "Arsenic (inorganic)",
+    "type_of_trv": "Inhalation UR",
+    "value": 6.4,
+    "value_raw_text": "6.4E+00",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013\u00b9",
+    "page_1indexed": 18
+  },
+  {
+    "substance": "Barium",
+    "type_of_trv": "Oral TDI",
+    "value": 0.19,
+    "value_raw_text": "1.9E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 18
+  },
+  {
+    "substance": "Benzene",
+    "type_of_trv": "Oral SF",
+    "value": 0.083,
+    "value_raw_text": "8.3E-02",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "\u2013",
+    "page_1indexed": 19
+  },
+  {
+    "substance": "Benzene",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.016,
+    "value_raw_text": "1.6E-02",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013\u00b9",
+    "page_1indexed": 19
+  },
+  {
+    "substance": "Benzo[a]pyrene (BaP)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0003,
+    "value_raw_text": "3.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 20
+  },
+  {
+    "substance": "Benzo[a]pyrene (BaP)",
+    "type_of_trv": "Inhalation TC",
+    "value": 2e-06,
+    "value_raw_text": "2.0E-06",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 20
+  },
+  {
+    "substance": "Benzo[a]pyrene (BaP)",
+    "type_of_trv": "Oral SF",
+    "value": 1.289,
+    "value_raw_text": "1.289E+00",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "(As per HC [2013b, 2024a], given that BaP is known to have a mutagenic mode of action, HC recommends applying ADAFs2 to the oral SF when assessing risk associated with early life exposures at federal contaminated sites) \u2013",
+    "page_1indexed": 20
+  },
+  {
+    "substance": "Benzo[a]pyrene (BaP)",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.6,
+    "value_raw_text": "6.0E-01",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013",
+    "page_1indexed": 21
+  },
+  {
+    "substance": "Beryllium",
+    "type_of_trv": "Oral TDI",
+    "value": 0.002,
+    "value_raw_text": "2.0E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 21
+  },
+  {
+    "substance": "Beryllium",
+    "type_of_trv": "Inhalation TC",
+    "value": 2e-05,
+    "value_raw_text": "2.0E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "(sensitive)",
+    "page_1indexed": 22
+  },
+  {
+    "substance": "Beryllium",
+    "type_of_trv": "Inhalation UR",
+    "value": 2.4,
+    "value_raw_text": "2.4E+00",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013",
+    "page_1indexed": 22
+  },
+  {
+    "substance": "Cadmium",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0008,
+    "value_raw_text": "8.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional)",
+    "page_1indexed": 23
+  },
+  {
+    "substance": "Cadmium",
+    "type_of_trv": "Inhalation UR",
+    "value": 4.2,
+    "value_raw_text": "4.2E+00",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u00b3 \u2013",
+    "page_1indexed": 23
+  },
+  {
+    "substance": "Carbon tetrachloride",
+    "type_of_trv": "Oral TDI",
+    "value": 0.00071,
+    "value_raw_text": "7.1E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 24
+  },
+  {
+    "substance": "Carbon tetrachloride",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.006,
+    "value_raw_text": "6.0E-03",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u00b3 \u2013\u00b9 [US EPA 20 0 : do not use with exposures > 8 ]",
+    "page_1indexed": 24
+  },
+  {
+    "substance": "Chlorobenzene",
+    "type_of_trv": "Oral TDI",
+    "value": 0.43,
+    "value_raw_text": "4.3E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 25
+  },
+  {
+    "substance": "Chlorobenzene",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.01,
+    "value_raw_text": "1.0E-02",
+    "unit": "mg/m3",
+    "qualifier_hint": "(provisional) \u00b3",
+    "page_1indexed": 25
+  },
+  {
+    "substance": "Chromium, trivalent3",
+    "type_of_trv": "Oral TDI",
+    "value": 0.3,
+    "value_raw_text": "3.0E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional)",
+    "page_1indexed": 26
+  },
+  {
+    "substance": "Chromium, hexavalent",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0022,
+    "value_raw_text": "2.2E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 27
+  },
+  {
+    "substance": "Chromium, hexavalent",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.0001,
+    "value_raw_text": "1.0E-04",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 27
+  },
+  {
+    "substance": "Chromium, hexavalent",
+    "type_of_trv": "Inhalation UR",
+    "value": 76.0,
+    "value_raw_text": "7.6E+01",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013",
+    "page_1indexed": 27
+  },
+  {
+    "substance": "Copper",
+    "type_of_trv": "Oral TDI",
+    "value": 0.426,
+    "value_raw_text": "4.26E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 28
+  },
+  {
+    "substance": "Dichlorobenzene, 1,2-",
+    "type_of_trv": "Oral TDI",
+    "value": 0.43,
+    "value_raw_text": "4.3E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 28
+  },
+  {
+    "substance": "Dichlorobenzene, 1,4-",
+    "type_of_trv": "Oral TDI",
+    "value": 0.11,
+    "value_raw_text": "1.1E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 29
+  },
+  {
+    "substance": "Dichlorobenzene, 1,4-",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.06,
+    "value_raw_text": "6.0E-02",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 29
+  },
+  {
+    "substance": "Dichloroethane, 1,2- (DCA, 1,2-)",
+    "type_of_trv": "Oral SF",
+    "value": 0.0033,
+    "value_raw_text": "3.3E-03",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "-",
+    "page_1indexed": 29
+  },
+  {
+    "substance": "Dichloroethylene, 1,1",
+    "type_of_trv": "Oral TDI",
+    "value": 0.003,
+    "value_raw_text": "3.0E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(referred to as an \u2018acceptable daily intake\u2019 in HC, 1994)",
+    "page_1indexed": 30
+  },
+  {
+    "substance": "Dichloroethylene, 1,1",
+    "type_of_trv": "Inhalation UR",
+    "value": 1.7e-07,
+    "value_raw_text": "1.7E-07",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "\u2013\u00b9",
+    "page_1indexed": 30
+  },
+  {
+    "substance": "Dichloromethane (methylene chloride)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.014,
+    "value_raw_text": "1.4E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 31
+  },
+  {
+    "substance": "Dichloromethane (methylene chloride)",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.6,
+    "value_raw_text": "6.0E-01",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 31
+  },
+  {
+    "substance": "Dichloromethane (methylene chloride)",
+    "type_of_trv": "Oral SF",
+    "value": 0.002,
+    "value_raw_text": "2.0E-03",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "[US EPA (2011a): do not use with exposures >60 mg/kg -day; BW apply ADAFs2 to the oral SF for early life exposures] \u2013",
+    "page_1indexed": 31
+  },
+  {
+    "substance": "Dichloromethane (methylene chloride)",
+    "type_of_trv": "Inhalation UR",
+    "value": 1e-05,
+    "value_raw_text": "1.0E-05",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "[US EPA (2011a): do not use with exposures exceeding >7700 mg/m3; apply ADAFs2 for early life exposures] \u2013\u00b9",
+    "page_1indexed": 32
+  },
+  {
+    "substance": "Ethylbenzene",
+    "type_of_trv": "Oral TDI",
+    "value": 0.022,
+    "value_raw_text": "2.2E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 32
+  },
+  {
+    "substance": "Ethylbenzene",
+    "type_of_trv": "Inhalation TC",
+    "value": 2.0,
+    "value_raw_text": "2.0E+00",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 32
+  },
+  {
+    "substance": "n-Hexane",
+    "type_of_trv": "Oral TDI",
+    "value": 0.1,
+    "value_raw_text": "1.0E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional)",
+    "page_1indexed": 33
+  },
+  {
+    "substance": "n-Hexane",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.7,
+    "value_raw_text": "7.0E-01",
+    "unit": "mg/m3",
+    "qualifier_hint": "(provisional)",
+    "page_1indexed": 33
+  },
+  {
+    "substance": "Lead",
+    "type_of_trv": "Risk-specific dose",
+    "value": 0.0005,
+    "value_raw_text": "5.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "4 (provisional)",
+    "page_1indexed": 33
+  },
+  {
+    "substance": "Manganese",
+    "type_of_trv": "Oral TDI",
+    "value": 0.025,
+    "value_raw_text": "2.5E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 34
+  },
+  {
+    "substance": "Manganese",
+    "type_of_trv": "Inhalation TC",
+    "value": 5e-05,
+    "value_raw_text": "5.0E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "in PM",
+    "page_1indexed": 35
+  },
+  {
+    "substance": "Manganese",
+    "type_of_trv": "Inhalation TC",
+    "value": 3.5,
+    "value_raw_text": "3.5",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 35
+  },
+  {
+    "substance": "Mercury (inorganic)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0003,
+    "value_raw_text": "3.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "[For exposure to mercury through consumption of food, use the TRV for methylmercury, the predominant form of mercury in these foods.]",
+    "page_1indexed": 36
+  },
+  {
+    "substance": "Methylmercury",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0002,
+    "value_raw_text": "2.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional) people of child-bearing age, infants, and children < 2 years",
+    "page_1indexed": 37
+  },
+  {
+    "substance": "Methylmercury",
+    "type_of_trv": "Oral TDI",
+    "value": 0.00047,
+    "value_raw_text": "4.7E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional) non-sensitive adults of the general population",
+    "page_1indexed": 37
+  },
+  {
+    "substance": "Methylnaphthalene, 2-",
+    "type_of_trv": "Oral TDI",
+    "value": 0.004,
+    "value_raw_text": "4.0E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 37
+  },
+  {
+    "substance": "Naphthalene",
+    "type_of_trv": "Oral TDI",
+    "value": 0.02,
+    "value_raw_text": "2.0E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 38
+  },
+  {
+    "substance": "Naphthalene",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.01,
+    "value_raw_text": "1.0E-02",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 38
+  },
+  {
+    "substance": "Nickel chloride",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0013,
+    "value_raw_text": "1.3E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 38
+  },
+  {
+    "substance": "Nickel oxide",
+    "type_of_trv": "Inhalation TC",
+    "value": 2.5e-05,
+    "value_raw_text": "2.5E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 39
+  },
+  {
+    "substance": "Nickel subsulfide (sulfidic nickel)",
+    "type_of_trv": "Inhalation TC",
+    "value": 1.8e-05,
+    "value_raw_text": "1.8E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 39
+  },
+  {
+    "substance": "Nickel sulfate",
+    "type_of_trv": "Oral TDI",
+    "value": 0.012,
+    "value_raw_text": "1.2E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(sensitive)",
+    "page_1indexed": 40
+  },
+  {
+    "substance": "Nickel sulfate",
+    "type_of_trv": "Inhalation TC",
+    "value": 2e-05,
+    "value_raw_text": "2.0E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 40
+  },
+  {
+    "substance": "Nickel, mixture of oxidic, sulfidic and soluble inorganic nickel compounds",
+    "type_of_trv": "Inhalation UR",
+    "value": 1.3,
+    "value_raw_text": "1.3E+00",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "-",
+    "page_1indexed": 41
+  },
+  {
+    "substance": "Nickel, metallic",
+    "type_of_trv": "Inhalation TC",
+    "value": 1.8e-05,
+    "value_raw_text": "1.8E-05",
+    "unit": "mg/m3",
+    "qualifier_hint": "(provisional)",
+    "page_1indexed": 41
+  },
+  {
+    "substance": "Polychlorinated biphenyls (PCBs) (non dioxin-like i.e., non-coplanar)5",
+    "type_of_trv": "Oral TDI",
+    "value": 1e-05,
+    "value_raw_text": "1.0E-05",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional) based on an Aroclor 254 mixture",
+    "page_1indexed": 41
+  },
+  {
+    "substance": "Polychlorinated biphenyls (PCBs)6 (dioxin-like, i.e. coplanar)",
+    "type_of_trv": "Oral TDI",
+    "value": 2.3e-09,
+    "value_raw_text": "2.3E-09",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional) mg TEQ/kg",
+    "page_1indexed": 42
+  },
+  {
+    "substance": "Polychlorinated dibenzo-p-dioxins/ polychlorinated dibenzofurans6 (PCDDs/PCDFs)",
+    "type_of_trv": "Oral TDI",
+    "value": 2.3e-09,
+    "value_raw_text": "2.3E-09",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(provisional) mg TEQ/kg",
+    "page_1indexed": 42
+  },
+  {
+    "substance": "Pyrene",
+    "type_of_trv": "Oral TDI",
+    "value": 0.03,
+    "value_raw_text": "3.0E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Selenium",
+    "type_of_trv": "UL",
+    "value": 0.0055,
+    "value_raw_text": "5.5E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 yrs",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Selenium",
+    "type_of_trv": "UL",
+    "value": 0.006,
+    "value_raw_text": "6.0E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 yrs",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Selenium",
+    "type_of_trv": "UL",
+    "value": 0.0063,
+    "value_raw_text": "6.3E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 yrs",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Selenium",
+    "type_of_trv": "UL",
+    "value": 0.0062,
+    "value_raw_text": "6.2E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 yrs",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Selenium",
+    "type_of_trv": "UL",
+    "value": 0.0057,
+    "value_raw_text": "5.7E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 yrs",
+    "page_1indexed": 43
+  },
+  {
+    "substance": "Tetrachloroethylene (PCE)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0047,
+    "value_raw_text": "4.7E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 44
+  },
+  {
+    "substance": "Tetrachloroethylene (PCE)",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.04,
+    "value_raw_text": "4.0E-02",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 45
+  },
+  {
+    "substance": "Tetrachloroethylene (PCE)",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.00026,
+    "value_raw_text": "2.6E-04",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "-",
+    "page_1indexed": 46
+  },
+  {
+    "substance": "Toluene",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0097,
+    "value_raw_text": "9.7E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 46
+  },
+  {
+    "substance": "Toluene",
+    "type_of_trv": "Inhalation TC",
+    "value": 2.3,
+    "value_raw_text": "2.3E+00",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 46
+  },
+  {
+    "substance": "Trichloroethylene (TCE)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.00146,
+    "value_raw_text": "1.46E-03",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 47
+  },
+  {
+    "substance": "Trichloroethylene (TCE)",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.002,
+    "value_raw_text": "2.0E-03",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 47
+  },
+  {
+    "substance": "Trichloroethylene (TCE)",
+    "type_of_trv": "Oral SF",
+    "value": 0.000811,
+    "value_raw_text": "8.11E-04",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "(As per HC [2013b, 2024a], given that TCE is known to have a mutagenic mode of action, HC recommends applying ADAFs2 to the oral SF when assessing risk associated with early life exposures at federal contaminated sites) \u2013",
+    "page_1indexed": 48
+  },
+  {
+    "substance": "Trichloroethylene (TCE)",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.0041,
+    "value_raw_text": "4.1E-03",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "(As per HC [2013b, 2024a], given that TCE is known to have a mutagenic mode of action, HC recommends applying ADAFs2 to the oral SF when assessing risk associated with early life exposures at federal contaminated sites) \u2013\u00b9",
+    "page_1indexed": 48
+  },
+  {
+    "substance": "Uranium (non-radioactive)",
+    "type_of_trv": "Oral TDI",
+    "value": 0.0006,
+    "value_raw_text": "6.0E-04",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(sensitive)",
+    "page_1indexed": 49
+  },
+  {
+    "substance": "Vinyl chloride",
+    "type_of_trv": "Oral SF",
+    "value": 0.24,
+    "value_raw_text": "2.4E-01",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "\u2013 for continuous lifetime exposure during adulthood",
+    "page_1indexed": 50
+  },
+  {
+    "substance": "Vinyl chloride",
+    "type_of_trv": "Oral SF",
+    "value": 0.48,
+    "value_raw_text": "4.8E-01",
+    "unit": "(mg/kgBW-day)-1",
+    "qualifier_hint": "\u2013 for continuous lifetime exposure from birth",
+    "page_1indexed": 50
+  },
+  {
+    "substance": "Vinyl chloride",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.0044,
+    "value_raw_text": "4.4E-03",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "[US EPA (2000b): should not be used for exposures >10 mg/m3] \u2013 for continuous lifetime exposure during adulthood",
+    "page_1indexed": 50
+  },
+  {
+    "substance": "Vinyl chloride",
+    "type_of_trv": "Inhalation UR",
+    "value": 0.0088,
+    "value_raw_text": "8.8E-03",
+    "unit": "(mg/m3)-1",
+    "qualifier_hint": "[US EPA (2000b): should not be used for exposures >10 mg/m3] \u2013 for continuous lifetime exposure from birth",
+    "page_1indexed": 50
+  },
+  {
+    "substance": "Xylenes, mixed isomers",
+    "type_of_trv": "Oral TDI",
+    "value": 0.013,
+    "value_raw_text": "1.3E-02",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "",
+    "page_1indexed": 51
+  },
+  {
+    "substance": "Xylenes, mixed isomers",
+    "type_of_trv": "Inhalation TC",
+    "value": 0.1,
+    "value_raw_text": "1.0E-01",
+    "unit": "mg/m3",
+    "qualifier_hint": "",
+    "page_1indexed": 51
+  },
+  {
+    "substance": "Zinc",
+    "type_of_trv": "UL",
+    "value": 0.49,
+    "value_raw_text": "4.9E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 years",
+    "page_1indexed": 52
+  },
+  {
+    "substance": "Zinc",
+    "type_of_trv": "UL",
+    "value": 0.48,
+    "value_raw_text": "4.8E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 years",
+    "page_1indexed": 52
+  },
+  {
+    "substance": "Zinc",
+    "type_of_trv": "UL",
+    "value": 0.51,
+    "value_raw_text": "5.1E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 years",
+    "page_1indexed": 52
+  },
+  {
+    "substance": "Zinc",
+    "type_of_trv": "UL",
+    "value": 0.54,
+    "value_raw_text": "5.4E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 years",
+    "page_1indexed": 52
+  },
+  {
+    "substance": "Zinc",
+    "type_of_trv": "UL",
+    "value": 0.57,
+    "value_raw_text": "5.7E-01",
+    "unit": "mg/kgBW-day",
+    "qualifier_hint": "(HC) 0 to <6 mo 6 mo to <5 yrs 5 to <12 yrs 12 to <20 yrs \u226520 years",
+    "page_1indexed": 52
+  }
+]

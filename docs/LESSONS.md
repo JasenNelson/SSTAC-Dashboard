@@ -12,25 +12,41 @@
 
 ## 2026-07-04 - A "HH oral RfD" can be a mis-filed inhalation TC; HC v4.0 (2025) trumps HC 2010; add provenance guards [HIGH]
 
-**Date:** July 4, 2026
+**Date:** July 4, 2026 (Discovery 1 CORRECTED 2026-07-06 -- see below; it was itself wrong)
 **Area:** matrix-options / substance data provenance / QA guards
-**Impact:** HIGH (data correctness; one shipped fix, one wrong quarantine caught before merge)
-**Status:** Shipped (#512, #513, #514); #516 closed unmerged as wrong
+**Impact:** HIGH (data correctness; #513 believed to be a fix, later found itself to be an error)
+**Status:** #512/#514 stand; #513 corrected 2026-07-06 (was based on an unverified theory); #516 closed unmerged as wrong
 **Session:** MO current_default selection + provenance-guard lane
 
-### Discovery 1 -- an "oral RfD" value can actually be an inhalation TC mis-mapped during extraction
-chlorobenzene's stored HC oral RfD of 0.43 was NOT an oral RfD at all -- it was the HC inhalation
-TC (tolerable concentration) that got mis-filed into the oral-RfD field during catalog extraction.
-The magnitude was the tell (an oral RfD of 0.43 mg/kg-d is implausibly high for chlorobenzene). Fix
-(#513): quarantine the mis-filed value and default to EPA IRIS oral RfD 0.02. LESSON: when an oral
-RfD looks out of family, check whether it is really an inhalation TC/RfC that was mapped into the
-wrong route/endpoint column; verify route + endpoint, not just the number.
+### Discovery 1 -- CORRECTED 2026-07-06: chlorobenzene's 0.43 was NEVER actually wrong; PR #513 was the error
+Original (now-superseded) claim: chlorobenzene's stored HC oral RfD of 0.43 was believed to be a
+mis-filed HC inhalation TC (tolerable concentration), fixed in #513 by quarantining it and defaulting
+to EPA IRIS 0.02. **This was wrong.** The real HC TRV v4.0 (2025) source PDF -- which turned out to
+still exist in the owner's Downloads folder (see Discovery 2 correction below) -- was read directly on
+2026-07-06 (independently, twice: once via a codex holistic review with file tool-use, once via this
+session's own PyMuPDF extraction of page 25) and shows TWO separate, legitimate, correctly-labeled HC
+study derivations for chlorobenzene: `Oral TDI = 4.3E-01 mg/kgBW-day` (chronic rat/mouse study) and
+`Inhalation TC (provisional) = 1.0E-02 mg/m3` (subchronic study) -- exactly matching what the ORIGINAL
+May 2026 catalog extraction had already recorded. 0.43 was never mis-filed. #513's theory (cross-source
+corroboration with EPA/BC P28 both at 0.02) was asserted without ever checking HC's own primary
+document. **LESSON (corrected): a magnitude that "looks implausible" plus cross-source corroboration is
+suggestive, not proof -- always verify against the primary source document directly before quarantining
+a value, especially before merging a fix that changes a regulatory default.**
 
-### Discovery 2 -- HC v4.0 (2025) supersedes HC 2010; do not quarantine a live value against a superseded source
+### Discovery 2 -- HC v4.0 (2025) supersedes HC 2010; do not quarantine a live value against a superseded source; CORRECTION 2026-07-06: the v4.0 source was never actually unobtainable
 PR #516 quarantined 1,2-DCB and added an "HC-2010-Part-II cross-check" tool -- but the quarantine
 was justified against the SUPERSEDED HC 2010 value. Owner: "HC v4.0 (2025) trumps 2010." The PR was
 CLOSED UNMERGED. LESSON: before quarantining/flagging a value by cross-checking a secondary HC table,
 confirm that table is the CURRENT edition; an older HC edition is not evidence a v4.0 value is wrong.
+**Correction (2026-07-06):** the follow-on framing that the real HC TRV v4.0 (2025) document was
+"order-a-copy / not web-published / unavailable" was ALSO wrong -- it was a false negative from an
+incomplete search. The actual source PDF (`C:\Users\jasen\Downloads\HC 2025 - Toxicological Reference
+Values TRV.pdf`) had been used to build the catalog's HC v4.0 rows back on 2026-05-29
+(`pass_d0c00012_hc_trv_v4.py`, commit `9f1ef98`); its existence/role was never written into a memory or
+doc, only buried in a May commit message, so this later search had no way to find it. **LESSON: before
+concluding a source document is unavailable, grep the relevant extraction pass script/review note for a
+hardcoded local file path -- it may already have been used to build the very data you're trying to
+verify.**
 
 ### Discovery 3 -- provenance guards as reusable tests (#514)
 Two guards shipped: (a) a cross-source >=10x divergence AUDIT that flags any substance whose values

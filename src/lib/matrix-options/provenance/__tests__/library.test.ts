@@ -242,9 +242,16 @@ describe('matrix options evidence library helpers', () => {
     // longer hold the default once a real catalog row was promoted). Net -36 + 8 = -28. See the
     // matching +28 on currentDefaults above.
     // 2026-07-05: -4 (1680 -> 1676) -- 2 HC chlorobenzene rows demoted to not_default, 2 IRIS rows promoted to current_default.
-    expect(view.audit.values.availableOptions).toBe(1676);
-    // 2026-07-05: +2 (17 -> 19) -- 2 HC chlorobenzene rows demoted to not_default.
-    expect(view.audit.values.notDefaults).toBe(19);
+    // 2026-07-06 CORRECTION: PR #513's chlorobenzene demotion (2026-07-05) was based on an unverified
+    // theory ("1,2-DCB mis-attribution") that direct extraction of the real HC TRV v4.0 (2025) source
+    // PDF disproved -- 0.43 mg/kgBW-day is chlorobenzene's genuine, correctly-derived HC Oral TDI (page
+    // 25), never mis-filed. The 2 rows are restored to available_option (current_default is
+    // deliberately left untouched pending owner sign-off -- see
+    // docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md). +2 (1676 -> 1678); the IRIS
+    // current_default promotion from 2026-07-05 is unaffected.
+    expect(view.audit.values.availableOptions).toBe(1678);
+    // 2026-07-06 CORRECTION: the 2 chlorobenzene rows leave not_default (see above). -2 (19 -> 17).
+    expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
     expect(view.audit.equations.currentCalculatorScaffold).toBe(3);
