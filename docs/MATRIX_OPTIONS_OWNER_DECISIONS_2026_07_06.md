@@ -90,15 +90,18 @@ zinc rfd 0.3 (US EPA IRIS); arsenic_inorganic sf 32 (US EPA IRIS 2025); cadmium 
 0.0002 (HC v4.0 -- see confirm-after-fact below).
 
 ### DECISION-NEEDED (2)
-1. **`dichlorobenzene_1_2` (rfd_oral)** -- REAL INCONSISTENCY. The live `current_default` is
-   **0.09 (US EPA IRIS 1989)**, but an approved **HC v4.0 (2025) 0.43** row sits alongside as
-   `available_option`. The recency rule says the newer authority (HC 2025) should win over the
-   outdated IRIS 1989 -- so the CURRENT default contradicts the recency proposal. Note the tension:
-   IRIS 0.09 is MORE protective (lower RfD) but OLDER; HC 0.43 is NEWER but less protective. This is
-   exactly the recency-vs-protectiveness judgment call the rule reserves for the owner.
-   RECOMMENDATION: move current_default to HC v4.0 0.43 to be consistent with the applied recency rule
-   for every other substance in this set -- BUT flagging because "newer but less protective" deserves
-   an explicit owner nod. (Dry-run only; not applied.)
+1. **`dichlorobenzene_1_2` (rfd_oral)** -- CORRECTED 2026-07-06: NOT an inconsistency; already decided.
+   An earlier draft of this doc flagged the IRIS-0.09 default as a stale artifact that the recency rule
+   should overturn to HC 0.43. That framing was WRONG -- it trusted the "HC v4.0 (2025)" label as the
+   assessment vintage. The `substanceLibrary.ts` provenance note (human-verified 2026-07-04) shows:
+   (a) the HC 0.43 value is HC's **1996** assessment (NTP 1985b chronic gavage), the "2025" being only
+   the TRV-table publication date; and (b) the IRIS **0.09** current_default was **deliberately set by
+   the owner on 2026-07-05** "per the conflict rule (more protective than the Health Canada value)".
+   So it is HC-1996 vs IRIS-1989 -- no generational gap -- and the recency rule's "newer wins" trigger
+   (which fires only when the most-protective value is genuinely outdated) does NOT apply; most-
+   protective (IRIS 0.09) stands. RESOLUTION: KEEP IRIS 0.09; no change. Lesson recorded: a TRV-table
+   publication date is not the assessment vintage -- check the underlying assessment year before
+   applying "newer wins".
 2. **`total_pcbs_aroclor_1254` (rfd_oral)** -- no current_default set (HC 0.00001 vs EPA 0.00002, both
    `available_option`). Correctly pending on the PCB-policy decision (Lane 1 item 1). RECOMMENDATION:
    resolve with the single PCB-policy call; do not auto-apply.
@@ -123,7 +126,7 @@ verification. Confirmed correct.
 |---|------|------|----------------|
 | 1 | 1+3 | PCB policy (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) | Adopt Option A (PCB-consolidation doc); one decision closes both |
 | 2 | 1 | `phenylmercuric_acetate` ContaminantClass | Pick a class (or approve `organomercury`) |
-| 3 | 3 | `dichlorobenzene_1_2` default: IRIS-1989 0.09 vs HC-2025 0.43 | Move to HC 0.43 for recency consistency (owner nod on newer-but-less-protective) |
+| 3 | 3 | `dichlorobenzene_1_2` default | RESOLVED 2026-07-06: keep IRIS 0.09 (owner's 07-05 more-protective call; HC 0.43 is 1996-vintage despite the 2025 table label). No action. |
 | 4 | 3 | Confirm cadmium 0.0008 + methylmercury 0.0002 defaults (applied despite hold flag) | Confirm or redirect; low urgency |
 | 5 | 2 | HC v4.0 catalog re-verification | Owner supplies canonical PDF source pointer -> run the existing #518 tooling as a focused lane |
 
