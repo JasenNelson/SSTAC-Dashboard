@@ -687,6 +687,16 @@ describe('matrix options provenance catalog', () => {
       ...IRIS_DUPE_CG_CANONICAL_VALUE_IDS,
       ...IRIS_PFAS_DUPE_CG_CANONICAL_VALUE_IDS,
       ...IRIS_PFDA_DUPE_CG_CANONICAL_VALUE_IDS,
+      // 2026-07-06: chlorobenzene's two HC v4.0 oral RfD rows, re-approved OUTSIDE the bulk
+      // promote-hc-trv-v4-2025.mjs tool (PR #513 on 2026-07-05 had dropped them from that tool's
+      // PROMOTION_ROWS when it quarantined them, believing 0.43 was a 1,2-DCB mis-attribution). Direct
+      // extraction of the real HC TRV v4.0 (2025) source PDF confirmed 0.43 mg/kgBW-day IS chlorobenzene's
+      // genuine, correctly-derived Oral TDI (page 25) -- it was never mis-filed. This correction restores
+      // qa_status=approved directly on the catalog rows (not via the bulk tool, since the bulk tool's
+      // "90 rows" scope is a separate, already-executed historical action) -- see
+      // docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md.
+      'pv-hc-chlorobenzene-hh-direct-rfd',
+      'pv-hc-chlorobenzene-hh-food-rfd',
     ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(
@@ -696,6 +706,13 @@ describe('matrix options provenance catalog', () => {
 
     const pfasPromotionIds = new Set(US_EPA_PFAS_PROMOTION_VALUE_IDS);
     const hcTrvPromotionIds = new Set(HC_TRV_V4_2025_PROMOTION_VALUE_IDS);
+    // 2026-07-06: chlorobenzene's two HC v4.0 oral RfD rows -- re-approved directly (see the
+    // sanctionedPromotionIds comment above), not via the bulk promote-hc-trv-v4-2025.mjs tool, but they
+    // carry the SAME single Health Canada v4.0 source as that tool's rows.
+    const chlorobenzeneCorrectionIds = new Set([
+      'pv-hc-chlorobenzene-hh-direct-rfd',
+      'pv-hc-chlorobenzene-hh-food-rfd',
+    ]);
     for (const record of promotedBeyondFrozen) {
       // Each promoted row is one of the sanctioned set (defense in depth with the set-equality above).
       expect(sanctionedPromotionIds.has(record.parameter_value_id), record.parameter_value_id).toBe(
@@ -712,7 +729,7 @@ describe('matrix options provenance catalog', () => {
           : 'src-us-epa-pfoa-2024';
         expect(US_EPA_PFAS_PROMOTION_SOURCE_IDS).toContain(expectedPfasSource);
         expect(record.source_ids, record.parameter_value_id).toEqual([expectedPfasSource]);
-      } else if (hcTrvPromotionIds.has(record.parameter_value_id)) {
+      } else if (hcTrvPromotionIds.has(record.parameter_value_id) || chlorobenzeneCorrectionIds.has(record.parameter_value_id)) {
         // Each HC TRV v4.0 row must carry EXACTLY the single Health Canada source.
         expect(record.source_ids, record.parameter_value_id).toEqual(['src-health-canada-trv-v4-2025']);
       } else {
