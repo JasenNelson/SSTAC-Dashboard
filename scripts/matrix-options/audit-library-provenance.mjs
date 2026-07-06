@@ -295,19 +295,36 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
       const max = distinctValues[distinctValues.length - 1];
       const ratio = max / min;
 
-      // The extreme (min and max) values must be attributable to at least TWO distinct sources for
-      // this to be a genuine CROSS-source divergence. A same-source spread is a legitimate alternative
-      // (e.g. FCSAP Module 7 eco TRVs give a MAMMAL and a BIRD value for one substance from the same
-      // source -- a receptor difference, not a source disagreement); flagging it under a check named
-      // CROSS_SOURCE_VALUE_DIVERGENCE would be a false positive. Verified on the live catalog: this
-      // drops the benzo_a_pyrene/vanadium eco mammal-vs-bird pairs while keeping every genuine
-      // cross-source divergence (chlorobenzene HC-vs-EPA, toxaphene EPA-ESB-vs-NRWQC, etc.).
-      const extremeSources = new Set([
-        ...rows.filter(r => r.value === min).flatMap(r => r.source_ids || []),
-        ...rows.filter(r => r.value === max).flatMap(r => r.source_ids || []),
-      ]);
+      // Flag only a genuine CROSS-source divergence: SOME pair of rows from DIFFERENT source
+      // provenance must disagree by >=10x. A same-source spread is a legitimate alternative (e.g.
+      // FCSAP Module 7 eco TRVs give a MAMMAL and a BIRD value for one substance from the SAME source
+      // -- a receptor difference, not a source disagreement) and must not be flagged under a check
+      // named CROSS_SOURCE_VALUE_DIVERGENCE.
+      //
+      // A full PAIRWISE test (not just the global min/max extremes) is exact: checking only the
+      // extremes would (a) MISS a real cross-source split that sits at an intermediate value while the
+      // global min and max happen to share a source, and (b) risk flagging a same-source spread that
+      // merely has a co-citation on one extreme. Verified on the live catalog: this keeps every genuine
+      // cross-source divergence (chlorobenzene HC-vs-EPA, toxaphene EPA-ESB-vs-NRWQC, ...) and drops the
+      // benzo_a_pyrene/vanadium eco mammal-vs-bird same-source pairs.
+      const srcKey = (r) => [...new Set(r.source_ids || [])].sort().join(',');
+      let hasCrossSourceDivergence = false;
+      for (let i = 0; i < rows.length && !hasCrossSourceDivergence; i++) {
+        for (let j = i + 1; j < rows.length; j++) {
+          if (rows[i].value === rows[j].value) continue;
+          const hi = Math.max(rows[i].value, rows[j].value);
+          const lo = Math.min(rows[i].value, rows[j].value);
+          // A pair is cross-source only if both rows carry a source AND those sources differ.
+          const ki = srcKey(rows[i]);
+          const kj = srcKey(rows[j]);
+          if (hi / lo >= 10 && ki !== '' && kj !== '' && ki !== kj) {
+            hasCrossSourceDivergence = true;
+            break;
+          }
+        }
+      }
 
-      if (ratio >= 10 && extremeSources.size >= 2) {
+      if (ratio >= 10 && hasCrossSourceDivergence) {
         const sourceMapping = rows.map(r => `${r.value}: src=${(r.source_ids || []).join(',')} pv=${r.parameter_value_id}`);
         findings.push({
           key: substance_key,

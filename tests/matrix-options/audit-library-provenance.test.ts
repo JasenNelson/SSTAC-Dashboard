@@ -601,6 +601,21 @@ describe('audit-library-provenance unit tests', () => {
     expect(divCheck?.ratio).toBe(20);
   });
 
+  it('flags an intermediate cross-source divergence even when the global min/max share a source', () => {
+    // False-negative guard (adversarial review catch): if the global min AND max both belong to one
+    // source (a same-source spread) but a THIRD row from a DIFFERENT source diverges >=10x from one of
+    // them, that is a genuine cross-source disagreement and must still be flagged. A min/max-extremes-
+    // only source test would miss it; the pairwise test catches it.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-a-lo', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-a-hi', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved', source_ids: ['src-a'] }, // global min & max both src-a
+      { parameter_value_id: 'pv-b-mid', substance_key: 'substance_mid', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.05, qa_status: 'approved', source_ids: ['src-b'] }, // 50x vs src-a's 0.001, DIFFERENT source
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_mid');
+    expect(divCheck).toBeDefined();
+  });
+
   it('does not flag a same-source spread (e.g. mammal vs bird eco TRV from one source)', () => {
     // Receptor-specific alternatives from the SAME source are a legitimate difference, not a
     // cross-source disagreement, so the CROSS_SOURCE_VALUE_DIVERGENCE check must NOT flag them --
