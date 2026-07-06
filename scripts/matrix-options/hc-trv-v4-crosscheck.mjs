@@ -88,6 +88,31 @@ function checkKeywordMatch(normalizedText, keywordSet) {
     });
 }
 
+// 2026-07-06: age-bracket disambiguation. Some substances (e.g. Zinc, Selenium UL) are qualified by
+// an age RANGE ("5 to <12 yrs", ">=20 years") rather than the sensitive/adult binary the KEYWORD_PAIRS
+// above cover. Normalize both sides to a canonical digit+unit token stream (stripping punctuation,
+// collapsing year/yr/years and month/mo/months variants) so "5 to <12 years" and "5 to <12 yrs" compare
+// equal, then require the catalog side to contain the PDF candidate's normalized bracket as an exact
+// substring. Returns false (no match) if either side has no extractable age-bracket text, so this never
+// produces a false match on unrelated substances.
+function normalizeAgeText(text) {
+    if (!text) return '';
+    let t = text.toLowerCase();
+    t = t.replace(/years?/g, 'yr').replace(/yrs?/g, 'yr');
+    t = t.replace(/months?/g, 'mo');
+    t = t.replace(/[^a-z0-9]/g, '');
+    return t;
+}
+
+function checkAgeBracketMatch(catalogContext, pdfQualifier) {
+    const normalizedPdf = normalizeAgeText(pdfQualifier);
+    const normalizedCatalog = normalizeAgeText(catalogContext);
+    // Require at least one digit in the PDF side so a substance with no age-bracket qualifier at all
+    // (e.g. "child" with no numbers) can't produce a spurious match via an empty/trivial substring.
+    if (!normalizedPdf || !/\d/.test(normalizedPdf) || !normalizedCatalog) return false;
+    return normalizedCatalog.includes(normalizedPdf);
+}
+
 function disambiguate(catalogRow, pdfRows) {
     const catalogContext = [
         catalogRow.applicability,
@@ -115,6 +140,10 @@ function disambiguate(catalogRow, pdfRows) {
                 hasMatch = true;
                 break;
             }
+        }
+
+        if (!hasMatch && checkAgeBracketMatch(catalogContext_normalized, qualifier_hint_normalized)) {
+            hasMatch = true;
         }
 
         if (hasMatch) {
@@ -219,10 +248,19 @@ const arURRow = catalogData.find(d => d.substance_key === 'arsenic_inorganic' &&
 const pass2 = classifyRow(arSFRow).status === 'MATCH' && classifyRow(arURRow).status === 'MATCH';
 validationResults.push({ name: 'Control MATCH case (Arsenic Oral SF and Inhalation UR)', pass: pass2 });
 
-// 3. Ambiguity case
-const vcRow = catalogData.find(d => d.substance_key === 'vinyl_chloride' && d.input_key === 'sf_oral_per_mg_per_kg_bw_per_day' && (d.source_ids||[]).includes('src-health-canada-trv-v4-2025'));
-const pass3 = classifyRow(vcRow).status === 'AMBIGUOUS';
-validationResults.push({ name: 'Ambiguity case (Vinyl chloride Oral SF)', pass: pass3 });
+// 3. Ambiguity case -- SYNTHETIC fixture (2026-07-06). Vinyl chloride's Oral SF row previously served
+// as this hard-AMBIGUOUS test case, but adding accurate qualifier text to its applicability (per the
+// 2026-07-06 metadata cleanup) correctly resolved it to MATCH -- a real substance is not a stable test
+// fixture for "must remain ambiguous," since improving catalog metadata is the whole point of that
+// cleanup. A synthetic catalog row with genuinely no disambiguating context, against two synthetic PDF
+// candidates with unrelated qualifiers, is independent of any real substance's data quality.
+const syntheticAmbiguousCatalogRow = { applicability: 'Synthetic test substance TRV candidate.', population_groups: [], review_notes: '' };
+const syntheticAmbiguousPdfRows = [
+    { value: 1, qualifier_hint: 'group alpha', page_1indexed: 1 },
+    { value: 2, qualifier_hint: 'group beta', page_1indexed: 1 },
+];
+const pass3 = disambiguate(syntheticAmbiguousCatalogRow, syntheticAmbiguousPdfRows).ambiguous === true;
+validationResults.push({ name: 'Ambiguity case (synthetic no-qualifier fixture)', pass: pass3 });
 
 // 4. Unit-conversion case
 const bzRow = catalogData.find(d => d.substance_key === 'benzene' && d.input_key === 'unit_risk_inhalation_per_ug_m3' && (d.source_ids||[]).includes('src-health-canada-trv-v4-2025'));
@@ -266,9 +304,19 @@ for (const row of hcRows) {
 // the baked "hand-verified, zero errors" claim would be FALSE for the new/changed rows. Guard: compare
 // the current run's AMBIGUOUS ids against the verified set and only emit the full adjudication claim
 // when they match exactly; otherwise emit a loud STALE warning naming the drifted ids instead.
+// UPDATED 2026-07-06 (same day, THIRD pass, after two separate codex findings on the first two
+// follow-on passes): zinc's ambiguity was genuinely closed by adding accurate, UNAMBIGUOUS age-bracket
+// metadata. methylmercury and vinyl_chloride's remaining direct-contact rows were ALMOST resolved by
+// adding adult/non-sensitive qualifier wording, but codex caught (twice, once per substance) that doing
+// so would silently paper over a real population/value tension in each: these rows are tagged
+// `population_groups: ["screening child"]` but hold HC's less-conservative adult/non-sensitive value,
+// not the more-protective sensitive-population or from-birth value that may better fit a child-inclusive
+// pathway. The correct fix is to surface that tension in review_notes for owner decision, NOT to phrase
+// around it so the tool reports a confident MATCH -- describing the tension honestly (mentioning
+// "sensitive"/"from birth") is exactly what correctly keeps these rows AMBIGUOUS via the keyword-pair
+// mechanism. So the true, honest baseline is 4 AMBIGUOUS rows: manganese's benign extractor quirk, plus
+// these three rows' genuine, owner-flagged population/value tensions.
 const VERIFIED_AMBIGUOUS_IDS_2026_07_06 = new Set([
-    'pv-hc-zinc-hh-direct-ul-child',
-    'pv-hc-zinc-hh-food-ul-adult',
     'pv-hc-manganese-hh-direct-rfc',
     'pv-hc-methylmercury-hh-direct-rfd',
     'pv-hc-vinyl_chloride-hh-direct-sf',
@@ -284,40 +332,46 @@ if (ambiguousSetMatches && stats.MISMATCH === 0) {
     adjudicationSection = [
         `## Adjudication Notes (hand-verified against the real PDF, 2026-07-06)`,
         ``,
-        `All 6 AMBIGUOUS rows were checked directly against the source PDF (via PyMuPDF) and are LEGITIMATE`,
-        `ambiguities, not tool bugs -- no catalog edit is warranted for any of them:`,
+        `All 4 remaining AMBIGUOUS rows were checked directly against the source PDF (via PyMuPDF) and`,
+        `each has a specific, understood reason -- no further catalog VALUE edit is warranted by this`,
+        `scan (three rows have a real population/value tension flagged for separate owner decision):`,
         ``,
-        `- **zinc (2 rows):** the real PDF has a genuinely age-stratified UL (0 to <6mo / 6mo-5yrs / 5-12yrs /`,
-        `  12-20yrs / >=20yrs, 5 distinct values 0.49/0.48/0.51/0.54/0.57 mg/kgBW-day, page 52). The catalog's`,
-        `  child (0.51) and adult (0.57) rows both correspond to real age-bracket values within this`,
-        `  stratification -- exactly as the original May 2026 pass's review note documented as a deliberate`,
-        `  "skip full stratification" decision. Confirmed correct; no fix needed.`,
         `- **manganese (1 row):** the "second candidate value" (3.5) is a FALSE POSITIVE in the extraction,`,
         `  confirmed by direct PDF read (page 35) -- it's the "3.5" in the unit annotation "mg/m3 (in PM3.5)"`,
         `  (particulate size fraction), not a second TRV value. The real (and only) Inhalation TC is 5.0E-05`,
-        `  mg/m3, matching the catalog's 0.00005 exactly. This is a benign extractor quirk (fails toward`,
-        `  AMBIGUOUS, never toward a false MATCH/MISMATCH) -- noted here for the record; not worth a parser`,
-        `  fix given the AMBIGUOUS classification is itself safe.`,
-        `- **methylmercury (1 row, \`pv-hc-methylmercury-hh-direct-rfd\`):** correctly AMBIGUOUS -- its`,
-        `  \`applicability\` text is generic ("Health Canada TRV v4.0 RFD for methylmercury") with no`,
-        `  sensitive/adult qualifier keyword, so there is genuinely no catalog-side basis to pick between the`,
-        `  PDF's two population-variant Oral TDI rows (0.0002 sensitive / 0.00047 adult). The OTHER 3`,
-        `  methylmercury rows correctly resolved to MATCH once the qualifier-matching keyword bug was fixed --`,
-        `  this one's own applicability text is just less specific than its siblings.`,
-        `- **vinyl_chloride (2 rows, Oral SF + Inhalation UR):** correctly AMBIGUOUS -- the PDF has adult vs.`,
-        `  from-birth variants for both (Oral SF 0.24/0.48; Inhalation UR 0.0044/0.0088 per mg/m3, page 50),`,
-        `  and the catalog's \`applicability\` text is generic with no adult/from-birth qualifier. The`,
-        `  catalog's stored values (0.24, 0.0000044 per ug/m3 = 0.0044 per mg/m3) happen to match the "adult"`,
-        `  PDF row, but per this cross-check's design, a numeric coincidence does not substitute for`,
-        `  catalog-side disambiguating metadata -- this is correctly flagged for human review, not silently`,
-        `  accepted as a match.`,
+        `  mg/m3, matching the catalog's 0.00005 exactly. Benign extractor quirk; not worth a parser fix`,
+        `  given the AMBIGUOUS classification is itself safe.`,
+        `- **methylmercury (1 row, \`pv-hc-methylmercury-hh-direct-rfd\`):** correctly AMBIGUOUS, and`,
+        `  intentionally left that way. Tagged \`population_groups: ["screening child"]\` -- the SAME tag as`,
+        `  the sensitive-population row (\`pv-hc-mehg-hh-direct-rfd-sensitive\`, value 0.0002) -- but holds`,
+        `  the less-protective adult value (0.00047). **OWNER REVIEW NEEDED** (see \`review_notes\`): should`,
+        `  this row be reassigned to the sensitive value, retagged, or is the current tagging intentional?`,
+        `- **vinyl_chloride (2 rows, direct-contact Oral SF + Inhalation UR):** correctly AMBIGUOUS, and`,
+        `  intentionally left that way. Both rows are tagged \`population_groups: ["screening child"]\` but`,
+        `  hold HC's adult-scenario values (0.24 SF / 0.0044 per mg/m3 IUR), not the more-conservative`,
+        `  from-birth values (0.48 SF / 0.0088 IUR) that may better fit a child-inclusive screening`,
+        `  pathway. **OWNER REVIEW NEEDED** (see each row's \`review_notes\`): should these rows be`,
+        `  reassigned to the from-birth value, or is the adult value intentional for this pathway? (The`,
+        `  food-web Oral SF row, by contrast, is tagged \`population_groups: ["screening adult"]\` --`,
+        `  consistent with its adult-scenario value -- and resolves cleanly to MATCH.)`,
         ``,
-        `**Net result: zero confirmed catalog errors found in this scan** (beyond chlorobenzene, already`,
-        `corrected in this session -- see the companion PR). All AMBIGUOUS rows are genuine source-document`,
-        `population/exposure-scenario variants (or one benign extractor quirk) that the catalog's own`,
-        `metadata doesn't yet disambiguate -- these are candidates for a FUTURE session to add explicit`,
-        `qualifier/population metadata to the catalog rows (so they resolve cleanly), not evidence of wrong`,
-        `values. No further catalog edits are made in this PR beyond the chlorobenzene correction.`,
+        `For all three flagged rows above: the underlying VALUES were NOT changed in this correction pass`,
+        `(they predate this session) -- only the descriptive text was corrected to surface each tension`,
+        `explicitly instead of leaving it implicit. None are current_default (available_option only), so`,
+        `there is no live calculator impact pending owner decision.`,
+        ``,
+        `**Previously AMBIGUOUS, now correctly resolved to MATCH (2026-07-06):**`,
+        `- **zinc (2 rows):** the real PDF has a genuinely age-stratified UL (0 to <6mo / 6mo-5yrs / 5-12yrs /`,
+        `  12-20yrs / >=20yrs, 5 distinct values 0.49/0.48/0.51/0.54/0.57 mg/kgBW-day, page 52). Added an`,
+        `  age-bracket exact-substring disambiguation capability to this script, plus explicit age-band`,
+        `  wording to the catalog's adult row's applicability (the child row already had it) -- both rows`,
+        `  now resolve to their correct age-bracket value. No population/value tension here: the "child"`,
+        `  and "adult" rows genuinely correspond to different real HC age brackets, not a same-tag`,
+        `  value clash like methylmercury/vinyl_chloride above.`,
+        ``,
+        `**Net result: zero confirmed catalog VALUE errors found in this scan** (beyond chlorobenzene,`,
+        `corrected in the companion PR). Three genuine population/value tensions (methylmercury,`,
+        `vinyl_chloride x2) are flagged for owner decision, not silently resolved.`,
         ``,
     ];
 } else {
@@ -327,9 +381,9 @@ if (ambiguousSetMatches && stats.MISMATCH === 0) {
         `## Adjudication Notes -- STALE, MANUAL RE-VERIFICATION REQUIRED`,
         ``,
         `> **WARNING:** the current run's AMBIGUOUS row set (or MISMATCH count) no longer matches the`,
-        `> 2026-07-06 hand-verified baseline. The detailed per-row adjudication from that session (zinc`,
-        `> age-stratified UL, manganese PM3.5 false-positive, methylmercury generic-text row, vinyl`,
-        `> chloride adult/from-birth ambiguity) may NOT apply to the rows below -- DO NOT treat this run`,
+        `> 2026-07-06 hand-verified baseline (manganese's benign extractor quirk, plus the methylmercury`,
+        `> and vinyl_chloride owner-flagged population/value tensions). The detailed per-row adjudication`,
+        `> from that session may NOT apply to the rows below -- DO NOT treat this run`,
         `> as "zero confirmed catalog errors" until a human re-verifies the drifted rows against the real`,
         `> PDF and updates this section.`,
         ``,

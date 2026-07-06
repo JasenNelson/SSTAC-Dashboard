@@ -10,10 +10,10 @@ doc = fitz.open(pdf_path)
 valid_types = ["Oral TDI", "Oral RfD", "Oral SF", "Risk-specific dose", "UL", "Inhalation TC", "Inhalation UR"]
 
 def parse_trv_type(t_str):
-    if not t_str: return None
-    t_str = t_str.replace('\n', ' ').strip()
+    if not t_str: return None, None
+    t_str_clean = t_str.replace('\n', ' ').strip()
     for vt in valid_types:
-        if t_str.lower().startswith(vt.lower()):
+        if t_str_clean.lower().startswith(vt.lower()):
             return vt, t_str
     return None, None
 
@@ -80,6 +80,12 @@ for page_idx in range(17, 52):
             parts = re.split(pattern, val_str)
             
             if len(parts) > 1:
+                value_index = 0
+                num_values_in_this_row = len(range(1, len(parts), 2))
+                raw_qualifier_text = raw_trv_type[len(trv_type):]
+                type_qualifier_lines = [line.strip() for line in raw_qualifier_text.split('\n')]
+                type_qualifier_lines = [line for line in type_qualifier_lines if line and line != "(HC)"]
+
                 for i in range(1, len(parts), 2):
                     val_raw = parts[i]
                     unit_raw = parts[i+1] if i+1 < len(parts) else ""
@@ -93,7 +99,10 @@ for page_idx in range(17, 52):
                     if not unit or len(unit) < 2: 
                         unit = clean_unit(parts[0], trv_type)
                     
-                    qualifier = raw_trv_type[len(trv_type):].strip()
+                    if len(type_qualifier_lines) == num_values_in_this_row and num_values_in_this_row >= 2:
+                        qualifier = type_qualifier_lines[value_index]
+                    else:
+                        qualifier = raw_qualifier_text.replace('\n', ' ').strip()
                     if qualifier.startswith('(') and qualifier.endswith(')'):
                         pass
                         
@@ -129,6 +138,7 @@ for page_idx in range(17, 52):
                         "qualifier_hint": qualifier,
                         "page_1indexed": page_idx + 1
                     })
+                    value_index += 1
 
 os.makedirs(r"scripts\matrix-options\data", exist_ok=True)
 output_path = r"scripts\matrix-options\data\hc_trv_v4_table1_extracted.json"
