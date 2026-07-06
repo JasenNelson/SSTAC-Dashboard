@@ -1,33 +1,33 @@
 // Owner-run promotion helper for the Health Canada TRVs v4.0 (2025) human-health TRV records
-// (src-health-canada-trv-v4-2025): 90 value records across 34 substances and 4 TRV input types
+// (src-health-canada-trv-v4-2025): 88 value records across 34 substances and 4 TRV input types
 // (oral RfD, oral SF, inhalation RfC, inhalation unit risk), human-health-direct + human-health-food
 // pathways. Plain ASCII only.
 //
 // WHY THIS EXISTS
-// The Matrix Options Evidence Library carries 90 Health Canada TRV v4.0 (2025) candidates. They were
+// The Matrix Options Evidence Library carries 88 Health Canada TRV v4.0 (2025) candidates. They were
 // extracted from the live Health Canada source (Table 1, pp. 17-51) and verified, so each row already
 // carries evidence_support_status = 'approved_source_backed' but is still qa_status = 'needs_review'
 // (pending the owner's QA attestation) with canonical_source_status = 'needs_direct_source_check'.
-// This tool performs the exact, coupled promotion of EXACTLY those 90 pv-hc-* VALUE records, fails
+// This tool performs the exact, coupled promotion of EXACTLY those 88 pv-hc-* VALUE records, fails
 // closed on any precondition, and is idempotent.
 //
-// CRITICAL SCOPE NOTE: this tool targets the exact 90 pv-hc-* ids listed in PROMOTION_ROWS ONLY (all
+// CRITICAL SCOPE NOTE: this tool targets the exact 88 pv-hc-* ids listed in PROMOTION_ROWS ONLY (all
 // linked to src-health-canada-trv-v4-2025). Other HC-prefixed rows (e.g. the older approved HC TRV
 // rows, or HC PQRA exposure parameters in parameter_values.json) are NOT reachable -- the id allowlist
 // is fixed and exact.
 //
 // It mirrors promote-iris-carcinogen-rfd.mjs in structure, style, and fail-closed discipline (same
 // human_health_trv_values.json catalog file; same pre-state; same coupled qa_status +
-// canonical_source_status flip). Unlike that 6-row tool, the 90 records here are data-driven from the
+// canonical_source_status flip). Unlike that 6-row tool, the 88 records here are data-driven from the
 // PROMOTION_ROWS table below (id + identity fields), so EXPECTED_IDENTITIES is derived, not hand-typed.
 //
 // LOAD-BEARING RULES honored:
 //  - AI NEVER writes qa_status. This tool is run BY THE OWNER; --reviewer/--date are the owner's HITL
 //    attestation. Author + dry-run only for AI.
-//  - OWNER VERIFICATION REQUIRED (rule 1): Before running with --apply, the OWNER attests the 90 TRV
+//  - OWNER VERIFICATION REQUIRED (rule 1): Before running with --apply, the OWNER attests the 88 TRV
 //    values match the primary Health Canada TRV v4.0 (2025) source (catalog H129-108/2025E-PDF,
 //    Table 1). Running with --apply attests to that verification.
-//  - SCOPE (rule 2): only the 90 listed pv-hc-* records are promoted. default_status is NEVER modified
+//  - SCOPE (rule 2): only the 88 listed pv-hc-* records are promoted. default_status is NEVER modified
 //    (stays 'available_option'); the owner's FRAME_DEFAULT_PROFILES row is the activation step.
 //  - SOURCE (rule 3): src-health-canada-trv-v4-2025 is expected to ALREADY carry
 //    canonical_source_status = 'direct_source_verified'. On the real catalog the SOURCE will SKIP
@@ -58,11 +58,11 @@ const SOURCES_FILE = path.join(
 export const HC_TRV_V4_2025_PROMOTION_SOURCE_ID = 'src-health-canada-trv-v4-2025';
 const JURISDICTION = 'Canada_federal';
 
-// The EXACT 90 records this tool will ever touch. Each carries the identity fields classifyCandidate /
+// The EXACT 88 records this tool will ever touch. Each carries the identity fields classifyCandidate /
 // getFrameSeedCandidateEligibility examine (substance/pathway/input/value/unit); candidate_group_id is
 // derived deterministically below. Values are the verified catalog floats (exact, so the strict
 // identity check is drift-detection, not a tautology against a re-rounded literal). Ordered by id.
-// Exported so the test can build complete fixtures (all 90) without re-typing the table.
+// Exported so the test can build complete fixtures (all 88) without re-typing the table.
 export const PROMOTION_ROWS = [
   { id: "pv-hc-arsenic_inorganic-hh-direct-iur", substanceKey: "arsenic_inorganic", pathway: "human-health-direct", inputKey: "unit_risk_inhalation_per_ug_m3", value: 0.0064, unit: "per ug/m3" },
   { id: "pv-hc-barium-hh-direct-rfd", substanceKey: "barium", pathway: "human-health-direct", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.19, unit: "mg/kg-bw/day" },
@@ -87,8 +87,6 @@ export const PROMOTION_ROWS = [
   { id: "pv-hc-chromium_hexavalent-hh-food-rfd", substanceKey: "chromium_hexavalent", pathway: "human-health-food", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.0022, unit: "mg/kg-bw/day" },
   { id: "pv-hc-chromium_trivalent-hh-direct-rfd", substanceKey: "chromium_trivalent", pathway: "human-health-direct", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.3, unit: "mg/kg-bw/day" },
   { id: "pv-hc-chromium_trivalent-hh-food-rfd", substanceKey: "chromium_trivalent", pathway: "human-health-food", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.3, unit: "mg/kg-bw/day" },
-  { id: "pv-hc-dichlorobenzene_1_2-hh-direct-rfd", substanceKey: "dichlorobenzene_1_2", pathway: "human-health-direct", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.43, unit: "mg/kg-bw/day" },
-  { id: "pv-hc-dichlorobenzene_1_2-hh-food-rfd", substanceKey: "dichlorobenzene_1_2", pathway: "human-health-food", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.43, unit: "mg/kg-bw/day" },
   { id: "pv-hc-dichlorobenzene_1_4-hh-direct-rfc", substanceKey: "dichlorobenzene_1_4", pathway: "human-health-direct", inputKey: "rfc_inhalation_mg_per_m3", value: 0.06, unit: "mg/m3" },
   { id: "pv-hc-dichlorobenzene_1_4-hh-direct-rfd", substanceKey: "dichlorobenzene_1_4", pathway: "human-health-direct", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.11, unit: "mg/kg-bw/day" },
   { id: "pv-hc-dichlorobenzene_1_4-hh-food-rfd", substanceKey: "dichlorobenzene_1_4", pathway: "human-health-food", inputKey: "rfd_oral_mg_per_kg_bw_day", value: 0.11, unit: "mg/kg-bw/day" },
@@ -304,7 +302,7 @@ function planOneValueRecord(paramValues, valueId, expectedIdentity) {
   return { valueRecord, valueAlreadyDone, promoteValue: !valueAlreadyDone };
 }
 
-// Computes the promotion plan for all 90 value records + the source. Idempotent (records already in
+// Computes the promotion plan for all 88 value records + the source. Idempotent (records already in
 // target state are SKIPPED). The source src-health-canada-trv-v4-2025 is expected already
 // direct_source_verified; on the real catalog the SOURCE will normally SKIP.
 export function planPromotion(paramValues, sources, _opts) {
@@ -518,14 +516,14 @@ export function applyPromotion(paramValues, sources, opts) {
 const BANNER = [
   '=============================================================================',
   ' promote-hc-trv-v4-2025.mjs -- owner-run Health Canada TRV v4.0 (2025) promotion',
-  '   (90 human-health TRV rows across 34 substances; RfD/SF/RfC/IUR; direct + food)',
+  '   (88 human-health TRV rows across 34 substances; RfD/SF/RfC/IUR; direct + food)',
   '=============================================================================',
   '',
   'OWNER VERIFICATION REQUIRED before --apply:',
-  '  Verify the 90 TRV values against the primary Health Canada TRV v4.0 (2025) source',
+  '  Verify the 88 TRV values against the primary Health Canada TRV v4.0 (2025) source',
   '  (catalog H129-108/2025E-PDF, Table 1, pp. 17-51). Running --apply attests to that verification.',
   '',
-  'SCOPE: targets the 90 listed pv-hc-* ids ONLY (all linked to src-health-canada-trv-v4-2025).',
+  'SCOPE: targets the 88 listed pv-hc-* ids ONLY (all linked to src-health-canada-trv-v4-2025).',
   '  default_status is NOT changed (stays available_option). The FRAME_DEFAULT_PROFILES row is the',
   '  owner activation step, not this tool.',
   '',
@@ -536,7 +534,7 @@ const BANNER = [
 ].join('\n');
 
 const HELP = [
-  'promote-hc-trv-v4-2025.mjs -- owner-run Health Canada TRV v4.0 (2025) promotion (90 rows).',
+  'promote-hc-trv-v4-2025.mjs -- owner-run Health Canada TRV v4.0 (2025) promotion (88 rows).',
   '',
   'Usage:',
   '  node scripts/matrix-options/promote-hc-trv-v4-2025.mjs --reviewer "<id>" --date YYYY-MM-DD [--apply]',
@@ -549,7 +547,7 @@ const HELP = [
   '  --zotero-key "<key>"     Zotero item key; sets zotero_item_key and zotero_status=linked.',
   '  --apply                  Write both catalog files (default is a dry run that writes nothing)',
   '',
-  'Targets: 90 HC TRV VALUE records + 1 SOURCE (src-health-canada-trv-v4-2025).',
+  'Targets: 88 HC TRV VALUE records + 1 SOURCE (src-health-canada-trv-v4-2025).',
   '',
   'On --apply, each VALUE record changes:',
   '  qa_status                 needs_review -> approved',

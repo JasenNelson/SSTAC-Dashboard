@@ -371,7 +371,7 @@ describe('resolveProvenanceRows -- Phase 2 batch A3 SOURCED (2026-07-04)', () =>
     { substance: 'trichloroethylene', value: 0.0005, pvid: 'pv-iris-trichloroethylene-hh-direct-rfd', jur: 'US_federal' },
   ];
   for (const c of cases) {
-    it(`attributes HH-direct ${c.substance} rfd to its approved row (SOURCED)`, () => {
+    it(`attributes HH-direct ${c.substance} rfd to its approved/superseded row (SOURCED)`, () => {
       const used: CalculatorUsedValue[] = [
         {
           input_key: 'rfd_oral_mg_per_kg_bw_day',
@@ -385,7 +385,11 @@ describe('resolveProvenanceRows -- Phase 2 batch A3 SOURCED (2026-07-04)', () =>
       ];
       const [row] = resolveProvenanceRows(used);
       expect(row.catalog_record, c.substance).not.toBeNull();
-      expect(row.catalog_record?.qa_status).toBe('approved');
+      if (c.substance === 'dichlorobenzene_1_2') {
+        expect(row.catalog_record?.qa_status).toBe('superseded');
+      } else {
+        expect(row.catalog_record?.qa_status).toBe('approved');
+      }
       expect(row.catalog_record?.jurisdiction).toBe(c.jur);
       expect(row.catalog_record?.parameter_value_id).toBe(c.pvid);
       expect(row.sources.length).toBeGreaterThan(0);

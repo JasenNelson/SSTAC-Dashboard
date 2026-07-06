@@ -242,9 +242,11 @@ describe('matrix options evidence library helpers', () => {
     // longer hold the default once a real catalog row was promoted). Net -36 + 8 = -28. See the
     // matching +28 on currentDefaults above.
     // 2026-07-05: -4 (1680 -> 1676) -- 2 HC chlorobenzene rows demoted to not_default, 2 IRIS rows promoted to current_default.
-    expect(view.audit.values.availableOptions).toBe(1676);
+    // 2026-07-05 (DCB): -2 (1676 -> 1674) -- 2 HC dichlorobenzene_1_2 rows demoted to not_default.
+    expect(view.audit.values.availableOptions).toBe(1674);
     // 2026-07-05: +2 (17 -> 19) -- 2 HC chlorobenzene rows demoted to not_default.
-    expect(view.audit.values.notDefaults).toBe(19);
+    // 2026-07-05 (DCB): +2 (19 -> 21) -- 2 HC dichlorobenzene_1_2 rows demoted to not_default.
+    expect(view.audit.values.notDefaults).toBe(21);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
     expect(view.audit.equations.currentCalculatorScaffold).toBe(3);
