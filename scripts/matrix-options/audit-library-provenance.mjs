@@ -295,6 +295,57 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
     }
   }
 
+  // 7. Evidence-vs-substance name mismatch check (wrong-SUBSTANCE mode; #514's divergence check above
+  // catches wrong-VALUE mode -- this catches evidence text that cites a DIFFERENT substance name than
+  // the row it's attached to, e.g. a chlorobenzene row whose evidence locator actually names
+  // "1,2-Dichlorobenzene". Scoped to HC TRV v4.0 rows first, where the locator format is consistent and
+  // reliably parseable ("... Table 1, <Substance Name>, Type=..."); a substance/CAS mismatch here is a
+  // strong signal of a copy/paste or cross-referencing error during extraction.
+  // Non-greedy (not a [^,]+ exclusion class) so substance names with internal commas (e.g.
+  // "Dichlorobenzene, 1,2-", "Chromium, hexavalent") are captured whole -- codex caught this: the
+  // original [^,]+ version stopped at the FIRST comma and silently skipped 23 of 92 real HC locators.
+  const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*Type\s*=/i;
+  const STOPWORDS = new Set(['and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers']);
+
+  function nameTokens(name) {
+    return (name || '')
+      .toLowerCase()
+      .replace(/[()[\]{}.,\-_]/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 2 && !STOPWORDS.has(t));
+  }
+
+  for (const row of parameterValueRecords) {
+    if (!(row.source_ids || []).includes('src-health-canada-trv-v4-2025')) continue;
+    const substanceTokens = new Set([
+      ...nameTokens(row.substance_key),
+      ...nameTokens(row.display_name),
+    ]);
+    if (substanceTokens.size === 0) continue;
+
+    for (const evidence of row.evidence_items || []) {
+      const match = evidence.locator && evidence.locator.match(HC_LOCATOR_RE);
+      if (!match) continue;
+      const citedName = match[1].trim();
+      const citedTokens = nameTokens(citedName);
+      if (citedTokens.length === 0) continue;
+
+      const hasOverlap = citedTokens.some((t) => substanceTokens.has(t));
+      if (!hasOverlap) {
+        findings.push({
+          key: row.substance_key,
+          severity: 'medium',
+          check: 'EVIDENCE_SUBSTANCE_NAME_MISMATCH',
+          detail: `substance_key=${row.substance_key}, parameter_value_id=${row.parameter_value_id}, cited_name="${citedName}", locator="${evidence.locator}"`,
+          substance_key: row.substance_key,
+          parameter_value_id: row.parameter_value_id,
+          cited_name: citedName,
+          message: `Evidence locator cites "${citedName}", which shares no name tokens with this row's substance_key/display_name ("${row.substance_key}" / "${row.display_name}"). Verify this is not a copy/cross-reference error (cf. the chlorobenzene 1,2-DCB mis-attribution theory, 2026-07-05, which turned out to be unfounded but is exactly the class of error this check targets).`,
+        });
+      }
+    }
+  }
+
   return findings;
 }
 

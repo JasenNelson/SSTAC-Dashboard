@@ -297,4 +297,122 @@ describe('audit-library-provenance unit tests', () => {
     expect(divCheck?.severity).toBe('info');
     expect(divCheck?.ratio).toBe(15);
   });
+
+  // 2026-07-06: wrong-SUBSTANCE mode guard (the divergence check above catches wrong-VALUE mode).
+  // Catches evidence text citing a DIFFERENT substance name than the row it's attached to -- the class
+  // of error the chlorobenzene 1,2-DCB mis-attribution theory (2026-07-05) worried about (that specific
+  // theory turned out to be unfounded, but the general failure mode is real and worth guarding).
+  it('flags an HC TRV v4.0 row whose evidence locator cites a different substance name', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-test_substance-hh-direct-rfd',
+        substance_key: 'test_substance',
+        display_name: 'Test Substance',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.1,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            locator: 'Health Canada TRVs v4.0 (2025), Table 1, Some Other Chemical, Type=Oral TDI, page 30',
+            value_text: '1.0E-01 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const mismatch = findings.find((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.severity).toBe('medium');
+    expect(mismatch?.cited_name).toBe('Some Other Chemical');
+  });
+
+  it('does not flag an HC TRV v4.0 row whose evidence locator correctly names the substance', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-chlorobenzene-hh-direct-rfd',
+        substance_key: 'chlorobenzene',
+        display_name: 'Chlorobenzene',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.43,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            locator: 'Health Canada TRVs v4.0 (2025), Table 1, Chlorobenzene, Type=Oral TDI, page 25',
+            value_text: '4.3E-01 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH')).toBe(false);
+  });
+
+  it('should find zero name mismatches on the live catalog', () => {
+    const findings = runAudit();
+    const mismatches = findings.filter((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
+    expect(mismatches).toEqual([]);
+  });
+
+  // 2026-07-06 codex round 1: the original [^,]+ locator regex stopped at the FIRST comma, silently
+  // skipping 23 of 92 real HC locators whose cited substance name itself contains a comma (e.g.
+  // "Dichlorobenzene, 1,2-", "Chromium, hexavalent"). Fixed with a non-greedy `.+?` capture; this test
+  // pins the regression so it can't silently reappear.
+  it('correctly parses a comma-containing substance name in the HC locator (no false negative)', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-dichlorobenzene_1_2-hh-direct-rfd',
+        substance_key: 'dichlorobenzene_1_2',
+        display_name: '1,2-Dichlorobenzene',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.43,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            locator: 'Health Canada TRVs v4.0 (2025), Table 1, Dichlorobenzene, 1,2-, Type=Oral TDI, page 28',
+            value_text: '4.3E-01 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    // Correct: no mismatch, since "dichlorobenzene" overlaps between the cited name and substance_key.
+    expect(findings.some((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH')).toBe(false);
+  });
+
+  it('still flags a wrong-substance mismatch even when the cited name has an internal comma', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-dichlorobenzene_1_2-hh-direct-rfd',
+        substance_key: 'dichlorobenzene_1_2',
+        display_name: '1,2-Dichlorobenzene',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.43,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        evidence_items: [
+          {
+            // Wrong substance entirely, but the cited name still has an internal comma -- must still
+            // be flagged, proving the fix didn't just make the regex permissive enough to stop flagging.
+            locator: 'Health Canada TRVs v4.0 (2025), Table 1, Chromium, hexavalent, Type=Oral TDI, page 27',
+            value_text: '4.3E-01 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const mismatch = findings.find((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH');
+    expect(mismatch).toBeDefined();
+    expect(mismatch?.cited_name).toBe('Chromium, hexavalent');
+  });
 });
