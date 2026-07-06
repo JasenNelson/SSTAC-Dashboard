@@ -280,6 +280,7 @@ describe('audit-library-provenance unit tests', () => {
         input_key: 'rfd_oral_mg_per_kg_bw_day',
         value: 0.1,
         qa_status: 'approved',
+        source_ids: ['src-a'],
       },
       {
         parameter_value_id: 'pv-2',
@@ -288,6 +289,7 @@ describe('audit-library-provenance unit tests', () => {
         input_key: 'rfd_oral_mg_per_kg_bw_day',
         value: 1.5, // 1.5 / 0.1 = 15x, >= 10x
         qa_status: 'approved',
+        source_ids: ['src-b'], // distinct source -> genuine CROSS-source divergence
       }
     ];
 
@@ -532,8 +534,8 @@ describe('audit-library-provenance unit tests', () => {
   // HH inhalation input_keys, and the two eco input_keys/pathways.
   it('catches cross-source divergence on rfc_inhalation_mg_per_m3 (HH inhalation)', () => {
     const mockCatalog = [
-      { parameter_value_id: 'pv-1', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.01, qa_status: 'approved' },
-      { parameter_value_id: 'pv-2', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.5, qa_status: 'approved' }, // 50x
+      { parameter_value_id: 'pv-1', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.01, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_rfc', pathway: 'human-health-direct', input_key: 'rfc_inhalation_mg_per_m3', value: 0.5, qa_status: 'approved', source_ids: ['src-b'] }, // 50x
     ];
     const findings = runAuditOnLibrary([], mockCatalog);
     const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_rfc');
@@ -543,8 +545,8 @@ describe('audit-library-provenance unit tests', () => {
 
   it('catches cross-source divergence on unit_risk_inhalation_per_ug_m3 (HH inhalation)', () => {
     const mockCatalog = [
-      { parameter_value_id: 'pv-1', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.0001, qa_status: 'approved' },
-      { parameter_value_id: 'pv-2', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.002, qa_status: 'approved' }, // 20x
+      { parameter_value_id: 'pv-1', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.0001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_iur', pathway: 'human-health-direct', input_key: 'unit_risk_inhalation_per_ug_m3', value: 0.002, qa_status: 'approved', source_ids: ['src-b'] }, // 20x
     ];
     const findings = runAuditOnLibrary([], mockCatalog);
     const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_iur');
@@ -554,8 +556,8 @@ describe('audit-library-provenance unit tests', () => {
 
   it('catches cross-source divergence on eco pathways (fcv_ug_per_L, eco-direct-eqp)', () => {
     const mockCatalog = [
-      { parameter_value_id: 'pv-1', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 1, qa_status: 'approved' },
-      { parameter_value_id: 'pv-2', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 25, qa_status: 'approved' }, // 25x
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 1, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco', pathway: 'eco-direct-eqp', input_key: 'fcv_ug_per_L', value: 25, qa_status: 'approved', source_ids: ['src-b'] }, // 25x
     ];
     const findings = runAuditOnLibrary([], mockCatalog);
     const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco');
@@ -565,8 +567,8 @@ describe('audit-library-provenance unit tests', () => {
 
   it('catches cross-source divergence on eco-food-bsaf pathway (trv_eco_mg_per_kg_bw_day)', () => {
     const mockCatalog = [
-      { parameter_value_id: 'pv-1', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved' },
-      { parameter_value_id: 'pv-2', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 10, qa_status: 'approved' }, // 20x
+      { parameter_value_id: 'pv-1', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.5, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_eco_food', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 10, qa_status: 'approved', source_ids: ['src-b'] }, // 20x
     ];
     const findings = runAuditOnLibrary([], mockCatalog);
     const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_eco_food');
@@ -597,6 +599,18 @@ describe('audit-library-provenance unit tests', () => {
     const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_xpath');
     expect(divCheck).toBeDefined();
     expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('does not flag a same-source spread (e.g. mammal vs bird eco TRV from one source)', () => {
+    // Receptor-specific alternatives from the SAME source are a legitimate difference, not a
+    // cross-source disagreement, so the CROSS_SOURCE_VALUE_DIVERGENCE check must NOT flag them --
+    // even at a huge ratio. Mirrors the live FCSAP benzo_a_pyrene/vanadium mammal-vs-bird eco TRVs.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-mammal', substance_key: 'substance_receptor', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 3.6, qa_status: 'approved', source_ids: ['src-fcsap-2021'] },
+      { parameter_value_id: 'pv-bird', substance_key: 'substance_receptor', pathway: 'eco-food-bsaf', input_key: 'trv_eco_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-fcsap-2021'] }, // 3600x but SAME source
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_receptor')).toBe(false);
   });
 
   it('does not flag agreeing values from different sources (ratio 1)', () => {

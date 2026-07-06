@@ -295,7 +295,19 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
       const max = distinctValues[distinctValues.length - 1];
       const ratio = max / min;
 
-      if (ratio >= 10) {
+      // The extreme (min and max) values must be attributable to at least TWO distinct sources for
+      // this to be a genuine CROSS-source divergence. A same-source spread is a legitimate alternative
+      // (e.g. FCSAP Module 7 eco TRVs give a MAMMAL and a BIRD value for one substance from the same
+      // source -- a receptor difference, not a source disagreement); flagging it under a check named
+      // CROSS_SOURCE_VALUE_DIVERGENCE would be a false positive. Verified on the live catalog: this
+      // drops the benzo_a_pyrene/vanadium eco mammal-vs-bird pairs while keeping every genuine
+      // cross-source divergence (chlorobenzene HC-vs-EPA, toxaphene EPA-ESB-vs-NRWQC, etc.).
+      const extremeSources = new Set([
+        ...rows.filter(r => r.value === min).flatMap(r => r.source_ids || []),
+        ...rows.filter(r => r.value === max).flatMap(r => r.source_ids || []),
+      ]);
+
+      if (ratio >= 10 && extremeSources.size >= 2) {
         const sourceMapping = rows.map(r => `${r.value}: src=${(r.source_ids || []).join(',')} pv=${r.parameter_value_id}`);
         findings.push({
           key: substance_key,
