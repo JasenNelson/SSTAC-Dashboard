@@ -295,6 +295,86 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
     }
   }
 
+  // 7. Evidence-vs-substance name mismatch check (wrong-SUBSTANCE mode; #514's divergence check above
+  // catches wrong-VALUE mode -- this catches evidence text that cites a DIFFERENT substance name than
+  // the row it's attached to, e.g. a chlorobenzene row whose evidence locator actually names
+  // "1,2-Dichlorobenzene". Scoped to HC TRV v4.0 rows first, where the locator format is consistent and
+  // reliably parseable ("... Table 1, <Substance Name>, Type=..."); a substance/CAS mismatch here is a
+  // strong signal of a copy/paste or cross-referencing error during extraction.
+  // Non-greedy (not a [^,]+ exclusion class) so substance names with internal commas (e.g.
+  // "Dichlorobenzene, 1,2-", "Chromium, hexavalent") are captured whole -- codex caught this: the
+  // original [^,]+ version stopped at the FIRST comma and silently skipped 23 of 92 real HC locators.
+  //
+  // Two live HC v4.0 locator shapes exist and BOTH must be parsed (codex caught the 2nd being
+  // skipped -- 19 of 111 rows, incl. benzo_a_pyrene / arsenic / PCBs / methylmercury / cadmium):
+  //   (a) "... Table 1, <Name>, Type=<endpoint> ..."           -> terminate the name at ", Type="
+  //   (b) "... Table 1, <Name>, <endpoint>, PDF page <n> ..."  -> terminate at ", <endpoint>, PDF page"
+  // In shape (b) the endpoint segment (e.g. "Oral TDI", "adult Oral TDI", "UL age-band values") has no
+  // internal comma, so [^,]+ safely matches it while the non-greedy name capture still absorbs
+  // internal-comma names.
+  //
+  // KNOWN BLIND SPOT (documented, not covered): this is a cross-COMPOUND check, not a cross-ISOMER or
+  // cross-SPECIATION one. nameTokens() drops isomer/position markers ("1,2-" / "1,4-" become <=2-char
+  // tokens that are filtered) and the token-overlap test passes on any shared parent token, so a
+  // locator citing "Dichlorobenzene, 1,4-" on a "dichlorobenzene_1_2" row, or "Chromium, hexavalent"
+  // on a "chromium_trivalent" row, is NOT flagged -- both collapse to a shared token
+  // ("dichlorobenzene" / "chromium"). This guard catches chlorobenzene-vs-dichlorobenzene class
+  // errors; isomer/speciation-level mis-attribution needs a separate alias-aware check and is out of
+  // scope here.
+  const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*(?:Type\s*=|[^,]+,\s*PDF\s*page)/i;
+  // STOPWORDS excludes both grammar filler AND generic chemistry group/suffix words. The generic
+  // tokens matter for correctness: without them, two distinct HC substances that share only a
+  // functional-group word register as a match and a copy/paste swap is missed -- e.g. "Vinyl
+  // chloride" vs "Nickel chloride" both reduce to the shared token "chloride". Dropping the generic
+  // tokens forces the overlap to rest on a DISTINCTIVE token (vinyl vs nickel). Verified against the
+  // live HC v4.0 catalog: adding these leaves 0 rows empty-tokened and introduces 0 new mismatches.
+  const STOPWORDS = new Set([
+    'and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers',
+    // generic chemistry group / suffix words (not distinctive on their own)
+    'chloride', 'oxide', 'sulfate', 'sulphate', 'nitrate', 'acid', 'salt', 'salts',
+    'compound', 'compounds',
+  ]);
+
+  function nameTokens(name) {
+    return (name || '')
+      .toLowerCase()
+      .replace(/[()[\]{}.,\-_/+']/g, ' ')
+      .split(/\s+/)
+      .filter((t) => t.length > 2 && !STOPWORDS.has(t));
+  }
+
+  for (const row of parameterValueRecords) {
+    if (!(row.source_ids || []).includes('src-health-canada-trv-v4-2025')) continue;
+    const substanceTokens = new Set([
+      ...nameTokens(row.substance_key),
+      ...nameTokens(row.display_name),
+    ]);
+    if (substanceTokens.size === 0) continue;
+
+    for (const evidence of row.evidence_items || []) {
+      if (!evidence) continue; // defensive: a null/undefined array element must not abort the audit
+      const match = evidence.locator && evidence.locator.match(HC_LOCATOR_RE);
+      if (!match) continue;
+      const citedName = match[1].trim();
+      const citedTokens = nameTokens(citedName);
+      if (citedTokens.length === 0) continue;
+
+      const hasOverlap = citedTokens.some((t) => substanceTokens.has(t));
+      if (!hasOverlap) {
+        findings.push({
+          key: row.substance_key,
+          severity: 'medium',
+          check: 'EVIDENCE_SUBSTANCE_NAME_MISMATCH',
+          detail: `substance_key=${row.substance_key}, parameter_value_id=${row.parameter_value_id}, cited_name="${citedName}", locator="${evidence.locator}"`,
+          substance_key: row.substance_key,
+          parameter_value_id: row.parameter_value_id,
+          cited_name: citedName,
+          message: `Evidence locator cites "${citedName}", which shares no name tokens with this row's substance_key/display_name ("${row.substance_key}" / "${row.display_name}"). Verify this is not a copy/cross-reference error (cf. the chlorobenzene 1,2-DCB mis-attribution theory, 2026-07-05, which turned out to be unfounded but is exactly the class of error this check targets).`,
+        });
+      }
+    }
+  }
+
   return findings;
 }
 
