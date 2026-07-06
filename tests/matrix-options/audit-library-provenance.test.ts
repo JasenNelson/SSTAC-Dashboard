@@ -415,4 +415,32 @@ describe('audit-library-provenance unit tests', () => {
     expect(mismatch).toBeDefined();
     expect(mismatch?.cited_name).toBe('Chromium, hexavalent');
   });
+
+  it('does not crash on a null element inside evidence_items', () => {
+    const mockCatalog = [
+      {
+        parameter_value_id: 'pv-hc-benzene-hh-direct-rfd',
+        substance_key: 'benzene',
+        display_name: 'Benzene',
+        pathway: 'human-health-direct',
+        input_key: 'rfd_oral_mg_per_kg_bw_day',
+        value: 0.0004,
+        qa_status: 'approved',
+        source_ids: ['src-health-canada-trv-v4-2025'],
+        // A null array element must be skipped, not abort the whole audit run.
+        evidence_items: [
+          null,
+          {
+            locator: 'Health Canada TRVs v4.0 (2025), Table 1, Benzene, Type=Oral TDI, page 12',
+            value_text: '4.0E-04 mg/kgBW-day',
+          },
+        ],
+      },
+    ];
+
+    expect(() => runAuditOnLibrary([], mockCatalog)).not.toThrow();
+    const findings = runAuditOnLibrary([], mockCatalog);
+    // The good (non-null) item correctly names Benzene, so no mismatch is raised.
+    expect(findings.some((f) => f.check === 'EVIDENCE_SUBSTANCE_NAME_MISMATCH')).toBe(false);
+  });
 });

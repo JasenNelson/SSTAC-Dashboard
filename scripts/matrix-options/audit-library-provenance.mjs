@@ -304,13 +304,20 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
   // Non-greedy (not a [^,]+ exclusion class) so substance names with internal commas (e.g.
   // "Dichlorobenzene, 1,2-", "Chromium, hexavalent") are captured whole -- codex caught this: the
   // original [^,]+ version stopped at the FIRST comma and silently skipped 23 of 92 real HC locators.
+  //
+  // KNOWN BLIND SPOT (documented, not covered): this is a cross-COMPOUND check, not a cross-ISOMER
+  // one. nameTokens() drops isomer position markers ("1,2-" / "1,4-" become <=2-char tokens that are
+  // filtered), so an evidence locator that cites "Dichlorobenzene, 1,4-" on a "dichlorobenzene_1_2"
+  // row is NOT flagged -- both collapse to the shared token "dichlorobenzene". This guard catches
+  // chlorobenzene-vs-dichlorobenzene class errors; isomer-level mis-attribution needs a separate
+  // isomer-aware check and is out of scope here.
   const HC_LOCATOR_RE = /Table\s*1,\s*(.+?),\s*Type\s*=/i;
   const STOPWORDS = new Set(['and', 'the', 'of', 'inorganic', 'organic', 'total', 'mixed', 'isomers']);
 
   function nameTokens(name) {
     return (name || '')
       .toLowerCase()
-      .replace(/[()[\]{}.,\-_]/g, ' ')
+      .replace(/[()[\]{}.,\-_/+']/g, ' ')
       .split(/\s+/)
       .filter((t) => t.length > 2 && !STOPWORDS.has(t));
   }
@@ -324,6 +331,7 @@ export function runAuditOnLibrary(substanceLibrary, parameterValueRecords) {
     if (substanceTokens.size === 0) continue;
 
     for (const evidence of row.evidence_items || []) {
+      if (!evidence) continue; // defensive: a null/undefined array element must not abort the audit
       const match = evidence.locator && evidence.locator.match(HC_LOCATOR_RE);
       if (!match) continue;
       const citedName = match[1].trim();
