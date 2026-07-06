@@ -582,4 +582,30 @@ describe('audit-library-provenance unit tests', () => {
     const findings = runAuditOnLibrary([], mockCatalog);
     expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_out_of_scope')).toBe(false);
   });
+
+  it('catches a divergence across DIFFERENT pathways for the same (substance_key, input_key)', () => {
+    // The load-bearing new capability: grouping is keyed on (substance_key, input_key) WITHOUT
+    // pathway, so a direct-route value and a food-route value for the same oral toxicity input that
+    // disagree >=10x are still caught (an oral RfD should be identical whichever route it is applied
+    // on -- a >=10x split signals a source mix-up). Pins behavior: this test FAILS if pathway is
+    // re-added to the group key.
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_xpath', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.001, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_xpath', pathway: 'human-health-food', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.02, qa_status: 'approved', source_ids: ['src-b'] }, // 20x, different route
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    const divCheck = findings.find((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_xpath');
+    expect(divCheck).toBeDefined();
+    expect(divCheck?.ratio).toBe(20);
+  });
+
+  it('does not flag agreeing values from different sources (ratio 1)', () => {
+    // Two sources reporting the SAME value must not be flagged (distinct-value dedup -> ratio 1).
+    const mockCatalog = [
+      { parameter_value_id: 'pv-1', substance_key: 'substance_agree', pathway: 'human-health-direct', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.01, qa_status: 'approved', source_ids: ['src-a'] },
+      { parameter_value_id: 'pv-2', substance_key: 'substance_agree', pathway: 'human-health-food', input_key: 'rfd_oral_mg_per_kg_bw_day', value: 0.01, qa_status: 'approved', source_ids: ['src-b'] },
+    ];
+    const findings = runAuditOnLibrary([], mockCatalog);
+    expect(findings.some((f) => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE' && f.substance_key === 'substance_agree')).toBe(false);
+  });
 });
