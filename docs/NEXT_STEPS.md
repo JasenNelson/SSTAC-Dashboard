@@ -19,6 +19,30 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-07-06 -- MO provenance guards shipped; owner-gated lanes re-grounded
+
+Session shipped PRs #522/#523/#524/#525 (two detection-only provenance guards + zinc/mn tension flags
++ handoff). Re-grounded the three owner-gated lanes from the 2026-07-01/07-05 planning docs against the
+current catalog and found them ~90% already executed. Genuinely-open items are captured as an owner
+decision packet: `docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md`. Deferred (owner decisions):
+- **Lane 2 HC TRV v4.0 re-verification -- RESOLVED 2026-07-06.** Owner supplied the canonical HC 2025
+  PDF (`G:\My Drive\SABCS - Sediment Project\References\HC 2025 - Toxicological Reference Values TRV.pdf`).
+  Re-extraction is byte-identical to the committed table (0 drift) and the crosscheck found 0 value
+  errors across 111 HC rows (107 MATCH / 0 MISMATCH / 4 AMBIGUOUS: 1 benign + the 3 already-flagged
+  population/value tensions). See `docs/MATRIX_OPTIONS_HC_V4_REVERIFICATION_LEDGER_2026_07_06.md`.
+  Residual (small, non-blocking): parameterize the extractor's hardcoded `pdf_path`; stamp the PDF
+  locator into HC rows' evidence items in a later owner-attested pass.
+- **`dichlorobenzene_1_2` current_default** is IRIS-1989 0.09 but the recency rule wants HC-2025 0.43 --
+  a real inconsistency awaiting an owner newer-vs-more-protective call.
+- **PCB policy** (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) and
+  **`phenylmercuric_acetate`** ContaminantClass -- policy decisions, not build gaps.
+- Confirm-after-fact: cadmium 0.0008 + methylmercury 0.0002 current_defaults (applied despite a hold
+  flag; picks defensible). benzo_a_pyrene remains HELD.
+- **Future catalog source to ingest (owner-flagged 2026-07-06):** `2026 Ontario MECP TRVs.zip` at
+  `G:\My Drive\SABCS - Sediment Project\References\2026 Ontario MECP TRVs.zip` -- add Ontario MECP TRVs
+  + other parameters to the catalog in a later lane (per-source provenance, needs_review-then-promote,
+  same discipline as HC/EPA). Not started.
+
 ### 2026-07-04 -- From the MO current_default / provenance-guard lane
 
 Surfaced during the current_default selection + provenance-guard session (PRs #512-#515; #516 closed

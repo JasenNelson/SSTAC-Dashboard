@@ -1,0 +1,131 @@
+# Matrix Options -- Owner Decision Packet (2026-07-06)
+
+Status: DECISION-NEEDED items teed up for owner judgment. Nothing in this doc has been applied
+autonomously. Values / defaults are only mutated on explicit inline owner approval (dashboard rule:
+AI never promotes, demotes, or re-ranks defaults, nor mutates catalog values, without HITL action).
+
+Context: this session shipped four provenance-integrity PRs (#522 zinc/mn tension flags, #523 handoff,
+#524 CAS/name-mismatch guard, #525 cross-source divergence extension -- all MERGED). It then
+RE-GROUNDED the three owner-gated lanes from the 2026-07-01 / 2026-07-05 planning docs against the
+CURRENT catalog. Headline: intervening sessions (the 2026-07-04 sweeps + the 2026-07-05 apply) already
+completed ~90% of what those docs framed as pending. The genuinely-open items are few and precise, and
+are listed below. All catalog-state claims here were verified by reading
+`matrix_research/reference_catalog/human_health_trv_values.json` on the post-#522 main tip.
+
+---
+
+## Lane 1 -- inorganic / metal cohort: DONE (2 policy decisions remain)
+
+The 2026-07-01 HITL doc (Group 4) framed "add `'inorganic'` to `ContaminantClass`" as a one-line
+unblock for a ~37-substance cohort. Re-grounding finding: **that enum change and the entire cohort
+wiring it unblocked are already merged.**
+- `src/lib/matrix-options/types.ts:12` already has `| 'inorganic'`.
+- `src/lib/matrix-options/substanceLibrary.ts` carries 25 `contaminantClass: 'inorganic'` entries;
+  every substance named in Group 3b's "clean", "backfill", "do-not-conflate", and "cyanide-dedup"
+  sub-cohorts has its own wired `key:` entry (metal salts wired as OWN keys, not backfilled into the
+  parent element -- e.g. `mercuric_chloride_hgcl2` stays separate from `mercury_inorganic`;
+  `nickel_chloride` / `nickel_soluble_salts` / `nickel_sulfate` stay separate from `nickel`).
+- `FRAME_DEFAULT_PROFILES` (frameDefaults.ts) is NOT a substance-value layer -- it seeds only receptor
+  exposure factors (BW, IR, EF, ...) per regulatory frame; no substance appears there and none should.
+  The earlier plan's premise that the cohort needed frame-default seeding was incorrect.
+
+### DECISION-NEEDED (2 substances, policy calls -- not build gaps)
+Only two of the named cohort are unwired, both pre-declared HITL-deferred:
+1. **`pcbs_non_coplanar`** -- PCB congener-grouping policy. Blocked on the same call as
+   `total_pcbs_aroclor_1254` (see Lane 3 + `docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`,
+   which recommends Option A: keep `total_pcbs_aroclor_1254` canonical, alias congener-specific keys,
+   never additive). RECOMMENDATION: fold `pcbs_non_coplanar` into that single PCB-policy decision
+   rather than treating it as a separate wiring task.
+2. **`phenylmercuric_acetate`** -- no clean `ContaminantClass` fit (sits between `methyl-Hg`,
+   `divalent-metal`, and `mercury_inorganic`). RECOMMENDATION: owner picks the class (or approves a
+   new `organomercury` class); then it is mechanical to wire.
+
+RECOMMENDATION: mark Group 3b / Group 4 CLOSED in the HITL-decisions doc and re-file these two under a
+narrow "PCB + organomercury policy" ticket.
+
+---
+
+## Lane 2 -- HC TRV v4.0 catalog re-verification (OPEN; correctness-critical)
+
+This is the one lane with substantive open engineering work. Problem (per `docs/NEXT_STEPS.md`
+2026-07-04): the catalog's HC values were extracted from a canada.ca page that is now dead, so no HC
+value in the library is currently re-verifiable against a live cited source. The chlorobenzene
+mis-file scare showed this class of error is real.
+
+Good news: the tooling to close this already exists on main (shipped via #518):
+- `scripts/matrix-options/hc_trv_v4_extract.py` -- extracts HC TRV v4.0 Table 1 from the PDF.
+- `scripts/matrix-options/hc-trv-v4-crosscheck.mjs` -- compares extracted values against the catalog
+  (the check #522 hardened; it already flags value/`value_text` mismatches and adult-vs-sensitive /
+  from-birth ambiguities).
+- `scripts/matrix-options/data/hc_trv_v4_table1_extracted.json` -- the extracted reference table.
+
+### PROPOSED PLAN (for owner review; no values changed until approved)
+1. Confirm the canonical HC TRV v4.0 PDF source (the 2025 edition) and its stable locator (Zotero key
+   or the `G:\...\References` path), since the web page is dead. -- owner-supplied source pointer.
+2. Re-run `hc_trv_v4_extract.py` against that PDF to refresh `hc_trv_v4_table1_extracted.json`
+   (orchestrator runs; AGY can author any script changes needed).
+3. Run `hc-trv-v4-crosscheck.mjs` catalog-wide; triage the AMBIGUOUS / mismatch rows it reports.
+4. For each HC-sourced row, stamp the exact PDF locator (page/table) into its evidence item so the
+   value is re-verifiable going forward, and resolve any route/endpoint mis-map (the chlorobenzene
+   class). Any VALUE change is owner-attested per row, never bulk.
+5. Deliverable: a per-row HC v4.0 verification ledger + a short repair PR for confirmed mis-maps.
+
+RECOMMENDATION: schedule this as its own focused lane; it is the highest-value correctness work
+remaining. It needs the owner to first supply the canonical PDF source pointer (step 1).
+
+---
+
+## Lane 3 -- current_default Phase 2: 18 of 20 applied; 2 open + 2 to confirm
+
+The 2026-07-05 recency proposal (default = most-protective approved value UNLESS outdated, then the
+newer authority wins; HC TRV v4.0 = 2025) proposed 20 picks. Re-grounding finding: **18 are already
+applied and match the proposal.** Verified current state below.
+
+### Already applied, matches proposal -- NO action (18)
+barium 0.19, carbon_tetrachloride 0.00071, chromium_trivalent 0.3, dichloroethylene_1_1 0.003,
+ethylbenzene 0.022, manganese 0.025, tetrachloroethylene 0.0047, toluene 0.0097, xylenes 0.013
+(all HC v4.0); chlorobenzene 0.43 (HC v4.0, via #520 -- CONFIRMED current_default, NOT pending);
+dichloromethane rfd 0.006 + sf 0.0033, trichloroethylene rfd 0.0005 + sf 0.052 (US EPA IRIS 2011);
+zinc rfd 0.3 (US EPA IRIS); arsenic_inorganic sf 32 (US EPA IRIS 2025); cadmium 0.0008 + methylmercury
+0.0002 (HC v4.0 -- see confirm-after-fact below).
+
+### DECISION-NEEDED (2)
+1. **`dichlorobenzene_1_2` (rfd_oral)** -- REAL INCONSISTENCY. The live `current_default` is
+   **0.09 (US EPA IRIS 1989)**, but an approved **HC v4.0 (2025) 0.43** row sits alongside as
+   `available_option`. The recency rule says the newer authority (HC 2025) should win over the
+   outdated IRIS 1989 -- so the CURRENT default contradicts the recency proposal. Note the tension:
+   IRIS 0.09 is MORE protective (lower RfD) but OLDER; HC 0.43 is NEWER but less protective. This is
+   exactly the recency-vs-protectiveness judgment call the rule reserves for the owner.
+   RECOMMENDATION: move current_default to HC v4.0 0.43 to be consistent with the applied recency rule
+   for every other substance in this set -- BUT flagging because "newer but less protective" deserves
+   an explicit owner nod. (Dry-run only; not applied.)
+2. **`total_pcbs_aroclor_1254` (rfd_oral)** -- no current_default set (HC 0.00001 vs EPA 0.00002, both
+   `available_option`). Correctly pending on the PCB-policy decision (Lane 1 item 1). RECOMMENDATION:
+   resolve with the single PCB-policy call; do not auto-apply.
+
+### CONFIRM-AFTER-THE-FACT (2) -- picks look right, but the hold step was bypassed
+`cadmium` (current_default HC v4.0 0.0008) and `methylmercury` (current_default HC v4.0 sensitive
+0.0002) were FLAGGED for owner hold in the 2026-07-05 proposal (cadmium route-split; methylmercury
+IRIS reassessment in progress) but a later apply set their current_default to the proposal's own
+recommended pick anyway. Both picks are defensible (methylmercury 0.0002 is the most-protective
+sensitive-population value; cadmium 0.0008 is the HC v4.0 value). RECOMMENDATION: owner confirms these
+two after the fact, or directs a change. No urgency -- both are internally consistent.
+
+### HELD -- correctly untouched (1)
+`benzo_a_pyrene` -- no current_default on any rfd/sf row (all `available_option`), pending HC-2016a
+verification. Confirmed correct.
+
+---
+
+## Summary of what the owner actually needs to decide
+
+| # | Lane | Item | Recommendation |
+|---|------|------|----------------|
+| 1 | 1+3 | PCB policy (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) | Adopt Option A (PCB-consolidation doc); one decision closes both |
+| 2 | 1 | `phenylmercuric_acetate` ContaminantClass | Pick a class (or approve `organomercury`) |
+| 3 | 3 | `dichlorobenzene_1_2` default: IRIS-1989 0.09 vs HC-2025 0.43 | Move to HC 0.43 for recency consistency (owner nod on newer-but-less-protective) |
+| 4 | 3 | Confirm cadmium 0.0008 + methylmercury 0.0002 defaults (applied despite hold flag) | Confirm or redirect; low urgency |
+| 5 | 2 | HC v4.0 catalog re-verification | Owner supplies canonical PDF source pointer -> run the existing #518 tooling as a focused lane |
+
+Nothing above is applied. On inline owner approval of any item, the dry-run -> before/after -> apply
+flow (promote-*.mjs / default set) runs per the dashboard attestation rule.
