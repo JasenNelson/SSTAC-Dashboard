@@ -114,9 +114,16 @@ recommended pick anyway. Both picks are defensible (methylmercury 0.0002 is the 
 sensitive-population value; cadmium 0.0008 is the HC v4.0 value). RECOMMENDATION: owner confirms these
 two after the fact, or directs a change. No urgency -- both are internally consistent.
 
-### HELD -- correctly untouched (1)
+### HELD -- correctly untouched (1); SF question RESOLVED 2026-07-06
 `benzo_a_pyrene` -- no current_default on any rfd/sf row (all `available_option`), pending HC-2016a
 verification. Confirmed correct.
+- UPDATE (A2 verification, see `MATRIX_OPTIONS_A2_VERIFICATION_RESULTS_2026_07_06.md`): the oral-SF
+  "discrepancy" is NOT a data error. The catalog's EPA `2.0 (mg/kg-d)^-1` is the current IRIS
+  LIFETIME slope factor with ADAFs baked in; IRIS separately lists `1.0` (adult-only). HC v4.0 =
+  `1.289`. So the remaining owner decision is only (a) which current_default (HC 1.289 vs an EPA
+  scenario), and (b) TAG each EPA sf row with its scenario (adult-only 1.0 vs lifetime-with-ADAF 2.0)
+  so the two IRIS numbers are not conflated. Also feeds the cumulative-PAH ADAF handling (do not
+  double-apply ADAFs if anchoring on the 2.0 figure).
 
 ---
 
