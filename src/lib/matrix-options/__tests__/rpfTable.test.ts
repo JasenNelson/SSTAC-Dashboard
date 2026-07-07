@@ -11,7 +11,7 @@ import {
 // rpfTable.ts holds regulatory RPF numbers. EXPECTED below is an INDEPENDENT second transcription of
 // the source values (SPEC Section 3 for nisbet-1992 / hc-pqra-v3 / epa-2010-draft; A2 verification for
 // ccme-2010; who-1998-pah mirrors the CCME lineage placeholder pending framework-A2). The full-table
-// cross-check asserts every 23 x 5 cell. Cell encoding: a number = an RPF value; 'excl' = excluded
+// cross-check asserts every 24 x 5 cell. Cell encoding: a number = an RPF value; 'excl' = excluded
 // (non-carcinogenic); 'nd' = not defined in that scheme.
 
 type Cell = number | 'excl' | 'nd';
@@ -28,9 +28,12 @@ const EXPECTED: Record<string, [Cell, Cell, Cell, Cell, Cell]> = {
   pyrene: [0.001, 'excl', 'excl', 'excl', 'excl'],
   benz_a_anthracene: [0.1, 0.1, 0.2, 0.1, 0.1],
   chrysene: [0.01, 0.01, 0.1, 0.01, 0.01],
-  benzo_b_fluoranthene: [0.1, 0.1, 0.8, 0.1, 0.1],
-  benzo_j_fluoranthene: [0.1, 0.1, 0.3, 0.1, 0.1],
-  benzo_k_fluoranthene: [0.1, 0.1, 0.03, 0.1, 0.1],
+  // b/j/k are not-defined under the group schemes (hc/ccme/who) -- see benzo_bjk_fluoranthene; kept
+  // per-isomer only under nisbet-1992 + epa-2010-draft. Corrected per CCME 2010 Table 6-6 (primary).
+  benzo_b_fluoranthene: [0.1, 'nd', 0.8, 'nd', 'nd'],
+  benzo_j_fluoranthene: [0.1, 'nd', 0.3, 'nd', 'nd'],
+  benzo_k_fluoranthene: [0.1, 'nd', 0.03, 'nd', 'nd'],
+  benzo_bjk_fluoranthene: ['nd', 0.1, 'nd', 0.1, 0.1],
   benzo_a_pyrene: [1.0, 1.0, 1.0, 1.0, 1.0],
   dibenz_ah_anthracene: [5.0, 1.0, 10, 1.0, 1.0],
   indeno_123cd_pyrene: [0.1, 0.1, 0.07, 0.1, 0.1],
@@ -44,10 +47,10 @@ const EXPECTED: Record<string, [Cell, Cell, Cell, Cell, Cell]> = {
 };
 
 describe('RPF_TABLE structure', () => {
-  it('has 23 PAH rows with unique keys and a cell for every scheme', () => {
-    expect(RPF_TABLE).toHaveLength(23);
+  it('has 24 PAH rows with unique keys and a cell for every scheme', () => {
+    expect(RPF_TABLE).toHaveLength(24);
     const keys = new Set(RPF_TABLE.map((r) => r.pahKey));
-    expect(keys.size).toBe(23);
+    expect(keys.size).toBe(24);
     for (const row of RPF_TABLE) {
       for (const scheme of RPF_SCHEMES) {
         expect(row.rpf[scheme]).toBeDefined();
