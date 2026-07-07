@@ -4,6 +4,56 @@ Supersedes `FRESH_SESSION_HANDOFF_2026_07_06e_CUMULATIVE_SHIPPED.md`. Plain ASCI
 of a long autonomous session (07-06e overnight + 07-07 continuation). Everything is committed + merged;
 no in-flight work. Migrating to a fresh session.
 
+## 0. PROJECT GOAL, PRINCIPLES + ROADMAP (fresh session: LOCK IN ON THIS FIRST)
+
+### The goal (the end state we are building toward)
+Give a Qualified Professional a WORKING, provenance-tracked, regulatory-framework-aware CUMULATIVE-EFFECTS
+calculator inside the SSTAC-Dashboard Matrix Options module -- so a site's dioxin-like congeners
+(TEF/TEQ), carcinogenic PAHs (RPF/BaP-equivalent), and total/non-dioxin-like PCBs (mass-based) can be
+combined correctly, compared to the RIGHT framework's standard, with every congener/PAH contribution
+attributed to its source -- replacing error-prone manual spreadsheet math. "Done" = a live UI where a QP
+picks a framework + enters congener/PAH concentrations and gets a defensible, verified, provenance-backed
+TEQ / BaP-eq PASS/FAIL with contribution breakdown.
+
+### Non-negotiable principles (the HOW -- honor these on every task)
+1. **Verify the PRIMARY source, never a memory or a subagent's secondary read**, for ANY regulatory
+   value (owner-reinforced 2026-07-07). Read the actual PDF (vision-first: Claude Read `pages` / Docling
+   -- NEVER install poppler).
+2. **AI never promotes / mutates catalog values or writes qa_status.** AI authors needs_review candidates
+   + dry-runs a promote-*.mjs; the OWNER runs `--apply` (that is the attestation). AI surfaces evidence;
+   HITL judges.
+3. **Fail closed.** A screening tool must block/underestimate-flag on any unknown/ambiguous input, never
+   silently over- or under-count (this session caught a 3x over-count + an ADAF mis-frame exactly here).
+4. **D0 -- standalone + additive.** The reducers do not extend `ProvenancePathway` / dispatch / frames /
+   existing files; build-first, zero policy mutation.
+5. **Honest QA flags.** needs_review is usable build-first but must reach the user; only primary-verified
+   rows are `verified`.
+6. **Ship discipline:** codex-review to mutual-agreement GREEN (commit gate) -> lint/test:ci/build/e2e
+   (push gate) -> owner merge. `/ship-protocols` + `/codex-review`.
+
+### Roadmap (where we are on the path to the goal)
+- **[DONE] Phase A -- calculation ENGINE.** A1 reference tables (TEF/RPF/ADAF, DeVito primary-verified) +
+  A3a headless reducers (computeTEQ/computeBaPeq/compare, fail-closed) -- SHIPPED + hardened (8 PRs).
+- **[NOW -- OWNER-GATED] Phase B -- unlock the anchors + fix SPEC representation.** The engine is headless
+  and its real anchors are not promoted. Owner decisions D1-D4 (below) promote the dioxin TEQ TDI, frame
+  the BaP anchor+ADAF, adopt PCB Option A, and correct the BC scheme. NOTHING downstream is usable until
+  these land.
+- **[NEXT -- AI-executable] Phase C -- framework-A2 verification.** Flip the non-HC TEF/RPF rows from
+  needs_review to verified against primaries (vision-first). Can run parallel to Phase B.
+- **[THEN] Phase D -- A3b UI (the user-facing feature).** The per-congener/PAH input grid + wiring the
+  compare step to the A4-attested anchors. Gated behind B (anchors) + C (verified schemes).
+
+### Recommended NEXT BEST STEPS (in order)
+1. **Take up the owner decisions D1-D4** (Phase B) -- start with whichever the owner picks; D1 (dioxin
+   TEQ) and D3 (PCB Option A) are the cleanest. For each: AI prepares the dry-run (candidate row +
+   promote script, before/after), owner attests inline, AI ships.
+2. **In parallel, framework-A2 WHO verification** (Phase C, vision-first) -- unblocks who-1998 editions +
+   confirms hc-pqra-v3; does not need owner judgment (verification, not promotion).
+3. **Then A3b UI** (Phase D) once B+C provide verified, anchored inputs.
+Do NOT jump to the UI (Phase D) before B+C -- it would render an unverified, unanchored calculator.
+
+---
+
 ## Status: engine SHIPPED, reviewed, hardened. Remaining work is OWNER-GATED.
 
 8 PRs merged to `main` (tip `1a7297f`) this session -- all codex-GREEN + 4-gate GREEN + owner-approved:
