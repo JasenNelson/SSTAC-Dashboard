@@ -143,23 +143,38 @@ leave needs_review:
 A3a (headless core -- SHIPPABLE build-first; NO union / dispatch changes per D0):
 - **Do NOT touch `ProvenancePathway` / `PROVENANCE_PATHWAYS` / `equationDispatch.ts` / `frameVariants.ts`.**
   The reducers are standalone (the `utl9595`/`avsSemCheck` precedent).
+- **UNIT CONTRACT (explicit -- per codex Leg-2 + `feedback_always_report_and_normalize_units`; the
+  #1 pre-execution requirement).** TEF/RPF are UNITLESS scalars. Every concentration entry MUST carry
+  its own `unit` (e.g. `pg/g`, `ng/kg`, `ug/kg`, `mg/kg`); the reducer normalizes ALL entries to one
+  canonical mass-per-mass base (recommend `mg/kg`) BEFORE summing -- never sum raw values across mixed
+  units. The equivalent (`teq`/`bapEq`) is reported IN that canonical unit, explicitly labeled. The
+  compare step (D1) must normalize BOTH the summed equivalent AND the HH-derived standard to the same
+  unit before comparing (the HH `sedS` is mg/kg-style; a TEQ in the same medium unit is required). MDL
+  (for the 0.5*MDL non-detect substitution) carries a unit too and is normalized identically. Unit
+  guard: an unrecognized/missing unit, or a standard/equivalent unit mismatch, is `blocked` with a
+  warning -- never a silent coercion. Reuse or extend the existing unit-normalization helper if one
+  exists (`isUnitBlocked`/unit utils in `defaultSelectionPolicy.ts`); else add a small
+  `normalizeConcentration(value, fromUnit, toUnit)` with its own tests.
 - New reducers (in `derivations.ts` or a new `cumulative.ts` sibling it re-exports):
-  - `computeTEQ(entries: {congenerId; concentration; isNonDetect?; mdl?}[], edition, opts): {teq;
-    contributions: {congenerId; factor; contribution}[]; warnings[]; blocked?}` -- `sum(C_i * TEF_i)`;
-    non-detect option = 0.5*MDL; unit guard (all entries same unit); empty-input and unknown-congener
-    handled via warnings/blocked, never a silent 0.
-  - `computeBaPeq(entries: {pahKey; concentration}[], scheme, opts: {applyAdaf?; ageBin?; dermalRaf?}):
-    {bapEq; contributions[]; warnings[]; blocked?}` -- `sum(C_i * RPF_i)`; optional ADAF age-binning;
-    optional dermal RAF (reuse `abs_dermal`). Excluded (non-carcinogenic) PAHs contribute 0 and are
-    surfaced as an informational warning, not silently dropped.
+  - `computeTEQ(entries: {congenerId; concentration; unit; isNonDetect?; mdl?; mdlUnit?}[], edition,
+    opts): {teq; teqUnit; contributions: {congenerId; factor; concentrationNorm; contribution}[];
+    warnings[]; blocked?}` -- normalize -> `sum(C_i_norm * TEF_i)`; non-detect option = 0.5*MDL;
+    empty-input and unknown-congener handled via warnings/blocked, never a silent 0.
+  - `computeBaPeq(entries: {pahKey; concentration; unit}[], scheme, opts: {applyAdaf?; ageBin?;
+    dermalRaf?}): {bapEq; bapEqUnit; contributions[]; warnings[]; blocked?}` -- normalize ->
+    `sum(C_i_norm * RPF_i)`; optional ADAF age-binning; optional dermal RAF (reuse `abs_dermal`).
+    Excluded (non-carcinogenic) PAHs contribute 0 and are surfaced as an informational warning, not
+    silently dropped.
   - Both pure, fail-closed on malformed input (mirror the existing RangeError/TypeError validation +
     `warnings[]` conventions), no catalog mutation.
 - **Compare step (per D1):** a small pure `compareEquivalentToStandard(equivalent, standard)` (or fold
   into the reducer's caller) -- for HH cases, derive the TCDD/BaP screening standard via the existing HH
   path, then compare the summed equivalent against it and emit PASS/FAIL + margin. Tested with anchors.
 - **Provenance-contribution shape (per D2):** define a `CumulativeContributionRow` (congenerId/pahKey,
-  concentration, factor, edition/scheme, contribution, factor-source-id) and a mapping to renderable
-  provenance rows, so A3b's UI + the provenance panel can attribute all N inputs. This is part of A3a.
+  `concentration` + `unit` (as entered), `concentrationNorm` (canonical mg/kg), factor,
+  edition/scheme, `contribution` + `unit`, factor-source-id) and a mapping to renderable provenance
+  rows, so A3b's UI + the provenance panel can attribute all N inputs WITH their units. This is part of
+  A3a.
 - Edition/scheme selection (RECEPTOR-AWARE for TEF -- resolved per codex, Section 8 Q5): TEF editions
   are taxa-specific, so a frame-only map CANNOT work (CCME needs mammal + avian + fish simultaneously by
   receptor). Use a resolver `resolveTefEdition(frameId, receptor): TefEdition` returning one of the real
@@ -182,7 +197,9 @@ A3a (headless core -- SHIPPABLE build-first; NO union / dispatch changes per D0)
 - Tests (`__tests__/derivations.test.ts` or a new sibling): ANCHOR CASES with hand-computed expected
   values -- e.g. a 3-congener TEQ under WHO-2005 (TCDD 1.0 + PCB-126 0.1 + OCDD 0.0003 at known
   concentrations) and a small BaP-eq under HC-PQRA-v3; the compare step against a known standard; plus
-  non-detect (0.5*MDL), unit-block, empty-input, unknown-congener, edition-with-no-factor (fail-closed,
+  a MIXED-UNIT normalization case (entries in pg/g + ug/kg summed correctly after normalization to
+  mg/kg), a standard-vs-equivalent UNIT-MISMATCH case (must `block`, not silently compare), non-detect
+  (0.5*MDL with a unit), unit-block, empty-input, unknown-congener, edition-with-no-factor (fail-closed,
   no silent drop), ADAF-applied, and excluded-PAH edge cases.
 
 A3b (input-grid UI -- FOLLOW-ON PR, deferred): a new component paralleling `HHDirectContactCalculator.tsx`
