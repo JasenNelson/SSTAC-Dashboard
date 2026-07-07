@@ -107,6 +107,25 @@ Priority order (A4 anchors before A3b; framework-A2 parallel). All packets:
   (`RPF_SCHEME_SCORING_BLOCKED` in cumulative.ts). Evidence:
   `docs/MATRIX_OPTIONS_FRAMEWORK_A2_RESEARCH_FINDINGS_2026_07_06.md`.
 
+## BROADER MATRIX-OPTIONS OPEN DECISIONS (NOT cumulative-specific -- do NOT lose these)
+
+The cumulative lane is ONE workstream. The prior session's wider MO work left owner-decisions that are
+NOT part of D1-D4. AUTHORITATIVE register: `docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md` (read it).
+Genuinely-open items there (cross-checked 2026-07-07):
+- **`phenylmercuric_acetate` ContaminantClass** -- no clean class fit (between methyl-Hg / inorganic-Hg /
+  organics); owner picks a class or approves `organomercury`. OPEN.
+- **Confirm `cadmium` (0.0008) + `methylmercury` (0.0002) current_defaults** -- applied despite a hold
+  flag; both defensible (most-protective); owner confirms after-the-fact or redirects. LOW urgency, OPEN.
+- `dichlorobenzene_1_2` default -- RESOLVED (keep IRIS 0.09; HC 0.43 is 1996-vintage despite the "2025"
+  table label). NO action.
+- OVERLAP: that doc's "PCB policy" item == cumulative **D3**; its `benzo_a_pyrene` HELD item == cumulative
+  **D2** (SF question A2-resolved; ADAF framing done #538). Resolve once, in the cumulative lane.
+- Deferred backlog (owner-curation-gated, from the MO memory anchors -- see MEMORY.md): ~22
+  jurisdiction-conflict substances; `beryllium`/`selenium` (multi-same-value catalog, no current_default
+  row -> resolveTupleRecord null); PCBs/diquat/fosetyl_al wiring. NOT cumulative; separate lane.
+- **Lane 2 (HC v4.0 catalog re-verification) is RESOLVED** (byte-identical, 0 value errors -- prior
+  session's close-out; the owner-decisions doc's "Lane 2 OPEN" line is STALE).
+
 ## FOLLOW-UP LANES (AI-executable once greenlit)
 
 - **Framework-A2 WHO verification:** verify WHO-2005 (Van den Berg 2006) + WHO-1998 mammal/avian/PCB TEF
