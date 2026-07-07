@@ -1,0 +1,292 @@
+[
+  {
+    "congener": "2,3,7,8- Tetrachlorodibenzo-p-dioxin (TCDD)",
+    "cas": "1746-01-6",
+    "tef": 1.0,
+    "tef_raw": "1",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,7,8- Pentachlorodibenzo-p-dioxin (PeCDD)",
+    "cas": "40321-76-4",
+    "tef": 0.4,
+    "tef_raw": "0.4",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,4,7,8- Hexachlorodibenzo-p-dioxin (HxCDD)",
+    "cas": "39227-28-6",
+    "tef": 0.09,
+    "tef_raw": "0.09",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,6,7,8- Hexachlorodibenzo-p-dioxin (HxCDD)",
+    "cas": "57653-85-7",
+    "tef": 0.07,
+    "tef_raw": "0.07",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,7,8,9- Hexachlorodibenzo-p-dioxin (HxCDD)",
+    "cas": "19408-74-3",
+    "tef": 0.05,
+    "tef_raw": "0.05",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,4,6,7,8- Heptachlorodibenzo-p-dioxin (HpCDD)",
+    "cas": "35822-46-9",
+    "tef": 0.05,
+    "tef_raw": "0.05",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "Octachlorodibenzo-p-dioxin (OCDD)",
+    "cas": "3268-87-9",
+    "tef": 0.001,
+    "tef_raw": "0.001",
+    "section": "PCDD",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "2,3,7,8- Tetrachlorodibenzofuran (TCDF)",
+    "cas": "51207-31-9",
+    "tef": 0.07,
+    "tef_raw": "0.07",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,7,8- Pentachlorodibenzofuran (PeCDF)",
+    "cas": "57117-41-6",
+    "tef": 0.01,
+    "tef_raw": "0.01",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "2,3,4,7,8- Pentachlorodibenzofuran (PeCDF)",
+    "cas": "57117-31-4",
+    "tef": 0.1,
+    "tef_raw": "0.1",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,4,7,8- Hexachlorodibenzofuran (HxCDF)",
+    "cas": "70648-26-9",
+    "tef": 0.3,
+    "tef_raw": "0.3",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,6,7,8- Hexachlorodibenzofuran (HxCDF)",
+    "cas": "57117-44-9",
+    "tef": 0.09,
+    "tef_raw": "0.09",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,7,8,9- Hexachlorodibenzofuran (HxCDF)",
+    "cas": "72918-21-9",
+    "tef": 0.2,
+    "tef_raw": "0.2",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "2,3,4,6,7,8- Hexachlorodibenzofuran (HxCDF)",
+    "cas": "60851-34-5",
+    "tef": 0.1,
+    "tef_raw": "0.1",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,4,6,7,8- Heptachlorodibenzofuran (HpCDF)",
+    "cas": "67562-39-4",
+    "tef": 0.02,
+    "tef_raw": "0.02",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "1,2,3,4,7,8,9- Heptachlorodibenzofuran (HpCDF)",
+    "cas": "55673-89-7",
+    "tef": 0.1,
+    "tef_raw": "0.1",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "Octachlorodibenzofuran (OCDF)",
+    "cas": "39001-02-0",
+    "tef": 0.002,
+    "tef_raw": "0.002",
+    "section": "PCDF",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "PCB 77",
+    "cas": "32598-13-3",
+    "tef": 0.0003,
+    "tef_raw": "0.0003",
+    "section": "PCB_non_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "PCB 81",
+    "cas": "70362-50-4",
+    "tef": 0.006,
+    "tef_raw": "0.006",
+    "section": "PCB_non_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 54
+  },
+  {
+    "congener": "PCB 126",
+    "cas": "57465-28-8",
+    "tef": 0.05,
+    "tef_raw": "0.05",
+    "section": "PCB_non_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 169",
+    "cas": "32774-16-6",
+    "tef": 0.005,
+    "tef_raw": "0.005",
+    "section": "PCB_non_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 105",
+    "cas": "32598-14-4",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 114",
+    "cas": "74472-37-0",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 118",
+    "cas": "31508-00-6",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 123",
+    "cas": "65510-44-3",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 156",
+    "cas": "38380-08-4",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 157",
+    "cas": "69782-90-7",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 167",
+    "cas": "52663-72-6",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  },
+  {
+    "congener": "PCB 189",
+    "cas": "39635-31-9",
+    "tef": 3e-05,
+    "tef_raw": "0.00003",
+    "section": "PCB_mono_ortho",
+    "edition": "who-2022-devito-2024",
+    "source": "HC TRV v4.0 (2025) Table 4 (DeVito et al., 2024)",
+    "pdf_page_1indexed": 55
+  }
+]
