@@ -57,6 +57,27 @@ Priority order (A4 before A3b -- the anchors ARE the A4 values):
    local-only lint errors from vendored JS in `scripts/catalog-overnight/.venv/`; CI unaffected).
    Separate small PR.
 
+## Framework-A2 research findings (NEW -- a SPEC error surfaced; owner decision)
+
+A bounded Sonnet research pass (report-only, codex-reviewed) produced
+`docs/MATRIX_OPTIONS_FRAMEWORK_A2_RESEARCH_FINDINGS_2026_07_06.md`. Key results:
+- **[OWNER DECISION -- HIGH] The SPEC's "BC = WHO-1998 5-PAH TEFs" (Section 4) is likely WRONG.** BC
+  Technical Guidance 7 (2017, VERIFIED-primary) directs BC CSR risk assessment to HC PQRA v2.0 Table 7
+  = the 8-PAH CCME-2010/WHO-1998 lineage already in the catalog, NOT a separate BC 5-PAH table. The only
+  genuinely BC-specific PAH-TEF table is a 6-compound set in a DIFFERENT regulation (Hazardous Waste Reg
+  63/88 Sch 1.1) with 2 anomalous values (flagged UNCERTAIN). Recommended (owner rules): remap
+  `bc-csr` -> `ccme-2010` (the verified 8-PAH set; NOT `hc-pqra-v3`, which is broader + unblocked) and
+  RETIRE/relabel `who-1998-pah`. **The shipped `who-1998-pah` scoring BLOCK is now doubly justified --
+  it safely contains the spec error until the owner decides.**
+- **[VERIFIED-primary] CCME "21.5" is TWO analytes:** PCDD/F PEL 21.5 ng TEQ/kg dw vs total-PCB marine
+  ISQG 21.5 ug/kg dw (1000x). Carry an explicit analyte+unit label when wiring. Companion: CCME PCDD/F
+  ISQG 0.85 ng TEQ/kg dw.
+- WHO-2005 (secondary-only) + WHO-1998 mammal/avian/PCB (un-OCR-able primary) stay `needs_review`
+  correctly. Only WHO-1998 fish PCDD/PCDF is now VERIFIED-primary (CCME 2001).
+- **Tooling gap for next session:** install `poppler-utils` (pdftoppm) -- several primary PDFs
+  (van den Berg 1998, WHO-2005 reprints) are scanned images this environment could not OCR; that blocks
+  closing the remaining UNCERTAIN items.
+
 ## Reference docs (all on the branches / main)
 
 - Plan: `docs/MATRIX_OPTIONS_CUMULATIVE_EFFECTS_IMPLEMENTATION_PLAN_2026_07_06.md` (codex-hardened).
