@@ -91,6 +91,8 @@ describe('computeTEQ -- WHO-2005 anchor case', () => {
     const res = computeTEQ([], 'who-2005');
     expect(res.blocked).toBe(true);
     expect(res.warnings.length).toBeGreaterThan(0);
+    // the edition-QA warning must survive the empty-input fail-closed path (codex)
+    expect(res.warnings.some((w) => /needs_review/i.test(w))).toBe(true);
   });
 
   it('fails closed on an unknown congener (component not summed)', () => {

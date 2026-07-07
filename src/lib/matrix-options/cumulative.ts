@@ -288,7 +288,9 @@ export function computeTEQ(
       equivalent: 0,
       equivalentUnit: CANONICAL_UNIT,
       contributions: [],
-      warnings: ['No congener entries supplied; TEQ is 0 by vacuous sum (verify this is intended).'],
+      // Preserve any edition-QA warning already pushed (codex): the needs_review guarantee must hold
+      // even on the empty-input fail-closed path for callers reading only equivalent + warnings.
+      warnings: [...warnings, 'No congener entries supplied; TEQ is 0 by vacuous sum (verify this is intended).'],
       blocked: true,
     };
   }
