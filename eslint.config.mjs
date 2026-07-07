@@ -23,6 +23,13 @@ const eslintConfig = [
       // .tmp/build-monitor. These are gitignored artifacts -- linting them produced
       // false no-require-imports errors that broke local `npm run lint` after a build.
       ".tmp/**",
+      // Python virtualenvs under scripts/ vendor minified JS (e.g. mpire's bootstrap/jquery,
+      // torch's model_dump code.js). They are gitignored + never shipped, but `eslint .` was
+      // picking them up and producing ~48 false no-this-alias / no-unused-vars errors that broke
+      // local `npm run lint` (CI never saw them -- they are untracked). Ignore all venv + vendored
+      // site-packages trees.
+      "**/.venv/**",
+      "**/site-packages/**",
       "tests/**/*.js",
       "tests/archive/**",
       "*.config.js",
