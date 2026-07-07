@@ -84,8 +84,10 @@ verified the code:
   (or beside) `derivations.ts`, called DIRECTLY by the UI, exactly like `utl9595`/`avsSemCheck`. They
   are NOT registered in `equationDispatch.ts` / `BASELINE_FUNCTIONS` (dispatch's single-arg
   `run(input)` signature structurally cannot hold a multi-arg array-input reducer anyway). Edition/
-  scheme is a plain function argument chosen by a small `frameId -> tefEdition/rpfScheme` lookup map
-  (NOT the `EquationVariantId`/`frameVariants.ts` machinery, which is dispatch-bound).
+  scheme is a plain function argument chosen by a small resolver -- `resolveTefEdition(frameId, receptor)`
+  (RECEPTOR-AWARE, because TEF editions are taxa-specific) and a frame-only `FRAME_RPF_SCHEME` (RPF is
+  human-health only) -- NOT the `EquationVariantId`/`frameVariants.ts` machinery, which is dispatch-bound.
+  Details in A3a.
 - **D1 -- the reducer emits an equivalent CONCENTRATION; a small NEW compare step consumes it.**
   (Corrected: the original "feed TEQ as the concentration of TCDD into the existing HH calculator" was
   wrong -- the HH functions produce a screening STANDARD, not a verdict-from-concentration.) So: the
@@ -158,16 +160,25 @@ A3a (headless core -- SHIPPABLE build-first; NO union / dispatch changes per D0)
 - **Provenance-contribution shape (per D2):** define a `CumulativeContributionRow` (congenerId/pahKey,
   concentration, factor, edition/scheme, contribution, factor-source-id) and a mapping to renderable
   provenance rows, so A3b's UI + the provenance panel can attribute all N inputs. This is part of A3a.
-- Edition/scheme selection: a plain `FRAME_TEF_EDITION: Record<RegulatoryFrameId, TefEdition>` +
-  `FRAME_RPF_SCHEME` lookup (a small const map, NOT dispatch/EquationVariantId) implementing spec
-  Section 4 (HC=who-2022-devito-2024; BC/EPA/Ontario=who-2005; CCME=who-1998-taxa). Surface the active
-  edition in the UI via `regulatoryFrames.ts` `sourceHierarchy` (read-only display; no union change).
-- `equations.json` provenance records (OPTIONAL, and only if they fit an existing pathway): if we want
-  Evidence-Library provenance records for the two methods, they must reuse an EXISTING
-  `EquationRecord.pathway` (e.g. `human-health-direct`) or be modeled under the `hh-toxicity-weighting`
-  evidence category -- NOT a new pathway string (EquationRecord.pathway is union-typed). If that is
-  awkward, defer the JSON records; the TS math + the factor-table source citations already carry
-  provenance.
+- Edition/scheme selection (RECEPTOR-AWARE for TEF -- resolved per codex, Section 8 Q5): TEF editions
+  are taxa-specific, so a frame-only map CANNOT work (CCME needs mammal + avian + fish simultaneously by
+  receptor). Use a resolver `resolveTefEdition(frameId, receptor): TefEdition` returning one of the real
+  edition keys `who-2022-devito-2024 | who-2005 | who-1998-mammal | who-1998-avian | who-1998-fish`
+  (there is NO `who-1998-taxa` key). Mapping (implements spec Section 4): HC-HH -> who-2022-devito-2024;
+  BC/EPA/Ontario-HH -> who-2005; CCME/FCSAP eco -> who-1998-{mammal|avian|fish} by the eco receptor;
+  HH-mammalian for CCME/FCSAP human-health -> who-1998-mammal. RPF is human-health-carcinogenic ONLY
+  (no taxa split), so `FRAME_RPF_SCHEME: Record<RegulatoryFrameId, RpfScheme>` frame-only is fine
+  (HC=hc-pqra-v3; EPA=epa-1993/2010; BC/CCME/Ontario=ccme-2010/who-1998 per spec Section 4 -- verify in
+  A2). Both are plain const maps/resolvers, NOT dispatch/EquationVariantId. Surface the active edition in
+  the UI via `regulatoryFrames.ts` `sourceHierarchy` (read-only; no union change).
+- `equations.json` provenance records (OPTIONAL): `EquationRecord.pathway` is typed to
+  `ProvenancePathway`, so a record can ONLY carry an EXISTING calculator pathway (e.g.
+  `human-health-direct`). Do NOT try to put `hh-toxicity-weighting` in `EquationRecord.pathway` -- it is
+  a `CatalogEvidencePathway` (evidence category), not a `ProvenancePathway`, so it is usable for EVIDENCE
+  attribution on the factor rows but not as an equation record's pathway. Practical call: either reuse
+  `human-health-direct` for the two `eq-cumulative-*` records, or DEFER the JSON records entirely -- the
+  TS math + the factor-table source citations (+ the `hh-toxicity-weighting` evidence tagging on factor
+  rows) already carry the provenance. Recommend DEFER unless the Evidence Library needs the records.
 - Tests (`__tests__/derivations.test.ts` or a new sibling): ANCHOR CASES with hand-computed expected
   values -- e.g. a 3-congener TEQ under WHO-2005 (TCDD 1.0 + PCB-126 0.1 + OCDD 0.0003 at known
   concentrations) and a small BaP-eq under HC-PQRA-v3; the compare step against a known standard; plus
@@ -225,8 +236,9 @@ Remaining for Leg 2 codex to pressure-test:
    mono-ortho PCB under a fish TEF, or an excluded PAH), the lookup must fail-closed with a warning --
    confirm the reducer surfaces it and never silently drops a component or coerces a missing factor to 0
    without a warning.
-5. Eco vs human-health split: the TEQ method uses taxa-specific TEF editions (mammal/avian/fish) for
-   ECO receptors but a single mammalian/DeVito edition for HH. Does the `FRAME_TEF_EDITION` map need to
-   be keyed by (frame, receptor) rather than frame alone? (Likely yes -- confirm.)
+5. Eco vs human-health TEF split -- RESOLVED (codex Leg-2, 2026-07-06): YES, edition selection must be
+   receptor-aware. Replaced the frame-only `FRAME_TEF_EDITION` with `resolveTefEdition(frameId, receptor)`
+   over the real edition keys (who-2022-devito-2024 / who-2005 / who-1998-mammal|avian|fish; there is no
+   `who-1998-taxa` key). RPF stays frame-only (human-health-carcinogenic only). See A3a.
 6. Is building the calc core BEFORE all non-HC reference numbers are A2-verified acceptable under
    build-first, given every factor row is qa-flagged and any equations.json record is needs_review?
