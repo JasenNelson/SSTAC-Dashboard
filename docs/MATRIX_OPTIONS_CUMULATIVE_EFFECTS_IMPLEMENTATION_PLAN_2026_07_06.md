@@ -117,8 +117,11 @@ header + per-row `qa: 'verified' | 'needs_review'` + `sourceId`), with `__tests_
   `who-2022-devito-2024`. Seed the WHO-2005/1998 columns from spec Section 2; TRANSCRIBE the
   DeVito-2024 column from HC TRV v4.0 Table 4 (pp. 54-55) via the .venv extractor (this is the A1
   extraction step; delegate the PDF read).
-- `src/lib/matrix-options/rpfTable.ts` -- PAH (by CAS) -> RPF, keyed by scheme: `nisbet-1992`,
-  `hc-pqra-v3`, `epa-2010-draft`. Seed from spec Section 3; flag every row needs_review pending A2.
+- `src/lib/matrix-options/rpfTable.ts` -- PAH (by CAS) -> RPF, keyed by scheme. The `RpfScheme` union is
+  the CANONICAL scheme list and MUST match the keys used by `FRAME_RPF_SCHEME` in A3a:
+  `nisbet-1992 | hc-pqra-v3 | epa-1993 | epa-2010-draft | ccme-2010 | who-1998-pah`. Seed the
+  well-defined columns from spec Section 3; add the framework-specific schemes (epa-1993, ccme-2010,
+  who-1998-pah) from A2 verification; flag every row needs_review pending A2.
 - `src/lib/matrix-options/adafTable.ts` -- age bin -> ADAF (0-<2 = 10, 2-<16 = 3, 16+ = 1), for the
   mutagenic-MoA PAH path. Source: US EPA 2005 supplemental guidance + HC v4.0 BaP ADAF note.
 - Lookup helpers return `{factor, qa, warning}` and warn (not throw) on an unknown congener/PAH/edition
@@ -182,10 +185,12 @@ A3a (headless core -- SHIPPABLE build-first; NO union / dispatch changes per D0)
   (there is NO `who-1998-taxa` key). Mapping (implements spec Section 4): HC-HH -> who-2022-devito-2024;
   BC/EPA/Ontario-HH -> who-2005; CCME/FCSAP eco -> who-1998-{mammal|avian|fish} by the eco receptor;
   HH-mammalian for CCME/FCSAP human-health -> who-1998-mammal. RPF is human-health-carcinogenic ONLY
-  (no taxa split), so `FRAME_RPF_SCHEME: Record<RegulatoryFrameId, RpfScheme>` frame-only is fine
-  (HC=hc-pqra-v3; EPA=epa-1993/2010; BC/CCME/Ontario=ccme-2010/who-1998 per spec Section 4 -- verify in
-  A2). Both are plain const maps/resolvers, NOT dispatch/EquationVariantId. Surface the active edition in
-  the UI via `regulatoryFrames.ts` `sourceHierarchy` (read-only; no union change).
+  (no taxa split), so `FRAME_RPF_SCHEME: Record<RegulatoryFrameId, RpfScheme>` frame-only is fine, using
+  the SAME `RpfScheme` union keys defined in A1 (HC -> hc-pqra-v3; EPA -> epa-2010-draft with epa-1993
+  fallback; BC -> who-1998-pah; CCME/Ontario -> ccme-2010; per spec Section 4 -- verify exact
+  per-framework choice in A2). Both are plain const maps/resolvers, NOT dispatch/EquationVariantId.
+  Surface the active edition in the UI via `regulatoryFrames.ts` `sourceHierarchy` (read-only; no union
+  change).
 - `equations.json` provenance records (OPTIONAL): `EquationRecord.pathway` is typed to
   `ProvenancePathway`, so a record can ONLY carry an EXISTING calculator pathway (e.g.
   `human-health-direct`). Do NOT try to put `hh-toxicity-weighting` in `EquationRecord.pathway` -- it is
