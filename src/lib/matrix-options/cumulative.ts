@@ -20,7 +20,7 @@
 //
 // Plain ASCII only.
 
-import { lookupTef, type TefEdition } from './tefTable';
+import { lookupTef, type TefEdition, TEF_EDITION_QA } from './tefTable';
 import { lookupRpf, type RpfScheme, RPF_SCHEME_NOTES } from './rpfTable';
 import { lookupAdaf } from './adafTable';
 import type { RegulatoryFrameId } from './regulatoryFrames';
@@ -118,6 +118,14 @@ export const RPF_SCHEME_BY_AUTHORITY: Record<RpfAuthority, RpfScheme> = {
   'us-epa': 'epa-2010-draft',
   ontario: 'ccme-2010',
 };
+
+// Schemes that are NOT safe to score yet (a warning is not enough for a screening tool -- a caller
+// that ignores warnings would over/under-sum). computeBaPeq BLOCKS these. who-1998-pah is the BC
+// placeholder whose 5-PAH subset is unverified (framework-A2); scoring it against the full CCME
+// lineage would OVER-SUM BC BaP-eq. Remove a scheme from this set only after its data is verified.
+export const RPF_SCHEME_SCORING_BLOCKED: ReadonlySet<RpfScheme> = new Set<RpfScheme>([
+  'who-1998-pah',
+]);
 
 // ---------------------------------------------------------------------------
 // Unit normalization -- mass/mass only, canonical mg/kg. (Deliberately NOT reusing
@@ -266,6 +274,15 @@ export function computeTEQ(
   const contributions: CumulativeContributionRow[] = [];
   const ndFraction = opts.nonDetectFraction ?? 0.5;
 
+  // Surface the edition's QA level in warnings (parallels the RPF needs_review warning) so a caller
+  // that only reads `equivalent` + `warnings` (not each contribution row's qa) still sees that a
+  // non-primary-verified TEF edition was used.
+  if (TEF_EDITION_QA[edition] === 'needs_review') {
+    warnings.push(
+      `TEF edition ${edition} is needs_review (not primary-source verified; framework-A2 pending).`,
+    );
+  }
+
   if (!Array.isArray(entries) || entries.length === 0) {
     return {
       equivalent: 0,
@@ -368,6 +385,22 @@ export function computeBaPeq(
 
   const schemeNote = RPF_SCHEME_NOTES[scheme];
   if (schemeNote) warnings.push(`Scheme ${scheme}: ${schemeNote}`);
+
+  // Fail closed for schemes not yet safe to score (e.g. the BC who-1998-pah placeholder whose 5-PAH
+  // subset is unverified). A warning alone is not enough for a screening tool -- BLOCK so a caller
+  // that ignores warnings cannot ship an over-summed BaP-eq.
+  if (RPF_SCHEME_SCORING_BLOCKED.has(scheme)) {
+    return {
+      equivalent: 0,
+      equivalentUnit: CANONICAL_UNIT,
+      contributions: [],
+      warnings: [
+        ...warnings,
+        `Scheme ${scheme} is not verified for scoring yet (framework-A2 pending); BaP-eq is blocked (fail-closed).`,
+      ],
+      blocked: true,
+    };
+  }
 
   if (!Array.isArray(entries) || entries.length === 0) {
     return {

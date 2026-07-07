@@ -137,6 +137,22 @@ describe('computeTEQ -- WHO-2005 anchor case', () => {
     expect(res.blocked).toBe(true);
     expect(res.warnings.some((w) => /negative/i.test(w))).toBe(true);
   });
+
+  it('surfaces a needs_review warning for a non-HC (needs_review) TEF edition', () => {
+    const res = computeTEQ(
+      [{ congenerId: '2378-tcdd', concentration: 10, unit: 'pg/g' }],
+      'who-2005',
+    );
+    expect(res.warnings.some((w) => /needs_review/i.test(w))).toBe(true);
+  });
+
+  it('the primary-verified DeVito-2024 edition does NOT emit a needs_review warning', () => {
+    const res = computeTEQ(
+      [{ congenerId: '2378-tcdd', concentration: 10, unit: 'pg/g' }],
+      'who-2022-devito-2024',
+    );
+    expect(res.warnings.some((w) => /needs_review/i.test(w))).toBe(false);
+  });
 });
 
 describe('computeBaPeq -- hc-pqra-v3 anchor case', () => {
@@ -178,12 +194,16 @@ describe('computeBaPeq -- hc-pqra-v3 anchor case', () => {
     expect(res.warnings.some((w) => /not already ADAF-adjusted/i.test(w))).toBe(true);
   });
 
-  it('surfaces the BC who-1998-pah known-gap over-sum warning', () => {
+  it('BLOCKS scoring for the BC who-1998-pah placeholder scheme (over-sum risk, framework-A2 pending)', () => {
     const res = computeBaPeq(
       [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
       'who-1998-pah',
     );
-    expect(res.warnings.some((w) => /over-sum|framework-A2|not for scoring/i.test(w))).toBe(true);
+    // A warning alone is not enough for a screening tool -- the result must be blocked so a caller
+    // that ignores warnings cannot ship an over-summed BaP-eq.
+    expect(res.blocked).toBe(true);
+    expect(res.equivalent).toBe(0);
+    expect(res.warnings.some((w) => /not verified for scoring|framework-A2/i.test(w))).toBe(true);
   });
 
   it('all-excluded PAHs is a VALID BaP-eq of 0 (not blocked) -- excluded != skipped', () => {
