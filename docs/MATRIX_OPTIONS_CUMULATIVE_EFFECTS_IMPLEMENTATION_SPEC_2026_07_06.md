@@ -19,6 +19,20 @@ for carcinogenic PAHs; total/non-dioxin-like PCB mass methods). Companion to the
   our catalog, they match cleanly (HC non-DL PCB 1e-5, EPA Aroclor-1254 RfD 2e-5, EPA total-PCB SF 2.0,
   NRWQC FW CCC 0.014, TCDD RfD 7e-10). That raises confidence in the mass-based PCB layer specifically.
 
+**VERIFIED 2026-07-06 against the HC TRV v4.0 (2025) PDF** (`G:\...\References\HC 2025 - Toxicological
+Reference Values TRV.pdf`, text-extracted, page-cited):
+- **HC v4.0 uses the WHO-2022 / DeVito et al. 2024 TEFs, NOT WHO 2005** (pp. 6, 16, 52 footnote 6, Table
+  4 pp. 54-55 "Source: DeVito et al., 2024", full ref p. 57). => the catalog MUST carry multiple TEF
+  editions keyed by framework (HC=DeVito-2024; BC/EPA/Ontario=WHO-2005; CCME=WHO-1998-taxa).
+- **Dioxin / DL-PCB oral TDI = 2.3E-9 mg TEQ/kgBW-day CONFIRMED** (p. 42, provisional) -- BUT the
+  derivation basis is **Faqi & Chahoud 1998** (Wistar-rat developmental study), NOT the JECFA-2002 PTMI
+  the research report claimed. Same TDI applies to PCDD/PCDF and to dioxin-like (coplanar) PCBs.
+- **benzo_a_pyrene oral SF = 1.289 (mg/kgBW-day)^-1 CONFIRMED as the current v4.0 value** (p. 20; HC 2016
+  from Culp 1998 + Moffat 2015). The research report's "HC 2.3" was the SUPERSEDED v3 value. v4.0 only
+  ADDED an ADAF-application note (mutagenic MoA) -- the SF number is unchanged. So our catalog's 1.289 is
+  correct; the Section-5 "discrepancy" is resolved in the catalog's favor (only the EPA-2.0 source still
+  needs pinning). BaP oral TDI (separate threshold endpoint) = 3.0E-4 mg/kgBW-day (US EPA 2017).
+
 ## 1. The three methods (what they are; how substances combine)
 
 **A. Dioxin-like compounds (PCDD + PCDF + 12 dioxin-like PCBs) -- TEF/TEQ.** Shared AhR mechanism =>
@@ -48,9 +62,11 @@ check AND a separate dioxin-like TEQ check; they must not be conflated.
 
 29 congeners. WHO 2005 mammalian is the current statutory standard for most frameworks; WHO 1998
 taxa-specific sets are required by CCME/FCSAP for ecological (fish/avian) receptors. NOTE the reports
-claim HC TRV v4.0 (2025) has moved to the WHO-2022 / DeVito-2024 set (PCB-126 0.1->0.05,
-1,2,3,7,8-PeCDD 1.0->0.4) -- THIS IS THE #1 VERIFY ITEM (check the HC v4.0 PDF the owner has), because
-it means the catalog must carry MULTIPLE TEF editions keyed by framework, not one table.
+claim -- VERIFIED 2026-07-06 against the HC v4.0 PDF -- that HC TRV v4.0 (2025) HAS moved to the
+WHO-2022 / DeVito-2024 set (PCB-126 0.1->0.05, 1,2,3,7,8-PeCDD 1.0->0.4). CONFIRMED, so the catalog must
+carry MULTIPLE TEF editions keyed by framework, not one table. The DeVito-2024 numeric TEF values still
+need transcription from HC v4.0 Table 4 (pp. 54-55); the WHO-2005/1998 columns below stay as the
+reference for the non-HC frameworks.
 
 | Congener | Mammal WHO2005 | Mammal WHO1998 | Avian WHO1998 | Fish WHO1998 |
 |---|---|---|---|---|
@@ -84,9 +100,11 @@ it means the catalog must carry MULTIPLE TEF editions keyed by framework, not on
 | PCB-167 | 0.00003 | 0.00001 | 0.00001 | <0.000005 |
 | PCB-189 | 0.00003 | 0.0001 | 0.00001 | <0.000005 |
 
-Dioxin-like anchor TRVs (VERIFY): TCDD oral RfD 7e-10 mg/kg-d (EPA IRIS 2012) -- MATCHES catalog. HC
-dioxin-like-PCB/TCDD oral TDI 2.3e-9 mg TEQ/kg-d (HC TRV v4.0 2025; JECFA-2002 PTMI 70 pg/kg-mo / 30) --
-currently UNPROMOTED in our catalog (only in a markdown packet); this is a top promotion candidate.
+Dioxin-like anchor TRVs: TCDD oral RfD 7e-10 mg/kg-d (EPA IRIS 2012) -- MATCHES catalog. HC
+dioxin-like-PCB/TCDD oral TDI 2.3e-9 mg TEQ/kg-d -- VERIFIED 2026-07-06 in HC TRV v4.0 p. 42
+(provisional; basis = Faqi & Chahoud 1998, NOT JECFA-2002 as the research claimed; same TDI for
+PCDD/PCDF and coplanar PCBs). Currently UNPROMOTED in our catalog (only in a markdown packet); this is
+a top promotion candidate now that it has a confirmed locator + basis.
 
 ## 3. Reference table -- PAH RPF values (VERIFY before promote)
 
@@ -156,10 +174,14 @@ CORROBORATED (research matches wired values -- raises confidence):
 - `polychlorinated_biphenyls_total_pcbs` eco FCV 0.014 ug/L = EPA NRWQC FW CCC (matches).
 - `2_3_7_8_tetrachlorodibenzo_p_dioxin` RfD 7e-10 = EPA IRIS 2012 (matches).
 
-DISCREPANCY TO RESOLVE (feeds the benzo_a_pyrene HELD decision):
-- Catalog benzo_a_pyrene sf_oral rows are HC-v4.0 1.289 and EPA 2.0. Research gives HC PQRA v3 (2021)
-  2.3 and EPA IRIS-2017 1.0 (pre-2017 7.3). Implication to verify: HC likely revised the BaP CSF
-  2.3 (v3) -> 1.289 (v4.0 2025); and our EPA "2.0" is not the IRIS-2017 1.0 -- identify its true source.
+benzo_a_pyrene SF -- LARGELY RESOLVED 2026-07-06 (feeds the HELD decision):
+- Catalog benzo_a_pyrene sf_oral rows are HC-v4.0 1.289 and EPA 2.0. VERIFIED in HC v4.0 p. 20: the HC
+  value **1.289 (mg/kgBW-day)^-1 is the correct current v4.0 SF** (HC 2016 / Culp 1998 / Moffat 2015);
+  the research's "HC 2.3" was the SUPERSEDED v3 value. So our HC row is right. Remaining open item: pin
+  the true source of the EPA "2.0" row (research cites EPA IRIS-2017 oral CSF = 1.0, pre-2017 = 7.3 --
+  neither is 2.0), and decide the current_default between HC 1.289 and the EPA value. Also note HC v4.0
+  now recommends applying ADAFs to the BaP SF for early-life exposures (mutagenic MoA) -- a calculator
+  consideration.
 
 GAPS the research can fill (promotion candidates, post-verification):
 - Dioxin-like PCB TEQ TDI 2.3e-9 mg TEQ/kg-d (now has an HC v4.0 locator) -> promote as a keyed value.
