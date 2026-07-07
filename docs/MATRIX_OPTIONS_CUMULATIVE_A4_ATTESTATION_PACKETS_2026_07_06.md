@@ -50,26 +50,42 @@ Owner attests (a) the value + locator, (b) the key/representation, (c) whether i
 
 ---
 
-## Packet 2 -- benzo_a_pyrene EPA "2.0" oral SF: scenario-tag + current_default pick
+## Packet 2 -- benzo_a_pyrene oral SF: anchor + ADAF methodology (NOT a bare number pick)
 
-**Resolved (A2, 2026-07-06):** the catalog's two benzo_a_pyrene sf_oral rows are BOTH legitimate current
-values, not a data error:
-- HC TRV v4.0 (2025) = `1.289 (mg/kgBW-day)^-1` (verified from the HC PDF; HC 2016 / Culp 1998 / Moffat 2015).
-- EPA IRIS = `2.0 (mg/kg-day)^-1` = the LIFETIME oral CSF with ADAFs BAKED IN (EPA 2005 supplemental
-  guidance; BaP mutagenic MoA). IRIS also lists `1.0` (adult-only). Pre-2017 `7.3` is superseded.
+**REFRAMED 2026-07-07 (ADAF research, primary-verified -- see
+`docs/MATRIX_OPTIONS_ADAF_BAP_EXPLAINER_2026_07_07.md`).** The earlier "pick HC 1.289 vs EPA 2.0"
+framing was methodologically WRONG: those two values sit at DIFFERENT processing stages and are not
+interchangeable. The three current values are:
+- **HC TRV v4.0 (2025) = `1.289 (mg/kgBW-day)^-1`** -- derived from ADULT bioassay data (B6C3F1 mouse
+  diet, BMDL10 + allometric scaling), NO lifetime-ADAF weighting baked in. Structurally analogous to
+  EPA's adult 1.0, NOT its 2.0. **VERIFIED-primary 2026-07-07** by direct read of the HC v4.0 PDF, p.20,
+  which states verbatim on the BaP oral SF row: "given that BaP is known to have a mutagenic mode of
+  action, HC recommends applying ADAFs to the oral SF when assessing risk associated with early life
+  exposures at federal contaminated sites" (and p.6 revisions: v4.0 ADDED this ADAF note -- it was NOT
+  in v3.0). So: for an ADULT-only scenario 1.289 is used AS-IS (ADAF = 1); for an early-life-inclusive
+  scenario ADAFs (10/3/1 per HC 2013b) are applied ON TOP. HC provides no pre-baked lifetime equivalent
+  to EPA's 2.0.
+- **EPA IRIS adult = `1.0 (mg/kg-day)^-1`** -- adult-only, NON-ADAF-embedded (apply ADAF on top).
+- **EPA IRIS lifetime = `2.0 (mg/kg-day)^-1`** -- ADAFs ALREADY BAKED IN (0-70yr duration-weighted);
+  do NOT apply ADAF again. Pre-2017 `7.3` is superseded.
 
-**OWNER DECISIONS (two):**
-1. **Scenario tagging (recommended, low-risk):** tag each EPA row with its scenario so the two IRIS
-   numbers are never confused -- `2.0` = "IRIS lifetime, ADAF-embedded"; `1.0` = "IRIS adult-only". This
-   is metadata only (no value change). Recommended: APPROVE.
-2. **current_default pick between HC 1.289 and the EPA value:** a policy call (Protocol 1 hierarchy:
-   HC-default vs EPA-when-newer/more-defensible). AI does not pick. Owner rules.
+**OWNER DECISIONS (reframed):**
+1. **Scenario tagging (recommended, low-risk, metadata only):** tag each row with its ADAF stage --
+   `1.289` = "HC v4.0, adult-base, apply ADAF on top"; `1.0` = "EPA IRIS adult, apply ADAF on top";
+   `2.0` = "EPA IRIS lifetime, ADAF-embedded, do NOT re-apply". Recommended: APPROVE.
+2. **current_default = choose an ANCHOR + its correct ADAF treatment (NOT just a number):** the valid,
+   like-for-like comparisons are HC-1.289 (+ADAF-on-top) vs EPA-1.0 (+ADAF-on-top) [both adult-base], OR
+   HC-1.289+ADAF vs EPA-2.0 [both early-life-inclusive]. Comparing HC-1.289 directly against EPA-2.0 is
+   an apples-to-oranges error (3x-10x for a child window). The pick is a Protocol 1 policy call (owner
+   rules); AI does not pick -- but the chosen anchor MUST be stored with its ADAF-treatment tag so the
+   calculator pairs it correctly.
 
-**Calculator implication (already encoded in A3a, no action needed):** `computeBaPeq`'s ADAF option must
-NOT be applied when the downstream cancer standard is anchored on the EPA 2.0 SF (ADAFs already embedded)
--- doing so double-counts. Anchoring on 1.0 (adult) or 1.289 (HC) and THEN applying ADAFs is the
-alternative. `cumulative.ts` `computeBaPeq` surfaces this in its ADAF warning; the anchor-vs-ADAF choice
-is the caller's (i.e. the eventual A3b UI + the owner's default pick).
+**Calculator status (A3a, verified correct 2026-07-07):** `computeBaPeq`'s ADAF logic is right -- ADAF
+applied ON TOP when the caller asks (correct for HC-1.289 / EPA-1.0), and a warning to NOT double-count
+against an ADAF-embedded anchor (EPA-2.0). The anchor<->applyAdaf pairing is the caller's (A3b UI)
+responsibility; a UI test must force `applyAdaf=false` when the anchor is EPA-2.0. NOTE the documented
+SINGLE-BIN scope: `computeBaPeq` applies one age bin's ADAF; a full lifetime (0-70yr) estimate needs
+per-age-window duration-weighting by the caller (contract clarified in `cumulative.ts` 2026-07-07).
 
 Ties to the HELD decision in `MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md` Lane 3.
 
@@ -103,7 +119,7 @@ script `--apply`.
 |---|---|---|---|
 | 1 | Promote dioxin TEQ TDI 2.3e-9 + pick representation | dedicated `dioxin_teq` key, needs_review | value now primary-confirmed |
 | 2a | Scenario-tag the two EPA BaP SF rows | APPROVE (metadata only) | low |
-| 2b | current_default: HC 1.289 vs EPA | owner policy call | medium |
+| 2b | current_default = ANCHOR + its ADAF treatment (HC 1.289 / EPA 1.0 = adult-base + ADAF-on-top; EPA 2.0 = ADAF-embedded, no re-apply) -- NOT a bare number pick | owner policy call | medium |
 | 3 | Adopt PCB Option A | ADOPT (research-backed) | low-medium |
 
 Nothing above is applied. Each row stays `needs_review` / owner-attested per the dashboard rules.
