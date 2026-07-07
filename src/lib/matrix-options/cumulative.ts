@@ -364,9 +364,21 @@ export interface BaPeqEntry {
 }
 
 export interface BaPeqOptions {
-  // Optional ADAF application for mutagenic MoA. Only apply when the DOWNSTREAM cancer standard is
-  // anchored on a NON-ADAF slope factor (e.g. EPA IRIS 1.0 or HC 1.289); do NOT apply when the anchor
-  // already embeds ADAFs (e.g. EPA IRIS lifetime 2.0) -- that double-counts. Caller owns that choice.
+  // Optional ADAF (Age-Dependent Adjustment Factor) application for a mutagenic-MoA carcinogen
+  // (benzo[a]pyrene). ADAF ANCHOR-PAIRING CONTRACT (load-bearing -- a mispairing is a 3x-10x error for
+  // a child-exposure window):
+  //   - HC v4.0 SF 1.289 and EPA IRIS adult SF 1.0 are ADULT-based, NON-ADAF-embedded -> ADAF is
+  //     applied ON TOP (applyAdaf: true). (HC v4.0, 2025, added an ADAF-application note; HC gives no
+  //     pre-baked lifetime equivalent.)
+  //   - EPA IRIS lifetime SF 2.0 already has ADAFs BAKED IN (0-70yr exposure-duration-weighted) ->
+  //     applyAdaf MUST be false, or you double-count.
+  //   The caller (UI/anchor selector) owns pairing the chosen anchor with the correct applyAdaf value.
+  // SINGLE-BIN SCOPE (not lifetime weighting): this applies ONE age bin's ADAF factor
+  // (ageYears -> 10 / 3 / 1) as a scalar. It does NOT perform the lifetime multi-window,
+  // exposure-duration-weighted averaging that a full 0-70yr scenario requires -- a caller that needs a
+  // lifetime-integrated estimate must weight the per-age-window results itself (e.g. call per bin and
+  // duration-weight), NOT call this once for a multi-decade exposure. See
+  // docs/MATRIX_OPTIONS_ADAF_BAP_EXPLAINER_2026_07_07.md.
   applyAdaf?: boolean;
   ageYears?: number;
 }
@@ -425,7 +437,11 @@ export function computeBaPeq(
       warnings.push(`ADAF requested but ${a.warning}; BaP-eq is blocked (fail-closed) rather than applying ADAF = 1.`);
     } else {
       adaf = a.adaf;
-      warnings.push(`ADAF ${a.adaf} applied (age bin ${a.ageBin}). Ensure the anchor SF is NOT already ADAF-adjusted.`);
+      warnings.push(
+        `ADAF ${a.adaf} applied for a SINGLE age bin (${a.ageBin}). Ensure the anchor SF is NOT already ` +
+          `ADAF-adjusted (do NOT use with EPA lifetime 2.0). A lifetime (0-70yr) estimate needs ` +
+          `per-age-window duration-weighting by the caller -- this call does not lifetime-weight.`,
+      );
     }
   }
 
