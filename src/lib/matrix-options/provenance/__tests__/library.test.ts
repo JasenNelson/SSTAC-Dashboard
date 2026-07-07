@@ -94,7 +94,10 @@ describe('matrix options evidence library helpers', () => {
     // eco-food-bsaf__methylmercury__trv_eco_mg_per_kg_bw_day__Canada_federal (distinct from the
     // deleted __general scaffold group), so they add +1 unique group (unchanged by the 2026-07-03
     // HITL promotion to approved -- promotion flips qa/evidence status, not the group count).
-    expect(view.valueGroups).toHaveLength(1683);
+    // 2026-07-07: +1 (1683 -> 1684) -- D1 dioxin-like TEQ oral TDI needs_review candidate
+    // (pv-hc-dioxin-like-teq-hh-direct-oral-tdi) adds ONE new candidate group
+    // human-health-direct__dioxin_like_teq__oral_tdi_teq_mg_per_kg_bw_day__Canada_federal.
+    expect(view.valueGroups).toHaveLength(1684);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -146,7 +149,9 @@ describe('matrix options evidence library helpers', () => {
     // NRWQC total-PCBs chronic criterion via promote-pcb-fcv-nrwqc.mjs) = 1350.
     // 2026-07-03: +2 (1350 -> 1352) -- methylmercury eco-food wildlife TDIs (mammal 0.022 + bird
     // 0.031) HITL-promoted to approved_source_backed (J. Nelson, promote-eco-source.mjs --apply).
-    expect(view.audit.values.approvedSourceBacked).toBe(1352);
+    // 2026-07-07: +1 (1352 -> 1353) -- D1 dioxin-like TEQ oral TDI needs_review candidate carries
+    // evidence_support_status=approved_source_backed (qa_status still needs_review), so it counts here.
+    expect(view.audit.values.approvedSourceBacked).toBe(1353);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -249,7 +254,9 @@ describe('matrix options evidence library helpers', () => {
     // deliberately left untouched pending owner sign-off -- see
     // docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md). +2 (1676 -> 1678); the IRIS
     // current_default promotion from 2026-07-05 is unaffected.
-    expect(view.audit.values.availableOptions).toBe(1678);
+    // 2026-07-07: +1 (1678 -> 1679) -- D1 dioxin-like TEQ oral TDI needs_review candidate has
+    // default_status=available_option.
+    expect(view.audit.values.availableOptions).toBe(1679);
     // 2026-07-06 CORRECTION: the 2 chlorobenzene rows leave not_default (see above). -2 (19 -> 17).
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
