@@ -260,7 +260,11 @@ findings at `tefTable.ts` / `rpfTable.ts` once merged.
 **Nothing here is auto-applied.** Two findings are consequential enough to require OWNER adjudication
 because they CONTRADICT the already-reviewed SPEC (#528) / plan (#529):
 
-1. **[OWNER DECISION -- HIGH] The SPEC's "BC = WHO-1998 5-PAH TEFs" (Section 4) is likely WRONG.**
+1. **[OWNER DECISION -- HIGH -- APPROVED + IMPLEMENTED 2026-07-07, D4] The SPEC's "BC = WHO-1998 5-PAH TEFs" (Section 4) was WRONG.**
+   STATUS: owner approved the remap below; `RPF_SCHEME_BY_AUTHORITY['bc-csr']` now maps to
+   `ccme-2010` (BC TG-7, 2017) and `who-1998-pah` is DEPRECATED-BUT-UNUSED (type/table kept for
+   other references; no authority maps to it; remains in `RPF_SCHEME_SCORING_BLOCKED` as inert
+   safety). See `src/lib/matrix-options/cumulative.ts` and `rpfTable.ts`.
    Primary (BC TG-7 2017): BC CSR risk assessment uses HC PQRA v2.0 Table 7 = the 8-PAH CCME-2010 /
    WHO-1998 lineage already in the catalog. Recommended correction (owner rules):
    - Remap `RPF_SCHEME_BY_AUTHORITY['bc-csr']` from `who-1998-pah` -> the VERIFIED 8-PAH Table-7
