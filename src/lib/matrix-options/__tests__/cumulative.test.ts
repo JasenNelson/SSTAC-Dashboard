@@ -346,7 +346,8 @@ describe('edition / scheme / authority selection', () => {
 
   it('RPF_SCHEME_BY_AUTHORITY covers the 5 human-health authorities (fcsap excluded by type)', () => {
     expect(RPF_SCHEME_BY_AUTHORITY.hc).toBe('hc-pqra-v3');
-    expect(RPF_SCHEME_BY_AUTHORITY['bc-csr']).toBe('who-1998-pah');
+    // D4 (owner-approved, 2026-07-07): BC TG-7 (2017) remap -- bc-csr -> ccme-2010, not who-1998-pah.
+    expect(RPF_SCHEME_BY_AUTHORITY['bc-csr']).toBe('ccme-2010');
     expect(RPF_SCHEME_BY_AUTHORITY.ccme).toBe('ccme-2010');
     expect(RPF_SCHEME_BY_AUTHORITY['us-epa']).toBe('epa-2010-draft');
     expect(RPF_SCHEME_BY_AUTHORITY.ontario).toBe('ccme-2010');

@@ -20,12 +20,15 @@
 //   ccme-2010      -- CCME 2010 Canadian Soil Quality Guidelines carcinogenic-PAH PEFs (8-PAH set,
 //                     adapted from WHO/IPCS 1998). qa: verified (A2 checked). HC adopts these as
 //                     "recommended".
-//   who-1998-pah   -- BC CSR PAH scheme (WHO-1998 lineage; shares CCME-2010 PEF VALUES). qa:
-//                     needs_review. *** KNOWN GAP: BC's regulatory scheme is a RESTRICTED 5-PAH
-//                     SUBSET, but the exact 5 PAHs are framework-A2 (NOT yet verified). This column
-//                     mirrors the CCME carcinogenic-PAH values as a placeholder; using it as-is may
-//                     OVER-SUM BC BaP-eq (it does not yet exclude the non-BC-5 PAHs). A3a must treat
-//                     who-1998-pah as needs_review + not-yet-scoring until the subset is pinned. ***
+//   who-1998-pah   -- DEPRECATED-BUT-UNUSED as of D4 (owner-approved, 2026-07-07): BC TG-7 (2017)
+//                     remaps bc-csr to ccme-2010 in RPF_SCHEME_BY_AUTHORITY (cumulative.ts); no
+//                     authority maps here anymore. Type + row KEPT (other code/tests may reference
+//                     it) and it remains in RPF_SCHEME_SCORING_BLOCKED as inert safety. BC CSR PAH
+//                     scheme (WHO-1998 lineage; shares CCME-2010 PEF VALUES). qa: needs_review.
+//                     *** KNOWN GAP (historical): BC's regulatory scheme was believed to be a
+//                     RESTRICTED 5-PAH SUBSET, but the exact 5 PAHs were never verified
+//                     (framework-A2); this column mirrored the CCME carcinogenic-PAH values as a
+//                     placeholder and may OVER-SUM BC BaP-eq if ever scored. ***
 //
 // A PAH cell is one of: a numeric RPF ('value'); 'excluded' (non-carcinogenic -- deliberately not in
 // the scheme's carcinogenic set; contributes 0 with an informational warning); or 'not-defined' (the

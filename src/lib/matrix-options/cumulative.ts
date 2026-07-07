@@ -110,19 +110,24 @@ export function resolveTefEdition(
 }
 
 // RPF scheme by authority (frame-only; human-health-carcinogenic only). fcsap excluded by type.
-// who-1998-pah (BC) is a KNOWN GAP: its 5-PAH subset membership is unverified (framework-A2).
+// D4 (owner-approved, 2026-07-07): BC TG-7 (2017) remap -- bc-csr now maps to ccme-2010 (the
+// verified 8-PAH CCME scheme), NOT who-1998-pah. who-1998-pah is DEPRECATED-BUT-UNUSED: its type
+// and RPF table row are kept (other code/tests may reference it) but no authority maps to it
+// anymore. It remains in RPF_SCHEME_SCORING_BLOCKED below as inert safety (harmless now that
+// nothing scores against it) -- this is a deliberate leave-in-place, not an oversight.
 export const RPF_SCHEME_BY_AUTHORITY: Record<RpfAuthority, RpfScheme> = {
   hc: 'hc-pqra-v3',
-  'bc-csr': 'who-1998-pah',
+  'bc-csr': 'ccme-2010',
   ccme: 'ccme-2010',
   'us-epa': 'epa-2010-draft',
   ontario: 'ccme-2010',
 };
 
 // Schemes that are NOT safe to score yet (a warning is not enough for a screening tool -- a caller
-// that ignores warnings would over/under-sum). computeBaPeq BLOCKS these. who-1998-pah is the BC
-// placeholder whose 5-PAH subset is unverified (framework-A2); scoring it against the full CCME
-// lineage would OVER-SUM BC BaP-eq. Remove a scheme from this set only after its data is verified.
+// that ignores warnings would over/under-sum). computeBaPeq BLOCKS these. who-1998-pah is retained
+// here as inert safety even though it is now unused by RPF_SCHEME_BY_AUTHORITY (D4 remap, BC TG-7
+// 2017); its 5-PAH subset was never verified (framework-A2) so it must never be scored if some
+// future caller reintroduces it. Remove a scheme from this set only after its data is verified.
 export const RPF_SCHEME_SCORING_BLOCKED: ReadonlySet<RpfScheme> = new Set<RpfScheme>([
   'who-1998-pah',
 ]);
