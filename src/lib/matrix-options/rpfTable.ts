@@ -114,9 +114,19 @@ const RAW_ROWS: readonly RawRow[] = [
   // Carcinogenic PAHs. who-1998-pah placeholder = CCME lineage (see KNOWN GAP above).
   { key: 'benz_a_anthracene', name: 'Benz[a]anthracene', cas: '56-55-3', cells: [0.1, 0.1, 0.2, 0.1, 0.1] },
   { key: 'chrysene', name: 'Chrysene', cas: '218-01-9', cells: [0.01, 0.01, 0.1, 0.01, 0.01] },
-  { key: 'benzo_b_fluoranthene', name: 'Benzo[b]fluoranthene', cas: '205-99-2', cells: [0.1, 0.1, 0.8, 0.1, 0.1] },
-  { key: 'benzo_j_fluoranthene', name: 'Benzo[j]fluoranthene', cas: '205-82-3', cells: [0.1, 0.1, 0.3, 0.1, 0.1] }, // nisbet 0.1 compiler-assigned
-  { key: 'benzo_k_fluoranthene', name: 'Benzo[k]fluoranthene', cas: '207-08-9', cells: [0.1, 0.1, 0.03, 0.1, 0.1] },
+  // benzo[b/j/k]fluoranthene: the GROUP schemes (hc-pqra-v3, ccme-2010, who-1998-pah) define ONE
+  // combined PEF for benzo[b+j+k]fluoranthene (they co-elute -- CCME 2010 Table 6-6, VERIFIED-primary);
+  // scoring b/j/k SEPARATELY under those schemes would OVER-COUNT up to 3x. So the individual isomers
+  // are 'not-defined' under the group schemes (a caller entering them fails closed -- use the combined
+  // `benzo_bjk_fluoranthene` key instead), and kept per-isomer only where the scheme genuinely assigns
+  // distinct potencies: nisbet-1992 (b, k separate; j compiler-assigned) and epa-2010-draft (0.8/0.3/0.03).
+  { key: 'benzo_b_fluoranthene', name: 'Benzo[b]fluoranthene', cas: '205-99-2', cells: [0.1, 'nd', 0.8, 'nd', 'nd'] },
+  { key: 'benzo_j_fluoranthene', name: 'Benzo[j]fluoranthene', cas: '205-82-3', cells: [0.1, 'nd', 0.3, 'nd', 'nd'] }, // nisbet 0.1 compiler-assigned
+  { key: 'benzo_k_fluoranthene', name: 'Benzo[k]fluoranthene', cas: '207-08-9', cells: [0.1, 'nd', 0.03, 'nd', 'nd'] },
+  // Combined benzo[b+j+k]fluoranthene group -- the correct key to enter under a GROUP scheme. RPF 0.1
+  // for hc-pqra-v3 / ccme-2010 / who-1998-pah (CCME 2010 Table 6-6 combined PEF); not-defined under
+  // nisbet-1992 / epa-2010-draft (those assign per-isomer potencies, use the individual keys there).
+  { key: 'benzo_bjk_fluoranthene', name: 'Benzo[b+j+k]fluoranthene', cas: '205-99-2/205-82-3/207-08-9', cells: ['nd', 0.1, 'nd', 0.1, 0.1] },
   { key: 'benzo_a_pyrene', name: 'Benzo[a]pyrene', cas: '50-32-8', cells: [1.0, 1.0, 1.0, 1.0, 1.0] }, // index
   { key: 'dibenz_ah_anthracene', name: 'Dibenz[a,h]anthracene', cas: '53-70-3', cells: [5.0, 1.0, 10, 1.0, 1.0] },
   { key: 'indeno_123cd_pyrene', name: 'Indeno[1,2,3-cd]pyrene', cas: '193-39-5', cells: [0.1, 0.1, 0.07, 0.1, 0.1] },

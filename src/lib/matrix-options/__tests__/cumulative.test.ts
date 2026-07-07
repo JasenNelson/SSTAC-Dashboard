@@ -220,6 +220,47 @@ describe('computeBaPeq -- hc-pqra-v3 anchor case', () => {
     expect(res.equivalent).toBe(0);
   });
 
+  it('under a group scheme, the COMBINED benzo[b+j+k] key scores once (no over-count)', () => {
+    // ccme-2010 defines ONE PEF 0.1 for benzo[b+j+k]fluoranthene. BaP 1.0 + bjk 3 mg/kg * 0.1 = 1.3.
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_bjk_fluoranthene', concentration: 3, unit: 'mg/kg' },
+      ],
+      'ccme-2010',
+    );
+    expect(res.blocked).toBe(false);
+    expect(res.equivalent).toBeCloseTo(1.3, 12);
+  });
+
+  it('under a group scheme, an INDIVIDUAL benzo[b] fails closed (prevents the 3x over-count)', () => {
+    // Entering benzo_b (or j/k) separately under ccme-2010 must NOT score 0.1 each -- it is not-defined
+    // there, so the reducer blocks (forcing the combined benzo_bjk key). Guards the over-count bug.
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_b_fluoranthene', concentration: 3, unit: 'mg/kg' },
+      ],
+      'ccme-2010',
+    );
+    expect(res.blocked).toBe(true);
+    expect(res.warnings.some((w) => /no rpf defined|not scored/i.test(w))).toBe(true);
+  });
+
+  it('under nisbet-1992, individual benzo[b]/benzo[k] ARE scored per-isomer (not a group there)', () => {
+    // BaP 1.0 + benzo_b 2*0.1 + benzo_k 3*0.1 = 1.0 + 0.2 + 0.3 = 1.5.
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_b_fluoranthene', concentration: 2, unit: 'mg/kg' },
+        { pahKey: 'benzo_k_fluoranthene', concentration: 3, unit: 'mg/kg' },
+      ],
+      'nisbet-1992',
+    );
+    expect(res.blocked).toBe(false);
+    expect(res.equivalent).toBeCloseTo(1.5, 12);
+  });
+
   it('BLOCKS when a valid PAH is mixed with a not-defined PAH (underestimate)', () => {
     const res = computeBaPeq(
       [
