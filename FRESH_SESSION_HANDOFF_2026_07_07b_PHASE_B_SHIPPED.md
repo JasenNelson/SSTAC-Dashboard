@@ -11,7 +11,8 @@ This session continued the Matrix Options cumulative-effects lane as ORCHESTRATO
 Phase A (the calculation engine: A1 tables + A3a reducers) was already SHIPPED in the prior session. This
 session executed Phase B -- the owner-gated anchor promotions D1/D2/D4 -- and attempted Phase C (framework-A2
 WHO verification), which turned out to be blocked on missing source PDFs and is now PARKED, not failed.
-D3 (PCB Option A) was recon'd and confirmed by the owner but is blocked pending D1 merge.
+D3 (PCB Option A) was recon'd + inspected and CLOSED OUT as DATA-LAYER SATISFIED, SCORING DEFERRED TO A3
+(no data-layer code required; see the D3 section below).
 
 ## Shipped this session (3 PRs, all gates GREEN, awaiting owner CI + merge)
 
@@ -59,22 +60,44 @@ progress. `who-2022-devito-2024` was already primary-verified in the prior sessi
 `scripts/matrix-options/probe_dioxin_tdi.py` (the `fitz` text-extraction pattern used successfully for D1 --
 reuse this pattern rather than re-deriving a PDF-reading approach).
 
-## D3 (PCB Option A) -- BLOCKED / deferred (recon done this session, no commits)
+## D3 (PCB Option A) -- CLOSEOUT: DATA-LAYER SATISFIED, SCORING DEFERRED TO A3
 
-The owner CONFIRMED Option A this session. D3 is nonetheless blocked for two reasons:
-1. It DEPENDS on D1 (PR #540) actually merging -- the dioxin-like PCB fraction is scored via D1's new
-   `dioxin_like_teq` TEQ TDI, apportioned 50%.
-2. Wiring that 50% apportionment into the cumulative reducer is A3/Phase-D-adjacent calculator-behavior
-   work (an owner `--apply`-attested change), which the plan intentionally defers until Phase B and Phase C
-   both land.
+Owner CONFIRMED Option A. A code-flow inspection of live `main` (verified: zero production callers of the
+cumulative reducers; `compareEquivalentToStandard` header `cumulative.ts:18-19`; PCB rows in
+`parameter_values.json`) established that **D3 is a dependency-tracking + deferred-scoring item, NOT a
+data-layer coding task.** Do not invent reducer work for it.
 
-PCB catalog state was checked this session and there is no stale `current_default` conflict:
-`total_pcbs_aroclor_1254` remains the sole canonical mass-based `current_default` key (IRIS RfD 2.0e-5, SF
-2.0, FCV 0.014) -- UNCHANGED; the non-DL `pcbs_non_coplanar` (HC 1e-5) is already approved. One owner
-sub-decision remains OPEN: whether to alias/deprecate the overlapping `polychlorinated_biphenyls_total_pcbs`
-stub or keep both keys scoped separately -- see
-`docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`. Only `promote-pcb-fcv-nrwqc.mjs`
-exists so far; nothing new was authored for D3 this session. **Resume D3 after D1 merges.**
+Verdict: **DATA-LAYER SATISFIED, SCORING DEFERRED TO A3.**
+
+What Option A needs, and its status:
+- **Mass-based total PCBs:** `total_pcbs_aroclor_1254` stays the active canonical `current_default`
+  (EPA/IRIS RfD 2.0e-5, SF 2.0, FCV 0.014) -- **UNCHANGED; MUST NOT be changed** (not a stale-default
+  cleanup).
+- **Non-DL PCB value:** `pcbs_non_coplanar` (HC 1e-5) -- **already approved / in place.**
+- **DL-PCB fraction TDI:** supplied by D1 / #540 as `dioxin_like_teq` = **2.3e-9 mg TEQ/kg-bw/day**, with
+  the **50% apportionment BAKED INTO THE CONSTANT at derivation** (HC / Baars-2001). **No runtime 50%
+  operation should ever be implemented** -- there is nothing to apply at scoring time. This is a DATA
+  dependency (arrives when #540 merges), not a D3 code task.
+
+Why the scoring is deferred (not buildable as a data-layer change now):
+- `computeTEQ` / `computeBaPeq` / `compareEquivalentToStandard` are **unwired / headless (D0-standalone),
+  with ZERO production callers.** Building anything against them now would be dead code.
+- `compareEquivalentToStandard` is **concentration-only and MUST NOT be used for a raw dose TDI**
+  (mg/kg-bw/day) comparison -- it deliberately rejects dose-unit standards (`cumulative.ts:18-19`).
+
+**Future A3 / Phase-D work (NOT this lane; start only when A3 is authorized):** compute the DL-PCB TEQ
+intake (`computeTEQ` + exposure) and evaluate it as an **HQ against `dioxin_like_teq` via the calculators'
+existing dose / RfD / HQ path** (NOT `compareEquivalentToStandard`), surfaced as a **parallel check
+alongside** the mass-based total-PCB result. This is dispatch/UI wiring (`equationDispatch`, resolver,
+`frameDefaults`, `defaultSelectionPolicy`, UI) and is owner-authorized A3 scope.
+
+**Optional owner-gated housekeeping (NOT required for Option A correctness):** alias / deprecate the
+overlapping `polychlorinated_biphenyls_total_pcbs` stub -- re-key its eco-FCV + P28 rows, **do not delete
+rows** -- per `docs/MATRIX_OPTIONS_PCB_KEY_CONSOLIDATION_DECISION_2026_07_02.md`.
+
+Dependency status at close: #540 (D1) was **still OPEN / not merged** at the time of this note (`main` at
+`deede52`); the `dioxin_like_teq` data dependency lands only when #540 merges. Nothing further is needed
+in the D3 data lane.
 
 ## Broader MO decisions (RESOLVED by owner this session 2026-07-07b)
 
