@@ -2,21 +2,14 @@
 
 ## Live Baseline
 
-- `origin/main` at plan time: `3285998`.
-- Phase B PRs #540, #541, #542, and #543 are merged.
-- PR #545 is open and ready for owner merge.
+- `origin/main` at plan time: Includes `a49d0b9` and newer.
+- Phase B PRs #540, #541, #542, and #543 are **merged**.
+- Phase A3 (DL-PCB TEQ parallel screening card) PR #545 is **merged** and QA'd green.
+- PRs #548, #549, and #550 are **merged**.
 - Phase C is parked on missing primary source PDFs.
 - Gate2B/Supabase/engine-v2 paths are out of scope for this Matrix Options run.
 
 ## Safe Now
-
-### PR #545 owner merge
-
-Status: ready for owner merge.
-
-Evidence packet: `docs/MATRIX_OPTIONS_PR545_READINESS_2026_07_08.md`.
-
-No further code is recommended before merge.
 
 ### Documentation consolidation
 
@@ -31,6 +24,7 @@ Current generated docs:
 - `docs/MATRIX_OPTIONS_ORGANOMERCURY_PACKET_2026_07_08.md`
 - `docs/MATRIX_OPTIONS_BACKLOG_EXECUTION_MAP_2026_07_08.md`
 - `docs/MATRIX_OPTIONS_E2E_ASSESSMENT_2026_07_08.md`
+- `docs/MATRIX_OPTIONS_NEXT_LANE_RECOMMENDATION_2026_07_08.md`
 
 These are docs-only and avoid forbidden paths. They are useful as a handoff PR once staging permissions are
 available.
@@ -39,9 +33,11 @@ available.
 
 ### Organomercury / `phenylmercuric_acetate`
 
-Decision needed: `abs_dermal` policy.
+Decision needed:
+1. `abs_dermal` policy.
+2. Contaminant class approach (Option A1: pragmatic `organic` bucket vs Option A2: explicit `organomercury` class).
 
-Evidence packet: `docs/MATRIX_OPTIONS_ORGANOMERCURY_PACKET_2026_07_08.md`.
+Evidence packet: `docs/MATRIX_OPTIONS_NEXT_LANE_RECOMMENDATION_2026_07_08.md`.
 
 Allowed implementation after decision:
 
@@ -108,28 +104,17 @@ Missing primary sources:
 
 Evidence packet: `docs/MATRIX_OPTIONS_PHASE_C_SOURCE_PREFLIGHT_2026_07_08.md`.
 
-## Blocked By #545 Merge
-
-### Post-merge A3 follow-up
-
-Do not build another DL-PCB direct-contact card before #545 is merged. After merge, the next possible extension
-is a separate, explicitly scoped food-web DL-PCB assessment. That is not included in this autonomous run because
-it would require a fresh design decision about whether to reuse the inverse food-web path or add a forward TEQ
-comparison.
-
 ## Forbidden For This Run
 
 - Supabase branching or MCP.
 - Gate2B / engine-v2 work.
 - Catalog mutation.
 - Review/default status mutation.
-- PR merges.
-- Worktree cleanup involving junctions.
+- Worktree cleanup involving junctions (without explicit care).
 
 ## Recommended Sequence
 
-1. Owner merges #545.
-2. Commit the docs-only autonomous-run packets if desired.
-3. Owner decides `phenylmercuric_acetate` `abs_dermal`.
-4. Implement organomercury as a small code-only PR.
-5. Wait for missing Phase C PDFs before resuming TEF/RPF verification.
+1. Owner decides `phenylmercuric_acetate` `abs_dermal` AND contaminant class strategy.
+2. Implement organomercury as a small code-only PR.
+3. Owner provides Phase C primary PDFs.
+4. Resume TEF/RPF verification.
