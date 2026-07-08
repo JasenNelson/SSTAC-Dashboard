@@ -24,8 +24,8 @@ async function clickUntilVisible(
 }
 
 // /matrix-options is auth-gated (middleware matcher) as of 2026-06-15. CI has no
-// shared auth storageState, so navigate and skip the authenticated assertions when
-// the dev server bounces us to /login (same convention as admin-agentic-os.spec.ts).
+// shared auth storageState, so auth-dependent assertions are explicitly guarded and
+// skipped if we land on /login.
 async function gotoMatrixOptionsOrSkip(page: Page) {
   await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
   if (page.url().includes('/login')) {
@@ -35,6 +35,17 @@ async function gotoMatrixOptionsOrSkip(page: Page) {
 }
 
 test.describe('Matrix Options default-policy review shortcuts', () => {
+  test('matrix-options route is either authenticated or redirects to /login', async ({ page }) => {
+    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
+
+    if (page.url().includes('/login')) {
+      await expect(page).toHaveURL(/\/login/);
+      return;
+    }
+
+    await expect(page.getByRole('heading', { name: /Matrix Options/i })).toBeVisible();
+  });
+
   test('opens References & Values from the calculator candidate-default shortcut', async ({
     page,
   }) => {
