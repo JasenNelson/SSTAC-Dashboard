@@ -2665,6 +2665,248 @@
         "ia-refactor"
       ],
       "notes": "Feature handoff for the /admin/agentic-os/subscriptions panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). Documents the commits on feat/agentic-os-ai-subscriptions-panel (PR #116): 8d35d31, 586eaab, c1a3b21, 0b3dcde, e8654ed, + this commit (codex holistic P2/P3 fix). Not a current-status source; defer to docs/INDEX.md and manifest facts for canonical project state."
+    },
+    {
+      "id": "matrix_options.agy_12h_execution_plan_2026_07_08",
+      "path": "docs/AGY_MATRIX_OPTIONS_12H_EXECUTION_PLAN_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "agent-handoff"
+      ],
+      "notes": "Execution plan for an autonomous Matrix Options run. Not a current-status source; use with the paired run-status and packet docs."
+    },
+    {
+      "id": "matrix_options.agy_native_prompt_2026_07_08",
+      "path": "docs/AGY_MATRIX_OPTIONS_NATIVE_PROMPT_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "agent-handoff"
+      ],
+      "notes": "Paste-ready native AGY prompt for executing the Matrix Options autonomous run plan."
+    },
+    {
+      "id": "matrix_options.autonomous_docs_manifest_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_AUTONOMOUS_DOCS_PR_MANIFEST_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "docs"
+      ],
+      "notes": "Path-scoped preservation manifest for Matrix Options autonomous-run artifacts."
+    },
+    {
+      "id": "matrix_options.autonomous_closeout_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_AUTONOMOUS_CLOSEOUT_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "closeout"
+      ],
+      "notes": "Closeout summary for the 2026-07-08 Matrix Options autonomous effort, including sandbox limits and next actions."
+    },
+    {
+      "id": "matrix_options.autonomous_run_status_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_AUTONOMOUS_RUN_STATUS_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "status"
+      ],
+      "notes": "Run-local status for the 2026-07-08 Matrix Options autonomous effort. Snapshot only; do not treat as canonical project status."
+    },
+    {
+      "id": "matrix_options.backlog_execution_map_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_BACKLOG_EXECUTION_MAP_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "backlog",
+        "autonomous-run"
+      ],
+      "notes": "Execution map that classifies Matrix Options backlog items by safe-now, owner-gated, blocked, and forbidden categories."
+    },
+    {
+      "id": "matrix_options.candidate_code_pr_manifest_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_CANDIDATE_CODE_PR_MANIFEST_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "candidate-pr",
+        "autonomous-run"
+      ],
+      "notes": "Manifest separating candidate code patches from the docs-only autonomous-run preservation PR."
+    },
+    {
+      "id": "matrix_options.cyanide_speciation_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_CYANIDE_SPECIATION_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "cyanide",
+        "decision-packet"
+      ],
+      "notes": "Decision packet for remaining cyanide speciation/runtime selection questions."
+    },
+    {
+      "id": "matrix_options.dioxin_tdi_probe_portability_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_DIOXIN_TDI_PROBE_PORTABILITY_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "health-canada",
+        "tooling"
+      ],
+      "notes": "Packet for the candidate dioxin-like TEQ TDI probe portability patch."
+    },
+    {
+      "id": "matrix_options.e2e_assessment_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_E2E_ASSESSMENT_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "e2e",
+        "qa"
+      ],
+      "notes": "Assessment of Matrix Options e2e coverage limits and follow-up strategy."
+    },
+    {
+      "id": "matrix_options.e2e_auth_visibility_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_E2E_AUTH_VISIBILITY_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "e2e",
+        "auth"
+      ],
+      "notes": "Packet for the candidate unauthenticated Matrix Options e2e assertion. The code patch remains uncommitted until the focused Playwright check passes."
+    },
+    {
+      "id": "matrix_options.hc_trv_promotion_helpers_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_HC_TRV_PROMOTION_HELPERS_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "health-canada",
+        "promotion-helper"
+      ],
+      "notes": "Mapping packet for existing Health Canada TRV promotion, crosscheck, and extraction helpers. Does not authorize catalog mutation."
+    },
+    {
+      "id": "matrix_options.hc_trv_extractor_portability_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_HC_TRV_EXTRACTOR_PORTABILITY_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "health-canada",
+        "tooling"
+      ],
+      "notes": "Packet for the candidate Health Canada TRV extractor portability patch. The code patch should land separately from docs-only preservation."
+    },
+    {
+      "id": "matrix_options.inhalation_schema_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_INHALATION_SCHEMA_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "inhalation",
+        "decision-packet"
+      ],
+      "notes": "Decision packet for the gap between provenance-level inhalation values and runtime oral-only calculator schema."
+    },
+    {
+      "id": "matrix_options.native_agy_commit_prompt_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_NATIVE_AGY_COMMIT_PROMPT_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "agent-handoff",
+        "autonomous-run"
+      ],
+      "notes": "Paste-ready native AGY prompt for committing the docs preservation PR and then handling candidate code PRs separately."
+    },
+    {
+      "id": "matrix_options.ontario_mecp_ingestion_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_ONTARIO_MECP_INGESTION_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "ontario-mecp",
+        "source-inventory"
+      ],
+      "notes": "Source-inventory packet for Ontario MECP TRV ingestion planning. Does not perform ingestion or catalog edits."
+    },
+    {
+      "id": "matrix_options.organomercury_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_ORGANOMERCURY_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "organomercury",
+        "decision-packet"
+      ],
+      "notes": "Decision packet for phenylmercuric acetate and organomercury runtime wiring scope."
+    },
+    {
+      "id": "matrix_options.overnight_status_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_OVERNIGHT_STATUS_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "autonomous-run",
+        "status"
+      ],
+      "notes": "Status packet for the Matrix Options overnight run. Snapshot only; do not treat as canonical project status."
+    },
+    {
+      "id": "matrix_options.pcb_alias_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_PCB_ALIAS_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "pcb",
+        "decision-packet"
+      ],
+      "notes": "Decision packet for PCB key alias/deprecation housekeeping."
+    },
+    {
+      "id": "matrix_options.phase_c_source_preflight_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_PHASE_C_SOURCE_PREFLIGHT_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "phase-c",
+        "source-preflight"
+      ],
+      "notes": "Source preflight for Phase C TEF primary-source verification."
+    },
+    {
+      "id": "matrix_options.pr545_readiness_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_PR545_READINESS_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "pr-readiness",
+        "pcb"
+      ],
+      "notes": "Readiness packet for PR #545 DL-PCB TEQ parallel-card work. Snapshot only; refresh live PR state before acting."
+    },
+    {
+      "id": "matrix_options.ui_runtime_backlog_packet_2026_07_08",
+      "path": "docs/MATRIX_OPTIONS_UI_RUNTIME_BACKLOG_PACKET_2026_07_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "ui-runtime",
+        "backlog"
+      ],
+      "notes": "Runtime/UI backlog packet for safe post-PR #545 Matrix Options follow-up work."
     }
   ],
   "section_catalog": {
