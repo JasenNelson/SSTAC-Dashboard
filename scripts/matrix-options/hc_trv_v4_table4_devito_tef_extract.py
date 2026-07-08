@@ -8,11 +8,12 @@
 #
 # This is the A1 primary-source extraction for tefTable.ts's who-2022-devito-2024 edition column.
 # Plain ASCII only. Run: .venv/Scripts/python.exe scripts/matrix-options/hc_trv_v4_table4_devito_tef_extract.py
-import fitz
+import argparse
 import json
 import os
 
 PDF_PATH = r"G:\My Drive\SABCS - Sediment Project\References\HC 2025 - Toxicological Reference Values TRV.pdf"
+PDF_ENV_VAR = "SSTAC_HC_TRV_PDF_PATH"
 OUT_PATH = r"scripts\matrix-options\data\hc_trv_v4_table4_devito_tef_extracted.json"
 TEF_HEADER = ["Substance", "CAS No.", "TEF1"]
 
@@ -25,12 +26,49 @@ SECTION_MAP = {
 }
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(description="Extract HC TRV v4.0 table 4 TEF rows to JSON.")
+    parser.add_argument(
+        "--pdf-path",
+        default=None,
+        help=f"Path to the local HC TRV v4.0 PDF. (Overrides {PDF_ENV_VAR}; defaults to env var or '{PDF_PATH}')"
+    )
+    return parser.parse_args()
+
+
+def resolve_pdf_path(cli_pdf_path):
+    candidate = cli_pdf_path or os.getenv(PDF_ENV_VAR, "").strip() or PDF_PATH
+    if not os.path.exists(candidate):
+        raise FileNotFoundError(
+            f"PDF path not found: {candidate}\n"
+            "Set --pdf-path or set SSTAC_HC_TRV_PDF_PATH to a valid file path."
+        )
+    if not os.path.isfile(candidate):
+        raise NotADirectoryError(
+            f"PDF path is not a file: {candidate}\n"
+            "Set --pdf-path or SSTAC_HC_TRV_PDF_PATH to a .pdf file."
+        )
+    return candidate
+
+
 def norm(s):
     return (s or "").replace("\n", " ").strip()
 
 
+def _resolve_selected_pdf_path():
+    args = parse_args()
+    return resolve_pdf_path(args.pdf_path)
+
+
 def main():
-    doc = fitz.open(PDF_PATH)
+    try:
+        selected_pdf_path = _resolve_selected_pdf_path()
+    except (FileNotFoundError, NotADirectoryError) as exc:
+        raise SystemExit(str(exc))
+
+    import fitz
+
+    doc = fitz.open(selected_pdf_path)
     rows = []
     section = None
     for pidx in (53, 54):  # 0-indexed pp. 54-55

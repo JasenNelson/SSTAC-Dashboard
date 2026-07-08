@@ -1,13 +1,15 @@
 # Primary-source probe: search HC TRV v4.0 (2025) PDF for dioxin-like TEQ oral TDI value.
 # Plain ASCII only. Run: .venv/Scripts/python.exe scripts/matrix-options/probe_dioxin_tdi.py
-import fitz
+import argparse
 import re
 import sys
 import io
+import os
 
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 
 PDF_PATH = r"G:\My Drive\SABCS - Sediment Project\References\HC 2025 - Toxicological Reference Values TRV.pdf"
+PDF_ENV_VAR = "SSTAC_HC_TRV_PDF_PATH"
 
 KEYWORDS = [
     "dioxin",
@@ -25,13 +27,62 @@ NUM_PATTERN = re.compile(
 )
 
 
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Probe HC TRV v4.0 PDF for dioxin-like TEQ oral TDI candidates."
+    )
+    parser.add_argument(
+        "--pdf-path",
+        default=None,
+        help=(
+            "Path to local HC TRV v4.0 PDF. Defaults to "
+            f"{PDF_ENV_VAR} if set, otherwise {PDF_PATH}."
+        ),
+    )
+    return parser.parse_args()
+
+
+def resolve_pdf_path(cli_pdf_path):
+    candidate = (
+        cli_pdf_path
+        or os.getenv(PDF_ENV_VAR, "").strip()
+        or PDF_PATH
+    )
+
+    if not os.path.exists(candidate):
+        raise FileNotFoundError(
+            f"PDF path not found: {candidate}\n"
+            f"Set --pdf-path or set {PDF_ENV_VAR} to a valid file path."
+        )
+
+    if not os.path.isfile(candidate):
+        raise NotADirectoryError(
+            f"PDF path is not a file: {candidate}\n"
+            f"Set --pdf-path or {PDF_ENV_VAR} to a .pdf file."
+        )
+
+    return candidate
+
+
+def open_pdf(pdf_path):
+    try:
+        import fitz
+    except ImportError as exc:
+        raise SystemExit(
+            "Missing dependency: PyMuPDF ('fitz') is required to read PDFs. "
+            "Install with: pip install pymupdf"
+        ) from exc
+
+    return fitz.open(pdf_path)
+
+
 def norm(s):
     return (s or "").replace("\n", " ").strip()
 
 
-def main():
-    doc = fitz.open(PDF_PATH)
-    print(f"Opened PDF: {PDF_PATH}")
+def main(selected_pdf_path):
+    doc = open_pdf(selected_pdf_path)
+    print(f"Opened PDF: {selected_pdf_path}")
     print(f"Total pages: {len(doc)}")
     print("=" * 80)
 
@@ -79,11 +130,11 @@ def main():
             print("-" * 80)
 
 
-def dump_summary_table_pages():
+def dump_summary_table_pages(selected_pdf_path):
     # Third pass: dump full text of any page whose text contains a line starting with
     # "Dioxins" / "Dibenzo-p-dioxin" / "2,3,7,8-T" near a TDI-style numeric column,
     # to find the main TRV summary table row for dioxin-like TEQ.
-    doc = fitz.open(PDF_PATH)
+    doc = open_pdf(selected_pdf_path)
     print("=" * 80)
     print("Third pass: pages with 'dioxin' AND a TDI-shaped number (mg/kg-bw/day, pg/kg, or 10^-)")
     tdi_shape = re.compile(r"10\s*[-\u2212]\s*\d|[eE][-\u2212]\d|pg/kg|\u03bcg/kg|ug/kg|mg/kg")
@@ -101,5 +152,11 @@ def dump_summary_table_pages():
 
 
 if __name__ == "__main__":
-    main()
-    dump_summary_table_pages()
+    args = parse_args()
+    try:
+        selected_pdf_path = resolve_pdf_path(args.pdf_path)
+    except (FileNotFoundError, NotADirectoryError) as exc:
+        raise SystemExit(str(exc))
+
+    main(selected_pdf_path)
+    dump_summary_table_pages(selected_pdf_path)
