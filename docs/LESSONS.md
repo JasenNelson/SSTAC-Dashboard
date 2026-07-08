@@ -10,6 +10,28 @@
 
 ---
 
+## 2026-07-08 - CI Unit Tests EPIPE/ForksPoolWorker flake: pin the job to Node 22 [MEDIUM]
+
+**Area:** CI infra / vitest / coverage memory
+**Impact:** MEDIUM (recurring non-content CI flake that blocked merges until an SOP rerun each time)
+
+The GitHub "Unit Tests" job repeatedly flaked with `Error: write EPIPE` -> `ForksPoolWorker.send` ->
+`ChildProcess.emitWorkerError` (`code: 'EPIPE'`) on #542, #543, and #546 -- each cleared by a single
+rerun, so environmental/resource-related, not content. Root cause is the known Node-24 v8-coverage
+memory regression: the forked coverage worker OOMs under the end-of-run remap (memory scales with
+modules-covered-per-shard) and the main process loses the IPC pipe (EPIPE). The 6-sequential-shard
+split (a prior STOPGAP) is no longer enough as the suite grew.
+
+FIX: pin ONLY the Unit Tests job to Node 22 (`.github/workflows/ci.yml` setup-node 24 -> 22). The job
+was the outlier -- `engines.node` is "22.x" and the Build/Perf jobs + Vercel production already run
+Node 22; Node 24 was the memory-regressed runtime. Node 22 has materially more coverage headroom (it
+tolerated maxWorkers=2 historically). `maxWorkers=1`, the 6 shards, and the 8GB heap were all RETAINED
+(change one variable at a time). Fallback if it recurs on Node 22: escalate to 8 shards, never
+maxWorkers=2. "Fixed" requires 3-5 consecutive Unit Tests runs with zero EPIPE, not one green run --
+the flake was intermittent.
+
+---
+
 ## 2026-07-06 - Re-ground stale plans against live state; verify the RIGHT output stream [HIGH]
 
 **Area:** matrix-options / planning / verification discipline
