@@ -175,6 +175,16 @@ npm scripts:
 8. Delete or modify any file under `supabase/migrations/` that has already been applied.
 9. Use emoji, smart quotes, em-dashes, or any non-ASCII character (code point > 127) in docs.
 10. Spawn more than 3 background subagents simultaneously.
+11. Write a real verdict value (e.g. `ADEQUATE`) into `v2_judgments` for ANY reason, including a
+    throwaway test/validation script against a disposable Supabase branch -- rule 1 has NO
+    "it's just a test" exception, and NO owner sign-off makes it acceptable for the AI itself to
+    perform this write. If a test needs to exercise the judgment-upsert mechanism, the only
+    acceptable paths are: (a) design the test to avoid writing meaningful verdict semantics
+    entirely (e.g. a value that is not a real verdict enum member, if schema/constraints allow), or
+    (b) have the OWNER supply or personally run that one write -- never assume disposability makes
+    an AI-authored verdict write fine. (Root-caused 2026-07-08: an AGY-drafted Gate 2B
+    branch-validation script wrote `verdict: "ADEQUATE"` into `v2_judgments` as a self-check; caught
+    by adversarial codex review before any branch existed to run it against, not by design.)
 
 ---
 
