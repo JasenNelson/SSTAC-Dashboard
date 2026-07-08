@@ -60,6 +60,42 @@ Vitest + Testing Library (unit), Playwright (e2e), Sentry.
   lane-2b `v2_judgments` write path. Migrations in `supabase/migrations/` are append-only.
 
 ### Supabase Protocol (HIGH AUTHORITY)
+- **BACKSTOP RULE (applies even if the sessionstart ritual was skipped): before ANY work touching
+  Supabase, SQL, migrations, branches, RLS, service_role keys, DATABASE_URL, matrix_map, or backend
+  data-loads, do ALL of the following, in order, before taking any live action:**
+  1. Scan the available-skills list (shown in every system-reminder) for a skill whose description
+     matches the task's domain keywords -- do not wait for the user to type the slash command.
+  2. Read `docs/INDEX.md` (this project's canonical documentation entrypoint) before any ad-hoc
+     `rg`/filename-guessing doc search.
+  3. Invoke the `/supabase` skill (`~/.claude/skills/supabase/SKILL.md`) specifically, every time,
+     for Supabase/migration/branch/backend-data work -- not only when the task looks unfamiliar.
+  4. **KNOWN, CURRENT TENSION (not hypothetical): the `/supabase` skill's capability claims and this
+     repo's CLAUDE.md/AGENTS.md guardrails currently disagree** (the skill describes MCP as live for
+     reads/small writes and a working direct-Postgres pooler write path; CLAUDE.md/AGENTS.md say
+     "Supabase MCP fails 100%, DO NOT attempt apply_migration or execute_sql"). **For any WRITE
+     action, the CLAUDE.md/AGENTS.md guardrail wins, full stop, unless the owner explicitly updates
+     that guardrail** -- a capability fact from the skill is NOT, by itself, permission to use a path
+     this repo's own instructions forbid. If it is genuinely unclear whether a guardrail is stale,
+     STOP and ask the owner rather than assuming either side wins.
+  5. **If `/supabase` or `docs/INDEX.md` cannot be found or read, STOP and tell the owner** rather
+     than proceeding from memory or assumption about how Supabase works in this repo.
+  6. **(D-lite, not full duplication)** `/supabase` holds safety-critical, project-specific facts --
+     the direct-Postgres pooler write path, its RLS-bypass implication, and a historical
+     password-reset-not-applied credential gotcha. Their EXISTENCE is named here so a session that
+     reads only `CLAUDE.md` still knows to go look; the operational details themselves (connection
+     string form, exact credentials, exact fix steps) are NOT copied here -- that content lives in
+     ONE place (`/supabase`) to avoid drift between two copies of safety-critical facts.
+  This rule's PROCESS (scan skills -> read the doc index -> invoke a matching skill if one exists)
+  generalizes to other domains this project has its own tooling for (poll system, matrix-map,
+  BN-RRM). It does NOT mean every domain must have a matching skill -- most don't (this project's
+  local skills are currently `safe-exit`, `sessionstart`, `update-docs`; `/supabase` is a global
+  skill). For a domain with no matching skill, the equivalent step is: read the domain's docs as
+  routed by `docs/INDEX.md` (e.g. the Polling Gate's required doc list) instead of invoking a skill --
+  do not treat "no skill exists for this domain" as a stop condition; only stop if `docs/INDEX.md`
+  itself, or a skill that IS known to exist (like `/supabase`), cannot be found/read.
+  (Root-caused 2026-07-08: a full Gate 2B session missed `/supabase` until pushed three times by the
+  owner, and separately skipped the `sessionstart` ritual entirely, whose Step 4 already contained
+  this exact instruction.)
 - Per `cross_project_supabase_mcp_dead_skip_to_sql_editor.md`: Supabase MCP fails 100%.
   DO NOT attempt MCP apply_migration or execute_sql.
   Author SQL + commit + push to PR. Owner pastes into Supabase Studio SQL Editor.
@@ -139,6 +175,16 @@ npm scripts:
 8. Delete or modify any file under `supabase/migrations/` that has already been applied.
 9. Use emoji, smart quotes, em-dashes, or any non-ASCII character (code point > 127) in docs.
 10. Spawn more than 3 background subagents simultaneously.
+11. Write a real verdict value (e.g. `ADEQUATE`) into `v2_judgments` for ANY reason, including a
+    throwaway test/validation script against a disposable Supabase branch -- rule 1 has NO
+    "it's just a test" exception, and NO owner sign-off makes it acceptable for the AI itself to
+    perform this write. If a test needs to exercise the judgment-upsert mechanism, the only
+    acceptable paths are: (a) design the test to avoid writing meaningful verdict semantics
+    entirely (e.g. a value that is not a real verdict enum member, if schema/constraints allow), or
+    (b) have the OWNER supply or personally run that one write -- never assume disposability makes
+    an AI-authored verdict write fine. (Root-caused 2026-07-08: an AGY-drafted Gate 2B
+    branch-validation script wrote `verdict: "ADEQUATE"` into `v2_judgments` as a self-check; caught
+    by adversarial codex review before any branch existed to run it against, not by design.)
 
 ---
 
