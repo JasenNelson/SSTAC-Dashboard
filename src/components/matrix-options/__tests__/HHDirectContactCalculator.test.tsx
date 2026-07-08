@@ -169,6 +169,59 @@ describe('HHDirectContactCalculator', () => {
   });
 });
 
+// A3 Option A: DL-PCB TEQ parallel screening card. Shown ONLY for total PCBs, alongside
+// (never replacing) the mass-based result card above it.
+describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
+  it('renders the DL-PCB TEQ card with a needs-review badge and a numeric TEQ standard for total PCBs', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const card = screen.getByTestId('hh-direct-dlpcb-teq-standard');
+    expect(card).toHaveTextContent(/DL-PCB TEQ parallel screening standard/i);
+    expect(
+      screen.getByTestId('hh-direct-dlpcb-teq-provisional-badge'),
+    ).toHaveTextContent(/Provisional -- needs review/i);
+    expect(screen.queryByTestId('hh-direct-dlpcb-teq-blocked')).not.toBeInTheDocument();
+    expect(card).toHaveTextContent(/mg TEQ\/kg dry/i);
+    // The mass-based sedS card is still present and unchanged for the PCB case.
+    expect(screen.getByTestId('hh-direct-preliminary-standard')).toHaveTextContent(
+      /Preliminary Human Health Screening Value/i,
+    );
+  });
+
+  it('does not render the DL-PCB TEQ card for a non-PCB substance', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="benzo_a_pyrene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.queryByTestId('hh-direct-dlpcb-teq-standard')).not.toBeInTheDocument();
+    // The mass-based card is unaffected.
+    expect(screen.getByTestId('hh-direct-preliminary-standard')).toHaveTextContent(
+      /Preliminary Human Health Screening Value/i,
+    );
+  });
+
+  it('blocks the DL-PCB TEQ card when the mass-based calculation itself is blocked (both endpoints blank)', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('hh-direct-rfd-input'), { target: { value: '' } });
+    fireEvent.change(screen.getByTestId('hh-direct-slope-input'), { target: { value: '' } });
+    expect(screen.getByTestId('hh-direct-error')).toBeInTheDocument();
+    expect(screen.getByTestId('hh-direct-dlpcb-teq-blocked')).toHaveTextContent(
+      /DL-PCB TEQ value unavailable/i,
+    );
+  });
+});
+
 // C-HH-direct (2026-06-12): the canada-fcsap-aquatic frame seeds the seven HC PQRA v4.0
 // toddler exposure factors. NO frameDefaults mock here -- this exercises the LIVE catalog
 // (the cited records are promoted to approved, so they resolve 'active' and seed the
