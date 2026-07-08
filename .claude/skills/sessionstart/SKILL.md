@@ -153,6 +153,11 @@ is mandatory: refresh + COMMIT the dated handoff, orphan sweep, and include `Cla
 next step: low/medium/high` plus `AGY delegation opportunity: yes/no`.
 
 ## Notes
+- This ritual is only load-bearing if it actually runs. A 2026-07-08 incident shows a session can
+  proceed directly into a detailed first-message task without invoking this skill at all, silently
+  skipping every gate/rule inside it (including the Supabase-skill-first rule in Step 4) -- CLAUDE.md
+  now carries a redundant backstop rule for exactly this failure mode, but do not treat that backstop
+  as a substitute for actually running this ritual on a genuinely fresh session.
 - This is the SSTAC-Dashboard project skill. It layers an ACTIVE ritual on top of the always-on passive
   SessionStart hook context -- keep both.
 - Adapt-then-port discipline: this was derived from the OHD skeleton; keep the gates/smell-test/contract
