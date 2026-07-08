@@ -13,12 +13,16 @@ import {
   getReceptorScenarioFrame,
 } from '@/lib/matrix-options/frameDefaults';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
-import type { HumanHealthDirectContactResult } from '@/lib/matrix-options/types';
+import type {
+  HumanHealthDirectContactInput,
+  HumanHealthDirectContactResult,
+} from '@/lib/matrix-options/types';
 import type {
   CalculatorUsedValue,
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
 import { positiveInput, optionalPositiveInput } from '@/lib/matrix-options/parseDecimal';
+import { resolveDlPcbTeqTdi } from '@/lib/matrix-options/dlPcbTeqTdi';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -332,6 +336,98 @@ export default function HHDirectContactCalculator({
   ]);
 
   const hhResult = 'error' in result ? null : result;
+
+  // A3 Option A: DL-PCB TEQ parallel screening card, shown ONLY for total PCBs. Reuses the
+  // SAME inverse (solve-for-sedS) math as the mass-based calculation above, with the RfD
+  // input replaced by the resolved dioxin-like-TEQ oral TDI (50% apportionment already baked
+  // into that catalog value -- no runtime apportionment math here). Static catalog lookup;
+  // resolved once (SSR == CSR, no fetch).
+  const dlPcbTeqTdi = useMemo(() => resolveDlPcbTeqTdi(), []);
+  const isDlPcbSubstance = substanceKey === 'total_pcbs_aroclor_1254';
+
+  const dlPcbResult:
+    | HumanHealthDirectContactResult
+    | { blocked: string }
+    | null = useMemo(() => {
+    if (!isDlPcbSubstance) return null;
+    // Fail-closed: follow the SAME blocked behavior as the mass-based calculation above
+    // (reuse its guard condition -- do not invent a separate one). If the mass calc could
+    // not resolve a value (missing/invalid exposure inputs, or no RfD/SF at all), the
+    // DL-PCB card is blocked too.
+    if (!hhResult) {
+      return {
+        blocked:
+          'error' in result
+            ? result.error
+            : 'Human Health direct-contact inputs are incomplete.',
+      };
+    }
+    if (!dlPcbTeqTdi.ok) {
+      return { blocked: dlPcbTeqTdi.reason };
+    }
+    const dlFields = {
+      BW_kg: positiveInput(bwInput, 'Body weight'),
+      ED_years: positiveInput(edInput, 'Exposure duration'),
+      EF_days_per_year: positiveInput(efInput, 'Exposure frequency'),
+      AT_cancer_years: positiveInput(atCancerInput, 'Cancer averaging time'),
+      IR_sed_mg_per_day: positiveInput(irSedInput, 'Sediment ingestion rate'),
+      SA_cm2: positiveInput(skinAreaInput, 'Skin surface area'),
+      AF_sed_mg_per_cm2: positiveInput(adherenceInput, 'Sediment adherence factor'),
+      targetRisk: positiveInput(targetRiskInput, 'Target risk'),
+      hazardQuotient: positiveInput(hazardQuotientInput, 'Hazard quotient'),
+      abs_dermal: positiveInput(absDermalInput, 'Dermal absorption fraction'),
+      ba_oral: positiveInput(baOralInput, 'Oral bioavailability'),
+    };
+    for (const value of Object.values(dlFields)) {
+      if (typeof value === 'object' && value !== null && 'error' in value) {
+        return { blocked: value.error };
+      }
+    }
+    try {
+      return humanHealthDirectContact({
+        ...(dlFields as {
+          BW_kg: number;
+          ED_years: number;
+          EF_days_per_year: number;
+          AT_cancer_years: number;
+          IR_sed_mg_per_day: number;
+          SA_cm2: number;
+          AF_sed_mg_per_cm2: number;
+          targetRisk: number;
+          hazardQuotient: number;
+          abs_dermal: number;
+          ba_oral: number;
+        }),
+        rfd_oral_mg_per_kg_bw_day: dlPcbTeqTdi.tdi_mg_per_kg_bw_day,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+      } satisfies HumanHealthDirectContactInput);
+    } catch (err) {
+      return { blocked: err instanceof Error ? err.message : String(err) };
+    }
+  }, [
+    isDlPcbSubstance,
+    hhResult,
+    result,
+    dlPcbTeqTdi,
+    bwInput,
+    edInput,
+    efInput,
+    atCancerInput,
+    irSedInput,
+    skinAreaInput,
+    adherenceInput,
+    targetRiskInput,
+    hazardQuotientInput,
+    absDermalInput,
+    baOralInput,
+    humanHealthDirectContact,
+  ]);
+
+  const dlPcbOk =
+    dlPcbResult != null && !('blocked' in dlPcbResult) ? dlPcbResult : null;
+  const dlPcbBlockedReason =
+    dlPcbResult != null && 'blocked' in dlPcbResult ? dlPcbResult.blocked : null;
+
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
       {
@@ -741,6 +837,47 @@ export default function HHDirectContactCalculator({
           assumptions before regulator-facing use.
         </p>
       </div>
+
+      {isDlPcbSubstance && (
+        <div
+          className="bg-amber-50 dark:bg-amber-900/20 rounded-xl p-6 text-center border border-amber-200 dark:border-amber-800 shadow-inner mb-6"
+          data-testid="hh-direct-dlpcb-teq-standard"
+        >
+          <div className="flex items-center justify-center gap-2 mb-1">
+            <span className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest">
+              DL-PCB TEQ parallel screening standard
+            </span>
+            <span
+              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+              data-testid="hh-direct-dlpcb-teq-provisional-badge"
+              title="Seeded from a needs_review Health Canada TRV v4.0 catalog candidate; not yet HITL-verified."
+            >
+              Provisional -- needs review
+            </span>
+          </div>
+          {dlPcbOk ? (
+            <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
+              {dlPcbOk.sedS.toPrecision(4)}{' '}
+              <span className="text-lg text-slate-500 font-medium">mg TEQ/kg dry</span>
+            </div>
+          ) : (
+            <div
+              className="text-sm font-semibold text-amber-800 dark:text-amber-200"
+              data-testid="hh-direct-dlpcb-teq-blocked"
+            >
+              DL-PCB TEQ value unavailable
+              {dlPcbBlockedReason ? `: ${dlPcbBlockedReason}` : ''}
+            </div>
+          )}
+          <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-3 italic">
+            Parallel dioxin-like-PCB check against the mass-based total-PCB standard
+            above. The dioxin-like fraction is assessed using the Health Canada
+            dioxin-like-TEQ oral TDI; the 50 percent dioxin-like-PCB apportionment is
+            already baked into that TDI value (no additional runtime apportionment
+            is applied here). Same exposure assumptions as the mass-based result.
+          </p>
+        </div>
+      )}
 
       <details
         className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
