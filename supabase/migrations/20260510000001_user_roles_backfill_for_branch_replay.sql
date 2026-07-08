@@ -8,9 +8,11 @@
 -- tracked migration by filename order, 20260513_v2_chunk_policy_citations.sql, references it in an RLS
 -- policy, causing branch creation to fail with MIGRATIONS_FAILED. This migration is timestamped
 -- 20260510 (before 20260513) purely so replay order is correct; it does not reflect when user_roles
--- was actually first created in production. Verbatim copy of database_schema.sql's user_roles block
--- (lines ~227-249), with DROP POLICY/TRIGGER IF EXISTS guards added since the source file was never
--- written to be replayed a second time.
+-- was actually first created in production. This migration intentionally creates ONLY the table,
+-- enables RLS, and grants SELECT to authenticated (see the two correction notes below for why) --
+-- it does NOT create any policy (20260515_matrix_security_audit.sql is the sole, authoritative
+-- policy source) and does NOT create the update_user_roles_updated_at trigger (see the "Deliberately
+-- still NOT included" note below).
 --
 -- Root-cause + investigation trail: .tmp_gate2b_migration_repair_plan_20260708.md,
 -- .tmp_gate2b_dbschema_inventory_report_20260708.md,

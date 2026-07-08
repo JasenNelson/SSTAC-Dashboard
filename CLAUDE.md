@@ -95,7 +95,7 @@ Vitest + Testing Library (unit), Playwright (e2e), Sentry.
   itself, or a skill that IS known to exist (like `/supabase`), cannot be found/read.
   (Root-caused 2026-07-08: a full Gate 2B session missed `/supabase` until pushed three times by the
   owner, and separately skipped the `sessionstart` ritual entirely, whose Step 4 already contained
-  this exact instruction. See memory `feedback_check_skills_and_docs_index_before_domain_work`.)
+  this exact instruction.)
 - Per `cross_project_supabase_mcp_dead_skip_to_sql_editor.md`: Supabase MCP fails 100%.
   DO NOT attempt MCP apply_migration or execute_sql.
   Author SQL + commit + push to PR. Owner pastes into Supabase Studio SQL Editor.
