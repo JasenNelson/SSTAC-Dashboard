@@ -1,6 +1,6 @@
 # AGY (Google Antigravity CLI) usage -- CANONICAL (SSTAC-Dashboard)
 
-Last updated 2026-06-23. This is the CURRENT, authoritative guide for using AGY as a workhorse from a
+Last updated 2026-07-07. This is the CURRENT, authoritative guide for using AGY as a workhorse from a
 Claude session in this repo. It supersedes all earlier AGY / "catalog robot" / headless-worker
 orchestration notes (those are archived under `docs/archive/` and carry a SUPERSEDED banner). The
 cross-session anchor is memory `agy_antigravity_cli_usage`. Plain ASCII.
@@ -13,6 +13,30 @@ cross-session anchor is memory `agy_antigravity_cli_usage`. Plain ASCII.
   brief; can run a free read-only self pre-review. **No confirmed web access** -- do NOT use AGY as a
   live-source verifier (that stays on Claude WebFetch).
 - **codex = ship gate** (Spark grind -> gpt-5.5 xhigh), unchanged.
+
+## Hard token-efficiency protocol
+
+Claude tokens are scarce. Being "token efficient" means delegating bounded mechanical work, not merely
+writing shorter responses. Do not treat AGY as only a dictation or file-copy tool.
+
+1. Claude owns strategy, gate decisions, final verification, and owner-facing judgment.
+2. AGY owns bounded mechanical production whenever target files, allowed actions, and acceptance checks
+   can be specified.
+3. Before any debugging or fix-review loop expected to take more than two Claude turns, write a tight
+   AGY brief or explain why AGY is inappropriate.
+4. Build one upfront harness or verification script instead of iterative live shell probing. Prefer AGY
+   to draft that harness after Claude defines the invariant.
+5. Use AGY for test harnesses, diagnostic scripts, candidate fixes, fixture generation, report drafting,
+   grep or inventory scripts, and repetitive verification scaffolds.
+6. Read Codex review output surgically: verdict, blockers, top findings, and named files first. Do not
+   tail or paste large reviewer transcripts into context unless a specific finding requires it.
+7. Track cumulative side-quest cost. If a task is not on the flagship path, state why it matters, what
+   it has already cost, the next bounded step, and whether AGY can do that step before continuing.
+8. Repeated "one more pass" loops are not free. If the cumulative work is drifting away from the current
+   project goal, pause and re-scope.
+9. Every closeout must include:
+   - `Claude-token spend risk for next step: low/medium/high`
+   - `AGY delegation opportunity: yes/no`
 
 ## NEVER use --dangerously-skip-permissions (the trap that misled a prior session)
 `agy --dangerously-skip-permissions` BYPASSES the settings.json deny-list (rm / fsutil / mklink /

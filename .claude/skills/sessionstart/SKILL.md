@@ -99,6 +99,25 @@ Separate risk decision (do NOT merge into Gate 1). Ask, recommendation first:
   separate hook question to reconcile. The main session may revise the recommended posture based on the
   kickoff prompt -- expected and good.
 
+### Step 4A -- HARD TOKEN-EFFICIENCY CHECK
+Claude tokens are the scarce orchestration budget. AGY is not just a dictation/file-copy tool. Once the
+spec is bounded, mechanical work goes to AGY unless Claude explicitly records why AGY is inappropriate.
+
+Apply these rules before implementation, debugging, or review loops:
+- Claude owns strategy, gate decisions, final verification, and owner-facing judgment.
+- AGY owns bounded mechanical production: test harnesses, diagnostic scripts, candidate fixes, fixture
+  generation, report drafting, grep/inventory scripts, and repetitive verification scaffolds.
+- Before any debugging or fix-review loop expected to take more than two Claude turns, write a tight AGY
+  brief or record why AGY is inappropriate.
+- Prefer one upfront harness/script for verification over iterative live shell probing. Claude defines
+  the invariant; AGY drafts the harness when safe.
+- Read Codex review output surgically: verdict, blockers, top findings, and named files first. Do not
+  paste large reviewer transcripts into context unless needed for a specific finding.
+- Track cumulative side-quest cost. If work is not on the flagship path, state why it matters, what it
+  has already cost, the next bounded step, and whether AGY can do that step before continuing.
+- Stop treating repeated "one more pass" loops as free. If the cumulative work drifts from the current
+  goal, pause and re-scope.
+
 ### Step 5 -- EXECUTE the chosen depth
 Run the exploration for the chosen tier (Explore/Plan agents as above; verify handoff claims
 empirically -- regulatory values against PRIMARY sources, not memory). Delegate the mechanical legwork
@@ -122,13 +141,16 @@ SESSION CONTRACT
   mutate src/data catalogs, propose a push without 4 gates GREEN, Supabase MCP writes/migrations.
 - Review loop: plan -> prior-session review -> /codex-review to GREEN -> ship (/ship-protocols)
 - Stop conditions: <budget ceiling / incident / codex oscillation past ~5 rounds -> informed holistic>
+- Claude-token spend risk for next step: <low/medium/high>
+- AGY delegation opportunity: <yes/no>
 ```
 
 ### Step 7 -- proceed to plan + hand back to the owner's loop
 Produce the plan (in plan mode). Then remind the owner of the loop: give this plan to the PRIOR session
 for review (it has context this fresh session lacks) if one is running, then approve + interrupt for
 /codex-review to iterate the plan to robust before implementation. Close-out (CLAUDE.md "Session End")
-is mandatory: refresh + COMMIT the dated handoff, orphan sweep.
+is mandatory: refresh + COMMIT the dated handoff, orphan sweep, and include `Claude-token spend risk for
+next step: low/medium/high` plus `AGY delegation opportunity: yes/no`.
 
 ## Notes
 - This is the SSTAC-Dashboard project skill. It layers an ACTIVE ritual on top of the always-on passive
