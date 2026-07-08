@@ -37,11 +37,20 @@ jobs:
     needs: lint-and-typecheck
     steps:
       - uses: actions/checkout@v6
-      
+
+      # Node 22 (not 24): pin the Unit Tests job to Node 22 to match engines.node ("22.x"), the
+      # Build/Perf jobs, and the Vercel production runtime. The Node 20 -> 24 bump introduced a v8
+      # coverage memory regression that intermittently OOM-crashed the forked coverage worker with
+      # `write EPIPE` / ForksPoolWorker.send / ChildProcess.emitWorkerError (recurred on #542, #543,
+      # and #546 -- each cleared by a single SOP rerun, i.e. environmental, not content). Node 22 has
+      # materially more coverage-memory headroom (it tolerated maxWorkers=2 historically). The
+      # maxWorkers=1 cap (vitest.config), the 6 sequential shards below, and the 8GB heap are all
+      # RETAINED as belt-and-suspenders -- change one variable at a time. Fallback if Node 22 ever
+      # OOMs again: escalate to 8 shards (never maxWorkers=2).
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: '24'
+          node-version: '22'
           cache: 'npm'
       
       - name: Install dependencies
