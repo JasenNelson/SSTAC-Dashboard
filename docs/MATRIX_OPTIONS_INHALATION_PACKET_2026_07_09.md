@@ -32,7 +32,7 @@ Therefore, the inhalation pathway must be implemented as a **separate, distinct 
 
 - **Current Direct Contact Component**: `HHDirectContactCalculator` handles ingestion and dermal pathways.
 - **New Inhalation Component**: `HHInhalationCalculator` (to be implemented).
-- **MatrixMapRightPanel Integration**: 
+- **MatrixMapRightPanel Integration**:
   - The inhalation calculator will be rendered conditionally based on the active `viewMode` or a new tab/toggle within the Human Health dashboard.
   - The `SubstanceCombobox` and `SharedGlobalInputs` will remain shared across all calculators, ensuring context is preserved when switching between Direct Contact, Food Web, and Inhalation pathways.
 
