@@ -9,12 +9,17 @@ metadata:
 # Supabase
 
 > **PROJECT OVERRIDE (SSTAC-Dashboard) -- read before anything below.** This is a vendored
-> upstream skill. Where it conflicts with this repo's AGENTS.md "Supabase Protocol", AGENTS.md
-> WINS. Specifically: in THIS project, MCP write operations (`apply_migration`, `execute_sql`)
-> and direct CLI SQL writes fail / are forbidden. All schema/data writes go through the SQL
-> Editor path: author the SQL + a PR; the owner pastes it into Supabase Studio. Any guidance
-> below that says to execute SQL via MCP or the CLI is VOID here -- produce the SQL for the
-> owner instead.
+> upstream skill. Where it conflicts with this repo's AGENTS.md/CLAUDE.md "Supabase Protocol",
+> AGENTS.md/CLAUDE.md WIN. Specifically (owner-reconciled 2026-07-09): MCP is usable for both
+> reads and, under a gate, writes -- reads/scoped verification queries need no owner paste; ANY
+> write (DDL, RPC replacement, RLS change, data write, migration application) requires the exact
+> SQL drafted first, a GREEN `/codex-review` on that exact SQL, the write explicitly flagged to
+> the owner, and the owner's explicit approval of that exact write, before it is run. MCP
+> `apply_migration` specifically remains disallowed unless separately and explicitly authorized
+> for that exact operation. `v2_judgments`: never write a real verdict value for any reason
+> (only two narrow exceptions apply, see CLAUDE.md item 11); this write gate never creates a
+> third path around that rule. See AGENTS.md/CLAUDE.md for the full workflow -- do not treat
+> guidance below as sufficient authorization on its own for any write in this project.
 
 ## Core Principles
 
