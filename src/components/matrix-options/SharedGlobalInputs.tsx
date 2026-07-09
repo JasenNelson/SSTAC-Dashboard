@@ -133,6 +133,25 @@ export default function SharedGlobalInputs({
               {substance.logKow ?? 'n/a'}
             </p>
           )}
+          {(substanceKey === 'cyanide_free' ||
+            substanceKey === 'hydrogen_cyanide_and_cyanide_salts') && (
+            <div
+              data-testid="cyanide-guidance-warning"
+              className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 shadow-sm leading-relaxed"
+            >
+              <strong className="font-semibold">Caution:</strong> These endpoints represent equivalent cyanide exposure. Select only one to avoid double-counting or confusing the selection basis.
+            </div>
+          )}
+          {(substanceKey === 'copper_cyanide' ||
+            substanceKey === 'silver_cyanide' ||
+            substanceKey === 'potassium_silver_cyanide') && (
+            <div
+              data-testid="cyanide-guidance-warning"
+              className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 shadow-sm leading-relaxed"
+            >
+              <strong className="font-semibold">Complex Salt:</strong> Represents a metal-cyanide compound/salt; do not assess concurrently with generic metal or generic cyanide unless the assessment intentionally covers both representations.
+            </div>
+          )}
           <ul
             role="list"
             data-testid="substance-applicability-badges"
