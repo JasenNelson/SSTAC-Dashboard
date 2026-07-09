@@ -1,5 +1,11 @@
 # Matrix Options Cyanide Selection Guidance - 2026-07-08
 
+## 0. Strict Guardrails & Status
+- **Cyanide runtime entries are already wired.**
+- This is **not** a missing code-wiring task.
+- **Do not** implement cyanide/speciation code changes until an owner selection convention is explicitly approved.
+- The safe current deliverable is this docs/design packet and UI copy proposal only.
+
 ## 1. Current Wired Cyanide-Family Entries
 The following cyanide-family substances are actively wired in `src/lib/matrix-options/substanceLibrary.ts` with `contaminantClass: 'inorganic'`:
 - `chlorine_cyanide`: RfD `0.05`
@@ -20,13 +26,13 @@ The following cyanide-family substances are actively wired in `src/lib/matrix-op
 The abundance of cyanide/metal-cyanide representations creates a high risk of double-counting or inappropriate selections:
 
 - **`cyanide_free` (0.00063) vs `hydrogen_cyanide_and_cyanide_salts` (0.0006):**
-  These represent nearly identical toxicological endpoints (free CN vs total CN). If a user selects both, the cumulative effect calculations will artificially inflate risk.
+  These represent nearly identical toxicological endpoints (free CN vs total CN). If a user selects both, the assessment/reporting may double-count or confuse the selection basis.
 - **`silver` (0.005) vs `silver_cyanide` (0.1) vs `potassium_silver_cyanide` (0.005):**
   A three-way conflict. `silver_cyanide` is 20x less stringent than generic silver. Selecting generic `silver` + `cyanide_free` vs selecting `silver_cyanide` alone yields drastically different screening outcomes.
 - **`copper` (0.426) vs `copper_cyanide` (0.005):**
   Selecting generic copper and generic cyanide independently versus selecting the specific `copper_cyanide` salt creates an aggregation conflict.
 
-## 3. Owner Decision Options
+## 3. Proposed Owner Decision Options (Not Yet Approved)
 Please select the preferred strategy for managing these overlaps in the UI:
 
 - **A. UI Guidance Only:** No hard filtering. Add warning/helper text (tooltips/chips) informing the user of the overlap, but allow all keys to remain selectable.
@@ -34,31 +40,34 @@ Please select the preferred strategy for managing these overlaps in the UI:
 - **C. Grouping/Alias Warning:** The UI dynamically warns the user if they select two overlapping keys simultaneously (e.g., "You have selected both Silver and Silver Cyanide").
 - **D. Hard Filtering/Collapse (Not Recommended):** Hide overlapping variants from the dropdown entirely. *Note: this requires explicit owner authorization as it breaks 1:1 parity with the source catalogs.*
 
-## 4. Proposed UI Copy
+## 4. Proposed UI Copy (Pending Approval)
 If Option A, B, or C is chosen, we propose the following tooltips/helper texts next to the relevant keys in the Substance Selection UI:
 
 - **For `cyanide_free` & `hydrogen_cyanide_and_cyanide_salts`:**
-  > *"Caution: These endpoints represent equivalent cyanide exposure. Select only one to avoid double-counting cumulative risk."*
+  > *"Caution: These endpoints represent equivalent cyanide exposure. Select only one to avoid double-counting or confusing the selection basis."*
 - **For `silver_cyanide` & `potassium_silver_cyanide`:**
-  > *"Complex Salt: Includes both silver and cyanide toxicity. Do not assess concurrently with generic Silver or generic Cyanide."*
+  > *"Represents a metal-cyanide compound/salt; do not assess concurrently with generic metal or generic cyanide unless the assessment intentionally covers both representations."*
 - **For `copper_cyanide`:**
-  > *"Complex Salt: Includes both copper and cyanide toxicity. Do not assess concurrently with generic Copper or generic Cyanide."*
+  > *"Represents a metal-cyanide compound/salt; do not assess concurrently with generic metal or generic cyanide unless the assessment intentionally covers both representations."*
 
 ## 5. Recommended First Implementation Increment
-Upon approval of the strategy (e.g., **Option A or C**), the implementation will proceed as follows:
+Upon approval of the strategy, the implementation will proceed as follows:
 
 - **Scope:** Add warning/helper text tooltips in the frontend components.
-- **Exact Files Likely Touched:**
-  - `src/components/matrix-options/SubstanceSelector.tsx` (or equivalent component handling the substance dropdown/list)
-  - `src/components/matrix-options/CalculatorPanel.tsx` (to display active warnings)
+- **Likely Files After Inspection:**
+  - `src/components/matrix-options/SubstanceCombobox.tsx`
+  - `src/components/matrix-options/MatrixDashboard.tsx`
+  - *Possibly calculator components if warnings are displayed in calculator panes.*
 - **Tests Expected:** Add component tests to verify tooltip rendering when cyanide/metal-cyanides are present.
 
 ## 6. Explicit Non-Goals
 This implementation strictly adheres to the following boundaries:
-- **NO** value changes to RfDs or classes.
-- **NO** catalog mutation (`src/data/**` remains completely untouched).
+- **NO** value/RfD/class changes.
+- **NO** catalog mutation (`matrix_research/reference_catalog/**` remains completely untouched).
+- **NO** `src/data/**` edits.
 - **NO** `qa_status` or `default_status` edits.
 - **NO** key removal from the runtime library.
+- **NO** re-ranking defaults.
 - **NO** silent collapse or redirection of substances.
 
 ## 7. Next Step
