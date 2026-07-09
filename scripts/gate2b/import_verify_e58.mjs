@@ -3,7 +3,13 @@ import { buildSubmissionChunkRows, buildCitationRows } from '../../src/lib/engin
 import { extractEvidenceSlices } from '../../src/lib/engine-v2/evidence_slices.ts';
 import { importEvalResult } from '../../src/lib/engine-v2/eval_result_import.ts';
 
+// TEST_EVALUATION_ID is a placeholder only -- no v2_evaluations row with this id exists.
 const TEST_EVALUATION_ID = "22222222-2222-2222-2222-222222222222";
+// NOTE (2026-07-09): the "33333333-3333-3333-3333-333333333333" directory name below started
+// as a placeholder-looking fixture id, but a v2_evaluations row with this EXACT id (under
+// project_id 11111111-1111-1111-1111-111111111111, "M6 Dress Rehearsal") is now REAL, live
+// production data -- the actual imported E-58 result. Do not delete or overwrite this local
+// staging directory, and do not assume this id is safe-to-reuse test data in any future script.
 const DEFAULT_FIXTURE_PATH = "C:\\Projects\\Regulatory-Review\\engine_v2_dashboard_staging\\data\\v2_dashboard_eval_runs\\33333333-3333-3333-3333-333333333333\\636249a3-3302-4048-bca8-167fa6e90060\\eval_result.json";
 
 function parseArgs() {
