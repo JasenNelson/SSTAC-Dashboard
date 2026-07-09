@@ -290,3 +290,37 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     expect(screen.queryByTestId('cyanide-guidance-warning')).not.toBeInTheDocument();
   });
 });
+
+describe('SharedGlobalInputs cyanide non-mutation', () => {
+  it('cyanide selectability/non-mutation: cyanide family keys are distinct and selectable', () => {
+    const cyanideKeys = [
+      { key: 'cyanide_free', expected: 'Cyanide, free' },
+      { key: 'hydrogen_cyanide_and_cyanide_salts', expected: 'Hydrogen cyanide and cyanide salts' },
+      { key: 'copper_cyanide', expected: 'Copper cyanide' },
+      { key: 'silver_cyanide', expected: 'Silver cyanide' },
+      { key: 'potassium_silver_cyanide', expected: 'Potassium silver cyanide' }
+    ];
+
+    const { rerender } = render(
+      <SharedGlobalInputs
+        substanceKey="cyanide_free"
+        jurisdiction="bc-protocol1-v5-dra"
+        onSubstanceKeyChange={() => {}}
+        onJurisdictionChange={() => {}}
+      />
+    );
+
+    cyanideKeys.forEach(({ key, expected }) => {
+      rerender(
+        <SharedGlobalInputs
+          substanceKey={key}
+          jurisdiction="bc-protocol1-v5-dra"
+          onSubstanceKeyChange={() => {}}
+          onJurisdictionChange={() => {}}
+        />
+      );
+      const input = screen.getByTestId('substance-combobox-input') as HTMLInputElement;
+      expect(input.value).toBe(expected);
+    });
+  });
+});
