@@ -60,6 +60,49 @@ describe('SUBSTANCE_LIBRARY', () => {
     const uniqueKeys = new Set(keys);
     expect(uniqueKeys.size).toBe(keys.length);
   });
+
+  it('has no duplicate displayNames (except known exceptions)', () => {
+    const names = SUBSTANCE_LIBRARY.map((entry) => entry.displayName);
+    const seen = new Set<string>();
+    const duplicates = new Set<string>();
+    for (const name of names) {
+      if (seen.has(name)) {
+        duplicates.add(name);
+      }
+      seen.add(name);
+    }
+    // Remove the known intentional duplicates that we expect to keep
+    duplicates.delete('1,1,1-Trichloroethane');
+    duplicates.delete('2-Methylnaphthalene');
+
+    expect(Array.from(duplicates)).toEqual([]);
+  });
+
+  it('every entry has valid bounding for abs_dermal and ba_oral', () => {
+    for (const entry of SUBSTANCE_LIBRARY) {
+      if (entry.abs_dermal !== null) {
+        expect(entry.abs_dermal).toBeGreaterThanOrEqual(0);
+        expect(entry.abs_dermal).toBeLessThanOrEqual(1);
+      }
+      if (entry.ba_oral !== null) {
+        expect(entry.ba_oral).toBeGreaterThanOrEqual(0);
+        expect(entry.ba_oral).toBeLessThanOrEqual(1);
+      }
+    }
+  });
+
+  it('special cases: cyanides maintain expected classes', () => {
+    const cyanideKeys = [
+      'calcium_cyanide', 'copper_cyanide', 'cyanide_free',
+      'hydrogen_cyanide_and_cyanide_salts', 'potassium_cyanide',
+      'potassium_silver_cyanide', 'silver_cyanide', 'sodium_cyanide'
+    ];
+    for (const key of cyanideKeys) {
+      const result = findSubstance(key);
+      expect(result).toBeDefined();
+      expect(result?.contaminantClass).toBe('inorganic');
+    }
+  });
 });
 
 describe('findSubstance', () => {
