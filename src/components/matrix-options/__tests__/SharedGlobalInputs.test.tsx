@@ -255,4 +255,38 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     expect(found?.logKow).not.toBeNull();
     expect(found?.fcv_ug_per_L).not.toBeNull();
   });
+
+  it('displays the cyanide guidance warning for cyanide-family keys', () => {
+    const { rerender } = render(
+      <SharedGlobalInputs
+        substanceKey="cyanide_free"
+        jurisdiction={DEFAULT_JURISDICTION}
+        onSubstanceKeyChange={() => {}}
+        onJurisdictionChange={() => {}}
+      />,
+    );
+    expect(screen.getByTestId('cyanide-guidance-warning')).toHaveTextContent(/Caution: These endpoints represent equivalent cyanide exposure/);
+
+    rerender(
+      <SharedGlobalInputs
+        substanceKey="copper_cyanide"
+        jurisdiction={DEFAULT_JURISDICTION}
+        onSubstanceKeyChange={() => {}}
+        onJurisdictionChange={() => {}}
+      />,
+    );
+    expect(screen.getByTestId('cyanide-guidance-warning')).toHaveTextContent(/Complex Salt: Represents a metal-cyanide compound\/salt/);
+  });
+
+  it('does not display the cyanide guidance warning for unrelated substances', () => {
+    render(
+      <SharedGlobalInputs
+        substanceKey={DEFAULT_SUBSTANCE_KEY}
+        jurisdiction={DEFAULT_JURISDICTION}
+        onSubstanceKeyChange={() => {}}
+        onJurisdictionChange={() => {}}
+      />,
+    );
+    expect(screen.queryByTestId('cyanide-guidance-warning')).not.toBeInTheDocument();
+  });
 });
