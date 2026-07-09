@@ -7492,6 +7492,29 @@ export const SUBSTANCE_LIBRARY = [
       'default. logKow n/a here (HH-oral only; no eco pathway wired). eco fields null (HH-only entry).',
   },
   {
+    key: 'phenylmercuric_acetate',
+    displayName: 'Phenylmercuric acetate',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.00008,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    bsaf_loc_freshwater: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'US EPA IRIS oral RfD 0.00008 mg/kg-bw/day (approved catalog value, pv-iris-phenylmercuric_acetate-hh-direct-rfd / src-us-epa-iris-rfd-table-live; ' +
+      'IRIS "Phenylmercuric acetate", CASRN 62-38-4). Identity: Phenylmercuric acetate, CAS 62-38-4. ORGANOMETALLIC ' +
+      '(Hg-C bonds): contaminantClass organic is a pragmatic bucket (no organometallic class exists in the ' +
+      'closed ContaminantClass union) -- do NOT reuse the elemental mercury (inorganic) entry.',
+    notes:
+      'NEW own-key entry. Oral RfD wired build-first from the approved direct-contact catalog row ' +
+      '(qa_status=approved). No oral slope factor candidate. contaminantClass organic is a pragmatic bucket for ' +
+      'this Hg-C organometallic (no organomercury class exists); NOT elemental mercury. abs_dermal 0.1 ' +
+      '= organic class default. logKow n/a here (HH-oral only; no eco pathway wired). eco fields null (HH-only entry).',
+  },
+  {
     key: 'zineb',
     displayName: 'Zineb',
     contaminantClass: 'organic',
