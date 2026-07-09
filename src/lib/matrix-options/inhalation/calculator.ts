@@ -14,6 +14,8 @@ export interface HumanHealthInhalationResult {
   driver: HumanHealthRiskDriver;
   nonCancerAirS: number | null;
   cancerAirS: number | null;
+  nonCancerBlocked: boolean;
+  cancerBlocked: boolean;
   warnings: string[];
   blocked: boolean;
 }
@@ -23,38 +25,31 @@ export interface HumanHealthInhalationResult {
  * Enforces the fail-closed behavior mandated by the design packet.
  */
 export function deriveInhalationStandards(input: HumanHealthInhalationInput): HumanHealthInhalationResult {
-  // If either required TRV is null, the corresponding derivation must return a blocked = true state
-  // for that pathway. If both are null, the entire calculation is blocked.
-  let nonCancerAirS: number | null = null;
-  let cancerAirS: number | null = null;
-  let driver: HumanHealthRiskDriver = 'non-cancer'; // Default fallback
-  let blocked = false;
+  const nonCancerAirS: number | null = null;
+  const cancerAirS: number | null = null;
+  const driver: HumanHealthRiskDriver = 'non-cancer'; // Default fallback
+  const blocked = true;
+  const nonCancerBlocked = true;
+  const cancerBlocked = true;
+
+  const warnings = ['Inhalation calculator is a stub; values are not valid standards.'];
   
   if (input.rfc_inhalation_mg_per_m3 !== null) {
-    // TODO: implement actual non-cancer derivation
-    nonCancerAirS = 1; 
+    warnings.push('RfC provided but non-cancer derivation is not yet implemented.');
   }
   
   if (input.iur_inhalation_per_mg_per_m3 !== null) {
-    // TODO: implement actual cancer derivation
-    cancerAirS = 1; 
+    warnings.push('IUR provided but cancer derivation is not yet implemented.');
   }
-  
-  if (nonCancerAirS === null && cancerAirS === null) {
-    blocked = true;
-  } else if (nonCancerAirS !== null && cancerAirS !== null) {
-    driver = nonCancerAirS < cancerAirS ? 'non-cancer' : 'cancer';
-  } else {
-    driver = nonCancerAirS !== null ? 'non-cancer' : 'cancer';
-  }
-  
-  // Return placeholder result
+
   return {
-    airConcentration_mg_per_m3: nonCancerAirS !== null ? nonCancerAirS : (cancerAirS ?? 0),
+    airConcentration_mg_per_m3: 0,
     driver,
     nonCancerAirS,
     cancerAirS,
-    warnings: ['Inhalation calculator is a stub; values are not valid standards.'],
+    nonCancerBlocked,
+    cancerBlocked,
+    warnings,
     blocked,
   };
 }

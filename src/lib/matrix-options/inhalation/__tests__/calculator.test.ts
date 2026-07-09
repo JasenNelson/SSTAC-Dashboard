@@ -9,38 +9,60 @@ describe('HHInhalationCalculator skeleton', () => {
       targetRisk: 0.00001,
       hazardQuotient: 1,
     });
-    
+
     expect(result.blocked).toBe(true);
-    expect(result.warnings.length).toBeGreaterThan(0);
+    expect(result.nonCancerBlocked).toBe(true);
+    expect(result.cancerBlocked).toBe(true);
+    expect(result.warnings).toContain('Inhalation calculator is a stub; values are not valid standards.');
     expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
   });
 
-  it('returns valid values (placeholder) when rfc is provided', () => {
+  it('remains blocked even when rfc is provided', () => {
     const result = deriveInhalationStandards({
       rfc_inhalation_mg_per_m3: 0.5,
       iur_inhalation_per_mg_per_m3: null,
       targetRisk: 0.00001,
       hazardQuotient: 1,
     });
-    
-    expect(result.blocked).toBe(false);
-    expect(result.driver).toBe('non-cancer');
-    expect(result.nonCancerAirS).not.toBeNull();
+
+    expect(result.blocked).toBe(true);
+    expect(result.nonCancerBlocked).toBe(true);
+    expect(result.cancerBlocked).toBe(true);
+    expect(result.warnings).toContain('RfC provided but non-cancer derivation is not yet implemented.');
+    expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
   });
 
-  it('returns valid values (placeholder) when iur is provided', () => {
+  it('remains blocked even when iur is provided', () => {
     const result = deriveInhalationStandards({
       rfc_inhalation_mg_per_m3: null,
       iur_inhalation_per_mg_per_m3: 0.002,
       targetRisk: 0.00001,
       hazardQuotient: 1,
     });
-    
-    expect(result.blocked).toBe(false);
-    expect(result.driver).toBe('cancer');
+
+    expect(result.blocked).toBe(true);
+    expect(result.nonCancerBlocked).toBe(true);
+    expect(result.cancerBlocked).toBe(true);
+    expect(result.warnings).toContain('IUR provided but cancer derivation is not yet implemented.');
     expect(result.nonCancerAirS).toBeNull();
-    expect(result.cancerAirS).not.toBeNull();
+    expect(result.cancerAirS).toBeNull();
+  });
+
+  it('remains blocked when both are provided', () => {
+    const result = deriveInhalationStandards({
+      rfc_inhalation_mg_per_m3: 0.5,
+      iur_inhalation_per_mg_per_m3: 0.002,
+      targetRisk: 0.00001,
+      hazardQuotient: 1,
+    });
+
+    expect(result.blocked).toBe(true);
+    expect(result.nonCancerBlocked).toBe(true);
+    expect(result.cancerBlocked).toBe(true);
+    expect(result.nonCancerAirS).toBeNull();
+    expect(result.cancerAirS).toBeNull();
+    expect(result.warnings.length).toBe(3);
   });
 });
