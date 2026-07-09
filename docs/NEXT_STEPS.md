@@ -19,6 +19,31 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-07-09 -- E-58 live review surface: RPC fix merged, production deploy still owner-gated
+
+Session merged PRs #559 (Search submission RPC ambiguous-column fix), #560 (Index-submission-
+evidence CTA for absent indexing state), #561 (E-58 provenance safeguard), and #562 (Supabase
+protocol reconciliation to an owner-approved gated-write workflow -- see CLAUDE.md's Supabase
+Protocol section for the current policy). Real E-58 evaluation confirmed live and working:
+`project_id 11111111-1111-1111-1111-111111111111`, `evaluation_id
+33333333-3333-3333-3333-333333333333`, `completed`/`live`, 42 per-policy rows, 420 submission
+chunks, 420 citation rows, indexing status `complete`, 0 `v2_judgments` rows.
+
+**Deferred (owner-gated, not started this session):**
+- **Apply the #559 migration to production.** Merging the PR does not deploy it -- the RPC fix
+  (`supabase/migrations/20260709_v2_submission_chunks_search_rpc_fix_ambiguous_evidence_item_id.sql`)
+  must be owner-run in Supabase Studio (or via the new PR #562 gated-write path) before Search
+  submission works live. Exact SQL, smoke-test steps, and rollback conditions: see the "Remaining
+  owner action" section of `FRESH_SESSION_HANDOFF_2026_07_09b_ENGINE_V2_E58_SEARCH_RPC_FIX.md`
+  (tracked, not a scratch file).
+- **Then smoke-test Search submission** on evaluation `33333333-3333-3333-3333-333333333333` (same
+  handoff section has the exact steps).
+- **Export CSV/MD/HTML and Export memo verification against real (non-stub) data** -- flagged in the
+  prior overnight closeout as unconfirmed; not revisited this session.
+- **One real judgment save + one real "Ask AI" chat query** against evaluation `33333333` --
+  remain untested end-to-end; the latter needs a live Ollama session (owner-gated per
+  OLLAMA_SCHEDULE_PROTOCOL.md).
+
 ### 2026-07-06 -- MO provenance guards shipped; owner-gated lanes re-grounded
 
 Session shipped PRs #522/#523/#524/#525 (two detection-only provenance guards + zinc/mn tension flags
