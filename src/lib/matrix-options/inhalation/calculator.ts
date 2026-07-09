@@ -10,7 +10,9 @@ export interface HumanHealthInhalationInput {
 }
 
 export interface HumanHealthInhalationResult {
-  airConcentration_mg_per_m3: number;
+  // Nullable + null while blocked so a fail-closed stub can never expose a numeric placeholder
+  // (e.g. 0) that a downstream consumer might render as a valid air concentration.
+  airConcentration_mg_per_m3: number | null;
   driver: HumanHealthRiskDriver;
   nonCancerAirS: number | null;
   cancerAirS: number | null;
@@ -33,17 +35,17 @@ export function deriveInhalationStandards(input: HumanHealthInhalationInput): Hu
   const cancerBlocked = true;
 
   const warnings = ['Inhalation calculator is a stub; values are not valid standards.'];
-  
+
   if (input.rfc_inhalation_mg_per_m3 !== null) {
     warnings.push('RfC provided but non-cancer derivation is not yet implemented.');
   }
-  
+
   if (input.iur_inhalation_per_mg_per_m3 !== null) {
     warnings.push('IUR provided but cancer derivation is not yet implemented.');
   }
 
   return {
-    airConcentration_mg_per_m3: 0,
+    airConcentration_mg_per_m3: null,
     driver,
     nonCancerAirS,
     cancerAirS,

@@ -16,6 +16,7 @@ describe('HHInhalationCalculator skeleton', () => {
     expect(result.warnings).toContain('Inhalation calculator is a stub; values are not valid standards.');
     expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
+    expect(result.airConcentration_mg_per_m3).toBeNull();
   });
 
   it('remains blocked even when rfc is provided', () => {
@@ -32,6 +33,7 @@ describe('HHInhalationCalculator skeleton', () => {
     expect(result.warnings).toContain('RfC provided but non-cancer derivation is not yet implemented.');
     expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
+    expect(result.airConcentration_mg_per_m3).toBeNull();
   });
 
   it('remains blocked even when iur is provided', () => {
@@ -48,6 +50,7 @@ describe('HHInhalationCalculator skeleton', () => {
     expect(result.warnings).toContain('IUR provided but cancer derivation is not yet implemented.');
     expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
+    expect(result.airConcentration_mg_per_m3).toBeNull();
   });
 
   it('remains blocked when both are provided', () => {
@@ -63,6 +66,7 @@ describe('HHInhalationCalculator skeleton', () => {
     expect(result.cancerBlocked).toBe(true);
     expect(result.nonCancerAirS).toBeNull();
     expect(result.cancerAirS).toBeNull();
+    expect(result.airConcentration_mg_per_m3).toBeNull();
     expect(result.warnings.length).toBe(3);
   });
 });
