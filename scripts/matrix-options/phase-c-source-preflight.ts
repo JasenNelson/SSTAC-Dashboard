@@ -33,7 +33,7 @@ function checkSources(rootPath: string) {
 
   for (const fileName of REQUIRED_FILES) {
     const foundPath = findFile(rootPath, fileName);
-    
+
     if (foundPath) {
       console.log(`[PASS] Found: ${fileName} at ${foundPath}`);
     } else {

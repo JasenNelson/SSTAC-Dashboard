@@ -257,25 +257,45 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
   });
 
   it('displays the cyanide guidance warning for cyanide-family keys', () => {
+    const equivalentKeys = ['cyanide_free', 'hydrogen_cyanide_and_cyanide_salts'];
+    const complexSaltKeys = ['copper_cyanide', 'silver_cyanide', 'potassium_silver_cyanide'];
+
     const { rerender } = render(
       <SharedGlobalInputs
-        substanceKey="cyanide_free"
+        substanceKey={equivalentKeys[0]}
         jurisdiction={DEFAULT_JURISDICTION}
         onSubstanceKeyChange={() => {}}
         onJurisdictionChange={() => {}}
       />,
     );
-    expect(screen.getByTestId('cyanide-guidance-warning')).toHaveTextContent(/Caution: These endpoints represent equivalent cyanide exposure/);
 
-    rerender(
-      <SharedGlobalInputs
-        substanceKey="copper_cyanide"
-        jurisdiction={DEFAULT_JURISDICTION}
-        onSubstanceKeyChange={() => {}}
-        onJurisdictionChange={() => {}}
-      />,
-    );
-    expect(screen.getByTestId('cyanide-guidance-warning')).toHaveTextContent(/Complex Salt: Represents a metal-cyanide compound\/salt/);
+    for (const key of equivalentKeys) {
+      rerender(
+        <SharedGlobalInputs
+          substanceKey={key}
+          jurisdiction={DEFAULT_JURISDICTION}
+          onSubstanceKeyChange={() => {}}
+          onJurisdictionChange={() => {}}
+        />,
+      );
+      const warning = screen.getByTestId('cyanide-guidance-warning');
+      expect(warning).toHaveTextContent(/Caution: These endpoints represent equivalent cyanide exposure/);
+      expect(warning).toHaveAttribute('role', 'alert');
+    }
+
+    for (const key of complexSaltKeys) {
+      rerender(
+        <SharedGlobalInputs
+          substanceKey={key}
+          jurisdiction={DEFAULT_JURISDICTION}
+          onSubstanceKeyChange={() => {}}
+          onJurisdictionChange={() => {}}
+        />,
+      );
+      const warning = screen.getByTestId('cyanide-guidance-warning');
+      expect(warning).toHaveTextContent(/Complex Salt: Represents a metal-cyanide compound\/salt/);
+      expect(warning).toHaveAttribute('role', 'alert');
+    }
   });
 
   it('does not display the cyanide guidance warning for unrelated substances', () => {

@@ -6,7 +6,7 @@ This design packet outlines the finalized data schema, component routing, and ex
 ## 1. Current Type and Data Limitations
 Presently, `SubstanceEntry` in `src/lib/matrix-options/types.ts` is strictly tailored for direct contact (oral/dermal) and eco-food pathways. It lacks the fields required to handle inhalation pathways, specifically RfC (Reference Concentration) and IUR (Inhalation Unit Risk).
 
-Furthermore, existing calculators (`HHDirectContactCalculator`, `HHFoodWebCalculator`) inherently assume mass-based exposure (mg/kg/day) and rely on oral absorption (`ba_oral`) and dermal absorption (`abs_dermal`) factors, which are completely inapplicable to inhalation exposure (mg/m³).
+Furthermore, existing calculators (`HHDirectContactCalculator`, `HHFoodWebCalculator`) inherently assume mass-based exposure (mg/kg/day) and rely on oral absorption (`ba_oral`) and dermal absorption (`abs_dermal`) factors, which are completely inapplicable to inhalation exposure (mg/m3).
 
 ## 2. Exact Candidate Fields
 The following fields must be appended to `SubstanceEntry` and the backend `SubstanceRow` definitions:
