@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "session_2026_07_09c_e58_launch_support_run": {
+      "status": "complete",
+      "session_date": "2026-07-09",
+      "work_summary": "Follow-up autonomous run (same day as session_2026_07_09_e58_search_rpc_fix, later): applied the #559 search_submission_chunks RPC fix to production via mcp__supabase-project-scoped__execute_sql (not apply_migration), after owner approval of the exact SQL and exact tool following an Opus adversarial review and a codex targeted review, both GREEN. Preflight confirmed the buggy version was live; postflight confirmed the fix. Smoke-tested Search submission against the real E-58 evaluation (project_id 11111111-1111-1111-1111-111111111111, evaluation_id 33333333-3333-3333-3333-333333333333): 3 queries (contamination, remediation, arsenic), all HTTP 200, real highlighted results with citation badges, zero console errors. v2_judgments remained at 0 rows throughout. Also opened PR #569 (docs-only vitest_test_count freshness refresh, 5080->5474), later merged as commit 2f30eac65b639e3421e243fcf10d84dc623f1035. This entry resolves the 'NOT done this session' items noted in session_2026_07_09_e58_search_rpc_fix.",
+      "prs_merged": 1,
+      "main_tip": "2f30eac65b639e3421e243fcf10d84dc623f1035",
+      "last_verified": "2026-07-09"
+    },
     "vitest_test_count_2026_07_05_pre_mo_hardening_batch": {
       "status": "superseded",
       "value": 5080,

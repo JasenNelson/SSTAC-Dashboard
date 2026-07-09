@@ -30,19 +30,29 @@ Protocol section for the current policy). Real E-58 evaluation confirmed live an
 chunks, 420 citation rows, indexing status `complete`, 0 `v2_judgments` rows.
 
 **Deferred (owner-gated, not started this session):**
+- **Export CSV/MD/HTML and Export memo verification against real (non-stub) data** -- flagged in the
+  prior overnight closeout as unconfirmed; not revisited this session.
+- **One real judgment save + one real "Ask AI" chat query** against evaluation `33333333` --
+  remain untested end-to-end; the latter needs a live Ollama session (owner-gated per
+  OLLAMA_SCHEDULE_PROTOCOL.md).
+
+### Resolved (2026-07-09, later same-day autonomous run -- see
+`FRESH_SESSION_HANDOFF_2026_07_09c_ENGINE_V2_E58_LAUNCH_SUPPORT_RUN.md`)
+
 - **Apply the #559 migration to production.** Merging the PR does not deploy it -- the RPC fix
   (`supabase/migrations/20260709_v2_submission_chunks_search_rpc_fix_ambiguous_evidence_item_id.sql`)
   must be owner-run in Supabase Studio (or via the new PR #562 gated-write path) before Search
   submission works live. Exact SQL, smoke-test steps, and rollback conditions: see the "Remaining
   owner action" section of `FRESH_SESSION_HANDOFF_2026_07_09b_ENGINE_V2_E58_SEARCH_RPC_FIX.md`
   (tracked, not a scratch file).
+  **DONE:** applied via owner-approved `mcp__supabase-project-scoped__execute_sql` (not
+  `apply_migration`) after byte-diff verification, an Opus adversarial review, and a codex targeted
+  review, all GREEN. Preflight confirmed the buggy version was live; postflight confirmed the fix
+  (`has_qualified_reference=true`, both buggy flags `false`).
 - **Then smoke-test Search submission** on evaluation `33333333-3333-3333-3333-333333333333` (same
   handoff section has the exact steps).
-- **Export CSV/MD/HTML and Export memo verification against real (non-stub) data** -- flagged in the
-  prior overnight closeout as unconfirmed; not revisited this session.
-- **One real judgment save + one real "Ask AI" chat query** against evaluation `33333333` --
-  remain untested end-to-end; the latter needs a live Ollama session (owner-gated per
-  OLLAMA_SCHEDULE_PROTOCOL.md).
+  **DONE, PASS:** 3 queries (contamination, remediation, arsenic), all HTTP 200, real highlighted
+  results with citation badges, zero console errors, zero `search_failed` text.
 
 ### 2026-07-06 -- MO provenance guards shipped; owner-gated lanes re-grounded
 
