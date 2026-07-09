@@ -161,3 +161,4 @@ scripts/matrix-map/_enrichment_working/
 !.gemini/GEMINI.md
 !.gemini/settings.json
 !.gemini/commands/
+.gstack/
