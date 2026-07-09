@@ -4,8 +4,9 @@
 //
 // Returns the row from v2_submission_chunks_indexing_status for this
 // evaluation_id (see plan v0.5 IMPORTANT 3). Consumed by
-// SubmissionSearchTab + AskAiTab to render a disabled state + retry CTA
-// when status='error'.
+// SubmissionSearchTab + AskAiTab to render a disabled state + a retry
+// CTA when status='error', or an "Index submission evidence" CTA when
+// status='absent' (both CTAs call the same POST /reindex route).
 //
 // Flow:
 //   1. requireAdminForApi  -> 401/403.
@@ -19,7 +20,8 @@
 //          error_message?, started_at?, completed_at?, updated_at? }
 //      The 'absent' status indicates no row exists yet (e.g., an
 //      evaluation completed before Phase B indexer was wired in -- the
-//      UI can render a smaller "re-evaluate to enable search" hint).
+//      UI renders a "no indexed chunks" hint with an "Index submission
+//      evidence" button that calls POST /reindex directly).
 //
 // ASCII only.
 
@@ -89,8 +91,8 @@ export async function GET(
 
   if (!row) {
     // Backwards-compat: an evaluation that completed before Phase B
-    // indexer was wired in has no status row. UI renders a smaller
-    // "re-evaluate to enable search" hint for this case.
+    // indexer was wired in has no status row. UI renders an "Index
+    // submission evidence" button for this case (calls POST /reindex).
     return NextResponse.json({ status: "absent" });
   }
 

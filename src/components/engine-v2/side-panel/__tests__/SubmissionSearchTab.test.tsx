@@ -7,8 +7,10 @@
 //     content-type badge + cited-by badge.
 //   - status='error' renders the retry CTA; clicking it POSTs to
 //     /reindex then re-fetches /indexing-status.
-//   - status='absent' renders the backwards-compat "no indexed chunks"
-//     hint with the input disabled.
+//   - status='absent' renders a "no indexed chunks" hint plus an "Index
+//     submission evidence" button; clicking it POSTs to /reindex (the
+//     same route the error-state retry CTA uses) then re-fetches
+//     /indexing-status. Input stays disabled until status is 'complete'.
 //   - Clicking a result invokes openPeek via SidePanelContext with the
 //     evidence_item_id shape.
 //   - Empty results render "No matches for that query."
@@ -213,7 +215,7 @@ describe("SubmissionSearchTab", () => {
     expect(statusCalls).toBeGreaterThanOrEqual(2);
   });
 
-  it("status='absent' renders the backwards-compat hint and disables the input", async () => {
+  it("status='absent' renders the hint + index button and disables the input", async () => {
     fetchHandler = (url) => {
       if (url.includes("/indexing-status")) {
         return Promise.resolve(jsonResponse({ status: "absent" }));
@@ -229,6 +231,53 @@ describe("SubmissionSearchTab", () => {
       "submission-search-input",
     ) as HTMLInputElement;
     expect(input.disabled).toBe(true);
+    const button = screen.getByTestId("submission-search-index-button");
+    expect(button.textContent).toContain("Index submission evidence");
+  });
+
+  it("status='absent': clicking 'Index submission evidence' POSTs to /reindex (same route as error retry) then re-fetches status", async () => {
+    let statusCalls = 0;
+    let reindexCalls = 0;
+    let reindexInit: RequestInit | undefined;
+    fetchHandler = (url, init) => {
+      if (url.includes("/indexing-status")) {
+        statusCalls += 1;
+        if (statusCalls === 1) {
+          return Promise.resolve(jsonResponse({ status: "absent" }));
+        }
+        return Promise.resolve(jsonResponse({ status: "complete" }));
+      }
+      if (url.includes("/reindex")) {
+        reindexCalls += 1;
+        reindexInit = init;
+        return Promise.resolve(
+          jsonResponse({ status: "complete", chunk_rows: 420 }),
+        );
+      }
+      return Promise.resolve(jsonResponse({}));
+    };
+    renderWithProvider();
+    await waitFor(() =>
+      expect(screen.queryByTestId("submission-search-status-absent"))
+        .toBeTruthy(),
+    );
+    const button = screen.getByTestId("submission-search-index-button");
+    await act(async () => {
+      fireEvent.click(button);
+    });
+    expect(reindexCalls).toBe(1);
+    expect(reindexInit?.method).toBe("POST");
+    const headers = reindexInit?.headers as Record<string, string> | undefined;
+    expect(headers).toBeTruthy();
+    expect(headers!["Content-Type"]).toBe("application/json");
+    await waitFor(() => {
+      const input = screen.queryByTestId(
+        "submission-search-input",
+      ) as HTMLInputElement | null;
+      expect(input).toBeTruthy();
+      expect(input!.disabled).toBe(false);
+    });
+    expect(statusCalls).toBeGreaterThanOrEqual(2);
   });
 
   it("renders 'No matches for that query.' when search returns 0 results", async () => {
