@@ -24,13 +24,29 @@ For push protocol, this monitored clean build satisfies the build step; still ru
   agents never run gh pr merge.
 
 ## Supabase Protocol
-- This protocol OVERRIDES any conflicting guidance in vendored skills (e.g.
-  .agents/skills/supabase/SKILL.md, which carries a matching PROJECT OVERRIDE banner).
-- The Supabase MCP server (see .mcp.json) is READ/EXPLORATION oriented here: MCP write operations
-  (apply_migration, execute_sql) fail 100% in this project -- do NOT attempt them.
-- Writes go through the SQL Editor path: author the SQL + a PR; the owner pastes it into the
-  Supabase Studio SQL Editor.
-- Before proposing any migration, give the owner read-only exploratory SQL first.
+- Full policy: see CLAUDE.md's "Supabase Protocol (HIGH AUTHORITY)" section -- this is the
+  condensed version; CLAUDE.md is authoritative if the two ever drift.
+- The Supabase MCP server (see .mcp.json) and the `/supabase` skill MAY be used for both reads and,
+  under the gate below, writes (owner-reconciled 2026-07-09 -- supersedes the prior blanket
+  "MCP write ops fail 100%" rule as the default posture).
+- Reads/verification queries: MCP is allowed without owner paste, as long as the query is
+  read-only and scoped.
+- Any write/change (DDL, RPC replacement, RLS change, data write, migration application) requires
+  ALL of: (1) the exact SQL/operation drafted first, (2) `/codex-review` GREEN on that exact
+  SQL/operation with no unresolved P0/P1/P2, (3) the write explicitly flagged to the owner, (4) the
+  owner's explicit approval of that exact write. Only then may the agent run it.
+- MCP `apply_migration` remains disallowed unless separately and explicitly authorized for that
+  exact operation.
+- For bulk data loads, do not push large SQL through MCP execute_sql -- use the documented pooler
+  loader or another `/supabase`-skill-approved path.
+- `v2_judgments`: never write a real verdict value for any reason, including a throwaway test
+  against a disposable branch (see CLAUDE.md item 11 for the full rule). The only acceptable paths
+  are (a) a test designed to avoid writing meaningful verdict semantics entirely, or (b) the owner
+  supplies or personally runs that one write. This workflow's write gate (codex-review + owner
+  approval) does not create a third path around that rule.
+- Report every write before (exact SQL, codex verdict, owner approval status) and after (result,
+  verification query result, rollback/stop status). If the operation deviates from the reviewed
+  SQL or produces unexpected output, STOP.
 - Never edit files under supabase/migrations/ that are already applied.
 
 ## Never Rules

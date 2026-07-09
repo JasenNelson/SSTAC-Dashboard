@@ -89,9 +89,14 @@ Separate risk decision (do NOT merge into Gate 1). Ask, recommendation first:
   applies -- this choice only sets the EXTRA cadence: targeted-per-commit (the mandatory floor) /
   +holistic at strategic checkpoints / owner-triggers-holistic-manually. There is NO "codex off." Codex
   CLI preferred; cursor-agent (gpt-5.3-codex-xhigh, `--trust`) is the set-up backup (TOOLING_SETUP B.5).
-- **Supabase / data work:** ALWAYS read the `/supabase` skill first. Reads via the project-scoped MCP
-  are fine; WRITES/migrations go through the SQL-Editor / `apply_live_load.py` path (never bulk SQL
-  through MCP -- token-fatal). Never mutate `supabase/migrations/` that is already applied.
+- **Supabase / data work:** ALWAYS read the `/supabase` skill first. Reads/scoped verification via
+  the project-scoped MCP are fine without owner paste. Any WRITE (DDL, RPC replacement, RLS change,
+  data write, migration application) requires the CLAUDE.md "SAFE AUTONOMOUS SUPABASE WORKFLOW"
+  gate: exact SQL drafted first, GREEN `/codex-review` on that exact SQL, explicitly flagged to the
+  owner, owner's explicit approval of that exact write, only then run. `apply_migration` remains
+  disallowed unless separately named. Bulk loads still go through the SQL-Editor / `apply_live_load.py`
+  path (never bulk SQL through MCP execute_sql -- token-fatal). Never mutate `supabase/migrations/`
+  that is already applied.
 - On AGY selection: BEFORE first use, read the `/AGY` skill + the SSTAC AGY guidance in CLAUDE.md 1.18.
 - Shipping: use `/ship-protocols` proactively before any commit/push/PR/merge; the full push gate is
   lint -> `test:ci` -> `build:monitored:clean` -> e2e (never raw `npm run build`).
@@ -138,7 +143,10 @@ SESSION CONTRACT
 - Protected paths / do-not-touch: supabase/migrations (applied), docs/archive/, src/data catalogs,
   CLAUDE.md, docs/GATE_MODE_SOP.md, src/middleware.ts, package.json/next.config/tsconfig  (+ any lane-specific)
 - AI-never-do (L1): write verdicts (ADEQUATE/INADEQUATE), promote/mutate the default-policy library,
-  mutate src/data catalogs, propose a push without 4 gates GREEN, Supabase MCP writes/migrations.
+  mutate src/data catalogs, propose a push without 4 gates GREEN, any Supabase write (DDL/RPC/RLS/
+  data/migration) or `apply_migration` without the CLAUDE.md gate (exact SQL drafted -> codex-review
+  GREEN -> owner-flagged -> owner-approved for that exact write); `v2_judgments` real-verdict writes
+  remain forbidden regardless (item 11), the gate never creates an exception for that.
 - Review loop: plan -> prior-session review -> /codex-review to GREEN -> ship (/ship-protocols)
 - Stop conditions: <budget ceiling / incident / codex oscillation past ~5 rounds -> informed holistic>
 - Claude-token spend risk for next step: <low/medium/high>

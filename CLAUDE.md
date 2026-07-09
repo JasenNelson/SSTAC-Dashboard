@@ -69,17 +69,9 @@ Vitest + Testing Library (unit), Playwright (e2e), Sentry.
      `rg`/filename-guessing doc search.
   3. Invoke the `/supabase` skill (`~/.claude/skills/supabase/SKILL.md`) specifically, every time,
      for Supabase/migration/branch/backend-data work -- not only when the task looks unfamiliar.
-  4. **KNOWN, CURRENT TENSION (not hypothetical): the `/supabase` skill's capability claims and this
-     repo's CLAUDE.md/AGENTS.md guardrails currently disagree** (the skill describes MCP as live for
-     reads/small writes and a working direct-Postgres pooler write path; CLAUDE.md/AGENTS.md say
-     "Supabase MCP fails 100%, DO NOT attempt apply_migration or execute_sql"). **For any WRITE
-     action, the CLAUDE.md/AGENTS.md guardrail wins, full stop, unless the owner explicitly updates
-     that guardrail** -- a capability fact from the skill is NOT, by itself, permission to use a path
-     this repo's own instructions forbid. If it is genuinely unclear whether a guardrail is stale,
-     STOP and ask the owner rather than assuming either side wins.
-  5. **If `/supabase` or `docs/INDEX.md` cannot be found or read, STOP and tell the owner** rather
+  4. **If `/supabase` or `docs/INDEX.md` cannot be found or read, STOP and tell the owner** rather
      than proceeding from memory or assumption about how Supabase works in this repo.
-  6. **(D-lite, not full duplication)** `/supabase` holds safety-critical, project-specific facts --
+  5. **(D-lite, not full duplication)** `/supabase` holds safety-critical, project-specific facts --
      the direct-Postgres pooler write path, its RLS-bypass implication, and a historical
      password-reset-not-applied credential gotcha. Their EXISTENCE is named here so a session that
      reads only `CLAUDE.md` still knows to go look; the operational details themselves (connection
@@ -96,12 +88,59 @@ Vitest + Testing Library (unit), Playwright (e2e), Sentry.
   (Root-caused 2026-07-08: a full Gate 2B session missed `/supabase` until pushed three times by the
   owner, and separately skipped the `sessionstart` ritual entirely, whose Step 4 already contained
   this exact instruction.)
-- Per `cross_project_supabase_mcp_dead_skip_to_sql_editor.md`: Supabase MCP fails 100%.
-  DO NOT attempt MCP apply_migration or execute_sql.
-  Author SQL + commit + push to PR. Owner pastes into Supabase Studio SQL Editor.
-- Per `cross_project_supabase_protocol_explore_before_assume.md`: ALWAYS give owner
-  read-only exploratory SQL BEFORE drafting any migration, RPC, RLS policy, or role.
-  ZERO assumptions about schema; verify "missing" objects twice before creating.
+
+- **SAFE AUTONOMOUS SUPABASE WORKFLOW (owner-reconciled 2026-07-09 -- supersedes the prior blanket
+  "MCP fails 100%, always paste into Studio" rule as the default posture; this is the current HIGH
+  AUTHORITY policy for all Supabase operations, not only Engine-v2/Regulatory Review).** The goal
+  is NOT to force manual owner copy-paste for every operation -- it is owner-approved,
+  codex-reviewed, exact-operation autonomous execution:
+  1. Claude MAY use the `/supabase` skill and the project-scoped MCP server for Supabase
+     operations, including reads and, under the gate in rule 2, writes.
+  2. For ANY Supabase write/change (DDL, RPC replacement, RLS change, data write, migration
+     application), ALL of the following must happen, in order, before Claude runs anything:
+     a. The exact SQL or operation is drafted first -- the literal statement(s) to be run, not a
+        description of intent.
+     b. `/codex-review` reviews that EXACT SQL/operation BEFORE it is run. The verdict must be
+        GREEN with no unresolved P0/P1/P2 findings.
+     c. The planned write/change is explicitly flagged to the owner: what table/function/policy,
+        what it does, and what it does NOT do.
+     d. The owner explicitly approves that EXACT write/change. A prior general "yes, do Supabase
+        work" does not carry forward -- each distinct write gets its own explicit approval.
+     e. Only then may Claude run it, using `/supabase`/project-scoped MCP if that is the
+        appropriate path for the operation (see rule 4 for bulk loads, which have a different
+        approved path).
+  3. For reads/verification queries: MCP is allowed WITHOUT owner paste, as long as the query is
+     read-only and scoped (no `INSERT`/`UPDATE`/`DELETE`/`CREATE`/`ALTER`/`DROP`, and not a call
+     into a function that itself writes).
+  4. For bulk data loads: do NOT push large SQL through MCP execute_sql (the SQL becomes Claude's
+     own output tokens -- budget-fatal at scale, per `/supabase`'s own guidance). Use the
+     documented pooler loader (`scripts/matrix-map/apply_live_load.py`) or another
+     `/supabase`-skill-approved bulk path.
+  5. MCP `apply_migration` specifically remains DISALLOWED unless separately and explicitly
+     authorized for that EXACT operation -- passing the rule-2 gate for a write does not, by
+     itself, authorize using this specific tool; the owner must name it.
+  6. Engine-v2 / Regulatory Review scope:
+     - Default posture is NO WRITES.
+     - An exact, owner-approved, codex-reviewed write MAY be run by Claude after a GREEN review +
+       explicit owner approval, per rule 2.
+     - `v2_judgments` writes follow item 11 under "What AI Must Never Do" EXACTLY, not a stricter
+       or looser version of it: never write a real verdict value, for any reason, including a
+       throwaway test against a disposable branch; the only acceptable paths remain (a) a test
+       designed to avoid writing meaningful verdict semantics entirely, or (b) the owner supplies
+       or personally runs that one write. This workflow's rule-2 write gate does NOT create a
+       third path -- passing codex-review + owner approval never makes an AI-authored real-verdict
+       write acceptable. Any request to loosen item 11 itself is a major protected decision
+       requiring its own explicit, unambiguous owner statement, not something a general "writes
+       are now allowed" policy update (like this one) covers on its own.
+  7. Report every write, before and after:
+     - BEFORE: the exact SQL/operation, the codex verdict, and the owner approval status.
+     - AFTER: the result, the verification query's result, and rollback/stop status.
+  8. If the operation deviates from the reviewed SQL, or produces unexpected output, STOP --
+     report it and wait for the owner rather than improvising a fix or workaround.
+- Per `cross_project_supabase_protocol_explore_before_assume.md`: ALWAYS give the owner (or, under
+  the read-path in rule 3 above, retrieve directly via scoped read-only MCP) exploratory
+  information BEFORE drafting any migration, RPC, RLS policy, or role. ZERO assumptions about
+  schema; verify "missing" objects twice before creating.
 
 ---
 
@@ -146,7 +185,9 @@ npm scripts:
 - **No default policy promotion.** The default-policy library is curated by HITL. AI must
   not automatically promote, demote, or re-rank policies in the library.
 - **No QA promotion.** Assessment verdicts (ADEQUATE / INADEQUATE / OBSERVATION_ONLY) are
-  HITL professional judgments. AI never writes through `v2_judgments` or proposes verdicts.
+  HITL professional judgments. AI never writes through `v2_judgments` or proposes verdicts --
+  see item 11 under "What AI Must Never Do" for the exact rule, including its two narrow
+  carve-outs, which this line does not restate.
 - **No catalog mutation.** `src/data/` reference catalogs are read-only for AI sessions
   unless owner has explicitly approved a change to the catalog itself.
 - **Protocol 28 is policy-compilation context.** It defines evidence compilation workflow;
@@ -169,7 +210,11 @@ npm scripts:
 2. Promote, demote, or mutate the default-policy evidence library without explicit HITL action.
 3. Propose a push without having run and reported all 4 gates GREEN inline.
 4. Run raw `npm run build` from an agent shell (no quarantine, causes Access Denied stalls).
-5. Attempt Supabase MCP apply_migration or execute_sql (fails 100%; use SQL Editor path).
+5. Call MCP `apply_migration` without a SEPARATE, explicit owner authorization naming that exact
+   operation (default: disallowed). Call MCP `execute_sql` for a WRITE without first: drafting the
+   exact SQL, getting a GREEN `/codex-review` on that exact SQL, flagging it to the owner, and
+   getting the owner's explicit approval for that exact write (see the Supabase Protocol section
+   above). Read-only, scoped `execute_sql` queries do not need this gate.
 6. Copy `rraa_v3_2.db` into the dashboard folder or suggest sync commands for it.
 7. Use `git add .` / `-A` / `-u` for staging.
 8. Delete or modify any file under `supabase/migrations/` that has already been applied.
