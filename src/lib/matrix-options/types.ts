@@ -229,6 +229,10 @@ export interface SubstanceEntry {
   // when no defensible eco-TRV is available (HITL must supply one before
   // running the Eco-Food pathway).
   readonly trv_eco_mg_per_kg_bw_day: number | null;
+  // Inhalation Reference Concentration (non-cancer). mg/m3.
+  readonly rfc_inhalation_mg_per_m3: number | null;
+  // Inhalation Unit Risk (cancer). (mg/m3)^-1.
+  readonly iur_inhalation_per_mg_per_m3: number | null;
   readonly sources: string;
   readonly notes?: string;
 }

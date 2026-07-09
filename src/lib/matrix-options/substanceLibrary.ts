@@ -22,7 +22,7 @@ export const SUBSTANCE_LIBRARY = [
     // source, but B[a]P is not covered by that document (PAHs are handled separately); the value was
     // copy-pasted from the PCB NRWQC criterion. No verified BaP aquatic-life FCV exists in the catalog.
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS B[a]P oral SF 2.0 per mg/kg-bw/day, ADAF-adjusted lifetime default (2017 reassessment), src-us-epa-iris-chemical-details-live (pv-iris-bap-hh-direct-sf); a non-ADAF adult-only IRIS alternate (1.0) and an HC alternate (1.289) also exist; ERDC BSAF DB; ' +
       'Indigenous-Consumption-Pacific-NW Section 4.3',
@@ -54,7 +54,7 @@ export const SUBSTANCE_LIBRARY = [
     // trv_eco_mg_per_kg_bw_day nulled 2026-07-02 (see notes below): the prior 0.00012 cited a
     // "US EPA Eco-SSL mammalian wildlife TRV (PCBs)" that does not exist as an EPA Eco-SSL document;
     // the value is unverifiable and has been removed.
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS Aroclor 1254 oral RfD (CASRN 11097-69-1, src-us-epa-iris-rfd-table-live); ' +
       'oral SF borrowed from the generic US EPA IRIS PCBs entry (CASRN 1336-36-3, ' +
@@ -86,7 +86,7 @@ export const SUBSTANCE_LIBRARY = [
     // trv_eco_mg_per_kg_bw_day nulled 2026-07-02 (see notes below): the prior 0.000064 cited a CCME
     // MeHg wildlife TRV, but CCME's actual published values are 22 (mammal) / 31 (avian) ug/kg-bw/day
     // or a 33 ug/kg tissue guideline -- none equals 64; the value does not match the cited source.
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada HHRA 2023; Indigenous-Consumption-Pacific-NW ' +
       'Section 5; BSAF-Translation Section 7. Oral RfD 0.0002 mg/kg-bw/day is the ' +
@@ -115,7 +115,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 (2025) provisional risk-specific dose 5.0e-4 mg/kg-bw/day (IEUBK/blood-lead-based, NOT a classic NOAEL/UF RfD), src-health-canada-trv-v4-2025 (pv-hc-lead-hh-direct-risk-dose); ANZG; Bioavailability TOC-AVS Section 5',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation. note the RfD is HC\'s provisional risk-specific dose (corrected from a prior untraceable 0.0035); static eco TRV removed (stale Eco-SSL; dynamic catalog resolver supplies it).',
@@ -131,7 +131,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Health Canada TRV v4.0 (2025) oral TDI 0.426 mg/kg-bw/day, src-health-canada-trv-v4-2025 (pv-hc-copper-hh-direct-rfd-tdi); ANZG',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation. the oral RfD is the approved HC TDI (corrected from a prior unsupported 0.04 that cited a non-existent IRIS copper row); the static eco TRV was removed (stale legacy Eco-SSL value not in the catalog; the eco-food calc resolves the catalog value dynamically).',
   },
@@ -148,7 +148,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Health Canada FCSAP TRV v4.0 (2021) provisional oral TDI 0.0008 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; WHO 2011, nephrotoxicity/renal tubular dysfunction; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS values (dietary 0.001, water 0.0005; 1989) remain available as candidate options. Identity: Cadmium, CAS 7440-43-9, PubChem CID 23973 (approved catalog value, pv-hc-cadmium-hh-direct-rfd-tdi / src-health-canada-trv-v4-2025).',
     notes: 'Oral RfD re-picked 2026-07-04 from the prior IRIS dietary value 0.001 to the more-protective Health Canada provisional oral TDI 0.0008 (BC Protocol 1 v5.0 s4.4 HC default). contaminantClass divalent-metal (unchanged); abs_dermal class default unchanged.',
   },
@@ -163,7 +163,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 0.50,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS Zn (approved catalog value, pv-iris-zinc-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Use AVS/SEM path for ecological direct-contact derivation. static eco TRV removed (stale Eco-SSL not in catalog; dynamic resolver supplies it).',
   },
@@ -178,7 +178,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 0.60,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 6e-5 mg/kg-bw/day + oral slope factor 32 per ' +
       'mg/kg-bw/day (Inorganic Arsenic, IRIS Toxicological Review FINAL Jan 2025; ' +
@@ -208,7 +208,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS antimony, hematologic effects, RfD verified 1991; live-verified 2026-07-04). Identity: Antimony, CAS 7440-36-0, PubChem CID 5354495. Re-picked 2026-07-04 from the prior BC Protocol 28 value 0.006 mg/kg-bw/day, which was found to have NO basis in any live primary source (antimony is absent from Health Canada FCSAP TRV v4.0; the IRIS oral RfD is 0.0004, ~15x lower) (approved catalog value, pv-iris-antimony-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD re-picked 2026-07-04 to the approved US EPA IRIS value (qa_status=approved) after live verification found the prior 0.006 (BC P28 needs_review) unsupported. contaminantClass metalloid; abs_dermal metalloid class default (unchanged). No Health Canada oral TDI exists for antimony.',
   },
@@ -223,7 +223,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.0003 mg/kg-bw/day (CAS 7440-48-4)',
     notes:
       'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
@@ -243,7 +243,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.025 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2019b, LOAEL 25 / UF 1000, neurodevelopmental; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.14 mg/kg-bw/day (1995, CNS effects) remains available as a candidate option. Identity: Manganese, CAS 7439-96-5, PubChem CID 23930 (approved catalog value, pv-hc-manganese-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes: 'Oral RfD re-picked 2026-07-04 from the prior 0.14 (US EPA IRIS 1995) to the more-protective Health Canada oral TDI 0.025 (BC Protocol 1 v5.0 s4.4 HC default; ~5.6x more protective). contaminantClass divalent-metal (unchanged); abs_dermal class default unchanged.',
   },
@@ -258,7 +258,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.005 mg/kg-bw/day (CAS 7440-22-4) (approved catalog value, pv-iris-silver-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
       'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
@@ -280,7 +280,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'BC Protocol 28 (Jan 2021) oral RfD 0.6 mg/kg-bw/day (CAS 7440-31-5)',
     notes:
       'Human-health pathways only (no eco TRV in catalog; Eco-Food is filtered ' +
@@ -302,7 +302,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRVs v4.0 oral TDI 0.19 mg/kg-bw/day (approved catalog value, ' +
       'pv-hc-barium-hh-direct-rfd / src-health-canada-trv-v4-2025). Wired as the most-protective ' +
@@ -329,7 +329,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + Health Canada TRV v4.0 oral SF 0.083 per mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-benzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-hc-benzene-hh-direct-sf / src-health-canada-trv-v4-2025).',
     notes:
       'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
@@ -347,7 +347,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value; BOTH src-us-epa-iris-rfd-table-live and src-health-canada-trv-v4-2025 approve the identical value -- concordant IRIS/HC, so the displayed default follows the active regulatory frame per BC Protocol 1 v5.0 s4.4: Health Canada under BC/Canada/default frames, US EPA IRIS under US frames); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-beryllium-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-hc-beryllium-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
       'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (dormant per the 2026-07-02 Cluster E abs_dermal correction). Value is concordant across US EPA IRIS and Health Canada (both approve 0.002); the displayed default follows the active regulatory frame per BC Protocol 1 v5.0 s4.4 (Health Canada under BC/Canada/default frames, US EPA IRIS under US frames). No oral slope factor candidate exists in the catalog (sf_oral remains null); inhalation RfC and inhalation unit risk candidates are available in References & Values but are out of scope for this wiring pass. abs_dermal 0.001 = divalent-metal class default (no chemical-specific soil ABSd), corrected from 0.1 -- unchanged by this wiring.',
@@ -363,7 +363,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRVs v4.0 oral TDI 0.3 mg/kg-bw/day (approved catalog value, ' +
       'pv-hc-chromium_trivalent-hh-direct-rfd / src-health-canada-trv-v4-2025; HC Table 1 ' +
@@ -392,7 +392,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral RfD 0.0022 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; the US EPA IRIS oral RfD candidate is a RANGE, 0.0007 to 0.07 mg/kg-bw/day, and is excluded as non-single-value) + US EPA IRIS oral SF 0.27 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-hc-chromium_hexavalent-hh-direct-rfd / src-health-canada-trv-v4-2025). (approved catalog value, pv-iris-chromium-hexavalent-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -419,7 +419,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, BOTH src-us-epa-iris-rfd-table-live and src-health-canada-trv-v4-2025 approve the identical value); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-naphthalene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-hc-naphthalene-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
       'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
@@ -437,7 +437,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0047 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; BMDL10 6.6 ppm Cavalleri 1994 occupational, PBPK external dose 4.7 mg/kg-bw/day, UF 1000, neurotoxicity/colour-confusion; HC 2015; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.006 mg/kg-bw/day remains available as a candidate option. PubChem CID 31373. ' +
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF US EPA IRIS oral slope factor 0.0021 per mg/kg-bw/day (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c) (approved catalog value, pv-hc-tetrachloroethylene-hh-direct-rfd / src-health-canada-trv-v4-2025).',
@@ -457,7 +457,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (US EPA IRIS 2011 oral slope factor; most-protective; current_default; owner-approved 2026-07-05; sources cite pv-iris-trichloroethylene-hh-direct-sf).',
     notes:
       'Oral RfD wired build-first (qa_status=approved). MOST-PROTECTIVE override to US EPA IRIS 2011 (0.0005) -- newer than and lower than the HC 2005 value (0.00146); logged for owner review. Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
@@ -474,7 +474,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF Health Canada oral slope factor 0.24 per mg/kg-bw/day (approved catalog value, pv-hc-vinyl_chloride-hh-direct-sf; single approved candidate -> resolves SOURCED to Health Canada; sf backfilled build-first 2026-07-04c). US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, pv-iris-vinyl-chloride-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes:
       'Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
@@ -495,7 +495,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Health Canada TRV v4.0 (2025) oral TDI 0.43 mg/kg-bw/day (approved catalog value, pv-hc-chlorobenzene-hh-direct-rfd / src-health-canada-trv-v4-2025; current_default 2026-07-06, owner-approved per the recency rule). PubChem CID 7964. Health Canada TRVs v4.0 Table 5 dermal RAF.',
     notes:
       'oral RfD reseeded 2026-07-06 to Health Canada TRV v4.0 0.43 (current_default). PR #513 (2026-07-05) had reseeded this to US EPA IRIS 0.02, believing 0.43 was a 1,2-dichlorobenzene mis-attribution -- that belief was disproven by direct verification against the real HC v4.0 source PDF (page 25; see docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md): 0.43 is genuinely HC\'s correctly-derived Oral TDI. The EPA/IRIS 0.02 row remains an available candidate option. ' +
@@ -521,7 +521,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Nickel (total), CAS 7440-02-0, PubChem CID 935 (EC 231-111-4). ' +
       'Eco-food TRV seeded from the eco catalog (FCSAP ERA Module 7).',
@@ -544,7 +544,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; a BC Protocol 28 v3.0 candidate agrees in value (0.005) but is pending_source_locator/needs_review and is not cited as the wiring source). Identity: Selenium (total), CAS 7782-49-2, PubChem CID 6326970 (US EPA IRIS CASRN 7782-49-2). Eco-food TRV seeded from the eco catalog (approved catalog value, pv-iris-selenium-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -561,7 +561,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0097 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b drinking-water tech doc, Seeber 2004/2005 occupational NOAEL, PBPK oral-equivalent, UF 10; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.08 mg/kg-bw/day (NTP 1990) remains available as a candidate option. PubChem CID 1140. ' +
       'Identity: Toluene (methylbenzene), CAS 108-88-3, PubChem CID 1140. ' +
@@ -583,7 +583,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.022 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b, NTP 1999 chronic inhalation route-to-route PBPK, UF 25; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.1 mg/kg-bw/day (Wolf 1956) remains available as a candidate option. PubChem CID 7500. ' +
       'Identity: Ethylbenzene, CAS 100-41-4, PubChem CID 7500. logKow 3.15 ' +
@@ -605,7 +605,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, BOTH src-health-canada-trv-v4-2025 and src-us-epa-iris-rfd-table-live approve the identical value); Identity: Pyrene (4-ring parent PAH), CAS 129-00-0, PubChem CID 31423 ' +
       '(EPA CompTox DTXSID3024289). logKow 4.88 (Hansch/Leo/Hoekman 1995, p.137, ' +
@@ -628,7 +628,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Benz[a]anthracene (= benzo[a]anthracene/tetraphene), CAS 56-55-3, ' +
       'PubChem CID 5954. logKow 5.76 (HSDB, Wang et al. 1986; ICSC 0385 lists 5.61). ' +
@@ -648,7 +648,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) oral RfD 0.3 mg/kg-bw/day (also US EPA IRIS). ' +
       'Non-carcinogenic PAH (approved catalog value, pv-iris-anthracene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
@@ -669,7 +669,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) oral RfD 0.04 mg/kg-bw/day (also US EPA IRIS). ' +
       'Non-carcinogenic PAH (approved catalog value, pv-iris-fluoranthene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
@@ -690,7 +690,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) oral RfD 0.04 mg/kg-bw/day. Non-carcinogenic PAH ' +
       '(EPA IRIS lists no oral RfD; the BC P28 surrogate value is used).',
@@ -711,7 +711,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.06 mg/kg-bw/day. Non-carcinogenic PAH (approved catalog value, pv-iris-acenaphthene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -731,7 +731,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.04 mg/kg-bw/day. Non-carcinogenic PAH (approved catalog value, pv-iris-fluorene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -751,7 +751,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) oral slope factor 7.3 per mg/kg-bw/day. ' +
       'Carcinogenic PAH (uses a cancer slope factor, not an RfD).',
@@ -773,7 +773,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Dieldrin (single organochlorine cyclodiene, epoxide of aldrin), ' +
       'CAS 60-57-1, PubChem CID 969491. logKow 5.37 = EPA ESB EqP anchor ' +
@@ -796,7 +796,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.34 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: p,p-DDT (4,4-DDT; the p,p isomer, CAS 50-29-3, PubChem CID 3036; ' +
       'US EPA IRIS CASRN 50-29-3) -- NOT o,p-DDT (789-02-6) nor technical mixture. ' +
@@ -818,7 +818,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Dibenzofuran (unsubstituted parent O-heterocyclic aromatic), ' +
       'CAS 132-64-9, PubChem CID 568 -- NOT a polychlorinated dibenzofuran (PCDF). ' +
@@ -838,7 +838,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Chlordane (TECHNICAL MIXTURE), CAS 12789-03-6 (US EPA IRIS ' +
       'DTXSID5023954) -- the mixture CAS, NOT general 57-74-9 nor cis/trans ' +
@@ -868,7 +868,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: alpha-Hexachlorocyclohexane (alpha-HCH), CAS 319-84-6. ATSDR Toxicological Profile for Hexachlorocyclohexane (HCH), Chapter 4, Table 4-1 (Chemical Identity) and Table 4-2 (Physical and Chemical Properties): log Kow = 3.8, footnote citing Hansch, C., Leo, A. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society; https://www.atsdr.cdc.gov/toxprofiles/tp43.pdf (PubChem CID 727 resolves to this CAS but carries no PUG-View LogP heading, so ATSDR is the correct primary source). US EPA IRIS oral slope factor 6.3 per mg/kg-bw/day (approved catalog value, pv-iris-alpha_hexachlorocyclohexane_alpha_hch-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes: 'Eco selectability. logKow 3.8 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -883,7 +883,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Azinphos-methyl, CAS 86-50-0. PubChem Compound CID 2268, LogP heading via PUG-View REST API: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2268/JSON?heading=LogP -- log Kow = 2.75, sourced from Hansch, C., Leo, A., Hoekman, D. Exploring QSAR (1995), ACS, p. 72; corroborated by ILO-WHO ICSC #0826 (log Kow = 2.75).',
     notes: 'Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -898,7 +898,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Biphenyl, CAS 92-52-4. PubChem CID 7095, LogP section citing Hansch C., Leo A., Hoekman D. (1995) Exploring QSAR, ACS, p.97 (via HSDB); log Kow = 4.01. IUPAC 1,1\'-biphenyl; value confirmed via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7095/JSON?heading=LogP. US EPA IRIS oral slope factor 0.008 per mg/kg-bw/day (approved catalog value, pv-iris-biphenyl-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).' +
       ' US EPA IRIS oral RfD 0.5 mg/kg-bw/day (approved catalog value, pv-iris-biphenyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 4.01 (eco-direct EqP input). oral RfD and oral slope factor now BOTH wired (rfd backfilled build-first 2026-07-04d); abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
@@ -914,7 +914,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Bromoform, CAS 75-25-2. PubChem CID 5558, LogP heading citing HSDB (Chemicals Inspection and Testing Institute, CSCL Japan 1992) log Kow = 2.40 and ILO-WHO ICSC 0108 = 2.38: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5558/JSON?heading=LogP . Identity/CAS confirmed against PubChem CID 5558 (CAS RN 75-25-2). US EPA IRIS oral slope factor 0.0079 per mg/kg-bw/day (approved catalog value, pv-iris-bromoform-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c). US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, pv-iris-bromoform-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 2.4 (eco-direct EqP input). oral RfD and oral slope factor now BOTH wired (rfd backfilled build-first 2026-07-04d); abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -929,7 +929,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: 4-Bromophenyl phenyl ether, CAS 101-55-3. PubChem CID 7565 (1-bromo-4-phenoxybenzene): https://pubchem.ncbi.nlm.nih.gov/compound/7565 -- computed XLogP3 = 4.4, formula C12H9BrO. US EPA CompTox (DTXSID8023927, CASRN 101-55-3) corroborates identity; no experimental log Kow is reported in PubChem PUG-View, so log Kow = 4.4 is the PubChem-computed XLogP3 (Cheng et al., J. Chem. Inf. Model. 2007, 47(6), 2140-2148).',
     notes: 'Eco selectability. logKow 4.4 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -944,7 +944,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Butyl benzyl phthalate (BBP), CAS 85-68-7. PubChem CID 2347: https://pubchem.ncbi.nlm.nih.gov/compound/2347 -- formula C19H20O4. Log Kow = 4.73 from Ellington JJ, Floyd TL, Octanol/water partition coefficients for eight phthalate esters, EPA/600/S-96/006 (1996), USEPA National Exposure Research Laboratory, as cited in HSDB via PubChem PUG-View LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2347/JSON?heading=LogP ; corroborated by ILO-WHO ICSC #0834 (log Kow = 4.77). US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, pv-iris-butyl_benzyl_phthalate_bbp-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 4.73 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -959,7 +959,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Carbaryl, CAS 63-25-2. PubChem CID 6129, LogP heading via PUG-View (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6129/JSON?heading=LogP), citing Hansch, Leo & Hoekman, Exploring QSAR, ACS 1995, p. 98 (log Kow = 2.36, peer reviewed, experimental); ILO-WHO ICSC 0121 reports 1.59 (not used). US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, pv-iris-carbaryl-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 2.36 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -974,7 +974,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.00071 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; NOAEL 1 mg/kg-bw/day Bruckner 1986 rat gavage, NOAELadj 0.71, UF 1000, hepatotoxicity; HC 2010; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.004 mg/kg-bw/day remains available as a candidate option. PubChem CID 5943. ' +
       'Identity: Carbon tetrachloride, CAS 56-23-5. PubChem CID 5943 (Carbon Tetrachloride) [corrects a CID error in the prior truncated text, which cited CID 5566 = Trifluoperazine], IUPAC tetrachloromethane, https://pubchem.ncbi.nlm.nih.gov/compound/Carbon-Tetrachloride. log Kow = 2.64 (EPA 1984): ATSDR Toxicological Profile for Carbon Tetrachloride (2005), Section 6.3.1, citing EPA Health Assessment Document for Carbon Tetrachloride, EPA600882001F (1984). Note: PubChem/HSDB experimental log Kow (Hansch/Leo/Hoekman 1995) is 2.83; the 2.64 used here matches ATSDR/EPA 1984 and ILO-WHO ICSC 0024. US EPA IRIS oral slope factor 0.07 per mg/kg-bw/day (approved catalog value, pv-iris-carbon_tetrachloride-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c) (approved catalog value, pv-hc-carbon_tetrachloride-hh-direct-rfd / src-health-canada-trv-v4-2025).',
@@ -993,7 +993,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Chlorpyrifos, CAS 2921-88-2. PubChem CID 2730, LogP heading via PUG-View (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/2730/JSON?heading=LogP), citing HSDB / Sangster LOGKOW Database (log Kow = 4.96, peer reviewed); EPA CompTox DTXSID4020458; corroborated by ILO-WHO ICSC and HMDB (both 4.96).',
     notes: 'Eco selectability. logKow 4.96 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1008,7 +1008,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Demeton (technical, O+S isomer mixture), CAS 8065-48-3. PPDB: Pesticide Properties DataBase, AERU, University of Hertfordshire -- Demeton (Ref: ENT 17295): https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1537.htm (Log P 3.21 at pH 7, 20 C, quality V3 [unverified data of known source], calculated from ChemID/ChemSpider/PubChem; Pow 1.62 x 10^3 calculated at pH 7, 20 C). US EPA IRIS oral RfD 0.00004 mg/kg-bw/day (approved catalog value, pv-iris-demeton-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 3.21 (eco-direct EqP input). logKow 3.21 is single-source (AERU PPDB, quality V3 calculated); plausible but not independently corroborated -- upgrade when a stronger source is found. oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1023,7 +1023,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Diazinon, CAS 333-41-5. PubChem CID 3017, LogP heading: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3017/JSON?heading=LogP -- log Kow = 3.81 (Hansch C., Leo A., Hoekman D., Exploring QSAR, ACS 1995, p.106; peer reviewed, HSDB, experimental); HMDB0032943 = 3.81; ILO-WHO ICSC 0137 reports 3.11 (not used).',
     notes: 'Eco selectability. logKow 3.81 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1038,7 +1038,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Dibutyl phthalate (DBP), CAS 84-74-2. PubChem CID 3026 (https://pubchem.ncbi.nlm.nih.gov/compound/3026), CAS 84-74-2. Log Kow = 4.50 from PubChem LogP heading citing HSDB: Ellington JJ, Floyd TL, Octanol/water partition coefficients for eight phthalate esters, EPA/600/S-96/006 (1996), USEPA National Exposure Research Lab (peer reviewed, experimental); HMDB = 4.50; ILO-WHO ICSC reports 4.72 (not used). US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, pv-iris-dibutyl_phthalate_dbp-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 4.5 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1053,7 +1053,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.09 mg/kg-bw/day (approved catalog value, pv-iris-dichlorobenzene_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live), set as current_default per the conflict rule (more protective than the Health Canada value; owner-approved 2026-07-05). The Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.43 mg/kg-bw/day (pv-hc-dichlorobenzene_1_2-hh-direct-rfd / src-health-canada-trv-v4-2025; HC 1996 based on NTP 1985b chronic gavage, NOAELadj 43, UF 100, nephrotoxicity; corroborated by WHO/IPCS SIDS 0.429; live-verified 2026-07-04) remains available as a candidate option. PubChem CID 7239. Identity: 1,2-Dichlorobenzene (o-dichlorobenzene), CAS 95-50-1. PubChem CID 7239 (https://pubchem.ncbi.nlm.nih.gov/compound/7239; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=CAS). Experimental LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/7239/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.43, experimental, peer-reviewed). Secondary, non-conflicting value 3.38 per ILO-WHO International Chemical Safety Cards (ICSC); not used (Hansch/ACS value retained as primary).',
     notes: 'Oral RfD is set to the US EPA IRIS current default 0.09 (owner-approved 2026-07-05). Eco selectability. logKow 3.43 (eco-direct EqP input). HH sf_oral null (rfd now wired); abs_dermal/ba_oral inert defaults.',
   },
@@ -1068,7 +1068,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: 1,3-Dichlorobenzene, CAS 541-73-1. CAS and identity: Wikipedia, 1,3-Dichlorobenzene (https://en.wikipedia.org/wiki/1,3-Dichlorobenzene); PubChem CID 10943 (https://pubchem.ncbi.nlm.nih.gov/compound/10943; CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10943/JSON?heading=CAS). LogP: PubChem PUG-View LogP heading for CID 10943 (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/10943/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (log Kow = 3.53, experimental). Concordant value 3.53 also per ILO-WHO International Chemical Safety Cards (ICSC).',
     notes: 'Eco selectability. logKow 3.53 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1083,7 +1083,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: 1,4-Dichlorobenzene, CAS 106-46-7. PubChem CID 4685 (1,4-Dichlorobenzene), Compound Summary and LogP record, https://pubchem.ncbi.nlm.nih.gov/compound/4685 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4685/JSON?heading=CAS). PubChem PUG-View LogP heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4685/JSON?heading=LogP, citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, via Hazardous Substances Data Bank (HSDB) (log Kow = 3.44, experimental). Concordant value 3.44 also per Human Metabolome Database (HMDB); secondary, lower value 3.37 per ILO-WHO ICSC, not used (Hansch/HSDB value retained as primary). Health Canada TRV v4.0 oral RfD 0.11 mg/kg-bw/day (approved catalog value, pv-hc-dichlorobenzene_1_4-hh-direct-rfd / src-health-canada-trv-v4-2025; single approved candidate at this value, so it resolves SOURCED to Health Canada TRV v4.0 by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 3.44 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1098,7 +1098,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Diethyl phthalate (DEP), CAS 84-66-2. PubChem CID 6781, https://pubchem.ncbi.nlm.nih.gov/compound/6781 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6781/JSON?heading=CAS; IUPAC name diethyl benzene-1,2-dicarboxylate). LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6781/JSON?heading=LogP), citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, p. 101, via Hazardous Substances Data Bank (HSDB) (log Kow = 2.47, experimental, peer-reviewed). Concordant value 2.47 also per ILO-WHO International Chemical Safety Cards (ICSC). US EPA IRIS oral RfD 0.8 mg/kg-bw/day (approved catalog value, pv-iris-diethyl_phthalate_dep-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 2.47 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1113,7 +1113,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Endosulfan (technical, mixed isomers), CAS 115-29-7. PubChem CID 3224 (Endosulfan), https://pubchem.ncbi.nlm.nih.gov/compound/3224 (CAS confirmed via PubChem CAS heading, https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3224/JSON?heading=CAS). Experimental Properties - LogP heading (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/3224/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society: this heading reports log Kow = 3.83 (alpha-isomer) and log Kow = 3.62 (beta-isomer) -- i.e. PubChem\'s own technical/mixed-isomer CID 3224 record carries isomer-specific values, not one single technical-mixture number. The library\'s 3.83 for this "technical, mixed isomers" row is therefore the alpha-isomer literature value, not a distinct technical-blend measurement; this is consistent with (and explains) the existing notes-field flag "logKow flagged disputed across sources; value is defensible/representative." Secondary, concordant value 3.55/3.62 per ILO-WHO International Chemical Safety Cards (ICSC) for Endosulfan (Mixed Isomers).' +
       ' US EPA IRIS oral RfD 0.006 mg/kg-bw/day (approved catalog value, pv-iris-endosulfan-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 3.83 (eco-direct EqP input). logKow flagged disputed across sources; value is defensible/representative. oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
@@ -1129,7 +1129,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: alpha-Endosulfan, CAS 959-98-8. CAS and identity confirmed via PubChem CID 12309460 (alpha-Endosulfan, C9H6Cl6O3S; https://pubchem.ncbi.nlm.nih.gov/compound/alpha-Endosulfan; CAS heading https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/12309460/JSON?heading=CAS) and NIST Chemistry WebBook (ID C959988; https://webbook.nist.gov/cgi/cbook.cgi?ID=C959988) -- NEITHER of these two records carries an experimental LogP/log Kow heading for this CAS/CID (PubChem CID 12309460 LogP heading query returns no data; NIST WebBook lists only mass spectrum, IR, phase-change, and GC data, no Kow). The verified log Kow = 4.74 value traces to Shen, L., Wania, F. (2005) "Compilation, Evaluation, and Selection of Physical-Chemical Property Data for Organochlorine Pesticides," Journal of Chemical & Engineering Data, 50(3), 742-768, DOI 10.1021/je049693f (internally-thermodynamically-consistency-adjusted literature review; reports log Kow = 4.74 for alpha-endosulfan and 4.78 for beta-endosulfan). Independently corroborated by the University of Hertfordshire PPDB (Pesticide Properties DataBase) record for alpha-endosulfan (log P = 4.74; https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1661.htm), sourced there from manufacturer safety data sheets (PPDB reliability code E3: unverified data of known source). LGC Standards and Sigma-Aldrich analytical-standard product pages corroborate identity/CAS only, not the logKow value itself.',
     notes: 'Eco selectability. logKow 4.74 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1144,7 +1144,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: beta-Endosulfan, CAS 33213-65-9. ATSDR (2015), Toxicological Profile for Endosulfan (NCBI Bookshelf NBK592006), Chapter 4 Chemical and Physical Information, Table 4-3 (Chemical Identity of beta-Endosulfan, CAS 33213-65-9, C9H6Cl6O3S) and Table 4-7 (Physical and Chemical Properties of beta-Endosulfan: Log Kow = 3.62, citing HSDB 2010). Identity corroborated via NIST Chemistry WebBook (ID C33213659, beta-Endosulfan, CAS 33213-65-9; https://webbook.nist.gov/cgi/cbook.cgi?ID=C33213659). Note: PubChem CID 12309460 (returned by name/CAS lookup for "beta-Endosulfan" and "33213-65-9") is actually the alpha-Endosulfan primary record (CAS 959-98-8) with 33213-65-9 listed only as a cross-referenced synonym -- do not cite this CID as a distinct beta-Endosulfan identity source. Value verified: log Kow 3.62 (experimental, HSDB 2010) matches the wired logKow field.',
     notes: 'Eco selectability. logKow 3.62 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1159,7 +1159,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Heptachlor, CAS 76-44-8. PubChem Compound Summary, Heptachlor, CID 3589 (https://pubchem.ncbi.nlm.nih.gov/compound/3589; confirmed C10H5Cl7, matches CAS 76-44-8) for IUPAC name and log Kow = 6.10 (experimental; HSDB, citing Simpson CD et al., Bull Environ Contam Toxicol 55:149-53, 1995, PMID 7663085). Secondary source: ILO-WHO International Chemical Safety Card ICSC 0743 (CAS 76-44-8; https://chemicalsafety.ilo.org/dyn/icsc/showcard.display?p_lang=en&p_card_id=0743), log Pow range 5.27-5.44. Wired logKow = 5.44 uses the ICSC upper-range/regulatory value (EqP-apt), not the PubChem/HSDB 6.10 value; see notes field. US EPA IRIS oral slope factor 4.5 per mg/kg-bw/day (approved catalog value, pv-iris-heptachlor-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c). US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, pv-iris-heptachlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 5.44 (eco-direct EqP input). logKow 5.44 = ATSDR regulatory value (EqP-apt); PubChem/HSDB lists 6.10. oral RfD and oral slope factor now BOTH wired (rfd backfilled build-first 2026-07-04d); abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -1174,7 +1174,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Heptachlor epoxide, CAS 1024-57-3. ATSDR (2022), Toxicological Profile for Heptachlor and Heptachlor Epoxide, NCBI Bookshelf NBK598049 (Potential for Human Exposure, sec. 6.3.1 Environmental Fate): log Kow = 5.40, citing Mackay 1982. Identity/CAS confirmed via PubChem (CID 15559699, Heptachlor epoxide, C10H5Cl7O; https://pubchem.ncbi.nlm.nih.gov/compound/15559699), which independently lists log Kow = 5.40 citing HSDB (Garten CT Jr, Trabalka JR; Environ Sci Technol 17:590-5, 1983). Both primary citations converge on the same value; wired logKow = 5.4 matches. US EPA IRIS oral slope factor 9.1 per mg/kg-bw/day (approved catalog value, pv-iris-heptachlor_epoxide-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c). US EPA IRIS oral RfD 0.000013 mg/kg-bw/day (approved catalog value, pv-iris-heptachlor_epoxide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 5.4 (eco-direct EqP input). oral RfD and oral slope factor now BOTH wired (rfd backfilled build-first 2026-07-04d); abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -1189,7 +1189,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Lindane (gamma-hexachlorocyclohexane), CAS 58-89-9. CAS and identity: ATSDR/U.S. EPA ToxFAQs factsheet "Hexachlorocyclohexane, gamma" (CAS 58-89-9; lindane), https://archive.epa.gov/epawaste/hazard/wastemin/web/pdf/hexagama.pdf ; PubChem CID 727 "Lindane" (https://pubchem.ncbi.nlm.nih.gov/compound/727) corroborates CAS 58-89-9 but its own computed value is XLogP3 = 3.8, not the wired 3.5. Value source: PPDB (Pesticide Properties DataBase, AERU, University of Hertfordshire), Lindane report (https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/370.htm): log P = 3.50, citing EU regulatory/evaluation data (EC/EFSA RAR, DAR and Conclusion dossiers; EMA Annex III PIC DGD) -- this is the value that matches the wired logKow field. Note: a newer 2024 ATSDR HCH Toxicological Profile (NCBI Bookshelf) reports gamma-HCH log Kow = 3.72, a different regulatory estimate not used here. US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, pv-iris-hexachlorocyclohexane_gamma-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 3.5 (eco-direct EqP input). oral RfD now wired (rfd backfilled build-first 2026-07-04d); sf_oral null unchanged; abs_dermal/ba_oral inert HH defaults.',
   },
@@ -1204,7 +1204,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Hexachloroethane, CAS 67-72-1. PubChem CID 6214 (LogP heading, REST pug_view; https://pubchem.ncbi.nlm.nih.gov/compound/6214) citing Hansch, Leo & Hoekman, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants (ACS 1995, p.3, ref #37) via HSDB: log Kow = 4.14. Confirmed compound identity: C2Cl6, IUPAC 1,1,1,2,2,2-hexachloroethane, matches CAS 67-72-1. Secondary value on the same PubChem record: LogP = 3.9 (ILO-WHO ICSC, ref #39) -- not used; 4.14 (HSDB/Hansch) matches the wired logKow field. ATSDR Toxicological Profile for Hexachloroethane provides CAS/identity corroboration for the regulatory-toxicology framing of this substance. US EPA IRIS oral slope factor 0.04 per mg/kg-bw/day (approved catalog value, pv-iris-hexachloroethane-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c). US EPA IRIS oral RfD 0.0007 mg/kg-bw/day (approved catalog value, pv-iris-hexachloroethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it resolves SOURCED to US EPA IRIS by value-match; rfd backfilled build-first 2026-07-04d).',
     notes: 'Eco selectability. logKow 4.14 (eco-direct EqP input). oral RfD and oral slope factor now BOTH wired (rfd backfilled build-first 2026-07-04d); abs_dermal/ba_oral inert HH defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -1219,7 +1219,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Malathion, CAS 121-75-5. NPIC (National Pesticide Information Center, Oregon State University / US EPA), Malathion Technical Fact Sheet, http://npic.orst.edu/factsheets/archive/malatech.html (CAS 121-75-5; Octanol-Water Partition Coefficient log Kow: 2.75, range 2.36-2.89, refs 5-6). CAS corroborated by PubChem CID 4004 (https://pubchem.ncbi.nlm.nih.gov/compound/4004; C10H19O6PS2), which independently lists log Kow = 2.36 (Hansch, Leo, Hoekman 1995, via HSDB), 2 (HMDB), and 2.89 (ICSC) -- consistent with the NPIC range. Wired logKow = 2.75 matches the NPIC fact sheet\'s primary cited value (approved catalog value, pv-iris-malathion-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.75 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1234,7 +1234,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Methoxychlor, CAS 72-43-5. PubChem CID 4115 (Methoxychlor), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/4115/JSON?heading=LogP -- experimental log Kow = 5.08, cited to Hazardous Substances Data Bank (HSDB Ref No. 28), citing Hansch C., Leo A., Hoekman D., Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society (1995), p. 139; secondary value 4.68/5.08 per ILO-WHO International Chemical Safety Cards (ICSC, Ref No. 32). CAS 72-43-5 and identity confirmed at https://pubchem.ncbi.nlm.nih.gov/compound/4115 (PubChem CID 4115 = Methoxychlor, C16H15Cl3O2) (approved catalog value, pv-iris-methoxychlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.08 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1249,7 +1249,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Mirex, CAS 2385-85-5. WIRED logKow = 5.28: ATSDR Toxicological Profile for Mirex and Chlordecone (2020), Table 4-2 Physical and Chemical Properties, log Kow = 5.28, footnote citing Niimi 1991 (https://www.ncbi.nlm.nih.gov/books/NBK590723/table/ch4.tab2/). ALTERNATE candidate logKow = 6.89: PubChem CID 16945 (Mirex), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/16945/JSON?heading=LogP), sourced from Hazardous Substances Data Bank (HSDB), citing Veith GD et al., J. Fish. Res. Bd. Can. 36(9):1040-1048 (1979). The two values diverge by ~2.6 log units (~40x in linear Kow); flagged for review; wired value uses the lower ATSDR/Niimi 1991 figure. CAS 2385-85-5 and identity (C10Cl12) confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Mirex (PubChem CID 16945) (approved catalog value, pv-iris-mirex-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.28 (eco-direct EqP input). logKow 5.28 = ATSDR (Niimi 1991); PubChem/HSDB lists 6.89 (Veith 1979) -- large spread (~40x), flagged for review. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1264,7 +1264,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Nonylphenol, CAS 84852-15-3. PubChem CID 67296 (Nonylphenol, C15H24O), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/67296/JSON?heading=LogP -- log Kow = 5.71 (average of 3 isomers), sourced from Hazardous Substances Data Bank (HSDB) citing Hansch, C., Leo, A., Hoekman, D. (1995) Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, American Chemical Society, p. 137. Value flagged disputed: technical nonylphenol (CAS 84852-15-3) is a mixture of ring/chain isomers; 5.71 is a representative isomer-average, not a single-compound measurement. CAS and identity confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Nonylphenol (PubChem CID 67296).',
     notes: 'Eco selectability. logKow 5.71 (eco-direct EqP input). logKow flagged disputed (technical nonylphenol is an isomer mixture); value is representative. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1279,7 +1279,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Parathion, CAS 56-38-2. PubChem CID 991 (Parathion, C10H14NO5PS), LogP heading via PUG-View REST: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/991/JSON?heading=LogP -- log Kow = 3.83, sourced from Hazardous Substances Data Bank (HSDB) citing Hansch C, Leo A, Hoekman D, Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS (1995), p. 76; corroborated by Human Metabolome Database (HMDB, LogP = 3.83) and ILO-WHO International Chemical Safety Cards (ICSC, LogP = 3.8). CAS 56-38-2 and identity confirmed via https://pubchem.ncbi.nlm.nih.gov/compound/Parathion (PubChem CID 991).',
     notes: 'Eco selectability. logKow 3.83 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1294,7 +1294,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: Pentachlorobenzene, CAS 608-93-5. CAS and identity: PubChem Compound CID 11855 (Pentachlorobenzene, C6HCl5), CAS 608-93-5, https://pubchem.ncbi.nlm.nih.gov/compound/608-93-5. log Kow = 5.18: PubChem PUG-View LogP heading for CID 11855 (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/11855/JSON?heading=LogP), sourced from Hazardous Substances Data Bank (HSDB), citing Hansch C., Leo A., Hoekman D., Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS (1995), p. 16; secondary range 5.03/5.63 per ILO-WHO International Chemical Safety Cards (ICSC) (approved catalog value, pv-iris-pentachlorobenzene_1_2_3_4_5-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 5.18 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1309,7 +1309,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.2 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live); Identity: 1,1,2,2-Tetrachloroethane, CAS 79-34-5. PubChem Compound CID 6591 (1,1,2,2-tetrachloroethane), LogP heading via PUG-View: https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/6591/JSON?heading=LogP -- experimental log Kow = 2.39, sourced from Hazardous Substances Data Bank (HSDB), citing Hansch, Leo & Hoekman (1995), Exploring QSAR - Hydrophobic, Electronic, and Steric Constants, ACS, p. 4; corroborated by ILO-WHO International Chemical Safety Cards (ICSC, value 2.39). Identity (CAS 79-34-5, molecular formula C2H2Cl4) verified via https://pubchem.ncbi.nlm.nih.gov/compound/6591 (PubChem CID 6591) (approved catalog value, pv-iris-tetrachloroethane_1_1_2_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-tetrachloroethane_1_1_2_2-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes: 'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 2.39 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1324,7 +1324,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Thallium, CAS 7440-28-0. Identity and CAS: American Elements, "Thallium Metal | High Purity 99%-99.9999% | CAS 7440-28-0" (https://www.americanelements.com/thallium-metal-7440-28-0), confirming elemental thallium Tl, atomic number 81, atomic weight 204.38, CAS 7440-28-0. PubChem CID 5359464 (Thallium, Tl), https://pubchem.ncbi.nlm.nih.gov/compound/5359464 (element record title \'Thallium | Tl\'), corroborating CAS 7440-28-0. No logKow applicable (elemental metal); no US EPA IRIS oral RfD or slope factor is posted for thallium metal -- HH fields left null accordingly.',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): Tl is not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1339,7 +1339,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Toxaphene, CAS 8001-35-2. PubChem CID 5284469 (Toxaphene), LogP heading via PUG-View REST (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/5284469/JSON?heading=LogP), citing Hazardous Substances Data Bank (HSDB) and Fisk AT et al., Chemosphere 39:2549-2562 (1999), median log Kow = 5.90. US EPA IRIS oral slope factor 1.1 per mg/kg-bw/day (approved catalog value, pv-iris-toxaphene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c).',
     notes: 'Eco selectability. logKow 5.9 (eco-direct EqP input). HH RfD not wired; oral slope factor now wired; abs_dermal/ba_oral inert defaults. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
   },
@@ -1354,7 +1354,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live); Identity: 1,2,4-Trichlorobenzene, CAS 120-82-1. PubChem CID 13 (1,2,4-Trichlorobenzene, CAS 120-82-1), LogP heading via PUG-View REST API (https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/13/JSON?heading=LogP), citing HSDB / Hansch, Leo & Hoekman, Exploring QSAR (ACS, 1995), p. 16, log Kow = 4.02 (a secondary ILO-WHO ICSC value of 3.98 is also on record for the same compound) (approved catalog value, pv-iris-trichlorobenzene_1_2_4-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'Oral RfD wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). Eco selectability. logKow 4.02 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1369,7 +1369,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: 1,1,1-Trichloroethane, CAS 71-55-6. PubChem CID 6278 (1,1,1-Trichloroethane), pug_view CAS and LogP headings, https://pubchem.ncbi.nlm.nih.gov/compound/6278 ; LogP source: Hansch C, Leo A, Hoekman D. Exploring QSAR - Hydrophobic, Electronic, and Steric Constants. Washington, DC: American Chemical Society, 1995, p. 4, log Kow = 2.49 (corroborated by Human Metabolome Database HMDB0041791 and ILO-WHO ICSC Card No. 0079).',
     notes: 'Eco selectability. logKow 2.49 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1384,7 +1384,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral RfD 0.0006 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); a BC Protocol 28 v3.0 candidate exists at a different value (0.003 mg/kg-bw/day, pending_source_locator/needs_review) and is not cited as the wiring source -- no US EPA IRIS oral RfD candidate exists for uranium. Identity: Uranium, CAS 7440-61-1, PubChem CID 23989 (approved catalog value, pv-hc-uranium-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
@@ -1405,7 +1405,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: Vanadium, CAS 7440-62-2. PubChem Compound CID 23990 (Vanadium, V), https://pubchem.ncbi.nlm.nih.gov/compound/23990 (record title \'Vanadium | V\'). CAS 7440-62-2 corroborated by Sigma-Aldrich product 262935 (Vanadium powder, -325 mesh, 99.5% trace metals basis, CAS 7440-62-2, https://www.sigmaaldrich.com/US/en/product/aldrich/262935) and product 774065 (Vanadium powder, -100 mesh, 99.9% trace metals basis, CAS 7440-62-2, https://www.sigmaaldrich.com/US/en/product/aldrich/774065). No logKow applicable (elemental metal); no oral RfD/SF wired -- HH fields left null accordingly.',
     notes: 'Eco selectability. logKow n/a (metal). Classed metalloid (not divalent-metal): vanadate, not a true M2+; avoids the divalent-metals AVS/SEM path. HH fields null; abs_dermal/ba_oral inert defaults.',
   },
@@ -1427,7 +1427,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.013 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; HC 2014b, Korsak 1994 subchronic inhalation PBPK oral-equivalent, UF 75, neurotoxicity; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.2 mg/kg-bw/day (NTP 1986) remains available as a candidate option. PubChem CID 1330 (mixed-isomer representative). ' +
       'Identity: Xylenes. Eco-direct FCV basis = m-xylene (CAS 108-38-3, PubChem ' +
@@ -1455,7 +1455,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Total PCBs (polychlorinated biphenyl mixture; EPA NRWQC ' +
       'total-PCBs criterion substance; the mixture has no single CAS). logKow 6.5 ' +
@@ -1486,7 +1486,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Chromium (generic/total, unspeciated), CAS 7440-47-3, PubChem ' +
       'CID 23976 (record title \'Chromium | Cr\'). logKow n/a (inorganic metal). ' +
@@ -1513,7 +1513,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; no US EPA IRIS oral RfD candidate exists for mercury_inorganic). Identity: Mercury, inorganic (divalent Hg(II)), CAS 7439-97-6, PubChem CID ' +
       '23931 (the elemental-mercury record matching CAS 7439-97-6, the ATSDR/EPA ' +
@@ -1540,7 +1540,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Identity: Chloroform (trichloromethane), CAS 67-66-3, PubChem CID 6212. ' +
       'logKow 1.97 (CCME factsheet "low Kow (1.97)"; corroborated PubChem/HSDB ' +
@@ -1568,7 +1568,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'BC Protocol 28 (Jan 2021) oral RfD 1.0 mg/kg-bw/day (CAS 7429-90-5).',
     notes:
       'Human-health pathways only; seeded build-first from the needs_review row ' +
@@ -1588,7 +1588,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.2 mg/kg-bw/day (CAS 7440-42-8) (approved catalog value, pv-iris-boron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1608,7 +1608,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (CAS 7439-98-7) (approved catalog value, pv-iris-molybdenum-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
       'Human-health pathways only; seeded build-first from the (now qa_status=approved) row ' +
@@ -1628,7 +1628,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.6 mg/kg-bw/day (CAS 7440-24-6) (approved catalog value, pv-iris-strontium-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
       'Human-health pathways only; seeded build-first from the (now qa_status=approved) row ' +
@@ -1647,7 +1647,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.3 mg/kg-bw/day (CAS 108-95-2) (approved catalog value, pv-iris-phenol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1668,7 +1668,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.2 mg/kg-bw/day (CAS 100-42-5) (approved catalog value, pv-iris-styrene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1690,7 +1690,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral RfD 0.9 mg/kg-bw/day (CAS 67-64-1) (approved catalog value, pv-iris-acetone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1710,7 +1710,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 1.6 per mg/kg-bw/day (carcinogen) + non-cancer ' +
       'oral RfD 0.0008 mg/kg-bw/day (CAS 118-74-1). BC Protocol 28 lists SF 0.83 (approved catalog value, pv-iris-hexachlorobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-hexachlorobenzene-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
@@ -1735,7 +1735,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'BC Protocol 28 (Jan 2021) + US EPA IRIS oral slope factor 0.4 per mg/kg-bw/day ' +
       '(carcinogen) + non-cancer oral RfD 0.005 mg/kg-bw/day (CAS 87-86-5) (approved catalog value, pv-iris-pentachlorophenol-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-pentachlorophenol-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
@@ -1758,7 +1758,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 0.1 per mg/kg-bw/day (carcinogen; approved catalog value, src-us-epa-iris-chemical-details-live) + non-cancer oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (CAS 123-91-1) (approved catalog value, pv-iris-1_4_dioxane-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-1_4_dioxane-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -1793,7 +1793,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA 2024 final human health toxicity assessment for PFOA (EPA ' +
       '815-R-24-006, April 2024) overall chronic oral RfD 3 x 10-8 mg/kg-bw/day ' +
@@ -1818,7 +1818,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA 2024 final human health toxicity assessment for PFOS (EPA ' +
       '815-R-24-007, April 2024) overall chronic oral RfD 1 x 10-7 mg/kg-bw/day ' +
@@ -1843,7 +1843,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 1.7 x 10 1 (17) per mg/kg-bw/day (carcinogen) ' +
       '+ non-cancer oral RfD 3 x 10-5 mg/kg-bw/day (organochlorine; CAS 309-00-2) (approved catalog value, pv-iris-aldrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-aldrin-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
@@ -1866,7 +1866,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 3 x 10-4 mg/kg-bw/day (organochlorine; CAS 72-20-8) (approved catalog value, pv-iris-endrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1886,7 +1886,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 7.8 x 10-2 (0.078) per mg/kg-bw/day ' +
       '(carcinogen; CAS 87-68-3) (approved catalog value, pv-iris-hexachlorobutadiene-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
@@ -1908,7 +1908,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 6 x 10-3 mg/kg-bw/day (HCCPD; CAS 77-47-4) (approved catalog value, pv-iris-hexachlorocyclopentadiene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1928,7 +1928,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 9.5 x 10-4 (0.00095) per mg/kg-bw/day (carcinogen; approved catalog value, src-us-epa-iris-chemical-details-live) + non-cancer oral RfD 2 x 10-1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (CAS 78-59-1) (approved catalog value, pv-iris-isophorone-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-isophorone-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -1950,7 +1950,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 5.4 x 10-1 (0.54) per mg/kg-bw/day ' +
       '(carcinogen; CAS 107-13-1) (approved catalog value, pv-iris-acrylonitrile-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
@@ -1972,7 +1972,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1 x 10-1 mg/kg-bw/day (CAS 75-15-0) (approved catalog value, pv-iris-carbon_disulfide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -1993,7 +1993,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 5 x 10-2 mg/kg-bw/day (CAS 80-05-7) (approved catalog value, pv-iris-bisphenol_a-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2013,7 +2013,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 2 x 10-3 mg/kg-bw/day (CAS 98-95-3) (approved catalog value, pv-iris-nitrobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2034,7 +2034,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1 x 10-3 mg/kg-bw/day (CAS 110-86-1) (approved catalog value, pv-iris-pyridine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2055,7 +2055,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 4 x 10-3 mg/kg-bw/day (2-methylnaphthalene; CAS 91-57-6) (approved catalog value, pv-iris-2_methylnaphthalene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2078,7 +2078,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS approved oral RfD 0.006 + oral SF 0.0033 (the rows the wired values match; approved catalog values pv-iris-dichloromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live and pv-iris-dichloromethane-hh-direct-sf / src-us-epa-iris-chemical-details-live), set as current_default (most-protective; owner-approved 2026-07-05). The Health Canada TRVs v4.0 values 0.014/0.002 (pv-hc-dichloromethane-hh-direct-rfd / pv-hc-dichloromethane-hh-direct-sf / src-health-canada-trv-v4-2025) remain available as candidate options. Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03).',
     notes:
@@ -2096,7 +2096,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRVs v4.0 approved oral RfD 0.003 (the row the wired value matches; US EPA IRIS lists a different value 0.05, not used); Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-hc-dichloroethylene_1_1-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
@@ -2114,7 +2114,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-1_2_dichloroethane-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2132,7 +2132,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-trichloroethane_1_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-trichloroethane_1_1_2-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2150,7 +2150,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-tetrachloroethane_1_1_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-tetrachloroethane_1_1_1_2-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2168,7 +2168,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.014 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 117-81-7); EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1) (approved catalog value, pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-bis_2_ethylhexyl_phthalate_dehp-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2188,7 +2188,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.03 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (CAS 118-96-7); EPA RAGS Part E supplemental soil ABS_d for TNT (abs_dermal 0.03, Reifenrath et al. 2002) (approved catalog value, pv-iris-2_4_6_trinitrotoluene_tnt-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-2_4_6_trinitrotoluene_tnt-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2208,7 +2208,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-formaldehyde-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2226,7 +2226,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-1_2_3_trimethylbenzene-hh-direct-rfd-nzene-oral-rfd-2 / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2244,7 +2244,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-1_2_4_trimethylbenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2262,7 +2262,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-1_3_5_trimethylbenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2280,7 +2280,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-bromobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2298,7 +2298,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-isopropylbenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2316,7 +2316,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (abs_dermal 0.03) (approved catalog value, pv-iris-chlorotoluene_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2334,7 +2334,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1) (approved catalog value, pv-iris-1_2_4_5_tetrachlorobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2354,7 +2354,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS toxicity values; EPA RAGS Part E soil SVOC default dermal absorption (abs_dermal 0.1) (approved catalog value, pv-iris-2_4_dinitrotoluene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2374,7 +2374,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_4_dichlorophenoxyacetic_acid_2_4_d-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2391,7 +2391,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-4_2_4_dichlorophenoxy_butyric_acid_2_4_db-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2408,7 +2408,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_4_5_trichlorophenoxyacetic_acid_2_4_5_t-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2425,7 +2425,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_2_4_5_trichlorophenoxy_propionic_acid_2_4_5_tp-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2442,7 +2442,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_methyl_4_chlorophenoxyacetic_acid_mcpa-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2459,7 +2459,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-4_2_methyl_4_chlorophenoxy_butyric_acid_mcpb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2476,7 +2476,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_2_methyl_4_chlorophenoxy_propionic_acid_mcpp-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2493,7 +2493,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-1_3_5_trinitrobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2510,7 +2510,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-4_6_dinitro_o_cyclohexyl_phenol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2527,7 +2527,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dinitrophenol_2_4-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2544,7 +2544,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.08 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-direct-rfd-e-rdx-oral-rfd-3 / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-hexahydro_1_3_5_trinitro_1_3_5_triazine_rdx-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2561,7 +2561,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-m_dinitrobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2578,7 +2578,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-nitroguanidine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2595,7 +2595,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog values, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-octahydro_1_3_5_7_tetranitro_1_3_5_7_tetrazocine_hmx-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2612,7 +2612,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.0007 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-2_2_3_3_4_4_5_5_6_6_decabromodiphenyl_ether_bde_209-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -2629,7 +2629,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_2_4_4_5_5_hexabromodiphenyl_ether_bde_153-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2646,7 +2646,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_2_4_4_5_pentabromodiphenyl_ether_bde_99-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2663,7 +2663,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_2_4_4_tetrabromodiphenyl_ether_bde_47-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2680,7 +2680,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-octabromodiphenyl_ether-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2697,7 +2697,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pentabromodiphenyl_ether-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -2714,7 +2714,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-aldicarb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2729,7 +2729,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-aldicarb_sulfone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2744,7 +2744,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-carbofuran-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2759,7 +2759,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methomyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2774,7 +2774,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-oxamyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2789,7 +2789,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-s_ethyl_dipropylthiocarbamate_eptc-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2804,7 +2804,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-sodium_diethyldithiocarbamate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; carbamate pesticide; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2819,7 +2819,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.035 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-atrazine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2834,7 +2834,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-simazine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2849,7 +2849,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propazine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2864,7 +2864,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2879,7 +2879,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-linuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2894,7 +2894,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorophenol_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2909,7 +2909,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dichlorophenol_2_4-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2924,7 +2924,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-trichlorophenol_2_4_5-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2939,7 +2939,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tetrachlorophenol_2_3_4_6-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2954,7 +2954,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.033 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-hexazinone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2969,7 +2969,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-metribuzin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2984,7 +2984,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.015 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-prometon-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -2999,7 +2999,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.07 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tebuthiuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3014,7 +3014,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethylene_glycol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3029,7 +3029,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethylene_glycol_monobutyl_ether_egbe_2_butoxyethanol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3044,7 +3044,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-butylphthalyl_butylglycolate_bpbg-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3059,7 +3059,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 3 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethylphthalyl_ethylglycolate_epeg-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3074,7 +3074,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.09 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-sethoxydim-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). No approved oral SF. abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3098,7 +3098,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acephate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3113,7 +3113,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethoate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3128,7 +3128,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-disulfoton-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3143,7 +3143,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethion-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3158,7 +3158,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethyl_p_nitrophenyl_phenylphosphorothioate_epn-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3173,7 +3173,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fenamiphos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3188,7 +3188,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fonofos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3203,7 +3203,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-glyphosate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3218,7 +3218,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-isopropyl_methyl_phosphonic_acid_impa-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3233,7 +3233,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.08 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diisopropyl_methylphosphonate_dimp-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3248,7 +3248,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-merphos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3263,7 +3263,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-merphos_oxide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3278,7 +3278,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methamidophos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3293,7 +3293,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methidathion-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3308,7 +3308,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methyl_parathion-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3323,7 +3323,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-phosmet-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3338,7 +3338,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pirimiphos_methyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3353,7 +3353,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-quinalphos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3368,7 +3368,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tetraethyldithiopyrophosphate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3383,7 +3383,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-naled-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3398,7 +3398,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tetrachlorovinphos-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3413,7 +3413,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). US EPA IRIS oral slope factor 0.29 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-dichlorvos-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-dichlorvos-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes: 'HH-only build-first wiring; organophosphate pesticide; oral RfD and oral slope factor (SF) candidates approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3428,7 +3428,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-1_2_4_tribromobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3443,7 +3443,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-1_4_dibromobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3458,7 +3458,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-1_4_dithiane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3473,7 +3473,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 7e-10 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_3_7_8_tetrachlorodibenzo_p_dioxin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3488,7 +3488,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_3_dichloropropanol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3503,7 +3503,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acetochlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3518,7 +3518,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acetophenone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3533,7 +3533,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acifluorfen_sodium-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3548,7 +3548,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acrolein-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3563,7 +3563,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). US EPA IRIS oral slope factor 0.83 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-acrylamide-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-acrylamide-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes: 'Oral RfD and oral slope factor (SF) candidates both approved in catalog (from different source_ids -- see sources field). HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3578,7 +3578,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.5 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-acrylic_acid-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3593,7 +3593,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-alachlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3608,7 +3608,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-allyl_alcohol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3623,7 +3623,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-benzaldehyde-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3638,7 +3638,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). US EPA IRIS oral slope factor 230 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-benzidine-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-benzidine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes: 'Oral RfD and oral slope factor (SF) candidates both approved in catalog (from different source_ids -- see sources field). HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3653,7 +3653,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 4 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-benzoic_acid-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3668,7 +3668,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.08 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-beta_chloronaphthalene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3683,7 +3683,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bis_2_chloro_1_methylethyl_ether-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3698,7 +3698,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). US EPA IRIS oral slope factor 0.062 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-bromodichloromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-bromodichloromethane-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes: 'Oral RfD and oral slope factor (SF) candidates both approved in catalog (from different source_ids -- see sources field). HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3713,7 +3713,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0014 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bromomethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3728,7 +3728,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-1_1_1_trichloroethane-hh-direct-rfd-thane-oral-rfd-2 / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3743,7 +3743,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-2_hexanone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3758,7 +3758,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.15 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-alar-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3773,7 +3773,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.25 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ally-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3788,7 +3788,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-amdro-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3803,7 +3803,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ametryn-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3818,7 +3818,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-amitraz-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3833,7 +3833,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-apollo-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3848,7 +3848,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.00007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-aroclor_1016-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3863,7 +3863,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-assure-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3878,7 +3878,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-asulam-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3893,7 +3893,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-avermectin_b1-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3908,7 +3908,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-baygon-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3923,7 +3923,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bayleton-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3938,7 +3938,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-baythroid-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3953,7 +3953,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.3 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-benefin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3968,7 +3968,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bentazon_basagran-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3983,7 +3983,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bidrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -3998,7 +3998,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.015 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-biphenthrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -4013,7 +4013,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bromoxynil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes: 'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal is the conservative organic-halogenated default (0.1), not a verified chemical-specific HC Table 5 RAF.',
   },
@@ -4028,7 +4028,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-bromoxynil_octanoate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4045,7 +4045,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-butylate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4062,7 +4062,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.5 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-caprolactam-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4079,7 +4079,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-captafol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4096,7 +4096,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.13 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-captan-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4113,7 +4113,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-carbosulfan-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4130,7 +4130,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-carboxin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4147,7 +4147,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chloral_hydrate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4164,7 +4164,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.015 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chloramben-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4181,7 +4181,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 10 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-chlordecone_kepone-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-chlordecone_kepone-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4198,7 +4198,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorimuron_ethyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4215,7 +4215,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorobenzilate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4232,7 +4232,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.015 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorothalonil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4249,7 +4249,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorpropham-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4266,7 +4266,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorsulfuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4283,7 +4283,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cis_1_2_dichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4300,7 +4300,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 5 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyclohexanone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4317,7 +4317,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyclohexylamine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4334,7 +4334,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyhalothrin_karate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4351,7 +4351,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cypermethrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4368,7 +4368,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0075 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyromazine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4385,7 +4385,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dacthal-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4402,7 +4402,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dalapon_sodium_salt-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4419,7 +4419,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-danitol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4436,7 +4436,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.6 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.0012 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-di_2_ethylhexyl_adipate-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-di_2_ethylhexyl_adipate-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4453,7 +4453,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.084 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-dibromochloromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-dibromochloromethane-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4470,7 +4470,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 2 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-dibromoethane_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-dibromoethane_1_2-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4487,7 +4487,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dicamba-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4504,7 +4504,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.05 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-dichloroacetic_acid-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-dichloroacetic_acid-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4521,7 +4521,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dichlorodifluoromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4538,7 +4538,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dichloroethylene_1_2_trans-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4555,7 +4555,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral SF 0.1 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-dichloropropene_1_3_cis_trans-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-dichloropropene_1_3_cis_trans-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4572,7 +4572,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diethyl_ether-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4589,7 +4589,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.08 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-difenzoquat-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4606,7 +4606,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diflubenzuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4623,7 +4623,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethipin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4640,7 +4640,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethyl_terephthalate_dmt-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4657,7 +4657,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethylaniline_n_n_dma-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4674,7 +4674,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethylphenol_2_4-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4691,7 +4691,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0006 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethylphenol_2_6-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4708,7 +4708,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dimethylphenol_3_4-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4725,7 +4725,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dinoseb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4742,7 +4742,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-benomyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4759,7 +4759,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diphenamid-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4776,7 +4776,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diphenylamine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4793,7 +4793,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0022 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-diquat-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4810,7 +4810,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-dodine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4827,7 +4827,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-endothall-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4844,7 +4844,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 0.0099 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-epichlorohydrin-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -4861,7 +4861,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethephon-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4878,7 +4878,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.9 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethyl_acetate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4895,7 +4895,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethyl_tertiary_butyl_ether_etbe-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4912,7 +4912,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ethylene_thiourea_etu-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4929,7 +4929,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.008 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-express-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4946,7 +4946,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fluometuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4963,7 +4963,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.08 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fluridone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4980,7 +4980,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-flurprimidol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -4997,7 +4997,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.06 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-flutolanil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5014,7 +5014,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fluvalinate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5031,7 +5031,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-folpet-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5048,7 +5048,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 3 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fosetyl_al-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5065,7 +5065,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-furan-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5082,7 +5082,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-furfural-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5099,7 +5099,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 0.03 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-furmecyclox-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5116,7 +5116,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-glufosinate_ammonium-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5133,7 +5133,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-glycidaldehyde-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5150,7 +5150,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-haloxyfop_methyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5167,7 +5167,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-harmony-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5184,7 +5184,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-hexabromobenzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5201,7 +5201,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 6200 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live; mixture of 1,2,3,6,7,8-HxCDD and 1,2,3,7,8,9-HxCDD) (approved catalog value, pv-iris-hexachlorodibenzo_p_dioxin_hxcdd_mixture_of_1_2_3_6_7_8_hxcdd_and_1_2_3_7_8_9_hxcdd-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5218,7 +5218,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-hexachlorophene-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5235,7 +5235,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-imazalil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5252,7 +5252,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.25 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-imazaquin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5269,7 +5269,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-iprodione-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5286,7 +5286,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.3 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-isobutyl_alcohol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5303,7 +5303,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.015 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-isopropalin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5320,7 +5320,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-isoxaben-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5337,7 +5337,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-lactofen-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5354,7 +5354,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-londax-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5371,7 +5371,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.006 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-m_phenylenediamine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5388,7 +5388,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-maleic_anhydride-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5405,7 +5405,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.5 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-maleic_hydrazide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5422,7 +5422,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-maneb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5439,7 +5439,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-mepiquat_chloride-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5456,7 +5456,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.06 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-metalaxyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5473,7 +5473,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methacrylonitrile-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5490,7 +5490,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methanol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5507,7 +5507,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.6 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methyl_ethyl_ketone_mek-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5524,7 +5524,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1.4 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methyl_methacrylate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5541,7 +5541,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.13,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral TDI/RfD 0.004 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025) (approved catalog value, pv-hc-methylnaphthalene_2-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
@@ -5558,7 +5558,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methylphenol_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5575,7 +5575,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-methylphenol_3-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5592,7 +5592,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.15 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-metolachlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5609,7 +5609,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-molinate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5626,7 +5626,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-n_butanol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5643,7 +5643,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral TDI/RfD 0.1 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025) (approved catalog value, pv-hc-n_hexane-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
@@ -5660,7 +5660,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 5.4 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitroso_di_n_butylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5677,7 +5677,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 22 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitroso_n_methylethylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5694,7 +5694,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 7 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosodi_n_propylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5711,7 +5711,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 2.8 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosodiethanolamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5728,7 +5728,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 150 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosodiethylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5745,7 +5745,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 51 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosodimethylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5773,7 +5773,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 0.0049 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosodiphenylamine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5790,7 +5790,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 2.1 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-n_nitrosopyrrolidine-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -5807,7 +5807,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-napropamide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5824,7 +5824,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-norflurazon-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5841,7 +5841,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; CASRN 85509-19-9) (approved catalog value, pv-iris-nustar-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5858,7 +5858,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-oryzalin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5875,7 +5875,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-oxadiazon-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5892,7 +5892,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-oxyfluorfen-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5909,7 +5909,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-p_chloroaniline-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5926,7 +5926,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       "US EPA IRIS oral slope factor 0.24 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-p_p_dichlorodiphenyl_dichloroethane_ddd-hh-direct-sf / src-us-epa-iris-chemical-details-live).",
     notes:
@@ -5943,7 +5943,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       "US EPA IRIS oral slope factor 0.34 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-p_p_dichlorodiphenyldichloroethylene_dde-hh-direct-sf / src-us-epa-iris-chemical-details-live).",
     notes:
@@ -5960,7 +5960,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-paclobutrazol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5977,7 +5977,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0045 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-paraquat-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -5994,7 +5994,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.04 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pendimethalin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6011,7 +6011,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pentachloronitrobenzene_pcnb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6028,7 +6028,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-perfluorobutanoic_acid_pfba-hh-direct-rfd--pfba-oral-rfd-3 / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6045,7 +6045,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 2 x 10-9 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live). EPA gives no single overall RfD, but both chronic non-cancer endpoints converge on 2e-9 (owner-confirmed 2026-06-23) (approved catalog value, pv-iris-perfluorodecanoic_acid_pfda-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6062,7 +6062,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-perfluorohexanoic_acid_pfhxa-hh-direct-rfd-pfhxa-oral-rfd-3 / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6079,7 +6079,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-permethrin_cis_trans-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6096,7 +6096,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.25 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-phenmedipham-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6113,7 +6113,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-phthalic_anhydride-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6130,7 +6130,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.07 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-picloram-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6147,7 +6147,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.15 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-prochloraz-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-prochloraz-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6164,7 +6164,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-prometryn-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6181,7 +6181,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.075 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pronamide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6198,7 +6198,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propachlor-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6215,7 +6215,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propanil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6232,7 +6232,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propargite-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6249,7 +6249,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propargyl_alcohol-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6266,7 +6266,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propham-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6283,7 +6283,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-propiconazole-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6300,7 +6300,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 0.24 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-propylene_oxide-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6317,7 +6317,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.25 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pursuit-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6334,7 +6334,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-pydrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6351,7 +6351,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral slope factor 3 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-quinoline-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6368,7 +6368,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-resmethrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6385,7 +6385,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-rotenone-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6402,7 +6402,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-savey-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6419,7 +6419,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-sodium_fluoroacetate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6436,7 +6436,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-strychnine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6453,7 +6453,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-systhane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6470,7 +6470,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-terbacil-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6487,7 +6487,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-terbutryn-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6504,7 +6504,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.4 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.0005 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-tert_butyl_alcohol_tba-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-tert_butyl_alcohol_tba-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6521,7 +6521,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.9 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tetrahydrofuran-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6538,7 +6538,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-thiobencarb-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6555,7 +6555,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.08 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-thiophanate_methyl-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6572,7 +6572,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-thiram-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6589,7 +6589,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0075 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tralomethrin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6606,7 +6606,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.013 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-triallate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6623,7 +6623,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.01 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-triasulfuron-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6640,7 +6640,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 30 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-trichloro_1_2_2_trifluoroethane_1_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6657,7 +6657,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.07 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-trichloroacetic_acid-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-trichloroacetic_acid-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6674,7 +6674,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.3 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-trichlorofluoromethane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6691,7 +6691,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-trichloropropane_1_1_2-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6708,7 +6708,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.5 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-trichloropropane_1_2_3-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-trichloropropane_1_2_3-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6725,7 +6725,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-tridiphane-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6742,7 +6742,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0075 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.0077 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-trifluralin-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-trifluralin-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6759,7 +6759,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-vernam-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6776,7 +6776,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.025 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-vinclozolin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6793,7 +6793,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-warfarin-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6810,7 +6810,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-aluminum_phosphide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6827,7 +6827,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.2 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-ammonium_sulfamate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6844,7 +6844,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + oral slope factor 0.7 per mg/kg-bw/day (approved catalog value, src-us-epa-iris-chemical-details-live) (approved catalog value, pv-iris-bromate-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-iris-bromate-hh-direct-sf / src-us-epa-iris-chemical-details-live).',
     notes:
@@ -6861,7 +6861,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6878,7 +6878,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorine_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6895,7 +6895,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorine_dioxide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6912,7 +6912,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.03 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-chlorite_sodium_salt-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6929,7 +6929,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyanogen-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6946,7 +6946,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.09 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-cyanogen_bromide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6963,7 +6963,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.06 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-fluorine_soluble_fluoride-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6980,7 +6980,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-monochloramine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -6997,7 +6997,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1.6 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-nitrate-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7014,7 +7014,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-nitrite-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7031,7 +7031,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0007 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-perchlorate_clo4_and_perchlorate_salts-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7048,7 +7048,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-phosphine-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7065,7 +7065,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-sodium_azide-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7082,7 +7082,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00002 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) (approved catalog value, pv-iris-white_phosphorus-hh-direct-rfd / src-us-epa-iris-rfd-table-live).',
     notes:
@@ -7099,7 +7099,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.009 mg/kg-bw/day (approved catalog value, ' +
       'src-us-epa-iris-rfd-table-live). Identity: Vanadium pentoxide (V2O5), ' +
@@ -7126,7 +7126,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Mercuric chloride (HgCl2)", CASRN 7487-94-7, autoimmune/renal, UF 1000; live-verified 2026-07-04). ' +
@@ -7149,7 +7149,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS selenium/selenious acid, clinical selenosis, UF 3; live-verified 2026-07-04). Identity: Selenious ' +
@@ -7171,7 +7171,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Uranium, soluble salts", nephrotoxicity, UF 1000; live-verified 2026-07-04). Identity: Uranium ' +
@@ -7196,7 +7196,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-calcium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7219,7 +7219,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-copper_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7242,7 +7242,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00063 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-cyanide_free-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7265,7 +7265,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0006 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-hydrogen_cyanide_and_cyanide_salts-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7288,7 +7288,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.002 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-potassium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7311,7 +7311,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.005 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-potassium_silver_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7334,7 +7334,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.1 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-silver_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7357,7 +7357,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.001 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-sodium_cyanide-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this value, so it ' +
@@ -7380,7 +7380,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRVs v4.0 oral TDI 0.0013 mg/kg-bw/day (approved catalog value, ' +
       'pv-hc-nickel_chloride-hh-direct-rfd / src-health-canada-trv-v4-2025; HC Table 1 Nickel chloride ' +
@@ -7406,7 +7406,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.02 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Nickel, soluble salts", Ambrose 1976 rat feeding, decreased body/organ weight, UF 300; ' +
@@ -7429,7 +7429,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.001,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.012 mg/kg-bw/day (approved catalog value, ' +
       'src-health-canada-trv-v4-2025; epidemiological, dermal toxicity/eczema in Ni-sensitive subjects, ' +
@@ -7452,7 +7452,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 1e-7 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Tetraethyl lead", CASRN 78-00-2, Schepers 1964, UF 10000; the unusually low 1e-7 value is real ' +
@@ -7478,7 +7478,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.0003 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Tributyltin oxide (TBTO)", CASRN 56-35-9, Vos 1990 immunotoxicity, BMD10, UF 100; live-verified ' +
@@ -7502,7 +7502,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.00008 mg/kg-bw/day (approved catalog value, pv-iris-phenylmercuric_acetate-hh-direct-rfd / src-us-epa-iris-rfd-table-live; ' +
       'IRIS "Phenylmercuric acetate", CASRN 62-38-4). Identity: Phenylmercuric acetate, CAS 62-38-4. ORGANOMETALLIC ' +
@@ -7525,7 +7525,7 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null,
+    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS oral RfD 0.05 mg/kg-bw/day (approved catalog value, ' +
       'pv-iris-zineb-hh-direct-rfd / src-us-epa-iris-rfd-table-live; single approved candidate at this ' +
