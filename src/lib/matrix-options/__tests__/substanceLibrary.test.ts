@@ -23,7 +23,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     // + 8 cyanide salts (2026-07-04b, PR #488: calcium/copper/free/HCN+salts/potassium/
     //   potassium-silver/silver/sodium cyanide) = 423.
     // + 1 zineb new-key organic oral RfD 0.05 (2026-07-04d) = 424.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(424);
+    // + 1 phenylmercuric_acetate organometallic (2026-07-08) = 425.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(425);
   });
 
   it('every entry has a non-null key', () => {
@@ -1014,6 +1015,7 @@ describe('SUBSTANCE_LIBRARY -- Phase 1a metal-salts + organometallics own-key or
     { key: 'nickel_chloride', rfd: 0.0013, sf: null, cls: 'divalent-metal', absDermal: 0.001 },
     { key: 'tetraethyl_lead', rfd: 0.0000001, sf: null, cls: 'organic', absDermal: 0.1 },
     { key: 'tributyltin_oxide_tbto', rfd: 0.0003, sf: null, cls: 'organic', absDermal: 0.1 },
+    { key: 'phenylmercuric_acetate', rfd: 0.00008, sf: null, cls: 'organic', absDermal: 0.1 },
   ] as const;
 
   for (const { key, rfd, sf, cls, absDermal } of expected) {
