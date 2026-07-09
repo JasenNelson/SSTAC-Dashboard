@@ -125,4 +125,29 @@ test.describe('Calculator pathway navigation', () => {
     });
     await expect(reviewButton).toBeVisible();
   });
+
+  test('Cyanide advisory warning appears when a cyanide candidate is selected', async ({
+    page,
+  }) => {
+    await gotoMatrixOptionsOrSkip(page);
+
+    await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
+    await page.getByTestId('category-selector-hh-food').click();
+
+    const substanceSelector = page.getByTestId('substance-combobox-input');
+    await substanceSelector.click();
+    await substanceSelector.fill('cyanide');
+    await page.getByTestId('substance-option-cyanide_free').click();
+
+    const warning = page.getByTestId('cyanide-guidance-warning');
+    await expect(warning).toBeVisible();
+    await expect(warning).toContainText('Caution: These endpoints represent equivalent cyanide exposure');
+
+    // Switch to another substance
+    await substanceSelector.click();
+    await substanceSelector.fill('benzene');
+    await page.getByTestId('substance-option-benzene').click();
+
+    await expect(warning).toBeHidden();
+  });
 });
