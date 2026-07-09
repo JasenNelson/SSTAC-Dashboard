@@ -1,102 +1,76 @@
-# Matrix Options Cyanide Speciation Packet - 2026-07-08
+# Matrix Options Cyanide Selection Guidance - 2026-07-08
 
-## Verdict
+## 0. Strict Guardrails & Status
+- **Cyanide runtime entries are already wired.**
+- This is **not** a missing code-wiring task.
+- **Do not** implement cyanide/speciation code changes until an owner selection convention is explicitly approved.
+- The safe current deliverable is this docs/design packet and UI copy proposal only.
 
-Do not implement cyanide/speciation code changes during the autonomous run.
+## 1. Current Wired Cyanide-Family Entries
+The following cyanide-family substances are actively wired in `src/lib/matrix-options/substanceLibrary.ts` with `contaminantClass: 'inorganic'`:
+- `chlorine_cyanide`: RfD `0.05`
+- `cyanogen`: RfD `0.001`
+- `cyanogen_bromide`: RfD `0.09`
+- `calcium_cyanide`: RfD `0.001`
+- `copper_cyanide`: RfD `0.005`
+- `cyanide_free`: RfD `0.00063`
+- `hydrogen_cyanide_and_cyanide_salts`: RfD `0.0006`
+- `potassium_cyanide`: RfD `0.002`
+- `potassium_silver_cyanide`: RfD `0.005`
+- `silver_cyanide`: RfD `0.1`
+- `sodium_cyanide`: RfD `0.001`
 
-The older "cyanide speciation" backlog item is partly stale: the `inorganic` class and the cyanide
-runtime entries have already landed. The remaining work is a policy/UX selection convention for
-overlapping cyanide and silver-cyanide substances, not a missing code wiring task.
+*Note: Generic `silver` (RfD `0.005`) and `copper` (RfD `0.426`) exist as `divalent-metal` entries.*
 
-## Current Runtime Evidence
+## 2. Exact Overlap Problems
+The abundance of cyanide/metal-cyanide representations creates a high risk of double-counting or inappropriate selections:
 
-`src/lib/matrix-options/types.ts` already includes:
+- **`cyanide_free` (0.00063) vs `hydrogen_cyanide_and_cyanide_salts` (0.0006):**
+  These represent nearly identical toxicological endpoints (free CN vs total CN). If a user selects both, the assessment/reporting may double-count or confuse the selection basis.
+- **`silver` (0.005) vs `silver_cyanide` (0.1) vs `potassium_silver_cyanide` (0.005):**
+  A three-way conflict. `silver_cyanide` is 20x less stringent than generic silver. Selecting generic `silver` + `cyanide_free` vs selecting `silver_cyanide` alone yields drastically different screening outcomes.
+- **`copper` (0.426) vs `copper_cyanide` (0.005):**
+  Selecting generic copper and generic cyanide independently versus selecting the specific `copper_cyanide` salt creates an aggregation conflict.
 
-```ts
-| 'inorganic'
-```
+## 3. Proposed Owner Decision Options (Not Yet Approved)
+Please select the preferred strategy for managing these overlaps in the UI:
 
-`src/lib/matrix-options/substanceLibrary.ts` includes wired cyanide-family entries:
+- **A. UI Guidance Only:** No hard filtering. Add warning/helper text (tooltips/chips) informing the user of the overlap, but allow all keys to remain selectable.
+- **B. Preferred/Recommended Key Convention:** Highlight one specific key (e.g., recommend `cyanide_free` over `hydrogen_cyanide...`) visually, but leave the others available as advanced options.
+- **C. Grouping/Alias Warning:** The UI dynamically warns the user if they select two overlapping keys simultaneously (e.g., "You have selected both Silver and Silver Cyanide").
+- **D. Hard Filtering/Collapse (Not Recommended):** Hide overlapping variants from the dropdown entirely. *Note: this requires explicit owner authorization as it breaks 1:1 parity with the source catalogs.*
 
-- `chlorine_cyanide`: RfD `0.05`, class `inorganic`
-- `cyanogen`: RfD `0.001`, class `inorganic`
-- `cyanogen_bromide`: RfD `0.09`, class `inorganic`
-- `calcium_cyanide`: RfD `0.001`, class `inorganic`
-- `copper_cyanide`: RfD `0.005`, class `inorganic`
-- `cyanide_free`: RfD `0.00063`, class `inorganic`
-- `hydrogen_cyanide_and_cyanide_salts`: RfD `0.0006`, class `inorganic`
-- `potassium_cyanide`: RfD `0.002`, class `inorganic`
-- `potassium_silver_cyanide`: RfD `0.005`, class `inorganic`
-- `silver_cyanide`: RfD `0.1`, class `inorganic`
-- `sodium_cyanide`: RfD `0.001`, class `inorganic`
+## 4. Proposed UI Copy (Pending Approval)
+If Option A, B, or C is chosen, we propose the following tooltips/helper texts next to the relevant keys in the Substance Selection UI:
 
-`src/lib/matrix-options/__tests__/substanceLibrary.test.ts` asserts the cyanide-salts cohort values
-and classes, including the eight 2026-07-04b cyanide-salt entries.
+- **For `cyanide_free` & `hydrogen_cyanide_and_cyanide_salts`:**
+  > *"Caution: These endpoints represent equivalent cyanide exposure. Select only one to avoid double-counting or confusing the selection basis."*
+- **For `silver_cyanide` & `potassium_silver_cyanide`:**
+  > *"Represents a metal-cyanide compound/salt; do not assess concurrently with generic metal or generic cyanide unless the assessment intentionally covers both representations."*
+- **For `copper_cyanide`:**
+  > *"Represents a metal-cyanide compound/salt; do not assess concurrently with generic metal or generic cyanide unless the assessment intentionally covers both representations."*
 
-## What Remains Open
+## 5. Recommended First Implementation Increment
+Upon approval of the strategy, the implementation will proceed as follows:
 
-The open issue is not whether these can compute. They can: as `inorganic`, they follow the default
-non-PAH/non-MeHg calculation path, with HH-only fields and no eco pathway.
+- **Scope:** Add warning/helper text tooltips in the frontend components.
+- **Likely Files After Inspection:**
+  - `src/components/matrix-options/SubstanceCombobox.tsx`
+  - `src/components/matrix-options/MatrixDashboard.tsx`
+  - *Possibly calculator components if warnings are displayed in calculator panes.*
+- **Tests Expected:** Add component tests to verify tooltip rendering when cyanide/metal-cyanides are present.
 
-The open issue is how users should choose among overlapping keys:
+## 6. Explicit Non-Goals
+This implementation strictly adheres to the following boundaries:
+- **NO** value/RfD/class changes.
+- **NO** catalog mutation (`matrix_research/reference_catalog/**` remains completely untouched).
+- **NO** `src/data/**` edits.
+- **NO** `qa_status` or `default_status` edits.
+- **NO** key removal from the runtime library.
+- **NO** re-ranking defaults.
+- **NO** silent collapse or redirection of substances.
 
-### `cyanide_free` vs `hydrogen_cyanide_and_cyanide_salts`
-
-- `cyanide_free`: `0.00063`
-- `hydrogen_cyanide_and_cyanide_salts`: `0.0006`
-
-These values are nearly identical and likely overlap as free-CN / HCN+CN- representations. Presenting
-both without guidance risks double counting or arbitrary selection.
-
-### Silver cyanide family
-
-- generic `silver`: `0.005` (existing non-cyanide silver key)
-- `potassium_silver_cyanide`: `0.005`
-- `silver_cyanide`: `0.1`
-
-This creates a three-way silver-adjacent selection problem. `silver_cyanide` is 20x less stringent
-than generic silver and potassium silver cyanide. That may be chemically defensible, but it needs an
-explicit selection convention so users do not pick the wrong silver/cyanide representation.
-
-### `copper_cyanide` vs generic `copper`
-
-`copper_cyanide` is an own-key cyanide-salt entry with RfD `0.005`. It should not be silently treated
-as additive with a generic copper assessment unless the assessment is actually for both copper and
-cyanide components. This is a user-selection/speciation convention issue.
-
-## Recommended Future Work
-
-Create a narrow "cyanide selection guidance" PR, not a value-wiring PR.
-
-Possible implementation surfaces, from lowest to highest risk:
-
-1. Add clearer notes/provenance text in `SUBSTANCE_LIBRARY` entries explaining umbrella vs speciated
-   cyanide keys.
-2. Add UI helper text or warning chips when selecting cyanide-family substances.
-3. Add a grouping/alias metadata layer so the UI can warn when multiple related cyanide keys are
-   selected or compared.
-
-Preferred first increment:
-
-- docs/design packet plus UI copy proposal only.
-- No value changes.
-- No `qa_status` / `default_status` changes.
-- No catalog mutation.
-
-## Non-Goals
-
-Do not:
-
-- remove any cyanide key
-- re-rank defaults
-- change the wired RfDs
-- change `qa_status` or `default_status`
-- collapse `cyanide_free` into `hydrogen_cyanide_and_cyanide_salts` without owner approval
-- collapse silver cyanide entries into generic silver without owner approval
-
-## Current Autonomous-Run Status
-
-Status: resolved as policy/UX backlog.
-
-No code change is appropriate under the current autonomous contract. The safe deliverable is this
-packet and an updated backlog map entry.
+## 7. Next Step
+**Provide an explicit instruction to proceed:**
+> *"Proceed with Option C (Grouping Warning). Use the proposed copy."*
+*(or specify your preferred option and adjustments).*
