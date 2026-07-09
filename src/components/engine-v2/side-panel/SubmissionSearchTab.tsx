@@ -13,8 +13,15 @@
 //   - status='error' -> show "Search unavailable: indexing failed
 //     (<error_message>); retry" CTA; clicking retry POSTs to the
 //     reindex route and re-fetches status on response.
-//   - status='absent' -> backwards-compat path: smaller hint "No
-//     indexed chunks yet -- re-evaluate to enable search".
+//   - status='absent' -> no indexing-status row exists yet (e.g. an
+//     evaluation imported before this feature, or one whose indexer
+//     never ran). Show "No indexed chunks yet" plus an "Index
+//     submission evidence" button that calls the SAME reindex route as
+//     the error-state retry CTA (no new backend write path). The label
+//     is deliberately honest: this triggers indexing, not a full
+//     re-evaluation -- the reindex route itself degrades gracefully
+//     (0 rows, status='complete') if the evaluation has no
+//     raw_eval_result_json / evidence_slices to index.
 //
 // Result list:
 //   - Snippet rendered as HTML (server-side <mark>-only highlighted on an
@@ -490,7 +497,20 @@ export function SubmissionSearchTab(
             data-testid="submission-search-status-absent"
             className="p-4 text-xs text-slate-500 dark:text-slate-400"
           >
-            No indexed chunks yet -- re-evaluate to enable search.
+            <p>No indexed chunks yet.</p>
+            <button
+              type="button"
+              onClick={() => void onRetryReindex()}
+              disabled={reindexing}
+              data-testid="submission-search-index-button"
+              className="mt-2 inline-flex items-center gap-1 rounded border border-slate-300 dark:border-slate-600 px-2 py-1 text-xs font-medium hover:bg-slate-50 dark:hover:bg-slate-800 disabled:opacity-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500"
+            >
+              <RefreshCw
+                className={"w-3 h-3 " + (reindexing ? "animate-spin" : "")}
+                aria-hidden="true"
+              />
+              {reindexing ? "Indexing..." : "Index submission evidence"}
+            </button>
           </div>
         )}
 
