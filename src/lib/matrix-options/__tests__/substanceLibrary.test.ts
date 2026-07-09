@@ -1042,6 +1042,18 @@ describe('SUBSTANCE_LIBRARY -- zineb new-key organic oral RfD (2026-07-04d)', ()
   });
 });
 
+describe('SUBSTANCE_LIBRARY -- phenylmercuric_acetate organometallic (2026-07-08)', () => {
+  it('phenylmercuric_acetate carries the wired rfd 0.00008, sf null, class organic, abs_dermal 0.1, ba_oral 1.0', () => {
+    const result = findSubstance('phenylmercuric_acetate');
+    expect(result).toBeDefined();
+    expect(result?.contaminantClass).toBe('organic');
+    expect(result?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.00008);
+    expect(result?.sf_oral_per_mg_per_kg_bw_per_day).toBeNull();
+    expect(result?.abs_dermal).toBe(0.1);
+    expect(result?.ba_oral).toBe(1.0);
+  });
+});
+
 describe('SUBSTANCE_LIBRARY -- oral RfD backfills for 17 existing substances (2026-07-04d)', () => {
   const expected = [
     { key: 'biphenyl', rfd: 0.5 },

@@ -7509,7 +7509,7 @@ export const SUBSTANCE_LIBRARY = [
       '(Hg-C bonds): contaminantClass organic is a pragmatic bucket (no organometallic class exists in the ' +
       'closed ContaminantClass union) -- do NOT reuse the elemental mercury (inorganic) entry.',
     notes:
-      'NEW own-key entry. Oral RfD wired build-first from the single approved catalog row ' +
+      'NEW own-key entry. Oral RfD wired build-first from the approved direct-contact catalog row ' +
       '(qa_status=approved). No oral slope factor candidate. contaminantClass organic is a pragmatic bucket for ' +
       'this Hg-C organometallic (no organomercury class exists); NOT elemental mercury. abs_dermal 0.1 ' +
       '= organic class default. logKow n/a here (HH-oral only; no eco pathway wired). eco fields null (HH-only entry).',
