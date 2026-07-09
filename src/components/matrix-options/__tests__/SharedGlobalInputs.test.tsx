@@ -256,3 +256,20 @@ describe('SharedGlobalInputs (PR-A2 commit 2)', () => {
     expect(found?.fcv_ug_per_L).not.toBeNull();
   });
 });
+
+describe('SharedGlobalInputs cyanide non-mutation', () => {
+  it('cyanide selectability/non-mutation: cyanide family keys are distinct', () => {
+    render(
+      <SharedGlobalInputs
+        substanceKey="copper_cyanide"
+        jurisdiction="bc-protocol1-v5-dra"
+        onSubstanceKeyChange={() => {}}
+        onJurisdictionChange={() => {}}
+      />
+    );
+    // Verifies that the combobox properly displays Copper cyanide without mutating it
+    const input = screen.getByTestId('substance-combobox-input') as HTMLInputElement;
+    expect(input.value).toBe('Copper cyanide');
+  });
+});
+

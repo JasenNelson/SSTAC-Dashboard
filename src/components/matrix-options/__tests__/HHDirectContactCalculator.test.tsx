@@ -427,3 +427,17 @@ describe('HHDirectContactCalculator receptor-scenario selector (live catalog)', 
     expect((screen.getByTestId('hh-direct-ir-sed-input') as HTMLInputElement).value).toBe('20');
   });
 });
+
+describe('HHDirectContactCalculator recent Matrix Options additions', () => {
+  it('organomercury entry: phenylmercuric_acetate is selectable and calculates without crashing', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="phenylmercuric_acetate"
+        jurisdiction="bc-protocol1-v5-dra"
+      />
+    );
+    expect(screen.getByTestId('hh-direct-preliminary-standard')).toBeInTheDocument();
+    const rfd = screen.getByTestId('hh-direct-rfd-input') as HTMLInputElement;
+    expect(rfd.value).toBe('0.00008'); // Verifies the RfD resolves correctly
+  });
+});
