@@ -136,6 +136,7 @@ export default function SharedGlobalInputs({
           {(substanceKey === 'cyanide_free' ||
             substanceKey === 'hydrogen_cyanide_and_cyanide_salts') && (
             <div
+              role="alert"
               data-testid="cyanide-guidance-warning"
               className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 shadow-sm leading-relaxed"
             >
@@ -146,6 +147,7 @@ export default function SharedGlobalInputs({
             substanceKey === 'silver_cyanide' ||
             substanceKey === 'potassium_silver_cyanide') && (
             <div
+              role="alert"
               data-testid="cyanide-guidance-warning"
               className="mt-2 p-2.5 bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-800 rounded-md text-xs text-amber-800 dark:text-amber-200 shadow-sm leading-relaxed"
             >
@@ -162,6 +164,7 @@ export default function SharedGlobalInputs({
               return (
                 <li
                   key={pathway}
+                  role="listitem"
                   data-testid={`applicability-${pathway}`}
                   className="flex items-center gap-1.5"
                   title={result.reason}

@@ -1185,3 +1185,51 @@ describe('SUBSTANCE_LIBRARY -- oral slope-factor backfills (2026-07-04c)', () =>
     });
   }
 });
+
+describe('Matrix Options Regression Guardrails', () => {
+  it('detects high-risk library/selector drift', () => {
+    // Assert no duplicate displayNames among high-risk keys
+    const displayNames = new Set<string>();
+    const duplicateDisplayNames: string[] = [];
+
+    for (const sub of SUBSTANCE_LIBRARY) {
+      if (displayNames.has(sub.displayName)) {
+        duplicateDisplayNames.push(sub.displayName);
+      }
+      displayNames.add(sub.displayName);
+
+      // Basic invariant checks
+      expect(sub.displayName).toBeTruthy();
+      expect(sub.contaminantClass).toBeTruthy();
+      expect(sub.abs_dermal).toBeGreaterThanOrEqual(0);
+    }
+
+    // Some known duplicates exist across broad catalogs due to multiple representations.
+    // We want to fail if NEW unintentional duplicates are introduced.
+    expect(duplicateDisplayNames.sort()).toEqual([
+      "1,1,1-Trichloroethane",
+      "2-Methylnaphthalene",
+    ]);
+
+    const cyanideKeys = ['cyanide_free', 'hydrogen_cyanide_and_cyanide_salts', 'copper_cyanide', 'silver_cyanide', 'potassium_silver_cyanide'];
+    const cyanideDisplayNames = cyanideKeys.map(k => findSubstance(k)?.displayName);
+    const uniqueCyanideNames = new Set(cyanideDisplayNames);
+    expect(uniqueCyanideNames.size).toBe(cyanideKeys.length);
+
+    // Assert cyanide-family keys remain distinct
+    for (const key of cyanideKeys) {
+      expect(findSubstance(key)).toBeDefined();
+    }
+
+    // Organometallic precedent remains consistent (e.g., methylmercury vs mercury_inorganic)
+    expect(findSubstance('methylmercury')).toBeDefined();
+    expect(findSubstance('mercury_inorganic')).toBeDefined();
+    expect(findSubstance('mercuric_chloride_hgcl2')).toBeDefined();
+
+    // PCB-specific DL-TEQ invariants
+    // Only PCB variants should have the specific TEQ modifiers, though the UI checks the 'key' explicitly.
+    // We just assert the key hasn't drifted.
+    expect(findSubstance('total_pcbs_aroclor_1254')).toBeDefined();
+    expect(findSubstance('polychlorinated_biphenyls_total_pcbs')).toBeDefined();
+  });
+});
