@@ -10,6 +10,50 @@
 
 ---
 
+## 2026-07-09 - PL/pgSQL RETURNS TABLE column name shadows an identically-named table column [HIGH]
+
+**Area:** Supabase RPC / PL/pgSQL / engine-v2 submission search
+**Impact:** HIGH (silently broke the "Search submission" feature for every evaluation with indexed
+chunks, undetected until exercised live against real data)
+
+`search_submission_chunks` (`supabase/migrations/20260513_v2_submission_chunks_search_rpc.sql`)
+declared `RETURNS TABLE (... evidence_item_id text ...)`. In PL/pgSQL, every column named in a
+function's `RETURNS TABLE` clause is implicitly declared as a block-scoped variable for the ENTIRE
+function body -- not just the final `RETURN QUERY` statement. An inner correlated subquery over
+`v2_chunk_policy_citations` (which also has an `evidence_item_id` column) referenced the column
+name UNQUALIFIED in its `SELECT` and `GROUP BY` clauses. Postgres could not resolve whether that
+name meant the table column or the function's own output variable, and raised "column reference
+\"evidence_item_id\" is ambiguous" -- a RUNTIME error, not a parse-time one, so `CREATE OR REPLACE
+FUNCTION` succeeded silently and the bug was invisible until the RPC was actually called.
+
+**Fix pattern:** whenever a PL/pgSQL function's `RETURNS TABLE` column list shares a name with a
+column in a table the function body queries, qualify EVERY reference to that name inside the body
+with a table alias, including inside inner subqueries -- do not rely on the outer query's own
+`c.*`/`cc.*` aliasing style being "obviously" enough; each nested `SELECT`/`GROUP BY` needs its own
+alias applied explicitly. See the fix:
+`supabase/migrations/20260709_v2_submission_chunks_search_rpc_fix_ambiguous_evidence_item_id.sql`.
+
+**Detection gap:** this repo has no live-Postgres test harness for RPC function bodies, so no
+automated test could have caught this before it shipped. The fix's companion test
+(`src/lib/engine-v2/__tests__/search_submission_chunks_rpc_migration.test.ts`) is a STATIC
+text-safeguard only (asserts no unqualified reference to the shadowed name survives outside the
+`RETURNS TABLE` declaration) -- it guards against regression, not the original class of bug in a
+brand-new function. When authoring a NEW `RETURNS TABLE` function, manually check every column name
+in that list against every table the body queries before shipping.
+
+### File References
+- Bug: `supabase/migrations/20260513_v2_submission_chunks_search_rpc.sql:97-102`
+- Fix: `supabase/migrations/20260709_v2_submission_chunks_search_rpc_fix_ambiguous_evidence_item_id.sql`
+- Safeguard test: `src/lib/engine-v2/__tests__/search_submission_chunks_rpc_migration.test.ts`
+
+### Key Takeaway
+A PL/pgSQL `RETURNS TABLE` column name is a live variable for the whole function body -- if any
+table the body queries has a column of the same name, every reference to it in every nested
+subquery must be explicitly table-aliased, or Postgres will raise an "ambiguous" error at call time
+that no static analysis or `CREATE OR REPLACE FUNCTION` will catch in advance.
+
+---
+
 ## 2026-07-08 - CI Unit Tests EPIPE/ForksPoolWorker flake: pin the job to Node 22 [MEDIUM]
 
 **Area:** CI infra / vitest / coverage memory
