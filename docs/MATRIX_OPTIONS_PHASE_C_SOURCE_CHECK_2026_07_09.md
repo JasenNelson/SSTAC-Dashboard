@@ -16,6 +16,6 @@ The following required documents were **NOT** found in the reference catalog:
 No `.pdf` files currently exist within `matrix_research/reference_catalog/` or any of its subdirectories.
 
 ## Recommendation
-The Phase C TEF/RPF Verification task is **BLOCKED**. 
+The Phase C TEF/RPF Verification task is **BLOCKED**.
 
 Do not proceed with TEF/RPF verification coding until the owner uploads these primary source PDFs to the reference catalog to satisfy the strict data provenance requirements.
