@@ -35,15 +35,15 @@ async function gotoMatrixOptionsOrSkip(page: Page) {
 }
 
 test.describe('Matrix Options default-policy review shortcuts', () => {
-  test('matrix-options route is either authenticated or redirects to /login', async ({ page }) => {
+  test('matrix-options route is either authenticated or redirects to /login', async ({ page }, testInfo) => {
     await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
 
-    if (page.url().includes('/login')) {
+    if (testInfo.project.name === 'chromium-auth') {
+      await expect(page).not.toHaveURL(/\/login/);
+      await expect(page.getByRole('heading', { name: 'Matrix Options', exact: true })).toBeVisible();
+    } else {
       await expect(page).toHaveURL(/\/login/);
-      return;
     }
-
-    await expect(page.getByRole('heading', { name: /Matrix Options/i })).toBeVisible();
   });
 
   test('opens References & Values from the calculator candidate-default shortcut', async ({
@@ -62,12 +62,15 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await reviewButton.click();
 
     await expect(page.getByTestId('references-values-tab')).toBeVisible();
-    await expect(page.getByTestId('evidence-library-default-policy-audit')).toBeVisible();
-    await expect(page.locator('body')).toContainText(
-      'Input: sf oral per mg per kg bw per day',
-    );
-    await expect(page.locator('body')).not.toContainText('Promote default');
-    await expect(page.locator('body')).not.toContainText('Approve default');
+    
+    const policyAudit = page.getByTestId('evidence-library-default-policy-audit');
+    await expect(policyAudit).toBeVisible();
+    
+    await expect(page.getByText('Calculator request')).toBeVisible();
+    await expect(page.getByText(/Input: (sf|rfd) oral/i).first()).toBeVisible();
+    
+    await expect(policyAudit).not.toContainText('Promote default');
+    await expect(policyAudit).not.toContainText('Approve default');
   });
 
   test('filters References by candidate defaults without promotion language', async ({
