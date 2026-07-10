@@ -1,13 +1,5 @@
 import { test, expect } from '@playwright/test';
 
-const PACKS = [
-  'bnrrm-general-v1.0-dev-map',
-  'bnrrm-site-v0.1-toquaht-case-study',
-  'bnrrm-site-v0.2-cpnelson-prototype',
-  'bnrrm-site-v0.1-alcan-map',
-  'bnrrm-casestudy-jermilova2025-mackenzie-hg',
-];
-
 const REVIEW_SECTIONS = [
   { id: 'guide', label: 'Guide' },
   { id: 'evidence', label: 'Evidence' },
@@ -44,7 +36,6 @@ test.describe('BN-RRM Frontend Smoke Tests', () => {
 
   test('No "Prototype" text in pack selector or banners', async ({ page }) => {
     // Check that "Prototype" doesn't appear in status-related UI elements
-    const pageText = await page.textContent('body');
     // Allow "Prototype" in code/technical contexts but not in pack display names
     const packSelectorArea = page.locator('[class*="pack"], [class*="selector"], [class*="banner"]');
     const count = await packSelectorArea.count();
