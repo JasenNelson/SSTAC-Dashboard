@@ -162,3 +162,4 @@ scripts/matrix-map/_enrichment_working/
 !.gemini/settings.json
 !.gemini/commands/
 .gstack/
+e2e/.auth/

@@ -1,10 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
-import path from 'path'; // eslint-disable-line @typescript-eslint/no-unused-vars
+import path from 'path';
 
 const playwrightPort = Number(process.env.PLAYWRIGHT_TEST_PORT || '3100');
 const playwrightHost = process.env.PLAYWRIGHT_TEST_HOST || '127.0.0.1';
 const playwrightBaseURL =
   process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${playwrightHost}:${playwrightPort}`;
+
+// Lane B auth fixture: the setup project + authenticated project are added ONLY
+// when E2E_TEST_EMAIL/PASSWORD are present, so CI without the secret is unchanged
+// (unauth specs skip on the /login bounce exactly as before).
+const hasE2ECreds = Boolean(process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD);
+const userAuthState = path.join(__dirname, 'e2e', '.auth', 'user.json');
 
 export default defineConfig({
   testDir: './e2e',
@@ -18,18 +24,37 @@ export default defineConfig({
     trace: 'on-first-retry',
   },
   projects: [
+    // trace:'off' on setup so the login flow (which fills credential fields) is
+    // never captured in a trace artifact, even on a retry. Defense-in-depth on
+    // top of Playwright's built-in password-input masking.
+    ...(hasE2ECreds
+      ? [{ name: 'setup', testMatch: /global\.setup\.ts/, use: { trace: 'off' as const } }]
+      : []),
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
+      testIgnore: /global\.setup\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
+      testIgnore: /global\.setup\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
+      testIgnore: /global\.setup\.ts/,
     },
+    ...(hasE2ECreds
+      ? [
+          {
+            name: 'chromium-auth',
+            use: { ...devices['Desktop Chrome'], storageState: userAuthState },
+            dependencies: ['setup'],
+            testMatch: /matrix-options\.spec\.ts/,
+          },
+        ]
+      : []),
   ],
   webServer: {
     // Use webpack dev server for hermetic worktree e2e runs. The app's
