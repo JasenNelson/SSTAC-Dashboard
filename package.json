@@ -24,6 +24,7 @@
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:debug": "playwright test --debug",
+    "test:k6": "k6 run tests/load/main.k6.js",
     "docs:gate": "node scripts/verify/docs-gate.mjs",
     "docs:gate:json": "node scripts/verify/docs-gate.mjs --json",
     "docs:archive:investigate": "node scripts/verify/docs-archive-investigation.mjs",
