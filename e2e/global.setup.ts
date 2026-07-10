@@ -17,6 +17,10 @@ setup('authenticate reviewer', async ({ page }) => {
 
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
+  // Wait for React to hydrate so the onSubmit handler is attached.
+  // Without this, a fast click triggers a native form submission, reloading the page.
+  await page.waitForTimeout(3000);
+
   // Hydration/readiness robustness: wait for inputs to be visible/editable
   const emailInput = page.locator('input#email');
   const passwordInput = page.locator('input#password');
