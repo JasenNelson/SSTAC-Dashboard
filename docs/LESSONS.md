@@ -10,6 +10,89 @@
 
 ---
 
+## 2026-07-10 - Static-JSX hydration mismatch means a stale dev build, not a source bug [MEDIUM]
+
+**Area:** Next.js dev server / SSR-CSR hydration / engine-v2 evaluation page
+**Impact:** MEDIUM (a false "front-end bug" alarm; also a prime suspect for intermittent silent
+click-swallow, which nearly triggered an unnecessary code fix loop)
+
+A React hydration error showed a STRUCTURAL server-vs-client mismatch on the evaluation page: the
+client wrapped content in a `flex flex-row items-stretch gap-0 min-h-screen` div the server did not
+render. But the JSX is fully STATIC and unconditional
+(`src/app/(dashboard)/dashboard/engine-v2/[projectId]/evaluation/[evalId]/page.tsx:424-527`), the
+`SidePanelProvider` renders NO DOM element
+(`src/components/engine-v2/side-panel/SidePanelContext.tsx:97-101`), and there is no
+`Date.now`/`Math.random`/`window`/localStorage branch in the render path. Static, deterministic JSX
+cannot itself produce a server-vs-client structural mismatch. Root cause: the dev server was running
+from a checkout ~72 commits behind `origin/main`, so the SSR chunk predated a layout change while the
+client bundle was newer (a stale `.next`/HMR skew). It also plausibly caused the intermittent
+save-swallow observed the same session: on a hydration failure React discards and regenerates the
+client tree, and event handlers on the regenerated subtree can fail to reattach, so a click fires no
+POST.
+
+**Diagnostic rule:** when a hydration mismatch is STRUCTURAL (a whole wrapper appears/disappears) and
+the JSX is static, suspect a build/env desync FIRST -- do not go hunting for a source bug. Confirm the
+source layout is static + identical to `origin/main`, then rebuild clean.
+
+**Fix (environment, not code):** run from a clean `origin/main`-tip checkout with a fresh `.next` (stop
+dev, delete `.next`, restart). If it persists, test incognito with extensions disabled (a DOM-mutating
+extension is the other listed cause). Confirmed gone on a clean build this session.
+
+**Key Takeaway:** static-JSX structural hydration mismatch == stale build / HMR skew; rebuild clean from
+the tip before touching component code.
+
+---
+
+## 2026-07-10 - Skip-safe authenticated Playwright fixture (env-gated setup project) [MEDIUM]
+
+**Area:** E2E / Playwright / CI (Matrix Options auth-gated specs)
+**Impact:** MEDIUM (closes a real CI test-integrity gap without breaking CI before secrets exist)
+
+Auth-gated e2e specs (`e2e/matrix-options.spec.ts`, `matrix-admin-rbac.spec.ts`) were skipping in CI
+because there was no shared auth `storageState`. Pattern that makes them run authenticated WITHOUT
+breaking CI when no test credentials exist (PR #575): a Playwright SETUP PROJECT
+(`e2e/global.setup.ts`) that logs in via the login form and saves `storageState`, plus an authenticated
+`chromium-auth` project that `dependencies: ['setup']` and uses that state -- BOTH added to the
+`projects` array ONLY when `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` are present
+(`playwright.config.ts`). With no creds the project list is byte-identical to before, so CI stays green
+and the specs skip on the `/login` bounce exactly as before. Fail-closed setup (throw if login does not
+redirect off `/login`); `trace: 'off'` on the setup project so credentials never land in a trace
+artifact; `e2e/.auth/` gitignored; `ci.yml` passes the secrets into the e2e job (empty when unset ->
+no-op).
+
+**Key Takeaway:** env-gate the setup + authenticated projects on the presence of the test-cred env vars
+-- that seam lets an auth fixture land and stay green BEFORE the secrets/test-user are provisioned
+(which is owner-gated: seed a non-privileged Supabase e2e user + add the GH secrets).
+
+---
+
+## 2026-07-10 - `jurisdiction` has TWO meanings in matrix-options; never bulk-rename it [HIGH]
+
+**Area:** matrix-options refactor safety / provenance integrity
+**Impact:** HIGH (a naive `jurisdiction`->`frameId` bulk rename would silently corrupt catalog
+provenance + BC-Protocol-1 default selection)
+
+The identifier `jurisdiction` means two DISTINCT things and only ONE is the rename target:
+(a) the frame-SELECTOR state/prop (React `useState jurisdiction`, the `jurisdiction`/`onJurisdictionChange`
+props, `LS_KEY_JURISDICTION`) -> rename target `frameId`. NOTE the canonical rename to `RegulatoryFrame`
+ALREADY happened; `src/components/matrix-options/guide/content/jurisdictions.ts` is a DEPRECATED-ALIAS
+shim kept to avoid churning ~15 importing files.
+(b) the catalog-PROVENANCE field `record.jurisdiction` / the `CatalogJurisdiction` type /
+`eligibleCatalogJurisdictions`, used by `src/lib/matrix-options/defaultSelectionPolicy.ts` for BC
+Protocol 1 source-priority default selection, and rendered in `EvidenceLibrary.tsx` /
+`CalculatorValueSearchPanel.tsx`. This must be KEPT.
+Compound identifiers blend both meanings and must NOT be touched: `getFrameJurisdictionRank`,
+`isJurisdictionEligible`, the policy disposition enum literal `blocked_frame_jurisdiction` (tested in
+3+ files), `LEGACY_JURISDICTION_FRAME_MAP`. The localStorage key string `matrix-options-jurisdiction-v1`
+must be preserved verbatim (rename only the identifier, per the existing in-code precedent).
+
+**Key Takeaway:** finishing the `jurisdiction`->`frameId` migration is a careful symbol-by-symbol PR
+(protect the catalog-provenance KEEP set), NEVER an AGY/bulk sed. It is low-value cosmetic cleanup;
+a 2026-07-10 strategic review returned RED and deferred it. Scope map:
+`.tmp/fable-mo-run-20260709/LANE_UX_INSPECTION_AND_RENAME_SCOPE.md`.
+
+---
+
 ## 2026-07-09 - PL/pgSQL RETURNS TABLE column name shadows an identically-named table column [HIGH]
 
 **Area:** Supabase RPC / PL/pgSQL / engine-v2 submission search
