@@ -17,15 +17,12 @@ setup('authenticate reviewer', async ({ page }) => {
 
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
 
-  // Hydration robustness: the login <form> submits via React's onSubmit
-  // (preventDefault). Before hydration attaches that handler, a click triggers a
-  // NATIVE GET form submission that reloads /login with the credentials in the
-  // query string and never calls Supabase -- so the token wait below times out.
-  // The login page exposes no explicit hydration marker; a bounded settle is used
-  // (NOT waitForLoadState('networkidle'), which can hang forever on the persistent
-  // `next dev` HMR websocket). A dedicated hydration data-attribute on the login
-  // page is a possible follow-up to replace this heuristic wait.
-  await page.waitForTimeout(3000);
+  // Hydration robustness: the login <form> submits via React's onSubmit (preventDefault). Before
+  // hydration attaches that handler, a click triggers a NATIVE GET form submission that reloads
+  // /login with the credentials in the query string and never calls Supabase. The login page sets
+  // data-hydrated="true" on the <form> in a mount effect once hydrated, so wait for that marker
+  // (deterministic; replaces the previous heuristic waitForTimeout settle).
+  await page.locator('form[data-hydrated="true"]').waitFor({ state: 'attached', timeout: 15_000 });
 
   // Wait for inputs to be visible/editable
   const emailInput = page.locator('input#email');

@@ -1,7 +1,7 @@
-﻿// src/app/(auth)/login/page.tsx
+// src/app/(auth)/login/page.tsx
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import type { NextPage } from 'next';
@@ -15,6 +15,9 @@ const LoginForm: React.FC = () => {
   const [password, setPassword] = useState<string>('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(false);
+  const [hydrated, setHydrated] = useState<boolean>(false);
+
+  useEffect(() => { setHydrated(true); }, []);
 
   // Get redirect URL from query params
   const redirectUrl = searchParams.get('redirect') || '/dashboard';
@@ -54,7 +57,7 @@ const LoginForm: React.FC = () => {
         </div>
 
         <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-xl p-8 border border-slate-100 dark:border-slate-700">
-          <form onSubmit={handleLogin} className="space-y-6">
+          <form onSubmit={handleLogin} className="space-y-6" data-hydrated={hydrated ? 'true' : undefined}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-2">
                 Email Address
