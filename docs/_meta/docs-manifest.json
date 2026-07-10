@@ -1418,6 +1418,17 @@
       ]
     },
     {
+      "id": "governance.gate_mode_sop",
+      "path": "docs/GATE_MODE_SOP.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "gates",
+        "ci",
+        "ship-protocols"
+      ],
+      "notes": "Gate-discipline authority: Gate Mode, the full push-gate suite (lint/unit/monitored build/e2e), and commit/push/merge protocols. Cited by CLAUDE.md as the gate authority."
+    },
+    {
       "id": "docs.readme_legacy",
       "path": "docs/README.md",
       "lifecycle": "REFERENCE",
