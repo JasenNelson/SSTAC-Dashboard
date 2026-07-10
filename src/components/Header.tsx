@@ -180,7 +180,7 @@ export default function Header() {
               <div className="relative ml-4" data-desktop-menu>
                 <button
                   onClick={() => setIsDesktopMenuOpen(!isDesktopMenuOpen)}
-                  className="flex items-center px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  className="flex items-center px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 rounded-md transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                   aria-expanded={isDesktopMenuOpen}
                   aria-controls="desktop-menu-dropdown"
                 >
@@ -245,7 +245,7 @@ export default function Header() {
                   {/* Logout Button */}
                   <button
                     onClick={handleLogout}
-                    className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                    className="px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                   >
                     Logout
                   </button>
@@ -254,7 +254,7 @@ export default function Header() {
                 {/* Mobile Menu Button */}
                 <button
                   onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                  className="md:hidden p-2 rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  className="md:hidden p-2 rounded-md text-slate-500 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                   aria-expanded={isMobileMenuOpen}
                   aria-controls="mobile-navigation-menu"
                   aria-label="Toggle mobile menu"
@@ -272,13 +272,13 @@ export default function Header() {
               <div className="flex items-center space-x-3">
                 <Link
                   href="/signup"
-                  className="px-4 py-2 text-sm font-medium text-sky-700 bg-white border border-sky-700 rounded-md hover:bg-sky-50 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  className="px-4 py-2 text-sm font-medium text-sky-700 bg-white border border-sky-700 rounded-md hover:bg-sky-50 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                 >
                   Sign Up
                 </Link>
                 <Link
                   href="/login"
-                  className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2"
+                  className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2"
                 >
                   Login
                 </Link>
@@ -360,7 +360,7 @@ export default function Header() {
                     handleLogout();
                     setIsMobileMenuOpen(false);
                   }}
-                  className="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+                  className="w-full mt-2 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-md hover:bg-red-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900"
                 >
                   Logout
                 </button>
