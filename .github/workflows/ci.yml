@@ -203,7 +203,7 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
-          E2E_AUTH_ENABLED: ${{ github.head_ref == 'fix/e2e-auth-setup-robust-2026-07-10' || github.ref_name == 'fix/e2e-auth-setup-robust-2026-07-10' }}
+          E2E_AUTH_ENABLED: ${{ github.head_ref == 'fix/e2e-auth-setup-robust-2026-07-10' || github.ref_name == 'fix/e2e-auth-setup-robust-2026-07-10' || github.head_ref == 'test/e2e-auth-enable-2026-07-10' || github.ref_name == 'test/e2e-auth-enable-2026-07-10' }}
 
       # Capture the Playwright report + per-test error-context/traces on failure so
       # e2e failures (e.g. the authenticated setup login) are diagnosable from CI.
