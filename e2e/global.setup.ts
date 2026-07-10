@@ -16,11 +16,55 @@ setup('authenticate reviewer', async ({ page }) => {
   setup.skip(!email || !password, 'E2E_TEST_EMAIL/E2E_TEST_PASSWORD not set');
 
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input#email').fill(email as string);
-  await page.locator('input#password').fill(password as string);
-  await page.locator('button[type="submit"]').click();
-  // Fail closed: success is a redirect off /login; throws on timeout if login failed.
-  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 15_000 });
+
+  // Hydration/readiness robustness: wait for inputs to be visible/editable
+  const emailInput = page.locator('input#email');
+  const passwordInput = page.locator('input#password');
+  const submitButton = page.locator('button[type="submit"]');
+
+  await emailInput.waitFor({ state: 'visible' });
+  await passwordInput.waitFor({ state: 'visible' });
+  await submitButton.waitFor({ state: 'visible' });
+
+  await emailInput.fill(email as string);
+  await passwordInput.fill(password as string);
+
+  // Assert input values stuck before submit
+  const emailValue = await emailInput.inputValue();
+  if (emailValue !== email) {
+    throw new Error('Email input value did not stick after fill (hydration issue?)');
+  }
+  const passwordValue = await passwordInput.inputValue();
+  if (passwordValue !== password) {
+    throw new Error('Password input value did not stick after fill');
+  }
+
+  // Submit and capture the Supabase auth response. Keying on the token call
+  // (not only the redirect) makes failures LOUD and specific: a bad password /
+  // rate limit / wrong project surfaces as a non-200 here instead of a generic
+  // URL-timeout, and it is robust to a slow post-login redirect under
+  // `next dev` cold-compile in CI.
+  const [tokenResp] = await Promise.all([
+    page.waitForResponse(
+      (r) => r.url().includes('/auth/v1/token') && r.request().method() === 'POST',
+      { timeout: 30_000 },
+    ),
+    page.locator('button[type="submit"]').click(),
+  ]);
+
+  // Fail closed with a precise reason if auth did not succeed.
+  if (tokenResp.status() !== 200) {
+    const body = await tokenResp.text().catch(() => '');
+    throw new Error(
+      `Login failed: Supabase auth token endpoint returned ${tokenResp.status()}. ` +
+        `Verify E2E_TEST_EMAIL/E2E_TEST_PASSWORD match a confirmed user in the CI Supabase ` +
+        `project. Response: ${body.slice(0, 300)}`,
+    );
+  }
+
+  // Auth succeeded and the session cookie is set; the post-login redirect to
+  // /dashboard can lag under cold-compile, so allow generously (still fail-closed).
+  await page.waitForURL((url) => !url.pathname.startsWith('/login'), { timeout: 30_000 });
 
   fs.mkdirSync(authDir, { recursive: true });
   await page.context().storageState({ path: userState });
