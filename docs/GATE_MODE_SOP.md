@@ -278,7 +278,7 @@ Raw `npm run build` does not provide the quarantine step or timeout protection. 
 
 ## Registration
 
-This SOP is not yet registered in docs/INDEX.md or docs/_meta/docs-manifest.json because this repo does not yet have a CLAUDE.md or canonical docs index (marked "TO AUTHOR" in L0 routing table). When the SSTAC-Dashboard CLAUDE.md is authored, this SOP should be cross-referenced there as the gate-discipline authority.
+CLAUDE.md (authored 2026-05-27) is the L1 project anchor and already references this SOP as the gate-discipline authority (see its "Gate Discipline" section, which cites `docs/GATE_MODE_SOP.md`). This SOP is not yet listed in docs/INDEX.md / docs/_meta/docs-manifest.json; registering it there is a pending docs-manifest task, best done via the `/update-docs` skill so the manifest facts stay consistent.
 
 ---
 
