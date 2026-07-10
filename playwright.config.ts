@@ -7,9 +7,12 @@ const playwrightBaseURL =
   process.env.PLAYWRIGHT_TEST_BASE_URL || `http://${playwrightHost}:${playwrightPort}`;
 
 // Lane B auth fixture: the setup project + authenticated project are added ONLY
-// when E2E_TEST_EMAIL/PASSWORD are present, so CI without the secret is unchanged
+// when E2E_TEST_EMAIL/PASSWORD are present AND E2E_AUTH_ENABLED=true is explicitly set.
+// This ensures secrets alone do not enable auth setup on every branch, avoiding CI failures.
 // (unauth specs skip on the /login bounce exactly as before).
 const hasE2ECreds = Boolean(process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD);
+const authEnabled = process.env.E2E_AUTH_ENABLED === 'true';
+const runAuthenticatedE2E = hasE2ECreds && authEnabled;
 const userAuthState = path.join(__dirname, 'e2e', '.auth', 'user.json');
 
 export default defineConfig({
@@ -27,7 +30,7 @@ export default defineConfig({
     // trace:'off' on setup so the login flow (which fills credential fields) is
     // never captured in a trace artifact, even on a retry. Defense-in-depth on
     // top of Playwright's built-in password-input masking.
-    ...(hasE2ECreds
+    ...(runAuthenticatedE2E
       ? [{ name: 'setup', testMatch: /global\.setup\.ts/, use: { trace: 'off' as const } }]
       : []),
     {
@@ -45,7 +48,7 @@ export default defineConfig({
       use: { ...devices['Desktop Safari'] },
       testIgnore: /global\.setup\.ts/,
     },
-    ...(hasE2ECreds
+    ...(runAuthenticatedE2E
       ? [
           {
             name: 'chromium-auth',

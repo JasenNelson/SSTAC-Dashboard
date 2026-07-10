@@ -16,8 +16,29 @@ setup('authenticate reviewer', async ({ page }) => {
   setup.skip(!email || !password, 'E2E_TEST_EMAIL/E2E_TEST_PASSWORD not set');
 
   await page.goto('/login', { waitUntil: 'domcontentloaded' });
-  await page.locator('input#email').fill(email as string);
-  await page.locator('input#password').fill(password as string);
+
+  // Hydration/readiness robustness: wait for inputs to be visible/editable
+  const emailInput = page.locator('input#email');
+  const passwordInput = page.locator('input#password');
+  const submitButton = page.locator('button[type="submit"]');
+
+  await emailInput.waitFor({ state: 'visible' });
+  await passwordInput.waitFor({ state: 'visible' });
+  await submitButton.waitFor({ state: 'visible' });
+
+  await emailInput.fill(email as string);
+  await passwordInput.fill(password as string);
+
+  // Assert input values stuck before submit
+  const emailValue = await emailInput.inputValue();
+  if (emailValue !== email) {
+    throw new Error('Email input value did not stick after fill (hydration issue?)');
+  }
+  const passwordValue = await passwordInput.inputValue();
+  if (passwordValue !== password) {
+    throw new Error('Password input value did not stick after fill');
+  }
+
   // Submit and capture the Supabase auth response. Keying on the token call
   // (not only the redirect) makes failures LOUD and specific: a bad password /
   // rate limit / wrong project surfaces as a non-200 here instead of a generic
