@@ -31,7 +31,13 @@ async function gotoMatrixOptionsOrSkip(page: Page) {
   if (page.url().includes('/login')) {
     test.skip(true, 'Not authenticated; /matrix-options is gated. Skipping authenticated assertions.');
   }
-  await page.waitForTimeout(3000);
+  // Deterministic readiness (replaces a blind 3s settle): the authenticated page
+  // renders the MatrixDashboard h1 exactly "Matrix Options". Waiting on it resolves
+  // as soon as the dashboard is interactive instead of after a fixed timeout, and
+  // fails loudly if the authed page never renders. Runs only under auth (post-skip).
+  await expect(
+    page.getByRole('heading', { name: 'Matrix Options', exact: true }),
+  ).toBeVisible({ timeout: 15_000 });
 }
 
 test.describe('Matrix Options default-policy review shortcuts', () => {
