@@ -29,8 +29,9 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 
 ### Goal 3: Catalog
 - DONE this run: Catalog coverage (T40, 425 substances) analyzed (rfd_oral 90.8%; sf_oral 15.8%; fcv_ug_per_L 1/425; bsaf 3/425; inhalation rfc/iur 0/425). 4 substances (Cr/Ni/Tl/V) fully empty; 17 zero human-health input. needs_review (T22) mapped: 393 rows (pv-p28-* 351, pv-iris-* 41, pv-hc-* 1). By input_key: oral RfD 280 / inhalation RfC 75 / inhalation IUR 22 / oral SF 15 / dioxin-TEQ TDI 1. Data integrity clean (0 missing source_id).
-- REMAINING (autonomous-continuable): IRIS orphan staging (T24, no apply).
-- REMAINING (owner-gated): Catalog arbitration (15 candidate-group conflicts, 20 supersede-or-reject, 351 Protocol-28 verify-vs-primary sweep). Owner runs promote-*.mjs --apply for approved rows.
+- DONE this run (added): US-EPA IRIS buildout is COMPLETE (T23 -> docs/MATRIX_OPTIONS_IRIS_ORPHAN_RECON_2026_07_11.md): 0 true orphans; source Chemicals_Details.xlsx already fully absorbed by a prior ~1020-row load; 1107 IRIS records (1066 approved / 41 needs_review, all intentional dupe-group alternates). T24 (IRIS staging) is therefore MOOT -- nothing to stage.
+- REMAINING (autonomous-continuable): none for IRIS (complete). Catalog buildout now = owner judgment.
+- REMAINING (owner-gated): Catalog arbitration (15 candidate-group conflicts incl. the 41 IRIS dupe-group canonical choices, 20 supersede-or-reject, 351 Protocol-28 verify-vs-primary sweep). Owner runs promote-*.mjs --apply for approved rows.
 
 ### Goal 4: RBAC/Docs
 - DONE this run: Guard audit (T44) completed: 71 API routes; 42 requireAdmin; 47/71 admin-equivalent; 7 public; secrets only NEXT_PUBLIC_SUPABASE_* (E2E_TEST_* absent -> skip-safe e2e baseline 120 pass/93 skip holds). Two owner-decision design packets drafted (#597).
