@@ -659,7 +659,7 @@ export default function EcoFoodBSAFCalculator({
             htmlFor="ecofood-fsite"
             className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            F_site (site-use fraction)
+            F_site (fraction, 0-1)
           </label>
           <input
             id="ecofood-fsite"
@@ -741,7 +741,7 @@ export default function EcoFoodBSAFCalculator({
                   data-testid="ecofood-trv-reset"
                   className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
                 >
-                  Reset
+                  Reset to frame default
                 </button>
               )}
             </div>
@@ -784,7 +784,7 @@ export default function EcoFoodBSAFCalculator({
                   data-testid="ecofood-bsaf-reset"
                   className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
                 >
-                  Reset
+                  Reset to frame default
                 </button>
               )}
             </div>
@@ -814,6 +814,24 @@ export default function EcoFoodBSAFCalculator({
             : "Reference-only under the selected regulatory frame: no frame-supported default is seeded for the BSAF pathway. Any value shown is for reference/diagnostic use only."}
         </div>
       )}
+      {ecoResult && ecoResult.blocked && (
+        <div
+          data-testid="ecofood-blocked-notice"
+          role="note"
+          className="mb-6 border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 rounded-lg p-3 text-sm"
+        >
+          <span className="font-semibold">Diagnostic only:</span>{' '}
+          {ecoResult.warnings.length === 1 ? (
+            ecoResult.warnings[0]
+          ) : (
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              {ecoResult.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
       <div
         className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
         data-testid="ecofood-preliminary-standard"
@@ -838,7 +856,7 @@ export default function EcoFoodBSAFCalculator({
             Diagnostic only (blocked by input validity)
           </div>
         )}
-        <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-3 italic">
+        <p className="text-xs text-sky-700 dark:text-sky-400 mt-3 italic">
           Preliminary -- not a final standard. HITL professional judgment +
           Background Adjustment apply downstream.
         </p>

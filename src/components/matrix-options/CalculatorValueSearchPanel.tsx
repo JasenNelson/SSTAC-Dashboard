@@ -286,7 +286,7 @@ function evidenceSummary(row: EvidenceLibraryValueRow): {
     return {
       label: review.label,
       detail: review.detail,
-      icon: <CheckCircle2 className="h-3.5 w-3.5" />,
+      icon: <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />,
       className: 'text-emerald-700 dark:text-emerald-300',
     };
   }
@@ -294,7 +294,7 @@ function evidenceSummary(row: EvidenceLibraryValueRow): {
     return {
       label: review.label,
       detail: review.detail,
-      icon: <AlertTriangle className="h-3.5 w-3.5" />,
+      icon: <AlertTriangle className="h-3.5 w-3.5" aria-hidden="true" />,
       className: 'text-amber-700 dark:text-amber-300',
     };
   }
@@ -302,14 +302,14 @@ function evidenceSummary(row: EvidenceLibraryValueRow): {
     return {
       label: review.label,
       detail: review.detail,
-      icon: <CircleDot className="h-3.5 w-3.5" />,
+      icon: <CircleDot className="h-3.5 w-3.5" aria-hidden="true" />,
       className: 'text-slate-600 dark:text-slate-300',
     };
   }
   return {
     label: review.label,
     detail: review.detail,
-    icon: <CircleDot className="h-3.5 w-3.5" />,
+    icon: <CircleDot className="h-3.5 w-3.5" aria-hidden="true" />,
     className: 'text-sky-700 dark:text-sky-300',
   };
 }
@@ -563,7 +563,7 @@ export default function CalculatorValueSearchPanel({
       <div>
         <div className="flex items-start gap-2">
           <div className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-200">
-            <Database className="h-4 w-4" />
+            <Database className="h-4 w-4" aria-hidden="true" />
           </div>
           <div className="min-w-0">
             <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -607,7 +607,7 @@ export default function CalculatorValueSearchPanel({
                 onClick={openDefaultPolicyCandidates}
                 className="flex min-h-8 w-full items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-2 text-xs font-semibold text-sky-800 hover:border-sky-300 hover:bg-white dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:border-sky-600"
               >
-                <ExternalLink className="h-3.5 w-3.5" />
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
                 {candidateReviewedAt
                   ? 'Re-review candidate defaults'
                   : 'Review candidate defaults'}
@@ -617,7 +617,7 @@ export default function CalculatorValueSearchPanel({
                   className="mt-1 text-[10px] text-slate-500 dark:text-slate-400"
                   data-testid="calculator-candidate-review-receipt"
                 >
-                  <CheckCircle2 className="mr-1 inline-block h-3 w-3 text-emerald-600 dark:text-emerald-400" />
+                  <CheckCircle2 className="mr-1 inline-block h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
                   {defaultPolicyCandidateInputKeys.length} candidate{defaultPolicyCandidateInputKeys.length === 1 ? '' : 's'} opened
                   for review at {candidateReviewedAt}. No defaults changed.
                 </p>
@@ -643,7 +643,7 @@ export default function CalculatorValueSearchPanel({
       <label className="block">
         <span className="sr-only">Search calculator values</span>
         <div className="relative">
-          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" aria-hidden="true" />
           <input
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -657,7 +657,7 @@ export default function CalculatorValueSearchPanel({
               aria-label="Clear value search"
               className="absolute right-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700 dark:hover:bg-slate-800 dark:hover:text-slate-200"
             >
-              <X className="h-4 w-4" />
+              <X className="h-4 w-4" aria-hidden="true" />
             </button>
           )}
         </div>
@@ -695,7 +695,7 @@ export default function CalculatorValueSearchPanel({
         onClick={openCurrentView}
         className="flex min-h-9 w-full items-center justify-center gap-2 rounded-lg border border-slate-200 bg-white px-3 text-sm font-semibold text-slate-700 hover:border-sky-300 hover:text-sky-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
       >
-        <ExternalLink className="h-4 w-4" />
+        <ExternalLink className="h-4 w-4" aria-hidden="true" />
         Full reference details
       </button>
 
@@ -762,7 +762,7 @@ export default function CalculatorValueSearchPanel({
                 aria-label={`Open reference details for ${row.record.display_name}`}
                 className="mt-2 flex w-full items-start gap-1.5 rounded-md px-0 text-left text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300"
               >
-                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                 <span>{sourceReferenceLabel(row)}</span>
               </button>
               {extractedAt && (

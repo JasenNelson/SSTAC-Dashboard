@@ -518,7 +518,7 @@ export default function HHFoodWebCalculator({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Body weight (kg)
-            <input data-testid="hh-food-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeBwDefault && activeBwDefault.value != null && (
               <p data-testid="hh-food-bw-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeBwDefault.value} kg ({activeBwDefault.label}). Adjustable.
@@ -532,7 +532,7 @@ export default function HHFoodWebCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Food ingestion (kg/day)
-            <input data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeIrDefault && activeIrDefault.value != null && (
               <p data-testid="hh-food-ir-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeIrDefault.value} kg/day ({activeIrDefault.label}). Adjustable.
@@ -560,30 +560,30 @@ export default function HHFoodWebCalculator({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             RfD (mg/kg-bw/day)
-            <input data-testid="hh-food-rfd-input" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-rfd-input" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Oral slope factor
-            <input data-testid="hh-food-slope-input" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-slope-input" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             BSAF_loc
-            <input data-testid="hh-food-bsaf-input" value={bsafInput} onChange={(e) => setBsafInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-food-bsaf-input" value={bsafInput} onChange={(e) => setBsafInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Oral bioavailability
-            <input value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Oral bioavailability (fraction, 0-1)
+            <input value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Target risk
-            <input value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Target risk (unitless probability)
+            <input value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Hazard quotient
-            <input value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Hazard quotient (unitless)
+            <input value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
 
@@ -622,6 +622,25 @@ export default function HHFoodWebCalculator({
         </div>
       )}
 
+      {hhResult && hhResult.blocked && (
+        <div
+          data-testid="hh-food-blocked-notice"
+          role="note"
+          className="mb-6 border border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-900/30 dark:text-amber-200 rounded-lg p-3 text-sm"
+        >
+          <span className="font-semibold">Diagnostic only:</span>{' '}
+          {hhResult.warnings.length === 1 ? (
+            hhResult.warnings[0]
+          ) : (
+            <ul className="list-disc pl-5 space-y-1 mt-1">
+              {hhResult.warnings.map((w) => (
+                <li key={w}>{w}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      )}
+
       <div
         className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
         data-testid="hh-food-preliminary-standard"
@@ -645,7 +664,7 @@ export default function HHFoodWebCalculator({
             )}
           </div>
         )}
-        <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-3 italic">
+        <p className="text-xs text-sky-700 dark:text-sky-400 mt-3 italic">
           Screening-grade value for options analysis; confirm consumption
           assumptions and tissue-linkage data before regulator-facing use.
         </p>

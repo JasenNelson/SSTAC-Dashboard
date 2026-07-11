@@ -675,7 +675,7 @@ export default function HHDirectContactCalculator({
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Body weight (kg)
-            <input data-testid="hh-direct-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeBwDefault && activeBwDefault.value != null && (
               <p data-testid="hh-direct-bw-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeBwDefault.value} kg ({activeBwDefault.label}). Adjustable.
@@ -689,7 +689,7 @@ export default function HHDirectContactCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Exposure duration (yr)
-            <input data-testid="hh-direct-ed-input" value={edInput} onChange={(e) => setEdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-ed-input" value={edInput} onChange={(e) => setEdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeEdDefault && activeEdDefault.value != null && (
               <p data-testid="hh-direct-ed-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeEdDefault.value} years ({activeEdDefault.label}). Adjustable.
@@ -703,7 +703,7 @@ export default function HHDirectContactCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Exposure frequency (days/yr)
-            <input data-testid="hh-direct-ef-input" value={efInput} onChange={(e) => setEfInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-ef-input" value={efInput} onChange={(e) => setEfInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeEfDefault && activeEfDefault.value != null && (
               <p data-testid="hh-direct-ef-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeEfDefault.value} days/year ({activeEfDefault.label}). Adjustable.
@@ -717,7 +717,7 @@ export default function HHDirectContactCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Cancer averaging time (yr)
-            <input data-testid="hh-direct-at-cancer-input" value={atCancerInput} onChange={(e) => setAtCancerInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-at-cancer-input" value={atCancerInput} onChange={(e) => setAtCancerInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeAtCancerDefault && activeAtCancerDefault.value != null && (
               <p data-testid="hh-direct-at-cancer-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeAtCancerDefault.value} years ({activeAtCancerDefault.label}). Adjustable.
@@ -734,7 +734,7 @@ export default function HHDirectContactCalculator({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Sediment ingestion (mg/day)
-            <input data-testid="hh-direct-ir-sed-input" value={irSedInput} onChange={(e) => setIrSedInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-ir-sed-input" value={irSedInput} onChange={(e) => setIrSedInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeIrSedDefault && activeIrSedDefault.value != null && (
               <p data-testid="hh-direct-ir-sed-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeIrSedDefault.value} mg/day ({activeIrSedDefault.label}). Adjustable.
@@ -748,7 +748,7 @@ export default function HHDirectContactCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Skin area (cm2)
-            <input data-testid="hh-direct-sa-input" value={skinAreaInput} onChange={(e) => setSkinAreaInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-sa-input" value={skinAreaInput} onChange={(e) => setSkinAreaInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeSaDefault && activeSaDefault.value != null && (
               <p data-testid="hh-direct-sa-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeSaDefault.value} cm2 ({activeSaDefault.label}). Adjustable.
@@ -762,7 +762,7 @@ export default function HHDirectContactCalculator({
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Adherence (mg/cm2)
-            <input data-testid="hh-direct-af-input" value={adherenceInput} onChange={(e) => setAdherenceInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-af-input" value={adherenceInput} onChange={(e) => setAdherenceInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeAfDefault && activeAfDefault.value != null && (
               <p data-testid="hh-direct-af-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeAfDefault.value} mg/cm2 ({activeAfDefault.label}). Adjustable.
@@ -779,30 +779,30 @@ export default function HHDirectContactCalculator({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             RfD (mg/kg-bw/day)
-            <input data-testid="hh-direct-rfd-input" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-rfd-input" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Oral slope factor
-            <input data-testid="hh-direct-slope-input" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            <input data-testid="hh-direct-slope-input" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Target risk
-            <input value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Target risk (unitless probability)
+            <input value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Hazard quotient
-            <input value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Hazard quotient (unitless)
+            <input value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Dermal absorption
-            <input value={absDermalInput} onChange={(e) => setAbsDermalInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Dermal absorption (fraction, 0-1)
+            <input value={absDermalInput} onChange={(e) => setAbsDermalInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Oral bioavailability
-            <input value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono" />
+            Oral bioavailability (fraction, 0-1)
+            <input value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
       </div>
@@ -832,7 +832,7 @@ export default function HHDirectContactCalculator({
             Driver: {hhResult.driver}
           </div>
         )}
-        <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-3 italic">
+        <p className="text-xs text-sky-700 dark:text-sky-400 mt-3 italic">
           Screening-grade value for options analysis; confirm exposure
           assumptions before regulator-facing use.
         </p>
