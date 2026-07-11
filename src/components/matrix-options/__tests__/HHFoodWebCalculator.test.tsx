@@ -173,6 +173,30 @@ describe('HHFoodWebCalculator', () => {
     expect(input.value).toBe('0.388');
   });
 
+  it('Ecosystem radiogroup responds to ArrowRight/ArrowLeft', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const freshwaterBtn = screen.getByRole('radio', { name: 'Freshwater' });
+    const estuarineBtn = screen.getByRole('radio', { name: 'Estuarine' });
+
+    expect(freshwaterBtn).toHaveAttribute('aria-checked', 'true');
+    expect(estuarineBtn).toHaveAttribute('aria-checked', 'false');
+    
+    // Press ArrowRight on the selected button
+    fireEvent.keyDown(freshwaterBtn, { key: 'ArrowRight' });
+    expect(freshwaterBtn).toHaveAttribute('aria-checked', 'false');
+    expect(estuarineBtn).toHaveAttribute('aria-checked', 'true');
+
+    // Press ArrowLeft
+    fireEvent.keyDown(estuarineBtn, { key: 'ArrowLeft' });
+    expect(freshwaterBtn).toHaveAttribute('aria-checked', 'true');
+    expect(estuarineBtn).toHaveAttribute('aria-checked', 'false');
+  });
+
   it('allows site-specific BSAF entry when the selected substance lacks a default BSAF', () => {
     render(
       <HHFoodWebCalculator

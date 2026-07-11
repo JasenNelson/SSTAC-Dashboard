@@ -376,13 +376,22 @@ export default function EcoDirectEqPCalculator({
               </span>
             )}
             {!fcvIsOverride && fcvSeed.provisional && fcvSeed.parameterValueId && (
-              <span
-                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
-                data-testid="eqp-fcv-provisional-badge"
-                title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
-              >
-                Provisional -- needs review
-              </span>
+              <>
+                <span
+                  id="eqp-fcv-provisional-desc"
+                  className="sr-only"
+                >
+                  Seeded from a needs_review eco catalog candidate; not yet HITL-verified.
+                </span>
+                <span
+                  className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                  data-testid="eqp-fcv-provisional-badge"
+                  title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
+                  aria-describedby="eqp-fcv-provisional-desc"
+                >
+                  Provisional -- needs review
+                </span>
+              </>
             )}
           </div>
           <input
