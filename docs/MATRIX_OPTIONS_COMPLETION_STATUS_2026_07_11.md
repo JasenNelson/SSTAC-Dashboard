@@ -14,6 +14,8 @@ PRs SHIPPED (all OPEN, owner merges after CI green):
 - #599 docs: THIS status doc + consolidated HITL queue + fresh handoff; also absorbed T16 coordinate QA + T18 waterbody normalization + T23 IRIS recon (data-truth docs).
 - #600 feat: matrix-map "Surveyed only" filter toggle + province provenance chip (T17). Full gate GREEN; codex-hardened over 3 rounds (a build-breaker + a selection-interaction bug caught + fixed).
 - #601 feat: matrix-map health "Data freshness" section (T05/T15) -- snapshot version (MAX samples.updated_at) + last-ETL (service_role_audit). Full gate GREEN.
+- #602 feat: calculator interaction + a11y polish (U1 batch C: reset placement + explicit label, radiogroup arrow-key nav, provisional-badge aria-describedby). STACKED on #598; full gate GREEN; codex-hardened.
+- #603 test: middleware regression guards (T45) -- protected-route matcher + unauthenticated-redirect + security headers. Test-only; middleware.ts untouched. test:ci + codex GREEN.
 
 CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 
@@ -62,14 +64,13 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 DONE this run: T16 coordinate QA (#599), T17 marker UX (#600), T05/T15 health obs (#601), T18 waterbody
 report (#599), T23 IRIS recon (#599). T24 IRIS staging is MOOT (0 orphans).
 
-Still open (deferred for stated reasons -- resume next session):
-- U1 batch C (interaction/microcopy: reset-button placement, radiogroup arrow-key nav, provisional-badge
-  a11y) + the P1-3 mobile side-panel gate. BLOCKED as clean work until #598 merges (they touch the same
-  calculator files; branching off origin/main now would conflict, and stacking risks the auto-close
-  gotcha). Resume off updated main after #598 lands.
-- Middleware regression TESTS (T45, test-only; do NOT edit src/middleware.ts). Delicate to write
-  meaningfully (Next middleware + Supabase SSR mocking); moderate value; not yet attempted.
-- Fail-closed audit sweep (T32): existing coverage is already strong (all 4 calculators have robust
-  blocked-render tests), so low yield; a confirmation sweep only.
-- Calculator cross-check vs a PRIMARY worked example (T39): needs a primary worked-example source to
-  verify against (none located in-repo); would fabricate if forced -- owner-provide a worked example.
+DONE (added): U1 batch C interaction/a11y (#602, stacked on #598); middleware regression tests (T45, #603).
+
+The clean non-HITL autonomous lane is now EXHAUSTED. Only these remain, both non-actionable autonomously:
+- Fail-closed audit sweep (T32): effectively already covered -- all 4 calculators have robust
+  blocked-render tests (confirmed in T31); a formal sweep would add ~0 tests. Skipped as no-yield.
+- Calculator cross-check vs a PRIMARY worked example (T39): needs an owner-provided worked example
+  (input->output) from HC/EPA methodology to verify against; none in-repo; will not fabricate one.
+- P1-3 mobile side-panel gate (MatrixDashboard.tsx isToolMode): a larger responsive-shell change; left
+  for a focused pass with a manual mobile smoke test (deferred, not blocked).
+- #602 must be retargeted to main once #598 merges (stacked-PR housekeeping).
