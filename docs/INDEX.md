@@ -47,6 +47,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 
 ### Core safety + operational rules (authoritative)
 - `docs/AGENTS.md`
+- `docs/GATE_MODE_SOP.md` -- gate-discipline authority (Gate Mode; full push-gate suite lint/unit/monitored build/e2e; commit/push/merge protocols). Cited by CLAUDE.md.
 
 ### Documentation archive policy (authoritative)
 - `docs/ARCHIVE_POLICY.md`
