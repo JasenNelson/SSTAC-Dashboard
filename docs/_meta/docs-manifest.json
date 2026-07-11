@@ -2702,6 +2702,17 @@
       "notes": "Feature handoff for the /admin/agentic-os/subscriptions panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). Documents the commits on feat/agentic-os-ai-subscriptions-panel (PR #116): 8d35d31, 586eaab, c1a3b21, 0b3dcde, e8654ed, + this commit (codex holistic P2/P3 fix). Not a current-status source; defer to docs/INDEX.md and manifest facts for canonical project state."
     },
     {
+      "id": "matrix_options.finalization_status_2026_07_10",
+      "path": "docs/MATRIX_OPTIONS_FINALIZATION_STATUS_2026_07_10.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "status",
+        "finalization"
+      ],
+      "notes": "Matrix-Options-scoped finalization status map (2026-07-10). Reduces drift across the dated MO snapshots; defers to docs/INDEX.md for global current status."
+    },
+    {
       "id": "matrix_options.agy_12h_execution_plan_2026_07_08",
       "path": "docs/AGY_MATRIX_OPTIONS_12H_EXECUTION_PLAN_2026_07_08.md",
       "lifecycle": "REFERENCE",
