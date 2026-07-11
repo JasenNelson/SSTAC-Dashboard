@@ -11,6 +11,9 @@ PRs SHIPPED (all OPEN, owner merges after CI green):
 - #596 test: matrix-map RPC-contract + spatial-oracle client-boundary coverage (fetch-samples-server.test.ts).
 - #597 docs: two owner-decision design packets -- inhalation model (T34) + DRA publication path (T01).
 - #598 feat: Matrix Options calculator UI/UX polish (display-only: focus rings, blocked-state transparency, aria-hidden icons, label/unit consistency). 405/405 component tests, full gate GREEN.
+- #599 docs: THIS status doc + consolidated HITL queue + fresh handoff; also absorbed T16 coordinate QA + T18 waterbody normalization + T23 IRIS recon (data-truth docs).
+- #600 feat: matrix-map "Surveyed only" filter toggle + province provenance chip (T17). Full gate GREEN; codex-hardened over 3 rounds (a build-breaker + a selection-interaction bug caught + fixed).
+- #601 feat: matrix-map health "Data freshness" section (T05/T15) -- snapshot version (MAX samples.updated_at) + last-ETL (service_role_audit). Full gate GREEN.
 
 CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 
@@ -56,10 +59,17 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 - catalog promotions <- (4) arbitrated
 
 ## 5. REMAINING AUTONOMOUS PART-1
-- Coordinate provenance QA (T16, needs Supabase read)
-- IRIS orphan staging (T24, no apply)
-- Health observability (T05/T15)
-- Marker/legend UX (T17)
-- Middleware regression TESTS (T45, no middleware edit)
-- More UI polish (U1 batch C interaction/microcopy + the P1-3 mobile side-panel gate)
-- Fail-closed audit sweep (T32)
+DONE this run: T16 coordinate QA (#599), T17 marker UX (#600), T05/T15 health obs (#601), T18 waterbody
+report (#599), T23 IRIS recon (#599). T24 IRIS staging is MOOT (0 orphans).
+
+Still open (deferred for stated reasons -- resume next session):
+- U1 batch C (interaction/microcopy: reset-button placement, radiogroup arrow-key nav, provisional-badge
+  a11y) + the P1-3 mobile side-panel gate. BLOCKED as clean work until #598 merges (they touch the same
+  calculator files; branching off origin/main now would conflict, and stacking risks the auto-close
+  gotcha). Resume off updated main after #598 lands.
+- Middleware regression TESTS (T45, test-only; do NOT edit src/middleware.ts). Delicate to write
+  meaningfully (Next middleware + Supabase SSR mocking); moderate value; not yet attempted.
+- Fail-closed audit sweep (T32): existing coverage is already strong (all 4 calculators have robust
+  blocked-render tests), so low yield; a confirmation sweep only.
+- Calculator cross-check vs a PRIMARY worked example (T39): needs a primary worked-example source to
+  verify against (none located in-repo); would fabricate if forced -- owner-provide a worked example.
