@@ -76,6 +76,11 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     const warnings = screen.getByTestId('eqp-warnings');
     expect(warnings).toHaveTextContent(/below/i);
     expect(screen.queryByTestId('eqp-verdict')).not.toBeInTheDocument();
+    // Fail-closed: a blocked result must NOT surface its diagnostic sedS as a benchmark.
+    // The headline standard is withheld ('--'), never a number.
+    const standardValue = screen.getByTestId('eqp-standard-value');
+    expect(standardValue).toHaveTextContent(/^--/);
+    expect(standardValue).not.toHaveTextContent(/[0-9]/);
   });
 
   it('rejects negative Cs with a clear error', () => {

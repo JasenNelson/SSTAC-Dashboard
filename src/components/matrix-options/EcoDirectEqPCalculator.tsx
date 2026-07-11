@@ -469,8 +469,17 @@ export default function EcoDirectEqPCalculator({
         <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
           Preliminary Toxicity-Based Standard (Eco-Direct EqP)
         </div>
-        <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-          {isResult ? (result as EcoDirectEqPResult).sedS.toPrecision(4) : '--'}{' '}
+        <div
+          className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter"
+          data-testid="eqp-standard-value"
+        >
+          {/* Fail-closed: a blocked result computes sedS for diagnostics only and MUST NOT be
+              quoted as a benchmark (see ecoDirectEqP derivation). Withhold the number (show '--')
+              when blocked -- the verdict is already suppressed and the warnings box explains why.
+              Matches the HHFoodWeb/EcoFoodBSAF blocked-render contract. */}
+          {isResult && !(result as EcoDirectEqPResult).blocked
+            ? (result as EcoDirectEqPResult).sedS.toPrecision(4)
+            : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">
             mg/kg dry
           </span>
