@@ -70,13 +70,17 @@ import {
 } from 'lucide-react';
 import type {
   Classification,
-  CoordinateQualityTier,
   MatrixMapData,
   MatrixSample,
 } from './types';
 // bbox-lane Stage 2: viewport refetch helpers. toRpcBbox is a fail-safe WGS84
 // guard (invalid/degenerate -> null -> province-wide).
 import { toRpcBbox, type MatrixMapBbox } from '@/lib/matrix-map/bbox';
+import {
+  COORD_TIER_DASH_ARRAY,
+  COORD_TIER_LABEL,
+  COORD_TIER_CAPTION,
+} from '@/lib/matrix-map/coordinate-provenance';
 
 export interface MatrixMapProps {
   /** Server-fetched payload from matrix_map.fetch_samples_with_hidden_summary RPC. */
@@ -242,19 +246,6 @@ const CLASSIFICATION_COLOR: Record<Classification, string> = {
   reference: '#10b981',
   impacted: '#eab308',
   unknown: '#94a3b8',
-};
-
-// PLAN_V3_4_2 section 3.3 -- coordinate quality tier outline pattern
-const COORD_TIER_DASH_ARRAY: Record<CoordinateQualityTier, string | undefined> = {
-  high: undefined,    // solid stroke (surveyed)
-  medium: '4 3',      // dashed (BC CSR centroid)
-  low: '1 3',         // dotted (manual steward fill)
-};
-
-const COORD_TIER_LABEL: Record<CoordinateQualityTier, string> = {
-  high: 'Surveyed',
-  medium: 'Centroid',
-  low: 'Manual',
 };
 
 function createImpactedMarkerIcon(L: typeof import('leaflet'), color: string, dashArray: string | undefined, selected: boolean) {
@@ -1707,6 +1698,9 @@ export function MatrixMap({
             <LegendOutline dashArray="4 3" label="Centroid (medium)" />
             <LegendOutline dashArray="1 3" label="Manual (low)" />
           </div>
+          <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
+            Centroid = approximate BC CSR parcel location, not a surveyed point.
+          </p>
         </div>
       </div>
 
@@ -1878,6 +1872,7 @@ function escapeHtml(value: string | number | null | undefined): string {
 function createPopupContent(sample: MatrixSample): string {
   const classificationColor = CLASSIFICATION_COLOR[sample.classification];
   const tierLabel = COORD_TIER_LABEL[sample.coordinate_quality_tier];
+  const tierCaption = COORD_TIER_CAPTION[sample.coordinate_quality_tier];
   const lat = sample.geometry.coordinates[1];
   const lng = sample.geometry.coordinates[0];
 
@@ -1918,6 +1913,7 @@ function createPopupContent(sample: MatrixSample): string {
       </div>
       <div style="margin-top: 8px;">
         <p style="font-size: 11px; color: #64748b;">Coordinate quality: <strong>${tierLabel}</strong></p>
+        <p style="font-size: 10px; color: #94a3b8; margin: 2px 0 0; font-style: italic;">${tierCaption}</p>
       </div>
     </div>
   `;
