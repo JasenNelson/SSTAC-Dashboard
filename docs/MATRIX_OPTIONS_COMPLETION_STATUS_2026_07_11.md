@@ -22,9 +22,10 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 - REMAINING (owner-gated): Inhalation model decision (T34), T33 unit-basis settle, A3b cumulative UI.
 
 ### Goal 2: Map Data
-- DONE this run: cap-migration owner packet generated (#595), RPC-contract + spatial-oracle client-boundary coverage tested (#596).
-- REMAINING (autonomous-continuable): Coordinate provenance QA (T16, needs Supabase read).
-- REMAINING (owner-gated): CAP-SQL apply 2500->5000.
+- DONE this run: cap-migration owner packet generated (#595), RPC-contract + spatial-oracle client-boundary coverage tested (#596), coordinate/sediment provenance QA on LIVE data (T16 -> docs/design/matrix-map/COORDINATE_PROVENANCE_QA_2026_07_11.md).
+- T16 LIVE FINDINGS (2026-07-11): 4494 samples / 574 DRAs, 100% have lat/lng; 98.49% are BC-CSR CENTROIDS (only 1.51% surveyed); of 503 sediment-bearing samples, 92% are centroid. waterbody_type is 93.55% empty with casing dupes (Marine 243 vs marine 25; Freshwater 8 vs freshwater 14). 88.6% of samples (3982/4494) have ZERO attached measurements in the current load. 0 public / 574 private DRAs + 0 grants -> 0 samples visible to any non-admin (root cause of the empty member map).
+- REMAINING (autonomous-continuable): waterbody_type casing normalization report (T18); health observability (T05/T15); marker UX (T17).
+- REMAINING (owner-gated): CAP-SQL apply 2500->5000; MEASUREMENT-LOAD GAP -- 88.6% of samples have no measurements (relates to the undated-events ~6742-measurement load decision, HITL item 8); waterbody_type source/derivation to fix the 93.55%-empty filter limitation.
 
 ### Goal 3: Catalog
 - DONE this run: Catalog coverage (T40, 425 substances) analyzed (rfd_oral 90.8%; sf_oral 15.8%; fcv_ug_per_L 1/425; bsaf 3/425; inhalation rfc/iur 0/425). 4 substances (Cr/Ni/Tl/V) fully empty; 17 zero human-health input. needs_review (T22) mapped: 393 rows (pv-p28-* 351, pv-iris-* 41, pv-hc-* 1). By input_key: oral RfD 280 / inhalation RfC 75 / inhalation IUR 22 / oral SF 15 / dioxin-TEQ TDI 1. Data integrity clean (0 missing source_id).
@@ -44,6 +45,7 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 5. RLS-bypass gap: dras_admin_all still permits an un-audited direct UPDATE dras SET public -- tighten now (follow-up migration/trigger) vs accept documented gap for v1.
 6. SECURITY FLAG (out of MO core lane; surface only): api/graphs/prioritization-matrix GET is PUBLIC and returns authenticated users' raw user_id UUIDs + individual poll votes (CEW pseudonymized, authenticated NOT). Poll-system route -> strict POLLING_GATE + owner decision. Plus milestones GET has no in-route auth (RLS-only) -- hardening inconsistency.
 7. Broader prior-session MO decisions still open (cross-ref docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md + the cumulative D1-D4 anchors in the 07-07 handoff): phenylmercuric_acetate class; confirm cadmium/methylmercury current_defaults; D1 dioxin TEQ promote / D2 BaP anchor+ADAF / D3 PCB Option A / D4 BC scheme remap.
+8. MEASUREMENT-LOAD GAP (T16 live finding): 88.6% of the 4494 loaded samples have zero attached measurements; only 503 samples carry sediment measurements. To put "significantly more sediment data" on the map, decide the measurement/undated-events load (~6742 measurements, prior HITL item T12) -- owner yes/no. Separately, waterbody_type is 93.55% empty (limits filtering) -- decide a source/derivation lane; the casing dupes (Marine/marine) are a small normalization fix (autonomous, report T18).
 
 ## 4. PART-3 UNLOCK MAP
 - cap-migration follow-through PR <- CAP-SQL applied
