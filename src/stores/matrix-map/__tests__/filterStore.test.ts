@@ -113,4 +113,87 @@ describe('useMatrixMapFilterStore', () => {
       }),
     ).toEqual(['sample-b']);
   });
+
+  it('filters to high-tier samples when surveyed_only is set, even with matchingSampleIdsReady:false and no active matching filters', () => {
+    const samples = [
+      makeSample({ id: 'sample-a', coordinate_quality_tier: 'high' }),
+      makeSample({ id: 'sample-b', coordinate_quality_tier: 'medium' }),
+    ];
+    const filterState = {
+      ...DEFAULT_MATRIX_MAP_FILTER_STATE,
+      surveyed_only: true,
+    };
+
+    expect(
+      getMapFilteredSamples({
+        samples,
+        filterState,
+        matchingSampleIds: [],
+        matchingSampleIdsReady: false,
+        selectedSampleIds: [],
+        showSelectedDespiteFilters: false,
+      }).map((sample) => sample.id),
+    ).toEqual(['sample-a']);
+  });
+
+  it('combines surveyed_only with an active matching filter (AND semantics)', () => {
+    const samples = [
+      makeSample({ id: 'sample-a', coordinate_quality_tier: 'high' }),
+      makeSample({ id: 'sample-b', coordinate_quality_tier: 'medium' }),
+    ];
+    const filterState = {
+      ...DEFAULT_MATRIX_MAP_FILTER_STATE,
+      mediums: ['sediment' as const],
+      surveyed_only: true,
+    };
+
+    expect(
+      getMapFilteredSamples({
+        samples,
+        filterState,
+        matchingSampleIds: ['sample-a', 'sample-b'],
+        matchingSampleIdsReady: true,
+        selectedSampleIds: [],
+        showSelectedDespiteFilters: false,
+      }).map((sample) => sample.id),
+    ).toEqual(['sample-a']);
+  });
+
+  it('surveyed_only always keeps an explicitly-selected non-surveyed sample visible (never an untracked hidden selection)', () => {
+    const samples = [
+      makeSample({ id: 'sample-a', coordinate_quality_tier: 'high' }),
+      makeSample({ id: 'sample-b', coordinate_quality_tier: 'medium' }),
+    ];
+    const filterState = {
+      ...DEFAULT_MATRIX_MAP_FILTER_STATE,
+      surveyed_only: true,
+    };
+
+    // sample-b is medium-tier (would be hidden by surveyed_only) but is SELECTED: it stays visible
+    // regardless of showSelectedDespiteFilters, so surveyed_only can never hide a selected sample.
+    for (const showSelectedDespiteFilters of [true, false]) {
+      expect(
+        getMapFilteredSamples({
+          samples,
+          filterState,
+          matchingSampleIds: [],
+          matchingSampleIdsReady: false,
+          selectedSampleIds: ['sample-b'],
+          showSelectedDespiteFilters,
+        }).map((sample) => sample.id),
+      ).toEqual(['sample-a', 'sample-b']);
+    }
+
+    // With nothing selected, surveyed_only hides the medium-tier sample as expected.
+    expect(
+      getMapFilteredSamples({
+        samples,
+        filterState,
+        matchingSampleIds: [],
+        matchingSampleIdsReady: false,
+        selectedSampleIds: [],
+        showSelectedDespiteFilters: false,
+      }).map((sample) => sample.id),
+    ).toEqual(['sample-a']);
+  });
 });

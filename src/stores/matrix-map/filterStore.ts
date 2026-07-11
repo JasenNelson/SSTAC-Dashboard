@@ -16,6 +16,9 @@ export interface MatrixMapFilterState {
   date_from: string;
   date_to: string;
   classification: MatrixMapClassificationFilter;
+  // Optional so existing full MatrixMapFilterState literals (tests, export route) stay valid;
+  // DEFAULT_MATRIX_MAP_FILTER_STATE always provides it, so it is defined at runtime.
+  surveyed_only?: boolean;
 }
 
 export const DEFAULT_MATRIX_MAP_FILTER_STATE: MatrixMapFilterState = {
@@ -25,6 +28,7 @@ export const DEFAULT_MATRIX_MAP_FILTER_STATE: MatrixMapFilterState = {
   date_from: '',
   date_to: '',
   classification: 'all',
+  surveyed_only: false,
 };
 
 interface MatrixMapFilterStoreState {
@@ -96,16 +100,27 @@ export function getMapFilteredSamples({
   selectedSampleIds: string[];
   showSelectedDespiteFilters: boolean;
 }) {
-  if (!hasActiveMatrixMapFilters(filterState) || !matchingSampleIdsReady) {
-    return samples;
-  }
+  const base = (() => {
+    if (!hasActiveMatrixMapFilters(filterState) || !matchingSampleIdsReady) {
+      return samples;
+    }
+    const matchingIds = new Set(matchingSampleIds);
+    const selectedIds = new Set(selectedSampleIds);
+    return samples.filter(
+      (sample) =>
+        matchingIds.has(sample.id) ||
+        (showSelectedDespiteFilters && selectedIds.has(sample.id)),
+    );
+  })();
 
-  const matchingIds = new Set(matchingSampleIds);
+  if (!filterState.surveyed_only) return base;
+  // surveyed_only is a map-view toggle that hides non-surveyed (non-high-tier) markers. It ALWAYS
+  // keeps explicitly-selected samples visible (regardless of showSelectedDespiteFilters), so it can
+  // never turn a selection into an untracked hidden selection -- getHiddenSelectedSampleIds only
+  // accounts for measurement-filter-hidden samples, and this toggle never hides a selected one.
   const selectedIds = new Set(selectedSampleIds);
-  return samples.filter(
-    (sample) =>
-      matchingIds.has(sample.id) ||
-      (showSelectedDespiteFilters && selectedIds.has(sample.id)),
+  return base.filter(
+    (sample) => sample.coordinate_quality_tier === 'high' || selectedIds.has(sample.id),
   );
 }
 
