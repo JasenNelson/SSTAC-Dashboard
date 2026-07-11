@@ -378,6 +378,109 @@ async function fetchActiveGrants(supa: Supa): Promise<{
   }
 }
 
+// Count matrix_map.samples that are mappable (non-null source_dra_id + lat/lng) and whose
+// source_dra_id is in draIds. The .in() list is CHUNKED so a large DRA set (up to all 574,
+// e.g. after bulk publication) never overflows the PostgREST request-URL length limit
+// (a single .in() over ~574 UUIDs is a ~21KB URL and can 414). Each sample has exactly one
+// source_dra_id, so summing counts over disjoint DRA-id batches is exact. Throws on error
+// (caught by the caller's try/catch).
+async function countMappableSamplesInDras(supa: Supa, draIds: string[]): Promise<number> {
+  if (draIds.length === 0) return 0;
+  const CHUNK = 150;
+  let total = 0;
+  for (let i = 0; i < draIds.length; i += CHUNK) {
+    const batch = draIds.slice(i, i + CHUNK);
+    const { count, error } = await supa
+      .schema('matrix_map')
+      .from('samples')
+      .select('*', { count: 'exact', head: true })
+      .not('source_dra_id', 'is', null)
+      .not('latitude', 'is', null)
+      .not('longitude', 'is', null)
+      .in('source_dra_id', batch);
+    if (error) throw new Error(error.message);
+    total += count ?? 0;
+  }
+  return total;
+}
+
+async function fetchReviewerVisibility(supa: Supa): Promise<{
+  data: {
+    total_valid_samples: number;
+    reviewer_visible_samples: number;
+    reviewer_hidden_samples: number;
+    orphan_samples: number;
+    public_dra_count: number;
+    has_member_users: boolean;
+  } | null;
+  error: string | null;
+}> {
+  try {
+    const nowIso = new Date().toISOString();
+
+    const { count: memberCount, error: memberErr } = await supa
+      .from('user_roles')
+      .select('*', { count: 'exact', head: true })
+      .eq('role', 'member');
+    if (memberErr) return { data: null, error: memberErr.message };
+    const has_member_users = (memberCount ?? 0) > 0;
+
+    const { data: dras, error: drasErr } = await supa
+      .schema('matrix_map')
+      .from('dras')
+      .select('id, public')
+      .eq('is_deleted', false);
+    if (drasErr) return { data: null, error: drasErr.message };
+
+    const undeletedDraIds = (dras ?? []).map((d: { id: string }) => d.id);
+    const publicDraIds = new Set((dras ?? []).filter((d: { public: boolean }) => d.public).map((d: { id: string }) => d.id));
+    const public_dra_count = publicDraIds.size;
+
+    const { data: grants, error: grantsErr } = await supa
+      .schema('matrix_map')
+      .from('private_data_grants')
+      .select('dra_id, expires_at')
+      .is('revoked_at', null);
+    if (grantsErr) return { data: null, error: grantsErr.message };
+
+    const activeGrants = (grants ?? []).filter((g: { expires_at: string | null }) => {
+      if (!g.expires_at) return true;
+      return g.expires_at > nowIso;
+    });
+    const grantedDraIds = new Set(activeGrants.map((g: { dra_id: string }) => g.dra_id));
+
+    const visibleDraIds = new Set([...publicDraIds, ...grantedDraIds]);
+    const validVisibleDraIds = Array.from(visibleDraIds).filter(id => undeletedDraIds.includes(id));
+
+    const { count: orphanCount, error: orphanErr } = await supa
+      .schema('matrix_map')
+      .from('samples')
+      .select('*', { count: 'exact', head: true })
+      .is('source_dra_id', null);
+    if (orphanErr) return { data: null, error: orphanErr.message };
+    const orphan_samples = orphanCount ?? 0;
+
+    const total_valid_samples = await countMappableSamplesInDras(supa, undeletedDraIds);
+    const reviewer_visible_samples = await countMappableSamplesInDras(supa, validVisibleDraIds);
+
+    const reviewer_hidden_samples = total_valid_samples - reviewer_visible_samples;
+
+    return {
+      data: {
+        total_valid_samples,
+        reviewer_visible_samples,
+        reviewer_hidden_samples,
+        orphan_samples,
+        public_dra_count,
+        has_member_users,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 // ---------------------------------------------------------------------
 // Aggregations (pure -- run on the fetched rows; cannot fail)
 // ---------------------------------------------------------------------
@@ -457,6 +560,7 @@ export default async function MatrixMapHealthPage() {
     budgetRes,
     auditRes,
     grantsRes,
+    reviewerVisRes,
   ] = await Promise.all([
     Promise.all(SCHEMA_TABLES.map((t) => fetchTableCount(supabase, t))),
     fetchClassificationBreakdown(supabase),
@@ -465,6 +569,7 @@ export default async function MatrixMapHealthPage() {
     fetchBudgetDimensions(supabase),
     fetchRecentAudit(supabase),
     fetchActiveGrants(supabase),
+    fetchReviewerVisibility(supabase),
   ]);
 
   const tableCounts: Record<SchemaTable, CountResult> = SCHEMA_TABLES.reduce(
@@ -819,6 +924,51 @@ export default async function MatrixMapHealthPage() {
                 )}
               </div>
             )}
+          </SectionCard>
+
+          {/* 8. Reviewer effective visibility */}
+          <SectionCard
+            title="8. Reviewer effective visibility"
+            subtitle="Derived visibility for non-admin reviewers based on public DRAs and active grants."
+          >
+            {reviewerVisRes.error ? (
+              <InlineError message={reviewerVisRes.error} />
+            ) : reviewerVisRes.data ? (
+              <div className="space-y-4">
+                <div>
+                  <KeyValueRow
+                    label="Total valid samples (mappable)"
+                    value={fmtNum(reviewerVisRes.data.total_valid_samples)}
+                  />
+                  <KeyValueRow
+                    label="Visible to non-admin reviewers"
+                    value={fmtNum(reviewerVisRes.data.reviewer_visible_samples)}
+                  />
+                  <KeyValueRow
+                    label="Hidden from reviewers (private DRAs, no grant)"
+                    value={fmtNum(reviewerVisRes.data.reviewer_hidden_samples)}
+                  />
+                  <KeyValueRow
+                    label="Orphan samples (no DRA, hidden from everyone)"
+                    value={fmtNum(reviewerVisRes.data.orphan_samples)}
+                  />
+                  <KeyValueRow
+                    label="Public DRAs"
+                    value={fmtNum(reviewerVisRes.data.public_dra_count)}
+                  />
+                </div>
+
+                {reviewerVisRes.data.public_dra_count === 0 && reviewerVisRes.data.has_member_users ? (
+                  <div role="status" className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300">
+                    0 public DRAs: non-admin reviewers see {fmtNum(reviewerVisRes.data.reviewer_visible_samples)} of {fmtNum(reviewerVisRes.data.total_valid_samples)} samples (grant-scoped access only). Publication is the owner lever (flip_dra_public) to broaden visibility.
+                  </div>
+                ) : reviewerVisRes.data.public_dra_count > 0 ? (
+                  <MutedNote>
+                    {reviewerVisRes.data.reviewer_visible_samples} of {reviewerVisRes.data.total_valid_samples} samples are reviewer-visible.
+                  </MutedNote>
+                ) : null}
+              </div>
+            ) : null}
           </SectionCard>
         </div>
 
