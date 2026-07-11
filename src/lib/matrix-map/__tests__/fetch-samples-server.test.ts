@@ -108,4 +108,85 @@ describe('fetchMatrixMapSamplesServerSide -- bbox-lane Stage 1 fields', () => {
     await fetchMatrixMapSamplesServerSide(supabase, null);
     expect(rpcFn).toHaveBeenCalledWith('fetch_samples_with_hidden_summary', { p_bbox: null });
   });
+
+  it('returns the empty fallback + an error message when the supabase client THROWS', async () => {
+    const supabase = mockClient({}, async () => { throw new Error('Network failure'); });
+    const { initialMapData, fetchErrorMessage } = await fetchMatrixMapSamplesServerSide(supabase);
+    expect(initialMapData).toEqual(EMPTY_MATRIX_MAP_DATA);
+    expect(fetchErrorMessage).toMatch(/temporarily unavailable/);
+  });
+
+  it('coerces a non-array visible_samples to an empty array', async () => {
+    const supabase = mockClient({
+      data: {
+        visible_samples: 'oops',
+        hidden_sample_count: 5,
+        hidden_dra_count: 2,
+        hidden_dra_ids: ['d2', 'd3'],
+        data_snapshot_version: '2026-06-23',
+      },
+      error: null,
+    });
+    const { initialMapData, fetchErrorMessage } = await fetchMatrixMapSamplesServerSide(supabase);
+    expect(fetchErrorMessage).toBeNull();
+    expect(initialMapData.visible_samples).toEqual([]);
+  });
+
+  it('passes truncated=true through and defaults a non-boolean truncated to false', async () => {
+    const supabaseTrue = mockClient({
+      data: {
+        visible_samples: [],
+        truncated: true,
+      },
+      error: null,
+    });
+    const resultTrue = await fetchMatrixMapSamplesServerSide(supabaseTrue);
+    expect(resultTrue.initialMapData.truncated).toBe(true);
+
+    const supabaseFalse = mockClient({
+      data: {
+        visible_samples: [],
+        truncated: 'yes',
+      },
+      error: null,
+    });
+    const resultFalse = await fetchMatrixMapSamplesServerSide(supabaseFalse);
+    expect(resultFalse.initialMapData.truncated).toBe(false);
+  });
+
+  it('coerces non-number hidden_sample_count/hidden_dra_count to 0 and non-array hidden_dra_ids to []', async () => {
+    const supabase = mockClient({
+      data: {
+        visible_samples: [],
+        hidden_sample_count: 'lots',
+        hidden_dra_count: { count: 5 },
+        hidden_dra_ids: 'd1,d2',
+      },
+      error: null,
+    });
+    const { initialMapData } = await fetchMatrixMapSamplesServerSide(supabase);
+    expect(initialMapData.hidden_sample_count).toBe(0);
+    expect(initialMapData.hidden_dra_count).toBe(0);
+    expect(initialMapData.hidden_dra_ids).toEqual([]);
+  });
+
+  it('passes the province-wide hidden aggregate through UNCHANGED even when a bbox is applied', async () => {
+    const bbox = { minLng: -125, minLat: 48, maxLng: -120, maxLat: 50 };
+    const supabase = mockClient({
+      data: {
+        visible_samples: [],
+        hidden_sample_count: 4000,
+        hidden_dra_count: 50,
+        hidden_dra_ids: ['d1', 'd2', 'd3'],
+        bbox_applied: true,
+      },
+      error: null,
+    });
+    const { initialMapData } = await fetchMatrixMapSamplesServerSide(supabase, bbox);
+    
+    // This pins the spatial-oracle-safe invariant at the client boundary (the SQL keeps
+    // the hidden summary province-wide; the client must never narrow it).
+    expect(initialMapData.hidden_sample_count).toBe(4000);
+    expect(initialMapData.hidden_dra_ids).toEqual(['d1', 'd2', 'd3']);
+  });
 });
