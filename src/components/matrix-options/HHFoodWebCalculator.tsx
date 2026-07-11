@@ -3,7 +3,7 @@
 // Human Health Food Web screening calculator.
 // Plain ASCII only.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import {
@@ -130,6 +130,45 @@ export default function HHFoodWebCalculator({
     getDefaultSelectableScenarioId(receptorFrame, 'human-health-food'),
   );
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
+  const ecosystemRefs = useRef<Record<Ecosystem, HTMLButtonElement | null>>({
+    freshwater: null,
+    estuarine: null,
+    'coastal-marine': null,
+  });
+
+  const handleEcosystemKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentVal: Ecosystem,
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setEcosystem(currentVal);
+      return;
+    }
+    const navKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'];
+    if (!navKeys.includes(event.key)) return;
+    event.preventDefault();
+
+    const options = ECOSYSTEM_OPTIONS.map((o) => o.value);
+    const currentIdx = options.indexOf(currentVal);
+    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+    let nextIdx = safeIdx;
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIdx = (safeIdx + 1) % options.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIdx = (safeIdx - 1 + options.length) % options.length;
+    } else if (event.key === 'Home') {
+      nextIdx = 0;
+    } else if (event.key === 'End') {
+      nextIdx = options.length - 1;
+    }
+
+    const nextVal = options[nextIdx];
+    setEcosystem(nextVal);
+    ecosystemRefs.current[nextVal]?.focus();
+  };
+
   // LAZY seed BW from the active receptor default for the initial receptor frame +
   // scenario (no flash; SSR == CSR because the catalog is static). The receptor-frame-
   // AND scenario-switch re-seed happens DURING render (below), so a change never paints
@@ -499,10 +538,15 @@ export default function HHFoodWebCalculator({
             {ECOSYSTEM_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
+                ref={(el) => {
+                  ecosystemRefs.current[opt.value] = el;
+                }}
                 type="button"
                 role="radio"
                 aria-checked={ecosystem === opt.value}
+                tabIndex={ecosystem === opt.value ? 0 : -1}
                 onClick={() => setEcosystem(opt.value)}
+                onKeyDown={(e) => handleEcosystemKeyDown(e, opt.value)}
                 className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                   ecosystem === opt.value
                     ? 'bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold'
@@ -530,15 +574,22 @@ export default function HHFoodWebCalculator({
               </button>
             )}
           </label>
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Food ingestion (kg/day)
-            <input data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+          {/* Explicit htmlFor/id label so the reset button can sit under the input WITHOUT being
+              nested inside the label (which would fold its text into the input's accessible name). */}
+          <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
+            <label htmlFor="hh-food-ir-input">Food ingestion (kg/day)</label>
+            <input id="hh-food-ir-input" data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeIrDefault && activeIrDefault.value != null && (
               <p data-testid="hh-food-ir-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeIrDefault.value} kg/day ({activeIrDefault.label}). Adjustable.
               </p>
             )}
-          </label>
+            {activeIrDefault && activeIrDefault.value != null && !irIsFrameDefault && (
+              <button type="button" data-testid="hh-food-ir-reset-to-frame-default" onClick={() => setFoodIrInput(String(activeIrDefault.value))} className="mt-1 px-2.5 py-1 text-xs rounded-md border border-sky-400 dark:border-sky-600 bg-sky-50 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
+                Reset to frame default
+              </button>
+            )}
+          </div>
           <div className="flex items-end gap-2 flex-wrap">
             <button type="button" onClick={() => setFoodIrInput('0.032')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
               32 g/day
@@ -549,11 +600,6 @@ export default function HHFoodWebCalculator({
             <button type="button" onClick={() => setFoodIrInput('0.388')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
               388 g/day
             </button>
-            {activeIrDefault && activeIrDefault.value != null && !irIsFrameDefault && (
-              <button type="button" data-testid="hh-food-ir-reset-to-frame-default" onClick={() => setFoodIrInput(String(activeIrDefault.value))} className="px-2.5 py-2 text-xs rounded-md border border-sky-400 dark:border-sky-600 bg-sky-50 dark:bg-sky-900/30 text-sky-800 dark:text-sky-200">
-                Reset to frame default
-              </button>
-            )}
           </div>
         </div>
 

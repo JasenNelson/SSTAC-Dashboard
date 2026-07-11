@@ -26,7 +26,7 @@
 //
 // Plain ASCII only.
 
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { getEquation } from '@/lib/matrix-options/equationDispatch';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
@@ -145,6 +145,44 @@ export default function EcoFoodBSAFCalculator({
 
   // Ecosystem selector (default freshwater per design doc 2.2). LOCAL.
   const [ecosystem, setEcosystem] = useState<Ecosystem>('freshwater');
+  const ecosystemRefs = useRef<Record<Ecosystem, HTMLButtonElement | null>>({
+    freshwater: null,
+    estuarine: null,
+    'coastal-marine': null,
+  });
+
+  const handleEcosystemKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentVal: Ecosystem,
+  ) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      setEcosystem(currentVal);
+      return;
+    }
+    const navKeys = ['ArrowRight', 'ArrowLeft', 'ArrowDown', 'ArrowUp', 'Home', 'End'];
+    if (!navKeys.includes(event.key)) return;
+    event.preventDefault();
+
+    const options = ECOSYSTEM_OPTIONS.map((o) => o.value);
+    const currentIdx = options.indexOf(currentVal);
+    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+    let nextIdx = safeIdx;
+
+    if (event.key === 'ArrowRight' || event.key === 'ArrowDown') {
+      nextIdx = (safeIdx + 1) % options.length;
+    } else if (event.key === 'ArrowLeft' || event.key === 'ArrowUp') {
+      nextIdx = (safeIdx - 1 + options.length) % options.length;
+    } else if (event.key === 'Home') {
+      nextIdx = 0;
+    } else if (event.key === 'End') {
+      nextIdx = options.length - 1;
+    }
+
+    const nextVal = options[nextIdx];
+    setEcosystem(nextVal);
+    ecosystemRefs.current[nextVal]?.focus();
+  };
 
   // Receptor inputs: default to mink piscivore (design doc 2.2 inputs table). LOCAL.
   const [bwInput, setBwInput] = useState<string>('0.85');
@@ -503,10 +541,15 @@ export default function EcoFoodBSAFCalculator({
             {ECOSYSTEM_OPTIONS.map((opt) => (
               <button
                 key={opt.value}
+                ref={(el) => {
+                  ecosystemRefs.current[opt.value] = el;
+                }}
                 type="button"
                 role="radio"
                 aria-checked={ecosystem === opt.value}
+                tabIndex={ecosystem === opt.value ? 0 : -1}
                 onClick={() => setEcosystem(opt.value)}
+                onKeyDown={(e) => handleEcosystemKeyDown(e, opt.value)}
                 className={`px-3 py-1.5 text-sm rounded-lg border transition-colors ${
                   ecosystem === opt.value
                     ? 'bg-sky-100 dark:bg-sky-900/40 border-sky-400 dark:border-sky-600 text-sky-800 dark:text-sky-200 font-semibold'
@@ -710,13 +753,22 @@ export default function EcoFoodBSAFCalculator({
               {!trvIsOverride &&
                 trvSeed.provisional &&
                 trvSeed.parameterValueId && (
-                  <span
-                    className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
-                    data-testid="ecofood-trv-provisional-badge"
-                    title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
-                  >
-                    Provisional -- needs review
-                  </span>
+                  <>
+                    <span
+                      id="ecofood-trv-provisional-desc"
+                      className="sr-only"
+                    >
+                      Seeded from a needs_review eco catalog candidate; not yet HITL-verified.
+                    </span>
+                    <span
+                      className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                      data-testid="ecofood-trv-provisional-badge"
+                      title="Seeded from a needs_review eco catalog candidate; not yet HITL-verified."
+                      aria-describedby="ecofood-trv-provisional-desc"
+                    >
+                      Provisional -- needs review
+                    </span>
+                  </>
                 )}
             </div>
             <input

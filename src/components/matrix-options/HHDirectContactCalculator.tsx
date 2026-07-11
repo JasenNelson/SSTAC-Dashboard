@@ -847,13 +847,19 @@ export default function HHDirectContactCalculator({
             <span className="text-xs font-bold text-amber-800 dark:text-amber-300 uppercase tracking-widest">
               DL-PCB TEQ parallel screening standard
             </span>
-            <span
-              className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
-              data-testid="hh-direct-dlpcb-teq-provisional-badge"
-              title="Seeded from a needs_review Health Canada TRV v4.0 catalog candidate; not yet HITL-verified."
-            >
-              Provisional -- needs review
-            </span>
+            <>
+              <span id="hh-direct-dlpcb-provisional-desc" className="sr-only">
+                Seeded from a needs_review Health Canada TRV v4.0 catalog candidate; not yet HITL-verified.
+              </span>
+              <span
+                className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-900/40 text-sky-800 dark:text-sky-200 border border-sky-200 dark:border-sky-800"
+                data-testid="hh-direct-dlpcb-teq-provisional-badge"
+                title="Seeded from a needs_review Health Canada TRV v4.0 catalog candidate; not yet HITL-verified."
+                aria-describedby="hh-direct-dlpcb-provisional-desc"
+              >
+                Provisional -- needs review
+              </span>
+            </>
           </div>
           {dlPcbOk ? (
             <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
