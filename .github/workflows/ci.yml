@@ -209,7 +209,11 @@ jobs:
           # (unset -> '' -> disabled) rather than a hard-coded branch name, so no
           # experiment-branch coupling leaks onto main. Enablement strategy is owner-gated
           # (see Lane B plan U3); a controlled proof branch may set this locally.
-          E2E_AUTH_ENABLED: ${{ vars.E2E_AUTH_ENABLED }}
+          # PROOF-BRANCH TOGGLE (2026-07-11, throwaway -- do NOT merge): enable authenticated
+          # E2E ONLY for the controlled proof branch/PR, so the R14 proof runs the previously
+          # skip-safe Matrix Options / cyanide specs under chromium-auth. Main stays disabled
+          # (vars.E2E_AUTH_ENABLED is unset); this line is reverted/abandoned with the proof branch.
+          E2E_AUTH_ENABLED: ${{ github.head_ref == 'proof/e2e-auth-verify-2026-07-11' || github.ref_name == 'proof/e2e-auth-verify-2026-07-11' || vars.E2E_AUTH_ENABLED }}
 
       # Capture the Playwright report + per-test error-context/traces on failure so
       # e2e failures (e.g. the authenticated setup login) are diagnosable from CI.
