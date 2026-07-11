@@ -481,6 +481,47 @@ async function fetchReviewerVisibility(supa: Supa): Promise<{
   }
 }
 
+async function fetchDataFreshness(supa: Supa): Promise<{
+  data: {
+    snapshotVersion: string | null;
+    lastEtlAt: string | null;
+    lastEtlAffectedRows: number | null;
+  } | null;
+  error: string | null;
+}> {
+  try {
+    const { data: snapRow, error: snapErr } = await supa
+      .schema('matrix_map')
+      .from('samples')
+      .select('updated_at')
+      .order('updated_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (snapErr) return { data: null, error: snapErr.message };
+
+    const { data: etlRow, error: etlErr } = await supa
+      .schema('matrix_map')
+      .from('service_role_audit')
+      .select('invoked_at, affected_rows')
+      .eq('rpc_name', 'etl_bnrrm_to_supabase')
+      .order('invoked_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (etlErr) return { data: null, error: etlErr.message };
+
+    return {
+      data: {
+        snapshotVersion: snapRow?.updated_at ?? null,
+        lastEtlAt: etlRow?.invoked_at ?? null,
+        lastEtlAffectedRows: etlRow?.affected_rows ?? null,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 // ---------------------------------------------------------------------
 // Aggregations (pure -- run on the fetched rows; cannot fail)
 // ---------------------------------------------------------------------
@@ -561,6 +602,7 @@ export default async function MatrixMapHealthPage() {
     auditRes,
     grantsRes,
     reviewerVisRes,
+    freshnessRes,
   ] = await Promise.all([
     Promise.all(SCHEMA_TABLES.map((t) => fetchTableCount(supabase, t))),
     fetchClassificationBreakdown(supabase),
@@ -570,6 +612,7 @@ export default async function MatrixMapHealthPage() {
     fetchRecentAudit(supabase),
     fetchActiveGrants(supabase),
     fetchReviewerVisibility(supabase),
+    fetchDataFreshness(supabase),
   ]);
 
   const tableCounts: Record<SchemaTable, CountResult> = SCHEMA_TABLES.reduce(
@@ -969,6 +1012,37 @@ export default async function MatrixMapHealthPage() {
                 ) : null}
               </div>
             ) : null}
+          </SectionCard>
+
+          {/* 9. Data freshness */}
+          <SectionCard
+            title="9. Data freshness"
+            subtitle="Snapshot version (matrix_map.samples) and last BN-RRM ETL run (matrix_map.service_role_audit)."
+          >
+            {freshnessRes.error ? (
+              <InlineError message={freshnessRes.error} />
+            ) : (
+              <div>
+                <KeyValueRow
+                  label="Snapshot version (MAX samples.updated_at)"
+                  value={fmtTs(freshnessRes.data?.snapshotVersion ?? null)}
+                  emphasis
+                />
+                <KeyValueRow
+                  label="Last ETL run (service_role_audit, rpc_name=etl_bnrrm_to_supabase)"
+                  value={fmtTs(freshnessRes.data?.lastEtlAt ?? null)}
+                />
+                <KeyValueRow
+                  label="Last ETL affected_rows"
+                  value={fmtNum(freshnessRes.data?.lastEtlAffectedRows ?? null)}
+                />
+              </div>
+            )}
+            <div className="mt-4">
+              <MutedNote>
+                Note: Row-count-drift monitoring is not yet available (no baseline snapshot table exists) so it is intentionally omitted.
+              </MutedNote>
+            </div>
           </SectionCard>
         </div>
 
