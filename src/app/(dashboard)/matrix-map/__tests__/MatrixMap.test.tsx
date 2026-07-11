@@ -17,11 +17,12 @@
  * Plain ASCII only -- no em-dashes / smart quotes / Unicode arrows.
  */
 
-import { describe, it, expect, vi } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import { MatrixMap } from '../MatrixMap';
 import { EMPTY_MATRIX_MAP_DATA } from '../types';
+import { useMatrixMapFilterStore } from '@/stores/matrix-map/filterStore';
 
 // Stub leaflet's dynamic import so its `await import('leaflet')` in
 // MatrixMap's init effect doesn't actually touch the (jsdom-unfriendly)
@@ -34,6 +35,10 @@ vi.mock('leaflet.markercluster/dist/MarkerCluster.css', () => ({}));
 vi.mock('leaflet.markercluster/dist/MarkerCluster.Default.css', () => ({}));
 
 describe('MatrixMap (Path-B fork)', () => {
+  beforeEach(() => {
+    useMatrixMapFilterStore.getState().resetFilters();
+  });
+
   it('exports a MatrixMap component', () => {
     expect(typeof MatrixMap).toBe('function');
   });
@@ -75,5 +80,19 @@ describe('MatrixMap (Path-B fork)', () => {
   it('does not show the truncated hint when the payload is not truncated', () => {
     render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
     expect(screen.queryByText(/zoom in to see all/i)).not.toBeInTheDocument();
+  });
+
+  it('wires the surveyed_only checkbox to the filter store', () => {
+    render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+    const checkbox = screen.getByRole('checkbox', { name: /show surveyed locations only/i });
+    expect(checkbox).not.toBeChecked();
+
+    fireEvent.click(checkbox);
+    expect(useMatrixMapFilterStore.getState().filterState.surveyed_only).toBe(true);
+  });
+
+  it('renders the province provenance chip text', () => {
+    render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+    expect(screen.getByText(/BC CSR site centroids/i)).toBeInTheDocument();
   });
 });

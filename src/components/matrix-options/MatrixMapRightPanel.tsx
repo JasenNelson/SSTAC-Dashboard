@@ -197,7 +197,8 @@ export function MatrixMapRightPanel({
   const pageCount = Math.max(1, Math.ceil(filteredRows.length / PAGE_SIZE));
   const currentPage = Math.min(page, pageCount);
   const pageRows = filteredRows.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const activeFilters = hasActiveMatrixMapFilters(filterState);
+  const activeFilters =
+    hasActiveMatrixMapFilters(filterState) || Boolean(filterState.surveyed_only);
   const substanceOptions = useMemo(() => extractSubstanceOptions(rows), [rows]);
   // availableMedia is computed from UNFILTERED rows so selecting one medium
   // does not disable others that are present in the data. While a fetch is
@@ -408,7 +409,8 @@ function FilterControls({
   onSubstancePickerOpen: (value: boolean) => void;
   disabledMedia: readonly MatrixMapMedium[];
 }) {
-  const activeFilters = hasActiveMatrixMapFilters(filterState);
+  const activeFilters =
+    hasActiveMatrixMapFilters(filterState) || Boolean(filterState.surveyed_only);
 
   return (
     <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/30">

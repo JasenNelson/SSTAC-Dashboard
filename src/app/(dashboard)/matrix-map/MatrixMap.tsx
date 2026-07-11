@@ -419,11 +419,16 @@ export function MatrixMap({
   const clearSampleSelection = useMatrixMapSelectionStore((s) => s.clearSampleSelection);
   const selectAllSamplesAction = useMatrixMapSelectionStore((s) => s.selectAllSamples);
   const filterState = useMatrixMapFilterStore((s) => s.filterState);
+  const setFilterState = useMatrixMapFilterStore((s) => s.setFilterState);
   const matchingSampleIds = useMatrixMapFilterStore((s) => s.matchingSampleIds);
   const matchingSampleIdsReady = useMatrixMapFilterStore((s) => s.matchingSampleIdsReady);
   const showSelectedDespiteFilters = useMatrixMapFilterStore((s) => s.showSelectedDespiteFilters);
   const resetMapFilters = useMatrixMapFilterStore((s) => s.resetFilters);
-  const activeMapFilters = hasActiveMatrixMapFilters(filterState);
+  // surveyed_only is deliberately NOT part of hasActiveMatrixMapFilters (that gates the
+  // measurement-matching pipeline), but it IS an active view filter for UI purposes (the
+  // sample-count subtitle + clear affordances), so OR it in here.
+  const activeMapFilters =
+    hasActiveMatrixMapFilters(filterState) || Boolean(filterState.surveyed_only);
   const samples = useMemo(
     () =>
       getMapFilteredSamples({
@@ -1701,6 +1706,16 @@ export function MatrixMap({
           <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
             Centroid = approximate BC CSR parcel location, not a surveyed point.
           </p>
+          <label className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+            <input
+              type="checkbox"
+              checked={filterState.surveyed_only}
+              onChange={(e) => setFilterState({ surveyed_only: e.target.checked })}
+              className="h-3 w-3 rounded border-slate-300 dark:border-slate-600"
+              aria-label="Show surveyed locations only"
+            />
+            Surveyed only
+          </label>
         </div>
       </div>
 
@@ -1717,6 +1732,12 @@ export function MatrixMap({
             </p>
           </div>
         </div>
+        {/* Source: dashboard_data_truth_map_run_2026_07_11 (province-wide DRA/sample audit, 2026-07-11). */}
+        {/* Static by design -- see T17 spec for why this is not computed from the loaded sample set. */}
+        <p className="mt-1.5 max-w-[220px] text-[10px] leading-snug text-slate-400 dark:text-slate-500">
+          Most plotted locations (~98.5%) are approximate BC CSR site centroids, not surveyed sediment
+          coordinates. See marker outline / legend for per-point provenance.
+        </p>
       </div>
 
       {/* Clickable Sample List */}
