@@ -408,7 +408,7 @@ export default function EcoDirectEqPCalculator({
                 data-testid="eqp-fcv-reset"
                 className="text-xs font-semibold text-sky-700 dark:text-sky-400 hover:text-sky-900 dark:hover:text-sky-200 underline underline-offset-2"
               >
-                Reset to default
+                Reset to frame default
               </button>
             )}
           </div>
@@ -497,7 +497,7 @@ export default function EcoDirectEqPCalculator({
               {(result as EcoDirectEqPResult).verdict}
             </div>
           )}
-        <p className="text-[11px] text-sky-700 dark:text-sky-400 mt-3 italic">
+        <p className="text-xs text-sky-700 dark:text-sky-400 mt-3 italic">
           Preliminary -- not a final standard. HITL professional judgment +
           Background Adjustment apply downstream.
         </p>
