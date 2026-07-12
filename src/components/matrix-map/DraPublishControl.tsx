@@ -65,6 +65,16 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
   }, [selectedRowId]);
 
   const loadAuditHistory = useCallback(async (draId: string) => {
+    // Codex P2 fix (2026-07-11, round 4): a round-3 refetch for a DRA that
+    // is no longer selected (e.g. a post-publish refresh for DRA A after
+    // the admin has since selected DRA B) correctly discarded its RESULT,
+    // but still unconditionally flipped auditLoading -> true up front,
+    // which could flicker DRA B's already-correct panel into a loading
+    // state -- or leave it stuck loading if that stale DRA-A fetch hangs.
+    // Bail out before touching any UI state at all if draId is not the
+    // current selection at call time.
+    if (selectedRowIdRef.current !== draId) return;
+
     const requestId = ++auditRequestIdRef.current;
     setAuditLoading(true);
     setAuditError(null);
@@ -88,7 +98,7 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
       setAuditError(msg);
       setAuditRows([]);
     } finally {
-      if (auditRequestIdRef.current === requestId) setAuditLoading(false);
+      if (stillCurrent()) setAuditLoading(false);
     }
   }, []);
 

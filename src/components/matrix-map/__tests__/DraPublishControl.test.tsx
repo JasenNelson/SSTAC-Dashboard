@@ -353,6 +353,88 @@ describe('DraPublishControl', () => {
     expect(screen.queryByTestId('dra-audit-history-empty')).not.toBeInTheDocument();
   });
 
+  it('regression: a post-publish refresh for a no-longer-selected DRA never flickers the current DRA panel into a loading state, and never issues a network call for it (codex P2 round 4)', async () => {
+    // Codex flagged that the round-3 fix discarded the stale RESULT
+    // correctly, but loadAuditHistory still unconditionally flipped
+    // auditLoading -> true up front before checking whether draId was
+    // still the current selection -- which could momentarily (or, if that
+    // request hung, permanently) hide DRA 2's already-correct,
+    // currently-selected panel behind a loading state. The round-4 fix
+    // bails out of loadAuditHistory before touching any state (and before
+    // firing the fetch at all) when draId no longer matches the current
+    // selection. Assert both effects: no loading flicker on DRA 2's panel,
+    // and no second network call for DRA 1 is ever made post-publish.
+    let resolvePublish: (value: Response) => void = () => {};
+    const publishPromise = new Promise<Response>((resolve) => {
+      resolvePublish = resolve;
+    });
+
+    const auditByDraId: Record<string, unknown[]> = {
+      '11111111-1111-4111-8111-111111111111': [],
+      '22222222-2222-4222-8222-222222222222': [dra2AuditRow],
+    };
+    const auditHistoryCallCount: Record<string, number> = {};
+
+    fetchMock = vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.startsWith('/api/matrix-map/admin/audit-history')) {
+        const draId = new URL(url, 'http://localhost').searchParams.get('dra_id') ?? '';
+        auditHistoryCallCount[draId] = (auditHistoryCallCount[draId] ?? 0) + 1;
+        return {
+          ok: true,
+          json: async () => ({ ok: true, dra_id: draId, rows: auditByDraId[draId] ?? [] }),
+        } as Response;
+      }
+
+      if (url === '/api/matrix-map/admin/publish') {
+        return publishPromise;
+      }
+
+      throw new Error(`Unexpected fetch call in test: ${url}`);
+    });
+
+    render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
+
+    fireEvent.click(screen.getByTestId('dra-row-11111111-1111-4111-8111-111111111111'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-empty')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    const textarea = screen.getByLabelText('Reason for visibility change');
+    await userEvent.type(textarea, 'Just published');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm publish' }));
+
+    // Switch selection to DRA 2 before the publish POST resolves.
+    fireEvent.click(screen.getByTestId('dra-row-22222222-2222-4222-8222-222222222222'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-list')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/TWG review complete/)).toBeInTheDocument();
+    const draOneCallsBeforeResolve = auditHistoryCallCount['11111111-1111-4111-8111-111111111111'] ?? 0;
+
+    // Resolve the stale publish for DRA 1. Its post-success refresh
+    // targets DRA 1, which is no longer selected -- the guard must skip it
+    // entirely before it ever touches auditLoading or issues a fetch.
+    resolvePublish({ ok: true, json: async () => ({ ok: true }) } as Response);
+
+    // Give the publish .then chain a turn to run (the success message is
+    // rendered unconditionally regardless of current selection, so it is a
+    // reliable signal that handleSubmitAction's continuation -- including
+    // its post-success loadAuditHistory('DRA 1') call -- has run), then
+    // assert nothing about DRA 2's panel moved and no new DRA-1
+    // audit-history call fired.
+    await waitFor(() => {
+      expect(screen.getByText('Successfully published DRA.')).toBeInTheDocument();
+    });
+    expect(screen.getByTestId('dra-audit-history-list')).toBeInTheDocument();
+    expect(screen.queryByTestId('dra-audit-history-loading')).not.toBeInTheDocument();
+    expect(screen.getByText(/TWG review complete/)).toBeInTheDocument();
+    expect(auditHistoryCallCount['11111111-1111-4111-8111-111111111111'] ?? 0).toBe(
+      draOneCallsBeforeResolve,
+    );
+  });
+
   it('fetches and renders audit history scoped to the selected DRA (per-DRA route, not a global list)', async () => {
     render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
 
