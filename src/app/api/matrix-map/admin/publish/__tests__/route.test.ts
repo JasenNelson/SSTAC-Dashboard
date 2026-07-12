@@ -187,6 +187,168 @@ describe('POST /api/matrix-map/admin/publish', () => {
     });
   });
 
+  describe('5. CSRF gating', () => {
+    it('returns the checkCsrf-mapped status when checkCsrf rejects (missing/wrong content-type -> 415)', async () => {
+      mocks.checkCsrf.mockReturnValue({ ok: false, reason: 'missing_content_type' });
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(415);
+      const data = await response.json();
+      expect(data.error).toBe('missing_content_type');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when checkCsrf rejects on origin mismatch', async () => {
+      mocks.checkCsrf.mockReturnValue({ ok: false, reason: 'origin_mismatch' });
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toBe('origin_mismatch');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('6. RPC error mapping', () => {
+    it('maps a 42501 (RLS/permission denied) RPC error to 403 rpc_forbidden', async () => {
+      const rpc = vi.fn(async () => ({
+        data: null,
+        error: { code: '42501', message: 'permission denied for function flip_dra_public' },
+      }));
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(() => ({ rpc })),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: false,
+        reason: 'Withdrawn',
+      }));
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toBe('rpc_forbidden');
+    });
+
+    it('maps a non-42501 RPC error to 500 rpc_failed', async () => {
+      const rpc = vi.fn(async () => ({
+        data: null,
+        error: { code: '23503', message: 'foreign key violation' },
+      }));
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(() => ({ rpc })),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(500);
+      const data = await response.json();
+      expect(data.error).toBe('rpc_failed');
+    });
+  });
+
+  describe('7. Single-DRA / no-bulk contract', () => {
+    it('rejects a payload with an array of dra_ids (no bulk support)', async () => {
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: ['11111111-1111-4111-8111-111111111111', '22222222-2222-4222-8222-222222222222'],
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(400);
+      const data = await response.json();
+      expect(data.error).toBe('invalid_payload');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('accepts admin (not just matrix_admin) role', async () => {
+      const rpc = vi.fn(async () => ({ data: null, error: null }));
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '33333333-3333-4333-8333-333333333333' } },
+            error: null,
+          })),
+        },
+        from: vi.fn(() => chain({ data: { role: 'admin' }, error: null })),
+        schema: vi.fn(() => ({ rpc })),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(200);
+      expect(rpc).toHaveBeenCalledWith('flip_dra_public', {
+        p_dra_id: '11111111-1111-4111-8111-111111111111',
+        p_new_value: true,
+        p_actor_id: '33333333-3333-4333-8333-333333333333',
+        p_reason: 'test',
+      });
+    });
+  });
+
   describe('4. Assert NO code path issues a direct dras UPDATE', () => {
     it('structurally guarantees no direct UPDATE by verifying schema returned object has no from method', async () => {
       // Setup similar to test 2

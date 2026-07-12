@@ -57,6 +57,21 @@ export default async function MatrixMapPublishPage() {
     .eq('is_deleted', false)
     .order('title');
 
+  // Read-only audit history of flip_dra_public visibility changes. The
+  // dra_visibility_audit table is RLS-gated to admin/matrix_admin SELECT
+  // (supabase/migrations/20260519000001_matrix_map_schema.sql +
+  // 20260519000002_matrix_map_rls.sql, policy dra_visibility_audit_admin_select)
+  // and is already read this way by /admin/matrix-map/health section 6.
+  //
+  // Codex P2 fix (2026-07-11): a global bounded fetch (top-200 rows across
+  // ALL DRAs, filtered client-side) could silently omit a selected DRA's
+  // history once the table grew past 200 rows and that DRA's latest change
+  // was not among the global newest 200 -- a false-negative "no history"
+  // result. History is now fetched PER-DRA, server-side, on selection via
+  // GET /api/matrix-map/admin/audit-history (see
+  // src/components/matrix-map/DraPublishControl.tsx), so no initial fetch
+  // happens here.
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -74,7 +89,10 @@ export default async function MatrixMapPublishPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <DraPublishControl initialDras={initialDras || []} isAdmin={isAdmin} />
+          <DraPublishControl
+            initialDras={initialDras || []}
+            isAdmin={isAdmin}
+          />
         </div>
       </div>
     </ErrorBoundary>
