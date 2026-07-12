@@ -43,7 +43,9 @@ apply via MCP" banners are superseded.)
 8. Cumulative D1-D4 + phenylmercuric_acetate class + confirm cadmium/methylmercury defaults (prior handoff).
 
 ## 4. NEXT SESSION -- plan-mode instructions (owner directive)
-Enter PLAN MODE. Build a NEW ~50-task plan that:
+Enter PLAN MODE. Build a NEW 50-task, 15-HOUR mostly-autonomous plan -- HITL gates BATCHED (accumulate
+owner decisions into one queue; do NOT stop at the first gate; work around gated items and keep shipping)
+-- that:
 - Turns the section-3 HITL items into executable units (design/dry-run/gated-write where owner-approval is
   needed; each owner-gated write follows the AGENTS.md gate: draft -> codex GREEN -> flag -> approve -> run).
 - Adds a fresh suite of high-value MO tasks to reach ~50 total, drawn from the still-open lanes:
