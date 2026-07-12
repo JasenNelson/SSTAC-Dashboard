@@ -39,6 +39,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { computeCapAlert, CAP_ALERT_THRESHOLD } from '@/lib/matrix-map/cap-alert';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -71,6 +72,13 @@ const CLASSIFICATION_SOURCES = [
   'bkgd_groundwater',
 ] as const;
 const COORD_QUALITY_TIERS = ['high', 'medium', 'low'] as const;
+// Deployed matrix_map.fetch_samples_with_hidden_summary v_cap. The RPC's JSON response
+// (see fetchCapReadiness below) returns total_in_bbox / returned_sample_count / truncated but
+// does NOT return the cap literal itself, so it cannot be read out of the RPC response. This
+// constant tracks the same value already documented in section 10's note below and in
+// supabase/migrations/20260711000001_matrix_map_fetch_samples_pagination.sql (v_cap = 5000,
+// raised from 2500 on 2026-07-11). Keep in sync if that migration's v_cap changes again.
+const DEPLOYED_MAP_CAP = 5000;
 const BUDGET_DIMENSIONS = [
   'supabase_reads',
   'wms_proxy',
@@ -1124,6 +1132,51 @@ export default async function MatrixMapHealthPage() {
                 2026-07-11 (migration 20260711000001). If truncated is YES, raise v_cap (see
                 MAP_CAP_PAGINATION_SPEC.md) or implement keyset pagination.
               </MutedNote>
+            </div>
+
+            {/* Cap-headroom threshold alert -- warns BEFORE truncation, unlike the
+                truncated flag above which only fires AFTER the cap is crossed. */}
+            <div className="mt-4">
+              {(() => {
+                const sampleCount = capRes.error ? null : (capRes.data?.totalValid ?? null);
+                const alert = computeCapAlert(sampleCount, DEPLOYED_MAP_CAP);
+                if (alert.level === 'indeterminate') {
+                  return (
+                    <div
+                      role="alert"
+                      className="rounded-md border border-yellow-200 bg-yellow-50 p-3 text-sm text-yellow-800 dark:border-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-300"
+                    >
+                      Cap headroom unknown -- valid sample count is unavailable, so the threshold
+                      alert cannot be evaluated (failing closed rather than reporting healthy).
+                    </div>
+                  );
+                }
+                if (alert.level === 'warning') {
+                  const pctLabel = ((alert.pct ?? 0) * 100).toFixed(1) + '%';
+                  return (
+                    <div
+                      role="alert"
+                      aria-live="assertive"
+                      className="rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-800 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+                    >
+                      <span className="font-semibold">Cap headroom warning:</span> map sample count is
+                      at {pctLabel} of the RPC cap ({fmtNum(sampleCount)} / {fmtNum(DEPLOYED_MAP_CAP)});
+                      approaching truncation -- plan pagination/cap raise.
+                    </div>
+                  );
+                }
+                const pctLabel = ((alert.pct ?? 0) * 100).toFixed(1) + '%';
+                return (
+                  <div
+                    aria-live="polite"
+                    className="rounded-md border border-slate-200 bg-slate-50/50 p-3 text-sm text-slate-500 dark:border-slate-700 dark:bg-slate-800/50 dark:text-slate-400"
+                  >
+                    Cap headroom OK -- {pctLabel} of the RPC cap ({fmtNum(sampleCount)} /{' '}
+                    {fmtNum(DEPLOYED_MAP_CAP)}), below the {(CAP_ALERT_THRESHOLD * 100).toFixed(0)}%
+                    alert threshold.
+                  </div>
+                );
+              })()}
             </div>
           </SectionCard>
         </div>
