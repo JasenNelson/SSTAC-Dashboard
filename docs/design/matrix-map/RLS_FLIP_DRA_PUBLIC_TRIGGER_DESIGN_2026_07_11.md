@@ -163,6 +163,24 @@ codex's finding was exactly about not overclaiming what the guard closes.
 
 ```sql
 -- ---------------------------------------------------------------------
+-- SECTION 0 -- TRANSIENT GRANT CREATE for owner-transfer dance.
+-- ---------------------------------------------------------------------
+-- Codex round 4 P2 finding: prior migrations (20260520000004 SECTION 6, and
+-- PR-MAP-1/PR-MAP-3a before it) REVOKE CREATE on schema matrix_map from
+-- matrix_map_owner at the end of their bodies. ALTER FUNCTION ... OWNER TO
+-- matrix_map_owner requires the target owner to hold CREATE on the containing
+-- schema, so the ALTER FUNCTION OWNER statements below (for
+-- enforce_dras_public_via_flip and the flip_dra_public reissue in section
+-- 2.2) would error without this transient grant. Mirrors the established
+-- 20260520000004 SECTION 0 pattern exactly. REVOKEd again at the bottom of
+-- this migration (after section 2.2's ALTER FUNCTION OWNER) so the
+-- post-migration state matches the existing REVOKEd steady-state posture.
+-- ---------------------------------------------------------------------
+
+GRANT CREATE ON SCHEMA matrix_map TO matrix_map_owner;
+
+
+-- ---------------------------------------------------------------------
 -- SECTION 1 -- Trigger function: enforce flip_dra_public-only writes
 -- ---------------------------------------------------------------------
 -- INTENTIONALLY SECURITY INVOKER (the plpgsql default -- no "SECURITY DEFINER" clause here).
@@ -261,9 +279,85 @@ COMMENT ON TRIGGER trg_dras_public_flip_only ON matrix_map.dras IS
 
 ### 2.2 Required edit to `flip_dra_public` (set + clear the marker around its own UPDATE)
 
-The current body (`20260520000004...sql` lines 404-426) becomes (new lines marked `-- NEW`):
+**Codex round 5 P2 finding: the previous draft of this section only showed a body-diff snippet
+and referred to "the full existing function body" by line number instead of including it.** A
+future agent copying "the exact SQL from sections 2.1-2.2" per section 7 would have installed the
+trigger without actually updating `flip_dra_public` -- breaking the sanctioned publish RPC (it
+would hit the trigger's 42501 marker error on its own guarded `UPDATE`). Fixed: the full
+`CREATE OR REPLACE FUNCTION` block below is the complete, exact re-issue (signature through
+`COMMENT ON FUNCTION`), copied verbatim from `20260520000004...sql` lines 344-443, with ONLY the
+two `PERFORM set_config(...)` lines and an updated `COMMENT` added -- no other line changed:
 
 ```sql
+-- ---------------------------------------------------------------------
+-- SECTION 2 -- REFACTOR: matrix_map.flip_dra_public(...) -- add the
+-- audited_flip marker around its own guarded UPDATE (T7 2026-07-11).
+-- All authorization checks below (actor-match, admin/matrix_admin role,
+-- non-empty reason, JWT email resolution, no-op-on-unchanged, atomic
+-- audit insert) are copied verbatim from 20260520000004...sql lines
+-- 344-428; only the two PERFORM set_config(...) lines are new.
+-- ---------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION matrix_map.flip_dra_public(
+  p_dra_id    uuid,
+  p_new_value boolean,
+  p_actor_id  uuid,
+  p_reason    text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = matrix_map, public, pg_temp
+AS $$
+DECLARE
+  v_uid           uuid;
+  v_claims        jsonb;
+  v_prior         boolean;
+  v_actor_email   text;
+  v_is_authorized boolean;
+BEGIN
+  v_uid    := matrix_map.current_user_id();
+  v_claims := matrix_map.jwt_claims();
+
+  -- (1) Must be called from an authenticated user-JWT context.
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'flip_dra_public must be called from an authenticated user context (jwt sub is null); service_role cannot call this RPC'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- (2) Caller cannot impersonate a different actor.
+  IF v_uid <> p_actor_id THEN
+    RAISE EXCEPTION 'flip_dra_public actor_id (%) must match caller jwt sub (%)', p_actor_id, v_uid
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- (3) Caller must hold admin OR matrix_admin role.
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = v_uid
+      AND role IN ('admin', 'matrix_admin')
+  )
+  INTO v_is_authorized;
+
+  IF NOT v_is_authorized THEN
+    RAISE EXCEPTION 'flip_dra_public requires admin or matrix_admin role'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- (4) Reason required (grants v2 section 2.3).
+  IF p_reason IS NULL OR length(trim(p_reason)) = 0 THEN
+    RAISE EXCEPTION 'flip_dra_public requires a non-empty reason';
+  END IF;
+
+  -- Resolve actor email from the JWT claims (bypasses auth.users read
+  -- which would fail under matrix_map_owner SECDEF -- no USAGE on auth
+  -- schema). The Supabase GoTrue issuer always includes the email claim
+  -- for password / OAuth sessions.
+  v_actor_email := (v_claims ->> 'email')::text;
+  IF v_actor_email IS NULL OR length(trim(v_actor_email)) = 0 THEN
+    RAISE EXCEPTION 'flip_dra_public could not resolve actor email from JWT for sub %', v_uid;
+  END IF;
+
   -- Lock + read prior value.
   SELECT public INTO v_prior
   FROM matrix_map.dras
@@ -291,17 +385,46 @@ The current body (`20260520000004...sql` lines 404-426) becomes (new lines marke
     VALUES
       (p_dra_id, v_prior, p_new_value, now(), v_uid, v_actor_email, p_reason);
   END IF;
+END;
+$$;
+
+ALTER FUNCTION matrix_map.flip_dra_public(uuid, boolean, uuid, text)
+  OWNER TO matrix_map_owner;
+
+REVOKE EXECUTE ON FUNCTION matrix_map.flip_dra_public(uuid, boolean, uuid, text)
+  FROM PUBLIC, anon;
+GRANT  EXECUTE ON FUNCTION matrix_map.flip_dra_public(uuid, boolean, uuid, text)
+  TO authenticated;
+
+COMMENT ON FUNCTION matrix_map.flip_dra_public(uuid, boolean, uuid, text) IS
+  '2026-07-11 T7 refactor: added transaction-local matrix_map.audited_flip '
+  'marker (set immediately before, cleared immediately after, the guarded '
+  'UPDATE) so matrix_map.enforce_dras_public_via_flip can distinguish this '
+  'function''s own guarded write from any other matrix_map_owner-owned '
+  'write path. All prior authorization checks (actor-match, admin/'
+  'matrix_admin role, non-empty reason, JWT email resolution, no-op-on-'
+  'unchanged, atomic audit insert) preserved verbatim from the 2026-05-20 '
+  'JWT refactor (20260520000004).';
 ```
 
-This is a `CREATE OR REPLACE FUNCTION matrix_map.flip_dra_public(...)` re-issue of the full
-existing function body from `20260520000004...sql` lines 344-428, with only the two `PERFORM
-set_config(...)` lines added around the guarded `UPDATE`. Signature, grants (`REVOKE ... FROM
-PUBLIC, anon` / `GRANT ... TO authenticated`), and `ALTER FUNCTION ... OWNER TO matrix_map_owner`
-are unchanged and do not need to be re-run, but the migration should re-issue them anyway (as
-`CREATE OR REPLACE` + the same `ALTER`/`REVOKE`/`GRANT`/`COMMENT` block) for a self-contained,
-idempotent migration file, matching this repo's existing pattern of full-function reissue on
-each functional migration (see `20260520000004` itself, which reissued `flip_dra_public` in full
-for a JWT refactor).
+Because this re-issue includes an `ALTER FUNCTION ... OWNER TO matrix_map_owner`, it needs the
+same transient `GRANT CREATE ON SCHEMA matrix_map TO matrix_map_owner` from section 2.1's SECTION
+0 (already in effect by the time this statement runs, since it is granted once at the top of the
+migration and used for every `ALTER FUNCTION ... OWNER` statement in the file, per the established
+`20260520000004` pattern).
+
+```sql
+-- ---------------------------------------------------------------------
+-- SECTION 3 -- REVOKE the transient CREATE grant (steady-state posture).
+-- ---------------------------------------------------------------------
+-- Mirrors 20260520000004 SECTION 6: after every ALTER FUNCTION ... OWNER TO
+-- matrix_map_owner statement in this migration has run (SECTION 1's
+-- enforce_dras_public_via_flip and this section's flip_dra_public reissue),
+-- revoke CREATE back off so matrix_map_owner does not retain schema-CREATE
+-- in steady state.
+-- ---------------------------------------------------------------------
+REVOKE CREATE ON SCHEMA matrix_map FROM matrix_map_owner;
+```
 
 **Why `is_local=true` and an explicit clear, not `is_local=false` or relying on
 transaction-end auto-reset alone:** `is_local=true` scopes the setting to the current transaction
@@ -531,6 +654,25 @@ gate (fixed), and section 1's "a trigger-based fix ... closes (b) and (c)" line 
 of the SQL-Editor/service_role threats that section 2's own "Honest residual limit" and section 6
 already correctly scope as NOT closed (fixed -- narrowed to accurately state the trigger only fully
 closes threat (a)).
+
+**Round 4 (2026-07-11, re-run after round-3 fixes, before push):** no P1s. Found one P2: the exact
+SQL in section 2.1 omitted the transient `GRANT CREATE ON SCHEMA matrix_map TO matrix_map_owner`
+that this repo's established owner-transfer pattern (`20260520000004` SECTION 0/6, itself born from
+a prior codex P1) requires before any `ALTER FUNCTION ... OWNER TO matrix_map_owner` -- without it,
+the `ALTER FUNCTION` statements for both `enforce_dras_public_via_flip` (section 2.1) and the
+`flip_dra_public` reissue (section 2.2) would error on the documented SQL-Editor/postgres apply
+path. Fixed by adding the matching transient `GRANT`/`REVOKE` bracket (section 2.1's new SECTION 0,
+section 2.2's new SECTION 3), mirroring `20260520000004` exactly.
+
+**Round 5 (2026-07-11, re-run after round-4 fix, immediately pre-push):** no P1s. Found one P2:
+section 2.2 still only showed a body-diff snippet and referred to "the full existing function
+body" by line number rather than including it, so a future agent literally copying "the exact SQL
+from sections 2.1-2.2" (per section 7) would install the trigger without actually updating
+`flip_dra_public` -- breaking the sanctioned publish RPC on its own first call. Fixed by replacing
+section 2.2 with the complete, exact `CREATE OR REPLACE FUNCTION matrix_map.flip_dra_public(...)`
+block (full signature, full body, `ALTER FUNCTION OWNER`, `REVOKE`/`GRANT EXECUTE`, `COMMENT`),
+copied verbatim from `20260520000004...sql` lines 344-443 with only the two `PERFORM
+set_config(...)` lines and the `COMMENT` text changed.
 
 **Honest, explicit statement of what the corrected design does and does not close (this replaces
 the original open questions to codex, which are now answered by the redesign):**
