@@ -219,6 +219,71 @@ describe('DraPublishControl', () => {
     });
   });
 
+  it('regression: refreshes the audit-history panel after a successful publish action instead of leaving it stale (codex P2 round 2)', async () => {
+    // Codex flagged that the audit-history effect only refetches on
+    // selection change, so a successful publish/unpublish -- which writes a
+    // NEW dra_visibility_audit row -- left the panel stale until the DRA
+    // was reselected. Simulate the server-side audit table gaining a new
+    // row as a side effect of the POST, and assert the panel picks it up
+    // without any reselection.
+    const auditByDraId: Record<string, unknown[]> = {
+      '11111111-1111-4111-8111-111111111111': [], // starts with no history
+    };
+    fetchMock = vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.startsWith('/api/matrix-map/admin/audit-history')) {
+        const draId = new URL(url, 'http://localhost').searchParams.get('dra_id') ?? '';
+        return {
+          ok: true,
+          json: async () => ({ ok: true, dra_id: draId, rows: auditByDraId[draId] ?? [] }),
+        } as Response;
+      }
+
+      if (url === '/api/matrix-map/admin/publish') {
+        // Simulate the RPC writing a new audit row as a side effect of a
+        // successful publish, the same way the real flip_dra_public RPC
+        // does server-side.
+        auditByDraId['11111111-1111-4111-8111-111111111111'] = [
+          {
+            id: 'new-audit-row',
+            dra_id: '11111111-1111-4111-8111-111111111111',
+            prior_value: false,
+            new_value: true,
+            changed_at: '2026-07-11T12:00:00.000Z',
+            changed_by_email: 'admin@example.com',
+            reason: 'Just published',
+          },
+        ];
+        return { ok: true, json: async () => ({ ok: true }) } as Response;
+      }
+
+      throw new Error(`Unexpected fetch call in test: ${url}`);
+    });
+
+    render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
+
+    // Select the first (private, no history) row.
+    fireEvent.click(screen.getByTestId('dra-row-11111111-1111-4111-8111-111111111111'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-empty')).toBeInTheDocument();
+    });
+
+    // Publish it.
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    const textarea = screen.getByLabelText('Reason for visibility change');
+    await userEvent.type(textarea, 'Just published');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm publish' }));
+
+    // Without reselecting the row, the audit-history panel must pick up
+    // the newly-written row -- not remain on the empty state.
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-list')).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('dra-audit-history-empty')).not.toBeInTheDocument();
+    expect(screen.getByText(/Just published/)).toBeInTheDocument();
+  });
+
   it('fetches and renders audit history scoped to the selected DRA (per-DRA route, not a global list)', async () => {
     render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
 

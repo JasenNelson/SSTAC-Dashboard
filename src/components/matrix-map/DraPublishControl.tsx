@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface DraRow {
@@ -48,42 +48,46 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
   const [auditRows, setAuditRows] = useState<DraAuditRow[]>([]);
   const [auditLoading, setAuditLoading] = useState(false);
   const [auditError, setAuditError] = useState<string | null>(null);
+  // Monotonic request counter so a stale in-flight fetch (superseded by a
+  // newer selection or an explicit post-publish refresh) never clobbers
+  // fresher state when it resolves out of order.
+  const auditRequestIdRef = useRef(0);
+
+  const loadAuditHistory = useCallback(async (draId: string) => {
+    const requestId = ++auditRequestIdRef.current;
+    setAuditLoading(true);
+    setAuditError(null);
+
+    try {
+      const response = await fetch(
+        `/api/matrix-map/admin/audit-history?dra_id=${encodeURIComponent(draId)}`,
+      );
+      const data = await response.json();
+      if (auditRequestIdRef.current !== requestId) return; // superseded
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || 'Failed to load visibility history');
+      }
+      setAuditRows(Array.isArray(data.rows) ? data.rows : []);
+    } catch (err: unknown) {
+      if (auditRequestIdRef.current !== requestId) return; // superseded
+      const msg = err instanceof Error ? err.message : String(err);
+      setAuditError(msg);
+      setAuditRows([]);
+    } finally {
+      if (auditRequestIdRef.current === requestId) setAuditLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (!selectedRowId) {
+      auditRequestIdRef.current += 1; // invalidate any in-flight request
       setAuditRows([]);
       setAuditError(null);
       setAuditLoading(false);
       return;
     }
-
-    let cancelled = false;
-    setAuditLoading(true);
-    setAuditError(null);
-
-    fetch(`/api/matrix-map/admin/audit-history?dra_id=${encodeURIComponent(selectedRowId)}`)
-      .then(async (response) => {
-        const data = await response.json();
-        if (cancelled) return;
-        if (!response.ok) {
-          throw new Error(data.detail || data.error || 'Failed to load visibility history');
-        }
-        setAuditRows(Array.isArray(data.rows) ? data.rows : []);
-      })
-      .catch((err: unknown) => {
-        if (cancelled) return;
-        const msg = err instanceof Error ? err.message : String(err);
-        setAuditError(msg);
-        setAuditRows([]);
-      })
-      .finally(() => {
-        if (!cancelled) setAuditLoading(false);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, [selectedRowId]);
+    loadAuditHistory(selectedRowId);
+  }, [selectedRowId, loadAuditHistory]);
 
   // Action state
   const [actionMode, setActionMode] = useState<'publish' | 'unpublish' | null>(null);
@@ -146,13 +150,20 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
       });
       setActionMode(null);
       setActionReason('');
+
+      // Codex P2 fix (2026-07-11, round 2): the POST just wrote a new
+      // dra_visibility_audit row for this DRA. Refetch its history now so
+      // the "Recent visibility changes" panel reflects it immediately,
+      // rather than staying stale (or stuck on the empty state) until the
+      // row is reselected or the page is reloaded.
+      loadAuditHistory(selectedRow.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setActionMessage({ kind: 'err', text: msg });
     } finally {
       setActionSubmitting(false);
     }
-  }, [actionMode, actionReason, selectedRow]);
+  }, [actionMode, actionReason, selectedRow, loadAuditHistory]);
 
   return (
     <div
