@@ -1,4 +1,6 @@
 import { describe, it, expect } from 'vitest';
+import fs from 'node:fs';
+import path from 'node:path';
 
 import {
   computeTEQ,
@@ -10,6 +12,7 @@ import {
   RPF_SCHEME_BY_AUTHORITY,
   CANONICAL_UNIT,
 } from '../cumulative';
+import { lookupRpf } from '../rpfTable';
 
 // Anchor cases use HAND-COMPUTED expected values (not "whatever it returns").
 // pg/g = 1e-6 mg/kg; ug/kg = 1e-3 mg/kg; ug/g = mg/kg = 1.
@@ -281,6 +284,173 @@ describe('computeBaPeq -- hc-pqra-v3 anchor case', () => {
     );
     expect(res.blocked).toBe(true);
     expect(res.warnings.some((w) => /ADAF requested but/i.test(w))).toBe(true);
+  });
+});
+
+// T21 (2026-07-11): regression-lock the SINGLE-BIN ADAF caller contract documented in
+// BaPeqOptions.applyAdaf (cumulative.ts). computeBaPeq applies exactly ONE age bin's ADAF (10 / 3 / 1)
+// per call -- it is NOT a lifetime 0-70yr duration-weighted average. A caller anchoring on an SF that
+// already embeds ADAFs (e.g. EPA IRIS lifetime BaP CSF 2.0) must pass applyAdaf: false (or omit it) so
+// the multiplier is never applied on top of an already-ADAF-adjusted slope factor.
+describe('computeBaPeq ADAF single-bin contract (T21)', () => {
+  it('a single call applies EXACTLY one age bin -- 0-<2 (10x), 2-<16 (3x), and 16+ (1x) never blend', () => {
+    const toddler = computeBaPeq(
+      [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
+      'hc-pqra-v3',
+      { applyAdaf: true, ageYears: 1 },
+    );
+    const child = computeBaPeq(
+      [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
+      'hc-pqra-v3',
+      { applyAdaf: true, ageYears: 5 },
+    );
+    const adult = computeBaPeq(
+      [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
+      'hc-pqra-v3',
+      { applyAdaf: true, ageYears: 30 },
+    );
+    // Each result is EXACTLY its own bin's ADAF, never a sum (10+3+1=14) or an average
+    // ((10+3+1)/3=4.67) across bins -- proving this is single-bin, not lifetime-weighted.
+    expect(toddler.equivalent).toBeCloseTo(10, 12);
+    expect(child.equivalent).toBeCloseTo(3, 12);
+    expect(adult.equivalent).toBeCloseTo(1, 12);
+    expect(toddler.warnings.some((w) => /ADAF 10 applied for a SINGLE age bin \(0-<2\)/.test(w))).toBe(true);
+    expect(child.warnings.some((w) => /ADAF 3 applied for a SINGLE age bin \(2-<16\)/.test(w))).toBe(true);
+    // The 16+ bin's multiplier is a numeric no-op (1x), but the single-bin warning must still fire --
+    // proving the ADAF path actually ran rather than being silently skipped for adults.
+    expect(adult.warnings.some((w) => /ADAF 1 applied for a SINGLE age bin \(16\+\)/.test(w))).toBe(true);
+  });
+
+  it('applyAdaf omitted (the EPA-2.0 ADAF-embedded-anchor path): no ADAF is applied and no ADAF warning fires', () => {
+    // Mirrors pairing an already-ADAF-baked-in anchor (e.g. EPA IRIS lifetime CSF 2.0): applyAdaf must
+    // stay false/omitted so this reducer never applies a SECOND ADAF on top of the anchor's.
+    const res = computeBaPeq(
+      [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
+      'hc-pqra-v3',
+    );
+    expect(res.equivalent).toBeCloseTo(1.0, 12);
+    expect(res.warnings.some((w) => /ADAF/i.test(w))).toBe(false);
+  });
+
+  it('explicit applyAdaf: false behaves identically to omitted (never silently double-applies)', () => {
+    const res = computeBaPeq(
+      [{ pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' }],
+      'hc-pqra-v3',
+      { applyAdaf: false },
+    );
+    expect(res.equivalent).toBeCloseTo(1.0, 12);
+    expect(res.warnings.some((w) => /ADAF/i.test(w))).toBe(false);
+  });
+
+  // Item 2: grep every `applyAdaf: true` call site under src/ and lock the current inventory. As of
+  // this writing computeBaPeq is NOT wired into any calculator component (cumulative.ts header:
+  // standalone, not registered in equationDispatch.ts / BASELINE_FUNCTIONS -- see D0). The only call
+  // sites are the single-bin-contract tests above, in THIS file. This test is a tripwire: if a future
+  // PR wires a real caller with `applyAdaf: true`, the new file appears in the inventory and this
+  // assertion fails -- forcing the author to either add an explicit single-bin-contract assertion at
+  // the new call site (mirroring the tests above) or consciously update this lock.
+  it('the only applyAdaf:true call sites under src/ are the single-bin-contract tests in this file', () => {
+    const srcRoot = path.resolve(__dirname, '../../..');
+    const pattern = /applyAdaf\s*:\s*true/;
+    const hits = new Set<string>();
+
+    function walk(dir: string) {
+      for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+        if (entry.name === 'node_modules' || entry.name === '.next') continue;
+        const full = path.join(dir, entry.name);
+        if (entry.isDirectory()) {
+          walk(full);
+        } else if (/\.(ts|tsx)$/.test(entry.name)) {
+          const content = fs.readFileSync(full, 'utf8');
+          if (pattern.test(content)) {
+            hits.add(path.relative(srcRoot, full).replaceAll('\\', '/'));
+          }
+        }
+      }
+    }
+    walk(srcRoot);
+
+    // cumulative.ts itself hits the pattern too, but only inside the BaPeqOptions.applyAdaf DOC
+    // COMMENT (the "applyAdaf: true" ANCHOR-PAIRING CONTRACT example, not executable code) --
+    // included here explicitly rather than filtered out, so a real future call site added to any
+    // OTHER file still trips this tripwire.
+    expect(Array.from(hits).sort()).toEqual(
+      ['lib/matrix-options/__tests__/cumulative.test.ts', 'lib/matrix-options/cumulative.ts'].sort(),
+    );
+  });
+});
+
+// T21 item 3: regression-lock the benzo[b+j+k]fluoranthene combined-key fail-closed behavior across
+// ALL group schemes (hc-pqra-v3 / ccme-2010 / who-1998-pah define ONE combined PEF; nisbet-1992 /
+// epa-2010-draft assign distinct per-isomer potencies). ccme-2010 + nisbet-1992 are already covered
+// above (lines ~226-265); this block extends the same guard to hc-pqra-v3, epa-2010-draft, and
+// who-1998-pah (via lookupRpf directly, since who-1998-pah is scoring-blocked at the computeBaPeq
+// level -- RPF_SCHEME_SCORING_BLOCKED -- so its per-isomer not-defined behavior can only be observed
+// at the rpfTable lookup layer).
+describe('benzo[b+j+k]fluoranthene combined-key fail-closed regression (T21 item 3)', () => {
+  it('under hc-pqra-v3 (group scheme), the COMBINED benzo[b+j+k] key scores once (RPF 0.1)', () => {
+    // BaP 1.0 + bjk 2 mg/kg * 0.1 = 1.0 + 0.2 = 1.2.
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_bjk_fluoranthene', concentration: 2, unit: 'mg/kg' },
+      ],
+      'hc-pqra-v3',
+    );
+    expect(res.blocked).toBe(false);
+    expect(res.equivalent).toBeCloseTo(1.2, 12);
+  });
+
+  it('under hc-pqra-v3 (group scheme), an INDIVIDUAL benzo[j] fails closed (prevents the 3x over-count)', () => {
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_j_fluoranthene', concentration: 2, unit: 'mg/kg' },
+      ],
+      'hc-pqra-v3',
+    );
+    expect(res.blocked).toBe(true);
+    expect(res.warnings.some((w) => /no rpf defined|not scored/i.test(w))).toBe(true);
+  });
+
+  it('under epa-2010-draft, individual benzo[b]/[j]/[k] ARE scored per-isomer (distinct potencies, not a group there)', () => {
+    // BaP 1.0 + benzo_b 1*0.8 + benzo_j 1*0.3 + benzo_k 1*0.03 = 2.13.
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_b_fluoranthene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_j_fluoranthene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_k_fluoranthene', concentration: 1, unit: 'mg/kg' },
+      ],
+      'epa-2010-draft',
+    );
+    expect(res.blocked).toBe(false);
+    expect(res.equivalent).toBeCloseTo(2.13, 12);
+  });
+
+  it('under epa-2010-draft, the COMBINED benzo[b+j+k] key fails closed (that scheme has no combined PEF)', () => {
+    const res = computeBaPeq(
+      [
+        { pahKey: 'benzo_a_pyrene', concentration: 1, unit: 'mg/kg' },
+        { pahKey: 'benzo_bjk_fluoranthene', concentration: 1, unit: 'mg/kg' },
+      ],
+      'epa-2010-draft',
+    );
+    expect(res.blocked).toBe(true);
+    expect(res.warnings.some((w) => /no rpf defined|not scored/i.test(w))).toBe(true);
+  });
+
+  it('rpfTable: who-1998-pah defines the COMBINED key (0.1) and leaves each individual b/j/k isomer not-defined', () => {
+    // computeBaPeq blocks who-1998-pah wholesale (RPF_SCHEME_SCORING_BLOCKED), so this fail-closed
+    // per-isomer behavior is only observable directly at the rpfTable lookup layer -- it is retained
+    // as inert safety per the rpfTable.ts / cumulative.ts D4 notes (BC TG-7 2017 remap left who-1998-pah
+    // unused-but-present).
+    expect(lookupRpf('benzo_b_fluoranthene', 'who-1998-pah').kind).toBe('not-defined');
+    expect(lookupRpf('benzo_j_fluoranthene', 'who-1998-pah').kind).toBe('not-defined');
+    expect(lookupRpf('benzo_k_fluoranthene', 'who-1998-pah').kind).toBe('not-defined');
+    const combined = lookupRpf('benzo_bjk_fluoranthene', 'who-1998-pah');
+    expect(combined.kind).toBe('value');
+    expect(combined.rpf).toBe(0.1);
   });
 });
 

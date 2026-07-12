@@ -15,6 +15,34 @@ vi.mock('@/components/MathRenderer', () => ({
   ),
 }));
 
+// T45: WRAP (never replace) the real resolveEcoSeed so every existing test in this file keeps
+// exercising the LIVE catalog unchanged. Only a synthetic substanceKey used by NO real substance
+// ('__t45_provisional_fixture__') is intercepted, to prove the TRV "Provisional -- needs review"
+// badge actually renders when resolveEcoSeed returns provisional: true. As of 2026-07-11 this path is
+// UNREACHABLE with live data (every eco_values.json row is approved + direct_source_verified), so this
+// is a regression LOCK against a future needs_review eco-food TRV row silently losing its flag.
+vi.mock('@/lib/matrix-options/ecoSeed', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/lib/matrix-options/ecoSeed')>();
+  return {
+    ...actual,
+    resolveEcoSeed: vi.fn((...args: Parameters<typeof actual.resolveEcoSeed>) => {
+      const [substanceKey, pathway] = args;
+      if (substanceKey === '__t45_provisional_fixture__' && pathway === 'eco-food-bsaf') {
+        return {
+          value: 0.02,
+          unit: 'mg/kg-bw/day',
+          parameterValueId: 'pv-t45-provisional-fixture-trv',
+          label: 'T45 provisional fixture TRV',
+          sourceShortLabel: 'T45 fixture source',
+          provisional: true,
+        };
+      }
+      return actual.resolveEcoSeed(...args);
+    }),
+  };
+});
+
 import EcoFoodBSAFCalculator from '../EcoFoodBSAFCalculator';
 import { SUBSTANCE_LIBRARY } from '@/lib/matrix-options/substanceLibrary';
 import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
@@ -110,6 +138,11 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     const focSlider = screen.getByLabelText(/Sediment f/i) as HTMLInputElement;
     fireEvent.change(focSlider, { target: { value: '0.1' } });
     expect(screen.getByTestId('ecofood-blocked')).toBeInTheDocument();
+    // T43 fail-closed sweep: the badge alone is not proof of a withheld standard -- confirm the hero
+    // numeric value is actually replaced with '--', never a stale/partial diagnostic number.
+    const standard = screen.getByTestId('ecofood-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
+    expect(standard).not.toHaveTextContent(/[0-9]/);
     // Open Technical details to see warnings.
     const details = screen.getByTestId(
       'ecofood-technical-details',
@@ -560,5 +593,44 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
       />,
     );
     expect(screen.queryByTestId('ecofood-reference-only-notice')).not.toBeInTheDocument();
+  });
+});
+
+// T45 (2026-07-11): needs_review honest-flag regression lock. Mirrors EcoDirectEqPCalculator's T45
+// block. The TRV "Provisional -- needs review" badge is implemented but no prior component test
+// exercised the TRUE branch -- every real eco-catalog row is currently approved + direct_source_verified
+// (see the vi.mock block above), so the badge condition was only ever proven absent, never present.
+describe('EcoFoodBSAFCalculator needs_review honest-flag surfacing (T45)', () => {
+  it('shows the TRV "Provisional -- needs review" badge when the eco-catalog seed is provisional (mocked fixture)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="__t45_provisional_fixture__"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const trv = screen.getByTestId('ecofood-trv-input') as HTMLInputElement;
+    expect(trv.value).toBe('0.02');
+    const badge = screen.getByTestId('ecofood-trv-provisional-badge');
+    expect(badge).toHaveTextContent(/Provisional -- needs review/i);
+    expect(badge).toHaveAttribute(
+      'title',
+      'Seeded from a needs_review eco catalog candidate; not yet HITL-verified.',
+    );
+    expect(screen.queryByTestId('ecofood-trv-override-badge')).not.toBeInTheDocument();
+  });
+
+  it('the provisional badge disappears once the user overrides the TRV (user-entered values are not tagged provisional)', () => {
+    render(
+      <EcoFoodBSAFCalculator
+        substanceKey="__t45_provisional_fixture__"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.getByTestId('ecofood-trv-provisional-badge')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('ecofood-trv-input'), {
+      target: { value: '0.05' },
+    });
+    expect(screen.queryByTestId('ecofood-trv-provisional-badge')).not.toBeInTheDocument();
+    expect(screen.getByTestId('ecofood-trv-override-badge')).toBeInTheDocument();
   });
 });

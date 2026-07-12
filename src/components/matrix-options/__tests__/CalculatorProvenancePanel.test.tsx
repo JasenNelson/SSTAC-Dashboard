@@ -338,4 +338,51 @@ describe('CalculatorProvenancePanel', () => {
       ).toBeInTheDocument();
     });
   });
+
+  // T45 (2026-07-11): needs_review honest-flag regression lock. The panel renders a per-row
+  // StatusChip for row.qa_status (component source ~L350), which is the mechanism that surfaces a
+  // needs_review value's flag to the user in the calculator UI. No prior test in this file asserted
+  // the RENDERED TEXT of that chip -- the "audit text" tests above only cover the aggregate counts
+  // (keyed on evidence_support_status, a different field). This locks the actual DOM text so a future
+  // refactor of StatusChip/humanizeStatus cannot silently drop the "needs review" wording from view.
+  describe('per-row qa_status flag surfaces to the user (T45)', () => {
+    it('a needs_review row renders a visible "needs review" status chip (never silently presented as verified)', () => {
+      const row = makeProvenanceRow({
+        input_key: 'sf_oral',
+        qa_status: 'needs_review',
+      });
+      mockResolveProvenanceRows.mockReturnValue([row]);
+
+      render(
+        <CalculatorProvenancePanel
+          pathway="eco-direct-eqp"
+          usedValues={[]}
+          defaultOpen={true}
+        />,
+      );
+
+      expect(screen.getByText(/needs review/i)).toBeInTheDocument();
+      // Discriminating contrast: the panel must NOT also claim this row is approved.
+      expect(screen.queryByText(/^approved$/i)).not.toBeInTheDocument();
+    });
+
+    it('an approved row renders "approved" (not "needs review") -- the chip is status-discriminating, not a static label', () => {
+      const row = makeProvenanceRow({
+        input_key: 'sf_oral',
+        qa_status: 'approved',
+      });
+      mockResolveProvenanceRows.mockReturnValue([row]);
+
+      render(
+        <CalculatorProvenancePanel
+          pathway="eco-direct-eqp"
+          usedValues={[]}
+          defaultOpen={true}
+        />,
+      );
+
+      expect(screen.getByText(/^approved$/i)).toBeInTheDocument();
+      expect(screen.queryByText(/needs review/i)).not.toBeInTheDocument();
+    });
+  });
 });

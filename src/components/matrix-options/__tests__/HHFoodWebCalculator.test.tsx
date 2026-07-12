@@ -207,6 +207,11 @@ describe('HHFoodWebCalculator', () => {
     expect(screen.getByTestId('hh-food-error')).toHaveTextContent(
       /BSAF_loc must be a positive/i,
     );
+    // T43 fail-closed sweep: while the BSAF is missing/ambiguous, the numeric standard must be
+    // withheld ('--'), never a stale or partial number.
+    const standard = screen.getByTestId('hh-food-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
+    expect(standard).not.toHaveTextContent(/[0-9]/);
     fireEvent.change(screen.getByTestId('hh-food-bsaf-input'), {
       target: { value: '0.25' },
     });
@@ -217,6 +222,26 @@ describe('HHFoodWebCalculator', () => {
     expect(
       screen.getByTestId('regulatory-frame-notice-human-health-food'),
     ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
+  });
+
+  // T43 fail-closed sweep gap: HHFoodWebCalculator's underlying humanHealthFoodWeb() reducer has a
+  // SECOND fail-closed path distinct from the hard parse error above -- a `blocked` result (foc outside
+  // the EqP validity window [0.2%, 10%], derivations.ts FOC_MIN/FOC_MAX) that still computes a
+  // diagnostic sedS but must NOT surface it as a usable standard. No prior test in this file exercised
+  // this path (the Eco calculators' equivalent foc-block tests exist; this one did not). Added here.
+  it('BLOCKS the standard (fail-closed render) when foc is outside the EqP validity window', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const focSlider = screen.getByLabelText(/Sediment f_oc/i) as HTMLInputElement;
+    fireEvent.change(focSlider, { target: { value: '0.1' } }); // 0.1% < FOC_MIN (0.2%)
+    expect(screen.getByTestId('hh-food-blocked-notice')).toBeInTheDocument();
+    const standard = screen.getByTestId('hh-food-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
+    expect(standard).not.toHaveTextContent(/[0-9]/);
   });
 
   it('renders conservative provenance scaffolds for HH food-web inputs', () => {
