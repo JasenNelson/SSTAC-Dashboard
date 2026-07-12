@@ -15,6 +15,35 @@ vi.mock('@/components/MathRenderer', () => ({
   ),
 }));
 
+// T45: WRAP (never replace) the real resolveEcoSeed so every existing test in this file keeps
+// exercising the LIVE catalog unchanged. Only a synthetic substanceKey used by NO real substance
+// ('__t45_provisional_fixture__') is intercepted, to prove the "Provisional -- needs review" badge
+// actually renders when resolveEcoSeed returns provisional: true. As of 2026-07-11 this path is
+// UNREACHABLE with live data -- every row in eco_values.json is approved + direct_source_verified
+// (Step-6 4B promotion swept the catalog clean) -- so this is a regression LOCK against a future
+// needs_review eco row silently losing its user-visible flag, not a currently-observable live case.
+vi.mock('@/lib/matrix-options/ecoSeed', async (importOriginal) => {
+  const actual =
+    await importOriginal<typeof import('@/lib/matrix-options/ecoSeed')>();
+  return {
+    ...actual,
+    resolveEcoSeed: vi.fn((...args: Parameters<typeof actual.resolveEcoSeed>) => {
+      const [substanceKey, pathway] = args;
+      if (substanceKey === '__t45_provisional_fixture__' && pathway === 'eco-direct-eqp') {
+        return {
+          value: 0.5,
+          unit: 'ug/L',
+          parameterValueId: 'pv-t45-provisional-fixture',
+          label: 'T45 provisional fixture',
+          sourceShortLabel: 'T45 fixture source',
+          provisional: true,
+        };
+      }
+      return actual.resolveEcoSeed(...args);
+    }),
+  };
+});
+
 import EcoDirectEqPCalculator from '../EcoDirectEqPCalculator';
 import { SUBSTANCE_LIBRARY } from '@/lib/matrix-options/substanceLibrary';
 import { REGULATORY_FRAME_IDS } from '@/lib/matrix-options/regulatoryFrames';
@@ -314,6 +343,10 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(screen.getByTestId('eqp-error')).toHaveTextContent(
       /FCV must be a positive decimal number/,
     );
+    // T43 fail-closed sweep: a null/missing FCV input must withhold the numeric standard.
+    const standardValue = screen.getByTestId('eqp-standard-value');
+    expect(standardValue).toHaveTextContent(/^--/);
+    expect(standardValue).not.toHaveTextContent(/[0-9]/);
   });
 
   it('does not render the embedded substance dropdown (substance lifted in PR-A2)', () => {
@@ -669,5 +702,48 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
       />,
     );
     expect(screen.queryByTestId('eqp-reference-only-notice')).not.toBeInTheDocument();
+  });
+});
+
+// T45 (2026-07-11): needs_review honest-flag regression lock. The "Provisional -- needs review" badge
+// (rendered when fcvSeed.provisional is true) is implemented, but no prior component test exercised
+// the TRUE branch -- every real eco-catalog row is currently approved + direct_source_verified, so the
+// badge condition was only ever proven absent, never proven present. This test uses the mocked
+// resolveEcoSeed fixture (see the vi.mock block above) to lock the positive case: a provisional seed
+// MUST surface its flag to the user in the calculator UI, never silently presented as verified.
+describe('EcoDirectEqPCalculator needs_review honest-flag surfacing (T45)', () => {
+  it('shows the "Provisional -- needs review" badge when the eco-catalog seed is provisional (mocked fixture)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="__t45_provisional_fixture__"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const fcv = screen.getByTestId('eqp-fcv-input') as HTMLInputElement;
+    expect(fcv.value).toBe('0.5');
+    const badge = screen.getByTestId('eqp-fcv-provisional-badge');
+    expect(badge).toHaveTextContent(/Provisional -- needs review/i);
+    expect(badge).toHaveAttribute(
+      'title',
+      'Seeded from a needs_review eco catalog candidate; not yet HITL-verified.',
+    );
+    // The value is NOT silently presented as verified: no override badge (this is a seed, not a
+    // user edit) and the provisional badge is the only status indicator on the field.
+    expect(screen.queryByTestId('eqp-fcv-override-badge')).not.toBeInTheDocument();
+  });
+
+  it('the provisional badge disappears once the user overrides the value (user-entered values are not tagged provisional)', () => {
+    render(
+      <EcoDirectEqPCalculator
+        substanceKey="__t45_provisional_fixture__"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.getByTestId('eqp-fcv-provisional-badge')).toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('eqp-fcv-input'), {
+      target: { value: '0.9' },
+    });
+    expect(screen.queryByTestId('eqp-fcv-provisional-badge')).not.toBeInTheDocument();
+    expect(screen.getByTestId('eqp-fcv-override-badge')).toBeInTheDocument();
   });
 });

@@ -1,7 +1,7 @@
 // src/app/api/graphs/prioritization-matrix/route.ts
 
 import { NextResponse } from 'next/server';
-import { createAnonymousClient } from '@/lib/supabase-auth';
+import { createAnonymousClient, createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 
 // Type definitions for API responses
 interface VotingResult {
@@ -100,11 +100,35 @@ export async function GET(request: Request) {
   console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
   const supabase = await createAnonymousClient();
 
+  // SECURITY (2026-07-11): this route has both public/anonymous consumers
+  // (CEW conference kiosk charts, always filter=cew) and authenticated
+  // consumers (survey-results pages, gated by middleware to any logged-in
+  // user; the admin poll-results page, gated to admins at the page level).
+  // The route itself must not rely on page-level gating -- it is a public
+  // HTTP endpoint. So the route determines its own auth tier here:
+  //   - "auth" tier (any logged-in caller): unchanged pre-fix behavior --
+  //     individual vote rows for BOTH cew and authenticated users, including
+  //     raw authenticated user_id (needed for the survey-results scatter
+  //     tooltip; matches existing non-admin-authenticated consumer needs).
+  //   - "public" tier (no session): aggregate stats + already-pseudonymized
+  //     CEW individual vote rows only. Individual authenticated vote rows
+  //     (raw user_id + their importance/feasibility) are never included.
+  // The in-memory cache key and the HTTP Cache-Control header are BOTH tier
+  // aware so a cached authenticated-tier response (or a shared/CDN HTTP
+  // cache) can never be replayed to an anonymous caller.
+  const authClient = await createAuthenticatedClient();
+  const requester = await getAuthenticatedUser(authClient);
+  const isAuthenticated = !!requester;
+  const cacheTier = isAuthenticated ? 'auth' : 'public';
+  const cacheControlHeader = isAuthenticated
+    ? 'private, no-store'
+    : 'public, max-age=600, s-maxage=600';
+
   // Get filter parameter from URL
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get('filter') || 'all';
-  const cacheKey = `matrix_${filter}`;
-  console.log(`🚀 MATRIX API - Filter mode: ${filter}`);
+  const cacheKey = `matrix_${filter}_${cacheTier}`;
+  console.log(`🚀 MATRIX API - Filter mode: ${filter}, tier: ${cacheTier}`);
 
   // Check cache
   if (matrixDataCache.has(cacheKey)) {
@@ -112,10 +136,10 @@ export async function GET(request: Request) {
     const cacheAge = Date.now() - cachedEntry.timestamp;
 
     if (cacheAge < MATRIX_CACHE_TTL_MS) {
-      console.log(`✅ MATRIX API - Cache hit for filter: ${filter}, age: ${cacheAge}ms`);
+      console.log(`✅ MATRIX API - Cache hit for filter: ${filter}, tier: ${cacheTier}, age: ${cacheAge}ms`);
       return NextResponse.json(cachedEntry.data, {
         headers: {
-          'Cache-Control': 'public, max-age=600, s-maxage=600',
+          'Cache-Control': cacheControlHeader,
           'X-Cache': 'HIT',
           'X-Cache-Age': `${cacheAge}ms`
         }
@@ -539,15 +563,29 @@ export async function GET(request: Request) {
       };
     });
 
-    // Store in cache
+    // SECURITY: never return individual authenticated-vote rows (raw
+    // user_id + that user's importance/feasibility scores) to an
+    // unauthenticated caller. CEW individual pairs are already
+    // pseudonymized (userId prefixed CEW2025_...) and are safe to keep in
+    // the public tier; aggregate stats are never identity-bearing and are
+    // identical across tiers. Fail closed: strip the whole row, not just
+    // the userId field.
+    const responseData: EnhancedMatrixData[] = isAuthenticated
+      ? matrixData
+      : matrixData.map(entry => ({
+          ...entry,
+          individualPairs: entry.individualPairs.filter(pair => pair.userType !== 'authenticated'),
+        }));
+
+    // Store in cache (tier-scoped key -- see cacheKey construction above)
     matrixDataCache.set(cacheKey, {
-      data: matrixData,
+      data: responseData,
       timestamp: Date.now()
     });
 
-    return NextResponse.json(matrixData, {
+    return NextResponse.json(responseData, {
       headers: {
-        'Cache-Control': 'public, max-age=600, s-maxage=600',
+        'Cache-Control': cacheControlHeader,
         'X-Cache': 'MISS'
       }
     });

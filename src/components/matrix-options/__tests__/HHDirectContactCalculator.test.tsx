@@ -69,6 +69,11 @@ describe('HHDirectContactCalculator', () => {
     expect(screen.getByTestId('hh-direct-error')).toHaveTextContent(
       /At least one of RfD or oral slope factor/i,
     );
+    // T43 fail-closed sweep: a blocked (null-toxicology) input must withhold the numeric standard --
+    // the hero card shows '--', never a stale or partial number.
+    const standard = screen.getByTestId('hh-direct-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
+    expect(standard).not.toHaveTextContent(/[0-9]/);
   });
 
   // Renamed from "renders conservative provenance scaffolds for HH direct inputs"

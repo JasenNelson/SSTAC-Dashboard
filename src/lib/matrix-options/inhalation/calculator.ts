@@ -5,6 +5,14 @@ export interface HumanHealthInhalationInput {
   iur_inhalation_per_mg_per_m3: number | null;
   targetRisk: number;
   hazardQuotient: number;
+  // RESERVED: volatilization factor (soil-to-air) and particulate emission factor inputs
+  // for the pending VF/PEF transport-model decision (Option A dynamic / B user-supplied /
+  // C hardcoded -- owner-gated, not yet resolved). These fields are NOT consumed by
+  // deriveInhalationStandards below; the function stays fail-closed (blocked=true)
+  // regardless of whether they are populated. Do not wire these into any computation
+  // until the model decision is made.
+  volatilization_factor_m3_per_kg: number | null;
+  particulate_emission_factor_m3_per_kg: number | null;
   // Placeholder parameters; exact exposure factors (e.g. inhalation rate)
   // and transport models (e.g. VF/PEF) will be defined in subsequent phases.
 }
@@ -42,6 +50,10 @@ export function deriveInhalationStandards(input: HumanHealthInhalationInput): Hu
 
   if (input.iur_inhalation_per_mg_per_m3 !== null) {
     warnings.push('IUR provided but cancer derivation is not yet implemented.');
+  }
+
+  if (input.volatilization_factor_m3_per_kg !== null || input.particulate_emission_factor_m3_per_kg !== null) {
+    warnings.push('VF/PEF provided but the transport-model decision is pending; values are not consumed.');
   }
 
   return {

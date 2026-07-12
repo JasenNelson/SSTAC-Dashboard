@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface DraRow {
@@ -11,14 +11,107 @@ export interface DraRow {
   public: boolean;
 }
 
+export interface DraAuditRow {
+  id: string;
+  dra_id: string;
+  prior_value: boolean;
+  new_value: boolean;
+  changed_at: string;
+  changed_by_email: string;
+  reason: string;
+}
+
 export interface DraPublishControlProps {
   initialDras: DraRow[];
   isAdmin: boolean;
 }
 
+function fmtAuditTs(ts: string): string {
+  try {
+    return new Date(ts).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  } catch {
+    return ts;
+  }
+}
+
 export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlProps) {
   const [dras, setDras] = useState<DraRow[]>(initialDras);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // Audit-history state. Codex P2 fix (2026-07-11): fetched PER-DRA,
+  // server-side, on selection change -- rather than filtered client-side
+  // out of a globally-bounded (top-200) list, which could silently omit a
+  // selected DRA's history once the table grew past that bound and this
+  // DRA's latest change fell outside the global newest-200 window
+  // (a false-negative "no history" result). See
+  // src/app/api/matrix-map/admin/audit-history/route.ts.
+  const [auditRows, setAuditRows] = useState<DraAuditRow[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+  // Monotonic request counter so a stale in-flight fetch (superseded by a
+  // newer selection or an explicit post-publish refresh) never clobbers
+  // fresher state when it resolves out of order.
+  const auditRequestIdRef = useRef(0);
+  // Codex P2 fix (2026-07-11, round 3): a request-id recency guard alone is
+  // not enough -- if an admin submits publish/unpublish for DRA A, then
+  // switches the selection to DRA B before that POST resolves, the
+  // post-success refetch for DRA A becomes the numerically "latest"
+  // request and would render DRA A's rows under DRA B's now-selected
+  // panel. Track the currently-selected id in a ref and additionally
+  // require the resolved fetch's draId to still match it.
+  const selectedRowIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedRowIdRef.current = selectedRowId;
+  }, [selectedRowId]);
+
+  const loadAuditHistory = useCallback(async (draId: string) => {
+    // Codex P2 fix (2026-07-11, round 4): a round-3 refetch for a DRA that
+    // is no longer selected (e.g. a post-publish refresh for DRA A after
+    // the admin has since selected DRA B) correctly discarded its RESULT,
+    // but still unconditionally flipped auditLoading -> true up front,
+    // which could flicker DRA B's already-correct panel into a loading
+    // state -- or leave it stuck loading if that stale DRA-A fetch hangs.
+    // Bail out before touching any UI state at all if draId is not the
+    // current selection at call time.
+    if (selectedRowIdRef.current !== draId) return;
+
+    const requestId = ++auditRequestIdRef.current;
+    setAuditLoading(true);
+    setAuditError(null);
+
+    const stillCurrent = () =>
+      auditRequestIdRef.current === requestId && selectedRowIdRef.current === draId;
+
+    try {
+      const response = await fetch(
+        `/api/matrix-map/admin/audit-history?dra_id=${encodeURIComponent(draId)}`,
+      );
+      const data = await response.json();
+      if (!stillCurrent()) return; // superseded, or draId no longer selected
+      if (!response.ok) {
+        throw new Error(data.detail || data.error || 'Failed to load visibility history');
+      }
+      setAuditRows(Array.isArray(data.rows) ? data.rows : []);
+    } catch (err: unknown) {
+      if (!stillCurrent()) return; // superseded, or draId no longer selected
+      const msg = err instanceof Error ? err.message : String(err);
+      setAuditError(msg);
+      setAuditRows([]);
+    } finally {
+      if (stillCurrent()) setAuditLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!selectedRowId) {
+      auditRequestIdRef.current += 1; // invalidate any in-flight request
+      setAuditRows([]);
+      setAuditError(null);
+      setAuditLoading(false);
+      return;
+    }
+    loadAuditHistory(selectedRowId);
+  }, [selectedRowId, loadAuditHistory]);
 
   // Action state
   const [actionMode, setActionMode] = useState<'publish' | 'unpublish' | null>(null);
@@ -81,13 +174,20 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
       });
       setActionMode(null);
       setActionReason('');
+
+      // Codex P2 fix (2026-07-11, round 2): the POST just wrote a new
+      // dra_visibility_audit row for this DRA. Refetch its history now so
+      // the "Recent visibility changes" panel reflects it immediately,
+      // rather than staying stale (or stuck on the empty state) until the
+      // row is reselected or the page is reloaded.
+      loadAuditHistory(selectedRow.id);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
       setActionMessage({ kind: 'err', text: msg });
     } finally {
       setActionSubmitting(false);
     }
-  }, [actionMode, actionReason, selectedRow]);
+  }, [actionMode, actionReason, selectedRow, loadAuditHistory]);
 
   return (
     <div
@@ -236,6 +336,72 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
               <div className="text-slate-700 dark:text-slate-200">
                 {selectedRow.public ? 'Public' : 'Private'}
               </div>
+            </div>
+
+            <div>
+              <div className="font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                Recent visibility changes
+              </div>
+              {(() => {
+                if (auditLoading) {
+                  return (
+                    <div
+                      className="text-[11px] text-slate-500 dark:text-slate-400"
+                      role="status"
+                      data-testid="dra-audit-history-loading"
+                    >
+                      Loading visibility history...
+                    </div>
+                  );
+                }
+                if (auditError) {
+                  // Fail-closed: never present a fetch failure as a
+                  // definitive "no history" -- that is the exact
+                  // false-negative shape codex flagged (P2, 2026-07-11).
+                  return (
+                    <div
+                      className="text-[11px] text-red-600 dark:text-red-400"
+                      role="alert"
+                      data-testid="dra-audit-history-error"
+                    >
+                      Unable to load visibility history for this DRA: {auditError}
+                    </div>
+                  );
+                }
+                const rowHistory = auditRows.slice(0, 5);
+                if (rowHistory.length === 0) {
+                  return (
+                    <div
+                      className="text-[11px] text-slate-500 dark:text-slate-400"
+                      role="status"
+                      data-testid="dra-audit-history-empty"
+                    >
+                      No recorded visibility changes for this DRA.
+                    </div>
+                  );
+                }
+                return (
+                  <ul
+                    className="space-y-1.5"
+                    data-testid="dra-audit-history-list"
+                    aria-label="Recent visibility changes"
+                  >
+                    {rowHistory.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
+                      >
+                        <div className="font-mono">
+                          {fmtAuditTs(a.changed_at)} -- {String(a.prior_value)} {'->'} {String(a.new_value)}
+                        </div>
+                        <div>
+                          {a.changed_by_email}: {a.reason}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
             </div>
 
             {isAdmin && actionMode === null && (
