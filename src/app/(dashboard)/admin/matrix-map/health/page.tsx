@@ -1139,7 +1139,8 @@ export default async function MatrixMapHealthPage() {
             <div className="mt-4">
               {(() => {
                 const sampleCount = capRes.error ? null : (capRes.data?.totalValid ?? null);
-                const alert = computeCapAlert(sampleCount, DEPLOYED_MAP_CAP);
+                const rpcTruncated = capRes.error ? null : (capRes.data?.truncated ?? null);
+                const alert = computeCapAlert(sampleCount, DEPLOYED_MAP_CAP, rpcTruncated);
                 if (alert.level === 'indeterminate') {
                   return (
                     <div

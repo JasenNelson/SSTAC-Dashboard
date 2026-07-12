@@ -37,10 +37,21 @@ export type CapAlertResult = {
  * 'indeterminate' (never a false 'ok'). Callers should render an
  * indeterminate/warning-styled state for 'indeterminate', not treat
  * it as healthy.
+ *
+ * `rpcTruncated`, when provided, is the DEPLOYED RPC's own `truncated`
+ * flag (see section 10 / migration 20260711000001). It is authoritative
+ * over the DEPLOYED_MAP_CAP-based pct estimate: DEPLOYED_MAP_CAP is a
+ * documented constant that can drift from the live RPC's v_cap (e.g. an
+ * environment still running the pre-2026-07-11 2500 cap). If the RPC
+ * itself already reports truncation, the alert always fires 'warning'
+ * regardless of what the pct calculation says, so this threshold alert
+ * can never report a healthy state that contradicts the RPC's own
+ * truncated flag in section 10 above it.
  */
 export function computeCapAlert(
   sampleCount: number | null | undefined,
   deployedCap: number | null | undefined,
+  rpcTruncated?: boolean | null,
 ): CapAlertResult {
   if (
     typeof sampleCount !== 'number' ||
@@ -54,5 +65,8 @@ export function computeCapAlert(
   }
 
   const pct = sampleCount / deployedCap;
+  if (rpcTruncated === true) {
+    return { level: 'warning', pct };
+  }
   return { level: pct >= CAP_ALERT_THRESHOLD ? 'warning' : 'ok', pct };
 }

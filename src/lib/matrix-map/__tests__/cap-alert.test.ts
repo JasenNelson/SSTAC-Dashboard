@@ -67,4 +67,31 @@ describe('computeCapAlert', () => {
   it('fails closed to indeterminate on negative sample count', () => {
     expect(computeCapAlert(-1, 5000).level).toBe('indeterminate');
   });
+
+  it('forces warning when the RPC truncated flag is true, even below the pct threshold', () => {
+    // Regression: DEPLOYED_MAP_CAP is a documented constant that can drift
+    // from the live RPC's v_cap (e.g. an older 2500-cap environment). A
+    // 2500-sample count against a stale 5000 constant computes to 50% (ok),
+    // but if the deployed RPC itself already reports truncated=true, this
+    // alert must never report a healthy state that contradicts it.
+    const result = computeCapAlert(2500, 5000, true);
+    expect(result.level).toBe('warning');
+    expect(result.pct).toBeCloseTo(0.5, 4);
+  });
+
+  it('does not force warning when rpcTruncated is false', () => {
+    const result = computeCapAlert(100, 5000, false);
+    expect(result.level).toBe('ok');
+  });
+
+  it('does not force warning when rpcTruncated is null/undefined (falls back to pct-based level)', () => {
+    expect(computeCapAlert(100, 5000, null).level).toBe('ok');
+    expect(computeCapAlert(100, 5000, undefined).level).toBe('ok');
+  });
+
+  it('rpcTruncated=true still yields indeterminate when the base inputs are invalid', () => {
+    const result = computeCapAlert(null, 5000, true);
+    expect(result.level).toBe('indeterminate');
+    expect(result.pct).toBeNull();
+  });
 });
