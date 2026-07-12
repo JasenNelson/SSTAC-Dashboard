@@ -1,43 +1,40 @@
-STATUS: APPLIED 2026-07-11 to production via the owner-approved project-scoped /supabase MCP path.
-Re-homed to repo history as supabase/migrations/20260711000001_matrix_map_fetch_samples_pagination.sql.
+-- =====================================================================
+-- matrix_map.fetch_samples_with_hidden_summary -- raise visible-row cap
+-- =====================================================================
+-- Lane: data-truth 2026-07-11 (T13). APPLIED 2026-07-11 to production via the owner-approved
+-- project-scoped /supabase MCP path (per current AGENTS.md Supabase Protocol: owner-approved MCP
+-- writes are allowed for an exact, drafted, codex-reviewed operation). This file re-homes the
+-- already-applied SQL into repo migration history so the repo matches the live DB. Post-apply verify
+-- confirmed cap_is_5000=true, still_2500=false, owner=matrix_map_owner, secdef=true, signature
+-- unchanged, and 0 DRA-visibility change. (The prior "STAGED / do NOT apply via MCP" banner reflected
+-- the superseded SQL-Editor-only posture.)
+--
+-- PROBLEM (verified 2026-07-11, MAP_ACCESS_DIAGNOSIS.md): the province-wide
+-- admin view has 4486 valid samples but the RPC capped at v_cap=2500
+-- (LIMIT 2500) -> 1986 rows silently dropped for admins/granted viewers.
+--
+-- FIX (minimal, security-preserving): raise v_cap 2500 -> 5000 so the CURRENT
+-- dataset (4486) returns in full. The honest 'truncated' flag + the
+-- "Showing N of M -- zoom in to see all" banner (MatrixMap.tsx) already
+-- handle any FUTURE dataset > 5000, and the viewport refetch (zoom >= 7)
+-- pages by geography. True offset-pagination (a signature change) is a
+-- deferred future lane if the dataset grows substantially past the cap --
+-- see MAP_CAP_PAGINATION_SPEC.md.
+--
+-- WHY CREATE OR REPLACE (same signature) and NOT drop+recreate: CREATE OR
+-- REPLACE preserves the existing function OWNER (matrix_map_owner -> the
+-- SECDEF execution identity with BYPASSRLS) and the existing grants
+-- (authenticated:EXECUTE, matrix_map_owner:EXECUTE; anon/service_role: no).
+-- A DROP+CREATE would reset ownership to the migrating role (postgres) and
+-- default-grant EXECUTE to PUBLIC -- a security regression. Keeping the
+-- single-arg signature is therefore REQUIRED, not merely convenient.
+--
+-- Every auth/allowlist/admin/visibility predicate and the PROVINCE-WIDE
+-- (spatial-oracle-safe) hidden-summary aggregate are byte-for-byte
+-- unchanged from 20260623000001; the ONLY change is the v_cap constant.
+-- Append-only. Plain ASCII only.
+-- =====================================================================
 
-Supabase-write posture (current AGENTS.md Supabase Protocol, supersedes the old "SQL-Editor-only /
-Do NOT apply via MCP" banner that was here): reads via MCP are free; an owner-approved WRITE via the
-/supabase MCP is allowed ONLY when the exact SQL is drafted, codex-reviewed GREEN, flagged to the
-owner, and explicitly owner-approved for that exact operation (apply_migration stays disallowed; bulk
-loads use the pooler loader). This cap operation met that bar (owner-approved 2026-07-11).
-
-# Matrix Map Cap Migration Owner Packet
-
-This migration raises the visible-row cap in `matrix_map.fetch_samples_with_hidden_summary` from 2500 to 5000. The cap is being raised because the province-wide valid sample count has grown to 4486, causing 1986 rows to be silently dropped for admins. This is a security-preserving `CREATE OR REPLACE` operation that maintains the same single-argument signature, which is required to preserve the function OWNER (`matrix_map_owner`) and existing grants.
-
-## PRE-APPLY VERIFY (read-only)
-
-Run the following queries FIRST to confirm the current state:
-
-**1. Confirm current function owner + signature:**
-```sql
-SELECT p.proname, pg_get_userbyid(p.proowner) AS owner, pg_get_function_identity_arguments(p.oid) AS args
-FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE n.nspname = 'matrix_map' AND p.proname = 'fetch_samples_with_hidden_summary';
-```
-
-**2. Confirm the province-wide valid-sample count (expected ~4486):**
-```sql
-SELECT COUNT(*)
-FROM matrix_map.samples s
-JOIN matrix_map.dras d ON d.id = s.source_dra_id
-WHERE s.longitude IS NOT NULL
-  AND s.latitude IS NOT NULL
-  AND s.source_dra_id IS NOT NULL
-  AND d.is_deleted = false;
-```
-
-## APPLY
-
-Apply the following `CREATE OR REPLACE FUNCTION` statement EXACTLY as written. It includes the required `SECURITY DEFINER`, `search_path`, and `v_cap constant int := 5000`.
-
-```sql
 CREATE OR REPLACE FUNCTION matrix_map.fetch_samples_with_hidden_summary(p_bbox jsonb DEFAULT NULL::jsonb)
   RETURNS jsonb
   LANGUAGE plpgsql
@@ -200,27 +197,3 @@ BEGIN
   );
 END;
 $function$;
-```
-
-## POST-APPLY VERIFY (read-only)
-
-Run the following queries to verify the function was updated successfully.
-
-**1. Re-run owner + signature query to ensure owner is STILL `matrix_map_owner` and signature is unchanged:**
-```sql
-SELECT p.proname, pg_get_userbyid(p.proowner) AS owner, pg_get_function_identity_arguments(p.oid) AS args
-FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
-WHERE n.nspname = 'matrix_map' AND p.proname = 'fetch_samples_with_hidden_summary';
-```
-
-**2. Confirm the cap now returns the full set:**
-```sql
-SELECT
-  (matrix_map.fetch_samples_with_hidden_summary()->>'returned_sample_count')::int AS count,
-  (matrix_map.fetch_samples_with_hidden_summary()->>'truncated')::boolean AS truncated;
-```
-Expected output should be a count of up to 5000 (currently ~4486) and `truncated = false`.
-
-## ROLLBACK
-
-If rollback is necessary, re-apply the 2500 cap version from `20260623000001_matrix_map_fetch_samples_bbox_pagination.sql` using a `CREATE OR REPLACE` statement to downgrade back to `v_cap constant int := 2500;`.
