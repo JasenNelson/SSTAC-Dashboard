@@ -39,6 +39,12 @@ Only two of the named cohort are unwired, both pre-declared HITL-deferred:
 2. **`phenylmercuric_acetate`** -- no clean `ContaminantClass` fit (sits between `methyl-Hg`,
    `divalent-metal`, and `mercury_inorganic`). RECOMMENDATION: owner picks the class (or approves a
    new `organomercury` class); then it is mechanical to wire.
+   - RESOLVED 2026-07-11d (verified in code): `phenylmercuric_acetate` is now wired as its own
+     entry in `src/lib/matrix-options/substanceLibrary.ts` with `contaminantClass: 'organic'`
+     (pragmatic bucket, documented in the entry's `notes` as NOT elemental/organic mercury since no
+     `organomercury` class exists in the closed `ContaminantClass` union), `abs_dermal: 0.1`
+     (organic-class default), and `rfd_oral_mg_per_kg_bw_per_day: 0.00008` (US EPA IRIS, CASRN
+     62-38-4, qa_status=approved). No open class decision remains for this substance.
 
 RECOMMENDATION: mark Group 3b / Group 4 CLOSED in the HITL-decisions doc and re-file these two under a
 narrow "PCB + organomercury policy" ticket.
@@ -132,7 +138,7 @@ verification. Confirmed correct.
 | # | Lane | Item | Recommendation |
 |---|------|------|----------------|
 | 1 | 1+3 | PCB policy (`total_pcbs_aroclor_1254` default + `pcbs_non_coplanar` wiring) | Adopt Option A (PCB-consolidation doc); one decision closes both |
-| 2 | 1 | `phenylmercuric_acetate` ContaminantClass | Pick a class (or approve `organomercury`) |
+| 2 | 1 | `phenylmercuric_acetate` ContaminantClass | RESOLVED 2026-07-11d: wired as `organic` (pragmatic bucket) in substanceLibrary.ts; no action needed |
 | 3 | 3 | `dichlorobenzene_1_2` default | RESOLVED 2026-07-06: keep IRIS 0.09 (owner's 07-05 more-protective call; HC 0.43 is 1996-vintage despite the 2025 table label). No action. |
 | 4 | 3 | Confirm cadmium 0.0008 + methylmercury 0.0002 defaults (applied despite hold flag) | Confirm or redirect; low urgency |
 | 5 | 2 | HC v4.0 catalog re-verification | Owner supplies canonical PDF source pointer -> run the existing #518 tooling as a focused lane |

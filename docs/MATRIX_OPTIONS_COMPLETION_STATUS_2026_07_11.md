@@ -1,5 +1,32 @@
 # Matrix Options Completion Status (2026-07-11)
 
+## 0. CONTINUATION UPDATE (2026-07-11d)
+
+Section 1's "Base SHA a5ac86a" and its PR list (#595-#603) are STALE as of this update. Current
+truth, verified against `origin/main` on the `docs/mo-cleanup-map-report-2026-07-11` worktree:
+
+- Base: `origin/main` is now at `a86414d` (the tip when this update was written).
+- #595 through #606 are all MERGED (this supersedes the "#595-#603 SHIPPED, owner merges" framing
+  in section 1 -- they have already been merged). This includes, beyond section 1's original list:
+  #604 (chore: cap migration history), #605 (feat: audited DRA publication flow, admin-only,
+  single-DRA, via `flip_dra_public`), and #606 (feat: matrix-map health cap/pagination readiness
+  observability).
+- Map cap: the RPC cap SQL from HITL item 1 (CAP_MIGRATION_OWNER_PACKET.md) has been APPLIED in
+  production -- the cap is now 5000 (was 2500).
+- DRA publication flow: BUILT (#605, addresses HITL item 2) -- admin-only, single-DRA, via
+  `flip_dra_public`. As of this update, 0 DRAs have actually been published through the flow (574
+  private / 0 public remains the live data state; the flow existing and DRAs being published are
+  two different facts -- do not conflate them).
+- Catalog / IRIS: US-EPA IRIS buildout remains COMPLETE per section 2 Goal 3 (0 true orphans; T24
+  moot). No change since section 1.
+- Inhalation: still scaffold-only. PR #610 (open) reserves the VF/PEF input fields fail-closed,
+  pending the model decision (HITL item 3) -- this is scaffolding, not a working inhalation pathway.
+
+Section 3 (HITL QUEUE) below remains the canonical open owner-decision queue; items 2 (DRA
+publication) and part of item 1 (cap-apply) are now RESOLVED per this update -- see the section 3
+item text for status where marked. Items not marked resolved below are still open. Newly-surfaced
+items since section 3 was written are appended at the end of section 3.
+
 ## 1. Purpose + Date + Base SHA + Shipped PRs
 Purpose: Single canonical status of the 15h Matrix Options completion push -- what shipped, what remains
 (autonomous-continuable vs owner-gated), and the consolidated HITL owner-decision queue.
@@ -44,14 +71,43 @@ CLOSED: #579 (superseded by #580 durable skip-safe E2E).
 - REMAINING (owner-gated): Approve BUILDING the audited DRA publication flow, RLS-bypass gap decision, strict POLLING_GATE + owner decision for api/graphs/prioritization-matrix.
 
 ## 3. HITL QUEUE
-1. CAP-SQL apply 2500->5000: Owner pastes CAP_MIGRATION_OWNER_PACKET.md SQL in Supabase SQL Editor (agent SQL writes forbidden). Pre/post verify queries are in the packet.
-2. Approve BUILDING the audited DRA publication flow: Design in #597; needs a strategic /codex-review + the owner to insert a matrix_admin user_roles row; v1 = single-DRA, no bulk.
+1. CAP-SQL apply 2500->5000: RESOLVED 2026-07-11d -- SQL from CAP_MIGRATION_OWNER_PACKET.md has been
+   APPLIED in production; the cap is now 5000. No further action.
+2. Approve BUILDING the audited DRA publication flow: RESOLVED 2026-07-11d -- flow BUILT (#605,
+   admin-only, single-DRA, via `flip_dra_public`, merged). Remaining is a data-state fact, not a
+   decision: 0 DRAs have actually been published through the flow yet (574 private / 0 public).
 3. Inhalation model decision (packet in #597): Name the VF/PEF anchor guidance (EPA J&E/RAGS Part F vs Health Canada vs BC) + pick option A dynamic / B user-supplied / C hardcoded (engineering recommendation = B first). Plus the T33 unit-basis (per-ug/m3 vs per-mg/m3, x1000) settle.
 4. Catalog arbitration: 15 candidate-group conflicts + 20 supersede-or-reject + the 351 Protocol-28 verify-vs-primary sweep. Then owner runs promote-*.mjs --apply for approved rows (AI never applies).
 5. RLS-bypass gap: dras_admin_all still permits an un-audited direct UPDATE dras SET public -- tighten now (follow-up migration/trigger) vs accept documented gap for v1.
 6. SECURITY FLAG (out of MO core lane; surface only): api/graphs/prioritization-matrix GET is PUBLIC and returns authenticated users' raw user_id UUIDs + individual poll votes (CEW pseudonymized, authenticated NOT). Poll-system route -> strict POLLING_GATE + owner decision. Plus milestones GET has no in-route auth (RLS-only) -- hardening inconsistency.
-7. Broader prior-session MO decisions still open (cross-ref docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md + the cumulative D1-D4 anchors in the 07-07 handoff): phenylmercuric_acetate class; confirm cadmium/methylmercury current_defaults; D1 dioxin TEQ promote / D2 BaP anchor+ADAF / D3 PCB Option A / D4 BC scheme remap.
+7. Broader prior-session MO decisions still open (cross-ref docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md + the cumulative D1-D4 anchors in the 07-07 handoff): confirm cadmium/methylmercury current_defaults;
+   D1 dioxin TEQ promote / D2 BaP anchor+ADAF / D3 PCB Option A.
+   - RESOLVED 2026-07-11d (verified in code): `phenylmercuric_acetate` class -- wired as `organic` in
+     `src/lib/matrix-options/substanceLibrary.ts` (see docs/MATRIX_OPTIONS_OWNER_DECISIONS_2026_07_06.md
+     item 2 for detail). No longer an open owner decision.
+   - RESOLVED 2026-07-11d (verified in code): D4 BC PAH scheme remap -- `RPF_SCHEME_BY_AUTHORITY['bc-csr']
+     = 'ccme-2010'` is ALREADY LIVE in `src/lib/matrix-options/cumulative.ts` (the code comment there
+     cites "D4 remap, BC TG-7 2017"; `who-1998-pah` is retained only as inert `RPF_SCHEME_SCORING_BLOCKED`
+     safety, unused by any authority mapping). No longer an open owner decision. D1-D3 remain open.
 8. MEASUREMENT-LOAD GAP (T16 live finding): 88.6% of the 4494 loaded samples have zero attached measurements; only 503 samples carry sediment measurements. To put "significantly more sediment data" on the map, decide the measurement/undated-events load (~6742 measurements, prior HITL item T12) -- owner yes/no. Separately, waterbody_type is 93.55% empty (limits filtering) -- decide a source/derivation lane. The casing dupes (Marine 243/marine 25 -> Marine 268; Freshwater 8/freshwater 14 -> Freshwater 22) are a deterministic 33-row fix, but it is a DATA WRITE -> owner-run (proposed UPDATE SQL in docs/design/matrix-map/WATERBODY_TYPE_NORMALIZATION_2026_07_11.md, report T18).
+9. NEW (2026-07-11d) -- authenticated non-admin peer-visibility scope: 37a (PR #608, open) closed the
+   anonymous/public leak + cache-poisoning vectors on `api/graphs/prioritization-matrix` GET. A narrower
+   question remains open (37b): should AUTHENTICATED non-admin users be able to see individual peer
+   `user_id`s at all via that endpoint, or should peer identities be aggregated/redacted even for
+   authenticated non-admin callers? Owner call; scope is narrower than 37a (auth is already required
+   post-#608), the question is about the granularity of what an authenticated peer sees.
+10. NEW (2026-07-11d) -- hitl-packets under-protection: `/api/hitl-packets/*` routes
+    (`route.ts`, `[sessionId]/route.ts`, `[sessionId]/csv/route.ts`, `[sessionId]/md/route.ts`) are
+    authed-only (any logged-in user passes `getAuthenticatedUser`) with no reviewer/admin role gate --
+    confirmed by reading `src/app/api/hitl-packets/route.ts` (checks `user` is non-null, does not check
+    role). Documented in the guard-role-model audit at `docs/design/MO_GUARD_ROLE_MODEL_AUDIT_2026_07_11.md`
+    which is PENDING PR #609 (open, not yet on origin/main as of this update) -- reference it as pending
+    PR #609 until merged. Owner call after verifying HITL-packet RLS/content sensitivity: leave
+    authed-only vs add a reviewer/admin role gate.
+11. NEW (2026-07-11d) -- Inhalation VF/PEF model decision (Option A dynamic / B user-supplied /
+    C hardcoded) + T33 unit-basis (per-ug/m3 vs per-mg/m3, x1000) -- still owner-gated (duplicate of
+    item 3 above; the input-field shell shipped in PR #610, open, fail-closed pending this decision).
+    No functional inhalation pathway exists yet.
 
 ## 4. PART-3 UNLOCK MAP
 - cap-migration follow-through PR <- CAP-SQL applied
