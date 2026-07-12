@@ -284,6 +284,75 @@ describe('DraPublishControl', () => {
     expect(screen.getByText(/Just published/)).toBeInTheDocument();
   });
 
+  it('regression: a stale post-publish refetch for a previously-selected DRA does not clobber the panel after the admin has since selected a different DRA (codex P2 round 3 -- race condition)', async () => {
+    // Codex flagged that the round-2 fix guarded refetches by recency
+    // (request id) only. If an admin submits publish for DRA 1, then
+    // switches the selection to DRA 2 BEFORE that POST resolves, the
+    // post-success refetch for DRA 1 becomes the numerically "latest"
+    // request and would (without the additional selected-id check) render
+    // DRA 1's rows under DRA 2's now-selected panel.
+    let resolvePublish: (value: Response) => void = () => {};
+    const publishPromise = new Promise<Response>((resolve) => {
+      resolvePublish = resolve;
+    });
+
+    const auditByDraId: Record<string, unknown[]> = {
+      '11111111-1111-4111-8111-111111111111': [],
+      '22222222-2222-4222-8222-222222222222': [dra2AuditRow],
+    };
+
+    fetchMock = vi.spyOn(global, 'fetch').mockImplementation(async (input: RequestInfo | URL) => {
+      const url = typeof input === 'string' ? input : input.toString();
+
+      if (url.startsWith('/api/matrix-map/admin/audit-history')) {
+        const draId = new URL(url, 'http://localhost').searchParams.get('dra_id') ?? '';
+        return {
+          ok: true,
+          json: async () => ({ ok: true, dra_id: draId, rows: auditByDraId[draId] ?? [] }),
+        } as Response;
+      }
+
+      if (url === '/api/matrix-map/admin/publish') {
+        // Deliberately left pending until resolved below, to simulate the
+        // admin switching selection before the POST returns.
+        return publishPromise;
+      }
+
+      throw new Error(`Unexpected fetch call in test: ${url}`);
+    });
+
+    render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
+
+    // Select DRA 1 (no history) and start + submit a publish action.
+    fireEvent.click(screen.getByTestId('dra-row-11111111-1111-4111-8111-111111111111'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-empty')).toBeInTheDocument();
+    });
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    const textarea = screen.getByLabelText('Reason for visibility change');
+    await userEvent.type(textarea, 'Just published');
+    fireEvent.click(screen.getByRole('button', { name: 'Confirm publish' }));
+
+    // Before the publish POST resolves, switch selection to DRA 2.
+    fireEvent.click(screen.getByTestId('dra-row-22222222-2222-4222-8222-222222222222'));
+    await waitFor(() => {
+      expect(screen.getByTestId('dra-audit-history-list')).toBeInTheDocument();
+    });
+    expect(screen.getByText(/TWG review complete/)).toBeInTheDocument();
+
+    // Now let the stale publish POST for DRA 1 resolve. Its post-success
+    // refetch targets DRA 1 -- it must NOT clobber the DRA 2 panel that is
+    // currently displayed.
+    resolvePublish({ ok: true, json: async () => ({ ok: true }) } as Response);
+
+    // Give the resolved (and now-superseded) refetch a chance to run and
+    // be discarded; the panel must still show DRA 2's real history.
+    await waitFor(() => {
+      expect(screen.getByText(/TWG review complete/)).toBeInTheDocument();
+    });
+    expect(screen.queryByTestId('dra-audit-history-empty')).not.toBeInTheDocument();
+  });
+
   it('fetches and renders audit history scoped to the selected DRA (per-DRA route, not a global list)', async () => {
     render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
 

@@ -52,24 +52,38 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
   // newer selection or an explicit post-publish refresh) never clobbers
   // fresher state when it resolves out of order.
   const auditRequestIdRef = useRef(0);
+  // Codex P2 fix (2026-07-11, round 3): a request-id recency guard alone is
+  // not enough -- if an admin submits publish/unpublish for DRA A, then
+  // switches the selection to DRA B before that POST resolves, the
+  // post-success refetch for DRA A becomes the numerically "latest"
+  // request and would render DRA A's rows under DRA B's now-selected
+  // panel. Track the currently-selected id in a ref and additionally
+  // require the resolved fetch's draId to still match it.
+  const selectedRowIdRef = useRef<string | null>(null);
+  useEffect(() => {
+    selectedRowIdRef.current = selectedRowId;
+  }, [selectedRowId]);
 
   const loadAuditHistory = useCallback(async (draId: string) => {
     const requestId = ++auditRequestIdRef.current;
     setAuditLoading(true);
     setAuditError(null);
 
+    const stillCurrent = () =>
+      auditRequestIdRef.current === requestId && selectedRowIdRef.current === draId;
+
     try {
       const response = await fetch(
         `/api/matrix-map/admin/audit-history?dra_id=${encodeURIComponent(draId)}`,
       );
       const data = await response.json();
-      if (auditRequestIdRef.current !== requestId) return; // superseded
+      if (!stillCurrent()) return; // superseded, or draId no longer selected
       if (!response.ok) {
         throw new Error(data.detail || data.error || 'Failed to load visibility history');
       }
       setAuditRows(Array.isArray(data.rows) ? data.rows : []);
     } catch (err: unknown) {
-      if (auditRequestIdRef.current !== requestId) return; // superseded
+      if (!stillCurrent()) return; // superseded, or draId no longer selected
       const msg = err instanceof Error ? err.message : String(err);
       setAuditError(msg);
       setAuditRows([]);
