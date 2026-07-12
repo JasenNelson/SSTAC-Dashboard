@@ -522,6 +522,43 @@ async function fetchDataFreshness(supa: Supa): Promise<{
   }
 }
 
+async function fetchCapReadiness(supa: Supa): Promise<{
+  data: {
+    totalValid: number | null;
+    returned: number | null;
+    truncated: boolean | null;
+  } | null;
+  error: string | null;
+}> {
+  try {
+    // Read the DEPLOYED cap behavior straight from the RPC (province-wide, no bbox) as the
+    // authenticated admin viewing this page. This reflects whatever v_cap the LIVE function
+    // actually uses -- NOT a hardcoded constant that could drift from the DB (e.g. if an
+    // environment still runs the pre-2500->5000 RPC). total_in_bbox = true province-wide valid
+    // count; returned_sample_count = rows actually returned (== the effective cap when truncated);
+    // truncated = the DB's own over-cap signal (the honest readiness indicator).
+    const { data, error } = await supa
+      .schema('matrix_map')
+      .rpc('fetch_samples_with_hidden_summary', {});
+    if (error) return { data: null, error: error.message };
+    const p = (data ?? {}) as {
+      total_in_bbox?: number;
+      returned_sample_count?: number;
+      truncated?: boolean;
+    };
+    return {
+      data: {
+        totalValid: typeof p.total_in_bbox === 'number' ? p.total_in_bbox : null,
+        returned: typeof p.returned_sample_count === 'number' ? p.returned_sample_count : null,
+        truncated: typeof p.truncated === 'boolean' ? p.truncated : null,
+      },
+      error: null,
+    };
+  } catch (err) {
+    return { data: null, error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
 // ---------------------------------------------------------------------
 // Aggregations (pure -- run on the fetched rows; cannot fail)
 // ---------------------------------------------------------------------
@@ -603,6 +640,7 @@ export default async function MatrixMapHealthPage() {
     grantsRes,
     reviewerVisRes,
     freshnessRes,
+    capRes,
   ] = await Promise.all([
     Promise.all(SCHEMA_TABLES.map((t) => fetchTableCount(supabase, t))),
     fetchClassificationBreakdown(supabase),
@@ -613,6 +651,7 @@ export default async function MatrixMapHealthPage() {
     fetchActiveGrants(supabase),
     fetchReviewerVisibility(supabase),
     fetchDataFreshness(supabase),
+    fetchCapReadiness(supabase),
   ]);
 
   const tableCounts: Record<SchemaTable, CountResult> = SCHEMA_TABLES.reduce(
@@ -1041,6 +1080,49 @@ export default async function MatrixMapHealthPage() {
             <div className="mt-4">
               <MutedNote>
                 Note: Row-count-drift monitoring is not yet available (no baseline snapshot table exists) so it is intentionally omitted.
+              </MutedNote>
+            </div>
+          </SectionCard>
+
+          {/* 10. Cap / pagination readiness */}
+          <SectionCard
+            title="10. Cap / pagination readiness"
+            subtitle="Deployed RPC truncated flag + returned-vs-valid counts (reflects the live cap, not a constant)."
+          >
+            {capRes.error ? (
+              <InlineError message={capRes.error} />
+            ) : (
+              <div>
+                <KeyValueRow
+                  label="Valid province-wide samples"
+                  value={fmtNum(capRes.data?.totalValid ?? null)}
+                  emphasis
+                />
+                <KeyValueRow
+                  label="Returned by deployed RPC (up to its cap)"
+                  value={fmtNum(capRes.data?.returned ?? null)}
+                />
+                <KeyValueRow
+                  label="Truncated (over deployed cap)"
+                  value={(() => {
+                    const t = capRes.data?.truncated;
+                    if (t === null || t === undefined) return '-';
+                    return t ? (
+                      <span className="text-red-600 dark:text-red-400">YES -- some rows dropped</span>
+                    ) : (
+                      <span className="text-green-600 dark:text-green-400">No</span>
+                    );
+                  })()}
+                  emphasis
+                />
+              </div>
+            )}
+            <div className="mt-4">
+              <MutedNote>
+                This uses the DEPLOYED RPC&apos;s own truncated flag (not a hardcoded cap), so it stays
+                honest even if an environment runs an older RPC. Production v_cap was raised to 5000 on
+                2026-07-11 (migration 20260711000001). If truncated is YES, raise v_cap (see
+                MAP_CAP_PAGINATION_SPEC.md) or implement keyset pagination.
               </MutedNote>
             </div>
           </SectionCard>
