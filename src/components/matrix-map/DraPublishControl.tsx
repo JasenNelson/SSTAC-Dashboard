@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface DraRow {
@@ -24,11 +24,6 @@ export interface DraAuditRow {
 export interface DraPublishControlProps {
   initialDras: DraRow[];
   isAdmin: boolean;
-  // Read-only history of flip_dra_public visibility changes across all
-  // DRAs (bounded by the caller; see publish/page.tsx). Optional so
-  // existing callers/tests that do not pass it keep working -- absence
-  // renders no audit-history panel rather than throwing.
-  auditHistory?: DraAuditRow[];
 }
 
 function fmtAuditTs(ts: string): string {
@@ -39,9 +34,56 @@ function fmtAuditTs(ts: string): string {
   }
 }
 
-export function DraPublishControl({ initialDras, isAdmin, auditHistory = [] }: DraPublishControlProps) {
+export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlProps) {
   const [dras, setDras] = useState<DraRow[]>(initialDras);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+
+  // Audit-history state. Codex P2 fix (2026-07-11): fetched PER-DRA,
+  // server-side, on selection change -- rather than filtered client-side
+  // out of a globally-bounded (top-200) list, which could silently omit a
+  // selected DRA's history once the table grew past that bound and this
+  // DRA's latest change fell outside the global newest-200 window
+  // (a false-negative "no history" result). See
+  // src/app/api/matrix-map/admin/audit-history/route.ts.
+  const [auditRows, setAuditRows] = useState<DraAuditRow[]>([]);
+  const [auditLoading, setAuditLoading] = useState(false);
+  const [auditError, setAuditError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!selectedRowId) {
+      setAuditRows([]);
+      setAuditError(null);
+      setAuditLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+    setAuditLoading(true);
+    setAuditError(null);
+
+    fetch(`/api/matrix-map/admin/audit-history?dra_id=${encodeURIComponent(selectedRowId)}`)
+      .then(async (response) => {
+        const data = await response.json();
+        if (cancelled) return;
+        if (!response.ok) {
+          throw new Error(data.detail || data.error || 'Failed to load visibility history');
+        }
+        setAuditRows(Array.isArray(data.rows) ? data.rows : []);
+      })
+      .catch((err: unknown) => {
+        if (cancelled) return;
+        const msg = err instanceof Error ? err.message : String(err);
+        setAuditError(msg);
+        setAuditRows([]);
+      })
+      .finally(() => {
+        if (!cancelled) setAuditLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedRowId]);
 
   // Action state
   const [actionMode, setActionMode] = useState<'publish' | 'unpublish' | null>(null);
@@ -266,9 +308,32 @@ export function DraPublishControl({ initialDras, isAdmin, auditHistory = [] }: D
                 Recent visibility changes
               </div>
               {(() => {
-                const rowHistory = auditHistory
-                  .filter((a) => a.dra_id === selectedRow.id)
-                  .slice(0, 5);
+                if (auditLoading) {
+                  return (
+                    <div
+                      className="text-[11px] text-slate-500 dark:text-slate-400"
+                      role="status"
+                      data-testid="dra-audit-history-loading"
+                    >
+                      Loading visibility history...
+                    </div>
+                  );
+                }
+                if (auditError) {
+                  // Fail-closed: never present a fetch failure as a
+                  // definitive "no history" -- that is the exact
+                  // false-negative shape codex flagged (P2, 2026-07-11).
+                  return (
+                    <div
+                      className="text-[11px] text-red-600 dark:text-red-400"
+                      role="alert"
+                      data-testid="dra-audit-history-error"
+                    >
+                      Unable to load visibility history for this DRA: {auditError}
+                    </div>
+                  );
+                }
+                const rowHistory = auditRows.slice(0, 5);
                 if (rowHistory.length === 0) {
                   return (
                     <div

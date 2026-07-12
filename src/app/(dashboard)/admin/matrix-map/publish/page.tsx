@@ -62,16 +62,15 @@ export default async function MatrixMapPublishPage() {
   // (supabase/migrations/20260519000001_matrix_map_schema.sql +
   // 20260519000002_matrix_map_rls.sql, policy dra_visibility_audit_admin_select)
   // and is already read this way by /admin/matrix-map/health section 6.
-  // Bounded to the most recent 200 rows (same bounded-read pattern used
-  // elsewhere on this page's peer health dashboard) so this stays a cheap
-  // read even as the table grows; the component further narrows this down
-  // to the rows for the selected DRA.
-  const { data: auditHistory } = await supabase
-    .schema('matrix_map')
-    .from('dra_visibility_audit')
-    .select('id, dra_id, prior_value, new_value, changed_at, changed_by_email, reason')
-    .order('changed_at', { ascending: false })
-    .limit(200);
+  //
+  // Codex P2 fix (2026-07-11): a global bounded fetch (top-200 rows across
+  // ALL DRAs, filtered client-side) could silently omit a selected DRA's
+  // history once the table grew past 200 rows and that DRA's latest change
+  // was not among the global newest 200 -- a false-negative "no history"
+  // result. History is now fetched PER-DRA, server-side, on selection via
+  // GET /api/matrix-map/admin/audit-history (see
+  // src/components/matrix-map/DraPublishControl.tsx), so no initial fetch
+  // happens here.
 
   return (
     <ErrorBoundary>
@@ -93,7 +92,6 @@ export default async function MatrixMapPublishPage() {
           <DraPublishControl
             initialDras={initialDras || []}
             isAdmin={isAdmin}
-            auditHistory={auditHistory || []}
           />
         </div>
       </div>
