@@ -57,6 +57,22 @@ export default async function MatrixMapPublishPage() {
     .eq('is_deleted', false)
     .order('title');
 
+  // Read-only audit history of flip_dra_public visibility changes. The
+  // dra_visibility_audit table is RLS-gated to admin/matrix_admin SELECT
+  // (supabase/migrations/20260519000001_matrix_map_schema.sql +
+  // 20260519000002_matrix_map_rls.sql, policy dra_visibility_audit_admin_select)
+  // and is already read this way by /admin/matrix-map/health section 6.
+  // Bounded to the most recent 200 rows (same bounded-read pattern used
+  // elsewhere on this page's peer health dashboard) so this stays a cheap
+  // read even as the table grows; the component further narrows this down
+  // to the rows for the selected DRA.
+  const { data: auditHistory } = await supabase
+    .schema('matrix_map')
+    .from('dra_visibility_audit')
+    .select('id, dra_id, prior_value, new_value, changed_at, changed_by_email, reason')
+    .order('changed_at', { ascending: false })
+    .limit(200);
+
   return (
     <ErrorBoundary>
       <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
@@ -74,7 +90,11 @@ export default async function MatrixMapPublishPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <DraPublishControl initialDras={initialDras || []} isAdmin={isAdmin} />
+          <DraPublishControl
+            initialDras={initialDras || []}
+            isAdmin={isAdmin}
+            auditHistory={auditHistory || []}
+          />
         </div>
       </div>
     </ErrorBoundary>

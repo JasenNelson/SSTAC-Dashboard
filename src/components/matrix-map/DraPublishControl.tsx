@@ -11,12 +11,35 @@ export interface DraRow {
   public: boolean;
 }
 
+export interface DraAuditRow {
+  id: string;
+  dra_id: string;
+  prior_value: boolean;
+  new_value: boolean;
+  changed_at: string;
+  changed_by_email: string;
+  reason: string;
+}
+
 export interface DraPublishControlProps {
   initialDras: DraRow[];
   isAdmin: boolean;
+  // Read-only history of flip_dra_public visibility changes across all
+  // DRAs (bounded by the caller; see publish/page.tsx). Optional so
+  // existing callers/tests that do not pass it keep working -- absence
+  // renders no audit-history panel rather than throwing.
+  auditHistory?: DraAuditRow[];
 }
 
-export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlProps) {
+function fmtAuditTs(ts: string): string {
+  try {
+    return new Date(ts).toISOString().replace('T', ' ').replace(/\.\d+Z$/, ' UTC');
+  } catch {
+    return ts;
+  }
+}
+
+export function DraPublishControl({ initialDras, isAdmin, auditHistory = [] }: DraPublishControlProps) {
   const [dras, setDras] = useState<DraRow[]>(initialDras);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
 
@@ -236,6 +259,49 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
               <div className="text-slate-700 dark:text-slate-200">
                 {selectedRow.public ? 'Public' : 'Private'}
               </div>
+            </div>
+
+            <div>
+              <div className="font-bold uppercase text-slate-500 dark:text-slate-400 mb-1">
+                Recent visibility changes
+              </div>
+              {(() => {
+                const rowHistory = auditHistory
+                  .filter((a) => a.dra_id === selectedRow.id)
+                  .slice(0, 5);
+                if (rowHistory.length === 0) {
+                  return (
+                    <div
+                      className="text-[11px] text-slate-500 dark:text-slate-400"
+                      role="status"
+                      data-testid="dra-audit-history-empty"
+                    >
+                      No recorded visibility changes for this DRA.
+                    </div>
+                  );
+                }
+                return (
+                  <ul
+                    className="space-y-1.5"
+                    data-testid="dra-audit-history-list"
+                    aria-label="Recent visibility changes"
+                  >
+                    {rowHistory.map((a) => (
+                      <li
+                        key={a.id}
+                        className="rounded border border-slate-200 bg-slate-50 px-2 py-1.5 text-[11px] text-slate-600 dark:border-slate-700 dark:bg-slate-800/60 dark:text-slate-300"
+                      >
+                        <div className="font-mono">
+                          {fmtAuditTs(a.changed_at)} -- {String(a.prior_value)} {'->'} {String(a.new_value)}
+                        </div>
+                        <div>
+                          {a.changed_by_email}: {a.reason}
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                );
+              })()}
             </div>
 
             {isAdmin && actionMode === null && (

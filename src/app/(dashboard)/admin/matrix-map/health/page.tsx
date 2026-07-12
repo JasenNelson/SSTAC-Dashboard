@@ -39,6 +39,7 @@
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -93,6 +94,8 @@ type ClassificationRow = {
 type CoordRow = { coordinate_quality_tier: string };
 
 type DraVisibilityRow = { public: boolean };
+
+type DraListRow = { id: string; title: string; public: boolean };
 
 type BudgetDimRow = {
   dimension: string;
@@ -287,6 +290,27 @@ async function fetchDraVisibility(
       .eq('is_deleted', false);
     if (error) return { rows: [], error: error.message };
     return { rows: (data ?? []) as DraVisibilityRow[], error: null };
+  } catch (err) {
+    return { rows: [], error: err instanceof Error ? err.message : String(err) };
+  }
+}
+
+// Read-only per-DRA title + public/private state, for the DRA visibility
+// list panel (section 4b) and its link into the publish control page.
+// Same unbounded-select pattern already used by fetchReviewerVisibility
+// above for this table (dras is a small reference table, ~500-600 rows).
+async function fetchDraList(
+  supa: Supa,
+): Promise<{ rows: DraListRow[]; error: string | null }> {
+  try {
+    const { data, error } = await supa
+      .schema('matrix_map')
+      .from('dras')
+      .select('id, title, public')
+      .eq('is_deleted', false)
+      .order('title');
+    if (error) return { rows: [], error: error.message };
+    return { rows: (data ?? []) as DraListRow[], error: null };
   } catch (err) {
     return { rows: [], error: err instanceof Error ? err.message : String(err) };
   }
@@ -635,6 +659,7 @@ export default async function MatrixMapHealthPage() {
     classificationRes,
     coordRes,
     draVisRes,
+    draListRes,
     budgetRes,
     auditRes,
     grantsRes,
@@ -646,6 +671,7 @@ export default async function MatrixMapHealthPage() {
     fetchClassificationBreakdown(supabase),
     fetchCoordBreakdown(supabase),
     fetchDraVisibility(supabase),
+    fetchDraList(supabase),
     fetchBudgetDimensions(supabase),
     fetchRecentAudit(supabase),
     fetchActiveGrants(supabase),
@@ -835,6 +861,54 @@ export default async function MatrixMapHealthPage() {
                   value={fmtNum(draAgg.total)}
                   emphasis
                 />
+              </div>
+            )}
+          </SectionCard>
+
+          {/* 4b. DRA visibility list + link to publish control */}
+          <SectionCard
+            title="4b. DRA list -- current visibility"
+            subtitle="Per-DRA public/private state (matrix_map.dras). Read-only; manage in the publish control."
+          >
+            <div className="mb-3">
+              <Link
+                href="/admin/matrix-map/publish"
+                className="text-sm font-medium text-sky-700 underline hover:text-sky-900 dark:text-sky-300 dark:hover:text-sky-100"
+              >
+                Go to Matrix Map Publish control
+              </Link>
+            </div>
+            {draListRes.error ? (
+              <InlineError message={draListRes.error} />
+            ) : draListRes.rows.length === 0 ? (
+              <MutedNote>No active dras rows.</MutedNote>
+            ) : (
+              <div
+                className="max-h-96 overflow-y-auto rounded-md border border-slate-200 dark:border-slate-700"
+                data-testid="dra-visibility-list"
+              >
+                <ul className="divide-y divide-slate-100 dark:divide-slate-800">
+                  {draListRes.rows.map((row) => (
+                    <li
+                      key={row.id}
+                      className="flex items-center justify-between gap-4 px-3 py-2 text-sm"
+                    >
+                      <span className="text-slate-700 dark:text-slate-200">
+                        {row.title}
+                      </span>
+                      <span
+                        className={
+                          'rounded px-1.5 py-0.5 text-[11px] font-mono ' +
+                          (row.public
+                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                            : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200')
+                        }
+                      >
+                        {row.public ? 'Public' : 'Private'}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
               </div>
             )}
           </SectionCard>
