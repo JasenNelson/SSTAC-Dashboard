@@ -1,11 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createMilestone, updateMilestone, deleteMilestone } from '@/app/(dashboard)/admin/milestones/actions';
-import { createAuthenticatedClient } from '@/lib/supabase-auth';
 import { getAuthAndRateLimit } from '../_helpers/rate-limit-wrapper';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const supabase = await createAuthenticatedClient();
+    const { user, supabase, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
+
+    if (!user) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (rateLimitResponse) return rateLimitResponse;
 
     const { data: milestones, error } = await supabase
       .from('milestones')
@@ -17,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch milestones' }, { status: 500 });
     }
 
-    return NextResponse.json(milestones);
+    return NextResponse.json(milestones, { headers: rateLimitHeaders });
   } catch (error) {
     console.error('Error in milestones GET:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
