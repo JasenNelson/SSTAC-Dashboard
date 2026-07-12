@@ -66,10 +66,20 @@ on 2026-07-11, and PR #590 (a proof-of-concept enablement run) was closed withou
 | `E2E_TEST_PASSWORD` | GitHub repo secret (same location) | `<dedicated-e2e-user-password>` | Login credential, paired with the above |
 | `E2E_AUTH_ENABLED` | GitHub repo **variable** (`Settings -> Secrets and variables -> Actions -> Variables`), NOT a secret | `true` | Second gate; keeps auth E2E off by default even if secrets exist, so a branch cannot accidentally enable it by merely inheriting secrets |
 
-For a local/dev run (not CI), the same three names go in `.env.local` (already
-`.gitignore`d in this repo) or as ad hoc shell env vars for that one `npm run test:e2e`
-invocation. Do not commit them to any tracked file, including `.env.example` (leave that
-file's entries as placeholder text, if it lists them at all).
+For a local/dev run (not CI), the same three names must be set as SHELL environment variables for
+that one `npm run test:e2e` invocation -- e.g. PowerShell `$env:E2E_TEST_EMAIL='...';
+$env:E2E_TEST_PASSWORD='...'; $env:E2E_AUTH_ENABLED='true'; npm run test:e2e`. Putting them ONLY in
+`.env.local` does NOT work: `npm run test:e2e` is plain `playwright test`, and
+`playwright.config.ts` / `e2e/global.setup.ts` read `process.env.E2E_*` at config-evaluation time --
+before (and independently of) any dotenv loading the Next dev web server does when Playwright later
+boots it. So `.env.local`-only values leave `hasE2ECreds`/`authEnabled` false, `chromium-auth` absent,
+and the skip-safe baseline running, while a developer wrongly believes auth coverage is active. (If a
+future change wants `.env.local` to suffice locally, `playwright.config.ts` itself must explicitly load
+dotenv, e.g. `dotenv/config`, at the top of the config -- that is a code change, not covered today.)
+Do not commit any real value to a tracked file, including `.env.example` (leave that file's entries as
+placeholder text, if it lists them at all). The CI path is unaffected -- CI passes the GitHub
+secrets/variable directly into the job env (section 1), which Playwright reads from `process.env` as
+required.
 
 ### 2b. Recommended dedicated test-user setup
 
@@ -98,9 +108,11 @@ file's entries as placeholder text, if it lists them at all).
   this audit found no drift from that invariant.
 - **Test-user scoping (blast-radius control):** the `member`-role `sstac-e2e-reviewer` user
   has no elevated privileges -- it can only reach what any authenticated non-admin member
-  can reach (this repo's memory record confirms 574 DRAs are private with 0 grants, so
-  even an authenticated member sees 0 matrix-map samples today; that is by-design
-  DRA-visibility gating, not a bug, and is itself a coverage opportunity -- see section 3).
+  can reach. As of 2026-07-12 the 3-DRA pilot is published (3 public DRAs / 571 private / 0
+  active grants), so an authenticated member now sees the samples on those 3 public DRAs
+  (34 member-visible samples per the measurement/waterbody readiness packet in this same branch),
+  NOT zero -- this changed from the earlier 0-public / 0-visible state; the DRA-visibility
+  gating itself is by-design, not a bug, and remains a coverage opportunity -- see section 3.
   An admin/matrix_admin-tier test user, if added later, should be similarly dedicated
   (never reuse the owner's personal admin account) and should be reviewed for what
   destructive actions it could trigger via E2E (e.g., the publish/unpublish flow) before
@@ -148,13 +160,19 @@ absent because no spec exists yet. None of it runs today in CI.
 unskipped) once an authenticated fixture is available -- explicitly requested in the task brief:
 
 - **Member-vs-admin map access.** No current spec asserts the DRA-visibility gating
-  described in `dashboard_data_truth_map_run_2026_07_11.md` (574/574 DRAs private, 0
-  grants -> authenticated members see 0 samples; admins see up to the fetch cap). A new
-  spec authenticated as `sstac-e2e-reviewer` (member) could assert "0 visible samples,
-  reviewer-effective-visibility indicator shows 0-public-DRA warning" (the health-page
-  indicator shipped in PR #591); a second spec authenticated as an admin/matrix_admin
-  fixture could assert the capped-count path. The member half is buildable today with the
-  existing user; the admin half needs the new admin test-user action from section 2b.
+  described in `dashboard_data_truth_map_run_2026_07_11.md`. NOTE the live baseline moved
+  since that 07-11 doc: as of 2026-07-12 the 3-DRA pilot is published (3 public DRAs / 571
+  private / 0 active grants), so an authenticated member now sees the samples on those 3
+  public DRAs (34 member-visible samples per the measurement/waterbody readiness packet in
+  this same branch), NOT zero; admins see up to the fetch cap. Any new spec MUST therefore
+  query or fixture the live visibility state at author time rather than hardcode a stale
+  count -- do NOT assert a literal "0 visible samples" (that was the pre-07-12 state). A new
+  spec authenticated as `sstac-e2e-reviewer` (member) could assert the then-current
+  member-visible sample count and that the reviewer-effective-visibility indicator reflects
+  the live public-DRA count (the health-page indicator shipped in PR #591); a second spec
+  authenticated as an admin/matrix_admin fixture could assert the capped-count path. The
+  member half is buildable today with the existing user; the admin half needs the new admin
+  test-user action from section 2b.
 - **Publish flow (PR #612).** `DraPublishControl.tsx` + the publish/audit-history/health
   admin pages have strong React Testing Library component-test coverage
   (`DraPublishControl.test.tsx`, 486 lines) and unit-tested API routes

@@ -243,7 +243,29 @@ rows).
 
 Split by what tooling already exists (verified from promote-*.mjs headers on origin/main):
 
-### 4a. Already scripted, ready to dry-run today (8 substances, 20 rows)
+### 4a. IRIS dupe-cg canonicals -- ALREADY APPLIED (no action); real remaining work = 41 needs_review alternates
+**CORRECTION (verified against the live catalog 2026-07-12, superseding an earlier draft that listed
+4a as "owner --apply required"):** the 20 canonical IDs targeted by the three promote scripts below
+are ALREADY `qa_status=approved` + `canonical_source_status=direct_source_verified` in the current
+`human_health_trv_values.json` (all 20 confirmed present + approved), and
+`src/lib/matrix-options/provenance/__tests__/catalog.test.ts` ALREADY imports their allowlists
+(`IRIS_DUPE_CG_CANONICAL_VALUE_IDS` / `IRIS_PFAS_DUPE_CG_CANONICAL_VALUE_IDS` /
+`IRIS_PFDA_DUPE_CG_CANONICAL_VALUE_IDS`, lines 31-33 + 691-693). The promotions these scripts perform
+have therefore already landed. Re-running them today is a no-op; there is NO pending owner --apply
+action for the canonical promotions. Do NOT send the next session to dry-run/apply these -- that
+chases a no-op.
+
+**What ACTUALLY remains in these 8 candidate groups = 41 `pv-iris-* needs_review` ALTERNATES** (the
+losing/alternate rows in each dupe group, still `needs_review`, awaiting a disposition decision --
+reject-as-superseded OR retain-as-citable-alternate OR select-as-current_default). Live count by
+substance: `1_1_1_trichloroethane` 5, `1_2_3_trimethylbenzene` 3, `1_2_4_trimethylbenzene` 6,
+`1_3_5_trimethylbenzene` 5, RDX 4, PFBA 4, PFDA 6, PFHxA 8 (total 41). These are the owner-attention
+items in this bucket, NOT the already-applied canonicals. No script exists for the alternate
+disposition; it is a per-group reject/retain/default call once the owner rules on the congener/endpoint
+policy.
+
+The three scripts (retained here for provenance of the ALREADY-APPLIED canonicals, not as pending
+actions):
 `scripts/matrix-options/promote-iris-dupe-cg-canonical.mjs` -- 14 rows: the trimethylbenzene isomers
 (1,2,3- / 1,2,4- / 1,3,5-, both rfc_inhalation and rfd_oral direct+food groups) + 1,1,1-trichloroethane
 (rfc_inhalation + rfd_oral direct+food) + RDX (rfd_oral direct+food). Per-row EPA IRIS URL + chronic
@@ -275,10 +297,12 @@ promote script exists; needs the anchor/scenario decision first.
   addressed in any decision doc read for this packet; no promote script found. Flagged as a genuinely
   open, previously-undocumented item (see section 6).
 
-**owner --apply required:** 4a = YES for dry-run-and-apply (mechanical once owner reviews the
-verification basis already documented in each script header -- LOWEST-EFFORT arbitration item in this
-packet). 4b = YES, folded into D2. 4c = cadmium/methylmercury: confirmation only (no value at risk);
-copper/sodium_ion: YES, undecided policy call.
+**owner --apply required:** 4a canonicals = NO -- ALREADY APPLIED (approved/direct_source_verified;
+test allowlists already imported), re-running is a no-op. The remaining 4a work is the 41
+`needs_review` alternate rows, which need a per-group reject/retain/default disposition decision
+(owner policy call, no script yet), NOT a canonical promotion. 4b = YES, folded into D2. 4c =
+cadmium/methylmercury: confirmation only (no value at risk); copper/sodium_ion: YES, undecided policy
+call.
 
 ---
 
@@ -346,11 +370,11 @@ not-yet-scoped lane, distinct from the other items in this packet which already 
    (`promote-hc-dioxin-teq.mjs`), locator already pinned to HC v4.0 p.42. Owner reviews the
    provisional-TDI caveat against the primary PDF, then dry-run -> --apply. Lowest row-count, fully
    scripted, single clean decision.
-2. **Section 4a IRIS dupe-cg canonicals** (8 substances / 20 rows) -- 3 scripts already exist and
-   already cite their 2026-06-22/23 primary-source verification basis. Owner spot-checks the
-   verification basis in each script header (or trusts the prior dual-blind-pass verification) and
-   dry-runs -> --apply all 3. Mechanical, well-documented, no new judgment needed beyond confirming
-   the prior verification stands.
+2. **Section 4a IRIS dupe-cg alternates** (8 substances) -- the 20 CANONICALS are ALREADY APPLIED
+   (no action; see section 4a correction). The remaining work is a per-group disposition of the 41
+   `needs_review` ALTERNATE rows (reject-as-superseded / retain-as-alternate / select-as-default),
+   which is an owner policy call, not a canonical promotion. No script exists for the alternate
+   disposition. Lower mechanical certainty than previously framed; do after the clearly-scripted D1.
 3. **cadmium / methylmercury current_default confirmation** (section 4c) -- no value at risk, pure
    confirm-or-redirect. Fast.
 4. **D3 PCB Option A ruling** (section 3) -- one policy decision (Option A recommended) closes 3
@@ -373,7 +397,8 @@ not-yet-scoped lane, distinct from the other items in this packet which already 
 
 **AI-dry-runnable now (script exists, verification basis already documented):**
 - D1 (`promote-hc-dioxin-teq.mjs`)
-- Section 4a IRIS dupe-cg canonicals (3 scripts)
+- (Section 4a canonicals are NOT listed here -- they are ALREADY APPLIED, not a pending dry-run; the
+  remaining 4a alternate-disposition is an owner policy call with no script.)
 
 **AI can author a dry-run script once the owner's policy pick is known (no primary-source
 verification burden beyond what already exists in the catalog rows):**

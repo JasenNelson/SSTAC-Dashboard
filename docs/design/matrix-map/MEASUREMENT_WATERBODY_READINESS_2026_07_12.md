@@ -140,7 +140,22 @@ possible, or new sample_events for existing samples -- no destructive change to 
    FK order; no schema/RLS/RPC changes) to mutual-agreement GREEN, per L0 section 1.3.
 3. Apply via `scripts/matrix-map/apply_live_load.py` (reads `DATABASE_URL` from `.env.local`, session
    pooler, server-side psycopg2 execution) -- NOT via MCP `execute_sql` for the bulk batches (token-
-   fatal per skill: ~112k tokens per 450 KB batch).
+   fatal per skill: ~112k tokens per 450 KB batch). **CRITICAL apply-input caveat (verified by reading
+   the script 2026-07-12):** `apply_live_load.py` as committed does NOT take a `--manifest`/`--out-sql`/
+   `--scripts-dir` argument. It reads a HARDCODED manifest at
+   `C:/Projects/sstac-dashboard/scripts/matrix-map/mm_live_load_manifest.json`, takes that manifest's
+   `apply_order` array, and resolves each named batch file from the HARDCODED directory
+   `C:/Projects/sstac-dashboard/scripts/matrix-map/`. It will therefore apply the batches that manifest
+   currently points at -- i.e. the prior dated live-load batches (which loaded 0 undated rows) -- NOT
+   the fresh `--out-sql` undated artifact, unless one of these is done first: EITHER (a) write the
+   Step-1 generated undated batch `.sql` files into that hardcoded directory AND overwrite
+   `mm_live_load_manifest.json` so its `apply_order` lists EXACTLY those fresh undated batch files
+   (then codex-review the updated manifest + the new batch files together, so the reviewed artifact IS
+   the apply input); OR (b) update `apply_live_load.py` to accept an explicit
+   `--manifest <fresh-manifest>` / `--scripts-dir <dir>` argument pointing at the fresh generated
+   artifact (a code change that is itself codex-gated). Do NOT run `apply_live_load.py` against the
+   stale hardcoded manifest expecting the undated rows to load -- that would re-apply the already-loaded
+   dated batches as idempotent no-ops and load ZERO undated rows.
 4. Post-load verification via MCP `execute_sql` (cheap, small reads only).
 
 **Preflight SELECTs (current counts, already captured above in Section 1):**
@@ -186,12 +201,31 @@ date_precision = 'undated' AND bnrrm_event_id = ANY(<id range>)`. Falls back to 
 - R5 (LOW): env_modifier measurements load with `medium='sediment'` + `notes='env_modifier'`
   discriminator (resolved finding from the design doc, section 3a) -- no enum change needed.
 
-**Owner approval sentence (paste-ready):**
-> "I approve running a fresh `etl_bnrrm_to_supabase.py --allow-undated` dry-run against the enriched
-> BN-RRM DB, codex-reviewing the resulting batches, and applying them via
-> `scripts/matrix-map/apply_live_load.py` to load the undated sediment/toxicity/community measurements
-> into the live matrix_map schema, with pre/post count verification and a report back before any
-> further action."
+**Two-step approval (do NOT collapse into one -- the exact SQL batches do not exist until after
+the generate/dry-run step, so a single sentence cannot approve applying artifacts that are not yet
+generated):**
+
+STEP 1 -- generate + dry-run + codex only (paste-ready; authorizes NO live write):
+> "I approve GENERATING the undated-events load batches via a fresh
+> `etl_bnrrm_to_supabase.py --allow-undated` run against the enriched BN-RRM DB, performing a dry-run
+> to produce the FK-ordered idempotent SQL batches + a manifest of exact counts, and codex-reviewing
+> those batches to mutual-agreement GREEN. This does NOT authorize applying anything to the live
+> matrix_map schema -- I will re-confirm separately (STEP 2) after seeing the exact generated batch
+> files and counts."
+
+STEP 2 -- apply the exact reviewed batches (paste-ready; to be given ONLY after STEP 1's batches
+exist, their manifest counts are reported back, codex-review is GREEN, AND the apply-input wiring
+from mechanism step 3 is in place -- i.e. the fresh undated batches + a matching `apply_order`
+manifest are the input `apply_live_load.py` will actually read, per option (a) or (b) above, NOT the
+stale hardcoded dated manifest):
+> "I have reviewed the exact generated batch files and their manifest counts (batch files:
+> `<list>`; measurements +`<N>`; new undated sample_events +`<M>`; samples delta `<0 or explained>`),
+> and codex-review on those exact batches is GREEN. I confirm the apply input is wired so
+> `apply_live_load.py` reads THESE fresh undated batches (the `mm_live_load_manifest.json` `apply_order`
+> now lists exactly these files, OR the script has been pointed at the fresh manifest/dir via an
+> explicit argument -- and that wiring change was itself codex-reviewed). I approve applying THOSE
+> SPECIFIC batches via `scripts/matrix-map/apply_live_load.py` to the live matrix_map schema, with
+> pre/post count verification and a report back before any further action."
 
 ---
 
