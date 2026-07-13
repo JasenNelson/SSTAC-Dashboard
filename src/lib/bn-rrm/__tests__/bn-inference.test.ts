@@ -69,21 +69,21 @@ describe('bn-inference', () => {
 
       const siteBelow: SiteData = {
         location: { id: '1', name: 'L1', latitude: 0, longitude: 0, siteType: 'exposure', dateCollected: '' },
-        sedimentChemistry: [{ copper: cuISQG - 1 }],
+        sedimentChemistry: [{ siteId: '1', sampleId: 'S1', dateCollected: '', copper: cuISQG - 1 }],
       };
       const evBelow = classifyRawSiteData(siteBelow);
       expect(evBelow.sed_cu).toBe('below_isqg');
 
       const siteBetween: SiteData = {
         location: { id: '2', name: 'L2', latitude: 0, longitude: 0, siteType: 'exposure', dateCollected: '' },
-        sedimentChemistry: [{ copper: cuISQG + 1 }],
+        sedimentChemistry: [{ siteId: '2', sampleId: 'S2', dateCollected: '', copper: cuISQG + 1 }],
       };
       const evBetween = classifyRawSiteData(siteBetween);
       expect(evBetween.sed_cu).toBe('isqg_pel');
 
       const siteAbove: SiteData = {
         location: { id: '3', name: 'L3', latitude: 0, longitude: 0, siteType: 'exposure', dateCollected: '' },
-        sedimentChemistry: [{ copper: cuPEL + 1 }],
+        sedimentChemistry: [{ siteId: '3', sampleId: 'S3', dateCollected: '', copper: cuPEL + 1 }],
       };
       const evAbove = classifyRawSiteData(siteAbove);
       expect(evAbove.sed_cu).toBe('above_pel');
@@ -92,7 +92,7 @@ describe('bn-inference', () => {
     it('does not throw on partial/missing chemistry', () => {
       const sitePartial: SiteData = {
         location: { id: '4', name: 'L4', latitude: 0, longitude: 0, siteType: 'exposure', dateCollected: '' },
-        sedimentChemistry: [{ copper: 10 }], // missing everything else
+        sedimentChemistry: [{ siteId: '4', sampleId: 'S4', dateCollected: '', copper: 10 }], // missing other chemistry
       };
       expect(() => classifyRawSiteData(sitePartial)).not.toThrow();
       
