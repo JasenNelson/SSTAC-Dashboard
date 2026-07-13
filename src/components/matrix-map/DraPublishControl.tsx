@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ChevronRight } from 'lucide-react';
 
 export interface DraRow {
@@ -9,6 +9,9 @@ export interface DraRow {
   agency: string | null;
   year: number | null;
   public: boolean;
+  site_id?: string | null;
+  site_name?: string | null;
+  site_registry_id?: string | null;
 }
 
 export interface DraAuditRow {
@@ -34,9 +37,104 @@ function fmtAuditTs(ts: string): string {
   }
 }
 
+type DraGroup = {
+  key: string;
+  label: string;
+  secondary: string | null;
+  publicCount: number;
+  privateCount: number;
+  rows: DraRow[];
+};
+
+function compact(value: string | number | null | undefined): string {
+  if (value === null || value === undefined) return '';
+  return String(value).trim();
+}
+
+function buildSiteLabel(row: DraRow): string {
+  const siteId = compact(row.site_id);
+  const siteName = compact(row.site_name);
+
+  if (siteId && siteName) return `Site ${siteId} - ${siteName}`;
+  if (siteName) return siteName;
+  if (siteId) return `Site ${siteId}`;
+  return 'Site not assigned';
+}
+
+function buildSiteSecondary(row: DraRow): string | null {
+  const registryId = compact(row.site_registry_id);
+  if (!registryId) return null;
+  return `Registry ${registryId}`;
+}
+
+function siteSortValue(row: DraRow): number {
+  const siteIdStr = compact(row.site_id);
+  if (siteIdStr === '') return Number.MAX_SAFE_INTEGER;
+  const siteId = Number(siteIdStr);
+  return Number.isFinite(siteId) ? siteId : Number.MAX_SAFE_INTEGER;
+}
+
+function compareRows(a: DraRow, b: DraRow): number {
+  const yearCompare = (b.year ?? -1) - (a.year ?? -1);
+  if (yearCompare !== 0) return yearCompare;
+  return a.title.localeCompare(b.title, undefined, { numeric: true, sensitivity: 'base' });
+}
+
+function groupDrasBySite(rows: DraRow[]): DraGroup[] {
+  const groups = new Map<string, DraGroup>();
+
+  for (const row of rows) {
+    const idVal = compact(row.site_id);
+    const nameVal = compact(row.site_name);
+    const key = idVal ? `id:${idVal}` : nameVal ? `name:${nameVal}` : 'unassigned';
+    const existing = groups.get(key);
+    if (existing) {
+      existing.rows.push(row);
+      if (row.public) existing.publicCount += 1;
+      else existing.privateCount += 1;
+      continue;
+    }
+
+    groups.set(key, {
+      key,
+      label: buildSiteLabel(row),
+      secondary: buildSiteSecondary(row),
+      publicCount: row.public ? 1 : 0,
+      privateCount: row.public ? 0 : 1,
+      rows: [row],
+    });
+  }
+
+  return Array.from(groups.values()).sort((a, b) => {
+    const aSort = siteSortValue(a.rows[0]);
+    const bSort = siteSortValue(b.rows[0]);
+    if (aSort !== bSort) return aSort - bSort;
+    return a.label.localeCompare(b.label, undefined, { numeric: true, sensitivity: 'base' });
+  }).map((group) => ({
+    ...group,
+    rows: [...group.rows].sort(compareRows),
+  }));
+}
+
+function matchesDraFilter(row: DraRow, query: string): boolean {
+  if (!query) return true;
+  const haystack = [
+    row.title,
+    row.agency,
+    row.year,
+    row.site_id,
+    row.site_name,
+    row.site_registry_id,
+    buildSiteLabel(row), // Match "Site N" labels since names degrade to "Site <id>" without a registry entry
+  ].map(compact).join(' ').toLowerCase();
+  return haystack.includes(query.toLowerCase());
+}
+
 export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlProps) {
   const [dras, setDras] = useState<DraRow[]>(initialDras);
   const [selectedRowId, setSelectedRowId] = useState<string | null>(null);
+  const [filterText, setFilterText] = useState('');
+  const [openGroups, setOpenGroups] = useState<Record<string, boolean>>({});
 
   // Audit-history state. Codex P2 fix (2026-07-11): fetched PER-DRA,
   // server-side, on selection change -- rather than filtered client-side
@@ -124,6 +222,12 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
   >(null);
 
   const selectedRow = dras.find((r) => r.id === selectedRowId) ?? null;
+  const normalizedFilter = filterText.trim();
+  const filteredDras = useMemo(
+    () => dras.filter((row) => matchesDraFilter(row, normalizedFilter)),
+    [dras, normalizedFilter],
+  );
+  const draGroups = useMemo(() => groupDrasBySite(filteredDras), [filteredDras]);
 
   const handleStartAction = useCallback((mode: 'publish' | 'unpublish') => {
     setActionMode(mode);
@@ -206,6 +310,23 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
           </h2>
         </div>
 
+        <div className="mb-4 space-y-3">
+          <label className="block text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400" htmlFor="dra-publish-filter">
+            Filter by site or report
+          </label>
+          <input
+            id="dra-publish-filter"
+            type="search"
+            value={filterText}
+            onChange={(e) => setFilterText(e.target.value)}
+            placeholder="Site, registry, report title, agency, or year"
+            className="w-full rounded-md border border-slate-300 bg-white px-3 py-2 text-sm text-slate-800 shadow-sm focus:border-sky-500 focus:outline-none focus:ring-2 focus:ring-sky-200 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-sky-500 dark:focus:ring-sky-900"
+          />
+          <div className="text-xs text-slate-500 dark:text-slate-400" role="status">
+            {filteredDras.length} of {dras.length} reports across {draGroups.length} site clusters
+          </div>
+        </div>
+
         {dras.length === 0 && (
           <div
             className="rounded border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400"
@@ -215,60 +336,123 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
           </div>
         )}
 
-        {dras.length > 0 && (
-          <ol
-            className="flex flex-col gap-1.5"
-            aria-label="DRAs"
+        {dras.length > 0 && filteredDras.length === 0 && (
+          <div
+            className="rounded border border-dashed border-slate-300 px-4 py-8 text-center text-sm text-slate-500 dark:border-slate-700 dark:text-slate-400"
+            role="status"
           >
-            {dras.map((row) => {
-              const isSelected = row.id === selectedRowId;
+            No DRAs match the current filter.
+          </div>
+        )}
+
+        {draGroups.length > 0 && (
+          <ol
+            className="flex flex-col gap-3"
+            aria-label="DRA site clusters"
+          >
+            {draGroups.map((group) => {
+              const reportLabel = group.rows.length === 1 ? 'report' : 'reports';
+              const defaultOpen = normalizedFilter.length > 0 ||
+                group.rows.some((row) => row.id === selectedRowId) ||
+                draGroups.length <= 12;
+              const isOpen = openGroups[group.key] ?? defaultOpen;
+
               return (
-                <li key={row.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSelectedRowId(row.id);
-                      setActionMode(null);
-                      setActionMessage(null);
-                    }}
-                    aria-pressed={isSelected}
-                    aria-label={`Select DRA ${row.title}`}
-                    className={
-                      'group relative flex w-full cursor-pointer flex-col gap-1 rounded-md border px-3 py-2 pr-8 text-left text-xs transition-colors ' +
-                      (isSelected
-                        ? 'border-sky-400 bg-sky-50 ring-1 ring-sky-200 dark:border-sky-600 dark:bg-sky-950/30 dark:ring-sky-800'
-                        : 'border-transparent hover:border-sky-300 hover:bg-slate-50 dark:hover:border-sky-700 dark:hover:bg-slate-800')
-                    }
-                    data-testid={`dra-row-${row.id}`}
-                  >
-                    <ChevronRight
-                      aria-hidden="true"
-                      className={
-                        'absolute right-2 top-2.5 h-4 w-4 transition-colors ' +
-                        (isSelected
-                          ? 'text-sky-500 dark:text-sky-400'
-                          : 'text-slate-300 group-hover:text-sky-400 dark:text-slate-600')
+                <li key={`${group.key}-${normalizedFilter ? 'filtered' : 'all'}`}>
+                  <details
+                    className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-950/40"
+                    open={isOpen}
+                    onToggle={(e) => {
+                      const newOpen = (e.currentTarget as HTMLDetailsElement).open;
+                      if (openGroups[group.key] !== newOpen) {
+                        setOpenGroups((prev) => ({ ...prev, [group.key]: newOpen }));
                       }
-                    />
-                    <div className="flex items-center justify-between">
-                      <span className="font-semibold text-slate-800 dark:text-slate-100">
-                        {row.title}
-                      </span>
-                      <span
-                        className={
-                          'rounded px-1.5 py-0.5 text-[11px] font-mono ' +
-                          (row.public
-                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
-                            : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200')
-                        }
-                      >
-                        {row.public ? 'Public' : 'Private'}
-                      </span>
-                    </div>
-                    <div className="text-[11px] text-slate-500 dark:text-slate-400">
-                      {row.agency ? `${row.agency}` : 'No agency'} {row.year ? `(${row.year})` : ''}
-                    </div>
-                  </button>
+                    }}
+                  >
+                    <summary className="cursor-pointer list-none rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                        <div>
+                          <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
+                            {group.label}
+                          </h3>
+                          {group.secondary && (
+                            <p className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
+                              {group.secondary}
+                            </p>
+                          )}
+                        </div>
+                        <div className="flex flex-wrap gap-1.5 text-[11px] font-medium">
+                          <span className="rounded bg-white px-2 py-0.5 text-slate-600 ring-1 ring-slate-200 dark:bg-slate-900 dark:text-slate-300 dark:ring-slate-700">
+                            {group.rows.length} {reportLabel}
+                          </span>
+                          <span className="rounded bg-emerald-50 px-2 py-0.5 text-emerald-700 ring-1 ring-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-300 dark:ring-emerald-900">
+                            {group.publicCount} public
+                          </span>
+                          <span className="rounded bg-slate-100 px-2 py-0.5 text-slate-700 ring-1 ring-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:ring-slate-700">
+                            {group.privateCount} private
+                          </span>
+                        </div>
+                      </div>
+                    </summary>
+
+                    <ol
+                      className="mt-2 flex flex-col gap-1.5"
+                      aria-label={`${group.label} reports`}
+                    >
+                      {group.rows.map((row) => {
+                        const isSelected = row.id === selectedRowId;
+                        return (
+                          <li key={row.id}>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setSelectedRowId(row.id);
+                                setActionMode(null);
+                                setActionMessage(null);
+                              }}
+                              aria-pressed={isSelected}
+                              aria-label={`Select DRA ${row.title}`}
+                              className={
+                                'group relative flex w-full cursor-pointer flex-col gap-1 rounded-md border px-3 py-2 pr-8 text-left text-xs transition-colors ' +
+                                (isSelected
+                                  ? 'border-sky-400 bg-sky-50 ring-1 ring-sky-200 dark:border-sky-600 dark:bg-sky-950/30 dark:ring-sky-800'
+                                  : 'border-transparent bg-white hover:border-sky-300 hover:bg-slate-50 dark:bg-slate-900/70 dark:hover:border-sky-700 dark:hover:bg-slate-800')
+                              }
+                              data-testid={`dra-row-${row.id}`}
+                            >
+                              <ChevronRight
+                                aria-hidden="true"
+                                className={
+                                  'absolute right-2 top-2.5 h-4 w-4 transition-colors ' +
+                                  (isSelected
+                                    ? 'text-sky-500 dark:text-sky-400'
+                                    : 'text-slate-300 group-hover:text-sky-400 dark:text-slate-600')
+                                }
+                              />
+                              <div className="flex items-start justify-between gap-3">
+                                <span className="font-semibold text-slate-800 dark:text-slate-100">
+                                  {row.title}
+                                </span>
+                                <span
+                                  className={
+                                    'shrink-0 rounded px-1.5 py-0.5 text-[11px] font-mono ' +
+                                    (row.public
+                                      ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200'
+                                      : 'bg-slate-100 text-slate-800 dark:bg-slate-800 dark:text-slate-200')
+                                  }
+                                >
+                                  {row.public ? 'Public' : 'Private'}
+                                </span>
+                              </div>
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                                {row.agency ? `${row.agency}` : 'No agency'} {row.year ? `(${row.year})` : ''}
+                              </div>
+                            </button>
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </details>
                 </li>
               );
             })}
@@ -329,6 +513,21 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
                 {selectedRow.title}
               </div>
             </div>
+            {(selectedRow.site_id || selectedRow.site_name || selectedRow.site_registry_id) && (
+              <div>
+                <div className="font-bold uppercase text-slate-500 dark:text-slate-400">
+                  Site
+                </div>
+                <div className="text-slate-700 dark:text-slate-200">
+                  {buildSiteLabel(selectedRow)}
+                </div>
+                {selectedRow.site_registry_id && (
+                  <div className="text-[11px] text-slate-500 dark:text-slate-400">
+                    Registry {selectedRow.site_registry_id}
+                  </div>
+                )}
+              </div>
+            )}
             <div>
               <div className="font-bold uppercase text-slate-500 dark:text-slate-400">
                 Status

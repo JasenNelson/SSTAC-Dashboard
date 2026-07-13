@@ -3,7 +3,23 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 
 import { DraPublishControl } from '@/components/matrix-map/DraPublishControl';
+import siteReportsData from '@/data/bn-rrm/transparency/site_reports.json';
 import ErrorBoundary from '@/components/ErrorBoundary';
+
+type SiteReportLookup = {
+  sites?: Array<{
+    site_id: number;
+    name?: string | null;
+    registry_id?: string | null;
+  }>;
+};
+
+const siteReportsById = new Map(
+  ((siteReportsData as SiteReportLookup).sites ?? []).map((site) => [
+    String(site.site_id),
+    site,
+  ]),
+);
 
 export default async function MatrixMapPublishPage() {
   const cookieStore = await cookies();
@@ -53,9 +69,25 @@ export default async function MatrixMapPublishPage() {
   const { data: initialDras } = await supabase
     .schema('matrix_map')
     .from('dras')
-    .select('id, title, agency, year, public')
+    .select('id, title, agency, year, site_id, public')
     .eq('is_deleted', false)
+    .order('site_id', { ascending: true, nullsFirst: false })
+    .order('year', { ascending: false, nullsFirst: false })
     .order('title');
+
+  const initialDrasWithSites = (initialDras || []).map((dra) => {
+    const siteId = typeof dra.site_id === 'string' && dra.site_id.trim().length > 0
+      ? dra.site_id.trim()
+      : null;
+    const siteReport = siteId ? siteReportsById.get(siteId) : undefined;
+
+    return {
+      ...dra,
+      site_id: siteId,
+      site_name: siteReport?.name ?? null,
+      site_registry_id: siteReport?.registry_id ?? null,
+    };
+  });
 
   // Read-only audit history of flip_dra_public visibility changes. The
   // dra_visibility_audit table is RLS-gated to admin/matrix_admin SELECT
@@ -90,7 +122,7 @@ export default async function MatrixMapPublishPage() {
 
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <DraPublishControl
-            initialDras={initialDras || []}
+            initialDras={initialDrasWithSites}
             isAdmin={isAdmin}
           />
         </div>

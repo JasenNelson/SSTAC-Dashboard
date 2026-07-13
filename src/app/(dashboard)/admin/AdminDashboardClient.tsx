@@ -17,6 +17,7 @@ import {
   Grid3x3,
   Boxes,
   Inbox,
+  Map,
 } from 'lucide-react';
 import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 
@@ -156,7 +157,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <Users className="w-8 h-8 text-sky-700 dark:text-sky-300" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
-                  Manage Users
+                  User Management
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Add, edit, and manage user accounts and permissions
@@ -171,7 +172,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <Tags className="w-8 h-8 text-green-600 dark:text-green-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-green-600 transition-colors mb-2">
-                  Manage Tags
+                  Tag Management
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Create, edit, and organize document tags
@@ -231,7 +232,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <FileSearch className="w-8 h-8 text-purple-600 dark:text-purple-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
-                  TWG White Paper Synthesis
+                  TWG Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Analyze and synthesize TWG review feedback
@@ -261,7 +262,7 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   <Grid3x3 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
-                  Matrix Options Review
+                  Matrix Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Analyze and synthesize Matrix Options phase feedback
@@ -269,26 +270,52 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
               </div>
             </Link>
 
-            {/* Agentic OS card -- only visible when the local-only feature
-                flag is on (dev mode or NEXT_PUBLIC_AGENTIC_OS_ENABLED=true).
-                Per holistic review NIT-3 the card was a broken link in
-                production environments where the underlying page can't read
-                the filesystem. */}
-            {isAgenticOsEnabled() && (
-              <Link href="/admin/agentic-os" className="group">
-                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-violet-300">
-                  <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-violet-200 dark:group-hover:bg-violet-800 transition-colors">
-                    <Boxes className="w-8 h-8 text-violet-600 dark:text-violet-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 transition-colors mb-2">
-                    Agentic OS
-                  </h3>
-                  <p className="text-slate-500 dark:text-slate-400 text-sm">
-                    Pulse view across all personal projects with launch buttons
-                  </p>
+            {/* Jermilova Review */}
+            <Link href="/admin/jermilova-review" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-teal-300">
+                <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal-200 dark:group-hover:bg-teal-800 transition-colors">
+                  <FileSearch className="w-8 h-8 text-teal-600 dark:text-teal-400" />
                 </div>
-              </Link>
-            )}
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors mb-2">
+                  Jermilova Review
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Review detailed comparison and uncertainty analysis inputs
+                </p>
+              </div>
+            </Link>
+
+            {/* Matrix Map Health */}
+            <Link href="/admin/matrix-map/health" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
+                  <BarChart3 className="w-8 h-8 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
+                  Matrix Map Health
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Inspect Matrix Map load, visibility, and publication readiness
+                </p>
+              </div>
+            </Link>
+
+            {/* Matrix Map Publish */}
+            <Link href="/admin/matrix-map/publish" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-300">
+                <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
+                  <Map className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
+                  Matrix Map Publish
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Publish or unpublish reviewed DRAs through the audited admin flow
+                </p>
+              </div>
+            </Link>
+
+
 
             {/* Regulatory Review */}
             <Link href="/regulatory-review" className="group">
@@ -319,6 +346,27 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 </p>
               </div>
             </Link>
+
+            {/* Agentic OS card -- only visible when the local-only feature
+                flag is on (dev mode or NEXT_PUBLIC_AGENTIC_OS_ENABLED=true).
+                Per holistic review NIT-3 the card was a broken link in
+                production environments where the underlying page can't read
+                the filesystem. */}
+            {isAgenticOsEnabled() && (
+              <Link href="/admin/agentic-os" className="group">
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-violet-300">
+                  <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-violet-200 dark:group-hover:bg-violet-800 transition-colors">
+                    <Boxes className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                  </div>
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 transition-colors mb-2">
+                    Agentic OS
+                  </h3>
+                  <p className="text-slate-500 dark:text-slate-400 text-sm">
+                    Pulse view across all personal projects with launch buttons
+                  </p>
+                </div>
+              </Link>
+            )}
           </div>
         </div>
 
