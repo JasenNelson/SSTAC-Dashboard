@@ -168,12 +168,16 @@ describe("memo-generator pure exports", () => {
       expect(csv).toContain('"Line1\nLine2"');
     });
 
-    it("does NOT neutralize CSV injection prefixes because escapeCSV doesn't do it", () => {
-      // The source escapeCSV does not neutralize = + - @
-      const a = makeAssessment({ policyId: "=cmd|calc" });
-      const { data, options } = baseInput({ assessments: [a], judgments: [] });
-      const csv = generateCSV(data, options);
-      expect(csv).toContain("=cmd|calc");
+    it("neutralizes CSV injection prefixes", () => {
+      // The source escapeCSV should mitigate = + - @ \t \r
+      const triggers = ["=cmd|calc", "+1", "-2", "@SUM", "\tval", "\rval"];
+      for (const t of triggers) {
+        const a = makeAssessment({ policyId: t });
+        const { data, options } = baseInput({ assessments: [a], judgments: [] });
+        const csv = generateCSV(data, options);
+        // It should prepend a single quote
+        expect(csv).toContain("'" + t);
+      }
     });
   });
 

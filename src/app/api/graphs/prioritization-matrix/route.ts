@@ -2,6 +2,20 @@
 
 import { NextResponse } from 'next/server';
 import { createAnonymousClient, createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { createHmac } from 'crypto';
+
+// SECURITY (2026-07-13): the pseudonym salt MUST be a server-only secret.
+// NEXT_PUBLIC_* env vars are bundled into client JS, so using one here would
+// let an attacker who already knows a target user's UUID recompute the
+// pseudonym locally and confirm that user's votes. MATRIX_PSEUDONYM_SALT is
+// a dedicated server-only var (never NEXT_PUBLIC_-prefixed); set it in the
+// deployment environment for stronger secret separation from other
+// credentials. The hard-coded fallback below keeps this route functional
+// (pseudonyms remain stable and are not derivable from any public value)
+// if the env var is unset -- the owner is never required to paste a secret
+// just to keep this endpoint working.
+const MATRIX_PSEUDONYM_FALLBACK_SALT =
+  'sstac-dashboard-matrix-pseudonym-fallback-salt-v1-2026-07-13-do-not-treat-as-secret';
 
 // Type definitions for API responses
 interface VotingResult {
@@ -100,26 +114,56 @@ export async function GET(request: Request) {
   console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
   const supabase = await createAnonymousClient();
 
-  // SECURITY (2026-07-11): this route has both public/anonymous consumers
-  // (CEW conference kiosk charts, always filter=cew) and authenticated
-  // consumers (survey-results pages, gated by middleware to any logged-in
-  // user; the admin poll-results page, gated to admins at the page level).
-  // The route itself must not rely on page-level gating -- it is a public
-  // HTTP endpoint. So the route determines its own auth tier here:
-  //   - "auth" tier (any logged-in caller): unchanged pre-fix behavior --
-  //     individual vote rows for BOTH cew and authenticated users, including
-  //     raw authenticated user_id (needed for the survey-results scatter
-  //     tooltip; matches existing non-admin-authenticated consumer needs).
+  // SECURITY (2026-07-11, tiers refined 2026-07-13): this route has both
+  // public/anonymous consumers (CEW conference kiosk charts, always
+  // filter=cew) and authenticated consumers (survey-results pages, gated by
+  // middleware to any logged-in user; the admin poll-results page, gated to
+  // admins at the page level). The route itself must not rely on page-level
+  // gating -- it is a public HTTP endpoint. So the route determines its own
+  // auth tier here:
+  //   - "admin" tier (admin / matrix_admin role): individual vote rows for
+  //     BOTH cew and authenticated users, including the RAW authenticated
+  //     user_id -- needed for admin-only cross-referencing on the
+  //     poll-results page.
+  //   - "auth" tier (any other logged-in caller): individual vote rows for
+  //     BOTH cew and authenticated users, but the authenticated user_id is
+  //     PSEUDONYMIZED (see MATRIX_PSEUDONYM_SALT below) so a non-admin
+  //     caller cannot use the raw UUID to identify or confirm another
+  //     specific person's votes; the scatter-plot consumer only needs a
+  //     stable per-user identifier, not the real UUID.
   //   - "public" tier (no session): aggregate stats + already-pseudonymized
   //     CEW individual vote rows only. Individual authenticated vote rows
-  //     (raw user_id + their importance/feasibility) are never included.
+  //     are never included at all.
   // The in-memory cache key and the HTTP Cache-Control header are BOTH tier
-  // aware so a cached authenticated-tier response (or a shared/CDN HTTP
-  // cache) can never be replayed to an anonymous caller.
+  // aware so a cached admin/authenticated-tier response (or a shared/CDN
+  // HTTP cache) can never be replayed to a lower-privilege caller.
   const authClient = await createAuthenticatedClient();
   const requester = await getAuthenticatedUser(authClient);
   const isAuthenticated = !!requester;
-  const cacheTier = isAuthenticated ? 'auth' : 'public';
+
+  let isAdmin = false;
+  if (requester) {
+    try {
+      const { data: role, error: roleError } = await authClient
+        .from('user_roles')
+        .select('role')
+        .eq('user_id', requester.id)
+        .in('role', ['admin', 'matrix_admin'])
+        .limit(1)
+        .maybeSingle();
+      if (roleError) throw roleError;
+      isAdmin = !!role;
+    } catch (roleLookupError) {
+      // Fail SAFE (not fail-open): a broken/erroring role lookup must never
+      // grant admin-tier (raw user_id) access. Treat as non-admin so the
+      // caller still gets a working, pseudonymized "auth" tier response
+      // instead of the whole route throwing a 500.
+      console.error('Error checking admin role for prioritization-matrix:', roleLookupError);
+      isAdmin = false;
+    }
+  }
+
+  const cacheTier = isAdmin ? 'admin' : (isAuthenticated ? 'auth' : 'public');
   const cacheControlHeader = isAuthenticated
     ? 'private, no-store'
     : 'public, max-age=600, s-maxage=600';
@@ -570,11 +614,16 @@ export async function GET(request: Request) {
     // the public tier; aggregate stats are never identity-bearing and are
     // identical across tiers. Fail closed: strip the whole row, not just
     // the userId field.
-    const responseData: EnhancedMatrixData[] = isAuthenticated
-      ? matrixData
-      : matrixData.map(entry => ({
+    const responseData: EnhancedMatrixData[] = matrixData.map(entry => ({
           ...entry,
-          individualPairs: entry.individualPairs.filter(pair => pair.userType !== 'authenticated'),
+          individualPairs: entry.individualPairs.map(pair => {
+            if (pair.userType === 'authenticated' && !isAdmin) {
+              const pseudonymSalt = process.env.MATRIX_PSEUDONYM_SALT || MATRIX_PSEUDONYM_FALLBACK_SALT;
+              const pseudoId = createHmac('sha256', pseudonymSalt).update(pair.userId).digest('hex');
+              return { ...pair, userId: pseudoId };
+            }
+            return pair;
+          }).filter(pair => isAuthenticated || pair.userType !== 'authenticated'),
         }));
 
     // Store in cache (tier-scoped key -- see cacheKey construction above)

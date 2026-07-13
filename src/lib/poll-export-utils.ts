@@ -96,7 +96,11 @@ function escapeCSV(value: string | number | boolean | null | undefined): string 
   if (value === null || value === undefined || value === '') {
     return '""';
   }
-  const str = String(value);
+  let str = String(value);
+  // Mitigate CSV injection (OWASP)
+  if (/^[=+\-@\t\r]/.test(str)) {
+    str = "'" + str;
+  }
   // Replace double quotes with two double quotes, then wrap in quotes if needed
   const escaped = str.replace(/"/g, '""');
   // Wrap in quotes if contains comma, quote, or newline
