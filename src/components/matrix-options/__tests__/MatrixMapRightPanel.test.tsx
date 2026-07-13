@@ -149,6 +149,25 @@ describe('MatrixMapRightPanel', () => {
     });
   });
 
+  it('computes coordinate basis coverage and formats tier labels correctly', async () => {
+    rpcMock.mockResolvedValue({ data: measurementRows(), error: null });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a', 'sample-b'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+
+    const basisElement = screen.getByTestId('matrix-map-coord-basis');
+    expect(basisElement).toHaveTextContent('Coordinate basis: 1 surveyed, 1 centroid');
+
+    const scrollRegion = screen.getByTestId('matrix-map-measurement-table-scroll');
+    expect(within(scrollRegion).getByText('Surveyed')).toBeInTheDocument();
+    expect(within(scrollRegion).getByText('Centroid')).toBeInTheDocument();
+  });
+
   it('searches, selects, chips, and clears substance filters', async () => {
     rpcMock.mockResolvedValue({ data: measurementRows(), error: null });
     useMatrixMapSelectionStore.setState({

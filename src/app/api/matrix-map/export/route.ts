@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 import { NextResponse, type NextRequest } from 'next/server';
 
 import { checkCsrf } from '@/lib/engine-v2/csrf';
+import { COORD_TIER_LABEL } from '@/lib/matrix-map/coordinate-provenance';
 
 export const runtime = 'nodejs';
 
@@ -313,6 +314,7 @@ async function buildSelectionExport(
       'display_name',
       'classification',
       'coordinate_quality_tier',
+      'coordinate_provenance',
       'source_dra_id',
       'bc_region',
       'waterbody',
@@ -325,6 +327,7 @@ async function buildSelectionExport(
       sample.display_name,
       sample.classification,
       sample.coordinate_quality_tier,
+      COORD_TIER_LABEL[sample.coordinate_quality_tier as keyof typeof COORD_TIER_LABEL] || '',
       sample.source_dra_id ?? '',
       sample.bc_region ?? '',
       sample.waterbody ?? '',
@@ -397,6 +400,7 @@ async function buildMeasurementsExport(
       'qualifier',
       'censored',
       'coordinate_quality_tier',
+      'coordinate_provenance',
       'classification',
       'source_dra_id',
       'source_dra_title',
@@ -416,6 +420,7 @@ async function buildMeasurementsExport(
       row.qualifier ?? '',
       row.censored === null ? '' : String(row.censored),
       row.coordinate_quality_tier,
+      COORD_TIER_LABEL[row.coordinate_quality_tier as keyof typeof COORD_TIER_LABEL] || '',
       row.classification,
       row.source_dra_id ?? '',
       row.source_dra_title ?? '',
