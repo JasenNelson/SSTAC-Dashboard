@@ -10,12 +10,10 @@ import { createHmac } from 'crypto';
 // pseudonym locally and confirm that user's votes. MATRIX_PSEUDONYM_SALT is
 // a dedicated server-only var (never NEXT_PUBLIC_-prefixed); set it in the
 // deployment environment for stronger secret separation from other
-// credentials. The hard-coded fallback below keeps this route functional
-// (pseudonyms remain stable and are not derivable from any public value)
-// if the env var is unset -- the owner is never required to paste a secret
-// just to keep this endpoint working.
-const MATRIX_PSEUDONYM_FALLBACK_SALT =
-  'sstac-dashboard-matrix-pseudonym-fallback-salt-v1-2026-07-13-do-not-treat-as-secret';
+// credentials. We fall back to SUPABASE_SERVICE_ROLE_KEY (which is always
+// present in real deployments and never in source). If neither is present
+// (e.g. local dev), we fail closed and return a fixed redacted string rather
+// than exposing recomputable pseudonyms.
 
 // Type definitions for API responses
 interface VotingResult {
@@ -618,7 +616,17 @@ export async function GET(request: Request) {
           ...entry,
           individualPairs: entry.individualPairs.map(pair => {
             if (pair.userType === 'authenticated' && !isAdmin) {
-              const pseudonymSalt = process.env.MATRIX_PSEUDONYM_SALT || MATRIX_PSEUDONYM_FALLBACK_SALT;
+              const pseudonymSalt = process.env.MATRIX_PSEUDONYM_SALT || process.env.SUPABASE_SERVICE_ROLE_KEY;
+              
+              // If we have no server-secret salt, fail closed: return a fixed, redacted 
+              // placeholder (length > 8 so UI substring(0,8) doesn't crash) for all non-admin
+              // users so no recomputable pseudonyms leak, collapsing all such votes to one label.
+              // In a real deployment, MATRIX_PSEUDONYM_SALT or SUPABASE_SERVICE_ROLE_KEY will
+              // be present to drive actual pseudonymization.
+              if (!pseudonymSalt) {
+                return { ...pair, userId: 'redacted-no-salt' };
+              }
+
               const pseudoId = createHmac('sha256', pseudonymSalt).update(pair.userId).digest('hex');
               return { ...pair, userId: pseudoId };
             }

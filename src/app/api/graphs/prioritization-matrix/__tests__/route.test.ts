@@ -152,6 +152,7 @@ beforeEach(() => {
     NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
     NODE_ENV: 'test',
+    MATRIX_PSEUDONYM_SALT: 'test-secret-salt',
   };
   vi.clearAllMocks();
   mockCookies.mockResolvedValue({ get: () => undefined });
@@ -226,6 +227,37 @@ describe('GET /api/graphs/prioritization-matrix', () => {
 
     // Authenticated/detail tier must never be shared/CDN-cacheable.
     expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+  });
+
+  it('non-admin authenticated caller (no salt): fails closed with fixed redacted placeholder', async () => {
+    delete process.env.MATRIX_PSEUDONYM_SALT;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null }, []);
+    mockCreateServerClient.mockReturnValue(client);
+
+    const request = new Request('http://localhost/api/graphs/prioritization-matrix?filter=twg');
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    const entry = body.find((e: { title: string }) => e.title === TARGET_TITLE);
+    expect(entry).toBeDefined();
+
+    const authenticatedRows = entry.individualPairs.filter(
+      (p: { userType: string }) => p.userType === 'authenticated'
+    );
+    expect(authenticatedRows).toHaveLength(1);
+    
+    // The raw UUID must never be exposed.
+    expect(authenticatedRows[0].userId).not.toBe(AUTH_USER_ID);
+    
+    // Should be exactly the redacted fallback string.
+    expect(authenticatedRows[0].userId).toBe('redacted-no-salt');
+    expect(authenticatedRows[0].userId.length).toBeGreaterThan(8);
+
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain(AUTH_USER_ID);
   });
 
   it('admin caller: receives RAW authenticated user_id (needed for admin cross-referencing)', async () => {
