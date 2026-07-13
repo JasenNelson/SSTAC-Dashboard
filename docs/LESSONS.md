@@ -10,6 +10,54 @@
 
 ---
 
+## 2026-07-13 - codex CLI can hang for a whole session; fall back to Sonnet adversarial review + kill hung codex by PID [MEDIUM]
+
+**Area:** Review tooling / codex CLI / autonomous ship gates
+**Impact:** MEDIUM (blocks the codex ship gate; wastes background slots + leaves orphaned codex.exe)
+
+### Problem
+During a long autonomous session, `codex exec` / `codex review` hung producing zero output at least
+3 times (a consult, an IOCO safety review, one commit review) -- the process idles with no CPU and
+never emits a `turn.completed`, so the JSONL parser prints nothing. The hung codex.exe are orphaned
+when their parent background Bash shell exits (L0 1.8), and show up as idle zombies under dead sh.exe.
+
+### Pattern
+- Do NOT block the run on a flaky codex. When codex CLI hangs, fall back to a **Sonnet adversarial
+  review subagent** (reliable, off-Opus-budget) as the primary Leg-1 review; it caught 4+ real bugs in
+  this session's admin patch that the base impl missed. codex, when it DID run, added distinct real
+  findings -- so use both when possible, but never let a hung codex stall shipping.
+- Kill a hung codex ONLY by explicit PID after confirming it is yours via its command-line prompt
+  signature (`Get-CimInstance Win32_Process ... CommandLine`); NEVER by image name (would hit the
+  desktop app / parallel sessions). Many codex.exe is normal for this owner (parallel sessions + desktop).
+- codex review of a small committed diff is more reliable than a large `codex exec` consult; prefer
+  `codex review --commit <sha>` / `--base origin/main` over long free-form `codex exec` prompts.
+
+### Key Takeaway
+codex CLI is best-effort, not a hard dependency; Sonnet adversarial subagents are the reliable review
+floor. Bound every codex call and kill hangs by PID+signature, never by name.
+
+## 2026-07-13 - Never switch git branches in a worktree while a background git-reading codex runs [MEDIUM]
+
+**Area:** Concurrency / git worktrees / codex review correctness
+**Impact:** MEDIUM (produces an INVALID review of the wrong tree; wasted a codex round)
+
+### Problem
+A background `codex review --base origin/main` (which resolves the diff via live `git` commands over
+its run) was launched on branch A, then the same worktree was `git switch`-ed to branch B for other
+work. codex's git diff then ran against branch B's tree, so it "reviewed" the wrong changes (commented
+on an unrelated D1 tripwire + a half-written UI edit instead of the security diff). The verdict was
+worthless and had to be re-run cleanly.
+
+### Pattern
+- A background process that reads git (codex review, any `git diff`-based tool) shares the worktree's
+  single HEAD. Do NOT change branches (or do other index/HEAD-mutating git ops) in that worktree until
+  it finishes. Hold the branch stable, or run the reviewer in a SEPARATE worktree per L0 1.15.
+- Concurrent AGY file-writes to different files in the same worktree are fine; branch switches are not.
+
+### Key Takeaway
+One worktree = one HEAD. Pin the branch while any background git-reading reviewer runs there, or give
+it its own worktree.
+
 ## 2026-07-10 - Static-JSX hydration mismatch means a stale dev build, not a source bug [MEDIUM]
 
 **Area:** Next.js dev server / SSR-CSR hydration / engine-v2 evaluation page
