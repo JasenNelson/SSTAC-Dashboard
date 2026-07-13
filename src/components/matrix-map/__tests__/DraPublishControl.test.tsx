@@ -695,4 +695,32 @@ describe('DraPublishControl', () => {
     expect(screen.getAllByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT').length).toBe(2);
     expect(screen.queryByLabelText('Reason for visibility change')).not.toBeInTheDocument();
   });
+
+  it('regression: typing a filter forces collapsed groups open to show matches, clearing filter restores collapsed state', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    // Group starts open due to heuristic (<=12 groups)
+    const details = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    
+    // Explicitly collapse the group
+    details.open = false;
+    fireEvent(details, new Event('toggle'));
+    expect(details.open).toBe(false);
+
+    // Set a filter matching a row in that group
+    const input = screen.getByLabelText('Filter by site or report');
+    await userEvent.type(input, 'Detailed Ecological');
+
+    // Group must be forced open to show the match
+    const updatedDetails = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    expect(updatedDetails.open).toBe(true);
+    expect(screen.getByTestId('dra-row-ioco-era')).toBeInTheDocument();
+
+    // Clear the filter
+    await userEvent.clear(input);
+
+    // Collapsed state is restored
+    const finalDetails = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    expect(finalDetails.open).toBe(false);
+  });
 });

@@ -360,10 +360,10 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
           >
             {draGroups.map((group) => {
               const reportLabel = group.rows.length === 1 ? 'report' : 'reports';
-              const defaultOpen = normalizedFilter.length > 0 ||
-                group.rows.some((row) => row.id === selectedRowId) ||
+              const filterActive = normalizedFilter.length > 0;
+              const heuristicOpen = group.rows.some((row) => row.id === selectedRowId) ||
                 draGroups.length <= 12;
-              const isOpen = openGroups[group.key] ?? defaultOpen;
+              const isOpen = filterActive ? true : (openGroups[group.key] ?? heuristicOpen);
 
               return (
                 <li key={`${group.key}-${normalizedFilter ? 'filtered' : 'all'}`}>
@@ -371,6 +371,7 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
                     className="rounded-lg border border-slate-200 bg-slate-50/70 p-3 dark:border-slate-700 dark:bg-slate-950/40"
                     open={isOpen}
                     onToggle={(e) => {
+                      if (filterActive) return;
                       const newOpen = (e.currentTarget as HTMLDetailsElement).open;
                       if (openGroups[group.key] !== newOpen) {
                         setOpenGroups((prev) => ({ ...prev, [group.key]: newOpen }));
