@@ -3067,8 +3067,74 @@ the entry is a real copy; skip fsutil and remove directly.
 
 ---
 
-**Last Updated:** June 8, 2026 (AGY autonomy pattern, Vercel OOM fix, Opus-first review discipline, junction-safe teardown)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); prior totals not re-tallied.
+## 2026-07-13 - Live matrix_map Data Write: Single Self-Verifying Fail-Closed DO Block [HIGH]
+
+**Date:** July 13, 2026
+**Area:** Supabase data write / matrix_map / operational safety
+**Impact:** HIGH (pattern for any future live matrix_map production data mutation)
+**Status:** Implemented
+
+### Problem or Discovery
+
+T32 (waterbody-label normalization: `marine` -> `Marine`, `freshwater` -> `Freshwater` in
+`matrix_map.samples`) was the first live production data write of the mo-nextrun-2026-07-12 run.
+Owner-approved, but a small write to a live, RLS-governed table with a downstream RPC
+(`fetch_samples_with_hidden_summary`) that caches a `snapshot_version` still carries real risk:
+wrong row selection, partial application under concurrent access, or a stale cached snapshot are
+all silent-failure modes that are hard to detect after the fact.
+
+### Root Cause or Context
+
+Ad hoc `UPDATE ... WHERE waterbody = 'marine'` style statements do not self-verify: they can
+silently match zero rows (typo, case drift already fixed) or more rows than expected (a shared
+prefix or a wildcard drift), and they do not force downstream cache invalidation.
+
+### Solution or Pattern
+
+Applied as a single self-verifying, fail-closed `DO` block, run via project-scoped Supabase MCP as
+one request:
+1. **id-keyed, not predicate-keyed** -- captured the exact row ids to touch ahead of time and
+   updated by id, not by re-evaluating the same `WHERE waterbody = ...` predicate at write time.
+2. **`LOCK` + `lock_timeout`** -- avoids an indefinite wait against concurrent access; fails closed
+   (raises, no partial write) instead of hanging.
+3. **`GET DIAGNOSTICS` rowcount assert** -- each id-keyed update asserts the expected row count
+   (25 marine->Marine, 14 freshwater->Freshwater); any mismatch raises and aborts the whole block.
+4. **Full-distribution postcondition** -- after the writes, the block re-queries the full
+   `waterbody` value distribution (Marine 268 / Freshwater 22 / lowercase 0 / empty 4204 / total
+   4494) and asserts it matches the expected final state before committing.
+5. **`updated_at = now()`** on touched rows so `fetch_samples_with_hidden_summary`'s
+   `snapshot_version` refreshes and callers do not read a stale cached snapshot.
+6. **Exact rollback SQL committed alongside the forward SQL** -- the id-keyed reverse update, not
+   a "restore from backup" note.
+7. codex-reviewed to GREEN on the exact operation before running it live.
+
+Separately: once applied, the owner-decision packet was updated to embed the EXACT executed SQL
+(byte-identical to what ran, not a paraphrase or the pre-apply draft) as the committed source of
+truth, and the earlier pre-apply two-step runbook was explicitly labeled SUPERSEDED / DO NOT
+EXECUTE rather than deleted (archive-before-edit, L0 rule 1.2).
+
+### File References
+- `docs/MATRIX_OPTIONS_T32_WATERBODY_OWNER_PACKET_2026_07_12.md` -- STATUS APPLIED banner,
+  postflight evidence, embedded exact executed DO block + exact id-keyed rollback.
+- `docs/MATRIX_OPTIONS_MO_NEXTRUN_OWNER_DECISIONS_CONSOLIDATED_2026_07_12.md` -- item 10 marked
+  APPLIED with evidence.
+- `docs/archive/2026-07/FRESH_SESSION_HANDOFF_2026_07_12_MO_NEXTRUN_LANES_1_4.pre_t32applied.md`
+  -- archived pre-apply snapshot (archive-before-edit).
+
+### Key Takeaway
+
+For any live matrix_map (or other production Supabase table) data write, use one id-keyed
+LOCK+lock_timeout, rowcount-asserted, full-distribution-postcondition, fail-closed `DO` block
+(bumping `updated_at` where a downstream RPC caches a snapshot version) run as a single MCP
+request, codex-reviewed on the exact operation -- not a bare predicate-keyed `UPDATE`. Once
+applied, the packet documenting it must embed the byte-identical executed SQL (and its exact
+rollback) as the committed source of truth, with the superseded pre-apply runbook explicitly
+labeled non-executable rather than silently left ambiguous.
+
+---
+
+**Last Updated:** July 13, 2026 (T32 live matrix_map data-write pattern)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
