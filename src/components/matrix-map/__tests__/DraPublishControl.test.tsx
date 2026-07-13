@@ -20,6 +20,40 @@ const mockDras: DraRow[] = [
   }
 ];
 
+
+const clusteredDras: DraRow[] = [
+  {
+    id: 'ioco-era',
+    title: 'Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT',
+    agency: 'Golder Associates Ltd.',
+    year: 2017,
+    public: false,
+    site_id: '5',
+    site_name: 'IOCO Shoreline (2225 Ioco Road, Port Moody)',
+    site_registry_id: '3130',
+  },
+  {
+    id: 'ioco-data',
+    title: 'Data Report for Sediment 2009-2012 at IOCO T1 Shoreline - Technical Memorandum',
+    agency: 'Golder Associates Ltd.',
+    year: 2015,
+    public: false,
+    site_id: '5',
+    site_name: 'IOCO Shoreline (2225 Ioco Road, Port Moody)',
+    site_registry_id: '3130',
+  },
+  {
+    id: 'woodfibre-era',
+    title: 'Howe Sound Sediment Human Health and Ecological Risk Assessment',
+    agency: 'Keystone Environmental Ltd.',
+    year: 2014,
+    public: true,
+    site_id: '1',
+    site_name: 'Woodfibre (Former Squamish Pulp Mill)',
+    site_registry_id: '9930',
+  },
+];
+
 const dra2AuditRow: DraAuditRow = {
   id: 'a1111111-1111-4111-8111-111111111111',
   dra_id: '22222222-2222-4222-8222-222222222222',
@@ -70,6 +104,27 @@ function mockFetchRouter(opts: {
 }
 
 describe('DraPublishControl', () => {
+
+  it('groups DRAs by site cluster instead of rendering one flat title list', () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    expect(screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)')).toBeInTheDocument();
+    expect(screen.getByText('Registry 3130')).toBeInTheDocument();
+    expect(screen.getByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).toBeInTheDocument();
+    expect(screen.getByText('2 reports')).toBeInTheDocument();
+  });
+
+  it('filters the DRA list by site name, registry id, and report text', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    await userEvent.type(screen.getByLabelText('Filter by site or report'), 'IOCO');
+
+    expect(screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)')).toBeInTheDocument();
+    expect(screen.getByTestId('dra-row-ioco-era')).toBeInTheDocument();
+    expect(screen.getByTestId('dra-row-ioco-data')).toBeInTheDocument();
+    expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
+  });
+
   let fetchMock: any;
 
   beforeEach(() => {
@@ -531,5 +586,141 @@ describe('DraPublishControl', () => {
     await waitFor(() => {
       expect(screen.getByTestId('dra-audit-history-empty')).toBeInTheDocument();
     });
+  });
+
+  it('unassigned/no-site_id row groups under unassigned AND sorts LAST', () => {
+    const mixedDras: DraRow[] = [
+      { id: '1', title: 'No site', agency: null, year: null, public: false },
+      { id: '2', title: 'Site 5', agency: null, year: null, public: false, site_id: '5', site_name: 'Five' },
+      { id: '3', title: 'Site 1', agency: null, year: null, public: false, site_id: '1', site_name: 'One' },
+    ];
+    render(<DraPublishControl initialDras={mixedDras} isAdmin={true} />);
+    
+    const headings = screen.getAllByRole('heading', { level: 3 });
+    expect(headings[0]).toHaveTextContent('Site 1 - One');
+    expect(headings[1]).toHaveTextContent('Site 5 - Five');
+    expect(headings[2]).toHaveTextContent('Site not assigned');
+  });
+
+  it('handles grouping-key collision case (site_name equal to another row site_id are NOT merged)', () => {
+    const collisionDras: DraRow[] = [
+      { id: '1', title: 'DRA 1', agency: null, year: null, public: false, site_id: '123' },
+      { id: '2', title: 'DRA 2', agency: null, year: null, public: false, site_name: '123' },
+    ];
+    render(<DraPublishControl initialDras={collisionDras} isAdmin={true} />);
+    
+    const headings = screen.getAllByRole('heading', { level: 3 });
+    expect(headings.length).toBe(2);
+    expect(headings[0]).toHaveTextContent('Site 123');
+    expect(headings[1]).toHaveTextContent('123');
+  });
+
+  it('>12 clusters: user opens group A, selection moves to group B, group A STAYS open', async () => {
+    const manyDras: DraRow[] = Array.from({ length: 13 }, (_, i) => ({
+      id: `dra-${i}`,
+      title: `DRA ${i}`,
+      agency: null,
+      year: null,
+      public: false,
+      site_id: `${i}`,
+    }));
+    
+    const { container } = render(<DraPublishControl initialDras={manyDras} isAdmin={true} />);
+    
+    const details = container.querySelectorAll('details');
+    expect(details.length).toBe(13);
+    
+    details.forEach(d => expect(d.open).toBe(false));
+    
+    const details0 = screen.getByText('Site 0').closest('details') as HTMLDetailsElement;
+    details0.open = true;
+    fireEvent(details0, new Event('toggle'));
+    
+    fireEvent.click(screen.getByTestId('dra-row-dra-1'));
+    
+    expect(details0?.open).toBe(true);
+  });
+
+  it('filter is genuinely case-insensitive', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+    
+    await userEvent.type(screen.getByLabelText('Filter by site or report'), 'ioco');
+    
+    expect(screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)')).toBeInTheDocument();
+    expect(screen.getByTestId('dra-row-ioco-era')).toBeInTheDocument();
+    expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
+  });
+
+  it('clearing the filter restores all rows/groups', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+    
+    const input = screen.getByLabelText('Filter by site or report');
+    await userEvent.type(input, 'ioco');
+    expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
+    
+    await userEvent.clear(input);
+    expect(screen.getByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).toBeInTheDocument();
+  });
+
+  it('clears selection and pending actions when the selected DRA is filtered out', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    // Select the first row (ioco-era, which is private)
+    fireEvent.click(screen.getByTestId('dra-row-ioco-era'));
+
+    // Verify detail panel shows the selected DRA
+    expect(screen.getAllByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT').length).toBe(2);
+
+    // Start a publish action
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    const textarea = screen.getByLabelText('Reason for visibility change');
+    await userEvent.type(textarea, 'Should clear this');
+
+    // Filter to something that excludes the selected DRA
+    await userEvent.type(screen.getByLabelText('Filter by site or report'), 'Woodfibre');
+
+    // Verify detail panel is empty/prompts for selection
+    expect(screen.getByText('Select a DRA from the list to manage its publication status.')).toBeInTheDocument();
+    
+    // The previously selected DRA title should not be in the detail panel
+    expect(screen.queryByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT')).not.toBeInTheDocument();
+
+    // Verify publish confirmation panel is gone
+    expect(screen.queryByLabelText('Reason for visibility change')).not.toBeInTheDocument();
+
+    // Clear the filter
+    await userEvent.clear(screen.getByLabelText('Filter by site or report'));
+
+    // The DRA is visible again and still selected, but action state is cleared
+    expect(screen.getAllByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT').length).toBe(2);
+    expect(screen.queryByLabelText('Reason for visibility change')).not.toBeInTheDocument();
+  });
+
+  it('regression: typing a filter forces collapsed groups open to show matches, clearing filter restores collapsed state', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    // Group starts open due to heuristic (<=12 groups)
+    const details = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    
+    // Explicitly collapse the group
+    details.open = false;
+    fireEvent(details, new Event('toggle'));
+    expect(details.open).toBe(false);
+
+    // Set a filter matching a row in that group
+    const input = screen.getByLabelText('Filter by site or report');
+    await userEvent.type(input, 'Detailed Ecological');
+
+    // Group must be forced open to show the match
+    const updatedDetails = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    expect(updatedDetails.open).toBe(true);
+    expect(screen.getByTestId('dra-row-ioco-era')).toBeInTheDocument();
+
+    // Clear the filter
+    await userEvent.clear(input);
+
+    // Collapsed state is restored
+    const finalDetails = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
+    expect(finalDetails.open).toBe(false);
   });
 });
