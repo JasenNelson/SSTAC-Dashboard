@@ -177,7 +177,7 @@ describe('HHDirectContactCalculator', () => {
 // A3 Option A: DL-PCB TEQ parallel screening card. Shown ONLY for total PCBs, alongside
 // (never replacing) the mass-based result card above it.
 describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
-  it('renders the DL-PCB TEQ card with a needs-review badge and a numeric TEQ standard for total PCBs', () => {
+  it('renders the DL-PCB TEQ card with an approved provisional badge and a numeric TEQ standard for total PCBs', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -186,9 +186,16 @@ describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
     );
     const card = screen.getByTestId('hh-direct-dlpcb-teq-standard');
     expect(card).toHaveTextContent(/DL-PCB TEQ parallel screening standard/i);
-    expect(
-      screen.getByTestId('hh-direct-dlpcb-teq-provisional-badge'),
-    ).toHaveTextContent(/Provisional -- needs review/i);
+    
+    const badge = screen.getByTestId('hh-direct-dlpcb-teq-provisional-badge');
+    expect(badge).toHaveTextContent(/^Provisional$/);
+    expect(badge).not.toHaveTextContent(/needs review/i);
+    
+    const title = badge.getAttribute('title') || '';
+    expect(title).toMatch(/approved/i);
+    expect(title).not.toMatch(/needs_review/i);
+    expect(title).not.toMatch(/not yet HITL-verified/i);
+
     expect(screen.queryByTestId('hh-direct-dlpcb-teq-blocked')).not.toBeInTheDocument();
     expect(card).toHaveTextContent(/mg TEQ\/kg dry/i);
     // The mass-based sedS card is still present and unchanged for the PCB case.
