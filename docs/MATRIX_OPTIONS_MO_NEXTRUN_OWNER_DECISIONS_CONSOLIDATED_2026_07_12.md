@@ -1,9 +1,11 @@
 # mo-nextrun-2026-07-12 -- Consolidated Owner-Decision Packet
 
-Single batched list of EVERY owner-gated action produced by the fresh run (Lanes 1-4). All prep is
-PREP-ONLY and shipped in PR #619; nothing below was applied. Each item points to its detailed packet
-(which carries the exact SQL / script / paste-ready approval sentence). Nothing here is urgent or
-time-boxed; work them in any order. Recommended sequencing is by blast-radius (cheap/mechanical first).
+Single batched list of EVERY owner-gated action produced by the fresh run (Lanes 1-4). The prep was
+shipped in PR #619 (merged). **APPLIED SO FAR: item 10 (T32 waterbody UPDATE) -- APPLIED 2026-07-13**
+(owner-approved; see item 10). Every OTHER item below is still owner-gated and NOT applied. Each item
+points to its detailed packet (which carries the exact SQL / script / paste-ready approval sentence).
+Nothing here is urgent or time-boxed; work them in any order. Recommended sequencing is by blast-radius
+(cheap/mechanical first).
 
 ## A. Catalog (Lane 1) -- packet: docs/MATRIX_OPTIONS_LANE1_OWNER_DECISION_PACKET_2026_07_12.md
 Rule: AI dry-ran; owner runs promote-*.mjs --apply (or gives inline attestation). NOTE the catalog
@@ -39,8 +41,11 @@ counts were union-corrected (parameter_values + human_health_trv_values + eco_va
    requires approval of the exact write, not a generic pre-approval; (d) only then apply_live_load.py.
    The paste-ready STEP-2 sentence in the report is the (c) approval, given AFTER the exact artifacts
    exist. (STEP-1 already done; no apply until (c).)
-10. **T32 waterbody UPDATE** -- packet: docs/MATRIX_OPTIONS_T32_WATERBODY_OWNER_PACKET_2026_07_12.md.
-    codex-review the exact 39-row UPDATE, then apply verify-before-commit (Marine 268 / Freshwater 22).
+10. **T32 waterbody UPDATE** -- **APPLIED 2026-07-13** (owner-approved). Ran the exact id-keyed,
+    locked, rowcount-asserted, full-distribution-postcondition, fail-closed DO block (updated_at bumped)
+    via the owner-approved project-scoped MCP path; codex-GREEN (7 rounds). Postflight evidence: Marine
+    268, Freshwater 22, lowercase marine/freshwater 0, (empty) 4204, total samples 4494; +25 Marine /
+    +14 Freshwater changed; no other production mutation. Exact id-keyed rollback on file. DONE.
 
 ## C. E2E enablement (Lane 3) -- packet: docs/MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md
 11. **Enable authenticated E2E** (optional) -- set GH secrets E2E_TEST_EMAIL / E2E_TEST_PASSWORD
@@ -66,6 +71,7 @@ counts were union-corrected (parameter_values + human_health_trv_values + eco_va
     fields already reserved fail-closed, PR #610). Not started this run.
 
 ---
-Nothing above is applied. PR #619 holds all four lanes' prep (CI fully green through the Lane-3 tip
-3628324; the Lane-4 tip 2c11979 CI must be confirmed before merge). When you approve any item, the
-next session (or this one, if resumed) executes it through its gate.
+Applied so far: ONLY item 10 (T32 waterbody UPDATE, 2026-07-13); everything else above is un-applied.
+PR #619 (all four lanes' prep) was MERGED to main 2026-07-13 (merge commit 5b5d74b; main CI all-green).
+When you approve any remaining item, the next session (or this one, if resumed) executes it through its
+gate.
