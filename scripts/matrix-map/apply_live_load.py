@@ -4,6 +4,7 @@ import json
 import psycopg2
 import subprocess
 from pathlib import Path
+import argparse
 
 import urllib.parse
 import re
@@ -100,6 +101,26 @@ def get_counts(conn):
     return counts
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--manifest", default="C:/Projects/sstac-dashboard/scripts/matrix-map/mm_live_load_manifest.json")
+    parser.add_argument("--scripts-dir", default="C:/Projects/sstac-dashboard/scripts/matrix-map")
+    parser.add_argument("--report", default="C:/Projects/sstac-dashboard/.tmp_agy_closeout_liveload_apply.md",
+                        help="Closeout report path (default: primary checkout). Set this for worktree/"
+                             "sandboxed STEP-2 runs so the report is not written to an unwritable path.")
+    args = parser.parse_args()
+
+    # PREFLIGHT the closeout-report TARGET writability BEFORE touching the live DB (codex): otherwise a
+    # bad --report path (missing parent, an existing directory, or a read-only file) would only fail
+    # AFTER every batch is committed, losing the audit closeout of a live data load. mkdir the parent,
+    # then actually open the target for append to prove it is a writable file (not a dir / read-only).
+    Path(args.report).parent.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(args.report, "a", encoding="utf-8"):
+            pass
+    except OSError as e:
+        print(f"Error: --report target is not a writable file: {args.report} ({e})")
+        sys.exit(1)
+
     db_url = get_database_url()
     if not db_url:
         print("Error: DATABASE_URL not found in .env.local, environment, or Windows Credential Manager.")
@@ -120,7 +141,7 @@ def main():
     print("PRE-LOAD counts:")
     print(json.dumps(pre_counts, indent=2))
     
-    manifest_path = Path("C:/Projects/sstac-dashboard/scripts/matrix-map/mm_live_load_manifest.json")
+    manifest_path = Path(args.manifest)
     if not manifest_path.exists():
         print(f"Error: Manifest not found at {manifest_path}")
         sys.exit(1)
@@ -133,7 +154,7 @@ def main():
         print("Error: No batches found in manifest 'apply_order'.")
         sys.exit(1)
         
-    scripts_dir = Path("C:/Projects/sstac-dashboard/scripts/matrix-map")
+    scripts_dir = Path(args.scripts_dir)
 
     # Preflight: verify EVERY batch file exists before touching the live DB, so a
     # missing file fails fast rather than committing a partial prefix and only then
@@ -228,7 +249,7 @@ def main():
     report_lines.append("  manifest match and does not lock against concurrent writes.")
     report_lines.append("")
     
-    report_path = Path("C:/Projects/sstac-dashboard/.tmp_agy_closeout_liveload_apply.md")
+    report_path = Path(args.report)
     with open(report_path, "w", encoding="utf-8") as f:
         f.write("\n".join(report_lines))
         
