@@ -54,7 +54,8 @@ export default defineConfig({
             name: 'chromium-auth',
             use: { ...devices['Desktop Chrome'], storageState: userAuthState },
             dependencies: ['setup'],
-            testMatch: /matrix-options\.spec\.ts/,
+            // T40: run the member-fixture RBAC specs authenticated alongside matrix-options.
+            testMatch: /(matrix-options|mo-map-access|mo-publish-rbac)\.spec\.ts/,
           },
         ]
       : []),
