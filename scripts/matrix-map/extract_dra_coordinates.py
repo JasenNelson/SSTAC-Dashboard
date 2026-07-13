@@ -1,6 +1,12 @@
+"""
+No-write dry-run harness for DRA coordinate extraction.
+--apply is owner-gated and fails closed. Coordinates are never fabricated.
+"""
 import argparse
-import sys
+import json
 import os
+import re
+import sys
 
 try:
     from docling.document_converter import DocumentConverter
@@ -14,127 +20,139 @@ try:
 except ImportError:
     HAS_PYPROJ = False
 
+UUID_RE = re.compile(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$")
+STATION_ID_RE = re.compile(r"^[A-Za-z0-9 _.\-/]+$")
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Extract DRA coordinates from PDF.")
     parser.add_argument("--pdf", required=True, help="Absolute path to the source PDF.")
     parser.add_argument("--dra-id", required=True, help="UUID of the DRA.")
-    parser.add_argument("--out-sql", required=True, help="Path to output SQL file.")
-    parser.add_argument("--apply", action="store_true", help="Apply to DB (GATED).")
+    parser.add_argument("--out-sql", required=True, help="Path to write generated SQL.")
+    parser.add_argument("--dry-run-report", help="Path to write the JSON report. Default: <out-sql>.dryrun.json")
+    parser.add_argument("--apply", action="store_true", help="Apply to DB (GATED, fails closed).")
     return parser.parse_args()
 
-def extract_station_table(pdf_path):
-    """
-    Extracts the station table from the PDF.
-    
-    Heuristic:
-    1. Scan document for tables with headers containing 'Station', 'Latitude', 'Longitude',
-       or 'Easting', 'Northing'.
-    2. Extract rows and yield dictionaries of raw data.
-    
-    NEEDS-TUNING: The exact table layout, page numbers, and column headers will vary
-    by PDF. This function must be tailored to the specific document once inspected.
-    """
-    if not HAS_DOCLING:
-        print("ERROR: docling is required for extraction.", file=sys.stderr)
-        sys.exit(1)
-        
-    print(f"Extracting tables from {pdf_path} using docling...")
-    # NEEDS-TUNING: Implement real docling table parsing logic.
-    # Do NOT fabricate coordinates. Returning empty list to trigger fail-close for now.
-    return []
-
 def normalize_and_validate_coords(lat, lon, is_utm=False, zone=None):
-    """
-    Normalizes coordinates and validates them against BC bounds.
-    BC Bounds approx: Lat 48.0 to 60.0, Lon -140.0 to -114.0
-    
-    NEEDS-TUNING: Precise bounding box and coordinate system detection per-PDF.
-    """
     if is_utm:
-        if not HAS_PYPROJ:
-            print("ERROR: pyproj is required for UTM->WGS84 conversion, but is not installed.", file=sys.stderr)
-            sys.exit(1)
-        # NEEDS-TUNING: Implement UTM conversion using pyproj.Proj
-        pass
-        
+        raise NotImplementedError("UTM->WGS84 conversion is not implemented; supply WGS84 lat/lon or implement pyproj conversion under owner approval")
     try:
         lat_f = float(lat)
         lon_f = float(lon)
     except (ValueError, TypeError):
-        print(f"ERROR: Invalid coordinate format: lat={lat}, lon={lon}", file=sys.stderr)
-        sys.exit(1)
-        
+        raise ValueError(f"Invalid coordinate format: lat={lat}, lon={lon}")
     if not (48.0 <= lat_f <= 60.0 and -140.0 <= lon_f <= -114.0):
-        print(f"ERROR: Coordinates out of BC bounds: lat={lat_f}, lon={lon_f}", file=sys.stderr)
-        sys.exit(1)
-        
+        raise ValueError(f"Coordinates out of BC bounds: lat={lat_f}, lon={lon_f}")
     return lat_f, lon_f
 
-def match_station_id(label):
+def match_station_id(label: str) -> str:
     """
-    Maps station label from PDF to matrix_map.samples.station_id.
-    
-    Strategy:
-    1. Exact match against known station_ids for this DRA.
-    2. Normalized match (strip whitespace, upper/lower case, remove dashes).
-    
-    NEEDS-TUNING: Wire up to actual station_id list from the DB for this DRA.
+    NEEDS-TUNING -- real DB station_id join is owner-gated (no DB connection here).
     """
-    # NEEDS-TUNING: actual lookup logic
     return label.strip()
 
+def _validate_dra_id(dra_id):
+    if not UUID_RE.match(dra_id):
+        raise ValueError(f"Invalid DRA ID format: {dra_id}")
+
+def _safe_station_literal(station_id):
+    if not STATION_ID_RE.match(station_id):
+        raise ValueError(f"Invalid station ID format: {station_id}")
+    safe_str = station_id.replace("'", "''")
+    return f"'{safe_str}'"
+
 def generate_sql(dra_id, stations_data):
-    """
-    Emits an idempotent, id-keyed coordinate-UPDATE SQL.
-    """
+    _validate_dra_id(dra_id)
     sql_lines = []
     sql_lines.append(f"-- Coordinate extraction for DRA {dra_id}")
     sql_lines.append("-- PRE-FLIGHT VERIFICATION:")
     sql_lines.append(f"-- SELECT count(*) FROM matrix_map.samples WHERE source_dra_id = '{dra_id}';")
-    
     for station in stations_data:
         station_id = station['station_id']
         lat = station['lat']
         lon = station['lon']
+        if not isinstance(lat, float) or not isinstance(lon, float):
+            raise ValueError("Coordinates must be floats")
+        safe_station_id = _safe_station_literal(station_id)
         sql_lines.append(
-            f"UPDATE matrix_map.samples SET latitude = {lat}, longitude = {lon}, "
+            f"UPDATE matrix_map.samples SET latitude = {repr(float(lat))}, longitude = {repr(float(lon))}, "
             f"coordinate_quality_tier = 'high' "
-            f"WHERE station_id = '{station_id}' AND source_dra_id = '{dra_id}';"
+            f"WHERE station_id = {safe_station_id} AND source_dra_id = '{dra_id}';"
         )
-        
     sql_lines.append("-- POST-FLIGHT VERIFICATION:")
     sql_lines.append(f"-- SELECT count(*) FROM matrix_map.samples WHERE source_dra_id = '{dra_id}' AND latitude IS NOT NULL;")
-    return "\\n".join(sql_lines) + "\\n"
+    return "\n".join(sql_lines) + "\n"
+
+def extract_station_table(pdf_path):
+    """
+    Extracts the station table from the PDF.
+
+    Heuristic:
+    1. Scan document for tables with headers containing 'Station', 'Latitude', 'Longitude',
+       or 'Easting', 'Northing'.
+    2. Extract rows and yield dictionaries of raw data.
+
+    NEEDS-TUNING: The exact table layout, page numbers, and column headers will vary
+    by PDF. This function must be tailored to the specific document once inspected.
+    """
+    try:
+        from docling.document_converter import DocumentConverter
+    except ImportError:
+        pass
+    return []
+
+def build_dry_run_report(dra_id, pdf, stations):
+    pdf_exists = os.path.exists(pdf)
+    stations_extracted = len(stations)
+    status = 'OK' if stations_extracted >= 1 else 'BLOCKED'
+    missing_inputs = []
+    if not pdf_exists:
+        missing_inputs.append(f"source PDF not found at: {pdf}")
+    if not HAS_DOCLING:
+        missing_inputs.append("docling not installed in this environment (pip install docling)")
+    missing_inputs.append("extract_station_table table-parse heuristic is NEEDS-TUNING (returns 0 rows); implement real docling table parsing before any run")
+
+    return {
+        "status": status,
+        "dra_id": dra_id,
+        "pdf": pdf,
+        "pdf_exists": pdf_exists,
+        "docling_available": HAS_DOCLING,
+        "pyproj_available": HAS_PYPROJ,
+        "stations_extracted": stations_extracted,
+        "missing_inputs": missing_inputs,
+        "notes": "",
+        "generated_by": "extract_dra_coordinates.py dry-run"
+    }
 
 def main():
     args = parse_args()
-    
+
     if args.apply:
-        print("OWNER-GATED: coordinate write not authorized; re-run under explicit owner approval + codex review")
-        sys.exit(0)
+        print("ERROR: live DB writes are owner-gated and not implemented. --apply fails closed.", file=sys.stderr)
+        sys.exit(2)
 
-    if not os.path.exists(args.pdf):
-        print(f"ERROR: PDF file not found: {args.pdf}", file=sys.stderr)
-        sys.exit(1)
-
-    print(f"Processing DRA {args.dra_id} from {args.pdf}")
-    
+    report_path = args.dry_run_report if args.dry_run_report else f"{args.out_sql}.dryrun.json"
     extracted_rows = extract_station_table(args.pdf)
-    
-    if not extracted_rows:
-        print("ERROR: Extraction yielded 0 stations. Aborting.", file=sys.stderr)
+    report = build_dry_run_report(args.dra_id, args.pdf, extracted_rows)
+
+    with open(report_path, "w", encoding="ascii") as f:
+        json.dump(report, f, indent=2)
+
+    print(f"Summary: {report['status']} | Report: {report_path} | Stations: {report['stations_extracted']}")
+
+    if report["stations_extracted"] == 0:
+        print("Blocked reasons:")
+        for reason in report["missing_inputs"]:
+            print(f" - {reason}")
         sys.exit(1)
 
     stations_data = []
     for row in extracted_rows:
-        # NEEDS-TUNING: Map raw row fields to label, lat, lon
-        raw_label = row.get("label")
+        raw_label = row.get("label", "")
         raw_lat = row.get("lat")
         raw_lon = row.get("lon")
-        
         lat_f, lon_f = normalize_and_validate_coords(raw_lat, raw_lon)
         station_id = match_station_id(raw_label)
-        
         stations_data.append({
             "station_id": station_id,
             "lat": lat_f,
@@ -142,10 +160,8 @@ def main():
         })
 
     sql = generate_sql(args.dra_id, stations_data)
-    
-    with open(args.out_sql, 'w', encoding='ascii') as f:
+    with open(args.out_sql, "w", encoding="ascii") as f:
         f.write(sql)
-        
     print(f"Wrote SQL to {args.out_sql}")
 
 if __name__ == "__main__":
