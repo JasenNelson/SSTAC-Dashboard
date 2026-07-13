@@ -661,4 +661,38 @@ describe('DraPublishControl', () => {
     await userEvent.clear(input);
     expect(screen.getByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).toBeInTheDocument();
   });
+
+  it('clears selection and pending actions when the selected DRA is filtered out', async () => {
+    render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
+
+    // Select the first row (ioco-era, which is private)
+    fireEvent.click(screen.getByTestId('dra-row-ioco-era'));
+
+    // Verify detail panel shows the selected DRA
+    expect(screen.getAllByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT').length).toBe(2);
+
+    // Start a publish action
+    fireEvent.click(screen.getByRole('button', { name: 'Publish' }));
+    const textarea = screen.getByLabelText('Reason for visibility change');
+    await userEvent.type(textarea, 'Should clear this');
+
+    // Filter to something that excludes the selected DRA
+    await userEvent.type(screen.getByLabelText('Filter by site or report'), 'Woodfibre');
+
+    // Verify detail panel is empty/prompts for selection
+    expect(screen.getByText('Select a DRA from the list to manage its publication status.')).toBeInTheDocument();
+    
+    // The previously selected DRA title should not be in the detail panel
+    expect(screen.queryByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT')).not.toBeInTheDocument();
+
+    // Verify publish confirmation panel is gone
+    expect(screen.queryByLabelText('Reason for visibility change')).not.toBeInTheDocument();
+
+    // Clear the filter
+    await userEvent.clear(screen.getByLabelText('Filter by site or report'));
+
+    // The DRA is visible again and still selected, but action state is cleared
+    expect(screen.getAllByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT').length).toBe(2);
+    expect(screen.queryByLabelText('Reason for visibility change')).not.toBeInTheDocument();
+  });
 });

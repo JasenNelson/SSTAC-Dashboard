@@ -221,12 +221,20 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
     | null
   >(null);
 
-  const selectedRow = dras.find((r) => r.id === selectedRowId) ?? null;
   const normalizedFilter = filterText.trim();
   const filteredDras = useMemo(
     () => dras.filter((row) => matchesDraFilter(row, normalizedFilter)),
     [dras, normalizedFilter],
   );
+  const selectedRow = filteredDras.find((r) => r.id === selectedRowId) ?? null;
+
+  useEffect(() => {
+    if (!selectedRow) {
+      setActionMode(null);
+      setActionReason('');
+    }
+  }, [selectedRow]);
+
   const draGroups = useMemo(() => groupDrasBySite(filteredDras), [filteredDras]);
 
   const handleStartAction = useCallback((mode: 'publish' | 'unpublish') => {
