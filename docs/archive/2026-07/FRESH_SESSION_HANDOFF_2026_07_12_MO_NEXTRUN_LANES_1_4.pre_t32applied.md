@@ -4,23 +4,20 @@
 The fresh 15h autonomous run executed the four merged #618 prep packets as PREP-ONLY. All non-mutating
 prep for Lanes 1-4 is shipped in **PR #619** (branch `feat/mo-nextrun-2026-07-12`, worktree
 `C:\Projects\SSTAC-Dashboard-worktrees\mo-nextrun-2026-07-12`, off origin/main feb99a6). Lane 5
-(inhalation) is parked. **Production writes so far: ONLY T32 waterbody UPDATE (APPLIED 2026-07-13, owner-approved -- see queue).** Every OTHER write remains owner-gated and un-applied.
+(inhalation) is parked. **Nothing was applied to production** -- every write is owner-gated.
 
 Next session: read **docs/MATRIX_OPTIONS_MO_NEXTRUN_OWNER_DECISIONS_CONSOLIDATED_2026_07_12.md** (the
 single batched list of all 15 owner-gated items with pointers + paste-ready sentences), then execute
 whichever items the owner has approved, each through its gate.
 
 ## Baseline
-- ORIGINAL run baseline was origin/main = feb99a6 (#608-#618 merged); this run branched off it.
-  CURRENT origin/main = **5b5d74b** (this run's PR #619 merged 2026-07-13). Next session branches off
-  the current 5b5d74b, not feb99a6.
-- PRIMARY checkout `C:\Projects\sstac-dashboard` was intentionally LEFT at deede52 (was 166 behind at
-  run start; now further behind after #619 merged, dirty):
+- origin/main = feb99a6 (#608-#618 merged). This run branched off it.
+- PRIMARY checkout `C:\Projects\sstac-dashboard` was intentionally LEFT at deede52 (166 behind, dirty):
   L0 1.6 conflict-check flagged possible parallel work, so the FF was skipped. The worktree isolated
   this run. A future hygiene pass may fast-forward the primary (stash its 7 edits first, never reset).
 - ~50 worktrees + orphan node/python processes exist (foreign/pre-existing); not cleaned this run.
 
-## What shipped in PR #619 (all codex-GREEN; MERGED to main 2026-07-13, merge commit 5b5d74b, main CI all-green -- no merge gate remains)
+## What shipped in PR #619 (all codex-GREEN; CI: FULLY GREEN through 3628324 [Lane 3 tip]; Lane-4 tip 2c11979 CI still IN PROGRESS as of this handoff -- the next session MUST confirm final-tip CI before relying on it / merging)
 - **Lane 1 (1a1f194):** catalog arbitration owner packet (8 items) + P28 verify worklist (357 rows).
   Union-corrected (1779-row 3-file catalog).
 - **Lane 2 (f0e65c8):** T31 undated measurement-load STEP-1 (generation only -- +4178 undated events /
@@ -32,9 +29,9 @@ whichever items the owner has approved, each through its gate.
 - **Lane 4 (2c11979):** DRA expansion source locators (all 5 candidate PDFs located/exist, full paths
   preserved) + IOCO publish packet.
 
-## Owner-gated queue (APPLIED so far: T32 waterbody UPDATE, 2026-07-13; ALL OTHERS un-applied) -- see the consolidated packet for details + paste-ready sentences
+## Owner-gated queue (nothing applied) -- see the consolidated packet for details + paste-ready sentences
 Catalog: D1 dioxin --apply (READY) | cadmium/mehg confirm | 41 IRIS alternates | copper/sodium | D3 PCB
-| D2 BaP | 357 P28 sweep (union) | count ambiguities. Data: T31 STEP-2 apply | T32 UPDATE [APPLIED 2026-07-13: Marine 268 / Freshwater 22 / lowercase 0 / empty 4204 / total 4494; id-keyed fail-closed DO block; rollback on file]. E2E: enable secrets
+| D2 BaP | 357 P28 sweep (union) | count ambiguities. Data: T31 STEP-2 apply | T32 UPDATE. E2E: enable secrets
 | admin fixture. DRA: publish IOCO ea15e94a | coordinate-extraction lane (deferred, PDFs located).
 Inhalation: parked (needs VF/PEF anchor + section-7 approval).
 

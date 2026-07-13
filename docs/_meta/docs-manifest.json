@@ -104,6 +104,19 @@
     }
   },
   "facts_history": {
+    "session_2026_07_12_mo_nextrun_t32_applied": {
+      "status": "complete",
+      "session_date": "2026-07-13",
+      "work_summary": "mo-nextrun-2026-07-12 run close-out. PR #619 (Lanes 1-4 prep) merged to main 2026-07-13 (merge commit 5b5d74b, main CI green). T32 waterbody-label normalization APPLIED to production (owner-approved, the only production data write of the run): matrix_map.samples marine->Marine (25 rows) + freshwater->Freshwater (14 rows); final distribution Marine 268 / Freshwater 22 / lowercase 0 / (empty) 4204 / total 4494. Applied via a single id-keyed, LOCK+lock_timeout, rowcount-asserted, full-distribution-postcondition, fail-closed DO block (updated_at=now() so fetch_samples_with_hidden_summary snapshot_version refreshes), codex-reviewed to GREEN, run through project-scoped Supabase MCP as one request; exact rollback SQL committed alongside. PR #620 (docs-only) opened to mark T32 APPLIED in the owner packet and embed the exact executed SQL/rollback as committed source of truth; the pre-apply two-step runbook is labeled SUPERSEDED / DO NOT EXECUTE, and the pre-apply handoff snapshot was archived (archive-before-edit, L0 rule 1.2). Adds the 2026-07-13 live-matrix_map-data-write DO-block pattern lesson to docs/LESSONS.md. Remaining queue is owner-gated only; next gated item is D1 (dioxin TEQ promote).",
+      "prs_merged": 1,
+      "prs_open": 1,
+      "prs": [
+        "#619 5b5d74b (merged)",
+        "#620 (open, docs-only)"
+      ],
+      "main_tip": "5b5d74b",
+      "last_verified": "2026-07-13"
+    },
     "session_2026_07_09c_e58_launch_support_run": {
       "status": "complete",
       "session_date": "2026-07-09",
