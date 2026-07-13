@@ -18,6 +18,18 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const { data: role, error: roleError } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'matrix_admin'])
+      .limit(1)
+      .maybeSingle();
+
+    if (roleError || !role) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     const sessions = discoverPacketSessions();
 
     return NextResponse.json({

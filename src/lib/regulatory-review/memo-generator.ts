@@ -652,11 +652,16 @@ export function generateHTML(
  */
 function escapeCSV(text: string): string {
   if (!text) return '';
-  // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
-  if (text.includes(',') || text.includes('"') || text.includes('\n')) {
-    return `"${text.replace(/"/g, '""')}"`;
+  let safeText = text;
+  // Mitigate CSV injection (OWASP)
+  if (/^[=+\-@\t\r]/.test(safeText)) {
+    safeText = "'" + safeText;
   }
-  return text;
+  // If field contains comma, quote, or newline, wrap in quotes and escape internal quotes
+  if (safeText.includes(',') || safeText.includes('"') || safeText.includes('\n') || safeText.includes('\r')) {
+    return `"${safeText.replace(/"/g, '""')}"`;
+  }
+  return safeText;
 }
 
 /**

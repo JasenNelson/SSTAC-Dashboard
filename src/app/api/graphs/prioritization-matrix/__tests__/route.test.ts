@@ -52,7 +52,11 @@ const votesTable = [
 //  - polls (id lookup): .select('id').eq('page_path', x).eq('poll_index', y).single()
 //  - polls (metadata):  .select('id, poll_index, page_path').in('id', ids)
 //  - poll_votes:        .select('user_id, option_index, voted_at, poll_id').in('poll_id', ids)
-function makeSupabaseClient(getUserResult: { data: { user: { id: string } | null }; error: null }) {
+//  - user_roles:        .select('role').eq('user_id', x).in('role', [...]).limit(1).maybeSingle()
+function makeSupabaseClient(
+  getUserResult: { data: { user: { id: string } | null }; error: null },
+  userRoles: Array<{ user_id: string; role: string }> = []
+) {
   return {
     auth: {
       getUser: vi.fn().mockResolvedValue(getUserResult),
@@ -107,6 +111,34 @@ function makeSupabaseClient(getUserResult: { data: { user: { id: string } | null
           }),
         };
       }
+      if (table === 'user_roles') {
+        return {
+          select: () => {
+            let userId: string | undefined;
+            let roles: string[] = [];
+            const builder = {
+              eq(_col: string, val: string) {
+                userId = val;
+                return builder;
+              },
+              in(_col: string, vals: string[]) {
+                roles = vals;
+                return builder;
+              },
+              limit() {
+                return builder;
+              },
+              maybeSingle() {
+                const found = userRoles.find(
+                  (r) => r.user_id === userId && roles.includes(r.role)
+                );
+                return Promise.resolve({ data: found ? { role: found.role } : null, error: null });
+              },
+            };
+            return builder;
+          },
+        };
+      }
       throw new Error(`Unexpected table in test mock: ${table}`);
     }),
   };
@@ -120,6 +152,7 @@ beforeEach(() => {
     NEXT_PUBLIC_SUPABASE_URL: 'https://test.supabase.co',
     NEXT_PUBLIC_SUPABASE_ANON_KEY: 'test-anon-key',
     NODE_ENV: 'test',
+    MATRIX_PSEUDONYM_SALT: 'test-secret-salt',
   };
   vi.clearAllMocks();
   mockCookies.mockResolvedValue({ get: () => undefined });
@@ -165,8 +198,9 @@ describe('GET /api/graphs/prioritization-matrix', () => {
     expect(response.headers.get('Cache-Control')).toBe('public, max-age=600, s-maxage=600');
   });
 
-  it('authenticated caller: receives individual authenticated vote rows (existing survey-results consumer behavior)', async () => {
-    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null });
+  it('non-admin authenticated caller: receives PSEUDONYMIZED authenticated vote rows (2026-07-13 hardening)', async () => {
+    // No user_roles row for AUTH_USER_ID -> not admin/matrix_admin.
+    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null }, []);
     mockCreateServerClient.mockReturnValue(client);
 
     const request = new Request('http://localhost/api/graphs/prioritization-matrix?filter=all');
@@ -181,14 +215,99 @@ describe('GET /api/graphs/prioritization-matrix', () => {
       (p: { userType: string }) => p.userType === 'authenticated'
     );
     expect(authenticatedRows).toHaveLength(1);
-    expect(authenticatedRows[0].userId).toBe(AUTH_USER_ID);
+    // The raw UUID must never be exposed to a non-admin caller (an attacker
+    // who knows a target's UUID must not be able to confirm their votes).
+    expect(authenticatedRows[0].userId).not.toBe(AUTH_USER_ID);
+    // Pseudonym must be a stable, sufficiently long (UI does
+    // substring(0, 8)) hex digest, not derivable from any public value.
+    expect(authenticatedRows[0].userId).toMatch(/^[0-9a-f]{16,}$/);
+
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain(AUTH_USER_ID);
 
     // Authenticated/detail tier must never be shared/CDN-cacheable.
     expect(response.headers.get('Cache-Control')).toBe('private, no-store');
   });
 
+  it('non-admin authenticated caller (no salt): fails closed with fixed redacted placeholder', async () => {
+    delete process.env.MATRIX_PSEUDONYM_SALT;
+    delete process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null }, []);
+    mockCreateServerClient.mockReturnValue(client);
+
+    const request = new Request('http://localhost/api/graphs/prioritization-matrix?filter=twg');
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    const entry = body.find((e: { title: string }) => e.title === TARGET_TITLE);
+    expect(entry).toBeDefined();
+
+    const authenticatedRows = entry.individualPairs.filter(
+      (p: { userType: string }) => p.userType === 'authenticated'
+    );
+    expect(authenticatedRows).toHaveLength(1);
+    
+    // The raw UUID must never be exposed.
+    expect(authenticatedRows[0].userId).not.toBe(AUTH_USER_ID);
+    
+    // Should be exactly the redacted fallback string.
+    expect(authenticatedRows[0].userId).toBe('redacted-no-salt');
+    expect(authenticatedRows[0].userId.length).toBeGreaterThan(8);
+
+    const raw = JSON.stringify(body);
+    expect(raw).not.toContain(AUTH_USER_ID);
+  });
+
+  it('admin caller: receives RAW authenticated user_id (needed for admin cross-referencing)', async () => {
+    const client = makeSupabaseClient(
+      { data: { user: { id: AUTH_USER_ID } }, error: null },
+      [{ user_id: AUTH_USER_ID, role: 'admin' }]
+    );
+    mockCreateServerClient.mockReturnValue(client);
+
+    const request = new Request('http://localhost/api/graphs/prioritization-matrix?filter=all');
+    const response = await GET(request);
+    const body = await response.json();
+
+    expect(response.status).toBe(200);
+    const entry = body.find((e: { title: string }) => e.title === TARGET_TITLE);
+    const authenticatedRows = entry.individualPairs.filter(
+      (p: { userType: string }) => p.userType === 'authenticated'
+    );
+    expect(authenticatedRows).toHaveLength(1);
+    expect(authenticatedRows[0].userId).toBe(AUTH_USER_ID);
+    expect(response.headers.get('Cache-Control')).toBe('private, no-store');
+  });
+
+  it('does not cross-leak between the admin tier and the non-admin authenticated tier', async () => {
+    const adminClient = makeSupabaseClient(
+      { data: { user: { id: AUTH_USER_ID } }, error: null },
+      [{ user_id: AUTH_USER_ID, role: 'admin' }]
+    );
+    mockCreateServerClient.mockReturnValue(adminClient);
+    const adminReq = new Request('http://localhost/api/graphs/prioritization-matrix?filter=all');
+    await GET(adminReq); // warms the "admin" tier cache entry with the RAW userId
+
+    const nonAdminClient = makeSupabaseClient(
+      { data: { user: { id: AUTH_USER_ID } }, error: null },
+      []
+    );
+    mockCreateServerClient.mockReturnValue(nonAdminClient);
+    const nonAdminReq = new Request('http://localhost/api/graphs/prioritization-matrix?filter=all');
+    const nonAdminResponse = await GET(nonAdminReq);
+    const nonAdminBody = await nonAdminResponse.json();
+
+    const entry = nonAdminBody.find((e: { title: string }) => e.title === TARGET_TITLE);
+    const authenticatedRows = entry.individualPairs.filter(
+      (p: { userType: string }) => p.userType === 'authenticated'
+    );
+    expect(authenticatedRows[0].userId).not.toBe(AUTH_USER_ID);
+  });
+
   it('cew filter never includes authenticated rows regardless of caller auth state', async () => {
-    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null });
+    const client = makeSupabaseClient({ data: { user: { id: AUTH_USER_ID } }, error: null }, []);
     mockCreateServerClient.mockReturnValue(client);
 
     const request = new Request('http://localhost/api/graphs/prioritization-matrix?filter=cew');

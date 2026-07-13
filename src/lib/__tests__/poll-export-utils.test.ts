@@ -43,6 +43,31 @@ describe('poll-export-utils', () => {
       expect(csv).toContain('50.00%');
     });
 
+    it('neutralizes CSV injection prefixes', () => {
+      const triggers = ["=1+1", "+1", "-1", "@SUM", "\tval", "\rval"];
+      for (const t of triggers) {
+        const poll: SingleChoicePollExport = {
+          question: 'Q1',
+          pollType: 'single_choice',
+          pagePath: '/test/poll',
+          pollIndex: 0,
+          filterMode: 'all',
+          totalResponses: 1,
+          options: [
+            {
+              optionIndex: 0,
+              optionText: t,
+              votes: 1,
+              percentage: 100
+            }
+          ]
+        };
+        const csv = exportSingleChoicePollToCSV(poll);
+        // It prepends a single quote
+        expect(csv).toContain("'" + t);
+      }
+    });
+
     it('handles filterMode twg/cew vs all column sets', () => {
       const poll: SingleChoicePollExport = {
         question: 'Q1',

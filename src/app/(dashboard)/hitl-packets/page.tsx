@@ -48,6 +48,23 @@ export default async function HitlPacketsPage() {
     redirect('/login?redirect=/hitl-packets');
   }
 
+  // Admin gate matches the /api/hitl-packets route's role check: admin OR
+  // matrix_admin. Codex P1 (2026-07-13): this server component reads packet
+  // session metadata directly, bypassing the API's 403 for non-admins who
+  // navigate here directly. Pattern mirrored from
+  // src/app/(dashboard)/admin/catalog-staging-review/page.tsx.
+  const { data: roles } = await supabase
+    .from('user_roles')
+    .select('role')
+    .eq('user_id', user.id)
+    .in('role', ['admin', 'matrix_admin']);
+
+  const isAdmin = Array.isArray(roles) && roles.length > 0;
+
+  if (!isAdmin) {
+    redirect('/dashboard');
+  }
+
   let sessions: ReturnType<typeof discoverPacketSessions> = [];
   try {
     sessions = discoverPacketSessions();

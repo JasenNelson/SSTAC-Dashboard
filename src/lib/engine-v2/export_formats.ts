@@ -241,7 +241,6 @@ function reviewedAtDisplay(row: JoinedRow): string {
 // "=cmd|...", a stray TAB or CR from upstream parsing). The OWASP-recommended
 // neutralization is to prefix a single quote ('), which Excel renders as
 // literal text rather than a formula.
-const CSV_FORMULA_TRIGGERS = new Set<string>(["=", "+", "-", "@", "\t", "\r"]);
 
 // RFC 4180-ish CSV escape with CWE-1236 formula-injection neutralization:
 //   1. Prefix `'` if the field begins with any formula-trigger character
@@ -256,7 +255,7 @@ function escapeCSV(text: string): string {
   let s = text;
   // CWE-1236 neutralization: applied BEFORE quote-wrap so the prefix gets the
   // same downstream escape treatment if the field also needs quoting.
-  if (s.length > 0 && CSV_FORMULA_TRIGGERS.has(s.charAt(0))) {
+  if (/^[=+\-@\t\r]/.test(s)) {
     s = "'" + s;
   }
   if (
