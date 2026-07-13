@@ -7,34 +7,34 @@ from the source docs named inline; nothing here was independently re-derived. Pl
 docs listed in section 5 as the first thing to read; those docs remain on disk as detail/evidence
 references, not as competing entry points.
 
-## 1. Current truth (as of 2026-07-13)
+## 1. Current truth (as of 2026-07-13, updated later same day)
 
-Catalog: **1779 rows** (parameter_values 106 + human_health_trv_values 1574 + eco_values 99) --
-**468 needs_review / 83 current_default**. `origin/main` is at **df7db68** (merge of PR #620,
-docs-only T32-applied source of truth). Two PRs are OPEN and pending owner merge: **#621** (Top-50
-priority tasks doc, branch `docs/mo-top50-2026-07-13`) and **#622** (tonight's overnight
-decision-support pack + coverage, branch `docs/mo-overnight-decision-support-2026-07-13`) --
-neither has landed on `origin/main` yet, so anything sourced only from those branches (the Top-50
-doc and the three 07-13 decision-support docs) is not yet on `main`. DRA publication baseline was
-corrected THIS session (Top-50 doc, superseding the 07-11 completion-status "0 public / 574
-private" claim): it is actually **3 public / 571 private** (a surveyed-coordinate pilot); IOCO
-Shoreline (coordinate-safe, +6 samples) is queued as the 4th, pending owner approval + exact-call
-codex review. Of the 07-12 owner-decision packet's 15 items, only **item 10 (T32 waterbody UPDATE)
-has been applied**; everything else in that packet is still un-applied.
+Catalog: **1780 rows** (approved-ish baseline, D1 promoted 1 row). `origin/main` is at **e425369** (post D1 #627 merge). 
+
+SHIPPED/MERGED since the last update:
+- **D1 dioxin-TEQ** APPLIED + MERGED (#627).
+- **T31 STEP-2** APPLIED to live matrix_map (deltas +4178 sample_events / +5752 measurements / 0 samples; MCP-verified; report in `.tmp/mo-nextrun-2026-07-12/liveload_apply_closeout.md`).
+
+Three PRs are OPEN and pending owner merge:
+- **#628** security hardening (hitl-packets admin gate incl. pages + csv/md routes; prioritization-matrix server-secret HMAC pseudonymization + fail-closed; escapeCSV formula-injection guard x3 modules; codex GREEN).
+- **#629** DRA coord-extraction harness DRAFT (no write).
+- **#630** DL-PCB card copy reflects approved dioxin TDI.
+
+DRA publication baseline is **3 public / 571 private** (a surveyed-coordinate pilot); IOCO Shoreline (coordinate-safe, +6 samples) is queued as the 4th, pending owner execution via app (admin JWT).
 
 ## 2. Lane status
 
 | Lane | Status | Current pointer doc | Immediate next action |
 |---|---|---|---|
-| Catalog arbitration | OWNER-GATED | `MATRIX_OPTIONS_MO_NEXTRUN_OWNER_DECISIONS_CONSOLIDATED_2026_07_12.md` sec A (+ null-risk audit for current_default sub-item) | Owner attests HC v4.0 p.42 locator for D1 dioxin-TEQ (cheapest, script-ready, 1 row) -- see queue item 1 below. |
-| Matrix-map data / T31 | OWNER-GATED | `MATRIX_OPTIONS_T31_STEP1_REPORT_2026_07_12.md` sec 9 | Owner authorizes STEP-2 (+4178 undated events / +5752 measurements); STEP-1 is done, nothing applied yet -- two-gate sequence (authorize, then regenerate+codex-GREEN the exact artifacts, then a second approval of that exact reviewed operation). |
-| DRA publication | OWNER-GATED / IN-PROGRESS | Top-50 doc (baseline correction) + `docs/design/matrix-map/DRA_EXPANSION_LOCATORS_AND_IOCO_PACKET_2026_07_12.md` | Baseline is 3 public / 571 private, not 0/574. Publish IOCO Shoreline (ea15e94a) as the 4th, pending owner approval + exact-operation codex review of the literal `flip_dra_public` call. |
+| Catalog arbitration | OWNER-GATED | `MATRIX_OPTIONS_MO_NEXTRUN_OWNER_DECISIONS_CONSOLIDATED_2026_07_12.md` sec A | D1 dioxin-TEQ is SHIPPED/MERGED (#627). Benzo_a_pyrene RfD wire + endosulfan default (separate small catalog batch) await owner approval. Remaining: D2/D3/IRIS/copper/P28 arbitration. |
+| Matrix-map data / T31 | APPLIED/DONE | `.tmp/mo-nextrun-2026-07-12/liveload_apply_closeout.md` | STEP-2 is applied (+4178 sample_events / +5752 measurements / 0 samples). Done. |
+| DRA publication | OWNER-GATED | Top-50 doc + `docs/design/matrix-map/DRA_EXPANSION_LOCATORS_AND_IOCO_PACKET_2026_07_12.md` | Publish IOCO Shoreline (dra ea15e94a) reviewed GREEN + preflight done, awaiting owner execution via app (admin JWT). Baseline is 3 public / 571 private. |
 | Inhalation | PARKED | `MATRIX_OPTIONS_MO_NEXTRUN_OWNER_DECISIONS_CONSOLIDATED_2026_07_12.md` sec E + Top-50 doc Tier 7 | None -- owner-deprioritized below all completion-path lanes. When resumed: needs the VF/PEF model decision (Option A dynamic / B user-supplied / C hardcoded) + T33 unit-basis settle before any wiring. Input fields already reserved fail-closed (PR #610). |
-| Cumulative UI (A3b) | OWNER-GATED (blocked) | `MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md` HITL item 7 / Top-50 doc #15-16 | Blocked on D1 (dioxin-TEQ) + D2 (BaP anchor) + D3 (PCB Option A) rulings. Once resolved: register computeTEQ/computeBaPeq in equationDispatch + build the UI component. TEQ/BaP-eq math itself is complete and tested (headless). |
-| Coordinate extraction | PARKED / DEFERRED | `docs/design/matrix-map/DRA_EXPANSION_LOCATORS_AND_IOCO_PACKET_2026_07_12.md` sec 2a + Top-50 doc Tier 4 | 4 centroid-only DRA source PDFs (Howe Sound / r-0074 / Lot C / Site 14764) are located. Next: AGY drafts the OCR/table-extraction harness, orchestrator runs it, the coordinate WRITE stays owner-gated and checkpoint-bound. |
-| Security / RBAC | OWNER-GATED (2 real gaps) | `MATRIX_OPTIONS_SECURITY_RBAC_REVERIFY_2026_07_13.md` (reverified 07-13) | GAP 1 (`/api/hitl-packets/*` no reviewer/admin role gate): owner picks `ALLOWED_ROLES` (reuse admin/matrix_admin vs new `hitl_reviewer` role). GAP 2 (`prioritization-matrix` authenticated non-admin user_id leak): owner picks drop-vs-pseudonymize for the non-admin tier. Recommendation in the source doc: fix GAP 2 first (smaller blast radius, more sensitive). Neither is applied. |
-| E2E | OWNER-GATED (optional) | Top-50 doc Tier 6 (#23-24) / `MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md` | Owner sets GH secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` + repo var `E2E_AUTH_ENABLED=true` to turn on member-authenticated coverage. Admin-tier coverage additionally needs a new admin test user + storageState (none exists today). |
-| Older 07-01 backlog | IN-PROGRESS (re-triaged 07-13) | `MATRIX_OPTIONS_HITL_0701_RETRIAGE_2026_07_13.md` | Of the original ~43 items / ~170 sub-actions: **111 RESOLVED, 4 SUPERSEDED (now tracked in the 07-12 packet), 11 STILL-OPEN**. See queue items 15-16 below for the net-new still-open items not already in the 07-12 packet. |
+| Cumulative UI (A3b) | OWNER-GATED (blocked) | `MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md` HITL item 7 / Top-50 doc #15-16 | Blocked on D2 (BaP anchor) and D3 (PCB Option A) rulings (D1 is resolved). Once resolved: register computeTEQ/computeBaPeq in equationDispatch + build the UI component. |
+| Coordinate extraction | OPEN PR / DRAFT | `docs/design/matrix-map/DRA_EXPANSION_LOCATORS_AND_IOCO_PACKET_2026_07_12.md` sec 2a + Top-50 doc Tier 4 | PR #629 is open (DRA coord-extraction harness DRAFT, no write). Extraction RUN remains owner-gated. |
+| Security / RBAC | OPEN PR / OWNER-GATED | `MATRIX_OPTIONS_SECURITY_RBAC_REVERIFY_2026_07_13.md` | PR #628 is open for owner merge (security hardening: hitl-packets admin gate incl. pages + csv/md routes; prioritization-matrix server-secret HMAC pseudonymization + fail-closed; escapeCSV formula-injection guard x3 modules; codex GREEN). |
+| E2E | OWNER-GATED | Top-50 doc Tier 6 / `MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md` | T40 E2E owner secrets setup (E2E_TEST_EMAIL/E2E_TEST_PASSWORD + E2E_AUTH_ENABLED=true) + #40 route removal (product decision). |
+| Older 07-01 backlog | IN-PROGRESS | `MATRIX_OPTIONS_HITL_0701_RETRIAGE_2026_07_13.md` | Of the original ~43 items: 111 RESOLVED, 4 SUPERSEDED, 11 STILL-OPEN. PR #630 is open (DL-PCB card copy reflects approved dioxin TDI) awaiting owner merge. |
 
 ## 3. Consolidated owner-decision queue
 
@@ -43,9 +43,7 @@ Dedup of the 07-12 packet's 15 items against tonight's (07-13) three decision-su
 (Lane C); 13-14 are DRA/map (Lane D); 15 is inhalation (Lane E). Items 16-18 are net-new,
 surfaced only by tonight's re-verification work and not present in the original 07-12 packet.
 
-1. **D1 dioxin-TEQ** -- READY (unchanged). Owner attests HC v4.0 p.42 locator, then
-   `promote-hc-dioxin-teq.mjs --apply` + the coupled tripwire edit, then tsc/lint/test:ci. Cheapest
-   item in the whole queue (1 row, script ready).
+1. **D1 dioxin-TEQ** -- **APPLIED + MERGED 2026-07-13 in PR #627**. Postflight: Baseline catalog promoted 1 row (from 1779 to 1780 approved rows). DONE.
 2. **cadmium + methylmercury current_default** -- CONFIRM-ONLY (unchanged). HC-policy-preference
    over lower approved IRIS alternatives; no value at risk.
 3. **41 IRIS needs_review alternates** -- per-group reject/retain/set-default ruling (8 substances,
@@ -64,9 +62,7 @@ surfaced only by tonight's re-verification work and not present in the original 
    compilation PDF. Unchanged, its own multi-session lane.
 8. **Ambiguities to reconcile** -- the completion-status "15 conflicts" (verified union = 33
    substances / 62 groups / 157 rows) and the untraceable "20 supersede-or-reject" list. Unchanged.
-9. **T31 STEP-2 apply** -- two-gate sequence (owner authorizes STEP-2; regenerate the 25-batch SQL
-   + manifest and codex-review GREEN on the exact freshly-regenerated artifacts; owner approves that
-   exact reviewed operation; then `apply_live_load.py`). STEP-1 already done. Unchanged.
+9. **T31 STEP-2 apply** -- **APPLIED 2026-07-13** (deltas +4178 sample_events / +5752 measurements / 0 samples; MCP-verified; report in `.tmp/mo-nextrun-2026-07-12/liveload_apply_closeout.md`). DONE.
 10. **T32 waterbody UPDATE** -- **APPLIED 2026-07-13** (owner-approved). DONE. Postflight: Marine
     268, Freshwater 22, no lowercase dupes, 4204 unlabeled, total 4494 samples; codex-GREEN over 7
     rounds; exact id-keyed rollback on file. No further action.
@@ -81,8 +77,8 @@ surfaced only by tonight's re-verification work and not present in the original 
     `ea15e94a-b093-4cb4-bd4d-80ab9eae16d4` + explicit owner approval sentence. Unchanged, still not
     applied.
 14. **Coordinate-extraction lane** (deferred) -- all 4 centroid-DRA source PDFs located (Howe Sound
-    / r-0074 / Lot C / Site 14764). Separate owner-gated, checkpoint-bound follow-on lane: AGY
-    drafts the extraction harness, orchestrator runs, write held. Unchanged.
+    / r-0074 / Lot C / Site 14764). PR #629 is open (DRA coord-extraction harness DRAFT, no write).
+    Extraction RUN remains owner-gated.
 15. **Inhalation** -- PARKED. Needs the owner's VF/PEF anchor decision + section-7 approval
     sentence before any wiring (input fields already reserved fail-closed, PR #610). Not started.
 16. **NEW -- current_default null-risk audit (Top-50 item #14, resolved by tonight's audit):** the
@@ -91,31 +87,20 @@ surfaced only by tonight's re-verification work and not present in the original 
     disambiguates them). **Only 2 real at-risk tuples remain**, both under the default frame:
     `endosulfan_alpha` and `endosulfan_beta` (eco-direct-eqp, fcv_ug_per_L = 0.056 ug/L, two
     same-jurisdiction US_federal EPA rows with no tiebreak). Recommended fix: set current_default
-    on one of the two identical rows per tuple (owner-gated, editorial pick between equal-value EPA
-    sources). Do NOT blanket-set current_default on the other 16 cross-jurisdiction ties -- that
+    on one of the two identical rows per tuple. Prepared in a separate small catalog batch awaiting owner approval (along with benzo_a_pyrene RfD wire). Do NOT blanket-set current_default on the other 16 cross-jurisdiction ties -- that
     would regress frame-sensitivity (current_default is checked ahead of the jurisdiction-rank
     fallback, so pinning one source would freeze it even under a frame designed to prefer the
     other). Up to 18 same-value tuples remain exposed only under a frame that ranks neither
-    Canada_federal nor US_federal (e.g. `bc-csr-sediment-numerical`) -- that residual is a
-    frame-ranking design question, not a per-row data edit.
-17. **NEW -- security gaps, both REAL, both owner-gated (reverified 2026-07-13):**
+    Canada_federal nor US_federal -- that residual is a frame-ranking design question, not a per-row data edit.
+17. **NEW -- security gaps (PR #628 OPEN):**
     - GAP 1: `/api/hitl-packets/*` (4 API routes + the dashboard page) is authenticated-only with
-      NO reviewer/admin role check -- confirmed by direct read of all 5 files, HIGH confidence.
-      Owner decision needed: which role gates it (reuse `admin`/`matrix_admin`, zero-new-schema, vs
-      add a dedicated `hitl_reviewer` role, more correct long-term but needs a migration + role
-      backfill). Owner must also confirm current legitimate HITL-packet users map onto whichever
-      role is picked, or the fix locks out real reviewers.
+      NO reviewer/admin role check.
     - GAP 2: `/api/graphs/prioritization-matrix` GET leaks raw `auth.users.id` UUIDs (truncated to
       8 chars but real) to any authenticated non-admin caller via the survey-results scatter
-      tooltip -- confirmed as a deliberate PR #608-era scope decision, not an oversight, and
-      confirmed as actually rendered in the UI (not just passed through unused). Distinct from the
-      anonymous-leak fix PR #608 already shipped (that part is sound). Owner decision needed: drop
-      `userId` for the authenticated-non-admin tier (three-tier split: public / authed-non-admin /
-      admin) vs pseudonymize it (needs a check that the scatter-plot clustering logic doesn't
-      require the raw value). Source doc recommends fixing GAP 2 first if forced to sequence
-      (smaller, more contained blast radius; more sensitive exposure).
-    Both gaps correspond to completion-status HITL queue items 9 and 10 (2026-07-11) and to Top-50
-    doc items #20-21; tonight's doc is the reverification, not a new finding.
+      tooltip.
+    Both gaps are addressed in **OPEN PR #628** (hitl-packets admin gate incl. pages + csv/md routes;
+    prioritization-matrix server-secret HMAC pseudonymization + fail-closed; escapeCSV formula-injection
+    guard x3 modules; codex GREEN) awaiting owner merge.
 18. **NEW -- HITL 07-01 backlog, re-triaged: 11 still-open** (of the original ~43 items). Items
     already cross-referenced into the numbered list above (copper=4, D3 PCB=5, D2 BaP=6) are not
     repeated. The genuinely net-new / not-elsewhere-tracked still-open items are:
@@ -126,7 +111,7 @@ surfaced only by tonight's re-verification work and not present in the original 
       packet.
     - **benzo_a_pyrene oral RfD**: simplest item in the whole re-triage -- single concordant
       approved value (0.0003 mg/kg-bw/day, HC + IRIS agree), currently unwired (`rfd_oral` still
-      null). No owner judgment needed; recommend wiring build-first.
+      null). Prepared in the separate small catalog batch awaiting owner approval.
     - **PHC family + lmw_pahs (6 keys: lmw_pahs, phc_f1-f4, total_phcs)**: whole-substance gap, no
       `substanceLibrary.ts` key exists despite approved catalog rows for at least 2 of the 6. Owner
       decision on whether/how to add given aggregate-fraction double-counting risk against
@@ -136,16 +121,16 @@ surfaced only by tonight's re-verification work and not present in the original 
     - **benzene / tetrachloroethylene / trichloroethylene abs_dermal cross-reference note**:
       documentation-only, no value change -- add the inline VOC-RAF rationale cross-reference
       already present on formaldehyde's entry.
-    (The 11-count also folds in the PHC/lmw_pahs 6-key group as a single re-triage line item; see
-    the retriage doc's Group 3e for the itemized 6 keys.)
+    - **DL-PCB card copy**: reflects approved dioxin TDI. Addressed in **OPEN PR #630** awaiting owner merge.
 
 ## 4. Not owner-gated (build-first, no decision needed)
 
-Two items surfaced above are pure engineering with no owner judgment required and can be shipped
+One item surfaced above is pure engineering with no owner judgment required and can be shipped
 without further HITL input:
-- `benzo_a_pyrene` oral RfD wiring (item 18, both approved sources concordant).
 - `benzene` / `tetrachloroethylene` / `trichloroethylene` abs_dermal cross-reference note
   (item 18, documentation-only).
+
+(Note: `benzo_a_pyrene` oral RfD wiring has been packaged with the endosulfan default in a small catalog batch and is now awaiting owner approval/execution).
 
 ## 5. Superseded docs (entry-point status only -- content retained as detail/evidence)
 

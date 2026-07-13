@@ -104,6 +104,12 @@
     }
   },
   "facts_history": {
+    "session_2026_07_13c_top50_owner_batch": {
+      "status": "complete",
+      "session_date": "2026-07-13",
+      "work_summary": "Top-50 mandate + owner batch. Merged #620-#627 to origin/main e425369 (incl. D1 dioxin-like TEQ oral TDI promote, owner-attested, codex PASS). Applied T31 STEP-2 to live matrix_map via apply_live_load.py/pooler (deltas +4178 sample_events / +5752 measurements / 0 samples; MCP-verified 4737/19383/4494). Opened 5 PRs left for owner merge: #628 security hardening (hitl-packets admin gate incl. pages+csv/md; prioritization-matrix server-secret HMAC pseudonymization+fail-closed; escapeCSV formula-injection guard x3; codex GREEN), #629 DRA coord-extraction harness DRAFT, #630 DL-PCB card copy, #631 live-status refresh, #632 admin publish clustering/filter (codex GREEN after 5 rounds, 22 tests). IOCO DRA publish (ea15e94a) reviewed GREEN + preflight done but owner/app-admin-JWT gated (flip_dra_public rejects service_role). Heavy AGY delegation (tests/fixes/packets/docs) + Sonnet adversarial reviews; codex CLI hung 3x (see LESSONS 2026-07-13). No merges done autonomously.",
+      "last_verified": "2026-07-13"
+    },
     "session_2026_07_12_mo_nextrun_t32_applied": {
       "status": "complete",
       "session_date": "2026-07-13",
