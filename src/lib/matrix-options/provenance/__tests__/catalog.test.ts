@@ -701,6 +701,10 @@ describe('matrix options provenance catalog', () => {
       // docs/MATRIX_OPTIONS_HC_TRV_V4_CROSSCHECK_2026_07_06.md.
       'pv-hc-chlorobenzene-hh-direct-rfd',
       'pv-hc-chlorobenzene-hh-food-rfd',
+      // 2026-07-13: HC TRV v4.0 (2025) dioxin-like TEQ oral TDI (2.3e-9 mg TEQ/kg-bw/day, PDF p.42),
+      // promoted via the dedicated promote-hc-dioxin-teq.mjs tool (not the bulk promote-hc-trv-v4-2025.mjs),
+      // owner-attested 2026-07-13. See docs/MATRIX_OPTIONS_D1_DIOXIN_APPLY_PLAN_2026_07_13.md.
+      'pv-hc-dioxin-like-teq-hh-direct-oral-tdi',
     ]);
     if (promotedBeyondFrozen.length > 0) {
       expect(new Set(promotedBeyondFrozen.map((record) => record.parameter_value_id))).toEqual(
@@ -717,6 +721,9 @@ describe('matrix options provenance catalog', () => {
       'pv-hc-chlorobenzene-hh-direct-rfd',
       'pv-hc-chlorobenzene-hh-food-rfd',
     ]);
+    // 2026-07-13: dioxin-like TEQ oral TDI promoted via promote-hc-dioxin-teq.mjs, which carries the
+    // single Health Canada v4.0 source (same source constraint as the bulk HC TRV rows below).
+    const dioxinTeqCorrectionIds = new Set(['pv-hc-dioxin-like-teq-hh-direct-oral-tdi']);
     for (const record of promotedBeyondFrozen) {
       // Each promoted row is one of the sanctioned set (defense in depth with the set-equality above).
       expect(sanctionedPromotionIds.has(record.parameter_value_id), record.parameter_value_id).toBe(
@@ -733,7 +740,11 @@ describe('matrix options provenance catalog', () => {
           : 'src-us-epa-pfoa-2024';
         expect(US_EPA_PFAS_PROMOTION_SOURCE_IDS).toContain(expectedPfasSource);
         expect(record.source_ids, record.parameter_value_id).toEqual([expectedPfasSource]);
-      } else if (hcTrvPromotionIds.has(record.parameter_value_id) || chlorobenzeneCorrectionIds.has(record.parameter_value_id)) {
+      } else if (
+        hcTrvPromotionIds.has(record.parameter_value_id) ||
+        chlorobenzeneCorrectionIds.has(record.parameter_value_id) ||
+        dioxinTeqCorrectionIds.has(record.parameter_value_id)
+      ) {
         // Each HC TRV v4.0 row must carry EXACTLY the single Health Canada source.
         expect(record.source_ids, record.parameter_value_id).toEqual(['src-health-canada-trv-v4-2025']);
       } else {
