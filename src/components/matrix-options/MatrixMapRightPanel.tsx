@@ -27,6 +27,7 @@ import type {
   MatrixMapData,
 } from '@/app/(dashboard)/matrix-map/types';
 import { filterMeasurementRows as filterMeasurementRowsLib } from '@/lib/matrix-map/filter-measurements';
+import { COORD_TIER_LABEL } from '@/lib/matrix-map/coordinate-provenance';
 
 const PAGE_SIZE = 100;
 const TABLE_HEADERS = [
@@ -58,7 +59,7 @@ interface SubstanceOption {
 }
 
 export function MatrixMapRightPanel({
-  initialMapData,
+  initialMapData: _initialMapData,
   substanceKey,
   isFocused,
   onToggleFocus,
@@ -176,6 +177,20 @@ export function MatrixMapRightPanel({
     [rows, filterState],
   );
 
+  const coordBasis = useMemo(() => {
+    const seen = new Map<string, CoordinateQualityTier>();
+    for (const row of filteredRows) {
+      if (!seen.has(row.sample_id)) seen.set(row.sample_id, row.coordinate_quality_tier);
+    }
+    let surveyed = 0, centroid = 0, manual = 0;
+    for (const tier of seen.values()) {
+      if (tier === 'high') surveyed++;
+      else if (tier === 'medium') centroid++;
+      else manual++;
+    }
+    return { surveyed, centroid, manual };
+  }, [filteredRows]);
+
   const matchingSampleIdsForRows = useMemo(
     () => Array.from(new Set(filteredRows.map((row) => row.sample_id))),
     [filteredRows],
@@ -282,6 +297,14 @@ export function MatrixMapRightPanel({
             <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/30">
               <p className="text-xs text-slate-500 dark:text-slate-400">
                 {selectedSampleIds.length} selected samples, {filteredRows.length} matching measurements
+              </p>
+              <p data-testid="matrix-map-coord-basis" className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
+                Coordinate basis:{' '}
+                {[
+                  coordBasis.surveyed > 0 ? `${coordBasis.surveyed} surveyed` : null,
+                  coordBasis.centroid > 0 ? `${coordBasis.centroid} centroid` : null,
+                  coordBasis.manual > 0 ? `${coordBasis.manual} manual` : null,
+                ].filter(Boolean).join(', ') || 'n/a'}
               </p>
             </div>
 
@@ -826,7 +849,7 @@ function MeasurementTable({
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.unit ?? ''}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.qualifier ?? ''}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.censored ? 'Censored' : 'Detected'}</td>
-                <td className="px-2 py-2 capitalize text-slate-600 dark:text-slate-300">{row.coordinate_quality_tier}</td>
+                <td className="px-2 py-2 capitalize text-slate-600 dark:text-slate-300">{COORD_TIER_LABEL[row.coordinate_quality_tier]}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.source_dra_title ?? row.source_dra_id ?? ''}</td>
               </tr>
             );

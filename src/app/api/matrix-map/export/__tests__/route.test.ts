@@ -100,7 +100,7 @@ describe('POST /api/matrix-map/export', () => {
           detection_limit: null,
           qualifier: null,
           censored: false,
-          coordinate_quality_tier: 'high',
+          coordinate_quality_tier: 'medium',
           classification: 'reference',
           source_dra_id: 'dra-1',
           source_dra_title: 'Source DRA',
@@ -146,6 +146,8 @@ describe('POST /api/matrix-map/export', () => {
 
     expect(response.status).toBe(200);
     const csv = await response.text();
+    expect(csv).toContain('coordinate_provenance');
+    expect(csv).toContain('Surveyed');
     expect(csv).toContain('Copper');
     expect(csv).not.toContain('Lead');
     expect(response.headers.get('content-disposition')).toContain('matrix-map-measurements');
@@ -207,7 +209,7 @@ describe('POST /api/matrix-map/export', () => {
           detection_limit: null,
           qualifier: null,
           censored: false,
-          coordinate_quality_tier: 'high',
+          coordinate_quality_tier: 'medium',
           classification: 'reference',
           source_dra_id: 'dra-1',
           source_dra_title: 'Source DRA',
@@ -242,6 +244,8 @@ describe('POST /api/matrix-map/export', () => {
     expect(filtered.status).toBe(200);
     const filteredCsv = await filtered.text();
     expect(filteredCsv).toContain('date_precision'); // header column present
+    expect(filteredCsv).toContain('coordinate_provenance');
+    expect(filteredCsv).toContain('Surveyed');
     expect(filteredCsv).toContain('Copper');
     expect(filteredCsv).not.toContain('Lead');
 
@@ -253,6 +257,7 @@ describe('POST /api/matrix-map/export', () => {
     }));
     const unfilteredCsv = await unfiltered.text();
     expect(unfilteredCsv).toContain('Lead');
+    expect(unfilteredCsv).toContain('Centroid');
     expect(unfilteredCsv).toContain('undated');
   });
 
