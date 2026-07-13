@@ -85,9 +85,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 5474,
-        "source": "vitest run output (2026-07-09, e58-launch-20260709 worktree at origin/main 88033cb; 5474 passed | 16 skipped | 2 todo; +394 over 5080 via 11 upstream commits between PR #567 and #565, principally PRs #563-#566 matrix-options test/feature hardening).",
-        "last_verified": "2026-07-09"
+        "value": 5635,
+        "source": "npm run test:ci output (2026-07-13)",
+        "last_verified": "2026-07-13"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -124,6 +124,14 @@
       "prs_merged": 1,
       "main_tip": "2f30eac65b639e3421e243fcf10d84dc623f1035",
       "last_verified": "2026-07-09"
+    },
+    "vitest_test_count_2026_07_09_pre_top50_overnight": {
+      "status": "superseded",
+      "value": 5474,
+      "source": "vitest run output (2026-07-09, e58-launch-20260709 worktree at origin/main 88033cb; 5474 passed | 16 skipped | 2 todo; +394 over 5080 via 11 upstream commits between PR #567 and #565, principally PRs #563-#566 matrix-options test/feature hardening).",
+      "last_verified": "2026-07-09",
+      "superseded_by": "facts.testing.vitest_test_count = 5635 (2026-07-13; overnight Top-50 run coverage PRs #622 +12 / #624 +38 + intervening merged commits: +161).",
+      "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 5635 during the 2026-07-13 Top-50 overnight run (fresh worktree off origin/main 3710a81). Measured via npm run test:ci (docs:manifest:update --vitest)."
     },
     "vitest_test_count_2026_07_05_pre_mo_hardening_batch": {
       "status": "superseded",
