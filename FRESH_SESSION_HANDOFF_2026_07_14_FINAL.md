@@ -5,8 +5,8 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
 (git + gh) before trusting it -- this records what was true when written.
 
 ## 0. Baseline (VERIFY LIVE FIRST)
-- `origin/main` = **a7f851e** (verify: `gh api repos/JasenNelson/SSTAC-Dashboard/branches/main --jq '.commit.sha'`).
-- 1 open PR: **#656** (DRA coordinate apply-readiness packet, docs-only, owner-merge-only).
+- `origin/main` = **eed2ef7** (after #656 merged; verify: `gh api repos/JasenNelson/SSTAC-Dashboard/branches/main --jq '.commit.sha'`).
+- Open PR: **#657** (this handoff). All other session PRs #646-#656 are MERGED.
 - PRIMARY checkout `C:\Projects\sstac-dashboard` is STALE + dirty; do NOT reset. Branch new work from
   `origin/main` in a fresh worktree (AGENTS.md worktree rules).
 
@@ -22,7 +22,7 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
   - #655 `scripts/matrix-map/parse_dra_well_coordinates.py` -- coordinate parser (codex-hardened,
     6 rounds) + structured extraction review. PROVEN: Site 14764 MW08-3 N=5443453.97 E=499448.26
     NAD83 (high); Lot C MW/SV24-29S (low); 3 Site 14764 wells unresolved (OCR-garbled).
-  - #656 (OPEN) apply-readiness packet: exact fail-closed apply SQL template + rollback + source-review
+  - #656 (MERGED) apply-readiness packet: exact fail-closed apply SQL template + rollback + source-review
     checklist + owner review table. APPLIES NOTHING.
 
 ## 2. Verified data-truths this session
@@ -34,7 +34,7 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
   coordinates are OCR-recoverable; Lot C full set is in the ORIGINAL DSI PDF (not the addendum).
 
 ## 3. Remaining owner-gated decisions (paste-ready-ish; nothing auto-doable)
-1. Merge #656 (docs; owner-merge-only).
+1. Merge #657 (this handoff; owner-merge-only). (#656 already merged.)
 2. **DRA coordinate APPLY** (NOT approved): review the #655 extraction; resolve the #656 blocking
    prereqs FIRST -- (a) well-id -> `matrix_map.samples` row/`source_dra_id` mapping (monitoring wells
    vs sample stations), (b) `coordinate_quality_tier` decision, (c) verify `low`-confidence records vs
