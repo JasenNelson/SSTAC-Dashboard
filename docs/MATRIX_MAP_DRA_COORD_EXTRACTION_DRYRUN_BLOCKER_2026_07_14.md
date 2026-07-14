@@ -68,3 +68,12 @@ Treat candidate-1 extraction as a dedicated, attended/monitored session that sta
 KNOWN table page range (step 1), not an unattended full-doc conversion. The diagnostic tools + the
 fail-closed harness are in place; the missing input is the specific appendix page range, which a
 person can identify from the report's ToC in minutes.
+
+## Additional NO-WRITE diagnostic: dump_dra_outline.py (2026-07-14)
+
+The new `dump_dra_outline.py` script extracts a PDF's outline/bookmark tree and flags potential coordinate-table locations.
+Run it with the repo `.venv` python (it has `pypdf`; the global python may not -- per CLAUDE.md, prefer `.venv/Scripts/python.exe` when present):
+`.venv/Scripts/python.exe scripts/matrix-map/dump_dra_outline.py --pdf <path> --report <out.json>`
+(If no `.venv`, first `pip install pypdf`, then run with plain `python`.)
+This can narrow or eliminate the attended-OCR step by reading the bookmark tree, which is often readable even in image-only/encrypted PDFs.
+The script is strictly READ-ONLY, fail-closed, and performs no coordinate apply.
