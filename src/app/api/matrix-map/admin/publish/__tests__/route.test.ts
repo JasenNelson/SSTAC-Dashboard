@@ -44,6 +44,7 @@ function chain(finalValue: unknown) {
     in: vi.fn(() => api),
     limit: vi.fn(() => api),
     maybeSingle: vi.fn(async () => finalValue),
+    single: vi.fn(async () => finalValue),
   };
   return api;
 }
@@ -88,7 +89,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: null, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: null, error: null })),
         schema: vi.fn(),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -111,8 +112,11 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
-        schema: vi.fn(() => ({ rpc })), // NO .from method in schema return
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(() => ({
+          rpc,
+          from: vi.fn((_table?: string) => chain({ data: { public: true }, error: null }))
+        })),
       };
       mocks.createServerClient.mockReturnValue(authClient);
 
@@ -142,8 +146,11 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
-        schema: vi.fn(() => ({ rpc })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(() => ({
+          rpc,
+          from: vi.fn((_table?: string) => chain({ data: { public: true }, error: null }))
+        })),
       };
       mocks.createServerClient.mockReturnValue(authClient);
       return authClient;
@@ -197,7 +204,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -222,7 +229,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -252,7 +259,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(() => ({ rpc })),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -279,7 +286,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(() => ({ rpc })),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -304,7 +311,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -329,8 +336,11 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'admin' }, error: null })),
-        schema: vi.fn(() => ({ rpc })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'admin' }, error: null })),
+        schema: vi.fn(() => ({
+          rpc,
+          from: vi.fn((_table?: string) => chain({ data: { public: true }, error: null }))
+        })),
       };
       mocks.createServerClient.mockReturnValue(authClient);
 
@@ -350,10 +360,13 @@ describe('POST /api/matrix-map/admin/publish', () => {
   });
 
   describe('4. Assert NO code path issues a direct dras UPDATE', () => {
-    it('structurally guarantees no direct UPDATE by verifying schema returned object has no from method', async () => {
+    it('structurally guarantees no direct UPDATE by verifying from() returned object has no update method', async () => {
       // Setup similar to test 2
       const rpc = vi.fn(async () => ({ data: null, error: null }));
-      const schemaReturn = { rpc }; // ONLY rpc is implemented
+      const schemaReturn = {
+        rpc,
+        from: vi.fn((_table?: string) => chain({ data: { public: true }, error: null }))
+      };
       const authClient = {
         auth: {
           getUser: vi.fn(async () => ({
@@ -361,7 +374,7 @@ describe('POST /api/matrix-map/admin/publish', () => {
             error: null,
           })),
         },
-        from: vi.fn(() => chain({ data: { role: 'matrix_admin' }, error: null })),
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
         schema: vi.fn(() => schemaReturn),
       };
       mocks.createServerClient.mockReturnValue(authClient);
@@ -373,9 +386,69 @@ describe('POST /api/matrix-map/admin/publish', () => {
       }));
 
       expect(response.status).toBe(200);
-      
-      // Verification: the schemaReturn object does not have a 'from' property
-      expect(schemaReturn).not.toHaveProperty('from');
+
+      // Verification: the from() object does not have an 'update' property
+      expect(schemaReturn.from('dras')).not.toHaveProperty('update');
+    });
+  });
+
+  describe('8. Read-back verification', () => {
+    const setupReadbackClient = (readbackValue: boolean | null, readErr: unknown) => {
+      const rpc = vi.fn(async () => ({ data: null, error: null }));
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(() => ({
+          rpc,
+          from: vi.fn((_table?: string) => chain({ data: readbackValue !== null ? { public: readbackValue } : null, error: readErr }))
+        })),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+      return authClient;
+    };
+
+    it('returns verified=true when read-back public matches submitted public', async () => {
+      setupReadbackClient(true, null);
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.verified).toBe(true);
+      expect(data.public).toBe(true);
+    });
+
+    it('returns verified=false and actual DB value when read-back does not match (silent non-persist)', async () => {
+      setupReadbackClient(false, null);
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true, // Submitted true, but read-back says false
+        reason: 'test',
+      }));
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.verified).toBe(false);
+      expect(data.public).toBe(false); // Returns the ACTUAL db value
+    });
+
+    it('returns verified=null when read-back errors', async () => {
+      setupReadbackClient(null, { message: 'db error' });
+      const response = await POST(makeRequest({
+        dra_id: '11111111-1111-4111-8111-111111111111',
+        public: true,
+        reason: 'test',
+      }));
+      expect(response.status).toBe(200);
+      const data = await response.json();
+      expect(data.verified).toBe(null);
+      expect(data.public).toBe(true); // Falls back to submitted
     });
   });
 });

@@ -145,5 +145,26 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     return mapRpcErrorToResponse(error);
   }
 
-  return NextResponse.json({ ok: true, dra_id: payload.dra_id, public: payload.public }, { status: 200 });
+  // Read-back: confirm the write actually persisted (flip_dra_public returns void and
+  // has a legitimate no-op branch; an unconfirmed 200 could mask a silent non-persist).
+  // READ-ONLY select, no write.
+  const { data: readback, error: readErr } = await authClient
+    .schema('matrix_map')
+    .from('dras')
+    .select('public')
+    .eq('id', payload.dra_id)
+    .single();
+
+  const actualPublic = readErr ? null : (readback?.public ?? null);
+  const verified = readErr || actualPublic === null ? null : actualPublic === payload.public;
+
+  return NextResponse.json(
+    {
+      ok: true,
+      dra_id: payload.dra_id,
+      public: verified === false && actualPublic !== null ? actualPublic : payload.public,
+      verified, // true = DB confirms the new value; false = DB does not match (silent non-persist); null = read-back unavailable
+    },
+    { status: 200 },
+  );
 }

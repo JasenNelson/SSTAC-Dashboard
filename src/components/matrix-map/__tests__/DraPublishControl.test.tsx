@@ -92,7 +92,7 @@ function mockFetchRouter(opts: {
     }
 
     if (url === '/api/matrix-map/admin/publish') {
-      const resp = opts.publishResponse ?? { ok: true, body: { ok: true } };
+      const resp = opts.publishResponse ?? { ok: true, body: { ok: true, verified: true } };
       return {
         ok: resp.ok,
         json: async () => resp.body,
@@ -240,6 +240,15 @@ describe('DraPublishControl', () => {
   });
 
   it('calls fetch with public:false when unpublishing', async () => {
+    fetchMock = mockFetchRouter({
+      auditHistoryByDraId: {
+        '22222222-2222-4222-8222-222222222222': [dra2AuditRow],
+      },
+      publishResponse: {
+        ok: true,
+        body: { ok: true, verified: true, public: false, dra_id: '22222222-2222-4222-8222-222222222222' }
+      }
+    });
     render(<DraPublishControl initialDras={mockDras} isAdmin={true} />);
 
     // Select the second (public) row
@@ -310,7 +319,7 @@ describe('DraPublishControl', () => {
             reason: 'Just published',
           },
         ];
-        return { ok: true, json: async () => ({ ok: true }) } as Response;
+        return { ok: true, json: async () => ({ ok: true, verified: true, public: true }) } as Response;
       }
 
       throw new Error(`Unexpected fetch call in test: ${url}`);
@@ -398,7 +407,7 @@ describe('DraPublishControl', () => {
     // Now let the stale publish POST for DRA 1 resolve. Its post-success
     // refetch targets DRA 1 -- it must NOT clobber the DRA 2 panel that is
     // currently displayed.
-    resolvePublish({ ok: true, json: async () => ({ ok: true }) } as Response);
+    resolvePublish({ ok: true, json: async () => ({ ok: true, verified: true, public: true }) } as Response);
 
     // Give the resolved (and now-superseded) refetch a chance to run and
     // be discarded; the panel must still show DRA 2's real history.
@@ -471,7 +480,7 @@ describe('DraPublishControl', () => {
     // Resolve the stale publish for DRA 1. Its post-success refresh
     // targets DRA 1, which is no longer selected -- the guard must skip it
     // entirely before it ever touches auditLoading or issues a fetch.
-    resolvePublish({ ok: true, json: async () => ({ ok: true }) } as Response);
+    resolvePublish({ ok: true, json: async () => ({ ok: true, verified: true, public: true }) } as Response);
 
     // Give the publish .then chain a turn to run (the success message is
     // rendered unconditionally regardless of current selection, so it is a
@@ -595,7 +604,7 @@ describe('DraPublishControl', () => {
       { id: '3', title: 'Site 1', agency: null, year: null, public: false, site_id: '1', site_name: 'One' },
     ];
     render(<DraPublishControl initialDras={mixedDras} isAdmin={true} />);
-    
+
     const headings = screen.getAllByRole('heading', { level: 3 });
     expect(headings[0]).toHaveTextContent('Site 1 - One');
     expect(headings[1]).toHaveTextContent('Site 5 - Five');
@@ -608,7 +617,7 @@ describe('DraPublishControl', () => {
       { id: '2', title: 'DRA 2', agency: null, year: null, public: false, site_name: '123' },
     ];
     render(<DraPublishControl initialDras={collisionDras} isAdmin={true} />);
-    
+
     const headings = screen.getAllByRole('heading', { level: 3 });
     expect(headings.length).toBe(2);
     expect(headings[0]).toHaveTextContent('Site 123');
@@ -624,28 +633,28 @@ describe('DraPublishControl', () => {
       public: false,
       site_id: `${i}`,
     }));
-    
+
     const { container } = render(<DraPublishControl initialDras={manyDras} isAdmin={true} />);
-    
+
     const details = container.querySelectorAll('details');
     expect(details.length).toBe(13);
-    
+
     details.forEach(d => expect(d.open).toBe(false));
-    
+
     const details0 = screen.getByText('Site 0').closest('details') as HTMLDetailsElement;
     details0.open = true;
     fireEvent(details0, new Event('toggle'));
-    
+
     fireEvent.click(screen.getByTestId('dra-row-dra-1'));
-    
+
     expect(details0?.open).toBe(true);
   });
 
   it('filter is genuinely case-insensitive', async () => {
     render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
-    
+
     await userEvent.type(screen.getByLabelText('Filter by site or report'), 'ioco');
-    
+
     expect(screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)')).toBeInTheDocument();
     expect(screen.getByTestId('dra-row-ioco-era')).toBeInTheDocument();
     expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
@@ -653,11 +662,11 @@ describe('DraPublishControl', () => {
 
   it('clearing the filter restores all rows/groups', async () => {
     render(<DraPublishControl initialDras={clusteredDras} isAdmin={true} />);
-    
+
     const input = screen.getByLabelText('Filter by site or report');
     await userEvent.type(input, 'ioco');
     expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
-    
+
     await userEvent.clear(input);
     expect(screen.getByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).toBeInTheDocument();
   });
@@ -681,7 +690,7 @@ describe('DraPublishControl', () => {
 
     // Verify detail panel is empty/prompts for selection
     expect(screen.getByText('Select a DRA from the list to manage its publication status.')).toBeInTheDocument();
-    
+
     // The previously selected DRA title should not be in the detail panel
     expect(screen.queryByText('Detailed Ecological Risk Assessment for the IOCO Shoreline, 2225 Ioco Road, Port Moody, BC - DRAFT')).not.toBeInTheDocument();
 
@@ -701,7 +710,7 @@ describe('DraPublishControl', () => {
 
     // Group starts open due to heuristic (<=12 groups)
     const details = screen.getByText('Site 5 - IOCO Shoreline (2225 Ioco Road, Port Moody)').closest('details') as HTMLDetailsElement;
-    
+
     // Explicitly collapse the group
     details.open = false;
     fireEvent(details, new Event('toggle'));
