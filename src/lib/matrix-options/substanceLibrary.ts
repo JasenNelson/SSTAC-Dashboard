@@ -68,9 +68,10 @@ export const SUBSTANCE_LIBRARY = [
       'passively accumulate. abs_dermal 0.14 = EPA RAGS Part E Exhibit 3-4 chemical-specific ' +
       'value for PCBs/Aroclor (not the 0.1 organic-halogenated default). trv_eco_mg_per_kg_bw_day ' +
       'nulled 2026-07-02: cited a "US EPA Eco-SSL mammalian wildlife TRV (PCBs)" but no EPA Eco-SSL ' +
-      'document exists for PCBs; value unverifiable. Duplicate-PCB-key consolidation with the ' +
-      'separate polychlorinated_biphenyls_total_pcbs key (which already carries an approved NRWQC ' +
-      'FCV row for the same value) is a deferred HITL item -- do not merge or delete either entry.',
+      'document exists for PCBs; value unverifiable. The total_pcbs_aroclor_1254 key is the CANONICAL ' +
+      '"Total PCBs" row (Option A, owner-ruled 2026-07-13d); Total-PCBs and Aroclor/congener-specific ' +
+      'rows are alternative representations and MUST NEVER be summed (non-additive convention). ' +
+      'The catalog-row value-migration/re-keying of the alias remains a separate deferred packet.',
   },
   {
     key: 'methylmercury',
@@ -1128,10 +1129,10 @@ export const SUBSTANCE_LIBRARY = [
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
-    fcv_ug_per_L: null,
+    fcv_ug_per_L: 0.056,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: alpha-Endosulfan, CAS 959-98-8. CAS and identity confirmed via PubChem CID 12309460 (alpha-Endosulfan, C9H6Cl6O3S; https://pubchem.ncbi.nlm.nih.gov/compound/alpha-Endosulfan; CAS heading https://pubchem.ncbi.nlm.nih.gov/rest/pug_view/data/compound/12309460/JSON?heading=CAS) and NIST Chemistry WebBook (ID C959988; https://webbook.nist.gov/cgi/cbook.cgi?ID=C959988) -- NEITHER of these two records carries an experimental LogP/log Kow heading for this CAS/CID (PubChem CID 12309460 LogP heading query returns no data; NIST WebBook lists only mass spectrum, IR, phase-change, and GC data, no Kow). The verified log Kow = 4.74 value traces to Shen, L., Wania, F. (2005) "Compilation, Evaluation, and Selection of Physical-Chemical Property Data for Organochlorine Pesticides," Journal of Chemical & Engineering Data, 50(3), 742-768, DOI 10.1021/je049693f (internally-thermodynamically-consistency-adjusted literature review; reports log Kow = 4.74 for alpha-endosulfan and 4.78 for beta-endosulfan). Independently corroborated by the University of Hertfordshire PPDB (Pesticide Properties DataBase) record for alpha-endosulfan (log P = 4.74; https://sitem.herts.ac.uk/aeru/ppdb/en/Reports/1661.htm), sourced there from manufacturer safety data sheets (PPDB reliability code E3: unverified data of known source). LGC Standards and Sigma-Aldrich analytical-standard product pages corroborate identity/CAS only, not the logKow value itself.',
-    notes: 'Eco selectability. logKow 4.74 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    notes: 'Eco selectability. logKow 4.74 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults. FCV 0.056 ug/L seeded in the library (EPA NRWQC, matches the two approved available_option eco rows pv-eco-endosulfan_<alpha|beta>-direct-fcv-*); eco catalog rows intentionally remain available_option to preserve the eco all-available_option invariant (defaults resolve via the library seed, not eco current_default).',
   },
   {
     key: 'endosulfan_beta',
@@ -1143,10 +1144,10 @@ export const SUBSTANCE_LIBRARY = [
     bsaf_loc_freshwater: null,
     abs_dermal: 0.1,
     ba_oral: 1.0,
-    fcv_ug_per_L: null,
+    fcv_ug_per_L: 0.056,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources: 'Identity: beta-Endosulfan, CAS 33213-65-9. ATSDR (2015), Toxicological Profile for Endosulfan (NCBI Bookshelf NBK592006), Chapter 4 Chemical and Physical Information, Table 4-3 (Chemical Identity of beta-Endosulfan, CAS 33213-65-9, C9H6Cl6O3S) and Table 4-7 (Physical and Chemical Properties of beta-Endosulfan: Log Kow = 3.62, citing HSDB 2010). Identity corroborated via NIST Chemistry WebBook (ID C33213659, beta-Endosulfan, CAS 33213-65-9; https://webbook.nist.gov/cgi/cbook.cgi?ID=C33213659). Note: PubChem CID 12309460 (returned by name/CAS lookup for "beta-Endosulfan" and "33213-65-9") is actually the alpha-Endosulfan primary record (CAS 959-98-8) with 33213-65-9 listed only as a cross-referenced synonym -- do not cite this CID as a distinct beta-Endosulfan identity source. Value verified: log Kow 3.62 (experimental, HSDB 2010) matches the wired logKow field.',
-    notes: 'Eco selectability. logKow 3.62 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults.',
+    notes: 'Eco selectability. logKow 3.62 (eco-direct EqP input). HH fields null; abs_dermal/ba_oral inert defaults. FCV 0.056 ug/L seeded in the library (EPA NRWQC, matches the two approved available_option eco rows pv-eco-endosulfan_<alpha|beta>-direct-fcv-*); eco catalog rows intentionally remain available_option to preserve the eco all-available_option invariant (defaults resolve via the library seed, not eco current_default).',
   },
   {
     key: 'heptachlor',
@@ -1471,9 +1472,11 @@ export const SUBSTANCE_LIBRARY = [
       'is sedS = FCV * Koc(logKow) * foc (Koc rises with logKow), pairing the FCV ' +
       'with the high 6.5 yields a HIGHER, LESS-stringent sediment benchmark than a ' +
       'lower-Kow representative would -- it is NOT over-protective; verify the site ' +
-      'congener/Aroclor profile before relying on it. Do not merge with ' +
-      'total_pcbs_aroclor_1254. HH fields null; abs_dermal/ba_oral inert ' +
-      '(organic-halogenated class).',
+      'congener/Aroclor profile before relying on it. DEPRECATED ALIAS of the ' +
+      'canonical total_pcbs_aroclor_1254 (Option A, owner-ruled 2026-07-13d); the ' +
+      'entry is RETAINED (not deleted) pending a separate value-migration packet; ' +
+      'never sum with total_pcbs_aroclor_1254 (non-additive). HH fields null; ' +
+      'abs_dermal/ba_oral inert (organic-halogenated class).',
   },
   {
     key: 'chromium',
