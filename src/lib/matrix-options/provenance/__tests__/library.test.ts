@@ -218,7 +218,8 @@ describe('matrix options evidence library helpers', () => {
     // (pv-bap-fcv, pv-pcb-trv-eco, pv-mehg-trv-eco). pv-pcb-fcv's PROMOTION does not change this count
     // -- default_status stays current_default (unchanged); only qa/evidence status moved.
     // 2026-07-05: +2 (81 -> 83) -- IRIS chlorobenzene oral RfD promoted to current_default.
-    expect(view.audit.values.currentDefaults).toBe(83);
+    // 2026-07-13d: +1 (83 -> 84) -- owner-approved batch: benzo_a_pyrene oral RfD (1 HC direct row) + copper (2 HC rows) promoted; copper generic scaffold (2 rows) demoted. Net +1.
+    expect(view.audit.values.currentDefaults).toBe(84);
     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (available_option) = 1582.
@@ -256,7 +257,8 @@ describe('matrix options evidence library helpers', () => {
     // current_default promotion from 2026-07-05 is unaffected.
     // 2026-07-07: +1 (1678 -> 1679) -- D1 dioxin-like TEQ oral TDI needs_review candidate has
     // default_status=available_option.
-    expect(view.audit.values.availableOptions).toBe(1679);
+    // 2026-07-13d: -1 -- same batch (3 promoted off available, 2 copper scaffold returned to available).
+    expect(view.audit.values.availableOptions).toBe(1678);
     // 2026-07-06 CORRECTION: the 2 chlorobenzene rows leave not_default (see above). -2 (19 -> 17).
     expect(view.audit.values.notDefaults).toBe(17);
     expect(view.audit.equations.pendingReview).toBe(5);
@@ -453,6 +455,7 @@ describe('matrix options evidence library helpers', () => {
         .map((sourceId) => getSourceRecord(sourceId))
         .filter((source): source is SourceRecord => Boolean(source));
 
+    // 2026-07-13d promotion: benzo_a_pyrene HC FOOD row remains available_option (Approved alternative).
     expect(
       getParameterValueReviewDisposition(
         healthCanada!,

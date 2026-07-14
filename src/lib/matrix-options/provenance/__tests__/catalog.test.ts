@@ -623,8 +623,11 @@ describe('matrix options provenance catalog', () => {
       'pv-iris-arsenic-hh-direct-sf', 'pv-iris-arsenic-hh-food-sf',
       'pv-iris-dichloromethane-hh-direct-sf', 'pv-iris-dichloromethane-hh-food-sf',
       'pv-iris-trichloroethylene-hh-direct-sf', 'pv-iris-trichloroethylene-hh-food-sf',
+      // Health Canada 2026-07-13 approvals
+      'pv-hc-bap-hh-direct-rfd-tdi',
+      'pv-hc-copper-hh-direct-rfd-tdi', 'pv-hc-copper-hh-food-rfd-tdi',
     ];
-    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(38);
+    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(41);
 
     for (const pvid of APPROVED_CURRENT_DEFAULT_IDS) {
       const record = PARAMETER_VALUE_RECORDS.find(
