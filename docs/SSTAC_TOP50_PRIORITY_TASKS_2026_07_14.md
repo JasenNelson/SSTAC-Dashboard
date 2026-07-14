@@ -188,8 +188,8 @@ Gate legend: OWNER = owner decision/attestation; CODE; DATA = production data wr
 ### Tier 6 -- T40 authenticated E2E
 | # | Task | Lane | Gate | Size | Source |
 |---|---|---|---|---|---|
-| 28 | Enable authenticated (member-tier) E2E: GH secrets E2E_TEST_EMAIL/PASSWORD (existing user) + var E2E_AUTH_ENABLED=true | infra | OWNER(secrets) | S | T40 admin-tier gate / ci.yml |
-| 29 | Create admin test user + set E2E_ADMIN_EMAIL/E2E_ADMIN_PASSWORD/E2E_AUTH_ENABLED to activate PR #641's admin-tier E2E scaffolding (currently skip-safe; login-bounce until configured) | infra | OWNER(create user + secrets) | S | PR #641 |
+| 28 | Authenticated member-tier E2E -- DONE/ACTIVE: repo secrets E2E_TEST_EMAIL/PASSWORD + repo var E2E_AUTH_ENABLED=true verified 2026-07-14; `.env.local` also has member credential key names. Future sessions must check live key presence before asking the owner. | infra | VERIFY | S | T40 enablement / ci.yml |
+| 29 | Admin-tier positive E2E remains gated: create or verify admin test user + set E2E_ADMIN_EMAIL/E2E_ADMIN_PASSWORD to activate PR #641's admin-tier E2E scaffolding (currently skip-safe; login-bounce until configured). Do not confuse this with completed member-tier setup. | infra | OWNER(create/verify user + secrets) | S | PR #641 |
 
 ### Tier 7 -- inhalation (DEPRIORITIZED / parked -- owner direction; ranks below all completion-path lanes above)
 | # | Task | Lane | Gate | Size | Source |

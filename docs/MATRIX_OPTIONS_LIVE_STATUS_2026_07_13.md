@@ -9,7 +9,7 @@ references, not as competing entry points.
 
 ## 1. Current truth (as of 2026-07-13, updated later same day)
 
-Catalog: **1780 rows** (approved-ish baseline, D1 promoted 1 row). `origin/main` is at **e425369** (post D1 #627 merge). 
+Catalog: **1780 rows** (approved-ish baseline, D1 promoted 1 row). `origin/main` is at **e425369** (post D1 #627 merge).
 
 SHIPPED/MERGED since the last update:
 - **D1 dioxin-TEQ** APPLIED + MERGED (#627).
@@ -33,7 +33,7 @@ DRA publication baseline is **3 public / 571 private** (a surveyed-coordinate pi
 | Cumulative UI (A3b) | OWNER-GATED (blocked) | `MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md` HITL item 7 / Top-50 doc #15-16 | Blocked on D2 (BaP anchor) and D3 (PCB Option A) rulings (D1 is resolved). Once resolved: register computeTEQ/computeBaPeq in equationDispatch + build the UI component. |
 | Coordinate extraction | OPEN PR / DRAFT | `docs/design/matrix-map/DRA_EXPANSION_LOCATORS_AND_IOCO_PACKET_2026_07_12.md` sec 2a + Top-50 doc Tier 4 | PR #629 is open (DRA coord-extraction harness DRAFT, no write). Extraction RUN remains owner-gated. |
 | Security / RBAC | OPEN PR / OWNER-GATED | `MATRIX_OPTIONS_SECURITY_RBAC_REVERIFY_2026_07_13.md` | PR #628 is open for owner merge (security hardening: hitl-packets admin gate incl. pages + csv/md routes; prioritization-matrix server-secret HMAC pseudonymization + fail-closed; escapeCSV formula-injection guard x3 modules; codex GREEN). |
-| E2E | OWNER-GATED | Top-50 doc Tier 6 / `MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md` | T40 E2E owner secrets setup (E2E_TEST_EMAIL/E2E_TEST_PASSWORD + E2E_AUTH_ENABLED=true) + #40 route removal (product decision). |
+| E2E | MEMBER-TIER ACTIVE; ADMIN-TIER OWNER-GATED | Top-50 doc Tier 6 / `MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md` | T40 member-tier setup is complete: repo secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` verified 2026-07-14; `.env.local` also has member credential key names. Remaining gate is admin-tier only (`E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD` not verified present). #40 route removal remains a product decision. |
 | Older 07-01 backlog | IN-PROGRESS | `MATRIX_OPTIONS_HITL_0701_RETRIAGE_2026_07_13.md` | Of the original ~43 items: 111 RESOLVED, 4 SUPERSEDED, 11 STILL-OPEN. PR #630 is open (DL-PCB card copy reflects approved dioxin TDI) awaiting owner merge. |
 
 ## 3. Consolidated owner-decision queue
@@ -66,8 +66,10 @@ surfaced only by tonight's re-verification work and not present in the original 
 10. **T32 waterbody UPDATE** -- **APPLIED 2026-07-13** (owner-approved). DONE. Postflight: Marine
     268, Freshwater 22, no lowercase dupes, 4204 unlabeled, total 4494 samples; codex-GREEN over 7
     rounds; exact id-keyed rollback on file. No further action.
-11. **Enable authenticated E2E** (optional) -- GH secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`
-    (`sstac-e2e-reviewer`) + repo var `E2E_AUTH_ENABLED=true`. Unchanged.
+11. **Authenticated E2E member tier is active** -- GH secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`
+    (`sstac-e2e-reviewer`) + repo var `E2E_AUTH_ENABLED=true` verified 2026-07-14. Do not ask the
+    owner to set these again without first checking live key presence. Remaining T40 gate is
+    admin-tier positive coverage (`E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`).
 12. **Admin-tier E2E** (optional follow-up) -- create an admin-role test user + storageState; no
     admin fixture exists today. Unchanged.
 13. **Publish IOCO Shoreline** (ea15e94a) -- coordinate-safe (all 6 samples surveyed/high-tier);

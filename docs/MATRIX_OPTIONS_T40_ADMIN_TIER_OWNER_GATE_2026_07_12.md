@@ -1,17 +1,30 @@
 # T40 Authenticated E2E -- Owner Gates + Enablement Recipe (2026-07-12)
 
+## 2026-07-14 current-state correction
+
+Member-tier authenticated E2E is no longer pending. Live verification found repo secrets
+`E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD`, repo variable `E2E_AUTH_ENABLED=true`, and matching
+`.env.local` key names for the member test credentials. Future sessions must verify these key names
+before asking the owner about member-tier setup.
+
+The remaining T40 gate is admin-tier positive coverage: `E2E_ADMIN_EMAIL` /
+`E2E_ADMIN_PASSWORD` were not present in the repo-level or checked environment-level GitHub secret
+lists, and were not present by key name in `.env.local` during the 2026-07-14 check.
+
 Lane 3 of the mo-nextrun-2026-07-12 run. This documents (a) what member-side / skip-safe E2E coverage
 SHIPPED, (b) the owner-only recipe to ENABLE authenticated E2E, and (c) the admin-tier OWNER GATE for
 the positive admin-side coverage that cannot be built without a second test user. **No secret was
 read, printed, invented, or set by AI. No admin user was created.**
 
 ## 1. Confirmed live state (read-only, 2026-07-12)
+
+Historical 2026-07-12 state below; superseded for member-tier setup by the correction above.
 - Member E2E test users EXIST and are email-confirmed (verified via read-only Supabase query):
   `sstac-e2e-reviewer@fake.bc.ca` (role `member`) and `sstac-e2e-reviewer2@fake.bc.ca` (role `member`).
   Do NOT recreate them.
 - There is NO admin-role (`admin` / `matrix_admin`) E2E test user. -> admin-side positive coverage is
   gated (section 4).
-- Repo is secret-free by design: `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` / `E2E_AUTH_ENABLED` are unset
+- Historical 2026-07-12 only, superseded by the 2026-07-14 correction: repo member-tier secrets were then unset
   on origin/main. CI steady state was e2e 120 pass / 93 skip; these two new specs add 4 tests x 3
   default browser projects = 12 PASSING unauthenticated assertions (they assert the /login bounce / 401,
   they do not skip), so the new secret-free steady state is **e2e 132 pass / 93 skip**. (When the owner

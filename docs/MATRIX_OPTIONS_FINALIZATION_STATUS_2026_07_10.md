@@ -1,5 +1,9 @@
 # Matrix Options -- finalization status (2026-07-10)
 
+## 2026-07-14 current-state correction
+
+This older finalization document is superseded for T40 member-tier state. Member-tier authenticated E2E is active: repo secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` were verified on 2026-07-14; `.env.local` also has the member credential key names. Remaining T40 gate is admin-tier positive coverage only (`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`).
+
 Lifecycle: REFERENCE. This is a Matrix-Options-scoped status map to reduce drift across the ~80 dated
 `docs/MATRIX_OPTIONS_*` snapshots. It does NOT claim global project status -- `docs/INDEX.md` remains the
 canonical current-status entrypoint (docs manifest `current_status_claims_policy`). Values/metrics are
@@ -22,7 +26,7 @@ NOT restated here; see the manifest `facts`.
 - **Authenticated E2E proof (U2 / Lane 1):** the authed Matrix Options / RBAC / cyanide e2e specs
   `test.skip` in CI without a login session, so their CI guarantee is the unit layer only. The auth
   fixture is landed + skip-safe (#580); proving it needs a dedicated E2E user password + the two GH
-  secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` (currently absent) -- an OWNER-performed Supabase/secret
+  secrets `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD` (historical 2026-07-10 state; superseded by 2026-07-14 verification) -- an OWNER-performed Supabase/secret
   write. The user `sstac-e2e-reviewer` (role `member`) already exists. This is the single biggest lever
   on MO end-to-end confidence.
 - **Standing auth-E2E enablement model:** decide only AFTER an authenticated-green proof.

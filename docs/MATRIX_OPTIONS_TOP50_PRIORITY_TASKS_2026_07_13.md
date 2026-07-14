@@ -1,5 +1,9 @@
 # SSTAC-Dashboard -- Top 50 Priority Tasks Toward Completion (2026-07-13)
 
+## 2026-07-14 current-state correction
+
+This older progress document is superseded for T40 member-tier state. Member-tier authenticated E2E is active: repo secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` were verified on 2026-07-14; `.env.local` also has the member credential key names. Future sessions must check live key presence before asking the owner. Remaining T40 gate is admin-tier positive coverage only (`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`).
+
 Deliverable for the fresh-session mandate in
 `FRESH_SESSION_HANDOFF_2026_07_13_MIGRATION_AND_TOP50_MANDATE.md` section 0: a ranked, deduplicated
 list of the highest-impact remaining tasks to move SSTAC-Dashboard toward its goal and completion.
@@ -100,7 +104,7 @@ Gate legend: OWNER = owner decision/attestation; CODE; DATA = production data wr
 ### Tier 6 -- T40 authenticated E2E
 | # | Task | Lane | Gate | Size | Source |
 |---|---|---|---|---|---|
-| 23 | Enable authenticated (member-tier) E2E: GH secrets E2E_TEST_EMAIL/PASSWORD (existing user) + var E2E_AUTH_ENABLED=true | infra | OWNER(secrets) | S | T40 admin-tier gate / ci.yml |
+| 23 | Authenticated member-tier E2E -- DONE/ACTIVE as of 2026-07-14: repo secrets E2E_TEST_EMAIL/PASSWORD + repo var E2E_AUTH_ENABLED=true verified present; remaining gate is admin-tier only | infra | VERIFY | S | T40 admin-tier gate / ci.yml |
 | 24 | Admin-tier E2E fixture + specs: new admin test user + storageState + real publish/unpublish click-through against throwaway DRA | infra | OWNER(create user)+CODE | M | T40 readiness s3b |
 
 ### Tier 7 -- inhalation (DEPRIORITIZED / parked -- owner direction; ranks below all completion-path lanes above)

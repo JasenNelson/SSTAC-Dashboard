@@ -1,9 +1,23 @@
 # MATRIX_OPTIONS_T40_E2E_ENABLEMENT_PACKET_2026_07_13
 
-This document outlines the exact owner actions to enable member-tier E2E testing, the required follow-up for admin-tier E2E, the highest-value net-new spec, and the current skip-safe baseline.
+## 2026-07-14 current-state correction
+
+Member-tier T40 authenticated E2E is enabled. Live verification found:
+- GitHub repo secrets: `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`.
+- GitHub repo variable: `E2E_AUTH_ENABLED=true`.
+- Primary checkout `.env.local`: `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD` key names present.
+
+Do not ask the owner to set member-tier `E2E_TEST_*` / `E2E_AUTH_ENABLED` again unless live
+verification contradicts the above. Check key names only; never print secret values.
+
+The remaining T40 gate is admin-tier positive coverage: `E2E_ADMIN_EMAIL` /
+`E2E_ADMIN_PASSWORD` were not present in the repo-level or checked environment-level GitHub secret
+lists, and were not present by key name in `.env.local` during the 2026-07-14 check.
+
+This document originally outlined the exact owner actions to enable member-tier E2E testing, the required follow-up for admin-tier E2E, the highest-value net-new spec, and the current skip-safe baseline.
 
 ## 1. Owner Actions to Enable Member-Tier E2E
-To turn on authenticated E2E coverage for the member tier, the repo owner must set the following in GitHub Actions:
+Completed as of 2026-07-14. The repo owner previously set the following in GitHub Actions:
 - **GH Repo SECRET**: `E2E_TEST_EMAIL` = `sstac-e2e-reviewer@fake.bc.ca` (existing user, do NOT recreate).
 - **GH Repo SECRET**: `E2E_TEST_PASSWORD` = the password for `sstac-e2e-reviewer@fake.bc.ca`.
 - **GH Repo VARIABLE**: `E2E_AUTH_ENABLED` = `true` (Note: This is a Variable, not a Secret. This acts as the final gate to enable E2E auth).
@@ -39,7 +53,7 @@ Enabling the admin-tier E2E testing requires the following subsequent owner acti
 - **Playwright Project**: Add a new `chromium-admin-auth` project in `playwright.config.ts` that relies on the `admin.json` storage state.
 
 ## 3. Highest-Value Net-New Spec
-The highest-value net-new specification to be authored once the admin fixture is ready is a **real publish/unpublish click-through against a throwaway test DRA**. 
+The highest-value net-new specification to be authored once the admin fixture is ready is a **real publish/unpublish click-through against a throwaway test DRA**.
 This flow would:
 - Authenticate as the admin test fixture.
 - Navigate to the `/admin/matrix-map/publish` route.
@@ -47,5 +61,5 @@ This flow would:
 - Assert the audit-history updates and health visibility panel changes.
 
 ## 4. Current Baseline and What Turns On
-- **Current Baseline**: The skip-safe steady state is **e2e 132 pass / 93 skip** (when unauthenticated, as `/login` bounces trigger test skips).
-- **What Turns On**: Once member-tier E2E is enabled (`E2E_AUTH_ENABLED=true`), tests in the `chromium-auth` project (which currently matches `/(matrix-options|mo-map-access|mo-publish-rbac)\.spec\.ts/`) will run and pass as an authenticated member instead of skipping or merely hitting the login redirect assertions.
+- **Current Baseline**: Member-tier authenticated E2E is active. The verified activated CI signature was **235 tests, 142 pass / 93 skip**, a +10 authenticated-spec increase over the prior 225-test / 132-pass baseline.
+- **What Turned On**: With member-tier E2E enabled (`E2E_AUTH_ENABLED=true`), tests in the `chromium-auth` project run and pass as an authenticated member instead of skipping or merely hitting the login redirect assertions.

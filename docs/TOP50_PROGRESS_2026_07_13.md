@@ -1,5 +1,9 @@
 # SSTAC Matrix Options -- Top-50 Progress Ledger (2026-07-13d)
 
+## 2026-07-14 current-state correction
+
+This older progress document is superseded for T40 member-tier state. Member-tier authenticated E2E is active: repo secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` were verified on 2026-07-14; `.env.local` also has the member credential key names. Future sessions must check live key presence before asking the owner. Remaining T40 gate is admin-tier positive coverage only (`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`).
+
 Note it is generated from the two source docs (`MATRIX_OPTIONS_TOP50_PRIORITY_TASKS_2026_07_13.md` and `MATRIX_OPTIONS_LIVE_STATUS_2026_07_13.md`) plus the verified Phase-0 run facts, and that it supersedes the approximate counts in the LIVE_STATUS doc.
 
 **Authoritative Phase-0 FACTS applied:**
@@ -30,8 +34,8 @@ Note it is generated from the two source docs (`MATRIX_OPTIONS_TOP50_PRIORITY_TA
 | 20 | Add reviewer/admin role gate to /api/hitl-packets/* | done | PR #628 | None | yes | no | high |
 | 21 | Re-verify + close non-CEW voter user_id granularity question | done | PR #628 | None | yes | no | high |
 | 22 | Tighten RLS-bypass: dras_admin_all allows un-audited UPDATE | not-started | completion-status item5 | RLS hardening design | yes | no | high |
-| 23 | Enable authenticated (member-tier) E2E | owner-gated | T40 admin-tier gate | Add GH secrets + var | yes | no | high |
-| 24 | Admin-tier E2E fixture + specs | owner-gated | e2e/global.setup.ts + admin-dashboard/matrix-admin-rbac/mo-publish-rbac/catalog-staging-review-rbac/ssd-workbench specs EXIST | Owner sets member-tier secrets; admin scaffolding already present | yes (secrets only) | scaffolding exists | high |
+| 23 | Authenticated member-tier E2E | done/active as of 2026-07-14 | T40 admin-tier gate + live key check | Member-tier secrets + var verified present; remaining gate is admin-tier only | no | no | high |
+| 24 | Admin-tier E2E fixture + specs | owner-gated | admin.setup.ts + admin-tier-rbac scaffolding / CI E2E_ADMIN_* passthrough | Create or verify admin test user and set `E2E_ADMIN_EMAIL`/`E2E_ADMIN_PASSWORD`; member-tier is already active | yes (admin credentials only) | scaffolding exists | high |
 | 25 | Inhalation VF/PEF model decision | owner-gated | inhalation packet | Await owner architecture decision | yes | no | med |
 | 26 | Build inhalation calculator + UI post-decision | blocked | completion-status s3 | Wire deriveInhalationStandards | yes | no | med |
 | 27 | Re-triage 07-01 HITL Groups 1-5 vs current catalog state | done | LIVE STATUS sec 3.18 | None | yes | no | med |
@@ -59,16 +63,16 @@ Note it is generated from the two source docs (`MATRIX_OPTIONS_TOP50_PRIORITY_TA
 | 49 | Reconcile AGENTS.md Supabase Protocol vs stale CLAUDE.md | owner-gated | handoff s4 / CLAUDE.md L1 | Remove contradiction | yes | no | low |
 | 50 | Stand up ONE living "MO completion status" doc | done | PR #631 | None | no | yes | low |
 
-- done: 13
+- done: 14
 - PR-open: 1
 - in-progress: 1
-- owner-gated: 22
+- owner-gated: 21
 - blocked: 4
 - not-started: 9
 
-(Revised 2026-07-13d after verify-before-build gap-checks: #35 SSD, #46 StatsShell, #47 ad/ks-table moved not-started -> done because coverage already exists; #24 admin-E2E scaffolding already present, only member-tier secrets remain owner-gated.)
+(Revised 2026-07-14 after live T40 verification: #23 member-tier authenticated E2E is active; #24 admin-tier positive coverage remains gated on admin credentials/user setup.)
 
-Also: AGY-safe-yes count: 17; owner-gated-yes count: 33; high-value count: 24.
+Also: AGY-safe-yes count: 17; owner-gated-yes count: 32; high-value count: 24.
 
 ## Token-Proportionality Judgment (Claude-owned)
 
