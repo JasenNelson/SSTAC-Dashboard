@@ -2159,7 +2159,7 @@
     "value": 0.426,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [
@@ -2367,7 +2367,7 @@
     "value": 0.426,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
     "qa_status": "needs_review",
     "source_ids": [

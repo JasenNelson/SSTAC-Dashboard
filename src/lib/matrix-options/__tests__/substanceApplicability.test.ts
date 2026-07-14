@@ -54,12 +54,12 @@ describe('getSubstanceApplicability', () => {
     expect(res['eco-direct-eqp'].state).toBe('computable');
   });
 
-  it('handles benzo_a_pyrene (organic-PAH, sf non-null, rfd null)', () => {
+  it('handles benzo_a_pyrene (organic-PAH, sf non-null, rfd non-null / wired)', () => {
     const s = findSubstance('benzo_a_pyrene');
     expect(s).toBeDefined();
     expect(s?.logKow).not.toBeNull();
     expect(s?.sf_oral_per_mg_per_kg_bw_per_day).not.toBeNull();
-    expect(s?.rfd_oral_mg_per_kg_bw_per_day).toBeNull();
+    expect(s?.rfd_oral_mg_per_kg_bw_per_day).toBe(0.0003);
 
     const res = getSubstanceApplicability('benzo_a_pyrene', DEFAULT_REGULATORY_FRAME_ID);
     expect(res['human-health-direct'].state).toBe('computable');

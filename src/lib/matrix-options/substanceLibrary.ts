@@ -13,7 +13,7 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Benzo[a]pyrene',
     contaminantClass: 'organic-PAH',
     logKow: 6.13,
-    rfd_oral_mg_per_kg_bw_per_day: null,
+    rfd_oral_mg_per_kg_bw_per_day: 0.0003,
     sf_oral_per_mg_per_kg_bw_per_day: 2.0,
     bsaf_loc_freshwater: 0.5,
     abs_dermal: 0.13,
@@ -25,7 +25,7 @@ export const SUBSTANCE_LIBRARY = [
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'US EPA IRIS B[a]P oral SF 2.0 per mg/kg-bw/day, ADAF-adjusted lifetime default (2017 reassessment), src-us-epa-iris-chemical-details-live (pv-iris-bap-hh-direct-sf); a non-ADAF adult-only IRIS alternate (1.0) and an HC alternate (1.289) also exist; ERDC BSAF DB; ' +
-      'Indigenous-Consumption-Pacific-NW Section 4.3',
+      'Indigenous-Consumption-Pacific-NW Section 4.3; Health Canada TRV v4.0 oral TDI 0.0003 mg/kg-bw/day (pv-hc-bap-hh-direct-rfd-tdi); concordant with US EPA IRIS.',
     notes:
       'Coastal-marine bivalve scenarios: multiply freshwater BSAF by 15 ' +
       '(passive PAH accumulation; lack of hepatic CYP1A). See design ' +
