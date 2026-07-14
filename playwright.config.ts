@@ -15,6 +15,10 @@ const authEnabled = process.env.E2E_AUTH_ENABLED === 'true';
 const runAuthenticatedE2E = hasE2ECreds && authEnabled;
 const userAuthState = path.join(__dirname, 'e2e', '.auth', 'user.json');
 
+const hasAdminCreds = Boolean(process.env.E2E_ADMIN_EMAIL && process.env.E2E_ADMIN_PASSWORD);
+const runAdminE2E = hasAdminCreds && authEnabled;
+const adminAuthState = path.join(__dirname, 'e2e', '.auth', 'admin.json');
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -33,20 +37,23 @@ export default defineConfig({
     ...(runAuthenticatedE2E
       ? [{ name: 'setup', testMatch: /global\.setup\.ts/, use: { trace: 'off' as const } }]
       : []),
+    ...(runAdminE2E
+      ? [{ name: 'setup-admin', testMatch: /admin\.setup\.ts/, use: { trace: 'off' as const } }]
+      : []),
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
-      testIgnore: /global\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts/,
     },
     {
       name: 'firefox',
       use: { ...devices['Desktop Firefox'] },
-      testIgnore: /global\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts/,
     },
     {
       name: 'webkit',
       use: { ...devices['Desktop Safari'] },
-      testIgnore: /global\.setup\.ts/,
+      testIgnore: /(global|admin)\.setup\.ts/,
     },
     ...(runAuthenticatedE2E
       ? [
@@ -56,6 +63,16 @@ export default defineConfig({
             dependencies: ['setup'],
             // T40: run the member-fixture RBAC specs authenticated alongside matrix-options.
             testMatch: /(matrix-options|mo-map-access|mo-publish-rbac)\.spec\.ts/,
+          },
+        ]
+      : []),
+    ...(runAdminE2E
+      ? [
+          {
+            name: 'chromium-admin-auth',
+            use: { ...devices['Desktop Chrome'], storageState: adminAuthState },
+            dependencies: ['setup-admin'],
+            testMatch: /admin-tier-rbac\.spec\.ts/,
           },
         ]
       : []),
