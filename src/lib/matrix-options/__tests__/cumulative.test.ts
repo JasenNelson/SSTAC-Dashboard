@@ -374,8 +374,18 @@ describe('computeBaPeq ADAF single-bin contract (T21)', () => {
     // COMMENT (the "applyAdaf: true" ANCHOR-PAIRING CONTRACT example, not executable code) --
     // included here explicitly rather than filtered out, so a real future call site added to any
     // OTHER file still trips this tripwire.
+    //
+    // 2026-07-14: adafAdjustedBaPeq.ts is the FIRST real (non-test) opt-in call site -- a thin
+    // lib-level wrapper (computeBaPeqAgeAdjusted) that fixes applyAdaf:true for scenarios anchored
+    // on an adult-only SF. It is single-bin-contract-asserted in adafAdjustedBaPeq.test.ts, is NOT
+    // registered in equationDispatch.ts, and does NOT change the default anchor. Registered here
+    // consciously per this tripwire's design.
     expect(Array.from(hits).sort()).toEqual(
-      ['lib/matrix-options/__tests__/cumulative.test.ts', 'lib/matrix-options/cumulative.ts'].sort(),
+      [
+        'lib/matrix-options/__tests__/cumulative.test.ts',
+        'lib/matrix-options/adafAdjustedBaPeq.ts',
+        'lib/matrix-options/cumulative.ts',
+      ].sort(),
     );
   });
 });
