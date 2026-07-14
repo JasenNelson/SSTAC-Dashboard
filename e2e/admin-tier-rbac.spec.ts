@@ -11,13 +11,22 @@ test.skip(
 );
 
 test.describe('Admin-tier RBAC', () => {
-  test('authenticated admins can access admin-only pages', async ({ page }) => {
+  test('authenticated admins can access admin-only pages', async ({ page }, testInfo) => {
     await page.goto('/admin/matrix-review');
 
-    // Robustness: if the page bounces to /login (i.e., run without the admin storageState,
-    // e.g. under a base project when creds happen to be set), the spec should skip/early-return
-    // rather than fail -- mirror how the member specs tolerate the unauth bounce.
+    // Bounce handling depends on the project (codex 2026-07-14 holistic):
+    // - In the base chromium/firefox/webkit projects there is no admin storageState, so a /login
+    //   bounce is expected -> skip (mirror how member specs tolerate the unauth bounce).
+    // - In chromium-admin-auth the admin storageState SHOULD authenticate; a /login bounce there
+    //   means the admin fixture is missing/invalid, so FAIL loudly -- CI must not go green without
+    //   actually exercising the admin tier.
     if (page.url().includes('/login')) {
+      if (testInfo.project.name === 'chromium-admin-auth') {
+        throw new Error(
+          'admin-tier fixture broken: /admin/matrix-review redirected to /login in the ' +
+            'chromium-admin-auth project (admin storageState missing or invalid).',
+        );
+      }
       test.skip();
       return;
     }
