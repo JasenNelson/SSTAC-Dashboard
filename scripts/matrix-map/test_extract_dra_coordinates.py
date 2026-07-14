@@ -29,9 +29,33 @@ class TestExtractDRACoordinates(unittest.TestCase):
         with self.assertRaises(ValueError):
             mod.normalize_and_validate_coords("abc", "def")
 
-        # is_utm=True
-        with self.assertRaises(NotImplementedError):
-            mod.normalize_and_validate_coords(49.2, -123.1, is_utm=True)
+    def test_utm_conversion(self):
+        if not mod.HAS_PYPROJ:
+            self.skipTest("pyproj not installed")
+
+        # valid UTM conversion
+        lat, lon = mod.normalize_and_validate_coords(491000, 5458000, is_utm=True, zone=10)
+        self.assertAlmostEqual(lat, 49.2747, places=3)
+        self.assertAlmostEqual(lon, -123.1237, places=3)
+
+        # UTM invalid zone
+        with self.assertRaises(ValueError):
+            mod.normalize_and_validate_coords(491000, 5458000, is_utm=True, zone=None)
+        with self.assertRaises(ValueError):
+            mod.normalize_and_validate_coords(491000, 5458000, is_utm=True, zone=99)
+
+        # UTM out-of-BC
+        with self.assertRaises(ValueError):
+            mod.normalize_and_validate_coords(500000, 4000000, is_utm=True, zone=10)
+
+    def test_normalize_station_label(self):
+        self.assertEqual(mod.normalize_station_label("SED-01 "), "SED01")
+
+    def test_match_station_id(self):
+        self.assertEqual(mod.match_station_id("sed 01", known_ids=["SED-01","SED-02"]), "SED-01")
+        with self.assertRaises(ValueError):
+            mod.match_station_id("nope", known_ids=["SED-01"])
+        self.assertEqual(mod.match_station_id("  X  "), "X")
 
     def test_validate_dra_id(self):
         # valid UUID
@@ -84,6 +108,9 @@ class TestExtractDRACoordinates(unittest.TestCase):
 
         missing_inputs = " ".join(report["missing_inputs"])
         self.assertIn("NEEDS-TUNING", missing_inputs)
+
+        self.assertIn("capabilities", report)
+        self.assertEqual(report["capabilities"]["bc_bounds_validation"], True)
 
         self.assertIsInstance(report["pyproj_available"], bool)
         self.assertIsInstance(report["docling_available"], bool)

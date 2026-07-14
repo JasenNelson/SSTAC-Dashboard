@@ -34,20 +34,41 @@ def parse_args():
 
 def normalize_and_validate_coords(lat, lon, is_utm=False, zone=None):
     if is_utm:
-        raise NotImplementedError("UTM->WGS84 conversion is not implemented; supply WGS84 lat/lon or implement pyproj conversion under owner approval")
-    try:
-        lat_f = float(lat)
-        lon_f = float(lon)
-    except (ValueError, TypeError):
-        raise ValueError(f"Invalid coordinate format: lat={lat}, lon={lon}")
+        if not HAS_PYPROJ:
+            raise RuntimeError("pyproj required for UTM conversion but not installed")
+        import pyproj
+        if zone is None or type(zone) is not int or not (7 <= zone <= 11):
+            raise ValueError("UTM zone must be an integer 7-11 for BC")
+        transformer = pyproj.Transformer.from_crs(f"EPSG:326{zone:02d}", "EPSG:4326", always_xy=True)
+        try:
+            easting = float(lat)
+            northing = float(lon)
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid coordinate format for UTM: easting={lat}, northing={lon}")
+        lon_f, lat_f = transformer.transform(easting, northing)
+    else:
+        try:
+            lat_f = float(lat)
+            lon_f = float(lon)
+        except (ValueError, TypeError):
+            raise ValueError(f"Invalid coordinate format: lat={lat}, lon={lon}")
     if not (48.0 <= lat_f <= 60.0 and -140.0 <= lon_f <= -114.0):
         raise ValueError(f"Coordinates out of BC bounds: lat={lat_f}, lon={lon_f}")
     return lat_f, lon_f
 
-def match_station_id(label: str) -> str:
+def normalize_station_label(label: str) -> str:
+    return label.upper().strip().replace(" ", "").replace("-", "")
+
+def match_station_id(label: str, known_ids=None) -> str:
     """
     NEEDS-TUNING -- real DB station_id join is owner-gated (no DB connection here).
     """
+    if known_ids is not None:
+        norm_label = normalize_station_label(label)
+        for known_id in known_ids:
+            if normalize_station_label(known_id) == norm_label:
+                return known_id
+        raise ValueError(f"No station_id match for label: {label}")
     return label.strip()
 
 def _validate_dra_id(dra_id):
@@ -93,6 +114,9 @@ def extract_station_table(pdf_path):
 
     NEEDS-TUNING: The exact table layout, page numbers, and column headers will vary
     by PDF. This function must be tailored to the specific document once inspected.
+    UTM conversion, BC-bounds validation, and station-matching are now implemented.
+    The remaining step is installing docling and implementing the real table-parse
+    heuristic tuned to each source PDF layout (owner-gated ingest step).
     """
     try:
         from docling.document_converter import DocumentConverter
@@ -120,6 +144,12 @@ def build_dry_run_report(dra_id, pdf, stations):
         "pyproj_available": HAS_PYPROJ,
         "stations_extracted": stations_extracted,
         "missing_inputs": missing_inputs,
+        "capabilities": {
+            "utm_wgs84": HAS_PYPROJ,
+            "bc_bounds_validation": True,
+            "station_matching": True,
+            "table_extraction": False
+        },
         "notes": "",
         "generated_by": "extract_dra_coordinates.py dry-run"
     }
