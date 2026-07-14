@@ -285,4 +285,119 @@ describe('POST /api/matrix-map/export', () => {
     });
     expect(authClient.schema).not.toHaveBeenCalled();
   });
+
+  describe('auth + CSRF gate', () => {
+    it('returns 401 when there is no user', async () => {
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: null },
+            error: null,
+          })),
+        },
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({ export_type: 'selection', selected_sample_ids: [SAMPLE_ID] }));
+      expect(response.status).toBe(401);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'unauthorized' });
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when user is authenticated but not an admin', async () => {
+      // A non-admin user's role query returns no row because the DB-level admin-role
+      // filter excludes them. Capture the chain so we can also assert the CRITICAL
+      // .in('role', ['admin','matrix_admin']) filter is applied -- so that dropping or
+      // broadening that filter (fail-open) would make this test FAIL, not silently pass.
+      const roleQuery = chain({ data: null, error: null });
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn((_table?: string) => roleQuery),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({ export_type: 'selection', selected_sample_ids: [SAMPLE_ID] }));
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data).toEqual({ error: 'forbidden' });
+      // Lock BOTH admin-check predicates so either fail-open regression makes this test fail:
+      // - .eq('user_id', <caller>) -- dropping it lets a non-admin match ANY admin row.
+      // - .in('role', ['admin','matrix_admin']) -- dropping/broadening it accepts non-admins.
+      expect(authClient.from).toHaveBeenCalledWith('user_roles');
+      expect(roleQuery.eq).toHaveBeenCalledWith('user_id', '22222222-2222-4222-8222-222222222222');
+      expect(roleQuery.in).toHaveBeenCalledWith('role', ['admin', 'matrix_admin']);
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('returns 500 with admin_role_query_failed when role query returns an error', async () => {
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn((_table?: string) => chain({ data: null, error: { message: 'db error' } })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({ export_type: 'selection', selected_sample_ids: [SAMPLE_ID] }));
+      expect(response.status).toBe(500);
+      const data = await response.json();
+      expect(data.error).toBe('admin_role_query_failed');
+      expect(data.detail).toBe('db error');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('returns 415 when checkCsrf rejects with missing/wrong content-type', async () => {
+      mocks.checkCsrf.mockReturnValue({ ok: false, reason: 'missing_content_type' });
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({ export_type: 'selection', selected_sample_ids: [SAMPLE_ID] }));
+      expect(response.status).toBe(415);
+      const data = await response.json();
+      expect(data.error).toBe('missing_content_type');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('returns 403 when checkCsrf rejects on origin mismatch', async () => {
+      mocks.checkCsrf.mockReturnValue({ ok: false, reason: 'origin_mismatch' });
+      const authClient = {
+        auth: {
+          getUser: vi.fn(async () => ({
+            data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+            error: null,
+          })),
+        },
+        from: vi.fn((_table?: string) => chain({ data: { role: 'matrix_admin' }, error: null })),
+        schema: vi.fn(),
+      };
+      mocks.createServerClient.mockReturnValue(authClient);
+
+      const response = await POST(makeRequest({ export_type: 'selection', selected_sample_ids: [SAMPLE_ID] }));
+      expect(response.status).toBe(403);
+      const data = await response.json();
+      expect(data.error).toBe('origin_mismatch');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+  });
 });

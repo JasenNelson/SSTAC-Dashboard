@@ -160,10 +160,10 @@ environment/capability gate, NOT a role tier.
 | `/api/discussions/[id]` | GET | `getAuthenticatedUser()` | authed |
 | `/api/discussions/[id]` | PUT, DELETE | auth + ownership | owner |
 | `/api/discussions/[id]/replies` | GET, POST | `getAuthenticatedUser()` | authed |
-| `/api/hitl-packets` | GET | `getAuthenticatedUser()` | authed |
-| `/api/hitl-packets/[sessionId]` | GET | `getAuthenticatedUser()` | authed |
-| `/api/hitl-packets/[sessionId]/csv` | GET | `getAuthenticatedUser()` | authed |
-| `/api/hitl-packets/[sessionId]/md` | GET | `getAuthenticatedUser()` | authed |
+| `/api/hitl-packets` | GET | auth + `user_roles` role in (admin, matrix_admin) | admin\|matrix_admin |
+| `/api/hitl-packets/[sessionId]` | GET | auth + `user_roles` role in (admin, matrix_admin) | admin\|matrix_admin |
+| `/api/hitl-packets/[sessionId]/csv` | GET | auth + `user_roles` role in (admin, matrix_admin) | admin\|matrix_admin |
+| `/api/hitl-packets/[sessionId]/md` | GET | auth + `user_roles` role in (admin, matrix_admin) | admin\|matrix_admin |
 | `/api/review/save` | POST | `getAuthenticatedUser()` | authed |
 | `/api/review/submit` | POST | `getAuthenticatedUser()` | authed |
 | `/api/review/upload` | POST | auth + ownership | owner |
@@ -208,15 +208,13 @@ They are NOT admin-vs-matrix_admin tier mismatches, and fixing them would change
 SEMANTICS (potentially breaking a consuming UI), so per the T39 mandate they are
 flagged, not changed.
 
-1. **`/api/hitl-packets/*` (4 routes) are authed-only, no admin/reviewer role gate.**
-   Any logged-in user can list, view, and download CSV/MD exports of HITL packet
-   session data. Unlike `matrix-map/samples` (which documents its auth-only posture
-   with an in-file SECURITY comment because an RPC enforces visibility), hitl-packets
-   has no such documented justification and no role/RLS predicate visible in the route.
-   If HITL packets contain reviewer-only professional-judgment content, this likely
-   should require `admin` (or a reviewer role). DECISION NEEDED: is authed-only intended,
-   or should these be admin-gated? Recommend confirming the underlying table RLS before
-   any code change (per Supabase explore-before-assume protocol).
+1. **RESOLVED (2026-07-13, commit `14cf048`): `/api/hitl-packets/*` (4 routes) now
+   admin/matrix_admin role-gated.** Previously authed-only. All 4 routes now check
+   `user_roles.role in ('admin','matrix_admin')` and fail closed (`roleError || !role`
+   -> 403); see `src/app/api/hitl-packets/route.ts` and the 3 `[sessionId]` sub-routes.
+   Role-gate test coverage: top-level route in `hitl-packets/__tests__/route.test.ts`;
+   the 3 sub-routes covered by `test/hitl-subroutes-and-sodium-2026-07-14` (merged
+   2026-07-14). No further action; retained here as an audit-trail record only.
 
 2. **`/api/announcements` GET is authed-only while POST/PUT/DELETE are admin.**
    This asymmetry is most likely intentional (all authenticated dashboard users should
