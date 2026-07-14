@@ -203,6 +203,13 @@ jobs:
           NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
           E2E_TEST_EMAIL: ${{ secrets.E2E_TEST_EMAIL }}
           E2E_TEST_PASSWORD: ${{ secrets.E2E_TEST_PASSWORD }}
+          # Admin-tier authenticated E2E (T40) is ALSO skip-safe: playwright.config.ts gates
+          # the setup-admin + chromium-admin-auth projects on BOTH E2E_ADMIN_* secrets present
+          # AND E2E_AUTH_ENABLED == 'true'. Forwarding these here is a prerequisite for the
+          # owner-gated admin-tier activation (create admin test user + set the two secrets);
+          # unset -> '' -> admin projects skip, identical to today. No behavior change until set.
+          E2E_ADMIN_EMAIL: ${{ secrets.E2E_ADMIN_EMAIL }}
+          E2E_ADMIN_PASSWORD: ${{ secrets.E2E_ADMIN_PASSWORD }}
           # Authenticated E2E is OFF by default and stays skip-safe: playwright.config.ts
           # only adds the setup + chromium-auth projects when BOTH the E2E_TEST_* secrets
           # are present AND E2E_AUTH_ENABLED == 'true'. Driven by the repo variable
