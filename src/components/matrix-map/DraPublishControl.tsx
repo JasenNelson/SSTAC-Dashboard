@@ -276,24 +276,38 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
 
       const confirmedPublic = typeof data.public === 'boolean' ? data.public : nextValue;
 
-      setDras((current) =>
-        current.map((dra) =>
-          dra.id === selectedRow.id ? { ...dra, public: confirmedPublic } : dra
-        )
-      );
-
-      if (data.verified === false) {
+      if (data.verified === true) {
+        // DB read-back CONFIRMED the new value: the only path that shows success + closes the panel.
+        setDras((current) =>
+          current.map((dra) =>
+            dra.id === selectedRow.id ? { ...dra, public: confirmedPublic } : dra
+          )
+        );
+        setActionMessage({
+          kind: 'ok',
+          text: `Successfully ${actionMode === 'publish' ? 'published' : 'unpublished'} DRA.`,
+        });
+        setActionMode(null);
+        setActionReason('');
+      } else if (data.verified === false) {
+        // DB does NOT reflect the change: show the actual DB value; keep the retry panel open.
+        setDras((current) =>
+          current.map((dra) =>
+            dra.id === selectedRow.id ? { ...dra, public: confirmedPublic } : dra
+          )
+        );
         setActionMessage({
           kind: 'err',
           text: `The publish request returned success, but the database still shows the DRA as ${confirmedPublic ? 'published' : 'not published'}. The change did NOT persist -- re-check your admin session and retry. (Do not assume success from the toast.)`,
         });
       } else {
+        // verified === null: the confirmation read-back was UNAVAILABLE, so persistence could not be
+        // verified. Stay LOUD -- do NOT claim success and do NOT optimistically flip the row (codex
+        // 2026-07-14 holistic); keep the panel open so the owner verifies/retries.
         setActionMessage({
-          kind: 'ok',
-          text: `Successfully ${actionMode === 'publish' ? 'published' : 'unpublished'} DRA.${data.verified === null ? ' (database read-back was unavailable to confirm).' : ''}`,
+          kind: 'err',
+          text: `The publish request returned success, but the confirmation read-back was UNAVAILABLE, so persistence could NOT be verified. Do not assume success -- verify the DRA's published state before relying on it, then retry if needed.`,
         });
-        setActionMode(null);
-        setActionReason('');
       }
 
       // Codex P2 fix (2026-07-11, round 2): the POST just wrote a new
