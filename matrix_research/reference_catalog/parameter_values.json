@@ -277,7 +277,8 @@
     "species_groups": [],
     "assumption_tags": [
       "toxicology endpoint",
-      "direct contact"
+      "direct contact",
+      "adaf_stage:embedded_do_not_reapply"
     ],
     "evidence_items": [
       {
@@ -1073,7 +1074,8 @@
     ],
     "assumption_tags": [
       "toxicology endpoint",
-      "food web"
+      "food web",
+      "adaf_stage:embedded_do_not_reapply"
     ],
     "evidence_items": [
       {
