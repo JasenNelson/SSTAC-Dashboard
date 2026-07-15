@@ -81,7 +81,7 @@ describe("Content-Type enforcement (Finding 11)", () => {
   });
 });
 
-describe("Production strict origin (Finding 24)", () => {
+describe("Production origin allowance (Finding 24)", () => {
   beforeEach(() => {
     process.env.VERCEL_ENV = "production";
     process.env.NEXT_PUBLIC_SITE_URL = "https://prod.example.com";
@@ -94,6 +94,37 @@ describe("Production strict origin (Finding 24)", () => {
     expect(r.ok).toBe(true);
   });
 
+  it("normalizes NEXT_PUBLIC_SITE_URL before matching the production origin", () => {
+    process.env.NEXT_PUBLIC_SITE_URL = "https://prod.example.com/admin";
+    const r = checkCsrf(
+      makeReq({ contentType: "application/json", origin: "https://prod.example.com" })
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("accepts same-origin Vercel production requests when NEXT_PUBLIC_SITE_URL is unset", () => {
+    delete process.env.NEXT_PUBLIC_SITE_URL;
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://sstac-dashboard.vercel.app",
+        selfOrigin: "https://sstac-dashboard.vercel.app",
+      })
+    );
+    expect(r.ok).toBe(true);
+  });
+
+  it("rejects same-origin production aliases when NEXT_PUBLIC_SITE_URL is configured", () => {
+    const r = checkCsrf(
+      makeReq({
+        contentType: "application/json",
+        origin: "https://preview-deploy.vercel.app",
+        selfOrigin: "https://preview-deploy.vercel.app",
+      })
+    );
+    expect(r.reason).toBe("origin_mismatch");
+  });
+
   it("rejects mismatched origin", () => {
     const r = checkCsrf(
       makeReq({ contentType: "application/json", origin: "https://evil.example.com" })
@@ -101,7 +132,7 @@ describe("Production strict origin (Finding 24)", () => {
     expect(r.reason).toBe("origin_mismatch");
   });
 
-  it("rejects same-origin Vercel preview from production deploy", () => {
+  it("rejects Vercel preview origin from production deploy", () => {
     const r = checkCsrf(
       makeReq({
         contentType: "application/json",
