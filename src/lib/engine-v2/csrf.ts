@@ -15,7 +15,7 @@ export interface CsrfCheckResult {
 }
 
 // Environment-aware Origin check (Finding 24):
-// - production: strict against NEXT_PUBLIC_SITE_URL
+// - production: strict against NEXT_PUBLIC_SITE_URL when set; otherwise same-origin
 // - preview: same-origin (request.nextUrl.origin) OR <project-slug>-*.vercel.app
 //   where slug is derived from VERCEL_PROJECT_PRODUCTION_URL
 // - dev: allow http://localhost:* and http://127.0.0.1:*
@@ -27,13 +27,24 @@ function getProjectSlug(): string | null {
   return /^[a-z0-9-]+$/.test(slug) ? slug : null;
 }
 
+function configuredSiteOriginMatches(origin: string): boolean | null {
+  const expected = process.env.NEXT_PUBLIC_SITE_URL;
+  if (!expected) return null;
+  try {
+    return origin === new URL(expected).origin;
+  } catch {
+    return false;
+  }
+}
+
 function isOriginAllowed(origin: string, request: NextRequest): boolean {
   const vercelEnv = process.env.VERCEL_ENV;
   const nodeEnv = process.env.NODE_ENV;
 
   if (vercelEnv === "production") {
-    const expected = process.env.NEXT_PUBLIC_SITE_URL;
-    return Boolean(expected) && origin === expected;
+    const configuredMatch = configuredSiteOriginMatches(origin);
+    if (configuredMatch !== null) return configuredMatch;
+    return origin === request.nextUrl.origin;
   }
 
   if (vercelEnv === "preview") {
@@ -66,8 +77,7 @@ function isOriginAllowed(origin: string, request: NextRequest): boolean {
   }
 
   // Self-hosted prod (no VERCEL_ENV but no localhost either): strict against NEXT_PUBLIC_SITE_URL.
-  const expected = process.env.NEXT_PUBLIC_SITE_URL;
-  return Boolean(expected) && origin === expected;
+  return configuredSiteOriginMatches(origin) === true;
 }
 
 // Verify Content-Type + Origin/Referer on POST/DELETE requests.
