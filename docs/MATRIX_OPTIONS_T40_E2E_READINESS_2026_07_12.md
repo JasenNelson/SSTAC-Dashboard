@@ -1,5 +1,22 @@
 # T40 -- Authenticated E2E readiness audit (2026-07-12)
 
+## 2026-07-14 current-state correction
+
+This readiness audit is historical. Do not use its "secrets absent" statements as current state.
+Live verification on 2026-07-14 found the member-tier setup complete:
+
+- GitHub repo secrets exist: `E2E_TEST_EMAIL`, `E2E_TEST_PASSWORD`.
+- GitHub repo variable exists: `E2E_AUTH_ENABLED=true`.
+- The primary checkout `.env.local` also contains `E2E_TEST_EMAIL` and `E2E_TEST_PASSWORD`
+  key names. Do not print or inspect secret values.
+- Current sessions must verify these key names with `gh secret list`, `gh variable list`, and a
+  key-presence-only `.env.local` check before asking the owner about T40 member-tier setup.
+
+Remaining T40 gate is admin-tier only unless live verification proves otherwise:
+`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD` were not present in the repo-level or checked
+environment-level GitHub secret lists, and were not present by key name in `.env.local` during the
+2026-07-14 check. Keep this distinct from the completed member-tier setup.
+
 Read-only inspection against `origin/main` (tip `589deaf` at audit time). No secrets read,
 printed, or invented. No Supabase writes. No code changes made (see section 4).
 
@@ -41,8 +58,9 @@ all specs listed in section 3's "currently skipped" column.
 
 **Test-user status:** a dedicated non-privileged Supabase e2e user, `sstac-e2e-reviewer`
 (role `member`), already exists per `FRESH_SESSION_HANDOFF_2026_07_10_MO_AUTONOMOUS_CLOSEOUT.md`
-section 6 item 1 (the finalization-status doc corroborates this). Only the GH Actions
-secrets are missing -- the user itself does not need to be created.
+section 6 item 1 (the finalization-status doc corroborates this). At 2026-07-12 audit time, only the GH Actions
+secrets were missing -- the user itself did not need to be created. This is superseded by the
+2026-07-14 correction above: the member-tier GH secrets and repo variable are now verified present.
 
 **Confirmed absent from the repo (grep of `origin/main`, no working-tree state assumed):**
 `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` / `E2E_AUTH_ENABLED` appear ONLY as: (a) references
@@ -50,9 +68,9 @@ to the GitHub secret/var *names* in `.github/workflows/ci.yml`, (b) the env-var 
 `playwright.config.ts` / `e2e/global.setup.ts` (code that reads them, never a literal
 value), and (c) prose in handoff/lessons docs describing the recipe. No literal credential
 value appears anywhere. `FRESH_SESSION_HANDOFF_2026_07_11_DATA_TRUTH.md` records that the
-repo secrets were explicitly REMOVED (verified absent) as a pre-authorized Phase-0 action
+a pre-authorized Phase-0 action verified the repo secrets absent at that historical time
 on 2026-07-11, and PR #590 (a proof-of-concept enablement run) was closed without merge.
-`origin/main` is currently secret-free by design, not by oversight.
+That historical state is superseded by the 2026-07-14 correction above; current sessions must verify live key presence before making T40 claims.
 
 ---
 

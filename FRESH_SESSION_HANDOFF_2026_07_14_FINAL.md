@@ -5,12 +5,16 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
 (git + gh) before trusting it -- this records what was true when written.
 
 ## 0. Baseline (VERIFY LIVE FIRST)
-- `origin/main` = **eed2ef7** (after #656 merged; verify: `gh api repos/JasenNelson/SSTAC-Dashboard/branches/main --jq '.commit.sha'`).
-- Open PR: **#657** (this handoff). All other session PRs #646-#656 are MERGED.
+- `origin/main` = **1dc4189** (after #657 merged; verify: `gh api repos/JasenNelson/SSTAC-Dashboard/branches/main --jq '.commit.sha'`).
+- No open session PRs from #646-#657. All are MERGED.
 - PRIMARY checkout `C:\Projects\sstac-dashboard` is STALE + dirty; do NOT reset. Branch new work from
   `origin/main` in a fresh worktree (AGENTS.md worktree rules).
+- T40 correction: member-tier authenticated E2E is active. Repo secrets `E2E_TEST_EMAIL` /
+  `E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` were verified 2026-07-14, and
+  `.env.local` has the member credential key names. Do not ask the owner to set these again without
+  checking live key presence first.
 
-## 1. What this session shipped (all merged: #646-#655)
+## 1. What this session shipped (all merged: #646-#657)
 - Morning: #641-#645 (earlier). Then #646 (PCB dry-run) + #647 (Top-50 refresh).
 - #648 handoff; #649 CI E2E_ADMIN_* passthrough (unblocks T40 in CI); #650 DRA outline diagnostic;
   #651 hitl-packets sub-route tests + sodium regression; #652 matrix-map /export admin-gate tests +
@@ -24,6 +28,7 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
     NAD83 (high); Lot C MW/SV24-29S (low); 3 Site 14764 wells unresolved (OCR-garbled).
   - #656 (MERGED) apply-readiness packet: exact fail-closed apply SQL template + rollback + source-review
     checklist + owner review table. APPLIES NOTHING.
+  - #657 (MERGED) final handoff.
 
 ## 2. Verified data-truths this session
 - Security/RBAC surface: NO fail-open/missing-guard bug found (2 gate-0 sweeps, all ~75 API routes +
@@ -34,16 +39,16 @@ predated most of this session's work). Plain ASCII. VERIFY every load-bearing cl
   coordinates are OCR-recoverable; Lot C full set is in the ORIGINAL DSI PDF (not the addendum).
 
 ## 3. Remaining owner-gated decisions (paste-ready-ish; nothing auto-doable)
-1. Merge #657 (this handoff; owner-merge-only). (#656 already merged.)
-2. **DRA coordinate APPLY** (NOT approved): review the #655 extraction; resolve the #656 blocking
+1. **DRA coordinate APPLY** (NOT approved): review the #655 extraction; resolve the #656 blocking
    prereqs FIRST -- (a) well-id -> `matrix_map.samples` row/`source_dra_id` mapping (monitoring wells
    vs sample stations), (b) `coordinate_quality_tier` decision, (c) verify `low`-confidence records vs
    source. Then the exact fail-closed apply via the audited path (#656 template). Owner-gated.
-3. IOCO Shoreline publish -- in-app admin-JWT retry (owner action).
-4. T40 admin-tier -- owner creates admin test user + sets `E2E_ADMIN_EMAIL`/`_PASSWORD` (#649 wired the
-   CI passthrough; `E2E_AUTH_ENABLED` already true).
-5. Catalog D2 (BaP anchor) / D3 (PCB Option A/B/C + PCB QP site-congener check) -- owner rulings.
-6. Incremental DRA (safe, low-value): re-OCR the 3 garbled Site 14764 wells (higher DPI); locate Howe
+2. IOCO Shoreline publish -- in-app admin-JWT retry (owner action).
+3. T40 admin-tier only -- member-tier authenticated E2E is already active. Admin-tier positive
+   coverage still needs an admin test user decision plus `E2E_ADMIN_EMAIL`/`_PASSWORD` if live key
+   verification still shows them absent (#649 wired the CI passthrough; `E2E_AUTH_ENABLED` already true).
+4. Catalog D2 (BaP anchor) / D3 (PCB Option A/B/C + PCB QP site-congener check) -- owner rulings.
+5. Incremental DRA (safe, low-value): re-OCR the 3 garbled Site 14764 wells (higher DPI); locate Howe
    Sound coordinate pages; obtain the original Lot C DSI PDF.
 
 ## 4. Working posture + guardrails (unchanged)

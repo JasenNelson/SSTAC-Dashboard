@@ -48,7 +48,7 @@ produced by `ocr_dra_page_range.py` (#654) + `parse_dra_well_coordinates.py` (#6
 ## 4. EXACT apply operation TEMPLATE (NOT run; fill placeholders after prereqs)
 Per sample row, id-keyed + rowcount-asserted + fail-closed (mirror the T32 DO-block):
 ```sql
--- OWNER-RUN ONLY, after prereqs 1-3. Replace <sample_id>, <easting>, <northing>, <tier>, <source>.
+-- OWNER-RUN ONLY, after prereqs 1-3. Replace <sample_id>, <source_dra_id>, <easting>, <northing>, <tier>, <source>.
 DO $$
 DECLARE v_rows int;
 BEGIN
@@ -58,10 +58,11 @@ BEGIN
          coordinate_quality_tier = '<tier>',            -- e.g. 'medium'
          coordinate_source = '<source>',                -- e.g. 'OCR: Site 14764 App C p162-172, well MW08-3'
          updated_at = now()
-   WHERE id = '<sample_id>'::uuid;                       -- EXACT row (verified mapping), NOT a name match
+   WHERE id = '<sample_id>'::uuid                        -- EXACT row (verified mapping), NOT a name match
+     AND source_dra_id = '<source_dra_id>'::uuid;         -- defense-in-depth against cross-DRA mapping mistakes
   GET DIAGNOSTICS v_rows = ROW_COUNT;
   IF v_rows <> 1 THEN
-    RAISE EXCEPTION 'apply aborted: expected 1 row, updated %', v_rows;  -- fail-closed
+    RAISE EXCEPTION 'apply aborted: expected 1 row for sample/source_dra_id pair, updated %', v_rows;  -- fail-closed
   END IF;
 END $$;
 ```
@@ -71,17 +72,16 @@ Postflight (read-only): re-fetch the row's geometry -> confirm lng/lat within Zo
 ## 5. Rollback packet
 PREFLIGHT (capture BEFORE any apply -- required): for each `<sample_id>`, record the current
 `geometry` (as `ST_AsText(geometry)` or the lng/lat), `coordinate_quality_tier`, `coordinate_source`,
-`updated_at`. Rollback = the same id-keyed fail-closed DO-block setting those columns back to the
-captured values (or `geometry = NULL` + tiers to their prior values if the row was previously
-coordinate-less). Because `matrix_map.samples.geometry` is NOT NULL, a row that had a geometry cannot
-be rolled back to NULL -- restore the exact prior geometry. Keep the preflight capture with the apply
-record (T32 practice).
+`updated_at`. Rollback = the same id-keyed + source-dra-id-guarded fail-closed DO-block setting those
+columns back to the captured values. Because `matrix_map.samples.geometry` is NOT NULL, rollback MUST
+restore the exact prior geometry; do not use `geometry = NULL`. Keep the preflight capture with the
+apply record (T32 practice).
 
 ## 6. Source-review checklist (per record, before apply)
 - [ ] Well id read matches the source page (OCR verified against the PDF page image).
 - [ ] UTM easting/northing digits confirmed against source (no OCR transposition); datum = NAD83 Zone 10N.
 - [ ] Confidence is `high` OR the `low` record was manually verified against source.
-- [ ] The sample-row `id` mapping (prereq 1) is confirmed for the correct `source_dra_id`.
+- [ ] The sample-row `id` mapping (prereq 1) is confirmed for the correct `source_dra_id`, and both are included in the filled SQL `WHERE` clause.
 - [ ] `coordinate_quality_tier` + `coordinate_source` set per owner decision (prereq 2).
 - [ ] Preflight rollback capture recorded (section 5).
 - [ ] `/codex-review` on the exact filled DO-block (per the exact-operation gate).
