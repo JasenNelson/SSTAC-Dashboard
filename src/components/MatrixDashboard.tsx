@@ -15,6 +15,7 @@ import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
+import CumulativeEffectsCalculator from './matrix-options/CumulativeEffectsCalculator';
 import EvidenceLibrary from './matrix-options/EvidenceLibrary';
 import SsdWorkbench from './matrix-options/SsdWorkbench';
 import Phase2TasksSection from './matrix-options/Phase2TasksSection';
@@ -852,6 +853,17 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               />
             )}
+            {/*
+              Cumulative Effects (TEQ + BaP-eq) is orthogonal to the eco/hh CategorySelector -- it
+              works over its own list of PAH/congener entries rather than a single substanceKey, so
+              it is stacked unconditionally below the active category calculator (same pattern as
+              BackgroundAdjustment below), not gated by activeCategory.
+            */}
+            <CumulativeEffectsCalculator
+              substanceKey={substanceKey}
+              jurisdiction={jurisdiction}
+              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+            />
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
               <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
