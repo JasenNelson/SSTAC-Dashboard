@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import RunEngineButton from './RunEngineButton';
 
 // ============================================================================
 // Types
@@ -187,11 +186,6 @@ export default function SubmissionCard({ submission }: { submission: DisplaySubm
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
         </Link>
-        <RunEngineButton
-          submissionId={submission.id}
-          siteId={submission.siteId}
-          variant="secondary"
-        />
       </div>
     </div>
   );

@@ -74,7 +74,6 @@ Routes follow a consistent error pattern:
 | 422 | Tier-constraint violation | regulatory-review judgment guard |
 | 429 | Rate-limited | `getAuthAndRateLimit` |
 | 500 | Unhandled server error | caught in outer `try/catch` |
-| 501 | Deprecated | `/api/regulatory-review/run-engine` only |
 | 503 | Local engine disabled | `requireLocalEngine()` |
 
 ---
@@ -93,7 +92,6 @@ Routes follow a consistent error pattern:
 - [Regulatory Review — search](#regulatory-review--search)
 - [Regulatory Review — validation & progress](#regulatory-review--validation--progress)
 - [HITL packets](#hitl-packets)
-- [Deprecated](#deprecated)
 
 ---
 
@@ -262,7 +260,6 @@ The regulatory-review surface uses three different guard combinations. Read this
 | `requireAdmin()` + `requireLocalEngine()` | `projects` (list/create), `projects/[id]` (read/patch/delete), `projects/[id]/files` (list/upload), `projects/[id]/files/[fileId]` (delete), `projects/[id]/extract`, `projects/[id]/extract-status`, `projects/[id]/evaluate`, `projects/[id]/evaluate-status`, `assistant/chat`, `assistant/models` |
 | `requireAdmin()` only (no local-engine gate) | `assessments`, `assessments/[csapId]`, `submissions`, `judgments`, `matching-detail`, `progress`, `validation-stats`, `search`, `submission-search` |
 | Authenticated Supabase session via `createAuthenticatedClient()` + `getAuthenticatedUser()` (returns 401 if no user; no admin check) | `hitl-packets` (list), `hitl-packets/[sessionId]`, `hitl-packets/[sessionId]/csv`, `hitl-packets/[sessionId]/md` |
-| No guards | `regulatory-review/run-engine` (deprecated 501 stub) |
 
 These routes read/write the submission SQLite DB (`src/data/regulatory-review.db`) via helpers in `src/lib/sqlite/queries/**`. The local-engine-gated subset additionally touches the Regulatory-Review sibling repo filesystem at `C:/Projects/Regulatory-Review/1_Active_Reviews/`. Routes that read the policy KB use the engine DB at `{cwd}/../Regulatory-Review/engine/data/rraa_v3_2.db`.
 
@@ -462,13 +459,6 @@ Download the pre-generated CSV.
 Download the pre-generated markdown packet.
 - **Auth:** authenticated session; 401 if absent.
 - **Response:** `text/markdown` with `Content-Disposition: attachment; filename="HITL_PACKET_{sessionId}.md"`.
-
----
-
-## Deprecated
-
-### `POST /api/regulatory-review/run-engine` — DEPRECATED
-Returns HTTP 501 with a deprecation message redirecting callers to `POST /api/regulatory-review/projects/[id]/evaluate`. Removal is tracked in `docs/NEXT_STEPS.md`.
 
 ---
 

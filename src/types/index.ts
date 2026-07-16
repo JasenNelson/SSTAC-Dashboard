@@ -211,8 +211,6 @@ export type {
   GetValidationStatsResponse,
   GetMatchingDetailRequest,
   GetMatchingDetailResponse,
-  RunAssessmentEngineRequest,
-  RunAssessmentEngineResponse,
 
   // Matrix Endpoints
   GetMatrixDataRequest,

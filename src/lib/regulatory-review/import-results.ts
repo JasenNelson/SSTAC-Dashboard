@@ -1,9 +1,8 @@
 /**
- * Shared import function for evaluation results → dashboard DB.
+ * Shared import function for evaluation results -> dashboard DB.
  *
  * Used by:
- *   - POST /api/regulatory-review/run-engine (admin/debug path)
- *   - GET  /api/regulatory-review/projects/[id]/evaluate-status (project pipeline)
+ *   - GET /api/regulatory-review/projects/[id]/evaluate-status (project pipeline)
  */
 
 // ============================================================================
