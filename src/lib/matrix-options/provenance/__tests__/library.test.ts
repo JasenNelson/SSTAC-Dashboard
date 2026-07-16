@@ -15,6 +15,24 @@ import {
 } from '../library';
 import type { SourceRecord } from '../types';
 
+// 2026-07-16: Stage 2 copper #18 disposal (scripts/matrix-options/promote-copper-hc0426.mjs, owner
+// --apply pending) will flip these 6 redundant copper oral-RfD candidates from needs_review ->
+// superseded. HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the owner-approved canonical copper
+// oral RfD (pv-hc-copper-hh-direct-rfd-tdi / pv-hc-copper-hh-food-rfd-tdi, current_default); the 4
+// BC Protocol 28 rows (0.09 / 0.141) and the 2 legacy current-calculator scaffold rows (0.426,
+// unsourced) are superseded redundant alternates for the same slot. Except them from the
+// "still needs_review scaffold" invariants below so these tests stay green both BEFORE and AFTER
+// --apply, without asserting the post-apply 'superseded' status here (that is the dispose tool's
+// job, not a catalog-shape invariant).
+const DISPOSED_COPPER_IDS = new Set([
+  'pv-p28-copper-hh-direct-rfd',
+  'pv-p28-copper-hh-food-rfd',
+  'pv-p28-copper-hh-direct-rfd-copper-rfd-water',
+  'pv-p28-copper-hh-food-rfd-copper-rfd-water',
+  'pv-copper-hh-direct-rfd',
+  'pv-copper-hh-food-rfd',
+]);
+
 describe('matrix options evidence library helpers', () => {
   it('builds the default view from repo-local catalog records', () => {
     const view = buildEvidenceLibraryView(createEvidenceLibraryFilters());
@@ -558,7 +576,12 @@ describe('matrix options evidence library helpers', () => {
     const hhRecords = PARAMETER_VALUE_RECORDS.filter(
       (record) =>
         record.pathway.startsWith('human-health') &&
-        record.source_ids.includes('src-current-calculator-design-v1'),
+        record.source_ids.includes('src-current-calculator-design-v1') &&
+        // 2026-07-16: exclude the 2 copper #18 disposal scaffold rows (pv-copper-hh-direct-rfd,
+        // pv-copper-hh-food-rfd; see DISPOSED_COPPER_IDS above) -- they legitimately leave this
+        // "still needs_review scaffold" invariant once promote-copper-hc0426.mjs --apply flips them
+        // to superseded.
+        !DISPOSED_COPPER_IDS.has(record.parameter_value_id),
     );
 
     expect(hhRecords.length).toBeGreaterThan(0);
@@ -629,6 +652,14 @@ describe('matrix options evidence library helpers', () => {
     for (const substance of scaffoldSubstances) {
       for (const [pathway, inputKeys] of Object.entries(inputKeysByPathway)) {
         for (const inputKey of inputKeys) {
+          // 2026-07-16: copper #18 disposal (promote-copper-hc0426.mjs) supersedes the copper
+          // rfd_oral scaffold candidates (pv-copper-hh-direct-rfd / pv-copper-hh-food-rfd) --
+          // HC v4.0 0.426 (src-health-canada-trv-v4-2025) is now the owner-approved current_default
+          // for this slot. Skip ONLY this one cell (copper x rfd_oral, both pathways); every other
+          // substance/input-key cell still asserts needs_review below.
+          if (substance.key === 'copper' && inputKey === 'rfd_oral_mg_per_kg_bw_day') {
+            continue;
+          }
           const record = getParameterValueRecord(
             substance.key,
             pathway as keyof typeof inputKeysByPathway,

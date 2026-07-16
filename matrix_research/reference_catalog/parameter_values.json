@@ -2163,7 +2163,7 @@
     "value_type": "single_value",
     "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
+    "qa_status": "superseded",
     "source_ids": [
       "src-current-calculator-design-v1"
     ],
@@ -2171,9 +2171,9 @@
       "eq-human-health-direct-contact"
     ],
     "jurisdiction": "general",
-    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
-    "uncertainty": "Current calculator scaffold; exact source locator pending.",
-    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
+    "uncertainty": "Current calculator scaffold; exact source locator pending. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
     "receptor_groups": [
       "human"
     ],
@@ -2193,10 +2193,10 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
+        "qa_status": "superseded",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-07-16",
+        "note": "Exact source locator must be confirmed before approval. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
         "evidence_id": "ev-pv-copper-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }
@@ -2371,7 +2371,7 @@
     "value_type": "single_value",
     "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
+    "qa_status": "superseded",
     "source_ids": [
       "src-current-calculator-design-v1"
     ],
@@ -2379,9 +2379,9 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "general",
-    "applicability": "Human food-web non-cancer endpoint scaffold.",
-    "uncertainty": "Current calculator scaffold; exact source locator pending.",
-    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "applicability": "Human food-web non-cancer endpoint scaffold. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
+    "uncertainty": "Current calculator scaffold; exact source locator pending. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
     "receptor_groups": [
       "human"
     ],
@@ -2403,10 +2403,10 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
+        "qa_status": "superseded",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-07-16",
+        "note": "Exact source locator must be confirmed before approval. [SUPERSEDED (disposed) on 2026-07-16 by J. Nelson. Superseded: HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the canonical copper oral RfD; this P28/scaffold row is a redundant alternate.]",
         "evidence_id": "ev-pv-copper-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
