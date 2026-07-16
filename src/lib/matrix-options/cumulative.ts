@@ -22,7 +22,7 @@
 
 import { lookupTef, type TefEdition, TEF_EDITION_QA } from './tefTable';
 import { lookupRpf, type RpfScheme, RPF_SCHEME_NOTES } from './rpfTable';
-import { lookupAdaf } from './adafTable';
+import { lookupAdaf, ADAF_TABLE } from './adafTable';
 import type { RegulatoryFrameId } from './regulatoryFrames';
 
 // ---------------------------------------------------------------------------
@@ -521,6 +521,130 @@ function buildRow(
     contribution: null,
     contributionUnit: CANONICAL_UNIT,
     factorSourceQa: qa,
+  };
+}
+
+// ---------------------------------------------------------------------------
+// Lifetime multi-window ADAF weighting. computeBaPeq (above) applies exactly ONE age bin's ADAF as a
+// scalar per call (see BaPeqOptions.applyAdaf SINGLE-BIN SCOPE note). A full lifetime (e.g. 0-70yr)
+// scenario instead needs an exposure-duration-weighted average across every age bin the receptor
+// passes through. This is standard EPA (2005) lifetime ADAF methodology: effective ADAF =
+// sum(ADAF_bin * fraction-of-averaging-period-in-bin), applied ONCE to the no-ADAF (ADAF = 1) BaP-eq.
+// ---------------------------------------------------------------------------
+
+// Bin-label union mirroring ADAF_TABLE's row labels. adafTable.ts types AdafRow.ageBin as `string`
+// (it exports no literal union for the bin label), so this alias is declared here rather than
+// re-derived via typeof, and every value is validated against ADAF_TABLE at runtime (fail-closed on
+// an unknown label) inside computeBaPeqLifetime below.
+export type AdafBin = '0-<2' | '2-<16' | '16+';
+
+export interface AgeBinFraction {
+  ageBin: AdafBin;
+  // Fraction of the averaging period spent in this bin. All fractions across the ageBins array must
+  // sum to 1.0 (within epsilon 1e-6).
+  exposureFraction: number;
+}
+
+function adafForBin(bin: AdafBin): number | null {
+  const row = ADAF_TABLE.find((r) => r.ageBin === bin);
+  return row ? row.adaf : null;
+}
+
+function blockedLifetimeResult(reason: string): CumulativeResult {
+  return {
+    equivalent: 0,
+    equivalentUnit: CANONICAL_UNIT,
+    contributions: [],
+    warnings: [reason],
+    blocked: true,
+  };
+}
+
+/**
+ * Lifetime multi-window ADAF-weighted BaP-eq: sum(C_i * RPF_i) x effective-lifetime-ADAF, where the
+ * effective ADAF = sum(ADAF(bin) * bin.exposureFraction) over every age bin the receptor passes
+ * through during the averaging period. Unlike computeBaPeq's single-bin applyAdaf (one age -> one
+ * scalar), this weights ACROSS bins for a full-lifetime scenario -- same anchor-pairing contract as
+ * BaPeqOptions.applyAdaf applies here too: never call this with an anchor SF that already embeds
+ * ADAFs (e.g. EPA IRIS lifetime CSF 2.0); pair it only with an adult-only / non-ADAF-embedded anchor.
+ *
+ * Computes the NO-ADAF base via computeBaPeq(entries, scheme, {}) (ADAF = 1), then scales the total
+ * and each scored contribution row by the effective lifetime ADAF -- mirroring exactly how
+ * computeBaPeq applies its single scalar (contribution = concentrationNorm * factor * adaf; the
+ * `factor` field itself is never scaled, only `contribution` and the summed `equivalent`).
+ *
+ * Fail-closed (never throws): empty ageBins; any exposureFraction non-finite, negative, or > 1;
+ * fractions not summing to 1.0 within epsilon 1e-6; an unknown or duplicate ageBin; or a base BaP-eq
+ * that is already blocked (propagated unchanged).
+ */
+export function computeBaPeqLifetime(
+  entries: readonly BaPeqEntry[],
+  scheme: RpfScheme,
+  ageBins: readonly AgeBinFraction[],
+): CumulativeResult {
+  const base = computeBaPeq(entries, scheme, {});
+  if (base.blocked) return base;
+
+  if (!Array.isArray(ageBins) || ageBins.length === 0) {
+    return blockedLifetimeResult('No age bins supplied; lifetime BaP-eq is blocked (fail-closed).');
+  }
+
+  const seenBins = new Set<string>();
+  let fractionSum = 0;
+  for (const b of ageBins) {
+    if ((b as unknown) === null || typeof (b as unknown) !== 'object') {
+      return blockedLifetimeResult(
+        'Malformed age bin entry (null or non-object); lifetime BaP-eq is blocked (fail-closed).',
+      );
+    }
+    if (!Number.isFinite(b.exposureFraction) || b.exposureFraction < 0 || b.exposureFraction > 1) {
+      return blockedLifetimeResult(
+        `Age bin "${b.ageBin}" has an invalid exposureFraction ${b.exposureFraction} (must be a ` +
+          'finite number >= 0 and <= 1); lifetime BaP-eq is blocked (fail-closed).',
+      );
+    }
+    if (seenBins.has(b.ageBin)) {
+      return blockedLifetimeResult(
+        `Duplicate age bin "${b.ageBin}" supplied; lifetime BaP-eq is blocked (fail-closed).`,
+      );
+    }
+    seenBins.add(b.ageBin);
+    fractionSum += b.exposureFraction;
+  }
+
+  if (Math.abs(fractionSum - 1.0) > 1e-6) {
+    return blockedLifetimeResult(
+      `Age bin exposureFractions sum to ${fractionSum}, not 1.0 (epsilon 1e-6); lifetime BaP-eq is ` +
+        'blocked (fail-closed).',
+    );
+  }
+
+  let effectiveAdaf = 0;
+  for (const b of ageBins) {
+    const adaf = adafForBin(b.ageBin);
+    if (adaf === null) {
+      return blockedLifetimeResult(
+        `Unknown age bin "${b.ageBin}" not found in ADAF_TABLE; lifetime BaP-eq is blocked (fail-closed).`,
+      );
+    }
+    effectiveAdaf += adaf * b.exposureFraction;
+  }
+
+  const contributions = base.contributions.map((c) =>
+    c.contribution === null ? c : { ...c, contribution: c.contribution * effectiveAdaf },
+  );
+
+  return {
+    equivalent: base.equivalent * effectiveAdaf,
+    equivalentUnit: base.equivalentUnit,
+    contributions,
+    warnings: [
+      ...base.warnings,
+      `Lifetime multi-window ADAF ${effectiveAdaf} applied (exposure-duration-weighted sum over ` +
+        `${ageBins.length} age bin(s)). Ensure the anchor SF is NOT already ADAF-adjusted (do NOT ` +
+        'use with EPA lifetime 2.0).',
+    ],
+    blocked: false,
   };
 }
 
