@@ -417,23 +417,6 @@ export interface GetMatchingDetailResponse extends ApiResponse<{
   evidence: Record<string, unknown>;
 }> {}
 
-// POST /api/regulatory-review/run-engine
-export interface RunAssessmentEngineRequest {
-  submissionId: string;
-  options?: {
-    reFlagItems?: boolean;
-    recalculateAll?: boolean;
-  };
-}
-
-// eslint-disable-next-line @typescript-eslint/no-empty-object-type
-export interface RunAssessmentEngineResponse extends ApiResponse<{
-  jobId: string;
-  status: 'queued' | 'processing' | 'completed' | 'failed';
-  progress?: number;
-  estimatedTime?: number; // seconds
-}> {}
-
 // =============================================================================
 // Matrix/Prioritization API Endpoints
 // =============================================================================

@@ -139,8 +139,6 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   - **Source:** Phase 3b survey, 2026-04-20.
 - **Submission-search performance.** `src/app/api/regulatory-review/submission-search/route.ts` does a full in-memory JSON scan of `assessments.evidence_found`. Acceptable for the current data size; the chat/search enhancement plan notes this becomes a problem past ~1K assessments and suggests a denormalized search table or SQLite FTS index in a later phase.
   - **Source:** `docs/regulatory-review/CHAT_AND_SEARCH_ENHANCEMENT_PLAN.md` Phase B notes.
-- **Deprecated `/api/regulatory-review/run-engine` route.** Returns HTTP 501 with a deprecation message redirecting to `projects/[id]/evaluate`. Not yet removed from the codebase. Safe to delete once no external callers remain.
-  - **Source:** route inventory for `docs/API_REFERENCE.md` refresh.
 - **`.env.example` comment-only drift.** `REG_REVIEW_EXTRACTIONS_PATH`, `REG_REVIEW_OUTPUT_PATH`, `REG_REVIEW_TEMP_UPLOAD_PATH` are commented in `.env.example` but are not read by any code in `src/` or `scripts/` (verified 2026-04-20). Either wire them up or remove them.
   - **Source:** `docs/ENVIRONMENT_REFERENCE.md` §"Variables in `.env.example` that are not currently consumed".
 
