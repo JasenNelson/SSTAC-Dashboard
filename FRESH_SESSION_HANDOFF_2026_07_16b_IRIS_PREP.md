@@ -10,19 +10,19 @@ Matrix-Options top-50 completion path. Plain ASCII. VERIFY load-bearing claims a
 - **#666** (498b207) -- Stage 2 dispose scripts + rulings docs.
 - **#667** (2f85b65) -- copper #18 apply: 6 rows needs_review->superseded (top-level + nested), value/default_status unchanged; guard-test exclusions (DISPOSED_COPPER_IDS). 10/10 CI green incl E2E. codex GREEN (grind + xhigh).
 
-## 2. IRIS #17 apply lane -- PREPPED, STOPPED at owner --apply gate
+## 2. IRIS #17 apply lane -- APPLIED (owner-run) + shipping as a PR
 - Worktree: `C:\Projects\SSTAC-Dashboard-worktrees\iris-apply-2026-07-16` (branch `feat/iris-apply-2026-07-16` off 2f85b65; junctioned; .env.local copied).
-- Script `scripts/matrix-options/supersede-iris-17-alternates.mjs` present on main (from #666); dry-run CLEAN = 41 records to dispose, 0 already in target state, no JSON written.
-- GUARD-TEST COUPLING: **NONE** (verified on this main): none of the 41 disposed `pv-iris-*` ids appear by-id in any test; all needs_review count/loop assertions filter by non-IRIS sources (P28 / ERDC-BSAF) or specific non-disposed ids (arsenic/PCB leads); frozen-batch test counts only approved rows. -> IRIS apply is JSON-only; test:ci unchanged (expect 5750).
-
-### OWNER COMMAND (run in the IRIS worktree; AI never runs --apply):
-```
-cd C:\Projects\SSTAC-Dashboard-worktrees\iris-apply-2026-07-16
-node scripts/matrix-options/supersede-iris-17-alternates.mjs --reviewer "J. Nelson" --date 2026-07-16 --apply
-```
-After you run it, AI will: verify the diff (41 rows, top-level + nested -> superseded, 20 canonical
-siblings + default_status untouched, no drift), commit ONLY the JSON path-scoped, run full gates
-(tsc/lint/test:ci/monitored build; e2e->CI) + /codex-review to GREEN, open the IRIS apply PR, monitor CI.
+- Owner RAN `supersede-iris-17-alternates.mjs --apply` (J. Nelson, 2026-07-16). 41 rows disposed:
+  top-level + nested evidence qa_status needs_review->superseded; value/default_status UNCHANGED; the
+  20 canonical siblings untouched. Verified: 82 flips (41 top + 41 nested), 0 value/default/id/approved
+  changes, 0 pv-iris needs_review remaining. Committed on this branch (JSON path-scoped).
+- GUARD-TEST COUPLING: NONE (verified: none of the 41 ids asserted needs_review in any test).
+  test:ci confirmed 5750 passed post-apply.
+- CODEX FIX (P2): the disposal stamp originally hardcoded `src-us-epa-iris-rfd-table-live`, which
+  mislabeled the 11 inhalation RfC rows (their source is `src-us-epa-iris-chemical-details-live`).
+  Corrected to a SOURCE-NEUTRAL stamp ("...alternate from the same IRIS export...") in BOTH the applied
+  JSON (post-apply text fix, allowed scope) AND the script constant (root cause). No value/status change.
+- STATUS: gated (tsc/lint/test:ci/build GREEN; e2e->CI) + codex re-review to GREEN; PR opening.
 
 ## 3. Owner-gated / blocked (forbidden without a fresh gate)
 - **PCB #15**: BLOCKED pending site congener/Aroclor profile + representative logKow + HC-1.0e-5-vs-IRIS-2.0e-5 HH-default call. Unblocks #13 (D3 re-key), #15 (QP attest), #23 (dl-PCB TEQ full).

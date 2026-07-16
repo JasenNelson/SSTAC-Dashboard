@@ -70,8 +70,12 @@ const HH_TRV_FILE = path.join(
   REPO_ROOT, 'matrix_research', 'reference_catalog', 'human_health_trv_values.json',
 );
 
+// Source-NEUTRAL rationale: the disposed set spans both src-us-epa-iris-rfd-table-live (oral RfD
+// rows) and src-us-epa-iris-chemical-details-live (inhalation RfC rows), so the stamp must NOT name a
+// single source id (a hardcoded 'rfd-table-live' would mislabel the 11 RfC supersedes). Each row's own
+// source_ids remain intact and authoritative; this note is source-neutral to stay correct for all 41.
 const DISPOSAL_RATIONALE =
-  'Superseded: unverified robot-extraction alternate of src-us-epa-iris-rfd-table-live; the group\'s ' +
+  'Superseded: unverified robot-extraction alternate from the same IRIS export; the group\'s ' +
   'direct_source_verified canonical sibling is retained. Owner ruling 2026-07-16 (IRIS #17).';
 
 // The EXACT 41 records this tool will ever touch (fail-closed, hardcoded -- NOT a dynamic filter
