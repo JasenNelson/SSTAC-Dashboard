@@ -82,10 +82,11 @@ const TAB_PLACEHOLDERS: Record<Exclude<TerminalTab, 'logs'>, TabPlaceholder> = {
   agents: {
     heading: 'AGENTS',
     body:
+      'This tab is a static placeholder -- it does not show live data. ' +
       'Agents are launched via the per-project "Agent v" dropdown in the ' +
-      'Actions column. Running agents stream their output into the LOGS ' +
-      'tab as `run_agent` cards alongside skill runs. A filtered ' +
-      'agents-only view will live here.',
+      'Actions column; running agents stream their output into the LOGS ' +
+      'tab as `run_agent` cards alongside skill runs, not here. A ' +
+      'filtered agents-only view may replace this placeholder in the future.',
   },
   tasks: {
     heading: 'TASKS',
