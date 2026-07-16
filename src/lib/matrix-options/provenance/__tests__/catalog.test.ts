@@ -192,6 +192,24 @@ const ALLOWED_WQCIU_PROMOTION_STATUSES = [
   'needs_formula_verification',
 ];
 
+// 2026-07-16: Stage 2 copper #18 disposal (scripts/matrix-options/promote-copper-hc0426.mjs, owner
+// --apply pending) will flip these 6 redundant copper oral-RfD candidates from needs_review ->
+// superseded. HC v4.0 0.426 (src-health-canada-trv-v4-2025) is the owner-approved canonical copper
+// oral RfD (pv-hc-copper-hh-direct-rfd-tdi / pv-hc-copper-hh-food-rfd-tdi, current_default); the 4
+// BC Protocol 28 rows (0.09 / 0.141) and the 2 legacy current-calculator scaffold rows (0.426,
+// unsourced) are superseded redundant alternates for the same slot. Except them from the
+// "still needs_review / still pending" invariants below so this test stays green both BEFORE and
+// AFTER --apply, without this test itself asserting the post-apply 'superseded' status (that is the
+// dispose tool's job, not a catalog-shape invariant).
+const DISPOSED_COPPER_IDS = new Set([
+  'pv-p28-copper-hh-direct-rfd',
+  'pv-p28-copper-hh-food-rfd',
+  'pv-p28-copper-hh-direct-rfd-copper-rfd-water',
+  'pv-p28-copper-hh-food-rfd-copper-rfd-water',
+  'pv-copper-hh-direct-rfd',
+  'pv-copper-hh-food-rfd',
+]);
+
 describe('matrix options provenance catalog', () => {
   it('uses unique source, equation, and parameter identifiers', () => {
     expectUnique(SOURCE_RECORDS.map((record) => record.source_id));
@@ -1003,14 +1021,22 @@ describe('matrix options provenance catalog', () => {
 
   it('keeps Protocol 28 TRV candidates pending until original sources are checked', () => {
     const protocol28Values = PARAMETER_VALUE_RECORDS.filter((record) =>
-      record.source_ids.includes('src-bc-protocol-28-v3-0-2024'),
+      record.source_ids.includes('src-bc-protocol-28-v3-0-2024') &&
+      // 2026-07-16: exclude the 4 copper #18 disposal candidates (see DISPOSED_COPPER_IDS above) --
+      // they legitimately leave this "still pending" invariant once promote-copper-hc0426.mjs
+      // --apply flips them to superseded.
+      !DISPOSED_COPPER_IDS.has(record.parameter_value_id),
     );
 
     // 2026-06-22: BC P28 source dedup -- the mislabeled src-bc-protocol-28-2021-jan was retired and
     // its 355 HH rows curated onto the canonical v3.0 id (4 exact-duplicate twins of the
     // verification-packet rows deleted, 351 re-keyed). So the v3.0 set is now 351 HH + 6 PV = 357,
     // all still available_option / pending_source_locator / needs_direct_source_check / needs_review.
-    expect(protocol28Values).toHaveLength(357);
+    // 2026-07-16: -4 (357 -> 353) -- copper #18 disposal excludes its 4 BC Protocol 28 oral-RfD
+    // candidates (pv-p28-copper-hh-direct-rfd, pv-p28-copper-hh-food-rfd,
+    // pv-p28-copper-hh-direct-rfd-copper-rfd-water, pv-p28-copper-hh-food-rfd-copper-rfd-water) from
+    // this loop; see DISPOSED_COPPER_IDS.
+    expect(protocol28Values).toHaveLength(353);
     for (const record of protocol28Values) {
       expect(record.default_status, record.parameter_value_id).toBe(
         'available_option',
