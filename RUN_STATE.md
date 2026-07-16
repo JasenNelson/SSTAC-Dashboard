@@ -15,13 +15,18 @@ Plan (codex-GREEN, 3 rounds): `~/.claude/plans/explore-code-base-and-imperative-
 - 16 python processes dated 2026-07-14/15 observed at session start = FOREIGN (predate this session).
   0 node processes. Do NOT kill foreign processes. Re-check at close-out.
 
-## Progress
+## Progress -- SESSION COMPLETE
 - [x] Step 0: worktree + junction + env + templates verified + artifacts init.
-- [ ] Step 1: Copper #18 reconciliation + dispose-script draft (STOP for owner --apply).
-- [ ] Step 2: IRIS #17 per-group rulings (live) + dispose-script draft.
-- [ ] Step 3: PCB QP #15 packet for owner attestation + conditional D3 draft.
-- [ ] Step 4: ship ruling-unblocked code (report-ready PRs; no auto-merge).
-- [ ] Step 6: close-out (handoff + orphan sweep).
+- [x] Step 1: Copper #18 reconciled (promote already done); dispose script prepped (STOP for --apply).
+- [x] Step 2: IRIS #17 ruled supersede-all-41; script prepped (STOP for --apply); PFDA 2e-9 verified correct.
+- [x] Step 3: PCB QP #15 = REQUEST MORE DATA (codex-consulted); no D3 draft; chain stays blocked.
+- [x] Step 4: no code PR (PCB chain blocked; copper/IRIS are catalog applies). Shipped docs+scripts PR #666.
+- [x] Step 6: close-out -- PR #666 report-ready (lint0/tsc0/test:ci5750/build0; e2e->CI; codex GREEN); handoff committed; orphan sweep done.
+
+## Result
+- PR #666 (report-ready, owner merges after CI). Both --apply scripts prepped-and-stopped.
+- Owner queue: (1) --apply copper (+3 coupled guard-test edits, same PR); (2) --apply IRIS (standalone);
+  (3) PCB #15 site data; (4) prior owner-only: IOCO #7, T40 #29, RLS #27.
 
 ## Owner gates (STOPPED; never autonomous)
 copper --apply (#18) | IRIS --apply (#17) | PCB QP attest (#15) -> D3 migration (#13) |

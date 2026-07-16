@@ -5,7 +5,7 @@ Baseline origin/main = c5b32fb. NO auto-merge (owner merges each after gates + c
 ## PRs this run
 | PR | Branch | Unit (row) | Gates | codex | CI | Merge |
 |----|--------|------------|-------|-------|----|-------|
-| (pending) | feat/top50-stage2-2026-07-16 | Stage 2 rulings docs + 2 dry-run apply scripts (no-write) | (running) | grind found 3 fail-closed items -> fixing -> re-gate | pending | OWNER (report-ready) |
+| #666 | feat/top50-stage2-2026-07-16 | Stage 2 rulings docs + 2 dry-run apply scripts (no-write) | lint0 / tsc0 / test:ci 5750 / build0; e2e deferred-to-CI (no app surface) | GREEN gpt-5.5 xhigh (after 3 fix rounds) | pending | OWNER (report-ready) |
 
 ## Prepped-and-stopped (owner-gated; NOT executed autonomously)
 | Item | Artifact | Owner action |
