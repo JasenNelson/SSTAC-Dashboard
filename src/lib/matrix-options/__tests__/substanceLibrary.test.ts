@@ -24,7 +24,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     //   potassium-silver/silver/sodium cyanide) = 423.
     // + 1 zineb new-key organic oral RfD 0.05 (2026-07-04d) = 424.
     // + 1 phenylmercuric_acetate organometallic (2026-07-08) = 425.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(425);
+    // + 1 lmw_pahs eco food-web new-key organic (NOT organic-PAH) (2026-07-17) = 426.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(426);
   });
 
   it('every entry has a non-null key', () => {
@@ -935,7 +936,7 @@ describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
     { key: 'acrylonitrile', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
     { key: 'carbon_disulfide', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
     { key: 'styrene', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
-    { key: 'pyridine', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'pyridine', absDermal: 0.1, source: 'RAGS SVOC default 0.1 (HITL item #35, 2026-07-17)' },
     // Kept at 0.14: RAGS chemical-specific PCB value (not the 0.1 organic-halogenated default).
     { key: 'total_pcbs_aroclor_1254', absDermal: 0.14, source: 'RAGS PCB 0.14' },
   ] as const;
