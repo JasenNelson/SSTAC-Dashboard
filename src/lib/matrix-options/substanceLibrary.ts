@@ -41,7 +41,9 @@ export const SUBSTANCE_LIBRARY = [
     displayName: 'Total PCBs (Aroclor 1254)',
     contaminantClass: 'organic-halogenated',
     logKow: 6.50,
-    rfd_oral_mg_per_kg_bw_per_day: 2.0e-5,
+    // HH default = HC v4.0 non-dioxin-like TDI 1.0e-5 (owner/QP 2026-07-16; more protective +
+    // newer than IRIS Aroclor-1254 2.0e-5/1994; dl-PCBs via separate TEQ pathway).
+    rfd_oral_mg_per_kg_bw_per_day: 1.0e-5,
     sf_oral_per_mg_per_kg_bw_per_day: 2.0,
     bsaf_loc_freshwater: 2.0,
     abs_dermal: 0.14,

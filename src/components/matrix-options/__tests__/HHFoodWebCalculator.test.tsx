@@ -260,7 +260,11 @@ describe('HHFoodWebCalculator', () => {
     expect(panel).toHaveTextContent(/Hazard quotient/);
     expect(panel).toHaveTextContent(/current default/);
     expect(panel).toHaveTextContent(/needs review/);
-    expect(panel).toHaveTextContent(/0 approved/);
+    // PCB HH oral RfD slot is now an approved HC current_default (owner/QP
+    // 2026-07-16), so the summary counts 1 approved source (the other three
+    // scaffolded inputs -- oral slope factor, BSAF, bioavailability -- remain
+    // needs-review scaffolds).
+    expect(panel).toHaveTextContent(/1 approved/);
     expect(panel).toHaveTextContent(
       /current calculator scaffold only/i,
     );
