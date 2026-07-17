@@ -7543,6 +7543,56 @@ export const SUBSTANCE_LIBRARY = [
       'HH-direct/HH-food only; sf_oral null (no carcinogen slope factor in catalog). ' +
       'abs_dermal/ba_oral are organic class defaults pending HITL. logKow/eco not in catalog -> eco filtered.',
   },
+  {
+    key: 'lmw_pahs',
+    displayName: 'Low-molecular-weight PAHs (LMW PAHs)',
+    contaminantClass: 'organic',
+    logKow: null,
+    rfd_oral_mg_per_kg_bw_per_day: null,
+    sf_oral_per_mg_per_kg_bw_per_day: null,
+    abs_dermal: 0.1,
+    ba_oral: 1.0,
+    fcv_ug_per_L: null,
+    rfc_inhalation_mg_per_m3: null,
+    iur_inhalation_per_mg_per_m3: null,
+    bsaf_loc_freshwater: 1.5,
+    // trv_eco stays null (NOT hardcoded to 7.7): the eco catalog already carries BOTH
+    // receptor-specific rows for lmw_pahs -- pv-eco-lmw_pahs-food-trveco-bird-fcsap (7.7,
+    // conservative) and pv-eco-lmw_pahs-food-trveco-mammal-fcsap (65.6) -- and
+    // EcoFoodBSAFCalculator.computeTrvSeed() always prefers the live resolveEcoSeed() catalog
+    // lookup (per-receptor) over this static library fallback whenever a catalog row exists for
+    // the selected receptor. A static 7.7 here would never actually surface as the calculator's
+    // default TRV (the UI's default receptor is 'mammal', which seeds 65.6 from the catalog) and
+    // would misleadingly read as "the wired default" in this file when it is not (codex P1
+    // 2026-07-17). Mirrors the established precedent at the 'lead' and 'naphthalene' entries in
+    // this same file ("static eco TRV removed; dynamic catalog resolver supplies it").
+    trv_eco_mg_per_kg_bw_day: null,
+    sources:
+      'FCSAP ERA Module 7 (2021) eco food-web wildlife TRVs for lmw_pahs: bird 7.7 mg/kg-bw/day ' +
+      '(pv-eco-lmw_pahs-food-trveco-bird-fcsap, conservative) and mammal 65.6 mg/kg-bw/day ' +
+      '(pv-eco-lmw_pahs-food-trveco-mammal-fcsap), both approved catalog rows -- the ' +
+      'per-receptor dynamic catalog resolver (resolveEcoSeed) supplies whichever the HITL selects ' +
+      'in the receptor dropdown; BSAF 1.5 = ERDC BSAF Database Oct 2022, PAHs group, pooled ' +
+      'LMW-PAH ~p75 conservative representative (owner/QP 2026-07-17, library-only value, no ' +
+      'catalog parameter_value row yet); eco-food-web pathway only.',
+    notes:
+      'NEW own-key entry. LMW PAH sum (2-3 ring PAHs); eco food-web pathway only -- HH oral RfD/SF, ' +
+      'inhalation, and eco-direct fields intentionally null (not wired this pass). abs_dermal 0.1 / ' +
+      'ba_oral 1.0 are the standard organic class defaults (populated per library invariant even ' +
+      'though no HH pathway is wired here -- inert while rfd_oral/sf_oral stay null, so no HH ' +
+      'exposure route is exercised). trv_eco_mg_per_kg_bw_day is intentionally null (see field ' +
+      'comment): both bird (7.7, conservative) and mammal (65.6) FCSAP TRVs are already ' +
+      'catalog-approved and receptor-selectable live via the calculator dropdown; a static ' +
+      'library fallback would be dead code for the default view and is omitted per the ' +
+      'lead/naphthalene precedent. bsaf_loc_freshwater 1.5 IS the real seeded default (this ' +
+      'calculator has no dynamic BSAF resolver; it always reads the library value directly). ' +
+      'contaminantClass is deliberately \'organic\' (NOT ' +
+      '\'organic-PAH\') so the ecoFoodBSAF/humanHealthFoodWeb M_eco coastal-marine multiplier ' +
+      '(M_ECO_COASTAL_PAH = 15) does NOT apply to this substance: LMW PAHs here represent an ' +
+      'aggregate sum-class TRV/BSAF pairing, not the single-congener passive-bioaccumulation case ' +
+      'the PAH M_eco multiplier was designed for. Owner+codex ruled \'organic\' 2026-07-17 to avoid ' +
+      'over-applying the coastal-PAH multiplier to a PAH sum at the marine IOCO site.',
+  },
 ] as const satisfies readonly SubstanceEntry[];
 
 export type SubstanceKey = (typeof SUBSTANCE_LIBRARY)[number]['key'];

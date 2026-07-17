@@ -128,6 +128,37 @@ describe('resolveEcoSeed -- real wired catalog', () => {
     ).toBeNull();
   });
 
+  it('selects the receptor-specific lmw_pahs eco-food TRV (mammal vs bird, FCSAP, approved)', () => {
+    // lmw_pahs wiring (2026-07-17): substanceLibrary.ts trv_eco_mg_per_kg_bw_day is deliberately
+    // null so this resolver -- NOT a static library fallback -- supplies the per-receptor TRV.
+    // Both catalog rows are qa_status=approved + canonical_source_status=direct_source_verified,
+    // so provisional is false.
+    const mammal = resolveEcoSeed(
+      'lmw_pahs',
+      'eco-food-bsaf',
+      'trv_eco_mg_per_kg_bw_day',
+      'canada-fcsap-aquatic',
+      'mammal',
+    );
+    const bird = resolveEcoSeed(
+      'lmw_pahs',
+      'eco-food-bsaf',
+      'trv_eco_mg_per_kg_bw_day',
+      'canada-fcsap-aquatic',
+      'bird',
+    );
+    expect(mammal?.value).toBe(65.6);
+    expect(mammal?.parameterValueId).toBe(
+      'pv-eco-lmw_pahs-food-trveco-mammal-fcsap',
+    );
+    expect(mammal?.provisional).toBe(false);
+    expect(bird?.value).toBe(7.7);
+    expect(bird?.parameterValueId).toBe(
+      'pv-eco-lmw_pahs-food-trveco-bird-fcsap',
+    );
+    expect(bird?.provisional).toBe(false);
+  });
+
   it('returns null when no catalog candidate exists for the substance', () => {
     expect(
       resolveEcoSeed(

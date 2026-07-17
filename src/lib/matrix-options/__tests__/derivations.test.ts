@@ -416,6 +416,29 @@ describe('ecoFoodBSAF', () => {
     expect(result.blocked).toBe(false);
   });
 
+  it('lmw_pahs (organic, NOT organic-PAH) stays at M_eco = 1 in coastal-marine (2026-07-17 wiring)', () => {
+    // lmw_pahs is deliberately classed 'organic' (not 'organic-PAH') so the
+    // coastal-marine M_eco = 15 PAH multiplier does NOT apply to this
+    // sum-class TRV/BSAF pairing (owner/QP + codex 2026-07-17). Using the
+    // wired values: TRV_eco 7.7 mg/kg-bw/day (FCSAP bird), BSAF 1.5 (ERDC).
+    const result = ecoFoodBSAF({
+      TRV_eco_mg_per_kg_bw_day: 7.7,
+      BW_eco_kg: 0.85,
+      IR_eco_kg_per_day: 0.18,
+      BSAF_loc_freshwater: 1.5,
+      fLipid: 0.05,
+      foc: 0.02,
+      Fsite: 1.0,
+      ecosystem: 'coastal-marine',
+      contaminantClass: 'organic',
+    });
+    expect(result.M_eco).toBe(1);
+    // BSAF_effective = 1.5 * (0.05 / 0.02) * 1 = 3.75 (NOT * 15 = 56.25).
+    expect(result.BSAF_effective).toBeCloseTo(3.75, 6);
+    expect(result.warnings.some((w) => /M_eco = 15/.test(w))).toBe(true);
+    expect(result.blocked).toBe(false);
+  });
+
   it('honors the supplied fProtein override on the MeHg branch', () => {
     // If the HITL passes fProtein explicitly (e.g., 0.20 measured from
     // site-specific tissue analysis), the factor changes accordingly.

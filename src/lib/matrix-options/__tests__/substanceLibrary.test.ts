@@ -24,7 +24,8 @@ describe('SUBSTANCE_LIBRARY', () => {
     //   potassium-silver/silver/sodium cyanide) = 423.
     // + 1 zineb new-key organic oral RfD 0.05 (2026-07-04d) = 424.
     // + 1 phenylmercuric_acetate organometallic (2026-07-08) = 425.
-    expect(SUBSTANCE_LIBRARY).toHaveLength(425);
+    // + 1 lmw_pahs eco food-web new-key organic (NOT organic-PAH) (2026-07-17) = 426.
+    expect(SUBSTANCE_LIBRARY).toHaveLength(426);
   });
 
   it('every entry has a non-null key', () => {
