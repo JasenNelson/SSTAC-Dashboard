@@ -305,7 +305,7 @@
     "pathway": "human-health-direct",
     "input_key": "abs_dermal",
     "display_name": "Benzo[a]pyrene dermal absorption fraction",
-    "value": 0.13,
+    "value": 0.148,
     "unit": "unitless",
     "value_type": "single_value",
     "default_status": "current_default",

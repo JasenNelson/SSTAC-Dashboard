@@ -16,7 +16,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.0003,
     sf_oral_per_mg_per_kg_bw_per_day: 2.0,
     bsaf_loc_freshwater: 0.5,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     // fcv_ug_per_L nulled 2026-07-02 (see notes below): the prior 0.014 cited EPA ESB Tier-2 as its
     // source, but B[a]P is not covered by that document (PAHs are handled separately); the value was
@@ -34,7 +34,7 @@ export const SUBSTANCE_LIBRARY = [
       'value was silently driving eco-food output; nulling forces the dynamic catalog resolver / explicit ' +
       'HITL receptor choice). fcv_ug_per_L nulled 2026-07-02: cited EPA ESB Tier-2 nonionic-organics ' +
       '(2008), but benzo[a]pyrene is not in that document (PAHs are handled separately); 0.014 was ' +
-      'copy-pasted from the PCB NRWQC value. No verified BaP aquatic-life FCV exists in the catalog.',
+      'copy-pasted from the PCB NRWQC value. No verified BaP aquatic-life FCV exists in the catalog. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'total_pcbs_aroclor_1254',
@@ -340,7 +340,7 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
       'Human-health RfC and inhalation unit risk ' +
-      'candidates are available in References & Values.',
+      'candidates are available in References & Values. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'beryllium',
@@ -450,7 +450,7 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
       'Human-health RfD, RfC, and inhalation unit risk ' +
-      'candidates are available in References & Values; oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row.',
+      'candidates are available in References & Values; oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'trichloroethylene',
@@ -467,7 +467,7 @@ export const SUBSTANCE_LIBRARY = [
     sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (US EPA IRIS 2011 oral slope factor; most-protective; current_default; owner-approved 2026-07-05; sources cite pv-iris-trichloroethylene-hh-direct-sf).',
     notes:
       'Oral RfD wired build-first (qa_status=approved). MOST-PROTECTIVE override to US EPA IRIS 2011 (0.0005) -- newer than and lower than the HC 2005 value (0.00146); logged for owner review. Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values.',
+      'candidates are available in References & Values. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'vinyl_chloride',
@@ -608,7 +608,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.03,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -621,7 +621,7 @@ export const SUBSTANCE_LIBRARY = [
       'Eco-food selectability (logKow not seeded for its eco-food pathway; trv_eco_mg_per_kg_bw_day is resolved dynamically from the eco catalog at runtime, not held statically). ' +
       'CAVEAT: if eco-direct EqP is later activated for pyrene, prefer the EPA ' +
       'PAH ESB logKow (~5.18) for EqP consistency; 4.88 is the PubChem/HSDB ' +
-      'experimental value. Oral RfD is wired (0.03); sf_oral_per_mg_per_kg_bw_per_day remains null (no catalog SF candidate). abs_dermal/ba_oral are the HH direct-contact defaults, active for the wired oral RfD pathway.',
+      'experimental value. Oral RfD is wired (0.03); sf_oral_per_mg_per_kg_bw_per_day remains null (no catalog SF candidate). abs_dermal/ba_oral are the HH direct-contact defaults, active for the wired oral RfD pathway. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'benz_a_anthracene',
@@ -631,7 +631,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -641,7 +641,7 @@ export const SUBSTANCE_LIBRARY = [
       'Eco-food TRV is resolved dynamically from the eco catalog at runtime; trv_eco_mg_per_kg_bw_day static field is intentionally null.',
     notes:
       'Eco-food selectability. logKow 5.76 is a single-study high-end value (range ' +
-      '5.18-5.92); not seeded for eco-food. HH fields null; abs_dermal/ba_oral inert.',
+      '5.18-5.92); not seeded for eco-food. HH fields null; abs_dermal/ba_oral inert. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'anthracene',
@@ -651,7 +651,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -662,7 +662,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only, seeded build-first from the needs_review catalog ' +
       'row pv-p28-anthracene-hh-direct-rfd / -food-rfd (value 0.3). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'fluoranthene',
@@ -672,7 +672,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.04,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -683,7 +683,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only, seeded build-first from the needs_review catalog ' +
       'row pv-p28-fluoranthene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'phenanthrene',
@@ -693,7 +693,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.04,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -704,7 +704,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only, seeded build-first from the needs_review catalog ' +
       'row pv-p28-phenanthrene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'acenaphthene',
@@ -714,7 +714,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.06,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -724,7 +724,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only, seeded build-first from the approved catalog ' +
       'row pv-iris-acenaphthene-hh-direct-rfd / -food-rfd (value 0.06). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'fluorene',
@@ -734,7 +734,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.04,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -744,7 +744,7 @@ export const SUBSTANCE_LIBRARY = [
       'Human-health pathways only, seeded build-first from the approved catalog ' +
       'row pv-iris-fluorene-hh-direct-rfd / -food-rfd (value 0.04). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'dibenzo_a_h_anthracene',
@@ -754,7 +754,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: null,
     sf_oral_per_mg_per_kg_bw_per_day: 7.3,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -766,7 +766,7 @@ export const SUBSTANCE_LIBRARY = [
       'row pv-p28-dibenzo_a_h_anthracene-hh-direct-sf / -food-sf (sf 7.3). ' +
       'Carcinogen: sf_oral set, rfd_oral null (cf. benzo_a_pyrene). logKow not in ' +
       'catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food filtered out. ' +
-      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL.',
+      'abs_dermal/ba_oral are organic-PAH class defaults pending HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'dieldrin',
@@ -2039,7 +2039,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 1.0e-3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.03,
+    abs_dermal: 0.1,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -2048,9 +2048,10 @@ export const SUBSTANCE_LIBRARY = [
     notes:
       'Human-health pathways only; RfD seeded build-first from the approved row ' +
       'pv-iris-pyridine-hh-direct-rfd / -food-rfd (value 0.001). logKow not in catalog ' +
-      '-> eco pathways filtered. abs_dermal 0.03 = HC TRV v4.0 Table 5 VOC RAFDerm ' +
-      'default (0.03, MECP 2011). Boundary case: volatile (bp 115 C) but Method ' +
-      '8270-classified; 0.03 kept as the VOC default awaiting a dedicated review.',
+      '-> eco pathways filtered. abs_dermal 0.1 = organic-class SVOC default (EPA RAGS ' +
+      'Part E); Method 8270-classified (SVOC), not treated as a VOC despite being ' +
+      'volatile (bp 115 C); prior 0.03 HC VOC RAFDerm label was the flagged VOC-vs-SVOC ' +
+      'boundary case (HITL Group 2 retriage item #35), now resolved by owner ruling 2026-07-17.',
   },
   {
     key: '2_methylnaphthalene',
@@ -2060,7 +2061,7 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 4.0e-3,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
@@ -2073,7 +2074,7 @@ export const SUBSTANCE_LIBRARY = [
       'resolves to these US EPA IRIS rows (a separate BC-jurisdiction methylnaphthalene_2 ' +
       'catalog row exists under a different key and is not seeded here). organic-PAH; ' +
       'logKow not in catalog -> eco-direct EqP unavailable; no eco TRV -> Eco-Food ' +
-      'filtered. abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL.',
+      'filtered. abs_dermal/ba_oral are organic-PAH class defaults awaiting HITL. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'dichloromethane',
@@ -5546,14 +5547,14 @@ export const SUBSTANCE_LIBRARY = [
     rfd_oral_mg_per_kg_bw_per_day: 0.004,
     sf_oral_per_mg_per_kg_bw_per_day: null,
     bsaf_loc_freshwater: null,
-    abs_dermal: 0.13,
+    abs_dermal: 0.148,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
       'Health Canada TRV v4.0 oral TDI/RfD 0.004 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025) (approved catalog value, pv-hc-methylnaphthalene_2-hh-direct-rfd / src-health-canada-trv-v4-2025).',
     notes:
-      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal uses the organic-PAH class default (0.13, matching every other organic-PAH entry in this library) rather than the generic organic default, since this is the same 2-methylnaphthalene chemical already wired under the key 2_methylnaphthalene (Batch D, US EPA IRIS-sourced); this Health Canada TRV v4.0-sourced catalog row was deferred at Batch D and is seeded here as a separate jurisdiction-specific entry, per the 2_methylnaphthalene note.',
+      'HH-only build-first wiring; oral RfD candidate approved in catalog (qa_status=approved). abs_dermal uses the organic-PAH class default (0.148, matching every other organic-PAH entry in this library) rather than the generic organic default, since this is the same 2-methylnaphthalene chemical already wired under the key 2_methylnaphthalene (Batch D, US EPA IRIS-sourced); this Health Canada TRV v4.0-sourced catalog row was deferred at Batch D and is seeded here as a separate jurisdiction-specific entry, per the 2_methylnaphthalene note. Corrected 2026-07-17 (HITL Group 2 retriage item #35, owner ruling): abs_dermal 0.13 -> 0.148 to match the confirmed-correct naphthalene value (HC TRV v4.0/v3.0 Table 5 PAH-class dermal RAF, Moody et al. 2007); 0.13 was not independently defensible for this congener.',
   },
   {
     key: 'methylphenol_2',
