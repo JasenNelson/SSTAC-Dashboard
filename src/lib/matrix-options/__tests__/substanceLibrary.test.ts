@@ -935,7 +935,7 @@ describe('Group 2 abs_dermal source-verified values (2026-07-02)', () => {
     { key: 'acrylonitrile', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
     { key: 'carbon_disulfide', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
     { key: 'styrene', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
-    { key: 'pyridine', absDermal: 0.03, source: 'HC VOC RAFDerm 0.03' },
+    { key: 'pyridine', absDermal: 0.1, source: 'RAGS SVOC default 0.1 (HITL item #35, 2026-07-17)' },
     // Kept at 0.14: RAGS chemical-specific PCB value (not the 0.1 organic-halogenated default).
     { key: 'total_pcbs_aroclor_1254', absDermal: 0.14, source: 'RAGS PCB 0.14' },
   ] as const;
