@@ -58,13 +58,16 @@ export const SUBSTANCE_LIBRARY = [
     // the value is unverifiable and has been removed.
     trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
     sources:
-      'US EPA IRIS Aroclor 1254 oral RfD (CASRN 11097-69-1, src-us-epa-iris-rfd-table-live); ' +
+      'HH oral RfD = Health Canada TRVs v4.0 non-dioxin-like PCB oral TDI 1.0e-5 ' +
+      '(pv-hc-pcb-hh-direct-rfd-nondioxin / src-health-canada-trv-v4-2025; owner/QP-approved ' +
+      'current_default 2026-07-16 -- more protective + newer than the US EPA IRIS Aroclor 1254 oral ' +
+      'RfD 2.0e-5 (CASRN 11097-69-1, src-us-epa-iris-rfd-table-live, last updated 1994), which is ' +
+      'retained as an available_option alternative under pv-iris-pcb-hh-direct-rfd-aroclor1254); ' +
       'oral SF borrowed from the generic US EPA IRIS PCBs entry (CASRN 1336-36-3, ' +
       '"high risk and persistence" tier, src-us-epa-iris-chemical-details-live) -- IRIS has not ' +
       'assessed Aroclor 1254 carcinogenicity under its own CASRN; BSAF-Translation Section 4; ' +
       'FCV: US EPA National Recommended Water Quality Criteria - Aquatic Life Criteria Table, ' +
-      'total-PCBs chronic (CCC), src-us-epa-nrwqc-aquatic-life-live (verified 2026-07-02, ' +
-      'pv-pcb-fcv) (approved catalog value, pv-iris-pcb-hh-direct-rfd-aroclor1254 / src-us-epa-iris-rfd-table-live).',
+      'total-PCBs chronic (CCC), src-us-epa-nrwqc-aquatic-life-live (verified 2026-07-02, pv-pcb-fcv).',
     notes:
       'Do not apply coastal PAH multiplier; PCBs biomagnify rather than ' +
       'passively accumulate. abs_dermal 0.14 = EPA RAGS Part E Exhibit 3-4 chemical-specific ' +
