@@ -620,9 +620,9 @@
     "value": 0.00002,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
+    "qa_status": "superseded",
     "source_ids": [
       "src-current-calculator-design-v1"
     ],
@@ -630,9 +630,9 @@
       "eq-human-health-food-web"
     ],
     "jurisdiction": "general",
-    "applicability": "Human food-web non-cancer endpoint scaffold.",
-    "uncertainty": "Current calculator scaffold; exact source locator pending.",
-    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "applicability": "Human food-web non-cancer endpoint scaffold. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
+    "uncertainty": "Current calculator scaffold; exact source locator pending. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
     "receptor_groups": [
       "human"
     ],
@@ -654,10 +654,10 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
+        "qa_status": "superseded",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-07-17",
+        "note": "Exact source locator must be confirmed before approval. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
         "evidence_id": "ev-pv-pcb-hh-food-rfd-1",
         "locator_type": "current_calculator"
       }
@@ -1213,9 +1213,9 @@
     "value": 0.00002,
     "unit": "mg/kg-bw/day",
     "value_type": "single_value",
-    "default_status": "current_default",
+    "default_status": "available_option",
     "extraction_status": "extracted_from_current_calculator",
-    "qa_status": "needs_review",
+    "qa_status": "superseded",
     "source_ids": [
       "src-current-calculator-design-v1"
     ],
@@ -1223,9 +1223,9 @@
       "eq-human-health-direct-contact"
     ],
     "jurisdiction": "general",
-    "applicability": "Human direct-contact non-cancer endpoint scaffold.",
-    "uncertainty": "Current calculator scaffold; exact source locator pending.",
-    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed.",
+    "applicability": "Human direct-contact non-cancer endpoint scaffold. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
+    "uncertainty": "Current calculator scaffold; exact source locator pending. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
+    "review_notes": "Current substance-library value. Do not treat as source-approved until exact source locator is confirmed. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
     "receptor_groups": [
       "human"
     ],
@@ -1245,10 +1245,10 @@
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
-        "qa_status": "needs_review",
-        "reviewed_by": null,
-        "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
+        "qa_status": "superseded",
+        "reviewed_by": "J. Nelson",
+        "reviewed_at": "2026-07-17",
+        "note": "Exact source locator must be confirmed before approval. [SUPERSEDED (disposed) on 2026-07-17 by J. Nelson. Superseded: the Health Canada v4.0 non-dioxin-like PCB oral TDI (1.0e-5 mg/kg-bw/day, src-health-canada-trv-v4-2025) is now the human-health default for total_pcbs_aroclor_1254; this unsourced current-calculator scaffold (src-current-calculator-design-v1, 2.0e-5 mg/kg-bw/day) is a redundant placeholder and is demoted off current_default.]",
         "evidence_id": "ev-pv-pcb-hh-direct-rfd-1",
         "locator_type": "current_calculator"
       }

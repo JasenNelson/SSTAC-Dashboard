@@ -644,8 +644,10 @@ describe('matrix options provenance catalog', () => {
       // Health Canada 2026-07-13 approvals
       'pv-hc-bap-hh-direct-rfd-tdi',
       'pv-hc-copper-hh-direct-rfd-tdi', 'pv-hc-copper-hh-food-rfd-tdi',
+      // Health Canada 2026-07-16 PCB HH-default (non-dioxin-like; more protective + newer than IRIS 1994)
+      'pv-hc-pcb-hh-direct-rfd-nondioxin', 'pv-hc-pcb-hh-food-rfd-nondioxin',
     ];
-    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(41);
+    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(43);
 
     for (const pvid of APPROVED_CURRENT_DEFAULT_IDS) {
       const record = PARAMETER_VALUE_RECORDS.find(
@@ -1316,13 +1318,22 @@ describe('matrix options provenance catalog', () => {
     expect(protocol28Pcb?.canonical_source_status).toBe(
       'needs_direct_source_check',
     );
-    for (const sourceBackedPcb of [
-      irisPcbFood,
-      irisPcbDirect,
-      healthCanadaPcbFood,
-      healthCanadaPcbDirect,
-    ]) {
+    // IRIS Aroclor 1254 rows remain available_option candidates (never promoted to default).
+    for (const sourceBackedPcb of [irisPcbFood, irisPcbDirect]) {
       expect(sourceBackedPcb?.default_status).toBe('available_option');
+      expect(sourceBackedPcb?.evidence_support_status).toBe(
+        'approved_source_backed',
+      );
+      expect(sourceBackedPcb?.qa_status).toBe('approved');
+      expect(sourceBackedPcb?.canonical_source_status).toBe(
+        'direct_source_verified',
+      );
+    }
+    // Health Canada non-dioxin-like rows are the owner-ruled 2026-07-16 human-health default
+    // (more protective + newer than IRIS Aroclor 1254 1994; see
+    // promote-pcb-hc-nondioxin-default.mjs). qa/evidence/canonical status unchanged.
+    for (const sourceBackedPcb of [healthCanadaPcbFood, healthCanadaPcbDirect]) {
+      expect(sourceBackedPcb?.default_status).toBe('current_default');
       expect(sourceBackedPcb?.evidence_support_status).toBe(
         'approved_source_backed',
       );

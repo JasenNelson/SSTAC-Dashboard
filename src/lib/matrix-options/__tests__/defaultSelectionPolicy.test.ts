@@ -143,8 +143,10 @@ describe('matrix options default selection policy', () => {
       promotesDefault: false,
       promotesQa: false,
     });
+    // HC non-dioxin is now the active current_default (owner/QP 2026-07-16); the
+    // top eligible-to-promote alternative is therefore the IRIS Aroclor-1254 row.
     expect(decision.recommendedCandidate?.record.parameter_value_id).toBe(
-      'pv-hc-pcb-hh-food-rfd-nondioxin',
+      'pv-iris-pcb-hh-food-rfd-aroclor1254',
     );
     expect(statusSnapshot(watchedIds)).toEqual(before);
   });

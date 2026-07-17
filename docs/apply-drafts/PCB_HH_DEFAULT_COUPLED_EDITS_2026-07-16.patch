@@ -1,0 +1,148 @@
+diff --git a/src/lib/matrix-options/provenance/__tests__/catalog.test.ts b/src/lib/matrix-options/provenance/__tests__/catalog.test.ts
+index 5ffc3ea..667b412 100644
+--- a/src/lib/matrix-options/provenance/__tests__/catalog.test.ts
++++ b/src/lib/matrix-options/provenance/__tests__/catalog.test.ts
+@@ -644,8 +644,10 @@ describe('matrix options provenance catalog', () => {
+       // Health Canada 2026-07-13 approvals
+       'pv-hc-bap-hh-direct-rfd-tdi',
+       'pv-hc-copper-hh-direct-rfd-tdi', 'pv-hc-copper-hh-food-rfd-tdi',
++      // Health Canada 2026-07-16 PCB HH-default (non-dioxin-like; more protective + newer than IRIS 1994)
++      'pv-hc-pcb-hh-direct-rfd-nondioxin', 'pv-hc-pcb-hh-food-rfd-nondioxin',
+     ];
+-    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(41);
++    expect(new Set(APPROVED_CURRENT_DEFAULT_IDS).size).toBe(43);
+ 
+     for (const pvid of APPROVED_CURRENT_DEFAULT_IDS) {
+       const record = PARAMETER_VALUE_RECORDS.find(
+@@ -1316,12 +1318,8 @@ describe('matrix options provenance catalog', () => {
+     expect(protocol28Pcb?.canonical_source_status).toBe(
+       'needs_direct_source_check',
+     );
+-    for (const sourceBackedPcb of [
+-      irisPcbFood,
+-      irisPcbDirect,
+-      healthCanadaPcbFood,
+-      healthCanadaPcbDirect,
+-    ]) {
++    // IRIS Aroclor 1254 rows remain available_option candidates (never promoted to default).
++    for (const sourceBackedPcb of [irisPcbFood, irisPcbDirect]) {
+       expect(sourceBackedPcb?.default_status).toBe('available_option');
+       expect(sourceBackedPcb?.evidence_support_status).toBe(
+         'approved_source_backed',
+@@ -1331,6 +1329,19 @@ describe('matrix options provenance catalog', () => {
+         'direct_source_verified',
+       );
+     }
++    // Health Canada non-dioxin-like rows are the owner-ruled 2026-07-16 human-health default
++    // (more protective + newer than IRIS Aroclor 1254 1994; see
++    // promote-pcb-hc-nondioxin-default.mjs). qa/evidence/canonical status unchanged.
++    for (const sourceBackedPcb of [healthCanadaPcbFood, healthCanadaPcbDirect]) {
++      expect(sourceBackedPcb?.default_status).toBe('current_default');
++      expect(sourceBackedPcb?.evidence_support_status).toBe(
++        'approved_source_backed',
++      );
++      expect(sourceBackedPcb?.qa_status).toBe('approved');
++      expect(sourceBackedPcb?.canonical_source_status).toBe(
++        'direct_source_verified',
++      );
++    }
+   });
+ 
+   it('records the zinc direct-source match without promoting the Protocol 28 value', () => {
+diff --git a/src/lib/matrix-options/provenance/__tests__/library.test.ts b/src/lib/matrix-options/provenance/__tests__/library.test.ts
+index ae0125a..b43317b 100644
+--- a/src/lib/matrix-options/provenance/__tests__/library.test.ts
++++ b/src/lib/matrix-options/provenance/__tests__/library.test.ts
+@@ -33,6 +33,18 @@ const DISPOSED_COPPER_IDS = new Set([
+   'pv-copper-hh-food-rfd',
+ ]);
+ 
++// 2026-07-16: PCB HH-default coupled promote+dispose (scripts/matrix-options/
++// promote-pcb-hc-nondioxin-default.mjs, owner --apply pending) will flip these 2 legacy
++// current-calculator scaffold rows from needs_review -> superseded (and default_status
++// current_default -> available_option) at the SAME time it promotes the HC non-dioxin-like PCB
++// oral RfD rows (pv-hc-pcb-hh-direct-rfd-nondioxin / pv-hc-pcb-hh-food-rfd-nondioxin) to
++// current_default. Mirrors DISPOSED_COPPER_IDS above exactly: except them from the "still
++// needs_review scaffold" invariants below so these tests stay green both BEFORE and AFTER --apply.
++const DISPOSED_PCB_IDS = new Set([
++  'pv-pcb-hh-direct-rfd',
++  'pv-pcb-hh-food-rfd',
++]);
++
+ describe('matrix options evidence library helpers', () => {
+   it('builds the default view from repo-local catalog records', () => {
+     const view = buildEvidenceLibraryView(createEvidenceLibraryFilters());
+@@ -237,6 +249,13 @@ describe('matrix options evidence library helpers', () => {
+     // -- default_status stays current_default (unchanged); only qa/evidence status moved.
+     // 2026-07-05: +2 (81 -> 83) -- IRIS chlorobenzene oral RfD promoted to current_default.
+     // 2026-07-13d: +1 (83 -> 84) -- owner-approved batch: benzo_a_pyrene oral RfD (1 HC direct row) + copper (2 HC rows) promoted; copper generic scaffold (2 rows) demoted. Net +1.
++    // 2026-07-16: NET ZERO (84 -> 84) -- owner/QP ruling: HC non-dioxin-like PCB oral RfD (2 rows,
++    // pv-hc-pcb-hh-direct-rfd-nondioxin + pv-hc-pcb-hh-food-rfd-nondioxin) promoted
++    // available_option -> current_default for total_pcbs_aroclor_1254 (more protective + newer
++    // than IRIS Aroclor 1254 1994), COUPLED with demoting the 2 legacy current-calculator
++    // scaffold rows that already held current_default for the SAME 2 tuples off current_default
++    // (pv-pcb-hh-direct-rfd + pv-pcb-hh-food-rfd -> available_option, then disposed to superseded
++    // below -- see promote-pcb-hc-nondioxin-default.mjs). +2 promoted, -2 demoted = net 0.
+     expect(view.audit.values.currentDefaults).toBe(84);
+     // availableOptions: was 1580; -1 (asbestos IUR deletion) = 1579. The ETBE IUR value
+     // re-scale (8e-5 -> 8e-8 per ug/m3) does not change any count.
+@@ -276,6 +295,14 @@ describe('matrix options evidence library helpers', () => {
+     // 2026-07-07: +1 (1678 -> 1679) -- D1 dioxin-like TEQ oral TDI needs_review candidate has
+     // default_status=available_option.
+     // 2026-07-13d: -1 -- same batch (3 promoted off available, 2 copper scaffold returned to available).
++    // 2026-07-16: NET ZERO (1678 -> 1678) -- same PCB coupled promote+dispose as currentDefaults
++    // above. The 2 HC rows leave available_option (-2), but countByStatus('default_status',
++    // 'available_option') is qa_status-agnostic (see library.ts countByStatus): the disposal sets
++    // the 2 scaffold rows' default_status to available_option (even though qa_status becomes
++    // superseded), so they RE-ENTER this count (+2). Net -2 + 2 = 0. Verified by simulating
++    // applyPromotion() against the live catalog (see promote-pcb-hc-nondioxin-default.mjs) --
++    // do not assume the scaffolds' disposal reduces this count; qa_status=superseded rows with
++    // default_status=available_option still count here.
+     expect(view.audit.values.availableOptions).toBe(1678);
+     // 2026-07-06 CORRECTION: the 2 chlorobenzene rows leave not_default (see above). -2 (19 -> 17).
+     expect(view.audit.values.notDefaults).toBe(17);
+@@ -581,7 +608,12 @@ describe('matrix options evidence library helpers', () => {
+         // pv-copper-hh-food-rfd; see DISPOSED_COPPER_IDS above) -- they legitimately leave this
+         // "still needs_review scaffold" invariant once promote-copper-hc0426.mjs --apply flips them
+         // to superseded.
+-        !DISPOSED_COPPER_IDS.has(record.parameter_value_id),
++        !DISPOSED_COPPER_IDS.has(record.parameter_value_id) &&
++        // 2026-07-16: exclude the 2 PCB HH-default disposal scaffold rows (pv-pcb-hh-direct-rfd,
++        // pv-pcb-hh-food-rfd; see DISPOSED_PCB_IDS above) -- they legitimately leave this
++        // "still needs_review scaffold" invariant once promote-pcb-hc-nondioxin-default.mjs --apply
++        // flips them to superseded.
++        !DISPOSED_PCB_IDS.has(record.parameter_value_id),
+     );
+ 
+     expect(hhRecords.length).toBeGreaterThan(0);
+@@ -660,6 +692,15 @@ describe('matrix options evidence library helpers', () => {
+           if (substance.key === 'copper' && inputKey === 'rfd_oral_mg_per_kg_bw_day') {
+             continue;
+           }
++          // 2026-07-16: PCB HH-default disposal (promote-pcb-hc-nondioxin-default.mjs) supersedes
++          // the total_pcbs_aroclor_1254 rfd_oral scaffold candidates (pv-pcb-hh-direct-rfd /
++          // pv-pcb-hh-food-rfd) -- HC v4.0 non-dioxin-like TDI 1.0e-5 (src-health-canada-trv-v4-2025)
++          // is now the owner-approved current_default for this slot. Skip ONLY this one cell (PCB x
++          // rfd_oral, both pathways); every other substance/input-key cell still asserts
++          // needs_review below.
++          if (substance.key === 'total_pcbs_aroclor_1254' && inputKey === 'rfd_oral_mg_per_kg_bw_day') {
++            continue;
++          }
+           const record = getParameterValueRecord(
+             substance.key,
+             pathway as keyof typeof inputKeysByPathway,
+diff --git a/src/lib/matrix-options/substanceLibrary.ts b/src/lib/matrix-options/substanceLibrary.ts
+index 316bf8b..32d449d 100644
+--- a/src/lib/matrix-options/substanceLibrary.ts
++++ b/src/lib/matrix-options/substanceLibrary.ts
+@@ -41,7 +41,9 @@ export const SUBSTANCE_LIBRARY = [
+     displayName: 'Total PCBs (Aroclor 1254)',
+     contaminantClass: 'organic-halogenated',
+     logKow: 6.50,
+-    rfd_oral_mg_per_kg_bw_per_day: 2.0e-5,
++    // HH default = HC v4.0 non-dioxin-like TDI 1.0e-5 (owner/QP 2026-07-16; more protective +
++    // newer than IRIS Aroclor-1254 2.0e-5/1994; dl-PCBs via separate TEQ pathway).
++    rfd_oral_mg_per_kg_bw_per_day: 1.0e-5,
+     sf_oral_per_mg_per_kg_bw_per_day: 2.0,
+     bsaf_loc_freshwater: 2.0,
+     abs_dermal: 0.14,
