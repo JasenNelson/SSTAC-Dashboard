@@ -882,6 +882,158 @@ describe('humanHealthDirectContact', () => {
       }),
     ).toThrow(RangeError);
   });
+
+  // ---------------------------------------------------------------------------
+  // Row #23 (top-50): dl-PCB TEQ 3-way MIN-selection.
+  // ---------------------------------------------------------------------------
+  describe('dl-PCB TEQ 3-way MIN-selection (row #23)', () => {
+    it('backward compatibility: omitting dlPcbTeq_mg_per_kg_bw_day reproduces the 2-way result exactly', () => {
+      const withField = humanHealthDirectContact({ ...DC_BASE, dlPcbTeq_mg_per_kg_bw_day: null });
+      const without = humanHealthDirectContact(DC_BASE);
+      expect(withField.sedS).toBe(without.sedS);
+      expect(withField.driver).toBe(without.driver);
+      expect(withField.nonCancerSedS).toBe(without.nonCancerSedS);
+      expect(withField.cancerSedS).toBe(without.cancerSedS);
+      expect(withField.dlPcbTeqSedS).toBeNull();
+    });
+
+    it('computes dlPcbTeqSedS using the same non-cancer-shaped math as nonCancerSedS, with the TEQ TDI substituted for the RfD', () => {
+      // Same TDI value as the RfD used in the existing "uses the available endpoint when
+      // only RfD is present" test (3.5e-3) but supplied as the TEQ candidate instead, with
+      // RfD/SF both null -- dlPcbTeqSedS must equal that test's nonCancerSedS exactly.
+      const rfdOnly = humanHealthDirectContact({
+        rfd_oral_mg_per_kg_bw_day: 3.5e-3,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+        targetRisk: 1.0e-5,
+        hazardQuotient: 1,
+        BW_kg: 15,
+        ED_years: 6,
+        EF_days_per_year: 40,
+        AT_cancer_years: 70,
+        IR_sed_mg_per_day: 200,
+        SA_cm2: 2800,
+        AF_sed_mg_per_cm2: 0.2,
+        abs_dermal: 0.001,
+        ba_oral: 0.5,
+      });
+      const teqOnly = humanHealthDirectContact({
+        rfd_oral_mg_per_kg_bw_day: null,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+        dlPcbTeq_mg_per_kg_bw_day: 3.5e-3,
+        targetRisk: 1.0e-5,
+        hazardQuotient: 1,
+        BW_kg: 15,
+        ED_years: 6,
+        EF_days_per_year: 40,
+        AT_cancer_years: 70,
+        IR_sed_mg_per_day: 200,
+        SA_cm2: 2800,
+        AF_sed_mg_per_cm2: 0.2,
+        abs_dermal: 0.001,
+        ba_oral: 0.5,
+      });
+      expect(teqOnly.dlPcbTeqSedS).toBeCloseTo(rfdOnly.nonCancerSedS as number, 10);
+      expect(teqOnly.sedS).toBeCloseTo(teqOnly.dlPcbTeqSedS as number, 10);
+      expect(teqOnly.driver).toBe('dl-pcb-teq');
+      expect(teqOnly.nonCancerSedS).toBeNull();
+      expect(teqOnly.cancerSedS).toBeNull();
+    });
+
+    it('3-way MIN-selection: each of the three candidates governs in turn when it is the lowest', () => {
+      // dl-PCB TEQ TDI is realistically far more restrictive (mg TEQ/kg-bw/day ~1e-9) than
+      // either mass-based endpoint, so a small TEQ value makes it govern.
+      const teqGoverns = humanHealthDirectContact({
+        ...DC_BASE,
+        dlPcbTeq_mg_per_kg_bw_day: 2.3e-9,
+      });
+      expect(teqGoverns.driver).toBe('dl-pcb-teq');
+      expect(teqGoverns.sedS).toBeCloseTo(teqGoverns.dlPcbTeqSedS as number, 10);
+      expect(teqGoverns.sedS).toBeLessThan(teqGoverns.nonCancerSedS as number);
+      expect(teqGoverns.sedS).toBeLessThan(teqGoverns.cancerSedS as number);
+
+      // A very large (permissive) TEQ TDI makes the mass-based cancer endpoint (the DC_BASE
+      // lowest of the other two, per the earlier "computes the lower of non-cancer and
+      // cancer" test at rfd=3.0e-4/sf=1.5: nonCancerSedS ~300.16 > cancerSedS ~77.82) still
+      // govern -- the huge TEQ candidate never becomes the minimum.
+      const cancerStillGoverns = humanHealthDirectContact({
+        ...DC_BASE,
+        dlPcbTeq_mg_per_kg_bw_day: 10,
+      });
+      expect(cancerStillGoverns.driver).toBe('cancer');
+      expect(cancerStillGoverns.sedS).toBeCloseTo(
+        cancerStillGoverns.cancerSedS as number,
+        10,
+      );
+    });
+
+    it('throws RangeError for non-null non-positive dlPcbTeq_mg_per_kg_bw_day', () => {
+      expect(() =>
+        humanHealthDirectContact({ ...DC_BASE, dlPcbTeq_mg_per_kg_bw_day: 0 }),
+      ).toThrow(RangeError);
+      expect(() =>
+        humanHealthDirectContact({ ...DC_BASE, dlPcbTeq_mg_per_kg_bw_day: -1e-9 }),
+      ).toThrow(RangeError);
+    });
+
+    // THE LOAD-BEARING DOUBLE-COUNTING REGRESSION TEST.
+    // Encodes the project's cumulative-effects spec section 1C requirement verbatim: the
+    // non-DL mass-based check and the dl-PCB TEQ check are "assessed CONCURRENTLY WITHOUT
+    // DOUBLE-COUNTING" -- MIN-selection, never a summed Hazard Index. This test would FAIL
+    // if a future change replaced the MIN-selection with any additive combination.
+    it('never produces a combined sedS more permissive (larger) than the dl-PCB TEQ TDI alone', () => {
+      const teqAlone = humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: null,
+        sf_oral_per_mg_per_kg_bw_per_day: null,
+        dlPcbTeq_mg_per_kg_bw_day: 2.3e-9,
+      });
+      const combined = humanHealthDirectContact({
+        ...DC_BASE,
+        // HC non-dioxin-like current_default RfD (1.0e-5) + the same slope factor as DC_BASE.
+        rfd_oral_mg_per_kg_bw_day: 1.0e-5,
+        dlPcbTeq_mg_per_kg_bw_day: 2.3e-9,
+      });
+      // A summed Hazard Index would make the combined value SMALLER (more conservative) than
+      // any individual candidate divided across more terms in the denominator -- i.e. a sum
+      // is never expressible as "equal to the min candidate". MIN-selection is: the combined
+      // sedS is EXACTLY EQUAL to whichever single candidate is lowest, never lower/higher due
+      // to interaction with the other candidates. Assert exact equality (not just <=) to
+      // positively distinguish MIN-selection from summation.
+      expect(combined.sedS).toBeCloseTo(teqAlone.sedS, 10);
+      expect(combined.driver).toBe('dl-pcb-teq');
+      expect(combined.sedS).not.toBeGreaterThan(teqAlone.sedS);
+    });
+
+    it('the un-split IRIS Aroclor-1254 RfD (2.0e-5) still MIN-selects correctly and does not silently change which value is reported as the TEQ candidate', () => {
+      // This is the derivation-layer half of the provenance-mismatch guard: the CALCULATION
+      // itself is correctness-safe either way (MIN-select is provenance-agnostic by design),
+      // but dlPcbTeqSedS must remain computed from ONLY the dlPcbTeq_mg_per_kg_bw_day
+      // argument -- swapping the RfD must never leak into or alter dlPcbTeqSedS. The UI-layer
+      // warning banner (HHDirectContactCalculator.test.tsx) is what actually flags the
+      // mismatch to the user; this test pins that the math stays partitioned regardless.
+      const nonDioxinLikeDefault = humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: 1.0e-5,
+        dlPcbTeq_mg_per_kg_bw_day: 2.3e-9,
+      });
+      const unsplitIrisRfd = humanHealthDirectContact({
+        ...DC_BASE,
+        rfd_oral_mg_per_kg_bw_day: 2.0e-5,
+        dlPcbTeq_mg_per_kg_bw_day: 2.3e-9,
+      });
+      // dlPcbTeqSedS is identical in both cases -- it never depends on the RfD value.
+      expect(unsplitIrisRfd.dlPcbTeqSedS).toBeCloseTo(
+        nonDioxinLikeDefault.dlPcbTeqSedS as number,
+        10,
+      );
+      // The TEQ TDI is so much more restrictive than either RfD candidate that it governs
+      // regardless of which RfD was supplied -- the driver and sedS are unaffected by the
+      // RfD swap, confirming the mismatch is a provenance/labeling concern (UI layer), not a
+      // silent numeric drift in the governing answer.
+      expect(unsplitIrisRfd.driver).toBe('dl-pcb-teq');
+      expect(unsplitIrisRfd.sedS).toBeCloseTo(nonDioxinLikeDefault.sedS, 10);
+    });
+  });
 });
 
 describe('humanHealthFoodWeb', () => {

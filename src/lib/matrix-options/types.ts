@@ -147,11 +147,22 @@ export interface EcoFoodBSAFResult {
 // Human Health Direct Contact path
 // ---------------------------------------------------------------------------
 
-export type HumanHealthRiskDriver = 'non-cancer' | 'cancer';
+// Row #23 (top-50): 'dl-pcb-teq' added as a third possible governing driver. The dl-PCB
+// TEQ oral TDI is a non-cancer-shaped endpoint (same math as the mass-based non-cancer RfD,
+// different TRV) that is MIN-selected alongside 'non-cancer' and 'cancer' -- never summed
+// with them (see pickHumanHealthEndpoint3Way in derivations.ts). Backward-compatible: when
+// no dl-PCB TEQ candidate is supplied, driver is still only 'non-cancer' | 'cancer'.
+export type HumanHealthRiskDriver = 'non-cancer' | 'cancer' | 'dl-pcb-teq';
 
 export interface HumanHealthDirectContactInput {
   rfd_oral_mg_per_kg_bw_day: number | null;
   sf_oral_per_mg_per_kg_bw_per_day: number | null;
+  // Optional dioxin-like-PCB TEQ oral TDI candidate (mg TEQ/kg-bw/day; see dlPcbTeqTdi.ts).
+  // When supplied (non-null), it is added as a THIRD candidate to the MIN-selection
+  // alongside rfd_oral_mg_per_kg_bw_day and sf_oral_per_mg_per_kg_bw_per_day -- never
+  // summed with either. Null/omitted for every substance except total PCBs. Optional so
+  // every pre-existing caller (every non-PCB substance) is byte-for-byte unaffected.
+  dlPcbTeq_mg_per_kg_bw_day?: number | null;
   targetRisk: number;
   hazardQuotient: number;
   BW_kg: number;
@@ -170,6 +181,10 @@ export interface HumanHealthDirectContactResult {
   driver: HumanHealthRiskDriver;
   nonCancerSedS: number | null;
   cancerSedS: number | null;
+  // Sediment standard implied by the dl-PCB TEQ candidate alone (same non-cancer-shaped
+  // math as nonCancerSedS, different TRV). Null when dlPcbTeq_mg_per_kg_bw_day was not
+  // supplied/null. MIN-selected against nonCancerSedS/cancerSedS, never summed with them.
+  dlPcbTeqSedS: number | null;
   contactRate_mg_per_day: number;
   ingestionRateAdjusted_mg_per_day: number;
   dermalRateAdjusted_mg_per_day: number;

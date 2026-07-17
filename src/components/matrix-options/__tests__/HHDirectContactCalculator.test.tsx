@@ -218,7 +218,12 @@ describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
     );
   });
 
-  it('blocks the DL-PCB TEQ card when the mass-based calculation itself is blocked (both endpoints blank)', () => {
+  // Row #23 full integration: with BOTH mass-based endpoints cleared, the dl-PCB TEQ
+  // candidate is now folded into the SAME combined call (not a separately-gated parallel
+  // call), so it can drive the single governing standard on its own -- no error, no blocked
+  // card. This replaces the old two-independent-calls architecture's "blocked when the mass
+  // calc is blocked" test, which no longer reflects how the combined driver behaves.
+  it('the dl-PCB TEQ candidate alone can still drive the combined standard when both mass-based endpoints are blank', () => {
     render(
       <HHDirectContactCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -227,9 +232,56 @@ describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
     );
     fireEvent.change(screen.getByTestId('hh-direct-rfd-input'), { target: { value: '' } });
     fireEvent.change(screen.getByTestId('hh-direct-slope-input'), { target: { value: '' } });
+    expect(screen.queryByTestId('hh-direct-error')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('hh-direct-dlpcb-teq-blocked')).not.toBeInTheDocument();
+    const standard = screen.getByTestId('hh-direct-preliminary-standard');
+    expect(standard).toHaveTextContent(/Driver: dl-pcb-teq/);
+    expect(standard).not.toHaveTextContent(/--\s*mg\/kg/);
+    const card = screen.getByTestId('hh-direct-dlpcb-teq-standard');
+    expect(card).toHaveTextContent(/mg TEQ\/kg dry/i);
+    expect(screen.getByTestId('hh-direct-dlpcb-teq-is-governing')).toBeInTheDocument();
+  });
+
+  // Row #23: when an exposure-factor input (not just RfD/SF) is invalid, the ENTIRE combined
+  // calculation fails (including the dl-PCB TEQ candidate, which shares the same exposure
+  // factors) -- this is the one case the TEQ card is genuinely blocked.
+  it('blocks the DL-PCB TEQ card when the combined calculation itself fails (invalid exposure input)', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('hh-direct-bw-input'), { target: { value: '' } });
     expect(screen.getByTestId('hh-direct-error')).toBeInTheDocument();
     expect(screen.getByTestId('hh-direct-dlpcb-teq-blocked')).toHaveTextContent(
       /DL-PCB TEQ value unavailable/i,
+    );
+  });
+
+  // Row #23 non-double-counting guard: swapping the RfD to the un-split IRIS Aroclor-1254
+  // value (2.0e-5, an available_option that covers the WHOLE mixture including the
+  // dioxin-like fraction) must trip the provenance-mismatch warning -- never silently change
+  // the governing driver without comment.
+  it('surfaces a provenance-mismatch warning when the RfD is edited away from the non-dioxin-like catalog default', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(
+      screen.queryByTestId('hh-direct-dlpcb-rfd-provenance-warning'),
+    ).not.toBeInTheDocument();
+    fireEvent.change(screen.getByTestId('hh-direct-rfd-input'), {
+      target: { value: '2.0e-5' },
+    });
+    const warning = screen.getByTestId('hh-direct-dlpcb-rfd-provenance-warning');
+    expect(warning).toHaveTextContent(/not confirmed non-dioxin-like-only/i);
+    // The dl-PCB TEQ TDI (2.3e-9) is ~4300x more restrictive than either RfD candidate, so
+    // it still governs -- the warning is additive information, not a driver change.
+    expect(screen.getByTestId('hh-direct-preliminary-standard')).toHaveTextContent(
+      /Driver: dl-pcb-teq/,
     );
   });
 });
