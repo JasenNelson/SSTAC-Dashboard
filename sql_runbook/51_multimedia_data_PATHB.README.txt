@@ -1,0 +1,33 @@
+51 -- Path B multi-media DATA load (NOT inline SQL: the monolith is ~6.03 MB / 9521 lines,
+     far over the ~1 MB Supabase Studio paste limit, so it must be split into chunks first).
+
+Run AFTER 08_matrix_map_rpc_chain.sql AND 50_multimedia_schema_delta.sql. Steps:
+
+1. RESOLVE THE env_modifier ENUM QUESTION (see the WARNING block at the bottom of
+   50_multimedia_schema_delta.sql). Path B emits 658 medium='env_modifier' rows; the live
+   CHECK rejects them. Either extend the enum (uncomment that block) OR regenerate Path B
+   without env_modifier. Do NOT skip this -- the paste aborts on the first env_modifier row.
+2. Point the splitter SOURCE at the Path B file. Edit scripts/matrix-map/split_etl_output.py
+   and set its SOURCE line to
+   scripts/matrix-map/etl_bnrrm_to_supabase_output_v1_1_0_multimedium_PATH_B.sql
+   (its SOURCE is hard-coded to the OLD v1.0.0 single-medium file -- do not split that one).
+3. Split: run the splitter with the repo .venv if present
+   (.venv/Scripts/python.exe scripts/matrix-map/split_etl_output.py). It writes ~700 KB chunks
+   to scripts/matrix-map/etl_output_chunks/NN_<purpose>.sql, each wrapped in BEGIN/COMMIT +
+   SET LOCAL search_path, split only at ; boundaries. Confirm the chunk count and that the LAST
+   chunk ends cleanly on a ; (and COMMIT) before pasting.
+4. Paste the chunks into Supabase Studio IN NUMERIC ORDER (01, 02, 03 ...). Order is FK-safe and
+   MUST be preserved: substances -> samples -> sample_events -> measurements. Every INSERT is
+   ON CONFLICT DO NOTHING, so re-pasting a chunk is idempotent and cannot duplicate the baseline.
+5. VERIFY by medium:
+     select medium, count(*) from matrix_map.measurements group by medium order by medium;
+     select count(*) as total from matrix_map.measurements;
+   Expect total ~8675 (8166 sediment, 334 toxicity, 175 community, 658 env_modifier per the
+   v1.1.0 monolith header -- env_modifier only if you extended the enum in step 1).
+
+ROLLBACK (leaves the sediment baseline intact):
+   DELETE FROM matrix_map.measurements WHERE medium IN ('toxicity','community','env_modifier');
+
+NOTE -- the stale v1.0.0 chunks already under scripts/matrix-map/etl_output_chunks/ are SEDIMENT
+ONLY (7508 measurements, 37 substances) and must NOT be pasted; regenerate from the Path B
+monolith per the steps above.

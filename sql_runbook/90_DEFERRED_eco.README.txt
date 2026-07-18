@@ -1,0 +1,7 @@
+90 -- DEFERRED: eco passes (catalog eco-soil / Eco-SSL staging). DO NOT RUN unless you
+     decide to. HAZARD: ~2364 HITL-gated staging rows -- d0c00010 (60 EPA Eco-SSL) +
+     d0c00005 (2305 P28 eco-soil), both catalog_extraction_staging INSERTs
+     (needs_review, never-promote). The SQL lives only in .tmp/catalog-paste/ (gitignored,
+     local-only, on the owner's desktop), NOT in this runbook. Eco-soil / Eco-SSL are
+     TERRESTRIAL evidence categories, NOT sediment calc pathways -- scope is an OWNER decision.
+     If you decide to load it: paste from disk at the desktop, then HITL-sample; AI never promotes.

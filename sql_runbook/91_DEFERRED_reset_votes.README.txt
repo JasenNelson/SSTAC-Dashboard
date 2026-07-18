@@ -1,0 +1,7 @@
+91 -- DEFERRED: /admin/reset-votes create_vote_backup. DO NOT RUN, and do not open or click
+     the route during a demo. HAZARDS: (1) the route calls rpc('create_vote_backup'), a FUNCTION
+     with ZERO DDL anywhere in the repo -- there is no source to apply and no safe reconstruction;
+     (2) the same page exposes PERMANENT vote deletion (poll_votes / ranking_votes .delete()) --
+     destructive and irreversible. No probe and no remedy exist for this BY DESIGN. If a vote-backup
+     capability is ever genuinely needed, recover the function via explore-before-assume against the
+     live project first; this runbook authors no reconstructed function.
