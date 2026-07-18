@@ -91,9 +91,9 @@
       },
       "playwright_test_count": {
         "status": "verified",
-        "value": 6,
-        "source": "playwright test --list output (2025-12-18)",
-        "last_verified": "2025-12-18"
+        "value": 228,
+        "source": "playwright test --list output (2026-07-18)",
+        "last_verified": "2026-07-18"
       },
       "k6_script_count": {
         "status": "verified",
@@ -104,6 +104,14 @@
     }
   },
   "facts_history": {
+    "playwright_test_count_2025_12_18_pre_2026_07_18_refresh": {
+      "status": "superseded",
+      "value": 6,
+      "source": "playwright test --list output (2025-12-18)",
+      "last_verified": "2025-12-18",
+      "superseded_by": "facts.testing.playwright_test_count = 228 (2026-07-18; npx playwright test --list in a fresh worktree off origin/main 113d8e2, list-only enumeration, no suite execution; 13 spec files x chromium/firefox/webkit projects, no E2E_AUTH_ENABLED override so no extra auth-gated projects were counted).",
+      "note": "Prior live playwright_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 228 during the 2026-07-18 manifest-testcounts docs-only refresh. Added by hand per facts_policy (docs:manifest:update:playwright overwrites the live fact in place and does not create this history entry)."
+    },
     "session_2026_07_13c_top50_owner_batch": {
       "status": "complete",
       "session_date": "2026-07-13",
