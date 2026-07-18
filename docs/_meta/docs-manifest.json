@@ -60,19 +60,20 @@
       },
       "current_grade": {
         "status": "verified",
-        "value": "A (90%)",
-        "source": "Achieved January 25, 2026 through Phase 2 Security Hardening completion: 3 vulnerabilities fixed, 6 security headers added, 246/246 tests passing, all CI/CD gates passing. Verified by full test suite execution and GitHub CI/CD validation.",
+        "value": "A- (89%)",
+        "source": "Re-analysis 2026-07-18 (resolves the prior stale_unreconciled flag) using the 7-category weighted rubric in docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md. Metrics gathered against origin/main 73203c5 and CI/CD Pipeline run 29651396505 (all 8 gate jobs green: Lint & TypeScript Check, Unit Tests, Production Build, E2E Tests, Security Scan, Performance, K6, Status). Structural metrics: 616 source ts/tsx + 286 unit-test files + 13 e2e specs; vitest 5635 + playwright 228 + k6 6 all passing; 51 ': any' annotations (low); 137 files over 500 lines (god-component/data/test debt, mostly matrix-options). Supersedes both the stale 'A (90%)' (last verified 2026-01-25, pre-dating ~6 months of matrix-options + RLS work) and the un-reproducible facts_history 97.5/100 'A++++' self-assessment. PROPOSED until the owner merges this PR; owner merge = sanction to treat as current.",
         "calculation_basis": {
-          "security_posture": "95% (3 critical vulnerabilities fixed, 6 security headers, cryptographic ID generation, file upload validation, Redis rate limiting)",
-          "type_safety": "85% (Phase 1 type work in progress, but critical paths secured)",
-          "test_coverage": "100% (246/246 tests passing, 0 failures)",
-          "documentation": "90% (LESSONS.md updated with 2 critical lessons, manifest facts current)",
-          "code_quality": "88% (Build succeeds, linting warnings only, no errors)"
+          "documentation_and_setup_10pct": "92% (docs/INDEX.md, docs-manifest facts + automated docs:gate, GATE_MODE_SOP, ENVIRONMENT_REFERENCE)",
+          "database_schema_15pct": "90% (append-only Supabase migrations, RLS policies incl. dras_admin_all flip trigger + spatial-oracle hardening)",
+          "frontend_architecture_15pct": "85% (Next.js 15 App Router + React 19 + Zustand; docked for god components e.g. EvidenceLibrary.tsx 4552, MatrixMap.tsx 1943)",
+          "api_architecture_15pct": "88% (organized route handlers, structured logger wired, Redis rate-limiting, polling-gate discipline)",
+          "testing_and_qa_20pct": "95% (vitest 5635 + playwright 228 + k6 6, 100% pass, coverage-enforced test:ci, all CI gates green)",
+          "code_quality_15pct": "86% (0 tsc errors, lint warnings-only, 51 ': any'; docked for 443 console.* sites + 137 files over 500 lines)",
+          "architecture_patterns_10pct": "88% (well-abstracted provenance/catalog subsystem + Zustand stores; some god-file debt)"
         },
-        "weighted_average": "90%",
-        "commits_contributed": "commit 1511fd8 (test fixes), phase2_security_hardening verified at last_verified 2026-01-25",
-        "staleness_note": "Value (A 90%) was last verified 2026-01-25 and contradicts the historical facts_history.current_session_2026_01_26.final_grade (97.5/100 A++++). Retained here for scripts/analyze-grade.ps1 compatibility. Treat as stale_unreconciled pending a fresh grade re-analysis.",
-        "last_verified": "2026-01-25"
+        "weighted_average": "89.35% -> A- (89%)",
+        "reanalysis_ref": "2026-07-18 grade re-analysis; metric script .tmp/grade_metrics.sh; CI/CD Pipeline run 29651396505; ref origin/main 73203c5",
+        "last_verified": "2026-07-18"
       },
       "target_grade": {
         "status": "in_progress",
@@ -104,6 +105,14 @@
     }
   },
   "facts_history": {
+    "current_grade_2026_01_25_pre_2026_07_18_reanalysis": {
+      "status": "superseded",
+      "value": "A (90%)",
+      "source": "Achieved January 25, 2026 through Phase 2 Security Hardening completion: 3 vulnerabilities fixed, 6 security headers added, 246/246 tests passing, all CI/CD gates passing. Verified by full test suite execution and GitHub CI/CD validation.",
+      "superseded_by": "current_grade re-analysis 2026-07-18 (A- 89%, 7-category weighted rubric). The old 'A (90%)' was flagged stale_unreconciled because it contradicted facts_history.current_session_2026_01_26 (97.5/100 A++++) and pre-dated ~6 months of matrix-options + RLS work; both are reconciled by the 2026-07-18 re-analysis.",
+      "last_verified": "2026-01-25",
+      "superseded_on": "2026-07-18"
+    },
     "playwright_test_count_2025_12_18_pre_2026_07_18_refresh": {
       "status": "superseded",
       "value": 6,
