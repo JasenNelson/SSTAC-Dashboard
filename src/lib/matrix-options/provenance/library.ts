@@ -927,13 +927,14 @@ export function humanizeCatalogLabel(value: string): string {
     US_federal: 'US federal',
     // Catalog evidence-category pathways (canonical extraction registry). Calculator
     // pathway strings are intentionally absent here so their existing badge text is
-    // unchanged; these 6 give the evidence categories readable badges.
+    // unchanged; these 7 give the evidence categories readable badges.
     'hh-toxicity-value': 'HH toxicity value',
     'hh-toxicity-weighting': 'HH toxicity weighting',
     'hh-exposure-parameter': 'HH exposure parameter',
     'eco-soil': 'eco soil (TRV)',
     'eco-soil-screening': 'eco soil screening',
     'reference-background': 'reference/background',
+    'human-health-inhalation': 'HH inhalation (VF/PEF)',
   };
   if (labels[value]) return labels[value];
   return value.replaceAll('_', ' ').replaceAll('-', ' ');

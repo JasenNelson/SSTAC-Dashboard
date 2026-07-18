@@ -1,7 +1,7 @@
 // Pathway vocabularies live in ./pathways (single source of truth for the unions +
 // runtime guards). Re-exported here for backward-compatible imports from './types'.
 //   ProvenancePathway      -- 5 calculator derivation pathways (drive equations + policy)
-//   CatalogEvidencePathway -- 6 catalog evidence categories (no equation; never a default)
+//   CatalogEvidencePathway -- 7 catalog evidence categories (no equation; never a default)
 //   CatalogPathway         -- the union; the type of a catalog record's `pathway` field
 export type {
   ProvenancePathway,
