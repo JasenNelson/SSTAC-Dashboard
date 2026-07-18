@@ -57,6 +57,22 @@ describe('resolveDlPcbTeqTdi', () => {
     }
   });
 
+  // Drive-by fix (flagged in the row #23 design note): the baseRecord() fixture's
+  // qa_status: 'needs_review' default is stale relative to the real catalog, which has
+  // carried qa_status: 'approved' for this row since 2026-07-13. The resolver's pass-through
+  // of qaStatus is qa_status-value-agnostic (it never gates ok/not-ok on qa_status), so this
+  // additional case pins the 'approved' pass-through explicitly rather than leaving it
+  // untested and relying solely on a 'needs_review' fixture that no longer matches reality.
+  it('resolves the happy path with qa_status "approved" (matches the live catalog state today)', () => {
+    mockGetRecord.mockReturnValue(baseRecord({ qa_status: 'approved' }));
+    const result = resolveDlPcbTeqTdi();
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.qaStatus).toBe('approved');
+      expect(result.tdi_mg_per_kg_bw_day).toBe(2.3e-9);
+    }
+  });
+
   it('is fail-closed when the catalog record is missing', () => {
     mockGetRecord.mockReturnValue(undefined);
     const result = resolveDlPcbTeqTdi();

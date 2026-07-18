@@ -13,6 +13,7 @@ import type {
   HumanHealthDirectContactResult,
   HumanHealthFoodWebInput,
   HumanHealthFoodWebResult,
+  HumanHealthRiskDriver,
   Utl9595Result,
 } from './types';
 import { lookupK9595 } from './utlTable';
@@ -490,6 +491,41 @@ function pickHumanHealthEndpoint(
     : { sedS: cancerSedS as number, driver: 'cancer' };
 }
 
+// Row #23 (top-50): 3-way sibling of pickHumanHealthEndpoint above, used ONLY by
+// humanHealthDirectContact() (never by humanHealthFoodWeb(), which keeps the unmodified
+// 2-way selector -- the dl-PCB TEQ candidate is a direct-contact-pathway-only concept).
+// MIN-selects the lowest (most conservative / most protective) sedS across whichever of
+// the three candidates are non-null. This is a SELECTION, never a summation: the
+// non-double-counting requirement (Health Canada TRVs v4.0 section 1C / the project's
+// cumulative-effects spec section 1C -- "assessed CONCURRENTLY WITHOUT DOUBLE-COUNTING")
+// is satisfied BY CONSTRUCTION here, because the three candidates are never added
+// together -- exactly one of them governs the returned sedS.
+//
+// Tie-break order mirrors pickHumanHealthEndpoint's non-cancer-over-cancer preference:
+// candidates are compared in (non-cancer, cancer, dl-pcb-teq) order and a STRICT `<`
+// comparison means an earlier-listed candidate wins any exact tie. This makes the
+// function byte-for-byte backward compatible with pickHumanHealthEndpoint when
+// dlPcbTeqSedS is null (every substance except total PCBs).
+function pickHumanHealthEndpoint3Way(
+  nonCancerSedS: number | null,
+  cancerSedS: number | null,
+  dlPcbTeqSedS: number | null,
+): { sedS: number; driver: HumanHealthRiskDriver } {
+  const candidates: Array<{ sedS: number; driver: HumanHealthRiskDriver }> = [];
+  if (nonCancerSedS !== null) candidates.push({ sedS: nonCancerSedS, driver: 'non-cancer' });
+  if (cancerSedS !== null) candidates.push({ sedS: cancerSedS, driver: 'cancer' });
+  if (dlPcbTeqSedS !== null) candidates.push({ sedS: dlPcbTeqSedS, driver: 'dl-pcb-teq' });
+  if (candidates.length === 0) {
+    throw new RangeError(
+      'At least one of RfD or oral slope factor (or, for total PCBs, the dl-PCB TEQ TDI) ' +
+        'is required for the Human Health pathway',
+    );
+  }
+  return candidates.reduce((best, candidate) =>
+    candidate.sedS < best.sedS ? candidate : best,
+  );
+}
+
 /**
  * Human Health Direct Contact screening value.
  *
@@ -507,6 +543,7 @@ export function humanHealthDirectContact(
   const {
     rfd_oral_mg_per_kg_bw_day,
     sf_oral_per_mg_per_kg_bw_per_day,
+    dlPcbTeq_mg_per_kg_bw_day = null,
     targetRisk,
     hazardQuotient,
     BW_kg,
@@ -551,6 +588,14 @@ export function humanHealthDirectContact(
       'Oral slope factor must be null or a positive finite number',
     );
   }
+  if (
+    dlPcbTeq_mg_per_kg_bw_day != null &&
+    (!Number.isFinite(dlPcbTeq_mg_per_kg_bw_day) || dlPcbTeq_mg_per_kg_bw_day <= 0)
+  ) {
+    throw new RangeError(
+      'DL-PCB TEQ oral TDI must be null or a positive finite number',
+    );
+  }
 
   const ingestionRateAdjusted = IR_sed_mg_per_day * ba_oral;
   const dermalRateAdjusted = SA_cm2 * AF_sed_mg_per_cm2 * abs_dermal;
@@ -577,7 +622,23 @@ export function humanHealthDirectContact(
           KG_PER_MG *
           exposureDays *
           contactRate);
-  const { sedS, driver } = pickHumanHealthEndpoint(nonCancerSedS, cancerSedS);
+  // dl-PCB TEQ candidate: same non-cancer-shaped inverse (hazard-quotient-scaled, non-cancer
+  // averaging time) as nonCancerSedS above, with the TDI substituted for the RfD. Row #23
+  // (top-50): MIN-selected against nonCancerSedS/cancerSedS below, NEVER summed with either
+  // (see pickHumanHealthEndpoint3Way doc comment for the non-double-counting rationale).
+  const dlPcbTeqSedS =
+    dlPcbTeq_mg_per_kg_bw_day == null
+      ? null
+      : (hazardQuotient *
+          dlPcbTeq_mg_per_kg_bw_day *
+          BW_kg *
+          nonCancerATDays) /
+        (KG_PER_MG * exposureDays * contactRate);
+  const { sedS, driver } = pickHumanHealthEndpoint3Way(
+    nonCancerSedS,
+    cancerSedS,
+    dlPcbTeqSedS,
+  );
 
   const warnings: string[] = [];
   if (rfd_oral_mg_per_kg_bw_day === null) {
@@ -592,6 +653,7 @@ export function humanHealthDirectContact(
     driver,
     nonCancerSedS,
     cancerSedS,
+    dlPcbTeqSedS,
     contactRate_mg_per_day: contactRate,
     ingestionRateAdjusted_mg_per_day: ingestionRateAdjusted,
     dermalRateAdjusted_mg_per_day: dermalRateAdjusted,

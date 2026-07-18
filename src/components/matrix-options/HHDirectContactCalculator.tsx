@@ -276,6 +276,16 @@ export default function HHDirectContactCalculator({
   const { run: humanHealthDirectContact, usedBaselineFallback, fallbackReason } =
     useMemo(() => getEquation(jurisdiction, 'human-health-direct'), [jurisdiction]);
 
+  // Row #23 (top-50): the dl-PCB TEQ TDI is resolved BEFORE the main computation and folded
+  // into the SAME humanHealthDirectContact() call as a third MIN-selection candidate (see
+  // pickHumanHealthEndpoint3Way in derivations.ts) -- replacing the prior architecture of two
+  // entirely independent calls/cards. Static catalog lookup; resolved once (SSR == CSR, no
+  // fetch). Gated on substanceKey (never the deprecated-alias PCB keys) exactly as before.
+  const dlPcbTeqTdi = useMemo(() => resolveDlPcbTeqTdi(), []);
+  const isDlPcbSubstance = substanceKey === 'total_pcbs_aroclor_1254';
+  const dlPcbTeqCandidate_mg_per_kg_bw_day: number | null =
+    isDlPcbSubstance && dlPcbTeqTdi.ok ? dlPcbTeqTdi.tdi_mg_per_kg_bw_day : null;
+
   const result: HumanHealthDirectContactResult | { error: string } = useMemo(() => {
     const fields = {
       BW_kg: positiveInput(bwInput, 'Body weight'),
@@ -300,21 +310,24 @@ export default function HHDirectContactCalculator({
     }
 
     try {
-      return humanHealthDirectContact(fields as {
-        rfd_oral_mg_per_kg_bw_day: number | null;
-        sf_oral_per_mg_per_kg_bw_per_day: number | null;
-        targetRisk: number;
-        hazardQuotient: number;
-        BW_kg: number;
-        ED_years: number;
-        EF_days_per_year: number;
-        AT_cancer_years: number;
-        IR_sed_mg_per_day: number;
-        SA_cm2: number;
-        AF_sed_mg_per_cm2: number;
-        abs_dermal: number;
-        ba_oral: number;
-      });
+      return humanHealthDirectContact({
+        ...(fields as {
+          rfd_oral_mg_per_kg_bw_day: number | null;
+          sf_oral_per_mg_per_kg_bw_per_day: number | null;
+          targetRisk: number;
+          hazardQuotient: number;
+          BW_kg: number;
+          ED_years: number;
+          EF_days_per_year: number;
+          AT_cancer_years: number;
+          IR_sed_mg_per_day: number;
+          SA_cm2: number;
+          AF_sed_mg_per_cm2: number;
+          abs_dermal: number;
+          ba_oral: number;
+        }),
+        dlPcbTeq_mg_per_kg_bw_day: dlPcbTeqCandidate_mg_per_kg_bw_day,
+      } satisfies HumanHealthDirectContactInput);
     } catch (err) {
       return { error: err instanceof Error ? err.message : String(err) };
     }
@@ -332,101 +345,48 @@ export default function HHDirectContactCalculator({
     slopeInput,
     absDermalInput,
     baOralInput,
+    dlPcbTeqCandidate_mg_per_kg_bw_day,
     humanHealthDirectContact,
   ]);
 
   const hhResult = 'error' in result ? null : result;
 
-  // A3 Option A: DL-PCB TEQ parallel screening card, shown ONLY for total PCBs. Reuses the
-  // SAME inverse (solve-for-sedS) math as the mass-based calculation above, with the RfD
-  // input replaced by the resolved dioxin-like-TEQ oral TDI (50% apportionment already baked
-  // into that catalog value -- no runtime apportionment math here). Static catalog lookup;
-  // resolved once (SSR == CSR, no fetch).
-  const dlPcbTeqTdi = useMemo(() => resolveDlPcbTeqTdi(), []);
-  const isDlPcbSubstance = substanceKey === 'total_pcbs_aroclor_1254';
-
-  const dlPcbResult:
-    | HumanHealthDirectContactResult
-    | { blocked: string }
-    | null = useMemo(() => {
-    if (!isDlPcbSubstance) return null;
-    // Fail-closed: follow the SAME blocked behavior as the mass-based calculation above
-    // (reuse its guard condition -- do not invent a separate one). If the mass calc could
-    // not resolve a value (missing/invalid exposure inputs, or no RfD/SF at all), the
-    // DL-PCB card is blocked too.
-    if (!hhResult) {
-      return {
-        blocked:
-          'error' in result
+  // Row #23: the dl-PCB TEQ sub-value is now just a field on the SINGLE combined hhResult
+  // (dlPcbTeqSedS) rather than a separately-computed/blocked parallel result. It is only
+  // BLOCKED when the catalog TDI itself failed to resolve, or when the combined calculation
+  // failed entirely (e.g. an invalid exposure-factor input) -- not merely because the
+  // mass-based RfD/SF fields were cleared (the TEQ candidate can govern on its own in that
+  // case; see the "dl-PCB TEQ alone can still drive the standard" component test).
+  const dlPcbBlockedReason: string | null = !isDlPcbSubstance
+    ? null
+    : !dlPcbTeqTdi.ok
+      ? dlPcbTeqTdi.reason
+      : !hhResult
+        ? ('error' in result
             ? result.error
-            : 'Human Health direct-contact inputs are incomplete.',
-      };
-    }
-    if (!dlPcbTeqTdi.ok) {
-      return { blocked: dlPcbTeqTdi.reason };
-    }
-    const dlFields = {
-      BW_kg: positiveInput(bwInput, 'Body weight'),
-      ED_years: positiveInput(edInput, 'Exposure duration'),
-      EF_days_per_year: positiveInput(efInput, 'Exposure frequency'),
-      AT_cancer_years: positiveInput(atCancerInput, 'Cancer averaging time'),
-      IR_sed_mg_per_day: positiveInput(irSedInput, 'Sediment ingestion rate'),
-      SA_cm2: positiveInput(skinAreaInput, 'Skin surface area'),
-      AF_sed_mg_per_cm2: positiveInput(adherenceInput, 'Sediment adherence factor'),
-      targetRisk: positiveInput(targetRiskInput, 'Target risk'),
-      hazardQuotient: positiveInput(hazardQuotientInput, 'Hazard quotient'),
-      abs_dermal: positiveInput(absDermalInput, 'Dermal absorption fraction'),
-      ba_oral: positiveInput(baOralInput, 'Oral bioavailability'),
-    };
-    for (const value of Object.values(dlFields)) {
-      if (typeof value === 'object' && value !== null && 'error' in value) {
-        return { blocked: value.error };
-      }
-    }
-    try {
-      return humanHealthDirectContact({
-        ...(dlFields as {
-          BW_kg: number;
-          ED_years: number;
-          EF_days_per_year: number;
-          AT_cancer_years: number;
-          IR_sed_mg_per_day: number;
-          SA_cm2: number;
-          AF_sed_mg_per_cm2: number;
-          targetRisk: number;
-          hazardQuotient: number;
-          abs_dermal: number;
-          ba_oral: number;
-        }),
-        rfd_oral_mg_per_kg_bw_day: dlPcbTeqTdi.tdi_mg_per_kg_bw_day,
-        sf_oral_per_mg_per_kg_bw_per_day: null,
-      } satisfies HumanHealthDirectContactInput);
-    } catch (err) {
-      return { blocked: err instanceof Error ? err.message : String(err) };
-    }
-  }, [
-    isDlPcbSubstance,
-    hhResult,
-    result,
-    dlPcbTeqTdi,
-    bwInput,
-    edInput,
-    efInput,
-    atCancerInput,
-    irSedInput,
-    skinAreaInput,
-    adherenceInput,
-    targetRiskInput,
-    hazardQuotientInput,
-    absDermalInput,
-    baOralInput,
-    humanHealthDirectContact,
-  ]);
+            : 'Human Health direct-contact inputs are incomplete.')
+        : null;
+  const dlPcbTeqSedS: number | null =
+    isDlPcbSubstance && hhResult ? hhResult.dlPcbTeqSedS : null;
 
-  const dlPcbOk =
-    dlPcbResult != null && !('blocked' in dlPcbResult) ? dlPcbResult : null;
-  const dlPcbBlockedReason =
-    dlPcbResult != null && 'blocked' in dlPcbResult ? dlPcbResult.blocked : null;
+  // Non-double-counting guard (row #23): the dl-PCB TEQ TDI already has the 50% dioxin-like
+  // apportionment baked in and is only correctness-safe to combine with a mass-based RfD that
+  // is CONFIRMED non-dioxin-like-only (the catalog current_default, pv-hc-pcb-hh-direct-rfd-
+  // nondioxin, 1.0e-5 mg/kg-bw/day today). rfdInput is a free-text field a QP can retype to
+  // the un-split IRIS Aroclor-1254 RfD (available_option, 2.0e-5) or any other value; if they
+  // do, the combined result is not literally double-counted (MIN-select never sums), but the
+  // "mass non-cancer vs dl-PCB TEQ" labeling becomes misleading because the mass-based value
+  // no longer means "non-dioxin-like only". Surface a WARNING (never silent) instead of
+  // guessing/coercing the RfD back to the catalog default.
+  const nonDioxinLikeRfd_mg_per_kg_bw_day = substance?.rfd_oral_mg_per_kg_bw_per_day ?? null;
+  const parsedRfdForProvenanceCheck = rfdInput.trim() === '' ? null : Number(rfdInput);
+  const dlPcbRfdProvenanceMismatch =
+    isDlPcbSubstance &&
+    dlPcbTeqTdi.ok &&
+    nonDioxinLikeRfd_mg_per_kg_bw_day !== null &&
+    parsedRfdForProvenanceCheck !== null &&
+    Number.isFinite(parsedRfdForProvenanceCheck) &&
+    parsedRfdForProvenanceCheck !== nonDioxinLikeRfd_mg_per_kg_bw_day;
 
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
@@ -869,11 +829,21 @@ export default function HHDirectContactCalculator({
               </span>
             </>
           </div>
-          {dlPcbOk ? (
-            <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-              {dlPcbOk.sedS.toPrecision(4)}{' '}
-              <span className="text-lg text-slate-500 font-medium">mg TEQ/kg dry</span>
-            </div>
+          {dlPcbTeqSedS !== null ? (
+            <>
+              <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
+                {dlPcbTeqSedS.toPrecision(4)}{' '}
+                <span className="text-lg text-slate-500 font-medium">mg TEQ/kg dry</span>
+              </div>
+              {hhResult?.driver === 'dl-pcb-teq' && (
+                <div
+                  className="mt-2 inline-block px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-200 dark:bg-amber-800/60 text-amber-900 dark:text-amber-100"
+                  data-testid="hh-direct-dlpcb-teq-is-governing"
+                >
+                  Governs the preliminary standard above
+                </div>
+              )}
+            </>
           ) : (
             <div
               className="text-sm font-semibold text-amber-800 dark:text-amber-200"
@@ -884,12 +854,25 @@ export default function HHDirectContactCalculator({
             </div>
           )}
           <p className="text-[11px] text-amber-800 dark:text-amber-300 mt-3 italic">
-            Parallel dioxin-like-PCB check against the mass-based total-PCB standard
-            above. The dioxin-like fraction is assessed using the Health Canada
-            dioxin-like-TEQ oral TDI; the 50 percent dioxin-like-PCB apportionment is
-            already baked into that TDI value (no additional runtime apportionment
-            is applied here). Same exposure assumptions as the mass-based result.
+            Dioxin-like-PCB check assessed CONCURRENTLY with (never summed with) the
+            mass-based total-PCB standard above -- the two are compared and the more
+            protective (lower) value governs the single preliminary standard. The
+            dioxin-like fraction is assessed using the Health Canada dioxin-like-TEQ oral
+            TDI; the 50 percent dioxin-like-PCB apportionment is already baked into that
+            TDI value (no additional runtime apportionment is applied here). Same
+            exposure assumptions as the mass-based result.
           </p>
+          {dlPcbRfdProvenanceMismatch && (
+            <p
+              className="mt-3 text-xs font-semibold text-rose-800 dark:text-rose-200 bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-lg p-3"
+              data-testid="hh-direct-dlpcb-rfd-provenance-warning"
+            >
+              This RfD is not confirmed non-dioxin-like-only; combining it with the
+              dl-PCB TEQ check may mis-attribute the dioxin-like fraction. The catalog
+              current_default non-dioxin-like RfD is{' '}
+              {nonDioxinLikeRfd_mg_per_kg_bw_day} mg/kg-bw/day.
+            </p>
+          )}
         </div>
       )}
 
@@ -921,6 +904,12 @@ export default function HHDirectContactCalculator({
                 <span className="text-slate-500">Cancer value</span>
                 <span>{hhResult.cancerSedS?.toPrecision(4) ?? 'n/a'}</span>
               </div>
+              {isDlPcbSubstance && (
+                <div className="flex justify-between font-mono">
+                  <span className="text-slate-500">dl-PCB TEQ value</span>
+                  <span>{hhResult.dlPcbTeqSedS?.toPrecision(4) ?? 'n/a'}</span>
+                </div>
+              )}
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Adjusted contact rate</span>
                 <span>{hhResult.contactRate_mg_per_day.toPrecision(4)} mg/day</span>
