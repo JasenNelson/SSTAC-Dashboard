@@ -14,6 +14,7 @@
 
 import path from 'path';
 import fs from 'fs';
+import { logger } from '@/lib/logger';
 
 // Database module type definition
 type DatabaseModule = new (filename: string) => Database;
@@ -149,7 +150,7 @@ function runMigrationsInternal(db: Database): void {
       continue;
     }
 
-    console.log(`[SQLite] Applying migration: ${file}`);
+    logger.info('Applying migration', { module: 'sqlite', file });
     const sql = fs.readFileSync(path.join(MIGRATIONS_PATH, file), 'utf-8');
 
     // Run migration in a transaction
@@ -158,7 +159,7 @@ function runMigrationsInternal(db: Database): void {
       db.prepare('INSERT INTO _migrations (name) VALUES (?)').run(file);
     })();
 
-    console.log(`[SQLite] Migration applied: ${file}`);
+    logger.info('Migration applied', { module: 'sqlite', file });
   }
 }
 

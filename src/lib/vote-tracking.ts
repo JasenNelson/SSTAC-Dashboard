@@ -2,6 +2,8 @@
  * Track votes to prevent multiple submissions from same device
  */
 
+import { logger } from '@/lib/logger';
+
 export interface VoteTracker {
   deviceId: string;
   userAgent: string;
@@ -37,9 +39,7 @@ export function trackVote(pagePath: string, pollIndex: number): boolean {
   // Check if this device already voted on this poll
   const existingTracker = localStorage.getItem(trackerKey);
   if (existingTracker) {
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`Device ${deviceId} already voted on ${pagePath} poll ${pollIndex}`);
-    }
+    logger.debug('Device already voted', { deviceId, pagePath, pollIndex });
     return false; // Already voted
   }
   
@@ -53,16 +53,12 @@ export function trackVote(pagePath: string, pollIndex: number): boolean {
   };
   
   localStorage.setItem(trackerKey, JSON.stringify(tracker));
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`Tracked vote for device ${deviceId} on ${pagePath} poll ${pollIndex}`);
-  }
+  logger.debug('Tracked vote for device', { deviceId, pagePath, pollIndex });
   return true; // New vote allowed
 }
 
 export function clearVoteTracking(pagePath: string, pollIndex: number): void {
   const trackerKey = `cew_tracker_${pagePath}_${pollIndex}`;
   localStorage.removeItem(trackerKey);
-  if (process.env.NODE_ENV === 'development') {
-    console.log(`Cleared vote tracking for ${pagePath} poll ${pollIndex}`);
-  }
+  logger.debug('Cleared vote tracking', { pagePath, pollIndex });
 }

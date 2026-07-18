@@ -14,6 +14,8 @@
  * REDIS_TOKEN=your-token
  */
 
+import { logger } from '@/lib/logger';
+
 interface RateLimitResult {
   success: boolean;
   remaining: number;
@@ -43,7 +45,13 @@ async function initializeRedis() {
   try {
     // Only try to import if Redis credentials are available
     if (!process.env.REDIS_URL || !process.env.REDIS_TOKEN) {
-      console.log('⚠️ Redis credentials not configured - using in-memory fallback');
+      // Intentionally NOT routed through logger.warn: this is a real
+      // production-relevant misconfiguration signal (every request silently
+      // falls back to in-memory rate limiting), and logger.warn/info only
+      // print in development. Kept as an unconditional console.warn so it
+      // remains visible in production logs. See PR notes (Phase 1 logger
+      // cleanup) for the codex/reviewer finding that flagged this.
+      console.warn('Redis credentials not configured - using in-memory fallback');
       redisAvailable = false;
       return false;
     }
@@ -58,12 +66,15 @@ async function initializeRedis() {
 
     // Test connection
     await redisClient.ping();
-    console.log('✅ Redis rate limiting initialized');
+    // Intentionally NOT routed through logger.info: unconditional production
+    // startup confirmation (logger.info only prints in development). See the
+    // console.warn comment above for the same rationale.
+    console.log('Redis rate limiting initialized');
     redisAvailable = true;
     return true;
   } catch (error) {
     console.error('❌ Failed to initialize Redis:', error);
-    console.log('⚠️ Falling back to in-memory rate limiting');
+    logger.warn('Falling back to in-memory rate limiting');
     redisAvailable = false;
     return false;
   }
