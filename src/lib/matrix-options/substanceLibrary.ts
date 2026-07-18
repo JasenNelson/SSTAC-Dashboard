@@ -335,12 +335,21 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
-    sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + Health Canada TRV v4.0 oral SF 0.083 per mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-benzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-hc-benzene-hh-direct-sf / src-health-canada-trv-v4-2025).',
+    trv_eco_mg_per_kg_bw_day: null,
+    // Inhalation RfC wired 2026-07-17 (Matrix Options row #31 build): US EPA IRIS
+    // approved catalog value pv-iris-benzene-hh-direct-rfc / src-us-epa-iris-chemical-details-live.
+    rfc_inhalation_mg_per_m3: 0.03,
+    // Inhalation IUR wired 2026-07-17: Health Canada TRV v4.0 approved catalog value
+    // pv-hc-benzene-hh-direct-iur / src-health-canada-trv-v4-2025, catalog value
+    // 1.6e-5 per ug/m3, CONVERTED to this field's per-mg/m3 basis (x1000) = 0.016.
+    // A needs_review BC Protocol 28 candidate (7.8e-6 per ug/m3, pv-p28-benzene-hh-direct-iur)
+    // also exists and remains an available option; HC is more protective (higher IUR).
+    iur_inhalation_per_mg_per_m3: 0.016,
+    sources: 'US EPA IRIS oral RfD 0.004 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live) + Health Canada TRV v4.0 oral SF 0.083 per mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025); Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-benzene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (approved catalog value, pv-hc-benzene-hh-direct-sf / src-health-canada-trv-v4-2025). Inhalation RfC 0.03 mg/m3 (approved catalog value, pv-iris-benzene-hh-direct-rfc / src-us-epa-iris-chemical-details-live); inhalation IUR 0.016 per mg/m3 = 1.6e-5 per ug/m3 x 1000 (approved catalog value, pv-hc-benzene-hh-direct-iur / src-health-canada-trv-v4-2025).',
     notes:
       'Oral RfD/SF wired build-first from the approved catalog row(s) (qa_status=approved); previously null (coverage gap surfaced by the 2026-07 QA audit). ' +
-      'Human-health RfC and inhalation unit risk ' +
-      'candidates are available in References & Values. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
+      'Inhalation RfC/IUR wired 2026-07-17 for the Human Health Inhalation calculator build (Matrix Options row #31). ' +
+      'abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'beryllium',
@@ -443,14 +452,23 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
+    trv_eco_mg_per_kg_bw_day: null,
+    // Inhalation RfC wired 2026-07-17: US EPA IRIS and Health Canada TRV v4.0 both
+    // approve the identical value (approved catalog values pv-iris-tetrachloroethylene-hh-direct-rfc
+    // and pv-hc-tetrachloroethylene-hh-direct-rfc; no source conflict to adjudicate).
+    rfc_inhalation_mg_per_m3: 0.04,
+    // Inhalation IUR wired 2026-07-17: three approved/needs_review candidates (US EPA
+    // IRIS approved, BC Protocol 28 needs_review, Health Canada approved) all agree at
+    // 2.6e-7 per ug/m3; CONVERTED to this field's per-mg/m3 basis (x1000) = 0.00026.
+    iur_inhalation_per_mg_per_m3: 0.00026,
     sources:
       'Health Canada FCSAP TRV v4.0 (2021) oral TDI 0.0047 mg/kg-bw/day (approved catalog value, src-health-canada-trv-v4-2025; BMDL10 6.6 ppm Cavalleri 1994 occupational, PBPK external dose 4.7 mg/kg-bw/day, UF 1000, neurotoxicity/colour-confusion; HC 2015; live-verified 2026-07-04). Seeded as the BC Protocol 1 v5.0 s4.4 Health Canada default; the US EPA IRIS value 0.006 mg/kg-bw/day remains available as a candidate option. PubChem CID 31373. ' +
-      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF US EPA IRIS oral slope factor 0.0021 per mg/kg-bw/day (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c) (approved catalog value, pv-hc-tetrachloroethylene-hh-direct-rfd / src-health-canada-trv-v4-2025).',
+      'US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF US EPA IRIS oral slope factor 0.0021 per mg/kg-bw/day (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-sf / src-us-epa-iris-chemical-details-live; single approved candidate at this value -> resolves SOURCED to US EPA IRIS by value-match; sf backfilled build-first 2026-07-04c) (approved catalog value, pv-hc-tetrachloroethylene-hh-direct-rfd / src-health-canada-trv-v4-2025). ' +
+      'Inhalation RfC 0.04 mg/m3 (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-rfc / pv-hc-tetrachloroethylene-hh-direct-rfc; IRIS and HC agree); inhalation IUR 0.00026 per mg/m3 = 2.6e-7 per ug/m3 x 1000 (approved catalog value, pv-iris-tetrachloroethylene-hh-direct-iur / src-us-epa-iris-chemical-details-live; also approved by HC and needs_review at BC Protocol 28, all at the same value).',
     notes:
       'Oral RfD wired build-first from the approved HC catalog row (qa_status=approved), HC-default per BC Protocol 1 v5.0 s4.4. ' +
-      'Human-health RfD, RfC, and inhalation unit risk ' +
-      'candidates are available in References & Values; oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
+      'Inhalation RfC/IUR wired 2026-07-17 for the Human Health Inhalation calculator build (Matrix Options row #31); ' +
+      'oral slope factor now wired. sf_oral backfilled 2026-07-04c from the single approved catalog slope-factor row. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'trichloroethylene',
@@ -463,11 +481,24 @@ export const SUBSTANCE_LIBRARY = [
     abs_dermal: 0.03,
     ba_oral: 1.0,
     fcv_ug_per_L: null,
-    trv_eco_mg_per_kg_bw_day: null, rfc_inhalation_mg_per_m3: null, iur_inhalation_per_mg_per_m3: null,
-    sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (US EPA IRIS 2011 oral slope factor; most-protective; current_default; owner-approved 2026-07-05; sources cite pv-iris-trichloroethylene-hh-direct-sf).',
+    trv_eco_mg_per_kg_bw_day: null,
+    // Inhalation RfC wired 2026-07-17: US EPA IRIS, BC Protocol 28 (needs_review), and
+    // Health Canada all agree at 0.002 mg/m3 (approved catalog values
+    // pv-iris-trichloroethylene-hh-direct-rfc / pv-hc-trichloroethylene-hh-direct-rfc; no
+    // source conflict to adjudicate).
+    rfc_inhalation_mg_per_m3: 0.002,
+    // Inhalation IUR wired 2026-07-17: two approved candidates DISAGREE in value --
+    // US EPA IRIS 4.8e-6 per ug/m3 (pv-iris-trichloroethylene-hh-direct-iur) vs. Health
+    // Canada 4.1e-6 per ug/m3 (pv-hc-trichloroethylene-hh-direct-iur). Wired to the
+    // MOST-PROTECTIVE (higher-potency) value, consistent with the same-substance oral SF
+    // conflict rule already applied above (IRIS 2011 chosen as most-protective there).
+    // CONVERTED to this field's per-mg/m3 basis (x1000): 4.8e-6 * 1000 = 0.0048.
+    iur_inhalation_per_mg_per_m3: 0.0048,
+    sources: 'US EPA IRIS oral RfD 0.0005 mg/kg-bw/day (approved catalog value, src-us-epa-iris-rfd-table-live; IRIS 2011 Toxicological Review EPA/635/R-09/011F, developmental + immune effects, midpoint of 3 candidate RfDs; live-verified 2026-07-04). Wired as a MOST-PROTECTIVE override to the newer, lower IRIS assessment (per the conflict rule): the IRIS 2011 review is newer than the Health Canada 2005 value (0.00146 mg/kg-bw/day, Dawson 1993 developmental) AND more protective; the HC value remains available as a candidate option. PubChem CID 6575. US EPA IRIS toxicity values; Health Canada TRVs v4.0 Table 5 dermal RAF (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfd / src-us-epa-iris-rfd-table-live). (US EPA IRIS 2011 oral slope factor; most-protective; current_default; owner-approved 2026-07-05; sources cite pv-iris-trichloroethylene-hh-direct-sf). Inhalation RfC 0.002 mg/m3 (approved catalog value, pv-iris-trichloroethylene-hh-direct-rfc; IRIS and HC agree). Inhalation IUR 0.0048 per mg/m3 = 4.8e-6 per ug/m3 x 1000 (approved catalog value, pv-iris-trichloroethylene-hh-direct-iur / src-us-epa-iris-chemical-details-live; MOST-PROTECTIVE over the HC 4.1e-6 per ug/m3 alternate, pv-hc-trichloroethylene-hh-direct-iur, which remains an available option).',
     notes:
-      'Oral RfD wired build-first (qa_status=approved). MOST-PROTECTIVE override to US EPA IRIS 2011 (0.0005) -- newer than and lower than the HC 2005 value (0.00146); logged for owner review. Human-health RfD, RfC, oral slope factor, and inhalation unit risk ' +
-      'candidates are available in References & Values. abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
+      'Oral RfD wired build-first (qa_status=approved). MOST-PROTECTIVE override to US EPA IRIS 2011 (0.0005) -- newer than and lower than the HC 2005 value (0.00146); logged for owner review. ' +
+      'Inhalation RfC/IUR wired 2026-07-17 for the Human Health Inhalation calculator build (Matrix Options row #31). ' +
+      'abs_dermal 0.03 is the HC TRV v4.0 Table 5 VOC RAF default (cf. formaldehyde). Cross-reference added 2026-07-17 (HITL Group 5 retriage item #36, owner ruling); no abs_dermal value change.',
   },
   {
     key: 'vinyl_chloride',

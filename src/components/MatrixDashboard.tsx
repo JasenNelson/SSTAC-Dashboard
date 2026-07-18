@@ -15,6 +15,7 @@ import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
 import HHFoodWebCalculator from './matrix-options/HHFoodWebCalculator';
+import HHInhalationCalculator from './matrix-options/HHInhalationCalculator';
 import CumulativeEffectsCalculator from './matrix-options/CumulativeEffectsCalculator';
 import EvidenceLibrary from './matrix-options/EvidenceLibrary';
 import SsdWorkbench from './matrix-options/SsdWorkbench';
@@ -860,6 +861,28 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
               BackgroundAdjustment below), not gated by activeCategory.
             */}
             <CumulativeEffectsCalculator
+              substanceKey={substanceKey}
+              jurisdiction={jurisdiction}
+              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+            />
+            {/*
+              Human Health Inhalation (Matrix Options row #31) is orthogonal to the
+              eco/hh CategorySelector for the same reason CumulativeEffectsCalculator is
+              (see comment above): it is a distinct pathway with a fail-closed,
+              user-supplied-VF/PEF contract (owner ruling 2026-07-17), not one of the
+              4 eco/hh-direct/food quadrant calculators the 1x4 CategorySelector's
+              exhaustiveness-checked MatrixCategory type is locked to. Stacking it here
+              (rather than adding a 5th CategorySelector category) keeps that tightly
+              scoped component's layout and accessibility contract unchanged.
+            */}
+            <div className="flex items-center gap-3 py-2" aria-hidden="true">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
+                Human Health Inhalation
+              </span>
+              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
+            </div>
+            <HHInhalationCalculator
               substanceKey={substanceKey}
               jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
