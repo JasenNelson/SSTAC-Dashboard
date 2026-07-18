@@ -7,6 +7,7 @@
  */
 
 import { createClient } from '@/lib/supabase/client';
+import { logger } from '@/lib/logger';
 
 // Throttling mechanism to prevent excessive calls
 let lastRefreshTime = 0;
@@ -22,9 +23,7 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     // Throttle calls to prevent excessive database queries (unless forced)
     const now = Date.now();
     if (!force && now - lastRefreshTime < REFRESH_THROTTLE_MS) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⏰ Admin status refresh throttled - too soon since last call');
-      }
+      logger.debug('Admin status refresh throttled - too soon since last call');
       // During throttle period, return false (safer default)
       // Do not check localStorage
       return false;
@@ -37,15 +36,11 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     const { data: { user }, error: userError } = await supabase.auth.getUser();
 
     if (userError || !user) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('⚠️ No user found during admin status refresh');
-      }
+      logger.debug('No user found during admin status refresh');
       return false;
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log('🔄 Verifying admin status for user:', user.email);
-    }
+    logger.debug('Verifying admin status for user', { email: user.email });
 
     // Check if user has admin role in database
     const { data: roleData, error: roleError } = await supabase
@@ -64,13 +59,9 @@ export async function refreshGlobalAdminStatus(force = false): Promise<boolean> 
     const isAdmin = !!roleData;
 
     if (isAdmin) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('✅ User verified as admin');
-      }
+      logger.debug('User verified as admin');
     } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('ℹ️ User is not admin');
-      }
+      logger.debug('User is not admin');
     }
 
     return isAdmin;
@@ -111,9 +102,7 @@ export async function checkCurrentUserAdminStatus(): Promise<boolean> {
 
     const isAdmin = !!roleData;
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`🔍 Admin status check: ${isAdmin ? '✅ Admin' : '❌ Not admin'}`);
-    }
+    logger.debug('Admin status check', { isAdmin });
 
     return isAdmin;
   } catch (error) {
@@ -134,9 +123,7 @@ export async function clearAdminStatusBackup(): Promise<void> {
     const { data: { user } } = await supabase.auth.getUser();
 
     if (user) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('🧹 Admin verification requested for user:', user.email);
-      }
+      logger.debug('Admin verification requested for user', { email: user.email });
     }
   } catch (error) {
     console.error('❌ Error during admin status clear:', error);

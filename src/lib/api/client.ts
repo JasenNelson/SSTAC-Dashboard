@@ -8,6 +8,7 @@
  */
 
 import { createAuthenticatedClient } from '@/lib/supabase-auth';
+import { logger } from '@/lib/logger';
 import type {
   ApiResponse as _ApiResponse,
   ApiError,
@@ -203,7 +204,7 @@ export class ApiClient {
    */
   private log(message: string): void {
     if (this.config.enableLogging) {
-      console.log(`[API Client] ${message}`);
+      logger.debug(message, { module: 'ApiClient' });
     }
   }
 

@@ -3,6 +3,8 @@
  * This helps prevent multiple votes from the same device
  */
 
+import { logger } from '@/lib/logger';
+
 export function generateDeviceFingerprint(): string {
   // Get browser characteristics
   const canvas = document.createElement('canvas');
@@ -39,9 +41,7 @@ export function getDeviceId(): string {
     // Generate new device ID
     deviceId = generateDeviceFingerprint();
     localStorage.setItem('cew_device_id', deviceId);
-    if (process.env.NODE_ENV === 'development') {
-      console.log('Generated new device ID:', deviceId);
-    }
+    logger.debug('Generated new device ID', { deviceId });
   }
   
   return deviceId;
