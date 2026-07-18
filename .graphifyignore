@@ -1,0 +1,118 @@
+# .graphifyignore -- Graphify AST scan exclusions for SSTAC-Dashboard.
+# Merged with .gitignore. PATH lines are root-anchored (leading /).
+# EXTENSION globs are deliberately UNANCHORED (no leading /) so they match
+# at any depth (gitignore semantics; /*.db would miss subdirectory .db
+# files). Ordering matters for negations: last-match-wins.
+
+# --- Nested worktree(s) ------------------------------------------------
+# Phase 0.4 REGENERATES this list from a live `git worktree list` before
+# every first build; do not reuse this starter line as current inventory.
+# TODAY's known instance ONLY (confirmed 2026-07-17: the one in-root
+# worktree is C:/Projects/SSTAC-Dashboard/ProjectsSSTAC-Dashboard-
+# worktreese58-launch-20260709).
+/ProjectsSSTAC-Dashboard-worktreese58-launch-20260709/
+
+# --- Secrets -------------------------------------------------------------
+# Belt-and-suspenders over the .gitignore merge (the merge layer has OHD
+# bug history).
+/.env*
+/*.bak*
+/.tmp*
+
+# --- Tool output (Graphify / wiki pipeline artifacts) ---------------------
+/graphify-out/
+/wiki/
+/wiki.staging/
+/.venv-graphify/
+/.tmp_wiki_nightly/
+
+# --- Data payloads ---------------------------------------------------------
+# Unanchored extension globs:
+*.db
+*.sqlite*
+*.csv
+*.geojson
+# Anchored dirs:
+/src/data/
+/matrix_research/
+/scripts/matrix-map/_enrichment_working/
+/scripts/matrix-map/*chunk*/
+# ETL sql dumps (regenerable artifacts under scripts/matrix-map/; naming
+# convention confirmed against the existing .gitignore entry for
+# scripts/matrix-map/etl_bnrrm_to_supabase_output.sql):
+/scripts/matrix-map/etl_*.sql
+
+# --- Media (unanchored extension globs) -------------------------------------
+*.png
+*.jpg
+*.jpeg
+*.gif
+*.svg
+*.webp
+*.ico
+*.pdf
+*.xml
+*.docx
+/public/
+
+# --- Root scratch by anchored name/class -------------------------------------
+/temp*.txt
+/ocr_results.txt
+/scratch_view.txt
+/log.txt
+/dump_*.py
+/check_*.py
+/merge_json.py
+/tmp_check.py
+/e2e-query.mjs
+/e2e-reset.mjs
+/tmp_*/
+/sql_runbook/
+/_enrichment_working/
+
+# --- Agent-surface dirs EXCLUDED ENTIRELY ----------------------------------
+# Same rationale as /.claude/ below: vendored skills, agent configs, and
+# guardrail surfaces are never graph/wiki input.
+/.agents/
+/.codex/
+/.gemini/
+/.gstack/
+
+# --- SUBSTRATE INVARIANT (fail-closed) --------------------------------------
+# Enforced by graph_smoke.py at the Phase 2 first-build gate and by
+# nightly_wiki_sync.ps1 steps N0/N4: the graph may contain only files that
+# are GIT-TRACKED or on an explicit untracked-allowlist (default: empty).
+# After every build, every source_file in graph.json must be in
+# `git ls-files` or allowlisted; violations FAIL the run before wiki
+# compile, listing offenders. Remediation is an ignore line added here
+# (gated .graphifyignore commit -> config-hash full rebuild) or a file
+# disposition decision. The named lines in this file are today's known
+# offenders; the invariant catches tomorrow's.
+
+# --- Docs trust (semantic-tier scope; see gen_docs_scope.py) ---------------
+# gen_docs_scope.py additionally FAILS CLOSED on any .claude/, .agents/,
+# .codex/, .gemini/, .gstack/, or *.pre-* path appearing in scan scope.
+# CLAUDE.md-class guardrail docs are excluded from SEMANTIC extraction
+# (guardrails are read from source, never re-derived from paraphrase).
+/docs/archive/
+*.pre-*
+/*.md
+/.claude/
+
+# --- Phase-2-only extra line -------------------------------------------------
+# SMOKE TEST ONLY (no LLM, no md wiki content this phase). Removed at
+# Phase 4 with a mandatory from-scratch rebuild, when .graphifyignore
+# switches from this blanket *.md line to the docs trust filter above.
+*.md
+
+# --- Negation: keep README.md visible to the scan ---------------------------
+# ORDERING MATTERS (gitignore last-match-wins): this line MUST be the LAST
+# md-matching line in this file, placed AFTER both the docs-trust /*.md
+# line above and the Phase-2-only blanket *.md line above -- otherwise the
+# blanket re-excludes it and the probe fails for ordering, not support.
+!/README.md
+
+# --- supabase/migrations/ stays IN SCOPE deliberately ------------------------
+# ([sql] extra; schema-evolution knowledge; read-only scan, never
+# modification). No ignore line here by design -- this comment documents
+# the decision so a future edit does not accidentally add one.

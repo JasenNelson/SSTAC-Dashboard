@@ -1,0 +1,15 @@
+# Pinned Graphify install for the SSTAC-Dashboard KB pilot (Phase 2).
+# Section 3 owner decision (2026-07-16): pin graphifyy[sql,mcp]==0.9.17 in a
+# fresh .venv-graphify (11 Windows-fix releases ahead of OHD's 0.9.6);
+# 0.9.6 is the documented rollback if 0.9.17 regresses.
+#
+# Phase 0 finding (2026-07-17): 0.9.18 is now the latest release on PyPI,
+# one release ahead of this pin. The pin stays at 0.9.17 per the owner
+# decision above -- do not silently bump to 0.9.18 without a separate
+# owner-gated re-verification pass.
+#
+# TODO(Phase 2 step 2): after `py -3.11 -m venv .venv-graphify` and
+# `pip install -r requirements-graphify.txt`, run `pip freeze` and append
+# the frozen transitive pins below this line, so the venv is fully
+# reproducible (this file currently pins only the top-level package).
+graphifyy[sql,mcp]==0.9.17

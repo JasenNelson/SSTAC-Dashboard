@@ -163,3 +163,10 @@ scripts/matrix-map/_enrichment_working/
 !.gemini/commands/
 .gstack/
 e2e/.auth/
+
+# KB pilot (Graphify + LLM-wiki) tool output -- untracked pilot artifacts.
+# .tmp_wiki_nightly is already covered by the .tmp_* rule above (line 138).
+/graphify-out/
+/wiki/
+/wiki.staging/
+/.venv-graphify/
