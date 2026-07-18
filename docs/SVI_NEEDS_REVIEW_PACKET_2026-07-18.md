@@ -68,8 +68,16 @@ So attenuation/model slots are legitimately CCME-sourced with an HC deferral not
 
 ## BLOCKED HC PQRA slots -- EXACT missing quote/page needed (owner request)
 No local HC PQRA primary copy exists (searched References + Regulatory-Review this session; found the
-**Detailed** QRA "DQRA HC final draft Feb 2009" but NOT the **Preliminary** QRA / FCSAP Part I). canada.ca
-is 403-blocked to WebFetch. Each blocked slot below needs ONE exact primary quote:
+**Detailed** QRA "DQRA HC final draft Feb 2009" but NOT the **Preliminary** QRA / FCSAP Part I).
+
+**HC PQRA v3.0 LOCATED but access-gated (exact one-click owner action):** catalog `H129-114/2023E-PDF`,
+direct URL `https://publications.gc.ca/collections/collection_2023/sc-hc/H129-114-2023-eng.pdf` (dataset:
+open.canada.ca/data/en/dataset/bee0644a-0929-40a1-aecd-cd81a32a47db). Automated fetch is BLOCKED three
+ways: canada.ca = HTTP 403; publications.gc.ca = TLS cert-chain error in WebFetch AND serves a JS/cookie
+"archived content" interstitial to curl (returns HTML, not the PDF, even with browser UA + wbdisable). A
+**human browser downloads it in one click** (accept the archived-content notice). OWNER ACTION: open that
+URL, save the PDF into `G:\...\References\`, and AI vision-extracts all 4 slots below in one pass. Each
+blocked slot needs ONE exact primary quote:
 
 | slot | exact missing artifact | expected value (web-identified, UNCITED) | canonical source doc |
 |---|---|---|---|
