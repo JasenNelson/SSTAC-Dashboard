@@ -22,7 +22,7 @@ describe('pathway vocabularies', () => {
     ]);
   });
 
-  it('declares the 6 catalog evidence categories', () => {
+  it('declares the 7 catalog evidence categories', () => {
     expect([...CATALOG_EVIDENCE_PATHWAYS]).toEqual([
       'hh-toxicity-value',
       'hh-toxicity-weighting',
@@ -30,12 +30,13 @@ describe('pathway vocabularies', () => {
       'eco-soil',
       'eco-soil-screening',
       'reference-background',
+      'human-health-inhalation',
     ]);
   });
 
-  it('builds CatalogPathway as the disjoint union of the two sets (11 unique)', () => {
-    expect(CATALOG_PATHWAYS).toHaveLength(11);
-    expect(new Set(CATALOG_PATHWAYS).size).toBe(11);
+  it('builds CatalogPathway as the disjoint union of the two sets (12 unique)', () => {
+    expect(CATALOG_PATHWAYS).toHaveLength(12);
+    expect(new Set(CATALOG_PATHWAYS).size).toBe(12);
     // The two source vocabularies must not overlap, or a calculator pathway could be
     // mistaken for an evidence category (or vice versa) at a type boundary.
     const calc = new Set<string>(PROVENANCE_PATHWAYS);
@@ -58,7 +59,16 @@ describe('pathway guards', () => {
     expect(isProvenancePathway(42)).toBe(false);
   });
 
-  it('isCatalogEvidencePathway accepts only the 6 evidence categories', () => {
+  it('isProvenancePathway rejects human-health-inhalation (catalog evidence, not a calculator pathway)', () => {
+    // human-health-inhalation is a CATALOG EVIDENCE category (VF/PEF are user-supplied,
+    // never a calculator default -- see pathways.ts CATALOG_EVIDENCE_PATHWAYS comment),
+    // so it must never pass the calculator-only guard.
+    expect(isProvenancePathway('human-health-inhalation')).toBe(false);
+    expect(isCatalogEvidencePathway('human-health-inhalation')).toBe(true);
+    expect(isCatalogPathway('human-health-inhalation')).toBe(true);
+  });
+
+  it('isCatalogEvidencePathway accepts only the 7 evidence categories', () => {
     for (const pathway of CATALOG_EVIDENCE_PATHWAYS) {
       expect(isCatalogEvidencePathway(pathway)).toBe(true);
     }
@@ -84,7 +94,7 @@ describe('evidence-category badge labels', () => {
       const label = humanizeCatalogLabel(pathway);
       expect(label.length).toBeGreaterThan(0);
       // No raw kebab token should survive (a missing label would fall back to a
-      // hyphen-stripped string, which is acceptable, but these 6 are explicitly mapped).
+      // hyphen-stripped string, which is acceptable, but these 7 are explicitly mapped).
       expect(label).not.toContain('-');
     }
   });
