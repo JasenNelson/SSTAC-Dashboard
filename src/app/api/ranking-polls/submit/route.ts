@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const { pagePath, pollIndex, question, options, rankings, authCode } = await request.json();
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Ranking Poll Submit] Received ranking for poll ${pollIndex} on page ${pagePath}${authCode ? `, authCode: "${authCode}"` : ''}`);
-    }
-    
+    logger.debug('Received ranking submission', { pollIndex, pagePath, authCode });
+
     // Create appropriate client based on page path (CEW vs authenticated)
     const { supabase: supabaseClient, isCEWPage } = await createClientForPagePath(pagePath);
     let finalUserId;
@@ -22,9 +21,7 @@ export async function POST(request: NextRequest) {
       const timestamp = Date.now();
       const randomSuffix = randomBytes(4).toString('hex');
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Ranking Poll Submit] CEW page, using unique userId: ${finalUserId}`);
-      }
+      logger.debug('CEW page, using unique userId', { finalUserId });
     } else {
       // Authenticated pages: Get user ID from authenticated user
       const user = await getAuthenticatedUser(supabaseClient);
@@ -32,9 +29,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       finalUserId = user.id;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Ranking Poll Submit] Authenticated user: ${finalUserId}`);
-      }
+      logger.debug('Authenticated user', { finalUserId });
     }
 
     // Get or create ranking poll using the existing function
@@ -51,22 +46,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create/get ranking poll' }, { status: 500 });
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Ranking Poll Submit] Poll created/found for pollIndex ${pollIndex}:`, pollId);
-    }
+    logger.debug('Poll created/found for pollIndex', { pollIndex, pollId });
 
     // For CEW pages, allow multiple votes by inserting new records
     // For authenticated users, delete existing and insert new ones
     if (isCEWPage && authCode) {
       // CEW pages: Always insert new votes (allow multiple votes per CEW code)
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Ranking Poll Submit] CEW page - inserting new ranking votes`);
-      }
+      logger.debug('CEW page - inserting new ranking votes');
     } else {
       // Authenticated users: Delete existing votes first
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Ranking Poll Submit] Authenticated user - deleting existing votes first`);
-      }
+      logger.debug('Authenticated user - deleting existing votes first');
       const { error: deleteError } = await supabaseClient
         .from('ranking_votes')
         .delete()
@@ -75,9 +64,7 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         console.error('Error deleting existing ranking votes:', deleteError);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Continuing with vote submission despite delete error');
-        }
+        logger.debug('Continuing with vote submission despite delete error');
       }
     }
 
@@ -103,9 +90,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to submit ranking votes' }, { status: 500 });
     }
 
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Ranking Poll Submit] Successfully submitted ${voteInserts.length} ranking votes for poll ${pollId}`);
-    }
+    logger.debug('Successfully submitted ranking votes', { count: voteInserts.length, pollId });
     return NextResponse.json({ success: true, pollId: pollId });
   } catch (error) {
     console.error('Error in ranking poll submit API:', error);

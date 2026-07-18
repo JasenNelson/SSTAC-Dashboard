@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
 import SurveyMatrixGraph from '@/components/graphs/SurveyMatrixGraph';
+import { logger } from '@/lib/logger';
 
 interface PollData {
   question: string;
@@ -367,7 +368,7 @@ export default function HolisticProtectionClient() {
                     pagePath="/survey-results/holistic-protection"
                     questionNumber={poll.questionNumber}
                     onVote={(pollIndex, optionIndex) => {
-                      console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                      logger.debug('Vote submitted for poll', { pollIndex, optionIndex });
                     }}
                   />
                   

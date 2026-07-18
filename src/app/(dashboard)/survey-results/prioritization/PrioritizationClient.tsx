@@ -6,6 +6,7 @@ import PollWithResults from '@/components/PollWithResults';
 import RankingPoll from '@/components/dashboard/RankingPoll';
 import WordCloudPoll from '@/components/dashboard/WordCloudPoll';
 import SurveyMatrixGraph from '@/components/graphs/SurveyMatrixGraph';
+import { logger } from '@/lib/logger';
 
 interface PollData {
   question: string;
@@ -341,7 +342,7 @@ export default function PrioritizationClient() {
                       questionNumber={poll.questionNumber}
                       predefinedOptions={poll.predefinedOptions}
                       onVote={(pollIndex, words) => {
-                        console.log(`Words submitted for poll ${pollIndex}:`, words);
+                        logger.debug('Words submitted for poll', { pollIndex, words });
                       }}
                     />
                   </div>
@@ -357,7 +358,7 @@ export default function PrioritizationClient() {
                       pagePath="/survey-results/prioritization"
                       questionNumber={poll.questionNumber}
                       onVote={(pollIndex, rankings) => {
-                        console.log(`Ranking submitted for poll ${pollIndex}:`, rankings);
+                        logger.debug('Ranking submitted for poll', { pollIndex, rankings });
                       }}
                     />
                   </div>
@@ -374,7 +375,7 @@ export default function PrioritizationClient() {
                         pagePath="/survey-results/prioritization"
                         questionNumber={poll.questionNumber}
                         onVote={(pollIndex, optionIndex) => {
-                          console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                          logger.debug('Vote submitted for poll', { pollIndex, optionIndex });
                         }}
                       />
                     </div>

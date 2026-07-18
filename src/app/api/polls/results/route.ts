@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { logger } from '@/lib/logger';
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,10 +37,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (pollData) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Poll exists for pollIndex ${pollIndex}:`, pollData);
-      }
-      
+      logger.debug('Poll exists', { pollIndex, pollData });
+
       // Poll exists, get results from view
       const { data: resultsData, error: resultsError } = await supabase
         .from('poll_results')
@@ -50,13 +49,9 @@ export async function GET(request: NextRequest) {
 
       if (!resultsError) {
         results = resultsData;
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`Results found for poll ${pollIndex}:`, results);
-        }
+        logger.debug('Results found for poll', { pollIndex, results });
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`No results found for poll ${pollIndex}:`, resultsError);
-        }
+        logger.debug('No results found for poll', { pollIndex, resultsError });
       }
 
       // Get user's vote (for both authenticated users and CEW pages)
@@ -66,14 +61,10 @@ export async function GET(request: NextRequest) {
       const authCode = request.nextUrl.searchParams.get('authCode');
       if (authCode) {
         // For CEW pages, don't return user votes for privacy
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`CEW poll - not returning user vote for privacy (pollIndex: ${pollIndex})`);
-        }
+        logger.debug('CEW poll - not returning user vote for privacy', { pollIndex });
       } else if (isAuthenticated && user) {
         userId = user.id;
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`Looking for authenticated user vote for poll ${pollData.id} (pollIndex: ${pollIndex})`);
-        }
+        logger.debug('Looking for authenticated user vote', { pollId: pollData.id, pollIndex });
       }
 
       if (userId) {
@@ -84,29 +75,19 @@ export async function GET(request: NextRequest) {
           .eq('user_id', userId)
           .single();
 
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`User vote data for poll ${pollIndex}:`, { userVoteData, voteError });
-        }
+        logger.debug('User vote data for poll', { pollIndex, userVoteData, voteError });
         if (!voteError && userVoteData) {
           userVote = userVoteData.option_index;
           userOtherText = userVoteData.other_text;
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`User vote found for poll ${pollIndex}:`, userVote, userOtherText ? `with other text: "${userOtherText}"` : '');
-          }
+          logger.debug('User vote found for poll', { pollIndex, userVote, userOtherText });
         } else {
-          if (process.env.NODE_ENV === 'development') {
-            console.log(`No user vote found for poll ${pollIndex}`);
-          }
+          logger.debug('No user vote found for poll', { pollIndex });
         }
       } else {
-        if (process.env.NODE_ENV === 'development') {
-          console.log(`No user identifier available - no user vote lookup for poll ${pollIndex}`);
-        }
+        logger.debug('No user identifier available - no user vote lookup', { pollIndex });
       }
     } else {
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`Poll does not exist yet for pollIndex ${pollIndex}`);
-      }
+      logger.debug('Poll does not exist yet', { pollIndex });
     }
 
     return NextResponse.json({ results, userVote, userOtherText });

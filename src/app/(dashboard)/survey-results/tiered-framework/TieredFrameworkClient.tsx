@@ -3,6 +3,7 @@
 import React from 'react';
 import Image from 'next/image';
 import PollWithResults from '@/components/PollWithResults';
+import { logger } from '@/lib/logger';
 
 interface PollData {
   question: string;
@@ -253,7 +254,7 @@ export default function TieredFrameworkClient() {
                   pagePath="/survey-results/tiered-framework"
                   questionNumber={poll.questionNumber}
                   onVote={(pollIndex, optionIndex) => {
-                    console.log(`Vote submitted for poll ${pollIndex}, option ${optionIndex}`);
+                    logger.debug('Vote submitted for poll', { pollIndex, optionIndex });
                   }}
                 />
               );

@@ -2,6 +2,7 @@
 
 import React, { useMemo } from 'react';
 import { PollResult } from '../types';
+import { logger } from '@/lib/logger';
 
 interface RankingDisplayProps {
   selectedPoll: PollResult;
@@ -30,7 +31,7 @@ function RankingDisplay({ selectedPoll, isExpanded, getFilteredPollResults }: Ra
       const resultsMap = new Map(filteredResults.map((r) => [r.option_index, r]));
 
       // Debug: Log the options array to see what we have
-      console.log('🔍 Prioritization ranking poll options:', {
+      logger.debug('Prioritization ranking poll options', {
         pollIndex: selectedPoll.poll_index,
         options: selectedPoll.options,
         optionsType: typeof selectedPoll.options,

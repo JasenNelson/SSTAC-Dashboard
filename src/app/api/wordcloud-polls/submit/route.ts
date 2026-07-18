@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { randomBytes } from 'crypto';
 import { createClientForPagePath, getAuthenticatedUser } from '@/lib/supabase-auth';
+import { logger } from '@/lib/logger';
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { pagePath, pollIndex, question, maxWords, wordLimit, words, authCode } = body;
-    if (process.env.NODE_ENV === 'development') {
-      console.log(`[Wordcloud Submit] Received words for poll ${pollIndex} on page ${pagePath}, words: ${words}${authCode ? `, authCode: "${authCode}"` : ''}`);
-    }
+    logger.debug('Received words for poll', { pollIndex, pagePath, words, authCode });
 
     // Validate required fields
     if (!pagePath || pollIndex === undefined || !question || !words || !Array.isArray(words)) {
@@ -65,9 +64,7 @@ export async function POST(request: NextRequest) {
       const timestamp = Date.now();
       const randomSuffix = randomBytes(4).toString('hex');
       finalUserId = `${authCode || 'CEW2025'}_${timestamp}_${randomSuffix}`;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Wordcloud Submit] CEW page, using unique userId: ${finalUserId}`);
-      }
+      logger.debug('CEW page, using unique userId', { finalUserId });
     } else {
       // Authenticated pages: Get user ID from authenticated user
       const user = await getAuthenticatedUser(supabase);
@@ -75,9 +72,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
       }
       finalUserId = user.id;
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Wordcloud Submit] Authenticated user: ${finalUserId}`);
-      }
+      logger.debug('Authenticated user', { finalUserId });
     }
 
     // Get or create the wordcloud poll
@@ -104,14 +99,10 @@ export async function POST(request: NextRequest) {
     // For authenticated users, delete existing and insert new ones
     if (isCEWPage) {
       // CEW pages: Always insert new votes (allow multiple votes per CEW code)
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Wordcloud Submit] CEW page - inserting new wordcloud votes`);
-      }
+      logger.debug('CEW page - inserting new wordcloud votes');
     } else {
       // Authenticated users: Delete existing votes first
-      if (process.env.NODE_ENV === 'development') {
-        console.log(`[Wordcloud Submit] Authenticated user - deleting existing votes first`);
-      }
+      logger.debug('Authenticated user - deleting existing votes first');
       const { error: deleteError } = await supabase
         .from('wordcloud_votes')
         .delete()
@@ -120,9 +111,7 @@ export async function POST(request: NextRequest) {
 
       if (deleteError) {
         console.error('Error deleting existing wordcloud votes:', deleteError);
-        if (process.env.NODE_ENV === 'development') {
-          console.log('Continuing with vote submission despite delete error');
-        }
+        logger.debug('Continuing with vote submission despite delete error');
       }
     }
 
