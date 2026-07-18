@@ -2,9 +2,9 @@
 
 A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
-## 🔗 **Quick Links**
+## **Quick Links**
 
-### **📚 Documentation**
+### **Documentation**
 - **[Core Development Guidelines](docs/AGENTS.md)** - Essential rules and principles for development
 - **[Project Status](docs/PROJECT_STATUS.md)** - Current features and completed work
 - **[Review & Analysis](docs/review-analysis/README.md)** - Code quality assessment and improvement plans
@@ -12,7 +12,7 @@ A comprehensive dashboard platform for the **Sediment Standards Technical Adviso
 - **[Testing Documentation](docs/testing/README.md)** - Testing infrastructure (k6, Vitest, Playwright)
 - **[Documentation Index](docs/README.md)** - Complete documentation organization
 
-### **🧪 Testing**
+### **Testing**
 - **[Run Comprehensive Tests](tests/)** - Full k6 test suite
 - **[Test Database Schema](database_schema.sql)** - Complete schema with debugging notes
 
@@ -46,19 +46,19 @@ npm run test:e2e:ui
 - **Load Tests**: 23 k6 tests for API endpoints
 - **CI/CD**: Automated testing on every PR (GitHub Actions)
 
-### **🛠️ Utilities**
+### **Utilities**
 - **[SQL Scripts](scripts/)** - Database utilities (verification, monitoring, cleanup, debugging)
 - **[Verification Scripts](scripts/verify/)** - Performance monitoring and index verification
 - **[Debug Scripts](scripts/debug/)** - Database diagnostic queries
 - **[Cleanup Scripts](scripts/cleanup/)** - Maintenance and cleanup tools
 - **[Test Execution Scripts](scripts/)** - Automated test runners
 
-### **📖 Reference Materials**
+### **Reference Materials**
 - **[Sediment Standards Research](reference%20materials/)** - Background documentation
 
-## 🚀 **Recent Major Updates**
+## **Recent Major Updates**
 
-### **Survey-Results Pages Content Update** ✅ NEW (2025-01-31)
+### **Survey-Results Pages Content Update** [x] NEW (2025-01-31)
 - **Revised Content Integration**: All three survey-results pages (Holistic Protection, Prioritization, Tiered Framework) updated to align with revised presentation materials
 - **Content Restructuring**: Removed outdated information and fabricated statistics; implemented accurate framework structures based on latest presentations
 - **UI/UX Improvements**: Fixed light/dark mode text color issues, applied consistent color schemes across all sections
@@ -66,20 +66,20 @@ npm run test:e2e:ui
 - **Menu Structure Update**: WIKS menu item relocated under "Prioritization Framework" and renamed to "Weaving Indigenous Knowledges & Science"
 - **Reference Materials**: Added revised content files and matrix graph image for prioritization page
 
-### **TWG Review Access & Authentication Improvements** ✅ NEW (2025-01-31)
+### **TWG Review Access & Authentication Improvements** [x] NEW (2025-01-31)
 - **Simplified Access Control**: TWG Review page now requires only authentication (no role checks) - matches all other dashboard pages
 - **Instant Access**: Removed unnecessary role checking delays - authenticated users can access immediately
 - **Enhanced Auth Error Handling**: Improved middleware and Header component to properly detect and handle invalid refresh tokens
 - **Login Redirect Flow**: Added Suspense boundary to login page and redirect query parameter support for seamless navigation
 - **Consistent Access Pattern**: All non-admin dashboard pages (Dashboard, WIKS, Survey Results, TWG Review) now use same authentication-only pattern
 
-### **TWG Review & Auth Reliability** ✅ COMPLETED (2025-09-18)
-- **TWG Review Reordering**: Moved Line-by-Line Comments to Part 3; added six 5,000-character fields (Sections I–V and Appendices C & D)
+### **TWG Review & Auth Reliability** [x] COMPLETED (2025-09-18)
+- **TWG Review Reordering**: Moved Line-by-Line Comments to Part 3; added six 5,000-character fields (Sections I-V and Appendices C & D)
 - **Auth Robustness**: Server-side fallback now auto-assigns `member` on first `/twg/review` visit if trigger lag occurs (replaced with simplified auth-only access)
 - **Admin Role Checks**: Switched server/client checks from `.single()` to `.maybeSingle()` to avoid 406 errors for non-admins
 - **Schema Alignment**: `review_files` columns renamed (`file_name`, `mime_type`, `created_at`); `admin_review_submissions` exposes `submission_created_at`, `submission_updated_at`
 
-### **Poll Results UI/UX Improvements** ✅ NEW (2025-01-18)
+### **Poll Results UI/UX Improvements** [x] NEW (2025-01-18)
 - **Single Question Display**: Poll results now show only the selected question for focused viewing
 - **Expandable Poll Groups**: Left panel groups can be expanded to reveal individual question links
 - **Visual Selection Feedback**: Selected questions show blue ring highlight in navigation
@@ -87,7 +87,7 @@ npm run test:e2e:ui
 - **Improved Navigation**: Question buttons display vote counts and provide direct access
 - **Mobile Optimized**: Better responsive design for poll results viewing
 
-### **Phase 3: Validation & Security** ✅ COMPLETED (January 2025)
+### **Phase 3: Validation & Security** [x] COMPLETED (January 2025)
 - **Zod Validation**: Centralized validation schemas for all non-poll APIs
 - **Structured Logging**: Production-ready logging with JSON format
 - **Rate Limiting**: Integrated into all non-poll API routes with configurable limits
@@ -99,18 +99,18 @@ npm run test:e2e:ui
 
 **For Details:** See `docs/review-analysis/PHASE3_COMPLETION_SUMMARY.md`
 
-### **Testing & Code Quality Infrastructure** ✅ COMPLETED (Weeks 1-16)
+### **Testing & Code Quality Infrastructure** [x] COMPLETED (Weeks 1-16)
 - **Testing Infrastructure**: Vitest unit tests (122 tests), Playwright E2E tests, CI/CD integration
 - **CI/CD Reliability**: Fixed GitHub Actions test errors, all ErrorBoundary tests passing (7/7)
 - **Code Quality Improvements**: Supabase utility centralization (16 routes migrated), 200+ lines of duplicate code eliminated
 - **Code Cleanup**: Conditional logging, debug code removal, import cleanup
 - **Type Safety**: Replaced critical `any` types with proper definitions
 - **Build Quality**: Production-ready builds, linting improvements
-- **Grade Improvement**: C (66%) → B+ (83-84%) through safe, incremental improvements including Phase 3
+- **Grade Improvement**: C (66%) -> B+ (83-84%) through safe, incremental improvements including Phase 3
 
 **For Details:** See `docs/review-analysis/MASTER_COMPLETION_SUMMARY.md` for comprehensive overview.
 
-### **Comprehensive Poll System** ✅ NEW
+### **Comprehensive Poll System** [x] NEW
 - **Interactive Polls**: Single-choice and ranking polls across 4 survey pages
 - **Vote Persistence**: Votes remembered across page refreshes and sessions
 - **Select-Then-Submit Pattern**: Clear user experience with explicit submit buttons
@@ -119,27 +119,27 @@ npm run test:e2e:ui
 - **Database Integration**: Secure poll storage with Row Level Security
 - **Admin Management**: Complete poll results viewing and management
 
-### **Dark/Light Mode Theme System** ✅ NEW
+### **Dark/Light Mode Theme System** [x] NEW
 - **Complete Theme Implementation**: Full dark/light mode support across all pages
 - **Theme Persistence**: User preferences saved in localStorage
 - **CSS Specificity Solution**: Resolved complex CSS override issues
 - **Comprehensive Coverage**: All components and pages support both themes
 - **Professional UI**: Consistent visual experience across all interfaces
 
-### **Enhanced User Management System** ✅
+### **Enhanced User Management System** [x]
 - **100% User Visibility**: Admin dashboard now shows all authenticated users
 - **Real Email Addresses**: No more "User 1234..." - displays actual user emails
 - **Automatic Role Assignment**: New signups automatically get 'member' role
 - **Complete Activity Tracking**: Monitor user engagement and participation
 - **Professional Admin Interface**: Enterprise-level user management capabilities
 
-### **Database Improvements** ✅
+### **Database Improvements** [x]
 - **Secure User Email Access**: Safe database functions for user data
 - **Enhanced Views**: Comprehensive user management and activity tracking
 - **Automatic Triggers**: Self-maintaining user role system
 - **Performance Optimization**: Efficient queries and indexing
 
-### **CEW Conference Polling System** ✅ NEW (FINAL VERSION)
+### **CEW Conference Polling System** [x] NEW (FINAL VERSION)
 - **Unauthenticated Polling**: Conference attendees can vote without accounts
 - **Shared Code Authentication**: Single code (e.g., "CEW2025") for all attendees
 - **Privacy-Focused Design**: No client-side persistence for true privacy in incognito mode
@@ -152,7 +152,7 @@ npm run test:e2e:ui
 - **Simplified Constraints**: Removed complex database constraints for reliable operation
 - **Menu Update**: Changed from "CEW 2025" to "SABCS Session" in header navigation
 
-## 🏗️ **Architecture**
+## **Architecture**
 
 ### **Technology Stack**
 - **Frontend**: Next.js 15+ with App Router, TypeScript, Tailwind CSS v4
@@ -170,40 +170,40 @@ npm run test:e2e:ui
 ### **File Structure**
 ```
 src/
-├── app/
-│   ├── (auth)/           # Authentication pages
-│   ├── (dashboard)/      # Main dashboard and admin
-│   ├── api/              # API routes
-│   └── globals.css       # Global styles
-├── components/            # Reusable React components
-│   ├── dashboard/        # Dashboard-specific components
-│   └── shared/           # Common UI components
-├── lib/                   # Utility functions and configurations
-│   └── supabase/         # Supabase client and middleware
-└── middleware.ts          # Route protection middleware
+|-- app/
+|   |-- (auth)/           # Authentication pages
+|   |-- (dashboard)/      # Main dashboard and admin
+|   |-- api/              # API routes
+|   `-- globals.css       # Global styles
+|-- components/            # Reusable React components
+|   |-- dashboard/        # Dashboard-specific components
+|   `-- shared/           # Common UI components
+|-- lib/                   # Utility functions and configurations
+|   `-- supabase/         # Supabase client and middleware
+`-- middleware.ts          # Route protection middleware
 
-docs/                      # 📚 Project documentation
-├── AGENTS.md              # Core development guidelines and rules
-├── PROJECT_STATUS.md      # Current project status and features
-├── POLL_SYSTEM_COMPLETE_GUIDE.md  # Poll system architecture
-├── POLL_SYSTEM_DEBUGGING_GUIDE.md # Debugging procedures
-├── DEBUGGING_LESSONS_LEARNED.md   # Historical debugging issues
-├── K6_TEST_COVERAGE_ANALYSIS.md   # Testing documentation
-├── MATRIX_GRAPH_VISUALIZATION.md  # Matrix graph guide
-└── SAFE_POLL_UPDATE_PROTOCOL.md   # Update procedures
+docs/                      # Project documentation
+|-- AGENTS.md              # Core development guidelines and rules
+|-- PROJECT_STATUS.md      # Current project status and features
+|-- POLL_SYSTEM_COMPLETE_GUIDE.md  # Poll system architecture
+|-- POLL_SYSTEM_DEBUGGING_GUIDE.md # Debugging procedures
+|-- DEBUGGING_LESSONS_LEARNED.md   # Historical debugging issues
+|-- K6_TEST_COVERAGE_ANALYSIS.md   # Testing documentation
+|-- MATRIX_GRAPH_VISUALIZATION.md  # Matrix graph guide
+`-- SAFE_POLL_UPDATE_PROTOCOL.md   # Update procedures
 
-scripts/                   # 🛠️ Utility scripts
-├── debug/                 # SQL debugging queries
-├── cleanup/               # Data cleanup scripts
-└── run-cew-100-test.*     # Test execution scripts
+scripts/                   # Utility scripts
+|-- debug/                 # SQL debugging queries
+|-- cleanup/               # Data cleanup scripts
+`-- run-cew-100-test.*     # Test execution scripts
 
-tests/                     # 🧪 Test files
-├── k6-comprehensive-test-enhanced.js  # Main test suite
-├── k6-matrix-graph-test-enhanced.js   # Matrix graph tests
-├── k6-ranking-test.js                 # Ranking poll tests
-├── k6-survey-results-authenticated.js # Authenticated tests
-├── k6-test.js                         # Basic test suite
-└── k6-wordcloud-test.js               # Wordcloud tests
+tests/                     # Test files
+|-- k6-comprehensive-test-enhanced.js  # Main test suite
+|-- k6-matrix-graph-test-enhanced.js   # Matrix graph tests
+|-- k6-ranking-test.js                 # Ranking poll tests
+|-- k6-survey-results-authenticated.js # Authenticated tests
+|-- k6-test.js                         # Basic test suite
+`-- k6-wordcloud-test.js               # Wordcloud tests
 ```
 
 ### **Core Components**
@@ -212,9 +212,9 @@ tests/                     # 🧪 Test files
 - **Real-time Features**: Live updates for discussions and notifications
 - **Admin Panel**: Comprehensive user and content management
 
-## 📊 **Features**
+## **Features**
 
-### **Interactive Poll System** 🆕
+### **Interactive Poll System** (NEW)
 - **Survey Pages**: 4 pages with interactive polls (Holistic Protection, Prioritization, Tiered Framework, WIKS)
 - **Poll Types**: Single-choice polls and ranking polls with automatic detection
 - **Vote Persistence**: All votes saved and remembered across sessions
@@ -233,7 +233,7 @@ tests/                     # 🧪 Test files
 - **Mobile Optimization**: Responsive design with clean hover-free charts
 - **Security**: RLS policies for user isolation and admin access
 
-### **CEW Conference Polling** 🆕
+### **CEW Conference Polling** (NEW)
 - **Unauthenticated Access**: Conference attendees vote without creating accounts
 - **Shared Code System**: Single code (e.g., "CEW2025") for all attendees
 - **Mobile-Optimized**: Perfect for conference mobile devices
@@ -249,14 +249,14 @@ tests/                     # 🧪 Test files
 - **Efficient Design**: Optimized for 100 people in 15 minutes
 - **No Change Votes**: One vote per device to prevent confusion
 
-### **Theme System** 🆕
+### **Theme System** (NEW)
 - **Dark/Light Mode**: Complete theme switching with user preference persistence
 - **CSS Specificity Solution**: Resolved complex styling override issues
 - **Comprehensive Coverage**: All pages and components support both themes
 - **Professional UI**: Consistent visual experience across all interfaces
 - **Theme Toggle**: Easy switching between light and dark modes
 
-### **User Management** 🆕
+### **User Management** (NEW)
 - **Complete User Visibility**: See all authenticated users in admin dashboard
 - **Real Email Addresses**: Professional user communication capabilities
 - **Automatic Role Assignment**: Self-maintaining user role system
@@ -289,9 +289,9 @@ tests/                     # 🧪 Test files
 - **Content Moderation**: Manage documents, discussions, and announcements
 - **System Monitoring**: Track platform usage and engagement
 - **Role Administration**: Manage user permissions and access
-- **Poll Results Management**: Enhanced single-question display with expandable navigation ✅ NEW
+- **Poll Results Management**: Enhanced single-question display with expandable navigation [x] NEW
 
-## 🔐 **Security Features**
+## **Security Features**
 
 ### **Row Level Security (RLS)**
 - **User Isolation**: Users can only access their own data
@@ -307,24 +307,24 @@ tests/                     # 🧪 Test files
 - **Redirect Flow**: Seamless login redirect with return-to-page functionality
 - **API Security**: Protected endpoints with proper authentication
 
-## 📁 **Project Structure**
+## **Project Structure**
 
 ```
 src/
-├── app/                    # Next.js App Router
-│   ├── (auth)/           # Authentication pages
-│   ├── (dashboard)/      # Main dashboard and admin
-│   ├── api/              # API routes
-│   └── globals.css       # Global styles
-├── components/            # Reusable React components
-│   ├── dashboard/        # Dashboard-specific components
-│   └── shared/           # Common UI components
-├── lib/                   # Utility functions and configurations
-│   └── supabase/         # Supabase client and middleware
-└── middleware.ts          # Route protection middleware
+|-- app/                    # Next.js App Router
+|   |-- (auth)/           # Authentication pages
+|   |-- (dashboard)/      # Main dashboard and admin
+|   |-- api/              # API routes
+|   `-- globals.css       # Global styles
+|-- components/            # Reusable React components
+|   |-- dashboard/        # Dashboard-specific components
+|   `-- shared/           # Common UI components
+|-- lib/                   # Utility functions and configurations
+|   `-- supabase/         # Supabase client and middleware
+`-- middleware.ts          # Route protection middleware
 ```
 
-## 🚀 **Getting Started**
+## **Getting Started**
 
 ### **Prerequisites**
 - Node.js 18+ 
@@ -361,7 +361,7 @@ src/
    npm run dev
    ```
 
-## 🗄️ **Database Setup**
+## **Database Setup**
 
 ### **Quick Database Setup**
 1. Go to your Supabase dashboard
@@ -369,7 +369,7 @@ src/
 3. Run the database schema from `DATABASE_GUIDE.md`
 4. This creates all tables, views, functions, and RLS policies
 
-### **Enhanced User Management** 🆕
+### **Enhanced User Management** (NEW)
 The database includes a comprehensive user management system:
 
 - **`get_users_with_emails()` Function**: Secure access to user emails
@@ -383,12 +383,12 @@ The database includes a comprehensive user management system:
 - **`user_roles`**: User role management and access control
 - **`documents`**: File storage and management
 - **`discussions`**: Forum conversations and user engagement
-- **`likes`**: User interaction tracking ✅ NEW
+- **`likes`**: User interaction tracking [x] NEW
 - **`announcements`**: System notifications and updates
 - **`milestones`**: Project timeline and progress tracking
-- **`polls` & `poll_votes`**: Interactive poll system ✅ NEW
-- **`ranking_polls` & `ranking_votes`**: Ranking poll system ✅ NEW
-- **`poll_results` & `ranking_results`**: Aggregated poll results views ✅ NEW
+- **`polls` & `poll_votes`**: Interactive poll system [x] NEW
+- **`ranking_polls` & `ranking_votes`**: Ranking poll system [x] NEW
+- **`poll_results` & `ranking_results`**: Aggregated poll results views [x] NEW
 
 ### **Database Security**
 - **Row Level Security (RLS)**: All tables protected with proper policies
@@ -396,7 +396,7 @@ The database includes a comprehensive user management system:
 - **Admin Access**: Admins can manage all user data
 - **Secure Functions**: Database functions respect RLS policies
 
-## 🔧 **Configuration**
+## **Configuration**
 
 ### **Environment Variables**
 ```env
@@ -412,7 +412,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 4. Configure authentication providers
 5. Set up storage buckets for documents
 
-## 📱 **Usage**
+## **Usage**
 
 ### **For Users**
 1. **Sign Up**: Create an account with email verification
@@ -426,7 +426,7 @@ SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 3. **System Administration**: Configure platform settings and permissions
 4. **Analytics**: Track user engagement and platform usage
 
-## 🧪 **Testing**
+## **Testing**
 
 ### **User Management Testing**
 ```bash
@@ -452,7 +452,7 @@ npm run test:security
 npm run test:performance
 ```
 
-## 📈 **Performance**
+## **Performance**
 
 ### **Optimizations**
 - **Database Views**: Efficient data aggregation and querying
@@ -466,9 +466,9 @@ npm run test:performance
 - **Performance Metrics**: Database query performance
 - **Security Auditing**: RLS policy verification
 
-## 🔄 **Deployment**
+## **Deployment**
 
-### **Vercel Deployment** ✅ Configured
+### **Vercel Deployment** [x] Configured
 - **Method:** Automatic deployments via GitHub commits
 - **Status:** Every commit triggers deployment automatically
 - **Performance:** 99% Real Experience Score (Excellent)
@@ -483,7 +483,7 @@ npm run test:performance
 - **Backup Strategy**: Always backup before running migrations
 - **Rollback Plan**: Procedures for reverting changes if needed
 
-## 🤝 **Contributing**
+## **Contributing**
 
 ### **Development Guidelines**
 1. **Code Style**: Follow TypeScript and React best practices
@@ -497,7 +497,7 @@ npm run test:performance
 3. **Testing**: Verify changes in development environment
 4. **Documentation**: Update schema documentation
 
-## 📚 **Documentation**
+## **Documentation**
 
 ### **Core Documentation**
 All documentation has been organized in the `docs/` folder for better accessibility:
@@ -522,7 +522,7 @@ All documentation has been organized in the `docs/` folder for better accessibil
 - **Admin**: User and content administration
 - **Polls**: Interactive poll system with vote persistence
 
-## 🗳️ **Poll and Ranking Question System Documentation**
+## **Poll and Ranking Question System Documentation**
 
 ### **System Overview**
 The poll and ranking question system provides interactive voting capabilities for both authenticated users and conference attendees. The system supports two types of polls: single-choice polls and ranking polls.
@@ -710,7 +710,7 @@ SELECT * FROM ranking_results WHERE page_path = '/survey-results/holistic-protec
 - **Database Sharding**: Support for larger poll volumes
 - **API Rate Limiting**: Protection against abuse
 
-## 🐛 **Troubleshooting**
+## **Troubleshooting**
 
 ### Common Issues
 
@@ -731,7 +731,7 @@ SELECT * FROM ranking_results WHERE page_path = '/survey-results/holistic-protec
 - **Verification**: Check user roles through admin dashboard
 
 #### Signup Issues
-- **Status**: ✅ RESOLVED
+- **Status**: [x] RESOLVED
 - **Previous Issue**: Temporary 500 errors during signup were caused by Supabase service issues, not database configuration
 - **Current State**: Signup process works normally with automatic role assignment
 - **Verification**: New users can sign up and automatically receive 'member' role
@@ -756,7 +756,7 @@ FROM information_schema.triggers
 WHERE event_object_table = 'users' AND trigger_schema = 'auth';
 ```
 
-## 🔮 **Roadmap**
+## **Roadmap**
 
 ### **Short Term**
 - **Enhanced Analytics**: Advanced user engagement metrics
@@ -770,11 +770,11 @@ WHERE event_object_table = 'users' AND trigger_schema = 'auth';
 - **API Integration**: External system integration
 - **Scalability**: Support for larger user bases
 
-## 📄 **License**
+## **License**
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🙏 **Acknowledgments**
+## **Acknowledgments**
 
 - **SSTAC Committee**: For project requirements and feedback
 - **TWG Members**: For technical guidance and testing
@@ -782,7 +782,7 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - **Next.js Team**: For powerful React framework
 - **Open Source Community**: For valuable tools and libraries
 
-## 📞 **Support**
+## **Support**
 
 ### **Technical Support**
 - **Documentation**: Comprehensive guides and examples
