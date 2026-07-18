@@ -9,6 +9,7 @@ import FilterSidebar from './components/FilterSidebar';
 import CustomWordCloud from '@/components/dashboard/CustomWordCloud';
 import PrioritizationMatrixGraph from '@/components/graphs/PrioritizationMatrixGraph';
 import { usePollExport } from './hooks/usePollExport';
+import { logger } from '@/lib/logger';
 
 // Simple Error Boundary Component
 class ErrorBoundary extends React.Component<{ children: React.ReactNode; fallback: React.ReactNode }, { hasError: boolean }> {
@@ -91,17 +92,17 @@ export default function PollResultsClient() {
       const wordcloudData = wordcloudResult.data || [];
       
       // Debug: Log specific data for tiered-framework
-      console.log('🔍 Raw single-choice data for tiered-framework:', 
-        singleChoiceData.filter(p => p.page_path.includes('tiered-framework'))
-      );
-      console.log('🔍 Raw ranking data for tiered-framework:', 
-        rankingData.filter(p => p.page_path.includes('tiered-framework'))
-      );
-      
+      logger.debug('Raw single-choice data for tiered-framework', {
+        data: singleChoiceData.filter(p => p.page_path.includes('tiered-framework'))
+      });
+      logger.debug('Raw ranking data for tiered-framework', {
+        data: rankingData.filter(p => p.page_path.includes('tiered-framework'))
+      });
+
       // Debug: Log wordcloud data for prioritization
-      console.log('🔍 Raw wordcloud data for prioritization:', 
-        wordcloudData.filter(p => p.page_path.includes('prioritization'))
-      );
+      logger.debug('Raw wordcloud data for prioritization', {
+        data: wordcloudData.filter(p => p.page_path.includes('prioritization'))
+      });
 
       // Define current active polls to filter out old/test data
       // Use more specific matching patterns to avoid false positives
@@ -144,24 +145,24 @@ export default function PollResultsClient() {
                  pollStart.includes('matrix sediment standards') && questionStart.includes('matrix sediment standards');
         });
         if (!matchesCurrentQuestion) {
-          console.log('🔍 Single-choice poll not matching current questions:', {
+          logger.debug('Single-choice poll not matching current questions', {
             page_path: poll.page_path,
             poll_index: poll.poll_index,
             question_preview: poll.question.substring(0, 100)
           });
           return;
         }
-        
-        console.log('✅ Single-choice poll matched:', {
+
+        logger.debug('Single-choice poll matched', {
           page_path: poll.page_path,
           poll_index: poll.poll_index,
           total_votes: poll.total_votes,
           question_preview: poll.question.substring(0, 100)
         });
-        
+
         // Debug: Check if this is holistic protection question 1
         if (poll.page_path.includes('holistic-protection') && poll.poll_index === 0) {
-          console.log('🔍 HOLISTIC Q1 DEBUG:', {
+          logger.debug('Holistic Q1 debug', {
             poll_question: poll.question,
             expected_question: currentPollQuestions[0],
             match_found: currentPollQuestions.some(q => q.includes('ecosystem health from direct toxicity')),
@@ -200,7 +201,7 @@ export default function PollResultsClient() {
         const group = pollGroups.get(key)!;
         if (poll.page_path.startsWith('/survey-results') || poll.page_path === '/wiks') {
           group.surveyPoll = poll;
-          console.log('📊 Added survey poll to group:', {
+          logger.debug('Added survey poll to group', {
             key,
             page_path: poll.page_path,
             poll_index: poll.poll_index,
@@ -208,7 +209,7 @@ export default function PollResultsClient() {
           });
         } else if (poll.page_path.startsWith('/cew-polls')) {
           group.cewPoll = poll;
-          console.log('📊 Added CEW poll to group:', {
+          logger.debug('Added CEW poll to group', {
             key,
             page_path: poll.page_path,
             poll_index: poll.poll_index,
@@ -225,7 +226,7 @@ export default function PollResultsClient() {
       // Process ranking polls
       rankingData.forEach(poll => {
         // Debug: Log all ranking polls to see what we're working with
-        console.log('🔍 Processing ranking poll:', {
+        logger.debug('Processing ranking poll', {
           page_path: poll.page_path,
           poll_index: poll.poll_index,
           question_preview: poll.question.substring(0, 100),
@@ -243,15 +244,15 @@ export default function PollResultsClient() {
         });
         
         if (!matchesCurrentQuestion) {
-          console.log('❌ Ranking poll filtered out - no matching question:', {
+          logger.debug('Ranking poll filtered out - no matching question', {
             page_path: poll.page_path,
             poll_index: poll.poll_index,
             question_preview: poll.question.substring(0, 100)
           });
           return;
         }
-        
-        console.log('✅ Ranking poll matched:', {
+
+        logger.debug('Ranking poll matched', {
           page_path: poll.page_path,
           poll_index: poll.poll_index,
           total_votes: poll.total_votes
@@ -325,7 +326,7 @@ export default function PollResultsClient() {
                  pollStart.includes('barrier') && questionStart.includes('barrier');
         });
         if (!matchesCurrentQuestion) {
-          console.log('🔍 Wordcloud poll not matching current questions:', {
+          logger.debug('Wordcloud poll not matching current questions', {
             page_path: poll.page_path,
             poll_index: poll.poll_index,
             question_preview: poll.question.substring(0, 100)
@@ -440,7 +441,7 @@ export default function PollResultsClient() {
         
         // Debug: Log wordcloud poll data processing
         if (pollData.page_path.includes('prioritization')) {
-          console.log('🔍 Wordcloud poll data processing:', {
+          logger.debug('Wordcloud poll data processing', {
             pollId: pollData.poll_id,
             pagePath: pollData.page_path,
             pollIndex: pollData.poll_index,
@@ -485,7 +486,7 @@ export default function PollResultsClient() {
           
           // Debug: Log wordcloud vote calculation
           if (key.includes('prioritization')) {
-            console.log('🔍 Wordcloud vote calculation:', {
+            logger.debug('Wordcloud vote calculation', {
               key,
               surveyVotes,
               cewVotes,
@@ -513,7 +514,7 @@ export default function PollResultsClient() {
 
         // Debug: Log vote calculation for prioritization questions
         if (key.includes('prioritization')) {
-          console.log('🔍 Prioritization vote calculation:', {
+          logger.debug('Prioritization vote calculation', {
             key,
             isRanking: group.isRanking,
             isWordcloud: group.isWordcloud,
@@ -718,7 +719,7 @@ export default function PollResultsClient() {
         
         // Debug logging for WIKS polls
         if (key.includes('wiks')) {
-          console.log('🔍 DEBUG: WIKS Poll:', {
+          logger.debug('WIKS poll', {
             key,
             page_path: combinedPoll.page_path,
             question: combinedPoll.question.substring(0, 100) + '...',
@@ -780,13 +781,12 @@ export default function PollResultsClient() {
   useEffect(() => {
     const fetchMatrixData = async () => {
       try {
-        console.log(`🔍 MATRIX API CALL: Fetching matrix data with filter=${filterMode}`);
+        logger.debug('Matrix API call - fetching matrix data', { filterMode });
         const response = await fetch(`/api/graphs/prioritization-matrix?filter=${filterMode}`);
-        console.log(`🔍 MATRIX API RESPONSE: Status ${response.status}`);
+        logger.debug('Matrix API response', { status: response.status });
         if (response.ok) {
         const data = await response.json();
-        console.log(`🔍 MATRIX API DATA:`, data);
-        console.log(`🔍 MATRIX API DATA DETAILED:`, JSON.stringify(data, null, 2));
+        logger.debug('Matrix API data', { data });
         setMatrixData(data);
         } else {
           console.error(`❌ MATRIX API ERROR: ${response.status} ${response.statusText}`);
@@ -1389,7 +1389,7 @@ export default function PollResultsClient() {
                         const resultsMap = new Map(filteredResults.map(r => [r.option_index, r]));
                         
                         // Debug: Log the options array to see what we have
-                        console.log('🔍 Prioritization ranking poll options:', {
+                        logger.debug('Prioritization ranking poll options', {
                           pollIndex: selectedPoll.poll_index,
                           options: selectedPoll.options,
                           optionsType: typeof selectedPoll.options,

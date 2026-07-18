@@ -2,6 +2,7 @@
 
 import { useCallback, useRef, useState } from 'react';
 import { MatrixData } from '../types';
+import { logger } from '@/lib/logger';
 
 // Cache duration: 10 minutes (matches server TTL)
 const CACHE_DURATION_MS = 10 * 60 * 1000;
@@ -41,7 +42,7 @@ export function useMatrixDataCache() {
         const cacheAge = Date.now() - cachedEntry.timestamp;
 
         if (cacheAge < CACHE_DURATION_MS) {
-          console.log(`✅ useMatrixDataCache - Cache hit for ${filter}, age: ${cacheAge}ms`);
+          logger.debug('useMatrixDataCache - cache hit', { filter, cacheAge });
           setLoading(false);
           setError(null);
           return cachedEntry.data;
@@ -50,7 +51,7 @@ export function useMatrixDataCache() {
 
       // Check if there's already a pending request for this filter
       if (pendingRequests.has(cacheKey)) {
-        console.log(`⏳ useMatrixDataCache - Returning pending request for ${filter}`);
+        logger.debug('useMatrixDataCache - returning pending request', { filter });
         return pendingRequests.get(cacheKey)!.promise;
       }
 
@@ -74,7 +75,7 @@ export function useMatrixDataCache() {
             timestamp: Date.now()
           });
 
-          console.log(`✅ useMatrixDataCache - Data cached for ${filter}`);
+          logger.debug('useMatrixDataCache - data cached', { filter });
           setLoading(false);
           return data;
         } catch (err) {
@@ -107,10 +108,10 @@ export function useMatrixDataCache() {
   const clearCache = useCallback((filter?: 'all' | 'twg' | 'cew') => {
     if (filter) {
       matrixDataCache.delete(`matrix_${filter}`);
-      console.log(`✅ useMatrixDataCache - Cleared cache for ${filter}`);
+      logger.debug('useMatrixDataCache - cleared cache', { filter });
     } else {
       matrixDataCache.clear();
-      console.log(`✅ useMatrixDataCache - Cleared all caches`);
+      logger.debug('useMatrixDataCache - cleared all caches');
     }
   }, []);
 

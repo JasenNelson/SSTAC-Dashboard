@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { PollResult, MatrixData, PollGroupEntry, CacheEntry, PollResultItem } from '../types';
+import { logger } from '@/lib/logger';
 
 // Cache configuration
 const CACHE_DURATION_MS = 5 * 60 * 1000; // 5 minutes
@@ -65,7 +66,7 @@ export function usePollData() {
       const wordcloudData = wordcloudResult.data || [];
 
       // Debug logging
-      console.log('📊 Poll Data Fetch Results:', {
+      logger.debug('Poll data fetch results', {
         singleChoice: singleChoiceData.length,
         ranking: rankingData.length,
         wordcloud: wordcloudData.length
@@ -298,7 +299,7 @@ export function usePollData() {
       });
 
       // Debug: Log combined results count
-      console.log('📊 Combined Results after filtering:', combinedResults.length);
+      logger.debug('Combined results after filtering', { count: combinedResults.length });
 
       // If no combined results, fallback to showing raw data
       let finalResults: PollResult[];

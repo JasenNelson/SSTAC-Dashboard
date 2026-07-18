@@ -3,6 +3,7 @@
 import { NextResponse } from 'next/server';
 import { createAnonymousClient, createAuthenticatedClient, getAuthenticatedUser } from '@/lib/supabase-auth';
 import { createHmac } from 'crypto';
+import { logger } from '@/lib/logger';
 
 // SECURITY (2026-07-13): the pseudonym salt MUST be a server-only secret.
 // NEXT_PUBLIC_* env vars are bundled into client JS, so using one here would
@@ -109,7 +110,7 @@ const MATRIX_CACHE_TTL_MS = 10 * 60 * 1000;
 const matrixDataCache = new Map<string, CachedMatrixData>();
 
 export async function GET(request: Request) {
-  console.log('🚀 MATRIX API CALLED - Starting prioritization matrix API');
+  logger.debug('Matrix API called - starting prioritization matrix API');
   const supabase = await createAnonymousClient();
 
   // SECURITY (2026-07-11, tiers refined 2026-07-13): this route has both
@@ -170,7 +171,7 @@ export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
   const filter = searchParams.get('filter') || 'all';
   const cacheKey = `matrix_${filter}_${cacheTier}`;
-  console.log(`🚀 MATRIX API - Filter mode: ${filter}, tier: ${cacheTier}`);
+  logger.debug('Matrix API filter mode', { filter, cacheTier });
 
   // Check cache
   if (matrixDataCache.has(cacheKey)) {
@@ -178,7 +179,7 @@ export async function GET(request: Request) {
     const cacheAge = Date.now() - cachedEntry.timestamp;
 
     if (cacheAge < MATRIX_CACHE_TTL_MS) {
-      console.log(`✅ MATRIX API - Cache hit for filter: ${filter}, tier: ${cacheTier}, age: ${cacheAge}ms`);
+      logger.debug('Matrix API cache hit', { filter, cacheTier, cacheAge });
       return NextResponse.json(cachedEntry.data, {
         headers: {
           'Cache-Control': cacheControlHeader,
@@ -205,7 +206,7 @@ export async function GET(request: Request) {
 
     // 2. Filter poll results based on filter parameter
     let filteredPollResults = pollResults;
-    console.log('🔍 Initial poll results:', {
+    logger.debug('Initial poll results', {
       filter,
       totalPolls: pollResults.length,
       pollPaths: pollResults.map(p => p.page_path),
@@ -221,7 +222,7 @@ export async function GET(request: Request) {
     }
     // 'all' filter keeps all data
     
-    console.log('🔍 Filtered poll results:', {
+    logger.debug('Filtered poll results', {
       filter,
       totalPolls: filteredPollResults.length,
       pollPaths: filteredPollResults.map(p => p.page_path),
@@ -255,7 +256,7 @@ export async function GET(request: Request) {
     const individualVotesData = new Map<string, IndividualVotePair[]>();
     
     // Debug: Log what's in the pollsByPathAndIndex map
-    console.log('🔍 Polls by path and index:', {
+    logger.debug('Polls by path and index', {
       prioritization: Array.from(pollsByPathAndIndex.get('prioritization')?.entries() || []),
       holisticProtection: Array.from(pollsByPathAndIndex.get('holistic-protection')?.entries() || [])
     });
@@ -328,7 +329,8 @@ export async function GET(request: Request) {
           importancePollIds = [cewImportancePoll?.id, surveyImportancePoll?.id].filter(Boolean) as string[];
           feasibilityPollIds = [cewFeasibilityPoll?.id, surveyFeasibilityPoll?.id].filter(Boolean) as string[];
           
-          console.log(`🔄 Using comprehensive poll IDs for ${pair.title}:`, {
+          logger.debug('Using comprehensive poll IDs', {
+            pairTitle: pair.title,
             importancePollIds,
             feasibilityPollIds,
             originalImportancePollId: importancePollId,
@@ -337,7 +339,8 @@ export async function GET(request: Request) {
         }
 
         // Debug: Log what polls we're querying
-        console.log(`🔍 Poll lookup for ${pair.title}:`, {
+        logger.debug('Poll lookup', {
+          pairTitle: pair.title,
           importanceIndex: pair.importanceIndex,
           feasibilityIndex: pair.feasibilityIndex,
           originalImportancePollId: importancePollId,
@@ -429,7 +432,8 @@ export async function GET(request: Request) {
         });
 
         // Debug: Log vote pairing results
-        console.log(`🔍 Vote pairing debug for ${pair.title}:`, {
+        logger.debug('Vote pairing debug', {
+          pairTitle: pair.title,
           totalVotesFound: individualVotes?.length || 0,
           enrichedVotesFound: enrichedVotes?.length || 0,
           uniqueUsers: userVotes.size,
@@ -492,7 +496,8 @@ export async function GET(request: Request) {
         });
 
         // Update debug info with actual pairs created
-        console.log(`🔍 Final pairing results for ${pair.title}:`, {
+        logger.debug('Final pairing results', {
+          pairTitle: pair.title,
           totalVotesFound: individualVotes?.length || 0,
           enrichedVotesFound: enrichedVotes?.length || 0,
           uniqueUsers: userVotes.size,
@@ -513,21 +518,22 @@ export async function GET(request: Request) {
 
         // Apply filter to individual pairs
         let filteredPairs = individualPairs;
-        console.log(`🔍 Filtering individual pairs for ${pair.title}:`, {
+        logger.debug('Filtering individual pairs', {
+          pairTitle: pair.title,
           filter,
           totalPairs: individualPairs.length,
           userTypes: individualPairs.map(p => p.userType),
           samplePairs: individualPairs.slice(0, 2)
         });
-        
+
         if (filter === 'twg') {
           filteredPairs = individualPairs.filter(pair => pair.userType === 'authenticated');
         } else if (filter === 'cew') {
           filteredPairs = individualPairs.filter(pair => pair.userType === 'cew');
         }
         // For 'all' filter, keep all pairs (no filtering needed)
-        
-        console.log(`🔍 Filtered pairs result:`, {
+
+        logger.debug('Filtered pairs result', {
           filter,
           filteredCount: filteredPairs.length,
           sampleFiltered: filteredPairs.slice(0, 2)
