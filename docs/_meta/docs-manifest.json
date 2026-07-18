@@ -91,9 +91,9 @@
       },
       "playwright_test_count": {
         "status": "verified",
-        "value": 6,
-        "source": "playwright test --list output (2025-12-18)",
-        "last_verified": "2025-12-18"
+        "value": 228,
+        "source": "playwright test --list output (2026-07-18)",
+        "last_verified": "2026-07-18"
       },
       "k6_script_count": {
         "status": "verified",
