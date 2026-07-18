@@ -110,7 +110,9 @@ class TestGraphSmoke(unittest.TestCase):
         self.assertIn("HARD FAIL", result.stdout)
 
     def test_communities_out_of_band_is_warn_only_never_hard(self):
-        # 5 communities is far below the 15-250 healthy band, but must only WARN (no
+        # 5 communities is far below the 15-700 healthy band (2026-07-17: upper bound
+        # widened 250 -> 700, see docs/KB_COMMUNITY_CALIBRATION_2026-07-17.md; lower
+        # bound 15 unchanged, so this test is unaffected), but must only WARN (no
         # stated HARD limit for community COUNT) -- must not cause a non-zero exit on its
         # own. Nodes are spread evenly across the 5 communities (20% each) so
         # largest_community_pct stays healthy (<=35%) -- num_communities=1 would force

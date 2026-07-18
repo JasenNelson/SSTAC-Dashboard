@@ -61,7 +61,20 @@ THRESHOLD_TABLE = [
     (
         'num_communities',
         'communities (count) -- WARN-only, no stated HARD limit',
-        lambda v: 15 <= v <= 250,
+        # Upper bound widened 250 -> 700 (2026-07-17 calibration follow-up,
+        # docs/KB_COMMUNITY_CALIBRATION_2026-07-17.md): the 250 ceiling was set
+        # against the OHD reference instance at ~2851 nodes, but OHD's own live
+        # graph had already grown past 250 communities by 2026-07-11 and sits at
+        # 669 communities / 2907 nodes as of 2026-07-17 (13 consecutive green
+        # nightlies throughout). SSTAC's Phase 2 graph is 534 communities / 8517
+        # nodes -- a LOWER communities-per-1000-nodes density (62.7) than every
+        # OHD snapshot observed (129.7-296.9). Neither data point indicates a
+        # clustering/extraction defect (largest_community_pct stays <2% for
+        # SSTAC; small communities are numerous but hold little node mass) --
+        # the fixed absolute band was simply stale for both graphs' current
+        # scale. 700 covers both current data points with margin while still
+        # flagging genuinely pathological over-fragmentation.
+        lambda v: 15 <= v <= 700,
         None,
     ),
     (
