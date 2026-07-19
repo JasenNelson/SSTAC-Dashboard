@@ -127,7 +127,11 @@ describe('matrix options evidence library helpers', () => {
     // 2026-07-07: +1 (1683 -> 1684) -- D1 dioxin-like TEQ oral TDI needs_review candidate
     // (pv-hc-dioxin-like-teq-hh-direct-oral-tdi) adds ONE new candidate group
     // human-health-direct__dioxin_like_teq__oral_tdi_teq_mg_per_kg_bw_day__Canada_federal.
-    expect(view.valueGroups).toHaveLength(1684);
+    // 2026-07-19: +3 (1684 -> 1687) -- owner-approved D2a inhalation needs_review candidates:
+    // the two IR_air_m3_per_day rows (adult+toddler) share ONE group
+    // human-health-direct__generic__IR_air_m3_per_day__general; plus ILCR_target__general and the
+    // BC CSR Hazard Index group human-health-direct__generic__HI__BC.
+    expect(view.valueGroups).toHaveLength(1687);
     // approvedSourceBacked: was 1219; -1 (asbestos IUR deletion) = 1218.
     // (P28 rows use pending_source_locator, not approved_source_backed.)
     // 2026-06-09: +1 -- WLRS recreational fish-ingestion-rate (pv-wlrs-2023-ir-food-
@@ -181,7 +185,10 @@ describe('matrix options evidence library helpers', () => {
     // 0.031) HITL-promoted to approved_source_backed (J. Nelson, promote-eco-source.mjs --apply).
     // 2026-07-07: +1 (1352 -> 1353) -- D1 dioxin-like TEQ oral TDI needs_review candidate carries
     // evidence_support_status=approved_source_backed (qa_status still needs_review), so it counts here.
-    expect(view.audit.values.approvedSourceBacked).toBe(1353);
+    // 2026-07-19: +4 (1353 -> 1357) -- the 4 D2a inhalation needs_review rows are
+    // evidence_support_status=approved_source_backed (source-verified), qa_status still
+    // needs_review, so they count here.
+    expect(view.audit.values.approvedSourceBacked).toBe(1357);
     // pendingSourceLocator: 355 P28 (soil + water/vapour) + 15 base/other pending = 370;
     // 2026-06-09: +3 BC WLRS fish-ingestion-rate candidates (needs_review/pending) = 373;
     // -1 -- WLRS recreational promoted out of pending (HITL, J. Nelson) = 372.
@@ -305,7 +312,8 @@ describe('matrix options evidence library helpers', () => {
     // default_status=available_option still count here.
     expect(view.audit.values.availableOptions).toBe(1678);
     // 2026-07-06 CORRECTION: the 2 chlorobenzene rows leave not_default (see above). -2 (19 -> 17).
-    expect(view.audit.values.notDefaults).toBe(17);
+    // 2026-07-19: +4 (17 -> 21) -- the 4 D2a inhalation rows are all default_status=not_default.
+    expect(view.audit.values.notDefaults).toBe(21);
     expect(view.audit.equations.pendingReview).toBe(5);
     expect(view.audit.equations.pendingSourceLocator).toBe(2);
     expect(view.audit.equations.currentCalculatorScaffold).toBe(3);
@@ -345,6 +353,8 @@ describe('matrix options evidence library helpers', () => {
       'src-bc-protocol-28-v3-0-2024',
       'src-us-epa-pfoa-2024',
       'src-us-epa-pfos-2024',
+      // 2026-07-19: BC CSR (B.C. Reg. 375/96) registered for the D2a Hazard Index (HI=1) row.
+      'src-bc-csr-375-96',
     ]);
   });
 

@@ -6072,5 +6072,268 @@
       "exposure factor"
     ],
     "candidate_group_id": "human-health-food__generic__BW_kg__BC"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ir-air-adult-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "not_default",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "IR_air_m3_per_day",
+    "display_name": "Inhalation rate - adult (HC PQRA v4.0)",
+    "value": 16.6,
+    "unit": "m3/day",
+    "applicability": "Health Canada PQRA v4.0 (2024) adult inhalation rate. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "uncertainty": "Pending direct-source verification.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs)",
+        "value_text": "16.6 m3/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "agy",
+        "extracted_at": "2026-07-19",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E adult inhalation rate.",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ir-air-adult-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "HC PQRA v4.0 Appendix E adult inhalation rate (16.6 m3/day). generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 section this parameter comes from -- inhalation rate"
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "general adult",
+      "worker",
+      "commercial",
+      "industrial"
+    ],
+    "assumption_tags": [
+      "inhalation rate",
+      "receptor characteristic",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__IR_air_m3_per_day__general"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ir-air-toddler-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "not_default",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "IR_air_m3_per_day",
+    "display_name": "Inhalation rate - toddler (HC PQRA v4.0)",
+    "value": 8.3,
+    "unit": "m3/day",
+    "applicability": "Health Canada PQRA v4.0 (2024) toddler inhalation rate. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "uncertainty": "Pending direct-source verification.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Appendix E (Recommended Receptor Characteristics for HHRAs)",
+        "value_text": "8.3 m3/day",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "agy",
+        "extracted_at": "2026-07-19",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Appendix E toddler inhalation rate.",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ir-air-toddler-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "HC PQRA v4.0 Appendix E toddler inhalation rate (8.3 m3/day). generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 section this parameter comes from -- inhalation rate"
+      }
+    ],
+    "population_groups": [
+      "general population",
+      "toddler"
+    ],
+    "assumption_tags": [
+      "inhalation rate",
+      "receptor characteristic",
+      "exposure factor"
+    ],
+    "candidate_group_id": "human-health-direct__generic__IR_air_m3_per_day__general"
+  },
+  {
+    "parameter_value_id": "pv-bc-csr-hi-target-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "not_default",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-bc-csr-375-96"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "BC",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "1996-04-01",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "HI",
+    "display_name": "Acceptable Hazard Index (HI)",
+    "value": 1,
+    "unit": "unitless",
+    "applicability": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "uncertainty": "Pending direct-source verification.",
+    "evidence_items": [
+      {
+        "source_id": "src-bc-csr-375-96",
+        "locator": "Section 18",
+        "value_text": "HI = 1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "agy",
+        "extracted_at": "2026-07-19",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index.",
+        "evidence_id": "ev-pv-bc-csr-hi-target-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "BC CSR (B.C. Reg. 375/96) s.18 acceptable Hazard Index = 1 (the BC operative threshold; HC PQRA per-substance target HQ 0.2 is a different concept). needs_review candidate; non-operational -- no calculator consumer yet; not a default.",
+    "source_relationships": [
+      {
+        "source_id": "src-bc-csr-375-96",
+        "role": "canonical_candidate",
+        "note": "BC Contaminated Sites Regulation (B.C. Reg. 375/96) Section 18 specifies an acceptable hazard index of 1."
+      }
+    ],
+    "population_groups": [
+      "general population"
+    ],
+    "assumption_tags": [
+      "hazard index",
+      "screening threshold"
+    ],
+    "candidate_group_id": "human-health-direct__generic__HI__BC"
+  },
+  {
+    "parameter_value_id": "pv-hc-pqra-v4-2024-ilcr-target-ca",
+    "substance_key": "generic",
+    "pathway": "human-health-direct",
+    "value_type": "single_value",
+    "default_status": "not_default",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "needs_review",
+    "source_ids": [
+      "src-health-canada-pqra-v4-2024"
+    ],
+    "equation_ids": [
+      "eq-human-health-direct-contact"
+    ],
+    "jurisdiction": "general",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "canonical_source_status": "direct_source_verified",
+    "bc_protocol_alignment": null,
+    "bc_protocol_basis": null,
+    "source_crystallization_date": "2024-03-31",
+    "receptor_groups": [
+      "human"
+    ],
+    "species_groups": [],
+    "input_key": "ILCR_target",
+    "display_name": "Target Incremental Lifetime Cancer Risk (HC PQRA v4.0)",
+    "value": 0.00001,
+    "unit": "unitless",
+    "applicability": "Health Canada PQRA v4.0 (2024) Target ILCR. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "uncertainty": "Pending direct-source verification.",
+    "evidence_items": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "locator": "Health Canada PQRA v4.0",
+        "value_text": "0.00001",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "agy",
+        "extracted_at": "2026-07-19",
+        "qa_status": "needs_review",
+        "reviewed_by": null,
+        "reviewed_at": null,
+        "note": "Health Canada PQRA v4.0 Target Incremental Lifetime Cancer Risk.",
+        "evidence_id": "ev-pv-hc-pqra-v4-2024-ilcr-target-ca-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "HC PQRA v4.0 Target Incremental Lifetime Cancer Risk (1e-5). generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "source_relationships": [
+      {
+        "source_id": "src-health-canada-pqra-v4-2024",
+        "role": "canonical_candidate",
+        "note": "Health Canada PQRA v4.0 section this parameter comes from -- target incremental lifetime cancer risk"
+      }
+    ],
+    "population_groups": [
+      "general population"
+    ],
+    "assumption_tags": [
+      "target cancer risk",
+      "screening threshold"
+    ],
+    "candidate_group_id": "human-health-direct__generic__ILCR_target__general"
   }
 ]
