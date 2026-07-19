@@ -2,6 +2,15 @@ import fs from 'fs';
 import path from 'path';
 import { SUBSTANCE_LIBRARY } from '../../src/lib/matrix-options/substanceLibrary';
 
+interface CatalogRow {
+  substance_key: unknown;
+  input_key: unknown;
+  qa_status: unknown;
+  value_type: unknown;
+  value: unknown;
+  source_ids: unknown;
+}
+
 interface Finding {
   key: string;
   severity: string;
@@ -13,7 +22,7 @@ interface Finding {
 
 function audit() {
   const catalogPath = path.resolve('matrix_research/reference_catalog/human_health_trv_values.json');
-  let rawCatalog: any;
+  let rawCatalog: unknown;
   try {
     rawCatalog = JSON.parse(fs.readFileSync(catalogPath, 'utf8'));
   } catch (err) {
@@ -21,20 +30,20 @@ function audit() {
     process.exit(1);
   }
 
-  let catalog: any[] = [];
+  let catalog: CatalogRow[] = [];
   if (Array.isArray(rawCatalog)) {
-    catalog = rawCatalog;
+    catalog = rawCatalog as CatalogRow[];
   } else {
-    for (const key of Object.keys(rawCatalog)) {
-      if (Array.isArray(rawCatalog[key])) {
-        catalog = rawCatalog[key];
+    for (const key of Object.keys(rawCatalog as Record<string, unknown>)) {
+      if (Array.isArray((rawCatalog as Record<string, unknown>)[key])) {
+        catalog = (rawCatalog as Record<string, unknown>)[key] as CatalogRow[];
         break;
       }
     }
   }
 
   const ecoCatalogPath = path.resolve('matrix_research/reference_catalog/eco_values.json');
-  let rawEcoCatalog: any;
+  let rawEcoCatalog: unknown;
   try {
     rawEcoCatalog = JSON.parse(fs.readFileSync(ecoCatalogPath, 'utf8'));
   } catch (err) {
@@ -42,13 +51,13 @@ function audit() {
     process.exit(1);
   }
 
-  let ecoCatalog: any[] = [];
+  let ecoCatalog: CatalogRow[] = [];
   if (Array.isArray(rawEcoCatalog)) {
-    ecoCatalog = rawEcoCatalog;
+    ecoCatalog = rawEcoCatalog as CatalogRow[];
   } else {
-    for (const key of Object.keys(rawEcoCatalog)) {
-      if (Array.isArray(rawEcoCatalog[key])) {
-        ecoCatalog = rawEcoCatalog[key];
+    for (const key of Object.keys(rawEcoCatalog as Record<string, unknown>)) {
+      if (Array.isArray((rawEcoCatalog as Record<string, unknown>)[key])) {
+        ecoCatalog = (rawEcoCatalog as Record<string, unknown>)[key] as CatalogRow[];
         break;
       }
     }
@@ -57,7 +66,7 @@ function audit() {
   const findings: Finding[] = [];
   const keySet = new Set<string>();
 
-  for (const entry of SUBSTANCE_LIBRARY as unknown as any[]) {
+  for (const entry of SUBSTANCE_LIBRARY) {
     if (keySet.has(entry.key)) {
       findings.push({
         key: entry.key,
@@ -75,7 +84,7 @@ function audit() {
   }
 
   const absDermalByClass: Record<string, number[]> = {};
-  for (const entry of SUBSTANCE_LIBRARY as unknown as any[]) {
+  for (const entry of SUBSTANCE_LIBRARY) {
     if (typeof entry.contaminantClass === 'string' && typeof entry.abs_dermal === 'number') {
       if (!absDermalByClass[entry.contaminantClass]) {
         absDermalByClass[entry.contaminantClass] = [];
@@ -99,7 +108,7 @@ function audit() {
     modalAbsDermalByClass[cClass] = mode;
   }
 
-  for (const entry of SUBSTANCE_LIBRARY as unknown as any[]) {
+  for (const entry of SUBSTANCE_LIBRARY) {
     const key = entry.key;
 
     // 5. FIELD_TYPES
@@ -133,13 +142,14 @@ function audit() {
     }
 
     // 1. RFD_VALUE
-    let rfdMatchedRows: any[] = [];
+    let rfdMatchedRows: CatalogRow[] = [];
     if (entry.rfd_oral_mg_per_kg_bw_per_day != null) {
+      const rfd = entry.rfd_oral_mg_per_kg_bw_per_day;
       const approvedRows = catalog.filter(r => r.substance_key === key && r.input_key === 'rfd_oral_mg_per_kg_bw_day' && r.qa_status === 'approved' && r.value_type === 'single_value');
       if (approvedRows.length === 0) {
         findings.push({ key, severity: 'high', check: 'RFD_NO_APPROVED_ROW', detail: 'No approved row found for rfd' });
       } else {
-        const matches = approvedRows.filter(r => floatEqual(Number(r.value), entry.rfd_oral_mg_per_kg_bw_per_day));
+        const matches = approvedRows.filter(r => floatEqual(Number(r.value), rfd));
         if (matches.length === 0) {
           const distinctValues = Array.from(new Set(approvedRows.map(r => Number(r.value))));
           findings.push({
@@ -157,13 +167,14 @@ function audit() {
     }
 
     // 2. SF_VALUE
-    let sfMatchedRows: any[] = [];
+    let sfMatchedRows: CatalogRow[] = [];
     if (entry.sf_oral_per_mg_per_kg_bw_per_day != null) {
+      const sf = entry.sf_oral_per_mg_per_kg_bw_per_day;
       const approvedRows = catalog.filter(r => r.substance_key === key && r.input_key === 'sf_oral_per_mg_per_kg_bw_per_day' && r.qa_status === 'approved' && r.value_type === 'single_value');
       if (approvedRows.length === 0) {
         findings.push({ key, severity: 'high', check: 'SF_NO_APPROVED_ROW', detail: 'No approved row found for sf' });
       } else {
-        const matches = approvedRows.filter(r => floatEqual(Number(r.value), entry.sf_oral_per_mg_per_kg_bw_per_day));
+        const matches = approvedRows.filter(r => floatEqual(Number(r.value), sf));
         if (matches.length === 0) {
           const distinctValues = Array.from(new Set(approvedRows.map(r => Number(r.value))));
           findings.push({
@@ -212,11 +223,12 @@ function audit() {
     }
 
     // New check 1. CROSS_KEY_BORROW
-    const checkCrossKeyBorrow = (val: any, inputKey: string) => {
+    const checkCrossKeyBorrow = (val: number | null, inputKey: string) => {
       if (val != null) {
+        const v = val;
         const hasOwnRow = catalog.some(r => r.substance_key === key && r.input_key === inputKey);
         if (!hasOwnRow) {
-          const otherRows = catalog.filter(r => r.input_key === inputKey && floatEqual(Number(r.value), val));
+          const otherRows = catalog.filter(r => r.input_key === inputKey && floatEqual(Number(r.value), v));
           if (otherRows.length > 0) {
             const otherKeys = Array.from(new Set(otherRows.map(r => r.substance_key)));
             findings.push({
@@ -251,7 +263,7 @@ function audit() {
     }
 
     // New check 3. ECO_UNWIRED_GAP and ECO_VALUE_MISMATCH
-    const checkEco = (val: any, inputKey: string) => {
+    const checkEco = (val: number | null, inputKey: string) => {
       const approvedRows = ecoCatalog.filter(r => r.substance_key === key && r.input_key === inputKey && r.qa_status === 'approved' && r.value_type === 'single_value');
       if (val == null) {
         if (approvedRows.length > 0) {
@@ -264,8 +276,9 @@ function audit() {
           });
         }
       } else {
+        const v = val;
         if (approvedRows.length > 0) {
-          const matches = approvedRows.some(r => floatEqual(Number(r.value), val));
+          const matches = approvedRows.some(r => floatEqual(Number(r.value), v));
           if (!matches) {
             const vals = Array.from(new Set(approvedRows.map(r => r.value)));
             findings.push({
