@@ -81,6 +81,8 @@ const INHALATION_TOXICITY_PARAMETER_VALUE_IDS: Record<
   },
 };
 
+const INHALATION_THRESHOLD_PARAMETER_VALUE_IDS = { hazardQuotient: 'pv-bc-csr-hi-target-ca', targetRisk: 'pv-hc-pqra-v4-2024-ilcr-target-ca' } as const;
+
 export interface HHInhalationCalculatorProps {
   substanceKey?: string;
   jurisdiction?: Jurisdiction;
@@ -192,6 +194,8 @@ export default function HHInhalationCalculator({
     wiredToxicityIds != null && rfcSeed != null && rfcInput === rfcSeed;
   const iurMatchesSeed =
     wiredToxicityIds != null && iurSeed != null && iurInput === iurSeed;
+  const hazardQuotientMatchesSeed = hazardQuotientInput === BASELINE_HAZARD_QUOTIENT;
+  const targetRiskMatchesSeed = targetRiskInput === BASELINE_TARGET_RISK;
   // Effective input_key for the IUR provenance row (codex ship-gate P3, 2026-07-17):
   // switches to the catalog's real key ONLY while the exact-id attribution above is
   // active, so CalculatorProvenancePanel's "View alternatives" button (which filters by
@@ -278,13 +282,23 @@ export default function HHInhalationCalculator({
         input_key: 'targetRisk',
         label: 'Target risk',
         value: targetRiskInput,
-        role: 'screening assumption',
+        ...(targetRiskMatchesSeed
+          ? {
+              role: 'source-backed default' as const,
+              parameter_value_id: INHALATION_THRESHOLD_PARAMETER_VALUE_IDS.targetRisk,
+            }
+          : { role: 'screening assumption' as const }),
       },
       {
         input_key: 'hazardQuotient',
         label: 'Hazard quotient',
         value: hazardQuotientInput,
-        role: 'screening assumption',
+        ...(hazardQuotientMatchesSeed
+          ? {
+              role: 'source-backed default' as const,
+              parameter_value_id: INHALATION_THRESHOLD_PARAMETER_VALUE_IDS.hazardQuotient,
+            }
+          : { role: 'screening assumption' as const }),
       },
     ],
     [
@@ -292,6 +306,7 @@ export default function HHInhalationCalculator({
       edInput,
       efInput,
       hazardQuotientInput,
+      hazardQuotientMatchesSeed,
       iurEffectiveInputKey,
       iurInput,
       iurMatchesSeed,
@@ -300,6 +315,7 @@ export default function HHInhalationCalculator({
       rfcMatchesSeed,
       substanceKey,
       targetRiskInput,
+      targetRiskMatchesSeed,
       vfInput,
       wiredToxicityIds,
     ],
