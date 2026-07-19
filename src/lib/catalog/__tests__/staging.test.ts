@@ -7,6 +7,16 @@ import {
   markSupersededStagingRows,
 } from '../staging';
 
+interface MockQueryBuilder {
+  eq?: () => MockQueryBuilder;
+  order?: () => MockQueryBuilder;
+  range?: () => MockQueryBuilder;
+  in?: () => MockQueryBuilder;
+  select?: () => MockQueryBuilder;
+  single?: () => Promise<unknown>;
+  then?: (resolve: (v: unknown) => void) => void;
+}
+
 // ---------------------------------------------------------------------------
 // Supabase mock infrastructure
 // ---------------------------------------------------------------------------
@@ -138,26 +148,26 @@ beforeEach(() => {
         // listPendingStagingRows chain
         select: () => {
           const listResult = { data: mockState.listRows, error: mockState.listError };
-          const builder: Record<string, unknown> = {};
-          (builder as any).eq = () => builder;
-          (builder as any).order = () => builder;
-          (builder as any).range = () => builder;
-          (builder as any).in = () => builder;
-          (builder as any).then = (resolve: (v: unknown) => void) => resolve(listResult);
+          const builder = {} as MockQueryBuilder;
+          builder.eq = () => builder;
+          builder.order = () => builder;
+          builder.range = () => builder;
+          builder.in = () => builder;
+          builder.then = (resolve: (v: unknown) => void) => resolve(listResult);
           return builder;
         },
         update: (payload: unknown) => {
           callTrace.update.push({ table: tableName, payload });
-          const builder: Record<string, unknown> = {};
-          (builder as any).eq = () => builder;
-          (builder as any).select = () => {
-            const sub: Record<string, unknown> = {};
-            (sub as any).single = async () => mockState.rejectUpdateResult;
-            (sub as any).then = (resolve: (v: unknown) => void) =>
+          const builder = {} as MockQueryBuilder;
+          builder.eq = () => builder;
+          builder.select = () => {
+            const sub = {} as MockQueryBuilder;
+            sub.single = async () => mockState.rejectUpdateResult;
+            sub.then = (resolve: (v: unknown) => void) =>
               resolve(mockState.supersedeUpdateResult);
             return sub;
           };
-          (builder as any).then = (resolve: (v: unknown) => void) =>
+          builder.then = (resolve: (v: unknown) => void) =>
             resolve(mockState.rejectUpdateResult);
           return builder;
         },
