@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import fs from 'node:fs';
 import { runAudit, runAuditOnLibrary } from '../../scripts/matrix-options/audit-library-provenance.mjs';
 import { SUBSTANCE_LIBRARY } from '../../src/lib/matrix-options/substanceLibrary';
+import type { SubstanceEntry } from '../../src/lib/matrix-options/types';
 
 describe('audit-library-provenance unit tests', () => {
   it('should run successfully on the live database and return findings', () => {
@@ -33,7 +34,7 @@ describe('audit-library-provenance unit tests', () => {
     ];
     for (const entry of SUBSTANCE_LIBRARY) {
       for (const field of fields) {
-        if ((entry as any)[field] !== null && (entry as any)[field] !== undefined) {
+        if ((entry as Record<string, unknown>)[field] !== null && (entry as Record<string, unknown>)[field] !== undefined) {
           expectedCount++;
         }
       }
@@ -83,7 +84,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], mockCatalog);
     expect(findings.some(f => f.check === 'CITATION_MISSING_PVID')).toBe(true);
   });
 
@@ -119,7 +120,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, []);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], []);
     
     expect(findings.some(f => f.check === 'INVALID_FIELD_TYPE' && f.detail.includes('key'))).toBe(true);
     expect(findings.some(f => f.check === 'INVALID_FIELD_TYPE' && f.detail.includes('logKow'))).toBe(true);
@@ -146,7 +147,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, []);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], []);
     expect(findings.some(f => f.check === 'INVALID_CONTAMINANT_CLASS')).toBe(true);
   });
 
@@ -179,10 +180,10 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings1 = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const findings1 = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], mockCatalog);
     expect(findings1.some(f => f.check === 'RFD_ORAL_MG_PER_KG_BW_PER_DAY_VALUE_MISMATCH')).toBe(true);
 
-    const findings2 = runAuditOnLibrary(mockLibrary as any, []);
+    const findings2 = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], []);
     expect(findings2.some(f => f.check === 'RFD_ORAL_MG_PER_KG_BW_PER_DAY_NO_APPROVED_ROW')).toBe(true);
   });
 
@@ -216,7 +217,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], mockCatalog);
     expect(findings.some(f => f.check === 'CITATION_MISSING_PVID')).toBe(true);
     expect(findings.some(f => f.check === 'STALE_NOTES_RFD')).toBe(true);
   });
@@ -251,7 +252,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], mockCatalog);
     expect(findings.some(f => f.check === 'STALE_NOTES_QA_STATUS')).toBe(true);
   });
   it('should catch cross-source value divergence >= 10x', () => {
@@ -293,7 +294,7 @@ describe('audit-library-provenance unit tests', () => {
       }
     ];
 
-    const findings = runAuditOnLibrary(mockLibrary as any, mockCatalog);
+    const findings = runAuditOnLibrary(mockLibrary as unknown as SubstanceEntry[], mockCatalog);
     const divCheck = findings.find(f => f.check === 'CROSS_SOURCE_VALUE_DIVERGENCE');
     expect(divCheck).toBeDefined();
     expect(divCheck?.severity).toBe('info');
