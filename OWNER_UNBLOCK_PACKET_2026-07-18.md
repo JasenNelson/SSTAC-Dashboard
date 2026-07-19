@@ -4,6 +4,33 @@
 
 ---
 
+## RECONCILIATION UPDATE -- 2026-07-18 (post-completion; origin/main now cdb0515)
+
+Two of the three turnkey gates below are now DONE; the sections below are retained as the historical
+record. Current state:
+
+- **#7 IOCO publish -- COMPLETE.** Owner published it in-app; read-only Supabase postflight verified
+  DRA `ea15e94a-b093-4cb4-bd4d-80ab9eae16d4` `public = true`, title matches the IOCO Shoreline DRA,
+  `total_public_dras = 5`. No further action.
+- **#29 admin E2E -- COMPLETE.** Repo-level secrets `E2E_ADMIN_EMAIL` + `E2E_ADMIN_PASSWORD` are set;
+  the post-secret CI run (29657798271) proved admin-tier E2E EXECUTES + passes (`E2E_ADMIN_EMAIL: ***`,
+  240 tests / 144 passed / 0 failed, up from 141 pre-secret). No further action.
+- **#3 SVI inhalation -- the SOLE remaining gate.** Packet `docs/SVI_NEEDS_REVIEW_PACKET_2026-07-18.md`
+  landed (PR #687 merged at cdb0515; refinements in PR #688). 4 slots are CCME-2014 primary-sourced
+  (needs_review); **4 HC PQRA slots remain BLOCKED**. No valid local substitute exists -- the local
+  `DQRA HC final draft Feb 2009` was vision-checked this session and REJECTED (it is a watermarked
+  DRAFT and is the *Detailed* QRA, not the *Preliminary* QRA screening defaults the `hc_pqra_*` slots
+  need). **Smallest exact owner action:** browser-download HC PQRA v3.0 (catalog `H129-114/2023E-PDF`,
+  `https://publications.gc.ca/collections/collection_2023/sc-hc/H129-114-2023-eng.pdf` -- accept the
+  archived-content notice), save into `G:\...\References\`, and AI vision-extracts the 4 slots in one
+  pass (target cancer risk 1e-5, target HQ, adult 15.8 + toddler 9.3 inhalation rates). No catalog
+  apply / current_default until owner review.
+
+Frontier re-scan (from cdb0515): no autonomous-safe implementation lane remains (console.* clusters
+are 2 tiny/borderline files; 5 TODOs; no stale-fact lane). The frontier is fully owner-gated on #3.
+
+---
+
 ## PRIORITY 1 (turnkey) -- #7 IOCO publish
 
 **Smallest exact action:**
