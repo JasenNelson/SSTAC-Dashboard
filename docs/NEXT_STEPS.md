@@ -161,6 +161,43 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   vestigial or intended-but-unwired is unresolved, and it must be settled before any tier-aware
   visibility design is built on top of it.
   - **Source:** same preflight session; `pg_policies` inspection 2026-07-20.
+  - **REFINED 2026-07-20 (later session):** "unconsulted" was imprecise and understated the hazard.
+    `matrix_map.fetch_samples_with_hidden_summary` DOES reference `s.public` -- but only in a SELECT
+    projection list; every gating predicate in that function uses `d.public` or
+    `has_private_grant(d.id)`. So the column is **read and returned to clients while having zero
+    effect on what is returned.** That is a trap, not merely dead weight: an implementer who sees it
+    in the payload may assume writing it restricts visibility. Resolve by either wiring it
+    deliberately (policy change + review) or removing it from the projection.
+
+### 2026-07-20b -- Option C site-aggregate design
+
+- **NEXT AUTONOMOUS-SAFE ITEM: Option C design review, not any DRA flip.** A design-only doc for the
+  site-level aggregate layer now exists. The next step is a strategic `/codex-review` of that design
+  plus an owner ruling -- explicitly NOT an implementation and NOT a publication. No `flip_dra_public`
+  call is authorised by anything in this lane.
+  - **Source:** `docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md`.
+- **Owner ruling required on aggregate publication semantics: shape (a) vs shape (b).** Shape (a)
+  derives aggregate visibility from existing DRA visibility -- read-side only, no new state, but it
+  renders only 4 markers today and does not solve the actual problem. Shape (b) publishes a site
+  aggregate independently of its samples -- this is the shape that delivers Option C's value (118
+  markers, zero centroid sample rows exposed) but requires a NEW audited publication primitive,
+  new RLS, and a new enforcement trigger. Recommended: (b), gated on the reviews below.
+  - **Source:** same design doc, section 5.5.
+- **Aggregate-oracle hazard must be designed in from the start.** An aggregate over rows the caller
+  cannot see is an information channel. Per `feedback_bbox_scoped_private_aggregate_is_a_spatial_oracle`
+  (codex P1, 2026-06-23), counts must be computed over a fixed, caller-independent grouping, and the
+  endpoint must not accept caller-supplied bbox/radius/filter parameters that scope hidden-row
+  counts. This is the item most likely to fail review if retrofitted.
+  - **Source:** same design doc, section 6.3.
+- **Cheapest useful next deliverable: the admin preview.** Rendering the aggregate layer over all 118
+  sites without publishing anything is likely read-only and separable from the publication primitive,
+  so the owner can see what Option C looks like before ruling on it.
+  - **Source:** same design doc, section 5.7.
+- **Resolved for the record:** prior-design risk R2 (direct `UPDATE dras SET public` bypassing the
+  audited RPC) is CLOSED -- trigger `trg_dras_public_flip_only` (`enforce_dras_public_via_flip`)
+  exists and is enabled. Any new publication primitive needs an equivalent enforcement trigger.
+  - **Source:** `pg_trigger` inspection 2026-07-20; supersedes the open framing in
+    `docs/design/matrix-map/DRA_PUBLICATION_PATH_DESIGN_2026_07_11.md` R2.
 
 ---
 
