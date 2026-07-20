@@ -83,10 +83,10 @@ describe('promote-hc-pqra-inhalation', () => {
     }
   });
 
-  it('d) source_ids: HC PQRA rows use the HC source; the BC CSR HI row uses the CSR source', () => {
+  it('d) source_ids: 2 IR_air rows use the HC source; the HI and ILCR rows use the BC CSR source', () => {
     const plan = planPromotion([], {});
     for (const r of plan.appendRecords) {
-      if (r.parameter_value_id === 'pv-bc-csr-hi-target-ca') {
+      if (r.parameter_value_id === 'pv-bc-csr-hi-target-ca' || r.parameter_value_id === 'pv-hc-pqra-v4-2024-ilcr-target-ca') {
         expect(r.source_ids).toEqual(['src-bc-csr-375-96']);
       } else {
         expect(r.source_ids).toEqual([HC_PQRA_INHALATION_PROMOTION_SOURCE_ID]);

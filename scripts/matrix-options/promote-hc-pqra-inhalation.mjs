@@ -1,9 +1,12 @@
 // Owner-run promotion helper for the HC PQRA v4.0 inhalation direct-contact
-// receptor profile records. Plain ASCII only.
+// receptor profile records (and BC CSR HI/ILCR thresholds). Plain ASCII only.
 //
 // WHY THIS EXISTS
-// This tool promotes the inhalation records (IR_air_m3_per_day, THQ, ILCR_target)
+// This tool promotes the inhalation records (IR_air_m3_per_day, HI, ILCR_target)
 // so the direct-contact frame can offer the additional receptor options.
+//
+// ILCR row re-sourced to BC CSR s.18 post-append (PR #699); this generator was synced to match.
+// (The 2 IR_air rows are HC PQRA v4.0 Appendix E; the HI and ILCR rows are BC CSR B.C. Reg. 375/96 s.18).
 //
 // It mirrors promote-hc-pqra-lifestage.mjs in structure, style, and fail-closed
 // discipline (multi-record batch promotion).
@@ -11,9 +14,9 @@
 // LOAD-BEARING RULES honored:
 //  - AI NEVER writes qa_status. This tool is run BY THE OWNER; --reviewer/--date are the owner's
 //    HITL attestation. Author + dry-run only for AI.
-//  - OWNER VERIFICATION REQUIRED (rule 1): Before running with --apply, the OWNER must verify all
-//    4 values against the primary Health Canada PQRA v4.0 PDF (Cat. H129-114/2023E-PDF, ISBN
-//    978-0-660-68497-0, March 2024, Appendix E). Running with --apply attests to that verification.
+//  - OWNER VERIFICATION REQUIRED (rule 1): Before running with --apply, the OWNER must verify the
+//    2 IR_air values against the primary Health Canada PQRA v4.0 PDF (Cat. H129-114/2023E-PDF, ISBN
+//    978-0-660-68497-0, March 2024, Appendix E), and verify the HI and ILCR rows against BC CSR. Running with --apply attests to that verification.
 //  - SCOPE (rule 2): only the 4 listed records are promoted. default_status is NEVER modified
 //    (stays 'not_default'); the owner's FRAME_DEFAULT_PROFILES row is the activation step.
 //  - AFTER --apply (rule 4): run npx tsc --noEmit; npm run lint; npm run test:ci.
@@ -205,7 +208,7 @@ const NEW_RECORDS = [
     display_name: 'Acceptable Hazard Index (HI)',
     value: 1.0,
     unit: 'unitless',
-    applicability: 'BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default',
+    applicability: 'BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)',
     uncertainty: 'Pending direct-source verification.',
     evidence_items: [
       {
@@ -223,7 +226,7 @@ const NEW_RECORDS = [
         locator_type: 'source_table'
       }
     ],
-    review_notes: 'BC CSR (B.C. Reg. 375/96) s.18 acceptable Hazard Index = 1 (the BC operative threshold; HC PQRA per-substance target HQ 0.2 is a different concept). needs_review candidate; non-operational -- no calculator consumer yet; not a default.',
+    review_notes: 'BC CSR (B.C. Reg. 375/96) s.18 acceptable Hazard Index = 1 (the BC operative threshold; HC PQRA per-substance target HQ 0.2 is a different concept). needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted).',
     source_relationships: [
       {
         source_id: 'src-bc-csr-375-96',
@@ -249,26 +252,26 @@ const NEW_RECORDS = [
     evidence_support_status: 'approved_source_backed',
     extraction_status: 'extracted_from_source',
     qa_status: 'needs_review',
-    source_ids: [HC_PQRA_INHALATION_PROMOTION_SOURCE_ID],
+    source_ids: ['src-bc-csr-375-96'],
     equation_ids: ['eq-human-health-direct-contact'],
     jurisdiction: 'general',
     source_authority_tier: 'tier_1_government_or_regulatory',
     canonical_source_status: 'direct_source_verified',
     bc_protocol_alignment: null,
     bc_protocol_basis: null,
-    source_crystallization_date: '2024-03-31',
+    source_crystallization_date: '1996-04-01',
     receptor_groups: ['human'],
     species_groups: [],
     input_key: INPUT_KEYS.ILCR_TARGET,
-    display_name: 'Target Incremental Lifetime Cancer Risk (HC PQRA v4.0)',
+    display_name: 'Target Incremental Lifetime Cancer Risk (BC CSR s.18)',
     value: 0.00001,
     unit: UNITS.UNITLESS,
-    applicability: 'Health Canada PQRA v4.0 (2024) Target ILCR. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default',
+    applicability: 'BC CSR (B.C. Reg. 375/96) Section 18 acceptable Incremental Lifetime Cancer Risk (ILCR). generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)',
     uncertainty: 'Pending direct-source verification.',
     evidence_items: [
       {
-        source_id: HC_PQRA_INHALATION_PROMOTION_SOURCE_ID,
-        locator: 'Health Canada PQRA v4.0',
+        source_id: 'src-bc-csr-375-96',
+        locator: 'Section 18',
         value_text: '0.00001',
         extraction_method: 'manual_source_extraction',
         extracted_by: 'agy',
@@ -276,17 +279,17 @@ const NEW_RECORDS = [
         qa_status: 'needs_review',
         reviewed_by: null,
         reviewed_at: null,
-        note: 'Health Canada PQRA v4.0 Target Incremental Lifetime Cancer Risk.',
+        note: 'BC CSR (B.C. Reg. 375/96) Section 18 acceptable incremental lifetime cancer risk.',
         evidence_id: 'ev-pv-hc-pqra-v4-2024-ilcr-target-ca-1',
         locator_type: 'source_table'
       }
     ],
-    review_notes: 'HC PQRA v4.0 Target Incremental Lifetime Cancer Risk (1e-5). generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default',
+    review_notes: 'BC CSR (B.C. Reg. 375/96) s.18 acceptable Incremental Lifetime Cancer Risk (ILCR) = 1e-5. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)',
     source_relationships: [
       {
-        source_id: HC_PQRA_INHALATION_PROMOTION_SOURCE_ID,
+        source_id: 'src-bc-csr-375-96',
         role: 'canonical_candidate',
-        note: 'Health Canada PQRA v4.0 section this parameter comes from -- target incremental lifetime cancer risk'
+        note: 'BC Contaminated Sites Regulation (B.C. Reg. 375/96) Section 18 specifies an acceptable incremental lifetime cancer risk of 1e-5.'
       }
     ],
     population_groups: [
