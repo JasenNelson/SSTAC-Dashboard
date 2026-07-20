@@ -35,9 +35,9 @@ All three streams defined in `AGY_AUTONOMOUS_15H_BRIEF_2026_07_04.md` are 100% c
 
 ## 2. Next Steps for Next Session / Owner Review
 1. **Audit Report Verification**:
-   - Review the generated [MATRIX_OPTIONS_PROVENANCE_AUDIT_REPORT_2026_07_04.md](file:///C:/Projects/sstac-dashboard/docs/MATRIX_OPTIONS_PROVENANCE_AUDIT_REPORT_2026_07_04.md) to confirm that the SAFE-TO-FIX section has 0 entries and the 59 owner-gated findings are accurately documented.
+   - Review the generated [MATRIX_OPTIONS_PROVENANCE_AUDIT_REPORT_2026_07_04.md](docs/MATRIX_OPTIONS_PROVENANCE_AUDIT_REPORT_2026_07_04.md) to confirm that the SAFE-TO-FIX section has 0 entries and the 59 owner-gated findings are accurately documented.
 2. **Review Decision-Support Doc**:
-   - The owner can use [MATRIX_OPTIONS_JURISDICTION_CONFLICTS_DECISION_SUPPORT_2026_07_04.md](file:///C:/Projects/sstac-dashboard/docs/MATRIX_OPTIONS_JURISDICTION_CONFLICTS_DECISION_SUPPORT_2026_07_04.md) as direct input for making future policy/jurisdiction selections.
+   - The owner can use [MATRIX_OPTIONS_JURISDICTION_CONFLICTS_DECISION_SUPPORT_2026_07_04.md](docs/MATRIX_OPTIONS_JURISDICTION_CONFLICTS_DECISION_SUPPORT_2026_07_04.md) as direct input for making future policy/jurisdiction selections.
 
 ---
 *Handoff written by AGY.*
