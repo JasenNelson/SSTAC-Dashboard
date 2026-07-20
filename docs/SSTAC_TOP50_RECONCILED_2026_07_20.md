@@ -52,12 +52,20 @@ than inherit them. The live database figures were last confirmed unchanged at pu
 | Tier | Samples | DRAs | Public |
 |---|---|---|---|
 | high (surveyed) | 40 | 4 | yes |
-| high (surveyed) | **28** | **4** | **no -- publishable today under the existing standard** |
+| high (surveyed) | **28** | **4** | no -- ~~publishable today under the existing standard~~ **NOT publishable; see below** |
 | medium (centroid) | 4418 | 118 | no -- policy-gated |
 
-The 4 unpublished surveyed DRAs are: `ERA Volume 4 - Mark Creek and Lois Creek` (20 samples),
-`20240312 LTR Response to ENV comments of DHHERA` (5), `HHERA_FINAL` (2), `Old Slope Place-HHERA` (1).
-Note one of the 5 public DRAs contributes 0 samples -- worth a look.
+**CORRECTION 2026-07-20.** This table groups SAMPLES by tier, and reading it as "4 surveyed DRAs"
+is the error that produced the retracted row 1. Those 28 surveyed samples live inside 4 DRAs that
+ALSO hold **1169 centroid samples** (1197 total). Because `flip_dra_public` publishes at DRA
+granularity, there is no way to publish the 28 without the 1169. The 1169 are a subset of the 4418
+above, not an addition. **A tier-grouped sample query cannot tell you what a DRA flip will expose --
+group by DRA and count both tiers.**
+
+The 4 DRAs formerly labelled "unpublished surveyed" are: `ERA Volume 4 - Mark Creek and Lois Creek`
+(20 high / 35 medium), `20240312 LTR Response to ENV comments of DHHERA` (5 / 413), `HHERA_FINAL`
+(2 / 245), `Old Slope Place-HHERA` (1 / 476). Note one of the 5 public DRAs contributes 0 samples --
+worth a look.
 
 **Production (Vercel, project `prj_pTwrPuPE9QbHxVqC0AmSgq3cFpYC`)**
 - Runtime health is good: 3 benign auth-refresh errors in 7 days, none since 2026-07-13.
@@ -121,12 +129,12 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG.
 
 | # | Task | Lane | Status | Evidence | Why it matters |
 |---|---|---|---|---|---|
-| 1 | Publish the 4 unpublished surveyed-tier DRAs (+28 samples) | MAP | OWNER | live tier query, this doc s1 | +70% map content, zero new data, existing standard. Cheapest large win in the project |
+| 1 | ~~Publish the 4 unpublished surveyed-tier DRAs (+28 samples)~~ | MAP | **BLOCKED** | preflight 2026-07-20; `pg_policies` on `matrix_map.samples` | **RETRACTED.** The 4 DRAs are MIXED-TIER, not surveyed-only: 28 high + **1169 medium** = 1197 samples. `flip_dra_public` is DRA-granularity and RLS `samples_authenticated_select` never consults `samples.public`, so flipping them publishes all 1197 (40 -> 1237 visible), silently enacting Option B on 4 coordinate points. Merged into row 5 |
 | 2 | Deploy-health gate: alert when prod SHA != main SHA (build the check only) | PROD | SAFE | Vercel deploy list; prod serves #699 | No alerting exists for prod tip != main tip. New item, untracked anywhere |
 | 2b | Re-deploy the 3 stranded commits | PROD | **OWNER** | same | Triggering a production deploy is a production action; Claude prepares the packet only |
 | 3 | Centroid-publication decision packet (evidence, risk framing, options) | MAP | SAFE | 4418 samples / 118 DRAs gated | Unblocks the single largest data lever in the project |
 | 4 | ~~Coordinate-accuracy tier badge + disclaimer in map UI~~ | MAP | **DONE-ALREADY** | verified on `dddbe0f4` 2026-07-20; PRs #593, #600, #635 | **RETRACTED.** Already shipped: `src/lib/matrix-map/coordinate-provenance.ts` defines the canonical vocabulary (Surveyed / Centroid / Manual) and `MatrixMap.tsx` applies dash-array marker encoding, a popup caption reading "Approximate BC CSR site centroid -- not a surveyed sediment location.", and a 3-entry legend, plus a Surveyed-only filter, a province provenance chip, and CSV/panel columns. No data-layer change was ever needed |
-| 5 | Owner ruling: publish centroids with badge, yes/no | MAP | OWNER | depends on #3, #4 | Gates 4418 samples. Owner selected both lanes 1 and 2 |
+| 5 | **Owner ruling: centroid publication policy (now the ONLY publication decision)** | MAP | OWNER | corrected packet s5/s8 | Absorbs retracted row 1. Options: no publication now (recommended interim) / Option C site-aggregate layer / tier-aware visibility design / Option B accepted knowingly / Option D OCR-first. Gates all **4418** publishable centroid samples across 118 DRAs -- note the 1169 inside the 4 formerly-"surveyed" DRAs are a SUBSET of that 4418 (verified overlap = 1169), not an addition to it |
 | 6 | Wire `SENTRY_*` CI secrets + verify release/source-map upload | PROD | OWNER | `gh secret list` shows none | Production errors currently lack release attribution. New item |
 | 7 | Reconcile the 6-gate skill vs 4-gate `GATE_MODE_SOP.md` drift | PROD | OWNER | SOP Phase 4 lists 4; skill says 6 | Sessions under-gate pushes. Tier-1 protected file, do not fix unilaterally |
 | 8 | Correct the KB plan doc's "not started" framing to match merged Phases 2-3 | KB | SAFE | `fb4f7d9c`, `4811fef9`, `ae8d48db` | Plan doc materially misrepresents lane state |
@@ -194,9 +202,14 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG.
 
 Each lane is independent, so an owner gate in one never stalls the others.
 
-**Lane 1 -- MAP quick win (rows 1, 3, 4, 17).** Build the tier-badge UI and the centroid decision
-packet autonomously; hand the owner the 4-DRA surveyed publish as a single in-app action. Worktree
-off `origin/main`. AGY suitability: high for the packet draft, medium for the badge component.
+**Lane 1 -- MAP.** ~~quick win (rows 1, 3, 4, 17): build the tier-badge UI and the centroid decision
+packet autonomously; hand the owner the 4-DRA surveyed publish as a single in-app action.~~
+**SUPERSEDED 2026-07-20 -- there is no "quick win" here and no publish to hand over.** Rows 3 and 4
+are DONE (packet merged; the tier badge was already shipped via #593/#600/#635). Row 1 is CANCELLED:
+its preflight failed because the 4 DRAs are mixed-tier, so the flip would publish 1197 samples, not
+28. **Do NOT surface a 4-DRA publish action to the owner.** The only remaining item in this lane is
+row 5, the centroid-publication policy ruling, which is an owner decision and not an execution task.
+Row 17 (the public DRA contributing 0 samples) is unaffected and still autonomous-safe.
 
 **Lane 2 -- PROD hardening (rows 2, 6, 40).** Build a deploy-health check comparing the Vercel
 production alias SHA to `origin/main`, surfaced in CI or the admin health page. The re-deploy itself
@@ -227,27 +240,42 @@ row 14's mapping verification first.
 
 0. ~~Merge #703 and #704~~ **DONE 2026-07-20T04:54Z.** Remaining: merge **#705** (docs-only handoff)
    when the active session closes.
-1. **Publish 4 surveyed DRAs.** This is a data-publication action, so it is wrapped in a
-   preflight/postflight guard -- do not perform the flip bare.
+1. ~~**Publish 4 surveyed DRAs.**~~ **CANCELLED 2026-07-20 -- NOT AN ACTION. DO NOT PERFORM.**
+   This item is retained only as an audit trail of a retracted instruction. There is no publication
+   to carry out here; the decision was absorbed into the single centroid-publication policy ruling
+   (row 5 / corrected packet section 8). Skip to item 2.
 
-   **(a) PREFLIGHT (read-only, AI-safe).** Re-run the section-10 coordinate-tier query and confirm,
-   at execution time, that these 4 DRAs are still `public=false` and still 100% `coordinate_quality_tier
-   = 'high'`. If any row has drifted to `medium`, STOP and re-surface -- the whole justification for
-   this action is that it applies the existing surveyed-only standard.
+   **(a) PREFLIGHT -- ALREADY RUN, AND IT FAILED.** The guard did its job. It required these 4 DRAs
+   to be `public=false` and 100% `coordinate_quality_tier = 'high'`, and instructed: "If any row has
+   drifted to `medium`, STOP and re-surface." Every one of the 4 contains `medium` rows, so the
+   STOP condition fired and no flip was performed.
 
-   **(b) OWNER ACTION.** In-app at `/admin/matrix-map/publish`, through the audited `flip_dra_public`
-   path (never a direct `UPDATE dras SET public`), flip:
-   - `35626cb0-2413-40c1-8951-a2857b4272bc` -- ERA Volume 4, Mark Creek and Lois Creek (20 samples)
-   - `c2d6a380-4f3a-47a8-b773-1659436e7b36` -- LTR Response to ENV comments, DHHERA (5)
-   - `a3b95869-4fe8-43fd-8c39-2afc8fa9266e` -- HHERA_FINAL (2)
-   - `11f00164-2ba7-4f95-9034-18815e8a31f6` -- Old Slope Place HHERA (1)
+   **(b) OWNER ACTION -- CANCELLED 2026-07-20. DO NOT PERFORM.** The preflight in (a) was run and it
+   **failed**. The 4 DRAs are mixed-tier, not surveyed-only:
 
-   Requires an admin JWT; AI cannot perform this write.
+   | DRA | high | medium | total |
+   |---|---|---|---|
+   | `35626cb0-...` ERA Volume 4, Mark Creek and Lois Creek | 20 | 35 | 55 |
+   | `c2d6a380-...` LTR Response to ENV comments, DHHERA | 5 | 413 | 418 |
+   | `a3b95869-...` HHERA_FINAL | 2 | 245 | 247 |
+   | `11f00164-...` Old Slope Place HHERA | 1 | **476** | 477 |
+   | **Total** | **28** | **1169** | **1197** |
 
-   **(c) POSTFLIGHT (read-only, AI-safe).** Re-run the headline query and confirm
-   `dras_public` 5 -> 9 and `samples_public_visible` **40 -> 68**. A flip that does not read back is
-   the exact silent-non-persist failure PR #642 was built to catch. If the count does not move,
-   report it rather than retrying blind.
+   `matrix_map.flip_dra_public` updates only `dras.public`; RLS `samples_authenticated_select` gates
+   on `d.public = true OR has_private_grant(d.id)` and **never consults `samples.public`**. Visibility
+   is therefore DRA-granularity: flipping these 4 publishes **1197** samples (40 -> 1237 visible), of
+   which **1169 are centroid-tier sitting on just 4 distinct coordinates**. That silently enacts
+   Option B -- the option the packet does not recommend -- and includes Old Slope Place, the DRA
+   behind the "476 samples on one coordinate" warning.
+
+   There is **no DRA-granularity path that publishes only the surveyed samples.** This action is
+   superseded by the single centroid-publication policy decision (row 5 / corrected packet section 8).
+
+   **(c) POSTFLIGHT -- not applicable; no action to verify.** The original expectation
+   (`dras_public` 5 -> 9, `samples_public_visible` 40 -> 68) was wrong: the true outcome would have
+   been 40 -> 1237. Retained only to document the error. Any FUTURE publication must run the
+   mandatory preflight in the corrected packet's section 9 and confirm the tier mix of every
+   candidate DRA before flipping.
 2. **Rule on centroid publication** after reading the row-3 packet. Yes/no plus whether a tier badge
    is sufficient mitigation.
 3. **Set `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`** as repo secrets (or confirm Sentry is
@@ -372,8 +400,10 @@ infer process ownership from timing. Read the command line.
 ## 9. Verification
 
 - **Data claims:** re-run the read-only SQL in section 1 against the project-scoped Supabase MCP.
-- **Map UI:** after the row-1 publish, load `/matrix-map` as a member and confirm 68 visible samples
-  and that the tier badge renders for surveyed points.
+- **Map UI:** ~~after the row-1 publish, load `/matrix-map` as a member and confirm 68 visible
+  samples~~ **N/A -- row 1 is cancelled and no publish will occur.** The 68 figure was wrong anyway
+  (the flip would have yielded 1237). Member-visible count stays at 40 until the row-5 policy ruling.
+  The tier badge already renders for surveyed points and needs no new verification.
 - **Deploy health:** compare the Vercel production alias SHA against `origin/main`; the check added
   in Lane 2 should fail loudly when they diverge.
 - **KB:** `tooling/wiki` tests plus `graph_smoke.py` thresholds; no Ollama, no nightly, no hooks.
@@ -416,7 +446,11 @@ select d.public, s.coordinate_quality_tier, count(*) as samples,
   left join matrix_map.dras d on d.id = s.source_dra_id
  group by 1,2 order by 1 desc nulls last, 3 desc;
 
--- the 4 publish candidates for owner packet item 1
+-- the 4 DRAs formerly proposed as publish candidates (row 1, now CANCELLED).
+-- WARNING: this query filters to tier='high' and therefore HIDES the 1169 centroid samples in the
+-- same DRAs. It is the query that produced the retracted "28 samples / 4 surveyed DRAs" reading.
+-- To assess a real flip, use the mandatory preflight in the centroid packet section 9 instead,
+-- which groups by DRA and counts BOTH tiers.
 select d.id, d.title, d.public, count(*) as samples
   from matrix_map.samples s join matrix_map.dras d on d.id = s.source_dra_id
  where s.coordinate_quality_tier = 'high'

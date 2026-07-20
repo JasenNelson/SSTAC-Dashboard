@@ -142,6 +142,26 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
 - **`.env.example` comment-only drift.** `REG_REVIEW_EXTRACTIONS_PATH`, `REG_REVIEW_OUTPUT_PATH`, `REG_REVIEW_TEMP_UPLOAD_PATH` are commented in `.env.example` but are not read by any code in `src/` or `scripts/` (verified 2026-04-20). Either wire them up or remove them.
   - **Source:** `docs/ENVIRONMENT_REFERENCE.md` §"Variables in `.env.example` that are not currently consumed".
 
+### 2026-07-20 -- Matrix Map centroid publication preflight
+
+- **Matrix Map publication is blocked pending a centroid-publication POLICY ruling.** The next owner
+  decision here is policy/product, **not** execution. A read-only preflight before any flip found
+  that the 4 candidate "surveyed" DRAs are in fact mixed-tier (28 high + 1169 medium = 1197 samples).
+  `matrix_map.flip_dra_public` updates only `dras.public`, and RLS `samples_authenticated_select`
+  gates on `d.public = true OR has_private_grant(d.id)` without ever consulting `samples.public` --
+  so visibility is DRA-granularity and flipping those 4 would publish all 1197 samples (40 -> 1237
+  member-visible), including 1169 centroid-tier on just 4 distinct coordinates. No publication was
+  performed. Deferred until the owner rules between: no publication now (recommended interim),
+  Option C site-level aggregate layer, a tier-aware visibility design, Option B accepted knowingly,
+  or Option D OCR-first.
+  - **Source:** `docs/MATRIX_MAP_CENTROID_PUBLICATION_DECISION_PACKET_2026-07-20.md` (correction
+    banner + corrected sections 5, 8, 9); preflight session 2026-07-20 against `origin/main` b6f0291f.
+- **`matrix_map.samples.public` is present but unconsulted.** Neither policy on the table
+  (`samples_authenticated_select`, `samples_admin_all`) references it. Whether the column is
+  vestigial or intended-but-unwired is unresolved, and it must be settled before any tier-aware
+  visibility design is built on top of it.
+  - **Source:** same preflight session; `pg_policies` inspection 2026-07-20.
+
 ---
 
 ## How to add a new deferred item
