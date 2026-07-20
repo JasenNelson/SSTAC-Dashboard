@@ -12,7 +12,9 @@
  * The existing admin matrix-map pages (health, publish) fetch direct-Supabase server-side, so
  * this matches the established pattern. It is also the stronger posture for the oracle
  * constraint (design s6.3): with no HTTP endpoint there is no surface that could ever accept a
- * caller-supplied bbox, radius, or filter to narrow counts over hidden rows. If a future
+ * caller-supplied bbox, radius, or filter to narrow counts over hidden rows. The Leaflet map is
+ * a CLIENT child, but it receives only a server-derived `AggregateMarker[]` snapshot as a prop
+ * -- it makes no fetch of its own, so it introduces no queryable surface either. If a future
  * client-rendered map needs these aggregates over HTTP, that route is a separate, reviewable
  * change -- and it must carry the same no-parameter rule.
  *
@@ -29,7 +31,9 @@ import {
   type AggregateInputSample,
   type AggregateInputDra,
 } from '@/lib/matrix-map/siteAggregates';
+import { toAggregateMarkers } from '@/lib/matrix-map/siteAggregateMarkers';
 import { COORD_TIER_LABEL, COORD_TIER_CAPTION } from '@/lib/matrix-map/coordinate-provenance';
+import { SiteAggregateMapLoader } from './SiteAggregateMapLoader';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -162,6 +166,9 @@ export default async function SiteAggregatesPreviewPage() {
   const aggregates = loadError ? [] : computeSiteAggregates(samples, dras, { tier: 'medium' });
   const summary = summariseSiteAggregates(aggregates);
   const orphanCount = samples.filter((s) => s.source_dra_id === null).length;
+  // Markers are derived SERVER-SIDE and only the marker projection crosses to the client map.
+  // The client receives no sample rows and no aggregate fields beyond what a marker needs.
+  const markers = toAggregateMarkers(aggregates);
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -226,6 +233,19 @@ export default async function SiteAggregatesPreviewPage() {
             spatial precision and sampling density, which is the hazard Option C removes by
             construction.
           </p>
+        </SectionCard>
+
+        <SectionCard
+          title="Map preview"
+          subtitle={`${markers.length} site markers, one per site. A site with many samples is a single larger marker, not many pins -- that is the honest rendering.`}
+        >
+          {markers.length === 0 ? (
+            <p className="text-sm text-slate-500 dark:text-slate-400">
+              {loadError ? 'Map unavailable while the sample load is failing.' : 'No centroid-tier sites to plot.'}
+            </p>
+          ) : (
+            <SiteAggregateMapLoader markers={markers} />
+          )}
         </SectionCard>
 
         <SectionCard
