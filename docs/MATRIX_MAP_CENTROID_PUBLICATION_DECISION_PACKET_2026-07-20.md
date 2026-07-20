@@ -1,5 +1,60 @@
 # Matrix Map -- Centroid Publication Decision Packet (2026-07-20)
 
+> ## CORRECTION 2026-07-20 -- OPTION A IS BLOCKED. READ THIS FIRST.
+>
+> This packet originally recommended "Option A now": publish 4 surveyed DRAs, 28 samples,
+> "no new policy needed", 40 -> 68 member-visible. **That recommendation was wrong and must not be
+> executed.** A read-only preflight against live data before any flip found the premise false.
+>
+> **The 4 DRAs are not surveyed-only. They are mixed-tier.**
+>
+> | DRA ID | Title | `public` | high | medium | total |
+> |---|---|---|---|---|---|
+> | `35626cb0-2413-40c1-8951-a2857b4272bc` | ERA Volume 4 -- Mark Creek and Lois Creek | false | 20 | 35 | 55 |
+> | `c2d6a380-4f3a-47a8-b773-1659436e7b36` | LTR Response to ENV comments, DHHERA | false | 5 | 413 | 418 |
+> | `a3b95869-4fe8-43fd-8c39-2afc8fa9266e` | HHERA_FINAL | false | 2 | 245 | 247 |
+> | `11f00164-2ba7-4f95-9034-18815e8a31f6` | Old Slope Place HHERA | false | 1 | **476** | 477 |
+> | | **Total** | | **28** | **1169** | **1197** |
+>
+> **Why that blocks the action.** `matrix_map.flip_dra_public` updates only
+> `matrix_map.dras.public`; it touches no sample rows. Member visibility is decided by RLS policy
+> `samples_authenticated_select`, which gates on
+> `d.public = true OR matrix_map.has_private_grant(d.id)` -- **DRA granularity**. Flipping a DRA
+> publishes every sample beneath it, regardless of coordinate tier.
+>
+> | | Original claim | Verified actual |
+> |---|---|---|
+> | Samples published | 28 | **1197** |
+> | Member-visible after | 40 -> 68 | **40 -> 1237** |
+> | Centroid samples published | 0 | **1169** |
+>
+> Three consequences:
+> 1. It would **silently enact Option B** -- the option this same packet does not recommend --
+>    without Decision 2 ever being ruled on.
+> 2. Those 1169 centroid samples sit on just **4 distinct coordinates** (about 292 pins per point),
+>    a more extreme case of the stacking problem than the province-wide 37.4 average in section 3.
+> 3. It includes **Old Slope Place**, which is the very DRA behind section 3's "476 samples on one
+>    coordinate" warning.
+>
+> **There is no DRA-granularity path that publishes only the surveyed samples.** The claim "Option A
+> needs no new policy" is false.
+>
+> **`samples.public` exists but is NOT consulted** by `samples_authenticated_select` (nor by the only
+> other policy on the table, `samples_admin_all`). Whether that column is vestigial or
+> intended-but-unwired is UNRESOLVED and must be investigated before any tier-aware approach is
+> designed on top of it.
+>
+> **Status: no publication is approved.** Corrected below: section 4 (Option A withdrawn), section 5
+> (recommendation withdrawn), section 8 (two decisions collapse to one), plus a new mandatory
+> preflight in section 9. Sections 2, 3, 6 and 7 remain valid as written.
+>
+> Root cause, recorded so it is not repeated: the original analysis grouped samples by
+> `(public, coordinate_quality_tier)` and read "28 high-tier samples across 4 DRAs" as "4 surveyed
+> DRAs". It never checked whether those DRAs also contained other tiers. The document was internally
+> consistent, which is why review did not catch it -- the defect was in the premise, not the
+> reasoning. **Verify a publication unit against the schema's actual visibility granularity, not
+> against an aggregate query.**
+
 **1. The decision.**
 
 A determination is required on whether the 4418 **publishable** centroid-tier samples should become
@@ -50,10 +105,13 @@ This is not merely imprecise -- a dense cluster of pins reads to a viewer as man
 There are four options for handling these centroids. 
 Each details what the map would show, the risk, and the effort:
 
-- **Option A -- surveyed only (status quo+).** 
-  Publish the unpublished surveyed data: 28 samples across 4 DRAs. 
-  No new policy is needed. 
-  The map stays sparse.
+- ~~**Option A -- surveyed only (status quo+).**~~ **WITHDRAWN 2026-07-20 -- NOT EXECUTABLE.**
+  ~~Publish the unpublished surveyed data: 28 samples across 4 DRAs. No new policy is needed.~~
+  Both claims are false. The 4 DRAs are mixed-tier (28 high + 1169 medium), and visibility is
+  DRA-granularity, so this flip publishes 1197 samples and DOES require the centroid-publication
+  ruling. See the correction banner. Option A survives only as an intent -- "publish the surveyed
+  data and nothing else" -- which is unreachable today and is what the tier-aware visibility option
+  in section 8 would have to build.
 
 - **Option B -- publish centroids as per-sample markers, with a tier badge.** 
   The map would show all 4418 centroid samples as individual points alongside the existing public ones.
@@ -70,15 +128,23 @@ Each details what the map would show, the risk, and the effort:
   This offers the highest fidelity.
   However, it is the slowest path and requires attended sessions.
 
-**5. Recommendation.**
+**5. Recommendation (CORRECTED 2026-07-20).**
 
-We recommend Option A now, then Option C. 
+~~We recommend Option A now, then Option C.~~ **Withdrawn.** Option A as written is not executable:
+see the correction banner. The 4 candidate DRAs are mixed-tier, and `flip_dra_public` publishes at
+DRA granularity, so "publish 28 surveyed samples via 4 DRA flips" would in fact publish 1197 samples
+including 1169 centroid-tier.
 
-Option A is immediate and needs no ruling. 
+**Corrected recommendation: make no publication now.** The next decision is policy and product, not
+execution. Option A is no longer a free, ruling-free move that could be taken ahead of Decision 2 --
+it *is* Decision 2, in disguise and at a worse stacking ratio.
 
-Option C resolves the stacking problem by construction rather than papering over it with a disclaimer. 
+Option C remains the recommended eventual direction: it resolves the stacking problem by
+construction rather than papering over it with a disclaimer.
 
-Note that Option B's risk is not fixable by a badge alone, because the misleading signal is the marker geometry itself, not the missing label.
+Option B's risk is still not fixable by a badge alone, because the misleading signal is the marker
+geometry itself, not the missing label. That reasoning is unchanged, and it now applies to the
+4-DRA flip as well.
 
 **6. Mitigations -- 3 of the 4 REQUIRED mitigations are already built.**
 
@@ -117,27 +183,65 @@ This packet does not request any catalog change, any verdict, or any change to h
 
 It is strictly a publication-visibility decision.
 
-**8. Exact owner action.**
+**8. Exact owner action (CORRECTED 2026-07-20).**
 
-This is TWO separate decisions, not one. They can be answered independently and in this order.
+~~This is TWO separate decisions, not one.~~ **There is now ONE decision.** The original Decision 1
+("Option A, surveyed publish, needs no policy") does not exist as a separable action: under
+DRA-granularity visibility it collapses into Decision 2. Deciding it *is* deciding centroid
+publication policy.
 
-**Decision 1 -- Option A (surveyed publish). Recommended: YES, now.**
-Flip the 4 unpublished surveyed DRAs (28 samples) through the in-app audited path
-(`flip_dra_public` RPC). This needs no new policy: it applies the standard already used for the 40
-currently-visible samples. Result: 40 -> 68 member-visible samples. An AI cannot perform this flip;
-it requires an admin JWT.
+**No publication is approved, and none should be performed until this is ruled on.**
 
-**Decision 2 -- what to do with the 4418 centroid samples. Recommended: Option C.**
-Choose one:
-- Option C (recommended) -- approve building the site-level aggregate layer (118 markers, one per
-  DRA, each labelled with its sample count), then publish. Resolves the stacking problem by
-  construction.
-- Option B -- publish centroids as per-sample markers. NOT recommended; section 3 explains why a
-  label cannot fix this.
-- Option D -- fund the OCR coordinate-upgrade lane first and defer publication.
-- Defer -- leave centroids private for now. Decision 1 is unaffected either way.
+**THE DECISION -- centroid publication policy.** Choose one:
 
-Deciding 1 does not commit you to any answer on 2.
+- **No publication now (recommended interim).** Leave all **118** centroid DRAs private. **The 4
+  formerly-"surveyed" DRAs are 4 OF those 118, not additional to them** (verified: all 4 appear in
+  the 118-DRA centroid set, and their 1169 medium samples are a subset of the 4418). There is one
+  population here, not two. Costs nothing, forecloses nothing, and keeps the map honest at 40
+  visible samples.
+- **Option C -- build the site-level aggregate layer first** (118 markers, one per DRA, each
+  labelled with its sample count), then publish. Recommended eventual direction; resolves the
+  stacking problem by construction.
+- **Tier-aware visibility.** Change the visibility path so surveyed and centroid samples can be
+  published independently. This is the only route that recovers the original "publish 28 surveyed
+  samples" intent. It requires an RLS/fetch design change and its own review, and it must first
+  resolve whether `samples.public` (currently present but unconsulted) is the intended lever.
+- **Option B, accepted knowingly.** Publish centroids as per-sample markers, understanding the
+  stacking effect in section 3. Not recommended, but it is a legitimate call to make explicitly --
+  which is precisely what the withdrawn Option A would have done implicitly.
+- **Option D -- fund the OCR coordinate-upgrade lane first** and defer publication entirely.
+
+Whichever is chosen, an AI cannot perform the flip: `flip_dra_public` requires an authenticated
+admin JWT and explicitly rejects `service_role`.
+
+**Before ANY future flip, re-run the preflight** in section 9 and confirm the tier mix of every
+candidate DRA. Do not infer a DRA's tier composition from an aggregate sample query.
+
+**9. Preflight query (read-only) -- MANDATORY before any publication.**
+
+Establishes the true tier composition and blast radius of any candidate DRA set:
+
+```sql
+-- What would flipping these DRAs actually publish?
+select d.id, d.title, d.public,
+       count(*) filter (where s.coordinate_quality_tier = 'high')   as high_samples,
+       count(*) filter (where s.coordinate_quality_tier = 'medium') as medium_samples,
+       count(*) as total_samples,
+       count(distinct (round(s.latitude::numeric,5)||','||round(s.longitude::numeric,5))) as distinct_points
+  from matrix_map.dras d
+  join matrix_map.samples s on s.source_dra_id = d.id
+ where d.id in ( /* candidate DRA ids */ )
+ group by d.id, d.title, d.public
+ order by total_samples desc;
+```
+
+STOP if any candidate DRA reports a non-zero `medium_samples` count and centroid publication has not
+been ruled on. Confirm the governing policy is still DRA-level before relying on this reading:
+
+```sql
+select policyname, cmd, qual from pg_policies
+ where schemaname = 'matrix_map' and tablename = 'samples';
+```
 
 ---
 
