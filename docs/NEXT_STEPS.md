@@ -215,6 +215,24 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   - **Source:** `pg_trigger` inspection 2026-07-20; supersedes the open framing in
     `docs/design/matrix-map/DRA_PUBLICATION_PATH_DESIGN_2026_07_11.md` R2.
 
+### 2026-07-20c -- Option D coordinate-upgrade design
+
+- **NEXT ITEM (owner-gated, design only): Option D pilot decision.** A design-only doc for the DRA
+  coordinate-upgrade lane now exists. The next step is a strategic `/codex-review` of that design
+  plus an owner ruling on the pilot gates -- explicitly NOT an extraction, an OCR/vision run, an AGY
+  call, a coordinate write, or a publication. The lane stops at a dry-run evidence artifact.
+  - **Source:** `docs/design/matrix-map/OPTION_D_COORDINATE_UPGRADE_DESIGN_2026-07-20.md`.
+- **Standing blocker to resolve before ANY apply: well-id -> sample-row mapping.** The mapping key is
+  `samples.display_name` (the printed label, e.g. `SED11-137A`), NOT `station_id` (the BN-RRM integer
+  surrogate). The prior Site 14764 OCR extracted monitoring wells (`MW08-3`), a different feature
+  class than the sediment sample rows -- likely why the mapping was "unverified". The pilot must
+  extract the same feature class and match on `display_name` under `source_dra_id`.
+  - **Source:** same design doc, sections 8 and 10.1; `docs/MATRIX_MAP_DRA_COORD_APPLY_READINESS_2026_07_14.md` s3.
+- **Recommended pilot: r-0074 (`90d54294`), one DRA only,** with a Step-3a text-table go/no-go (its
+  coordinates may be map-embedded); OCR is a separate owner gate. The obsolete `generate_sql` writer
+  in `extract_dra_coordinates.py` is quarantined and out of scope.
+  - **Source:** same design doc, sections 6 and 10.1.
+
 ---
 
 ## How to add a new deferred item
