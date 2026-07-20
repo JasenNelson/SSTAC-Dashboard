@@ -52,7 +52,7 @@ For detailed progress history, see `docs/review-analysis/archive/MASTER_COMPLETI
 
 ### 7. Performance Optimization Guidelines (CRITICAL)
 - **MEASURE FIRST**: Check if performance issues actually exist before optimizing
-- **Database Performance**: Baseline established (see `docs/review-analysis/MONITORING_BASELINE.md`)
+- **Database Performance**: Baseline established (see `docs/review-analysis/archive/MONITORING_BASELINE.md`)
 - **Monitoring**: Use `scripts/verify/simple-query-monitoring.sql` for weekly performance tracking
 - **ISOLATE TESTING**: Test optimizations in separate branches first
 - **USER CONSULTATION**: Ask if "excessive" calls are actually problematic
