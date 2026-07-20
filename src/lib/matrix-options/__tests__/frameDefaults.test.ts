@@ -1029,7 +1029,7 @@ describe('validateFrameDefaultProfiles', () => {
 
   it('receptorScenarioId is not a string -> error', () => {
     const profile = makeProfile({
-      receptorScenarioId: 123 as any,
+      receptorScenarioId: 123 as unknown as string,
       scenarioLabel: 'Test',
     });
     const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
@@ -1039,7 +1039,7 @@ describe('validateFrameDefaultProfiles', () => {
 
   it('isDefaultScenario is not a boolean -> error', () => {
     const profile = makeProfile({
-      isDefaultScenario: 'true' as any,
+      isDefaultScenario: 'true' as unknown as boolean,
     });
     const errors = validateFrameDefaultProfiles([profile], [APPROVED_IR_RECORD]);
     expect(errors.length).toBeGreaterThan(0);
@@ -1060,7 +1060,7 @@ describe('validateFrameDefaultProfiles', () => {
   it('record source_ids is undefined -> error', () => {
     const record = makeRecord({
       parameter_value_id: 'pvid-test-ir',
-      source_ids: undefined as any,
+      source_ids: undefined as unknown as string[],
     });
     const profile = makeProfile();
     const errors = validateFrameDefaultProfiles([profile], [record]);

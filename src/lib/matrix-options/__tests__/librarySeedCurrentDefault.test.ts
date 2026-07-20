@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { findSubstance } from '../substanceLibrary';
 import fs from 'node:fs';
 import path from 'node:path';
+import type { ParameterValueRecord } from '../provenance/types';
 
-function floatEqual(a: any, b: any) {
+function floatEqual(a: number | null | undefined, b: number | null | undefined) {
   if (a === b) return true;
   if (a == null || b == null) return false;
   return Math.abs(Number(a) - Number(b)) <= 1e-9 * Math.max(1, Math.abs(Number(a)), Math.abs(Number(b)));
@@ -20,7 +21,7 @@ describe('librarySeedCurrentDefault', () => {
     const paramValuesPath = path.resolve(__dirname, '../../../../matrix_research/reference_catalog/parameter_values.json');
     const ecoValuesPath = path.resolve(__dirname, '../../../../matrix_research/reference_catalog/eco_values.json');
     
-    let parameterValueRecords: any[] = [];
+    const parameterValueRecords: ParameterValueRecord[] = [];
     if (fs.existsSync(hhValuesPath)) {
       parameterValueRecords.push(...JSON.parse(fs.readFileSync(hhValuesPath, 'utf8')));
     }
@@ -31,7 +32,7 @@ describe('librarySeedCurrentDefault', () => {
       parameterValueRecords.push(...JSON.parse(fs.readFileSync(ecoValuesPath, 'utf8')));
     }
     
-    const currentDefaults = parameterValueRecords.filter((r: any) => 
+    const currentDefaults = parameterValueRecords.filter((r: ParameterValueRecord) => 
       r.default_status === 'current_default' && 
       r.pathway === 'human-health-direct' &&
       (r.input_key === 'rfd_oral_mg_per_kg_bw_day' || r.input_key === 'sf_oral_per_mg_per_kg_bw_per_day')
@@ -56,7 +57,7 @@ describe('librarySeedCurrentDefault', () => {
         libraryValue = substance.sf_oral_per_mg_per_kg_bw_per_day;
       }
       
-      if (!floatEqual(libraryValue, row.value)) {
+      if (!floatEqual(libraryValue, row.value as number)) {
         throw new Error(`Divergence for ${row.substance_key} ${row.input_key}: library has ${libraryValue}, catalog default_status='current_default' has ${row.value}`);
       }
       checkedRows++;

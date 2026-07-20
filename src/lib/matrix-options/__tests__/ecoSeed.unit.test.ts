@@ -46,7 +46,7 @@ beforeEach(() => {
     short_citation: 'Mock Citation',
     currentness_status: 'current',
     authority_tier: 'tier_1_government_or_regulatory',
-  } as any));
+  } as unknown as ReturnType<typeof getSourceRecord>));
 });
 
 function makeEcoRecord(overrides: Partial<ParameterValueRecord>): ParameterValueRecord {
@@ -89,7 +89,7 @@ describe('resolveEcoSeed unit tests', () => {
   });
 
   it('converts string value to number and returns seed', () => {
-    const record = makeEcoRecord({ value: '150' as any });
+    const record = makeEcoRecord({ value: '150' as unknown as number });
     mockGetRecords.mockReturnValue([record]);
     mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: '' });
     mockJurisdictionRank.mockReturnValue(1);
@@ -102,7 +102,7 @@ describe('resolveEcoSeed unit tests', () => {
   it('returns null for non-finite or non-positive value', () => {
     const r1 = makeEcoRecord({ value: NaN });
     const r2 = makeEcoRecord({ value: -10 });
-    const r3 = makeEcoRecord({ value: 'invalid-string' as any });
+    const r3 = makeEcoRecord({ value: 'invalid-string' as unknown as number });
 
     mockEligibility.mockReturnValue({ eligible: true, disposition: 'eligible_pending_approval', rationale: '' });
     mockJurisdictionRank.mockReturnValue(1);
