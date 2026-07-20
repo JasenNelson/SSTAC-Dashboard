@@ -276,4 +276,51 @@ describe('HHInhalationCalculator', () => {
       screen.queryByText(/US EPA IRIS chemical details, live/i),
     ).not.toBeInTheDocument();
   });
+  it('attributes the baseline Hazard Quotient to its exact BC CSR catalog row (source citation visible)', () => {
+    render(
+      <HHInhalationCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    // pv-bc-csr-hi-target-ca cites src-bc-csr-375-96, short_citation
+    // "B.C. Reg. 375/96 (CSR)". This text can only appear if the parameter_value_id
+    // override resolved the row.
+    expect(screen.getByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toBeInTheDocument();
+  });
+
+  it('attributes the baseline Target Risk to its exact Health Canada PQRA catalog row (source citation visible)', () => {
+    render(
+      <HHInhalationCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    // pv-hc-pqra-v4-2024-ilcr-target-ca cites src-health-canada-pqra-v4-2024, short_citation
+    // "Health Canada PQRA v4.0, 2024".
+    expect(screen.getByText(/Health Canada PQRA v4\.0, 2024/i)).toBeInTheDocument();
+  });
+
+  it('drops the exact-id HQ/TR attribution once the user edits the values away from the seed', () => {
+    render(
+      <HHInhalationCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.getByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toBeInTheDocument();
+    expect(screen.getByText(/Health Canada PQRA v4\.0, 2024/i)).toBeInTheDocument();
+    
+    fireEvent.change(screen.getByTestId('hh-inhalation-hazard-quotient-input'), {
+      target: { value: '0.2' },
+    });
+    // The edited value no longer matches the wired seed, so the exact catalog attribution must be dropped.
+    expect(screen.queryByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).not.toBeInTheDocument();
+
+    fireEvent.change(screen.getByTestId('hh-inhalation-target-risk-input'), {
+      target: { value: '0.00002' },
+    });
+    // Same for TR.
+    expect(screen.queryByText(/Health Canada PQRA v4\.0, 2024/i)).not.toBeInTheDocument();
+  });
 });
