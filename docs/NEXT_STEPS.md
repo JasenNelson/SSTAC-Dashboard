@@ -197,10 +197,18 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
     that could accept a caller-supplied bbox/radius/filter, so the oracle constraint (design s6.3)
     is satisfied structurally rather than by validation. A route would only be needed if a future
     client-rendered map has to fetch these over HTTP -- and it must carry the same no-parameter rule.
-  - **Follow-up still open: the map render.** This batch ships the table and summary panel so the
-    aggregate shape can be reviewed first; drawing the 118 markers on the Leaflet layer (with the
-    existing dash-array tier encoding and a legend entry) is not done.
-  - **Source:** design doc section 5.7; implemented 2026-07-20.
+  - ~~**Follow-up still open: the map render.**~~ **SHIPPED 2026-07-20 (PR #712, open).** The Leaflet
+    layer now draws the 118 sites as one marker each, with the dash-array centroid encoding, a legend
+    entry, per-site popups (tier + counts + the honest caption), and marker size clamped so N=1 stays
+    legible and N=476 does not read as area. Markers are derived server-side; the client map receives
+    only the marker projection, so no sample row crosses to it.
+  - **Admin-tier e2e** for the preview shipped 2026-07-20 (separate PR this session): skip-safe in
+    base projects, fail-loud in `chromium-admin-auth`, asserting the read-only guarantee and no
+    publish control.
+  - **Consolidated owner decision packet:** `docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md`
+    -- one place for the centroid-publication call (no publication now / Option C / B / D), plus the
+    two sub-questions Option C forces (shape a vs b; `samples.public` disposition).
+  - **Source:** design doc section 5.7; implemented 2026-07-20 across PRs #711, #712, e2e + docs PRs.
 - **Resolved for the record:** prior-design risk R2 (direct `UPDATE dras SET public` bypassing the
   audited RPC) is CLOSED -- trigger `trg_dras_public_flip_only` (`enforce_dras_public_via_flip`)
   exists and is enabled. Any new publication primitive needs an equivalent enforcement trigger.
