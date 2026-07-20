@@ -6237,7 +6237,7 @@
     "display_name": "Acceptable Hazard Index (HI)",
     "value": 1,
     "unit": "unitless",
-    "applicability": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "applicability": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable Hazard Index. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
     "uncertainty": "Pending direct-source verification.",
     "evidence_items": [
       {
@@ -6255,7 +6255,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "BC CSR (B.C. Reg. 375/96) s.18 acceptable Hazard Index = 1 (the BC operative threshold; HC PQRA per-substance target HQ 0.2 is a different concept). needs_review candidate; non-operational -- no calculator consumer yet; not a default.",
+    "review_notes": "BC CSR (B.C. Reg. 375/96) s.18 acceptable Hazard Index = 1 (the BC operative threshold; HC PQRA per-substance target HQ 0.2 is a different concept). needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted).",
     "source_relationships": [
       {
         "source_id": "src-bc-csr-375-96",
@@ -6301,7 +6301,7 @@
     "display_name": "Target Incremental Lifetime Cancer Risk (HC PQRA v4.0)",
     "value": 0.00001,
     "unit": "unitless",
-    "applicability": "Health Canada PQRA v4.0 (2024) Target ILCR. generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "applicability": "Health Canada PQRA v4.0 (2024) Target ILCR. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
     "uncertainty": "Pending direct-source verification.",
     "evidence_items": [
       {
@@ -6319,7 +6319,7 @@
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "HC PQRA v4.0 Target Incremental Lifetime Cancer Risk (1e-5). generic, substance-independent; needs_review candidate; non-operational -- no calculator consumer yet; not a default",
+    "review_notes": "HC PQRA v4.0 Target Incremental Lifetime Cancer Risk (1e-5). generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
     "source_relationships": [
       {
         "source_id": "src-health-canada-pqra-v4-2024",
