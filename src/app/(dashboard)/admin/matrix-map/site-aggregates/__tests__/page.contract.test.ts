@@ -112,6 +112,22 @@ describe('site-aggregate preview -- no write path', () => {
   });
 });
 
+describe('site-aggregate preview -- map layer containment', () => {
+  it('passes ONLY server-derived markers to the client map, never raw samples or aggregates', () => {
+    // The client map must receive the marker projection, which carries no per-sample data.
+    expect(code).toMatch(/const markers = toAggregateMarkers\(aggregates\)/);
+    expect(code).toMatch(/<SiteAggregateMapLoader markers=\{markers\}/);
+    // It must NOT hand the client the raw sample array or the full aggregate rows.
+    expect(code).not.toMatch(/MapLoader[^>]*samples=/);
+    expect(code).not.toMatch(/MapLoader[^>]*aggregates=/);
+  });
+
+  it('derives markers server-side (the map component makes no data fetch of its own)', () => {
+    // toAggregateMarkers is called in the server component, not delegated to the client.
+    expect(code).toMatch(/import \{ toAggregateMarkers \} from '@\/lib\/matrix-map\/siteAggregateMarkers'/);
+  });
+});
+
 describe('site-aggregate preview -- reuses shared vocabulary', () => {
   it('imports tier labels rather than inventing new wording', () => {
     expect(source).toMatch(
