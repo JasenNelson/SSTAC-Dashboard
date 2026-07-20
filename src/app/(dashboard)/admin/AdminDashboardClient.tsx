@@ -300,6 +300,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
               </div>
             </Link>
 
+            {/* Matrix Map Site Aggregates (Option C preview, read-only) */}
+            <Link href="/admin/matrix-map/site-aggregates" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-indigo-300">
+                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800 transition-colors">
+                  <BarChart3 className="w-8 h-8 text-indigo-700 dark:text-indigo-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mb-2">
+                  Matrix Map Site Aggregates
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Read-only Option C preview: one marker per site instead of one pin per sample. Publishes nothing.
+                </p>
+              </div>
+            </Link>
+
             {/* Matrix Map Publish */}
             <Link href="/admin/matrix-map/publish" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-300">

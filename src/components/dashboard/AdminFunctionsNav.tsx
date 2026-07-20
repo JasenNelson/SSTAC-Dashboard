@@ -17,6 +17,7 @@ const baseAdminNavItems = [
   { href: '/admin/jermilova-review', label: 'Jermilova Review' },
   { href: '/admin/matrix-map/health', label: 'Matrix Map Health' },
   { href: '/admin/matrix-map/publish', label: 'Matrix Map Publish' },
+  { href: '/admin/matrix-map/site-aggregates', label: 'Matrix Map Site Aggregates' },
   { href: '/regulatory-review', label: 'Regulatory Review' },
   { href: '/dashboard/engine-v2', label: 'Engine v2' },
 ]

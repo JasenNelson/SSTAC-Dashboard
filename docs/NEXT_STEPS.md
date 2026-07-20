@@ -189,10 +189,18 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   endpoint must not accept caller-supplied bbox/radius/filter parameters that scope hidden-row
   counts. This is the item most likely to fail review if retrofitted.
   - **Source:** same design doc, section 6.3.
-- **Cheapest useful next deliverable: the admin preview.** Rendering the aggregate layer over all 118
-  sites without publishing anything is likely read-only and separable from the publication primitive,
-  so the owner can see what Option C looks like before ruling on it.
-  - **Source:** same design doc, section 5.7.
+- ~~**Cheapest useful next deliverable: the admin preview.**~~ **SHIPPED 2026-07-20** as a read-only
+  admin page at `/admin/matrix-map/site-aggregates`, backed by the pure helper
+  `src/lib/matrix-map/siteAggregates.ts`. Renders the summary + a per-site table over all 118
+  centroid sites. Publishes nothing and contains no write path.
+  - Built as a **server component, not an API route**: with no HTTP endpoint there is no surface
+    that could accept a caller-supplied bbox/radius/filter, so the oracle constraint (design s6.3)
+    is satisfied structurally rather than by validation. A route would only be needed if a future
+    client-rendered map has to fetch these over HTTP -- and it must carry the same no-parameter rule.
+  - **Follow-up still open: the map render.** This batch ships the table and summary panel so the
+    aggregate shape can be reviewed first; drawing the 118 markers on the Leaflet layer (with the
+    existing dash-array tier encoding and a legend entry) is not done.
+  - **Source:** design doc section 5.7; implemented 2026-07-20.
 - **Resolved for the record:** prior-design risk R2 (direct `UPDATE dras SET public` bypassing the
   audited RPC) is CLOSED -- trigger `trg_dras_public_flip_only` (`enforce_dras_public_via_flip`)
   exists and is enabled. Any new publication primitive needs an equivalent enforcement trigger.
