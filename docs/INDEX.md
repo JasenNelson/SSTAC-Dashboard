@@ -5,11 +5,11 @@ This file is the **single canonical entrypoint** for project documentation.
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
 - **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
-## How to use this repo’s docs (humans + AI)
+## How to use this repo's docs (humans + AI)
 
 1. Start here.
 2. Use the manifest to determine which docs/sections are required for your change.
-3. Do not trust “current” claims or metrics found elsewhere unless they are explicitly labeled historical and dated.
+3. Do not trust "current" claims or metrics found elsewhere unless they are explicitly labeled historical and dated.
 
 ## Gate system (deterministic doc review)
 
@@ -17,9 +17,9 @@ To resolve which documentation must be reviewed for a given change, run:
 
 - `npm run docs:gate -- --base origin/main --head HEAD`
 
-This uses `docs/_meta/docs-manifest.json` to map changed code paths → required docs/sections, and fails if required headings drift.
+This uses `docs/_meta/docs-manifest.json` to map changed code paths -> required docs/sections, and fails if required headings drift.
 
-If you don’t have `origin/main` locally (or you want to force a specific check), you can pass explicit files:
+If you don't have `origin/main` locally (or you want to force a specific check), you can pass explicit files:
 
 - `npm run docs:gate -- --files src/app/api/polls/submit/route.ts`
 
@@ -128,7 +128,7 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 - `docs/regulatory-review/REGULATORY_REVIEW_UX_PROPOSAL_CORRECTIONS_APPLIED.md` - Corrections log (historical)
 - `docs/regulatory-review/LOCAL_ENGINE_ROUTING_PLAN.md` - Local-engine gating plan v3.1.1 (2026-02-19). Design artifact behind the current `requireAdmin()`/`requireLocalEngine()` guards and `/regulatory-review/:path*` middleware matcher.
 - `docs/regulatory-review/CHAT_AND_SEARCH_ENHANCEMENT_PLAN.md` - Chat+search assistant plan v1.1 (2026-02-21). Phase A routes are implemented under `src/app/api/regulatory-review/assistant/`; Phase B items remain deferred per `docs/NEXT_STEPS.md`.
-- `docs/regulatory-review/PHASE1_PYRAMID_NAVIGATION_IMPLEMENTATION.md` - Pyramid-navigation implementation proposal. Status unresolved — target files not in `src/` as of 2026-04-20; tracked in `docs/NEXT_STEPS.md`.
+- `docs/regulatory-review/PHASE1_PYRAMID_NAVIGATION_IMPLEMENTATION.md` - Pyramid-navigation implementation proposal. Status unresolved -- target files not in `src/` as of 2026-04-20; tracked in `docs/NEXT_STEPS.md`.
 - `docs/regulatory-review/CODEX_REVIEW_PROMPT.md` - One-shot Codex review prompt for the Local-Engine Routing Plan (historical).
 - Archived pre-correction copies live under `docs/regulatory-review/archive/`
 

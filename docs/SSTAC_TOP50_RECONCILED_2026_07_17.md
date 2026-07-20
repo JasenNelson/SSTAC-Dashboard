@@ -1,4 +1,9 @@
 # SSTAC-Dashboard -- Top 50 Priority Tasks Reconciled (2026-07-17)
+> **SUPERSEDED 2026-07-20** by `docs/SSTAC_TOP50_RECONCILED_2026_07_20.md`.
+> This document is retained as a historical record. It is STALE on at least four items that shipped
+> after it was written: the inhalation calculator (#673), the dl-PCB TEQ integration (#675), the
+> abs_dermal corrections (commit 8fcc30eb), and the IOCO publish (#7, now live). Do not cite it as
+> current state.
 
 Baseline: origin/main = 74900bf
 
