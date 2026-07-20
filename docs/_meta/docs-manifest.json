@@ -86,9 +86,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 5635,
-        "source": "npm run test:ci output (2026-07-13)",
-        "last_verified": "2026-07-13"
+        "value": 5821,
+        "source": "npm run test:ci output (2026-07-20)",
+        "last_verified": "2026-07-20"
       },
       "playwright_test_count": {
         "status": "verified",
