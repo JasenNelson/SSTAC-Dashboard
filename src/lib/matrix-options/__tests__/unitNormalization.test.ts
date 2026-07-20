@@ -109,8 +109,8 @@ describe('normalizeToBase', () => {
   });
 
   it('handles null/undefined rawUnit by failing closed', () => {
-    expect(normalizeToBase('1.0', null as any)).toBeNull();
-    expect(normalizeToBase('1.0', undefined as any)).toBeNull();
+    expect(normalizeToBase('1.0', null as unknown as string)).toBeNull();
+    expect(normalizeToBase('1.0', undefined as unknown as string)).toBeNull();
   });
 
   it('normalizes alternative dose unit patterns (hasDose sub-conditions)', () => {
@@ -160,7 +160,7 @@ describe('assessSlotUnitConsistency', () => {
 
   it('handles elements with missing unit safely by falling back to empty string', () => {
     const c = assessSlotUnitConsistency([
-      { value: '1.0', unit: null as any },
+      { value: '1.0', unit: null as unknown as string },
     ]);
     expect(c.allNormalizable).toBe(false);
     expect(c.comparable).toBe(false);

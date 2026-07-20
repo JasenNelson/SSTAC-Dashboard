@@ -5,6 +5,7 @@ import { MatrixMapStatsShell } from '../MatrixMapStatsShell';
 import { useMatrixMapMeasurementStore } from '@/stores/matrix-map/measurementStore';
 import { useMatrixMapFilterStore, DEFAULT_MATRIX_MAP_FILTER_STATE } from '@/stores/matrix-map/filterStore';
 import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import type { MatrixMapSelectionStatsProps } from '../MatrixMapSelectionStats';
 
 // Mock the Zustand stores
 vi.mock('@/stores/matrix-map/measurementStore', () => ({
@@ -12,7 +13,7 @@ vi.mock('@/stores/matrix-map/measurementStore', () => ({
 }));
 
 vi.mock('@/stores/matrix-map/filterStore', async (importOriginal) => {
-  const actual = await importOriginal() as any;
+  const actual = await importOriginal<typeof import('@/stores/matrix-map/filterStore')>();
   return {
     ...actual,
     useMatrixMapFilterStore: vi.fn(),
@@ -25,7 +26,7 @@ vi.mock('@/stores/matrix-map/selectionStore', () => ({
 
 // Mock the child component
 vi.mock('../MatrixMapSelectionStats', () => ({
-  MatrixMapSelectionStats: ({ ready, isLoading, errorMessage }: any) => (
+  MatrixMapSelectionStats: ({ ready, isLoading, errorMessage }: MatrixMapSelectionStatsProps) => (
     <div data-testid="mock-stats-child">
       <span data-testid="ready">{String(ready)}</span>
       <span data-testid="loading">{String(isLoading)}</span>
@@ -36,28 +37,28 @@ vi.mock('../MatrixMapSelectionStats', () => ({
 
 describe('MatrixMapStatsShell', () => {
   it('renders correctly with default store values', () => {
-    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapMeasurementStore.getState>) => unknown) => {
       const state = {
         rows: [],
         isLoading: false,
         errorMessage: null,
         selectedIdKey: 'sample-1',
       };
-      return selector(state);
+      return selector(state as unknown as ReturnType<typeof useMatrixMapMeasurementStore.getState>);
     });
 
-    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapSelectionStore.getState>) => unknown) => {
       const state = {
         selectedSampleIds: ['sample-1'],
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapSelectionStore.getState>);
     });
 
-    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapFilterStore.getState>) => unknown) => {
       const state = {
         filterState: DEFAULT_MATRIX_MAP_FILTER_STATE,
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapFilterStore.getState>);
     });
 
     render(<MatrixMapStatsShell />);
@@ -71,28 +72,28 @@ describe('MatrixMapStatsShell', () => {
   });
 
   it('passes ready=false when selectedIdKey does not match current selection', () => {
-    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapMeasurementStore.getState>) => unknown) => {
       const state = {
         rows: [],
         isLoading: false,
         errorMessage: null,
         selectedIdKey: 'sample-1', // different from selection
       };
-      return selector(state);
+      return selector(state as unknown as ReturnType<typeof useMatrixMapMeasurementStore.getState>);
     });
 
-    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapSelectionStore.getState>) => unknown) => {
       const state = {
         selectedSampleIds: ['sample-2'],
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapSelectionStore.getState>);
     });
 
-    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapFilterStore.getState>) => unknown) => {
       const state = {
         filterState: DEFAULT_MATRIX_MAP_FILTER_STATE,
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapFilterStore.getState>);
     });
 
     render(<MatrixMapStatsShell />);
@@ -101,28 +102,28 @@ describe('MatrixMapStatsShell', () => {
   });
 
   it('passes ready=false and isLoading=true when loading', () => {
-    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapMeasurementStore.getState>) => unknown) => {
       const state = {
         rows: [],
         isLoading: true,
         errorMessage: null,
         selectedIdKey: 'sample-1',
       };
-      return selector(state);
+      return selector(state as unknown as ReturnType<typeof useMatrixMapMeasurementStore.getState>);
     });
 
-    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapSelectionStore.getState>) => unknown) => {
       const state = {
         selectedSampleIds: ['sample-1'],
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapSelectionStore.getState>);
     });
 
-    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapFilterStore.getState>) => unknown) => {
       const state = {
         filterState: DEFAULT_MATRIX_MAP_FILTER_STATE,
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapFilterStore.getState>);
     });
 
     render(<MatrixMapStatsShell />);
@@ -132,28 +133,28 @@ describe('MatrixMapStatsShell', () => {
   });
 
   it('passes error state through to child', () => {
-    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapMeasurementStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapMeasurementStore.getState>) => unknown) => {
       const state = {
         rows: [],
         isLoading: false,
         errorMessage: 'Test error message',
         selectedIdKey: 'sample-1',
       };
-      return selector(state);
+      return selector(state as unknown as ReturnType<typeof useMatrixMapMeasurementStore.getState>);
     });
 
-    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapSelectionStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapSelectionStore.getState>) => unknown) => {
       const state = {
         selectedSampleIds: ['sample-1'],
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapSelectionStore.getState>);
     });
 
-    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: any) => {
+    vi.mocked(useMatrixMapFilterStore).mockImplementation((selector: (state: ReturnType<typeof useMatrixMapFilterStore.getState>) => unknown) => {
       const state = {
         filterState: DEFAULT_MATRIX_MAP_FILTER_STATE,
       };
-      return selector(state);
+      return selector(state as ReturnType<typeof useMatrixMapFilterStore.getState>);
     });
 
     render(<MatrixMapStatsShell />);
