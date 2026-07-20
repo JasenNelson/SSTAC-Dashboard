@@ -197,10 +197,12 @@ review items are cleared.
 
 ### 5.7 Admin preview and preflight
 
-- Admin preview renders the aggregate layer over the full 118 sites **without publishing anything**,
-  so the owner can see exactly what Option C looks like before ruling.
-- **This preview is the highest-value early deliverable** and is likely read-only, which makes it
-  separable from the publication primitive. Consider it as its own PR.
+- **SHIPPED 2026-07-20.** The admin preview renders the aggregate layer over the full 118 sites
+  **without publishing anything**, so the owner can see exactly what Option C looks like before
+  ruling. Table + summary landed in PR #711; the Leaflet map (118 markers + legend) in PR #712;
+  admin-tier e2e in a separate PR this session.
+- As predicted, it was read-only and separable from the publication primitive -- it was built as a
+  server component with no HTTP endpoint, so the oracle constraint (s6.3) holds by construction.
 - Any future publication action reuses the mandatory preflight in the decision packet's section 9:
   group by DRA, count both tiers, and hard-stop on unexpected tier mixes.
 
