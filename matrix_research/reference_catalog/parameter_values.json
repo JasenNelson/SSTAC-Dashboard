@@ -6282,7 +6282,7 @@
     "extraction_status": "extracted_from_source",
     "qa_status": "needs_review",
     "source_ids": [
-      "src-health-canada-pqra-v4-2024"
+      "src-bc-csr-375-96"
     ],
     "equation_ids": [
       "eq-human-health-direct-contact"
@@ -6292,21 +6292,21 @@
     "canonical_source_status": "direct_source_verified",
     "bc_protocol_alignment": null,
     "bc_protocol_basis": null,
-    "source_crystallization_date": "2024-03-31",
+    "source_crystallization_date": "1996-04-01",
     "receptor_groups": [
       "human"
     ],
     "species_groups": [],
     "input_key": "ILCR_target",
-    "display_name": "Target Incremental Lifetime Cancer Risk (HC PQRA v4.0)",
+    "display_name": "Target Incremental Lifetime Cancer Risk (BC CSR s.18)",
     "value": 0.00001,
     "unit": "unitless",
-    "applicability": "Health Canada PQRA v4.0 (2024) Target ILCR. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
+    "applicability": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable Incremental Lifetime Cancer Risk (ILCR). generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
     "uncertainty": "Pending direct-source verification.",
     "evidence_items": [
       {
-        "source_id": "src-health-canada-pqra-v4-2024",
-        "locator": "Health Canada PQRA v4.0",
+        "source_id": "src-bc-csr-375-96",
+        "locator": "Section 18",
         "value_text": "0.00001",
         "extraction_method": "manual_source_extraction",
         "extracted_by": "agy",
@@ -6314,17 +6314,17 @@
         "qa_status": "needs_review",
         "reviewed_by": null,
         "reviewed_at": null,
-        "note": "Health Canada PQRA v4.0 Target Incremental Lifetime Cancer Risk.",
+        "note": "BC CSR (B.C. Reg. 375/96) Section 18 acceptable incremental lifetime cancer risk.",
         "evidence_id": "ev-pv-hc-pqra-v4-2024-ilcr-target-ca-1",
         "locator_type": "source_table"
       }
     ],
-    "review_notes": "HC PQRA v4.0 Target Incremental Lifetime Cancer Risk (1e-5). generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
+    "review_notes": "BC CSR (B.C. Reg. 375/96) s.18 acceptable Incremental Lifetime Cancer Risk (ILCR) = 1e-5. generic, substance-independent; needs_review candidate; wired as the source-backed provenance default in the inhalation calculator (PR #697) via id-pin; remains not_default (not promoted)",
     "source_relationships": [
       {
-        "source_id": "src-health-canada-pqra-v4-2024",
+        "source_id": "src-bc-csr-375-96",
         "role": "canonical_candidate",
-        "note": "Health Canada PQRA v4.0 section this parameter comes from -- target incremental lifetime cancer risk"
+        "note": "BC Contaminated Sites Regulation (B.C. Reg. 375/96) Section 18 specifies an acceptable incremental lifetime cancer risk of 1e-5."
       }
     ],
     "population_groups": [

@@ -276,29 +276,29 @@ describe('HHInhalationCalculator', () => {
       screen.queryByText(/US EPA IRIS chemical details, live/i),
     ).not.toBeInTheDocument();
   });
-  it('attributes the baseline Hazard Quotient to its exact BC CSR catalog row (source citation visible)', () => {
+  it('attributes both baseline thresholds (HQ + ILCR) to their BC CSR catalog rows', () => {
     render(
       <HHInhalationCalculator
         substanceKey="benzene"
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
-    // pv-bc-csr-hi-target-ca cites src-bc-csr-375-96, short_citation
-    // "B.C. Reg. 375/96 (CSR)". This text can only appear if the parameter_value_id
-    // override resolved the row.
-    expect(screen.getByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toBeInTheDocument();
+    // Both threshold inputs now resolve to BC CSR: HQ -> pv-bc-csr-hi-target-ca and the
+    // re-sourced ILCR -> pv-hc-pqra-v4-2024-ilcr-target-ca (now cites src-bc-csr-375-96),
+    // both short_citation "B.C. Reg. 375/96 (CSR)", so it appears twice.
+    expect(screen.getAllByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toHaveLength(2);
   });
 
-  it('attributes the baseline Target Risk to its exact Health Canada PQRA catalog row (source citation visible)', () => {
+  it('no longer attributes the baseline Target Risk to Health Canada PQRA (re-sourced to BC CSR s.18)', () => {
     render(
       <HHInhalationCalculator
         substanceKey="benzene"
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
-    // pv-hc-pqra-v4-2024-ilcr-target-ca cites src-health-canada-pqra-v4-2024, short_citation
-    // "Health Canada PQRA v4.0, 2024".
-    expect(screen.getByText(/Health Canada PQRA v4\.0, 2024/i)).toBeInTheDocument();
+    // pv-hc-pqra-v4-2024-ilcr-target-ca is re-sourced to src-bc-csr-375-96 (BC CSR s.18),
+    // so the Health Canada PQRA citation is no longer attributed to the target-risk input.
+    expect(screen.queryByText(/Health Canada PQRA v4\.0, 2024/i)).not.toBeInTheDocument();
   });
 
   it('drops the exact-id HQ/TR attribution once the user edits the values away from the seed', () => {
@@ -308,19 +308,19 @@ describe('HHInhalationCalculator', () => {
         jurisdiction="bc-protocol1-v5-dra"
       />,
     );
-    expect(screen.getByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toBeInTheDocument();
-    expect(screen.getByText(/Health Canada PQRA v4\.0, 2024/i)).toBeInTheDocument();
-    
+    // Both HQ and TR resolve to BC CSR at baseline, so the citation appears twice.
+    expect(screen.getAllByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toHaveLength(2);
+
     fireEvent.change(screen.getByTestId('hh-inhalation-hazard-quotient-input'), {
       target: { value: '0.2' },
     });
-    // The edited value no longer matches the wired seed, so the exact catalog attribution must be dropped.
-    expect(screen.queryByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).not.toBeInTheDocument();
+    // Editing HQ away from the seed drops ITS attribution; TR's BC CSR citation still remains.
+    expect(screen.getAllByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).toHaveLength(1);
 
     fireEvent.change(screen.getByTestId('hh-inhalation-target-risk-input'), {
       target: { value: '0.00002' },
     });
-    // Same for TR.
-    expect(screen.queryByText(/Health Canada PQRA v4\.0, 2024/i)).not.toBeInTheDocument();
+    // Editing TR away too drops the last BC CSR attribution.
+    expect(screen.queryByText(/B\.C\. Reg\. 375\/96 \(CSR\)/i)).not.toBeInTheDocument();
   });
 });
