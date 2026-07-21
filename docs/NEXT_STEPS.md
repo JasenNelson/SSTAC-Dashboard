@@ -247,6 +247,21 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
     OCR/vision spend; r-0074 is not viable text-first from this source.
   - **Source:** `docs/design/matrix-map/OPTION_D_R0074_PILOT_EVIDENCE_2026-07-20.md`.
 
+### 2026-07-21 -- Option D r-0074 source-document check: text-first NO-GO across the site file
+
+- **The source check is complete: `SED11-*` coordinates are NOT text-extractable from any document
+  in the r-0074 site file (19661).** A read-only text-layer scan of all candidate source PDFs --
+  including the full 2932-page master Stage 1&2 PSI/DSI/COR compilation -- found the `SED11-*` 2011
+  sediment labels zero times, with zero `SED11`+UTM co-occurrence. The site's own investigations use
+  `BH`/`MW`/`SE` naming (2015-2020, project T17-035) and reclassified its sediment samples
+  (`SE19-*`/`SE20-*`) as soil. The `SED11-*` source is therefore raster-only in the HHERA or an
+  external 2011 study not filed under site 19661. No OCR/vision/write/publication occurred; AGY not
+  invoked (no text table found).
+  - **Recommended next gate:** pick a different DRA pilot whose stations appear as a text-layer
+    coordinate table, OR accept centroid `medium` tier for r-0074. OCR of this site file has low
+    expected yield.
+  - **Source:** `docs/design/matrix-map/OPTION_D_R0074_SOURCE_CHECK_2026-07-21.md`.
+
 ---
 
 ## How to add a new deferred item
