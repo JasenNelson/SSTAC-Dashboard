@@ -262,6 +262,24 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
     expected yield.
   - **Source:** `docs/design/matrix-map/OPTION_D_R0074_SOURCE_CHECK_2026-07-21.md`.
 
+### 2026-07-21b -- Option D next-pilot selection: no clean text-first GO; the HHERA path is exhausted
+
+- **Ranked the remaining located Option D candidates; none is a clean single-source text-first GO.**
+  Read-only text-layer probes: Howe Sound (052c6a9d, 198 stn) NO-GO (HHERA = chemistry + dive
+  narrative, no coordinate table); Site 14764 (e6c0df6d, 49 stn) NO-GO (`SED09` sediment labels never
+  co-occur with coordinates; the doc's UTM is `MW` wells); Lot C (578bab5d, 114 stn) NO-GO text-first
+  but the STRONGEST OCR candidate -- its full borehole-log set (`Appendix G`, 410 pp, 52 `MW*` ids
+  incl. MW21/22 matching samples) is mostly RASTER (only 89 pp have text; the `Well location:`
+  coordinate field is not text); only one anomalous 2024 log (p28 `MW/SV24-29S`) has text coords.
+- **Systemic finding:** the DRA source docs BN-RRM extracted from are HHERA/ERA risk assessments,
+  which carry CHEMISTRY tables, not station COORDINATE tables. Coordinates live in companion DSI
+  borehole LOGS -- but those are usually RASTER (need OCR of the `Well location` field), not a text
+  parse. A crude UTM regex is unreliable here (lab sample IDs false-match).
+- **Recommended gate:** if the owner authorizes a bounded OCR run, Lot C `Appendix G` is a
+  high-confidence OCR pilot (structured logs, ids already matching `display_name`); else accept
+  centroid tier now. No write/OCR/vision/publication occurred; AGY not invoked.
+  - **Source:** `docs/design/matrix-map/OPTION_D_NEXT_PILOT_SELECTION_2026-07-21.md`.
+
 ---
 
 ## How to add a new deferred item
