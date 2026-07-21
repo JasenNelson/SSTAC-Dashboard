@@ -280,6 +280,22 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   centroid tier now. No write/OCR/vision/publication occurred; AGY not invoked.
   - **Source:** `docs/design/matrix-map/OPTION_D_NEXT_PILOT_SELECTION_2026-07-21.md`.
 
+### 2026-07-21c -- Option D Lot C OCR pilot: NO-GO, OCR not warranted; text-first + log-OCR exhausted
+
+- **The Lot C Appendix G OCR pilot was NOT run -- its premise was falsified read-only first.** (A) The
+  well logs carry no surveyed coordinates: 35/35 ESdat logs with a `COORDINATES` field say "Not
+  Surveyed" (p356 MW21-01), and older MW10 logs use a narrative `Well location`. (B) Appendix G is the
+  wrong target: 103/114 Lot C samples are `SED11-*` SEDIMENT stations (same 2011 family as r-0074),
+  not the 3 monitoring wells the logs cover. OCR would only re-read "Not Surveyed". This CORRECTS the
+  PR #718 "best OCR candidate" call. No OCR/write/publication; AGY not invoked.
+- **Option D status:** HHERA text-first, next-pilot text-first, and borehole-log OCR are all
+  exhausted. `SED11-*` (r-0074 + Lot C) is a shared 2011 sediment dataset with no coordinate source in
+  the located corpus.
+- **Recommended gate:** accept centroid `medium` tier and close the coordinate-upgrade effort (no
+  surveyed coordinate data was found for these stations in the located corpus), unless the owner can
+  provide the original 2011 sediment study.
+  - **Source:** `docs/design/matrix-map/OPTION_D_LOTC_OCR_PILOT_2026-07-21.md`.
+
 ---
 
 ## How to add a new deferred item
