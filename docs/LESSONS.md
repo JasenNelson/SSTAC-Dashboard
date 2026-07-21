@@ -3181,8 +3181,52 @@ labeled non-executable rather than silently left ambiguous.
 
 ---
 
-**Last Updated:** July 13, 2026 (T32 live matrix_map data-write pattern)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); prior totals not re-tallied.
+## 2026-07-21 - Verify the data actually exists (read-only) before spending an extraction/OCR lane [HIGH]
+
+**Area:** Matrix Map coordinate upgrade (Option D) / autonomous run scoping / OCR cost control
+**Impact:** HIGH (a prior corpus-wide vision run cost ~19M tokens; premise-first checks closed 5 DRAs read-only at ~0 extraction cost)
+
+### Problem
+Option D aimed to replace centroid coordinates with true per-sample coordinates extracted from source
+DRA PDFs. Across five DRAs (r-0074, Howe Sound, Site 14764, Lot C, plus IOCO which is already
+surveyed) every attempted extraction path failed -- but the failures were cheap to discover only
+because each lane verified the PREMISE read-only before spending. The reflex to "just run OCR" would
+have burned a large token/time budget against source documents that do not contain the coordinates.
+
+### Pattern
+1. The DRA source docs BN-RRM extracted from are HHERA/ERA risk assessments -- they carry CHEMISTRY
+   tables (station id + analyte results), NOT station COORDINATE tables. Coordinates live in companion
+   DSI borehole logs and survey figures.
+2. Those logs are frequently RASTER (scanned) OR text-but-empty: Lot C's borehole-log appendix (410pp)
+   reads "COORDINATES Not Surveyed" on 35/35 well logs; older logs use a narrative location ("East of
+   the Air Compression Building"). Those located logs therefore carry no coordinates to extract (a
+   corpus-scoped read; not a claim that coordinates exist nowhere).
+3. Feature-class mismatch: the sample rows are SEDIMENT stations (SED09/SED11) but the coordinate-
+   bearing content is boreholes/monitoring wells (MW/BH) -- a different physical feature. Extracting
+   the wrong feature class produces an unmappable result.
+4. Crude coordinate regexes false-match: a `<7-digit> <6-digit>` UTM-pair pattern matched 161 pages of
+   Howe Sound that were all CHEMISTRY tables (6-7 digit lab sample IDs), not coordinates. The reliable
+   text-layer signal is `easting`+`northing` header co-presence, not raw number pairs.
+5. Every negative claim was scoped to WHAT WAS CHECKED (text-layer / located corpus), never "the
+   coordinates do not exist anywhere" -- codex enforced this scoping in review after review.
+
+### File References
+- `docs/design/matrix-map/OPTION_D_*_2026-07-2[01].md` -- the five read-only pilot / selection /
+  source-check evidence packets (all NO-GO), each stopping at an owner gate.
+- Owner ruling (2026-07-21): accept centroid medium tier; rely on Option C site aggregates.
+
+### Key Takeaway
+Before committing an autonomous run to an expensive extraction / OCR / vision lane, spend a cheap
+read-only pass to confirm the target data (a) exists in the located source at all, (b) is in the
+feature class your rows need, and (c) is machine-readable in the form you plan to parse. A false
+premise is discovered for ~0 cost by reading and for ~millions of tokens by OCR-ing. Scope every
+negative finding to what was actually checked, and let a null result close the lane at an owner gate
+rather than escalating tooling against absent data.
+
+---
+
+**Last Updated:** July 21, 2026 (Option D read-only premise-first extraction discipline)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill
