@@ -233,6 +233,20 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   in `extract_dra_coordinates.py` is quarantined and out of scope.
   - **Source:** same design doc, sections 6 and 10.1.
 
+### 2026-07-20d -- Option D r-0074 text-first pilot: NO-GO (owner gate pending)
+
+- **The r-0074 text-first pilot ran read-only and returned NO-GO; next step is an owner decision, NOT
+  an OCR/vision run.** Two blockers: (A) the source HHERA has no machine-readable coordinate table --
+  its coordinate content is map figures ("UTM Zone 10 NAD83" legend only, no textual values); (B) the
+  24 `SED11-*` sediment sample stations appear ZERO times in the text layer (its figures show
+  boreholes/monitoring wells, a different feature class; text-layer diagnostics only cannot rule out
+  raster/vector figure content), so the `SED11-*` coordinates most plausibly live in the original
+  2011 sediment report, not `bnrrm_doc_id 351`. No coordinate/Supabase write, no OCR/vision, no
+  publication occurred.
+  - **Recommended next gate:** confirm the correct source document (cheap, read-only) before any
+    OCR/vision spend; r-0074 is not viable text-first from this source.
+  - **Source:** `docs/design/matrix-map/OPTION_D_R0074_PILOT_EVIDENCE_2026-07-20.md`.
+
 ---
 
 ## How to add a new deferred item
