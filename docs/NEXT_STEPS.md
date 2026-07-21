@@ -285,8 +285,8 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
 - **The Lot C Appendix G OCR pilot was NOT run -- its premise was falsified read-only first.** (A) The
   well logs carry no surveyed coordinates: 35/35 ESdat logs with a `COORDINATES` field say "Not
   Surveyed" (p356 MW21-01), and older MW10 logs use a narrative `Well location`. (B) Appendix G is the
-  wrong target: 103/114 Lot C samples are `SED11-*` SEDIMENT stations (same 2011 family as r-0074),
-  not the 3 monitoring wells the logs cover. OCR would only re-read "Not Surveyed". This CORRECTS the
+  wrong target: 100/114 Lot C samples are `SED*` SEDIMENT stations (mostly `SED11-*`, same 2011 family
+  as r-0074), not the 3 monitoring wells the logs cover. OCR would only re-read "Not Surveyed". This CORRECTS the
   PR #718 "best OCR candidate" call. No OCR/write/publication; AGY not invoked.
 - **Option D status:** HHERA text-first, next-pilot text-first, and borehole-log OCR are all
   exhausted. `SED11-*` (r-0074 + Lot C) is a shared 2011 sediment dataset with no coordinate source in
