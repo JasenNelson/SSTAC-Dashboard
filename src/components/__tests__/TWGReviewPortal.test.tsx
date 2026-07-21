@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import TWGReviewPortal from '../TWGReviewPortal'
 import { createClient } from '@/lib/supabase/client'
@@ -47,7 +47,7 @@ describe('TWGReviewPortal', () => {
     })
 
     // Typecast since it's mocked
-    ;(createClient as any).mockReturnValue({
+    ;(createClient as unknown as Mock).mockReturnValue({
       auth: { getUser: mockGetUser },
       from: mockFrom,
     })

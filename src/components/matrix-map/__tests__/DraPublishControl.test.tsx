@@ -125,7 +125,7 @@ describe('DraPublishControl', () => {
     expect(screen.queryByText('Site 1 - Woodfibre (Former Squamish Pulp Mill)')).not.toBeInTheDocument();
   });
 
-  let fetchMock: any;
+  let fetchMock: ReturnType<typeof mockFetchRouter>;
 
   beforeEach(() => {
     fetchMock = mockFetchRouter({

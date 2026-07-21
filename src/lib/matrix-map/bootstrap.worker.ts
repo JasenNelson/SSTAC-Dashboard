@@ -203,8 +203,8 @@ if (typeof window === 'undefined' && typeof self !== 'undefined' && typeof postM
       const { values, B, seed } = event.data;
       const results = performBootstrap(values, B, seed);
       postMessage({ status: 'success', results });
-    } catch (err: any) {
-      postMessage({ status: 'error', error: err.message || err.toString() });
+    } catch (err) {
+      postMessage({ status: 'error', error: err instanceof Error ? err.message : String(err) });
     }
   };
 }

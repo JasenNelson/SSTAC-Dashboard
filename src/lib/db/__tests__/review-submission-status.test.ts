@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest';
 import {
   REVIEW_SUBMISSION_STATUSES,
   type ReviewSubmissionStatus,
@@ -25,9 +25,15 @@ const writtenPayloads: Array<Record<string, unknown>> = [];
 // AND exposes .single()/.eq() so it works for both call styles:
 //   queries.ts:    .insert(p).single()  /  .update(p).eq().single()
 //   api client.ts: .insert(p)           /  .update(p).eq()
-function makeTerminal(): any {
+interface MockTerminal {
+  single: Mock;
+  eq: Mock;
+  then: (resolve: (v: { data: null; error: null }) => unknown) => unknown;
+}
+
+function makeTerminal(): MockTerminal {
   const result = { data: null, error: null };
-  const terminal: any = {
+  const terminal: MockTerminal = {
     single: vi.fn(async () => result),
     eq: vi.fn(() => terminal),
     then: (resolve: (v: typeof result) => unknown) => resolve(result),
@@ -56,7 +62,7 @@ describe('review submission status integrity', () => {
     vi.clearAllMocks();
     writtenPayloads.length = 0;
     resetApiClient();
-    (createAuthenticatedClient as any).mockResolvedValue(buildMockClient());
+    (createAuthenticatedClient as unknown as Mock).mockResolvedValue(buildMockClient());
   });
 
   it('REVIEW_SUBMISSION_STATUSES matches the DB CHECK constraint set', () => {

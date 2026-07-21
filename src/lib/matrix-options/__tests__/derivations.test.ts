@@ -43,7 +43,7 @@ describe('utl9595', () => {
   });
 
   it('throws TypeError when samples is not an array', () => {
-    expect(() => utl9595('not-an-array' as any)).toThrow(TypeError);
+    expect(() => utl9595('not-an-array' as unknown as number[])).toThrow(TypeError);
   });
 
   it('returns an empty warnings array when n is at a tabulated row', () => {
