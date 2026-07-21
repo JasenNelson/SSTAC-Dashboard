@@ -2,6 +2,10 @@ import { describe, it, expect } from 'vitest';
 import { createTrainedNetwork, createGenericNetwork } from '../trained-network';
 import type { NetworkModel } from '@/types/bn-rrm/network';
 
+// The loose input shape createGenericNetwork accepts (LearnedModelJSON). Derived from the
+// function signature so these fixtures stay typed without importing the non-exported interface.
+type NetJson = Parameters<typeof createGenericNetwork>[0];
+
 describe('trained-network', () => {
   describe('createTrainedNetwork', () => {
     it('returns the 20-node DAG and deep-copies models', () => {
@@ -17,7 +21,7 @@ describe('trained-network', () => {
 
   describe('createGenericNetwork', () => {
     it('throws on empty nodes', () => {
-      const badJson: any = {
+      const badJson: NetJson = {
         nodes: [],
         edges: [{ source: 'A', target: 'B' }],
         containers: [],
@@ -27,7 +31,7 @@ describe('trained-network', () => {
     });
 
     it('throws on empty edges', () => {
-      const badJson: any = {
+      const badJson: NetJson = {
         nodes: [{ id: 'A', category: 'substance', states: [], beliefs: {} }],
         edges: [],
         containers: [],
@@ -37,7 +41,7 @@ describe('trained-network', () => {
     });
 
     it('accepts canonical CPT key convention (parentNodeIds/entries)', () => {
-      const json: any = {
+      const json: NetJson = {
         nodes: [{ id: 'A', category: 'substance', states: [], beliefs: {} }, { id: 'B', category: 'effect', states: [], beliefs: {} }],
         edges: [{ source: 'A', target: 'B' }],
         containers: [],
@@ -55,7 +59,7 @@ describe('trained-network', () => {
     });
 
     it('accepts alternate CPT key convention (parentIds/table)', () => {
-      const json: any = {
+      const json: NetJson = {
         nodes: [{ id: 'A', category: 'substance', states: [], beliefs: {} }, { id: 'B', category: 'effect', states: [], beliefs: {} }],
         edges: [{ source: 'A', target: 'B' }],
         containers: [],

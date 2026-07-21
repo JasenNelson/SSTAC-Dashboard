@@ -44,7 +44,7 @@ describe('GET /api/hitl-packets/[sessionId]', () => {
     vi.clearAllMocks();
   });
 
-  const req = {} as any;
+  const req = {} as unknown as Parameters<typeof GET>[0];
   const params = Promise.resolve({ sessionId: 'session-123' });
 
   it('Unauthenticated (getAuthenticatedUser -> null) -> status 401, body.error === \'Unauthorized\'.', async () => {

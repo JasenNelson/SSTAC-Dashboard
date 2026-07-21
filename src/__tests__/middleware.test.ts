@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, vi, beforeEach, afterEach, type Mock } from 'vitest'
 import { middleware, config } from '../middleware'
 import { NextRequest } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
@@ -41,7 +41,7 @@ describe('middleware auth gating', () => {
   })
 
   it('redirects an unauthenticated request to /login carrying the redirect path', async () => {
-    ;(createServerClient as unknown as any).mockReturnValue({
+    ;(createServerClient as unknown as Mock).mockReturnValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
     })
 
@@ -55,7 +55,7 @@ describe('middleware auth gating', () => {
   })
 
   it('passes an authenticated request through with security headers', async () => {
-    ;(createServerClient as unknown as any).mockReturnValue({
+    ;(createServerClient as unknown as Mock).mockReturnValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null }) },
     })
 
