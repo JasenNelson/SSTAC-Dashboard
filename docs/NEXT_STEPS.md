@@ -296,6 +296,21 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   provide the original 2011 sediment study.
   - **Source:** `docs/design/matrix-map/OPTION_D_LOTC_OCR_PILOT_2026-07-21.md`.
 
+### 2026-07-21d -- Top-50 continuation: deploy-health check shipped + batched owner gates
+
+- **Executed:** Top-50 row 2 (deploy-health) shipped as PR #721 -- read-only `GET /api/health` SHA
+  probe + `check-prod-sha-drift.mjs` drift checker (build-only; CI wiring/alerting is owner row 2b).
+  Row 36 (`LESSONS.md`) refreshed with the Option D premise-first extraction lesson.
+- **Retired/verified:** rows 35/37/43 already fixed via PR #706 (no-op); Option D coordinate rows
+  (13,14,15,46) closed by the owner ruling; publication rows (1,3,5,25) owner-ruled (no centroid
+  publication now); row 28 retracted 2026-07-20 (deliberate forward-declares, not a coverage gap).
+  Row 8's stale text lives in an external `~/.claude/plans/` file.
+- **Owner gates (batched):** row 17 -- the public DRA `c2284286` (IOCO T1 data-report, doc 7) has 0
+  samples because its samples are on the sibling ERA DRA `ea15e94a` (doc 6); harmless companion doc,
+  owner decides leave-published vs unpublish (`flip_dra_public`, owner-only). Plus row 2b (wire the
+  drift check + alerting) and row 8 (external plan-doc edit).
+  - **Source:** `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md`.
+
 ---
 
 ## How to add a new deferred item
