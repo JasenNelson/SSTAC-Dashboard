@@ -1,0 +1,141 @@
+name: Prod deploy-health
+
+# Top-50 row 2b: run the READ-ONLY prod SHA-drift check (scripts/verify/check-prod-sha-drift.mjs,
+# shipped in row 2 / PR #721) on a schedule and surface drift / unreachable via job failure.
+# READ-ONLY: GETs <PROD_URL>/api/health and compares the deployed SHA to the main tip. No writes,
+# no deploy, no secrets. Triggering a real production redeploy is a separate owner action.
+#
+# Alerting = GitHub's native failed-workflow notification (owner is emailed when the job fails).
+# This workflow runs ONLY on schedule + workflow_dispatch (never pull_request), so it produces no
+# PR check context and must NOT be added to branch-protection required checks -- it would otherwise
+# block every PR whenever production legitimately trails main.
+
+on:
+  schedule:
+    # Every 6 hours (UTC). Catches a stranded / failed production deploy or an unreachable
+    # /api/health within a quarter-day at 4 runs/day; clear of GitHub's sub-5-minute cron
+    # throttling. Scheduled Actions are best-effort and run in UTC.
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+    inputs:
+      soft_mode:
+        description: 'Manual audit only: treat prod-behind-main DRIFT as a warning (job stays green) instead of failing. UNREACHABLE always fails. Default off (drift fails). Never used by the scheduled run.'
+        type: boolean
+        default: false
+
+# Least privilege: only checks out the repo and GETs a public URL (mirrors docs-gate.yml).
+permissions:
+  contents: read
+
+concurrency:
+  group: prod-health-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  prod-sha-drift:
+    name: Check prod SHA drift
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+        with:
+          # Full history so the abbreviated main SHA (`git rev-parse --short FETCH_HEAD` after
+          # fetching main in the run step) is unambiguous. actions/checkout does not create an
+          # origin/main remote-tracking ref, and a manual workflow_dispatch can check out a
+          # NON-main ref, so the run step fetches main explicitly rather than trusting HEAD.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v6
+        with:
+          # Mirrors docs-gate.yml. The checker has ZERO npm dependencies (Node builtins + global
+          # fetch), so there is deliberately no `npm ci` / dependency cache.
+          node-version: 24
+
+      - name: Check prod SHA drift
+        env:
+          # Public production alias (verified live 2026-07-21). Override via the repo variable
+          # PROD_URL to repoint (e.g. a custom domain) without a code change.
+          PROD_URL: ${{ vars.PROD_URL || 'https://sstac-dashboard.vercel.app' }}
+          # Empty on scheduled runs (no inputs context) -> hard-fail path. 'true' only via a
+          # manual workflow_dispatch that opts into soft mode.
+          SOFT_MODE: ${{ inputs.soft_mode }}
+        run: |
+          set +e
+          # Resolve the repository's MAIN tip explicitly rather than the checked-out HEAD: a manual
+          # workflow_dispatch can run from any ref, so HEAD may be a feature branch and comparing
+          # production against it would defeat the prod-vs-main check. Fetch main into a DEDICATED
+          # ref (NOT FETCH_HEAD, which a failed fetch under `set +e` could leave stale from checkout)
+          # and HARD-FAIL if it cannot be resolved -- never compare production against the wrong SHA.
+          # fetch-depth: 0 above keeps the abbreviation unambiguous over full history.
+          if ! git fetch --no-tags --force origin main:refs/prod-health/main; then
+            echo "::error::could not fetch origin/main to resolve the expected main tip."
+            exit 1
+          fi
+          EXPECTED="$(git rev-parse --short refs/prod-health/main)"
+          if [ -z "$EXPECTED" ]; then
+            echo "::error::could not resolve the main tip SHA from the fetched ref."
+            exit 1
+          fi
+          echo "main tip (expected): $EXPECTED"
+          echo "prod url:            $PROD_URL"
+
+          # Retry once on UNREACHABLE (exit 2) to de-noise a transient Vercel/network blip
+          # before believing production is down.
+          CODE=2
+          OUT=""
+          for attempt in 1 2; do
+            OUT="$(node scripts/verify/check-prod-sha-drift.mjs "$PROD_URL" "$EXPECTED" 2>&1)"
+            CODE=$?
+            echo "$OUT"
+            if [ "$CODE" -ne 2 ]; then
+              break
+            fi
+            if [ "$attempt" -eq 1 ]; then
+              echo "attempt 1: UNREACHABLE -- retrying in 15s..."
+              sleep 15
+            fi
+          done
+
+          {
+            echo "## Prod deploy-health"
+            echo ""
+            echo "- main tip (expected): \`$EXPECTED\`"
+            echo "- prod URL: $PROD_URL"
+            echo ""
+            echo "Result:"
+            echo ""
+            echo '```'
+            echo "$OUT"
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+          case "$CODE" in
+            0)
+              echo "ALIGNED -- production is on the main tip."
+              exit 0
+              ;;
+            1)
+              # Only soften a GENUINE drift result. The checker prints "DRIFT: ..." on exit 1, but
+              # Node also exits 1 on a module-load / syntax / runtime crash -- those must still fail
+              # even under soft_mode, so gate the downgrade on the expected DRIFT message.
+              case "$OUT" in
+                DRIFT:*)
+                  if [ "$SOFT_MODE" = "true" ]; then
+                    echo "::warning::$OUT"
+                    echo "soft_mode=true -- expected DRIFT surfaced as a warning; job stays green."
+                    exit 0
+                  fi
+                  ;;
+              esac
+              echo "::error::$OUT"
+              exit 1
+              ;;
+            *)
+              # UNREACHABLE (exit 2): always fail -- this is the genuinely actionable
+              # "production is not answering" signal, independent of soft_mode.
+              echo "::error::$OUT"
+              exit 1
+              ;;
+          esac
