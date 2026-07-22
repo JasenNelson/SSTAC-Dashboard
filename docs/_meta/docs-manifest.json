@@ -59,9 +59,9 @@
         "last_verified": "2025-12-18"
       },
       "current_grade": {
-        "status": "verified",
+        "status": "stale_unreconciled",
         "value": "A- (89%)",
-        "source": "Re-analysis 2026-07-18 (resolves the prior stale_unreconciled flag) using the 7-category weighted rubric in docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md. Metrics gathered against origin/main 73203c5 and CI/CD Pipeline run 29651396505 (all 8 gate jobs green: Lint & TypeScript Check, Unit Tests, Production Build, E2E Tests, Security Scan, Performance, K6, Status). Structural metrics: 616 source ts/tsx + 286 unit-test files + 13 e2e specs; vitest 5635 + playwright 228 + k6 6 all passing; 51 ': any' annotations (low); 137 files over 500 lines (god-component/data/test debt, mostly matrix-options). Supersedes both the stale 'A (90%)' (last verified 2026-01-25, pre-dating ~6 months of matrix-options + RLS work) and the un-reproducible facts_history 97.5/100 'A++++' self-assessment. PROPOSED until the owner merges this PR; owner merge = sanction to treat as current.",
+        "source": "Re-analysis 2026-07-18 (resolves the prior stale_unreconciled flag) using the 7-category weighted rubric in docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md. Metrics gathered against origin/main 73203c5 and CI/CD Pipeline run 29651396505 (all 8 gate jobs green: Lint & TypeScript Check, Unit Tests, Production Build, E2E Tests, Security Scan, Performance, K6, Status). Structural metrics: 616 source ts/tsx + 286 unit-test files + 13 e2e specs; vitest 5635 + playwright 228 + k6 6 all passing; 51 ': any' annotations (low); 137 files over 500 lines (god-component/data/test debt, mostly matrix-options). Supersedes both the stale 'A (90%)' (last verified 2026-01-25, pre-dating ~6 months of matrix-options + RLS work) and the un-reproducible facts_history 97.5/100 'A++++' self-assessment. This snapshot was sanctioned by the owner on merge (status: verified); see staleness_note -- the pinned metrics are now stale vs the current tip.",
         "calculation_basis": {
           "documentation_and_setup_10pct": "92% (docs/INDEX.md, docs-manifest facts + automated docs:gate, GATE_MODE_SOP, ENVIRONMENT_REFERENCE)",
           "database_schema_15pct": "90% (append-only Supabase migrations, RLS policies incl. dras_admin_all flip trigger + spatial-oracle hardening)",
@@ -73,7 +73,8 @@
         },
         "weighted_average": "89.35% -> A- (89%)",
         "reanalysis_ref": "2026-07-18 grade re-analysis; metric script .tmp/grade_metrics.sh; CI/CD Pipeline run 29651396505; ref origin/main 73203c5",
-        "last_verified": "2026-07-18"
+        "last_verified": "2026-07-18",
+        "staleness_note": "The A- (89%) snapshot and all calculation_basis structural metrics are PINNED to origin/main 73203c5 (2026-07-18) and are now stale: the tip has advanced many merged PRs since (current tip b493f8c7, 2026-07-22). Do NOT cite this snapshot's structural metrics as current -- e.g. the ': any' figure (snapshot: 51) predates the continued explicit-any burn-down (PR #725, 2026-07-21) and, separately, the raw ': any'/eslint-disable-suppression count is a different number from the eslint no-explicit-any WARNING count, so any current explicit-any figure must be freshly measured, not read from here; test counts (vitest etc.) have also moved. A fresh 7-category re-analysis (HOW_TO_CONDUCT_GRADE_ANALYSIS.md, against the current tip + a green CI run) is due before the grade is treated as current. Flagged 2026-07-22; no new grade computed here."
       },
       "target_grade": {
         "status": "in_progress",
