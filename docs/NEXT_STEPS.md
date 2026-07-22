@@ -338,6 +338,28 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   `main` until that merges.
   - **Source:** owner rulings 2026-07-21 (Top-50 owner-packet cleanup batch); PR #729.
 
+### 2026-07-22 -- SSTAC Graphify/KB wiki phase-state audit + Phase 3.5 owner gate
+
+- **New Top-50 item: SSTAC Graphify/KB wiki phase-state audit + Phase 3.5 owner packet.** This is
+  SSTAC-Dashboard's OWN `tooling/wiki` Graphify/LLM-wiki pilot -- NOT the Regulatory-Review KB.
+  Audited 2026-07-22 at `origin/main b493f8c7`: Phases 0-3.5 code/tooling are fully LANDED and match
+  the plan EXCEPT for the flagged drift (D1-D3 in the audit; D1 is a safety gap) (all ports + bounded
+  enhancements + tests; `/sync-wiki` skill shipped in #731), and the deterministic **test suite passes
+  48/48** under plain Python (stdlib-only, no graphify). Phases 4-7 are confirmed fully UNLANDED (no Ollama third-lane, no nightly scripts, no
+  `.claude/settings.json` hooks, no graphify MCP, no committed wiki) -- correctly gated behind Phase
+  3.5. **Row 9 (land `/sync-wiki`) is DONE (#731).**
+- **Phase 3.5 go/no-go is the open owner gate (Top-50 row 48).** Three options: STOP-HERE (default;
+  keep only the deterministic on-demand layer), PROCEED to Phases 4-7 (only on affirmative evidence:
+  healthy smoke metrics AND the wiki demonstrably helped real work AND priority re-affirmed vs Matrix
+  Options), or ABANDON. Recommendation: STOP-HERE unless the evidence conditions are met.
+- **Row 10 clarified:** whether SSTAC's guarded first build + ledger seed actually RAN is owner-
+  verifiable only from the local untracked `graphify-out/`/`wiki/`/`promotion.json` (gitignored by
+  design); the passing tests do not substitute for that.
+- **Flagged drift D1 (safety):** `tooling/wiki/sync_wiki.ps1` calls `graphify update` DIRECTLY,
+  bypassing the plan-mandated `Invoke-GraphifyGuarded` timeout wrapper -- recommend a small fix PR
+  before any Phase 3.5 "proceed" or live graph build. (Code change; owner-authorize separately.)
+  - **Source:** `docs/design/GRAPHIFY_KB_WIKI_PHASE_STATE_AUDIT_2026-07-22.md` (this session).
+
 ---
 
 ## How to add a new deferred item
