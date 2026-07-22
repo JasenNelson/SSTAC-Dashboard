@@ -76,7 +76,8 @@ worth a look.
 **CI / E2E (live-checked, correcting a subagent inference)**
 - Admin-tier E2E **is active**: repo variable `E2E_AUTH_ENABLED=true`, secrets `E2E_ADMIN_EMAIL` and
   `E2E_ADMIN_PASSWORD` set 2026-07-18. The 07-18b handoff claim is TRUE.
-- **No `SENTRY_*` secrets exist**, so Sentry release/source-map upload is not wired in CI. New gap.
+- **No `SENTRY_*` secrets exist**, so Sentry release/source-map upload is not wired in CI. (Row 6
+  lane PARKED by owner ruling 2026-07-21 -- do not wire unless reopened.)
 - 13 e2e spec files, 228 Playwright tests, 5821 vitest tests.
 
 **Corrected stale claims** (do not cite these sources as current)
@@ -123,7 +124,7 @@ reading and row 2 narrows to alerting-only, with row 2b likely moot.
 
 Status key: `SAFE` = autonomous-safe, `OWNER` = needs an owner action/ruling, `BLOCKED` = external
 data or upstream gate, `ATTEND` = needs owner present, `CONFLICT` = active-session lane.
-Lane key: MAP, MO (matrix options), PROD, KB, HYG.
+Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review UX/search; row 44 relabeled here 2026-07-21).
 
 ### Tier A -- highest leverage, mostly unblocked (1-12)
 
@@ -131,12 +132,12 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG.
 |---|---|---|---|---|---|
 | 1 | ~~Publish the 4 unpublished surveyed-tier DRAs (+28 samples)~~ | MAP | **BLOCKED** | preflight 2026-07-20; `pg_policies` on `matrix_map.samples` | **RETRACTED.** The 4 DRAs are MIXED-TIER, not surveyed-only: 28 high + **1169 medium** = 1197 samples. `flip_dra_public` is DRA-granularity and RLS `samples_authenticated_select` never consults `samples.public`, so flipping them publishes all 1197 (40 -> 1237 visible), silently enacting Option B on 4 coordinate points. Merged into row 5 |
 | 2 | Deploy-health gate: alert when prod SHA != main SHA (build the check only) | PROD | SAFE | Vercel deploy list; prod serves #699 | No alerting exists for prod tip != main tip. New item, untracked anywhere |
-| 2b | Re-deploy the 3 stranded commits | PROD | **OWNER** | same | Triggering a production deploy is a production action; Claude prepares the packet only |
+| 2b | Re-deploy the 3 stranded commits | PROD | **RESOLVED-BY-DESIGN** | prod-health fix PR #729; owner ruling 2026-07-21 | The stranded commits are docs-only (Vercel-ignored), so no redeploy is needed -- prod legitimately lags and carries forward on the next app deploy. PR #729 stops the scheduled prod-health check from false-alarming on that docs-only lag; it still hard-fails on app-affecting drift. (The drift-check CI wiring itself shipped in #724.) |
 | 3 | Centroid-publication decision packet (evidence, risk framing, options) | MAP | SAFE | 4418 samples / 118 DRAs gated | Unblocks the single largest data lever in the project |
 | 4 | ~~Coordinate-accuracy tier badge + disclaimer in map UI~~ | MAP | **DONE-ALREADY** | verified on `dddbe0f4` 2026-07-20; PRs #593, #600, #635 | **RETRACTED.** Already shipped: `src/lib/matrix-map/coordinate-provenance.ts` defines the canonical vocabulary (Surveyed / Centroid / Manual) and `MatrixMap.tsx` applies dash-array marker encoding, a popup caption reading "Approximate BC CSR site centroid -- not a surveyed sediment location.", and a 3-entry legend, plus a Surveyed-only filter, a province provenance chip, and CSV/panel columns. No data-layer change was ever needed |
 | 5 | **Owner ruling: centroid publication policy (now the ONLY publication decision)** | MAP | OWNER | corrected packet s5/s8 | Absorbs retracted row 1. Options: no publication now (recommended interim) / Option C site-aggregate layer / tier-aware visibility design / Option B accepted knowingly / Option D OCR-first. Gates all **4418** publishable centroid samples across 118 DRAs -- note the 1169 inside the 4 formerly-"surveyed" DRAs are a SUBSET of that 4418 (verified overlap = 1169), not an addition to it |
-| 6 | Wire `SENTRY_*` CI secrets + verify release/source-map upload | PROD | OWNER | `gh secret list` shows none | Production errors currently lack release attribution. New item |
-| 7 | Reconcile the 6-gate skill vs 4-gate `GATE_MODE_SOP.md` drift | PROD | OWNER | SOP Phase 4 lists 4; skill says 6 | Sessions under-gate pushes. Tier-1 protected file, do not fix unilaterally |
+| 6 | Wire `SENTRY_*` CI secrets + verify release/source-map upload | PROD | **PARKED** | owner ruling 2026-07-21 | PARKED by owner 2026-07-21 -- do NOT set up Sentry (no tokens/secrets/integrations) unless reopened. What-to-set guidance retained in `docs/design/SENTRY_CI_SECRETS_WIRING_PACKET_2026-07-21.md`; see `NEXT_STEPS.md` 2026-07-21e |
+| 7 | Reconcile the 6-gate skill vs 4-gate `GATE_MODE_SOP.md` drift | PROD | **DONE** | reconciled 2026-07-21 | RESOLVED 2026-07-21 (owner-authorized): `GATE_MODE_SOP.md` Phase 4 reconciled to the SIX named gates (G1-G6) matching the live `ship-protocols` skill |
 | 8 | Correct the KB plan doc's "not started" framing to match merged Phases 2-3 | KB | SAFE | `fb4f7d9c`, `4811fef9`, `ae8d48db` | Plan doc materially misrepresents lane state |
 | 9 | Land the `/sync-wiki` skill (in approved 0-3.5 scope, absent from tree) | KB | SAFE | no `.claude/skills/sync-wiki/` | Phase 3's on-demand refresh has no invocation surface |
 | 10 | Confirm whether the guarded graph build / wiki compile / ledger seed actually ran | KB | OWNER | artifacts gitignored, unverifiable from git | Phase 3.5 go/no-go needs this evidence |
@@ -153,7 +154,7 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG.
 | 16 | Disposition the 8 orphan samples (null `source_dra_id`) | MAP | OWNER | live query | Invisible to everyone including admins |
 | 17 | Investigate the public DRA contributing 0 samples | MAP | SAFE | 5 public, 4 with samples | Possible publish or data error |
 | 18 | Normalize `waterbody_type` casing (93.5% empty, "Marine"/"marine") | MAP | SAFE | completion-status doc | Map filters/legend quality |
-| 19 | P28 verify-vs-primary sweep, 357 rows, vision-first | MO | OWNER | base row #20 | Largest remaining verification backlog by row count |
+| 19 | P28 verify-vs-primary sweep, 357 rows, vision-first | MO | **PARKED** | owner ruling 2026-07-21 | PARKED by owner 2026-07-21 -- no vision/source-access sweep. 357-row inventory exists (`docs/MATRIX_OPTIONS_P28_VERIFY_WORKLIST_2026_07_12.md`); remaining work is per-value vision-vs-primary + owner-gated. Largest remaining verification backlog by row count |
 | 20 | T39 calculator cross-check vs a primary worked example | MO | OWNER | base row #37 | The project's own anti-fabrication check, never executed |
 | 21 | Owner ruling: keep or drop the CCME SVI attenuation-factor lane | MO | OWNER | SVI packet; VF/PEF is user-supplied-only by ruling | Risk of sourcing values a binding ruling says will never be consumed |
 | 22 | Option B intake-based inhalation model (5 sub-rulings) | MO | OWNER | `OPTION_B_..._PACKET_2026-07-20.md` s6-7 | Owner chose Option A; this is gated future scope, not urgent |
@@ -188,7 +189,7 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG.
 | 41 | Verify Export CSV/MD/HTML + export-memo against real data | MO | OWNER | base row #39 | Needs non-stub data |
 | 42 | One real judgment save + one "Ask AI" query vs live eval | MO | BLOCKED | base row #40 | Needs Ollama under the L0 1.12 schedule protocol |
 | 43 | Correct the pyramid-navigation status in `docs/NEXT_STEPS.md` line 138 | MO | SAFE (docs only) | probed 2026-07-20 | **RESOLVED: superseded, not abandoned.** The concept shipped inline in `ReviewDashboardClient.tsx` as "Stage Group Definitions (Pyramid Navigation)" with a `StageGroup` interface, rather than as the proposed `pyramidHierarchy.ts` / `PyramidNavigation.tsx`. `NEXT_STEPS.md` still calls this "unresolved"; that is now answerable. Remaining work is the one-line docs fix, not code |
-| 44 | Submission-search FTS performance plan | MO | SAFE | base row #42 | Deferred until >1K assessments; not yet hit |
+| 44 | Submission-search FTS performance plan | reg-review | SAFE | base row #42 | Design DONE 2026-07-21 (`docs/design/SUBMISSION_SEARCH_FTS_DESIGN_2026-07-21.md`, PR #727): SQLite FTS5 near-term, engine_v2 Postgres FTS convergence long-term. Implementation deferred until >1K assessments / reviewer latency (not yet hit). Lane relabeled MO -> reg-review (owner ruling 2026-07-21) |
 | 45 | Continue the `curate-bc-protocol-28-dedup.mjs` sweep (output gated) | MO | SAFE | `scripts/matrix-options/` | Script runs autonomously; rulings gate the values |
 | 46 | Coordinate remediation lane beyond the 4 named DRAs | MAP | BLOCKED | status doc s4 item 4 | Future; report-only today |
 | 47 | `matrix_map_backup_20260624` schema cleanup (13 tables, ~8746 rows) | HYG | OWNER | status doc | Storage hygiene, low priority |
@@ -212,9 +213,10 @@ row 5, the centroid-publication policy ruling, which is an owner decision and no
 Row 17 (the public DRA contributing 0 samples) is unaffected and still autonomous-safe.
 
 **Lane 2 -- PROD hardening (rows 2, 6, 40).** Build a deploy-health check comparing the Vercel
-production alias SHA to `origin/main`, surfaced in CI or the admin health page. The re-deploy itself
-(row 2b), the Sentry secrets (row 6) and the REVOKE (row 40) are all owner actions; Claude prepares
-only. Note the softer diagnosis: Vercel auto-cancels superseded builds, so three CANCELED
+production alias SHA to `origin/main`, surfaced in CI or the admin health page. **Status update
+2026-07-21:** the deploy-health check shipped (#724) and its docs-only-drift handling is PR #729;
+row 2b (re-deploy) is RESOLVED-BY-DESIGN (stranded commits are docs-only); **row 6 (Sentry) is PARKED
+by owner ruling -- do not action**. The REVOKE (row 40) remains an owner action; Claude prepares only. Note the softer diagnosis: Vercel auto-cancels superseded builds, so three CANCELED
 deploys from merges seconds apart is expected behavior, not proven deploy loss. The finding that
 stands is prod tip != main tip with **no alerting**, and user impact is nil because #700/#701/#702
 were docs/manifest/script-only. AGY: high.
@@ -230,9 +232,9 @@ mechanical.
 merged. Close the two `it.todo` entries in `equationDispatch.test.ts`, run the pyramid-nav probe,
 continue the P28 dedup sweep, and pick up the explicit-any burn-down where #703 stopped. AGY: medium.
 
-Deliberately NOT in the first five: the P28 357-row sweep (row 19) is a multi-session lane of its own
-and should start only once the above are moving; the coordinate-extraction lane (rows 13-15) needs
-row 14's mapping verification first.
+Deliberately NOT in the first five: the P28 357-row sweep (row 19) -- **PARKED by owner ruling
+2026-07-21 (no vision/source-access sweep); do not start** -- is a multi-session vision-first lane;
+the coordinate-extraction lane (rows 13-15) needs row 14's mapping verification first.
 
 ---
 
@@ -279,11 +281,16 @@ row 14's mapping verification first.
 2. **Rule on centroid publication** after reading the row-3 packet. Yes/no plus whether a tier badge
    is sufficient mitigation.
 3. **Set `SENTRY_ORG`, `SENTRY_PROJECT`, `SENTRY_AUTH_TOKEN`** as repo secrets (or confirm Sentry is
-   intentionally unwired).
+   intentionally unwired). **[PARKED 2026-07-21: owner ruled Sentry parked -- do not set up; see
+   `NEXT_STEPS.md` 2026-07-21e. Reopen to action.]**
 3b. **Approve the production re-deploy** of the 3 stranded commits (row 2b), or confirm it can wait
-   for the next merge to carry prod forward naturally.
+   for the next merge to carry prod forward naturally. **[RESOLVED-BY-DESIGN 2026-07-21: the 3
+   stranded commits are docs-only, so no redeploy is needed; PR #729 stops the prod-health false
+   alarm on that docs-only lag.]**
 3c. **Approve the `dras_admin_all` REVOKE** SQL once drafted (row 40).
 4. **Rule on the 4-gate vs 6-gate drift** and authorize the edit to `docs/GATE_MODE_SOP.md`.
+   **[DONE 2026-07-21: owner-authorized; `GATE_MODE_SOP.md` Phase 4 reconciled to the six named
+   gates G1-G6.]**
 5. **Confirm** whether the KB Phase 2 guarded build and Phase 3 wiki compile were ever actually run.
 6. **Rule on the CCME SVI attenuation lane**: keep as reference-only rows, or drop.
 7. **Authorize** (or decline) worktree/branch cleanup as a separate careful, junction-safe session.
@@ -328,16 +335,20 @@ row 14's mapping verification first.
      member. After any fallback, append to the codex re-review queue per the SOP.
   5. Do **not** generalize to "codex is broken", do **not** record a memory either way, and do not
      conclude it works from a version string alone. Evidence is a VERDICT line, not a `--version`.
-- **Gates before push (local, MANDATORY).** `docs/GATE_MODE_SOP.md` Phase 4 is the authority: run
-  `npm run lint` -> `npm run test:ci` -> `npm run build:monitored:clean -- -TimeoutSeconds 360
-  -PollSeconds 10` -> `npm run test:e2e`, in that order, **each GREEN before the next starts**.
-  Never raw `npm run build`. `npm run test:unit` is never push-gate evidence.
+- **Gates before push (local, MANDATORY).** `docs/GATE_MODE_SOP.md` Phase 4 is the authority: run the
+  SIX push gates G1-G6 (reconciled 2026-07-21 to match the live `ship-protocols` skill) --
+  `npm run lint` (G1) -> `npx tsc --noEmit` (G2) -> `npm run test:ci` (G3) -> `npm run
+  build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` (G4) -> `npm run test:e2e` (G5) ->
+  `npm run docs:gate` (G6), in that order, **each GREEN before the next starts**. Never raw
+  `npm run build`. `npm run test:unit` is never push-gate evidence.
   **Correction to an earlier draft of this plan:** it proposed preferring CI-as-gate because local
   `test:ci` can exceed the 10-minute Bash ceiling. That under-gates and conflicts with the SOP and
   AGENTS.md. The ceiling is a harness limitation, not a licence to skip a gate: run long gates as
   main-session background tasks and wait for them. CI remains a **confirmation** after push, never a
-  substitute for the local suite. Local gates may only be waived by an explicit owner waiver,
-  recorded in the run log.
+  substitute for the local suite. Local gates may be waived ONLY by an explicit owner waiver for
+  NON-CODE changes (pure docs / generated facts), recorded in the PR body; anything touching `src/`,
+  `scripts/`, `supabase/`, or configs gets no waiver (matches `GATE_MODE_SOP.md` Phase 4 + the
+  `ship-protocols` skill).
 - **Batching:** owner decisions accumulate into one packet; never drip-fed mid-run.
 - **Resilience artifacts:** refresh `RUN_STATE.md`, `PR_MANIFEST.md`, `RESUME_PROMPT.md` and the
   dated handoff, and commit them (mandatory close-out).

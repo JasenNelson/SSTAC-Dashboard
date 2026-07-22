@@ -311,6 +311,33 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   drift check + alerting) and row 8 (external plan-doc edit).
   - **Source:** `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md`.
 
+### 2026-07-21e -- Top-50 owner rulings: Sentry parked, Row 44 deferred/relabel, Row 19 parked, prod-health docs-only drift
+
+- **Row 6 / Sentry -- PARKED (owner ruling 2026-07-21).** Do NOT set up Sentry: no tokens/users/
+  integrations, no secret inspection/setting, no GitHub/Vercel Sentry values, and no `next.config.ts`
+  `silent:!SENTRY_DSN` cleanup PR -- unless the owner explicitly reopens the lane. The wiring facts +
+  what-to-set guidance remain captured in `docs/design/SENTRY_CI_SECRETS_WIRING_PACKET_2026-07-21.md`
+  for when/if reopened.
+- **Row 44 / submission-search FTS -- DEFERRED + RELABELED (owner ruling 2026-07-21).** The prod URL
+  space is routable but the feature is admin / local-dev SQLite. Defer FTS implementation until a
+  measured >1K assessments or reviewer latency. Prefer engine_v2 Postgres FTS convergence long-term;
+  Option A (SQLite FTS5) only if an interim implementation is later triggered. Lane relabeled
+  `MO -> reg-review` in `docs/SSTAC_TOP50_RECONCILED_2026_07_20.md`. Design:
+  `docs/design/SUBMISSION_SEARCH_FTS_DESIGN_2026-07-21.md` (PR #727).
+- **Row 19 / P28 357-row verify-vs-primary sweep -- PARKED (owner ruling 2026-07-21).** No
+  vision/source-access sweep. The 357-row inventory already exists
+  (`docs/MATRIX_OPTIONS_P28_VERIFY_WORKLIST_2026_07_12.md`); remaining work is per-value
+  vision-vs-primary verification + owner-gated promotion.
+- **Row 2b / prod-health -- docs-only drift no longer hard-fails (PR #729, pending merge).** The
+  scheduled prod-health check (`.github/workflows/prod-health.yml`) is updated so "production behind
+  main" is GREEN when every path changed between the deployed SHA and main is Vercel-ignored
+  (docs/scripts/supabase/e2e/*.md, per `vercel.json`), classified by a new
+  `scripts/verify/classify-drift-paths.mjs`. It still HARD-FAILS on app/runtime-affecting drift (a
+  real pending deploy) and on UNREACHABLE. This fixes false alarms after docs-only merges (which
+  Vercel intentionally does not deploy). Lands with PR #729; the classifier/workflow support is not on
+  `main` until that merges.
+  - **Source:** owner rulings 2026-07-21 (Top-50 owner-packet cleanup batch); PR #729.
+
 ---
 
 ## How to add a new deferred item
