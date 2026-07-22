@@ -77,20 +77,23 @@ function makeMockClient(cfg: MockConfig = {}): {
 const REAL_ARTIFACT = "C:\\Projects\\Regulatory-Review-worktrees\\engine-v2-m6-overnight-2026-07-03\\engine_v2\\data\\eval_runs\\m6_overnight\\m6_quality_42_run1\\636249a3-3302-4048-bca8-167fa6e90060\\eval_result.json";
 const HAVE = existsSync(REAL_ARTIFACT);
 
-function assertRoundTripInvariants(envelope: EvalResultEnvelope, rows: any[]) {
+type Row = Record<string, unknown>;
+
+function assertRoundTripInvariants(envelope: EvalResultEnvelope, rows: Row[]) {
+  const perPolicy = (envelope.per_policy_results ?? []) as Row[];
   // a. rows.length === envelope.per_policy_results.length;
-  expect(rows.length).toBe(envelope.per_policy_results.length);
+  expect(rows.length).toBe(perPolicy.length);
 
   // b. every row policy_id is a non-empty string and the multiset of policy_ids matches the envelope's;
-  const envPolicyIds = [...envelope.per_policy_results.map((r: any) => r.policy_id)].sort();
-  const rowPolicyIds = [...rows.map((r: any) => r.policy_id)].sort();
+  const envPolicyIds = [...perPolicy.map((r) => r.policy_id as string)].sort();
+  const rowPolicyIds = [...rows.map((r) => r.policy_id as string)].sort();
   expect(rowPolicyIds).toEqual(envPolicyIds);
-  rows.forEach((r: any) => {
+  rows.forEach((r) => {
     expect(typeof r.policy_id).toBe("string");
-    expect(r.policy_id.length).toBeGreaterThan(0);
+    expect((r.policy_id as string).length).toBeGreaterThan(0);
   });
 
-  rows.forEach((r: any) => {
+  rows.forEach((r) => {
     // c. every row confidence is a finite number in [0,1];
     expect(Number.isFinite(r.confidence)).toBe(true);
     expect(r.confidence).toBeGreaterThanOrEqual(0);
@@ -103,35 +106,38 @@ function assertRoundTripInvariants(envelope: EvalResultEnvelope, rows: any[]) {
     // e. every row evidence_packet is an Array (0.1.0 rows) and its length equals the source row's
     // evidence_packet length (content preserved verbatim by reference equality on raw_result_json);
     expect(Array.isArray(r.evidence_packet)).toBe(true);
-    const sourceRow = envelope.per_policy_results.find((pr: any) => pr.policy_id === r.policy_id) as any;
-    expect(Array.isArray(sourceRow?.evidence_packet)).toBe(true); // 0.1.0 contract: array at source too
-    expect(r.evidence_packet.length).toBe(sourceRow.evidence_packet.length);
+    const sourceRow = perPolicy.find((pr) => pr.policy_id === r.policy_id) as Row;
+    expect(Array.isArray(sourceRow.evidence_packet)).toBe(true); // 0.1.0 contract: array at source too
+    expect((r.evidence_packet as unknown[]).length).toBe((sourceRow.evidence_packet as unknown[]).length);
     // e2. projection consistency (Claude verification fix, 2026-07-22): the ADVERTISED total_cited
     // must match the PROJECTED packet length for flat-array 0.1.0 rows -- this is what makes a
     // null/absent packet with advertised counts FAIL here instead of silently projecting to [].
     // (Dashboard-collected-count equality with corpus filtering is the engine validator's job;
     // this asserts only that the reviewer sees as many cards as the header advertises.)
-    expect(r.evidence_signal_counts.total_cited).toBe(r.evidence_packet.length);
+    const sc = r.evidence_signal_counts as Record<string, unknown>;
+    expect(sc.total_cited).toBe((r.evidence_packet as unknown[]).length);
 
     // f. every row s4_schema_version === "0.1.0" and evidence_signal_counts has the 5 numeric fields
     // total_cited/supporting/negating/absence_or_category_mismatch/neutral;
     expect(r.s4_schema_version).toBe("0.1.0");
     expect(r.evidence_signal_counts).toBeDefined();
-    expect(typeof r.evidence_signal_counts.total_cited).toBe("number");
-    expect(typeof r.evidence_signal_counts.supporting).toBe("number");
-    expect(typeof r.evidence_signal_counts.negating).toBe("number");
-    expect(typeof r.evidence_signal_counts.absence_or_category_mismatch).toBe("number");
-    expect(typeof r.evidence_signal_counts.neutral).toBe("number");
+    expect(typeof sc.total_cited).toBe("number");
+    expect(typeof sc.supporting).toBe("number");
+    expect(typeof sc.negating).toBe("number");
+    expect(typeof sc.absence_or_category_mismatch).toBe("number");
+    expect(typeof sc.neutral).toBe("number");
 
     // g. every row pathway_notes is an Array (engine 0.1.0 emits arrays; may be empty);
     expect(Array.isArray(r.pathway_notes)).toBe(true);
 
     // h. every row raw_result_json.indigenous_content_signal is a non-null object with boolean matched
     // Indigenous-content signal = pathway-relevant evidence metadata, never an automatic determination
-    expect(r.raw_result_json).toBeDefined();
-    expect(typeof r.raw_result_json.indigenous_content_signal).toBe("object");
-    expect(r.raw_result_json.indigenous_content_signal).not.toBeNull();
-    expect(typeof r.raw_result_json.indigenous_content_signal.matched).toBe("boolean");
+    const rawJson = r.raw_result_json as Record<string, unknown>;
+    expect(rawJson).toBeDefined();
+    const ics = rawJson.indigenous_content_signal as Record<string, unknown> | null;
+    expect(typeof ics).toBe("object");
+    expect(ics).not.toBeNull();
+    expect(typeof (ics as Record<string, unknown>).matched).toBe("boolean");
   });
 }
 
@@ -155,7 +161,7 @@ describe.skipIf(!HAVE)("real artifact round-trip", () => {
 
     const upsertCall = calls.find((c) => c.op === "upsert");
     expect(upsertCall).toBeDefined();
-    const rows = upsertCall!.rows as any[];
+    const rows = upsertCall!.rows as Row[];
     expect(rows.length).toBe(42);
 
     assertRoundTripInvariants(envelope, rows);
@@ -172,10 +178,10 @@ describe.skipIf(!HAVE)("real artifact round-trip", () => {
     const upserts = calls.filter((c) => c.op === "upsert");
     expect(upserts).toHaveLength(2);
 
-    const rows1 = upserts[0]!.rows as any[];
-    const rows2 = upserts[1]!.rows as any[];
+    const rows1 = upserts[0]!.rows as Row[];
+    const rows2 = upserts[1]!.rows as Row[];
 
-    const keyFor = (r: any) => `${r.policy_id}|${r.stage}|${r.packet_id}`;
+    const keyFor = (r: Row) => `${r.policy_id}|${r.stage}|${r.packet_id}`;
     const keys1 = rows1.map(keyFor).sort();
     const keys2 = rows2.map(keyFor).sort();
 
@@ -245,7 +251,7 @@ describe("failure fixtures", () => {
     const env = makeEnvelope({
       per_policy_results: [
         makePolicyRow("CSR-RED-1", { evidence_packet: null })
-      ] as any,
+      ] as unknown as EvalResultEnvelope["per_policy_results"],
     });
     const { client, calls } = makeMockClient();
     
@@ -253,7 +259,7 @@ describe("failure fixtures", () => {
     await importEvalResult(client, EVAL_ID, env);
     
     const upsertCall = calls.find((c) => c.op === "upsert");
-    const rows = upsertCall!.rows as any[];
+    const rows = upsertCall!.rows as Row[];
     
     // BUT expect(() => assertRoundTripInvariants(...)).toThrow()
     expect(() => assertRoundTripInvariants(env, rows)).toThrow();
@@ -263,14 +269,14 @@ describe("failure fixtures", () => {
     const env = makeEnvelope({
       per_policy_results: [
         makePolicyRow("CSR-RED-2", { indigenous_content_signal: null })
-      ] as any,
+      ] as unknown as EvalResultEnvelope["per_policy_results"],
     });
     const { client, calls } = makeMockClient();
     
     await importEvalResult(client, EVAL_ID, env);
     
     const upsertCall = calls.find((c) => c.op === "upsert");
-    const rows = upsertCall!.rows as any[];
+    const rows = upsertCall!.rows as Row[];
     
     expect(() => assertRoundTripInvariants(env, rows)).toThrow();
   });
@@ -279,14 +285,14 @@ describe("failure fixtures", () => {
     const env = makeEnvelope({
       per_policy_results: [
         makePolicyRow("CSR-RED-3", { pathway_notes: { legacy: true } })
-      ] as any,
+      ] as unknown as EvalResultEnvelope["per_policy_results"],
     });
     const { client, calls } = makeMockClient();
     
     await importEvalResult(client, EVAL_ID, env);
     
     const upsertCall = calls.find((c) => c.op === "upsert");
-    const rows = upsertCall!.rows as any[];
+    const rows = upsertCall!.rows as Row[];
     
     expect(() => assertRoundTripInvariants(env, rows)).toThrow();
   });
