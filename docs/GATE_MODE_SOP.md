@@ -2,7 +2,7 @@
 
 **Project:** SSTAC-Dashboard
 **Status:** Operational
-**Last updated:** 2026-05-26
+**Last updated:** 2026-07-21 (push suite reconciled from the "4-gate" shorthand to the SIX named gates that match the live `ship-protocols` skill authority; owner-authorized Top-50 batch)
 **Source:** Extracted from MATRIX_OPTIONS_WORKFLOW_RECOVERY_CLAUDE_HANDOFF_2026_05_26.md lines 96-220 and refined for durable cross-session use.
 **ASCII:** Plain ASCII only (code point <= 127 per L0 CLAUDE.md rule 1.1).
 
@@ -71,21 +71,36 @@ Never use `git add .` or `git add -A` or `git add -u`. Path-scoped staging only 
 
 ### Phase 4 -- Push Protocol Gates
 
-Run gates in this order. Each gate must reach GREEN before the next gate starts.
+Run the SIX push gates in this order (the full six-gate suite; enumerated to match the live
+`ship-protocols` skill). Each gate must reach GREEN before the next gate starts. The six are the
+four conceptual gates (lint / unit / build / e2e) with the always-required TypeScript typecheck (G2)
+and the manifest docs gate (G6) named explicitly so they cannot be skipped.
 
-1. `npm run lint`
-2. `npm run test:ci` -- MANDATORY push-gate unit/coverage gate. Sets `CI=true` and runs Vitest
-   coverage to exactly match the GitHub Actions "Unit Tests" job (the CI-conditional `testTimeout`
-   and `maxWorkers` in `vitest.config.ts` only activate when `CI` is set). Use `npm run test:unit`
-   ONLY for fast inner-loop checks, NEVER as push-gate evidence: it runs no coverage and at default
-   workers, so it cannot reproduce coverage/CI-only failures. This exact gap turned `main` RED on
-   2026-06-01 (a coverage-only render timeout passed `test:unit` locally). One command names the
-   CI contract so local and CI cannot drift; see `feedback_push_gate_must_match_ci_test_coverage`.
-3. `npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` -- never raw `npm run build` (see section 10).
-4. Focused e2e first when the change has a narrow e2e surface.
-5. Full e2e last.
+- **G1** `npm run lint` -- 0 errors (pre-existing legacy warnings are OK).
+- **G2** `npx tsc --noEmit` -- clean typecheck. CI typechecks test files too, so run this even when
+  lint passes; ESLint does not catch type errors.
+- **G3** `npm run test:ci` -- MANDATORY unit/coverage gate. Sets `CI=true` and runs Vitest coverage to
+  exactly match the GitHub Actions "Unit Tests" job (the CI-conditional `testTimeout` and `maxWorkers`
+  in `vitest.config.ts` only activate when `CI` is set); equivalently `CI=true npm run test:coverage`.
+  Use `npm run test:unit` ONLY for fast inner-loop checks, NEVER as push-gate evidence: it runs no
+  coverage and at default workers, so it cannot reproduce coverage/CI-only failures. This exact gap
+  turned `main` RED on 2026-06-01 (a coverage-only render timeout passed `test:unit` locally). One
+  command names the CI contract so local and CI cannot drift; see
+  `feedback_push_gate_must_match_ci_test_coverage`.
+- **G4** `npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10` -- exit 0; never raw
+  `npm run build` (see section 10).
+- **G5** `npm run test:e2e` -- full Playwright e2e. Run a focused e2e first when the change has a
+  narrow e2e surface, then the full suite last.
+- **G6** `npm run docs:gate` -- STATUS: PASS. The manifest-driven docs gate; a required-doc or
+  required-section drift fails it.
 
-See section 5 for retry limits on known failure classes.
+Long-gate note: if the full local `test:ci` / build / e2e exceed the agent shell timeout, run them
+as background or main-session tasks -- still LOCALLY and on the FINAL tip -- rather than skipping
+them. GitHub CI is the MERGE-confirmation step (Phase 5 / merge protocol), not a substitute for the
+local push gates. The six gates are not waived EXCEPT by an explicit owner waiver for NON-CODE
+changes (pure docs / generated facts), recorded in the PR body (per the merge protocol / the
+`ship-protocols` skill); anything touching `src/`, `scripts/`, `supabase/`, or configs gets no
+waiver. See section 5 for retry limits on known failure classes.
 
 ### Phase 5 -- Push and CI Check
 
@@ -108,7 +123,7 @@ The compact variant applies to COMMIT PROTOCOL ONLY for micro-commits (pure type
 - Run: lint + focused test + build only.
 - Still requires `/codex-review` targeted loop before staging (section 6). No exceptions.
 
-PUSH PROTOCOL IS NEVER COMPACT. The full 4-gate suite (lint + unit + build + e2e) runs before every push per L0 CLAUDE.md rule 1.3, even for one-line fixups. The compact variant does not override Push protocol.
+PUSH PROTOCOL IS NEVER COMPACT. The full six-gate suite (lint, tsc, test:ci coverage, monitored build, e2e, docs:gate -- Phase 4 G1-G6) runs before every push per L0 CLAUDE.md rule 1.3, even for one-line fixups. (L0 1.3's "4-gate" wording is the older shorthand for the same suite; the six named gates add the always-required tsc typecheck and docs gate.) The compact variant does not override Push protocol.
 
 The compact variant does not apply to commit protocol when the diff touches component logic, API routes, database queries, or test files.
 
@@ -170,7 +185,11 @@ This is the highest-friction failure class. Follow all four steps in order:
    - Stop only confirmed stale Playwright Node PIDs (by PID, not by image-name kill per cross_project_no_image_name_kill_mcp.md).
    - Remove only the exact stale Playwright artifacts after verifying paths.
 3. Run focused e2e once.
-4. If local environment still fails: stop, delegate to Claude Code (section 8), or request an explicit local e2e waiver from owner.
+4. If local environment still fails: stop, delegate to Claude Code (section 8) or request owner
+   triage. Any e2e waiver here is an ENVIRONMENT/tooling waiver for a local Playwright-EPERM failure
+   (owner-recorded), NOT a waiver of the G5 e2e GATE itself -- the gate must still pass (locally
+   after delegation, or as a required GitHub CI check before merge). Per Phase 4, code/config changes
+   have no self-serve gate waiver.
 
 Do not attempt a second cleanup cycle. Do not widen the artifact removal scope.
 
