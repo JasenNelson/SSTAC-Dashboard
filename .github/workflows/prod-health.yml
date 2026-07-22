@@ -5,6 +5,12 @@ name: Prod deploy-health
 # READ-ONLY: GETs <PROD_URL>/api/health and compares the deployed SHA to the main tip. No writes,
 # no deploy, no secrets. Triggering a real production redeploy is a separate owner action.
 #
+# Docs-only drift is NOT a failure: Vercel's ignoreCommand (vercel.json) skips deploying commits
+# that only touch docs/scripts/supabase/e2e/*.md, so production legitimately trails main after such
+# merges. When drift is detected, classify-drift-paths.mjs checks the paths changed between the
+# deployed SHA and main; if every one is Vercel-ignored the job is GREEN (expected lag). The job
+# still HARD-FAILS on app/runtime-affecting drift (a real pending deploy) and on UNREACHABLE.
+#
 # Alerting = GitHub's native failed-workflow notification (owner is emailed when the job fails).
 # This workflow runs ONLY on schedule + workflow_dispatch (never pull_request), so it produces no
 # PR check context and must NOT be added to branch-protection required checks -- it would otherwise
@@ -19,7 +25,7 @@ on:
   workflow_dispatch:
     inputs:
       soft_mode:
-        description: 'Manual audit only: treat prod-behind-main DRIFT as a warning (job stays green) instead of failing. UNREACHABLE always fails. Default off (drift fails). Never used by the scheduled run.'
+        description: 'Manual audit only: downgrade an APP-AFFECTING prod-behind-main drift to a warning (job stays green) instead of failing. Docs-only drift is already GREEN; UNREACHABLE always fails. Default off. Never used by the scheduled run.'
         type: boolean
         default: false
 
@@ -117,16 +123,41 @@ jobs:
               exit 0
               ;;
             1)
-              # Only soften a GENUINE drift result. The checker prints "DRIFT: ..." on exit 1, but
-              # Node also exits 1 on a module-load / syntax / runtime crash -- those must still fail
-              # even under soft_mode, so gate the downgrade on the expected DRIFT message.
+              # Only act on a GENUINE drift result. The checker prints "DRIFT: ..." on exit 1, but
+              # Node also exits 1 on a module-load / syntax / runtime crash -- those must ALWAYS
+              # fail (they fall through to the hard-fail below), so gate on the DRIFT message.
               case "$OUT" in
                 DRIFT:*)
-                  if [ "$SOFT_MODE" = "true" ]; then
-                    echo "::warning::$OUT"
-                    echo "soft_mode=true -- expected DRIFT surfaced as a warning; job stays green."
+                  # Production trails main. Classify WHY: if every path changed between the deployed
+                  # SHA and main is Vercel-ignored (docs/scripts/supabase/e2e/*.md), then Vercel
+                  # intentionally skipped those deploys and the lag is EXPECTED -> GREEN. If any
+                  # intervening change is app/runtime-affecting, a real deploy is pending -> FAIL
+                  # (unless soft_mode). If the classifier cannot determine it, FAIL SAFE.
+                  DEPLOYED="$(printf '%s\n' "$OUT" | sed -n 's/^PROD_DEPLOYED_SHA=//p' | head -1)"
+                  if [ -n "$DEPLOYED" ]; then
+                    CLASS_OUT="$(node scripts/verify/classify-drift-paths.mjs "$DEPLOYED" refs/prod-health/main 2>&1)"
+                    CLASS=$?
+                  else
+                    CLASS_OUT="could not parse the deployed SHA from the checker output; failing safe."
+                    CLASS=2
+                  fi
+                  echo "$CLASS_OUT"
+                  echo "- drift classification: $CLASS_OUT" >> "$GITHUB_STEP_SUMMARY"
+                  if [ "$CLASS" -eq 0 ]; then
+                    echo "::notice::Production trails main only by Vercel-ignored (docs-only) commits; expected, no app deploy pending."
+                    echo "prod-behind-main is docs-only / Vercel-ignored -- treated as GREEN."
                     exit 0
                   fi
+                  # CLASS=1 (app-affecting): a real deploy is pending; manual soft_mode may downgrade
+                  # it to a warning. CLASS=2 (undetermined) ALWAYS hard-fails, even under soft_mode --
+                  # the fail-safe must be absolute (never green when we cannot prove docs-only).
+                  if [ "$CLASS" -eq 1 ] && [ "$SOFT_MODE" = "true" ]; then
+                    echo "::warning::$OUT"
+                    echo "soft_mode=true -- app-affecting DRIFT surfaced as a warning; job stays green."
+                    exit 0
+                  fi
+                  echo "::error::$OUT"
+                  exit 1
                   ;;
               esac
               echo "::error::$OUT"

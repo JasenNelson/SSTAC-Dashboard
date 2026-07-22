@@ -89,12 +89,14 @@ export async function evaluateDrift({ prodUrl, expected, fetchFn = fetch }) {
     return {
       code: 0,
       stream: 'out',
+      deployed,
       message: `ALIGNED: production ${deployed} matches origin/main ${exp} (env=${payload?.env ?? 'unknown'}).`,
     };
   }
   return {
     code: 1,
     stream: 'err',
+    deployed,
     message: `DRIFT: production is on ${deployed} but origin/main is ${exp} (env=${payload?.env ?? 'unknown'}). A production deploy of the current tip is pending (owner action).`,
   };
 }
@@ -102,11 +104,17 @@ export async function evaluateDrift({ prodUrl, expected, fetchFn = fetch }) {
 async function main() {
   const prodUrl = process.argv[2] || process.env.PROD_URL || '';
   const expected = process.argv[3] || shortOriginMain() || '';
-  const { code, stream, message } = await evaluateDrift({ prodUrl, expected });
+  const { code, stream, message, deployed } = await evaluateDrift({ prodUrl, expected });
   if (stream === 'out') {
     console.log(message);
   } else {
     console.error(message);
+  }
+  // Emit the deployed SHA on its own machine-parseable stdout line whenever we read one
+  // (ALIGNED/DRIFT). prod-health.yml greps `PROD_DEPLOYED_SHA=` on DRIFT to classify the
+  // drift (docs-only Vercel-ignored lag vs an app-affecting pending deploy).
+  if (deployed) {
+    console.log(`PROD_DEPLOYED_SHA=${deployed}`);
   }
   // Set the exit code and let Node drain and exit naturally rather than calling
   // process.exit(): a synchronous process.exit() while undici's keepalive socket from
