@@ -514,3 +514,136 @@ describe("importEvalResult", () => {
     expect(row010!.ai_suggestion).toBeNull();
   });
 });
+
+// D1 pathway_notes array fix (2026-07-22): the engine S4 v0.1.0 contract emits pathway_notes
+// as an ORDERED ARRAY; the importer previously stripped arrays to {} via asRecord.
+describe("pathway_notes normalization (D1 array fix)", () => {
+  it("P0 regression: pathway_notes ARRAY of 3 notes survives toPerPolicyRow in order (not stripped to {})", async () => {
+    const pathwayNotes = [
+      {
+        pathway_id: "pn-1",
+        pathway_kind: "soil_to_groundwater",
+        narrative: "note text 1",
+        edge_chain: ["E1", "E2"],
+        supporting_evidence_item_ids: ["slice_a"]
+      },
+      {
+        pathway_id: "pn-2",
+        pathway_kind: "soil_to_groundwater",
+        narrative: "note text 2",
+        edge_chain: ["E3", "E4"],
+        supporting_evidence_item_ids: ["slice_b"]
+      },
+      {
+        pathway_id: "pn-3",
+        pathway_kind: "soil_to_groundwater",
+        narrative: "note text 3",
+        edge_chain: ["E5", "E6"],
+        supporting_evidence_item_ids: ["slice_c"]
+      }
+    ];
+    const env = makeEnvelope({
+      per_policy_results: [
+        makePolicyRow("CSR-PN-1", { pathway_notes: pathwayNotes }),
+      ],
+    });
+    const { client, calls } = makeMockClient();
+
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(1);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+
+    const pn = rows[0]!.pathway_notes;
+    expect(Array.isArray(pn)).toBe(true);
+    expect(pn).toHaveLength(3);
+    expect(pn).toEqual(pathwayNotes);
+  });
+
+  it("empty pathway_notes array preserved as [] (not coerced to {})", async () => {
+    const env = makeEnvelope({
+      per_policy_results: [
+        makePolicyRow("CSR-PN-2", { pathway_notes: [] }),
+      ],
+    });
+    const { client, calls } = makeMockClient();
+
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(1);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+
+    const pn = rows[0]!.pathway_notes;
+    expect(Array.isArray(pn)).toBe(true);
+    expect(pn).toHaveLength(0);
+  });
+
+  it("missing pathway_notes still defaults to {} (legacy normalization unchanged)", async () => {
+    const row = makePolicyRow("CSR-PN-3");
+    delete row.pathway_notes;
+    const env = makeEnvelope({
+      per_policy_results: [row],
+    });
+    const { client, calls } = makeMockClient();
+
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(1);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+
+    expect(rows[0]!.pathway_notes).toEqual({});
+  });
+
+  it("legacy object-shaped pathway_notes (0.0.1) still accepted", async () => {
+    const legacyNotes = { pathway_a: "wired" };
+    const env = makeEnvelope({
+      per_policy_results: [
+        makePolicyRow("CSR-PN-4", { pathway_notes: legacyNotes }),
+      ],
+    });
+    const { client, calls } = makeMockClient();
+
+    const result = await importEvalResult(client, EVAL_ID, env);
+    expect(result.rowsImported).toBe(1);
+
+    const upsertCall = calls.find((c) => c.op === "upsert");
+    expect(upsertCall).toBeDefined();
+    const rows = upsertCall!.rows as Array<Record<string, unknown>>;
+    expect(rows).toHaveLength(1);
+
+    expect(rows[0]!.pathway_notes).toEqual(legacyNotes);
+  });
+
+  it("malformed scalar pathway_notes degrades safely to {}", async () => {
+    const env1 = makeEnvelope({
+      per_policy_results: [
+        makePolicyRow("CSR-PN-5a", { pathway_notes: "not-notes" }),
+      ],
+    });
+    const { client: client1, calls: calls1 } = makeMockClient();
+
+    await importEvalResult(client1, EVAL_ID, env1);
+    const rows1 = (calls1.find((c) => c.op === "upsert")!.rows) as Array<Record<string, unknown>>;
+    expect(rows1[0]!.pathway_notes).toEqual({});
+
+    const env2 = makeEnvelope({
+      per_policy_results: [
+        makePolicyRow("CSR-PN-5b", { pathway_notes: 42 }),
+      ],
+    });
+    const { client: client2, calls: calls2 } = makeMockClient();
+
+    await importEvalResult(client2, EVAL_ID, env2);
+    const rows2 = (calls2.find((c) => c.op === "upsert")!.rows) as Array<Record<string, unknown>>;
+    expect(rows2[0]!.pathway_notes).toEqual({});
+  });
+});

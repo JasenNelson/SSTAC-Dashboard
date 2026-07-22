@@ -1417,3 +1417,74 @@ describe("PerPolicyResultsTable legacy verdict sort (codex+claude desktop P2)", 
     expect(ids).toEqual(["LG-ESCALATE", "LG-FAIL", "LG-NOTFOUND", "LG-PASS"]);
   });
 });
+
+// D1 pathway_notes array fix (2026-07-22): JsonObjectView array branch must render the
+// engine's ordered pathway-note array; empty array keeps the empty label.
+describe("pathway_notes array rendering (D1)", () => {
+  it("renders ARRAY-shaped pathway_notes as content (per-policy-pathway-notes)", () => {
+    const pathwayNotes = [
+      {
+        pathway_id: "pn-1",
+        pathway_kind: "soil_to_groundwater",
+        narrative: "note text 1",
+        edge_chain: ["E1", "E2"],
+        supporting_evidence_item_ids: ["slice_a"]
+      },
+      {
+        pathway_id: "pn-2",
+        pathway_kind: "soil_to_groundwater",
+        narrative: "note text 2",
+        edge_chain: ["E3", "E4"],
+        supporting_evidence_item_ids: ["slice_b"]
+      }
+    ];
+    const row = makeResult({
+      policy_id: "PX-ARRAY-PN",
+      pathway_notes: pathwayNotes,
+    });
+
+    render(
+      <PerPolicyResultsTable results={[row]} judgments={NO_JUDGMENTS} />,
+    );
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    const target = rows.find(
+      (r) => r.getAttribute("data-policy-id") === "PX-ARRAY-PN",
+    );
+    expect(target).toBeTruthy();
+    const toggle = within(target as HTMLElement).getByTestId(
+      "per-policy-expand-toggle",
+    );
+    fireEvent.click(toggle);
+
+    const notesEl = screen.getByTestId("per-policy-pathway-notes");
+    expect(notesEl).toBeInTheDocument();
+    expect(notesEl.textContent).toContain("note text 1");
+    expect(screen.queryByTestId("per-policy-pathway-notes-empty")).not.toBeInTheDocument();
+  });
+
+  it("empty pathway_notes array renders the empty label", () => {
+    const row = makeResult({
+      policy_id: "PX-EMPTY-PN",
+      pathway_notes: [],
+    });
+
+    render(
+      <PerPolicyResultsTable results={[row]} judgments={NO_JUDGMENTS} />,
+    );
+
+    const rows = screen.getAllByTestId("per-policy-row");
+    const target = rows.find(
+      (r) => r.getAttribute("data-policy-id") === "PX-EMPTY-PN",
+    );
+    expect(target).toBeTruthy();
+    const toggle = within(target as HTMLElement).getByTestId(
+      "per-policy-expand-toggle",
+    );
+    fireEvent.click(toggle);
+
+    const emptyEl = screen.getByTestId("per-policy-pathway-notes-empty");
+    expect(emptyEl).toBeInTheDocument();
+    expect(emptyEl.textContent).toBe("No pathway notes recorded.");
+  });
+});

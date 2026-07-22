@@ -90,7 +90,12 @@ export interface V2PerPolicyResult {
   // forms are accepted. Callers must not assume either shape -- use
   // collectEvidenceItems() / extractEvidencePacketItems() to iterate safely.
   evidence_packet: unknown[] | Record<string, unknown>;
-  pathway_notes: Record<string, unknown>;
+  // Engine S4 v0.1.0 contract: pathway_notes is an ORDERED ARRAY of pathway-note objects
+  // (pathway_id / pathway_kind / narrative / edge_chain / supporting_evidence_item_ids); legacy
+  // 0.0.1 rows may carry a keyed object -- both admitted (same union pattern as evidence_packet
+  // above). Pathway notes are pathway-relevant EVIDENCE surfaced to the reviewer; they are never
+  // an adequacy / compliance / tier determination.
+  pathway_notes: unknown[] | Record<string, unknown>;
   rubric_self_score: Record<string, unknown> | null;
   raw_result_json: Record<string, unknown>;
   created_at: string;
