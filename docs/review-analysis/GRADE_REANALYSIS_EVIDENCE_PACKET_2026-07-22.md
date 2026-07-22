@@ -37,7 +37,7 @@ metrics); test/gate counts from this run's full local six-gate suites (logs in t
 | tsc errors | 0 | **0** (fresh tsc gate) | unchanged |
 | Files > 500 lines | 137 | **137** (top: substanceLibrary.ts 7634; EvidenceLibrary.tsx 4552; SsdWorkbench.tsx 2216; MatrixMap.tsx 1943) | unchanged |
 | console.* sites | 443 | 445 | +2 |
-| Gate suites | all 8 CI jobs green on 73203c5 | lint/tsc/test:ci/build/e2e/docs:gate ALL PASS locally x4 suites today (tips 8bfe7d06, 84e7a125, 28da1753, 70f4bc74 among others); PR-branch CI green on every 2026-07-22 PR (#735-#743, e.g. 13/13 on #735/#736, 10/10 on #740) | consistent |
+| Gate suites | all 8 CI jobs green on 73203c5 | lint/tsc/test:ci/build/e2e/docs:gate ALL PASS locally x4 suites today (tips 8bfe7d06, 84e7a125, 28da1753, 70f4bc74 among others); PR-branch CI green on every 2026-07-22 PR through #743 at packet-writing time (e.g. 13/13 on #735/#736, 10/10 on #740) | consistent |
 
 ## 3. Category-by-category assessment against the 2026-07-18 calculation_basis
 
@@ -72,7 +72,7 @@ in `docs/_meta/docs-manifest.json` `facts.grades.current_grade`, set EXACTLY:
 - `source`: `"Re-analysis 2026-07-22 (resolves the 2026-07-22 stale_unreconciled flag) using the
   7-category weighted rubric in docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md. Metrics
   gathered against origin/main 362e402a with four full local six-gate suites green that day and
-  green GitHub CI on every 2026-07-22 PR branch (#735-#743). Structural metrics: 622 source ts/tsx
+  green GitHub CI on every 2026-07-22 PR branch through #743 at packet-writing time (later same-day PRs #744/#745 must be re-verified green before this text is sanctioned). Structural metrics: 622 source ts/tsx
   + 294 unit-test files + 14 e2e specs; vitest 5926 passed / 17 skipped / 2 todo; 29 ': any'
   annotations (down from 51; plus 89 no-explicit-any suppressions counted separately); 0 tsc
   errors; 0 lint errors / 40 warnings; 137 files over 500 lines (unchanged); 445 console.* sites.
@@ -114,7 +114,7 @@ misread as drift. `vitest_test_count` (5821, 2026-07-20) DOES lag today's 5926 -
   full-matrix number is a CI-side count. This packet cites local pass + green PR-branch CI rather
   than claiming a fresh full-matrix count.
 - The main-tip CI/CD Pipeline run for 362e402a (id 29958008169) was IN PROGRESS at packet-writing
-  time; every completed check on every 2026-07-22 PR branch was green. Re-check before the owner
+  time; every completed check on every 2026-07-22 PR branch through #743 was green (later same-day PRs #744/#745 need their own green CI re-verification). Re-check before the owner
   sanctions the edit.
 - The census script (`.tmp_grade_metrics.py`, AGY-authored, orchestrator-run) is untracked scratch;
   its counting rules are stated in section 2 and reproducible from the methodology doc's commands.
