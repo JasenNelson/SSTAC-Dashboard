@@ -61,6 +61,7 @@ describe('evaluateDrift exit codes', () => {
     expect(r.code).toBe(0);
     expect(r.stream).toBe('out');
     expect(r.message).toContain('ALIGNED');
+    expect(r.deployed).toBe(FULL); // exposed so prod-health.yml can classify the drift
   });
 
   it('exit 1 DRIFT when the deployed SHA differs', async () => {
@@ -72,6 +73,7 @@ describe('evaluateDrift exit codes', () => {
     expect(r.code).toBe(1);
     expect(r.stream).toBe('err');
     expect(r.message).toContain('DRIFT');
+    expect(r.deployed).toBe(OTHER); // the deployed SHA prod-health.yml diffs against main
   });
 
   it('exit 2 UNREACHABLE when prod URL is missing', async () => {
