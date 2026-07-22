@@ -3,6 +3,11 @@ param (
     [Parameter(Mandatory=$true)]
     [string]$Stamp,
     [string]$GraphifyExe = 'graphify',
+    # Hard timeout (seconds) for the guarded `graphify update` graph build. graphify has no
+    # timeout/memory cap on Windows, so the build MUST go through Invoke-GraphifyGuarded, which
+    # fails closed (exit 124 + tree-kill-by-PID) if the build hangs past this. Generous default
+    # for a full first build; override for a large graph.
+    [int]$GraphTimeoutSec = 1800,
     [switch]$AutoCommit
 )
 
@@ -15,6 +20,12 @@ param (
 $repoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location -Path $repoRoot
 
+# Dot-source the graphify guardrail (hard timeout + fail-closed snapshot-then-tree-kill-by-PID).
+# The graph build in step 1 MUST go through Invoke-GraphifyGuarded -- graphify has no timeout /
+# memory cap on Windows, so an unguarded graph-build invocation could hang unbounded (D1 fix
+# 2026-07-22; plan section 7 requires zero bare graphify calls outside Invoke-GraphifyGuarded).
+. (Join-Path $PSScriptRoot 'graphify_guardrail.ps1')
+
 # Both Python call sites below deliberately use the pinned .venv-graphify interpreter, not
 # a bare `python` on PATH -- the pilot's graphifyy[sql,mcp]==0.9.17 pin (and its transitive
 # deps) live ONLY in that venv (see requirements-graphify.txt); a bare `python` call would
@@ -23,8 +34,17 @@ $venvPython = Join-Path $repoRoot '.venv-graphify\Scripts\python.exe'
 
 Write-Host "--- 1. Graph Generation ---"
 if (-not $SkipGraph) {
-    & $GraphifyExe update . --no-cluster
-    if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host "FAIL: graph generation (launch or exit failure)"; exit 1 }
+    # Guarded build: fail closed on hang (timeout -> exit 124 + tree-kill) AND on a non-zero
+    # graphify exit. Never a silent success. (D1 fix: replaces the former unguarded graph-build call.)
+    $graphResult = Invoke-GraphifyGuarded -GraphifyExe $GraphifyExe -GraphifyArgs @('update', '.', '--no-cluster') -TimeoutSec $GraphTimeoutSec
+    if ($graphResult.TimedOut) {
+        Write-Host "FAIL: graph generation TIMED OUT after ${GraphTimeoutSec}s (guarded; tree fully killed=$($graphResult.Killed))"
+        exit 1
+    }
+    if ($graphResult.ExitCode -ne 0) {
+        Write-Host "FAIL: graph generation (graphify exit $($graphResult.ExitCode))"
+        exit 1
+    }
 }
 
 Write-Host "--- 2. Wiki Compile ---"
