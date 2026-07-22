@@ -1,5 +1,16 @@
 # TOP50 CONTINUATION STATUS -- 2026-07-22 (autonomous run, post-KB-lane close-out)
 
+> UPDATE (2026-07-22, later run): rows 40 and 18 are now **RETIRED** -- the owner approved
+> confirm-retire contingent on re-verification, and both conditions were RE-VERIFIED live
+> (read-only) after the #739/#741/#742 merges: `authenticated` still holds ONLY SELECT on
+> `matrix_map.dras` at both table and column level with `trg_dras_public_flip_only` present
+> (row 40), and `matrix_map.samples.waterbody_type` still has zero case variants
+> (Marine 268 / Freshwater 22 / empty 4204) (row 18). The separate 93.55%-empty
+> `waterbody_type` backfill lane is explicitly **PARKED** (owner-scoped; needs a
+> source/derivation decision -- see the 2026-07-11 normalization report section 5b).
+> Sections 1 and 5 below predate this update; where they say "recommend retire" /
+> "confirm retirement", the retirement is now recorded.
+
 Follows `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md` and reconciles the queue against
 origin/main f5aa0f56 (#735-#738 merged) plus LIVE read-only Supabase verification performed this
 run. Owner rulings in force this run: Phase 3.5 = STOP-HERE (no Phase 4-7 KB work); Sentry PARKED;
