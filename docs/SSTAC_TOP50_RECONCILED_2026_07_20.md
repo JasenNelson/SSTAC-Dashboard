@@ -1,6 +1,7 @@
 # SSTAC-Dashboard -- Top 50 Priority Tasks, Reconciled and Re-Ranked (2026-07-20)
 
-> STATUS-CELL UPDATES 2026-07-22: rows 12/18/39/40/44/45 carry dated bracketed corrections
+> STATUS-CELL UPDATES 2026-07-22: rows 12/18/39/40/43/44/45/50 (and the Lane 5 narrative +
+> row-40 owner-checklist echoes) carry dated bracketed corrections
 > below (drift fixes only -- no re-ranking). Later state supersedes this doc; see
 > `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md` and `docs/TOP50_CONTINUATION_STATUS_2026-07-22.md`.
 
@@ -184,7 +185,7 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 | 37 | Fix non-ASCII in `docs/INDEX.md` (curly quote, arrow glyph) | HYG | SAFE | direct read | Violates the L0 plain-ASCII rule |
 | 38 | Close or triage the 6 stale open PRs (#108-#187, all 2+ months old) | HYG | OWNER | `gh pr list` | Never adopt bot branches; reimplement clean if real |
 | 39 | Establish an explicit-any / god-file burn-down doc (51 / 137 snapshot) | HYG | **[2026-07-22: premise STALE -- PR #725 took no-explicit-any warnings to 0; current census 29 raw annotations / 137 god-files, see `docs/review-analysis/GRADE_REANALYSIS_EVIDENCE_PACKET_2026-07-22.md` (in-flight PR on branch `docs/grade-reanalysis-packet-2026-07-22` at this edit; verify merged before relying on it)]** OWNER | manifest `code_quality_15pct` | Currently ad-hoc; formalize only if owner wants tracking |
-| 40 | Optional defense-in-depth REVOKE on `dras_admin_all` | PROD | **[2026-07-22: RETIRED -- nothing to revoke; authenticated is SELECT-only (table+column) with the flip trigger + audited RPC live, re-verified]** | base row #27 | A database write. Claude drafts and preflights the SQL only; owner applies via SQL Editor |
+| 40 | Optional defense-in-depth REVOKE on `dras_admin_all` | PROD | **[2026-07-22: RETIRED -- nothing to revoke; authenticated is SELECT-only (table+column) with the flip trigger + audited RPC live, re-verified]** | base row #27 | **[2026-07-22: SUPERSEDED -- no SQL to draft or apply; see the RETIRED status. Original instruction retained for audit only: "A database write. Claude drafts and preflights the SQL only; owner applies via SQL Editor" -- do NOT action]** |
 
 ### Tier D -- reg-review and long-tail (41-50)
 
@@ -192,14 +193,14 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 |---|---|---|---|---|---|
 | 41 | Verify Export CSV/MD/HTML + export-memo against real data | MO | OWNER | base row #39 | Needs non-stub data |
 | 42 | One real judgment save + one "Ask AI" query vs live eval | MO | BLOCKED | base row #40 | Needs Ollama under the L0 1.12 schedule protocol |
-| 43 | Correct the pyramid-navigation status in `docs/NEXT_STEPS.md` line 138 | MO | SAFE (docs only) | probed 2026-07-20 | **RESOLVED: superseded, not abandoned.** The concept shipped inline in `ReviewDashboardClient.tsx` as "Stage Group Definitions (Pyramid Navigation)" with a `StageGroup` interface, rather than as the proposed `pyramidHierarchy.ts` / `PyramidNavigation.tsx`. `NEXT_STEPS.md` still calls this "unresolved"; that is now answerable. Remaining work is the one-line docs fix, not code |
+| 43 | Correct the pyramid-navigation status in `docs/NEXT_STEPS.md` line 138 | MO | **[2026-07-22: DONE -- the NEXT_STEPS entry now reads "RESOLVED 2026-07-20: superseded, not abandoned" (NEXT_STEPS.md:159); no work remains]** | probed 2026-07-20 | **RESOLVED: superseded, not abandoned.** The concept shipped inline in `ReviewDashboardClient.tsx` as "Stage Group Definitions (Pyramid Navigation)" with a `StageGroup` interface, rather than as the proposed `pyramidHierarchy.ts` / `PyramidNavigation.tsx`. **[2026-07-22: superseded]** ~~`NEXT_STEPS.md` still calls this "unresolved"; that is now answerable. Remaining work is the one-line docs fix, not code~~ (the NEXT_STEPS fix landed 2026-07-20; nothing remains) |
 | 44 | Submission-search FTS performance plan | reg-review | **[2026-07-22: D1 RESOLVED -- route is local-dev/admin-only; implementation stays DEFERRED]** SAFE(design-done) | base row #42 | Design DONE 2026-07-21 (`docs/design/SUBMISSION_SEARCH_FTS_DESIGN_2026-07-21.md`, PR #727): SQLite FTS5 near-term, engine_v2 Postgres FTS convergence long-term. Implementation deferred until >1K assessments / reviewer latency (not yet hit). Lane relabeled MO -> reg-review (owner ruling 2026-07-21) |
 | 45 | Continue the `curate-bc-protocol-28-dedup.mjs` sweep (output gated) | MO | **[2026-07-21: RETIRED -- verified already applied, 0 pending (46c6d0eb)]** | `scripts/matrix-options/` | Script runs autonomously; rulings gate the values |
 | 46 | Coordinate remediation lane beyond the 4 named DRAs | MAP | BLOCKED | status doc s4 item 4 | Future; report-only today |
 | 47 | `matrix_map_backup_20260624` schema cleanup (13 tables, ~8746 rows) | HYG | OWNER | status doc | Storage hygiene, low priority |
 | 48 | KB Phase 3.5 owner go/no-go checkpoint | KB | OWNER | plan Phase 3.5, STOP-default | Gates all of Phases 4-7 |
 | 49 | KB Phases 4-7 (Ollama, nightly, hooks, graduation) | KB | BLOCKED | plan s4-8; depends on #48 | Explicitly subordinate to Matrix Options priority |
-| 50 | Post-merge follow-up on the #703/#704 lint/type-guard lanes | MO | SAFE | both MERGED 2026-07-20 | Freeze lifted; continue the explicit-any burn-down where those PRs stopped |
+| 50 | Post-merge follow-up on the #703/#704 lint/type-guard lanes | MO | **[2026-07-22: DONE -- burn-down completed by PR #725 (no-explicit-any warnings -> 0)]** | both MERGED 2026-07-20 | **[superseded]** ~~Freeze lifted; continue the explicit-any burn-down where those PRs stopped~~ |
 
 ---
 
@@ -220,7 +221,7 @@ Row 17 (the public DRA contributing 0 samples) is unaffected and still autonomou
 production alias SHA to `origin/main`, surfaced in CI or the admin health page. **Status update
 2026-07-21:** the deploy-health check shipped (#724) and its docs-only-drift handling is PR #729;
 row 2b (re-deploy) is RESOLVED-BY-DESIGN (stranded commits are docs-only); **row 6 (Sentry) is PARKED
-by owner ruling -- do not action**. The REVOKE (row 40) remains an owner action; Claude prepares only. Note the softer diagnosis: Vercel auto-cancels superseded builds, so three CANCELED
+by owner ruling -- do not action**. **[2026-07-22: row 40 RETIRED -- nothing to revoke; no owner action; see the row-40 status cell.]** ~~The REVOKE (row 40) remains an owner action; Claude prepares only.~~ Note the softer diagnosis: Vercel auto-cancels superseded builds, so three CANCELED
 deploys from merges seconds apart is expected behavior, not proven deploy loss. The finding that
 stands is prod tip != main tip with **no alerting**, and user impact is nil because #700/#701/#702
 were docs/manifest/script-only. AGY: high.
@@ -232,9 +233,12 @@ status probe for whether the Phase 2/3 builds actually ran. Deterministic, no Ol
 refresh the manifest facts, fix the RED docs gate and the non-ASCII. AGY: very high, near-fully
 mechanical.
 
-**Lane 5 -- MO bounded coverage (rows 28, 43, 45, 50).** **Unblocked** as of 2026-07-20: #703/#704
-merged. Close the two `it.todo` entries in `equationDispatch.test.ts`, run the pyramid-nav probe,
-continue the P28 dedup sweep, and pick up the explicit-any burn-down where #703 stopped. AGY: medium.
+**Lane 5 -- MO bounded coverage (rows 28, 43, 45, 50).** **[2026-07-22: LANE CLOSED -- all four
+rows are done/retired: 28 retracted (deliberate forward-declares), 43 resolved (pyramid-nav shipped
+inline), 45 RETIRED (dedup already applied, 0 pending), 50 DONE (#725, no-explicit-any warnings
+0). No current action.]** ~~Unblocked as of 2026-07-20: #703/#704 merged. Close the two `it.todo`
+entries in `equationDispatch.test.ts`, run the pyramid-nav probe, continue the P28 dedup sweep, and
+pick up the explicit-any burn-down where #703 stopped. AGY: medium.~~
 
 Deliberately NOT in the first five: the P28 357-row sweep (row 19) -- **PARKED by owner ruling
 2026-07-21 (no vision/source-access sweep); do not start** -- is a multi-session vision-first lane;
@@ -291,7 +295,7 @@ the coordinate-extraction lane (rows 13-15) needs row 14's mapping verification 
    for the next merge to carry prod forward naturally. **[RESOLVED-BY-DESIGN 2026-07-21: the 3
    stranded commits are docs-only, so no redeploy is needed; PR #729 stops the prod-health false
    alarm on that docs-only lag.]**
-3c. **Approve the `dras_admin_all` REVOKE** SQL once drafted (row 40).
+3c. **[2026-07-22: RETIRED -- row 40 closed with nothing to revoke; no SQL will be drafted; NO owner action needed.]** ~~Approve the `dras_admin_all` REVOKE SQL once drafted (row 40).~~
 4. **Rule on the 4-gate vs 6-gate drift** and authorize the edit to `docs/GATE_MODE_SOP.md`.
    **[DONE 2026-07-21: owner-authorized; `GATE_MODE_SOP.md` Phase 4 reconciled to the six named
    gates G1-G6.]**
