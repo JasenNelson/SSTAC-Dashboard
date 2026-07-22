@@ -78,7 +78,9 @@ These strengthen the already-approved deterministic layer and do not cross the g
 1. **Hardening PR for gap-analysis findings 1-2:** add a json exclusion + fail-closed
    `graph_smoke.py` assert; widen the Phase-2 blanket exclude to the full doc-extension set.
    (Owner-scoped; small config + one-assert change.)
-2. **`ascii_json.py` disposition:** port it or document it as unneeded (gap analysis, inventory row).
+2. **`ascii_json.py` disposition:** RESOLVED 2026-07-22 -- not needed in Phase 0-3.5 (SSTAC's
+   `wiki/.graph/` copy target is gitignored, so the ASCII gate never applies); becomes a MANDATORY
+   Phase 7 pre-condition (tracked wiki) recorded in the gap-analysis inventory row.
 3. **Use the wiki on real work** and record any instance where it helps -- the only way condition 2
    can ever be met, and it costs nothing.
 
