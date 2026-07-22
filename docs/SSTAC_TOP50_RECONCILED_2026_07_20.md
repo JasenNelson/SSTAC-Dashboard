@@ -1,5 +1,9 @@
 # SSTAC-Dashboard -- Top 50 Priority Tasks, Reconciled and Re-Ranked (2026-07-20)
 
+> STATUS-CELL UPDATES 2026-07-22: rows 12/18/39/40/44/45 carry dated bracketed corrections
+> below (drift fixes only -- no re-ranking). Later state supersedes this doc; see
+> `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md` and `docs/TOP50_CONTINUATION_STATUS_2026-07-22.md`.
+
 ## Context
 
 The existing Top-50 lineage (`docs/SSTAC_TOP50_*` 07-13, 07-14, 07-15, 07-17) has degraded from a
@@ -142,7 +146,7 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 | 9 | Land the `/sync-wiki` skill (approved 0-3.5 scope) | KB | **DONE** | PR #731 merged 2026-07-22 | `.claude/skills/sync-wiki/SKILL.md` landed (Phase-0-3.5-scoped, no-commit, no-Ollama, on-demand) |
 | 10 | Confirm whether SSTAC's guarded graph build / wiki compile / ledger seed actually ran (SSTAC pilot, NOT Regulatory-Review) | KB | OWNER (Phase 3.5 evidence gate) | outputs gitignored, unverifiable from git; audit 2026-07-22 | Phase 0-3.5 tooling LANDED + 48/48 tests pass (`docs/design/GRAPHIFY_KB_WIKI_PHASE_STATE_AUDIT_2026-07-22.md`); the actual guarded build/seed RUN is owner-verifiable only from the local untracked `graphify-out/`/`wiki/`/`promotion.json`. Feeds the Phase 3.5 go/no-go (row 48) |
 | 11 | Land this list **into `docs/`** as the successor doc; retire the 07-17 doc | HYG | SAFE | 4 stale claims in s1 | Must live in `docs/`, not `~/.claude/plans/`, or the next session will not treat it as authoritative |
-| 12 | Draft a `current_grade` re-analysis **PR** (pinned to `73203c5`, tip is `c1e79be4`) | HYG | SAFE-to-draft / OWNER-to-sanction | `docs-manifest.json` | Owner merge is what makes a computed grade current. Do NOT redo `vitest_test_count`; #701 refreshed it to 5821 today |
+| 12 | Draft a `current_grade` re-analysis **PR** (pinned to `73203c5`, tip is `c1e79be4`) | HYG | **[2026-07-22: evidence packet DONE -- `docs/review-analysis/GRADE_REANALYSIS_EVIDENCE_PACKET_2026-07-22.md` (in-flight PR on branch `docs/grade-reanalysis-packet-2026-07-22` at this edit; verify merged before relying on the link); the exact manifest edit awaits OWNER sanction]** SAFE-to-draft / OWNER-to-sanction | `docs-manifest.json` | Owner merge is what makes a computed grade current. Do NOT redo `vitest_test_count`; #701 refreshed it to 5821 today |
 
 ### Tier B -- real work, bounded, some gated (13-28)
 
@@ -153,7 +157,7 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 | 15 | Locate the real coordinate tables in Lot C and Howe Sound PDFs | MAP | ATTEND | OCR results doc falsified the guesses | 312 of 385 centroid stations sit behind this |
 | 16 | Disposition the 8 orphan samples (null `source_dra_id`) | MAP | OWNER | live query | Invisible to everyone including admins |
 | 17 | Investigate the public DRA contributing 0 samples | MAP | SAFE | 5 public, 4 with samples | Possible publish or data error |
-| 18 | Normalize `waterbody_type` casing (93.5% empty, "Marine"/"marine") | MAP | SAFE | completion-status doc | Map filters/legend quality |
+| 18 | Normalize `waterbody_type` casing (93.5% empty, "Marine"/"marine") | MAP | **[2026-07-22: RETIRED -- already normalized live (zero case variants, re-verified); the SAFE tag was also wrong per the evidence file (data write = owner-gated); empty-backfill lane PARKED]** | completion-status doc | Map filters/legend quality |
 | 19 | P28 verify-vs-primary sweep, 357 rows, vision-first | MO | **PARKED** | owner ruling 2026-07-21 | PARKED by owner 2026-07-21 -- no vision/source-access sweep. 357-row inventory exists (`docs/MATRIX_OPTIONS_P28_VERIFY_WORKLIST_2026_07_12.md`); remaining work is per-value vision-vs-primary + owner-gated. Largest remaining verification backlog by row count |
 | 20 | T39 calculator cross-check vs a primary worked example | MO | OWNER | base row #37 | The project's own anti-fabrication check, never executed |
 | 21 | Owner ruling: keep or drop the CCME SVI attenuation-factor lane | MO | OWNER | SVI packet; VF/PEF is user-supplied-only by ruling | Risk of sourcing values a binding ruling says will never be consumed |
@@ -179,8 +183,8 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 | 36 | Refresh `docs/LESSONS.md` (last updated 2026-07-13, ~150 commits ago) | HYG | SAFE | `e4f7c898` | Lessons from KB/E2E/CSRF/inhalation work uncaptured |
 | 37 | Fix non-ASCII in `docs/INDEX.md` (curly quote, arrow glyph) | HYG | SAFE | direct read | Violates the L0 plain-ASCII rule |
 | 38 | Close or triage the 6 stale open PRs (#108-#187, all 2+ months old) | HYG | OWNER | `gh pr list` | Never adopt bot branches; reimplement clean if real |
-| 39 | Establish an explicit-any / god-file burn-down doc (51 / 137 snapshot) | HYG | OWNER | manifest `code_quality_15pct` | Currently ad-hoc; formalize only if owner wants tracking |
-| 40 | Optional defense-in-depth REVOKE on `dras_admin_all` | PROD | **OWNER** | base row #27 | A database write. Claude drafts and preflights the SQL only; owner applies via SQL Editor |
+| 39 | Establish an explicit-any / god-file burn-down doc (51 / 137 snapshot) | HYG | **[2026-07-22: premise STALE -- PR #725 took no-explicit-any warnings to 0; current census 29 raw annotations / 137 god-files, see `docs/review-analysis/GRADE_REANALYSIS_EVIDENCE_PACKET_2026-07-22.md` (in-flight PR on branch `docs/grade-reanalysis-packet-2026-07-22` at this edit; verify merged before relying on it)]** OWNER | manifest `code_quality_15pct` | Currently ad-hoc; formalize only if owner wants tracking |
+| 40 | Optional defense-in-depth REVOKE on `dras_admin_all` | PROD | **[2026-07-22: RETIRED -- nothing to revoke; authenticated is SELECT-only (table+column) with the flip trigger + audited RPC live, re-verified]** | base row #27 | A database write. Claude drafts and preflights the SQL only; owner applies via SQL Editor |
 
 ### Tier D -- reg-review and long-tail (41-50)
 
@@ -189,8 +193,8 @@ Lane key: MAP, MO (matrix options), PROD, KB, HYG, reg-review (regulatory-review
 | 41 | Verify Export CSV/MD/HTML + export-memo against real data | MO | OWNER | base row #39 | Needs non-stub data |
 | 42 | One real judgment save + one "Ask AI" query vs live eval | MO | BLOCKED | base row #40 | Needs Ollama under the L0 1.12 schedule protocol |
 | 43 | Correct the pyramid-navigation status in `docs/NEXT_STEPS.md` line 138 | MO | SAFE (docs only) | probed 2026-07-20 | **RESOLVED: superseded, not abandoned.** The concept shipped inline in `ReviewDashboardClient.tsx` as "Stage Group Definitions (Pyramid Navigation)" with a `StageGroup` interface, rather than as the proposed `pyramidHierarchy.ts` / `PyramidNavigation.tsx`. `NEXT_STEPS.md` still calls this "unresolved"; that is now answerable. Remaining work is the one-line docs fix, not code |
-| 44 | Submission-search FTS performance plan | reg-review | SAFE | base row #42 | Design DONE 2026-07-21 (`docs/design/SUBMISSION_SEARCH_FTS_DESIGN_2026-07-21.md`, PR #727): SQLite FTS5 near-term, engine_v2 Postgres FTS convergence long-term. Implementation deferred until >1K assessments / reviewer latency (not yet hit). Lane relabeled MO -> reg-review (owner ruling 2026-07-21) |
-| 45 | Continue the `curate-bc-protocol-28-dedup.mjs` sweep (output gated) | MO | SAFE | `scripts/matrix-options/` | Script runs autonomously; rulings gate the values |
+| 44 | Submission-search FTS performance plan | reg-review | **[2026-07-22: D1 RESOLVED -- route is local-dev/admin-only; implementation stays DEFERRED]** SAFE(design-done) | base row #42 | Design DONE 2026-07-21 (`docs/design/SUBMISSION_SEARCH_FTS_DESIGN_2026-07-21.md`, PR #727): SQLite FTS5 near-term, engine_v2 Postgres FTS convergence long-term. Implementation deferred until >1K assessments / reviewer latency (not yet hit). Lane relabeled MO -> reg-review (owner ruling 2026-07-21) |
+| 45 | Continue the `curate-bc-protocol-28-dedup.mjs` sweep (output gated) | MO | **[2026-07-21: RETIRED -- verified already applied, 0 pending (46c6d0eb)]** | `scripts/matrix-options/` | Script runs autonomously; rulings gate the values |
 | 46 | Coordinate remediation lane beyond the 4 named DRAs | MAP | BLOCKED | status doc s4 item 4 | Future; report-only today |
 | 47 | `matrix_map_backup_20260624` schema cleanup (13 tables, ~8746 rows) | HYG | OWNER | status doc | Storage hygiene, low priority |
 | 48 | KB Phase 3.5 owner go/no-go checkpoint | KB | OWNER | plan Phase 3.5, STOP-default | Gates all of Phases 4-7 |
