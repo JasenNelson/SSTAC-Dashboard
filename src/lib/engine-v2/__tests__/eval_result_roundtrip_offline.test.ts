@@ -75,7 +75,11 @@ function makeMockClient(cfg: MockConfig = {}): {
 }
 
 const REAL_ARTIFACT = "C:\\Projects\\Regulatory-Review-worktrees\\engine-v2-m6-overnight-2026-07-03\\engine_v2\\data\\eval_runs\\m6_overnight\\m6_quality_42_run1\\636249a3-3302-4048-bca8-167fa6e90060\\eval_result.json";
-const HAVE = existsSync(REAL_ARTIFACT);
+// OPT-IN (codex sstac-pn-r1 P2): the real artifact lives OUTSIDE this repo and can change without
+// a dashboard diff -- the suite must never run implicitly just because the file exists. Enable
+// locally with: RR_ENGINE_ROUNDTRIP=1 npx vitest run <this file>.
+const OPT_IN = process.env.RR_ENGINE_ROUNDTRIP === "1";
+const HAVE = OPT_IN && existsSync(REAL_ARTIFACT);
 
 type Row = Record<string, unknown>;
 
@@ -141,7 +145,7 @@ function assertRoundTripInvariants(envelope: EvalResultEnvelope, rows: Row[]) {
   });
 }
 
-describe.skipIf(!HAVE)("real artifact round-trip", () => {
+describe.skipIf(!HAVE)("real artifact round-trip (opt-in via RR_ENGINE_ROUNDTRIP=1)", () => {
   const EVAL_ID = "11111111-2222-3333-4444-555555555555";
 
   beforeEach(() => {
@@ -206,9 +210,11 @@ function makePolicyRow(
     evidence_present: true,
     evidence_packet: [{ evidence_item_id: "c1" }],
     pathway_notes: [],
+    // internally consistent (codex sstac-pn-r1 P3): 1 packet item => total_cited/supporting 1, so
+    // each failure fixture throws on ITS OWN invariant, not on the e2 count mismatch.
     evidence_signal_counts: {
-      total_cited: 2,
-      supporting: 2,
+      total_cited: 1,
+      supporting: 1,
       negating: 0,
       absence_or_category_mismatch: 0,
       neutral: 0,
