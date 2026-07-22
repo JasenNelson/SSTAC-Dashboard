@@ -19,6 +19,27 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-07-22 -- KB/Graphify source-trace + gap analysis formalized
+
+Formalized the KB-wiki/Graphify instruction lineage and OHD-vs-SSTAC gap as committed docs (companions
+to the 2026-07-22 phase-state audit and Row 10 build receipt):
+`docs/design/SSTAC_KB_GRAPHIFY_SOURCE_TRACE_2026-07-22.md` and
+`docs/design/OPENHARNESS_TO_SSTAC_KB_GAP_ANALYSIS_2026-07-22.md`.
+
+- Confirmed `~/.claude/plans/jolly-marinating-piglet.md` (698 lines) is the complete, authoritative
+  SSTAC instruction set -- no fuller undiscovered instruction doc exists; nothing was lost to drift.
+- Regulatory-Review comparator conclusion: RR has landed nothing graphify/KB-wiki (Phase -1,
+  pre-kickoff); its plan is itself a fork of SSTAC's own plan, so there is nothing to port FROM RR
+  into SSTAC.
+- Cross-checked nine later-vintage RR-plan adversarial findings against SSTAC's current landed state:
+  two (json-as-code exclusion, full doc-extension blanket exclude) are real outstanding gaps in the
+  already-landed `.graphifyignore`; the rest are either already absorbed or not yet applicable pending
+  Phase 4-6 work.
+- **On the phase-gate question, the outstanding action is the Phase 3.5 owner go/no-go decision** -- a
+  dedicated decision packet PR is the recommended next step; no Phase 4-7 work proceeds without it.
+  Independently of that gate, the two hardening gaps above (json-as-code exclusion, full doc-extension
+  blanket exclude) are Phase-0-3.5-safe candidate follow-up PRs (owner-scoped).
+
 ### 2026-07-09 -- E-58 live review surface: RPC fix merged, production deploy still owner-gated
 
 Session merged PRs #559 (Search submission RPC ambiguous-column fix), #560 (Index-submission-
