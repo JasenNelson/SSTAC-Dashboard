@@ -94,7 +94,11 @@ function toPerPolicyRow(
     confidence_method: asString(raw.confidence_method),
     summary: asString(raw.summary),
     evidence_packet: asArray(raw.evidence_packet) ?? asRecord(raw.evidence_packet) ?? [],
-    pathway_notes: asRecord(raw.pathway_notes) ?? {},
+    // Engine S4 v0.1.0 emits pathway_notes as an ORDERED ARRAY (LOCKED contract, schema :185);
+    // legacy 0.0.1 rows may carry a keyed object. Accept BOTH -- mirroring evidence_packet one
+    // line up. The old asRecord-only path stripped every array to {} and silently dropped the
+    // content at import (D1 defect; the engine-side import-readiness validator WARNs on it).
+    pathway_notes: asArray(raw.pathway_notes) ?? asRecord(raw.pathway_notes) ?? {},
     rubric_self_score: asRecord(raw.rubric_self_score),
     raw_result_json: raw,
     // S4 read-side expand-contract: per-packet fields (Rule 1 -- read from `raw`,
