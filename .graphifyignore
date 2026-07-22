@@ -32,6 +32,12 @@
 *.sqlite*
 *.csv
 *.geojson
+# json is parsed by graphify as CODE (detect.py CODE_EXTENSIONS) and yields
+# empty ASTs -- data, config, and manifest json must never enter code-graph
+# scope (gap-analysis finding 1, 2026-07-22). Default-exclude ALL json; the
+# explicit allowlist for any future exception is graph_smoke.py
+# --data-allowlist (default: empty).
+*.json
 # Anchored dirs:
 /src/data/
 /matrix_research/
@@ -104,6 +110,17 @@
 # Phase 4 with a mandatory from-scratch rebuild, when .graphifyignore
 # switches from this blanket *.md line to the docs trust filter above.
 *.md
+# Full graphify DOC_EXTENSIONS blanket (gap-analysis finding 2, 2026-07-22):
+# the code-only phase must exclude ALL doc extensions, not just .md. Removed
+# together with the *.md line at Phase 4 (same mandatory from-scratch rebuild)
+# when the docs-trust filter takes over.
+*.mdx
+*.qmd
+*.txt
+*.rst
+*.html
+*.yaml
+*.yml
 
 # --- Negation: keep README.md visible to the scan ---------------------------
 # ORDERING MATTERS (gitignore last-match-wins): this line MUST be the LAST
