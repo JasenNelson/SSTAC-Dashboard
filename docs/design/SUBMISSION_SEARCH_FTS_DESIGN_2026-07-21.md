@@ -1,8 +1,9 @@
 # Submission-search full-text-search performance design (Top-50 row 44)
 
-Status: DESIGN (design-only; no code change). 2026-07-21. Lane: reg-review (see note on the `MO`
-mislabel below). Trigger: deferred until the searched corpus is large enough to feel the O(N) scan
-(~1K assessments); **not yet hit**.
+Status: DESIGN (design-only; no code change). 2026-07-21; D1 reachability question RESOLVED
+2026-07-22 (section 7: local-dev/admin-only -- row 44 stays deferred). Lane: reg-review (see note on
+the `MO` mislabel below). Trigger: deferred until the searched corpus is large enough to feel the
+O(N) scan (~1K assessments); **not yet hit**.
 
 ## 1. Context and the one reframe that matters
 
@@ -137,8 +138,24 @@ unless the owner decides the legacy route must go live independent of engine_v2.
 
 ## 7. Owner decisions (for the batched packet)
 
-- **D1:** Is the legacy `submission-search` route reachable in production, or local-dev/admin only?
-  (Drives whether row 44 ever needs implementing at all.)
+- **D1: RESOLVED 2026-07-22 -- local-dev/admin-only; NOT production-functional.** Verified against
+  origin/main f5aa0f56:
+  1. `better-sqlite3` is an **optionalDependency** (`package.json`), webpack-externalized
+     (`next.config.ts:41`). If its native build is absent/fails in the deployed environment, the
+     route's `require` catch leaves `Database` null -> HTTP 503 (section 1).
+  2. Even where the module loads, **no `.db` file is git-tracked under `src/data/`**
+     (`git ls-files src/data/` has no `.db` entry), so the deployed bundle carries no
+     `regulatory-review.db` data -- any query path fails -> HTTP 500 (section 1's second failure
+     mode). The data exists only on a local dev machine.
+  3. The route is `requireAdmin()`-gated regardless (`route.ts:53`).
+  Consequence: row 44 stays **DEFERRED** per section 5 -- the O(N) scan can only ever bite a local
+  admin reviewer; no production user path exists. Implementation waits on the local ~1K trigger (or
+  a reviewer feeling latency), with Option A as the then-preferred fix and Option 0 (engine_v2 port)
+  as the long-term convergence (D2 below, unchanged).
+  Investigation provenance: route disambiguation and the local-dev rationale were surfaced via the
+  KB wiki module pages (`src_app_api_regulatory_review_submission_search_route_ts` and the engine-v2
+  sibling), then confirmed by direct reads of `route.ts`, `package.json`, `next.config.ts`, and
+  `git ls-files` -- recorded as a Phase 3.5 condition-2 wiki-usage data point.
 - **D2:** When implementation is triggered -- Option A (SQLite FTS5 now) vs wait for the engine_v2 port
   (Option 0)?
 - **D3:** Relabel row 44 lane `MO -> reg-review` in the Top-50 queue (`SSTAC_TOP50_RECONCILED_2026_07_20.md:191`
