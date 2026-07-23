@@ -9,25 +9,54 @@ function truncateHash(hash: string, n = 12): string {
   return hash.length <= n ? hash : `${hash.slice(0, n)}...`;
 }
 
-// R3 check per contract
+// R3 conformance check -- mirrors the S4 0.1.0 $defs/pathway_note schema AND
+// the RR offline validator exactly (cross-contract round 2026-07-22: the
+// render must not present schema-INVALID items as conforming cards while the
+// validator REDs them; a Phase-0 enum extension is a schema amendment that
+// updates all layers together, and the JSON fallback still shows content).
+const PATHWAY_KINDS = new Set([
+  "GOVERNED_BY",
+  "CITATION_CHAIN",
+  "CONCEPT_BRIDGE",
+  "DOCUMENT_CO_MEMBERSHIP",
+]);
+const EDGE_TOKENS = new Set([
+  "REFERENCES",
+  "INCORPORATES",
+  "INTERPRETS",
+  "SUPPLEMENTS",
+  "ENABLES",
+  "DEFERS_TO",
+  "ENFORCES",
+  "RESTRICTS",
+  "MODIFIES",
+  "REQUIRES",
+  "OTHER",
+  "CITES",
+  "CITES_DOC",
+  "SAME_DOC",
+]);
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SLICE_ID_RE = /^slice_[a-f0-9]{64}$/;
+
 function isConformingItem(item: unknown): boolean {
   if (!item || typeof item !== "object" || Array.isArray(item)) return false;
   const obj = item as Record<string, unknown>;
   const keys = Object.keys(obj);
   if (keys.length !== 5) return false;
-  
-  if (typeof obj.pathway_id !== "string") return false;
-  if (typeof obj.pathway_kind !== "string") return false;
+
+  if (typeof obj.pathway_id !== "string" || !UUID_RE.test(obj.pathway_id)) return false;
+  if (typeof obj.pathway_kind !== "string" || !PATHWAY_KINDS.has(obj.pathway_kind)) return false;
   if (typeof obj.narrative !== "string" || obj.narrative.length < 1) return false;
-  
+
   if (!Array.isArray(obj.edge_chain) || obj.edge_chain.length < 1) return false;
   for (const edge of obj.edge_chain) {
-    if (typeof edge !== "string") return false;
+    if (typeof edge !== "string" || !EDGE_TOKENS.has(edge)) return false;
   }
-  
+
   if (!Array.isArray(obj.supporting_evidence_item_ids) || obj.supporting_evidence_item_ids.length < 1) return false;
   for (const id of obj.supporting_evidence_item_ids) {
-    if (typeof id !== "string") return false;
+    if (typeof id !== "string" || !SLICE_ID_RE.test(id)) return false;
   }
 
   // Contract: must have exactly the 5 keys
@@ -35,7 +64,7 @@ function isConformingItem(item: unknown): boolean {
   for (const k of keys) {
     if (!expectedKeys.has(k)) return false;
   }
-  
+
   return true;
 }
 

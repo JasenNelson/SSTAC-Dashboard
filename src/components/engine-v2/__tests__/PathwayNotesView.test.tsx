@@ -274,3 +274,39 @@ describe("evidence reference matching (L3A R3/X3 as amended)", () => {
     expect(screen.queryByTestId("pathway-evidence-id-matched")).not.toBeInTheDocument();
     expect(screen.getByTestId("pathway-evidence-id-unmatched")).toBeInTheDocument();
   });
+
+it("schema-invalid strings (bad kind/uuid/edge/slice) route to JSON fallback, not cards (cross-contract P2)", () => {
+  const bad = [
+    {
+      pathway_id: "not-a-uuid",
+      pathway_kind: "GOVERNED_BY",
+      narrative: "bad uuid",
+      edge_chain: ["REQUIRES"],
+      supporting_evidence_item_ids: ["slice_" + "a".repeat(64)],
+    },
+    {
+      pathway_id: "550e8400-e29b-41d4-a716-446655440000",
+      pathway_kind: "BAD_KIND",
+      narrative: "bad kind",
+      edge_chain: ["REQUIRES"],
+      supporting_evidence_item_ids: ["slice_" + "a".repeat(64)],
+    },
+    {
+      pathway_id: "550e8400-e29b-41d4-a716-446655440000",
+      pathway_kind: "GOVERNED_BY",
+      narrative: "bad edge",
+      edge_chain: ["NOT_A_TOKEN"],
+      supporting_evidence_item_ids: ["slice_" + "a".repeat(64)],
+    },
+    {
+      pathway_id: "550e8400-e29b-41d4-a716-446655440000",
+      pathway_kind: "GOVERNED_BY",
+      narrative: "bad slice id",
+      edge_chain: ["REQUIRES"],
+      supporting_evidence_item_ids: ["slice_short"],
+    },
+  ];
+  render(<PathwayNotesView value={bad} />);
+  expect(screen.queryByTestId("pathway-note-card")).not.toBeInTheDocument();
+  expect(screen.getAllByTestId("pathway-note-fallback")).toHaveLength(4);
+});
