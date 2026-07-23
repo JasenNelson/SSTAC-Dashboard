@@ -5,9 +5,17 @@ param(
 
 $ErrorActionPreference = 'Continue'
 
+if ($env:SSTAC_WIKI_HOOKS_OFF) {
+    exit 0
+}
+
 try {
     if (-not $RepoRoot) {
-        $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+        if ($env:SSTAC_WIKI_RUNTIME_ROOT) {
+            $RepoRoot = (Resolve-Path -LiteralPath $env:SSTAC_WIKI_RUNTIME_ROOT).Path
+        } else {
+            $RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path
+        }
     }
 } catch {
     Write-Host "NIGHTLY WATCHDOG: UNKNOWN -- advisory wrapper could not resolve repo root: $($_.Exception.Message)"

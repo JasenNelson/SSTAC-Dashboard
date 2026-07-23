@@ -25,10 +25,11 @@ All compiled wiki assets reside in the following structure:
 - `.graph/`: Contains the served copy of `graph.json` (synced by `sync_wiki.ps1`), the promotion
   ledger `promotion.json`, and the structured contradiction log `contradictions.json`.
 
-NOTE: during the Phase 0-3.5 pilot, `wiki/` (and `graphify-out/`, `.venv-graphify/`) are
-**gitignored and untracked** -- the entire compiled wiki is a local, on-demand artifact, refreshed
-manually via `sync_wiki.ps1 -SkipGraph` (or `/sync-wiki` once the pilot skill lands). There is no
-nightly automation and no auto-commit during the pilot; see the plan's Phase 3.5 gate.
+`wiki/` (and `graphify-out/`, `.venv-graphify/`) remain gitignored and untracked. Deterministic
+on-demand rebuilds are enabled. Nightly, hooks, and semantic infrastructure are tracked, but task
+registration, MCP registration, the Ollama standing block, semantic runs, and auto-commit remain
+separate activation/owner gates. The canonical runtime root defaults to the main checkout; a
+dedicated runtime worktree must be selected consistently with `SSTAC_WIKI_RUNTIME_ROOT`.
 
 ## 3. Link Confidence Tiers
 The system classifies semantic relationships between entities into three distinct confidence levels:
@@ -78,12 +79,12 @@ The knowledge graph uses standard relations to model connections between entitie
 - `conceptually_related_to`: Denotes semantic mapping between nodes.
 
 ## 6. Sync Receipts and logs
-- **Nightly Sync Receipts (Phase 5, contingent -- not built in the 0-3.5 pilot):** nightly execution
-  would create status receipt files in `.tmp_wiki_nightly/` using the patterns:
+- **Nightly Sync Receipts:** a manually invoked or owner-registered nightly writes status receipt
+  files in `.tmp_wiki_nightly/` using the patterns:
   - `receipt-YYYY-MM-DD.md`
   - `semantic-receipt-YYYY-MM-DD.md`
-- **Manual `/sync-wiki` runs (Phase 0-3.5, current):** `sync_wiki.ps1` prints step-by-step status to
-  the invoking shell; there is no persisted receipt file during the pilot.
+- **Manual `/sync-wiki` runs:** `sync_wiki.ps1` prints step-by-step status to the invoking shell;
+  there is no persisted receipt file.
 - **Safe Exit Logs:** the `/safe-exit` checks log detailed execution diagnostics to:
   - `safe-exit_YYYYMMDD_HHMMSS.log`
 

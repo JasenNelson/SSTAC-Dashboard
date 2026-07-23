@@ -160,28 +160,33 @@ def main():
             return 0
             
         if should_fire(command):
-            root_dir = os.environ.get("WIKI_BOOTSTRAP_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+            configured_runtime = os.environ.get("SSTAC_WIKI_RUNTIME_ROOT")
+            root_dir = configured_runtime or os.environ.get("WIKI_BOOTSTRAP_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
             local_graph = os.path.join(root_dir, 'wiki', '.graph', 'graph.json')
+            graphify_exe = os.path.join(root_dir, '.venv-graphify', 'Scripts', 'graphify.exe')
             
             if os.path.exists(local_graph):
                 card = (
                     "GRAPHIFY NUDGE: You are running a broad repository search.\n"
                     "For non-trivial exploration or unfamiliar-subsystem analysis, "
                     "please consider checking the graphify index first to orient yourself:\n"
-                    "`.venv-graphify/Scripts/graphify.exe query \"<question>\" --graph wiki\\.graph\\graph.json`\n"
+                    f"`\"{graphify_exe}\" query \"<question>\" --graph \"{local_graph}\"`\n"
                     "(See AGENTS.md for the Graphify Usage Requirement, or wiki indexes as a fallback)."
                 )
                 _emit(card)
             else:
+                if configured_runtime:
+                    return 0
                 main_root = get_main_root(root_dir)
                 main_graph = os.path.join(main_root, 'wiki', '.graph', 'graph.json')
                 if os.path.exists(main_graph):
                     main_indexes = os.path.join(main_root, 'wiki', '03_Indexes')
+                    main_graphify_exe = os.path.join(main_root, '.venv-graphify', 'Scripts', 'graphify.exe')
                     card = (
                         "GRAPHIFY NUDGE: You are running a broad repository search.\n"
                         "For non-trivial exploration or unfamiliar-subsystem analysis, "
                         "please consider checking the graphify index first to orient yourself:\n"
-                        "`.venv-graphify/Scripts/graphify.exe query \"<question>\" --graph wiki\\.graph\\graph.json` (main checkout)\n"
+                        f"`\"{main_graphify_exe}\" query \"<question>\" --graph \"{main_graph}\"` (main checkout)\n"
                         f"or read the wiki indexes at {main_indexes}\n"
                         "(See AGENTS.md for the Graphify Usage Requirement)."
                     )

@@ -46,7 +46,6 @@ if (Test-Path $configFile) {
 
 $graphifyExe = Join-Path $RepoRoot ".venv-graphify\Scripts\graphify.exe"
 $pythonExe = Join-Path $RepoRoot ".venv-graphify\Scripts\python.exe"
-$ServeGateBranch = 'main'
 
 $step1Status = "SKIPPED"
 $step2Status = "SKIPPED"
@@ -54,11 +53,14 @@ $step5Status = "SKIPPED"
 $promStatus = "SKIPPED"
 $step6Status = "SKIPPED"
 $wikiServedStatus = "SKIPPED"
+$promotionCandidateReady = $false
 $n0Head = ""
 $n0PorcelainLines = 0
 $graphOrphanRisk = $false
 $gpuOrphanRisk = $false
 $secretHit = $false
+$serveGateSummary = "not evaluated"
+$serveGateRequiredRef = "refs/remotes/origin/main"
 
 Write-Host "--- N0 PREFLIGHT ---"
 & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "tooling\wiki\check_orphans.ps1")
@@ -97,11 +99,19 @@ $n0PorcelainLines = @(git -C $RepoRoot status --porcelain).Count
 $n0Head = (git -C $RepoRoot rev-parse HEAD).Trim()
 
 Write-Host "--- N1 FETCH+SCOPE+HASH ---"
-$fetchOk = $false
+$serveGateRunId = [guid]::NewGuid().ToString('N')
+$serveGateFetchReceipt = Join-Path $logDir "serve-gate-fetch-$stamp-$serveGateRunId.json"
+$promotionCandidate = Join-Path $logDir "promotion-candidate-$stamp-$serveGateRunId.json"
+$serveGateFetchRaw = (& $pythonExe (Join-Path $RepoRoot "tooling\wiki\serve_gate.py") --repo-root $RepoRoot --config $configFile fetch --receipt $serveGateFetchReceipt) -join "`n"
+$fetchOk = ($LASTEXITCODE -eq 0)
 try {
-    & git -C $RepoRoot fetch origin +refs/heads/main:refs/remotes/origin/main 2>$null
-    if ($LASTEXITCODE -eq 0) { $fetchOk = $true }
-} catch {}
+    $serveGateFetchResult = $serveGateFetchRaw | ConvertFrom-Json
+    if ($serveGateFetchResult.required_ref) {
+        $serveGateRequiredRef = $serveGateFetchResult.required_ref
+    }
+} catch {
+    $fetchOk = $false
+}
 
 # --emit-overlay is REQUIRED here (codex P2): without regenerating the docs-trust
 # negation overlay the root *.md blanket excludes every registered doc from N1 build.
@@ -246,10 +256,25 @@ if ($semanticSkippedReason) {
                     } elseif ($currHead -ne $n0Head) {
                         $promStatus = "PROMOTION_SKIPPED_HEAD_MOVED"
                     } else {
-                        $promArgs = @((Join-Path $RepoRoot "tooling\wiki\promotion.py"), '--graph', (Join-Path $RepoRoot "graphify-out\graph.json"), '--state', (Join-Path $RepoRoot "wiki\.graph\promotion.json"), '--commit', (git -C $RepoRoot rev-parse --short HEAD).Trim(), '--report')
-                        & $pythonExe @promArgs
-                        if ($LASTEXITCODE -ne 0) { $promStatus = "PROMOTION_FAILED"; $step5Fail = $true }
-                        else { $promStatus = "PROMOTION_DONE" }
+                        $servedPromotion = Join-Path $RepoRoot "wiki\.graph\promotion.json"
+                        try {
+                            if (Test-Path -LiteralPath $servedPromotion) {
+                                Copy-Item -LiteralPath $servedPromotion -Destination $promotionCandidate -Force -ErrorAction Stop
+                            }
+                            $promArgs = @((Join-Path $RepoRoot "tooling\wiki\promotion.py"), '--graph', (Join-Path $RepoRoot "graphify-out\graph.json"), '--state', $promotionCandidate, '--commit', (git -C $RepoRoot rev-parse --short HEAD).Trim(), '--report')
+                            & $pythonExe @promArgs
+                            if ($LASTEXITCODE -ne 0) {
+                                $promStatus = "PROMOTION_FAILED"
+                                $step5Fail = $true
+                            } else {
+                                $promotionCandidateReady = Test-Path -LiteralPath $promotionCandidate
+                                $promStatus = "PROMOTION_DONE"
+                            }
+                        } catch {
+                            Write-Host "FAIL: promotion candidate preparation: $($_.Exception.Message)"
+                            $promStatus = "PROMOTION_FAILED"
+                            $step5Fail = $true
+                        }
                     }
                 }
             }
@@ -274,21 +299,33 @@ if ($semanticSkippedReason) {
 
 Write-Host "--- N6 WIKI ---"
 $wikiServedStatus = ""
+$publishHelper = Join-Path $RepoRoot "tooling\wiki\publish_wiki.py"
+$ws = Join-Path $RepoRoot "wiki.staging"
+$w = Join-Path $RepoRoot "wiki"
+$publishBackup = Join-Path $logDir "wiki-backup-$stamp-$PID"
 if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
     # A red cluster step blocks serve too (codex P2): never compile/serve over a graph
     # whose required cluster pass failed, even though the raw build succeeded.
     $step6Status = "SKIPPED_PREV_FAIL"
 } else {
-    $ws = Join-Path $RepoRoot "wiki.staging"
-    if (Test-Path $ws) { Remove-Item $ws -Recurse -Force }
-    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\wiki_compile.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --out $ws --stamp $stamp
-    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\wiki_lint.py") --wiki $ws
-    $lintExit = $LASTEXITCODE
-    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\scan_secrets.py") --repo-root $RepoRoot --target wiki.staging
-    $secretExit = $LASTEXITCODE
-    
-    $currBranch = (git -C $RepoRoot rev-parse --abbrev-ref HEAD).Trim()
-    
+    & $pythonExe $publishHelper --repo-root $RepoRoot prepare --served $w --staging $ws
+    $prepareExit = $LASTEXITCODE
+    $compileExit = 1
+    $lintExit = 1
+    $secretExit = 1
+    if ($prepareExit -eq 0) {
+        & $pythonExe (Join-Path $RepoRoot "tooling\wiki\wiki_compile.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --out $ws --stamp $stamp
+        $compileExit = $LASTEXITCODE
+    }
+    if ($compileExit -eq 0) {
+        & $pythonExe (Join-Path $RepoRoot "tooling\wiki\wiki_lint.py") --wiki $ws
+        $lintExit = $LASTEXITCODE
+    }
+    if ($lintExit -eq 0) {
+        & $pythonExe (Join-Path $RepoRoot "tooling\wiki\scan_secrets.py") --repo-root $RepoRoot --target wiki.staging
+        $secretExit = $LASTEXITCODE
+    }
+
     $semanticPartial = $false
     $grpt = Join-Path $RepoRoot "graphify-out\GRAPH_REPORT.md"
     if (Test-Path $grpt) {
@@ -299,6 +336,20 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
     
     $trackedClean = (@(git -C $RepoRoot status --porcelain --untracked-files=no).Count -eq 0)
     $headUnchanged = ((git -C $RepoRoot rev-parse HEAD).Trim() -eq $n0Head)
+
+    $serveGateRaw = (& $pythonExe (Join-Path $RepoRoot "tooling\wiki\serve_gate.py") --repo-root $RepoRoot --config $configFile verify --receipt $serveGateFetchReceipt) -join "`n"
+    $serveGateExit = $LASTEXITCODE
+    $serveGateOk = $false
+    $serveGateReasons = @()
+    try {
+        $serveGateResult = $serveGateRaw | ConvertFrom-Json
+        $serveGateOk = ($serveGateExit -eq 0 -and $serveGateResult.allowed)
+        $serveGateReasons = @($serveGateResult.reasons)
+        $serveGateSummary = "allowed=$serveGateOk; required_ref=$($serveGateResult.required_ref); fetched_oid=$($serveGateResult.fetched_oid); head=$($serveGateResult.head); ref_head=$($serveGateResult.required_ref_head)"
+    } catch {
+        $serveGateReasons = @("Serve gate returned invalid output")
+        $serveGateSummary = "allowed=False; invalid evaluator output"
+    }
     
     # Freshness of receipt lineage OK
     $freshnessOk = $true
@@ -311,35 +362,42 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
         }
     }
     
-    if ($currBranch -eq $ServeGateBranch -and $trackedClean -and $headUnchanged -and $lintExit -eq 0 -and $secretExit -eq 0 -and -not $semanticPartial -and $freshnessOk) {
-        $w = Join-Path $RepoRoot "wiki"
-        $wo = Join-Path $RepoRoot "wiki.old-$stamp"
-        if (Test-Path $w) { Rename-Item $w -NewName "wiki.old-$stamp" -ErrorAction Stop }
-        Rename-Item $ws -NewName "wiki" -ErrorAction Stop
-        # .graph may not exist on a compile with no contradictions (codex P2) -- create it
-        # before the copy or the served graph/session hooks/MCP path silently breaks.
-        $servedGraphDir = Join-Path $RepoRoot "wiki\.graph"
-        if (-not (Test-Path $servedGraphDir)) { New-Item -ItemType Directory -Path $servedGraphDir | Out-Null }
-        Copy-Item (Join-Path $RepoRoot "graphify-out\graph.json") (Join-Path $servedGraphDir "graph.json") -Force -ErrorAction Stop
-        if (Test-Path $grpt) {
-            Copy-Item $grpt (Join-Path $RepoRoot "wiki\.graph\") -Force
+    $artifactsOk = ($prepareExit -eq 0 -and $compileExit -eq 0 -and $lintExit -eq 0 -and $secretExit -eq 0)
+    if ($serveGateOk -and $trackedClean -and $headUnchanged -and $artifactsOk -and -not $semanticPartial -and $freshnessOk) {
+        $promotionStateArgs = @()
+        if ($promotionCandidateReady) {
+            $promotionStateArgs = @('--promotion-state', $promotionCandidate)
         }
-        "Build Stamp: $stamp`nHEAD: $n0Head" | Set-Content (Join-Path $RepoRoot "wiki\.build-stamp")
-        if (Test-Path $wo) { Remove-Item $wo -Recurse -Force }
-        $wikiServedStatus = "SERVED_WIKI_SWAPPED"
+        & $pythonExe $publishHelper --repo-root $RepoRoot finalize --staging $ws --graph (Join-Path $RepoRoot "graphify-out\graph.json") --graph-report $grpt --stamp $stamp --head $n0Head @promotionStateArgs
+        $finalizeExit = $LASTEXITCODE
+        if ($finalizeExit -eq 0) {
+            & $pythonExe $publishHelper --repo-root $RepoRoot swap --served $w --staging $ws --backup $publishBackup
+            $swapExit = $LASTEXITCODE
+        } else {
+            $swapExit = 1
+        }
+        if ($finalizeExit -eq 0 -and $swapExit -eq 0) {
+            $wikiServedStatus = "SERVED_WIKI_SWAPPED"
+            $step6Status = "OK"
+        } else {
+            $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD (Publish failed)"
+            $step6Status = "FAIL"
+        }
     } else {
         $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD"
         $reasons = @()
-        if ($currBranch -ne $ServeGateBranch) { $reasons += "Branch != $ServeGateBranch" }
+        if (-not $serveGateOk) { $reasons += $serveGateReasons }
         if (-not $trackedClean) { $reasons += "Tracked files dirty" }
         if (-not $headUnchanged) { $reasons += "HEAD changed" }
+        if ($prepareExit -ne 0) { $reasons += "Staging prepare failed" }
+        if ($compileExit -ne 0) { $reasons += "Compile failed" }
         if ($lintExit -ne 0) { $reasons += "Lint Failed" }
         if ($secretExit -ne 0) { $reasons += "Secret Scan Failed" }
         if ($semanticPartial) { $reasons += "Semantic SUSPECT_PARTIAL" }
         if (-not $freshnessOk) { $reasons += "Freshness Failed" }
         $wikiServedStatus += " ($($reasons -join ', '))"
+        $step6Status = if ($artifactsOk) { "OK" } else { "FAIL" }
     }
-    $step6Status = "OK"
 }
 
 Write-Host "--- N7 RECEIPT ---"
@@ -358,9 +416,9 @@ $ageDays = 0
 $freshnessStr = "freshness_unknown"
 if ($fetchOk) {
     try {
-        $commitsBehind = [int](git -C $RepoRoot rev-list --count HEAD..origin/main)
+        $commitsBehind = [int](git -C $RepoRoot rev-list --count "HEAD..$serveGateRequiredRef")
         $headTime = [int](git -C $RepoRoot log -1 --format=%ct HEAD)
-        $mainTime = [int](git -C $RepoRoot log -1 --format=%ct origin/main)
+        $mainTime = [int](git -C $RepoRoot log -1 --format=%ct $serveGateRequiredRef)
         if ($mainTime -gt $headTime) {
             $ageDays = [math]::Round(($mainTime - $headTime) / 86400, 1)
         }
@@ -380,6 +438,7 @@ $receiptBody = @(
     "N5 Semantic: $step5Status"
     "Promotion: $promStatus"
     "N6 Wiki: $step6Status / $wikiServedStatus"
+    "Serve Gate: $serveGateSummary"
     "Nodes: $nodeCount"
     "Edges: $edgeCount"
     "Freshness: $freshnessStr"

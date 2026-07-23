@@ -61,13 +61,22 @@ if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph smoke (hard a
 & $venvPython tooling\wiki\scan_secrets.py --repo-root . --target graphify-out
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: secrets scan on graphify-out'; exit 1 }
 
-Write-Host "--- 2. Wiki Compile ---"
-& $venvPython tooling\wiki\wiki_compile.py --graph graphify-out\graph.json --repo-root . --out wiki --stamp $Stamp
+$servedWiki = Join-Path $repoRoot 'wiki'
+$stagingWiki = Join-Path $repoRoot 'wiki.staging'
+$publishHelper = Join-Path $repoRoot 'tooling\wiki\publish_wiki.py'
+$publishBackup = Join-Path $repoRoot ".tmp\wiki-publish-backup-$PID"
+
+Write-Host "--- 2. Prepare + Compile Staging Wiki ---"
+& $venvPython $publishHelper --repo-root $repoRoot prepare --served $servedWiki --staging $stagingWiki
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: staging preparation'; exit 1 }
+& $venvPython tooling\wiki\wiki_compile.py --graph graphify-out\graph.json --repo-root . --out $stagingWiki --stamp $Stamp
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: step (launch or exit failure)'; exit 1 }
 
-Write-Host "--- 3. Wiki Lint ---"
-& $venvPython tooling\wiki\wiki_lint.py --wiki wiki
+Write-Host "--- 3. Staging Wiki Gates ---"
+& $venvPython tooling\wiki\wiki_lint.py --wiki $stagingWiki
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: step (launch or exit failure)'; exit 1 }
+& $venvPython tooling\wiki\scan_secrets.py --repo-root . --target wiki.staging
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: secrets scan on staging wiki'; exit 1 }
 
 # NOTE: the OHD reference invokes promotion.py here (unconditionally, every sync). This
 # SSTAC port deliberately DROPS that call -- the single-invocation rule (conventions.md
@@ -78,12 +87,16 @@ if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: step (launch or exi
 # ledger for reasons that have nothing to do with the code actually changing. To seed or
 # refresh the ledger, invoke tooling\wiki\promotion.py directly (see conventions.md).
 
-Write-Host "--- 4. Copy Graph ---"
-if (-not (Test-Path "wiki\.graph")) {
-    $null = New-Item -ItemType Directory -Force -Path "wiki\.graph"
+Write-Host "--- 4. Finalize + Publish Served Package ---"
+$syncHead = (git rev-parse HEAD).Trim()
+if ((-not $?) -or ($LASTEXITCODE -ne 0) -or (-not $syncHead)) {
+    Write-Host 'FAIL: could not resolve HEAD for build stamp'
+    exit 1
 }
-Copy-Item graphify-out\graph.json wiki\.graph\graph.json -Force
-if (-not $?) { exit 1 }
+& $venvPython $publishHelper --repo-root $repoRoot finalize --staging $stagingWiki --graph (Join-Path $repoRoot 'graphify-out\graph.json') --graph-report (Join-Path $repoRoot 'graphify-out\GRAPH_REPORT.md') --stamp $Stamp --head $syncHead
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: staging package finalization'; exit 1 }
+& $venvPython $publishHelper --repo-root $repoRoot swap --served $servedWiki --staging $stagingWiki --backup $publishBackup
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: served wiki swap'; exit 1 }
 
 Write-Host "--- 5. Changed Files ---"
 # wiki\ is gitignored during the pilot (see .gitignore); this reports the untracked diff
