@@ -8,11 +8,13 @@ from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).parent.parent / "session_bootstrap.py"
 
-def run_main(root_dir, fake_main_root=None):
+def run_main(root_dir, fake_main_root=None, runtime_root=None):
     env = dict(os.environ)
     env["WIKI_BOOTSTRAP_ROOT"] = str(root_dir)
     if fake_main_root:
         env["FAKE_GIT_COMMON_DIR"] = str(Path(fake_main_root) / ".git")
+    if runtime_root:
+        env["SSTAC_WIKI_RUNTIME_ROOT"] = str(runtime_root)
     proc = subprocess.run(
         [sys.executable, str(SCRIPT_PATH)],
         env=env, capture_output=True, text=True,
@@ -51,6 +53,24 @@ class TestMain(unittest.TestCase):
         self.assertIn("KB lives in the main checkout", out)
         self.assertIn("000-Modules.md + 000-Concepts.md", out)
         self.assertNotIn("NUDGE", out.upper())
+
+    def test_configured_runtime_takes_precedence_over_main_checkout(self):
+        runtime_dir = Path(self.temp_dir) / "runtime"
+        idx_dir = runtime_dir / "wiki" / "03_Indexes"
+        idx_dir.mkdir(parents=True)
+        (idx_dir / "000-Modules.md").write_text(
+            "# Modules\n[[runtime_module]]\n",
+            encoding="ascii",
+        )
+        (runtime_dir / "wiki" / ".build-stamp").write_text(
+            "Build Stamp: runtime\nHEAD: abc\n",
+            encoding="ascii",
+        )
+
+        rc, out = run_main(self.main_dir, runtime_root=runtime_dir)
+        self.assertEqual(rc, 0)
+        self.assertIn("Build Stamp: runtime", out)
+        self.assertIn(str(runtime_dir), out)
 
     def test_nothing_exists_case(self):
         # (c) nothing-exists case -> single line, exit 0.

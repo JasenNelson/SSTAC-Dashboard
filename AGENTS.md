@@ -2,11 +2,13 @@
 
 ## KB Wiki (read-first; ALL agents -- Claude, Codex, AGY, OpenCode)
 
-A compiled code-knowledge wiki lives in the MAIN checkout at `wiki\` (untracked pilot output;
-worktrees read it via the absolute main-checkout path). Before repo-wide grepping, consult
-`wiki\03_Indexes\000-Modules.md` + `000-Concepts.md`; rebuild on demand with `/sync-wiki`
-(Claude) or `tooling\wiki\sync_wiki.ps1`. Operations runbook:
-`docs/WIKI_KB_OPERATIONS_2026_07.md`. Read-only usage is always safe.
+A compiled code-knowledge wiki lives under the canonical runtime root at `wiki\` (untracked
+output). The runtime defaults to the MAIN checkout; a dedicated worktree is supported only when
+`SSTAC_WIKI_RUNTIME_ROOT` points every hook/session consumer to that same absolute root. Before
+repo-wide grepping, consult `<runtime>\wiki\03_Indexes\000-Modules.md` +
+`000-Concepts.md`; rebuild on demand from the runtime root with `/sync-wiki` (Claude) or
+`tooling\wiki\sync_wiki.ps1`. Operations runbook: `docs/WIKI_KB_OPERATIONS_2026_07.md`.
+Read-only usage is always safe.
 
 ## Build Gate
 

@@ -5,5 +5,6 @@
   "lock_expiry_minutes": { "label_only": 60, "label_plus_semantic": 150, "standalone_first_pass": 270 },
   "timeouts_sec": { "update_incremental": 2700, "update_full": 7200, "cluster": 1800, "label": 3600, "semantic_outer": 3600, "semantic_inner": 3000 },
   "freshness_max_age_hours": 48,
-  "notes": "Read by nightly_wiki_sync.ps1 and semantic_extract.ps1; plain ASCII; edit via gated PR only."
+  "serve_gate": { "remote": "origin", "branch": "main" },
+  "notes": "Read by nightly_wiki_sync.ps1, serve_gate.py, and semantic_extract.ps1; plain ASCII; edit via gated PR only."
 }

@@ -79,14 +79,17 @@ def main():
     if os.environ.get('SSTAC_WIKI_HOOKS_OFF'):
         return 0
     try:
-        root_dir = os.environ.get("WIKI_BOOTSTRAP_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
+        configured_runtime = os.environ.get("SSTAC_WIKI_RUNTIME_ROOT")
+        root_dir = configured_runtime or os.environ.get("WIKI_BOOTSTRAP_ROOT", os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
         
         wiki_dir = os.path.join(root_dir, 'wiki')
         main_root = get_main_root(root_dir)
         main_wiki_dir = os.path.join(main_root, 'wiki')
         
         if not os.path.exists(wiki_dir):
-            if os.path.exists(main_wiki_dir):
+            if configured_runtime:
+                print(f"KB wiki not built at configured runtime root: {root_dir}")
+            elif os.path.exists(main_wiki_dir):
                 idx = os.path.join(main_wiki_dir, '03_Indexes')
                 print(f"KB lives in the main checkout -- wiki indexes (read-only): {os.path.join(idx, '000-Modules.md')} + 000-Concepts.md")
             else:
@@ -145,7 +148,9 @@ def main():
                 out.append(hub)
                 
         out.append("QUERY TOOLS:")
-        out.append('.venv-graphify/Scripts/graphify query "<question>" --graph wiki\\.graph\\graph.json')
+        graphify_exe = os.path.join(root_dir, '.venv-graphify', 'Scripts', 'graphify.exe')
+        graph_json = os.path.join(wiki_dir, '.graph', 'graph.json')
+        out.append(f'"{graphify_exe}" query "<question>" --graph "{graph_json}"')
         out.append('/sync-wiki   (recompile if wiki is stale)')
         
         stale = False
@@ -172,7 +177,6 @@ def main():
             except Exception:
                 pass
         
-        graph_json = os.path.join(wiki_dir, '.graph', 'graph.json')
         if os.path.exists(graph_json):
             try:
                 mtime = os.path.getmtime(graph_json)
