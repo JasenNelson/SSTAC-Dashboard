@@ -54,13 +54,15 @@ class TestGraphSmoke(unittest.TestCase):
             json.dump({'nodes': nodes, 'links': links or []}, f)
         return graph_path
 
-    def run_smoke(self, graph_path, manifest_path=None, allowlist_path=None):
+    def run_smoke(self, graph_path, manifest_path=None, allowlist_path=None, data_allowlist_path=None):
         cmd = [sys.executable, str(self.script_path),
                "--graph", str(graph_path), "--repo-root", str(self.repo_root)]
         if manifest_path:
             cmd += ["--manifest", str(manifest_path)]
         if allowlist_path:
             cmd += ["--allowlist", str(allowlist_path)]
+        if data_allowlist_path:
+            cmd += ["--data-allowlist", str(data_allowlist_path)]
         return subprocess.run(cmd, capture_output=True, text=True)
 
     def test_substrate_invariant_passes_for_tracked_files(self):
@@ -134,6 +136,63 @@ class TestGraphSmoke(unittest.TestCase):
         result = self.run_smoke(graph_path)
         self.assertEqual(result.returncode, 0, result.stdout)
         self.assertIn("num_communities: 5 [WARN]", result.stdout)
+
+    def test_data_as_code_hard_fails(self):
+        # The json file IS git-tracked, so the substrate invariant passes and the
+        # exit-1 comes solely from the DATA-AS-CODE audit (check isolation).
+        self.write_and_track("src/data/foo.json", "{}\n")
+        nodes = self.filler_nodes()
+        nodes.append({"id": "n_data", "source_file": "src/data/foo.json", "community": 999})
+        graph_path = self.write_graph(nodes)
+        result = self.run_smoke(graph_path)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("DATA-AS-CODE audit", result.stdout)
+        self.assertIn("src/data/foo.json", result.stdout)
+        self.assertIn("HARD FAIL", result.stdout)
+        self.assertIn("OK: every source_file is git-tracked or allowlisted", result.stdout)
+
+    def test_data_as_code_allowlist_exempts_file(self):
+        # Tracked (substrate passes) + data-allowlisted (data audit passes) -> exit 0.
+        self.write_and_track("src/data/foo.json", "{}\n")
+        nodes = self.filler_nodes()
+        nodes.append({"id": "n_data", "source_file": "src/data/foo.json", "community": 999})
+        graph_path = self.write_graph(nodes)
+        allowlist_path = self.repo_root / "data_allow.txt"
+        allowlist_path.write_text("src/data/foo.json\n")
+        result = self.run_smoke(graph_path, data_allowlist_path=allowlist_path)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("DATA-AS-CODE audit", result.stdout)
+        self.assertIn("OK: zero data-extension source_files", result.stdout)
+
+    def test_data_as_code_allowlist_backslash_entry_matches(self):
+        # codex P2 (2026-07-22): an allowlist entry written with Windows separators
+        # must still match the forward-slash-normalized source_file comparison.
+        self.write_and_track("src/data/foo.json", "{}\n")
+        nodes = self.filler_nodes()
+        nodes.append({"id": "n_data", "source_file": "src/data/foo.json", "community": 999})
+        graph_path = self.write_graph(nodes)
+        allowlist_path = self.repo_root / "data_allow.txt"
+        allowlist_path.write_text("src\\data\\foo.json\n")
+        result = self.run_smoke(graph_path, data_allowlist_path=allowlist_path)
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("OK: zero data-extension source_files", result.stdout)
+
+    def test_data_as_code_case_insensitive(self):
+        self.write_and_track("src/data/X.JSON", "{}\n")
+        nodes = self.filler_nodes()
+        nodes.append({"id": "n_data", "source_file": "src/data/X.JSON", "community": 999})
+        graph_path = self.write_graph(nodes)
+        result = self.run_smoke(graph_path)
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("src/data/X.JSON", result.stdout)
+
+    def test_data_as_code_clean_graph(self):
+        nodes = self.filler_nodes()
+        graph_path = self.write_graph(nodes)
+        result = self.run_smoke(graph_path)
+        self.assertEqual(result.returncode, 0)
+        self.assertIn("DATA-AS-CODE audit", result.stdout)
+        self.assertIn("OK: zero data-extension source_files", result.stdout)
 
 
 if __name__ == '__main__':

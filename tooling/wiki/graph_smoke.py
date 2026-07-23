@@ -10,7 +10,7 @@ Two-band threshold semantics (plan Phase 2 acceptance thresholds):
 Some metrics (communities count) have no stated HARD limit in the plan -- those are
 WARN-only (can never abort the run on their own) and are marked as such below.
 
-The SUBSTRATE INVARIANT and the worktree/node_modules/env PATH audit are ZERO-TOLERANCE
+The SUBSTRATE INVARIANT, the worktree/node_modules/env PATH audit, and the DATA-AS-CODE audit are ZERO-TOLERANCE
 HARD checks (no WARN band): any hit aborts regardless of the two-band table.
 
 Usage:
@@ -86,6 +86,13 @@ THRESHOLD_TABLE = [
 ]
 
 
+# Zero-tolerance data-extension set: these are excluded by .graphifyignore and
+# must NEVER appear as a source_file in the graph (gap-analysis finding 1 --
+# graphify parses .json as CODE and yields empty ASTs; a hit here means the
+# ignore layer failed open). Exceptions go on the explicit --data-allowlist.
+DATA_EXTENSIONS = {'.json', '.csv', '.geojson', '.db', '.sqlite', '.sqlite3'}
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument('--graph', required=True)
@@ -93,6 +100,9 @@ def parse_args():
     parser.add_argument('--repo-root', required=True)
     parser.add_argument('--allowlist', required=False,
                          help='Optional file of newline-separated untracked-allowlist paths '
+                              '(root-anchored, relative to --repo-root). Default: empty.')
+    parser.add_argument('--data-allowlist', required=False,
+                         help='Optional file of newline-separated data-file exception paths '
                               '(root-anchored, relative to --repo-root). Default: empty.')
     parser.add_argument('--receipt', required=False,
                          help='Optional path to write the metrics table as JSON.')
@@ -255,6 +265,36 @@ def suspicious_path_hits(graph, worktree_names):
     return hits
 
 
+def load_path_allowlist(path_arg):
+    """Loads a newline-separated path allowlist file: skips blanks and '#' comments,
+    normalizes backslashes to forward slashes, strips any leading '/'. Returns a set."""
+    entries = set()
+    if path_arg and Path(path_arg).exists():
+        with open(path_arg, 'r', encoding='utf-8') as f:
+            for line in f:
+                line = line.strip()
+                if line and not line.startswith('#'):
+                    entries.add(line.replace('\\', '/').lstrip('/'))
+    return entries
+
+
+def data_as_code_hits(graph, data_allowlist):
+    hits = []
+    seen = set()
+    for n in graph.get('nodes', []):
+        sf = n.get('source_file')
+        if not sf or sf in seen:
+            continue
+        seen.add(sf)
+        norm = sf.replace('\\', '/')
+        if norm.lstrip('/') in data_allowlist:
+            continue
+        ext = Path(norm).suffix.lower()
+        if ext in DATA_EXTENSIONS:
+            hits.append(sf)
+    return sorted(hits)
+
+
 def main():
     args = parse_args()
     repo_root = Path(args.repo_root)
@@ -267,13 +307,11 @@ def main():
         with open(args.manifest, 'r', encoding='utf-8') as f:
             manifest = json.load(f)
 
-    allowlist = set()
-    if args.allowlist and Path(args.allowlist).exists():
-        with open(args.allowlist, 'r', encoding='utf-8') as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith('#'):
-                    allowlist.add(line.lstrip('/'))
+    # Both allowlist loaders normalize backslashes to forward slashes so an entry
+    # written with Windows separators still matches the forward-slash-normalized
+    # source_file comparison (codex P2, 2026-07-22).
+    allowlist = load_path_allowlist(args.allowlist)
+    data_allowlist = load_path_allowlist(args.data_allowlist)
 
     worktree_names = git_worktree_paths(repo_root)
 
@@ -293,6 +331,7 @@ def main():
 
     offenders = substrate_invariant_offenders(graph, repo_root, allowlist)
     path_hits = suspicious_path_hits(graph, worktree_names)
+    data_hits = data_as_code_hits(graph, data_allowlist)
 
     print("--- graph_smoke: metric table ---")
     for row in report_rows:
@@ -318,11 +357,23 @@ def main():
     else:
         print("  OK: zero hits.")
 
+    print("--- graph_smoke: DATA-AS-CODE audit (zero-tolerance) ---")
+    if data_hits:
+        print(f"  HARD FAIL: {len(data_hits)} data-extension source_file(s) in code-graph scope (ignore layer failed open):")
+        for sf in data_hits[:50]:
+            print(f"    {sf}")
+        if len(data_hits) > 50:
+            print(f"    ... and {len(data_hits) - 50} more")
+        hard_abort = True
+    else:
+        print("  OK: zero data-extension source_files in graph scope.")
+
     if args.receipt:
         receipt = {
             'metrics': report_rows,
             'substrate_invariant_offenders': offenders,
             'path_audit_hits': [{'source_file': sf, 'pattern': pat} for sf, pat in path_hits],
+            'data_as_code_hits': data_hits,
             'hard_abort': hard_abort,
         }
         Path(args.receipt).parent.mkdir(parents=True, exist_ok=True)
