@@ -1,5 +1,13 @@
 # SSTAC-Dashboard Agent Notes
 
+## KB Wiki (read-first; ALL agents -- Claude, Codex, AGY, OpenCode)
+
+A compiled code-knowledge wiki lives in the MAIN checkout at `wiki\` (untracked pilot output;
+worktrees read it via the absolute main-checkout path). Before repo-wide grepping, consult
+`wiki\03_Indexes\000-Modules.md` + `000-Concepts.md`; rebuild on demand with `/sync-wiki`
+(Claude) or `tooling\wiki\sync_wiki.ps1`. Operations runbook:
+`docs/WIKI_KB_OPERATIONS_2026_07.md`. Read-only usage is always safe.
+
 ## Build Gate
 
 Do not run raw `npm run build` from Codex/agent shells by default. Stale or interrupted `.next` state has caused Next.js builds to stall at the banner stage in this repo.

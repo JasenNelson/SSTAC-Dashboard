@@ -32,6 +32,14 @@ Set-Location -Path $repoRoot
 # silently run against whatever interpreter happens to be first on PATH.
 $venvPython = Join-Path $repoRoot '.venv-graphify\Scripts\python.exe'
 
+Write-Host "--- 0. Docs scope + trust overlay (Phase 4) ---"
+# The docs-trust negation overlay (docs\.graphifyignore) is untracked and MUST be
+# regenerated before any build (codex P2, 2026-07-22): on a clean checkout the root *.md
+# blanket would otherwise silently exclude every registered doc from the graph while this
+# script appeared to succeed. Fail-closed on scope errors.
+& $venvPython tooling\wiki\gen_docs_scope.py --repo-root . --out graphify-out\docs_scope.json --emit-overlay
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: docs scope/overlay generation'; exit 1 }
+
 Write-Host "--- 1. Graph Generation ---"
 if (-not $SkipGraph) {
     # Guarded build: fail closed on hang (timeout -> exit 124 + tree-kill) AND on a non-zero
@@ -46,6 +54,12 @@ if (-not $SkipGraph) {
         exit 1
     }
 }
+
+Write-Host "--- 1b. Graph smoke + secrets scan (Phase 4 gates) ---"
+& $venvPython tooling\wiki\graph_smoke.py --graph graphify-out\graph.json --repo-root .
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph smoke (hard abort)'; exit 1 }
+& $venvPython tooling\wiki\scan_secrets.py --repo-root . --target graphify-out
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: secrets scan on graphify-out'; exit 1 }
 
 Write-Host "--- 2. Wiki Compile ---"
 & $venvPython tooling\wiki\wiki_compile.py --graph graphify-out\graph.json --repo-root . --out wiki --stamp $Stamp

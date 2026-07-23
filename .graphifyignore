@@ -105,15 +105,19 @@
 /*.md
 /.claude/
 
-# --- Phase-2-only extra line -------------------------------------------------
-# SMOKE TEST ONLY (no LLM, no md wiki content this phase). Removed at
-# Phase 4 with a mandatory from-scratch rebuild, when .graphifyignore
-# switches from this blanket *.md line to the docs trust filter above.
+# --- Phase 4 posture (2026-07-22): DEFAULT-DENY blanket + GENERATED ALLOWLIST OVERLAY ---
+# The blanket *.md below stays as the fail-closed base at Phase 4 (codex P1:
+# without it, every unregistered docs/**.md would enter scan scope the moment
+# the blanket dropped). The REGISTERED docs-trust set is re-admitted by a
+# GENERATED negation overlay at docs/.graphifyignore, written per run by
+# gen_docs_scope.py --emit-overlay from docs/INDEX.md + docs-manifest.json
+# (nested ignore files govern their subtree; file-level ! re-admission is
+# valid because no parent DIRECTORY of docs/ is excluded). Overlay absent =>
+# zero md in scope (fail-closed). The overlay is untracked + regenerated;
+# its content is covered by the nightly config-hash via docs_scope.json.
 *.md
-# Full graphify DOC_EXTENSIONS blanket (gap-analysis finding 2, 2026-07-22):
-# the code-only phase must exclude ALL doc extensions, not just .md. Removed
-# together with the *.md line at Phase 4 (same mandatory from-scratch rebuild)
-# when the docs-trust filter takes over.
+# NON-MD doc extensions blanket-excluded: not part of the md semantic tier
+# (gap-analysis finding 2 stays in force at Phase 4).
 *.mdx
 *.qmd
 *.txt

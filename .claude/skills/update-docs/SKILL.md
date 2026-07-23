@@ -92,6 +92,10 @@ Shall I proceed?
 - **REFERENCE**: Helpful context; not enforced by gates; can be archived/historical
 - **HISTORICAL**: Snapshots of previous states; preserved for reference only
 
+KB-wiki note (Phase 4+): ARCHIVING a doc (moving it under an `archive/` dir) is the sanctioned
+way to retire its semantic claims from the KB wiki -- archived paths are hard-excluded from doc
+scan scope and their ledger entries retire automatically on the next full pass.
+
 ---
 
 ## Golden Rules

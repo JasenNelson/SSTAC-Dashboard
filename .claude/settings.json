@@ -1,0 +1,37 @@
+{
+  "$comment": "SSTAC-Dashboard repo-level Claude settings (Phase 6 session integration, 2026-07-22). FAIL-SAFE BY DESIGN: every hook script always exits 0 (broad try/except), has a tight harness timeout, and honors the SSTAC_WIKI_HOOKS_OFF=1 env kill-switch as an instant global disable without editing this file. Deleting this file (or the hooks block) is always safe -- nothing else reads it. See docs/WIKI_KB_OPERATIONS_2026_07.md.",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python tooling/wiki/session_bootstrap.py",
+            "timeout": 10,
+            "statusMessage": "KB wiki bootstrap (advisory)"
+          },
+          {
+            "type": "command",
+            "command": "powershell -NoProfile -ExecutionPolicy Bypass -File tooling/wiki/check_nightly_freshness_advisory.ps1",
+            "timeout": 10,
+            "statusMessage": "wiki nightly freshness (advisory)"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python tooling/wiki/graphify_nudge_pretooluse.py",
+            "timeout": 5,
+            "statusMessage": "graphify nudge (advisory)"
+          }
+        ]
+      }
+    ]
+  }
+}
