@@ -116,9 +116,8 @@ being reclaimed mid-run by a peer lane's dead-PID recovery logic.
   mutual-agreement GREEN; push = the full gate suite re-enumerated from that skill at execution time).
 - Project anchors: `CLAUDE.md` (SSTAC-Dashboard L1) and `docs/GATE_MODE_SOP.md` (gate discipline
   authority) at the repository root.
-- Operational runbook: `docs/WIKI_KB_OPERATIONS_2026_07.md` is a Phase 7 (contingent) deliverable --
-  it does not exist during the Phase 0-3.5 pilot. Until it lands, this file (`conventions.md`) and the
-  adoption plan (`jolly-marinating-piglet.md`) are the operational reference.
+- Operational runbook: `docs/WIKI_KB_OPERATIONS_2026_07.md` is the authoritative post-Phase-4
+  operations reference. This conventions file remains supplementary.
 - Adoption plan (locked owner decisions, phase gates, port map, config artifacts):
   `C:\Users\jasen\.claude\plans\jolly-marinating-piglet.md`.
 

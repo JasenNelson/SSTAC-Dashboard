@@ -50,7 +50,7 @@ class TestMain(unittest.TestCase):
         
         rc, out = run_main(self.temp_dir, fake_main_root=self.main_dir)
         self.assertEqual(rc, 0)
-        self.assertIn("KB lives in the main checkout", out)
+        self.assertIn("KB lives in the canonical main-checkout runtime", out)
         self.assertIn("000-Modules.md + 000-Concepts.md", out)
         self.assertNotIn("NUDGE", out.upper())
 
@@ -76,7 +76,10 @@ class TestMain(unittest.TestCase):
         # (c) nothing-exists case -> single line, exit 0.
         rc, out = run_main(self.temp_dir, fake_main_root=self.main_dir)
         self.assertEqual(rc, 0)
-        self.assertIn("KB wiki not built here; /sync-wiki builds it (main checkout only)", out)
+        self.assertIn(
+            "KB wiki not built here; /sync-wiki builds it from the configured canonical runtime",
+            out,
+        )
 
     def test_hard_failure(self):
         # (d) hard failure injected -> still exit 0.
