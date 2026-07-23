@@ -88,12 +88,12 @@ def main():
         
         if not os.path.exists(wiki_dir):
             if configured_runtime:
-                print(f"KB wiki not built at configured runtime root: {root_dir}")
+                print(f"KB wiki not built at configured canonical runtime root: {root_dir}")
             elif os.path.exists(main_wiki_dir):
                 idx = os.path.join(main_wiki_dir, '03_Indexes')
-                print(f"KB lives in the main checkout -- wiki indexes (read-only): {os.path.join(idx, '000-Modules.md')} + 000-Concepts.md")
+                print(f"KB lives in the canonical main-checkout runtime -- wiki indexes (read-only): {os.path.join(idx, '000-Modules.md')} + 000-Concepts.md")
             else:
-                print("KB wiki not built here; /sync-wiki builds it (main checkout only)")
+                print("KB wiki not built here; /sync-wiki builds it from the configured canonical runtime")
             sys.exit(0)
 
         out = []

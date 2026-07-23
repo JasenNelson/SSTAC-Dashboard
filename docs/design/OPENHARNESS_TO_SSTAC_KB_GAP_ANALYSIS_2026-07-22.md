@@ -7,6 +7,11 @@ This doc inventories OpenHarness-dev's (OHD's) complete component set, maps it a
 state, and cross-checks a set of later-vintage findings surfaced by the Regulatory-Review (RR) fork of
 this same plan against what SSTAC has actually landed.
 
+Supersession note (2026-07-23): This document records the pre-activation comparison as of 2026-07-22.
+For current activation behavior and owner sequencing, use `docs/WIKI_KB_OPERATIONS_2026_07.md` and
+the read-only `tooling/wiki/activation_preflight.ps1`; do not treat historical "missing" rows below
+as current runtime state without verifying the selected runtime.
+
 Scope: **SSTAC-Dashboard's own** `tooling/wiki` Graphify/LLM-wiki pilot. OHD read-only; nothing in OHD
 was modified to produce this doc.
 

@@ -40,6 +40,22 @@ reference implementation: OpenHarness-dev (bugs fixed during port, not copied --
 - Config: `tooling\wiki\wiki_nightly_config.json` (model, timeouts, expiries, freshness
   threshold, and exact serve-gate remote/branch). Edit via gated PR only.
 
+### Owner activation preflight (no activation)
+
+Before any owner-run scheduler or local MCP registration step, run this command from the selected
+canonical runtime:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File tooling\wiki\activation_preflight.ps1
+```
+
+The preflight is read-only: it does not fetch, register tasks, add or remove MCPs, invoke Ollama,
+alter standing blocks, or delete locks. `RESULT READY` requires a clean tracked runtime,
+graphifyy 0.9.17, a served graph with nodes and links, a build stamp matching `HEAD`, and `HEAD`
+matching the configured remote-tracking ref. If scheduler or MCP entries already exist, they must
+match the expected command shape for the selected runtime. Resolve FAIL before activation and
+resolve material UNKNOWN checks manually.
+
 ### Canonical runtime and detached worktrees
 
 - The default canonical runtime is `C:\Projects\SSTAC-Dashboard`. To use a dedicated worktree,
