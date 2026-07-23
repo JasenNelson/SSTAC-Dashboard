@@ -41,7 +41,10 @@ Read, in this order, and note what each says vs what the handoff claims:
    `docs/INDEX.md`.
 5. The SSTAC auto-memory index (`MEMORY.md`) surfaced in context IS available -- it records what was
    true WHEN WRITTEN; if a memory names a file/flag/PR, VERIFY it still exists before relying on it.
-   (There is no local graph DB for SSTAC -- do not look for one.)
+6. CONSULT THE KB WIKI FIRST (Phase 6, 2026-07-22): before repo-wide grepping, check the wiki
+   indexes -- `wiki\03_Indexes\000-Modules.md` + `000-Concepts.md` (MAIN CHECKOUT ONLY during the
+   pilot; worktree sessions read them via the absolute main-checkout path the SessionStart
+   bootstrap prints). `/sync-wiki` rebuilds on demand; `tooling\wiki\` is the pipeline.
 
 ### Step 1 -- SMELL-TEST the handoff (verify-before-assert)
 The handoff can be stale or wrong -- this is a load-bearing SSTAC lesson (CLAUDE.md "Session End" drift

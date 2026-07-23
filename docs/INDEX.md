@@ -10,6 +10,9 @@ This file is the **single canonical entrypoint** for project documentation.
 1. Start here.
 2. Use the manifest to determine which docs/sections are required for your change.
 3. Do not trust "current" claims or metrics found elsewhere unless they are explicitly labeled historical and dated.
+4. CODE questions: consult the KB wiki indexes first (`wiki\03_Indexes\` in the MAIN checkout;
+   untracked pilot output, read-only from worktrees via the absolute path) before repo-wide
+   searches. Operations: `docs/WIKI_KB_OPERATIONS_2026_07.md`.
 
 ## Gate system (deterministic doc review)
 

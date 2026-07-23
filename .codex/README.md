@@ -2,6 +2,10 @@
 
 Codex has no CODEX.md; it reads root AGENTS.md (and CLAUDE.md as fallback).
 
+KB WIKI (read-first): the main checkout's `wiki\03_Indexes\` holds compiled module/concept
+indexes of this codebase -- consult them before repo-wide searches (read-only; see root
+AGENTS.md "KB Wiki" + `docs/WIKI_KB_OPERATIONS_2026_07.md`).
+
 IMPORTANT -- config.toml loading mechanism: the Codex CLI loads `$CODEX_HOME/config.toml`
 (default `~/.codex/config.toml`); it does NOT auto-load this repo-local `.codex/config.toml`.
 This file is the project's CANONICAL DOCUMENTED Codex settings. To apply it, MERGE these keys
