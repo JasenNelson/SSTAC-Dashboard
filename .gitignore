@@ -170,3 +170,6 @@ e2e/.auth/
 /wiki/
 /wiki.staging/
 /.venv-graphify/
+# Phase 4: generated docs-trust negation overlay (gen_docs_scope.py --emit-overlay);
+# regenerated per run, never committed.
+/docs/.graphifyignore

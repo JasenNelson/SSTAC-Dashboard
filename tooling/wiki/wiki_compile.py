@@ -7,6 +7,33 @@ import shutil
 from collections import defaultdict
 from pathlib import Path
 
+# Plain-ASCII sanitation for EMITTED pages (L0 rule 1.1: authored artifacts are
+# ASCII-only). Doc-DERIVED content inherits legacy non-ASCII (emoji-era docs);
+# compiled pages are authored artifacts of this tool, so sanitize at write time --
+# source docs are never modified. Common typography transliterates readably;
+# everything else becomes a lossless backslash-u escape.
+_ASCII_MAP = {
+    0x2018: "'", 0x2019: "'", 0x201C: '"', 0x201D: '"',
+    0x2013: '-', 0x2014: '--', 0x2026: '...', 0x2022: '-',
+    0x2192: '->', 0x2190: '<-', 0x2194: '<->', 0x00A0: ' ',
+}
+
+
+def ascii_sanitize(text):
+    if all(ord(c) < 128 for c in text):
+        return text
+    out = []
+    for ch in text:
+        cp = ord(ch)
+        if cp < 128:
+            out.append(ch)
+        elif cp in _ASCII_MAP:
+            out.append(_ASCII_MAP[cp])
+        else:
+            out.append(ch.encode('ascii', 'backslashreplace').decode('ascii'))
+    return ''.join(out)
+
+
 def slugify(text):
     if not text:
         return "unknown"
@@ -312,7 +339,7 @@ def main():
     for page_id, pdata in pages.items():
         dest_dir = out_modules if pdata['type'] == 'module' else out_concepts
         dest_path = dest_dir / pdata['file_name']
-        dest_path.write_text(pdata['final_content'], encoding='utf-8')
+        dest_path.write_text(ascii_sanitize(pdata['final_content']), encoding='utf-8')
 
     for page_id, path in orphans:
         dest_path = out_orphaned / path.name

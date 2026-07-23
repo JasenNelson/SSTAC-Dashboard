@@ -1,0 +1,235 @@
+import argparse
+import json
+import os
+import sys
+import re
+from datetime import datetime, timezone
+
+def generate_docs_scope(repo_root):
+    index_path = os.path.join(repo_root, "docs", "INDEX.md")
+    manifest_path = os.path.join(repo_root, "docs", "_meta", "docs-manifest.json")
+    
+    if not os.path.exists(index_path) or not os.path.exists(manifest_path):
+        print(f"Error: Missing {index_path} or {manifest_path}", file=sys.stderr)
+        sys.exit(2)
+        
+    registered = set(["README.md"])
+    
+    # parse INDEX.md for backticked docs
+    try:
+        with open(index_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if line.strip().startswith("-") or line.strip().startswith("*"):
+                    matches = re.findall(r'`([^`]+\.md)`', line)
+                    for match in matches:
+                        registered.add(match)
+    except Exception as e:
+        print(f"Error reading {index_path}: {e}", file=sys.stderr)
+        sys.exit(2)
+        
+    def walk_manifest(node):
+        if isinstance(node, dict):
+            for value in node.values():
+                walk_manifest(value)
+        elif isinstance(node, list):
+            for item in node:
+                walk_manifest(item)
+        elif isinstance(node, str) and node.endswith(".md"):
+            registered.add(node)
+            
+    # parse docs-manifest.json
+    try:
+        with open(manifest_path, "r", encoding="utf-8") as f:
+            manifest_data = json.load(f)
+            walk_manifest(manifest_data)
+    except Exception as e:
+        print(f"Error reading {manifest_path}: {e}", file=sys.stderr)
+        sys.exit(2)
+        
+    # normalize paths
+    normalized_registered = set()
+    for path in registered:
+        path = path.replace("\\", "/")
+        if path.startswith("./"):
+            path = path[2:]
+        if path.startswith("/"):
+            path = path[1:]
+        normalized_registered.add(path)
+        
+    hard_excluded_rules = [
+        "docs/archive/*",
+        "*.pre-*",
+        "root-level *.md (except README.md)",
+        ".claude/*",
+        ".agents/*",
+        ".codex/*",
+        ".gemini/*",
+        ".gstack/*",
+        "wiki/*",
+        "wiki.staging/*"
+    ]
+
+    # Registration NEVER overrides the trust filter: a manifest/INDEX reference to a
+    # hard-excluded path (e.g. .claude/*.md) must not put it on the allowlist -- the
+    # emitted registered set advertises only paths semantic scan may actually touch.
+    # And the trust IN-set is docs/** + README.md ONLY (codex P2, 2026-07-22): a
+    # registered .github/*.md etc. can never be re-admitted by the docs/ overlay, so
+    # advertising it in docs_scope.json would desynchronize the evidence from the
+    # actual graph scope.
+    normalized_registered = {
+        p for p in normalized_registered
+        if not is_hard_excluded(p) and (p == "README.md" or p.startswith("docs/"))
+    }
+
+    return sorted(list(normalized_registered)), hard_excluded_rules
+
+# Guardrail/secrets-adjacent docs NEVER enter doc scan scope (trust model:
+# guardrails are read from source, never re-derived; and a doc that documents
+# credential MARKERS re-emits them into compiled wiki pages, tripping the
+# fail-closed secrets scan -- observed live with ENVIRONMENT_REFERENCE.md's
+# service_role marker, 2026-07-22).
+SENSITIVE_DOCS = {
+    "docs/ENVIRONMENT_REFERENCE.md",
+}
+
+
+def is_hard_excluded(path):
+    parts = path.split("/")
+    if path in SENSITIVE_DOCS:
+        return True
+    # ANY 'archive'/'_archive' PATH SEGMENT is hard-excluded, not just top-level
+    # docs/archive/ -- nested per-lane archives (docs/<lane>/archive/**) are the
+    # same retired-content class (Phase 4 acceptance: zero pages sourced from
+    # archives; found leaking via manifest-registered nested archives 2026-07-22).
+    if any(seg in ("archive", "_archive") for seg in parts[:-1]):
+        return True
+    if path.startswith("docs/archive/"):
+        return True
+    if ".pre-" in parts[-1]:
+        return True
+    if len(parts) == 1 and path.endswith(".md") and path != "README.md":
+        return True
+    if parts[0] in [".claude", ".agents", ".codex", ".gemini", ".gstack", "wiki", "wiki.staging"]:
+        return True
+    return False
+
+def emit_overlay(repo_root, registered):
+    """Writes the GENERATED docs-trust negation overlay at docs/.graphifyignore.
+
+    Phase 4 posture: the root .graphifyignore keeps a fail-closed blanket *.md;
+    this overlay re-admits EXACTLY the registered docs/ md set via file-level
+    gitignore negations (nested ignore files govern their subtree; a '!' can
+    re-admit a file excluded by a parent FILE pattern because no parent
+    DIRECTORY of docs/ is excluded). Registered paths outside docs/ are NOT
+    re-admitted here (the trust IN-set is docs/** + README.md; root README has
+    its own tracked negation). Overlay absent => zero md in scope.
+    """
+    lines = [
+        "# GENERATED by tooling/wiki/gen_docs_scope.py --emit-overlay -- DO NOT EDIT, DO NOT COMMIT.",
+        "# Re-admits the REGISTERED docs-trust md set past the root blanket *.md (fail-closed base).",
+        "# Regenerated per run; content is covered by the nightly config-hash via docs_scope.json.",
+    ]
+    count = 0
+    for path in registered:
+        if path.startswith("docs/") and path.endswith(".md") and not is_hard_excluded(path):
+            rel = path[len("docs/"):]
+            lines.append("!/" + rel)
+            count += 1
+    overlay_path = os.path.join(repo_root, "docs", ".graphifyignore")
+    with open(overlay_path, "w", encoding="ascii", newline="\n") as f:
+        f.write("\n".join(lines) + "\n")
+    print(f"overlay written: {overlay_path} ({count} negations)")
+    return count
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Generate and validate docs scope.")
+    parser.add_argument("--repo-root", required=True, help="Path to the repository root.")
+    parser.add_argument("--out", help="Path to output JSON file.")
+    parser.add_argument("--check-scan", help="Path to file containing newline-separated md paths to check.")
+    parser.add_argument("--emit-overlay", action="store_true",
+                        help="Also write the docs/.graphifyignore negation overlay (Phase 4 allowlist).")
+
+    args = parser.parse_args()
+
+    repo_root = os.path.abspath(args.repo_root)
+    registered, hard_excluded_rules = generate_docs_scope(repo_root)
+
+    if args.emit_overlay:
+        emit_overlay(repo_root, registered)
+    
+    out_data = {
+        # NO timestamp here (codex P2, 2026-07-22): this file is hashed verbatim by the
+        # nightly config-hash sentinel -- a per-run timestamp would force a full rebuild
+        # every night even with an unchanged scope. Run timestamps live in receipts.
+        "registered": registered,
+        "hard_excluded_rules": hard_excluded_rules,
+        "repo_root": repo_root
+    }
+    
+    auto_excluded = []
+    has_fails = False
+    
+    if args.check_scan:
+        try:
+            with open(args.check_scan, "r", encoding="utf-8") as f:
+                scan_paths = [line.strip().replace("\\", "/") for line in f if line.strip()]
+        except Exception as e:
+            print(f"Error reading scan file: {e}", file=sys.stderr)
+            sys.exit(2)
+            
+        fails = []
+        warns = []
+        oks = []
+        
+        for path in scan_paths:
+            if path.startswith("./"):
+                path = path[2:]
+            if path.startswith("/"):
+                path = path[1:]
+                
+            if is_hard_excluded(path):
+                fails.append(path)
+            elif path not in registered:
+                warns.append(path)
+                auto_excluded.append(path)
+            else:
+                oks.append(path)
+                
+        print("Check scan report:")
+        print(f"FAIL: {len(fails)}")
+        for p in fails[:20]:
+            print(f"  {p}")
+            
+        print(f"WARN: {len(warns)}")
+        for p in warns[:20]:
+            print(f"  {p}")
+            
+        print(f"OK: {len(oks)}")
+        for p in oks[:20]:
+            print(f"  {p}")
+            
+        if fails:
+            has_fails = True
+            
+    if args.out:
+        if auto_excluded:
+            out_data["auto_excluded"] = auto_excluded
+            
+        out_dir = os.path.dirname(os.path.abspath(args.out))
+        if out_dir:
+            os.makedirs(out_dir, exist_ok=True)
+            
+        try:
+            with open(args.out, "w", encoding="utf-8") as f:
+                json.dump(out_data, f, indent=2)
+        except Exception as e:
+            print(f"Error writing to {args.out}: {e}", file=sys.stderr)
+            sys.exit(2)
+            
+    if has_fails:
+        sys.exit(2)
+    sys.exit(0)
+
+if __name__ == "__main__":
+    main()
