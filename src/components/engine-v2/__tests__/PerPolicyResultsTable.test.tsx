@@ -1418,8 +1418,10 @@ describe("PerPolicyResultsTable legacy verdict sort (codex+claude desktop P2)", 
   });
 });
 
-// D1 pathway_notes array fix (2026-07-22): JsonObjectView array branch must render the
-// engine's ordered pathway-note array; empty array keeps the empty label.
+// D1 pathway_notes array fix (2026-07-22): ARRAY-shaped pathway_notes route to
+// PathwayNotesView (conforming items render as cards -- same testid contract);
+// empty array keeps the empty label. (Comment updated with the PathwayNotesView
+// branch, 2026-07-22 -- previously described the JsonObjectView array branch.)
 describe("pathway_notes array rendering (D1)", () => {
   it("renders ARRAY-shaped pathway_notes as content (per-policy-pathway-notes)", () => {
     const pathwayNotes = [

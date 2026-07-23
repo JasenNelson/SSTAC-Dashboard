@@ -35,6 +35,7 @@ import {
   surfaceableConfidence,
 } from "@/lib/engine-v2/schema_version";
 import { EvidenceStatusCell } from "./EvidenceStatusCell";
+import { PathwayNotesView, isPathwayNotesArray } from "./PathwayNotesView";
 
 // Lane 2d / Phase E: pulse animation for the row(s) that match a
 // pendingHighlight.evidenceItemId. The keyframe lives as a scoped style
@@ -1584,11 +1585,29 @@ export function PerPolicyResultsTable({
                             <div className="text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-1">
                               Pathway notes
                             </div>
-                            <JsonObjectView
-                              obj={r.pathway_notes}
-                              emptyLabel="No pathway notes recorded."
-                              testId="per-policy-pathway-notes"
-                            />
+                            {isPathwayNotesArray(r.pathway_notes) ? (
+                              <PathwayNotesView
+                                value={r.pathway_notes}
+                                presentEvidenceIds={
+                                  // L3A R3/X3: same post-filter item set the
+                                  // evidence-citations render uses, so match
+                                  // semantics cannot drift from what the
+                                  // reviewer actually sees.
+                                  new Set(
+                                    collectEvidenceItems(
+                                      r.evidence_packet,
+                                      r.policy_id,
+                                    ).map((it) => it.evidence_item_id),
+                                  )
+                                }
+                              />
+                            ) : (
+                              <JsonObjectView
+                                obj={r.pathway_notes}
+                                emptyLabel="No pathway notes recorded."
+                                testId="per-policy-pathway-notes"
+                              />
+                            )}
                           </section>
 
                           {/* Minority findings + evidence gaps */}
