@@ -6,7 +6,13 @@ import path from 'path';
 
 import MatrixDashboard from '@/components/MatrixDashboard';
 import { fetchMatrixMapSamplesServerSide } from '@/lib/matrix-map/fetch-samples-server';
-import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData } from '@/app/(dashboard)/matrix-map/types';
+import { fetchMatrixMapSiteAggregatesServerSide } from '@/lib/matrix-map/fetch-site-aggregates-server';
+import {
+  EMPTY_MATRIX_MAP_DATA,
+  EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+  type MatrixMapData,
+  type MatrixSiteAggregateData,
+} from '@/app/(dashboard)/matrix-map/types';
 
 export const metadata = {
   title: 'Matrix Options Analysis | SSTAC Dashboard',
@@ -81,6 +87,8 @@ export default async function MatrixOptionsPage() {
   // user. The RPC also enforces matrix_map.is_email_allowlisted (JWT sub).
   let initialMapData: MatrixMapData = EMPTY_MATRIX_MAP_DATA;
   let fetchErrorMessage: string | null = null;
+  let siteAggregateData: MatrixSiteAggregateData = EMPTY_MATRIX_SITE_AGGREGATE_DATA;
+  let siteAggregateFetchErrorMessage: string | null = null;
   const supabase = await buildSupabase();
   const {
     data: { user },
@@ -93,6 +101,11 @@ export default async function MatrixOptionsPage() {
     const result = await fetchMatrixMapSamplesServerSide(supabase);
     initialMapData = result.initialMapData;
     fetchErrorMessage = result.fetchErrorMessage;
+    if (fetchErrorMessage === null) {
+      const aggregateResult = await fetchMatrixMapSiteAggregatesServerSide(supabase);
+      siteAggregateData = aggregateResult.siteAggregateData;
+      siteAggregateFetchErrorMessage = aggregateResult.siteAggregateFetchErrorMessage;
+    }
   }
 
   return (
@@ -105,6 +118,8 @@ export default async function MatrixOptionsPage() {
         finalDraftContent={finalDraftContent}
         initialMapData={initialMapData}
         fetchErrorMessage={fetchErrorMessage}
+        siteAggregateData={siteAggregateData}
+        siteAggregateFetchErrorMessage={siteAggregateFetchErrorMessage}
       />
     </div>
   );

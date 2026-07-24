@@ -6,7 +6,13 @@ import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
 import PartialVisibilityBanner from '@/app/(dashboard)/matrix-map/PartialVisibilityBanner';
-import { EMPTY_MATRIX_MAP_DATA, type MatrixMapData, type MatrixSample } from '@/app/(dashboard)/matrix-map/types';
+import {
+  EMPTY_MATRIX_MAP_DATA,
+  EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+  type MatrixMapData,
+  type MatrixSample,
+  type MatrixSiteAggregateData,
+} from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
@@ -224,6 +230,9 @@ interface MatrixDashboardProps {
    * server-side RPC fetch failed; pass-through to MatrixMapLoader.
    */
   fetchErrorMessage?: string | null;
+  /** Option C aggregate markers. Separate from sample rows and sample export. */
+  siteAggregateData?: MatrixSiteAggregateData;
+  siteAggregateFetchErrorMessage?: string | null;
 }
 
 const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
@@ -245,7 +254,17 @@ const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
   'Human Health Pathways': ['human-health-direct', 'human-health-food'],
 };
 
-export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyContent, humanHealthContent, guideContent, finalDraftContent, initialMapData = EMPTY_MATRIX_MAP_DATA, fetchErrorMessage = null }: MatrixDashboardProps) {
+export default function MatrixDashboard({
+  eqpCaseStudyContent,
+  bsafCaseStudyContent,
+  humanHealthContent,
+  guideContent,
+  finalDraftContent,
+  initialMapData = EMPTY_MATRIX_MAP_DATA,
+  fetchErrorMessage = null,
+  siteAggregateData = EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+  siteAggregateFetchErrorMessage = null,
+}: MatrixDashboardProps) {
   const router = useRouter();
   // bbox-lane Stage 2 (codex P1): MatrixMap refetches per-viewport, so a user can
   // select a marker that exists only in a viewport-fetch payload -- not in the
@@ -1003,6 +1022,8 @@ export default function MatrixDashboard({ eqpCaseStudyContent, bsafCaseStudyCont
                 <MatrixMapLoader
                   initialMapData={initialMapData}
                   fetchErrorMessage={fetchErrorMessage}
+                  siteAggregateData={siteAggregateData}
+                  siteAggregateFetchErrorMessage={siteAggregateFetchErrorMessage}
                   onMapDataChange={handleViewportData}
                 />
               </div>

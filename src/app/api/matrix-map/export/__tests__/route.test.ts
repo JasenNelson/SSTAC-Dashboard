@@ -286,6 +286,28 @@ describe('POST /api/matrix-map/export', () => {
     expect(authClient.schema).not.toHaveBeenCalled();
   });
 
+  it('rejects aggregate export requests before querying Supabase', async () => {
+    const authClient = {
+      auth: {
+        getUser: vi.fn(async () => ({
+          data: { user: { id: '22222222-2222-4222-8222-222222222222' } },
+          error: null,
+        })),
+      },
+      from: vi.fn(() => chain({ data: { role: 'admin' }, error: null })),
+      schema: vi.fn(),
+    };
+    mocks.createServerClient.mockReturnValue(authClient);
+
+    const response = await POST(makeRequest({
+      export_type: 'aggregates',
+      selected_sample_ids: [SAMPLE_ID],
+    }));
+
+    expect(response.status).toBe(400);
+    expect(authClient.schema).not.toHaveBeenCalled();
+  });
+
   describe('auth + CSRF gate', () => {
     it('returns 401 when there is no user', async () => {
       const authClient = {

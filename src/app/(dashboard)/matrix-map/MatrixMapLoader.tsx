@@ -29,7 +29,7 @@ import 'leaflet/dist/leaflet.css';
 import 'leaflet.markercluster/dist/MarkerCluster.css';
 import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 
-import type { MatrixMapData } from './types';
+import type { MatrixMapData, MatrixSiteAggregateData } from './types';
 
 const MatrixMap = dynamic(
   () => import('./MatrixMap').then((mod) => mod.MatrixMap),
@@ -60,6 +60,12 @@ export interface MatrixMapLoaderProps {
    */
   fetchErrorMessage?: string | null;
   /**
+   * Option C site aggregate markers are a separate payload from sample rows.
+   * They never participate in sample selection or export.
+   */
+  siteAggregateData?: MatrixSiteAggregateData;
+  siteAggregateFetchErrorMessage?: string | null;
+  /**
    * bbox-lane Stage 2 pass-through: notifies an embedding parent of each
    * viewport-refetch payload so sibling panels can accumulate a cumulative
    * sample union (selection resolution must survive viewport changes).
@@ -71,11 +77,15 @@ export default function MatrixMapLoader({
   initialMapData,
   fetchErrorMessage,
   onMapDataChange,
+  siteAggregateData,
+  siteAggregateFetchErrorMessage,
 }: MatrixMapLoaderProps) {
   return (
     <MatrixMap
       initialMapData={initialMapData}
       fetchErrorMessage={fetchErrorMessage}
+      siteAggregateData={siteAggregateData}
+      siteAggregateFetchErrorMessage={siteAggregateFetchErrorMessage}
       onMapDataChange={onMapDataChange}
     />
   );

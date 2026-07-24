@@ -20,9 +20,17 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
-import { MatrixMap } from '../MatrixMap';
+import {
+  MatrixMap,
+  createSiteAggregateMarkerHtml,
+  filterSamplesCoveredBySiteAggregates,
+  getFitBoundsPoints,
+} from '../MatrixMap';
 import { EMPTY_MATRIX_MAP_DATA } from '../types';
 import { useMatrixMapFilterStore } from '@/stores/matrix-map/filterStore';
+import { useMatrixMapSelectionStore } from '@/stores/matrix-map/selectionStore';
+import type { MatrixSample, MatrixSiteAggregateData } from '../types';
+import type { AggregateMarker } from '@/lib/matrix-map/siteAggregateMarkers';
 
 // Stub leaflet's dynamic import so its `await import('leaflet')` in
 // MatrixMap's init effect doesn't actually touch the (jsdom-unfriendly)
@@ -34,9 +42,61 @@ vi.mock('leaflet.markercluster', () => ({ default: {} }));
 vi.mock('leaflet.markercluster/dist/MarkerCluster.css', () => ({}));
 vi.mock('leaflet.markercluster/dist/MarkerCluster.Default.css', () => ({}));
 
+const aggregateMarker: AggregateMarker = {
+  key: 'dra-1:49.28270,-123.12070',
+  source_dra_id: 'dra-1',
+  position: [49.2827, -123.1207],
+  label: 'Old <Slope> Place',
+  coordinate_quality_tier: 'medium',
+  sample_count_total: 10,
+  sample_count_high: 0,
+  sample_count_medium: 10,
+  radius: 8,
+};
+
+const siteAggregateData: MatrixSiteAggregateData = {
+  site_aggregate_markers: [
+    aggregateMarker,
+    {
+      ...aggregateMarker,
+      key: 'dra-2:50.00000,-124.00000',
+      source_dra_id: 'dra-2',
+      position: [50, -124],
+      sample_count_total: 1,
+      sample_count_medium: 1,
+    },
+  ],
+  site_count: 2,
+  sample_count_total: 11,
+  data_snapshot_version: 'site-aggregates-v1',
+};
+
+function matrixSample(overrides: Partial<MatrixSample> = {}): MatrixSample {
+  return {
+    id: 'sample-1',
+    bnrrm_station_id: 1,
+    station_id: 'ST-1',
+    display_name: 'Sample 1',
+    geometry: { type: 'Point', coordinates: [-123.1207, 49.2827] },
+    coordinate_quality_tier: 'medium',
+    coordinate_source: 'bc-csr-centroid',
+    classification: 'unknown',
+    classification_source: 'data_unknown',
+    classification_rationale: null,
+    classification_confidence: null,
+    source_dra_id: 'dra-1',
+    public: true,
+    bc_region: null,
+    waterbody: null,
+    waterbody_type: null,
+    ...overrides,
+  };
+}
+
 describe('MatrixMap (Path-B fork)', () => {
   beforeEach(() => {
     useMatrixMapFilterStore.getState().resetFilters();
+    useMatrixMapSelectionStore.getState().clearSampleSelection();
   });
 
   it('exports a MatrixMap component', () => {
@@ -94,5 +154,170 @@ describe('MatrixMap (Path-B fork)', () => {
   it('renders the province provenance chip text', () => {
     render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
     expect(screen.getByText(/BC CSR site centroids/i)).toBeInTheDocument();
+  });
+
+  it('renders Option C aggregate layer chrome separately from sample rows', () => {
+    render(
+      <MatrixMap
+        initialMapData={EMPTY_MATRIX_MAP_DATA}
+        siteAggregateData={siteAggregateData}
+      />,
+    );
+
+    expect(screen.getByText('Site aggregates')).toBeInTheDocument();
+    expect(screen.getByText(/2 site aggregates represent 11 total samples at centroid-site locations/i)).toBeInTheDocument();
+    expect(screen.queryByText(/Station/i)).not.toBeInTheDocument();
+  });
+
+  it('surveyed_only hides the aggregate marker layer text', () => {
+    render(
+      <MatrixMap
+        initialMapData={EMPTY_MATRIX_MAP_DATA}
+        siteAggregateData={siteAggregateData}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('checkbox', { name: /show surveyed locations only/i }));
+    expect(screen.getByText(/Site aggregates hidden by Surveyed only/i)).toBeInTheDocument();
+  });
+
+  it('renders aggregate marker HTML as a distinct escaped diamond', () => {
+    const html = createSiteAggregateMarkerHtml(aggregateMarker);
+    expect(html).toContain('transform:rotate(45deg)');
+    expect(html).toContain('border:2px dashed #0f766e');
+    expect(html).toContain('Old &lt;Slope&gt; Place');
+    expect(html).not.toMatch(/sample_id|station_id|measurement/i);
+  });
+
+  it('filters aggregate-covered centroid samples out of sample UI candidates', () => {
+    const coveredCentroid = matrixSample({ id: 'covered' });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+    });
+    const otherCluster = matrixSample({
+      id: 'other-cluster',
+      geometry: { type: 'Point', coordinates: [-123.1307, 49.2927] },
+    });
+
+    const filtered = filterSamplesCoveredBySiteAggregates(
+      [coveredCentroid, surveyed, otherCluster],
+      [aggregateMarker],
+    );
+    expect(filtered.map((sample) => sample.id)).toEqual(['surveyed', 'other-cluster']);
+  });
+
+  it('excludes aggregate-covered centroid samples from the list and All selection', () => {
+    const coveredCentroid = matrixSample({
+      id: 'covered',
+      display_name: 'Covered centroid sample',
+      station_id: 'COVERED',
+    });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      display_name: 'Surveyed sample',
+      station_id: 'SURVEYED',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+    });
+
+    render(
+      <MatrixMap
+        initialMapData={{
+          ...EMPTY_MATRIX_MAP_DATA,
+          visible_samples: [coveredCentroid, surveyed],
+        }}
+        siteAggregateData={{
+          ...siteAggregateData,
+          site_aggregate_markers: [aggregateMarker],
+          site_count: 1,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('Covered centroid sample')).not.toBeInTheDocument();
+    expect(screen.getByText('Surveyed sample')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(useMatrixMapSelectionStore.getState().selectedSampleIds).toEqual(['surveyed']);
+  });
+
+  it('fails closed by hiding medium-tier samples when aggregate fetch is unavailable', () => {
+    const mediumCentroid = matrixSample({
+      id: 'medium-centroid',
+      display_name: 'Medium centroid sample',
+      station_id: 'MEDIUM',
+    });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      display_name: 'Surveyed sample',
+      station_id: 'SURVEYED',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+    });
+
+    render(
+      <MatrixMap
+        initialMapData={{
+          ...EMPTY_MATRIX_MAP_DATA,
+          visible_samples: [mediumCentroid, surveyed],
+        }}
+        siteAggregateFetchErrorMessage="Site aggregates temporarily unavailable."
+      />,
+    );
+
+    expect(screen.queryByText('Medium centroid sample')).not.toBeInTheDocument();
+    expect(screen.getByText('Surveyed sample')).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole('button', { name: 'All' }));
+    expect(useMatrixMapSelectionStore.getState().selectedSampleIds).toEqual(['surveyed']);
+  });
+  it('keeps aggregate-covered samples suppressed when active filters hide aggregate markers', () => {
+    useMatrixMapFilterStore.getState().setFilterState({ classification: 'unknown' });
+    const coveredCentroid = matrixSample({
+      id: 'covered',
+      display_name: 'Covered centroid sample',
+      station_id: 'COVERED',
+      classification: 'unknown',
+    });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      display_name: 'Surveyed sample',
+      station_id: 'SURVEYED',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+      classification: 'unknown',
+    });
+
+    render(
+      <MatrixMap
+        initialMapData={{
+          ...EMPTY_MATRIX_MAP_DATA,
+          visible_samples: [coveredCentroid, surveyed],
+        }}
+        siteAggregateData={{
+          ...siteAggregateData,
+          site_aggregate_markers: [aggregateMarker],
+          site_count: 1,
+        }}
+      />,
+    );
+
+    expect(screen.queryByText('Covered centroid sample')).not.toBeInTheDocument();
+    expect(screen.getByText('Surveyed sample')).toBeInTheDocument();
+  });
+  it('includes aggregate markers in fit-bound points', () => {
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+      geometry: { type: 'Point', coordinates: [-123.5, 49.5] },
+    });
+
+    expect(getFitBoundsPoints([surveyed], [aggregateMarker])).toEqual([
+      [49.5, -123.5],
+      aggregateMarker.position,
+    ]);
   });
 });
