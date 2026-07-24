@@ -207,6 +207,28 @@ describe('MatrixMap (Path-B fork)', () => {
     );
     expect(filtered.map((sample) => sample.id)).toEqual(['surveyed', 'other-cluster']);
   });
+  it('filters centroid samples using a non-display suppression key from published aggregates', () => {
+    const coveredCentroid = matrixSample({ id: 'covered' });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+    });
+    const publishedMarker: AggregateMarker = {
+      ...aggregateMarker,
+      key: 'published-aggregate-1',
+      source_dra_id: 'published-aggregate:published-aggregate-1',
+      sample_suppression_key: 'dra-1:49.28270,-123.12070',
+      sample_count_label: '2-9',
+    };
+
+    const filtered = filterSamplesCoveredBySiteAggregates(
+      [coveredCentroid, surveyed],
+      [publishedMarker],
+    );
+    expect(filtered.map((sample) => sample.id)).toEqual(['surveyed']);
+  });
+
 
   it('excludes aggregate-covered centroid samples from the list and All selection', () => {
     const coveredCentroid = matrixSample({

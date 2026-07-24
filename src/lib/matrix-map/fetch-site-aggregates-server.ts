@@ -12,11 +12,17 @@ import {
   type AggregateInputSample,
   type CoordinateTier,
 } from './siteAggregates';
-import { toAggregateMarkers } from './siteAggregateMarkers';
+import {
+  markerRadiusForCount,
+  toAggregateMarkers,
+  type AggregateMarker,
+} from './siteAggregateMarkers';
 
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 25;
 const DRA_ID_CHUNK_SIZE = 100;
+const PUBLISHED_AGGREGATE_SOURCE_PREFIX = 'published-aggregate';
+const PUBLISHED_AGGREGATE_SNAPSHOT_FALLBACK = 'site-aggregate-publications-v1';
 
 export interface FetchSiteAggregatesServerSideResult {
   siteAggregateData: MatrixSiteAggregateData;
@@ -24,7 +30,14 @@ export interface FetchSiteAggregatesServerSideResult {
 }
 
 interface PagedQuery<T> {
-  range: (from: number, to: number) => Promise<{ data: T[] | null; error: { message?: string } | null }>;
+  range: (from: number, to: number) => Promise<{ data: T[] | null; error: QueryError | null }>;
+}
+
+interface QueryError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
 }
 
 type RawSampleRow = {
@@ -39,6 +52,24 @@ type RawDraRow = {
   id?: unknown;
   title?: unknown;
   public?: unknown;
+};
+
+type RawPublishedAggregateRow = {
+  aggregate_id?: unknown;
+  label?: unknown;
+  representative_latitude?: unknown;
+  representative_longitude?: unknown;
+  coordinate_quality_tier?: unknown;
+  coordinate_source?: unknown;
+  sample_count_bucket?: unknown;
+  data_snapshot_version?: unknown;
+  visible_sample_suppression_key?: unknown;
+};
+
+type SampleCountBucket = '1' | '2-9' | '10-99' | '100+';
+
+type MatrixMapSchemaRpcClient = {
+  rpc?: (functionName: string) => PagedQuery<RawPublishedAggregateRow>;
 };
 
 async function fetchAllPages<T>(query: PagedQuery<T>): Promise<T[]> {
@@ -65,6 +96,19 @@ function asFiniteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function asSampleCountBucket(value: unknown): SampleCountBucket | null {
+  return value === '1' || value === '2-9' || value === '10-99' || value === '100+'
+    ? value
+    : null;
+}
+
+function bucketRepresentativeCount(bucket: SampleCountBucket): number {
+  if (bucket === '1') return 1;
+  if (bucket === '2-9') return 2;
+  if (bucket === '10-99') return 10;
+  return 100;
+}
+
 function normalizeSample(row: RawSampleRow): AggregateInputSample | null {
   const tier = asCoordinateTier(row.coordinate_quality_tier);
   if (!tier) return null;
@@ -86,16 +130,103 @@ function normalizeDra(row: RawDraRow): AggregateInputDra | null {
   };
 }
 
+function normalizePublishedAggregate(row: RawPublishedAggregateRow): AggregateMarker | null {
+  const aggregateId = typeof row.aggregate_id === 'string' ? row.aggregate_id : null;
+  const label = typeof row.label === 'string' && row.label.trim().length > 0
+    ? row.label
+    : null;
+  const latitude = asFiniteNumber(row.representative_latitude);
+  const longitude = asFiniteNumber(row.representative_longitude);
+  const tier = asCoordinateTier(row.coordinate_quality_tier);
+  const bucket = asSampleCountBucket(row.sample_count_bucket);
+  const sampleSuppressionKey = typeof row.visible_sample_suppression_key === 'string' && row.visible_sample_suppression_key.length > 0
+    ? row.visible_sample_suppression_key
+    : undefined;
+  if (!aggregateId || !label || latitude === null || longitude === null || !tier || !bucket) {
+    return null;
+  }
+
+  const representativeCount = bucketRepresentativeCount(bucket);
+  return {
+    key: aggregateId,
+    source_dra_id: `${PUBLISHED_AGGREGATE_SOURCE_PREFIX}:${aggregateId}`,
+    position: [latitude, longitude],
+    label,
+    coordinate_quality_tier: tier,
+    sample_count_total: representativeCount,
+    sample_count_high: 0,
+    sample_count_medium: representativeCount,
+    sample_count_label: bucket,
+    sample_suppression_key: sampleSuppressionKey,
+    radius: markerRadiusForCount(representativeCount),
+  };
+}
+
+function isMissingPublishedAggregateRpcError(error: QueryError): boolean {
+  if (error.code === 'PGRST202') return true;
+  const text = [error.message, error.details, error.hint]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  return (
+    text.includes('fetch_published_site_aggregates') &&
+    (text.includes('could not find') ||
+      text.includes('not found') ||
+      text.includes('does not exist') ||
+      text.includes('schema cache'))
+  );
+}
+
+async function fetchPublishedSiteAggregatesServerSide(
+  supabase: SupabaseClient,
+): Promise<MatrixSiteAggregateData | null> {
+  const schemaClient = supabase.schema('matrix_map') as unknown as MatrixMapSchemaRpcClient;
+  if (typeof schemaClient.rpc !== 'function') return null;
+
+  const rpcQuery = schemaClient.rpc('fetch_published_site_aggregates');
+  const rows: RawPublishedAggregateRow[] = [];
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await rpcQuery.range(from, to);
+    if (error) {
+      if (isMissingPublishedAggregateRpcError(error)) return null;
+      throw new Error(error.message ?? 'published site aggregate query failed');
+    }
+    const batch = data ?? [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+    if (page === MAX_PAGES - 1) {
+      throw new Error('published site aggregate query exceeded page cap');
+    }
+  }
+
+  const markers = rows
+    .map(normalizePublishedAggregate)
+    .filter((marker): marker is AggregateMarker => Boolean(marker));
+  const dataSnapshotVersion = rows
+    .map((row) => row.data_snapshot_version)
+    .find((value): value is string => typeof value === 'string' && value.length > 0);
+
+  return {
+    site_aggregate_markers: markers,
+    site_count: markers.length,
+    sample_count_total: markers.reduce((total, marker) => total + marker.sample_count_total, 0),
+    sample_count_label: markers.length > 0 ? 'bucketed sample counts' : undefined,
+    data_snapshot_version: dataSnapshotVersion ?? PUBLISHED_AGGREGATE_SNAPSHOT_FALLBACK,
+  };
+}
+
 /**
- * Fixed, caller-independent Option C aggregate read over the caller's
- * authenticated Matrix Map RLS surface. This helper accepts no bbox, radius,
- * substance, date, classification, or other caller-supplied filter, so counts
- * cannot be narrowed into an oracle. It also does not use service-role
- * credentials.
+ * Fixed, caller-independent Option C aggregate read. When the audited publication
+ * primitive is installed, this helper uses the member-safe RPC projection first:
+ * opaque ids, neutral labels, bucketed counts, and no raw DRA provenance. Before
+ * that migration exists, it falls back to the original authenticated Matrix Map
+ * RLS surface so the deployed pages keep their current behavior.
  *
  * Callers must pass a server-side Supabase client with the user's JWT attached.
- * RLS/allowlist/private grants decide which rows are visible. The helper returns
- * aggregate markers only, never sample rows.
+ * The helper accepts no bbox, radius, substance, date, classification, or other
+ * caller-supplied filter, so counts cannot be narrowed into an oracle.
  */
 export async function fetchMatrixMapSiteAggregatesServerSide(
   supabase: SupabaseClient | null,
@@ -108,6 +239,14 @@ export async function fetchMatrixMapSiteAggregatesServerSide(
   }
 
   try {
+    const publishedSiteAggregateData = await fetchPublishedSiteAggregatesServerSide(supabase);
+    if (publishedSiteAggregateData) {
+      return {
+        siteAggregateData: publishedSiteAggregateData,
+        siteAggregateFetchErrorMessage: null,
+      };
+    }
+
     const draQuery = supabase
       .schema('matrix_map')
       .from('dras')
