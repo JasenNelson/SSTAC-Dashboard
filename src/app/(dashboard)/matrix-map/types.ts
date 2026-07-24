@@ -17,6 +17,8 @@
 // Literal '->' for arrow text. Per L0 CLAUDE.md section 1.1.
 // =====================================================================
 
+import type { AggregateMarker } from '@/lib/matrix-map/siteAggregateMarkers';
+
 /**
  * Geometry-tier coordinate quality. Drives the marker outline style:
  *   high   -> solid stroke (surveyed)
@@ -139,5 +141,24 @@ export const EMPTY_MATRIX_MAP_DATA: MatrixMapData = {
   hidden_sample_count: 0,
   hidden_dra_count: 0,
   hidden_dra_ids: [],
+  data_snapshot_version: 'unavailable',
+};
+
+/**
+ * Option C member-map aggregate payload. This is deliberately separate from
+ * MatrixSample so aggregate markers cannot be mistaken for selectable sample
+ * rows and cannot flow into sample export paths.
+ */
+export interface MatrixSiteAggregateData {
+  site_aggregate_markers: AggregateMarker[];
+  site_count: number;
+  sample_count_total: number;
+  data_snapshot_version: string;
+}
+
+export const EMPTY_MATRIX_SITE_AGGREGATE_DATA: MatrixSiteAggregateData = {
+  site_aggregate_markers: [],
+  site_count: 0,
+  sample_count_total: 0,
   data_snapshot_version: 'unavailable',
 };

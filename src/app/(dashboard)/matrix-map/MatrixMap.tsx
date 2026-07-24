@@ -28,7 +28,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
-import type { Map as LeafletMap, TileLayer, CircleMarker, Marker, Popup, Layer, MarkerCluster, MarkerClusterGroup } from 'leaflet';
+import type { Map as LeafletMap, TileLayer, CircleMarker, Marker, Popup, Layer, MarkerCluster, MarkerClusterGroup, LayerGroup } from 'leaflet';
 // leaflet.markercluster augments the 'leaflet' module; the side-effect import
 // makes the MarkerCluster / MarkerClusterGroup types available via the 'leaflet'
 // namespace without requiring a separate namespace import.
@@ -72,6 +72,7 @@ import type {
   Classification,
   MatrixMapData,
   MatrixSample,
+  MatrixSiteAggregateData,
 } from './types';
 // bbox-lane Stage 2: viewport refetch helpers. toRpcBbox is a fail-safe WGS84
 // guard (invalid/degenerate -> null -> province-wide).
@@ -81,12 +82,18 @@ import {
   COORD_TIER_LABEL,
   COORD_TIER_CAPTION,
 } from '@/lib/matrix-map/coordinate-provenance';
+import type { AggregateMarker } from '@/lib/matrix-map/siteAggregateMarkers';
+import { coordinateClusterId } from '@/lib/matrix-map/siteAggregates';
+import { EMPTY_MATRIX_SITE_AGGREGATE_DATA } from './types';
 
 export interface MatrixMapProps {
   /** Server-fetched payload from matrix_map.fetch_samples_with_hidden_summary RPC. */
   initialMapData: MatrixMapData;
   /** Optional inline notice when server-side RPC failed. */
   fetchErrorMessage?: string | null;
+  /** Option C aggregate markers, separate from MatrixSample rows. */
+  siteAggregateData?: MatrixSiteAggregateData;
+  siteAggregateFetchErrorMessage?: string | null;
   className?: string;
   initialCenter?: [number, number];
   initialZoom?: number;
@@ -105,29 +112,29 @@ const BASE_LAYERS = {
   streets: {
     name: 'Streets',
     url: 'https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenStreetMap contributors',
+    attribution: '(c) OpenStreetMap contributors',
   },
   satellite: {
     name: 'Satellite',
     url: 'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
-    attribution: '© Esri',
+    attribution: '(c) Esri',
   },
   topo: {
     name: 'Topographic',
     url: 'https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png',
-    attribution: '© OpenTopoMap',
+    attribution: '(c) OpenTopoMap',
   },
   terrain: {
     name: 'Terrain',
     url: 'https://stamen-tiles.a.ssl.fastly.net/terrain/{z}/{x}/{y}.jpg',
-    attribution: '© Stamen Design',
+    attribution: '(c) Stamen Design',
   },
 };
 
 const BC_WMS_URL = 'https://openmaps.gov.bc.ca/geo/pub/ows';
 const BC_WMS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wms-identify';
 const BC_WFS_IDENTIFY_PROXY_URL = '/api/bn-rrm/wfs-identify';
-const BC_ATTR = '© Province of British Columbia';
+const BC_ATTR = '(c) Province of British Columbia';
 
 // bbox-lane Stage 2 -- viewport refetch tuning.
 // Debounce settle time after moveend/zoomend before a refetch fires.
@@ -270,6 +277,8 @@ function createImpactedMarkerIcon(L: typeof import('leaflet'), color: string, da
 export function MatrixMap({
   initialMapData,
   fetchErrorMessage,
+  siteAggregateData = EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+  siteAggregateFetchErrorMessage,
   className,
   initialCenter = [54.7, -125.0],  // BC province center
   initialZoom = 5,                  // province-wide default
@@ -282,6 +291,7 @@ export function MatrixMap({
   const mapContainerRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<LeafletMap | null>(null);
   const markersLayerRef = useRef<MarkerClusterGroup | null>(null);
+  const aggregateMarkersLayerRef = useRef<LayerGroup | null>(null);
   const tileLayerRef = useRef<TileLayer | null>(null);
 
   const [isLoaded, setIsLoaded] = useState(false);
@@ -427,9 +437,10 @@ export function MatrixMap({
   // surveyed_only is deliberately NOT part of hasActiveMatrixMapFilters (that gates the
   // measurement-matching pipeline), but it IS an active view filter for UI purposes (the
   // sample-count subtitle + clear affordances), so OR it in here.
+  const sampleFiltersActive = hasActiveMatrixMapFilters(filterState);
   const activeMapFilters =
-    hasActiveMatrixMapFilters(filterState) || Boolean(filterState.surveyed_only);
-  const samples = useMemo(
+    sampleFiltersActive || Boolean(filterState.surveyed_only);
+  const filteredSamples = useMemo(
     () =>
       getMapFilteredSamples({
         samples: allSamples,
@@ -448,7 +459,30 @@ export function MatrixMap({
       showSelectedDespiteFilters,
     ],
   );
+  const aggregateMarkers = siteAggregateData.site_aggregate_markers;
+  const aggregateSuppressionMarkers = useMemo(
+    () => (filterState.surveyed_only ? [] : aggregateMarkers),
+    [aggregateMarkers, filterState.surveyed_only],
+  );
+  const visibleAggregateMarkers = useMemo(
+    () => (sampleFiltersActive ? [] : aggregateSuppressionMarkers),
+    [aggregateSuppressionMarkers, sampleFiltersActive],
+  );
+  const aggregateFetchFailed = Boolean(siteAggregateFetchErrorMessage);
+  const samples = useMemo(() => {
+    const aggregateFilteredSamples = filterSamplesCoveredBySiteAggregates(
+      filteredSamples,
+      aggregateSuppressionMarkers,
+    );
+    if (!aggregateFetchFailed) return aggregateFilteredSamples;
+    return aggregateFilteredSamples.filter(
+      (sample) => sample.coordinate_quality_tier !== 'medium',
+    );
+  }, [filteredSamples, aggregateSuppressionMarkers, aggregateFetchFailed]);
   const sampleCount = samples.length;
+  const sampleMarkers = samples;
+  const sampleMarkerCount = sampleMarkers.length;
+  const fitLocationCount = sampleMarkerCount + visibleAggregateMarkers.length;
   // Wrap selectAllSamples to preserve the no-arg signature used at the
   // call sites in this file. The store action takes an explicit ID list
   // so it stays independent of the samples prop.
@@ -625,6 +659,9 @@ export function MatrixMap({
       map.addLayer(markers);
       markersLayerRef.current = markers;
 
+      const aggregateMarkersLayer = L.layerGroup().addTo(map);
+      aggregateMarkersLayerRef.current = aggregateMarkersLayer;
+
       // ---- bbox-lane Stage 2: debounced viewport refetch --------------------
       // Compute a stable dedupe key + the bbox for the current viewport. Below
       // VIEWPORT_MIN_BBOX_ZOOM we fetch province-wide (null bbox) -- a capped
@@ -749,6 +786,7 @@ export function MatrixMap({
         mapInstanceRef.current.remove();
         mapInstanceRef.current = null;
         markersLayerRef.current = null;
+        aggregateMarkersLayerRef.current = null;
         tileLayerRef.current = null;
       }
     };
@@ -861,7 +899,7 @@ export function MatrixMap({
     markersLayer.clearLayers();
     markerMapRef.current.clear();
 
-    samples.forEach((sample) => {
+    sampleMarkers.forEach((sample) => {
       const color = CLASSIFICATION_COLOR[sample.classification];
       const dashArray = COORD_TIER_DASH_ARRAY[sample.coordinate_quality_tier];
       const isUnknown = sample.classification === 'unknown';
@@ -938,13 +976,40 @@ export function MatrixMap({
       markerMapRef.current.set(sample.id, marker);
       markersLayer.addLayer(marker);
     });
-  }, [samples, isLoaded, leaflet, selectSample, addSampleSelection, removeSampleSelection]);
+  }, [sampleMarkers, isLoaded, leaflet, selectSample, addSampleSelection, removeSampleSelection]);
+
+  // Option C aggregate markers are static, fixed-site markers. They are kept
+  // out of the sample cluster layer so they cannot be selected or exported as
+  // sample rows, and surveyed_only hides them entirely.
+  useEffect(() => {
+    if (!mapInstanceRef.current || !isLoaded || !leaflet || !aggregateMarkersLayerRef.current) return;
+    const layer = aggregateMarkersLayerRef.current;
+    layer.clearLayers();
+
+    visibleAggregateMarkers.forEach((aggregate) => {
+      const marker = leaflet.marker(aggregate.position, {
+        icon: createSiteAggregateMarkerIcon(leaflet, aggregate),
+        keyboard: true,
+        title: `Site aggregate: ${aggregate.label}`,
+      });
+      if (interactionMode !== 'identify' && interactionMode !== 'identify-area') {
+        marker.bindPopup(createSiteAggregatePopupContent(aggregate), { maxWidth: 300 });
+      }
+      marker.on('click', () => {
+        if (
+          interactionModeRef.current === 'identify' ||
+          interactionModeRef.current === 'identify-area'
+        ) return;
+      });
+      layer.addLayer(marker);
+    });
+  }, [visibleAggregateMarkers, isLoaded, leaflet, interactionMode]);
 
   // Update marker styles when selection changes -- without clearing/recreating layers.
   useEffect(() => {
     if (!isLoaded || !leaflet) return;
     markerMapRef.current.forEach((marker, sampleId) => {
-      const sample = samples.find((s) => s.id === sampleId);
+      const sample = sampleMarkers.find((s) => s.id === sampleId);
       if (!sample) return;
       const isSelected =
         selectedSampleIds.includes(sampleId) || selectedSampleId === sampleId;
@@ -976,7 +1041,7 @@ export function MatrixMap({
       });
     });
     markersLayerRef.current?.refreshClusters?.();
-  }, [selectedSampleId, selectedSampleIds, samples, isLoaded, leaflet]);
+  }, [selectedSampleId, selectedSampleIds, sampleMarkers, isLoaded, leaflet]);
 
   // Area select (rectangle drag) mode
   useEffect(() => {
@@ -1013,7 +1078,7 @@ export function MatrixMap({
         const bounds = leaflet.latLngBounds(startLatLng, e.latlng);
 
         // Find all samples within the rectangle
-        const insideIds = samples
+        const insideIds = sampleMarkers
           .filter((s) => bounds.contains(leaflet.latLng(s.geometry.coordinates[1], s.geometry.coordinates[0])))
           .map((s) => s.id);
 
@@ -1046,7 +1111,7 @@ export function MatrixMap({
       map.dragging.enable();
       map.getContainer().style.cursor = '';
     }
-  }, [interactionMode, isLoaded, leaflet, samples, selectAllSamplesAction]);
+  }, [interactionMode, isLoaded, leaflet, sampleMarkers, selectAllSamplesAction]);
 
   // Identify-area mode: drag a rectangle and query active WMS overlays for
   // all features in the drawn bounds. Results replace the current identified
@@ -1407,12 +1472,12 @@ export function MatrixMap({
   const handleZoomOut = () => mapInstanceRef.current?.zoomOut();
 
   const handleFitToSamples = useCallback(() => {
-    if (!mapInstanceRef.current || !leaflet || samples.length === 0) return;
-    const bounds = leaflet.latLngBounds(
-      samples.map((s) => [s.geometry.coordinates[1], s.geometry.coordinates[0]])
-    );
+    if (!mapInstanceRef.current || !leaflet) return;
+    const points = getFitBoundsPoints(sampleMarkers, visibleAggregateMarkers);
+    if (points.length === 0) return;
+    const bounds = leaflet.latLngBounds(points);
     mapInstanceRef.current.fitBounds(bounds.pad(0.2), { maxZoom: 13 });
-  }, [leaflet, samples]);
+  }, [leaflet, sampleMarkers, visibleAggregateMarkers]);
 
   // Export map as image
   const handleExportMap = useCallback(async () => {
@@ -1501,6 +1566,11 @@ export function MatrixMap({
         </div>
       )}
 
+      {siteAggregateFetchErrorMessage && (
+        <div className="absolute top-44 left-4 right-4 z-[1000] flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+          <span>{siteAggregateFetchErrorMessage}</span>
+        </div>
+      )}
       {/* bbox-lane Stage 2: transient viewport-refetch error -- shown WITHOUT
           discarding the last good markers; dismissable. */}
       {refetchError && (
@@ -1539,8 +1609,8 @@ export function MatrixMap({
         <button
           aria-label="Fit to samples"
           onClick={handleFitToSamples}
-          className={cn("p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", sampleCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
-          disabled={sampleCount === 0}
+          className={cn("p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", fitLocationCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
+          disabled={fitLocationCount === 0}
           title="Fit to samples"
         >
           <Target className="w-5 h-5" />
@@ -1625,7 +1695,7 @@ export function MatrixMap({
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
           )}
-          title="Pan mode — drag to move map"
+          title="Pan mode -- drag to move map"
         >
           <Hand className="w-4 h-4" />
           <span className="hidden sm:inline">Pan</span>
@@ -1706,6 +1776,12 @@ export function MatrixMap({
           <p className="mt-2 text-[10px] text-slate-400 dark:text-slate-500 leading-snug">
             Centroid = approximate BC CSR parcel location, not a surveyed point.
           </p>
+          {siteAggregateData.site_count > 0 && (
+            <div className="mt-2 flex items-center gap-2 rounded border border-teal-100 bg-teal-50/70 px-2 py-1 text-[10px] text-teal-900 dark:border-teal-900/50 dark:bg-teal-950/30 dark:text-teal-200">
+              <span className="h-3 w-3 rotate-45 border-2 border-dashed border-teal-700 bg-amber-100 dark:border-teal-300 dark:bg-amber-900/60" />
+              <span>Site aggregates</span>
+            </div>
+          )}
           <label className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
             <input
               type="checkbox"
@@ -1738,6 +1814,15 @@ export function MatrixMap({
           Most plotted locations (~98.5%) are approximate BC CSR site centroids, not surveyed sediment
           coordinates. See marker outline / legend for per-point provenance.
         </p>
+        {siteAggregateData.site_count > 0 && (
+          <p className="mt-1 max-w-[220px] text-[10px] leading-snug text-teal-700 dark:text-teal-300">
+            {filterState.surveyed_only
+              ? 'Site aggregates hidden by Surveyed only.'
+              : sampleFiltersActive
+                ? 'Site aggregates hidden by active filters.'
+              : `${visibleAggregateMarkers.length} site aggregates represent ${siteAggregateData.sample_count_total} total samples at centroid-site locations.`}
+          </p>
+        )}
       </div>
 
       {/* Clickable Sample List */}
@@ -1869,6 +1954,81 @@ function LegendOutline({ dashArray, label }: { dashArray: string | undefined; la
       <span className="text-xs text-slate-600 dark:text-slate-400">{label}</span>
     </div>
   );
+}
+
+export function filterSamplesCoveredBySiteAggregates(
+  samples: readonly MatrixSample[],
+  aggregateMarkers: readonly AggregateMarker[],
+): MatrixSample[] {
+  if (aggregateMarkers.length === 0) return [...samples];
+  const coveredKeys = new Set(
+    aggregateMarkers.map((marker) =>
+      `${marker.source_dra_id}:${coordinateClusterId(marker.position[0], marker.position[1])}`,
+    ),
+  );
+  return samples.filter((sample) => {
+    if (sample.coordinate_quality_tier !== 'medium' || sample.source_dra_id === null) return true;
+    const [longitude, latitude] = sample.geometry.coordinates;
+    const key = `${sample.source_dra_id}:${coordinateClusterId(latitude, longitude)}`;
+    return !coveredKeys.has(key);
+  });
+}
+
+export function getFitBoundsPoints(
+  samples: readonly MatrixSample[],
+  aggregateMarkers: readonly AggregateMarker[],
+): [number, number][] {
+  return [
+    ...samples.map((sample) => [
+      sample.geometry.coordinates[1],
+      sample.geometry.coordinates[0],
+    ] as [number, number]),
+    ...aggregateMarkers.map((aggregate) => aggregate.position),
+  ];
+}
+
+function createSiteAggregateMarkerIcon(L: typeof import('leaflet'), aggregate: AggregateMarker) {
+  const size = Math.max(18, Math.min(34, aggregate.radius * 2 + 8));
+  return L.divIcon({
+    className: 'site-aggregate-div-icon',
+    html: createSiteAggregateMarkerHtml(aggregate, size),
+    iconSize: L.point(size, size),
+    iconAnchor: L.point(size / 2, size / 2),
+    popupAnchor: L.point(0, -size / 2),
+  });
+}
+
+export function createSiteAggregateMarkerHtml(aggregate: AggregateMarker, size = 26): string {
+  const countLabel = aggregate.sample_count_total > 99 ? '99+' : String(aggregate.sample_count_total);
+  return (
+    `<div aria-label="Site aggregate marker for ${escapeHtml(aggregate.label)}" ` +
+    `style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;` +
+    `transform:rotate(45deg);border:2px dashed #0f766e;background:#fef3c7;` +
+    `box-shadow:0 1px 4px rgba(15,23,42,0.35);">` +
+    `<span style="transform:rotate(-45deg);font:700 9px system-ui,sans-serif;color:#0f172a;">${countLabel}</span>` +
+    `</div>`
+  );
+}
+
+function createSiteAggregatePopupContent(aggregate: AggregateMarker): string {
+  return `
+    <div style="min-width:220px;font-family:system-ui,sans-serif;">
+      <h3 style="margin:0 0 8px 0;font-size:14px;font-weight:700;color:#0f172a;">
+        ${escapeHtml(aggregate.label)}
+      </h3>
+      <p style="margin:0 0 6px 0;font-size:12px;color:#475569;">
+        Site aggregate marker -- not a sample position.
+      </p>
+      <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:12px;color:#334155;">
+        <dt>Total samples</dt><dd style="margin:0;font-weight:700;">${aggregate.sample_count_total}</dd>
+        <dt>Surveyed tier</dt><dd style="margin:0;">${aggregate.sample_count_high}</dd>
+        <dt>Centroid tier</dt><dd style="margin:0;">${aggregate.sample_count_medium}</dd>
+      </dl>
+      <p style="margin:8px 0 0 0;font-size:11px;color:#64748b;">
+        ${escapeHtml(COORD_TIER_CAPTION[aggregate.coordinate_quality_tier])}
+      </p>
+    </div>
+  `;
 }
 
 function getMarkerColor(sample: MatrixSample): string {

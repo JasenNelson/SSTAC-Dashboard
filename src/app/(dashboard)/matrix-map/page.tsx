@@ -42,7 +42,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 
 import { fetchMatrixMapSamplesServerSide } from '@/lib/matrix-map/fetch-samples-server';
+import { fetchMatrixMapSiteAggregatesServerSide } from '@/lib/matrix-map/fetch-site-aggregates-server';
 import MatrixMapLoader from './MatrixMapLoader';
+import { EMPTY_MATRIX_SITE_AGGREGATE_DATA } from './types';
 
 export const metadata = {
   title: 'Matrix Interactive Map | SSTAC Dashboard',
@@ -116,6 +118,14 @@ export default async function MatrixMapPage() {
   const { initialMapData, fetchErrorMessage } =
     await fetchMatrixMapSamplesServerSide(supabase);
 
+  const { siteAggregateData, siteAggregateFetchErrorMessage } =
+    fetchErrorMessage === null
+      ? await fetchMatrixMapSiteAggregatesServerSide(supabase)
+      : {
+          siteAggregateData: EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+          siteAggregateFetchErrorMessage: null,
+        };
+
   return (
     <div className="flex h-[calc(100vh-4rem)] w-full flex-col bg-slate-50 dark:bg-slate-900">
       <header className="border-b border-slate-200 bg-white px-6 py-3 dark:border-slate-700 dark:bg-slate-800">
@@ -137,6 +147,8 @@ export default async function MatrixMapPage() {
         <MatrixMapLoader
           initialMapData={initialMapData}
           fetchErrorMessage={fetchErrorMessage}
+          siteAggregateData={siteAggregateData}
+          siteAggregateFetchErrorMessage={siteAggregateFetchErrorMessage}
         />
       </div>
     </div>
