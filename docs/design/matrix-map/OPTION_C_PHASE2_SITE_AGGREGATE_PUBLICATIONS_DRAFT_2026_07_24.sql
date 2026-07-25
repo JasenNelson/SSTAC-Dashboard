@@ -150,6 +150,8 @@ BEGIN
   END IF;
 
   IF ROW(
+    NEW.source_dra_id,
+    NEW.coordinate_cluster_id,
     NEW.is_published,
     NEW.member_display_label,
     NEW.representative_latitude,
@@ -170,6 +172,8 @@ BEGIN
     NEW.unpublished_by,
     NEW.unpublish_reason
   ) IS DISTINCT FROM ROW(
+    OLD.source_dra_id,
+    OLD.coordinate_cluster_id,
     OLD.is_published,
     OLD.member_display_label,
     OLD.representative_latitude,
@@ -266,6 +270,11 @@ BEGIN
     sap.coordinate_source,
     matrix_map.site_aggregate_count_bucket(sap.sample_count_total) AS sample_count_bucket,
     sap.data_snapshot_version,
+    -- Clarify the conditional duplicate-suppression contract:
+    -- The member RPC returns a DRA-derived suppression key only when the caller can
+    -- already see that DRA through d.public, an existing private grant, or an admin role.
+    -- It must remain NULL for independently published hidden aggregates to prevent
+    -- any privilege expansion or raw DRA id leakage.
     CASE
       WHEN d.public = true
         OR matrix_map.has_private_grant(d.id)
@@ -458,6 +467,132 @@ REVOKE EXECUTE ON FUNCTION matrix_map.fetch_site_aggregate_publication_audit(uui
 GRANT EXECUTE ON FUNCTION matrix_map.fetch_site_aggregate_publication_audit(uuid)
   TO authenticated;
 
+CREATE OR REPLACE FUNCTION matrix_map.canonical_five_decimal_cluster(p_lat double precision, p_lng double precision)
+RETURNS text
+LANGUAGE sql
+IMMUTABLE
+SET search_path = pg_temp
+AS $$
+  SELECT trim(to_char(round(p_lat::numeric, 5), 'FM9990.00000')) || ',' || trim(to_char(round(p_lng::numeric, 5), 'FM9990.00000'));
+$$;
+
+ALTER FUNCTION matrix_map.canonical_five_decimal_cluster(double precision, double precision) OWNER TO matrix_map_owner;
+REVOKE EXECUTE ON FUNCTION matrix_map.canonical_five_decimal_cluster(double precision, double precision) FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE OR REPLACE FUNCTION matrix_map.current_site_aggregate_snapshot(p_source_dra_id uuid, p_cluster_id text)
+RETURNS TABLE (
+  representative_latitude double precision,
+  representative_longitude double precision,
+  sample_count_total integer,
+  sample_count_high integer,
+  sample_count_medium integer,
+  sample_count_low integer,
+  distinct_point_count integer,
+  coordinate_quality_tier text,
+  coordinate_source text,
+  source_sample_hash text
+)
+LANGUAGE plpgsql
+STABLE
+SET search_path = matrix_map, pg_temp
+AS $$
+BEGIN
+  RETURN QUERY
+  WITH cluster_samples AS (
+    SELECT
+      s.id,
+      s.latitude,
+      s.longitude,
+      s.coordinate_quality_tier,
+      s.coordinate_source
+    FROM matrix_map.samples s
+    WHERE s.source_dra_id = p_source_dra_id
+      AND matrix_map.canonical_five_decimal_cluster(s.latitude, s.longitude) = p_cluster_id
+  ),
+  agg_base AS (
+    SELECT
+      (SELECT round(cs_rep.latitude::numeric, 5)::double precision FROM cluster_samples cs_rep ORDER BY cs_rep.id ASC LIMIT 1) AS rep_lat,
+      (SELECT round(cs_rep.longitude::numeric, 5)::double precision FROM cluster_samples cs_rep ORDER BY cs_rep.id ASC LIMIT 1) AS rep_lng,
+      count(*)::integer AS total_cnt,
+      count(*) FILTER (WHERE cs_main.coordinate_quality_tier = 'high')::integer AS high_cnt,
+      count(*) FILTER (WHERE cs_main.coordinate_quality_tier = 'medium')::integer AS med_cnt,
+      count(*) FILTER (WHERE cs_main.coordinate_quality_tier = 'low')::integer AS low_cnt,
+      count(DISTINCT matrix_map.canonical_five_decimal_cluster(cs_main.latitude, cs_main.longitude))::integer AS dp_cnt,
+      (
+        SELECT sub.tier
+        FROM (
+          SELECT cs_tier.coordinate_quality_tier AS tier, count(*) as cnt
+          FROM cluster_samples cs_tier
+          GROUP BY cs_tier.coordinate_quality_tier
+        ) sub
+        ORDER BY sub.cnt DESC, CASE sub.tier WHEN 'high' THEN 1 WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END ASC, sub.tier COLLATE "C" ASC NULLS LAST
+        LIMIT 1
+      ) AS dom_tier,
+      (
+        SELECT string_agg(sub.src, '; ' ORDER BY sub.src COLLATE "C" ASC)
+        FROM (
+          SELECT DISTINCT cs_src.coordinate_source AS src
+          FROM cluster_samples cs_src
+          WHERE cs_src.coordinate_source IS NOT NULL AND length(trim(cs_src.coordinate_source)) > 0
+        ) sub
+      ) AS dom_source,
+      (
+        SELECT string_agg(
+          jsonb_build_array(
+            cs_hash.id::text,
+            matrix_map.canonical_five_decimal_cluster(cs_hash.latitude, cs_hash.longitude),
+            cs_hash.coordinate_quality_tier,
+            cs_hash.coordinate_source
+          )::text,
+          E'\n' ORDER BY cs_hash.id ASC
+        )
+        FROM cluster_samples cs_hash
+      ) AS member_hash_input
+    FROM cluster_samples cs_main
+  )
+  SELECT
+    rep_lat,
+    rep_lng,
+    total_cnt,
+    high_cnt,
+    med_cnt,
+    low_cnt,
+    dp_cnt,
+    dom_tier,
+    dom_source,
+    md5(member_hash_input)
+  FROM agg_base
+  WHERE total_cnt > 0;
+END;
+$$;
+
+ALTER FUNCTION matrix_map.current_site_aggregate_snapshot(uuid, text) OWNER TO matrix_map_owner;
+REVOKE EXECUTE ON FUNCTION matrix_map.current_site_aggregate_snapshot(uuid, text) FROM PUBLIC, anon, authenticated, service_role;
+
+CREATE FUNCTION matrix_map.lock_site_aggregate_publication_sources()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = matrix_map, pg_temp
+AS $$
+BEGIN
+  LOCK TABLE matrix_map.dras IN SHARE MODE;
+  LOCK TABLE matrix_map.samples IN SHARE MODE;
+END;
+$$;
+
+ALTER FUNCTION matrix_map.lock_site_aggregate_publication_sources() OWNER TO postgres;
+
+COMMENT ON FUNCTION matrix_map.lock_site_aggregate_publication_sources() IS
+  'Helper function for flip_site_aggregate_public to lock underlying DRA and sample tables '
+  'in SHARE MODE prior to snapshot validation during aggregate publication. '
+  'Must remain owned by postgres (the target Supabase migration/table owner).';
+
+REVOKE ALL ON FUNCTION matrix_map.lock_site_aggregate_publication_sources()
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION matrix_map.lock_site_aggregate_publication_sources()
+  TO matrix_map_owner;
+
 CREATE OR REPLACE FUNCTION matrix_map.flip_site_aggregate_public(
   p_publication_id uuid,
   p_new_value boolean,
@@ -488,6 +623,10 @@ BEGIN
   IF v_uid <> p_actor_id THEN
     RAISE EXCEPTION 'flip_site_aggregate_public actor_id (%) must match caller jwt sub (%)', p_actor_id, v_uid
       USING ERRCODE = '42501';
+  END IF;
+
+  IF p_new_value = true AND lower(current_setting('transaction_isolation')) IS DISTINCT FROM 'read committed' THEN
+    RAISE EXCEPTION 'flip_site_aggregate_public requires read committed transaction isolation when publishing';
   END IF;
 
   SELECT EXISTS (
@@ -521,22 +660,54 @@ BEGIN
     RAISE EXCEPTION 'site aggregate publication % not found', p_publication_id;
   END IF;
 
-  SELECT EXISTS (
-    SELECT 1 FROM matrix_map.dras d
-    WHERE d.id = v_row.source_dra_id
-      AND d.is_deleted = false
-  )
-  INTO v_dra_exists;
-
-  IF NOT v_dra_exists THEN
-    RAISE EXCEPTION 'site aggregate publication % references a missing or soft-deleted DRA', p_publication_id;
-  END IF;
-
   IF length(trim(v_row.member_display_label)) = 0 THEN
     RAISE EXCEPTION 'site aggregate publication % requires a neutral member display label', p_publication_id;
   END IF;
 
   IF v_row.is_published IS DISTINCT FROM p_new_value THEN
+    IF p_new_value = true THEN
+      PERFORM matrix_map.lock_site_aggregate_publication_sources();
+
+      SELECT EXISTS (
+        SELECT 1 FROM matrix_map.dras d
+        WHERE d.id = v_row.source_dra_id
+          AND d.is_deleted = false
+      )
+      INTO v_dra_exists;
+
+      IF NOT v_dra_exists THEN
+        RAISE EXCEPTION 'site aggregate publication % references a missing or soft-deleted DRA', p_publication_id;
+      END IF;
+
+      DECLARE
+        v_snap RECORD;
+      BEGIN
+        SELECT * INTO v_snap
+        FROM matrix_map.current_site_aggregate_snapshot(v_row.source_dra_id, v_row.coordinate_cluster_id);
+
+        IF v_snap IS NULL OR v_snap.sample_count_total IS NULL OR v_snap.sample_count_total = 0 THEN
+          RAISE EXCEPTION 'site aggregate publication % current snapshot is empty', p_publication_id;
+        END IF;
+
+        IF v_snap.sample_count_medium = 0 THEN
+          RAISE EXCEPTION 'site aggregate publication % requires at least one medium-tier sample', p_publication_id;
+        END IF;
+
+        IF v_snap.representative_latitude IS DISTINCT FROM v_row.representative_latitude
+           OR v_snap.representative_longitude IS DISTINCT FROM v_row.representative_longitude
+           OR v_snap.sample_count_total IS DISTINCT FROM v_row.sample_count_total
+           OR v_snap.sample_count_high IS DISTINCT FROM v_row.sample_count_high
+           OR v_snap.sample_count_medium IS DISTINCT FROM v_row.sample_count_medium
+           OR v_snap.sample_count_low IS DISTINCT FROM v_row.sample_count_low
+           OR v_snap.distinct_point_count IS DISTINCT FROM v_row.distinct_point_count
+           OR v_snap.coordinate_quality_tier IS DISTINCT FROM v_row.coordinate_quality_tier
+           OR v_snap.coordinate_source IS DISTINCT FROM v_row.coordinate_source
+           OR v_snap.source_sample_hash IS DISTINCT FROM v_row.source_sample_hash THEN
+          RAISE EXCEPTION 'site aggregate publication % snapshot drift detected', p_publication_id;
+        END IF;
+      END;
+    END IF;
+
     PERFORM set_config('matrix_map.audited_site_aggregate_publication', '1', true);
 
     UPDATE matrix_map.site_aggregate_publications

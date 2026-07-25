@@ -167,12 +167,24 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   const actualPublic = readback.is_published;
   const verified = actualPublic === payload.public;
 
+  if (!verified) {
+    return NextResponse.json(
+      {
+        error: 'verification_failed',
+        publication_id: payload.publication_id,
+        public: actualPublic,
+        verified: false,
+      },
+      { status: 409 },
+    );
+  }
+
   return NextResponse.json(
     {
       ok: true,
       publication_id: payload.publication_id,
-      public: verified ? payload.public : actualPublic,
-      verified,
+      public: payload.public,
+      verified: true,
     },
     { status: 200 },
   );

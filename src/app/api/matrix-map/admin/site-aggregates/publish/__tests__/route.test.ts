@@ -226,10 +226,11 @@ describe('POST /api/matrix-map/admin/site-aggregates/publish', () => {
       makeRequest({ publication_id: PUBLICATION_ID, public: true, reason: 'pilot publish' }),
     );
 
-    expect(response.status).toBe(200);
+    expect(response.status).toBe(409);
     const data = await response.json();
     expect(data.verified).toBe(false);
     expect(data.public).toBe(false);
+    expect(data.ok).toBeUndefined();
   });
 
   it('returns readback_failed when verification read-back errors after the flip', async () => {
