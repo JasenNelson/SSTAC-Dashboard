@@ -30,8 +30,7 @@ $Script:LogEntries = [System.Collections.Generic.List[string]]::new()
 function Write-HarnessLog {
   param([string]$Message, [string]$Level = 'INFO')
   $timestamp = [DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ss.fffZ')
-  $safeMessage = $Message -replace 'val_pass_\d+', '[REDACTED]'
-  $line = "[$timestamp] [$Level] $safeMessage"
+  $line = "[$timestamp] [$Level] $Message"
   $Script:LogEntries.Add($line)
   Write-Host $line
 }
@@ -108,7 +107,7 @@ if ($LASTEXITCODE -ne 0) {
 Set-Content -Path (Join-Path $OutputDir "docker_image_receipt.json") -Value $imageInspectJson -Encoding Ascii
 
 $ContainerName = "sstac-pg-replay-optc-$([DateTime]::UtcNow.ToString('yyyyMMddHHmmss'))-$((Get-Random -Minimum 1000 -Maximum 9999))"
-$PgPassword = "val_pass_$((Get-Random -Minimum 100000 -Maximum 999999))"
+$PgPassword = [guid]::NewGuid().ToString('N')
 $ContainerId = $null
 $jobA = $null
 $jobB = $null
@@ -757,6 +756,5 @@ WHERE n.nspname = 'matrix_map' AND c.relname = 'samples' AND l.mode = 'RowExclus
   }
 
   $logPath = Join-Path $OutputDir "harness.log"
-  $safeLogs = $Script:LogEntries | ForEach-Object { $_ -replace 'val_pass_\d+', '[REDACTED]' }
-  Set-Content -Path $logPath -Value ($safeLogs -join "`r`n") -Encoding Ascii
+  Set-Content -Path $logPath -Value ($Script:LogEntries -join "`r`n") -Encoding Ascii
 }
