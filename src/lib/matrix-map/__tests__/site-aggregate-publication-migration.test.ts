@@ -17,16 +17,8 @@ function functionBody(name: string): string {
     start = migrationSql.indexOf(`CREATE FUNCTION matrix_map.${name}`);
   }
   expect(start).toBeGreaterThanOrEqual(0);
-  const nextReplace = migrationSql.indexOf('CREATE OR REPLACE FUNCTION matrix_map.', start + 1);
-  const nextCreate = migrationSql.indexOf('CREATE FUNCTION matrix_map.', start + 1);
-  let next = -1;
-  if (nextReplace !== -1 && nextCreate !== -1) {
-    next = Math.min(nextReplace, nextCreate);
-  } else if (nextReplace !== -1) {
-    next = nextReplace;
-  } else {
-    next = nextCreate;
-  }
+  const endMarker = `ALTER FUNCTION matrix_map.${name}`;
+  const next = migrationSql.indexOf(endMarker, start + 1);
   return migrationSql.slice(start, next === -1 ? undefined : next);
 }
 
@@ -192,8 +184,8 @@ describe('Option C Phase 2 aggregate publication migration draft', () => {
     );
     expect(helperRpc).toContain('SECURITY DEFINER');
     expect(helperRpc).toContain('SET search_path = matrix_map, pg_temp');
-    expect(helperRpc).toContain('LOCK TABLE matrix_map.dras IN SHARE MODE');
-    expect(helperRpc).toContain('LOCK TABLE matrix_map.samples IN SHARE MODE');
+    expect(helperRpc).toContain('LOCK TABLE matrix_map.dras IN SHARE MODE NOWAIT');
+    expect(helperRpc).toContain('LOCK TABLE matrix_map.samples IN SHARE MODE NOWAIT');
 
     // Helper must alter owner to postgres
     expect(migrationSql).toContain(
@@ -215,8 +207,8 @@ describe('Option C Phase 2 aggregate publication migration draft', () => {
   it('enforces table SHARE lock order dras then samples', () => {
     const helperRpc = functionBody('lock_site_aggregate_publication_sources');
 
-    const drasLockIndex = helperRpc.indexOf('LOCK TABLE matrix_map.dras IN SHARE MODE');
-    const samplesLockIndex = helperRpc.indexOf('LOCK TABLE matrix_map.samples IN SHARE MODE');
+    const drasLockIndex = helperRpc.indexOf('LOCK TABLE matrix_map.dras IN SHARE MODE NOWAIT');
+    const samplesLockIndex = helperRpc.indexOf('LOCK TABLE matrix_map.samples IN SHARE MODE NOWAIT');
 
     expect(drasLockIndex).toBeGreaterThan(-1);
     expect(samplesLockIndex).toBeGreaterThan(drasLockIndex);

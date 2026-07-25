@@ -10,6 +10,8 @@
 -- - admin reads retain exact counts and raw provenance
 -- - publication writes flow only through matrix_map.flip_site_aggregate_public(...)
 
+BEGIN;
+
 GRANT CREATE ON SCHEMA matrix_map TO matrix_map_owner;
 
 CREATE TABLE IF NOT EXISTS matrix_map.site_aggregate_publications (
@@ -235,7 +237,6 @@ RETURNS TABLE (
   representative_latitude double precision,
   representative_longitude double precision,
   coordinate_quality_tier text,
-  coordinate_source text,
   sample_count_bucket text,
   data_snapshot_version text,
   visible_sample_suppression_key text
@@ -254,6 +255,8 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
+  -- Note: is_email_allowlisted checks if the caller holds a valid role. The email itself
+  -- is currently ignored, but we pass it to satisfy the function signature.
   v_email := matrix_map.jwt_claims() ->> 'email';
   IF v_email IS NULL OR NOT matrix_map.is_email_allowlisted(v_email) THEN
     RAISE EXCEPTION 'fetch_published_site_aggregates requires an allowlisted member'
@@ -264,10 +267,9 @@ BEGIN
   SELECT
     sap.id AS aggregate_id,
     sap.member_display_label AS label,
-    sap.representative_latitude,
-    sap.representative_longitude,
+    round(sap.representative_latitude::numeric, 3)::double precision AS representative_latitude,
+    round(sap.representative_longitude::numeric, 3)::double precision AS representative_longitude,
     sap.coordinate_quality_tier,
-    sap.coordinate_source,
     matrix_map.site_aggregate_count_bucket(sap.sample_count_total) AS sample_count_bucket,
     sap.data_snapshot_version,
     -- Clarify the conditional duplicate-suppression contract:
@@ -454,7 +456,7 @@ BEGIN
     a.new_snapshot
   FROM matrix_map.site_aggregate_publication_audit a
   WHERE a.publication_id = p_publication_id
-  ORDER BY a.changed_at DESC
+  ORDER BY a.changed_at DESC, a.id DESC
   LIMIT 50;
 END;
 $$;
@@ -576,8 +578,8 @@ SECURITY DEFINER
 SET search_path = matrix_map, pg_temp
 AS $$
 BEGIN
-  LOCK TABLE matrix_map.dras IN SHARE MODE;
-  LOCK TABLE matrix_map.samples IN SHARE MODE;
+  LOCK TABLE matrix_map.dras IN SHARE MODE NOWAIT;
+  LOCK TABLE matrix_map.samples IN SHARE MODE NOWAIT;
 END;
 $$;
 
@@ -586,7 +588,9 @@ ALTER FUNCTION matrix_map.lock_site_aggregate_publication_sources() OWNER TO pos
 COMMENT ON FUNCTION matrix_map.lock_site_aggregate_publication_sources() IS
   'Helper function for flip_site_aggregate_public to lock underlying DRA and sample tables '
   'in SHARE MODE prior to snapshot validation during aggregate publication. '
-  'Must remain owned by postgres (the target Supabase migration/table owner).';
+  'Must remain owned by postgres (the target Supabase migration/table owner). '
+  'WARNING: Re-definable definer functions MUST NOT call this helper, or any authenticated user '
+  'could take table SHARE locks and stall writes.';
 
 REVOKE ALL ON FUNCTION matrix_map.lock_site_aggregate_publication_sources()
   FROM PUBLIC, anon, authenticated, service_role;
@@ -626,7 +630,8 @@ BEGIN
   END IF;
 
   IF p_new_value = true AND lower(current_setting('transaction_isolation')) IS DISTINCT FROM 'read committed' THEN
-    RAISE EXCEPTION 'flip_site_aggregate_public requires read committed transaction isolation when publishing';
+    RAISE EXCEPTION 'flip_site_aggregate_public requires read committed transaction isolation when publishing'
+      USING ERRCODE = 'UE500';
   END IF;
 
   SELECT EXISTS (
@@ -642,12 +647,14 @@ BEGIN
   END IF;
 
   IF p_reason IS NULL OR length(trim(p_reason)) = 0 THEN
-    RAISE EXCEPTION 'flip_site_aggregate_public requires a non-empty reason';
+    RAISE EXCEPTION 'flip_site_aggregate_public requires a non-empty reason'
+      USING ERRCODE = 'UE422';
   END IF;
 
   v_actor_email := v_claims ->> 'email';
   IF v_actor_email IS NULL OR length(trim(v_actor_email)) = 0 THEN
-    RAISE EXCEPTION 'flip_site_aggregate_public could not resolve actor email from JWT for sub %', v_uid;
+    RAISE EXCEPTION 'flip_site_aggregate_public could not resolve actor email from JWT for sub %', v_uid
+      USING ERRCODE = '42501';
   END IF;
 
   SELECT *
@@ -657,11 +664,13 @@ BEGIN
   FOR UPDATE;
 
   IF v_row.id IS NULL THEN
-    RAISE EXCEPTION 'site aggregate publication % not found', p_publication_id;
+    RAISE EXCEPTION 'site aggregate publication % not found', p_publication_id
+      USING ERRCODE = 'UE404';
   END IF;
 
   IF length(trim(v_row.member_display_label)) = 0 THEN
-    RAISE EXCEPTION 'site aggregate publication % requires a neutral member display label', p_publication_id;
+    RAISE EXCEPTION 'site aggregate publication % requires a neutral member display label', p_publication_id
+      USING ERRCODE = 'UE422';
   END IF;
 
   IF v_row.is_published IS DISTINCT FROM p_new_value THEN
@@ -676,7 +685,8 @@ BEGIN
       INTO v_dra_exists;
 
       IF NOT v_dra_exists THEN
-        RAISE EXCEPTION 'site aggregate publication % references a missing or soft-deleted DRA', p_publication_id;
+        RAISE EXCEPTION 'site aggregate publication % references a missing or soft-deleted DRA', p_publication_id
+          USING ERRCODE = 'UE409';
       END IF;
 
       DECLARE
@@ -686,11 +696,13 @@ BEGIN
         FROM matrix_map.current_site_aggregate_snapshot(v_row.source_dra_id, v_row.coordinate_cluster_id);
 
         IF v_snap IS NULL OR v_snap.sample_count_total IS NULL OR v_snap.sample_count_total = 0 THEN
-          RAISE EXCEPTION 'site aggregate publication % current snapshot is empty', p_publication_id;
+          RAISE EXCEPTION 'site aggregate publication % current snapshot is empty', p_publication_id
+            USING ERRCODE = 'UE409';
         END IF;
 
         IF v_snap.sample_count_medium = 0 THEN
-          RAISE EXCEPTION 'site aggregate publication % requires at least one medium-tier sample', p_publication_id;
+          RAISE EXCEPTION 'site aggregate publication % requires at least one medium-tier sample', p_publication_id
+            USING ERRCODE = 'UE422';
         END IF;
 
         IF v_snap.representative_latitude IS DISTINCT FROM v_row.representative_latitude
@@ -703,7 +715,8 @@ BEGIN
            OR v_snap.coordinate_quality_tier IS DISTINCT FROM v_row.coordinate_quality_tier
            OR v_snap.coordinate_source IS DISTINCT FROM v_row.coordinate_source
            OR v_snap.source_sample_hash IS DISTINCT FROM v_row.source_sample_hash THEN
-          RAISE EXCEPTION 'site aggregate publication % snapshot drift detected', p_publication_id;
+          RAISE EXCEPTION 'site aggregate publication % snapshot drift detected', p_publication_id
+            USING ERRCODE = 'UE409';
         END IF;
       END;
     END IF;
@@ -713,13 +726,13 @@ BEGIN
     UPDATE matrix_map.site_aggregate_publications
     SET
       is_published = p_new_value,
-      published_at = CASE WHEN p_new_value THEN now() ELSE published_at END,
+      published_at = CASE WHEN p_new_value THEN clock_timestamp() ELSE published_at END,
       published_by = CASE WHEN p_new_value THEN v_uid ELSE published_by END,
       publish_reason = CASE WHEN p_new_value THEN trim(p_reason) ELSE publish_reason END,
-      unpublished_at = CASE WHEN p_new_value THEN unpublished_at ELSE now() END,
+      unpublished_at = CASE WHEN p_new_value THEN unpublished_at ELSE clock_timestamp() END,
       unpublished_by = CASE WHEN p_new_value THEN unpublished_by ELSE v_uid END,
       unpublish_reason = CASE WHEN p_new_value THEN unpublish_reason ELSE trim(p_reason) END,
-      updated_at = now()
+      updated_at = clock_timestamp()
     WHERE id = p_publication_id;
 
     PERFORM set_config('matrix_map.audited_site_aggregate_publication', '0', true);
@@ -744,7 +757,7 @@ BEGIN
       v_row.coordinate_cluster_id,
       v_row.is_published,
       p_new_value,
-      now(),
+      clock_timestamp(),
       v_uid,
       v_actor_email,
       trim(p_reason),
@@ -803,3 +816,5 @@ GRANT SELECT, UPDATE ON matrix_map.site_aggregate_publications TO matrix_map_own
 GRANT SELECT, INSERT ON matrix_map.site_aggregate_publication_audit TO matrix_map_owner;
 
 REVOKE CREATE ON SCHEMA matrix_map FROM matrix_map_owner;
+
+COMMIT;

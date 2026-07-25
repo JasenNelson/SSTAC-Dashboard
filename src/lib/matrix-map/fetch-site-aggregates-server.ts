@@ -60,7 +60,6 @@ type RawPublishedAggregateRow = {
   representative_latitude?: unknown;
   representative_longitude?: unknown;
   coordinate_quality_tier?: unknown;
-  coordinate_source?: unknown;
   sample_count_bucket?: unknown;
   data_snapshot_version?: unknown;
   visible_sample_suppression_key?: unknown;
@@ -190,7 +189,10 @@ async function fetchPublishedSiteAggregatesServerSide(
     const to = from + PAGE_SIZE - 1;
     const { data, error } = await rpcQuery.range(from, to);
     if (error) {
-      if (isMissingPublishedAggregateRpcError(error)) return null;
+      if (isMissingPublishedAggregateRpcError(error)) {
+        console.warn('[matrix-map] fetch_published_site_aggregates RPC missing; falling back to legacy RLS path');
+        return null;
+      }
       throw new Error(error.message ?? 'published site aggregate query failed');
     }
     const batch = data ?? [];

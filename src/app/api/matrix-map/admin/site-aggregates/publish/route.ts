@@ -54,7 +54,7 @@ async function requireMatrixMapAdmin(
 
   if (roleError) {
     return NextResponse.json(
-      { error: 'admin_role_query_failed', detail: roleError.message },
+      { error: 'admin_role_query_failed' },
       { status: 500 },
     );
   }
@@ -98,12 +98,30 @@ function parsePublishPayload(value: unknown): PublishPayload {
 function mapRpcErrorToResponse(error: { code?: string; message?: string }) {
   if (error.code === '42501') {
     return NextResponse.json(
-      { error: 'rpc_forbidden', detail: error.message },
+      { error: 'rpc_forbidden' },
       { status: 403 },
     );
   }
+  if (error.code === 'UE404') {
+    return NextResponse.json(
+      { error: 'not_found' },
+      { status: 404 },
+    );
+  }
+  if (error.code === 'UE409' || error.code === '55P03') {
+    return NextResponse.json(
+      { error: 'conflict' },
+      { status: 409 },
+    );
+  }
+  if (error.code === 'UE422') {
+    return NextResponse.json(
+      { error: 'validation_failed' },
+      { status: 422 },
+    );
+  }
   return NextResponse.json(
-    { error: 'rpc_failed', detail: error.message },
+    { error: 'rpc_failed' },
     { status: 500 },
   );
 }
@@ -154,7 +172,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   if (readErr) {
     return NextResponse.json(
-      { error: 'readback_failed', detail: readErr.message },
+      { error: 'readback_failed' },
       { status: 500 },
     );
   }

@@ -241,7 +241,7 @@ describe('POST /api/matrix-map/admin/site-aggregates/publish', () => {
     );
 
     expect(response.status).toBe(500);
-    expect(await response.json()).toEqual({ error: 'readback_failed', detail: 'read failed' });
+    expect(await response.json()).toEqual({ error: 'readback_failed' });
   });
 
   it('returns readback_missing when verification read-back returns no row after the flip', async () => {
