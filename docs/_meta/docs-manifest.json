@@ -1471,9 +1471,31 @@
         "ci",
         "ship-protocols"
       ],
-      "notes": "Gate-discipline authority: Gate Mode, the full push-gate suite (lint/unit/monitored build/e2e), and commit/push/merge protocols. Cited by CLAUDE.md as the gate authority."
+      "notes": "Gate-discipline authority: Gate Mode, the full six-gate push suite (lint/typecheck/test:ci/monitored build/e2e/docs gate), and commit/push/merge protocols. Cited by CLAUDE.md as the gate authority."
     },
     {
+      "id": "governance.agy_usage",
+      "path": "docs/AGY_USAGE.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "agents",
+        "agy",
+        "orchestration",
+        "supervision"
+      ],
+      "notes": "Canonical SSTAC-specific AGY launch, supervision, review-loop, and acceptance runbook."
+    },
+    {
+      "id": "governance.sstac_ai_pipeline",
+      "path": "SSTAC_AI_PIPELINE.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "agents",
+        "ai-pipeline",
+        "orchestration"
+      ],
+      "notes": "Multi-AI role split and operating flow for mission control, AGY, Codex, OpenCode, and the owner."
+    },    {
       "id": "docs.readme_legacy",
       "path": "docs/README.md",
       "lifecycle": "REFERENCE",

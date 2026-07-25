@@ -1,57 +1,72 @@
 # SSTAC AI Pipeline
 
-Status: v0.1 operational draft.
+Status: authoritative operational runbook (v0.2).
 Scope: `C:\Projects\SSTAC-Dashboard`.
 
 ## Purpose
 
 This runbook defines the multi-AI workflow for SSTAC-Dashboard so work can be delegated without burning Claude, Codex, and AGY tokens on the wrong layer.
 
-SSTAC has multimodal and data-heavy work: PDFs, images, SQLite ledgers, Supabase-gated deltas, matrix options, batch enrichment, and long-running scripts. The lane should use AGY as the primary execution workhorse, Claude as orchestrator, Codex as reviewer, and OpenCode/GLM-5.2 as a low-risk context and review-prep assistant.
+SSTAC has multimodal and data-heavy work: PDFs, images, SQLite ledgers,
+Supabase-gated deltas, matrix options, batch enrichment, and long-running scripts.
+The lane should use AGY as the primary execution workhorse, Claude or the active
+mission-control Codex session as orchestrator, Codex as reviewer, and
+OpenCode/GLM-5.2 as a low-risk context and review-prep assistant.
 
 ## Roles
 
 | Role | Primary tool | Responsibility |
 |---|---|---|
-| Orchestrator | Claude | Decide scope, sequence work, adjudicate tradeoffs, stop unsafe runs, synthesize handoffs. |
-| Workhorse | AGY/Antigravity | Execute bounded implementation, multimodal extraction, PDF/image/database work, and long batch preparation. |
-| Reviewer | Codex CLI | Perform adversarial review, commit gates, and high-risk diff review. Prefer running Codex inside AGY when that saves Claude tokens. |
+| Orchestrator | Claude or mission-control Codex | Decide scope, sequence work, adjudicate tradeoffs, stop unsafe runs, synthesize handoffs. |
+| Workhorse | AGY CLI | Execute bounded implementation, multimodal extraction, PDF/image/database work, long verification runs, and autonomous multi-hour runways. |
+| Reviewer | Codex CLI | Perform targeted, strategic, holistic, and comprehensive adversarial review loops. Prefer running Codex inside AGY and iterating corrections to mutual GREEN. |
 | Scout | OpenCode/GLM-5.2 | Read-only repo scouting, stale-doc detection, log triage, test-output clustering, handoff drafting, Codex review-bundle preparation. |
 | Owner | J. Nelson | Gate live data loads, destructive process actions, major architecture shifts, and cross-lane scheduling conflicts. |
 
 ## Default Flow
 
-1. Claude frames the task, constraints, acceptance criteria, and escalation triggers.
-2. AGY performs the implementation or data/extraction work with bounded instructions.
-3. AGY produces a closeout with changed files, commands run, results, unresolved risks, and artifacts.
-4. Codex CLI reviews the diff or artifact bundle. Iterate until GREEN for commit-adjacent work.
-5. Claude adjudicates any disagreement and decides whether to continue, pause, or hand off.
-6. OpenCode may prepare summaries, line-numbered stale-doc reports, and Codex review bundles, but it does not self-certify final readiness.
+1. Active mission control frames the task, constraints, acceptance criteria, and
+   escalation triggers.
+2. Mission control selects Rapid Interactive, Bounded Batch, Autonomous
+   Multi-Hour, or Correction/Recovery mode and writes one file-backed workplan.
+3. AGY executes the bounded runway and runs Codex review/correction loops at
+   the planned checkpoints.
+4. A controller supervises every run over five minutes using PID custody,
+   breadcrumbs, logs, stall thresholds, and required artifact acceptance.
+5. AGY produces a closeout with changed files, commands, results, review
+   dispositions, unresolved risks, and durable artifacts.
+6. Claude or mission-control Codex independently verifies the closeout against
+   live refs, diffs, gates, PR state, and forbidden-action compliance.
+7. OpenCode may prepare summaries, line-numbered stale-doc reports, and Codex
+   review bundles, but it does not self-certify final readiness.
 
 ## Token-Efficiency Protocol
 
-Claude is the scarce orchestration budget. AGY should be used for bounded mechanical engineering work
-once Claude can specify target files, allowed actions, and acceptance checks. Do not reserve AGY only for
+Claude and Codex are scarce orchestration and review budgets. AGY should be used
+for bounded mechanical engineering work once mission control can specify target
+files, allowed actions, and acceptance checks. Do not reserve AGY only for
 dictation, file-copy, or bulk data entry.
 
 Use AGY for:
 
 - Test harnesses and verification scripts.
 - Diagnostic scripts and grep/inventory scripts.
-- Candidate fixes after Claude defines the root cause and acceptance checks.
+- Candidate fixes after mission control defines the root cause and acceptance checks.
 - Fixture generation and repetitive test scaffolds.
 - Report, handoff, and closeout drafting from existing artifacts.
-- Repetitive verification scaffolds that would otherwise become iterative Claude shell probing.
+- Repetitive verification scaffolds that would otherwise become iterative
+  mission-control shell probing.
 
-Claude must do:
+Mission control must do:
 
 - Strategy, sequencing, scope decisions, and owner-facing judgment.
 - Safety and gate decisions.
 - Final verification of AGY output via `git diff`, targeted greps, and repo gates.
 - Codex finding adjudication and disposition.
 
-Before any debugging or fix-review loop expected to take more than two Claude turns, Claude must either
-write a tight AGY brief or state why AGY is inappropriate. Repeated "one more pass" loops are not free;
+Before any debugging or fix-review loop expected to take more than two
+mission-control turns, mission control must either write a tight AGY brief or
+state why AGY is inappropriate. Repeated "one more pass" loops are not free;
 when work drifts from the current project goal, pause and re-scope.
 
 Read Codex review output surgically: verdict, blockers, top findings, and named files first. Do not paste
@@ -132,25 +147,69 @@ Known SSTAC build gate:
 npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10
 ```
 
-The push gate still includes lint, unit tests, e2e tests, and any task-specific verification required by the current workstream.
+The push protocol uses the full six-gate sequence on the final tip:
+`npm run lint` -> `npx tsc --noEmit` -> `npm run test:ci` -> monitored clean
+build -> `npm run test:e2e` -> `npm run docs:gate`, plus any task-specific
+verification required by the current workstream.
 
 ## Long Runs
 
-Any long-running wrapper must have:
+`docs/AGY_USAGE.md` is the authority for SSTAC AGY launches. Any worker expected
+to exceed five minutes must use the `supervise-headless-ai-worker` contract.
+Supervision detects and rejects bad runs; it does not prevent a write-enabled
+worker from mutating a granted root. Never grant the dirty primary checkout to
+an autonomous writer. Use an isolated worktree or an independently enforced
+read-only boundary, and give audit workers pre-captured primary-state receipts.
 
-- Dated log file.
-- Heartbeat or breadcrumb JSON.
-- Process ID and launch command.
-- Stall threshold and restart/resume instructions.
-- Clear stop condition.
+Required properties:
 
-Do not start duplicate runners against the same DB/ledger. Verify process ownership and current command line before killing or restarting anything.
+- One run-scoped prompt and one short owner launch command.
+- A unique run root and an absent or empty controller root.
+- A no-AGY supervisor handshake before the production worker.
+- Wrapper-owned breadcrumb JSON with valid status and non-future UTC progress
+  timestamps.
+- Wrapper and worker PIDs, process start times, executable paths, exact
+  arguments, stdout/stderr logs, and owned-descendant inventory.
+- `RUN_STATE.md`, `COMMAND_LOG.md`, `HEARTBEAT.log`, `RESUME_PROMPT.md`, and
+  task-specific required artifacts.
+- Maximum runtime, phase-aware stall threshold, stop conditions, and retry
+  budget zero unless a separately reviewed controller supports retries.
+- Native exit zero plus valid terminal breadcrumb and accepted artifacts before
+  controller GREEN.
+
+Use `System.Diagnostics.ProcessStartInfo.ArgumentList`. For the live-verified
+Gemini 3.1 Pro High invocation, do not pass `--effort`; AGY rejects it. Never
+use `--dangerously-skip-permissions`.
+
+Do not start duplicate runners against the same DB/ledger. Verify process
+ownership and current command line before proposing any termination. Never kill
+by image name and never adopt another session's worker.
+
+For a multi-hour mission, include a minimum useful runtime and fallback backlog.
+The launch queue is not the entire mission, and AGY must not close early merely
+because the first units are complete.
+
+## Review Depth Inside AGY
+
+AGY invokes Codex itself at planned checkpoints:
+
+- targeted after code, SQL, test, harness, auth, or security-sensitive diffs;
+- strategic before changing architecture, sequencing, or project framing;
+- holistic before milestone closeout across affected surfaces;
+- comprehensive before closing a broad multi-unit autonomous run.
+
+Each checkpoint is review -> finding disposition -> correction -> ripple sweep
+-> fresh re-review. Preserve full receipts and a finding ledger. A worker may
+report GREEN only after mutual-agreement GREEN and any required high-reasoning
+confirmation on identical bytes.
 
 ## Supabase And Live Data
 
 SSTAC extraction and enrichment runs write to scratch databases and sidecar ledgers until explicitly gated.
 
-Do not load to live Supabase until Claude/Codex gates approve the delta. OpenCode and AGY may prepare evidence, but owner/Claude/Codex gate the live load.
+Do not load to live Supabase until the exact operation completes the root
+AGENTS.md review/preflight protocol and the owner explicitly approves it.
+OpenCode and AGY may prepare evidence, but they do not grant live-write authority.
 
 ## Handoff Format
 
@@ -166,11 +225,12 @@ Every AI handoff should include:
 
 ## Escalation Triggers
 
-Escalate to Claude/owner before:
+Escalate to mission control or the owner before:
 
 - Killing or restarting processes.
 - Changing shared `AGENTS.md`, `CLAUDE.md`, `.codex`, `.claude`, `.gemini`, or opencode global settings.
-- Starting an unattended run expected to exceed 30 minutes.
+- Starting an unattended run expected to exceed 30 minutes without an
+  owner-approved launch contract.
 - Writing to live Supabase or production data stores.
 - Modifying migration/auth/security/deploy paths.
 - Proceeding after Codex, AGY, or OpenCode disagree on safety.
@@ -178,11 +238,19 @@ Escalate to Claude/owner before:
 ## Practical Prompt For AGY Workhorse
 
 ```text
-You are the SSTAC workhorse. Follow C:\Projects\SSTAC-Dashboard\SSTAC_AI_PIPELINE.md.
+You are the SSTAC AGY-primary executor. Read:
+- C:\Projects\CLAUDE.md
+- C:\Projects\SSTAC-Dashboard\AGENTS.md
+- C:\Projects\SSTAC-Dashboard\docs\AGY_USAGE.md
+- C:\Projects\SSTAC-Dashboard\SSTAC_AI_PIPELINE.md
 
-Claude owns orchestration. Codex owns final review. You own bounded implementation and evidence production.
+Execute the file-backed workplan for its full bounded runway. Maintain the
+required state, heartbeat, command log, review receipts, and resume artifact.
+Run the specified Codex review/correction loops to mutual GREEN.
 
-Do not write live Supabase. Do not kill processes unless explicitly instructed. Do not start duplicate runners. Produce a closeout with files changed, commands run, artifacts, risks, and the next exact command.
+Do not write live Supabase, mutate scheduler/MCP/Ollama, deploy, merge, clean,
+prune, delete worktrees, kill unowned processes, or broaden staging. Treat
+prior closeouts as claim lists. Produce the contracted artifacts and closeout.
 ```
 
 ## Practical Prompt For OpenCode Scout

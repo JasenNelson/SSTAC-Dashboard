@@ -50,7 +50,7 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 
 ### Core safety + operational rules (authoritative)
 - `docs/AGENTS.md`
-- `docs/GATE_MODE_SOP.md` -- gate-discipline authority (Gate Mode; full push-gate suite lint/unit/monitored build/e2e; commit/push/merge protocols). Cited by CLAUDE.md.
+- `docs/GATE_MODE_SOP.md` -- gate-discipline authority (Gate Mode; full six-gate push suite lint/typecheck/test:ci/monitored build/e2e/docs gate; commit/push/merge protocols). Cited by CLAUDE.md.
 
 ### Documentation archive policy (authoritative)
 - `docs/ARCHIVE_POLICY.md`
@@ -134,6 +134,14 @@ The repo-root upgrade-plan files were authored mid-roadmap and embed grades, wee
 - `docs/regulatory-review/PHASE1_PYRAMID_NAVIGATION_IMPLEMENTATION.md` - Pyramid-navigation implementation proposal. Status unresolved -- target files not in `src/` as of 2026-04-20; tracked in `docs/NEXT_STEPS.md`.
 - `docs/regulatory-review/CODEX_REVIEW_PROMPT.md` - One-shot Codex review prompt for the Local-Engine Routing Plan (historical).
 - Archived pre-correction copies live under `docs/regulatory-review/archive/`
+
+### Agent operations (authoritative)
+- `docs/AGY_USAGE.md` - Canonical SSTAC-specific AGY CLI runbook: mode
+  selection, file-backed autonomous workplans, supervised multi-hour launch,
+  Codex review loops, failure prevention, and acceptance.
+- `SSTAC_AI_PIPELINE.md` - Authoritative multi-AI role split and operational flow
+  for mission control, AGY, Codex, OpenCode, and the owner. Read with
+  `docs/AGY_USAGE.md` before an AGY launch.
 
 ### Agentic OS (reference)
 - `docs/agentic_os_ai_subscriptions_panel_handoff_2026_05_16.md` - Feature handoff for the `/admin/agentic-os/subscriptions` panel + IA refactor (shared layout + sidebar + page-level auth-guard helper). REFERENCE-tier: not a current-status source.

@@ -45,6 +45,11 @@ If a skill's example command contradicts `docs/INDEX.md` or the manifest, the ma
 ## Known stale
 
 The `update-docs/SKILL.md` file currently contains example commands and `F:\` paths that predate the move to `C:/Projects/SSTAC-Dashboard`. Follow the **principles** of the skill (manifest-first edits, smallest diff, register-in-same-diff, gate semantics) but verify any literal command/path against the current manifest before running it. A future pass will correct the SKILL.md examples.
+The `safe-exit/SKILL.md` file is also stale for this checkout: it references
+`F:\Regulatory-Review` scripts and paths. For SSTAC-Dashboard closeout, use the
+repo rule from `AGENTS.md` / `CLAUDE.md`: check `Get-Process node, python
+-ErrorAction SilentlyContinue`, report owned candidates only, and ask the owner
+before terminating any process.
 
 ## What this README is not
 

@@ -1,5 +1,13 @@
 # AGENTS.md for SSTAC & TWG Dashboard
 
+## 2026-07-25 Routing Note
+
+This file remains a behavioral safety reference for data-touching work, especially
+polls, RLS, RPCs, API gates, and historical battle scars. It is not the canonical
+current-status source. For current agent operating rules, start with root
+`AGENTS.md`; for docs navigation, use `docs/INDEX.md`; for volatile facts and
+documentation gates, use `docs/_meta/docs-manifest.json`.
+
 ## 🎯 Project Overview
 A comprehensive dashboard platform for the **Sediment Standards Technical Advisory Committee (SSTAC)** and **Technical Working Group (TWG)**. This platform manages sediment standards development through stakeholder engagement, document management, and administrative tools.
 
