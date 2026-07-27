@@ -1820,7 +1820,9 @@ export function MatrixMap({
               ? 'Site aggregates hidden by Surveyed only.'
               : sampleFiltersActive
                 ? 'Site aggregates hidden by active filters.'
-              : `${visibleAggregateMarkers.length} site aggregates represent ${siteAggregateData.sample_count_total} total samples at centroid-site locations.`}
+                : siteAggregateData.sample_count_label
+                  ? `${visibleAggregateMarkers.length} site aggregates use ${siteAggregateData.sample_count_label} at centroid-site locations.`
+                  : `${visibleAggregateMarkers.length} site aggregates represent ${siteAggregateData.sample_count_total} total samples at centroid-site locations.`}
           </p>
         )}
       </div>
@@ -1963,6 +1965,7 @@ export function filterSamplesCoveredBySiteAggregates(
   if (aggregateMarkers.length === 0) return [...samples];
   const coveredKeys = new Set(
     aggregateMarkers.map((marker) =>
+      marker.sample_suppression_key ??
       `${marker.source_dra_id}:${coordinateClusterId(marker.position[0], marker.position[1])}`,
     ),
   );
@@ -1999,18 +2002,30 @@ function createSiteAggregateMarkerIcon(L: typeof import('leaflet'), aggregate: A
 }
 
 export function createSiteAggregateMarkerHtml(aggregate: AggregateMarker, size = 26): string {
-  const countLabel = aggregate.sample_count_total > 99 ? '99+' : String(aggregate.sample_count_total);
+  const countLabel = aggregate.sample_count_label ?? (aggregate.sample_count_total > 99 ? '99+' : String(aggregate.sample_count_total));
   return (
     `<div aria-label="Site aggregate marker for ${escapeHtml(aggregate.label)}" ` +
     `style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;` +
     `transform:rotate(45deg);border:2px dashed #0f766e;background:#fef3c7;` +
     `box-shadow:0 1px 4px rgba(15,23,42,0.35);">` +
-    `<span style="transform:rotate(-45deg);font:700 9px system-ui,sans-serif;color:#0f172a;">${countLabel}</span>` +
+    // escapeHtml is mandatory here: countLabel derives from the server-supplied
+    // sample_count_label. The DB emits a closed vocabulary ('1','2-9','10-99',
+    // '100+') but the client type is a plain `string`, so nothing guarantees at
+    // runtime that only those four values arrive. The same field is already
+    // escaped in createSiteAggregatePopupContent below; this sink was the one
+    // place it was interpolated raw into Leaflet's divIcon HTML.
+    `<span style="transform:rotate(-45deg);font:700 9px system-ui,sans-serif;color:#0f172a;">${escapeHtml(countLabel)}</span>` +
     `</div>`
   );
 }
 
 function createSiteAggregatePopupContent(aggregate: AggregateMarker): string {
+  const countRows = aggregate.sample_count_label
+    ? `<dt>Samples</dt><dd style="margin:0;font-weight:700;">${escapeHtml(aggregate.sample_count_label)}</dd>`
+    : `
+        <dt>Total samples</dt><dd style="margin:0;font-weight:700;">${aggregate.sample_count_total}</dd>
+        <dt>Surveyed tier</dt><dd style="margin:0;">${aggregate.sample_count_high}</dd>
+        <dt>Centroid tier</dt><dd style="margin:0;">${aggregate.sample_count_medium}</dd>`;
   return `
     <div style="min-width:220px;font-family:system-ui,sans-serif;">
       <h3 style="margin:0 0 8px 0;font-size:14px;font-weight:700;color:#0f172a;">
@@ -2020,9 +2035,7 @@ function createSiteAggregatePopupContent(aggregate: AggregateMarker): string {
         Site aggregate marker -- not a sample position.
       </p>
       <dl style="margin:0;display:grid;grid-template-columns:auto 1fr;gap:3px 8px;font-size:12px;color:#334155;">
-        <dt>Total samples</dt><dd style="margin:0;font-weight:700;">${aggregate.sample_count_total}</dd>
-        <dt>Surveyed tier</dt><dd style="margin:0;">${aggregate.sample_count_high}</dd>
-        <dt>Centroid tier</dt><dd style="margin:0;">${aggregate.sample_count_medium}</dd>
+        ${countRows}
       </dl>
       <p style="margin:8px 0 0 0;font-size:11px;color:#64748b;">
         ${escapeHtml(COORD_TIER_CAPTION[aggregate.coordinate_quality_tier])}

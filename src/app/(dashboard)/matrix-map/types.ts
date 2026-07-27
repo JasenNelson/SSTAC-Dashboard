@@ -153,6 +153,8 @@ export interface MatrixSiteAggregateData {
   site_aggregate_markers: AggregateMarker[];
   site_count: number;
   sample_count_total: number;
+  /** Present when member-safe published aggregates expose bucketed rather than exact counts. */
+  sample_count_label?: string;
   data_snapshot_version: string;
 }
 

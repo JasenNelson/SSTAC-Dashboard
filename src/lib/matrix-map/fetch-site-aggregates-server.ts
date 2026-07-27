@@ -1,5 +1,7 @@
 import 'server-only';
 
+import { logger } from '@/lib/logger';
+
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 import {
@@ -12,19 +14,53 @@ import {
   type AggregateInputSample,
   type CoordinateTier,
 } from './siteAggregates';
-import { toAggregateMarkers } from './siteAggregateMarkers';
+import {
+  markerRadiusForCount,
+  toAggregateMarkers,
+  type AggregateMarker,
+} from './siteAggregateMarkers';
 
 const PAGE_SIZE = 1000;
 const MAX_PAGES = 25;
 const DRA_ID_CHUNK_SIZE = 100;
+const PUBLISHED_AGGREGATE_SOURCE_PREFIX = 'published-aggregate';
+const PUBLISHED_AGGREGATE_SNAPSHOT_FALLBACK = 'site-aggregate-publications-v1';
+
+/**
+ * Discriminates WHY an aggregate fetch produced no data. Previously every failure
+ * collapsed into the single string 'Site aggregates temporarily unavailable.', so
+ * a caller could not tell "the member-safe RPC is not deployed" from "the query
+ * failed" from "we exceeded the page cap". Under the fail-closed contract below
+ * that distinction is load-bearing, because "no published aggregates exist" and
+ * "we refused to serve a non-member-safe shape" must not look identical.
+ */
+export type SiteAggregateFetchErrorKind =
+  | 'client_unavailable'
+  | 'member_rpc_unavailable'
+  | 'query_failed'
+  | 'page_cap_exceeded';
 
 export interface FetchSiteAggregatesServerSideResult {
   siteAggregateData: MatrixSiteAggregateData;
   siteAggregateFetchErrorMessage: string | null;
+  /** Optional so existing callers that construct this shape stay valid. */
+  siteAggregateFetchErrorKind?: SiteAggregateFetchErrorKind | null;
 }
 
+/** Internal discriminated result of the member-safe RPC attempt. */
+type PublishedAggregateAttempt =
+  | { status: 'ok'; data: MatrixSiteAggregateData }
+  | { status: 'rpc_unavailable' };
+
 interface PagedQuery<T> {
-  range: (from: number, to: number) => Promise<{ data: T[] | null; error: { message?: string } | null }>;
+  range: (from: number, to: number) => Promise<{ data: T[] | null; error: QueryError | null }>;
+}
+
+interface QueryError {
+  code?: string;
+  message?: string;
+  details?: string;
+  hint?: string;
 }
 
 type RawSampleRow = {
@@ -39,6 +75,23 @@ type RawDraRow = {
   id?: unknown;
   title?: unknown;
   public?: unknown;
+};
+
+type RawPublishedAggregateRow = {
+  aggregate_id?: unknown;
+  label?: unknown;
+  representative_latitude?: unknown;
+  representative_longitude?: unknown;
+  coordinate_quality_tier?: unknown;
+  sample_count_bucket?: unknown;
+  data_snapshot_version?: unknown;
+  visible_sample_suppression_key?: unknown;
+};
+
+type SampleCountBucket = '1' | '2-9' | '10-99' | '100+';
+
+type MatrixMapSchemaRpcClient = {
+  rpc?: (functionName: string) => PagedQuery<RawPublishedAggregateRow>;
 };
 
 async function fetchAllPages<T>(query: PagedQuery<T>): Promise<T[]> {
@@ -65,6 +118,19 @@ function asFiniteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
 }
 
+function asSampleCountBucket(value: unknown): SampleCountBucket | null {
+  return value === '1' || value === '2-9' || value === '10-99' || value === '100+'
+    ? value
+    : null;
+}
+
+function bucketRepresentativeCount(bucket: SampleCountBucket): number {
+  if (bucket === '1') return 1;
+  if (bucket === '2-9') return 2;
+  if (bucket === '10-99') return 10;
+  return 100;
+}
+
 function normalizeSample(row: RawSampleRow): AggregateInputSample | null {
   const tier = asCoordinateTier(row.coordinate_quality_tier);
   if (!tier) return null;
@@ -86,16 +152,148 @@ function normalizeDra(row: RawDraRow): AggregateInputDra | null {
   };
 }
 
+function normalizePublishedAggregate(row: RawPublishedAggregateRow): AggregateMarker | null {
+  // A null/non-object row previously threw a TypeError on the first property
+  // access below. That exception escaped to the outer catch and discarded EVERY
+  // otherwise-valid marker in the payload -- a single malformed row poisoned the
+  // whole response and the caller silently received the empty fallback.
+  if (!row || typeof row !== 'object') return null;
+
+  const aggregateId = typeof row.aggregate_id === 'string' ? row.aggregate_id : null;
+  const label = typeof row.label === 'string' && row.label.trim().length > 0
+    ? row.label
+    : null;
+  const latitude = asFiniteNumber(row.representative_latitude);
+  const longitude = asFiniteNumber(row.representative_longitude);
+  const tier = asCoordinateTier(row.coordinate_quality_tier);
+  const bucket = asSampleCountBucket(row.sample_count_bucket);
+  const sampleSuppressionKey = typeof row.visible_sample_suppression_key === 'string' && row.visible_sample_suppression_key.length > 0
+    ? row.visible_sample_suppression_key
+    : undefined;
+  if (!aggregateId || !label || latitude === null || longitude === null || !tier || !bucket) {
+    return null;
+  }
+
+  const representativeCount = bucketRepresentativeCount(bucket);
+  return {
+    key: aggregateId,
+    source_dra_id: `${PUBLISHED_AGGREGATE_SOURCE_PREFIX}:${aggregateId}`,
+    position: [latitude, longitude],
+    label,
+    coordinate_quality_tier: tier,
+    sample_count_total: representativeCount,
+    sample_count_high: 0,
+    sample_count_medium: representativeCount,
+    sample_count_label: bucket,
+    sample_suppression_key: sampleSuppressionKey,
+    radius: markerRadiusForCount(representativeCount),
+  };
+}
+
+function isMissingPublishedAggregateRpcError(error: QueryError): boolean {
+  if (error.code === 'PGRST202') return true;
+  const text = [error.message, error.details, error.hint]
+    .filter((value): value is string => typeof value === 'string')
+    .join(' ')
+    .toLowerCase();
+  return (
+    text.includes('fetch_published_site_aggregates') &&
+    (text.includes('could not find') ||
+      text.includes('not found') ||
+      text.includes('does not exist') ||
+      text.includes('schema cache'))
+  );
+}
+
+async function fetchPublishedSiteAggregatesServerSide(
+  supabase: SupabaseClient,
+): Promise<PublishedAggregateAttempt> {
+  const schemaClient = supabase.schema('matrix_map') as unknown as MatrixMapSchemaRpcClient;
+  if (typeof schemaClient.rpc !== 'function') {
+    // Previously returned null with NO log at all, so this path was completely
+    // invisible: the map silently served the legacy shape with no signal anywhere.
+    logger.warn('[matrix-map] schema client exposes no rpc(); member-safe aggregate path unavailable');
+    return { status: 'rpc_unavailable' };
+  }
+
+  const rpcQuery = schemaClient.rpc('fetch_published_site_aggregates');
+  const rows: RawPublishedAggregateRow[] = [];
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const from = page * PAGE_SIZE;
+    const to = from + PAGE_SIZE - 1;
+    const { data, error } = await rpcQuery.range(from, to);
+    if (error) {
+      if (isMissingPublishedAggregateRpcError(error)) {
+        logger.warn('[matrix-map] fetch_published_site_aggregates RPC unavailable; failing closed', {
+          code: error.code ?? null,
+        });
+        return { status: 'rpc_unavailable' };
+      }
+      throw new Error(error.message ?? 'published site aggregate query failed');
+    }
+    const batch = data ?? [];
+    rows.push(...batch);
+    if (batch.length < PAGE_SIZE) break;
+    if (page === MAX_PAGES - 1) {
+      throw new Error('published site aggregate query exceeded page cap');
+    }
+  }
+
+  const markers = rows
+    .map(normalizePublishedAggregate)
+    .filter((marker): marker is AggregateMarker => Boolean(marker));
+
+  // Malformed rows are dropped rather than failing the whole payload, but the
+  // drop must not be SILENT -- an unobservable discard is how a projection
+  // regression ships unnoticed.
+  const droppedRowCount = rows.length - markers.length;
+  if (droppedRowCount > 0) {
+    logger.warn('[matrix-map] dropped malformed published aggregate rows', {
+      dropped: droppedRowCount,
+      received: rows.length,
+    });
+  }
+
+  // Mixed snapshot versions: `.find()` silently returned the FIRST version, so a
+  // payload spanning a republish boundary advertised one snapshot key while
+  // carrying markers from several. Still deterministic (first wins, for
+  // compatibility), but no longer silent.
+  const snapshotVersions = [
+    ...new Set(
+      rows
+        .map((row) => (row && typeof row === 'object' ? row.data_snapshot_version : undefined))
+        .filter((value): value is string => typeof value === 'string' && value.length > 0),
+    ),
+  ];
+  if (snapshotVersions.length > 1) {
+    logger.warn('[matrix-map] published aggregates span multiple data_snapshot_version values', {
+      versions: snapshotVersions.length,
+      selected: snapshotVersions[0],
+    });
+  }
+
+  return {
+    status: 'ok',
+    data: {
+      site_aggregate_markers: markers,
+      site_count: markers.length,
+      sample_count_total: markers.reduce((total, marker) => total + marker.sample_count_total, 0),
+      sample_count_label: markers.length > 0 ? 'bucketed sample counts' : undefined,
+      data_snapshot_version: snapshotVersions[0] ?? PUBLISHED_AGGREGATE_SNAPSHOT_FALLBACK,
+    },
+  };
+}
+
 /**
- * Fixed, caller-independent Option C aggregate read over the caller's
- * authenticated Matrix Map RLS surface. This helper accepts no bbox, radius,
- * substance, date, classification, or other caller-supplied filter, so counts
- * cannot be narrowed into an oracle. It also does not use service-role
- * credentials.
+ * Fixed, caller-independent Option C aggregate read. When the audited publication
+ * primitive is installed, this helper uses the member-safe RPC projection first:
+ * opaque ids, neutral labels, bucketed counts, and no raw DRA provenance. Before
+ * that migration exists, it falls back to the original authenticated Matrix Map
+ * RLS surface so the deployed pages keep their current behavior.
  *
  * Callers must pass a server-side Supabase client with the user's JWT attached.
- * RLS/allowlist/private grants decide which rows are visible. The helper returns
- * aggregate markers only, never sample rows.
+ * The helper accepts no bbox, radius, substance, date, classification, or other
+ * caller-supplied filter, so counts cannot be narrowed into an oracle.
  */
 export async function fetchMatrixMapSiteAggregatesServerSide(
   supabase: SupabaseClient | null,
@@ -104,9 +302,73 @@ export async function fetchMatrixMapSiteAggregatesServerSide(
     return {
       siteAggregateData: EMPTY_MATRIX_SITE_AGGREGATE_DATA,
       siteAggregateFetchErrorMessage: 'Site aggregates temporarily unavailable.',
+      siteAggregateFetchErrorKind: 'client_unavailable',
     };
   }
 
+  try {
+    const attempt = await fetchPublishedSiteAggregatesServerSide(supabase);
+    if (attempt.status === 'ok') {
+      return {
+        siteAggregateData: attempt.data,
+        siteAggregateFetchErrorMessage: null,
+        siteAggregateFetchErrorKind: null,
+      };
+    }
+
+    // ---------------------------------------------------------------------
+    // D1(c) FAIL_CLOSED - owner-approved 2026-07-27.
+    //
+    // When the member-safe RPC is unavailable we return NO aggregate markers
+    // and an explicit unavailable state. We do NOT fall through to the legacy
+    // RLS recomputation below.
+    //
+    // Why: the legacy path emits a DIFFERENT, wider shape -- raw DRA ids and
+    // titles, exact per-tier counts, and full-precision coordinates -- versus
+    // the published member contract's opaque ids, neutral labels, bucketed
+    // counts and 3-decimal coordinates. Silently substituting it means the
+    // caller cannot tell which contract it received, so a publication
+    // primitive that exists precisely to bound member exposure would quietly
+    // degrade to the unbounded path whenever it was missing. Everything the
+    // legacy path exposes is permitted by existing RLS, so this is a contract
+    // and release-safety failure rather than a privilege leak -- but "allowed
+    // by RLS" is not the same as "inside the published member contract".
+    //
+    // An empty map with an honest unavailable banner is strictly better than a
+    // populated map of unknown provenance.
+    // ---------------------------------------------------------------------
+    logger.warn('[matrix-map] member-safe aggregate RPC unavailable; failing closed (D1c)');
+    return {
+      siteAggregateData: EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+      siteAggregateFetchErrorMessage:
+        'Site aggregates are unavailable until the published aggregate service is deployed.',
+      siteAggregateFetchErrorKind: 'member_rpc_unavailable',
+    };
+  } catch (error) {
+    const isPageCap =
+      error instanceof Error && error.message.includes('exceeded page cap');
+    logger.error('[matrix-map] site aggregate fetch failed', {
+      kind: isPageCap ? 'page_cap_exceeded' : 'query_failed',
+      message: error instanceof Error ? error.message : String(error),
+    });
+    return {
+      siteAggregateData: EMPTY_MATRIX_SITE_AGGREGATE_DATA,
+      siteAggregateFetchErrorMessage: 'Site aggregates temporarily unavailable.',
+      siteAggregateFetchErrorKind: isPageCap ? 'page_cap_exceeded' : 'query_failed',
+    };
+  }
+}
+
+/**
+ * LEGACY RLS recomputation. Retained for the ADMIN preview surface and for
+ * reference, but deliberately NO LONGER reachable from the ordinary member path
+ * above (see the D1(c) FAIL_CLOSED block). It emits the wider admin-shaped
+ * projection and must never be served to members as a substitute for the
+ * published member contract.
+ */
+export async function fetchLegacyRlsSiteAggregatesServerSide(
+  supabase: SupabaseClient,
+): Promise<FetchSiteAggregatesServerSideResult> {
   try {
     const draQuery = supabase
       .schema('matrix_map')
@@ -164,10 +426,13 @@ export async function fetchMatrixMapSiteAggregatesServerSide(
       siteAggregateFetchErrorMessage: null,
     };
   } catch (error) {
-    console.error('[matrix-map] site aggregate fetch failed:', error);
+    logger.error('[matrix-map] legacy RLS site aggregate fetch failed', {
+      message: error instanceof Error ? error.message : String(error),
+    });
     return {
       siteAggregateData: EMPTY_MATRIX_SITE_AGGREGATE_DATA,
       siteAggregateFetchErrorMessage: 'Site aggregates temporarily unavailable.',
+      siteAggregateFetchErrorKind: 'query_failed',
     };
   }
 }

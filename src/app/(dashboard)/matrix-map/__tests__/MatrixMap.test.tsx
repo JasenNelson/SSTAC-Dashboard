@@ -189,6 +189,89 @@ describe('MatrixMap (Path-B fork)', () => {
     expect(html).not.toMatch(/sample_id|station_id|measurement/i);
   });
 
+  describe('marker HTML injection regression (sample_count_label sink)', () => {
+    // The bucket label is server-supplied. The DB emits a closed vocabulary
+    // ('1','2-9','10-99','100+') but the client type is a plain `string`, so
+    // nothing guarantees at runtime that only those four values arrive. This
+    // value was previously interpolated RAW into Leaflet's divIcon HTML while
+    // the adjacent aggregate.label was escaped.
+
+    it('escapes angle brackets in sample_count_label', () => {
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        sample_count_label: '<b>2-9</b>',
+      });
+      expect(html).toContain('&lt;b&gt;2-9&lt;/b&gt;');
+      expect(html).not.toContain('<b>');
+    });
+
+    it('escapes ampersands in sample_count_label', () => {
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        sample_count_label: 'A & B',
+      });
+      expect(html).toContain('&amp;');
+      expect(html).not.toMatch(/A & B/);
+    });
+
+    it('escapes double and single quotes in sample_count_label', () => {
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        sample_count_label: `"quoted" 'single'`,
+      });
+      expect(html).not.toContain('"quoted"');
+      expect(html).not.toContain("'single'");
+      expect(html).toMatch(/&quot;|&#34;|&#039;|&#39;|&apos;/);
+    });
+
+    it('neutralises an attempted HTML tag with an event handler', () => {
+      const payload = '<img src=x onerror="alert(1)">';
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        sample_count_label: payload,
+      });
+      // The literal tag must not survive as markup.
+      expect(html).not.toContain('<img');
+      expect(html).not.toContain('onerror="alert(1)"');
+      expect(html).toContain('&lt;img');
+      // And it must not have been silently dropped either -- it should appear,
+      // escaped, so the operator can see the malformed value.
+      expect(html).toContain('&lt;');
+    });
+
+    it('escapes the numeric fallback path as well', () => {
+      // When sample_count_label is absent the label is derived from a number,
+      // which is inherently safe -- assert it still renders and no raw tag
+      // characters leak from the surrounding template.
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        sample_count_label: undefined,
+        sample_count_total: 7,
+      });
+      expect(html).toContain('>7<');
+    });
+
+    it('keeps the escaping contract on the aria-label as well', () => {
+      const html = createSiteAggregateMarkerHtml({
+        ...aggregateMarker,
+        label: '<script>x</script>',
+        sample_count_label: '2-9',
+      });
+      expect(html).not.toContain('<script>');
+      expect(html).toContain('&lt;script&gt;');
+    });
+  });
+
+  // NOTE: the member-payload allow-list contract is deliberately NOT asserted
+  // here. A version of it living in this file could only inspect a hand-built
+  // AggregateMarker fixture, which is vacuous against the production boundary:
+  // if normalizePublishedAggregate began copying coordinate_source or another
+  // private field, the fixture would not change and every assertion would still
+  // pass. The authoritative version asserts the allow-list and forbidden-field
+  // absence on a marker produced by the REAL RPC path, and lives in
+  // src/lib/matrix-map/__tests__/fetch-site-aggregates-server.test.ts under
+  // "member payload boundary contract".
+
   it('filters aggregate-covered centroid samples out of sample UI candidates', () => {
     const coveredCentroid = matrixSample({ id: 'covered' });
     const surveyed = matrixSample({
@@ -207,6 +290,28 @@ describe('MatrixMap (Path-B fork)', () => {
     );
     expect(filtered.map((sample) => sample.id)).toEqual(['surveyed', 'other-cluster']);
   });
+  it('filters centroid samples using a non-display suppression key from published aggregates', () => {
+    const coveredCentroid = matrixSample({ id: 'covered' });
+    const surveyed = matrixSample({
+      id: 'surveyed',
+      coordinate_quality_tier: 'high',
+      coordinate_source: 'surveyed',
+    });
+    const publishedMarker: AggregateMarker = {
+      ...aggregateMarker,
+      key: 'published-aggregate-1',
+      source_dra_id: 'published-aggregate:published-aggregate-1',
+      sample_suppression_key: 'dra-1:49.28270,-123.12070',
+      sample_count_label: '2-9',
+    };
+
+    const filtered = filterSamplesCoveredBySiteAggregates(
+      [coveredCentroid, surveyed],
+      [publishedMarker],
+    );
+    expect(filtered.map((sample) => sample.id)).toEqual(['surveyed']);
+  });
+
 
   it('excludes aggregate-covered centroid samples from the list and All selection', () => {
     const coveredCentroid = matrixSample({

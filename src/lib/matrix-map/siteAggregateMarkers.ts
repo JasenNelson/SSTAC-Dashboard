@@ -22,6 +22,10 @@ export interface AggregateMarker {
   /** Stable React key. Same value as the aggregate's `aggregate_id`. */
   key: string;
   source_dra_id: string;
+  /** Optional bucket label for member-safe published aggregates. */
+  sample_count_label?: string;
+  /** Optional non-display key used only to suppress duplicate visible centroid samples. */
+  sample_suppression_key?: string;
   /** Leaflet order: [latitude, longitude]. */
   position: [number, number];
   label: string;
