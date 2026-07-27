@@ -1,7 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
 
 import { EMPTY_MATRIX_SITE_AGGREGATE_DATA } from '@/app/(dashboard)/matrix-map/types';
-import { fetchMatrixMapSiteAggregatesServerSide } from '../fetch-site-aggregates-server';
+import {
+  fetchLegacyRlsSiteAggregatesServerSide,
+  fetchMatrixMapSiteAggregatesServerSide,
+} from '../fetch-site-aggregates-server';
 
 type QueryCall = {
   table: string;
@@ -223,7 +226,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
     expect(result.siteAggregateFetchErrorMessage).toMatch(/temporarily unavailable/);
   });
 
-  it('derives public medium-tier aggregate markers from the authenticated RLS projection before the RPC is installed', async () => {
+  it('derives public medium-tier aggregate markers from the authenticated RLS projection (legacy RLS path, no longer member-reachable)', async () => {
     const { client, calls } = mockClient({
       dras: [
         { id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false },
@@ -239,7 +242,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       ],
     });
 
-    const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+    const result = await fetchLegacyRlsSiteAggregatesServerSide(client as never);
 
     expect(result.siteAggregateFetchErrorMessage).toBeNull();
     expect(result.siteAggregateData.site_count).toBe(1);
@@ -265,7 +268,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
     expect(JSON.stringify(sampleCall)).not.toMatch(/sample_id|station_id|bnrrm_station_id|measurement|geometry/i);
   });
 
-  it('uses RLS-visible grant DRAs without opening unseen private DRAs before the RPC is installed', async () => {
+  it('uses RLS-visible grant DRAs without opening unseen private DRAs (legacy RLS path, no longer member-reachable)', async () => {
     const { client, calls } = mockClient({
       dras: [
         { id: DRA_PRIVATE, title: 'Grant-visible DRA', public: false, is_deleted: false },
@@ -279,7 +282,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       ],
     });
 
-    const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+    const result = await fetchLegacyRlsSiteAggregatesServerSide(client as never);
 
     expect(result.siteAggregateFetchErrorMessage).toBeNull();
     expect(result.siteAggregateData.site_count).toBe(2);
@@ -296,7 +299,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       .not.toContain(DRA_PRIVATE_UNSEEN);
   });
 
-  it('emits centroid provenance for mixed-tier aggregate markers before the RPC is installed', async () => {
+  it('emits centroid provenance for mixed-tier aggregate markers (legacy RLS path, no longer member-reachable)', async () => {
     const { client } = mockClient({
       dras: [
         { id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false },
@@ -308,7 +311,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       ],
     });
 
-    const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+    const result = await fetchLegacyRlsSiteAggregatesServerSide(client as never);
 
     expect(result.siteAggregateData.site_aggregate_markers[0]).toMatchObject({
       source_dra_id: DRA_PUBLIC,
@@ -319,7 +322,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
     });
   });
 
-  it('chunks large visible DRA id sets before reading samples before the RPC is installed', async () => {
+  it('chunks large visible DRA id sets before reading samples (legacy RLS path, no longer member-reachable)', async () => {
     const dras = Array.from({ length: 205 }, (_, index) => ({
       id: `dra-${String(index).padStart(3, '0')}`,
       title: `DRA ${index}`,
@@ -335,7 +338,7 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       ],
     });
 
-    const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+    const result = await fetchLegacyRlsSiteAggregatesServerSide(client as never);
 
     expect(result.siteAggregateFetchErrorMessage).toBeNull();
     expect(result.siteAggregateData.site_count).toBe(3);
@@ -357,15 +360,161 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
     expect(result.siteAggregateFetchErrorMessage).toMatch(/temporarily unavailable/);
   });
 
-  it('returns an empty fallback on query failure before the RPC is installed', async () => {
+  it('returns an empty fallback on query failure (legacy RLS path, no longer member-reachable)', async () => {
     const { client } = mockClient({
       dras: [{ id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false }],
       samples: [sample({ source_dra_id: DRA_PUBLIC })],
       errorTable: 'samples',
     });
 
-    const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+    const result = await fetchLegacyRlsSiteAggregatesServerSide(client as never);
     expect(result.siteAggregateData).toEqual(EMPTY_MATRIX_SITE_AGGREGATE_DATA);
     expect(result.siteAggregateFetchErrorMessage).toMatch(/temporarily unavailable/);
+  });
+
+  describe('D1(c) fail-closed', () => {
+    it('returns no markers and an explicit unavailable state when the member-safe RPC is missing', async () => {
+      const { client } = mockClient({
+        dras: [{ id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false }],
+        samples: [sample({ source_dra_id: DRA_PUBLIC })],
+        rpcError: { code: 'PGRST202', message: 'missing function' },
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+
+      expect(result.siteAggregateData.site_aggregate_markers).toHaveLength(0);
+      expect(result.siteAggregateData.site_count).toBe(0);
+      expect(result.siteAggregateFetchErrorMessage).toEqual(expect.any(String));
+      expect(result.siteAggregateFetchErrorMessage).toMatch(/unavailable/);
+      expect(result.siteAggregateFetchErrorKind).toBe('member_rpc_unavailable');
+    });
+
+    it('does not invoke the legacy RLS recomputation when the member-safe RPC is missing', async () => {
+      const fromSpy = vi.fn();
+      const client = {
+        schema: vi.fn((schemaName: string) => {
+          expect(schemaName).toBe('matrix_map');
+          return {
+            from: fromSpy,
+            rpc: vi.fn(() => ({
+              range: vi.fn(async () => ({
+                data: null,
+                error: { code: 'PGRST202', message: 'missing function' },
+              })),
+            })),
+          };
+        }),
+      };
+
+      await fetchMatrixMapSiteAggregatesServerSide(client as never);
+
+      expect(fromSpy).not.toHaveBeenCalled();
+    });
+
+    it('distinguishes an empty published result from an unavailable service', async () => {
+      const { client } = mockClient({
+        dras: [],
+        samples: [],
+        publishedAggregates: [],
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+
+      expect(result.siteAggregateData.site_aggregate_markers).toHaveLength(0);
+      expect(result.siteAggregateFetchErrorMessage).toBeNull();
+      expect(result.siteAggregateFetchErrorKind ?? null).toBeNull();
+    });
+  });
+
+  describe('member payload boundary contract', () => {
+    // This asserts the allow-list on a marker PRODUCED BY THE REAL CODE PATH,
+    // not on a hand-built fixture. A fixture-based version of this test is
+    // vacuous: if normalizePublishedAggregate started copying coordinate_source
+    // or any other private field, a hand-written fixture would not change and
+    // every assertion would still pass. The RPC row below deliberately CARRIES
+    // private fields so the test proves they are dropped in normalization.
+    const PRIVATE_FIELD_ROW = {
+      aggregate_id: PUBLISHED_AGGREGATE_ID,
+      label: 'Owner-reviewed site',
+      representative_latitude: 49.28271234,
+      representative_longitude: -123.12071234,
+      coordinate_quality_tier: 'medium',
+      sample_count_bucket: '10-99',
+      data_snapshot_version: 'snapshot-2026-07-24',
+      visible_sample_suppression_key: `${DRA_PUBLIC}:49.28270,-123.12070`,
+      // Private / admin-shaped fields that must NOT reach the member marker:
+      coordinate_source: 'bc-csr-centroid',
+      source_dra_id: DRA_PUBLIC,
+      title: 'Confidential DRA Title',
+      source_sample_hash: 'deadbeef',
+      sample_count_total: 42,
+      sample_count_high: 7,
+      sample_count_low: 3,
+      distinct_point_count: 5,
+    };
+
+    it('emits exactly the allow-listed member marker keys from the real RPC path', async () => {
+      const { client } = mockClient({
+        dras: [{ id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false }],
+        samples: [],
+        publishedAggregates: [PRIVATE_FIELD_ROW],
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+      const marker = result.siteAggregateData.site_aggregate_markers[0];
+
+      expect(marker).toBeDefined();
+      expect(Object.keys(marker).sort()).toEqual(
+        [
+          'key',
+          'label',
+          'position',
+          'coordinate_quality_tier',
+          'sample_count_total',
+          'sample_count_high',
+          'sample_count_medium',
+          'sample_count_label',
+          'sample_suppression_key',
+          'radius',
+          'source_dra_id',
+        ].sort(),
+      );
+    });
+
+    it('drops every private field carried on the RPC row', async () => {
+      const { client } = mockClient({
+        dras: [{ id: DRA_PUBLIC, title: 'Public DRA', public: true, is_deleted: false }],
+        samples: [],
+        publishedAggregates: [PRIVATE_FIELD_ROW],
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+      const marker = result.siteAggregateData.site_aggregate_markers[0];
+
+      for (const forbidden of [
+        'coordinate_source',
+        'title',
+        'source_sample_hash',
+        'sample_count_low',
+        'distinct_point_count',
+        'representative_latitude',
+        'representative_longitude',
+        'data_snapshot_version',
+      ]) {
+        expect(marker).not.toHaveProperty(forbidden);
+      }
+
+      // source_dra_id exists but MUST be the synthetic opaque id, never the raw one.
+      expect(marker.source_dra_id).toBe(`published-aggregate:${PUBLISHED_AGGREGATE_ID}`);
+      expect(marker.source_dra_id).not.toContain(DRA_PUBLIC);
+
+      // Counts must come from the BUCKET, not the exact server-side totals.
+      expect(marker.sample_count_total).not.toBe(42);
+      expect(marker.sample_count_high).toBe(0);
+      expect(marker.sample_count_label).toBe('10-99');
+
+      // The whole serialized payload must not leak the confidential title.
+      expect(JSON.stringify(result.siteAggregateData)).not.toContain('Confidential DRA Title');
+    });
   });
 });

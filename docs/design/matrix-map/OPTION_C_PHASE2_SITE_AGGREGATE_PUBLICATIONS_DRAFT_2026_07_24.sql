@@ -203,9 +203,24 @@ BEGIN
     END IF;
 
     IF current_setting('matrix_map.audited_site_aggregate_publication', true) IS DISTINCT FROM '1' THEN
-      RAISE EXCEPTION
-        'site aggregate publication UPDATE seen outside matrix_map.flip_site_aggregate_public audited path'
-        USING ERRCODE = '42501';
+      IF current_setting('matrix_map.audited_site_aggregate_candidate', true) = '1' THEN
+        -- Candidate upsert path: reject any changes to publication metadata
+        IF NEW.is_published IS DISTINCT FROM OLD.is_published
+           OR NEW.published_at IS DISTINCT FROM OLD.published_at
+           OR NEW.published_by IS DISTINCT FROM OLD.published_by
+           OR NEW.publish_reason IS DISTINCT FROM OLD.publish_reason
+           OR NEW.unpublished_at IS DISTINCT FROM OLD.unpublished_at
+           OR NEW.unpublished_by IS DISTINCT FROM OLD.unpublished_by
+           OR NEW.unpublish_reason IS DISTINCT FROM OLD.unpublish_reason THEN
+          RAISE EXCEPTION
+            'site aggregate candidate UPDATE cannot change publication state'
+            USING ERRCODE = '42501';
+        END IF;
+      ELSE
+        RAISE EXCEPTION
+          'site aggregate publication UPDATE seen outside matrix_map.flip_site_aggregate_public or audited candidate path'
+          USING ERRCODE = '42501';
+      END IF;
     END IF;
   END IF;
 
@@ -812,8 +827,232 @@ REVOKE ALL ON matrix_map.site_aggregate_publications
 REVOKE ALL ON matrix_map.site_aggregate_publication_audit
   FROM PUBLIC, anon, authenticated, service_role;
 
-GRANT SELECT, UPDATE ON matrix_map.site_aggregate_publications TO matrix_map_owner;
+GRANT SELECT, INSERT, UPDATE ON matrix_map.site_aggregate_publications TO matrix_map_owner;
 GRANT SELECT, INSERT ON matrix_map.site_aggregate_publication_audit TO matrix_map_owner;
+
+CREATE TABLE IF NOT EXISTS matrix_map.site_aggregate_candidate_audit (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  publication_id uuid,
+  source_dra_id uuid NOT NULL,
+  coordinate_cluster_id text NOT NULL,
+  action text NOT NULL CHECK (action IN ('create', 'refresh')),
+  prior_snapshot jsonb,
+  new_snapshot jsonb NOT NULL,
+  reason text NOT NULL,
+  changed_by uuid NOT NULL,
+  changed_by_email text NOT NULL,
+  changed_at timestamptz NOT NULL DEFAULT now()
+);
+
+COMMENT ON TABLE matrix_map.site_aggregate_candidate_audit IS
+  'Audit log for Option C candidate creation and refresh. Written only by matrix_map.upsert_site_aggregate_candidate(...).';
+
+CREATE INDEX IF NOT EXISTS site_aggregate_candidate_audit_publication_idx
+  ON matrix_map.site_aggregate_candidate_audit (publication_id, changed_at DESC);
+
+ALTER TABLE matrix_map.site_aggregate_candidate_audit ENABLE ROW LEVEL SECURITY;
+ALTER TABLE matrix_map.site_aggregate_candidate_audit FORCE ROW LEVEL SECURITY;
+
+CREATE POLICY site_aggregate_candidate_audit_no_direct_select
+  ON matrix_map.site_aggregate_candidate_audit
+  FOR SELECT TO authenticated USING (false);
+
+REVOKE ALL ON matrix_map.site_aggregate_candidate_audit FROM PUBLIC, anon, authenticated, service_role;
+GRANT SELECT, INSERT ON matrix_map.site_aggregate_candidate_audit TO matrix_map_owner;
+
+CREATE OR REPLACE FUNCTION matrix_map.upsert_site_aggregate_candidate(
+  p_source_dra_id uuid,
+  p_coordinate_cluster_id text,
+  p_member_display_label text,
+  p_actor_id uuid,
+  p_reason text
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = matrix_map, public, pg_temp
+AS $$
+DECLARE
+  v_uid uuid;
+  v_claims jsonb;
+  v_actor_email text;
+  v_is_authorized boolean;
+  v_existing_id uuid;
+  v_is_published boolean;
+  v_prior_snapshot jsonb;
+  v_snap RECORD;
+  v_action text;
+BEGIN
+  v_uid := matrix_map.current_user_id();
+  v_claims := matrix_map.jwt_claims();
+
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate must be called from an authenticated user context' USING ERRCODE = '42501';
+  END IF;
+
+  IF v_uid <> p_actor_id THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate actor_id (%) must match caller jwt sub (%)', p_actor_id, v_uid USING ERRCODE = '42501';
+  END IF;
+
+  IF lower(current_setting('transaction_isolation')) IS DISTINCT FROM 'read committed' THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate requires read committed transaction isolation' USING ERRCODE = 'UE500';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = v_uid AND role IN ('admin', 'matrix_admin')
+  ) INTO v_is_authorized;
+
+  IF NOT v_is_authorized THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate requires admin or matrix_admin role' USING ERRCODE = '42501';
+  END IF;
+
+  IF p_member_display_label IS NULL OR length(trim(p_member_display_label)) = 0 THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate requires a non-empty member_display_label' USING ERRCODE = 'UE422';
+  END IF;
+
+  -- DEFENSE IN DEPTH, NOT ROUTE-ONLY. `member_display_label` is stored and served to
+  -- members verbatim. The API route rejects a label carrying the raw source_dra_id, but
+  -- this RPC is GRANTed EXECUTE to `authenticated`, so any admin can call it directly
+  -- (e.g. via the Supabase client library or REST) and bypass the route entirely. The
+  -- guard must therefore live here too, before any write, so raw DRA provenance can never
+  -- reach a published member label regardless of caller. Message stays free of the actual
+  -- id value.
+  IF position(lower(p_source_dra_id::text) IN lower(trim(p_member_display_label))) > 0 THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate member_display_label must not contain the source DRA identifier' USING ERRCODE = 'UE422';
+  END IF;
+
+  IF p_reason IS NULL OR length(trim(p_reason)) = 0 THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate requires a non-empty reason' USING ERRCODE = 'UE422';
+  END IF;
+
+  v_actor_email := v_claims ->> 'email';
+  IF v_actor_email IS NULL OR length(trim(v_actor_email)) = 0 THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate could not resolve actor email from JWT' USING ERRCODE = '42501';
+  END IF;
+
+  -- 1. Lock existing row (if any) to prevent concurrent publish/refresh races
+  SELECT id, is_published, to_jsonb(t) INTO v_existing_id, v_is_published, v_prior_snapshot
+  FROM matrix_map.site_aggregate_publications t
+  WHERE source_dra_id = p_source_dra_id AND coordinate_cluster_id = p_coordinate_cluster_id
+  FOR UPDATE;
+
+  IF FOUND AND v_is_published THEN
+    RAISE EXCEPTION 'candidate % is already published and cannot be refreshed silently', v_existing_id USING ERRCODE = 'UE409';
+  END IF;
+
+  v_action := CASE WHEN FOUND THEN 'refresh' ELSE 'create' END;
+
+  -- 2. Lock sources and compute snapshot
+  PERFORM matrix_map.lock_site_aggregate_publication_sources();
+
+  SELECT * INTO v_snap
+  FROM matrix_map.current_site_aggregate_snapshot(p_source_dra_id, p_coordinate_cluster_id);
+
+  IF v_snap IS NULL OR v_snap.sample_count_total IS NULL OR v_snap.sample_count_total = 0 THEN
+    RAISE EXCEPTION 'snapshot is empty' USING ERRCODE = 'UE409';
+  END IF;
+
+  IF v_snap.sample_count_medium = 0 THEN
+    RAISE EXCEPTION 'candidate requires at least one medium-tier sample' USING ERRCODE = 'UE422';
+  END IF;
+
+  -- 3. Upsert
+  PERFORM set_config('matrix_map.audited_site_aggregate_candidate', '1', true);
+
+  INSERT INTO matrix_map.site_aggregate_publications (
+    source_dra_id, coordinate_cluster_id, representative_latitude, representative_longitude,
+    coordinate_quality_tier, coordinate_source, member_display_label, is_published,
+    sample_count_total, sample_count_high, sample_count_medium, sample_count_low,
+    distinct_point_count, data_snapshot_version, source_sample_hash, updated_at
+  ) VALUES (
+    p_source_dra_id, p_coordinate_cluster_id, v_snap.representative_latitude, v_snap.representative_longitude,
+    v_snap.coordinate_quality_tier, v_snap.coordinate_source, trim(p_member_display_label), false,
+    v_snap.sample_count_total, v_snap.sample_count_high, v_snap.sample_count_medium, v_snap.sample_count_low,
+    v_snap.distinct_point_count, md5(v_snap.source_sample_hash), v_snap.source_sample_hash, clock_timestamp()
+  )
+  ON CONFLICT (source_dra_id, coordinate_cluster_id) DO UPDATE SET
+    representative_latitude = EXCLUDED.representative_latitude,
+    representative_longitude = EXCLUDED.representative_longitude,
+    coordinate_quality_tier = EXCLUDED.coordinate_quality_tier,
+    coordinate_source = EXCLUDED.coordinate_source,
+    member_display_label = EXCLUDED.member_display_label,
+    sample_count_total = EXCLUDED.sample_count_total,
+    sample_count_high = EXCLUDED.sample_count_high,
+    sample_count_medium = EXCLUDED.sample_count_medium,
+    sample_count_low = EXCLUDED.sample_count_low,
+    distinct_point_count = EXCLUDED.distinct_point_count,
+    data_snapshot_version = EXCLUDED.data_snapshot_version,
+    source_sample_hash = EXCLUDED.source_sample_hash,
+    updated_at = EXCLUDED.updated_at
+  RETURNING id INTO v_existing_id;
+
+  PERFORM set_config('matrix_map.audited_site_aggregate_candidate', '0', true);
+
+  -- 4. Audit
+  INSERT INTO matrix_map.site_aggregate_candidate_audit (
+    publication_id, source_dra_id, coordinate_cluster_id, action,
+    prior_snapshot, new_snapshot, reason, changed_by, changed_by_email, changed_at
+  ) VALUES (
+    v_existing_id, p_source_dra_id, p_coordinate_cluster_id, v_action,
+    v_prior_snapshot, to_jsonb(v_snap), trim(p_reason), v_uid, v_actor_email, clock_timestamp()
+  );
+
+END;
+$$;
+
+ALTER FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) OWNER TO matrix_map_owner;
+REVOKE ALL ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) TO authenticated;
+
+CREATE OR REPLACE FUNCTION matrix_map.fetch_site_aggregate_candidate_audit(p_publication_id uuid)
+RETURNS TABLE (
+  id uuid,
+  publication_id uuid,
+  source_dra_id uuid,
+  coordinate_cluster_id text,
+  action text,
+  reason text,
+  prior_snapshot jsonb,
+  new_snapshot jsonb,
+  changed_by uuid,
+  changed_by_email text,
+  changed_at timestamptz
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = matrix_map, public, pg_temp
+AS $$
+DECLARE
+  v_uid uuid;
+  v_is_authorized boolean;
+BEGIN
+  v_uid := matrix_map.current_user_id();
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'fetch_site_aggregate_candidate_audit requires authenticated user context' USING ERRCODE = '42501';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles
+    WHERE user_id = v_uid AND role IN ('admin', 'matrix_admin')
+  ) INTO v_is_authorized;
+
+  IF NOT v_is_authorized THEN
+    RAISE EXCEPTION 'fetch_site_aggregate_candidate_audit requires admin or matrix_admin role' USING ERRCODE = '42501';
+  END IF;
+
+  RETURN QUERY
+  SELECT a.id, a.publication_id, a.source_dra_id, a.coordinate_cluster_id, a.action, a.reason,
+         a.prior_snapshot, a.new_snapshot, a.changed_by, a.changed_by_email, a.changed_at
+  FROM matrix_map.site_aggregate_candidate_audit a
+  WHERE a.publication_id = p_publication_id
+  ORDER BY a.changed_at DESC, a.id DESC LIMIT 50;
+END;
+$$;
+
+ALTER FUNCTION matrix_map.fetch_site_aggregate_candidate_audit(uuid) OWNER TO matrix_map_owner;
+REVOKE ALL ON FUNCTION matrix_map.fetch_site_aggregate_candidate_audit(uuid) FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION matrix_map.fetch_site_aggregate_candidate_audit(uuid) TO authenticated;
 
 REVOKE CREATE ON SCHEMA matrix_map FROM matrix_map_owner;
 

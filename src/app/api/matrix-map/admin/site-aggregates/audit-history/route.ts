@@ -51,8 +51,13 @@ async function requireMatrixMapAdmin(
     .maybeSingle();
 
   if (roleError) {
+    // Do NOT echo roleError.message: this runs BEFORE admin authorization has
+    // succeeded, so any authenticated caller would receive it. Database errors
+    // can disclose relation names, schema details and query diagnostics. The
+    // stable code is returned; the detail belongs in server-side logs only.
+    console.error('[matrix-map] admin role lookup failed', roleError);
     return NextResponse.json(
-      { error: 'admin_role_query_failed', detail: roleError.message },
+      { error: 'admin_role_query_failed' },
       { status: 500 },
     );
   }
@@ -74,21 +79,41 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     return NextResponse.json({ error: 'invalid_publication_id' }, { status: 400 });
   }
 
-  const { data, error } = await authClient
-    .schema('matrix_map')
-    .rpc('fetch_site_aggregate_publication_audit', {
-      p_publication_id: publicationId,
-    });
+  const schemaClient = authClient.schema('matrix_map');
+
+  const { data, error } = await schemaClient.rpc(
+    'fetch_site_aggregate_publication_audit',
+    { p_publication_id: publicationId },
+  );
 
   if (error) {
-    return NextResponse.json(
-      { error: 'query_failed', detail: error.message },
-      { status: 500 },
-    );
+    console.error('[matrix-map] publication audit query failed', error);
+    return NextResponse.json({ error: 'query_failed' }, { status: 500 });
+  }
+
+  // Candidate lifecycle audit trail. Before this change
+  // `fetch_site_aggregate_candidate_audit` had ZERO callers, so create/refresh
+  // history was written but never surfaced anywhere.
+  const { data: candidateData, error: candidateError } = await schemaClient.rpc(
+    'fetch_site_aggregate_candidate_audit',
+    { p_publication_id: publicationId },
+  );
+
+  if (candidateError) {
+    // Fail CLOSED rather than returning a partial history. An audit view that
+    // silently omits one of its two trails reads as "nothing happened", which is
+    // the most misleading thing an audit surface can do.
+    console.error('[matrix-map] candidate audit query failed', candidateError);
+    return NextResponse.json({ error: 'candidate_query_failed' }, { status: 500 });
   }
 
   return NextResponse.json(
-    { ok: true, publication_id: publicationId, rows: data ?? [] },
+    {
+      ok: true,
+      publication_id: publicationId,
+      rows: data ?? [],
+      candidate_rows: candidateData ?? [],
+    },
     { status: 200 },
   );
 }

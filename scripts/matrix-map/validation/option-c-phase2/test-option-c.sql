@@ -395,6 +395,310 @@ BEGIN
   END IF;
 END $$;
 
+-- ---------------------------------------------------------------------------
+-- CANDIDATE LIFECYCLE DELTA (TEST_12 .. TEST_16)
+-- Added by the candidate-lifecycle branch. These cover the delta this branch
+-- introduces on top of PR #752: the upsert RPC, its audit trail, the published
+-- guard, publication idempotency, and the invariant that the member projection
+-- is NOT widened by any of it.
+-- ---------------------------------------------------------------------------
+
+-- TEST 12: Candidate delta objects exist
+DO $$
+DECLARE
+  v_missing text[];
+  v_has_audit_table boolean;
+BEGIN
+  SELECT array_agg(fn) INTO v_missing
+  FROM (
+    SELECT unnest(ARRAY[
+      'upsert_site_aggregate_candidate',
+      'fetch_site_aggregate_candidate_audit'
+    ]) AS fn
+  ) required
+  WHERE NOT EXISTS (
+    SELECT 1 FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace
+    WHERE n.nspname = 'matrix_map' AND p.proname = required.fn
+  );
+
+  SELECT EXISTS (
+    SELECT 1 FROM pg_class c
+    JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+  ) INTO v_has_audit_table;
+
+  IF (v_missing IS NULL OR array_length(v_missing, 1) IS NULL) AND v_has_audit_table THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_12', 'Verify candidate lifecycle delta objects exist (2 functions + audit table)', 'PASS',
+            'upsert_site_aggregate_candidate, fetch_site_aggregate_candidate_audit and site_aggregate_candidate_audit all present');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_12', 'Verify candidate lifecycle delta objects exist (2 functions + audit table)', 'FAIL',
+            format('missing_functions=%s, audit_table=%s', COALESCE(array_to_string(v_missing, ','), 'none'), v_has_audit_table));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_12', 'Verify candidate lifecycle delta objects exist (2 functions + audit table)', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST 13: Candidate create then refresh is repeatable and audited
+-- The seeded fixture publication c1111111-... already exists for the DRA's
+-- first-sample cluster (49.28273,-123.12074), so an upsert against THAT
+-- cluster always takes the ON CONFLICT DO UPDATE path ('refresh') and never
+-- exercises the INSERT ('create') branch. To genuinely exercise 'create' this
+-- test inserts an extra medium-tier sample at a DIFFERENT coordinate so it
+-- forms its own cluster with NO existing publication row, derives that
+-- cluster id via matrix_map.canonical_five_decimal_cluster, and runs the two
+-- upserts against it. First upsert must be 'create'; second must be 'refresh'.
+DO $$
+DECLARE
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_new_sample_id uuid := 'b3333333-3333-3333-3333-333333333333';
+  v_new_lat double precision := 49.30000;
+  v_new_lng double precision := -123.15000;
+  v_cluster text;
+  v_existing uuid;
+  v_pub_id_1 uuid;
+  v_pub_id_2 uuid;
+  v_audit_before integer;
+  v_audit_mid integer;
+  v_audit_after integer;
+  v_first_action text;
+  v_last_action text;
+BEGIN
+  -- Insert a brand-new sample at a distinct coordinate so it clusters alone,
+  -- with no pre-existing site_aggregate_publications row for that cluster.
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  ) VALUES (
+    v_new_sample_id, 103, 'STN-003', 'Sample Station 3', v_new_lat, v_new_lng,
+    extensions.st_setsrid(extensions.st_makepoint(v_new_lng, v_new_lat), 4326)::extensions.geography,
+    'medium', 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  )
+  ON CONFLICT (id) DO NOTHING;
+
+  v_cluster := matrix_map.canonical_five_decimal_cluster(v_new_lat, v_new_lng);
+
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  -- PRECONDITION. Confirm no publication row exists yet for this fresh cluster
+  -- (the point of this test is the never-before-published INSERT/'create' path).
+  SELECT id INTO v_existing FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+  IF v_existing IS NOT NULL THEN
+    RAISE EXCEPTION 'test setup invariant violated: publication already exists for fresh cluster %', v_cluster;
+  END IF;
+
+  -- Audit rows are compared as DELTAS, not absolute counts.
+  SELECT count(*) INTO v_audit_before FROM matrix_map.site_aggregate_candidate_audit
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+
+  PERFORM matrix_map.upsert_site_aggregate_candidate(
+    v_dra_id, v_cluster, 'Delta Label A', v_admin_id, 'delta upsert one'
+  );
+  SELECT id INTO v_pub_id_1 FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+  SELECT count(*) INTO v_audit_mid FROM matrix_map.site_aggregate_candidate_audit
+  WHERE publication_id = v_pub_id_1;
+  SELECT action INTO v_first_action FROM matrix_map.site_aggregate_candidate_audit
+  WHERE publication_id = v_pub_id_1 ORDER BY changed_at ASC, id ASC LIMIT 1;
+
+  -- Repeat: must be stable (same row), and audited again as a real change.
+  PERFORM matrix_map.upsert_site_aggregate_candidate(
+    v_dra_id, v_cluster, 'Delta Label B', v_admin_id, 'delta upsert two'
+  );
+  SELECT id INTO v_pub_id_2 FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+  SELECT count(*) INTO v_audit_after FROM matrix_map.site_aggregate_candidate_audit
+  WHERE publication_id = v_pub_id_2;
+
+  SELECT action INTO v_last_action FROM matrix_map.site_aggregate_candidate_audit
+  WHERE publication_id = v_pub_id_2 ORDER BY changed_at DESC, id DESC LIMIT 1;
+
+  IF v_pub_id_1 IS NOT NULL
+     AND v_pub_id_1 = v_pub_id_2
+     AND (v_audit_mid - v_audit_before) = 1
+     AND (v_audit_after - v_audit_mid) = 1
+     AND v_first_action = 'create'
+     AND v_last_action = 'refresh'
+  THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_13', 'Verify candidate create/refresh is repeatable (stable row) and writes one audit row per real change', 'PASS',
+            format('first action=%s, publication_id stable, audit delta 1 per upsert (%s->%s->%s), last action=%s',
+                   v_first_action, v_audit_before, v_audit_mid, v_audit_after, v_last_action));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_13', 'Verify candidate create/refresh is repeatable (stable row) and writes one audit row per real change', 'FAIL',
+            format('pub1=%s, pub2=%s, audit %s->%s->%s, first action=%s, last action=%s',
+                   v_pub_id_1, v_pub_id_2, v_audit_before, v_audit_mid, v_audit_after, v_first_action, v_last_action));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_13', 'Verify candidate create/refresh is repeatable (stable row) and writes one audit row per real change', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST 14: Refreshing a PUBLISHED candidate is rejected with UE409
+DO $$
+DECLARE
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_cluster text;
+  v_pub_id uuid;
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  SELECT matrix_map.canonical_five_decimal_cluster(s.latitude, s.longitude)
+  INTO v_cluster
+  FROM matrix_map.samples s
+  WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1;
+
+  SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+
+  PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, true, v_admin_id, 'publish before refresh guard test');
+
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_dra_id, v_cluster, 'Should Not Apply', v_admin_id, 'refresh while published'
+    );
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_14', 'Verify refreshing a published candidate is rejected with UE409', 'FAIL',
+            'upsert unexpectedly succeeded against a published candidate');
+  EXCEPTION WHEN SQLSTATE 'UE409' THEN
+    INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+    VALUES ('TEST_14', 'Verify refreshing a published candidate is rejected with UE409', 'PASS', 'UE409',
+            'Caught expected UE409 published-candidate guard');
+  END;
+
+  -- restore unpublished state for later assertions
+  PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, false, v_admin_id, 'restore after refresh guard test');
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_14', 'Verify refreshing a published candidate is rejected with UE409', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST 15: A no-op publication flip writes NO additional audit row (idempotency)
+DO $$
+DECLARE
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_cluster text;
+  v_pub_id uuid;
+  v_before integer;
+  v_after integer;
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  SELECT matrix_map.canonical_five_decimal_cluster(s.latitude, s.longitude)
+  INTO v_cluster
+  FROM matrix_map.samples s
+  WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1;
+
+  SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
+
+  PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, true, v_admin_id, 'idempotency baseline publish');
+  SELECT count(*) INTO v_before FROM matrix_map.site_aggregate_publication_audit WHERE publication_id = v_pub_id;
+
+  -- Same value again: a genuine no-op.
+  PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, true, v_admin_id, 'idempotency no-op publish');
+  SELECT count(*) INTO v_after FROM matrix_map.site_aggregate_publication_audit WHERE publication_id = v_pub_id;
+
+  IF v_after = v_before THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_15', 'Verify a no-op publication flip writes no additional audit row', 'PASS',
+            format('audit rows unchanged at %s across a repeated identical flip', v_before));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_15', 'Verify a no-op publication flip writes no additional audit row', 'FAIL',
+            format('audit rows grew from %s to %s on a no-op flip', v_before, v_after));
+  END IF;
+
+  PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, false, v_admin_id, 'restore after idempotency test');
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_15', 'Verify a no-op publication flip writes no additional audit row', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST 16: The candidate delta does NOT widen the member projection
+DO $$
+DECLARE
+  v_result text;
+  v_leaks text[] := ARRAY[]::text[];
+  v_forbidden text;
+BEGIN
+  v_result := pg_get_function_result('matrix_map.fetch_published_site_aggregates()'::regprocedure);
+
+  FOREACH v_forbidden IN ARRAY ARRAY[
+    'source_dra_id',
+    'coordinate_source',
+    'sample_count_total',
+    'sample_count_high',
+    'sample_count_medium',
+    'sample_count_low',
+    'distinct_point_count',
+    'source_sample_hash',
+    'title'
+  ]
+  LOOP
+    IF position(v_forbidden IN v_result) > 0 THEN
+      v_leaks := array_append(v_leaks, v_forbidden);
+    END IF;
+  END LOOP;
+
+  IF array_length(v_leaks, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_16', 'Verify the candidate delta does not widen the member projection (no raw DRA/sample provenance)', 'PASS',
+            'member RETURNS TABLE exposes no raw dra id, coordinate source, exact counts, source hash or DRA title');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_16', 'Verify the candidate delta does not widen the member projection (no raw DRA/sample provenance)', 'FAIL',
+            'member projection leaked: ' || array_to_string(v_leaks, ', '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_16', 'Verify the candidate delta does not widen the member projection (no raw DRA/sample provenance)', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST 17: Candidate label containing the raw DRA id is rejected with UE422 (RPC-direct, not route-only)
+-- The route-level guard rejects a label carrying the raw source_dra_id, but
+-- upsert_site_aggregate_candidate is GRANTed EXECUTE to `authenticated`, so an
+-- admin can call the RPC directly and bypass the route. This asserts the guard
+-- also lives INSIDE the RPC, before any write, so no caller path can publish a
+-- label carrying raw DRA provenance.
+DO $$
+DECLARE
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_cluster text;
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  SELECT matrix_map.canonical_five_decimal_cluster(s.latitude, s.longitude)
+  INTO v_cluster
+  FROM matrix_map.samples s
+  WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1;
+
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_dra_id, v_cluster, 'Site ' || v_dra_id::text || ' West', v_admin_id, 'label carries raw dra id'
+    );
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_17', 'Verify upsert_site_aggregate_candidate rejects a member_display_label containing the raw source_dra_id (RPC-direct, bypassing the route guard)', 'FAIL',
+            'upsert unexpectedly succeeded with a label carrying the raw DRA id');
+  EXCEPTION WHEN SQLSTATE 'UE422' THEN
+    INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+    VALUES ('TEST_17', 'Verify upsert_site_aggregate_candidate rejects a member_display_label containing the raw source_dra_id (RPC-direct, bypassing the route guard)', 'PASS', 'UE422',
+            'Caught expected UE422 label-provenance guard called directly against the RPC');
+  END;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_17', 'Verify upsert_site_aggregate_candidate rejects a member_display_label containing the raw source_dra_id (RPC-direct, bypassing the route guard)', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
 -- Summary Output Query
 SELECT test_id, description, status, COALESCE(sqlstate, '00000') as sqlstate, details
 FROM public.test_results

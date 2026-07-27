@@ -96,10 +96,16 @@ describe('site-aggregate preview -- containment', () => {
 });
 
 describe('site-aggregate preview -- no write path', () => {
-  it('performs no insert, update, upsert, delete, or RPC call', () => {
-    for (const forbidden of ['.insert(', '.update(', '.upsert(', '.delete(', '.rpc(']) {
+  it('performs no insert, update, upsert, or delete', () => {
+    for (const forbidden of ['.insert(', '.update(', '.upsert(', '.delete(']) {
       expect(code).not.toContain(forbidden);
     }
+  });
+
+  it('performs no mutating RPC calls (only allows read-only fetch_admin_site_aggregate_publications)', () => {
+    // The client component handles actions. The server component must remain read-only.
+    expect(code).not.toContain(".rpc('upsert_site_aggregate_candidate'");
+    expect(code).not.toContain(".rpc('flip_site_aggregate_public'");
   });
 
   it('never calls the publication primitive', () => {
@@ -107,8 +113,24 @@ describe('site-aggregate preview -- no write path', () => {
     expect(code).not.toContain('flip_dra_public');
   });
 
-  it('states plainly in the UI that nothing is published', () => {
-    expect(source).toContain('Nothing here is published');
+  it('states plainly in the UI that DRA visibility is never changed by this page', () => {
+    // NOTE: this assertion previously required the string 'Nothing here is
+    // published'. That claim became FALSE in the same change that added the
+    // candidate lifecycle controls (create / refresh / publish / unpublish) to
+    // this page, so the copy was corrected rather than the test deleted.
+    // The honesty invariant actually worth protecting is the SAFETY one, and it
+    // is strictly stronger: publishing a site aggregate must never be presented
+    // as -- or become -- a change to DRA visibility.
+    expect(source).toContain('DRA visibility is never changed by this page');
+  });
+
+  it('does not claim to be read-only now that it renders mutating controls', () => {
+    // Guards against the inverse regression: reinstating "Read-only preview" or
+    // "Nothing here is published" while the actions column is still rendered.
+    const claimsReadOnly =
+      source.includes('Read-only preview') || source.includes('Nothing here is published');
+    const rendersActions = code.includes('SiteAggregateAdminActions');
+    expect(claimsReadOnly && rendersActions).toBe(false);
   });
 });
 

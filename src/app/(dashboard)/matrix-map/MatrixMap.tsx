@@ -2008,7 +2008,13 @@ export function createSiteAggregateMarkerHtml(aggregate: AggregateMarker, size =
     `style="width:${size}px;height:${size}px;display:flex;align-items:center;justify-content:center;` +
     `transform:rotate(45deg);border:2px dashed #0f766e;background:#fef3c7;` +
     `box-shadow:0 1px 4px rgba(15,23,42,0.35);">` +
-    `<span style="transform:rotate(-45deg);font:700 9px system-ui,sans-serif;color:#0f172a;">${countLabel}</span>` +
+    // escapeHtml is mandatory here: countLabel derives from the server-supplied
+    // sample_count_label. The DB emits a closed vocabulary ('1','2-9','10-99',
+    // '100+') but the client type is a plain `string`, so nothing guarantees at
+    // runtime that only those four values arrive. The same field is already
+    // escaped in createSiteAggregatePopupContent below; this sink was the one
+    // place it was interpolated raw into Leaflet's divIcon HTML.
+    `<span style="transform:rotate(-45deg);font:700 9px system-ui,sans-serif;color:#0f172a;">${escapeHtml(countLabel)}</span>` +
     `</div>`
   );
 }

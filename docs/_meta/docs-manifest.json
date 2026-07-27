@@ -2998,6 +2998,92 @@
         "backlog"
       ],
       "notes": "Runtime/UI backlog packet for safe post-PR #545 Matrix Options follow-up work."
+    },
+    {
+      "id": "continuity.current_handoff",
+      "path": "FRESH_SESSION_HANDOFF_2026_07_26_PLANNING_AND_DOCS_RECOVERY.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "continuity",
+        "handoff"
+      ],
+      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-26. Update this id path when a newer dated handoff supersedes it."
+    },
+    {
+      "id": "matrixmap.plan_v3_4_2",
+      "path": "docs/design/matrix-map/PLAN_V3_4_2.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-map",
+        "design",
+        "scope"
+      ],
+      "notes": "LOCKED Matrix Map v1 plan: PR-MAP-0..7 scope, effort table, risk register. Authority for whether PR-MAP-6/PR-MAP-7/mobile-summary remain mandatory v1 scope (owner decision D3)."
+    },
+    {
+      "id": "matrixmap.option_c_design",
+      "path": "docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-map",
+        "option-c",
+        "design",
+        "security"
+      ],
+      "notes": "Option C site-aggregate architecture authority, including the aggregate-oracle hazard analysis. Architecture authority only; not an implementation-status page."
+    },
+    {
+      "id": "matrixmap.option_c_owner_decision_packet",
+      "path": "docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-map",
+        "option-c",
+        "owner-decision"
+      ],
+      "notes": "Owner decision packet for Option C publication semantics (shape a vs b) and the matrix_map.samples.public disposition. Both sub-decisions remain open."
+    },
+    {
+      "id": "matrixmap.option_c_preapply_runbook",
+      "path": "docs/design/matrix-map/OPTION_C_PREAPPLY_RUNBOOK_2026_07_26.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-map",
+        "option-c",
+        "runbook"
+      ],
+      "notes": "OWNER-RUN pre-apply procedure for the Option C publication primitive: exact reviewed SQL bytes and SHA-256, the mandatory replay-and-GREEN gate, read-only preflight and postflight, and the visibility invariant. Documents a procedure; authorizes nothing (owner decision D2 remains NOT AUTHORIZED)."
+    },
+    {
+      "id": "status.top50_reconciled_2026_07_20",
+      "path": "docs/SSTAC_TOP50_RECONCILED_2026_07_20.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "status",
+        "matrix-options",
+        "queue"
+      ],
+      "notes": "Dated Top-50 reconciliation. Snapshot, not current state."
+    },
+    {
+      "id": "status.top50_continuation_2026_07_21",
+      "path": "docs/TOP50_CONTINUATION_STATUS_2026-07-21.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "status",
+        "queue"
+      ],
+      "notes": "Dated Top-50 continuation snapshot."
+    },
+    {
+      "id": "status.top50_continuation_2026_07_22",
+      "path": "docs/TOP50_CONTINUATION_STATUS_2026-07-22.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "status",
+        "queue"
+      ],
+      "notes": "Dated Top-50 continuation snapshot. Records the safe-autonomous queue as EMPTY as of 2026-07-22; every remaining row is owner-gated, blocked, parked, or done."
     }
   ],
   "section_catalog": {
@@ -3187,6 +3273,65 @@
     }
   },
   "bundles": {
+    "DOCS_GOVERNANCE_GATE": {
+      "description": "Triggered by changes to the documentation control plane itself (index, manifest, core agent rules, gate SOP) AND by changes to the gate implementation that enforces it. Added 2026-07-26: a change to the docs system previously activated no bundle, so docs:gate passed vacuously on the very files that define the gates.",
+      "triggers": [
+        "docs/INDEX.md",
+        "docs/_meta/**",
+        "docs/AGENTS.md",
+        "docs/GATE_MODE_SOP.md",
+        "scripts/verify/docs-gate.mjs",
+        "scripts/verify/__tests__/docs-gate.test.mjs"
+      ],
+      "requires_documents": [
+        {
+          "doc_id": "docs.index",
+          "why": "Canonical navigation; a control-plane change must keep the index coherent."
+        },
+        {
+          "doc_id": "docs.manifest",
+          "why": "The manifest is the gate authority; it must remain present and valid."
+        },
+        {
+          "doc_id": "core.agents",
+          "why": "Core safety rules travel with any change to the documentation control plane."
+        },
+        {
+          "doc_id": "governance.gate_mode_sop",
+          "why": "Gate discipline authority; gate changes must be checked against it."
+        }
+      ]
+    },
+    "MATRIX_MAP_GATE": {
+      "description": "Triggered by Matrix Map / Option C source, API, SQL, or validation-harness changes. Added 2026-07-26 during documentation recovery: docs:gate previously activated no bundle for this lane, so it passed vacuously on every matrix-map change.",
+      "triggers": [
+        "src/app/(dashboard)/matrix-map/**",
+        "src/app/(dashboard)/admin/matrix-map/**",
+        "src/app/api/matrix-map/**",
+        "src/lib/matrix-map/**",
+        "src/stores/matrix-map/**",
+        "docs/design/matrix-map/**",
+        "scripts/matrix-map/validation/**"
+      ],
+      "requires_documents": [
+        {
+          "doc_id": "docs.index",
+          "why": "Canonical navigation + gate rules."
+        },
+        {
+          "doc_id": "core.agents",
+          "why": "Core safety rules; prevents known high-cost mistakes."
+        },
+        {
+          "doc_id": "matrixmap.plan_v3_4_2",
+          "why": "LOCKED v1 scope authority; changes must be checked against it or explicitly de-scoped."
+        },
+        {
+          "doc_id": "matrixmap.option_c_design",
+          "why": "Option C architecture authority, including the aggregate-oracle hazard that any new aggregate surface must not reintroduce."
+        }
+      ]
+    },
     "API_GATE": {
       "description": "Triggered by any API route change; lightweight required-doc set.",
       "triggers": [
