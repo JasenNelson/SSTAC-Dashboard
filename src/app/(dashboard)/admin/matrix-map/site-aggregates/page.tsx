@@ -34,6 +34,7 @@ import {
 import { toAggregateMarkers } from '@/lib/matrix-map/siteAggregateMarkers';
 import { COORD_TIER_LABEL, COORD_TIER_CAPTION } from '@/lib/matrix-map/coordinate-provenance';
 import { SiteAggregateMapLoader } from './SiteAggregateMapLoader';
+import { SiteAggregateAdminActions, type SiteAggregateCandidate } from './SiteAggregateAdminActions';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -162,6 +163,50 @@ export default async function SiteAggregatesPreviewPage() {
 
   if (draError && !loadError) loadError = draError.message;
 
+  // Paged to exhaustion, mirroring the samples load above. A single unpaged
+  // `.rpc(...)` call silently omits rows once publications exceed the
+  // PostgREST row cap: a published ORPHAN whose row falls beyond the cap would
+  // never enter `orphanedCandidates` (staying member-visible with no Unpublish
+  // control), and a live aggregate whose candidate row is omitted would render
+  // "Create Candidate" instead of "Unpublish" -- inviting a duplicate-publish
+  // attempt. Truncation must surface as a load error, not a silent gap.
+  const candidates: SiteAggregateCandidate[] = [];
+  let candidatesTruncated = false;
+  for (let page = 0; page < MAX_PAGES; page += 1) {
+    const from = page * PAGE_SIZE;
+    const { data, error } = await supabase
+      .schema('matrix_map')
+      .rpc('fetch_admin_site_aggregate_publications', {
+        p_publication_id: null,
+      })
+      .range(from, from + PAGE_SIZE - 1);
+
+    if (error) {
+      if (!loadError) loadError = error.message;
+      break;
+    }
+    const rows = (data ?? []) as SiteAggregateCandidate[];
+    candidates.push(...rows);
+    if (rows.length < PAGE_SIZE) break;
+    if (page === MAX_PAGES - 1) candidatesTruncated = true;
+  }
+
+  /**
+   * Neutral seed for a MEMBER-VISIBLE label.
+   *
+   * This must NEVER be seeded from `a.display_name`. That value is
+   * `dra?.title ?? a.source_dra_id` (siteAggregates.ts), i.e. the PRIVATE DRA
+   * title, or the raw DRA UUID when no title resolves. Pre-filling the member
+   * label with it means an admin who accepts the default and enters only a
+   * reason publishes raw DRA provenance to members, since the database stores
+   * and serves `member_display_label` verbatim.
+   *
+   * An existing candidate's own stored label is reused (it was already curated);
+   * otherwise the operator gets a neutral placeholder they must consciously
+   * replace.
+   */
+  const neutralDefaultLabel = (index: number) => `Site aggregate ${index + 1}`;
+
   const dras: AggregateInputDra[] = (draRows ?? []) as AggregateInputDra[];
   const aggregates = loadError ? [] : computeSiteAggregates(samples, dras, { tier: 'medium' });
   const summary = summariseSiteAggregates(aggregates);
@@ -169,6 +214,20 @@ export default async function SiteAggregatesPreviewPage() {
   // Markers are derived SERVER-SIDE and only the marker projection crosses to the client map.
   // The client receives no sample rows and no aggregate fields beyond what a marker needs.
   const markers = toAggregateMarkers(aggregates);
+
+  // ORPHANED PUBLICATIONS. Rows below are driven by LIVE aggregates, but a
+  // publication persists independently of them. If a published candidate's
+  // samples are removed, re-clustered, or drop below the medium-tier threshold,
+  // the aggregate disappears from `aggregates` while the publication remains
+  // member-visible -- and with it the only Unpublish control. That is a stuck
+  // published aggregate with no operator route to retract it.
+  // Render the UNION so candidate-only rows stay reachable.
+  const liveKeys = new Set(
+    aggregates.map((a) => `${a.source_dra_id ?? ''}::${a.coordinate_cluster_id}`),
+  );
+  const orphanedCandidates = candidates.filter(
+    (c) => !liveKeys.has(`${c.source_dra_id}::${c.coordinate_cluster_id}`),
+  );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -178,9 +237,12 @@ export default async function SiteAggregatesPreviewPage() {
             Matrix Map -- Site Aggregate Preview (Option C)
           </h1>
           <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
-            Read-only preview of what centroid-tier data would look like as one marker per site
-            instead of one pin per sample. <strong>Nothing here is published.</strong> No DRA
-            visibility is changed by viewing this page, and this page provides no way to change it.
+            Preview of what centroid-tier data would look like as one marker per site instead of
+            one pin per sample, together with the admin controls for the site aggregate candidate
+            lifecycle. Creating, refreshing, publishing or unpublishing a candidate here changes
+            only the <strong>site aggregate publication</strong> state.{' '}
+            <strong>DRA visibility is never changed by this page</strong>, and publishing an
+            aggregate exposes no individual sample or DRA record.
           </p>
           <p className="mt-2 max-w-3xl text-sm text-slate-600 dark:text-slate-300">
             {COORD_TIER_CAPTION.medium}
@@ -191,6 +253,11 @@ export default async function SiteAggregatesPreviewPage() {
         {truncated ? (
           <InlineError
             message={`Sample load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Counts below are INCOMPLETE and must not be used for a publication decision.`}
+          />
+        ) : null}
+        {candidatesTruncated ? (
+          <InlineError
+            message={`Candidate load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. The candidate list below is INCOMPLETE -- some published or orphaned rows may be missing their Unpublish control.`}
           />
         ) : null}
 
@@ -252,7 +319,10 @@ export default async function SiteAggregatesPreviewPage() {
           title="Aggregate sites"
           subtitle={`${aggregates.length} rows, sorted by sample count. Tier vocabulary matches the map legend (${COORD_TIER_LABEL.high} / ${COORD_TIER_LABEL.medium} / ${COORD_TIER_LABEL.low}).`}
         >
-          {aggregates.length === 0 && !loadError ? (
+          {aggregates.length === 0 && orphanedCandidates.length === 0 && !loadError ? (
+            // orphanedCandidates is part of the emptiness test on purpose: if it
+            // were omitted, a published-but-orphaned publication would be hidden
+            // behind "no sites found" and remain unretractable.
             <p className="text-sm text-slate-500 dark:text-slate-400">No centroid-tier sites found.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -266,15 +336,19 @@ export default async function SiteAggregatesPreviewPage() {
                     <th className="py-2 pr-4 text-right font-semibold">Centroid</th>
                     <th className="py-2 pr-4 text-right font-semibold">Points</th>
                     <th className="py-2 pr-4 font-semibold">Representative coordinate</th>
-                    <th className="py-2 pr-4 font-semibold">Published</th>
+                    <th className="py-2 pr-4 font-semibold">Actions</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {aggregates.map((a) => (
-                    <tr
-                      key={a.aggregate_id}
-                      className="border-b border-slate-100 align-top dark:border-slate-800"
-                    >
+                  {aggregates.map((a, index) => {
+                    const candidate = candidates.find(
+                      (c) => c.source_dra_id === a.source_dra_id && c.coordinate_cluster_id === a.coordinate_cluster_id
+                    );
+                    return (
+                      <tr
+                        key={a.aggregate_id}
+                        className="border-b border-slate-100 align-top dark:border-slate-800"
+                      >
                       <td className="py-2 pr-4">
                         <div className="text-slate-900 dark:text-slate-100">{a.display_name}</div>
                         <div className="font-mono text-xs text-slate-400">{a.source_dra_id}</div>
@@ -287,9 +361,62 @@ export default async function SiteAggregatesPreviewPage() {
                       <td className="py-2 pr-4 font-mono text-xs">
                         {a.representative_latitude}, {a.representative_longitude}
                       </td>
-                      <td className="py-2 pr-4">{a.dra_public ? 'yes' : 'no'}</td>
+                      <td className="py-2 pr-4">
+                        <SiteAggregateAdminActions
+                          source_dra_id={a.source_dra_id || ''}
+                          coordinate_cluster_id={a.coordinate_cluster_id}
+                          defaultLabel={candidate?.member_display_label ?? neutralDefaultLabel(index)}
+                          candidate={candidate}
+                          liveSnapshot={{
+                            sample_count_total: a.sample_count_total,
+                            sample_count_high: a.sample_count_high,
+                            sample_count_medium: a.sample_count_medium,
+                            sample_count_low: a.sample_count_low,
+                            distinct_point_count: a.distinct_point_count,
+                            representative_latitude: a.representative_latitude,
+                            representative_longitude: a.representative_longitude,
+                            coordinate_quality_tier: a.coordinate_quality_tier,
+                          }}
+                        />
+                      </td>
                     </tr>
-                  ))}
+                  );
+                })}
+                {orphanedCandidates.map((c) => (
+                  // Candidate-only row: a persisted publication whose live
+                  // aggregate no longer exists. Without this row the Unpublish
+                  // control would be unreachable while the aggregate stayed
+                  // member-visible. No liveSnapshot is passed, so drift is
+                  // reported as UNKNOWN rather than as a confirmed match.
+                  <tr
+                    key={`orphan-${c.publication_id ?? `${c.source_dra_id}:${c.coordinate_cluster_id}`}`}
+                    className="border-b border-amber-200 bg-amber-50 align-top dark:border-amber-900 dark:bg-amber-950/30"
+                  >
+                    <td className="py-2 pr-4">
+                      <div className="text-slate-900 dark:text-slate-100">
+                        {c.member_display_label}
+                      </div>
+                      <div className="font-mono text-xs text-slate-400">{c.source_dra_id}</div>
+                      <div className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
+                        No live aggregate for this publication
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 font-mono text-xs">--</td>
+                    <td className="py-2 pr-4">
+                      <SiteAggregateAdminActions
+                        source_dra_id={c.source_dra_id}
+                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        defaultLabel={c.member_display_label}
+                        candidate={c}
+                      />
+                    </td>
+                  </tr>
+                ))}
                 </tbody>
               </table>
             </div>

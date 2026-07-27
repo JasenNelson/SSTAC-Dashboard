@@ -67,6 +67,36 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/system-design/README.md`
 - `docs/system-design/MATRIX_GRAPH_VISUALIZATION.md`
 
+### Matrix Map and Option C (authoritative design + open owner decisions)
+Added 2026-07-26 during documentation recovery: this lane was the active flagship
+workstream yet had no route from this index, and none of its authorities were
+registered in `docs/_meta/docs-manifest.json`. Changes under
+`src/app/(dashboard)/matrix-map/**`, `src/app/(dashboard)/admin/matrix-map/**`,
+`src/app/api/matrix-map/**`, `src/lib/matrix-map/**`, `docs/design/matrix-map/**`,
+or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
+- `docs/design/matrix-map/PLAN_V3_4_2.md` - LOCKED v1 scope (PR-MAP-0..7, effort
+  table, risks). Authority for whether PR-MAP-6, PR-MAP-7, and the mobile summary
+  remain mandatory v1 scope. That scope question is an OPEN owner decision.
+- `docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md` - Option C
+  architecture authority, including the aggregate-oracle hazard. Architecture
+  authority only; it is NOT an implementation-status page.
+- `docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md` - the two OPEN
+  owner sub-decisions: publication semantics (shape a vs shape b) and the
+  `matrix_map.samples.public` disposition.
+- `docs/design/matrix-map/OPTION_C_PREAPPLY_RUNBOOK_2026_07_26.md` - OWNER-RUN
+  pre-apply procedure: exact reviewed SQL bytes and SHA-256, the mandatory
+  replay-and-GREEN gate, read-only preflight and postflight, and the visibility
+  invariant. It documents a procedure and authorizes nothing; the live apply
+  remains an OPEN owner decision.
+
+### Status snapshots (reference; dated, not current state)
+Treat every file below as a claim list tied to its date, never as live status.
+- `docs/SSTAC_TOP50_RECONCILED_2026_07_20.md` - supersedes the July 11-13 status docs.
+- `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md`
+- `docs/TOP50_CONTINUATION_STATUS_2026-07-22.md` - records the safe-autonomous
+  queue as EMPTY as of that date; every remaining row is owner-gated, blocked,
+  parked, or done.
+
 ### Testing (reference; avoid volatile counts)
 - `docs/testing/README.md`
 

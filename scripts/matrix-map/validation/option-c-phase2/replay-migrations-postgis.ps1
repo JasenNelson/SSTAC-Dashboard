@@ -16,9 +16,41 @@ param(
   [Parameter(Mandatory = $false)]
   [string]$PgImage = 'postgis/postgis@sha256:bcab61c139a9644dcf0bb00b0cff8ab84e36b3b6f74983cf229ddb4ea0c22897',
 
+  # Repository root that migrations, the draft SQL and the test suite are read
+  # from. Defaults to the repository this script actually lives in, derived from
+  # $PSScriptRoot (scripts/matrix-map/validation/option-c-phase2 -> repo root).
+  # It previously hardcoded the PR #752 temporary worktree. After that PR merged
+  # and the branch was restacked, that default was actively dangerous: if the old
+  # path is gone the replay fails, and if it still exists at stale bytes the
+  # MANDATORY replay gate reports GREEN for SQL that is not the SQL under review.
   [Parameter(Mandatory = $false)]
-  [int]$TimeoutSeconds = 300
+  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
 )
+
+# NOTE: this script deliberately exposes NO -TimeoutSeconds parameter.
+# An earlier revision declared one and never consumed it anywhere, which
+# advertised a bound that did not exist: a hung `docker exec` could block
+# indefinitely and leave incomplete evidence behind. There are 17 separate
+# `docker exec` call sites and no shared invocation helper, so a genuine
+# per-call bound with process termination and cleanup belongs in its own
+# reviewed change rather than being bolted on here.
+# Until then, bound this script EXTERNALLY. On native Windows PowerShell
+# (pwsh.exe / powershell.exe with no coreutils on PATH), `timeout` resolves to
+# the console-delay utility (timeout.exe), NOT GNU coreutils timeout -- it
+# waits for a keypress-or-N-seconds and does not bound or kill a child
+# process, so `timeout 1800 pwsh -File ...` bounds NOTHING there. Use a
+# Start-Process supervisor with a timed Wait-Process and process-tree
+# termination instead, e.g.:
+#   $p = Start-Process -FilePath 'pwsh' -ArgumentList @('-File','replay-migrations-postgis.ps1','-OutputDir','<dir>') -PassThru
+#   if (-not $p.WaitForExit(1800000)) {
+#     # Timed out: kill the whole process tree (Stop-Process alone can leave
+#     # docker/psql children orphaned), then treat as a failed/stalled run.
+#     Start-Process -FilePath 'taskkill' -ArgumentList @('/PID', $p.Id, '/T', '/F') -Wait
+#     throw "replay-migrations-postgis.ps1 exceeded 1800s bound and was terminated"
+#   }
+# The GNU-coreutils form (`timeout 1800 pwsh -File ...`) IS valid, but only in
+# a shell that actually provides GNU coreutils timeout, e.g. Git Bash / WSL --
+# not plain Windows PowerShell/cmd.exe.
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
@@ -38,12 +70,16 @@ function Write-HarnessLog {
 Write-HarnessLog "Starting PostGIS Actual Supabase Migration Replay (agy-runtime-007)"
 Write-HarnessLog "OutputDir: $OutputDir"
 Write-HarnessLog "PgImage: $PgImage"
+Write-HarnessLog "RepoRoot: $RepoRoot"
 
 if (-not (Test-Path -Path $OutputDir)) {
   New-Item -ItemType Directory -Path $OutputDir -Force | Out-Null
 }
 
-$RepoRoot = "C:\tmp\sstac-option-c-phase2-2026-07-24"
+if (-not (Test-Path -LiteralPath $RepoRoot)) {
+  Write-HarnessLog "RepoRoot does not exist: $RepoRoot" "ERROR"
+  throw "RepoRoot does not exist: $RepoRoot"
+}
 $MigrationsDir = Join-Path $RepoRoot "supabase\migrations"
 $DraftSqlPath = Join-Path $RepoRoot "docs\design\matrix-map\OPTION_C_PHASE2_SITE_AGGREGATE_PUBLICATIONS_DRAFT_2026_07_24.sql"
 $TestSqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\test-option-c.sql"
@@ -517,7 +553,14 @@ ON CONFLICT (id) DO NOTHING;
   Write-HarnessLog "Automated test suite execution completed."
   Set-Content -Path (Join-Path $OutputDir "test_results.txt") -Value $testOutput -Encoding Ascii
 
-  $expectedTestIds = @('TEST_01','TEST_02','TEST_03','TEST_04','TEST_05','TEST_06','TEST_07','TEST_08','TEST_09','TEST_10','TEST_11')
+  # REQUIRED baseline: these must all be present or the suite did not really run.
+  # This is a MINIMUM, not an allow-list. Every TEST_* id emitted by the suite is
+  # parsed and counted, so assertions added to test-option-c.sql are never
+  # silently discarded. An earlier revision treated this array as an allow-list
+  # and hardcoded `parsedResults.Count -eq 11`, which meant five newly added
+  # candidate-delta assertions -- including a FAILING one -- were dropped on the
+  # floor while the run still reported COMPLETED_GREEN.
+  $requiredTestIds = @('TEST_01','TEST_02','TEST_03','TEST_04','TEST_05','TEST_06','TEST_07','TEST_08','TEST_09','TEST_10','TEST_11','TEST_12','TEST_13','TEST_14','TEST_15','TEST_16','TEST_17')
   $passCount = 0
   $failCount = 0
   $parsedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -533,7 +576,7 @@ ON CONFLICT (id) DO NOTHING;
       $tSqlState = if ($parts.Count -ge 4) { $parts[3].Trim() } else { '00000' }
       $tDetails = if ($parts.Count -ge 5) { $parts[4].Trim() } else { '' }
 
-      if ($expectedTestIds -contains $tId -and -not $foundTestIds.Contains($tId)) {
+      if (-not $foundTestIds.Contains($tId)) {
         $foundTestIds.Add($tId) | Out-Null
         if ($tStatus -eq 'PASS') { $passCount++ } else { $failCount++ }
         $parsedResults.Add([PSCustomObject]@{
@@ -548,8 +591,8 @@ ON CONFLICT (id) DO NOTHING;
     }
   }
 
-  $missingTestIds = @($expectedTestIds | Where-Object { -not $foundTestIds.Contains($_) })
-  $testSuiteStrictPass = ($parsedResults.Count -eq 11) -and ($missingTestIds.Count -eq 0) -and ($failCount -eq 0)
+  $missingTestIds = @($requiredTestIds | Where-Object { -not $foundTestIds.Contains($_) })
+  $testSuiteStrictPass = ($parsedResults.Count -ge $requiredTestIds.Count) -and ($missingTestIds.Count -eq 0) -and ($failCount -eq 0)
 
   $testHash = (Get-FileHash -Algorithm SHA256 -Path $TestSqlPath).Hash.ToUpperInvariant()
   $testReceipt = [PSCustomObject]@{
