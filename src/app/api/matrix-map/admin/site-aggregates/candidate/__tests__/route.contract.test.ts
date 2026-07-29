@@ -1,9 +1,27 @@
-// Contract guard for the Option C candidate lifecycle surface. Plain ASCII.
+// Coverage and boundary guard for the Option C candidate lifecycle surface.
+// Plain ASCII.
 //
-// These are SOURCE-level invariants, deliberately separate from the behavioural
-// suite in route.test.ts. They pin properties that behavioural tests cannot:
-// that the write path stays audited, that coverage is not silently dropped, and
-// that this surface is never proven by a live-backed browser test.
+// SCOPE, STATED HONESTLY. This file no longer makes any claim about WHICH RPCs
+// the route calls. It previously carried a regex RPC allow-list and a
+// TypeScript-compiler AST walker asserting a "TRUE allow-list". Both were
+// RETIRED by mission-control ruling: they claimed more than they enforced. An
+// RPC reached through an alias or a bound function is not a call expression
+// whose callee is named `rpc`, so the real call escaped the scanner while the
+// allowed calls kept the test green.
+//
+// That claim is now proved BEHAVIOURALLY in route.test.ts, which records the
+// RPC names the route ACTUALLY invokes on a real request and asserts exactly
+// the audited upsert followed by one exact-ID readback. Auth, CSRF, payload
+// validation and server-side actor resolution are likewise proved there by
+// execution.
+//
+// Do NOT reintroduce regex, AST, token-window, identifier-name or
+// source-concatenation analysis here.
+//
+// What remains are two things behavioural tests genuinely cannot express:
+// that the behavioural suites still EXIST (coverage cannot be silently
+// dropped), and that this surface is never proven by a live-backed browser
+// test.
 
 import { describe, it, expect } from 'vitest';
 import { readFileSync, existsSync, readdirSync } from 'node:fs';
@@ -12,59 +30,10 @@ import { fileURLToPath } from 'node:url';
 
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(HERE, '..', '..', '..', '..', '..', '..', '..', '..');
-const ROUTE = path.join(HERE, '..', 'route.ts');
 const COMPONENT = path.join(
   REPO_ROOT,
   'src/app/(dashboard)/admin/matrix-map/site-aggregates/SiteAggregateAdminActions.tsx'
 );
-
-const routeSource = readFileSync(ROUTE, 'utf8');
-// Comment-stripped, so prose explaining why something is NOT done cannot satisfy
-// or trip a source assertion.
-const routeCode = routeSource
-  .replace(/\/\*[\s\S]*?\*\//g, '')
-  .replace(/^\s*\/\/.*$/gm, '');
-
-describe('candidate route - audited write path only', () => {
-  it('performs no direct table insert, update, upsert, or delete', () => {
-    // Every candidate mutation must go through the audited SECURITY DEFINER RPC.
-    // A direct table write would bypass the audit trail and the published-state
-    // guard entirely.
-    for (const forbidden of ['.insert(', '.update(', '.upsert(', '.delete(']) {
-      expect(routeCode).not.toContain(forbidden);
-    }
-  });
-
-  it('mutates only through upsert_site_aggregate_candidate', () => {
-    expect(routeCode).toContain("rpc('upsert_site_aggregate_candidate'");
-  });
-
-  it('never calls the DRA publication primitive', () => {
-    // Creating or refreshing a candidate must never touch DRA visibility.
-    expect(routeCode).not.toContain('flip_dra_public');
-  });
-
-  it('never calls the aggregate publication flip', () => {
-    // Publishing is a separate, separately-audited action on a different route.
-    expect(routeCode).not.toContain('flip_site_aggregate_public');
-  });
-
-  it('resolves the actor id server-side, never from the request body', () => {
-    expect(routeCode).toContain('p_actor_id: auth.user.id');
-  });
-
-  it('enforces CSRF before performing any mutation', () => {
-    const csrfAt = routeCode.indexOf('checkCsrf');
-    const rpcAt = routeCode.indexOf("rpc('upsert_site_aggregate_candidate'");
-    expect(csrfAt).toBeGreaterThan(-1);
-    expect(rpcAt).toBeGreaterThan(-1);
-    expect(csrfAt).toBeLessThan(rpcAt);
-  });
-
-  it('restricts admin roles to exactly admin and matrix_admin', () => {
-    expect(routeCode).toContain("const ADMIN_ROLES = ['admin', 'matrix_admin']");
-  });
-});
 
 describe('candidate lifecycle - coverage guard', () => {
   it('keeps a behavioural test suite for the route', () => {

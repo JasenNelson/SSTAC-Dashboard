@@ -1,12 +1,21 @@
 /**
- * Option C -- READ-ONLY admin preview of site-level centroid aggregates.
+ * Option C -- admin site-aggregate preview and candidate lifecycle surface.
  *
  * Design: docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md
  *
  * WHAT THIS IS
- * A preview so the owner can inspect the centroid sites BEFORE ruling on publication policy.
- * It publishes nothing, writes nothing, and adds no publication primitive. Current stance is
- * unchanged: no DRA publication.
+ * The table, map and summary are a MEDIUM-TIER preview of the centroid sites. The Actions
+ * column drives the candidate lifecycle: Create/Refresh capture an ALL-TIER candidate through
+ * audited SECURITY DEFINER RPCs, and Publish/Unpublish change site-aggregate publication state.
+ *
+ * The two populations differ on purpose and must not be conflated: the medium-tier rows are the
+ * operator PREVIEW, while the candidate the actions persist -- and which becomes member-visible --
+ * spans every tier in the cluster. The action cell therefore displays the persisted all-tier
+ * candidate alongside the medium-tier row.
+ *
+ * This SERVER COMPONENT performs no writes of its own; every mutation goes through the audited
+ * RPCs behind the Actions column. It never flips DRA or sample visibility -- `matrix_map.dras.public`
+ * and `matrix_map.samples.public` are untouched by anything on this page.
  *
  * WHY A SERVER COMPONENT AND NOT AN API ROUTE
  * The existing admin matrix-map pages (health, publish) fetch direct-Supabase server-side, so
@@ -32,7 +41,15 @@ import {
   type AggregateInputDra,
 } from '@/lib/matrix-map/siteAggregates';
 import { toAggregateMarkers } from '@/lib/matrix-map/siteAggregateMarkers';
+import {
+  classifyLifecycleRows,
+  deriveLifecycleEvidenceAxes,
+} from '@/lib/matrix-map/site-aggregate-lifecycle-rows';
 import { COORD_TIER_LABEL, COORD_TIER_CAPTION } from '@/lib/matrix-map/coordinate-provenance';
+import { loadSiteAggregateAdminSurface } from '@/lib/matrix-map/site-aggregate-admin-loaders';
+// Used ONLY to render the page-ceiling message. Offsets are never computed
+// here -- see site-aggregate-pagination.siteAggregatePageArgs.
+import { PAGE_SIZE, MAX_PAGES } from '@/lib/matrix-map/site-aggregate-pagination';
 import { SiteAggregateMapLoader } from './SiteAggregateMapLoader';
 import { SiteAggregateAdminActions, type SiteAggregateCandidate } from './SiteAggregateAdminActions';
 
@@ -40,9 +57,6 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 const ADMIN_ROLES = ['admin', 'matrix_admin'];
-const PAGE_SIZE = 1000;
-/** Hard ceiling so a data explosion cannot spin this page forever. */
-const MAX_PAGES = 25;
 
 async function createAuthenticatedClient() {
   const cookieStore = await cookies();
@@ -121,75 +135,26 @@ export default async function SiteAggregatesPreviewPage() {
   if (roleError || !role) redirect('/dashboard');
 
   // --- Read-only data load ------------------------------------------------
-  // Only the five columns the aggregation helper is permitted to see. No id, no station_id,
-  // no measurements. See the containment note in siteAggregates.ts.
-  const samples: AggregateInputSample[] = [];
-  let loadError: string | null = null;
-  let truncated = false;
-
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const from = page * PAGE_SIZE;
-    const { data, error } = await supabase
-      .schema('matrix_map')
-      .from('samples')
-      .select('source_dra_id, coordinate_quality_tier, coordinate_source, latitude, longitude')
-      .eq('coordinate_quality_tier', 'medium')
-      // TOTAL ORDER IS REQUIRED FOR CORRECTNESS, not just tidiness. `source_dra_id` alone is
-      // not unique -- a single DRA can hold hundreds of rows, so its ties certainly straddle a
-      // 1000-row page boundary. Postgres gives no stable tie order across independent .range()
-      // requests, so without a unique tiebreaker rows can be silently skipped or double-counted
-      // between pages, corrupting the aggregate counts while `truncated` stays false.
-      // `id` is the primary key and is ORDERED BY but never SELECTed, so containment holds:
-      // no per-sample identifier reaches the helper, the page, or the rendered output.
-      .order('source_dra_id', { ascending: true, nullsFirst: true })
-      .order('id', { ascending: true })
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) {
-      loadError = error.message;
-      break;
-    }
-    const rows = (data ?? []) as AggregateInputSample[];
-    samples.push(...rows);
-    if (rows.length < PAGE_SIZE) break;
-    if (page === MAX_PAGES - 1) truncated = true;
-  }
-
-  const { data: draRows, error: draError } = await supabase
-    .schema('matrix_map')
-    .from('dras')
-    .select('id, title, public')
-    .eq('is_deleted', false);
-
-  if (draError && !loadError) loadError = draError.message;
-
-  // Paged to exhaustion, mirroring the samples load above. A single unpaged
-  // `.rpc(...)` call silently omits rows once publications exceed the
-  // PostgREST row cap: a published ORPHAN whose row falls beyond the cap would
-  // never enter `orphanedCandidates` (staying member-visible with no Unpublish
-  // control), and a live aggregate whose candidate row is omitted would render
-  // "Create Candidate" instead of "Unpublish" -- inviting a duplicate-publish
-  // attempt. Truncation must surface as a load error, not a silent gap.
-  const candidates: SiteAggregateCandidate[] = [];
-  let candidatesTruncated = false;
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const from = page * PAGE_SIZE;
-    const { data, error } = await supabase
-      .schema('matrix_map')
-      .rpc('fetch_admin_site_aggregate_publications', {
-        p_publication_id: null,
-      })
-      .range(from, from + PAGE_SIZE - 1);
-
-    if (error) {
-      if (!loadError) loadError = error.message;
-      break;
-    }
-    const rows = (data ?? []) as SiteAggregateCandidate[];
-    candidates.push(...rows);
-    if (rows.length < PAGE_SIZE) break;
-    if (page === MAX_PAGES - 1) candidatesTruncated = true;
-  }
+  // Only the five columns the aggregation helper is permitted to see. No id, no
+  // station_id, no measurements. See the containment note in siteAggregates.ts.
+  //
+  // ONE orchestration call, in src/lib/matrix-map/site-aggregate-admin-loaders.ts.
+  // The three paged loops live there so their actual RPC and range arguments are
+  // executable in a test, and the orchestration itself is extracted so that "the
+  // page actually invokes the loaders" is provable by execution rather than by
+  // scanning source text. Ordering and error routing are unchanged: samples,
+  // then DRAs (whose error fills loadError only if samples did not), then
+  // candidates, whose error stays on its own axis.
+  const {
+    samples,
+    truncated,
+    draRows,
+    drasTruncated,
+    candidates,
+    candidatesTruncated,
+    loadError,
+    candidateError,
+  } = await loadSiteAggregateAdminSurface<SiteAggregateCandidate>(supabase as never);
 
   /**
    * Neutral seed for a MEMBER-VISIBLE label.
@@ -207,8 +172,27 @@ export default async function SiteAggregatesPreviewPage() {
    */
   const neutralDefaultLabel = (index: number) => `Site aggregate ${index + 1}`;
 
-  const dras: AggregateInputDra[] = (draRows ?? []) as AggregateInputDra[];
-  const aggregates = loadError ? [] : computeSiteAggregates(samples, dras, { tier: 'medium' });
+  const dras: AggregateInputDra[] = draRows;
+
+  // TWO AXES, derived by a pure tested helper. `previewRenderable` depends on
+  // the PREVIEW axis alone, so a candidate-side failure can never blank the
+  // medium-tier table, summary or map.
+  const { previewIncomplete, candidateIncomplete, previewRenderable } =
+    deriveLifecycleEvidenceAxes({
+      previewLoadError: loadError,
+      previewTruncated: truncated,
+      // Feeds the PREVIEW axis, not the candidate axis: a truncated DRA read
+      // corrupts the same samples/DRA population `truncated` already guards,
+      // so it must degrade `previewIncomplete` exactly like a truncated
+      // sample read does -- see the field comment on LifecycleLoadSignals.
+      previewDrasTruncated: drasTruncated,
+      candidateLoadError: candidateError,
+      candidateTruncated: candidatesTruncated,
+    });
+
+  const aggregates = previewRenderable
+    ? computeSiteAggregates(samples, dras, { tier: 'medium' })
+    : [];
   const summary = summariseSiteAggregates(aggregates);
   const orphanCount = samples.filter((s) => s.source_dra_id === null).length;
   // Markers are derived SERVER-SIDE and only the marker projection crosses to the client map.
@@ -222,12 +206,44 @@ export default async function SiteAggregatesPreviewPage() {
   // member-visible -- and with it the only Unpublish control. That is a stuck
   // published aggregate with no operator route to retract it.
   // Render the UNION so candidate-only rows stay reachable.
-  const liveKeys = new Set(
-    aggregates.map((a) => `${a.source_dra_id ?? ''}::${a.coordinate_cluster_id}`),
-  );
-  const orphanedCandidates = candidates.filter(
-    (c) => !liveKeys.has(`${c.source_dra_id}::${c.coordinate_cluster_id}`),
-  );
+  // FAIL CLOSED. The warnings above surface an errored/truncated sample load or
+  // a truncated candidate load, but the table and its lifecycle controls kept
+  // rendering from whatever partial data DID come back. That is unsafe: an
+  // OMITTED candidate then looks "safely absent" (offering "Create Candidate",
+  // which upserts and can overwrite a curated label) rather than "unknown
+  // because the read was incomplete", and an omitted orphaned publication stays
+  // unreachable for Unpublish. When the evidence is known incomplete, keep the
+  // warning and the read-only table for operator visibility, and gate the
+  // WRITE and VISIBILITY-INCREASING controls -- Create, Refresh and Publish --
+  // until a clean reload is possible.
+  //
+  // UNPUBLISH STAYS AVAILABLE, deliberately: it REDUCES visibility and needs
+  // nothing from the preview, so gating it would strand the only retraction
+  // path precisely when a persistent load failure could leave stale
+  // member-visible data unretractable. It remains gated by the in-flight and
+  // non-retryable latches.
+  //
+  // NO ORPHAN INFERENCE IS MADE HERE, and none may be added. `match` or `drift`
+  // can prove a publication HAS a live aggregate; absence from the available
+  // preview proves nothing, because `unknown` is overloaded server-side (it
+  // covers both "no snapshot" and "DRA soft-deleted") and the preview may
+  // itself be incomplete. Every unmatched or overloaded state is therefore
+  // reported as status-unavailable, and the page makes no absence-based orphan
+  // claim under any completeness condition. See site-aggregate-lifecycle-rows.ts.
+
+  // ONE implementation, in a pure module, because this page is an async server
+  // component that jsdom cannot render -- inline, its behaviour could only be
+  // asserted by matching source strings. See site-aggregate-lifecycle-rows.ts.
+  const {
+    candidateByKey,
+    duplicateCandidateKeys,
+    hasDuplicateCandidates,
+    lifecycleBlocked,
+    unmatchedCandidates,
+    outsidePreviewTier,
+    liveUnclassified,
+    unknownStatusCandidates,
+  } = classifyLifecycleRows({ aggregates, candidates, previewIncomplete, candidateIncomplete });
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -253,6 +269,21 @@ export default async function SiteAggregatesPreviewPage() {
         {truncated ? (
           <InlineError
             message={`Sample load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Counts below are INCOMPLETE and must not be used for a publication decision.`}
+          />
+        ) : null}
+        {drasTruncated ? (
+          <InlineError
+            message={`DRA load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Samples whose DRA fell beyond the page ceiling are dropped from the preview, so counts below are INCOMPLETE and must not be used for a publication decision.`}
+          />
+        ) : null}
+        {candidateError ? (
+          <InlineError
+            message={`Candidate lifecycle data is unavailable: ${candidateError}. The medium-tier preview below is UNAFFECTED and still reflects the samples that loaded successfully. Create, Refresh and Publish are disabled until the lifecycle read succeeds; already-loaded published rows keep their Unpublish control.`}
+          />
+        ) : null}
+        {hasDuplicateCandidates ? (
+          <InlineError
+            message={`Candidate load returned ${duplicateCandidateKeys.length} duplicated publication identit${duplicateCandidateKeys.length === 1 ? 'y' : 'ies'} (source DRA + coordinate cluster). The read is INCONSISTENT, so lifecycle controls are disabled and live-aggregate status is reported as unavailable rather than guessed.`}
           />
         ) : null}
         {candidatesTruncated ? (
@@ -319,10 +350,19 @@ export default async function SiteAggregatesPreviewPage() {
           title="Aggregate sites"
           subtitle={`${aggregates.length} rows, sorted by sample count. Tier vocabulary matches the map legend (${COORD_TIER_LABEL.high} / ${COORD_TIER_LABEL.medium} / ${COORD_TIER_LABEL.low}).`}
         >
-          {aggregates.length === 0 && orphanedCandidates.length === 0 && !loadError ? (
-            // orphanedCandidates is part of the emptiness test on purpose: if it
-            // were omitted, a published-but-orphaned publication would be hidden
-            // behind "no sites found" and remain unretractable.
+          {/* EVERY rendered bucket counts. Quarantined duplicates are excluded
+              from `unmatchedCandidates` by design, so testing that alone hid the
+              whole table -- and every Unpublish control with it -- when all
+              candidates were quarantined and no medium-tier aggregate existed. */}
+          {aggregates.length === 0 &&
+          unknownStatusCandidates.length === 0 &&
+          outsidePreviewTier.length === 0 &&
+          liveUnclassified.length === 0 &&
+          !loadError ? (
+            // Every candidate bucket is part of the emptiness test on purpose:
+            // if any were omitted, a published publication with no medium-tier
+            // aggregate would be hidden behind "no sites found" and left
+            // unretractable.
             <p className="text-sm text-slate-500 dark:text-slate-400">No centroid-tier sites found.</p>
           ) : (
             <div className="overflow-x-auto">
@@ -341,8 +381,8 @@ export default async function SiteAggregatesPreviewPage() {
                 </thead>
                 <tbody>
                   {aggregates.map((a, index) => {
-                    const candidate = candidates.find(
-                      (c) => c.source_dra_id === a.source_dra_id && c.coordinate_cluster_id === a.coordinate_cluster_id
+                    const candidate = candidateByKey.get(
+                      `${a.source_dra_id ?? ''}::${a.coordinate_cluster_id}`,
                     );
                     return (
                       <tr
@@ -367,38 +407,28 @@ export default async function SiteAggregatesPreviewPage() {
                           coordinate_cluster_id={a.coordinate_cluster_id}
                           defaultLabel={candidate?.member_display_label ?? neutralDefaultLabel(index)}
                           candidate={candidate}
-                          liveSnapshot={{
-                            sample_count_total: a.sample_count_total,
-                            sample_count_high: a.sample_count_high,
-                            sample_count_medium: a.sample_count_medium,
-                            sample_count_low: a.sample_count_low,
-                            distinct_point_count: a.distinct_point_count,
-                            representative_latitude: a.representative_latitude,
-                            representative_longitude: a.representative_longitude,
-                            coordinate_quality_tier: a.coordinate_quality_tier,
-                          }}
+                          disabled={lifecycleBlocked}
                         />
                       </td>
                     </tr>
                   );
                 })}
-                {orphanedCandidates.map((c) => (
-                  // Candidate-only row: a persisted publication whose live
-                  // aggregate no longer exists. Without this row the Unpublish
-                  // control would be unreachable while the aggregate stayed
-                  // member-visible. No liveSnapshot is passed, so drift is
-                  // reported as UNKNOWN rather than as a confirmed match.
+                {outsidePreviewTier.map((c) => (
+                  // ALIVE per the server, just not in this MEDIUM-TIER preview:
+                  // the cluster kept high- or low-tier samples but lost its last
+                  // medium one. Saying "no live aggregate" here would contradict
+                  // the drift badge derived from that very aggregate.
                   <tr
-                    key={`orphan-${c.publication_id ?? `${c.source_dra_id}:${c.coordinate_cluster_id}`}`}
-                    className="border-b border-amber-200 bg-amber-50 align-top dark:border-amber-900 dark:bg-amber-950/30"
+                    key={`tier-${c.publication_id ?? `${c.source_dra_id}:${c.coordinate_cluster_id}`}`}
+                    className="border-b border-sky-200 bg-sky-50 align-top dark:border-sky-900 dark:bg-sky-950/30"
                   >
                     <td className="py-2 pr-4">
                       <div className="text-slate-900 dark:text-slate-100">
                         {c.member_display_label}
                       </div>
                       <div className="font-mono text-xs text-slate-400">{c.source_dra_id}</div>
-                      <div className="mt-1 text-xs font-semibold text-amber-700 dark:text-amber-400">
-                        No live aggregate for this publication
+                      <div className="mt-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                        Live, but outside this medium-tier preview
                       </div>
                     </td>
                     <td className="py-2 pr-4">--</td>
@@ -413,6 +443,82 @@ export default async function SiteAggregatesPreviewPage() {
                         coordinate_cluster_id={c.coordinate_cluster_id}
                         defaultLabel={c.member_display_label}
                         candidate={c}
+                        disabled={lifecycleBlocked}
+                      />
+                    </td>
+                  </tr>
+                ))}
+                {liveUnclassified.map((c) => (
+                  // LIVE per the server, but the preview evidence is INCOMPLETE,
+                  // so why it is missing locally cannot be classified: it may be
+                  // outside the medium-tier preview, or it may simply not have
+                  // been read. State exactly that, and no more.
+                  <tr
+                    key={`liveunclassified-${c.publication_id ?? `${c.source_dra_id}:${c.coordinate_cluster_id}`}`}
+                    className="border-b border-sky-200 bg-sky-50 align-top dark:border-sky-900 dark:bg-sky-950/30"
+                  >
+                    <td className="py-2 pr-4">
+                      <div className="text-slate-900 dark:text-slate-100">
+                        {c.member_display_label}
+                      </div>
+                      <div className="font-mono text-xs text-slate-400">{c.source_dra_id}</div>
+                      <div className="mt-1 text-xs font-semibold text-sky-700 dark:text-sky-400">
+                        Live aggregate confirmed; preview incomplete, so its local
+                        omission cannot be classified
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 font-mono text-xs">--</td>
+                    <td className="py-2 pr-4">
+                      <SiteAggregateAdminActions
+                        source_dra_id={c.source_dra_id}
+                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        defaultLabel={c.member_display_label}
+                        candidate={c}
+                        disabled={lifecycleBlocked}
+                      />
+                    </td>
+                  </tr>
+                ))}
+                {unknownStatusCandidates.map((c) => (
+                  // STATUS UNAVAILABLE, never "orphaned". Any of several causes:
+                  // an errored or truncated read, a duplicated publication
+                  // identity, a soft-deleted DRA (which the server also reports
+                  // as `unknown`), or a drift state this build does not
+                  // recognise. NOTHING in the RPC contract distinguishes "gone"
+                  // from those, so the row states only what is true -- the
+                  // status is unavailable -- while staying visible so the
+                  // Unpublish escape hatch is never stranded.
+                  <tr
+                    key={`unknown-${c.publication_id ?? `${c.source_dra_id}:${c.coordinate_cluster_id}`}`}
+                    className="border-b border-slate-200 bg-slate-50 align-top dark:border-slate-700 dark:bg-slate-800/40"
+                  >
+                    <td className="py-2 pr-4">
+                      <div className="text-slate-900 dark:text-slate-100">
+                        {c.member_display_label}
+                      </div>
+                      <div className="font-mono text-xs text-slate-400">{c.source_dra_id}</div>
+                      <div className="mt-1 text-xs font-semibold text-slate-600 dark:text-slate-300">
+                        Live aggregate status unavailable
+                      </div>
+                    </td>
+                    <td className="py-2 pr-4">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 text-right">--</td>
+                    <td className="py-2 pr-4 font-mono text-xs">--</td>
+                    <td className="py-2 pr-4">
+                      <SiteAggregateAdminActions
+                        source_dra_id={c.source_dra_id}
+                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        defaultLabel={c.member_display_label}
+                        candidate={c}
+                        disabled={lifecycleBlocked}
                       />
                     </td>
                   </tr>
@@ -425,19 +531,25 @@ export default async function SiteAggregatesPreviewPage() {
 
         <SectionCard title="What this preview does not do">
           <ul className="list-disc space-y-1 pl-5 text-sm text-slate-600 dark:text-slate-300">
-            <li>It publishes nothing and cannot publish anything -- there is no write path here.</li>
+            <li>
+              This page itself performs no writes: every candidate and publication action is
+              carried out by the audited RPCs behind the buttons in the Actions column, never by
+              this view. It does not change DRA or sample visibility.
+            </li>
             <li>
               It exposes no per-sample identifier, station id, or measurement value. Only site-level
               counts and a representative coordinate are computed.
             </li>
             <li>
-              It renders no map layer yet. The map render is a documented follow-up; this batch
-              ships the table and summary so the shape can be reviewed first.
+              It does not flip DRA or sample visibility. Publish and Unpublish change
+              SITE-AGGREGATE publication state only; <code>dras.public</code> and{' '}
+              <code>samples.public</code> are never written by this page or its actions.
             </li>
             <li>
-              It adds no publication primitive. Making a site visible to members without its samples
-              would require a new audited primitive plus RLS work -- an owner decision, not a
-              consequence of this page.
+              The table, map and summary show the MEDIUM-TIER preview only. Create and Refresh
+              capture an ALL-TIER candidate, so a cluster containing high- or low-tier samples
+              will show larger counts in the Actions column than in this table. Review the
+              all-tier candidate before publishing -- that is what members would see.
             </li>
           </ul>
         </SectionCard>

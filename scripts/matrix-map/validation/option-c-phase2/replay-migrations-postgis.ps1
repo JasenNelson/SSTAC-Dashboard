@@ -24,7 +24,45 @@ param(
   # path is gone the replay fails, and if it still exists at stale bytes the
   # MANDATORY replay gate reports GREEN for SQL that is not the SQL under review.
   [Parameter(Mandatory = $false)]
-  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path
+  [string]$RepoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..\..\..')).Path,
+
+  # NEGATIVE FULL-SCRIPT LEGACY REPLAY (NEG_01), added 2026-07-27 restack.
+  #
+  # The positive suite (TEST_01..TEST_42) proves the apply-time invariant helper
+  # behaves correctly, but every one of those assertions runs INSIDE an
+  # already-applied schema, so none of them can prove what the pre-apply runbook
+  # now depends on: that when the helper raises UE409, the ENTIRE draft script
+  # rolls back atomically and leaves the database exactly as it was. That claim
+  # is the whole basis for removing the runbook's duplicate preflight check and
+  # making this block the single authority, so it is proven by execution rather
+  # than asserted from the presence of BEGIN/COMMIT.
+  #
+  # This mode: applies the draft cleanly (the "prior install"), mutates the
+  # candidate-audit table into a malformed LEGACY shape (nullable column, an
+  # orphan row, and a conforming-LOOKING but NOT VALID foreign key), fingerprints
+  # the catalog, reapplies the FULL draft expecting failure, fingerprints again,
+  # and requires the two fingerprints to be IDENTICAL.
+  [Parameter(Mandatory = $false)]
+  [switch]$NegativeLegacyReplay,
+
+  # POSITIVE FULL-SCRIPT REAPPLY CONTROL (REAPPLY_01), added 2026-07-27 restack.
+  #
+  # NEG_01 proves the script aborts and rolls back on a malformed install. It
+  # cannot prove the complementary and equally load-bearing claim: that a
+  # CONFORMING reapply SUCCEEDS. Nothing verified that path -- a bare CREATE
+  # FUNCTION and a DROP-less CREATE POLICY both broke it silently until NEG_01
+  # happened to trip over the first one.
+  #
+  # SCOPE, stated precisely: this proves the PINNED BYTES are idempotent against
+  # a fixture THIS HARNESS created. It does NOT authorize a reapply over an
+  # arbitrary live installation -- the runbook now STOPS on any existing install
+  # pending a case-specific adjudication, and this control is not a substitute
+  # for it. The capability is tested; the authorization is separate.
+  # This control applies the complete draft TWICE to a clean database and
+  # requires the second apply to reach COMMIT with the semantic catalog
+  # fingerprint unchanged.
+  [Parameter(Mandatory = $false)]
+  [switch]$PositiveReapplyControl
 )
 
 # NOTE: this script deliberately exposes NO -TimeoutSeconds parameter.
@@ -83,6 +121,145 @@ if (-not (Test-Path -LiteralPath $RepoRoot)) {
 $MigrationsDir = Join-Path $RepoRoot "supabase\migrations"
 $DraftSqlPath = Join-Path $RepoRoot "docs\design\matrix-map\OPTION_C_PHASE2_SITE_AGGREGATE_PUBLICATIONS_DRAFT_2026_07_24.sql"
 $TestSqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\test-option-c.sql"
+
+# ---------------------------------------------------------------------------
+# THE ONE CANONICAL CATALOG FINGERPRINT.
+#
+# Deliberately defined ONCE and reused by BOTH full-script controls (NEG_01 and
+# REAPPLY_01). Two hand-maintained copies of one rule is the exact defect class
+# this whole correction pass exists to remove, so the fingerprint does not get
+# duplicated per mode either.
+#
+# It is a SEMANTIC fingerprint, not a name census: it hashes function BODIES
+# (pg_get_functiondef), owners, and object comments, and full trigger
+# definitions (pg_get_triggerdef), alongside table/column shape, RLS flags,
+# constraints (including convalidated), policy expressions, and grants. A
+# reapply that silently changed a function body, an owner, a policy predicate,
+# or a grant therefore CHANGES the hash rather than passing unnoticed.
+#
+# ACL and role arrays are sorted before hashing. Grant order is an artifact of
+# REVOKE/GRANT execution sequence, not a semantic difference, and leaving it
+# unsorted would produce false failures on an otherwise identical reapply.
+# ---------------------------------------------------------------------------
+$Script:CatalogFingerprintSql = @'
+WITH t AS (
+  SELECT COALESCE(string_agg(format('TBL|%s|%s|%s|%s|%s|%s|%s|%s|%s',
+      c.relname, c.relkind, c.relrowsecurity, c.relforcerowsecurity,
+      a.attname, a.atttypid, a.attnotnull, a.atthasdef, a.attnum),
+      chr(10) ORDER BY c.relname, a.attnum), '') AS s
+  FROM pg_class c
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  LEFT JOIN pg_attribute a ON a.attrelid = c.oid AND a.attnum > 0 AND NOT a.attisdropped
+  WHERE n.nspname = 'matrix_map'
+), f AS (
+  SELECT COALESCE(string_agg(format('FN|%s|%s|%s|%s|%s|%s|%s|%s',
+      p.proname, pg_catalog.oidvectortypes(p.proargtypes), p.prorettype, p.prosecdef,
+      COALESCE(array_to_string(p.proconfig, ','), ''),
+      pg_get_userbyid(p.proowner),
+      COALESCE(obj_description(p.oid, 'pg_proc'), ''),
+      pg_get_functiondef(p.oid)),
+      chr(10) ORDER BY p.proname, pg_catalog.oidvectortypes(p.proargtypes)), '') AS s
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'matrix_map' AND p.prokind = 'f'
+), k AS (
+  SELECT COALESCE(string_agg(format('CON|%s|%s|%s|%s|%s|%s|%s|%s',
+      c.relname, con.conname, con.contype, COALESCE(con.conkey::text, ''),
+      COALESCE(con.confkey::text, ''), COALESCE(con.confrelid::regclass::text, ''),
+      con.confdeltype, con.convalidated),
+      chr(10) ORDER BY c.relname, con.conname), '') AS s
+  FROM pg_constraint con
+  JOIN pg_class c ON c.oid = con.conrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'matrix_map'
+), g AS (
+  SELECT COALESCE(string_agg(format('TRG|%s|%s|%s|%s|%s|%s',
+      c.relname, tg.tgname, tg.tgtype, tg.tgenabled,
+      tg.tgfoid::regprocedure::text, pg_get_triggerdef(tg.oid)),
+      chr(10) ORDER BY c.relname, tg.tgname), '') AS s
+  FROM pg_trigger tg
+  JOIN pg_class c ON c.oid = tg.tgrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'matrix_map' AND NOT tg.tgisinternal
+), pl AS (
+  SELECT COALESCE(string_agg(format('POL|%s|%s|%s|%s|%s|%s',
+      c.relname, po.polname, po.polcmd,
+      COALESCE((SELECT string_agg(r::regrole::text, ',' ORDER BY r::regrole::text)
+                FROM unnest(po.polroles) r), ''),
+      COALESCE(pg_get_expr(po.polqual, po.polrelid), ''),
+      COALESCE(pg_get_expr(po.polwithcheck, po.polrelid), '')),
+      chr(10) ORDER BY c.relname, po.polname), '') AS s
+  FROM pg_policy po
+  JOIN pg_class c ON c.oid = po.polrelid
+  JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'matrix_map'
+), ra AS (
+  SELECT COALESCE(string_agg(format('RELACL|%s|%s', c.relname,
+      COALESCE((SELECT string_agg(x::text, ',' ORDER BY x::text)
+                FROM unnest(c.relacl) x), '')),
+      chr(10) ORDER BY c.relname), '') AS s
+  FROM pg_class c JOIN pg_namespace n ON n.oid = c.relnamespace
+  WHERE n.nspname = 'matrix_map'
+), pa AS (
+  SELECT COALESCE(string_agg(format('PROACL|%s|%s|%s',
+      p.proname, pg_catalog.oidvectortypes(p.proargtypes),
+      COALESCE((SELECT string_agg(x::text, ',' ORDER BY x::text)
+                FROM unnest(p.proacl) x), '')),
+      chr(10) ORDER BY p.proname, pg_catalog.oidvectortypes(p.proargtypes)), '') AS s
+  FROM pg_proc p JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'matrix_map' AND p.prokind = 'f'
+), na AS (
+  SELECT COALESCE(string_agg(format('NSPACL|%s|%s', n.nspname,
+      COALESCE((SELECT string_agg(x::text, ',' ORDER BY x::text)
+                FROM unnest(n.nspacl) x), '')),
+      chr(10) ORDER BY n.nspname), '') AS s
+  FROM pg_namespace n WHERE n.nspname = 'matrix_map'
+)
+SELECT upper(encode(sha256(convert_to(
+  t.s || chr(10) || f.s || chr(10) || k.s || chr(10) || g.s || chr(10) ||
+  pl.s || chr(10) || ra.s || chr(10) || pa.s || chr(10) || na.s, 'UTF8')), 'hex'))
+FROM t, f, k, g, pl, ra, pa, na;
+'@
+
+# Direct, human-legible probe of the exact shape NEG_01 seeds and must find
+# untouched afterwards. The canonical fingerprint above already covers
+# attnotnull and convalidated, so this is not the proof of record -- it exists
+# so the receipt SHOWS the malformed FK and nullability explicitly instead of
+# leaving a reader to infer them from a hash.
+$Script:CandidateAuditShapeSql = @'
+SELECT format('not_null=%s|fk_count=%s|conname=%s|deltype=%s|convalidated=%s',
+  COALESCE((SELECT a.attnotnull::text
+     FROM pg_attribute a
+     JOIN pg_class c ON c.oid = a.attrelid
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+      AND a.attname = 'publication_id' AND a.attnum > 0 AND NOT a.attisdropped), 'ABSENT'),
+  (SELECT count(*)
+     FROM pg_constraint con
+     JOIN pg_class c ON c.oid = con.conrelid
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+      AND con.contype = 'f'),
+  COALESCE((SELECT string_agg(con.conname, ',' ORDER BY con.conname)
+     FROM pg_constraint con
+     JOIN pg_class c ON c.oid = con.conrelid
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+      AND con.contype = 'f'), ''),
+  COALESCE((SELECT string_agg(con.confdeltype::text, ',' ORDER BY con.conname)
+     FROM pg_constraint con
+     JOIN pg_class c ON c.oid = con.conrelid
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+      AND con.contype = 'f'), ''),
+  COALESCE((SELECT string_agg(con.convalidated::text, ',' ORDER BY con.conname)
+     FROM pg_constraint con
+     JOIN pg_class c ON c.oid = con.conrelid
+     JOIN pg_namespace n ON n.oid = c.relnamespace
+    WHERE n.nspname = 'matrix_map' AND c.relname = 'site_aggregate_candidate_audit'
+      AND con.contype = 'f'), ''));
+'@
+
+$Script:CatalogFingerprintScope = 'matrix_map schema, SEMANTIC: table+column shape and RLS flags; function signature, return type, SECURITY DEFINER, search_path config, owner, object comment and FULL pg_get_functiondef body; constraints including convalidated; full pg_get_triggerdef definitions; policy commands, roles and USING/WITH CHECK expressions; and grants (relacl/proacl/nspacl, sorted).'
 
 # Check directories
 if (-not (Test-Path -Path $MigrationsDir)) {
@@ -467,6 +644,215 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA auth TO anon, authenticated, service_ro
 
   Write-HarnessLog "All $($migrationFiles.Count) prerequisite migrations applied successfully!"
 
+  # Step 3b (NEG_01 only): negative full-script legacy replay.
+  if ($NegativeLegacyReplay) {
+    Write-HarnessLog "NEG_01: negative full-script legacy replay starting."
+    $negDraftContent = Get-Content -Raw -Path $DraftSqlPath -Encoding Ascii
+    $negDraftHash = (Get-FileHash -Algorithm SHA256 -Path $DraftSqlPath).Hash.ToUpperInvariant()
+    $negStart = [DateTime]::UtcNow
+
+    # NEG_01 step 1: establish the "prior install" by applying the draft cleanly.
+    Write-HarnessLog "NEG_01: applying the draft once to establish a prior install..."
+    $negFirstLog = $negDraftContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 setup failed: the draft did not apply cleanly to a fresh database: $negFirstLog" "ERROR"
+      exit 1
+    }
+
+    # NEG_01 step 2: mutate into the malformed LEGACY shape. Nullable column,
+    # an orphan row whose publication does NOT exist, and a foreign key that
+    # matches the conforming spec in every respect EXCEPT that it is NOT VALID
+    # (so the orphan row was never checked). Reapplying over this must abort.
+    Write-HarnessLog "NEG_01: mutating candidate-audit into the malformed legacy shape..."
+    $negMutateSql = @'
+ALTER TABLE matrix_map.site_aggregate_candidate_audit
+  DROP CONSTRAINT site_aggregate_candidate_audit_publication_id_fkey;
+ALTER TABLE matrix_map.site_aggregate_candidate_audit
+  ALTER COLUMN publication_id DROP NOT NULL;
+INSERT INTO matrix_map.site_aggregate_candidate_audit (
+  publication_id, source_dra_id, coordinate_cluster_id, action, new_snapshot, reason, changed_by, changed_by_email
+) VALUES (
+  'dddddddd-dead-4dea-8dea-dddddddddddd', 'a1111111-1111-1111-1111-111111111111', '49.28273,-123.12074', 'create', '{}'::jsonb,
+  'NEG_01 legacy seed row referencing a nonexistent publication', '11111111-1111-1111-1111-111111111111', 'admin@example.com'
+);
+ALTER TABLE matrix_map.site_aggregate_candidate_audit
+  ADD CONSTRAINT site_aggregate_candidate_audit_publication_id_fkey
+  FOREIGN KEY (publication_id) REFERENCES matrix_map.site_aggregate_publications(id)
+  ON DELETE RESTRICT NOT VALID;
+'@
+    $negMutateLog = $negMutateSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 setup failed: could not build the malformed legacy shape: $negMutateLog" "ERROR"
+      exit 1
+    }
+
+    # Deterministic catalog fingerprint over the matrix_map schema: tables and
+    # columns, functions, constraints, triggers, policies, and grants. Ordered,
+    # serialized, and hashed so "unchanged" is a single comparable value rather
+    # than an undefined claim about database objects.
+    $negFingerprintSql = $Script:CatalogFingerprintSql
+
+    $negFpBeforeRaw = $negFingerprintSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 setup failed: could not compute the BEFORE catalog fingerprint: $negFpBeforeRaw" "ERROR"
+      exit 1
+    }
+    $negFpBefore = ([string]($negFpBeforeRaw -join "`n")).Trim()
+
+    $negShapeBeforeRaw = $Script:CandidateAuditShapeSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 setup failed: could not read the BEFORE candidate-audit shape: $negShapeBeforeRaw" "ERROR"
+      exit 1
+    }
+    $negShapeBefore = ([string]($negShapeBeforeRaw -join "`n")).Trim()
+
+    # The seeded shape must actually BE malformed, or the whole control is
+    # vacuous: nullable column, exactly one FK, RESTRICT, and NOT validated.
+    if ($negShapeBefore -ne 'not_null=false|fk_count=1|conname=site_aggregate_candidate_audit_publication_id_fkey|deltype=r|convalidated=false') {
+      Write-HarnessLog "NEG_01 setup invariant violated: seeded shape is not the intended malformed legacy shape: $negShapeBefore" "ERROR"
+      exit 1
+    }
+
+    # NEG_01 step 3: reapply the ENTIRE draft. This MUST fail.
+    # VERBOSITY=verbose is REQUIRED here, and is a psql client variable rather
+    # than SQL: at default verbosity psql prints only 'ERROR:  <message>' and
+    # never the SQLSTATE, so asserting on 'UE409' could never match no matter
+    # how correct the script was. Passing it via -v changes the CLIENT's error
+    # formatting only; the SQL bytes piped on stdin remain byte-identical to
+    # the file whose SHA-256 this receipt records.
+    Write-HarnessLog "NEG_01: reapplying the FULL draft over the malformed legacy shape (failure expected)..."
+    $negReplayLog = $negDraftContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 -v VERBOSITY=verbose 2>&1
+    $negReplayExitCode = $LASTEXITCODE
+    $negReplayText = [string]($negReplayLog -join "`n")
+
+    $negFpAfterRaw = $negFingerprintSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 failed: could not compute the AFTER catalog fingerprint: $negFpAfterRaw" "ERROR"
+      exit 1
+    }
+    $negFpAfter = ([string]($negFpAfterRaw -join "`n")).Trim()
+
+    $negShapeAfterRaw = $Script:CandidateAuditShapeSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "NEG_01 failed: could not read the AFTER candidate-audit shape: $negShapeAfterRaw" "ERROR"
+      exit 1
+    }
+    $negShapeAfter = ([string]($negShapeAfterRaw -join "`n")).Trim()
+
+    # Anchored to the SQLSTATE field of a verbose ERROR line, not a bare
+    # substring: this must be satisfied by the raised SQLSTATE itself and not by
+    # any prose that happens to mention the code.
+    $negSawUe409 = $negReplayText -match '(?m)^ERROR:\s+UE409:'
+    $negFailedAsExpected = ($negReplayExitCode -ne 0)
+    $negFingerprintsMatch = ($negFpBefore -eq $negFpAfter) -and (-not [string]::IsNullOrWhiteSpace($negFpBefore))
+    $negShapeUnchanged = ($negShapeBefore -eq $negShapeAfter)
+    $negStatus = if ($negFailedAsExpected -and $negSawUe409 -and $negFingerprintsMatch -and $negShapeUnchanged) { 'PASS' } else { 'FAIL' }
+
+    $negReceipt = [PSCustomObject]@{
+      test_id = 'NEG_01'
+      description = 'NEGATIVE FULL-SCRIPT CONTROL: reapplying the entire draft over a malformed legacy candidate-audit table (nullable column, orphan row, conforming-looking but NOT VALID foreign key) aborts with UE409 and rolls back atomically, leaving the matrix_map catalog fingerprint identical'
+      status = $negStatus
+      timestamp_utc = $negStart.ToString('o')
+      duration_ms = ([DateTime]::UtcNow - $negStart).TotalMilliseconds
+      draft_sql_path = $DraftSqlPath
+      draft_sql_sha256 = $negDraftHash
+      replay_exit_code = $negReplayExitCode
+      failed_as_expected = $negFailedAsExpected
+      saw_ue409 = [bool]$negSawUe409
+      catalog_fingerprint_before = $negFpBefore
+      catalog_fingerprint_after = $negFpAfter
+      fingerprints_match = $negFingerprintsMatch
+      candidate_audit_shape_before = $negShapeBefore
+      candidate_audit_shape_after = $negShapeAfter
+      candidate_audit_shape_unchanged = $negShapeUnchanged
+      fingerprint_scope = $Script:CatalogFingerprintScope
+      replay_output = $negReplayText
+    }
+    $negReceipt | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $OutputDir "neg01_receipt.json") -Encoding Ascii
+
+    if ($negStatus -ne 'PASS') {
+      Write-HarnessLog "NEG_01 FAILED: exit_code=$negReplayExitCode saw_ue409=$negSawUe409 fingerprints_match=$negFingerprintsMatch shape_unchanged=$negShapeUnchanged" "ERROR"
+      exit 1
+    }
+    Write-HarnessLog "NEG_01 PASS: full-script reapply aborted with UE409 and the catalog fingerprint is unchanged ($negFpBefore)."
+    exit 0
+  }
+
+  # Step 3c (REAPPLY_01 only): positive full-script reapply control.
+  if ($PositiveReapplyControl) {
+    Write-HarnessLog "REAPPLY_01: positive full-script reapply control starting."
+    $reDraftContent = Get-Content -Raw -Path $DraftSqlPath -Encoding Ascii
+    $reDraftHash = (Get-FileHash -Algorithm SHA256 -Path $DraftSqlPath).Hash.ToUpperInvariant()
+    $reStart = [DateTime]::UtcNow
+
+    # First apply, against the clean database the migrations just produced.
+    Write-HarnessLog "REAPPLY_01: first apply of the complete draft..."
+    $reFirstLog = $reDraftContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    $reFirstExitCode = $LASTEXITCODE
+    $reFirstText = [string]($reFirstLog -join "`n")
+    if ($reFirstExitCode -ne 0) {
+      Write-HarnessLog "REAPPLY_01 setup failed: the FIRST apply did not succeed: $reFirstText" "ERROR"
+      exit 1
+    }
+
+    $reFpBeforeRaw = $Script:CatalogFingerprintSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "REAPPLY_01 failed: could not compute the post-first-apply fingerprint: $reFpBeforeRaw" "ERROR"
+      exit 1
+    }
+    $reFpBefore = ([string]($reFpBeforeRaw -join "`n")).Trim()
+
+    # Second apply of the IDENTICAL bytes against the fixture this harness just
+    # built. Proves idempotency of the pinned bytes -- NOT that any particular
+    # live installation is safe to reapply over (see the scope note in the
+    # parameter block).
+    Write-HarnessLog "REAPPLY_01: second apply of the IDENTICAL complete draft..."
+    $reSecondLog = $reDraftContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    $reSecondExitCode = $LASTEXITCODE
+    $reSecondText = [string]($reSecondLog -join "`n")
+
+    $reFpAfterRaw = $Script:CatalogFingerprintSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "REAPPLY_01 failed: could not compute the post-second-apply fingerprint: $reFpAfterRaw" "ERROR"
+      exit 1
+    }
+    $reFpAfter = ([string]($reFpAfterRaw -join "`n")).Trim()
+
+    # psql emits a command tag per statement; the draft is wrapped in a single
+    # BEGIN/COMMIT, so reaching COMMIT is what proves the whole script ran
+    # rather than merely that no error was raised before an early exit.
+    $reReachedCommit = $reSecondText -match '(?m)^COMMIT\s*$'
+    $reSucceeded = ($reSecondExitCode -eq 0)
+    $reFingerprintStable = ($reFpBefore -eq $reFpAfter) -and (-not [string]::IsNullOrWhiteSpace($reFpBefore))
+    $reStatus = if ($reSucceeded -and $reReachedCommit -and $reFingerprintStable) { 'PASS' } else { 'FAIL' }
+
+    $reReceipt = [PSCustomObject]@{
+      test_id = 'REAPPLY_01'
+      description = 'POSITIVE FULL-SCRIPT CONTROL: applying the complete draft a SECOND time to a database where it is already installed succeeds, runs through to COMMIT, and leaves the semantic matrix_map catalog fingerprint unchanged'
+      status = $reStatus
+      timestamp_utc = $reStart.ToString('o')
+      duration_ms = ([DateTime]::UtcNow - $reStart).TotalMilliseconds
+      draft_sql_path = $DraftSqlPath
+      draft_sql_sha256 = $reDraftHash
+      first_apply_exit_code = $reFirstExitCode
+      second_apply_exit_code = $reSecondExitCode
+      second_apply_reached_commit = [bool]$reReachedCommit
+      catalog_fingerprint_after_first_apply = $reFpBefore
+      catalog_fingerprint_after_second_apply = $reFpAfter
+      fingerprints_match = $reFingerprintStable
+      fingerprint_scope = $Script:CatalogFingerprintScope
+      second_apply_output = $reSecondText
+    }
+    $reReceipt | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $OutputDir "reapply01_receipt.json") -Encoding Ascii
+
+    if ($reStatus -ne 'PASS') {
+      Write-HarnessLog "REAPPLY_01 FAILED: second_apply_exit=$reSecondExitCode reached_commit=$reReachedCommit fingerprints_match=$reFingerprintStable" "ERROR"
+      exit 1
+    }
+    Write-HarnessLog "REAPPLY_01 PASS: identical reapply succeeded through COMMIT with an unchanged semantic fingerprint ($reFpBefore)."
+    exit 0
+  }
+
   # Step 4: Apply Option C Draft SQL (Unchanged bytes) to sstac_replay
   Write-HarnessLog "Applying PR #752 Option C Draft SQL to sstac_replay..."
   $draftContent = Get-Content -Raw -Path $DraftSqlPath -Encoding Ascii
@@ -493,12 +879,12 @@ GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA auth TO anon, authenticated, service_ro
 
   # Capture pg_get_functiondef(matrix_map.flip_site_aggregate_public) receipt immediately after draft load
   Write-HarnessLog "Capturing candidate flip_site_aggregate_public function definition receipt..."
-  $fnDefRaw = (docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -c "SELECT pg_get_functiondef('matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text)'::regprocedure);" 2>&1)
+  $fnDefRaw = (docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -c "SELECT pg_get_functiondef('matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text, timestamptz)'::regprocedure);" 2>&1)
   $fnDefText = [string]($fnDefRaw -join "`n")
   $fnDefReceipt = [PSCustomObject]@{
     timestamp_utc = [DateTime]::UtcNow.ToString('o')
     function_name = "matrix_map.flip_site_aggregate_public"
-    signature = "matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text)"
+    signature = "matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text, timestamptz)"
     post_load_candidate_ddl_executed = $false
     function_definition = $fnDefText
   }
@@ -560,7 +946,23 @@ ON CONFLICT (id) DO NOTHING;
   # and hardcoded `parsedResults.Count -eq 11`, which meant five newly added
   # candidate-delta assertions -- including a FAILING one -- were dropped on the
   # floor while the run still reported COMPLETED_GREEN.
-  $requiredTestIds = @('TEST_01','TEST_02','TEST_03','TEST_04','TEST_05','TEST_06','TEST_07','TEST_08','TEST_09','TEST_10','TEST_11','TEST_12','TEST_13','TEST_14','TEST_15','TEST_16','TEST_17')
+  # SINGLE AUTHORITY for the required baseline. `required_test_ids`,
+  # `required_test_count`, `missing_test_ids` and `strict_pass` are ALL derived
+  # from this one array and emitted into the receipt, so a reader never has to
+  # reconcile two numbers.
+  #
+  # WHY THE UPPER BOUND IS LOAD-BEARING, not cosmetic: this array previously
+  # stopped at TEST_64 while the suite had grown to TEST_69. TEST_65-69 are the
+  # exact-ID contract checks -- upsert return identity, refresh return identity,
+  # single-row readback through (p_publication_id, 1, 0), the DROP/CREATE
+  # ownership and grant posture, and the single-overload check. A replay that
+  # somehow failed to EMIT those five would still have satisfied the old
+  # baseline and reported strict_pass = true, so the pre-apply gate could go
+  # GREEN with precisely the newest safety checks absent.
+  #
+  # WHEN YOU ADD A TEST to test-option-c.sql, extend this array in the same
+  # commit. The `missing_test_ids` list is what fails closed if you do not.
+  $requiredTestIds = @(1..69 | ForEach-Object { 'TEST_{0:D2}' -f $_ })
   $passCount = 0
   $failCount = 0
   $parsedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -592,6 +994,9 @@ ON CONFLICT (id) DO NOTHING;
   }
 
   $missingTestIds = @($requiredTestIds | Where-Object { -not $foundTestIds.Contains($_) })
+  # Derived from the ONE authority above. `missing_test_ids` is the operative
+  # condition; the count comparison is retained only as a redundant guard and
+  # can never be satisfied while an id is missing.
   $testSuiteStrictPass = ($parsedResults.Count -ge $requiredTestIds.Count) -and ($missingTestIds.Count -eq 0) -and ($failCount -eq 0)
 
   $testHash = (Get-FileHash -Algorithm SHA256 -Path $TestSqlPath).Hash.ToUpperInvariant()
@@ -603,6 +1008,8 @@ ON CONFLICT (id) DO NOTHING;
     pass_count = $passCount
     fail_count = $failCount
     total_parsed_unique = $parsedResults.Count
+    required_test_ids = $requiredTestIds
+    required_test_count = $requiredTestIds.Count
     missing_test_ids = $missingTestIds
     strict_pass = $testSuiteStrictPass
     tests = $parsedResults
@@ -630,13 +1037,13 @@ COMMIT;
   $sessionBSql = @"
 BEGIN;
 SELECT set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
-SELECT matrix_map.flip_site_aggregate_public('c1111111-1111-1111-1111-111111111111', false, '11111111-1111-1111-1111-111111111111', 'Reset for concurrency test');
+SELECT matrix_map.flip_site_aggregate_public('c1111111-1111-1111-1111-111111111111', false, '11111111-1111-1111-1111-111111111111', 'Reset for concurrency test', NULL);
 COMMIT;
 
 BEGIN;
 SELECT set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
 -- Try to flip to true while A holds RowExclusive on samples. This will attempt SHARE NOWAIT and fail immediately.
-SELECT matrix_map.flip_site_aggregate_public('c1111111-1111-1111-1111-111111111111', true, '11111111-1111-1111-1111-111111111111', 'Session B Flip');
+SELECT matrix_map.flip_site_aggregate_public('c1111111-1111-1111-1111-111111111111', true, '11111111-1111-1111-1111-111111111111', 'Session B Flip', (SELECT updated_at FROM matrix_map.site_aggregate_publications WHERE id = 'c1111111-1111-1111-1111-111111111111'));
 COMMIT;
 "@
 

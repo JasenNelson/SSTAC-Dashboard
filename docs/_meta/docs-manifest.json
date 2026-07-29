@@ -3023,13 +3023,13 @@
     },
     {
       "id": "continuity.current_handoff",
-      "path": "FRESH_SESSION_HANDOFF_2026_07_26_PLANNING_AND_DOCS_RECOVERY.md",
+      "path": "FRESH_SESSION_HANDOFF_2026_07_27_OPTION_C_RESTACK_CORRECTION.md",
       "lifecycle": "AUTHORITATIVE",
       "domain_tags": [
         "continuity",
         "handoff"
       ],
-      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-26. Update this id path when a newer dated handoff supersedes it."
+      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-27. Supersedes FRESH_SESSION_HANDOFF_2026_07_26_PLANNING_AND_DOCS_RECOVERY.md, which predates the Option C correction and describes the superseded client-side drift comparison. Update this id path when a newer dated handoff supersedes it."
     },
     {
       "id": "matrixmap.plan_v3_4_2",

@@ -104,19 +104,24 @@ function mockClient({
         }),
       };
       if (publishedAggregates !== undefined || rpcError !== undefined) {
-        schemaApi.rpc = vi.fn((functionName: string) => {
-          rpcCalls.push(functionName);
-          return {
-            range: vi.fn(async (from: number, to: number) => {
-              rpcRanges.push([from, to]);
-              if (rpcError) return { data: null, error: rpcError };
-              if (functionName === 'fetch_published_site_aggregates') {
-                return { data: (publishedAggregates ?? []).slice(from, to + 1), error: null };
-              }
-              return { data: null, error: { code: 'PGRST202', message: 'missing function' } };
-            }),
-          };
-        });
+        // Bounds are ARGUMENTS now, not an outer `.range()`: the RPC is PL/pgSQL
+        // and materializes before any outer range, so paging had to move inside
+        // the function. The mock records the bounds it was ASKED for, which is
+        // what the pagination assertions check.
+        schemaApi.rpc = vi.fn(
+          async (functionName: string, args: { p_limit: number; p_offset: number }) => {
+            rpcCalls.push(functionName);
+            rpcRanges.push([args.p_offset, args.p_offset + args.p_limit - 1]);
+            if (rpcError) return { data: null, error: rpcError };
+            if (functionName === 'fetch_published_site_aggregates') {
+              return {
+                data: (publishedAggregates ?? []).slice(args.p_offset, args.p_offset + args.p_limit),
+                error: null,
+              };
+            }
+            return { data: null, error: { code: 'PGRST202', message: 'missing function' } };
+          },
+        );
       }
       return schemaApi;
     }),
@@ -396,11 +401,9 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
           expect(schemaName).toBe('matrix_map');
           return {
             from: fromSpy,
-            rpc: vi.fn(() => ({
-              range: vi.fn(async () => ({
-                data: null,
-                error: { code: 'PGRST202', message: 'missing function' },
-              })),
+            rpc: vi.fn(async () => ({
+              data: null,
+              error: { code: 'PGRST202', message: 'missing function' },
             })),
           };
         }),
@@ -513,8 +516,62 @@ describe('fetchMatrixMapSiteAggregatesServerSide', () => {
       expect(marker.sample_count_high).toBe(0);
       expect(marker.sample_count_label).toBe('10-99');
 
+      // COORDINATE PRECISION CONTAINMENT (member contract: at most 3 decimal
+      // places, ~111 m). PRIVATE_FIELD_ROW carries 8-decimal coordinates
+      // (49.28271234, -123.12071234) specifically to exercise this: if an
+      // installed RPC ever returns more precision than the member contract
+      // allows, the boundary must clamp it here rather than forwarding it.
+      // Rounded (not truncated): 49.28271234 -> 49.283, -123.12071234 -> -123.121.
+      expect(marker.position).toEqual([49.283, -123.121]);
+
       // The whole serialized payload must not leak the confidential title.
       expect(JSON.stringify(result.siteAggregateData)).not.toContain('Confidential DRA Title');
+    });
+
+    it('rounds a negative latitude the same way as a negative longitude (negative-coordinate coverage)', async () => {
+      const NEGATIVE_LAT_ROW = {
+        aggregate_id: PUBLISHED_AGGREGATE_ID,
+        label: 'Owner-reviewed site',
+        representative_latitude: -33.86881234,
+        representative_longitude: 151.20931234,
+        coordinate_quality_tier: 'medium',
+        sample_count_bucket: '1',
+        data_snapshot_version: 'snapshot-2026-07-24',
+      };
+      const { client } = mockClient({
+        dras: [],
+        samples: [],
+        publishedAggregates: [NEGATIVE_LAT_ROW],
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+      const marker = result.siteAggregateData.site_aggregate_markers[0];
+
+      // -33.86881234 -> -33.869 (rounded, not truncated to -33.868);
+      // 151.20931234 -> 151.209.
+      expect(marker.position).toEqual([-33.869, 151.209]);
+    });
+
+    it('rounds coordinates that already carry exactly 3 decimals unchanged (no spurious truncation)', async () => {
+      const EXACT_ROW = {
+        aggregate_id: PUBLISHED_AGGREGATE_ID,
+        label: 'Owner-reviewed site',
+        representative_latitude: 49.283,
+        representative_longitude: -123.121,
+        coordinate_quality_tier: 'medium',
+        sample_count_bucket: '1',
+        data_snapshot_version: 'snapshot-2026-07-24',
+      };
+      const { client } = mockClient({
+        dras: [],
+        samples: [],
+        publishedAggregates: [EXACT_ROW],
+      });
+
+      const result = await fetchMatrixMapSiteAggregatesServerSide(client as never);
+      const marker = result.siteAggregateData.site_aggregate_markers[0];
+
+      expect(marker.position).toEqual([49.283, -123.121]);
     });
   });
 });
