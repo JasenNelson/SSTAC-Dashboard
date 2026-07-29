@@ -1,0 +1,279 @@
+# SSTAC-Dashboard autonomous executor deny rules.
+#
+# These rules are intentionally restrictive. The executor runs with
+# approval_policy=never, so forbidden commands fail closed without prompting.
+
+prefix_rule(
+    pattern = [[
+        "git",
+        "git.exe",
+        "C:\\Program Files\\Git\\cmd\\git.exe",
+        "C:\\Program Files\\Git\\bin\\git.exe",
+    ]],
+    decision = "forbidden",
+    justification = "The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.",
+    match = [
+        "git status --short",
+        "git diff",
+        "git add tools/codex/example.ps1",
+        "git commit -m example",
+        "git push origin example",
+        "git restore example.txt",
+        "git clean -fd",
+        "git worktree remove C:\\example",
+    ],
+    not_match = [
+        "npm run lint",
+    ],
+)
+
+prefix_rule(
+    pattern = [["gh", "gh.exe"]],
+    decision = "forbidden",
+    justification = "Push, PR, workflow, release, and merge operations are outside the executor contract.",
+    match = [
+        "gh pr create",
+        "gh pr edit 1",
+        "gh pr merge 1",
+        "gh workflow run deploy.yml",
+    ],
+)
+
+prefix_rule(
+    pattern = [["supabase", "supabase.exe"]],
+    decision = "forbidden",
+    justification = "Supabase contact and operations require a separate owner-approved protocol.",
+    match = [
+        "supabase status",
+        "supabase db push",
+    ],
+)
+
+prefix_rule(
+    pattern = [["npx", "npx.cmd", "npx.exe"], "supabase"],
+    decision = "forbidden",
+    justification = "Supabase contact and operations require a separate owner-approved protocol.",
+    match = [
+        "npx supabase status",
+        "npx supabase db push",
+    ],
+)
+
+prefix_rule(
+    pattern = [["npm", "npm.cmd", "npm.exe"], "exec", "supabase"],
+    decision = "forbidden",
+    justification = "Supabase contact and operations require a separate owner-approved protocol.",
+    match = [
+        "npm exec supabase status",
+    ],
+)
+
+prefix_rule(
+    pattern = [["npm", "npm.cmd", "npm.exe"], "exec"],
+    decision = "forbidden",
+    justification = "Arbitrary package-executable dispatch can bypass the bounded command rules.",
+    match = [
+        "npm exec supabase status",
+        "npm exec vercel --prod",
+    ],
+)
+
+prefix_rule(
+    pattern = [
+        ["npx", "npx.cmd", "npx.exe"],
+        ["vercel", "netlify", "firebase", "wrangler", "prisma"],
+    ],
+    decision = "forbidden",
+    justification = "Deployment, cloud, and database tools are outside the executor contract.",
+    match = [
+        "npx vercel --prod",
+        "npx prisma migrate deploy",
+    ],
+)
+
+prefix_rule(
+    pattern = [["vercel", "vercel.exe"],],
+    decision = "forbidden",
+    justification = "Deployment is not authorized. Stop at READY_FOR_REVIEW.",
+    match = [
+        "vercel deploy",
+        "vercel --prod",
+    ],
+)
+
+prefix_rule(
+    pattern = [["kubectl", "kubectl.exe"]],
+    decision = "forbidden",
+    justification = "Cluster and deployment operations are not authorized.",
+    match = [
+        "kubectl apply -f deployment.yml",
+        "kubectl delete pod example",
+    ],
+)
+
+prefix_rule(
+    pattern = [["terraform", "terraform.exe"]],
+    decision = "forbidden",
+    justification = "Infrastructure inspection and mutation are outside the executor contract.",
+    match = [
+        "terraform plan",
+        "terraform apply",
+    ],
+)
+
+prefix_rule(
+    pattern = [["aws", "aws.exe", "az", "az.exe", "gcloud", "gcloud.exe"]],
+    decision = "forbidden",
+    justification = "Cloud control-plane access is outside the executor contract.",
+    match = [
+        "aws s3 ls",
+        "az account show",
+        "gcloud projects list",
+    ],
+)
+
+prefix_rule(
+    pattern = [["psql", "psql.exe", "sqlcmd", "sqlcmd.exe"]],
+    decision = "forbidden",
+    justification = "Database contact is outside the executor contract.",
+    match = [
+        "psql -c SELECT 1",
+        "sqlcmd -Q SELECT 1",
+    ],
+)
+
+prefix_rule(
+    pattern = [["npm", "npm.cmd", "npm.exe"], "run", "build"],
+    decision = "forbidden",
+    justification = "Raw npm run build is forbidden. Use npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10.",
+    match = [
+        "npm run build",
+    ],
+    not_match = [
+        "npm run build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10",
+    ],
+)
+
+prefix_rule(
+    pattern = [["npm", "npm.cmd", "npm.exe"], ["install", "uninstall", "ci", "publish"]],
+    decision = "forbidden",
+    justification = "Dependency-store and package-publication mutations are outside the executor contract.",
+    match = [
+        "npm install",
+        "npm uninstall example",
+        "npm ci",
+        "npm publish",
+    ],
+)
+
+prefix_rule(
+    pattern = [["ollama", "ollama.exe"]],
+    decision = "forbidden",
+    justification = "Ollama calls require the project scheduling and lock protocol and are not authorized here.",
+    match = [
+        "ollama list",
+        "ollama run example",
+    ],
+)
+
+prefix_rule(
+    pattern = [["taskkill", "taskkill.exe", "Stop-Process", "kill", "pkill"]],
+    decision = "forbidden",
+    justification = "Do not clean up arbitrary processes. Mission Control may terminate only an exact run-owned process cell or proven PID.",
+    match = [
+        "taskkill /PID 123 /F",
+        "Stop-Process -Id 123",
+        "kill 123",
+        "pkill node",
+    ],
+)
+
+prefix_rule(
+    pattern = [["fsutil", "fsutil.exe"], "reparsepoint", "delete"],
+    decision = "forbidden",
+    justification = "Never delete or replace a worktree node_modules junction.",
+    match = [
+        "fsutil reparsepoint delete C:\\example\\node_modules",
+    ],
+)
+
+prefix_rule(
+    pattern = [["rm", "rmdir", "rd", "del", "erase"]],
+    decision = "forbidden",
+    justification = "Broad cleanup and junction deletion are outside the executor contract.",
+    match = [
+        "rm -rf node_modules",
+        "rmdir node_modules",
+        "rd node_modules",
+        "del example.txt",
+    ],
+)
+
+prefix_rule(
+    pattern = [["env", "printenv", "set"]],
+    decision = "forbidden",
+    justification = "Do not enumerate environment variables or expose secrets.",
+    match = [
+        "env",
+        "printenv",
+        "set",
+    ],
+)
+
+prefix_rule(
+    pattern = [["curl", "curl.exe", "wget", "wget.exe", "Invoke-WebRequest", "iwr", "Invoke-RestMethod", "irm"]],
+    decision = "forbidden",
+    justification = "External network contact is disabled for the executor contract.",
+    match = [
+        "curl https://example.com",
+        "Invoke-WebRequest https://example.com",
+    ],
+)
+
+prefix_rule(
+    pattern = [["Get-ChildItem", "gci", "Get-Item", "gi", "Get-Content", "gc"], ["Env:", "Env:\\"]],
+    decision = "forbidden",
+    justification = "Do not enumerate or read process environment variables.",
+    match = [
+        "Get-ChildItem Env:",
+        "Get-Item Env:",
+    ],
+)
+
+prefix_rule(
+    pattern = [[
+        "powershell",
+        "powershell.exe",
+        "C:\\WINDOWS\\System32\\WindowsPowerShell\\v1.0\\powershell.exe",
+        "pwsh",
+        "pwsh.exe",
+        "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "cmd",
+        "cmd.exe",
+        "C:\\WINDOWS\\System32\\cmd.exe",
+        "bash",
+        "bash.exe",
+        "sh",
+        "wsl",
+        "wsl.exe",
+        "python",
+        "python.exe",
+        "py",
+        "py.exe",
+        "node",
+        "node.exe",
+        "bun",
+        "bun.exe",
+        "deno",
+        "deno.exe",
+    ]],
+    decision = "forbidden",
+    justification = "Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.",
+    match = [
+        "powershell -NoProfile -Command git status --short",
+        "cmd /c git status --short",
+        "pwsh -NoProfile -Command Get-ChildItem Env:",
+        "python -c print('example')",
+        "node -e console.log('example')",
+    ],
+)
