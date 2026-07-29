@@ -1,38 +1,62 @@
-[CmdletBinding()]
+[CmdletBinding(DefaultParameterSetName = 'Full')]
 param(
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [string]$WorktreePath,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [string]$ExpectedBranch,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
     [string]$BaseSha,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [ValidatePattern('^[0-9a-fA-F]{40}$')]
     [string]$OriginMainSha,
 
-    [string]$ActiveWorktreePath = 'C:\Projects\SSTAC-Dashboard-worktrees\option-c-candidate-restack-20260727',
-
-    [string]$ActiveBranch = 'feat/option-c-candidate-lifecycle-restack-2026-07-27',
-
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [string]$CleanCanaryWorktreePath,
 
-    [Parameter(Mandatory = $true)]
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
     [string]$CleanCanaryBranch,
 
+    [Parameter(ParameterSetName = 'Full')]
     [switch]$RunRealExecutorCanaries,
 
+    [Parameter(ParameterSetName = 'Full')]
     [string]$PositiveCanaryWorktreePath,
 
+    [Parameter(ParameterSetName = 'Full')]
     [string]$PositiveCanaryBranch,
 
+    [Parameter(ParameterSetName = 'Full')]
     [string]$UnexpectedCanaryWorktreePath,
 
-    [string]$UnexpectedCanaryBranch
+    [Parameter(ParameterSetName = 'Full')]
+    [string]$UnexpectedCanaryBranch,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [string]$ApprovedBaselineCanaryWorktreePath,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [string]$ApprovedBaselineCanaryBranch,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [ValidatePattern('^[0-9a-fA-F]{40}$')]
+    [string]$ApprovedBaselineSha,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [ValidatePattern('^[0-9a-fA-F]{40}$')]
+    [string]$ApprovedParentSha,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [string]$BaselineCommitReceiptPath,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Full')]
+    [string]$ExactCommitPatchPath,
+
+    [Parameter(Mandatory = $true, ParameterSetName = 'Pure')]
+    [switch]$PureRuntimeAuditOnly
 )
 
 Set-StrictMode -Version Latest
@@ -66,6 +90,7 @@ function New-MissionControlBundle {
     $timestampText = $Timestamp.UtcDateTime.ToString('o')
     $inventoryPath = Join-Path $Directory "$Name-ACTIVE_SESSION_INVENTORY.json"
     $receiptPath = Join-Path $Directory "$Name-MISSION_CONTROL_RECEIPT.json"
+    $secretInventoryPath = Join-Path $Directory "$Name-SECRET_PATH_INVENTORY.json"
     $inventory = [ordered]@{
         schema_version = 1
         registry_complete = $true
@@ -75,6 +100,18 @@ function New-MissionControlBundle {
     }
     Write-AsciiText -Path $inventoryPath -Value (($inventory | ConvertTo-Json -Depth 8) + "`n")
     $inventoryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $inventoryPath).Hash.ToLowerInvariant()
+    $secretInventory = [ordered]@{
+        schema_version = 1
+        recorded_at_utc = $timestampText
+        secret_bearing_paths = @(
+            [ordered]@{
+                path = "C:\Synthetic\Secrets\$Name\auth.json"
+                reason = 'Synthetic secret-path runtime audit fixture.'
+            }
+        )
+    }
+    Write-AsciiText -Path $secretInventoryPath -Value (($secretInventory | ConvertTo-Json -Depth 8) + "`n")
+    $secretInventoryHash = (Get-FileHash -Algorithm SHA256 -LiteralPath $secretInventoryPath).Hash.ToLowerInvariant()
     $receipt = [ordered]@{
         schema_version = 1
         receipt_id = [Guid]::NewGuid().ToString('D')
@@ -94,6 +131,60 @@ function New-MissionControlBundle {
         ReceiptSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $receiptPath).Hash.ToLowerInvariant()
         InventoryPath = $inventoryPath
         InventorySha256 = $inventoryHash
+        SecretInventoryPath = $secretInventoryPath
+        SecretInventorySha256 = $secretInventoryHash
+    }
+}
+
+function New-ApprovedBaselineAuthorizationBundle {
+    param(
+        [Parameter(Mandatory = $true)][string]$Directory,
+        [Parameter(Mandatory = $true)][string]$Name,
+        [Parameter(Mandatory = $true)][DateTimeOffset]$Timestamp,
+        [Parameter(Mandatory = $true)][string]$RepositoryRoot,
+        [Parameter(Mandatory = $true)][string]$ApprovedSha,
+        [Parameter(Mandatory = $true)][string]$ParentSha,
+        [Parameter(Mandatory = $true)][string]$OriginSha,
+        [Parameter(Mandatory = $true)][string]$BaselineReceiptPath,
+        [Parameter(Mandatory = $true)][string]$PatchPath,
+        [Parameter(Mandatory = $true)][object]$MissionBundle,
+        [hashtable]$Mutations = @{},
+        [switch]$AddUnexpectedProperty
+    )
+
+    $authorizationPath = Join-Path $Directory "$Name-APPROVED_BASELINE_AUTHORIZATION.json"
+    $authorization = [ordered]@{
+        schema_version = 1
+        receipt_id = [Guid]::NewGuid().ToString('D')
+        recorded_at_utc = $Timestamp.UtcDateTime.ToString('o')
+        repository_root = $RepositoryRoot
+        approved_baseline_sha = $ApprovedSha.ToLowerInvariant()
+        approved_parent_sha = $ParentSha.ToLowerInvariant()
+        local_origin_main_sha = $OriginSha.ToLowerInvariant()
+        live_remote_origin_main_sha = $OriginSha.ToLowerInvariant()
+        merge_base_sha = $OriginSha.ToLowerInvariant()
+        baseline_commit_receipt_path = [IO.Path]::GetFullPath($BaselineReceiptPath)
+        baseline_commit_receipt_sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $BaselineReceiptPath).Hash.ToLowerInvariant()
+        exact_commit_patch_path = [IO.Path]::GetFullPath($PatchPath)
+        exact_commit_patch_sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $PatchPath).Hash.ToLowerInvariant()
+        active_session_inventory_path = $MissionBundle.InventoryPath
+        active_session_inventory_sha256 = $MissionBundle.InventorySha256
+        secret_path_inventory_path = $MissionBundle.SecretInventoryPath
+        secret_path_inventory_sha256 = $MissionBundle.SecretInventorySha256
+    }
+    foreach ($mutationName in $Mutations.Keys) {
+        if (-not $authorization.Contains($mutationName)) {
+            throw "Unknown approved authorization mutation: $mutationName"
+        }
+        $authorization[$mutationName] = $Mutations[$mutationName]
+    }
+    if ($AddUnexpectedProperty) {
+        $authorization['unexpected_property'] = 'synthetic-malformed-case'
+    }
+    Write-AsciiText -Path $authorizationPath -Value (($authorization | ConvertTo-Json -Depth 8) + "`n")
+    return [PSCustomObject]@{
+        AuthorizationPath = $authorizationPath
+        AuthorizationSha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $authorizationPath).Hash.ToLowerInvariant()
     }
 }
 
@@ -103,6 +194,170 @@ function Copy-CanaryRules {
     $targetRulesDirectory = Join-Path $TargetWorktree '.codex\rules'
     New-Item -ItemType Directory -Force -Path $targetRulesDirectory | Out-Null
     Copy-Item -LiteralPath $script:RulesPath -Destination (Join-Path $targetRulesDirectory 'autonomous-executor.rules')
+}
+
+function Invoke-InMemoryRuntimeAudit {
+    param(
+        [Parameter(Mandatory = $true)][string[]]$EventJson,
+        [Parameter(Mandatory = $true)][string[]]$ActivePath,
+        [Parameter(Mandatory = $true)][string[]]$SecretPath
+    )
+
+    $launcher = Join-Path $PSScriptRoot 'Invoke-SstacAutonomousExecutor.ps1'
+    $raw = @(
+        & $launcher `
+            -WorktreePath 'C:\Synthetic\Unused' `
+            -ExpectedBranch 'test/codex-unused' `
+            -BaseSha ('0' * 40) `
+            -OriginMainSha ('0' * 40) `
+            -RunRoot 'C:\Synthetic\Unused\run' `
+            -ControllerRoot 'C:\tmp\synthetic-unused' `
+            -MissionControlReceiptPath 'C:\tmp\synthetic-unused.json' `
+            -MissionControlReceiptSha256 ('0' * 64) `
+            -AllowedPath 'synthetic.txt' `
+            -PromptSourcePath 'C:\tmp\synthetic-prompt.txt' `
+            -RuntimeAuditOnly `
+            -RuntimeAuditTestEventJson $EventJson `
+            -RuntimeAuditTestActivePath $ActivePath `
+            -RuntimeAuditTestSecretPath $SecretPath
+    )
+    if ($LASTEXITCODE -ne 0 -or $raw.Count -ne 1) {
+        throw 'In-memory runtime audit helper failed.'
+    }
+    return ([string]$raw[0] | ConvertFrom-Json -DateKind String)
+}
+
+function New-CommandEventJson {
+    param(
+        [Parameter(Mandatory = $true)][string]$Command,
+        [Parameter(Mandatory = $true)][ValidateSet('completed', 'failed', 'denied')][string]$Status,
+        [ValidateSet('item.started', 'item.completed')][string]$EventType = 'item.completed',
+        [AllowNull()][object]$ExitCode = 0,
+        [string]$Output = ''
+    )
+
+    return ([ordered]@{
+        type = $EventType
+        item = [ordered]@{
+            id = [Guid]::NewGuid().ToString('D')
+            type = 'command_execution'
+            command = $Command
+            status = $Status
+            exit_code = $ExitCode
+            aggregated_output = $Output
+        }
+    } | ConvertTo-Json -Compress -Depth 6)
+}
+
+function Invoke-PureRuntimeAuditTests {
+    $syntheticActive = 'C:\Synthetic\Active-Worktree'
+    $syntheticUncActive = '\\SyntheticServer\Share\Active-Worktree'
+    $syntheticSecret = 'C:\Synthetic\Secrets\auth.json'
+    $threadStarted = '{"type":"thread.started"}'
+    $turnCompleted = '{"type":"turn.completed"}'
+    $pathCases = @(
+        [ordered]@{ command = 'Get-Content c:\synthetic\active-worktree\file.txt'; event_type = 'item.completed' },
+        [ordered]@{ command = 'Get-Content C:/Synthetic/Active-Worktree/file.txt'; event_type = 'item.completed' },
+        [ordered]@{ command = 'Get-Content "C:\Synthetic\Active-Worktree"'; event_type = 'item.completed' },
+        [ordered]@{ command = 'Get-Content C:\Synthetic\Active-Worktree\descendant\file.txt'; event_type = 'item.completed' },
+        [ordered]@{ command = 'Get-Content \\?\C:\Synthetic\Active-Worktree\file.txt'; event_type = 'item.started' },
+        [ordered]@{ command = 'Get-Content \\?\UNC\SyntheticServer\Share\Active-Worktree\file.txt'; event_type = 'item.completed' },
+        [ordered]@{ command = 'Get-Content C:\Synthetic\Secrets\auth.json'; event_type = 'item.completed' }
+    )
+    $pathResults = @()
+    foreach ($pathCase in $pathCases) {
+        $audit = Invoke-InMemoryRuntimeAudit `
+            -EventJson @(
+                $threadStarted,
+                (New-CommandEventJson `
+                    -Command $pathCase.command `
+                    -Status completed `
+                    -EventType $pathCase.event_type `
+                    -ExitCode 0),
+                $turnCompleted
+            ) `
+            -ActivePath @($syntheticActive, $syntheticUncActive) `
+            -SecretPath @($syntheticSecret)
+        if ($audit.valid -ne $false -or @($audit.forbidden_target_findings).Count -lt 1) {
+            throw "Forbidden runtime path variant was not rejected: $($pathCase.command)"
+        }
+        $pathResults += [ordered]@{
+            command_sha256 = @($audit.commands)[0].command_sha256
+            rejected = $true
+        }
+    }
+
+    $statusEvents = @(
+        (New-CommandEventJson -Command 'Get-Content C:\Synthetic\Active-Worktree\done.txt' -Status completed -ExitCode 0),
+        (New-CommandEventJson -Command 'Get-Content C:\Synthetic\Active-Worktree\failed.txt' -Status failed -ExitCode 1),
+        (New-CommandEventJson -Command 'Get-Content C:\Synthetic\Secrets\auth.json' -Status denied -ExitCode $null -Output 'denied')
+    )
+    $statusAudit = Invoke-InMemoryRuntimeAudit `
+        -EventJson (@($threadStarted) + $statusEvents + @($turnCompleted)) `
+        -ActivePath @($syntheticActive, $syntheticUncActive) `
+        -SecretPath @($syntheticSecret)
+    if ($statusAudit.valid -ne $false -or
+        @($statusAudit.forbidden_target_findings).Count -ne 3 -or
+        @($statusAudit.commands | Where-Object { $_.forbidden_target_reference -eq $true }).Count -ne 3) {
+        throw 'Completed, failed, and denied command events were not all rejected.'
+    }
+
+    $safeAudit = Invoke-InMemoryRuntimeAudit `
+        -EventJson @(
+            $threadStarted,
+            (New-CommandEventJson -Command 'Get-Content C:\Projects\CLAUDE.md' -Status completed -ExitCode 0),
+            (New-CommandEventJson -Command 'Get-Content C:\Synthetic\Active-Worktree-Other\file.txt' -Status completed -ExitCode 0),
+            $turnCompleted
+        ) `
+        -ActivePath @($syntheticActive, $syntheticUncActive) `
+        -SecretPath @($syntheticSecret)
+    if ($safeAudit.valid -ne $true -or @($safeAudit.forbidden_target_findings).Count -ne 0) {
+        throw 'Approved governance path was incorrectly classified as a forbidden runtime target.'
+    }
+
+    $redactionAudit = Invoke-InMemoryRuntimeAudit `
+        -EventJson @(
+            $threadStarted,
+            (New-CommandEventJson `
+                -Command 'git show C:\Synthetic\Secrets\auth.json' `
+                -Status denied `
+                -ExitCode $null `
+                -Output 'forbidden'),
+            $turnCompleted
+        ) `
+        -ActivePath @($syntheticActive, $syntheticUncActive) `
+        -SecretPath @($syntheticSecret)
+    if ($redactionAudit.valid -ne $false -or
+        [string]@($redactionAudit.commands)[0].command -cne '[REDACTED_FORBIDDEN_TARGET_REFERENCE]' -or
+        (@($redactionAudit.errors) -join "`n") -match [regex]::Escape($syntheticSecret)) {
+        throw 'Forbidden target command details were not hash-preserved and redacted.'
+    }
+
+    $result = [ordered]@{
+        schema_version = 1
+        state = 'PURE_RUNTIME_AUDIT_PASS'
+        path_variant_count = $pathResults.Count
+        completed_failed_denied_count = @($statusAudit.forbidden_target_findings).Count
+        no_target_case_passed = $true
+        target_command_redaction_passed = $true
+        synthetic_paths_only = $true
+        git_commands_run = $false
+    }
+    Write-Output ($result | ConvertTo-Json -Compress)
+}
+
+if ($PureRuntimeAuditOnly) {
+    Invoke-PureRuntimeAuditTests
+    exit 0
+}
+
+$pureRuntimeAuditOutput = @(Invoke-PureRuntimeAuditTests)
+if ($pureRuntimeAuditOutput.Count -ne 1) {
+    throw 'Pure runtime path audit did not return one deterministic result.'
+}
+$pureRuntimeAuditResult = [string]$pureRuntimeAuditOutput[0] | ConvertFrom-Json -DateKind String
+if ($pureRuntimeAuditResult.state -cne 'PURE_RUNTIME_AUDIT_PASS') {
+    throw 'Pure runtime path audit did not pass before full canaries.'
 }
 
 $resolvedWorktree = [IO.Path]::GetFullPath($WorktreePath).TrimEnd('\', '/')
@@ -121,11 +376,6 @@ foreach ($candidate in @($canaryRunRoot, $canaryControllerRoot, $canarySourceRoo
 New-Item -ItemType Directory -Path $canarySourceRoot | Out-Null
 Write-AsciiText -Path $promptPath -Value "Canary only. Follow the frozen contract exactly.`n"
 
-$activeEntry = [ordered]@{
-    path = $ActiveWorktreePath
-    branch = $ActiveBranch
-    reason = 'Owner-declared active draft PR session; do not inspect.'
-}
 $syntheticActivePath = "C:\tmp\sstac-declared-active-canary-$stamp"
 $syntheticActiveBranch = "test/codex-declared-active-$stamp"
 $syntheticActiveEntry = [ordered]@{
@@ -137,17 +387,17 @@ $bundle = New-MissionControlBundle `
     -Directory $canarySourceRoot `
     -Name 'FRESH' `
     -Timestamp ([DateTimeOffset]::UtcNow) `
-    -ActiveWorktrees @($activeEntry, $syntheticActiveEntry)
+    -ActiveWorktrees @($syntheticActiveEntry)
 $staleBundle = New-MissionControlBundle `
     -Directory $canarySourceRoot `
     -Name 'STALE' `
     -Timestamp ([DateTimeOffset]::UtcNow.AddHours(-2)) `
-    -ActiveWorktrees @($activeEntry, $syntheticActiveEntry)
+    -ActiveWorktrees @($syntheticActiveEntry)
 $ambiguousBundle = New-MissionControlBundle `
     -Directory $canarySourceRoot `
     -Name 'AMBIGUOUS' `
     -Timestamp ([DateTimeOffset]::UtcNow) `
-    -ActiveWorktrees @($activeEntry, $activeEntry)
+    -ActiveWorktrees @($syntheticActiveEntry, $syntheticActiveEntry)
 
 $script:RulesPath = Join-Path $resolvedWorktree '.codex\rules\autonomous-executor.rules'
 $policyCases = @(
@@ -237,13 +487,44 @@ try {
 }
 if (-not $activeRejected) { throw 'Active-session worktree rejection canary failed.' }
 
+$dirtyBaselineReceiptData = Get-Content -Raw -LiteralPath $BaselineCommitReceiptPath |
+    ConvertFrom-Json -DateKind String
+$dirtyBaselineProvenanceEntry = [ordered]@{
+    path = [string]$dirtyBaselineReceiptData.worktree
+    branch = [string]$dirtyBaselineReceiptData.branch
+    reason = 'Controller-authorized baseline provenance for the dirty-worktree rejection canary.'
+}
+$dirtyTimestamp = [DateTimeOffset]::UtcNow
+$dirtyMissionBundle = New-MissionControlBundle `
+    -Directory $canarySourceRoot `
+    -Name 'DIRTY-APPROVED' `
+    -Timestamp $dirtyTimestamp `
+    -ActiveWorktrees @($dirtyBaselineProvenanceEntry)
+$dirtyAuthorization = New-ApprovedBaselineAuthorizationBundle `
+    -Directory $canarySourceRoot `
+    -Name 'DIRTY-VALID' `
+    -Timestamp $dirtyTimestamp `
+    -RepositoryRoot 'C:\Projects\SSTAC-Dashboard' `
+    -ApprovedSha $ApprovedBaselineSha `
+    -ParentSha $ApprovedParentSha `
+    -OriginSha $OriginMainSha `
+    -BaselineReceiptPath $BaselineCommitReceiptPath `
+    -PatchPath $ExactCommitPatchPath `
+    -MissionBundle $dirtyMissionBundle
+
 $dirtyRejected = $false
 try {
-    & $launcher @common `
+    $dirtyArguments = $common.Clone()
+    $dirtyArguments.BaseSha = $ApprovedBaselineSha
+    $dirtyArguments.MissionControlReceiptPath = $dirtyMissionBundle.ReceiptPath
+    $dirtyArguments.MissionControlReceiptSha256 = $dirtyMissionBundle.ReceiptSha256
+    & $launcher @dirtyArguments `
+        -ApprovedBaselineAuthorizationPath $dirtyAuthorization.AuthorizationPath `
+        -ApprovedBaselineAuthorizationSha256 $dirtyAuthorization.AuthorizationSha256 `
         -WorktreePath $resolvedWorktree `
         -ExpectedBranch $ExpectedBranch `
-        -RunRoot (Join-Path $resolvedWorktree '.tmp\should-not-exist-dirty-canary') `
-        -ControllerRoot 'C:\tmp\should-not-exist-dirty-canary'
+        -RunRoot (Join-Path $resolvedWorktree ".tmp\should-not-exist-dirty-canary-$stamp") `
+        -ControllerRoot "C:\tmp\should-not-exist-dirty-canary-$stamp"
 } catch {
     $dirtyRejected = $_.Exception.Message -like '*Refusing dirty worktree*'
 }
@@ -339,6 +620,175 @@ if ($executorConfig.state -cne 'CONFIG_VALIDATED' -or
     $forbiddenConfigClaims.Count -ne 0 -or
     @($executorConfig.disabled_mcp_servers).Count -lt 1) {
     throw 'Prepared executor configuration does not prove the explicit legacy workspace-write boundary.'
+}
+
+$approvedBaselineCoverageRun = $false
+$approvedBaselineRejections = [ordered]@{
+    stale = $false
+    malformed = $false
+    mismatched = $false
+    arbitrary_ahead = $false
+    wrong_parent = $false
+    remote_drift = $false
+    receipt_hash = $false
+    inventory_hash = $false
+    secret_inventory_hash = $false
+}
+$approvedInputs = @(
+    $ApprovedBaselineCanaryWorktreePath,
+    $ApprovedBaselineCanaryBranch,
+    $ApprovedBaselineSha,
+    $ApprovedParentSha,
+    $BaselineCommitReceiptPath,
+    $ExactCommitPatchPath
+)
+$approvedInputCount = @($approvedInputs | Where-Object { -not [string]::IsNullOrWhiteSpace($_) }).Count
+if ($approvedInputCount -ne 0 -and $approvedInputCount -ne $approvedInputs.Count) {
+    throw 'Approved-baseline canary inputs must be supplied as one complete set.'
+}
+if ($approvedInputCount -eq $approvedInputs.Count) {
+    $resolvedApprovedCanary = [IO.Path]::GetFullPath($ApprovedBaselineCanaryWorktreePath).TrimEnd('\', '/')
+    Copy-CanaryRules -TargetWorktree $resolvedApprovedCanary
+    $baselineReceiptData = Get-Content -Raw -LiteralPath $BaselineCommitReceiptPath |
+        ConvertFrom-Json -DateKind String
+    $baselineProvenanceEntry = [ordered]@{
+        path = [string]$baselineReceiptData.worktree
+        branch = [string]$baselineReceiptData.branch
+        reason = 'Controller-authorized baseline provenance; runtime target forbidden.'
+    }
+    $approvedTimestamp = [DateTimeOffset]::UtcNow
+    $approvedMissionBundle = New-MissionControlBundle `
+        -Directory $canarySourceRoot `
+        -Name 'APPROVED' `
+        -Timestamp $approvedTimestamp `
+        -ActiveWorktrees @($baselineProvenanceEntry)
+
+    $approvedAuthorizationCommon = @{
+        Directory = $canarySourceRoot
+        Timestamp = $approvedTimestamp
+        RepositoryRoot = 'C:\Projects\SSTAC-Dashboard'
+        ApprovedSha = $ApprovedBaselineSha
+        ParentSha = $ApprovedParentSha
+        OriginSha = $OriginMainSha
+        BaselineReceiptPath = $BaselineCommitReceiptPath
+        PatchPath = $ExactCommitPatchPath
+        MissionBundle = $approvedMissionBundle
+    }
+    $validAuthorization = New-ApprovedBaselineAuthorizationBundle `
+        @approvedAuthorizationCommon `
+        -Name 'VALID'
+    $variantCases = @(
+        [ordered]@{
+            name = 'stale'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'STALE' `
+                -Mutations @{ recorded_at_utc = [DateTimeOffset]::UtcNow.AddHours(-2).UtcDateTime.ToString('o') }
+            expected = '*stale or future-dated*'
+        },
+        [ordered]@{
+            name = 'malformed'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'MALFORMED' `
+                -AddUnexpectedProperty
+            expected = '*missing or unexpected properties*'
+        },
+        [ordered]@{
+            name = 'mismatched'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'MISMATCHED' `
+                -Mutations @{ approved_baseline_sha = '0' * 40 }
+            expected = '*pin set is mismatched*'
+        },
+        [ordered]@{
+            name = 'arbitrary_ahead'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'ARBITRARY-AHEAD' `
+                -Mutations @{ approved_parent_sha = $ApprovedBaselineSha.ToLowerInvariant() }
+            expected = '*arbitrary ahead-of-origin*'
+        },
+        [ordered]@{
+            name = 'wrong_parent'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'WRONG-PARENT' `
+                -Mutations @{ approved_parent_sha = '1' * 40 }
+            expected = '*pin set is mismatched*'
+        },
+        [ordered]@{
+            name = 'remote_drift'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'REMOTE-DRIFT' `
+                -Mutations @{ live_remote_origin_main_sha = '2' * 40 }
+            expected = '*pin set is mismatched*'
+        },
+        [ordered]@{
+            name = 'receipt_hash'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'RECEIPT-HASH' `
+                -Mutations @{ baseline_commit_receipt_sha256 = '0' * 64 }
+            expected = '*commit receipt hash*'
+        },
+        [ordered]@{
+            name = 'inventory_hash'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'INVENTORY-HASH' `
+                -Mutations @{ active_session_inventory_sha256 = '0' * 64 }
+            expected = '*active-session inventory binding*'
+        },
+        [ordered]@{
+            name = 'secret_inventory_hash'
+            bundle = New-ApprovedBaselineAuthorizationBundle @approvedAuthorizationCommon `
+                -Name 'SECRET-INVENTORY-HASH' `
+                -Mutations @{ secret_path_inventory_sha256 = '0' * 64 }
+            expected = '*Secret-path inventory hash*'
+        }
+    )
+    $approvedLauncherCommon = @{
+        WorktreePath = $resolvedApprovedCanary
+        ExpectedBranch = $ApprovedBaselineCanaryBranch
+        BaseSha = $ApprovedBaselineSha
+        OriginMainSha = $OriginMainSha
+        MissionControlReceiptPath = $approvedMissionBundle.ReceiptPath
+        MissionControlReceiptSha256 = $approvedMissionBundle.ReceiptSha256
+        AllowedPath = $allowed
+        PromptSourcePath = $promptPath
+        PrepareOnly = $true
+    }
+    foreach ($variantCase in $variantCases) {
+        $rejected = $false
+        try {
+            & $launcher @approvedLauncherCommon `
+                -ApprovedBaselineAuthorizationPath $variantCase.bundle.AuthorizationPath `
+                -ApprovedBaselineAuthorizationSha256 $variantCase.bundle.AuthorizationSha256 `
+                -RunRoot (Join-Path $resolvedApprovedCanary ".tmp\should-not-exist-$($variantCase.name)-$stamp") `
+                -ControllerRoot "C:\tmp\should-not-exist-$($variantCase.name)-$stamp"
+        } catch {
+            $rejected = $_.Exception.Message -like $variantCase.expected
+        }
+        if (-not $rejected) {
+            throw "Approved-baseline rejection case failed: $($variantCase.name)"
+        }
+        $approvedBaselineRejections[$variantCase.name] = $true
+    }
+
+    $approvedRunRoot = Join-Path $resolvedApprovedCanary ".tmp\codex-approved-baseline-canary-$stamp"
+    $approvedControllerRoot = "C:\tmp\sstac-codex-approved-baseline-canary-$stamp"
+    & $launcher @approvedLauncherCommon `
+        -ApprovedBaselineAuthorizationPath $validAuthorization.AuthorizationPath `
+        -ApprovedBaselineAuthorizationSha256 $validAuthorization.AuthorizationSha256 `
+        -RunRoot $approvedRunRoot `
+        -ControllerRoot $approvedControllerRoot
+    if ($LASTEXITCODE -ne 0) {
+        throw 'Valid approved local-baseline prepare canary failed.'
+    }
+    $approvedPreflight = Get-Content -Raw -LiteralPath (Join-Path $approvedControllerRoot 'PREFLIGHT.json') |
+        ConvertFrom-Json -DateKind String
+    if ($approvedPreflight.pin_mode -cne 'APPROVED_LOCAL_BASELINE' -or
+        [string]$approvedPreflight.head_sha -cne $ApprovedBaselineSha.ToLowerInvariant() -or
+        [string]$approvedPreflight.head_parent_sha -cne $ApprovedParentSha.ToLowerInvariant() -or
+        [string]$approvedPreflight.origin_main_sha -cne $OriginMainSha.ToLowerInvariant()) {
+        throw 'Valid approved local-baseline prepare did not preserve exact pin evidence.'
+    }
+    $approvedBaselineCoverageRun = $true
 }
 
 $negativeRunRoot = Join-Path $resolvedCanaryWorktree ".tmp\codex-acceptance-negative-$stamp"
@@ -447,6 +897,12 @@ $receipt = [ordered]@{
     stale_receipt_rejected = $staleReceiptRejected
     receipt_hash_rejected = $receiptHashRejected
     ambiguous_inventory_rejected = $ambiguousRegistryRejected
+    approved_baseline_validated = $approvedBaselineCoverageRun
+    approved_baseline_rejections = $approvedBaselineRejections
+    pure_runtime_path_audit_passed = ($pureRuntimeAuditResult.state -ceq 'PURE_RUNTIME_AUDIT_PASS')
+    pure_runtime_path_variant_count = [int]$pureRuntimeAuditResult.path_variant_count
+    completed_failed_denied_event_count = [int]$pureRuntimeAuditResult.completed_failed_denied_count
+    synthetic_runtime_paths_only = [bool]$pureRuntimeAuditResult.synthetic_paths_only
     missing_structured_artifacts_rejected = $missingArtifactsRejected
     explicit_legacy_workspace_write_config_validated = $true
     policy_results = @($policyResults)

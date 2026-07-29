@@ -35,6 +35,47 @@ that is stale, future-dated, hash-mismatched, duplicated, incomplete, or
 ambiguous. The default maximum age is 15 minutes. The receipt remote SHA, the
 caller pin, local `origin/main`, HEAD, base, and merge-base must all agree.
 
+That strict `HEAD == base == merge-base == origin/main` contract remains the
+default. Omitting approved-baseline parameters cannot authorize any local
+commit ahead of `origin/main`.
+
+## Approved local-baseline authorization
+
+A separate fail-closed path permits one exact, controller-approved local
+baseline commit. It is enabled only when both of these are supplied:
+
+- `-ApprovedBaselineAuthorizationPath`
+- `-ApprovedBaselineAuthorizationSha256`
+
+The schema-version-1 authorization has exactly these properties:
+
+- `schema_version`, `receipt_id`, `recorded_at_utc`, and `repository_root`;
+- `approved_baseline_sha`, `approved_parent_sha`,
+  `local_origin_main_sha`, `live_remote_origin_main_sha`, and
+  `merge_base_sha`;
+- `baseline_commit_receipt_path` and
+  `baseline_commit_receipt_sha256`;
+- `exact_commit_patch_path` and `exact_commit_patch_sha256`;
+- `active_session_inventory_path` and
+  `active_session_inventory_sha256`;
+- `secret_path_inventory_path` and `secret_path_inventory_sha256`.
+
+Missing, extra, malformed, stale, future-dated, mismatched, duplicated, or
+ambiguous values close the run before launch. The authorization itself is bound
+by the caller-supplied SHA-256 and must reside under the controller allowed root
+`C:\tmp`, outside the unique per-run `ControllerRoot`, which must remain absent
+before launch.
+Its baseline receipt, exact patch, active-session inventory, and secret-path
+inventory are independently rehashed and schema-validated.
+
+This path is intentionally not general ahead-of-origin permission. The
+approved HEAD must equal the caller base and the authorization SHA. Its actual
+first parent must equal the approved parent, and that parent must equal both
+local and freshly receipted live `origin/main`. The actual merge-base must be
+`origin/main`, the exact approved commit must descend from it, and the baseline
+receipt must prove exactly one local commit ahead with no push. The patch header
+and hash must bind that same commit.
+
 The target must be a registered, clean linked worktree. It cannot be the
 primary checkout, a declared active-session path or branch, or a path with an
 ambiguous reparse chain. Run and controller roots must be unique and absent.
@@ -65,6 +106,10 @@ Codex binary path, version, and SHA-256.
 control is defense in depth: a dedicated worktree, project rules, protected
 surface preflight, exact baselines, full tracked/untracked/ignored postflight,
 staging rejection, JSONL command audit, and controller acceptance.
+
+Command-text forbidden-path auditing is detection and evidence. It is not a
+hard Windows per-file deny-read boundary, and it can assess only paths that are
+materialized in the preserved command text.
 
 ## Ignored and protected surfaces
 
@@ -112,8 +157,25 @@ every worker artifact and writes `EVIDENCE_AUDIT.json`.
 
 The executor runs `codex exec --json`. Stdout is preserved as
 `CODEX_EVENTS.jsonl`; stderr is separate. The controller parses every nonempty
-JSONL line, requires lifecycle completion, inventories command events, hashes
-commands and outputs, and rejects a forbidden command that reaches execution.
+JSONL line, requires lifecycle completion, inventories every command event,
+and hashes commands and outputs. Completed, failed, and denied events are all
+audited.
+
+Every canonical active worktree from the validated active-session inventory
+and every canonical path from the validated secret-path inventory is a
+forbidden runtime target. Matching is Windows case-insensitive and covers
+forward or back slashes, quotes, descendants, and ordinary `\\?\` aliases. A
+reference closes RED even if policy denied the command or the command failed.
+Targets come only from controller-authenticated inventories; an unrelated
+outside governance path such as `C:\Projects\CLAUDE.md` is not classified by
+location alone.
+
+Target-bearing command text is redacted from `COMMAND_AUDIT.json`. The
+controller preserves the command SHA-256, output SHA-256, event type, status,
+exit code, target kind, target-path SHA-256, and match kind. Raw JSONL remains
+controller-owned evidence; acceptance summaries do not reproduce command
+output or secret contents. The controller also rejects a forbidden command
+that reaches execution.
 A real positive canary may make one direct `git status --short` probe; it is
 accepted only when JSONL independently proves the project rule denied it and
 contains the rule's exact justification.
@@ -147,6 +209,15 @@ The deterministic harness proves:
 
 - primary, active-session, dirty, and pin-drift refusal;
 - stale, hash-mismatched, and ambiguous Mission Control receipt refusal;
+- the unchanged strict origin-main pin path;
+- a valid approved one-commit local baseline;
+- stale, malformed, mismatched, arbitrary-ahead, wrong-parent, remote-drift,
+  baseline-receipt-hash, active-inventory-hash, and secret-inventory-hash
+  authorization refusal;
+- pure Windows path matching for case, slash, quote, descendant, and canonical
+  alias variants;
+- safe no-target events and synthetic forbidden active/secret events in
+  completed, failed, and denied states;
 - direct, absolute, and indirect forbidden policy matches;
 - explicitly unmatched safe commands remain unmatched;
 - the explicit legacy sandbox arguments contain no named profile or additional
@@ -190,6 +261,23 @@ Review `PREFLIGHT.json`, `CONTRACT.json`, `EXECUTOR_CONFIG.json`, ignored-surfac
 receipts, initial status, and the resolved prompt before launch. A non-prepare
 launch must stay in the foreground and be supervised through the platform's
 native yielded cell. Retry budget is zero.
+
+For an approved local baseline, use the same command plus the two explicit
+authorization parameters. `-BaseSha` is the approved local commit and
+`-OriginMainSha` remains the freshly verified remote SHA:
+
+```powershell
+  -ApprovedBaselineAuthorizationPath '<absolute-controller-authorization>' `
+  -ApprovedBaselineAuthorizationSha256 '<exact-authorization-sha256>'
+```
+
+The deterministic harness now also requires a separate clean approved-baseline
+canary worktree plus the approved SHA, parent SHA, baseline commit receipt, and
+exact patch. Its pure non-Git runtime audit can be run independently:
+
+```powershell
+.\tools\codex\Test-SstacAutonomousExecutor.ps1 -PureRuntimeAuditOnly
+```
 
 READY_FOR_REVIEW is not GREEN. Mission Control independently reviews the exact
 diff, command audit, evidence audit, changed paths, pins, gates, artifacts,
