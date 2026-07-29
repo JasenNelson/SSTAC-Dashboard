@@ -26,18 +26,44 @@ function makeRequest(publicationId: string | null) {
 }
 
 function roleChain(finalValue: unknown) {
+  const captured: { column?: string; values?: unknown } = {};
   const api = {
     select: vi.fn(() => api),
     eq: vi.fn(() => api),
-    in: vi.fn(() => api),
+    // CAPTURE the filter arguments. Without this the role tests are vacuous:
+    // stubbing a null row proves nothing about WHICH roles the route accepts,
+    // and the suite would still pass if the `.in()` predicate were deleted and
+    // the implementation accepted any returned role.
+    in: vi.fn((column: string, values: unknown) => {
+      captured.column = column;
+      captured.values = values;
+      return api;
+    }),
     limit: vi.fn(() => api),
     maybeSingle: vi.fn(async () => finalValue),
+    captured,
   };
   return api;
 }
 
-function setupAdminClient(queryResult: unknown) {
-  const rpc = vi.fn(async () => queryResult);
+function setupAdminClient(
+  queryResult: unknown,
+  options: { candidateResult?: unknown; role?: string | null; roleError?: unknown } = {},
+) {
+  const { candidateResult = { data: [], error: null }, role = 'matrix_admin', roleError = null } =
+    options;
+
+  // Name-aware: the route calls TWO distinct RPCs and they must not be conflated.
+  const rpc = vi.fn(async (name: string) => {
+    if (name === 'fetch_site_aggregate_publication_audit') return queryResult;
+    if (name === 'fetch_site_aggregate_candidate_audit') return candidateResult;
+    return { data: null, error: { message: `unexpected rpc: ${name}` } };
+  });
+
+  const chain = roleChain(
+    roleError ? { data: null, error: roleError } : { data: role ? { role } : null, error: null },
+  );
+
   const authClient = {
     auth: {
       getUser: vi.fn(async () => ({
@@ -45,11 +71,11 @@ function setupAdminClient(queryResult: unknown) {
         error: null,
       })),
     },
-    from: vi.fn(() => roleChain({ data: { role: 'matrix_admin' }, error: null })),
+    from: vi.fn(() => chain),
     schema: vi.fn(() => ({ rpc })),
   };
   mocks.createServerClient.mockReturnValue(authClient);
-  return { authClient, rpc };
+  return { authClient, rpc, chain };
 }
 
 describe('GET /api/matrix-map/admin/site-aggregates/audit-history', () => {
@@ -109,7 +135,7 @@ describe('GET /api/matrix-map/admin/site-aggregates/audit-history', () => {
     expect(authClient.schema).not.toHaveBeenCalled();
   });
 
-  it('calls only the aggregate audit RPC scoped to the requested publication', async () => {
+  it('returns BOTH audit trails, each scoped to the requested publication', async () => {
     const rows = [
       {
         id: 'audit-1',
@@ -120,7 +146,19 @@ describe('GET /api/matrix-map/admin/site-aggregates/audit-history', () => {
         reason: 'pilot publish',
       },
     ];
-    const { authClient, rpc } = setupAdminClient({ data: rows, error: null });
+    const candidateRows = [
+      {
+        id: 'cand-audit-1',
+        publication_id: PUBLICATION_ID,
+        action: 'create',
+        reason: 'initial candidate',
+        changed_by_email: 'admin@example.com',
+      },
+    ];
+    const { authClient, rpc } = setupAdminClient(
+      { data: rows, error: null },
+      { candidateResult: { data: candidateRows, error: null } },
+    );
 
     const response = await GET(makeRequest(PUBLICATION_ID));
 
@@ -129,19 +167,80 @@ describe('GET /api/matrix-map/admin/site-aggregates/audit-history', () => {
     expect(rpc).toHaveBeenCalledWith('fetch_site_aggregate_publication_audit', {
       p_publication_id: PUBLICATION_ID,
     });
+    // Previously ZERO callers existed for this RPC, so candidate create/refresh
+    // history was recorded but never surfaced anywhere.
+    expect(rpc).toHaveBeenCalledWith('fetch_site_aggregate_candidate_audit', {
+      p_publication_id: PUBLICATION_ID,
+    });
     expect(await response.json()).toEqual({
       ok: true,
       publication_id: PUBLICATION_ID,
       rows,
+      candidate_rows: candidateRows,
     });
   });
 
-  it('maps RPC errors to query_failed', async () => {
-    setupAdminClient({ data: null, error: { message: 'connection reset' } });
+  it('maps publication audit RPC errors to query_failed without leaking the message', async () => {
+    setupAdminClient({ data: null, error: { message: 'relation secret_table does not exist' } });
 
     const response = await GET(makeRequest(PUBLICATION_ID));
+    const body = await response.json();
 
     expect(response.status).toBe(500);
-    expect((await response.json()).error).toBe('query_failed');
+    expect(body.error).toBe('query_failed');
+    expect(JSON.stringify(body)).not.toContain('secret_table');
+  });
+
+  it('fails CLOSED when the candidate audit trail cannot be read', async () => {
+    // A partial audit history reads as "nothing happened", which is the most
+    // misleading thing an audit surface can do.
+    setupAdminClient(
+      { data: [], error: null },
+      { candidateResult: { data: null, error: { message: 'candidate audit unavailable' } } },
+    );
+
+    const response = await GET(makeRequest(PUBLICATION_ID));
+    const body = await response.json();
+
+    expect(response.status).toBe(500);
+    expect(body.error).toBe('candidate_query_failed');
+    expect(body.rows).toBeUndefined();
+  });
+
+  describe('admin allow-list', () => {
+    it('restricts the role query to exactly admin and matrix_admin', async () => {
+      // Non-vacuous: fails if a third role is added or the filter is removed.
+      const { chain } = setupAdminClient({ data: [], error: null });
+
+      await GET(makeRequest(PUBLICATION_ID));
+
+      expect(chain.captured.column).toBe('role');
+      expect(chain.captured.values).toEqual(['admin', 'matrix_admin']);
+    });
+
+    it.each(['admin', 'matrix_admin'])('accepts the %s role', async (role) => {
+      const { rpc } = setupAdminClient({ data: [], error: null }, { role });
+
+      const response = await GET(makeRequest(PUBLICATION_ID));
+
+      expect(response.status).toBe(200);
+      expect(rpc).toHaveBeenCalled();
+    });
+
+    it('fails CLOSED with 500 and no detail when the role query itself errors', async () => {
+      const { authClient } = setupAdminClient(
+        { data: [], error: null },
+        { roleError: { message: 'permission denied for relation user_roles' } },
+      );
+
+      const response = await GET(makeRequest(PUBLICATION_ID));
+      const body = await response.json();
+
+      expect(response.status).toBe(500);
+      expect(body).toEqual({ error: 'admin_role_query_failed' });
+      // The message must NOT reach a caller whose admin status is unproven.
+      expect(JSON.stringify(body)).not.toContain('user_roles');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
   });
 });

@@ -19,9 +19,16 @@ import {
   toAggregateMarkers,
   type AggregateMarker,
 } from './siteAggregateMarkers';
+// ONE legal database pagination envelope for every RPC consumer. Local numeric
+// copies are forbidden: three consumers previously each declared their own
+// PAGE_SIZE/MAX_PAGES, so raising the shared values and the SQL ceiling
+// together would have left this loader failing at the old cap.
+import {
+  PAGE_SIZE,
+  siteAggregatePageArgs,
+  siteAggregatePageIndexes,
+} from './site-aggregate-pagination';
 
-const PAGE_SIZE = 1000;
-const MAX_PAGES = 25;
 const DRA_ID_CHUNK_SIZE = 100;
 const PUBLISHED_AGGREGATE_SOURCE_PREFIX = 'published-aggregate';
 const PUBLISHED_AGGREGATE_SNAPSHOT_FALLBACK = 'site-aggregate-publications-v1';
@@ -90,15 +97,28 @@ type RawPublishedAggregateRow = {
 
 type SampleCountBucket = '1' | '2-9' | '10-99' | '100+';
 
+/**
+ * The member aggregate RPC now takes its bounds as ARGUMENTS and resolves to a
+ * result directly, rather than returning a chainable `.range()` builder. The
+ * function is PL/pgSQL, so an outer range would trim a result the database had
+ * already materialized in full -- once per page.
+ */
+type PublishedAggregateRpcArgs = { p_limit: number; p_offset: number };
+
 type MatrixMapSchemaRpcClient = {
-  rpc?: (functionName: string) => PagedQuery<RawPublishedAggregateRow>;
+  rpc?: (
+    functionName: string,
+    args: PublishedAggregateRpcArgs,
+  ) => Promise<{ data: RawPublishedAggregateRow[] | null; error: QueryError | null }>;
 };
 
 async function fetchAllPages<T>(query: PagedQuery<T>): Promise<T[]> {
   const rows: T[] = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
+  for (const page of siteAggregatePageIndexes()) {
+    // The WINDOW comes from the shared authority, not from arithmetic here.
+    const { p_limit, p_offset } = siteAggregatePageArgs(page);
+    const from = p_offset;
+    const to = p_offset + p_limit - 1;
     const { data, error } = await query.range(from, to);
     if (error) {
       throw new Error(error.message ?? 'query failed');
@@ -116,6 +136,19 @@ function asCoordinateTier(value: unknown): CoordinateTier | null {
 
 function asFiniteNumber(value: unknown): number | null {
   return typeof value === 'number' && Number.isFinite(value) ? value : null;
+}
+
+/**
+ * Rounds (never truncates) to at most three decimal places -- roughly 111 m of
+ * precision at the equator, the published member coordinate contract. Applied
+ * AFTER the finite-number validation in `normalizePublishedAggregate`, so this
+ * is a boundary enforcement, not a trust assumption: if an installed RPC ever
+ * returns more than 3 decimals (deployment drift, a schema change upstream),
+ * the member marker must still be clamped to the contract here rather than
+ * forwarding whatever precision happened to arrive.
+ */
+function roundToThreeDecimalPlaces(value: number): number {
+  return Math.round(value * 1000) / 1000;
 }
 
 function asSampleCountBucket(value: unknown): SampleCountBucket | null {
@@ -174,11 +207,17 @@ function normalizePublishedAggregate(row: RawPublishedAggregateRow): AggregateMa
     return null;
   }
 
+  // Precision containment at the application boundary: round AFTER the finite
+  // check above, never trust the RPC's own precision. See
+  // roundToThreeDecimalPlaces for why this must be round, not truncate.
+  const boundedLatitude = roundToThreeDecimalPlaces(latitude);
+  const boundedLongitude = roundToThreeDecimalPlaces(longitude);
+
   const representativeCount = bucketRepresentativeCount(bucket);
   return {
     key: aggregateId,
     source_dra_id: `${PUBLISHED_AGGREGATE_SOURCE_PREFIX}:${aggregateId}`,
-    position: [latitude, longitude],
+    position: [boundedLatitude, boundedLongitude],
     label,
     coordinate_quality_tier: tier,
     sample_count_total: representativeCount,
@@ -216,12 +255,20 @@ async function fetchPublishedSiteAggregatesServerSide(
     return { status: 'rpc_unavailable' };
   }
 
-  const rpcQuery = schemaClient.rpc('fetch_published_site_aggregates');
   const rows: RawPublishedAggregateRow[] = [];
-  for (let page = 0; page < MAX_PAGES; page += 1) {
-    const from = page * PAGE_SIZE;
-    const to = from + PAGE_SIZE - 1;
-    const { data, error } = await rpcQuery.range(from, to);
+  const pageIndexes = siteAggregatePageIndexes();
+  for (const page of pageIndexes) {
+    // Bounds are ARGUMENTS, not an outer `.range()`. The RPC is PL/pgSQL, so
+    // its RETURN QUERY materializes the whole sorted set before any outer range
+    // trims it -- paging with `.range()` recomputed the entire published list
+    // once per page. A fresh call per page is required now that the bounds are
+    // part of the request.
+    // The argument object is the shared constructor's RETURN VALUE, passed
+    // straight through. No p_limit/p_offset is built here.
+    const { data, error } = await schemaClient.rpc(
+      'fetch_published_site_aggregates',
+      siteAggregatePageArgs(page),
+    );
     if (error) {
       if (isMissingPublishedAggregateRpcError(error)) {
         logger.warn('[matrix-map] fetch_published_site_aggregates RPC unavailable; failing closed', {
@@ -234,7 +281,7 @@ async function fetchPublishedSiteAggregatesServerSide(
     const batch = data ?? [];
     rows.push(...batch);
     if (batch.length < PAGE_SIZE) break;
-    if (page === MAX_PAGES - 1) {
+    if (page === pageIndexes[pageIndexes.length - 1]) {
       throw new Error('published site aggregate query exceeded page cap');
     }
   }
