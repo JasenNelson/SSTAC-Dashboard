@@ -157,6 +157,9 @@ scripts/matrix-map/_enrichment_working/
 .codex/*
 !.codex/config.toml
 !.codex/README.md
+!.codex/rules/
+.codex/rules/*
+!.codex/rules/autonomous-executor.rules
 .gemini/*
 !.gemini/GEMINI.md
 !.gemini/settings.json
