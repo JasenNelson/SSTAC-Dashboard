@@ -157,7 +157,33 @@ export async function loadAdminCandidates<T>(
       if (!candidateError) candidateError = error.message ?? 'candidate load failed';
       break;
     }
-    const rows = (data ?? []) as T[];
+    // FAIL CLOSED ON A PAYLOAD THAT IS NOT A ROW ARRAY, candidate side.
+    //
+    // This was `(data ?? []) as T[]`, and the coalesce was the whole defect: a
+    // successful call returning `null`, `undefined`, or any non-array shape
+    // became an EMPTY PAGE with no error, so the candidate read looked COMPLETE.
+    //
+    // CANDIDATE COMPLETENESS GATES WRITES -- this loader is not a display-only
+    // sibling, and a review corrected an earlier claim here that it was. The
+    // admin page's own FAIL CLOSED reasoning spells out the consequence: an
+    // OMITTED candidate looks "safely absent", so the page offers "Create
+    // Candidate", which upserts and can overwrite a curated label; and an
+    // omitted orphaned publication loses the only Unpublish control that can
+    // retract it from members. Both are exactly the outcomes the truncation
+    // warning already exists to prevent, reached by a different route.
+    //
+    // The error stays on the CANDIDATE axis, never `loadError`: a candidate-side
+    // failure must not blank a preview that loaded fine.
+    if (!Array.isArray(data)) {
+      if (!candidateError) {
+        candidateError =
+          data === null || data === undefined
+            ? 'candidate load returned no payload where a row array was expected'
+            : `candidate load returned a ${typeof data} payload where a row array was expected`;
+      }
+      break;
+    }
+    const rows = data as T[];
     candidates.push(...rows);
     if (rows.length < PAGE_SIZE) break;
     if (page === pages[pages.length - 1]) candidatesTruncated = true;

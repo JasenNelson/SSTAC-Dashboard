@@ -1132,6 +1132,41 @@ BEGIN
     FROM matrix_map.samples s
     WHERE s.source_dra_id = p_source_dra_id
       AND matrix_map.canonical_five_decimal_cluster(s.latitude, s.longitude) = p_cluster_id
+      -- F2 -- THE SAME COORDINATE-ELIGIBILITY PREDICATE the live preview applies
+      -- to its base population (see fetch_admin_site_aggregate_live_preview).
+      --
+      -- WHY THIS IS REQUIRED, and why it is a correctness fix rather than tidying.
+      -- Membership here was decided by DRA plus canonical key ALONE, and ROUNDING
+      -- CARRIES A JUST-OUT-OF-RANGE ROW INTO AN IN-RANGE KEY: longitude
+      -- 180.000001 is ineligible and the preview excludes it, but
+      -- round(180.000001, 5) is 180.00000, so it rendered to the very same
+      -- canonical id an eligible row produces and was still counted HERE.
+      --
+      -- NULL and NaN coordinates were already excluded, because the identity
+      -- function is not STRICT: a NULL yields NULL and a NaN yields a 'NaN'
+      -- rendering, neither of which equals any key an eligible pair produces. The
+      -- reachable gap is precisely values within 0.000005 of a bound, which is
+      -- why the predicate rather than the key comparison has to carry it.
+      --
+      -- The consequence was a broken write-preview contract, which is the whole
+      -- point of F2: the lifecycle counts, dominant tier and source list an
+      -- operator APPROVED in the preview could differ from the ones actually
+      -- PERSISTED, and a cluster whose only medium-tier sample was ineligible
+      -- could satisfy the medium-tier requirement while appearing nowhere in the
+      -- preview at all.
+      --
+      -- Safe to change now, and only now: the live catalog carries no
+      -- site_aggregate_publications table and no Option C function (preflight
+      -- P1/P2 both confirmed absent), so there are ZERO persisted rows whose
+      -- source_sample_hash this could reclassify as drifted. The identical change
+      -- after publication would silently re-drift every existing candidate and
+      -- would need a migration plan.
+      AND s.latitude  IS NOT NULL
+      AND s.longitude IS NOT NULL
+      AND s.latitude   <> 'NaN'::double precision
+      AND s.longitude  <> 'NaN'::double precision
+      AND s.latitude  BETWEEN  -90 AND  90
+      AND s.longitude BETWEEN -180 AND 180
   ),
   agg_base AS (
     SELECT
@@ -1832,11 +1867,31 @@ SELECT matrix_map.apply_candidate_audit_publication_id_invariant('matrix_map', '
 -- this function (it is invoked only by the API route; the two references
 -- elsewhere in this file are comments), so RESTRICT will FAIL LOUDLY if a future
 -- dependency is added rather than silently dropping it.
+-- F2 IDENTITY-AUTHORITY CHANGE (2026-07-29): the caller no longer supplies the
+-- cluster key as the thing this function trusts. It supplies a representative
+-- COORDINATE PAIR plus the key it BELIEVES that pair renders to, and this
+-- function derives the key itself, BEFORE any sample selection, and compares.
+--
+-- Why the pair and not the key. The previous contract took p_coordinate_cluster_id
+-- and passed it straight to current_site_aggregate_snapshot, which selects samples
+-- WHERE canonical_five_decimal_cluster(latitude, longitude) = p_cluster_id (:1133-1134).
+-- Re-deriving a key from rows that were filtered BY that key necessarily reproduces
+-- it, so a "derive and compare" placed after selection could never fail. The
+-- coordinate pair is the INDEPENDENT locator: it is derived from, not filtered by,
+-- the identity under test.
+--
+-- BOTH signatures are dropped. Leaving the 5-argument form installed would let
+-- PostgREST resolve a call to the old, unvalidated function and silently restore
+-- the defect, and an overload pair would make resolution ambiguous -- the same
+-- reasoning already applied to fetch_admin_site_aggregate_publications at :508-514.
 DROP FUNCTION IF EXISTS matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) RESTRICT;
+DROP FUNCTION IF EXISTS matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text) RESTRICT;
 
 CREATE FUNCTION matrix_map.upsert_site_aggregate_candidate(
   p_source_dra_id uuid,
-  p_coordinate_cluster_id text,
+  p_expected_cluster_id text,
+  p_representative_latitude double precision,
+  p_representative_longitude double precision,
   p_member_display_label text,
   p_actor_id uuid,
   p_reason text
@@ -1848,6 +1903,10 @@ SET search_path = matrix_map, public, pg_temp
 AS $$
 DECLARE
   v_uid uuid;
+  -- The authoritative key. Derived here from the representative pair and used for
+  -- EVERY downstream operation; p_expected_cluster_id is only ever compared, never
+  -- used to locate, lock, select, insert or audit.
+  v_derived_cluster text;
   v_claims jsonb;
   v_actor_email text;
   v_is_authorized boolean;
@@ -1951,6 +2010,49 @@ BEGIN
     RAISE EXCEPTION 'upsert_site_aggregate_candidate could not resolve actor email from JWT' USING ERRCODE = '42501';
   END IF;
 
+  -- F2 STEP 3 -- ELIGIBILITY. Validate the representative pair against the SAME
+  -- predicate fetch_admin_site_aggregate_live_preview applies to its base
+  -- population. The locator must be a coordinate this schema could itself have
+  -- produced, and an ineligible pair is a caller defect rejected BEFORE any
+  -- derivation, so no invalid value ever reaches the identity function.
+  --
+  -- NaN needs its own test: PostgreSQL defines NaN = NaN as TRUE for floats, so
+  -- the usual `x = x` idiom does NOT detect it. The range bounds are expected to
+  -- exclude NaN and both infinities unaided (PostgreSQL orders NaN above all
+  -- non-NaN values); the explicit NaN tests are belt-and-braces and cost nothing.
+  -- Both behaviours are pinned by executed tests rather than assumed.
+  --
+  -- No message below echoes a coordinate or a key (D-F2-6).
+  IF p_representative_latitude IS NULL OR p_representative_longitude IS NULL THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate requires a non-null representative coordinate pair' USING ERRCODE = 'UE422';
+  END IF;
+
+  IF p_representative_latitude = 'NaN'::double precision
+     OR p_representative_longitude = 'NaN'::double precision THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate representative coordinate pair must not be NaN' USING ERRCODE = 'UE422';
+  END IF;
+
+  IF p_representative_latitude NOT BETWEEN -90 AND 90
+     OR p_representative_longitude NOT BETWEEN -180 AND 180 THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate representative coordinate pair is outside the valid coordinate range' USING ERRCODE = 'UE422';
+  END IF;
+
+  -- F2 STEP 4 -- DERIVE, before any sample selection. This is the whole point of
+  -- the contract: the coordinate pair is an INDEPENDENT locator, so the key this
+  -- produces is not a restatement of anything the caller asserted.
+  v_derived_cluster := matrix_map.canonical_five_decimal_cluster(
+    p_representative_latitude,
+    p_representative_longitude
+  );
+
+  -- F2 STEP 5 -- COMPARE. PRE-COMMIT, and deliberately ahead of the advisory lock
+  -- and the FOR UPDATE lookup, so a mismatch writes nothing at all: no candidate
+  -- row, no audit row, and no lock contention with a concurrent legitimate caller.
+  -- IS DISTINCT FROM, not <>, so a NULL assertion is a mismatch rather than NULL.
+  IF v_derived_cluster IS DISTINCT FROM p_expected_cluster_id THEN
+    RAISE EXCEPTION 'upsert_site_aggregate_candidate cluster identity mismatch: the supplied representative coordinate pair does not render to the asserted cluster id' USING ERRCODE = 'UE412';
+  END IF;
+
   -- FIX 2 (accepted review finding): serialize concurrent first-create races on
   -- the natural key BEFORE classifying create vs refresh. Without this, two
   -- concurrent callers for the SAME (source_dra_id, coordinate_cluster_id) that
@@ -1968,12 +2070,16 @@ BEGIN
   -- SELECT ... FOR UPDATE below correctly observes the just-committed row for
   -- every caller, not just the winner. Chosen over the xmax approach because it
   -- is the smaller, more clearly-correct change for both symptoms.
-  PERFORM pg_advisory_xact_lock(hashtextextended(p_source_dra_id::text || ':' || p_coordinate_cluster_id, 0));
+  -- F2 STEP 6 -- from here down, ONLY v_derived_cluster is used. The advisory lock
+  -- must key on the derived value too: locking on the asserted one would let a
+  -- caller serialize against a different natural key than the one it goes on to
+  -- write, reopening the very create/refresh race this lock exists to close.
+  PERFORM pg_advisory_xact_lock(hashtextextended(p_source_dra_id::text || ':' || v_derived_cluster, 0));
 
   -- 1. Lock existing row (if any) to prevent concurrent publish/refresh races
   SELECT id, is_published, to_jsonb(t) INTO v_existing_id, v_is_published, v_prior_snapshot
   FROM matrix_map.site_aggregate_publications t
-  WHERE source_dra_id = p_source_dra_id AND coordinate_cluster_id = p_coordinate_cluster_id
+  WHERE source_dra_id = p_source_dra_id AND coordinate_cluster_id = v_derived_cluster
   FOR UPDATE;
 
   IF FOUND AND v_is_published THEN
@@ -1986,7 +2092,7 @@ BEGIN
   PERFORM matrix_map.lock_site_aggregate_publication_sources();
 
   SELECT * INTO v_snap
-  FROM matrix_map.current_site_aggregate_snapshot(p_source_dra_id, p_coordinate_cluster_id);
+  FROM matrix_map.current_site_aggregate_snapshot(p_source_dra_id, v_derived_cluster);
 
   IF v_snap IS NULL OR v_snap.sample_count_total IS NULL OR v_snap.sample_count_total = 0 THEN
     RAISE EXCEPTION 'snapshot is empty' USING ERRCODE = 'UE409';
@@ -2005,7 +2111,7 @@ BEGIN
     sample_count_total, sample_count_high, sample_count_medium, sample_count_low,
     distinct_point_count, data_snapshot_version, source_sample_hash, updated_at
   ) VALUES (
-    p_source_dra_id, p_coordinate_cluster_id, v_snap.representative_latitude, v_snap.representative_longitude,
+    p_source_dra_id, v_derived_cluster, v_snap.representative_latitude, v_snap.representative_longitude,
     v_snap.coordinate_quality_tier, v_snap.coordinate_source, matrix_map.blank_trim(p_member_display_label), false,
     v_snap.sample_count_total, v_snap.sample_count_high, v_snap.sample_count_medium, v_snap.sample_count_low,
     v_snap.distinct_point_count, md5(v_snap.source_sample_hash), v_snap.source_sample_hash, clock_timestamp()
@@ -2046,7 +2152,7 @@ BEGIN
     publication_id, source_dra_id, coordinate_cluster_id, action,
     prior_snapshot, new_snapshot, reason, changed_by, changed_by_email, changed_at
   ) VALUES (
-    v_existing_id, p_source_dra_id, p_coordinate_cluster_id, v_action,
+    v_existing_id, p_source_dra_id, v_derived_cluster, v_action,
     v_prior_snapshot, to_jsonb(v_persisted_row), matrix_map.blank_trim(p_reason), v_uid, v_actor_email, clock_timestamp()
   );
 
@@ -2057,9 +2163,395 @@ BEGIN
 END;
 $$;
 
-ALTER FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) OWNER TO matrix_map_owner;
-REVOKE ALL ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
-GRANT EXECUTE ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text) TO authenticated;
+ALTER FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text) OWNER TO matrix_map_owner;
+REVOKE ALL ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text) FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text) TO authenticated;
+
+-- ===========================================================================
+-- F2: LIVE PREVIEW RPC (2026-07-29)
+-- ===========================================================================
+--
+-- WHY THIS EXISTS. The admin site-aggregates page built its live preview with
+-- computeSiteAggregates(samples, dras, { tier: 'medium' }) -- clustering RAW
+-- SAMPLES IN TYPESCRIPT -- while fetch_admin_site_aggregate_publications reads
+-- only the persisted table. So nothing on the server could supply identities for
+-- an unpublished live cluster, and the client was the de facto identity author.
+-- This function is the server-side replacement, and it is what makes SQL the sole
+-- identity authority (D-F2-1) rather than merely the preferred one.
+--
+-- TWO POPULATIONS, DELIBERATELY DISTINGUISHED. This is the substantive bug the
+-- previous surface hid:
+--   * the PREVIEW block is computed from the MEDIUM-tier population -- exactly
+--     what { tier: 'medium' } produced, so the visible table and map are
+--     unchanged;
+--   * the LIFECYCLE block is computed from the ALL-TIER population -- exactly
+--     what current_site_aggregate_snapshot (which applies NO tier filter) would
+--     persist.
+-- The page previously showed medium-only numbers while the persist path wrote
+-- all-tier numbers. Both are now returned, separately, so the operator can see
+-- what will actually be written.
+--
+-- THE LIFECYCLE REPRESENTATIVE PAIR IS THE WRITE LOCATOR. It is the CANONICAL
+-- ROUNDED PAIR -- the numeric pair whose canonical rendering IS
+-- canonical_cluster_id -- not an arbitrary first-row sample as at :1138-1139.
+-- upsert_site_aggregate_candidate re-derives the key from this pair before
+-- selecting anything, so the pair must round-trip exactly. That invariant is
+-- asserted per returned row by executed test, not assumed.
+--
+-- ONE SOURCE OF TRUTH FOR CANONICALIZATION. lat5/lng5 are computed ONCE in
+-- `base`. The grouping uses them, the canonical id is derived FROM them via the
+-- shared function, and the locator is emitted FROM them. There is deliberately no
+-- second spelling of the rounding anywhere in this function -- two independently
+-- written canonicalizations are exactly how the client and server drifted apart.
+--
+-- SECURITY. matrix_map_owner holds BYPASSRLS, so this function reads past the
+-- FORCE ROW LEVEL SECURITY on matrix_map.samples. The in-function role check is
+-- therefore the SOLE access control, not defense in depth -- it runs FIRST, before
+-- cursor and limit validation and before any row work, and fails closed.
+-- search_path deliberately EXCLUDES public: every relation is schema-qualified,
+-- and leaving public on a SECURITY DEFINER path is the schema most exposed to
+-- object creation. Note that qualifying public.user_roles does not remove the
+-- DEPENDENCY on schema public -- USAGE on it is still required, and is verified by
+-- the catalog preflight rather than assumed.
+--
+-- AGGREGATE-ORACLE BOUNDARY. The logical unpaginated aggregate relation is fixed
+-- by this body. Cursor parameters select a WINDOW and permit source_dra_id scan
+-- pruning, but cannot change the grouping, tier rules, DRA scope or aggregate
+-- values of rows in that relation. There is deliberately NO bbox, DRA-filter,
+-- tier, radius, arbitrary-predicate or caller-sort parameter: a private aggregate
+-- a caller can narrow is a spatial oracle. Cursor values are NOT
+-- provenance-bearing -- a fabricated cursor is indistinguishable from an echoed
+-- one and the boundary must not, and does not, rest on their origin.
+CREATE OR REPLACE FUNCTION matrix_map.fetch_admin_site_aggregate_live_preview(
+  p_after_source_dra_id uuid,
+  p_after_canonical_cluster text,
+  p_limit integer
+)
+RETURNS TABLE (
+  source_dra_id uuid,
+  source_dra_title text,
+  canonical_cluster_id text,
+  preview_representative_latitude double precision,
+  preview_representative_longitude double precision,
+  preview_coordinate_quality_tier text,
+  -- DISPLAY/COMPATIBILITY value. See preview_coordinate_sources for the
+  -- authoritative set.
+  preview_coordinate_source text,
+  /*
+    THE AUTHORITATIVE PROVENANCE SET, sorted and DISTINCT.
+
+    The flattened `..._coordinate_source` text beside this is a LOSSY
+    serialization: `coordinate_source` is free-form text and may itself contain
+    the '; ' separator, so the joined string cannot be split back into the set
+    that produced it. Any consumer trying to recover set membership from the text
+    can be wrong in both directions, and the one relationship a consumer most
+    needs -- that the preview sources are a SUBSET of the lifecycle sources -- is
+    exactly a set relationship.
+
+    The array is therefore the contract and the text is kept only so existing
+    display paths keep working. Both are built from the SAME expression over the
+    SAME population, and both order by `b_source`, which carries COLLATE "C" from
+    the base CTE, so the array order and the text order agree byte-for-byte.
+
+    NULL, NOT AN EMPTY ARRAY, when no row contributes a source: `array_agg`
+    with a FILTER that matches nothing returns NULL, exactly as `string_agg`
+    does. Keeping them null together makes `text IS NULL <-> array IS NULL` an
+    invariant a consumer can assert, which a coalesce to '{}' would break.
+  */
+  preview_coordinate_sources text[],
+  preview_sample_count_total integer,
+  preview_sample_count_high integer,
+  preview_sample_count_medium integer,
+  preview_sample_count_low integer,
+  preview_distinct_point_count integer,
+  lifecycle_representative_latitude double precision,
+  lifecycle_representative_longitude double precision,
+  lifecycle_coordinate_quality_tier text,
+  -- DISPLAY/COMPATIBILITY value. See lifecycle_coordinate_sources.
+  lifecycle_coordinate_source text,
+  -- The ALL-TIER provenance set. Same contract as
+  -- preview_coordinate_sources above; the preview set is a SUBSET of this one,
+  -- because the preview population is the medium-tier subset of this population.
+  lifecycle_coordinate_sources text[],
+  lifecycle_sample_count_total integer,
+  lifecycle_sample_count_high integer,
+  lifecycle_sample_count_medium integer,
+  lifecycle_sample_count_low integer,
+  lifecycle_distinct_point_count integer
+)
+LANGUAGE plpgsql
+STABLE
+SECURITY DEFINER
+SET search_path = pg_catalog, matrix_map, pg_temp
+AS $$
+DECLARE
+  v_uid uuid;
+  v_is_authorized boolean;
+  -- Same ceiling as fetch_admin_site_aggregate_publications (:563).
+  c_max_limit constant integer := 1000;
+  -- A canonical cluster id is two 'FM9990.00000' renderings joined by a comma: at
+  -- most 11 characters per axis (optional sign, up to 4 integer digits, the point,
+  -- 5 decimals) plus the separator = 23. 32 leaves headroom without admitting an
+  -- unbounded caller-supplied string into a comparison.
+  c_max_cursor_len constant integer := 32;
+BEGIN
+  -- AUTHORIZATION FIRST. Not after validation, not interleaved with it. This is
+  -- the only access control on an RLS-bypassing function.
+  v_uid := matrix_map.current_user_id();
+  IF v_uid IS NULL THEN
+    RAISE EXCEPTION 'fetch_admin_site_aggregate_live_preview requires authenticated user context'
+      USING ERRCODE = '42501';
+  END IF;
+
+  SELECT EXISTS (
+    SELECT 1 FROM public.user_roles ur
+    WHERE ur.user_id = v_uid
+      AND ur.role IN ('admin', 'matrix_admin')
+  ) INTO v_is_authorized;
+
+  IF NOT v_is_authorized THEN
+    RAISE EXCEPTION 'fetch_admin_site_aggregate_live_preview requires admin or matrix_admin role'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- CURSOR PAIRING. Both fields or neither. A half-supplied cursor is a caller
+  -- defect, not something to silently coerce into a first page.
+  IF (p_after_source_dra_id IS NULL) <> (p_after_canonical_cluster IS NULL) THEN
+    RAISE EXCEPTION 'fetch_admin_site_aggregate_live_preview cursor requires both fields or neither'
+      USING ERRCODE = 'UE422';
+  END IF;
+
+  IF p_after_canonical_cluster IS NOT NULL
+     AND length(p_after_canonical_cluster) > c_max_cursor_len THEN
+    RAISE EXCEPTION 'fetch_admin_site_aggregate_live_preview cursor exceeds maximum canonical length'
+      USING ERRCODE = 'UE422';
+  END IF;
+
+  -- BOUNDS BEFORE ROW WORK, fail closed. No argument defaults anywhere in this
+  -- family: every caller states its own bounds (:508-512).
+  IF p_limit IS NULL OR p_limit < 1 OR p_limit > c_max_limit THEN
+    RAISE EXCEPTION 'fetch_admin_site_aggregate_live_preview requires p_limit between 1 and %', c_max_limit
+      USING ERRCODE = 'UE422';
+  END IF;
+
+  RETURN QUERY
+  WITH base AS (
+    SELECT
+      s.source_dra_id           AS b_source_dra_id,
+      -- THE single rounding expression per axis in this function.
+      round(s.latitude::numeric,  5) AS lat5,
+      round(s.longitude::numeric, 5) AS lng5,
+      s.coordinate_quality_tier AS b_tier,
+      -- COLLATE "C" IS APPLIED HERE, at the single point the column enters the
+      -- query, so the source aggregation below can order by the plain column and
+      -- still get byte order. `string_agg(DISTINCT x ...)` requires its ORDER BY
+      -- expression to appear in the DISTINCT list, and `x COLLATE "C"` is a
+      -- DIFFERENT expression from `x` -- so collating at the source is what makes
+      -- the set-based form legal at all, not a stylistic choice.
+      s.coordinate_source COLLATE "C" AS b_source
+    FROM matrix_map.samples s
+    JOIN matrix_map.dras d
+      ON d.id = s.source_dra_id
+     AND d.is_deleted = false
+    WHERE s.latitude  IS NOT NULL
+      AND s.longitude IS NOT NULL
+      -- NaN needs an explicit test: PostgreSQL defines NaN = NaN as TRUE for
+      -- floats, so `x = x` does not detect it. The range bounds are expected to
+      -- exclude NaN and both infinities unaided (NaN sorts above all non-NaN
+      -- values); these tests are belt-and-braces and are pinned by executed tests.
+      --
+      -- This predicate does NOT trust samples_lng_lat_geometry_consistency. That
+      -- constraint is NOT VALID, so rows predating validation were never checked,
+      -- and live state cannot rule them out.
+      AND s.latitude   <> 'NaN'::double precision
+      AND s.longitude  <> 'NaN'::double precision
+      AND s.latitude  BETWEEN  -90 AND  90
+      AND s.longitude BETWEEN -180 AND 180
+      -- WINDOW-EQUIVALENT SCAN PRUNE, pushed BELOW aggregation. `>=` and not `>`:
+      -- the cursor's own DRA may still contain later clusters. This can only
+      -- remove rows that could not have appeared in the requested window anyway,
+      -- because the total order leads with source_dra_id.
+      AND (p_after_source_dra_id IS NULL OR s.source_dra_id >= p_after_source_dra_id)
+  ),
+  grouped AS (
+    SELECT
+      b.b_source_dra_id AS g_source_dra_id,
+      b.lat5            AS g_lat5,
+      b.lng5            AS g_lng5,
+      -- Derived FROM the grouping key, so the round-trip invariant
+      -- canonical(rep_lat, rep_lng) = canonical_cluster_id holds by construction.
+      matrix_map.canonical_five_decimal_cluster(
+        b.lat5::double precision,
+        b.lng5::double precision
+      ) AS g_canonical_cluster_id,
+
+      -- LIFECYCLE (ALL-TIER) -- what the upsert would persist.
+      count(*)::integer                                                    AS g_life_total,
+      count(*) FILTER (WHERE b.b_tier = 'high')::integer                   AS g_life_high,
+      count(*) FILTER (WHERE b.b_tier = 'medium')::integer                 AS g_life_medium,
+      count(*) FILTER (WHERE b.b_tier = 'low')::integer                    AS g_life_low,
+
+      -- PREVIEW (MEDIUM ONLY) -- what { tier: 'medium' } produced client-side.
+      -- high and low are 0 by construction, exactly as the current UI reports
+      -- them; they are returned rather than omitted so the two blocks stay
+      -- structurally identical and a consumer cannot confuse one for the other.
+      count(*) FILTER (WHERE b.b_tier = 'medium')::integer                 AS g_prev_total,
+      0::integer                                                           AS g_prev_high,
+      count(*) FILTER (WHERE b.b_tier = 'medium')::integer                 AS g_prev_medium,
+      0::integer                                                           AS g_prev_low,
+
+      -- Dominant tier, all-tier population. Ties break high > medium > low,
+      -- matching current_site_aggregate_snapshot (:1152) and the client's
+      -- severity-ordered scan, so the marker cannot flip between runs.
+      --
+      -- WRITTEN AS AN EXPRESSION OVER THE FILTERED COUNTS, not as a correlated
+      -- subquery. It used to be a per-group `SELECT ... FROM base b2 WHERE
+      -- b2.b_source_dra_id = b.b_source_dra_id AND ... LIMIT 1`, which is
+      -- precisely the "aggregate that executes once per returned group" V6
+      -- section 8.2 forbids. MEASURED, not argued: with the 502,000-row PERF
+      -- fixture, a single first-page `EXPLAIN (ANALYZE, BUFFERS)` of the inner
+      -- SELECT had not returned after TEN MINUTES with the three correlated
+      -- subqueries present, and completes in well under a second without them.
+      --
+      -- The rewrite is EXACTLY equivalent. The old form ranked only the tiers
+      -- actually PRESENT in the group, by `cnt DESC` then severity. Here a tier
+      -- with a zero count is excluded by its own `> 0` guard, and the branch
+      -- order encodes the same severity tie-break:
+      --   high  wins when its count is >= both others and non-zero;
+      --   medium wins when its count is >= low's and non-zero;
+      --   low  otherwise.
+      -- The final `sub.tier COLLATE "C"` tie-break in the old form could only
+      -- ever apply to a fourth tier value, and the CHECK constraint on
+      -- coordinate_quality_tier admits exactly three, so nothing is lost.
+      CASE
+        WHEN count(*) FILTER (WHERE b.b_tier = 'high') >= count(*) FILTER (WHERE b.b_tier = 'medium')
+         AND count(*) FILTER (WHERE b.b_tier = 'high') >= count(*) FILTER (WHERE b.b_tier = 'low')
+         AND count(*) FILTER (WHERE b.b_tier = 'high') > 0
+          THEN 'high'
+        WHEN count(*) FILTER (WHERE b.b_tier = 'medium') >= count(*) FILTER (WHERE b.b_tier = 'low')
+         AND count(*) FILTER (WHERE b.b_tier = 'medium') > 0
+          THEN 'medium'
+        WHEN count(*) FILTER (WHERE b.b_tier = 'low') > 0
+          THEN 'low'
+        ELSE NULL
+      END::text AS g_life_tier,
+
+      -- Multiple distinct sources are reported explicitly rather than silently
+      -- picking one, so provenance is never misrepresented. Plain trim and the
+      -- non-empty filter mirror the snapshot function (:1166) exactly.
+      --
+      -- SET-BASED, for the same reason as the dominant tier above: both of these
+      -- were correlated subqueries re-scanning `base` once per group. The
+      -- ordering is still byte order -- `b_source` carries COLLATE "C" from the
+      -- base CTE -- and the empty case still yields NULL, because `string_agg`
+      -- over an empty filtered set returns NULL exactly as the old subquery over
+      -- an empty derived table did.
+      string_agg(DISTINCT b.b_source, '; ' ORDER BY b.b_source)
+        FILTER (WHERE b.b_source IS NOT NULL AND length(trim(b.b_source)) > 0)
+        AS g_life_source,
+
+      string_agg(DISTINCT b.b_source, '; ' ORDER BY b.b_source)
+        FILTER (WHERE b.b_tier = 'medium'
+                  AND b.b_source IS NOT NULL
+                  AND length(trim(b.b_source)) > 0)
+        AS g_prev_source,
+
+      -- THE AUTHORITATIVE SETS, paired with the flattened text above.
+      --
+      -- Each array_agg mirrors its string_agg EXACTLY -- same DISTINCT, same
+      -- ORDER BY b_source (which carries COLLATE "C" from the base CTE, so this
+      -- is byte order and not the database's default collation), and the same
+      -- FILTER. That is what lets a consumer verify the text is a faithful
+      -- rendering of the array WITHOUT parsing the text back into a set, which
+      -- is impossible when a source value can itself contain the '; ' separator.
+      --
+      -- Written as a pair rather than deriving the text from the array in SQL
+      -- (e.g. array_to_string) deliberately: the text column's existing bytes
+      -- must not change, because the drift hash and the persisted candidate
+      -- compare against it.
+      array_agg(DISTINCT b.b_source ORDER BY b.b_source)
+        FILTER (WHERE b.b_source IS NOT NULL AND length(trim(b.b_source)) > 0)
+        AS g_life_sources,
+
+      array_agg(DISTINCT b.b_source ORDER BY b.b_source)
+        FILTER (WHERE b.b_tier = 'medium'
+                  AND b.b_source IS NOT NULL
+                  AND length(trim(b.b_source)) > 0)
+        AS g_prev_sources
+    FROM base b
+    GROUP BY b.b_source_dra_id, b.lat5, b.lng5
+    -- ROW SCOPE: at least one medium-tier sample. A cluster with no medium sample
+    -- is not previewable and must not appear, matching { tier: 'medium' }.
+    HAVING count(*) FILTER (WHERE b.b_tier = 'medium') > 0
+  )
+  SELECT
+    g.g_source_dra_id,
+    d.title,
+    g.g_canonical_cluster_id,
+
+    -- The preview and lifecycle representative pairs COINCIDE by construction:
+    -- both are the canonical rounded pair of the same grouping key, and the medium
+    -- population is a subset of the same cluster. They are returned separately
+    -- because the two blocks are structurally parallel, not because they can
+    -- differ. The counts and tiers are what genuinely differ.
+    g.g_lat5::double precision,
+    g.g_lng5::double precision,
+    -- Preview population is medium-only, so its dominant tier is 'medium' by
+    -- construction -- again matching what the client reports today.
+    'medium'::text,
+    g.g_prev_source,
+    g.g_prev_sources,
+    g.g_prev_total,
+    g.g_prev_high,
+    g.g_prev_medium,
+    g.g_prev_low,
+    -- DISTINCT POINT COUNT is provably 1 here: the grouping key IS the rounded
+    -- pair, so every member renders to one canonical id. This replicates BOTH
+    -- existing authorities faithfully -- current_site_aggregate_snapshot computes
+    -- count(DISTINCT canonical(...)) over rows already filtered to one cluster
+    -- (:1144), and the client adds the cluster id, not the raw point, to its set
+    -- (siteAggregates.ts). Both are therefore always 1. Emitting the literal is
+    -- exact, not an approximation, and avoids a per-group DISTINCT aggregate for a
+    -- constant. The degeneracy is PRE-EXISTING and shared; changing what this
+    -- metric means is a semantic redesign and is deliberately NOT part of F2.
+    1::integer,
+
+    g.g_lat5::double precision,
+    g.g_lng5::double precision,
+    g.g_life_tier,
+    g.g_life_source,
+    g.g_life_sources,
+    g.g_life_total,
+    g.g_life_high,
+    g.g_life_medium,
+    g.g_life_low,
+    1::integer
+  FROM grouped g
+  JOIN matrix_map.dras d
+    ON d.id = g.g_source_dra_id
+  -- KEYSET PAGE PREDICATE. Written out rather than as a row-wise tuple comparison
+  -- because a tuple comparison gives no clean place to attach the collation, and
+  -- the collation is load-bearing: the total order must not depend on the
+  -- database's default collation.
+  WHERE p_after_source_dra_id IS NULL
+     OR g.g_source_dra_id > p_after_source_dra_id
+     OR ( g.g_source_dra_id = p_after_source_dra_id
+          AND g.g_canonical_cluster_id COLLATE "C" > p_after_canonical_cluster COLLATE "C" )
+  ORDER BY g.g_source_dra_id,
+           g.g_canonical_cluster_id COLLATE "C"
+  -- TRUNCATION IS EXPLICIT: fewer than p_limit rows means the traversal is
+  -- complete. The caller advances by passing back the last row's
+  -- (source_dra_id, canonical_cluster_id).
+  LIMIT p_limit;
+END;
+$$;
+
+ALTER FUNCTION matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)
+  OWNER TO matrix_map_owner;
+REVOKE ALL ON FUNCTION matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)
+  FROM PUBLIC, anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)
+  TO authenticated;
 
 CREATE OR REPLACE FUNCTION matrix_map.fetch_site_aggregate_candidate_audit(p_publication_id uuid)
 RETURNS TABLE (

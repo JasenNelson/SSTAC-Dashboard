@@ -512,7 +512,7 @@ BEGIN
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
   PERFORM matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Delta Label A', v_admin_id, 'delta upsert one'
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Delta Label A', v_admin_id, 'delta upsert one'
   );
   SELECT id INTO v_pub_id_1 FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
@@ -523,7 +523,7 @@ BEGIN
 
   -- Repeat: must be stable (same row), and audited again as a real change.
   PERFORM matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Delta Label B', v_admin_id, 'delta upsert two'
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Delta Label B', v_admin_id, 'delta upsert two'
   );
   SELECT id INTO v_pub_id_2 FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
@@ -577,7 +577,14 @@ BEGIN
 
   BEGIN
     PERFORM matrix_map.upsert_site_aggregate_candidate(
-      v_dra_id, v_cluster, 'Should Not Apply', v_admin_id, 'refresh while published'
+      v_dra_id, v_cluster,
+      -- F2: the representative pair must come from the SAME row v_cluster was
+      -- derived from above (same predicate, same ORDER BY, same LIMIT), so the
+      -- upsert's own derivation reproduces v_cluster exactly and this test still
+      -- exercises UE409 rather than tripping the new UE412 first.
+      (SELECT s.latitude  FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+      (SELECT s.longitude FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+      'Should Not Apply', v_admin_id, 'refresh while published'
     );
     INSERT INTO public.test_results (test_id, description, status, details)
     VALUES ('TEST_14', 'Verify refreshing a published candidate is rejected with UE409', 'FAIL',
@@ -699,7 +706,14 @@ BEGIN
 
   BEGIN
     PERFORM matrix_map.upsert_site_aggregate_candidate(
-      v_dra_id, v_cluster, 'Site ' || v_dra_id::text || ' West', v_admin_id, 'label carries raw dra id'
+      v_dra_id, v_cluster,
+      -- F2: same-row representative pair (see TEST_14). The label guard raises
+      -- UE422 before the F2 eligibility and derivation steps run, so this test's
+      -- assertion is unchanged; the pair is still supplied correctly rather than
+      -- relying on that ordering.
+      (SELECT s.latitude  FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+      (SELECT s.longitude FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+      'Site ' || v_dra_id::text || ' West', v_admin_id, 'label carries raw dra id'
     );
     INSERT INTO public.test_results (test_id, description, status, details)
     VALUES ('TEST_17', 'Verify upsert_site_aggregate_candidate rejects a member_display_label containing the raw source_dra_id (RPC-direct, bypassing the route guard)', 'FAIL',
@@ -924,8 +938,8 @@ BEGIN
   -- neither is visible/released until X commits below.
   PERFORM dblink_exec('conc_x', 'BEGIN');
   PERFORM dblink_send_query('conc_x', format(
-    $q$SELECT 1 FROM (SELECT matrix_map.upsert_site_aggregate_candidate(%L::uuid, %L, %L, %L::uuid, %L)) s$q$,
-    v_dra_id, v_cluster, 'Concurrent Label X', v_admin_id, 'concurrent create race X'));
+    $q$SELECT 1 FROM (SELECT matrix_map.upsert_site_aggregate_candidate(%L::uuid, %L, %L::double precision, %L::double precision, %L, %L::uuid, %L)) s$q$,
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Concurrent Label X', v_admin_id, 'concurrent create race X'));
   SELECT t.r INTO v_res_x FROM dblink_get_result('conc_x') AS t(r integer);
   -- dblink_get_result must be called until it returns no rows to fully clear
   -- the connection's async command state -- otherwise a LATER command on
@@ -936,8 +950,8 @@ BEGIN
   -- STEP 2: dispatch Y asynchronously against the SAME natural key while X's
   -- transaction (and its advisory lock + uncommitted row) is still open.
   PERFORM dblink_send_query('conc_y', format(
-    $q$SELECT 1 FROM (SELECT matrix_map.upsert_site_aggregate_candidate(%L::uuid, %L, %L, %L::uuid, %L)) s$q$,
-    v_dra_id, v_cluster, 'Concurrent Label Y', v_admin_id, 'concurrent create race Y'));
+    $q$SELECT 1 FROM (SELECT matrix_map.upsert_site_aggregate_candidate(%L::uuid, %L, %L::double precision, %L::double precision, %L, %L::uuid, %L)) s$q$,
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Concurrent Label Y', v_admin_id, 'concurrent create race Y'));
 
   -- STEP 3: prove the serialization boundary directly via pg_locks, queried
   -- from THIS local session (a third backend, independent of conc_x/conc_y).
@@ -1091,7 +1105,11 @@ BEGIN
   LOOP
     BEGIN
       PERFORM matrix_map.upsert_site_aggregate_candidate(
-        v_dra_id, v_cluster, v_variant, v_admin_id, 'label privacy variant test'
+        v_dra_id, v_cluster,
+        -- F2: same-row representative pair (see TEST_14).
+        (SELECT s.latitude  FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+        (SELECT s.longitude FROM matrix_map.samples s WHERE s.source_dra_id = v_dra_id ORDER BY s.id ASC LIMIT 1),
+        v_variant, v_admin_id, 'label privacy variant test'
       );
       v_failures := array_append(v_failures, 'NOT REJECTED: ' || v_variant);
     EXCEPTION WHEN SQLSTATE 'UE422' THEN
@@ -1141,7 +1159,7 @@ BEGIN
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_new_lat, v_new_lng);
 
   PERFORM matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, v_label, v_admin_id, 'innocuous label acceptance test'
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, v_label, v_admin_id, 'innocuous label acceptance test'
   );
 
   SELECT count(*) INTO v_audit_count FROM matrix_map.site_aggregate_candidate_audit
@@ -1226,7 +1244,7 @@ BEGIN
 
   -- Create with an initial label.
   PERFORM matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Audit Fix1 Original', v_admin_id, 'audit completeness create'
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Audit Fix1 Original', v_admin_id, 'audit completeness create'
   );
 
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
@@ -1244,7 +1262,7 @@ BEGIN
 
   -- Refresh with a DIFFERENT label.
   PERFORM matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Audit Fix1 Refreshed', v_admin_id, 'audit completeness refresh'
+    v_dra_id, v_cluster, v_new_lat, v_new_lng, 'Audit Fix1 Refreshed', v_admin_id, 'audit completeness refresh'
   );
 
   SELECT to_jsonb(t) INTO v_external_after_refresh
@@ -2265,7 +2283,7 @@ BEGIN
   ) ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 30', v_admin_id, 'drift test 30');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 30', v_admin_id, 'drift test 30');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2310,7 +2328,7 @@ BEGIN
   ) ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 31', v_admin_id, 'drift test 31');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 31', v_admin_id, 'drift test 31');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2364,7 +2382,7 @@ BEGIN
   ) ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 32', v_admin_id, 'drift test 32');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 32', v_admin_id, 'drift test 32');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2446,7 +2464,7 @@ BEGIN
   ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 33', v_admin_id, 'drift test 33');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 33', v_admin_id, 'drift test 33');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2493,7 +2511,7 @@ BEGIN
   ) ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 34', v_admin_id, 'drift test 34');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 34', v_admin_id, 'drift test 34');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2609,7 +2627,7 @@ BEGIN
   ) ON CONFLICT (id) DO NOTHING;
 
   v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Drift 36', v_admin_id, 'drift test 36');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lat, v_lng, 'Drift 36', v_admin_id, 'drift test 36');
   SELECT id INTO v_pub_id FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
@@ -2749,7 +2767,7 @@ BEGIN
   v_cluster := matrix_map.canonical_five_decimal_cluster(49.30001, -123.30001);
   BEGIN
     PERFORM matrix_map.upsert_site_aggregate_candidate(
-      v_dra_id, v_cluster, chr(9), v_admin_id, 'blank label attempt'
+      v_dra_id, v_cluster, 49.30001, -123.30001, chr(9), v_admin_id, 'blank label attempt'
     );
   EXCEPTION WHEN sqlstate 'UE422' THEN
     v_raised := true;
@@ -2911,14 +2929,14 @@ BEGIN
   v_cluster := matrix_map.canonical_five_decimal_cluster(49.43001, -123.43001);
 
   -- Admin A creates and REVIEWS this version.
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Reviewed Label A', v_admin_id, 'create 43');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 49.43001, -123.43001, 'Reviewed Label A', v_admin_id, 'create 43');
   SELECT id, updated_at INTO v_pub_id, v_seen_updated_at
   FROM matrix_map.site_aggregate_publications
   WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
 
   -- Admin B refreshes it to a DIFFERENT member-visible label.
   PERFORM pg_sleep(0.01);
-  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Substituted Label B', v_admin_id, 'refresh 43 by another admin');
+  PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 49.43001, -123.43001, 'Substituted Label B', v_admin_id, 'refresh 43 by another admin');
 
   SELECT count(*) INTO v_audit_before FROM matrix_map.site_aggregate_publication_audit WHERE publication_id = v_pub_id;
 
@@ -3225,7 +3243,7 @@ BEGIN
     ) ON CONFLICT (id) DO NOTHING;
 
     v_cluster := matrix_map.canonical_five_decimal_cluster(49.52000 + i * 0.001, -123.52000 - i * 0.001);
-    PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 'Member Page Label ' || i, v_admin_id, 'seed member page ' || i);
+    PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 49.52000 + i * 0.001, -123.52000 - i * 0.001, 'Member Page Label ' || i, v_admin_id, 'seed member page ' || i);
     SELECT id, updated_at INTO v_pub_id, v_cur FROM matrix_map.site_aggregate_publications
     WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
     PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, true, v_admin_id, 'seed publish ' || i, v_cur);
@@ -3311,7 +3329,7 @@ BEGIN
     ) ON CONFLICT (id) DO NOTHING;
 
     v_cluster := matrix_map.canonical_five_decimal_cluster(v_lats[i], v_lngs[i]);
-    PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_labels[i], v_admin_id, 'seed g1 projection ' || i);
+    PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_lats[i], v_lngs[i], v_labels[i], v_admin_id, 'seed g1 projection ' || i);
     SELECT id, updated_at INTO v_pub_id, v_cur FROM matrix_map.site_aggregate_publications
     WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_cluster;
     PERFORM matrix_map.flip_site_aggregate_public(v_pub_id, true, v_admin_id, 'seed g1 publish ' || i, v_cur);
@@ -3886,7 +3904,7 @@ BEGIN
 
   FOR i IN 1..array_length(v_labels, 1) LOOP
     BEGIN
-      PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, v_labels[i], v_admin_id, 'fix6 probe');
+      PERFORM matrix_map.upsert_site_aggregate_candidate(v_dra_id, v_cluster, 49.5266749, -123.5312351, v_labels[i], v_admin_id, 'fix6 probe');
       v_raised := 'NO_RAISE';
     EXCEPTION WHEN OTHERS THEN
       v_raised := SQLSTATE;
@@ -3905,6 +3923,7 @@ BEGIN
     PERFORM matrix_map.upsert_site_aggregate_candidate(
       v_dra_id,
       matrix_map.canonical_five_decimal_cluster(49.5313982, -123.5268531),
+      49.5313982, -123.5268531,
       'Beach access cafe deadbeef site',
       v_admin_id, 'fix6 innocuous probe');
     v_innocuous_ok := true;
@@ -4106,7 +4125,7 @@ BEGIN
   -- CREATE: capture the RETURNED id (not PERFORM -- the return value is the
   -- subject of this test).
   v_returned_create := matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Return Contract Create', v_admin_id, 'return contract create'
+    v_dra_id, v_cluster, v_lat, v_lng, 'Return Contract Create', v_admin_id, 'return contract create'
   );
 
   -- The id the row ACTUALLY has, looked up independently by natural key.
@@ -4127,7 +4146,7 @@ BEGIN
   -- REFRESH the SAME natural key: must return the SAME id, and must not have
   -- created a second row.
   v_returned_refresh := matrix_map.upsert_site_aggregate_candidate(
-    v_dra_id, v_cluster, 'Return Contract Refreshed', v_admin_id, 'return contract refresh'
+    v_dra_id, v_cluster, v_lat, v_lng, 'Return Contract Refreshed', v_admin_id, 'return contract refresh'
   );
 
   SELECT count(*) INTO v_row_count
@@ -4241,6 +4260,1651 @@ BEGIN
 EXCEPTION WHEN OTHERS THEN
   INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
   VALUES ('TEST_69', 'Verify exactly ONE upsert_site_aggregate_candidate overload exists after the DROP/CREATE, returning uuid, so no legacy void-returning signature survives for PostgREST to resolve to', 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- F2 -- ONE AUTHORITATIVE COORDINATE-CLUSTER IDENTITY (TEST_70..TEST_75)
+--
+-- These cover the behaviour F2 ADDS. The 69 tests above already prove the change
+-- is behaviour-preserving for everything that existed before it.
+-- ---------------------------------------------------------------------------
+
+-- TEST_70 -- a mismatched identity assertion raises UE412 and persists nothing.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_lat double precision := 49.70001;
+  v_lng double precision := -123.70001;
+  v_wrong_cluster text := '49.99999,-123.99999';
+  v_state text := 'NO EXCEPTION';
+  v_cand bigint;
+  v_audit bigint;
+  v_desc text := 'Verify upsert_site_aggregate_candidate raises UE412 when the asserted cluster id does not match the id derived from the supplied representative coordinate pair, and leaves no candidate row and no audit row for the asserted cluster';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  ) VALUES (
+    'd0000070-0000-4000-8000-000000000070', 170, 'STN-170', 'F2 Station 70', v_lat, v_lng,
+    extensions.st_setsrid(extensions.st_makepoint(v_lng, v_lat), 4326)::extensions.geography,
+    'medium', 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  ) ON CONFLICT (id) DO NOTHING;
+
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_dra_id, v_wrong_cluster, v_lat, v_lng, 'F2 Mismatch Label', v_admin_id, 'f2 mismatch test'
+    );
+  EXCEPTION
+    WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+
+  SELECT count(*) INTO v_cand
+  FROM matrix_map.site_aggregate_publications
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_wrong_cluster;
+
+  SELECT count(*) INTO v_audit
+  FROM matrix_map.site_aggregate_candidate_audit
+  WHERE source_dra_id = v_dra_id AND coordinate_cluster_id = v_wrong_cluster;
+
+  IF v_state = 'UE412' AND v_cand = 0 AND v_audit = 0 THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_70', v_desc, 'PASS', format('state=%s candidate_rows=%s audit_rows=%s', v_state, v_cand, v_audit));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_70', v_desc, 'FAIL', format('state=%s (exp UE412) candidate_rows=%s audit_rows=%s (exp 0/0)', v_state, v_cand, v_audit));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_70', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_71 -- a MATCHING assertion still succeeds. Without this, TEST_70 could pass
+-- against a function that rejected everything.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_lat double precision := 49.71001;
+  v_lng double precision := -123.71001;
+  v_cluster text;
+  v_pub_id uuid;
+  v_desc text := 'Verify upsert_site_aggregate_candidate SUCCEEDS when the asserted cluster id matches the id derived from the representative pair, so the UE412 guard rejects only genuine mismatches rather than everything';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  ) VALUES (
+    'd0000071-0000-4000-8000-000000000071', 171, 'STN-171', 'F2 Station 71', v_lat, v_lng,
+    extensions.st_setsrid(extensions.st_makepoint(v_lng, v_lat), 4326)::extensions.geography,
+    'medium', 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  ) ON CONFLICT (id) DO NOTHING;
+
+  v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
+  v_pub_id := matrix_map.upsert_site_aggregate_candidate(
+    v_dra_id, v_cluster, v_lat, v_lng, 'F2 Match Label', v_admin_id, 'f2 match test'
+  );
+
+  IF v_pub_id IS NOT NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_71', v_desc, 'PASS', format('publication_id=%s', v_pub_id));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_71', v_desc, 'FAIL', 'returned null publication id');
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_71', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_72 -- the eligibility gate rejects every ineligible representative pair
+-- with UE422, and ACCEPTS the in-range boundary values.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a1111111-1111-1111-1111-111111111111';
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_failures text[] := ARRAY[]::text[];
+  v_state text;
+  v_desc text := 'Verify upsert_site_aggregate_candidate rejects NULL, NaN, +Infinity, -Infinity and out-of-range representative coordinates with UE422, while the in-range boundary values -90/90/-180/180 pass the eligibility gate rather than being rejected by it';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  -- Each ineligible pair must raise UE422.
+  DECLARE
+    v_lats double precision[] := ARRAY[NULL, 'NaN', 'Infinity', '-Infinity', 91.0, 49.5]::double precision[];
+    v_lngs double precision[] := ARRAY[-123.5, -123.5, -123.5, -123.5, -123.5, 181.0]::double precision[];
+    v_labels text[] := ARRAY['null-lat', 'nan-lat', 'posinf-lat', 'neginf-lat', 'lat-out-of-range', 'lng-out-of-range'];
+    i integer;
+  BEGIN
+    FOR i IN 1 .. array_length(v_labels, 1) LOOP
+      v_state := 'NO EXCEPTION';
+      BEGIN
+        PERFORM matrix_map.upsert_site_aggregate_candidate(
+          v_dra_id, 'irrelevant', v_lats[i], v_lngs[i], 'F2 Eligibility', v_admin_id, 'f2 eligibility test'
+        );
+      EXCEPTION
+        WHEN SQLSTATE 'UE422' THEN v_state := 'UE422';
+        WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+      END;
+      IF v_state <> 'UE422' THEN
+        v_failures := array_append(v_failures, v_labels[i] || '=' || v_state);
+      END IF;
+    END LOOP;
+  END;
+
+  -- The in-range boundary values must NOT be rejected by the eligibility gate.
+  -- They will fail later with UE412 (their cluster id is deliberately wrong here),
+  -- which proves eligibility passed and derivation was reached.
+  DECLARE
+    v_blats double precision[] := ARRAY[-90.0, 90.0, 0.0, 0.0]::double precision[];
+    v_blngs double precision[] := ARRAY[0.0, 0.0, -180.0, 180.0]::double precision[];
+    v_blabels text[] := ARRAY['lat-min', 'lat-max', 'lng-min', 'lng-max'];
+    j integer;
+  BEGIN
+    FOR j IN 1 .. array_length(v_blabels, 1) LOOP
+      v_state := 'NO EXCEPTION';
+      BEGIN
+        PERFORM matrix_map.upsert_site_aggregate_candidate(
+          v_dra_id, 'deliberately-wrong', v_blats[j], v_blngs[j], 'F2 Boundary', v_admin_id, 'f2 boundary test'
+        );
+      EXCEPTION
+        WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+        WHEN SQLSTATE 'UE422' THEN v_state := 'UE422';
+        WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+      END;
+      IF v_state <> 'UE412' THEN
+        v_failures := array_append(v_failures, 'boundary ' || v_blabels[j] || '=' || v_state || ' (exp UE412, meaning eligibility accepted it)');
+      END IF;
+    END LOOP;
+  END;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_72', v_desc, 'PASS', '6 ineligible pairs rejected UE422; 4 boundary pairs accepted by the eligibility gate and reached derivation');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_72', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_72', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_73 -- the canonical round-trip invariant holds for EVERY row the live
+-- preview returns, and the check is NOT vacuous.
+DO $$
+DECLARE
+  v_rows bigint;
+  v_bad bigint;
+  v_desc text := 'Verify canonical_five_decimal_cluster(lifecycle_representative_latitude, lifecycle_representative_longitude) equals canonical_cluster_id for every row returned by fetch_admin_site_aggregate_live_preview, and that at least one row was examined so the assertion is not vacuous';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  SELECT count(*),
+         count(*) FILTER (
+           WHERE matrix_map.canonical_five_decimal_cluster(
+                   r.lifecycle_representative_latitude,
+                   r.lifecycle_representative_longitude
+                 ) IS DISTINCT FROM r.canonical_cluster_id
+         )
+  INTO v_rows, v_bad
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r;
+
+  IF v_rows > 0 AND v_bad = 0 THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_73', v_desc, 'PASS', format('rows=%s violations=%s', v_rows, v_bad));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_73', v_desc, 'FAIL', format('rows=%s (must be > 0) violations=%s (exp 0)', v_rows, v_bad));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_73', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_74 -- the live preview fails closed for every non-admin principal class.
+-- This function bypasses RLS via matrix_map_owner BYPASSRLS, so the in-function
+-- role check is the SOLE access control and must be proven, not assumed.
+DO $$
+DECLARE
+  v_failures text[] := ARRAY[]::text[];
+  v_state text;
+  v_rows bigint;
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview fails closed with 42501 for an authenticated non-admin, for anon, and for a null user context, and succeeds for admin, since matrix_map_owner BYPASSRLS makes the in-function role check the sole access control';
+BEGIN
+  -- authenticated non-admin
+  PERFORM set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","email":"member@example.com"}', true);
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 10);
+  EXCEPTION
+    WHEN SQLSTATE '42501' THEN v_state := '42501';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> '42501' THEN
+    v_failures := array_append(v_failures, 'non-admin=' || v_state);
+  END IF;
+
+  -- null user context
+  PERFORM set_config('request.jwt.claims', '', true);
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 10);
+  EXCEPTION
+    WHEN SQLSTATE '42501' THEN v_state := '42501';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> '42501' THEN
+    v_failures := array_append(v_failures, 'null-context=' || v_state);
+  END IF;
+
+  -- admin succeeds
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+  SELECT count(*) INTO v_rows FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 10);
+  IF v_rows IS NULL THEN
+    v_failures := array_append(v_failures, 'admin returned null count');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_74', v_desc, 'PASS', format('non-admin and null-context both 42501; admin returned %s rows', v_rows));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_74', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_74', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_75 -- the cursor and limit contract fails closed with UE422 before any row
+-- work, for a partial cursor, an over-length cursor, and out-of-bound limits.
+DO $$
+DECLARE
+  v_failures text[] := ARRAY[]::text[];
+  v_state text;
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview fails closed with UE422 on a half-supplied cursor (either field alone), on a cursor longer than the bounded canonical length, and on a null, zero, negative or oversized p_limit';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  -- partial cursor: dra without cluster
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview('a1111111-1111-1111-1111-111111111111'::uuid, NULL, 10);
+  EXCEPTION WHEN SQLSTATE 'UE422' THEN v_state := 'UE422'; WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE; END;
+  IF v_state <> 'UE422' THEN v_failures := array_append(v_failures, 'partial-cursor-dra-only=' || v_state); END IF;
+
+  -- partial cursor: cluster without dra
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, '49.5,-123.5', 10);
+  EXCEPTION WHEN SQLSTATE 'UE422' THEN v_state := 'UE422'; WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE; END;
+  IF v_state <> 'UE422' THEN v_failures := array_append(v_failures, 'partial-cursor-cluster-only=' || v_state); END IF;
+
+  -- over-length cursor (33 characters, one past the 32 bound)
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+      'a1111111-1111-1111-1111-111111111111'::uuid, repeat('9', 33), 10);
+  EXCEPTION WHEN SQLSTATE 'UE422' THEN v_state := 'UE422'; WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE; END;
+  IF v_state <> 'UE422' THEN v_failures := array_append(v_failures, 'over-length-cursor=' || v_state); END IF;
+
+  -- limit bounds
+  DECLARE
+    v_limits integer[] := ARRAY[NULL, 0, -1, 1001, 2147483647];
+    v_llabels text[] := ARRAY['null', 'zero', 'negative', 'over-max', 'int-max'];
+    k integer;
+  BEGIN
+    FOR k IN 1 .. array_length(v_llabels, 1) LOOP
+      v_state := 'NO EXCEPTION';
+      BEGIN
+        PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, v_limits[k]);
+      EXCEPTION WHEN SQLSTATE 'UE422' THEN v_state := 'UE422'; WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE; END;
+      IF v_state <> 'UE422' THEN v_failures := array_append(v_failures, 'limit-' || v_llabels[k] || '=' || v_state); END IF;
+    END LOOP;
+  END;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_75', v_desc, 'PASS', 'partial cursor (both directions), over-length cursor and 5 invalid limits all rejected UE422');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_75', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_75', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- F2 -- REMAINING LIVE-PREVIEW COVERAGE (TEST_76..TEST_80)
+--
+-- V6 plan s13.1 (population, row scope), s8.7 (pagination: window equivalence
+-- against REF, traversal completeness, partial page, arbitrary caller-
+-- constructed cursors, COLLATE "C" ordering).
+--
+-- REF, defined ONCE and used by TEST_78, TEST_79 and TEST_80:
+--
+--   REF = the live-preview relation with NO cursor, materialized in the
+--         function's own total order (source_dra_id, canonical_cluster_id
+--         COLLATE "C").
+--
+-- The plan defines REF as the inner aggregate SELECT with no cursor and NO
+-- LIMIT. `p_limit` has no NULL/unbounded spelling -- the function fails closed
+-- on a null or out-of-range limit by design -- so REF is materialized at the
+-- maximum permitted limit of 1000 and the row count is ASSERTED to be strictly
+-- below it. Below the ceiling the two are the same relation; the assertion is
+-- what makes that substitution sound rather than assumed, and it fails loudly
+-- if the fixture ever grows past it.
+-- ===========================================================================
+
+-- TEST_76 -- the PREVIEW and LIFECYCLE blocks diverge correctly on a mixed-tier
+-- cluster, and neither is a copy of the other.
+--
+-- This is the property the whole two-block projection exists for. If the blocks
+-- were accidentally wired to the same population the page would show the
+-- operator medium-tier counts while the upsert persisted all-tier ones, with
+-- nothing in the UI revealing the difference.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a7600000-0000-4000-8000-000000000076';
+  v_lat double precision := 48.76001;
+  v_lng double precision := -122.76001;
+  v_cluster text;
+  v_row record;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview returns a MEDIUM-ONLY preview block and an ALL-TIER lifecycle block for a mixed-tier cluster: preview counts medium samples only with high and low zero and dominant tier medium, while lifecycle counts every tier and reports the all-tier dominant tier';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+  VALUES (v_dra_id, 'F2 Mixed Tier DRA 76', 'Citation 76', false, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- 2 medium, 3 high, 1 low -- all at the SAME rounded coordinate, so they form
+  -- exactly one cluster. High is the strict plurality, so the lifecycle dominant
+  -- tier must be 'high' while the preview's is 'medium' by construction.
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  )
+  SELECT
+    ('d0000076-0000-4000-8000-0000000760' || lpad(g.i::text, 2, '0'))::uuid,
+    17600 + g.i,
+    'STN-176-' || g.i,
+    'F2 Station 176-' || g.i,
+    v_lat, v_lng,
+    extensions.st_setsrid(extensions.st_makepoint(v_lng, v_lat), 4326)::extensions.geography,
+    g.tier, 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  FROM (VALUES (1,'medium'),(2,'medium'),(3,'high'),(4,'high'),(5,'high'),(6,'low')) AS g(i, tier)
+  ON CONFLICT (id) DO NOTHING;
+
+  v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
+
+  SELECT * INTO v_row
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id AND r.canonical_cluster_id = v_cluster;
+
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'mixed-tier cluster absent from the preview');
+  ELSE
+    IF v_row.preview_sample_count_total <> 2 THEN
+      v_failures := array_append(v_failures, 'preview_total=' || v_row.preview_sample_count_total || ' exp 2');
+    END IF;
+    IF v_row.preview_sample_count_medium <> 2 THEN
+      v_failures := array_append(v_failures, 'preview_medium=' || v_row.preview_sample_count_medium || ' exp 2');
+    END IF;
+    IF v_row.preview_sample_count_high <> 0 THEN
+      v_failures := array_append(v_failures, 'preview_high=' || v_row.preview_sample_count_high || ' exp 0');
+    END IF;
+    IF v_row.preview_sample_count_low <> 0 THEN
+      v_failures := array_append(v_failures, 'preview_low=' || v_row.preview_sample_count_low || ' exp 0');
+    END IF;
+    IF v_row.preview_coordinate_quality_tier <> 'medium' THEN
+      v_failures := array_append(v_failures, 'preview_tier=' || coalesce(v_row.preview_coordinate_quality_tier, 'NULL') || ' exp medium');
+    END IF;
+
+    IF v_row.lifecycle_sample_count_total <> 6 THEN
+      v_failures := array_append(v_failures, 'lifecycle_total=' || v_row.lifecycle_sample_count_total || ' exp 6');
+    END IF;
+    IF v_row.lifecycle_sample_count_high <> 3 THEN
+      v_failures := array_append(v_failures, 'lifecycle_high=' || v_row.lifecycle_sample_count_high || ' exp 3');
+    END IF;
+    IF v_row.lifecycle_sample_count_medium <> 2 THEN
+      v_failures := array_append(v_failures, 'lifecycle_medium=' || v_row.lifecycle_sample_count_medium || ' exp 2');
+    END IF;
+    IF v_row.lifecycle_sample_count_low <> 1 THEN
+      v_failures := array_append(v_failures, 'lifecycle_low=' || v_row.lifecycle_sample_count_low || ' exp 1');
+    END IF;
+    IF v_row.lifecycle_coordinate_quality_tier <> 'high' THEN
+      v_failures := array_append(v_failures, 'lifecycle_tier=' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL') || ' exp high');
+    END IF;
+
+    -- THE BLOCKS MUST ACTUALLY DIFFER. Without this the assertions above could
+    -- all hold against a projection that emitted one population twice.
+    IF v_row.preview_sample_count_total = v_row.lifecycle_sample_count_total THEN
+      v_failures := array_append(v_failures, 'preview and lifecycle totals identical -- the blocks are not distinct populations');
+    END IF;
+
+    -- ...while the LOCATOR is shared by construction, and the round-trip
+    -- invariant holds on the lifecycle pair the upsert will derive from.
+    IF v_row.preview_representative_latitude IS DISTINCT FROM v_row.lifecycle_representative_latitude
+       OR v_row.preview_representative_longitude IS DISTINCT FROM v_row.lifecycle_representative_longitude THEN
+      v_failures := array_append(v_failures, 'preview and lifecycle representative pairs differ -- they are the same grouping key and must coincide');
+    END IF;
+    IF matrix_map.canonical_five_decimal_cluster(
+         v_row.lifecycle_representative_latitude, v_row.lifecycle_representative_longitude
+       ) IS DISTINCT FROM v_row.canonical_cluster_id THEN
+      v_failures := array_append(v_failures, 'round-trip invariant violated on the mixed-tier row');
+    END IF;
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_76', v_desc, 'PASS', 'preview 2/0/2/0 tier=medium; lifecycle 6/3/2/1 tier=high; locator shared; round trip holds');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_76', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_76', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_77 -- ROW SCOPE. Three populations must appear nowhere in the preview:
+-- a cluster with no medium sample, every sample of a soft-deleted DRA, and an
+-- orphan sample with no source DRA at all. Each is excluded by a DIFFERENT
+-- mechanism (the HAVING clause, the is_deleted join predicate, and the inner
+-- join itself), so all three are asserted separately.
+DO $$
+DECLARE
+  v_nomedium_dra uuid := 'a7700000-0000-4000-8000-000000000077';
+  v_deleted_dra  uuid := 'a7700001-0000-4000-8000-000000000077';
+  v_nomedium_lat double precision := 48.77001;
+  v_nomedium_lng double precision := -122.77001;
+  v_deleted_lat  double precision := 48.77002;
+  v_deleted_lng  double precision := -122.77002;
+  v_orphan_lat   double precision := 48.77003;
+  v_orphan_lng   double precision := -122.77003;
+  v_sibling_lat  double precision := 48.77004;
+  v_sibling_lng  double precision := -122.77004;
+  v_rows bigint;
+  v_sibling bigint;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview excludes a cluster with no medium-tier sample, excludes every sample belonging to a soft-deleted DRA, and excludes orphan samples with a null source_dra_id, while a medium-bearing sibling cluster in the same DRA still appears';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+  VALUES (v_nomedium_dra, 'F2 No Medium DRA 77', 'Citation 77a', false, false),
+         (v_deleted_dra,  'F2 Deleted DRA 77',   'Citation 77b', false, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- (a) high + low only, so the HAVING clause must drop the whole cluster.
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  ) VALUES
+    ('d0000077-0000-4000-8000-000000077001', 177001, 'STN-177-1', 'F2 Station 177-1', v_nomedium_lat, v_nomedium_lng,
+     extensions.st_setsrid(extensions.st_makepoint(v_nomedium_lng, v_nomedium_lat), 4326)::extensions.geography,
+     'high', 'bc_csr_centroid', 'reference', 'station_type', v_nomedium_dra, false),
+    ('d0000077-0000-4000-8000-000000077002', 177002, 'STN-177-2', 'F2 Station 177-2', v_nomedium_lat, v_nomedium_lng,
+     extensions.st_setsrid(extensions.st_makepoint(v_nomedium_lng, v_nomedium_lat), 4326)::extensions.geography,
+     'low', 'bc_csr_centroid', 'reference', 'station_type', v_nomedium_dra, false),
+    -- ...and a SIBLING cluster in the SAME DRA that does have a medium sample.
+    -- Dropping a no-medium cluster must not suppress its siblings.
+    ('d0000077-0000-4000-8000-000000077005', 177005, 'STN-177-5', 'F2 Station 177-5', v_sibling_lat, v_sibling_lng,
+     extensions.st_setsrid(extensions.st_makepoint(v_sibling_lng, v_sibling_lat), 4326)::extensions.geography,
+     'medium', 'bc_csr_centroid', 'reference', 'station_type', v_nomedium_dra, false),
+    -- (b) a medium sample under a DRA that is about to be soft-deleted.
+    ('d0000077-0000-4000-8000-000000077003', 177003, 'STN-177-3', 'F2 Station 177-3', v_deleted_lat, v_deleted_lng,
+     extensions.st_setsrid(extensions.st_makepoint(v_deleted_lng, v_deleted_lat), 4326)::extensions.geography,
+     'medium', 'bc_csr_centroid', 'reference', 'station_type', v_deleted_dra, false),
+    -- (c) an ORPHAN: medium tier, valid coordinate, no source DRA.
+    ('d0000077-0000-4000-8000-000000077004', 177004, 'STN-177-4', 'F2 Station 177-4', v_orphan_lat, v_orphan_lng,
+     extensions.st_setsrid(extensions.st_makepoint(v_orphan_lng, v_orphan_lat), 4326)::extensions.geography,
+     'medium', 'bc_csr_centroid', 'reference', 'station_type', NULL, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  UPDATE matrix_map.dras SET is_deleted = true WHERE id = v_deleted_dra;
+
+  -- (a) the no-medium cluster is absent...
+  SELECT count(*) INTO v_rows
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(v_nomedium_lat, v_nomedium_lng);
+  IF v_rows <> 0 THEN
+    v_failures := array_append(v_failures, 'no-medium cluster present, rows=' || v_rows);
+  END IF;
+
+  -- ...but its medium-bearing sibling in the same DRA is NOT suppressed.
+  SELECT count(*) INTO v_sibling
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_nomedium_dra
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(v_sibling_lat, v_sibling_lng);
+  IF v_sibling <> 1 THEN
+    v_failures := array_append(v_failures, 'medium-bearing sibling cluster rows=' || v_sibling || ' exp 1');
+  END IF;
+
+  -- (b) the soft-deleted DRA contributes nothing, by DRA and by cluster.
+  SELECT count(*) INTO v_rows
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_deleted_dra
+     OR r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(v_deleted_lat, v_deleted_lng);
+  IF v_rows <> 0 THEN
+    v_failures := array_append(v_failures, 'soft-deleted DRA present, rows=' || v_rows);
+  END IF;
+
+  -- (c) the orphan contributes nothing.
+  SELECT count(*) INTO v_rows
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(v_orphan_lat, v_orphan_lng);
+  IF v_rows <> 0 THEN
+    v_failures := array_append(v_failures, 'orphan sample present, rows=' || v_rows);
+  END IF;
+
+  -- No row may carry a null source DRA under any circumstance.
+  SELECT count(*) INTO v_rows
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id IS NULL;
+  IF v_rows <> 0 THEN
+    v_failures := array_append(v_failures, 'rows with null source_dra_id=' || v_rows);
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_77', v_desc, 'PASS', 'no-medium cluster, soft-deleted DRA and orphan all excluded; medium-bearing sibling retained');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_77', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_77', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_78 -- WINDOW EQUIVALENCE against REF for EVERY page of a full traversal,
+-- plus traversal completeness and the partial-page/empty-call contract.
+--
+-- Compared POSITIONALLY and by WHOLE ROW (jsonb of every returned column), not
+-- as a set and not on the key alone: the plan's oracle boundary says a cursor
+-- may select a window but must not change grouping, tier rules, DRA scope or any
+-- aggregate value, and only a full-row comparison can detect that.
+DO $$
+DECLARE
+  v_total bigint;
+  v_limit integer := 3;
+  v_after_dra uuid := NULL;
+  v_after_cluster text := NULL;
+  v_page integer := 0;
+  v_ord bigint := 0;
+  v_page_rows integer;
+  v_calls integer := 0;
+  v_concat bigint := 0;
+  v_expected jsonb;
+  v_actual jsonb;
+  v_last_dra uuid;
+  v_last_cluster text;
+  v_failures text[] := ARRAY[]::text[];
+  r record;
+  v_desc text := 'Verify every page of a full keyset traversal of fetch_admin_site_aggregate_live_preview equals the corresponding positional slice of the unpaginated REF relation, row for row and column for column; that concatenating all windows reproduces REF exactly; and that the traversal ends with a short or empty page rather than repeating';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  DROP TABLE IF EXISTS f2_ref;
+  CREATE TEMP TABLE f2_ref AS
+  SELECT row_number() OVER (
+           ORDER BY r0.source_dra_id, r0.canonical_cluster_id COLLATE "C"
+         ) AS ord,
+         r0.*
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r0;
+
+  SELECT count(*) INTO v_total FROM f2_ref;
+
+  -- REF must be the COMPLETE relation for the comparison to mean anything.
+  IF v_total >= 1000 THEN
+    v_failures := array_append(v_failures, 'REF hit the p_limit ceiling (rows=' || v_total || '); it is not the unpaginated relation');
+  END IF;
+  IF v_total < 2 * v_limit THEN
+    v_failures := array_append(v_failures, 'fixture too small for a multi-page traversal (rows=' || v_total || ')');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    LOOP
+      v_page := v_page + 1;
+      v_calls := v_calls + 1;
+      v_page_rows := 0;
+
+      FOR r IN
+        SELECT * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+          v_after_dra, v_after_cluster, v_limit
+        )
+      LOOP
+        v_page_rows := v_page_rows + 1;
+        v_ord := v_ord + 1;
+        v_concat := v_concat + 1;
+
+        SELECT to_jsonb(f) - 'ord' INTO v_expected FROM f2_ref f WHERE f.ord = v_ord;
+        v_actual := to_jsonb(r);
+
+        IF v_expected IS NULL THEN
+          v_failures := array_append(v_failures, format('page %s returned a row beyond REF (ordinal %s of %s)', v_page, v_ord, v_total));
+        ELSIF v_expected IS DISTINCT FROM v_actual THEN
+          v_failures := array_append(v_failures, format('page %s ordinal %s differs from REF', v_page, v_ord));
+        END IF;
+
+        v_last_dra := r.source_dra_id;
+        v_last_cluster := r.canonical_cluster_id;
+      END LOOP;
+
+      EXIT WHEN v_page_rows < v_limit;
+
+      v_after_dra := v_last_dra;
+      v_after_cluster := v_last_cluster;
+
+      IF v_page > 400 THEN
+        v_failures := array_append(v_failures, 'traversal did not terminate within 400 pages');
+        EXIT;
+      END IF;
+    END LOOP;
+
+    -- TRAVERSAL COMPLETENESS: the concatenation of every window IS REF.
+    IF v_concat <> v_total THEN
+      v_failures := array_append(v_failures, format('traversal returned %s rows, REF has %s', v_concat, v_total));
+    END IF;
+
+    -- PARTIAL/EMPTY FINAL PAGE. Exactly one of the two shapes must end it: a
+    -- short page, or -- when the total divides evenly -- a final call returning
+    -- zero rows. Both are "fewer than p_limit", which is the documented
+    -- termination rule.
+    IF v_page_rows >= v_limit THEN
+      v_failures := array_append(v_failures, 'traversal ended on a FULL page, so termination was not driven by the short-page rule');
+    END IF;
+    IF v_total % v_limit = 0 AND v_page_rows <> 0 THEN
+      v_failures := array_append(v_failures, format('total %s divides by limit %s, so the final call must return 0 rows, got %s', v_total, v_limit, v_page_rows));
+    END IF;
+    IF v_total % v_limit <> 0 AND v_page_rows <> (v_total % v_limit) THEN
+      v_failures := array_append(v_failures, format('final partial page had %s rows, expected %s', v_page_rows, v_total % v_limit));
+    END IF;
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_78', v_desc, 'PASS', format('REF rows=%s limit=%s calls=%s final_page_rows=%s; every page matched REF positionally on every column', v_total, v_limit, v_calls, v_page_rows));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_78', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_78', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_79 -- ARBITRARY CALLER-CONSTRUCTED CURSORS.
+--
+-- Cursor values are NOT provenance-bearing: the server cannot distinguish an
+-- echoed cursor from a fabricated one, so no safety property may rest on their
+-- origin. Each fabricated cursor must therefore return exactly the REF slice its
+-- POSITION implies -- and no aggregate value, tier classification, DRA scope or
+-- grouping may differ from REF.
+DO $$
+DECLARE
+  v_cursors text[][] := ARRAY[
+    -- a pair that does not exist at all
+    ARRAY['b9999999-9999-4999-8999-999999999999', '12.34567,-98.76543', 'nonexistent pair'],
+    -- before the first row (minimum uuid, minimum canonical rendering)
+    ARRAY['00000000-0000-0000-0000-000000000000', '-90.00000,-180.00000', 'before the first row'],
+    -- after the last row (maximum uuid, maximum canonical rendering)
+    ARRAY['ffffffff-ffff-ffff-ffff-ffffffffffff', '90.00000,180.00000', 'after the last row'],
+    -- syntactically valid, semantically meaningless
+    ARRAY['00000000-0000-0000-0000-000000000001', '0.00000,0.00000', 'syntactically valid but meaningless']
+  ];
+  v_i integer;
+  v_dra uuid;
+  v_cluster text;
+  v_label text;
+  v_expected_count bigint;
+  v_actual_count bigint;
+  v_mismatch bigint;
+  v_total bigint;
+  v_limit integer := 1000;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview returns exactly the positional REF slice implied by an ARBITRARY caller-constructed cursor -- one that does not exist, one before the first row, one after the last row, and one syntactically valid but semantically meaningless -- with no aggregate value, tier, DRA scope or grouping differing from REF';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  -- Rebuild REF independently of TEST_78, so this test does not depend on
+  -- another test's temp table surviving.
+  DROP TABLE IF EXISTS f2_ref79;
+  CREATE TEMP TABLE f2_ref79 AS
+  SELECT row_number() OVER (
+           ORDER BY r0.source_dra_id, r0.canonical_cluster_id COLLATE "C"
+         ) AS ord,
+         r0.*
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r0;
+
+  SELECT count(*) INTO v_total FROM f2_ref79;
+  IF v_total >= 1000 THEN
+    v_failures := array_append(v_failures, 'REF hit the p_limit ceiling; it is not the unpaginated relation');
+  END IF;
+
+  FOR v_i IN 1 .. array_length(v_cursors, 1) LOOP
+    v_dra := v_cursors[v_i][1]::uuid;
+    v_cluster := v_cursors[v_i][2];
+    v_label := v_cursors[v_i][3];
+
+    -- The slice the cursor's POSITION implies, computed over REF with the same
+    -- keyset predicate the function documents.
+    SELECT count(*) INTO v_expected_count
+    FROM f2_ref79 f
+    WHERE f.source_dra_id > v_dra
+       OR (f.source_dra_id = v_dra AND f.canonical_cluster_id COLLATE "C" > v_cluster COLLATE "C");
+
+    SELECT count(*) INTO v_actual_count
+    FROM matrix_map.fetch_admin_site_aggregate_live_preview(v_dra, v_cluster, v_limit);
+
+    IF v_actual_count IS DISTINCT FROM v_expected_count THEN
+      v_failures := array_append(v_failures, format('%s: rows=%s expected=%s', v_label, v_actual_count, v_expected_count));
+      CONTINUE;
+    END IF;
+
+    -- WHOLE-ROW equality against REF, positionally. A count match alone would
+    -- not detect a changed aggregate, tier or scope.
+    WITH actual AS (
+      SELECT row_number() OVER (
+               ORDER BY a.source_dra_id, a.canonical_cluster_id COLLATE "C"
+             ) AS ord,
+             to_jsonb(a) AS payload
+      FROM matrix_map.fetch_admin_site_aggregate_live_preview(v_dra, v_cluster, v_limit) a
+    ),
+    expected AS (
+      SELECT row_number() OVER (ORDER BY f.ord) AS ord,
+             to_jsonb(f) - 'ord' AS payload
+      FROM f2_ref79 f
+      WHERE f.source_dra_id > v_dra
+         OR (f.source_dra_id = v_dra AND f.canonical_cluster_id COLLATE "C" > v_cluster COLLATE "C")
+    )
+    SELECT count(*) INTO v_mismatch
+    FROM expected e
+    FULL OUTER JOIN actual a ON a.ord = e.ord
+    WHERE a.payload IS DISTINCT FROM e.payload;
+
+    IF v_mismatch <> 0 THEN
+      v_failures := array_append(v_failures, format('%s: %s row(s) differ from the REF slice', v_label, v_mismatch));
+    END IF;
+  END LOOP;
+
+  -- NON-VACUITY. The "before the first row" cursor must return the WHOLE
+  -- relation and the "after the last row" cursor must return NOTHING; if both
+  -- returned zero the comparisons above would pass against a function that
+  -- always returned nothing.
+  SELECT count(*) INTO v_actual_count
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+    '00000000-0000-0000-0000-000000000000'::uuid, '-90.00000,-180.00000', v_limit);
+  IF v_actual_count <> v_total THEN
+    v_failures := array_append(v_failures, format('before-first cursor returned %s of %s rows', v_actual_count, v_total));
+  END IF;
+
+  SELECT count(*) INTO v_actual_count
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+    'ffffffff-ffff-ffff-ffff-ffffffffffff'::uuid, '90.00000,180.00000', v_limit);
+  IF v_actual_count <> 0 THEN
+    v_failures := array_append(v_failures, format('after-last cursor returned %s rows, expected 0', v_actual_count));
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_79', v_desc, 'PASS', format('4 fabricated cursors each returned their exact REF slice; REF rows=%s; before-first returned all, after-last returned none', v_total));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_79', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_79', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_80 -- COLLATE "C" ORDERING.
+--
+-- The total order must not depend on the database's default collation. The
+-- fixture below deliberately mixes negative and positive renderings within ONE
+-- DRA so the ordering question is decided by the byte value of '-' (0x2D)
+-- against the digits, which is exactly where a linguistic collation is most
+-- likely to disagree.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a8000000-0000-4000-8000-000000000080';
+  v_actual text[];
+  v_expected_c text[];
+  v_default_order text[];
+  v_rows integer;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview orders canonical_cluster_id by COLLATE "C" byte order within a source_dra_id, so the total order does not depend on the database default collation';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+  VALUES (v_dra_id, 'F2 Collation DRA 80', 'Citation 80', false, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  )
+  SELECT
+    ('d0000080-0000-4000-8000-0000000800' || lpad(g.i::text, 2, '0'))::uuid,
+    18000 + g.i,
+    'STN-180-' || g.i,
+    'F2 Station 180-' || g.i,
+    g.lat, g.lng,
+    extensions.st_setsrid(extensions.st_makepoint(g.lng, g.lat), 4326)::extensions.geography,
+    'medium', 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  FROM (VALUES
+    (1,  1.10000::double precision, -122.80001::double precision),
+    (2, -1.10000::double precision, -122.80002::double precision),
+    (3,  0.10000::double precision, -122.80003::double precision),
+    (4, -0.10000::double precision, -122.80004::double precision),
+    (5, 10.10000::double precision, -122.80005::double precision)
+  ) AS g(i, lat, lng)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- `row_number() OVER ()` with no ORDER BY captures the order the FUNCTION
+  -- ITSELF emitted, which is the thing under test. An explicit ORDER BY here
+  -- would re-sort the rows and the assertion would become a tautology.
+  SELECT array_agg(o.cid ORDER BY o.ord)
+  INTO v_actual
+  FROM (
+    SELECT row_number() OVER () AS ord, x.canonical_cluster_id AS cid
+    FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) x
+    WHERE x.source_dra_id = v_dra_id
+  ) o;
+
+  SELECT array_agg(t.cid ORDER BY t.cid COLLATE "C")
+  INTO v_expected_c
+  FROM (
+    SELECT x.canonical_cluster_id AS cid
+    FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) x
+    WHERE x.source_dra_id = v_dra_id
+  ) t;
+
+  v_rows := coalesce(array_length(v_actual, 1), 0);
+
+  IF v_rows < 2 THEN
+    v_failures := array_append(v_failures, 'fewer than 2 clusters returned (' || v_rows || '), so the ordering assertion would be vacuous');
+  ELSIF v_actual IS DISTINCT FROM v_expected_c THEN
+    v_failures := array_append(v_failures,
+      'returned order ' || array_to_string(v_actual, '|') ||
+      ' does not match COLLATE "C" order ' || array_to_string(v_expected_c, '|'));
+  END IF;
+
+  -- Recorded as CONTEXT only, never as a pass condition: whether the database
+  -- default collation happens to disagree with C on this fixture is a property
+  -- of the platform, not of the function. The contract is that the function
+  -- follows C, and that is what is asserted above.
+  SELECT array_agg(t.cid ORDER BY t.cid)
+  INTO v_default_order
+  FROM (
+    SELECT x.canonical_cluster_id AS cid
+    FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) x
+    WHERE x.source_dra_id = v_dra_id
+  ) t;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_80', v_desc, 'PASS', format('%s clusters ordered by COLLATE "C": %s (default-collation order for context: %s)',
+      v_rows, array_to_string(v_actual, '|'), array_to_string(v_default_order, '|')));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_80', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_80', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_81 -- THE PAGE FIXTURE's exact pagination arithmetic (V6 8.5.2 + 8.7).
+--
+-- The PAGE fixture is 3 DRAs whose uuids all begin with `f`. The live-preview
+-- total order leads with source_dra_id, and every other fixture DRA uuid begins
+-- with a lower hex digit, so the PAGE rows occupy a contiguous block at the very
+-- END of the relation. Starting a traversal from a cursor positioned at the last
+-- NON-PAGE row therefore yields exactly the PAGE fixture's rows -- which is what
+-- makes the plan's exact arithmetic checkable without a separate database:
+--
+--   47 preview-eligible clusters at p_limit 10
+--     -> 4 full pages of 10, then 1 partial page of 7, then a 6th call of 0.
+--
+-- The 3 lifecycle-only clusters (no medium sample) must NOT appear at all; that
+-- is what makes the count 47 rather than 50, and it is asserted directly.
+DO $$
+DECLARE
+  v_boundary uuid := 'f0000000-0000-4000-8000-000000000000';
+  v_after_dra uuid;
+  v_after_cluster text;
+  v_limit integer := 10;
+  v_page integer := 0;
+  v_page_rows integer;
+  v_total integer := 0;
+  v_page_sizes integer[] := ARRAY[]::integer[];
+  v_nonpage integer := 0;
+  v_last_dra uuid;
+  v_last_cluster text;
+  v_page_total integer;
+  v_failures text[] := ARRAY[]::text[];
+  r record;
+  v_desc text := 'Verify the PAGE fixture traverses with p_limit 10 as exactly 4 full pages, then a partial page of 7, then a call returning 0 rows -- 47 preview-eligible clusters out of 50, with the 3 lifecycle-only clusters absent -- when the traversal starts from a cursor at the last non-PAGE row';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  -- The PAGE block must exist and be exactly 47 rows before anything else is
+  -- meaningful. If the fixture did not load, every page assertion below would
+  -- pass vacuously against an empty tail.
+  SELECT count(*) INTO v_page_total
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r0
+  WHERE r0.source_dra_id > v_boundary;
+
+  IF v_page_total <> 47 THEN
+    v_failures := array_append(v_failures, format('PAGE block has %s preview rows, expected 47 (50 clusters less 3 lifecycle-only)', v_page_total));
+  END IF;
+
+  -- The cursor: the LAST row of the relation that is NOT a PAGE row. Everything
+  -- after it is, by the uuid ordering, exactly the PAGE fixture.
+  SELECT r0.source_dra_id, r0.canonical_cluster_id
+  INTO v_after_dra, v_after_cluster
+  FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r0
+  WHERE r0.source_dra_id < v_boundary
+  ORDER BY r0.source_dra_id DESC, r0.canonical_cluster_id COLLATE "C" DESC
+  LIMIT 1;
+
+  IF v_after_dra IS NULL THEN
+    v_failures := array_append(v_failures, 'no non-PAGE row exists to position the cursor at');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    LOOP
+      v_page := v_page + 1;
+      v_page_rows := 0;
+
+      FOR r IN
+        SELECT * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+          v_after_dra, v_after_cluster, v_limit
+        )
+      LOOP
+        v_page_rows := v_page_rows + 1;
+        v_total := v_total + 1;
+        -- Every row the traversal yields must belong to the PAGE fixture. A row
+        -- from elsewhere would mean the cursor did not isolate the block and the
+        -- page arithmetic below would be measuring the wrong population.
+        IF r.source_dra_id <= v_boundary THEN
+          v_nonpage := v_nonpage + 1;
+        END IF;
+        v_last_dra := r.source_dra_id;
+        v_last_cluster := r.canonical_cluster_id;
+      END LOOP;
+
+      v_page_sizes := array_append(v_page_sizes, v_page_rows);
+      EXIT WHEN v_page_rows < v_limit;
+
+      v_after_dra := v_last_dra;
+      v_after_cluster := v_last_cluster;
+
+      IF v_page > 20 THEN
+        v_failures := array_append(v_failures, 'traversal did not terminate within 20 pages');
+        EXIT;
+      END IF;
+    END LOOP;
+
+    -- 47 = 4 * 10 + 7, so the traversal is 5 calls: four full, one partial of 7.
+    -- There is NO sixth call, because the fifth already returned fewer than
+    -- p_limit and that IS the documented termination rule. Asserting a sixth
+    -- empty call here would be asserting a behaviour the contract does not have;
+    -- the empty-call shape is exercised by TEST_78, where the fixture total
+    -- happens to divide evenly.
+    IF v_page_sizes IS DISTINCT FROM ARRAY[10, 10, 10, 10, 7] THEN
+      v_failures := array_append(v_failures,
+        'page sizes were [' || array_to_string(v_page_sizes, ',') || '], expected [10,10,10,10,7]');
+    END IF;
+    IF v_total <> 47 THEN
+      v_failures := array_append(v_failures, format('traversal returned %s rows, expected 47', v_total));
+    END IF;
+    IF v_nonpage <> 0 THEN
+      v_failures := array_append(v_failures, format('%s traversed rows were outside the PAGE fixture', v_nonpage));
+    END IF;
+
+    -- An explicit further call past the partial page must return nothing, so a
+    -- caller that keeps going does not loop.
+    SELECT count(*) INTO v_page_rows
+    FROM matrix_map.fetch_admin_site_aggregate_live_preview(v_last_dra, v_last_cluster, v_limit);
+    IF v_page_rows <> 0 THEN
+      v_failures := array_append(v_failures, format('a call past the final partial page returned %s rows, expected 0', v_page_rows));
+    END IF;
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_81', v_desc, 'PASS', format('page sizes [%s], total %s rows, 0 rows outside the PAGE fixture, and a further call returned 0',
+      array_to_string(v_page_sizes, ','), v_total));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_81', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_81', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- ===========================================================================
+-- F2 -- REVIEW-DRIVEN DISCRIMINATION TESTS (TEST_82..TEST_84)
+--
+-- Every one of these exists because a review proved an EXISTING test was not
+-- discriminating -- it would have stayed green against a broken implementation.
+-- ===========================================================================
+
+-- TEST_82 -- UE412 fires BEFORE the FOR UPDATE lookup and BEFORE the snapshot.
+--
+-- WHY TEST_70 WAS NOT ENOUGH. TEST_70 wraps the call in a plpgsql
+-- `BEGIN ... EXCEPTION` block, which is a SUBTRANSACTION: if `UE412` were moved
+-- after the advisory lock, after `SELECT ... FOR UPDATE`, or even after the
+-- candidate and audit writes, the rollback of that subtransaction would erase the
+-- writes and TEST_70's "zero rows" assertions would still hold. It pins the
+-- ERROR CODE, not the ORDER.
+--
+-- This test pins the ORDER by making the LATER steps produce a DIFFERENT,
+-- observable error. Two independent probes:
+--
+--   (a) against a natural key that is ALREADY PUBLISHED. If the compare runs
+--       first the answer is UE412; if control reached the FOR UPDATE lookup and
+--       its is_published guard first, the answer would be UE409.
+--   (b) against a DRA whose cluster has NO samples at all. If the compare runs
+--       first the answer is UE412; if control reached
+--       current_site_aggregate_snapshot first, the answer would be UE409
+--       ('snapshot is empty').
+--
+-- Neither probe can be satisfied by a subtransaction rollback, because what is
+-- being compared is WHICH SQLSTATE comes back, not what was written.
+DO $$
+DECLARE
+  v_dra_id uuid := 'a8200000-0000-4000-8000-000000000082';
+  v_empty_dra uuid := 'a8200001-0000-4000-8000-000000000082';
+  v_admin_id uuid := '11111111-1111-1111-1111-111111111111';
+  v_lat double precision := 46.82001;
+  v_lng double precision := -120.82001;
+  v_cluster text;
+  v_wrong text := '11.11111,-22.22222';
+  v_pub_id uuid;
+  v_state text;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify upsert_site_aggregate_candidate raises UE412 BEFORE the FOR UPDATE lookup and BEFORE the snapshot: a mismatched assertion against an ALREADY-PUBLISHED natural key returns UE412 rather than UE409, and a mismatched assertion against a cluster with no samples returns UE412 rather than the empty-snapshot UE409 -- an ordering that TEST_70 cannot detect because its subtransaction rollback hides any later write';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+  VALUES (v_dra_id, 'F2 Order DRA 82', 'Citation 82a', false, false),
+         (v_empty_dra, 'F2 Empty DRA 82', 'Citation 82b', false, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  ) VALUES (
+    'd0000082-0000-4000-8000-000000000082', 18200, 'STN-182', 'F2 Station 182', v_lat, v_lng,
+    extensions.st_setsrid(extensions.st_makepoint(v_lng, v_lat), 4326)::extensions.geography,
+    'medium', 'bc_csr_centroid', 'reference', 'station_type', v_dra_id, false
+  ) ON CONFLICT (id) DO NOTHING;
+
+  v_cluster := matrix_map.canonical_five_decimal_cluster(v_lat, v_lng);
+
+  -- Establish a PUBLISHED candidate on the real natural key.
+  v_pub_id := matrix_map.upsert_site_aggregate_candidate(
+    v_dra_id, v_cluster, v_lat, v_lng, 'F2 Order Label', v_admin_id, 'order test create');
+  PERFORM matrix_map.flip_site_aggregate_public(
+    v_pub_id, true, v_admin_id, 'order test publish',
+    (SELECT updated_at FROM matrix_map.site_aggregate_publications WHERE id = v_pub_id));
+
+  IF NOT (SELECT is_published FROM matrix_map.site_aggregate_publications WHERE id = v_pub_id) THEN
+    v_failures := array_append(v_failures, 'setup failed: candidate is not published, so probe (a) would be vacuous');
+  END IF;
+
+  -- PROBE (a). A MATCHING assertion here would return UE409 (already published);
+  -- a MISMATCHED one must return UE412 because the compare precedes that guard.
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_dra_id, v_wrong, v_lat, v_lng, 'F2 Order Label', v_admin_id, 'order probe a');
+  EXCEPTION
+    WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+    WHEN SQLSTATE 'UE409' THEN v_state := 'UE409';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> 'UE412' THEN
+    v_failures := array_append(v_failures,
+      'probe a (published key) returned ' || v_state || ', expected UE412 -- the compare is not ahead of the FOR UPDATE published guard');
+  END IF;
+
+  -- CONTROL for probe (a): the SAME call with a MATCHING assertion must reach the
+  -- published guard and return UE409. Without this, probe (a) would pass against
+  -- a function that returned UE412 unconditionally.
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_dra_id, v_cluster, v_lat, v_lng, 'F2 Order Label', v_admin_id, 'order probe a control');
+  EXCEPTION
+    WHEN SQLSTATE 'UE409' THEN v_state := 'UE409';
+    WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> 'UE409' THEN
+    v_failures := array_append(v_failures,
+      'probe a CONTROL (matching key on a published row) returned ' || v_state || ', expected UE409 -- so probe a is not discriminating');
+  END IF;
+
+  -- PROBE (b). No samples exist for this DRA at all, so a MATCHING assertion
+  -- would reach the snapshot and return UE409 'snapshot is empty'. A MISMATCHED
+  -- one must return UE412 first.
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_empty_dra, v_wrong, v_lat, v_lng, 'F2 Empty Label', v_admin_id, 'order probe b');
+  EXCEPTION
+    WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+    WHEN SQLSTATE 'UE409' THEN v_state := 'UE409';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> 'UE412' THEN
+    v_failures := array_append(v_failures,
+      'probe b (empty cluster) returned ' || v_state || ', expected UE412 -- the compare is not ahead of the snapshot');
+  END IF;
+
+  -- CONTROL for probe (b): a MATCHING assertion on the empty DRA must reach the
+  -- snapshot and fail closed with UE409.
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM matrix_map.upsert_site_aggregate_candidate(
+      v_empty_dra, v_cluster, v_lat, v_lng, 'F2 Empty Label', v_admin_id, 'order probe b control');
+  EXCEPTION
+    WHEN SQLSTATE 'UE409' THEN v_state := 'UE409';
+    WHEN SQLSTATE 'UE412' THEN v_state := 'UE412';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> 'UE409' THEN
+    v_failures := array_append(v_failures,
+      'probe b CONTROL (matching key on an empty cluster) returned ' || v_state || ', expected UE409 -- so probe b is not discriminating');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_82', v_desc, 'PASS', 'mismatch returns UE412 ahead of both the published FOR UPDATE guard and the snapshot; both matching controls returned UE409, so neither probe is vacuous');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_82', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_82', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_83 -- AUTHORIZATION runs BEFORE cursor and limit validation.
+--
+-- WHY TEST_74 AND TEST_75 WERE NOT ENOUGH. TEST_74 sends every UNAUTHORIZED call
+-- with VALID parameters; TEST_75 sends every INVALID-PARAMETER call as an ADMIN.
+-- Between them nothing pins the ORDER, so moving the role check below cursor and
+-- limit validation leaves both green -- while an unauthenticated caller starts
+-- learning which cursors and limits the function considers well-formed, on an
+-- RLS-bypassing function whose in-function check is the SOLE access control.
+--
+-- Every combination below must answer 42501, never UE422.
+DO $$
+DECLARE
+  v_state text;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview answers 42501 and never UE422 when an unauthorized principal supplies a half cursor, an over-length cursor, or an out-of-bounds limit, pinning that the role check precedes cursor and limit validation -- an order TEST_74 and TEST_75 cannot detect between them';
+  v_probe record;
+BEGIN
+  FOR v_probe IN
+    SELECT * FROM (VALUES
+      ('non-admin + half cursor (dra only)',    'member',  'half_dra'),
+      ('non-admin + half cursor (cluster only)','member',  'half_cluster'),
+      ('non-admin + over-length cursor',        'member',  'overlong'),
+      ('non-admin + null limit',                'member',  'null_limit'),
+      ('non-admin + zero limit',                'member',  'zero_limit'),
+      ('non-admin + oversized limit',           'member',  'big_limit'),
+      ('null context + half cursor (dra only)', 'none',    'half_dra'),
+      ('null context + over-length cursor',     'none',    'overlong'),
+      ('null context + oversized limit',        'none',    'big_limit')
+    ) AS t(label, principal, shape)
+  LOOP
+    IF v_probe.principal = 'member' THEN
+      PERFORM set_config('request.jwt.claims', '{"sub":"22222222-2222-2222-2222-222222222222","email":"member@example.com"}', true);
+    ELSE
+      PERFORM set_config('request.jwt.claims', '', true);
+    END IF;
+
+    v_state := 'NO EXCEPTION';
+    BEGIN
+      CASE v_probe.shape
+        WHEN 'half_dra' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+            '11111111-1111-1111-1111-111111111111'::uuid, NULL, 10);
+        WHEN 'half_cluster' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+            NULL, '49.28270,-123.12070', 10);
+        WHEN 'overlong' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+            '11111111-1111-1111-1111-111111111111'::uuid, repeat('9', 64), 10);
+        WHEN 'null_limit' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, NULL);
+        WHEN 'zero_limit' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 0);
+        WHEN 'big_limit' THEN
+          PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 100000);
+      END CASE;
+    EXCEPTION
+      WHEN SQLSTATE '42501' THEN v_state := '42501';
+      WHEN SQLSTATE 'UE422' THEN v_state := 'UE422';
+      WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+    END;
+
+    IF v_state <> '42501' THEN
+      v_failures := array_append(v_failures, v_probe.label || ' -> ' || v_state || ' (expected 42501)');
+    END IF;
+  END LOOP;
+
+  -- NON-VACUITY: as ADMIN the very same malformed parameters must produce UE422.
+  -- Without this the loop above would pass against a function that answered
+  -- 42501 to everything.
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+  v_state := 'NO EXCEPTION';
+  BEGIN
+    PERFORM * FROM matrix_map.fetch_admin_site_aggregate_live_preview(
+      '11111111-1111-1111-1111-111111111111'::uuid, NULL, 10);
+  EXCEPTION
+    WHEN SQLSTATE 'UE422' THEN v_state := 'UE422';
+    WHEN SQLSTATE '42501' THEN v_state := '42501';
+    WHEN OTHERS THEN v_state := 'OTHER:' || SQLSTATE;
+  END;
+  IF v_state <> 'UE422' THEN
+    v_failures := array_append(v_failures,
+      'admin CONTROL with a half cursor returned ' || v_state || ', expected UE422 -- so the 42501 assertions above are not discriminating');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_83', v_desc, 'PASS', '9 unauthorized malformed-parameter combinations all returned 42501; the admin control returned UE422 on the same shape');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_83', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_83', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+
+-- TEST_84 -- the SET-BASED rewrite's tie-breaking and source aggregation.
+--
+-- WHY TEST_76 WAS NOT ENOUGH. Its only mixed-tier group has a STRICT 3/2/1
+-- plurality and gives every row the SAME coordinate_source, and it asserts
+-- nothing about either returned source list. So a `>` instead of `>=` in the tie
+-- logic, a wrong severity branch order, or a broken DISTINCT / FILTER /
+-- COLLATE "C" source aggregation would ALL have stayed green -- in code that was
+-- rewritten from three correlated subqueries specifically for this change.
+--
+-- Four groups, each isolating one failure mode:
+--   G1  high 2 / medium 2 / low 0  -> tie between high and medium, high wins
+--   G2  high 0 / medium 2 / low 2  -> tie between medium and low, medium wins
+--   G3  high 0 / medium 3 / low 0  -> medium only, zero high and low counts
+--   G4  mixed, duplicate and blank coordinate_source values
+DO $$
+DECLARE
+  v_dra_id uuid := 'a8400000-0000-4000-8000-000000000084';
+  v_row record;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify the set-based rewrite of the preview aggregate: dominant tier resolves EVERY tie shape as high > medium > low -- a high/medium tie, a medium/low tie, a high/low tie above a smaller medium, and a three-way tie -- and ignores zero-count tiers, and both the lifecycle and preview coordinate_source lists are DISTINCT, blank-filtered and ordered by COLLATE "C" byte order, and the text[] source ARRAYS carry the same set with the text as their exact rendering, preview a subset of lifecycle, and a separator-containing source proving the flattened text is lossy -- none of which TEST_76 discriminates';
+BEGIN
+  PERFORM set_config('request.jwt.claims', '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}', true);
+
+  INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+  VALUES (v_dra_id, 'F2 Rewrite DRA 84', 'Citation 84', false, false)
+  ON CONFLICT (id) DO NOTHING;
+
+  -- G1..G4 at four distinct coordinates within the one DRA.
+  INSERT INTO matrix_map.samples (
+    id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+    geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+  )
+  SELECT
+    ('d0000084-0000-4000-8000-0000000840' || lpad(g.i::text, 2, '0'))::uuid,
+    18400 + g.i,
+    'STN-184-' || g.i,
+    'F2 Station 184-' || g.i,
+    g.lat, g.lng,
+    extensions.st_setsrid(extensions.st_makepoint(g.lng, g.lat), 4326)::extensions.geography,
+    g.tier, g.src, 'reference', 'station_type', v_dra_id, false
+  FROM (VALUES
+    -- G1 at 45.84001: high 2, medium 2 -> tie, high must win.
+    ( 1, 45.84001::double precision, -119.84001::double precision, 'high',   'alpha'),
+    ( 2, 45.84001::double precision, -119.84001::double precision, 'high',   'alpha'),
+    ( 3, 45.84001::double precision, -119.84001::double precision, 'medium', 'alpha'),
+    ( 4, 45.84001::double precision, -119.84001::double precision, 'medium', 'alpha'),
+    -- G2 at 45.84002: medium 2, low 2 -> tie, medium must win.
+    ( 5, 45.84002::double precision, -119.84002::double precision, 'medium', 'alpha'),
+    ( 6, 45.84002::double precision, -119.84002::double precision, 'medium', 'alpha'),
+    ( 7, 45.84002::double precision, -119.84002::double precision, 'low',    'alpha'),
+    ( 8, 45.84002::double precision, -119.84002::double precision, 'low',    'alpha'),
+    -- G3 at 45.84003: medium only.
+    ( 9, 45.84003::double precision, -119.84003::double precision, 'medium', 'alpha'),
+    (10, 45.84003::double precision, -119.84003::double precision, 'medium', 'alpha'),
+    (11, 45.84003::double precision, -119.84003::double precision, 'medium', 'alpha'),
+    -- G4 at 45.84004: source semantics. 'Zeta' sorts BEFORE 'alpha' under
+    -- COLLATE "C" (uppercase Z is 0x5A, lowercase a is 0x61) but AFTER it under a
+    -- typical linguistic collation, so the expected string pins byte order.
+    -- 'alpha' is duplicated (DISTINCT must collapse it), one row is BLANK (which
+    -- must be filtered), and the medium-only list must differ from the all-tier
+    -- list.
+    --
+    -- NO NULL-SOURCE ROW, deliberately: `samples.coordinate_source` is
+    -- `text NOT NULL`, so a NULL is not reachable by insert -- the first attempt
+    -- at this fixture tried one and the test failed with 23502. The aggregate's
+    -- `b_source IS NOT NULL` guard is therefore DEFENSIVE only, and this test
+    -- says so rather than pretending to exercise it.
+    (12, 45.84004::double precision, -119.84004::double precision, 'medium', 'Zeta'),
+    (13, 45.84004::double precision, -119.84004::double precision, 'medium', 'alpha'),
+    (14, 45.84004::double precision, -119.84004::double precision, 'medium', 'alpha'),
+    (15, 45.84004::double precision, -119.84004::double precision, 'high',   'beta'),
+    (16, 45.84004::double precision, -119.84004::double precision, 'low',    '   '),
+    -- G5 at 45.84005: high 2 / medium 1 / low 2 -- a high/low tie ABOVE a smaller
+    -- medium count. A review supplied this exact counterexample: a branch written
+    -- `high >= medium AND high > low` passes TEST_76 and every G1..G4 group, yet
+    -- picks LOW here. The correct rule picks high.
+    (17, 45.84005::double precision, -119.84005::double precision, 'high',   'alpha'),
+    (18, 45.84005::double precision, -119.84005::double precision, 'high',   'alpha'),
+    (19, 45.84005::double precision, -119.84005::double precision, 'medium', 'alpha'),
+    (20, 45.84005::double precision, -119.84005::double precision, 'low',    'alpha'),
+    (21, 45.84005::double precision, -119.84005::double precision, 'low',    'alpha'),
+    -- G6 at 45.84006: a THREE-WAY tie 2/2/2. Severity must decide, so high wins.
+    (22, 45.84006::double precision, -119.84006::double precision, 'high',   'alpha'),
+    (23, 45.84006::double precision, -119.84006::double precision, 'high',   'alpha'),
+    (24, 45.84006::double precision, -119.84006::double precision, 'medium', 'alpha'),
+    (25, 45.84006::double precision, -119.84006::double precision, 'medium', 'alpha'),
+    (26, 45.84006::double precision, -119.84006::double precision, 'low',    'alpha'),
+    (27, 45.84006::double precision, -119.84006::double precision, 'low',    'alpha'),
+    -- G7 at 45.84007: a coordinate_source that CONTAINS the '; ' separator.
+    -- 'x; y' is ONE value. The set therefore has two members while the flattened
+    -- rendering 'x; y; z' looks like three -- which is exactly why the text
+    -- cannot be split back into a set and why the arrays are the contract.
+    -- Medium-tier so the cluster is previewable at all.
+    (28, 45.84007::double precision, -119.84007::double precision, 'medium', 'x; y'),
+    (29, 45.84007::double precision, -119.84007::double precision, 'medium', 'z')
+  ) AS g(i, lat, lng, tier, src);
+
+  -- G1 -- tie high/medium resolves to high.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84001, -119.84001);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G1 absent');
+  ELSIF v_row.lifecycle_coordinate_quality_tier IS DISTINCT FROM 'high' THEN
+    v_failures := array_append(v_failures, 'G1 tie high/medium gave ' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL') || ', expected high');
+  END IF;
+
+  -- G2 -- tie medium/low resolves to medium, with zero high.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84002, -119.84002);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G2 absent');
+  ELSE
+    IF v_row.lifecycle_coordinate_quality_tier IS DISTINCT FROM 'medium' THEN
+      v_failures := array_append(v_failures, 'G2 tie medium/low gave ' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL') || ', expected medium');
+    END IF;
+    IF v_row.lifecycle_sample_count_high <> 0 THEN
+      v_failures := array_append(v_failures, 'G2 lifecycle_high=' || v_row.lifecycle_sample_count_high || ', expected 0');
+    END IF;
+  END IF;
+
+  -- G3 -- medium only; a zero-count tier must never be chosen.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84003, -119.84003);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G3 absent');
+  ELSIF v_row.lifecycle_coordinate_quality_tier IS DISTINCT FROM 'medium' THEN
+    v_failures := array_append(v_failures, 'G3 medium-only gave ' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL') || ', expected medium');
+  END IF;
+
+  -- G4 -- source aggregation: DISTINCT, blank/NULL filtered, COLLATE "C" order,
+  -- and the medium-only list genuinely narrower than the all-tier one.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84004, -119.84004);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G4 absent');
+  ELSE
+    IF v_row.lifecycle_coordinate_source IS DISTINCT FROM 'Zeta; alpha; beta' THEN
+      v_failures := array_append(v_failures,
+        'G4 lifecycle_source=' || coalesce(v_row.lifecycle_coordinate_source, 'NULL') || ', expected ''Zeta; alpha; beta'' (DISTINCT, blank/NULL filtered, COLLATE "C" byte order)');
+    END IF;
+    IF v_row.preview_coordinate_source IS DISTINCT FROM 'Zeta; alpha' THEN
+      v_failures := array_append(v_failures,
+        'G4 preview_source=' || coalesce(v_row.preview_coordinate_source, 'NULL') || ', expected ''Zeta; alpha'' (medium-tier rows only, so beta must be absent)');
+    END IF;
+    -- 5 all-tier (3 medium, 1 high, 1 low) and 3 medium.
+    IF v_row.lifecycle_sample_count_total <> 5 OR v_row.preview_sample_count_total <> 3 THEN
+      v_failures := array_append(v_failures,
+        'G4 counts lifecycle=' || v_row.lifecycle_sample_count_total || ' preview=' || v_row.preview_sample_count_total || ', expected 5 and 3');
+    END IF;
+    -- THE ARRAYS ARE THE AUTHORITATIVE SETS, and this pins their ORDER IN SQL.
+    -- The client must not re-sort: JavaScript compares UTF-16 code units, which
+    -- is a different order from COLLATE "C" byte order outside ASCII. 'Zeta'
+    -- before 'alpha' is the discriminating case -- 0x5A precedes 0x61 in byte
+    -- order but a linguistic collation would reverse them.
+    IF v_row.lifecycle_coordinate_sources IS DISTINCT FROM ARRAY['Zeta','alpha','beta']::text[] THEN
+      v_failures := array_append(v_failures,
+        'G4 lifecycle_sources=' || coalesce(v_row.lifecycle_coordinate_sources::text, 'NULL') || ', expected {Zeta,alpha,beta}');
+    END IF;
+    IF v_row.preview_coordinate_sources IS DISTINCT FROM ARRAY['Zeta','alpha']::text[] THEN
+      v_failures := array_append(v_failures,
+        'G4 preview_sources=' || coalesce(v_row.preview_coordinate_sources::text, 'NULL') || ', expected {Zeta,alpha}');
+    END IF;
+    -- THE TEXT IS A RENDERING OF THE ARRAY. Asserted in SQL as well as in the
+    -- parser, so a drift between the two aggregates is caught at the source
+    -- rather than only at the consumer.
+    IF v_row.lifecycle_coordinate_source IS DISTINCT FROM
+       array_to_string(v_row.lifecycle_coordinate_sources, '; ') THEN
+      v_failures := array_append(v_failures,
+        'G4 lifecycle text is not the array rendering');
+    END IF;
+    IF v_row.preview_coordinate_source IS DISTINCT FROM
+       array_to_string(v_row.preview_coordinate_sources, '; ') THEN
+      v_failures := array_append(v_failures,
+        'G4 preview text is not the array rendering');
+    END IF;
+    -- PREVIEW IS A SUBSET OF LIFECYCLE.
+    IF NOT (v_row.preview_coordinate_sources <@ v_row.lifecycle_coordinate_sources) THEN
+      v_failures := array_append(v_failures,
+        'G4 preview_sources is not a subset of lifecycle_sources');
+    END IF;
+  END IF;
+
+  -- G7 -- A SOURCE VALUE THAT CONTAINS THE '; ' SEPARATOR.
+  --
+  -- This is the case that makes the flattened text LOSSY and is the entire
+  -- reason the arrays exist. 'x; y' is ONE source value, so the set has two
+  -- members and the rendered text is indistinguishable from a three-member set.
+  -- The array must carry two elements; anything that recovers a set by SPLITTING
+  -- the text gets three and is wrong.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84007, -119.84007);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G7 absent');
+  ELSE
+    IF v_row.lifecycle_coordinate_sources IS DISTINCT FROM ARRAY['x; y','z']::text[] THEN
+      v_failures := array_append(v_failures,
+        'G7 lifecycle_sources=' || coalesce(v_row.lifecycle_coordinate_sources::text, 'NULL') || ', expected exactly 2 members {"x; y",z}');
+    END IF;
+    IF array_length(v_row.lifecycle_coordinate_sources, 1) <> 2 THEN
+      v_failures := array_append(v_failures,
+        'G7 expected 2 array members, got ' || coalesce(array_length(v_row.lifecycle_coordinate_sources, 1)::text, 'NULL'));
+    END IF;
+    -- The rendered text really is ambiguous, which is what the array protects
+    -- against. Asserting the ambiguity explicitly stops a future reader from
+    -- "simplifying" the parser back to a split.
+    IF v_row.lifecycle_coordinate_source IS DISTINCT FROM 'x; y; z' THEN
+      v_failures := array_append(v_failures,
+        'G7 lifecycle_source=' || coalesce(v_row.lifecycle_coordinate_source, 'NULL') || ', expected ''x; y; z''');
+    END IF;
+    IF array_length(string_to_array(v_row.lifecycle_coordinate_source, '; '), 1) <> 3 THEN
+      v_failures := array_append(v_failures,
+        'G7 the flattened text was expected to split into 3 misleading parts, proving it is lossy');
+    END IF;
+  END IF;
+
+  -- G5 -- high/low tie ABOVE a smaller medium: high must win.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84005, -119.84005);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G5 absent');
+  ELSIF v_row.lifecycle_coordinate_quality_tier IS DISTINCT FROM 'high' THEN
+    v_failures := array_append(v_failures,
+      'G5 high/low tie (2/1/2) gave ' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL')
+      || ', expected high -- the shape a `high >= medium AND high > low` branch gets wrong');
+  END IF;
+
+  -- G6 -- three-way tie: severity decides, so high wins.
+  SELECT * INTO v_row FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, 1000) r
+  WHERE r.source_dra_id = v_dra_id
+    AND r.canonical_cluster_id = matrix_map.canonical_five_decimal_cluster(45.84006, -119.84006);
+  IF NOT FOUND THEN
+    v_failures := array_append(v_failures, 'G6 absent');
+  ELSIF v_row.lifecycle_coordinate_quality_tier IS DISTINCT FROM 'high' THEN
+    v_failures := array_append(v_failures,
+      'G6 three-way tie (2/2/2) gave ' || coalesce(v_row.lifecycle_coordinate_quality_tier, 'NULL') || ', expected high');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_84', v_desc, 'PASS', 'G1 high-wins tie, G2 medium-wins tie with zero high, G3 medium-only, G4 sources ''Zeta; alpha; beta'' all-tier and ''Zeta; alpha'' medium-only with matching text[] arrays in COLLATE "C" order and preview <@ lifecycle, G5 high/low tie above a smaller medium -> high, G6 three-way tie -> high, G7 a separator-containing source stays ONE array member while its flattened text misleadingly splits into 3');
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_84', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_84', v_desc, 'FAIL', SQLSTATE, SQLERRM);
+END $$;
+-- TEST_85 -- the live-preview RPC's SECURITY ENVELOPE, pinned from the catalog.
+--
+-- WHY TEST_74 AND TEST_83 ARE NOT ENOUGH. Both only change `request.jwt.claims`
+-- while continuing to run as the same privileged replay role. They stay green if
+-- the function became `SECURITY INVOKER`, changed owner, lost its hardened
+-- `search_path`, or granted EXECUTE to `anon` or `service_role` -- and those
+-- properties ARE the security envelope for a read that bypasses RLS through
+-- `matrix_map_owner`'s BYPASSRLS. Modelled on TEST_68, which pins the same
+-- properties for the upsert.
+DO $$
+DECLARE
+  v_secdef boolean;
+  v_owner text;
+  v_config text[];
+  v_rettype text;
+  v_retset boolean;
+  v_pub_exec boolean;
+  v_anon_exec boolean;
+  v_auth_exec boolean;
+  v_svc_exec boolean;
+  v_overloads integer;
+  v_failures text[] := ARRAY[]::text[];
+  v_desc text := 'Verify fetch_admin_site_aggregate_live_preview is SECURITY DEFINER, owned by matrix_map_owner, carries a hardened search_path excluding public, returns SETOF record, exists as exactly ONE overload, and grants EXECUTE to authenticated only with PUBLIC, anon and service_role revoked -- none of which the JWT-claims probes in TEST_74 and TEST_83 can detect';
+BEGIN
+  SELECT p.prosecdef, pg_get_userbyid(p.proowner), p.proconfig,
+         pg_catalog.format_type(p.prorettype, NULL), p.proretset
+  INTO v_secdef, v_owner, v_config, v_rettype, v_retset
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'matrix_map'
+    AND p.proname = 'fetch_admin_site_aggregate_live_preview';
+
+  SELECT count(*) INTO v_overloads
+  FROM pg_proc p
+  JOIN pg_namespace n ON n.oid = p.pronamespace
+  WHERE n.nspname = 'matrix_map'
+    AND p.proname = 'fetch_admin_site_aggregate_live_preview';
+
+  IF v_overloads <> 1 THEN
+    v_failures := array_append(v_failures, 'overloads=' || v_overloads || ' (expected exactly 1, so PostgREST cannot resolve a stale signature)');
+  END IF;
+  IF v_secdef IS DISTINCT FROM true THEN
+    v_failures := array_append(v_failures, 'prosecdef=' || coalesce(v_secdef::text, 'NULL') || ' (expected true)');
+  END IF;
+  IF v_owner IS DISTINCT FROM 'matrix_map_owner' THEN
+    v_failures := array_append(v_failures, 'owner=' || coalesce(v_owner, 'NULL') || ' (expected matrix_map_owner)');
+  END IF;
+  -- The search_path must be pinned AND must not contain public. Both halves
+  -- matter: dropping the setting entirely and adding public are different
+  -- regressions with the same consequence on a DEFINER path.
+  IF coalesce(array_to_string(v_config, '|'), '') NOT LIKE '%search_path=%' THEN
+    v_failures := array_append(v_failures, 'no search_path in proconfig=' || coalesce(array_to_string(v_config, '|'), 'NULL'));
+  ELSIF coalesce(array_to_string(v_config, '|'), '') LIKE '%public%' THEN
+    v_failures := array_append(v_failures, 'search_path contains public: ' || array_to_string(v_config, '|'));
+  END IF;
+  -- SET-RETURNING lives in `proretset`, a SEPARATE column:
+  -- format_type(prorettype) yields plain 'record' and never carries the SETOF.
+  -- The first version of this test asserted 'SETOF record' against it and failed
+  -- on a perfectly correct function.
+  IF v_rettype IS DISTINCT FROM 'record' THEN
+    v_failures := array_append(v_failures, 'return type=' || coalesce(v_rettype, 'NULL') || ' (expected record, the RETURNS TABLE form)');
+  END IF;
+  IF v_retset IS DISTINCT FROM true THEN
+    v_failures := array_append(v_failures, 'proretset=' || coalesce(v_retset::text, 'NULL') || ' (expected true -- the function must be SET-RETURNING)');
+  END IF;
+
+  SELECT has_function_privilege('anon', 'matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)', 'EXECUTE'),
+         has_function_privilege('authenticated', 'matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)', 'EXECUTE'),
+         has_function_privilege('service_role', 'matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)', 'EXECUTE')
+  INTO v_anon_exec, v_auth_exec, v_svc_exec;
+
+  -- PUBLIC is checked through the ACL rather than has_function_privilege, which
+  -- reports true for any role that merely inherits a grant.
+  SELECT EXISTS (
+    SELECT 1
+    FROM pg_proc p
+    JOIN pg_namespace n ON n.oid = p.pronamespace,
+         aclexplode(COALESCE(p.proacl, acldefault('f', p.proowner))) a
+    WHERE n.nspname = 'matrix_map'
+      AND p.proname = 'fetch_admin_site_aggregate_live_preview'
+      AND a.grantee = 0
+      AND a.privilege_type = 'EXECUTE'
+  ) INTO v_pub_exec;
+
+  IF v_pub_exec THEN
+    v_failures := array_append(v_failures, 'PUBLIC holds EXECUTE (expected revoked)');
+  END IF;
+  IF v_anon_exec THEN
+    v_failures := array_append(v_failures, 'anon holds EXECUTE (expected revoked)');
+  END IF;
+  IF v_svc_exec THEN
+    v_failures := array_append(v_failures, 'service_role holds EXECUTE (expected revoked)');
+  END IF;
+  IF NOT v_auth_exec THEN
+    v_failures := array_append(v_failures, 'authenticated does NOT hold EXECUTE (expected granted)');
+  END IF;
+
+  IF array_length(v_failures, 1) IS NULL THEN
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_85', v_desc, 'PASS',
+      format('SECDEF=true owner=%s search_path=%s returns=%s set_returning=true overloads=1 exec: pub=false anon=false svc=false auth=true',
+        v_owner, array_to_string(v_config, '|'), v_rettype));
+  ELSE
+    INSERT INTO public.test_results (test_id, description, status, details)
+    VALUES ('TEST_85', v_desc, 'FAIL', array_to_string(v_failures, '; '));
+  END IF;
+EXCEPTION WHEN OTHERS THEN
+  INSERT INTO public.test_results (test_id, description, status, sqlstate, details)
+  VALUES ('TEST_85', v_desc, 'FAIL', SQLSTATE, SQLERRM);
 END $$;
 
 -- Summary Output Query

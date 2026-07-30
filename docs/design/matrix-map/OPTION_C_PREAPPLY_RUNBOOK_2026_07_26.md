@@ -65,8 +65,8 @@ Single artifact:
 | Field | Value |
 |---|---|
 | Path | `docs/design/matrix-map/OPTION_C_PHASE2_SITE_AGGREGATE_PUBLICATIONS_DRAFT_2026_07_24.sql` |
-| Bytes | 99831 |
-| SHA-256 | `003E163324004C50649D705896D5FD9C40A97AB188699AE94566D43EA84E6EED` |
+| Bytes | 126552 |
+| SHA-256 | `E57B1E5EBD22BF3D15F577E759840C021AFC348BDF472887BCCF61199990DB72` |
 
 > **PIN CHANGED 2026-07-28.** The previous pin (97326 bytes,
 > `1B8AA3AE...`) is SUPERSEDED and must not be used. A review found a real
@@ -85,15 +85,71 @@ Single artifact:
 > note): those receipts bind `draft_sql_sha256 1B8AA3AE...` and are evidence
 > about bytes that no longer exist.
 >
-> **THE CURRENT EVIDENCE SET IS FINAL32**, whose positive, NEG_01 and REAPPLY_01
-> receipts bind `003E1633...`.
+> **PIN CHANGED AGAIN 2026-07-29 (F2).** The 2026-07-28 pin (99831 bytes,
+> `003E1633...`) is SUPERSEDED and must not be used. F2 makes SQL the sole
+> authority for coordinate-cluster identity: it adds
+> `fetch_admin_site_aggregate_live_preview`, moves
+> `upsert_site_aggregate_candidate` to a 7-argument signature that derives the
+> cluster id from an independent representative pair BEFORE sample selection and
+> raises `UE412` pre-commit on disagreement, and rewrites three per-group
+> correlated subqueries in the preview aggregate as set-based aggregates.
+>
+> That last change was not cosmetic. With a 502,000-row performance fixture, a
+> single first-page `EXPLAIN (ANALYZE, BUFFERS)` of the inner aggregate SELECT
+> did not return within ten minutes while the correlated subqueries were present;
+> after the rewrite the same page plans and executes with one aggregate node at
+> one loop and zero SubPlan nodes.
+>
+> **Every FINAL32 replay receipt is INVALIDATED by this change**: those receipts
+> bind `draft_sql_sha256 003E1633...` and are evidence about bytes that no longer
+> exist.
+>
+> **PIN CHANGED AGAIN 2026-07-30 (F2, holistic round 8 finding V2).** The pin
+> `6A94FBB1...` (123637 bytes) is SUPERSEDED and must not be used.
+>
+> A terminal holistic review found that the admin preview could display
+> provenance the upsert would not persist: on a mixed-tier cluster the flattened
+> `coordinate_source` strings were only checked for nullability, so a
+> version-skewed response could show a preview source absent from the lifecycle
+> set. The obvious client-side fix -- splitting the `'; '`-joined text back into
+> a set and testing inclusion -- is UNSOUND, because `coordinate_source` is
+> free-form text and may itself contain that separator, so the flattened string
+> is a LOSSY serialization and a split-based check can reject legitimate database
+> output.
+>
+> The projection therefore now also returns `preview_coordinate_sources text[]`
+> and `lifecycle_coordinate_sources text[]`: sorted, DISTINCT, blank-filtered
+> arrays built from the SAME expressions, population and `COLLATE "C"` ordering
+> as the existing `string_agg` text. The arrays are the authoritative sets; the
+> text is retained as a display/compatibility rendering and is verified by
+> JOINING the array, never by splitting the text.
+>
+> **Every receipt binding `6A94FBB1...` is INVALIDATED by this change**: the
+> positive, NEG_01 and REAPPLY_01 receipts from the F2-FINAL set are evidence
+> about bytes that no longer exist.
+>
+> **THE CURRENT EVIDENCE SET IS F2-V8**, whose positive, NEG_01 and REAPPLY_01
+> receipts bind `E57B1E5E...`.
+>
+> **PIN REFRESHED WITHIN THE SAME F2 CHANGE (2026-07-29, review round 1).** The
+> interim F2 pin `CB910E4E...` (121484 bytes) never left this branch and must not
+> be used. A targeted SQL review found that
+> `current_site_aggregate_snapshot` selected its cluster members by DRA and
+> canonical key ALONE, with no coordinate-eligibility predicate -- so a row just
+> outside a bound that ROUNDS onto the bound (longitude 180.000001 ->
+> 180.00000) was excluded from the live preview but still COUNTED in what the
+> upsert persisted. That breaks the write-preview contract F2 exists to
+> establish. The snapshot now applies the identical predicate. The positive
+> suite also grew to 85 assertions across two review rounds.
 >
 > **FINAL25 through FINAL31 are SUPERSEDED and must not be used as current.**
 > They predate a fix to this very procedure's acceptance gate: the replay
 > harness required test ids only through `TEST_64` while the suite had grown to
 > `TEST_69`, so a replay that never emitted the exact-ID contract checks could
 > still have reported `strict_pass: true`. FINAL32 is the first set generated
-> from the corrected harness. The active positive suite is **69 tests**.
+> from the corrected harness. The active positive suite is now **81 tests**
+> (`TEST_01`..`TEST_85`), raised from 69 in the same change that added
+> `TEST_70`..`TEST_85`.
 
 Verify before doing anything else:
 
@@ -128,7 +184,7 @@ mandatory.
 # implements no internal timeout (see the note in its header).
 # Use a DIFFERENT -OutputDir per invocation so receipts are not overwritten.
 
-# 1 of 3 - migration replay + the 69-assertion suite (TEST_01..TEST_69)
+# 1 of 3 - migration replay + the 85-assertion suite (TEST_01..TEST_85)
 pwsh -File scripts/matrix-map/validation/option-c-phase2/replay-migrations-postgis.ps1 `
   -OutputDir <a path OUTSIDE any worktree> `
   -RepoRoot  <this repository root>
@@ -155,8 +211,8 @@ Acceptance, read from `<OutputDir>/migration_replay_summary.json` and
 | `failed_tests` | `0` |
 | `strict_pass` | `true` |
 | `missing_test_ids` | empty (`[]`) |
-| `required_test_count` | `69` |
-| `required_test_ids` | runs through `TEST_69` |
+| `required_test_count` | `85` |
+| `required_test_ids` | runs through `TEST_85` |
 | `draft_sql_sha256` | equals the SHA-256 pinned in section 1 |
 
 **THE HARNESS IS THE SINGLE AUTHORITY on which tests are required.** Every field
@@ -171,8 +227,8 @@ readback, DROP/CREATE ownership and grants, and single-overload checks -- would
 have satisfied both the harness baseline and this table, and the gate would have
 reported GREEN with the newest safety checks absent.
 
-If `required_test_count` in the receipt is not 69, or `required_test_ids` does
-not run through `TEST_69`, the harness is older than the suite: **STOP** and
+If `required_test_count` in the receipt is not 85, or `required_test_ids` does
+not run through `TEST_85`, the harness is older than the suite: **STOP** and
 reconcile them rather than accepting the receipt.
 
 Read `test_results.txt` and confirm the assertion log is **non-empty** and every
@@ -278,7 +334,8 @@ WITH expected(sig) AS (
     ('matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text, timestamp with time zone)'),
     ('matrix_map.lock_site_aggregate_publication_sources()'),
     ('matrix_map.site_aggregate_count_bucket(integer)'),
-    ('matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text)')
+    ('matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)'),
+    ('matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text)')
 ),
 actual(sig) AS (
   -- TYPE-ONLY identity. pg_get_function_identity_arguments() includes PARAMETER
@@ -297,7 +354,8 @@ actual(sig) AS (
       'flip_site_aggregate_public','upsert_site_aggregate_candidate',
       'fetch_site_aggregate_candidate_audit',
       'apply_candidate_audit_publication_id_invariant','blank_trim',
-      'assert_conforming_dra_cluster_index')
+      'assert_conforming_dra_cluster_index',
+      'fetch_admin_site_aggregate_live_preview')
 )
 SELECT
   (SELECT count(*) FROM expected e JOIN actual a ON a.sig = e.sig) AS matching_signatures,
@@ -634,10 +692,21 @@ SELECT
   to_regclass('matrix_map.site_aggregate_candidate_audit') IS NOT NULL
     AS candidate_audit_table_exists;
 
--- 5.1 REQUIRED: all fourteen functions present. Expect exactly 14.
+-- 5.1 REQUIRED: all fifteen functions present. Expect exactly 15.
 --     (The invariant-upgrade helper raised the total from 11 to 12; the text
 -- meaningfulness helper `blank_trim` then raised it to 13; the semantic index
--- conformance guard `assert_conforming_dra_cluster_index` raised it to 14.)
+-- conformance guard `assert_conforming_dra_cluster_index` raised it to 14; F2
+-- added `fetch_admin_site_aggregate_live_preview` to reach 15.)
+--
+--     F2 ALSO REPLACED THE UPSERT SIGNATURE. The five-argument
+-- `upsert_site_aggregate_candidate(uuid, text, text, uuid, text)` is DROPPED and
+-- the seven-argument form -- which carries the representative coordinate pair the
+-- server derives the cluster id from -- is what conforms. This list previously
+-- still expected the five-argument form and omitted the preview RPC entirely, so
+-- after a CORRECT apply the check would have reported the old signature missing,
+-- the new one unexpected, and never validated the preview function at all. A
+-- holistic review caught it: a postflight that false-alarms on a correct apply is
+-- worse than no postflight, because it burns the operator's trust in the gate.
 --     (Same object list as 3.1 / 3.4.)
 --
 --     This step previously carried only the prose above and no query, so the
@@ -660,7 +729,8 @@ WITH expected(sig) AS (
     ('matrix_map.flip_site_aggregate_public(uuid, boolean, uuid, text, timestamp with time zone)'),
     ('matrix_map.lock_site_aggregate_publication_sources()'),
     ('matrix_map.site_aggregate_count_bucket(integer)'),
-    ('matrix_map.upsert_site_aggregate_candidate(uuid, text, text, uuid, text)')
+    ('matrix_map.fetch_admin_site_aggregate_live_preview(uuid, text, integer)'),
+    ('matrix_map.upsert_site_aggregate_candidate(uuid, text, double precision, double precision, text, uuid, text)')
 ),
 actual(sig) AS (
   SELECT format('%s.%s(%s)', n.nspname, p.proname, pg_catalog.oidvectortypes(p.proargtypes))
@@ -674,7 +744,8 @@ actual(sig) AS (
       'flip_site_aggregate_public','upsert_site_aggregate_candidate',
       'fetch_site_aggregate_candidate_audit',
       'apply_candidate_audit_publication_id_invariant','blank_trim',
-      'assert_conforming_dra_cluster_index')
+      'assert_conforming_dra_cluster_index',
+      'fetch_admin_site_aggregate_live_preview')
 )
 SELECT
   (SELECT count(*) FROM expected e JOIN actual a ON a.sig = e.sig) AS matching_signatures,
@@ -684,7 +755,7 @@ SELECT
   COALESCE((SELECT array_agg(sig ORDER BY sig) FROM (
      SELECT sig FROM actual EXCEPT SELECT sig FROM expected) u), '{}') AS unexpected_overloads;
 
--- 5.1 REQUIRED result: matching_signatures = 14, expected_signatures = 14,
+-- 5.1 REQUIRED result: matching_signatures = 15, expected_signatures = 15,
 --     missing = {} and unexpected_overloads = {}. Anything else is an incident.
 
 -- 5.2 THE INVARIANT. These must match section 3.2 EXACTLY.

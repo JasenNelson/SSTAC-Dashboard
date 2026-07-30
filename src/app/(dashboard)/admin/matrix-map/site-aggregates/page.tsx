@@ -34,19 +34,18 @@
 import { createServerClient, type CookieOptions } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import {
-  computeSiteAggregates,
-  summariseSiteAggregates,
-  type AggregateInputSample,
-  type AggregateInputDra,
-} from '@/lib/matrix-map/siteAggregates';
+import { summariseSiteAggregates } from '@/lib/matrix-map/siteAggregates';
 import { toAggregateMarkers } from '@/lib/matrix-map/siteAggregateMarkers';
 import {
   classifyLifecycleRows,
   deriveLifecycleEvidenceAxes,
 } from '@/lib/matrix-map/site-aggregate-lifecycle-rows';
 import { COORD_TIER_LABEL, COORD_TIER_CAPTION } from '@/lib/matrix-map/coordinate-provenance';
-import { loadSiteAggregateAdminSurface } from '@/lib/matrix-map/site-aggregate-admin-loaders';
+import {
+  loadSiteAggregateLiveAdminSurface,
+  sortPreviewRowsForDisplay,
+} from '@/lib/matrix-map/site-aggregate-live-preview';
+import { parseServerClusterIdentity } from '@/lib/matrix-map/cluster-identity';
 // Used ONLY to render the page-ceiling message. Offsets are never computed
 // here -- see site-aggregate-pagination.siteAggregatePageArgs.
 import { PAGE_SIZE, MAX_PAGES } from '@/lib/matrix-map/site-aggregate-pagination';
@@ -135,26 +134,32 @@ export default async function SiteAggregatesPreviewPage() {
   if (roleError || !role) redirect('/dashboard');
 
   // --- Read-only data load ------------------------------------------------
-  // Only the five columns the aggregation helper is permitted to see. No id, no
-  // station_id, no measurements. See the containment note in siteAggregates.ts.
+  // F2: THE PAGE NO LONGER READS SAMPLES OR DRAs.
   //
-  // ONE orchestration call, in src/lib/matrix-map/site-aggregate-admin-loaders.ts.
-  // The three paged loops live there so their actual RPC and range arguments are
-  // executable in a test, and the orchestration itself is extracted so that "the
-  // page actually invokes the loaders" is provable by execution rather than by
-  // scanning source text. Ordering and error routing are unchanged: samples,
-  // then DRAs (whose error fills loadError only if samples did not), then
-  // candidates, whose error stays on its own axis.
+  // It used to page `matrix_map.samples` and `matrix_map.dras` and cluster them
+  // here with `computeSiteAggregates(samples, dras, { tier: 'medium' })`. That
+  // made TypeScript a second implementation of an identity SQL already owns, and
+  // the operator then asserted that TypeScript-derived key on the write path --
+  // so the server had nothing independent to check it against. The live-preview
+  // RPC now does the grouping, the DRA join and the medium-tier row scope
+  // server-side and returns the canonical key it derived, which this page only
+  // transports.
+  //
+  // Containment improves as a side effect: with no sample projection on this
+  // surface, there is no column list here that could later widen.
+  //
+  // ONE orchestration call, in site-aggregate-live-preview.ts, so that "the page
+  // actually invokes the loader" stays provable by execution rather than by
+  // scanning source text. Error routing is unchanged in principle: the preview
+  // error and the candidate error stay on separate axes.
+  const { preview, candidates, candidatesTruncated, candidateError } =
+    await loadSiteAggregateLiveAdminSurface<SiteAggregateCandidate>(supabase as never);
   const {
-    samples,
+    rows: previewRows,
     truncated,
-    draRows,
-    drasTruncated,
-    candidates,
-    candidatesTruncated,
+    unparsableRowCount,
     loadError,
-    candidateError,
-  } = await loadSiteAggregateAdminSurface<SiteAggregateCandidate>(supabase as never);
+  } = preview;
 
   /**
    * Neutral seed for a MEMBER-VISIBLE label.
@@ -172,8 +177,6 @@ export default async function SiteAggregatesPreviewPage() {
    */
   const neutralDefaultLabel = (index: number) => `Site aggregate ${index + 1}`;
 
-  const dras: AggregateInputDra[] = draRows;
-
   // TWO AXES, derived by a pure tested helper. `previewRenderable` depends on
   // the PREVIEW axis alone, so a candidate-side failure can never blank the
   // medium-tier table, summary or map.
@@ -181,23 +184,51 @@ export default async function SiteAggregatesPreviewPage() {
     deriveLifecycleEvidenceAxes({
       previewLoadError: loadError,
       previewTruncated: truncated,
-      // Feeds the PREVIEW axis, not the candidate axis: a truncated DRA read
-      // corrupts the same samples/DRA population `truncated` already guards,
-      // so it must degrade `previewIncomplete` exactly like a truncated
-      // sample read does -- see the field comment on LifecycleLoadSignals.
-      previewDrasTruncated: drasTruncated,
+      // Feeds the PREVIEW axis, not the candidate axis: a row the server sent
+      // that this build could not parse is simply MISSING from the table, which
+      // corrupts the rendered population exactly as a truncated read does.
+      previewRowsUnreadable: unparsableRowCount > 0,
       candidateLoadError: candidateError,
       candidateTruncated: candidatesTruncated,
     });
 
-  const aggregates = previewRenderable
-    ? computeSiteAggregates(samples, dras, { tier: 'medium' })
-    : [];
-  const summary = summariseSiteAggregates(aggregates);
-  const orphanCount = samples.filter((s) => s.source_dra_id === null).length;
+  /**
+   * The rendered preview rows.
+   *
+   * `preview_*` fields are the MEDIUM-TIER population, which is what this table,
+   * summary and map have always shown. `lifecycle_*` fields are the ALL-TIER
+   * population the candidate lifecycle acts on, and they are deliberately NOT
+   * mixed into the display: on a mixed-tier cluster the two legitimately differ,
+   * and the operator must be able to see which is which.
+   */
+  const aggregates = previewRenderable ? sortPreviewRowsForDisplay(previewRows) : [];
+
+  // The roll-up and the markers read only the PREVIEW block, so they render the
+  // same population as before F2 -- now grouped by the server instead of here.
+  const summary = summariseSiteAggregates(
+    aggregates.map((r) => ({
+      coordinate_cluster_id: r.canonical_cluster_id,
+      sample_count_total: r.preview_sample_count_total,
+      sample_count_high: r.preview_sample_count_high,
+      sample_count_medium: r.preview_sample_count_medium,
+      sample_count_low: r.preview_sample_count_low,
+    })),
+  );
   // Markers are derived SERVER-SIDE and only the marker projection crosses to the client map.
   // The client receives no sample rows and no aggregate fields beyond what a marker needs.
-  const markers = toAggregateMarkers(aggregates);
+  const markers = toAggregateMarkers(
+    aggregates.map((r) => ({
+      aggregate_id: r.aggregate_id,
+      source_dra_id: r.source_dra_id,
+      display_name: r.source_dra_title ?? r.source_dra_id,
+      representative_latitude: r.preview_representative_latitude,
+      representative_longitude: r.preview_representative_longitude,
+      coordinate_quality_tier: r.preview_coordinate_quality_tier,
+      sample_count_total: r.preview_sample_count_total,
+      sample_count_high: r.preview_sample_count_high,
+      sample_count_medium: r.preview_sample_count_medium,
+    })),
+  );
 
   // ORPHANED PUBLICATIONS. Rows below are driven by LIVE aggregates, but a
   // publication persists independently of them. If a published candidate's
@@ -243,7 +274,43 @@ export default async function SiteAggregatesPreviewPage() {
     outsidePreviewTier,
     liveUnclassified,
     unknownStatusCandidates,
-  } = classifyLifecycleRows({ aggregates, candidates, previewIncomplete, candidateIncomplete });
+  } = classifyLifecycleRows({
+    // The classifier matches on the PUBLICATION IDENTITY -- source DRA plus
+    // coordinate cluster. The cluster key it must match against is the one the
+    // database persisted, so the SERVER-derived `canonical_cluster_id` is what
+    // goes in. Before F2 this was the TypeScript-derived key, which is the same
+    // conflation the whole change removes.
+    aggregates: aggregates.map((r) => ({
+      source_dra_id: r.source_dra_id,
+      coordinate_cluster_id: r.canonical_cluster_id,
+    })),
+    candidates,
+    previewIncomplete,
+    candidateIncomplete,
+  });
+
+  /**
+   * The identity a persisted candidate carries, for rows that have no live
+   * preview row of their own (outside-preview-tier, unclassified, and
+   * status-unavailable rows).
+   *
+   * Parsed rather than trusted: `coordinate_cluster_id` and the representative
+   * pair both come back over PostgREST, and a row whose stored key or locator
+   * does not parse yields `null`, which disables Create/Refresh for that row
+   * while leaving Unpublish reachable.
+   *
+   * These two persisted values DO re-derive to each other by construction: the
+   * upsert writes `coordinate_cluster_id = v_derived_cluster` together with the
+   * representative pair `current_site_aggregate_snapshot` selected from the very
+   * samples that render to that key. The invariant is pinned by executed test
+   * rather than assumed here.
+   */
+  const candidateIdentity = (c: SiteAggregateCandidate) =>
+    parseServerClusterIdentity(
+      c.coordinate_cluster_id,
+      c.representative_latitude,
+      c.representative_longitude,
+    );
 
   return (
     <div className="min-h-screen bg-slate-50 dark:bg-slate-900">
@@ -268,12 +335,16 @@ export default async function SiteAggregatesPreviewPage() {
         {loadError ? <InlineError message={`Failed to load aggregate preview: ${loadError}`} /> : null}
         {truncated ? (
           <InlineError
-            message={`Sample load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Counts below are INCOMPLETE and must not be used for a publication decision.`}
+            message={`Live preview hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Rows below are INCOMPLETE and must not be used for a publication decision.`}
           />
         ) : null}
-        {drasTruncated ? (
+        {unparsableRowCount > 0 ? (
+          // Reported as loudly as a truncated read, and for the same reason: a
+          // row the server returned but this build could not read is simply
+          // ABSENT from the table below, and nothing else on the page would say
+          // so. Silence here would let a short table read as a complete one.
           <InlineError
-            message={`DRA load hit the ${MAX_PAGES * PAGE_SIZE}-row page ceiling. Samples whose DRA fell beyond the page ceiling are dropped from the preview, so counts below are INCOMPLETE and must not be used for a publication decision.`}
+            message={`The live preview returned ${unparsableRowCount} row${unparsableRowCount === 1 ? '' : 's'} this application could not read, so ${unparsableRowCount === 1 ? 'it is' : 'they are'} missing below. The list is INCOMPLETE and must not be used for a publication decision.`}
           />
         ) : null}
         {candidateError ? (
@@ -318,11 +389,16 @@ export default async function SiteAggregatesPreviewPage() {
             <Stat label="Median samples/site" value={summary.median_samples_per_site} />
             <Stat label="Sites with 100+" value={summary.sites_with_100_plus} />
             <Stat label="Sites with exactly 1" value={summary.sites_with_single_sample} />
-            <Stat
-              label="Orphans excluded"
-              value={orphanCount}
-              hint="no DRA to attribute them to"
-            />
+            {/* The "Orphans excluded" count is GONE, deliberately. It was
+                computed by counting `source_dra_id IS NULL` over raw sample rows
+                this page fetched -- and F2 removes that fetch entirely, because
+                clustering samples client-side is what made TypeScript a second
+                identity authority. Orphans are still excluded, now by the RPC's
+                inner join to `matrix_map.dras`, and that exclusion is pinned by
+                executed test. Reporting a count would require re-introducing the
+                sample read for a statistic, which is not a trade worth making;
+                inventing one from the aggregates would be worse, because the
+                aggregates no longer contain the orphan rows to count. */}
           </div>
           <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">
             Rendering these per-sample would place {summary.sample_count_total} pins on{' '}
@@ -382,7 +458,7 @@ export default async function SiteAggregatesPreviewPage() {
                 <tbody>
                   {aggregates.map((a, index) => {
                     const candidate = candidateByKey.get(
-                      `${a.source_dra_id ?? ''}::${a.coordinate_cluster_id}`,
+                      `${a.source_dra_id ?? ''}::${a.canonical_cluster_id}`,
                     );
                     return (
                       <tr
@@ -390,21 +466,54 @@ export default async function SiteAggregatesPreviewPage() {
                         className="border-b border-slate-100 align-top dark:border-slate-800"
                       >
                       <td className="py-2 pr-4">
-                        <div className="text-slate-900 dark:text-slate-100">{a.display_name}</div>
+                        <div className="text-slate-900 dark:text-slate-100">
+                          {a.source_dra_title ?? a.source_dra_id}
+                        </div>
                         <div className="font-mono text-xs text-slate-400">{a.source_dra_id}</div>
                       </td>
-                      <td className="py-2 pr-4">{COORD_TIER_LABEL[a.coordinate_quality_tier]}</td>
-                      <td className="py-2 pr-4 text-right font-semibold">{a.sample_count_total}</td>
-                      <td className="py-2 pr-4 text-right">{a.sample_count_high}</td>
-                      <td className="py-2 pr-4 text-right">{a.sample_count_medium}</td>
-                      <td className="py-2 pr-4 text-right">{a.distinct_point_count}</td>
+                      <td className="py-2 pr-4">
+                        {COORD_TIER_LABEL[a.preview_coordinate_quality_tier]}
+                      </td>
+                      <td className="py-2 pr-4 text-right font-semibold">
+                        {a.preview_sample_count_total}
+                      </td>
+                      <td className="py-2 pr-4 text-right">{a.preview_sample_count_high}</td>
+                      <td className="py-2 pr-4 text-right">{a.preview_sample_count_medium}</td>
+                      <td className="py-2 pr-4 text-right">{a.preview_distinct_point_count}</td>
                       <td className="py-2 pr-4 font-mono text-xs">
-                        {a.representative_latitude}, {a.representative_longitude}
+                        {a.preview_representative_latitude}, {a.preview_representative_longitude}
                       </td>
                       <td className="py-2 pr-4">
                         <SiteAggregateAdminActions
                           source_dra_id={a.source_dra_id || ''}
-                          coordinate_cluster_id={a.coordinate_cluster_id}
+                          // THE LIFECYCLE PAIR, not the preview one. The upsert
+                          // persists the ALL-TIER aggregate, so the locator it is
+                          // asked to derive from must be the ALL-TIER
+                          // representative. (Under the current construction the
+                          // two coincide -- both are the canonical rounded pair of
+                          // the same grouping key -- but sending the preview pair
+                          // would be correct only by coincidence, and a future
+                          // change to either population would silently break it.)
+                          identity={{
+                            canonicalClusterId: a.canonical_cluster_id,
+                            representative: a.lifecycle_representative,
+                          }}
+                          // THE ALL-TIER VALUES CREATE WOULD PERSIST. The RPC
+                          // already returns them; a holistic review caught that
+                          // they were being dropped, so on a mixed-tier cluster the
+                          // operator saw medium-only counts, clicked Create, and
+                          // only learned the persisted all-tier values afterwards.
+                          // A preview that cannot show what will be written is not
+                          // a preview.
+                          lifecyclePreview={{
+                            total: a.lifecycle_sample_count_total,
+                            high: a.lifecycle_sample_count_high,
+                            medium: a.lifecycle_sample_count_medium,
+                            low: a.lifecycle_sample_count_low,
+                            tier: a.lifecycle_coordinate_quality_tier,
+                            source: a.lifecycle_coordinate_source,
+                            distinctPoints: a.lifecycle_distinct_point_count,
+                          }}
                           defaultLabel={candidate?.member_display_label ?? neutralDefaultLabel(index)}
                           candidate={candidate}
                           disabled={lifecycleBlocked}
@@ -440,7 +549,7 @@ export default async function SiteAggregatesPreviewPage() {
                     <td className="py-2 pr-4">
                       <SiteAggregateAdminActions
                         source_dra_id={c.source_dra_id}
-                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        identity={candidateIdentity(c)}
                         defaultLabel={c.member_display_label}
                         candidate={c}
                         disabled={lifecycleBlocked}
@@ -476,7 +585,7 @@ export default async function SiteAggregatesPreviewPage() {
                     <td className="py-2 pr-4">
                       <SiteAggregateAdminActions
                         source_dra_id={c.source_dra_id}
-                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        identity={candidateIdentity(c)}
                         defaultLabel={c.member_display_label}
                         candidate={c}
                         disabled={lifecycleBlocked}
@@ -515,7 +624,7 @@ export default async function SiteAggregatesPreviewPage() {
                     <td className="py-2 pr-4">
                       <SiteAggregateAdminActions
                         source_dra_id={c.source_dra_id}
-                        coordinate_cluster_id={c.coordinate_cluster_id}
+                        identity={candidateIdentity(c)}
                         defaultLabel={c.member_display_label}
                         candidate={c}
                         disabled={lifecycleBlocked}

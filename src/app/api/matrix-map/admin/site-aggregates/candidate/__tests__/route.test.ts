@@ -25,14 +25,23 @@ import { POST } from '../route';
 // pagination envelope to share and nothing here should be expressed in pages.
 
 const SOURCE_DRA_ID = '11111111-1111-4111-8111-111111111111';
-const CLUSTER_ID = 'cluster-alpha';
+// F2: a REAL canonical rendering, not a placeholder. The route parses this
+// field through `parseServerClusterIdentity`, which rejects anything that is not
+// two 'FM9990.00000' renderings joined by a comma -- so a placeholder would now
+// make every test in this file exercise the rejection path instead of the route.
+const CLUSTER_ID = '49.28270,-123.12070';
+const REPRESENTATIVE_LATITUDE = 49.2827;
+const REPRESENTATIVE_LONGITUDE = -123.1207;
 const ADMIN_USER = '22222222-2222-4222-8222-222222222222';
 const PUBLICATION_ID = '33333333-3333-4333-8333-333333333333';
 
 function validBody(overrides: Record<string, unknown> = {}) {
   return {
     source_dra_id: SOURCE_DRA_ID,
-    coordinate_cluster_id: CLUSTER_ID,
+    // F2: the ASSERTED key plus the INDEPENDENT locator it must render from.
+    expected_cluster_id: CLUSTER_ID,
+    representative_latitude: REPRESENTATIVE_LATITUDE,
+    representative_longitude: REPRESENTATIVE_LONGITUDE,
     member_display_label: 'Neutral Label 1',
     reason: 'initial candidate',
     ...overrides,
@@ -418,7 +427,16 @@ describe('POST /api/matrix-map/admin/site-aggregates/candidate', () => {
     it.each([
       ['a non-UUID source_dra_id', { source_dra_id: 'not-a-uuid' }],
       ['a non-string source_dra_id', { source_dra_id: 12345 }],
-      ['an empty coordinate_cluster_id', { coordinate_cluster_id: '   ' }],
+      ['an empty expected_cluster_id', { expected_cluster_id: '   ' }],
+      ['a non-canonical expected_cluster_id', { expected_cluster_id: 'cluster-alpha' }],
+      ['a whitespace-padded expected_cluster_id', { expected_cluster_id: ` ${CLUSTER_ID} ` }],
+      ['a missing expected_cluster_id', { expected_cluster_id: undefined }],
+      ['a missing representative_latitude', { representative_latitude: undefined }],
+      ['a missing representative_longitude', { representative_longitude: undefined }],
+      ['a NaN representative_latitude', { representative_latitude: Number.NaN }],
+      ['an out-of-range representative_latitude', { representative_latitude: 500 }],
+      ['an out-of-range representative_longitude', { representative_longitude: -180.5 }],
+      ['a string representative_latitude', { representative_latitude: '49.2827' }],
       ['an empty member_display_label', { member_display_label: '   ' }],
       ['an empty reason', { reason: '   ' }],
       ['an array source_dra_id (bulk attempt)', { source_dra_id: [SOURCE_DRA_ID] }],
@@ -432,26 +450,64 @@ describe('POST /api/matrix-map/admin/site-aggregates/candidate', () => {
       expect(authClient.schema).not.toHaveBeenCalled();
     });
 
-    it('trims the label, reason and cluster id before sending them to the RPC', async () => {
+    it('trims the label and reason -- but NOT the cluster id -- before sending them to the RPC', async () => {
       const { rpc } = setupAdminClient();
 
       await POST(
         makeRequest(
           validBody({
-            coordinate_cluster_id: `  ${CLUSTER_ID}  `,
             member_display_label: '  Neutral Label 1  ',
             reason: '  initial candidate  ',
           }),
         ),
       );
 
+      // F2: SEVEN named arguments. The assertion is exact rather than partial,
+      // so a renamed or extra parameter cannot pass unnoticed -- PostgREST binds
+      // by NAME, and the 5-argument overload is dropped in the same transaction
+      // that creates this one.
       expect(rpc).toHaveBeenCalledWith('upsert_site_aggregate_candidate', {
         p_source_dra_id: SOURCE_DRA_ID,
-        p_coordinate_cluster_id: CLUSTER_ID,
+        p_expected_cluster_id: CLUSTER_ID,
+        p_representative_latitude: REPRESENTATIVE_LATITUDE,
+        p_representative_longitude: REPRESENTATIVE_LONGITUDE,
         p_member_display_label: 'Neutral Label 1',
         p_actor_id: ADMIN_USER,
         p_reason: 'initial candidate',
       });
+    });
+
+    it('REJECTS a whitespace-padded cluster id rather than repairing it', async () => {
+      // Deliberately NOT trimmed, unlike the label and reason. A canonical id is
+      // a fixed rendering: padding means the value did not come from
+      // `canonical_five_decimal_cluster`, and silently normalising it would
+      // manufacture agreement with the server's derivation instead of detecting
+      // the disagreement. The anchored shape check rejects it before any RPC.
+      const { authClient } = setupAdminClient();
+
+      const response = await POST(
+        makeRequest(validBody({ expected_cluster_id: `  ${CLUSTER_ID}  ` })),
+      );
+
+      expect(response.status).toBe(400);
+      expect((await response.json()).error).toBe('invalid_payload');
+      expect(authClient.schema).not.toHaveBeenCalled();
+    });
+
+    it('never echoes the offending cluster id or coordinates in the error detail (D-F2-6)', async () => {
+      setupAdminClient();
+
+      const response = await POST(
+        makeRequest(
+          validBody({ expected_cluster_id: '12.34567,-98.76543', representative_latitude: 500 }),
+        ),
+      );
+      const body = await response.json();
+
+      expect(response.status).toBe(400);
+      expect(String(body.detail ?? '')).not.toContain('12.34567');
+      expect(String(body.detail ?? '')).not.toContain('98.76543');
+      expect(String(body.detail ?? '')).not.toContain('500');
     });
 
     it('uses the server-resolved actor id, never a client-supplied one', async () => {
@@ -532,6 +588,73 @@ describe('POST /api/matrix-map/admin/site-aggregates/candidate', () => {
         expect.objectContaining({ p_source_dra_id: SOURCE_DRA_ID }),
       );
     });
+
+    /**
+     * THE ROUTE MUST ACCEPT POSTGRESQL'S UUID DOMAIN, NOT RFC 4122's SUBSET.
+     *
+     * `UUID_RE` previously carried RFC 4122 `[1-5]` version and `[89ab]` variant
+     * classes. The PostgreSQL `uuid` type stores any 128-bit value and no
+     * constraint on these columns enforces conformance -- `gen_random_uuid()`
+     * emitting v4 is a fact about the generator, not about the domain.
+     *
+     * The consequence was a SEAM FAILURE, not a theoretical one: the live-preview
+     * RPC returns whatever id the row holds, the admin page renders a control for
+     * it, and the route then refused the write for ids the database had just
+     * handed out. Every value below is a legitimate PostgreSQL uuid, and several
+     * are taken from this repository's own replay and perf fixtures.
+     */
+    it.each([
+      ['all-ones, non-RFC version and variant nibbles', '11111111-1111-1111-1111-111111111111'],
+      ['leading a, non-RFC variant nibble', 'a1111111-1111-1111-1111-111111111111'],
+      ['the nil uuid', '00000000-0000-0000-0000-000000000000'],
+      ['the max uuid', 'ffffffff-ffff-ffff-ffff-ffffffffffff'],
+      ['a v7-style id, version nibble 7', '018f0000-0000-7000-8000-000000000001'],
+    ])('ACCEPTS %s and forwards it to the RPC', async (_label, id) => {
+      const { rpc } = setupAdminClient();
+
+      const res = await POST(makeRequest(validBody({ source_dra_id: id })));
+
+      expect(res.status).not.toBe(400);
+      expect(rpc).toHaveBeenCalledWith(
+        'upsert_site_aggregate_candidate',
+        expect.objectContaining({ p_source_dra_id: id }),
+      );
+    });
+
+    it('still canonicalises case for a non-RFC uuid, so normalisation was not lost', async () => {
+      // Widening the domain must not disturb the transport-boundary lowercasing
+      // that keeps the strict readback comparison from producing a false 409.
+      const { rpc } = setupAdminClient();
+
+      await POST(
+        makeRequest(validBody({ source_dra_id: 'A1111111-1111-1111-1111-111111111111' })),
+      );
+
+      expect(rpc).toHaveBeenCalledWith(
+        'upsert_site_aggregate_candidate',
+        expect.objectContaining({ p_source_dra_id: 'a1111111-1111-1111-1111-111111111111' }),
+      );
+    });
+
+    /**
+     * DISCRIMINATING: widening the VALUE domain must not weaken the SPELLING
+     * check. Without these the acceptance table above could pass against a route
+     * that validates nothing at all.
+     */
+    it.each([
+      ['a group of the wrong length', '11111111-111-1111-1111-111111111111'],
+      ['a non-hex character', '1111111g-1111-1111-1111-111111111111'],
+      ['missing separators', '11111111111111111111111111111111'],
+      ['a trailing character', '11111111-1111-1111-1111-1111111111111'],
+      ['surrounding whitespace', ' 11111111-1111-1111-1111-111111111111 '],
+    ])('still REJECTS %s as malformed spelling', async (_label, id) => {
+      const { rpc } = setupAdminClient();
+
+      const res = await POST(makeRequest(validBody({ source_dra_id: id })));
+
+      expect(res.status).toBe(400);
+      expect(rpc).not.toHaveBeenCalled();
+    });
   });
 
   describe('deterministic RPC error mapping', () => {
@@ -555,6 +678,43 @@ describe('POST /api/matrix-map/admin/site-aggregates/candidate', () => {
       expect(body.error).toBe(error);
       expect(body.committed).toBe(false);
       expect(body.retry_safe).toBe(true);
+    });
+
+    // UE412 is DELIBERATELY NOT in the table above: it is the one pre-commit
+    // branch with `retry_safe: FALSE`, so folding it in would have required
+    // loosening the shared assertion and would have hidden exactly the property
+    // that matters. A review found this branch had no route-level coverage at
+    // all -- the table omits it and the D-F2-6 test only exercises client-side
+    // payload rejection -- so a regression in the code, the status, the retry
+    // semantics or the no-leak body would have left the suite green.
+    it('maps UE412 to 409 cluster_identity_mismatch with retry_safe FALSE and no leaked values', async () => {
+      const { rpc } = setupAdminClient({
+        rpcError: { code: 'UE412', message: 'cluster identity mismatch' },
+      });
+
+      const response = await POST(makeRequest(validBody()));
+      const body = await response.json();
+
+      expect(response.status).toBe(409);
+      expect(body.error).toBe('cluster_identity_mismatch');
+      expect(body.committed).toBe(false);
+      // FALSE, not true. Retrying an identical payload fails identically forever:
+      // the client's view of cluster identity has diverged from the server's and
+      // it must re-read the live preview to obtain a fresh pair. Marking this
+      // retry_safe would invite a retry loop that cannot terminate.
+      expect(body.retry_safe).toBe(false);
+
+      // D-F2-6: no raw cluster id and no coordinate anywhere in the response.
+      const serialised = JSON.stringify(body);
+      expect(serialised).not.toContain(CLUSTER_ID);
+      expect(serialised).not.toContain(String(REPRESENTATIVE_LATITUDE));
+      expect(serialised).not.toContain(String(REPRESENTATIVE_LONGITUDE));
+
+      // And it really did reach the RPC -- so this is the SERVER's UE412 being
+      // mapped, not the route's own payload validation short-circuiting first.
+      expect(rpc).toHaveBeenCalledWith('upsert_site_aggregate_candidate', expect.objectContaining({
+        p_expected_cluster_id: CLUSTER_ID,
+      }));
     });
 
     // An UNRECOGNIZED code is the case where we genuinely cannot tell whether

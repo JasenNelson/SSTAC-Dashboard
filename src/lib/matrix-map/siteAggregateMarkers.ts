@@ -16,7 +16,28 @@
  * LEAFLET COORDINATE ORDER: Leaflet uses [lat, lng]. `position` is emitted in that order so the
  * client can spread it directly into a marker without re-ordering (a classic lat/lng swap bug).
  */
-import type { SiteAggregate, CoordinateTier } from './siteAggregates';
+import type { CoordinateTier } from './siteAggregates';
+
+/**
+ * The fields marker derivation actually reads.
+ *
+ * Declared structurally (F2) so the admin live-preview rows -- which carry a
+ * server-derived `CanonicalClusterId` rather than a TypeScript-derived display
+ * key -- can be rendered by the SAME helper. `SiteAggregate` satisfies this
+ * interface, so the public map path is unchanged. No cluster key appears here at
+ * all: a marker never needed one.
+ */
+export interface MarkerSourceAggregate {
+  aggregate_id: string;
+  source_dra_id: string;
+  display_name: string;
+  representative_latitude: number;
+  representative_longitude: number;
+  coordinate_quality_tier: CoordinateTier;
+  sample_count_total: number;
+  sample_count_high: number;
+  sample_count_medium: number;
+}
 
 export interface AggregateMarker {
   /** Stable React key. Same value as the aggregate's `aggregate_id`. */
@@ -59,7 +80,9 @@ export function markerRadiusForCount(count: number): number {
  * are skipped (they cannot be placed). Order is preserved from the input, which is already sorted
  * deterministically by `computeSiteAggregates`.
  */
-export function toAggregateMarkers(aggregates: readonly SiteAggregate[]): AggregateMarker[] {
+export function toAggregateMarkers(
+  aggregates: readonly MarkerSourceAggregate[],
+): AggregateMarker[] {
   const out: AggregateMarker[] = [];
   for (const a of aggregates) {
     if (

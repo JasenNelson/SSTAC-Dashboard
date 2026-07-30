@@ -403,7 +403,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: null,
       previewTruncated: false,
-      previewDrasTruncated: false,
+      previewRowsUnreadable: false,
       candidateLoadError: 'function matrix_map.fetch_admin_site_aggregate_publications does not exist',
       candidateTruncated: false,
     });
@@ -418,7 +418,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: null,
       previewTruncated: false,
-      previewDrasTruncated: false,
+      previewRowsUnreadable: false,
       candidateLoadError: null,
       candidateTruncated: true,
     });
@@ -432,7 +432,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: 'samples query failed',
       previewTruncated: false,
-      previewDrasTruncated: false,
+      previewRowsUnreadable: false,
       candidateLoadError: null,
       candidateTruncated: false,
     });
@@ -449,7 +449,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: 'dras query failed',
       previewTruncated: false,
-      previewDrasTruncated: false,
+      previewRowsUnreadable: false,
       candidateLoadError: null,
       candidateTruncated: false,
     });
@@ -464,7 +464,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: null,
       previewTruncated: true,
-      previewDrasTruncated: false,
+      previewRowsUnreadable: false,
       candidateLoadError: null,
       candidateTruncated: false,
     });
@@ -479,7 +479,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: null,
       previewTruncated: false,
-      previewDrasTruncated: true,
+      previewRowsUnreadable: true,
       candidateLoadError: null,
       candidateTruncated: false,
     });
@@ -494,7 +494,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
     const axes = deriveLifecycleEvidenceAxes({
       previewLoadError: null,
       previewTruncated: false,
-      previewDrasTruncated: true,
+      previewRowsUnreadable: true,
       candidateLoadError: null,
       candidateTruncated: false,
     });
@@ -511,7 +511,7 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
         const axes = deriveLifecycleEvidenceAxes({
           previewLoadError: null,
           previewTruncated: false,
-          previewDrasTruncated: false,
+          previewRowsUnreadable: false,
           candidateLoadError,
           candidateTruncated,
         });
@@ -529,11 +529,11 @@ describe('evidence axes -- a candidate failure must not blank the preview (F6)',
         const axes = deriveLifecycleEvidenceAxes({
           previewLoadError: null,
           previewTruncated: false,
-          previewDrasTruncated: true,
+          previewRowsUnreadable: true,
           candidateLoadError,
           candidateTruncated,
         });
-        // previewIncomplete is driven by previewDrasTruncated alone here --
+        // previewIncomplete is driven by previewRowsUnreadable alone here --
         // the candidate axis must not flip it back to false or add anything.
         expect(axes.previewIncomplete).toBe(true);
         expect(axes.previewRenderable).toBe(true);
@@ -627,7 +627,7 @@ describe('lifecycle rows -- the local-omission CLAIM depends only on the preview
       const { previewIncomplete } = deriveLifecycleEvidenceAxes({
         previewLoadError: null,
         previewTruncated: false,
-        previewDrasTruncated: true,
+        previewRowsUnreadable: true,
         candidateLoadError: null,
         candidateTruncated: false,
       });

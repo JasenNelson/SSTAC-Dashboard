@@ -5,6 +5,10 @@ import { NextResponse, type NextRequest } from 'next/server';
 
 import { checkCsrf } from '@/lib/engine-v2/csrf';
 import { blankTrim } from '@/lib/matrix-map/blank-trim';
+import {
+  parseServerClusterIdentity,
+  type CanonicalClusterId,
+} from '@/lib/matrix-map/cluster-identity';
 // NOTE: this route deliberately imports NOTHING from the pagination module any
 // more. Post-commit verification is an EXACT-ID lookup (p_limit 1, p_offset 0),
 // so it has no pagination envelope to share. See the readback block below.
@@ -12,8 +16,36 @@ import { blankTrim } from '@/lib/matrix-map/blank-trim';
 export const runtime = 'nodejs';
 
 const ADMIN_ROLES = ['admin', 'matrix_admin'];
-const UUID_RE =
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+/**
+ * PostgreSQL's canonical uuid SPELLING -- 8-4-4-4-12 hexadecimal -- with NO RFC
+ * 4122 version or variant restriction.
+ *
+ * THIS DELIBERATELY DOES NOT ENCODE RFC 4122, and the narrower form it replaces
+ * was a real defect on both sides of this module. The PostgreSQL `uuid` type
+ * stores any 128-bit value; conformance is not enforced by the column, and
+ * `gen_random_uuid()` emitting v4 today is a fact about the generator, not a
+ * constraint on the domain. The previous `[1-5]` version and `[89ab]` variant
+ * classes therefore rejected values the database can legitimately hold.
+ *
+ * Both call sites needed the widening, for different reasons:
+ *   - the PAYLOAD check rejected a `source_dra_id` the live-preview RPC had
+ *     already returned and the admin page had already offered a control for, so
+ *     the write failed at the seam AFTER the operator clicked;
+ *   - the READBACK check validates a `publication_id` that came OUT of
+ *     PostgreSQL, where being stricter than the producer is simply a false
+ *     rejection of valid output.
+ *
+ * The general rule: a validator may be stricter than its producer about
+ * SPELLING, never about the producer's VALUE DOMAIN. Malformed spelling -- wrong
+ * group lengths, non-hex characters, missing separators -- is still rejected.
+ *
+ * CASE remains accepted here and normalised at the transport boundary (see
+ * `.toLowerCase()` below). That is the correct split for a route validating
+ * CLIENT input. The live-preview PARSER is deliberately case-SENSITIVE instead,
+ * because it reads SQL output, where lowercase is the only spelling PostgreSQL
+ * emits and an uppercase id signals a malformed response.
+ */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 async function createAuthenticatedClient(): Promise<SupabaseClient> {
   const cookieStore = await cookies();
@@ -74,9 +106,26 @@ async function requireMatrixMapAdmin(
   return { user };
 }
 
+/**
+ * F2: the write payload now carries an ASSERTED cluster id AND the independent
+ * locator it is supposed to render from.
+ *
+ * `expected_cluster_id` is branded `CanonicalClusterId`, so it cannot be
+ * satisfied by a `DisplayClusterKey` -- the value `coordinateClusterId()`
+ * produces client-side -- under ordinary type checking. The brand is a
+ * refactor-safety property, NOT provenance: this is a request body, so nothing
+ * here can prove the value originated server-side. `parseServerClusterIdentity`
+ * is a SHAPE and ELIGIBILITY gate that rejects obviously-unusable input before a
+ * round trip. The authority is SQL, which re-derives the key from the
+ * representative pair and raises `UE412` on disagreement regardless of what any
+ * caller asserts -- including a caller going straight to PostgREST and bypassing
+ * this route entirely.
+ */
 interface CandidatePayload {
   source_dra_id: string;
-  coordinate_cluster_id: string;
+  expected_cluster_id: CanonicalClusterId;
+  representative_latitude: number;
+  representative_longitude: number;
   member_display_label: string;
   reason: string;
 }
@@ -126,8 +175,27 @@ function parseCandidatePayload(value: unknown): CandidatePayload {
   if (typeof body.source_dra_id !== 'string' || !UUID_RE.test(body.source_dra_id)) {
     throw new Error('source_dra_id must be a UUID string');
   }
-  if (typeof body.coordinate_cluster_id !== 'string' || body.coordinate_cluster_id.trim().length === 0) {
-    throw new Error('coordinate_cluster_id must be a non-empty string');
+  // F2: the asserted key and its locator are parsed TOGETHER, through the one
+  // sanctioned construction path. Either being absent, misshapen, or
+  // coordinate-ineligible fails the whole payload -- there is no path that
+  // accepts a key without a locator, which would restore the circularity F2
+  // removes.
+  //
+  // NOT trimmed. A canonical id is a fixed rendering; whitespace around it means
+  // the value did not come from `canonical_five_decimal_cluster`, and quietly
+  // repairing it would mask exactly that. The regex is anchored, so a padded
+  // value is rejected here rather than silently normalised into agreement.
+  const identity = parseServerClusterIdentity(
+    body.expected_cluster_id,
+    body.representative_latitude,
+    body.representative_longitude,
+  );
+  if (identity === null) {
+    // No echo of the offending value (D-F2-6): the message names the fields, not
+    // their contents.
+    throw new Error(
+      'expected_cluster_id must be a canonical cluster id and representative_latitude/representative_longitude must be an eligible coordinate pair',
+    );
   }
   if (typeof body.member_display_label !== 'string' || body.member_display_label.trim().length === 0) {
     throw new Error('member_display_label must be a non-empty string');
@@ -163,7 +231,9 @@ function parseCandidatePayload(value: unknown): CandidatePayload {
     // comparison below fail after the mutation had already committed, returning
     // a false 409 and inviting a duplicate retry.
     source_dra_id: body.source_dra_id.toLowerCase(),
-    coordinate_cluster_id: body.coordinate_cluster_id.trim(),
+    expected_cluster_id: identity.canonicalClusterId,
+    representative_latitude: identity.representative.latitude,
+    representative_longitude: identity.representative.longitude,
     member_display_label: body.member_display_label.trim(),
     reason: body.reason.trim(),
   };
@@ -225,6 +295,30 @@ function mapRpcErrorToResponse(error: { code?: string; message?: string }) {
       { status: 404 },
     );
   }
+  // F2 (2026-07-29): cluster identity mismatch. The server derived a canonical
+  // cluster id from the representative coordinate pair the client supplied, and it
+  // did not equal the id the client asserted.
+  //
+  // 409 and not 422: the payload is well-formed and every field is individually
+  // valid -- what failed is agreement between two fields, which is a conflict of
+  // state, not a validation error. Kept DISTINCT from the UE409 'conflict' branch
+  // below because the operator response differs.
+  //
+  // retry_safe is FALSE, unlike every other pre-commit branch here. UE409 and
+  // UE422 describe transient or correctable conditions where replaying the same
+  // request can legitimately succeed. A UE412 means the client's view of cluster
+  // identity has diverged from the server's, so retrying the SAME payload will
+  // fail identically forever; the client must re-read the live preview and obtain
+  // a fresh pair. Marking it retry_safe would invite exactly the retry loop that
+  // cannot terminate.
+  //
+  // The body carries NO cluster id and NO coordinates (D-F2-6).
+  if (error.code === 'UE412') {
+    return NextResponse.json(
+      { error: 'cluster_identity_mismatch', committed: false, retry_safe: false },
+      { status: 409 },
+    );
+  }
   if (error.code === 'UE409' || error.code === '55P03') {
     return NextResponse.json(
       { error: 'conflict', committed: false, retry_safe: true },
@@ -284,9 +378,18 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
   const { data: upsertData, error, status } = await authClient
     .schema('matrix_map')
+    // F2: SEVEN arguments. The asserted key is passed as `p_expected_cluster_id`
+    // and is ONLY ever compared server-side; the representative pair is what SQL
+    // actually derives the authoritative key from, before any sample selection.
+    // Argument NAMES matter -- PostgREST maps a JSON object to named parameters,
+    // and the old 5-argument overload is dropped in the same transaction that
+    // creates this one, so a stale caller fails loudly rather than binding to a
+    // function that no longer exists.
     .rpc('upsert_site_aggregate_candidate', {
       p_source_dra_id: payload.source_dra_id,
-      p_coordinate_cluster_id: payload.coordinate_cluster_id,
+      p_expected_cluster_id: payload.expected_cluster_id,
+      p_representative_latitude: payload.representative_latitude,
+      p_representative_longitude: payload.representative_longitude,
       p_member_display_label: payload.member_display_label,
       p_actor_id: auth.user.id,
       p_reason: payload.reason,
@@ -443,7 +546,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (
     rowPublicationId !== returnedPublicationId ||
     rowSourceDraId !== payload.source_dra_id ||
-    rowClusterId !== payload.coordinate_cluster_id
+    // F2: compared against the ASSERTED key deliberately. The upsert persists
+    // `v_derived_cluster`, and it can only have reached the INSERT at all if
+    // that derived value equalled the assertion -- a mismatch raised `UE412`
+    // pre-commit. So equality here re-proves, from the persisted row, that the
+    // key SQL derived is the key the operator approved.
+    rowClusterId !== payload.expected_cluster_id
   ) {
     // Same post-commit posture as every other verification failure below: the
     // write landed, but what came back is not the row we wrote.

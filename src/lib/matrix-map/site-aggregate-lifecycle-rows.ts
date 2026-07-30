@@ -106,18 +106,25 @@ export interface LifecycleRows<TCandidate extends LifecycleCandidateKey> {
  * Raw load signals, split by which SIDE of the surface they come from.
  */
 export interface LifecycleLoadSignals {
-  /** Sample or DRA query error. Governs the PREVIEW only. */
+  /** Live-preview RPC error. Governs the PREVIEW only. */
   previewLoadError: string | null;
-  /** Sample pagination hit its ceiling. Governs the PREVIEW only. */
+  /** Preview keyset traversal hit its page ceiling. Governs the PREVIEW only. */
   previewTruncated: boolean;
   /**
-   * DRA pagination hit its ceiling. Governs the PREVIEW only, same as
-   * `previewTruncated` -- a truncated DRA read silently drops every sample
-   * whose DRA fell beyond the page ceiling (computeSiteAggregates treats a
-   * missing DRA as an orphan), so it is exactly as corrupting to the preview
-   * as a truncated sample read, not merely a candidate-side concern.
+   * The preview read returned rows this build could not read (F2).
+   *
+   * Governs the PREVIEW only, exactly like `previewTruncated`, and for the same
+   * reason: a row the server sent but the client could not parse is MISSING from
+   * the rendered set while nothing else signals it. Treating it as anything
+   * softer would let a short table look complete.
+   *
+   * REPLACES the former `previewDrasTruncated`. That signal existed because the
+   * page paged `matrix_map.dras` itself and a truncated DRA read silently
+   * reclassified samples as orphans. The page no longer reads samples or DRAs at
+   * all -- the live-preview RPC does the join server-side -- so that failure mode
+   * is gone and this one takes its place on the same axis.
    */
-  previewDrasTruncated: boolean;
+  previewRowsUnreadable: boolean;
   /** Candidate RPC error. Governs the LIFECYCLE surface only. */
   candidateLoadError: string | null;
   /** Candidate pagination hit its ceiling. Governs the LIFECYCLE surface only. */
@@ -147,11 +154,12 @@ export interface LifecycleEvidenceAxes {
 export function deriveLifecycleEvidenceAxes({
   previewLoadError,
   previewTruncated,
-  previewDrasTruncated,
+  previewRowsUnreadable,
   candidateLoadError,
   candidateTruncated,
 }: LifecycleLoadSignals): LifecycleEvidenceAxes {
-  const previewIncomplete = Boolean(previewLoadError) || previewTruncated || previewDrasTruncated;
+  const previewIncomplete =
+    Boolean(previewLoadError) || previewTruncated || previewRowsUnreadable;
   const candidateIncomplete = Boolean(candidateLoadError) || candidateTruncated;
   return {
     previewIncomplete,

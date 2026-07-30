@@ -303,6 +303,56 @@ describe('admin candidates loader: actual RPC arguments', () => {
     expectExactPrefix(rpcArgs, 3);
     expect(out.candidatesTruncated).toBe(false);
   });
+
+  /**
+   * THE CANDIDATE AXIS FAILS CLOSED TOO.
+   *
+   * `(data ?? []) as T[]` turned a successful call carrying a non-array payload
+   * into an empty page with no error, so the candidate read looked COMPLETE.
+   * That is not a display-only concern: an OMITTED candidate looks "safely
+   * absent", so the page offers Create -- which upserts and can overwrite a
+   * curated label -- and an omitted orphaned publication loses the only
+   * Unpublish control that can retract it from members.
+   *
+   * The error must land on `candidateError`, never the preview's `loadError`: a
+   * candidate-side failure must not blank a preview that loaded fine.
+   */
+  it.each([
+    ['null', null],
+    ['undefined', undefined],
+    ['an object', { rows: [] }],
+    ['a string', 'unexpected'],
+    ['a number', 42],
+  ])('reports a %s payload as a candidate error, not an empty complete read', async (_l, payload) => {
+    const client = {
+      schema: () => ({
+        rpc: async () => ({ data: payload, error: null }),
+      }),
+    };
+
+    const out = await loadAdminCandidates(client as never);
+
+    expect(out.candidateError).toMatch(/payload where a row array was expected/);
+    expect(out.candidates).toEqual([]);
+    expect(out.candidatesTruncated).toBe(false);
+  });
+
+  it('still treats a genuinely EMPTY ARRAY as a complete, error-free read', async () => {
+    // The other side of that check: a database with no publications must read as
+    // complete rather than broken, or the fix would disable the surface it
+    // protects.
+    const client = {
+      schema: () => ({
+        rpc: async () => ({ data: [], error: null }),
+      }),
+    };
+
+    const out = await loadAdminCandidates(client as never);
+
+    expect(out.candidateError).toBeNull();
+    expect(out.candidates).toEqual([]);
+    expect(out.candidatesTruncated).toBe(false);
+  });
 });
 
 // BOTH range loaders get BOTH traversal modes.

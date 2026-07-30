@@ -25,7 +25,17 @@
  * hidden rows. Do not add such a parameter here or in any route that calls it.
  *
  * This module performs NO I/O and NO writes.
+ *
+ * F2 (2026-07-29) -- THIS MODULE IS NOT AN IDENTITY AUTHORITY.
+ * `coordinateClusterId` returns a `DisplayClusterKey`, which is structurally
+ * incompatible with the server-derived `CanonicalClusterId` that write paths
+ * require. The admin candidate lifecycle no longer consumes anything computed
+ * here: it reads `matrix_map.fetch_admin_site_aggregate_live_preview` and
+ * transports the key SQL derived. What remains here serves the PUBLIC map layer,
+ * where a cluster key is only ever a grouping and de-duplication device.
  */
+
+import { asDisplayClusterKey, type DisplayClusterKey } from './cluster-identity';
 
 /** Coordinate quality tiers as stored in `matrix_map.samples.coordinate_quality_tier`. */
 export type CoordinateTier = 'high' | 'medium' | 'low';
@@ -54,8 +64,15 @@ export interface SiteAggregate {
   /** Stable key: `${source_dra_id}:${coordinate_cluster_id}`. */
   aggregate_id: string;
   source_dra_id: string;
-  /** Deterministic function of the rounded representative coordinate. */
-  coordinate_cluster_id: string;
+  /**
+   * Deterministic function of the rounded representative coordinate.
+   *
+   * F2: typed `DisplayClusterKey`, not `string`. This value is DERIVED IN
+   * TYPESCRIPT, so it is a display and grouping key only and must never be
+   * asserted on a persistence API. SQL owns the authoritative identity; see
+   * `cluster-identity.ts`.
+   */
+  coordinate_cluster_id: DisplayClusterKey;
   display_name: string;
   dra_public: boolean;
   representative_latitude: number;
@@ -78,11 +95,22 @@ export interface SiteAggregate {
  */
 export const COORDINATE_CLUSTER_PRECISION = 5;
 
-/** Deterministic cluster id from a coordinate. Not caller-controllable. */
-export function coordinateClusterId(latitude: number, longitude: number): string {
+/**
+ * Deterministic cluster key from a coordinate. Not caller-controllable.
+ *
+ * DISPLAY ONLY (F2). The return type is `DisplayClusterKey` precisely so this
+ * value cannot be handed to a persistence API. It is also NOT guaranteed to
+ * agree with the SQL rendering: `toFixed(5)` and PostgreSQL's
+ * `trim(to_char(round(x::numeric, 5), 'FM9990.00000'))` are predicted to
+ * disagree on signed zero and near-zero values, which is one of the three ways
+ * the identity invariant can break and is pinned by executed tests on the SQL
+ * side. That divergence is harmless for map grouping and would be a correctness
+ * defect on a write path -- which is exactly why the two types are distinct.
+ */
+export function coordinateClusterId(latitude: number, longitude: number): DisplayClusterKey {
   const lat = latitude.toFixed(COORDINATE_CLUSTER_PRECISION);
   const lon = longitude.toFixed(COORDINATE_CLUSTER_PRECISION);
-  return `${lat},${lon}`;
+  return asDisplayClusterKey(`${lat},${lon}`);
 }
 
 function hasUsableCoordinate(
@@ -130,7 +158,10 @@ export function computeSiteAggregates(
 
   interface Acc {
     source_dra_id: string;
-    cluster: string;
+    // Branded, because it comes from `coordinateClusterId` and flows straight
+    // into `SiteAggregate.coordinate_cluster_id`. Typing it `string` here would
+    // have quietly laundered the brand away at the one place it matters.
+    cluster: DisplayClusterKey;
     lat: number;
     lon: number;
     total: number;
@@ -243,7 +274,27 @@ export interface SiteAggregateSummary {
   sites_with_single_sample: number;
 }
 
-export function summariseSiteAggregates(aggregates: readonly SiteAggregate[]): SiteAggregateSummary {
+/**
+ * The fields the roll-up actually reads.
+ *
+ * Declared structurally (F2) so the SAME summary serves both the public
+ * TypeScript-clustered path and the admin live-preview path, whose rows carry a
+ * server-derived `CanonicalClusterId`. `coordinate_cluster_id` is plain `string`
+ * here on purpose: both branded key types are assignable to it for READING,
+ * while neither is assignable to the other, so widening the summary input does
+ * not weaken the write-path guarantee.
+ */
+export interface SummarisableAggregate {
+  coordinate_cluster_id: string;
+  sample_count_total: number;
+  sample_count_high: number;
+  sample_count_medium: number;
+  sample_count_low: number;
+}
+
+export function summariseSiteAggregates(
+  aggregates: readonly SummarisableAggregate[],
+): SiteAggregateSummary {
   const counts = aggregates.map((a) => a.sample_count_total).sort((a, b) => a - b);
   const n = counts.length;
 
