@@ -88,6 +88,24 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   replay-and-GREEN gate, read-only preflight and postflight, and the visibility
   invariant. It documents a procedure and authorizes nothing; the live apply
   remains an OPEN owner decision.
+- `docs/design/matrix-map/OPTION_C_CANDIDATE_LIFECYCLE_WORKPLAN_2026_07_25.md` -
+  REFERENCE. Early technical design for candidate create/refresh.
+  **SUPERSEDED IN PART by F2 (PR #756, merged `e8daa2b8`): it predates the
+  7-argument `upsert_site_aggregate_candidate`, the `UE412` pre-commit identity
+  check, and the live-preview RPC, none of which it mentions.** Read it for the
+  lifecycle intent (locking, authorization, audit), not for the current RPC
+  signature or identity contract, which live in the pinned SQL and the runbook.
+
+### F2 cluster-identity program (2026-07-29/30)
+- F2 (PR #756) is MERGED as `e8daa2b8`; the follow-on cookie-adapter hotfix
+  (PR #758) is MERGED as `79e9353d` and deployed.
+- **The Option C SQL remains UNAPPLIED and D2 remains BLOCKED**, pending an owner
+  decision and an outstanding authenticated production retest. Do not describe D2
+  as complete or authorized.
+- Root continuity anchor:
+  `FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md`.
+- Reusable auth lesson from the hotfix: `docs/LESSONS.md` (2026-07-30, guarded
+  `getAll`/`setAll` Supabase cookie adapters in Server Components).
 
 ### Status snapshots (reference; dated, not current state)
 Treat every file below as a claim list tied to its date, never as live status.

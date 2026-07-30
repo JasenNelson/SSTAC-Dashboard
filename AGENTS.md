@@ -83,8 +83,16 @@ reordered. Gate logs go to `.tmp/gate-logs/`.
 - PUSH protocol: full six-gate suite on the final tip, never compact:
   `npm run lint` -> `npx tsc --noEmit` -> `npm run test:ci` -> monitored clean build ->
   `npm run test:e2e` -> `npm run docs:gate`.
-- MERGE protocol: push protocol confirmed plus GitHub CI green on the PR head.
-  The owner merges; agents never run `gh pr merge`.
+- MERGE protocol: push protocol confirmed plus GitHub CI green on the PR head, PLUS
+  explicit owner/HITL APPROVAL of that exact reviewed SHA and scope.
+  **Merge requires owner APPROVAL, not necessarily owner EXECUTION.** Once the owner has
+  explicitly approved the exact SHA and scope, and the required CI checks are green, an
+  authorized executor may perform the merge and observe the resulting deployment.
+  **An executor may NEVER self-approve**, and approval of one SHA never carries forward to
+  another: a new head SHA, a changed scope, or a re-run needs its own approval.
+  (Corrected 2026-07-30. The previous wording, "The owner merges; agents never run
+  `gh pr merge`", conflated approval with execution and contradicted actual owner practice.
+  This is not standing merge authority.)
 
 GitHub facts verified 2026-07-25:
 
@@ -154,7 +162,10 @@ Auth model:
   against the working tree.
 - Never run raw `npm run build`; use the monitored build gate.
 - Never bypass hooks with `--no-verify`.
-- Never run `gh pr merge`.
+- Never run `gh pr merge` WITHOUT explicit owner/HITL approval of that exact reviewed SHA
+  and scope, with required CI green. Never self-approve. See the MERGE protocol above:
+  approval is the owner's, execution may be delegated, and approval never carries to a
+  different SHA.
 - Never normalize vendored files or stale legacy docs solely for style.
 - Plain ASCII only (code points <= 127) in files authored by an agent in this repo.
 - No more than 3 concurrent background agents.
