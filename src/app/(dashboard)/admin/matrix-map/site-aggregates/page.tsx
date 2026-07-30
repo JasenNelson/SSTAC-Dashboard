@@ -31,7 +31,7 @@
  * request and never cached, which is the server-component equivalent of the
  * `Cache-Control: private, no-store` used by the samples route.
  */
-import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { createServerClient, type SetAllCookies } from '@supabase/ssr';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { summariseSiteAggregates } from '@/lib/matrix-map/siteAggregates';
@@ -64,14 +64,53 @@ async function createAuthenticatedClient() {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
     {
       cookies: {
-        get(name: string) {
-          return cookieStore.get(name)?.value;
+        getAll() {
+          return cookieStore.getAll();
         },
-        set(name: string, value: string, options: CookieOptions) {
-          cookieStore.set({ name, value, ...options });
-        },
-        remove(name: string, options: CookieOptions) {
-          cookieStore.set({ name, value: '', ...options });
+        // MUST STAY GUARDED. This page is a Server Component, where Next.js
+        // forbids cookie mutation. The previous adapter used the legacy
+        // get/set/remove shape with an UNGUARDED `cookieStore.set`, so when
+        // @supabase/ssr refreshed an expiring access token mid-render it tried to
+        // persist the new token, Next.js threw "Cookies can only be modified in a
+        // Server Action or Route Handler", and the throw escaped every loader
+        // try/catch (it originates inside the auth client's refresh, not in a
+        // query result). The whole page fell through to the global error boundary
+        // instead of the bounded InlineError this surface is designed to show.
+        // Observed in production 2026-07-30T16:37:33Z, digest 4193104151.
+        //
+        // WHAT SWALLOWING ACTUALLY COSTS, because the usual justification does
+        // NOT apply here. The standard advice is that this catch is safe "if you
+        // have middleware refreshing user sessions" -- but `src/middleware.ts`'s
+        // matcher does NOT include `/admin/:path*`, so no middleware refresh runs
+        // on this route.
+        //
+        // Do not read the catch as harmless. If GoTrue has already ROTATED the
+        // refresh token, the rotated value is lost here and the browser keeps the
+        // superseded one; past GoTrue's reuse interval that token is rejected and
+        // the admin can be signed out with no visible explanation. @supabase/ssr
+        // says as much in its own source: a server client that cannot set cookies
+        // "can lead to issues such as random logouts, early session termination or
+        // increased token refresh requests". Because this adapter DOES expose
+        // `setAll`, the library takes the setAll branch and its console warning
+        // never fires, so the degradation is silent.
+        //
+        // It is still the correct trade: the previous unguarded adapter did not
+        // persist the rotation either -- it threw FROM that very write -- so this
+        // removes a hard crash without adding a new session-loss mode, and the
+        // browser client (`src/lib/supabase/client.ts`, autoRefresh over
+        // document.cookie) is what usually recovers the session. Whether `/admin`
+        // belongs in the middleware matcher is a separate, broader question that
+        // would change behaviour for every admin route.
+        setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) =>
+              cookieStore.set(name, value, options)
+            );
+          } catch {
+            // The `setAll` method was called from a Server Component.
+            // This can be ignored if you have middleware refreshing
+            // user sessions.
+          }
         },
       },
     }
