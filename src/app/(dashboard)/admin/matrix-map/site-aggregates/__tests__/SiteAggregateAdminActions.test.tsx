@@ -2,6 +2,8 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, waitFor, fireEvent, act } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 
+import { parseServerClusterIdentity } from '@/lib/matrix-map/cluster-identity';
+
 import {
   SiteAggregateAdminActions,
   resolveSnapshotDriftState,
@@ -9,7 +11,34 @@ import {
 } from '../SiteAggregateAdminActions';
 
 const SOURCE_DRA_ID = '11111111-1111-4111-8111-111111111111';
-const CLUSTER_ID = 'cluster-alpha';
+/**
+ * F2: a REAL canonical rendering, not the former placeholder 'cluster-alpha'.
+ * The component is handed a parsed `ServerClusterIdentity`, and the only
+ * sanctioned way to obtain one is through the server-response parser -- which
+ * rejects anything that is not two `FM9990.00000` renderings joined by a comma.
+ */
+const CLUSTER_ID = '49.28270,-123.12070';
+const REPRESENTATIVE_LATITUDE = 49.2827;
+const REPRESENTATIVE_LONGITUDE = -123.1207;
+
+/**
+ * Built through the parser rather than cast, so the fixture exercises the same
+ * construction path production uses. A `null` here would mean the parser and
+ * the canonical rendering have diverged, which must fail the suite loudly rather
+ * than be papered over with a cast.
+ */
+const IDENTITY = (() => {
+  const parsed = parseServerClusterIdentity(
+    CLUSTER_ID,
+    REPRESENTATIVE_LATITUDE,
+    REPRESENTATIVE_LONGITUDE,
+  );
+  if (parsed === null) {
+    throw new Error('test fixture: canonical cluster identity failed to parse');
+  }
+  return parsed;
+})();
+
 const PUBLICATION_ID = '33333333-3333-4333-8333-333333333333';
 
 const UPDATED_AT = '2026-07-28T12:34:56.789012+00:00';
@@ -32,12 +61,35 @@ function candidateFrom(over: Partial<SiteAggregateCandidate> = {}): SiteAggregat
   };
 }
 
+/**
+ * The all-tier proposal a real row always carries.
+ *
+ * SUPPLIED BY DEFAULT, deliberately. Create and Refresh are now GATED on having
+ * an all-tier proposal to show, because writing a snapshot the operator never saw
+ * is the defect the proposal panel exists to prevent. Omitting it from the shared
+ * helper would leave most of this file exercising a state in which the write
+ * controls are disabled -- which is not the state those tests are about.
+ *
+ * Tests that are ABOUT the gate pass `lifecyclePreview: undefined` explicitly, so
+ * the absence is visible at the call site rather than inherited from a default.
+ */
+const DEFAULT_LIFECYCLE_PREVIEW = {
+  total: 41,
+  high: 23,
+  medium: 11,
+  low: 7,
+  tier: 'high',
+  source: 'bc_csr_centroid; survey',
+  distinctPoints: 1,
+};
+
 function renderActions(props: Partial<React.ComponentProps<typeof SiteAggregateAdminActions>> = {}) {
   return render(
     <SiteAggregateAdminActions
       source_dra_id={SOURCE_DRA_ID}
-      coordinate_cluster_id={CLUSTER_ID}
+      identity={IDENTITY}
       defaultLabel="Default Label"
+      lifecyclePreview={DEFAULT_LIFECYCLE_PREVIEW}
       {...props}
     />,
   );
@@ -661,9 +713,15 @@ describe('SiteAggregateAdminActions submission', () => {
     expect(url).toBe('/api/matrix-map/admin/site-aggregates/candidate');
     expect(init.method).toBe('POST');
     expect(init.headers['Content-Type']).toBe('application/json');
+    // F2: the body carries the ASSERTED key AND the independent locator. The
+    // exact-equality assertion is deliberate -- an extra or renamed field would
+    // silently change what the route parses, and `toEqual` catches that where a
+    // per-field check would not.
     expect(JSON.parse(init.body)).toEqual({
       source_dra_id: SOURCE_DRA_ID,
-      coordinate_cluster_id: CLUSTER_ID,
+      expected_cluster_id: CLUSTER_ID,
+      representative_latitude: REPRESENTATIVE_LATITUDE,
+      representative_longitude: REPRESENTATIVE_LONGITUDE,
       member_display_label: 'Default Label',
       reason: 'initial candidate',
     });
@@ -952,5 +1010,266 @@ describe('same-tick duplicate dispatch (G2)', () => {
     fireEvent.submit(screen.getByRole('form', { name: /site aggregate candidate action/i }));
     fireEvent.submit(screen.getByRole('form', { name: /site aggregate candidate action/i }));
     expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
+/**
+ * F2 -- THE NULL-IDENTITY SAFETY GATES.
+ *
+ * A review found that every existing test in this file supplies the non-null
+ * `IDENTITY` fixture, so the `identityMissing` gate had NO coverage: deleting it,
+ * or accidentally applying it to Unpublish, would have left the whole suite green.
+ *
+ * The asymmetry is the point and is load-bearing. Create and Refresh ASSERT a
+ * cluster identity, so without one there is nothing sound to send. Unpublish
+ * asserts nothing -- it addresses the publication by id and the server
+ * revalidates -- and it is the visibility-REDUCING retraction path, so stranding
+ * it is the one failure this surface must never have.
+ */
+describe('null identity gates (F2)', () => {
+  it('disables Create when no server-derived identity is available', () => {
+    renderActions({ identity: null });
+
+    const create = screen.getByRole('button', { name: /create candidate/i });
+    expect(create).toBeDisabled();
+    expect(
+      screen.getByText(/Create and Refresh unavailable: no server-derived cluster identity/i),
+    ).toBeTruthy();
+  });
+
+  it('disables Refresh on an unpublished candidate when the identity is unreadable', () => {
+    renderActions({ identity: null, candidate: candidateFrom({ is_published: false }) });
+
+    expect(screen.getByRole('button', { name: /refresh candidate/i })).toBeDisabled();
+  });
+
+  it('KEEPS Unpublish reachable on a published candidate with no identity', () => {
+    // The retraction path must survive an unreadable identity. If this ever fails,
+    // a published aggregate could become member-visible with no operator route to
+    // retract it -- which is strictly worse than blocking a write.
+    renderActions({ identity: null, candidate: candidateFrom({ is_published: true }) });
+
+    expect(screen.getByRole('button', { name: /^unpublish$/i })).not.toBeDisabled();
+  });
+
+  it('DISCRIMINATES: the same controls are enabled once an identity IS present', () => {
+    // Without this, the three assertions above would pass against a component
+    // that disabled everything unconditionally.
+    const { unmount } = renderActions({ identity: IDENTITY });
+    expect(screen.getByRole('button', { name: /create candidate/i })).not.toBeDisabled();
+    unmount();
+
+    renderActions({ identity: IDENTITY, candidate: candidateFrom({ is_published: false }) });
+    expect(screen.getByRole('button', { name: /refresh candidate/i })).not.toBeDisabled();
+  });
+
+  it('never dispatches a create request while the identity is null', async () => {
+    // The gate is enforced in handleAction too, not only by the disabled
+    // attribute -- a disabled attribute can be cleared and Enter-to-submit never
+    // consults it.
+    //
+    // THE MODAL IS OPENED WITH A VALID IDENTITY FIRST, then the component is
+    // rerendered with `identity: null` while the form is still mounted. A review
+    // showed the previous version was VACUOUS: with a null identity from the
+    // start no modal renders at all, so it submitted a detached fallback form
+    // with no component listener -- which cannot dispatch whether or not the
+    // guard exists. This sequence puts the real production form on screen and
+    // then removes the identity underneath it.
+    const user = userEvent.setup();
+    const { rerender } = render(
+      <SiteAggregateAdminActions
+        source_dra_id={SOURCE_DRA_ID}
+        identity={IDENTITY}
+        defaultLabel="Default Label"
+        lifecyclePreview={DEFAULT_LIFECYCLE_PREVIEW}
+        candidate={candidateFrom({ is_published: false })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /refresh candidate/i }));
+    await user.type(document.querySelectorAll('textarea')[0], 'a reason');
+    // The form is now genuinely rendered and wired to the component.
+    expect(screen.getByRole('form', { name: /site aggregate candidate action/i })).toBeTruthy();
+
+    rerender(
+      <SiteAggregateAdminActions
+        source_dra_id={SOURCE_DRA_ID}
+        identity={null}
+        defaultLabel="Default Label"
+        lifecyclePreview={DEFAULT_LIFECYCLE_PREVIEW}
+        candidate={candidateFrom({ is_published: false })}
+      />,
+    );
+
+    fireEvent.submit(screen.getByRole('form', { name: /site aggregate candidate action/i }));
+
+    await waitFor(() =>
+      expect(
+        screen.getByText(/no server-derived cluster identity, so a candidate cannot be created/i),
+      ).toBeTruthy(),
+    );
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('DISCRIMINATES: the same sequence DOES dispatch when the identity survives', async () => {
+    // Without this, the assertion above would pass against a component that never
+    // dispatched anything from a rerendered form.
+    const user = userEvent.setup();
+    render(
+      <SiteAggregateAdminActions
+        source_dra_id={SOURCE_DRA_ID}
+        identity={IDENTITY}
+        defaultLabel="Default Label"
+        lifecyclePreview={DEFAULT_LIFECYCLE_PREVIEW}
+        candidate={candidateFrom({ is_published: false })}
+      />,
+    );
+
+    await user.click(screen.getByRole('button', { name: /refresh candidate/i }));
+    await user.type(document.querySelectorAll('textarea')[0], 'a reason');
+    fireEvent.submit(screen.getByRole('form', { name: /site aggregate candidate action/i }));
+
+    await waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+  });
+});
+
+/**
+ * F2 -- THE OPERATOR MUST SEE THE ALL-TIER SNAPSHOT BEFORE CREATE.
+ *
+ * A holistic review found this: on a mixed-tier cluster with no existing
+ * candidate, only the lifecycle IDENTITY was passed in. The all-tier counts, tier
+ * and source were returned by the RPC and then dropped, so the operator saw the
+ * MEDIUM-TIER row, clicked Create, and only discovered the persisted all-tier
+ * values afterwards.
+ *
+ * That contradicts F2's whole premise. A preview that cannot show what will be
+ * written is not a preview -- and this is precisely the gap a per-half review
+ * cannot see, because the SQL was returning the data correctly and the component
+ * was rendering correctly; only the WIRING between them lost it.
+ */
+describe('all-tier snapshot is visible before Create (F2)', () => {
+  const lifecyclePreview = DEFAULT_LIFECYCLE_PREVIEW;
+
+  it('shows the all-tier counts, tier and source when there is NO candidate yet', () => {
+    renderActions({ identity: IDENTITY, lifecyclePreview });
+
+    const panel = screen.getByTestId('create-lifecycle-preview');
+    expect(panel.textContent).toContain('41');
+    expect(panel.textContent).toContain('23');
+    expect(panel.textContent).toContain('11');
+    expect(panel.textContent).toContain('7');
+    expect(panel.textContent).toContain('high');
+    expect(panel.textContent).toContain('bc_csr_centroid; survey');
+  });
+
+  it('says plainly that these differ from the medium-tier row beside them', () => {
+    renderActions({ identity: IDENTITY, lifecyclePreview });
+
+    expect(
+      screen.getByText(/all-tier values are what would be written/i),
+    ).toBeTruthy();
+  });
+
+  it('is rendered on the CREATE path specifically, alongside the Create control', () => {
+    renderActions({ identity: IDENTITY, lifecyclePreview });
+
+    expect(screen.getByRole('button', { name: /create candidate/i })).toBeTruthy();
+    expect(screen.getByTestId('create-lifecycle-preview')).toBeTruthy();
+  });
+
+  it('DISCRIMINATES: absent without the prop, so the panel is genuinely data-driven', () => {
+    // Without this the assertions above could pass against a hard-coded panel.
+    renderActions({ identity: IDENTITY, lifecyclePreview: undefined });
+
+    expect(screen.queryByTestId('create-lifecycle-preview')).toBeNull();
+  });
+
+  it('swaps the CREATE proposal for the REFRESH proposal once a candidate exists', () => {
+    // THIS ASSERTION CHANGED, and the reason is worth stating. It used to require
+    // that NO proposal panel render once a candidate existed, reasoning that the
+    // persisted values are authoritative and that showing both invites the
+    // operator to compare a proposal against stored state as if they were the
+    // same kind of claim.
+    //
+    // That reasoning holds for CREATE, which is unreachable here. It does not
+    // hold for REFRESH, which OVERWRITES the persisted panel with the current
+    // all-tier snapshot -- so suppressing every proposal meant the operator
+    // confirmed that overwrite while looking only at the values being discarded.
+    // On a drifted cluster, the case where Refresh is the correct action, those
+    // differ, and the difference is the whole reason to act.
+    //
+    // The original concern is answered by SEPARATION, not suppression: the
+    // Refresh panel is distinctly labelled, sits beneath the persisted values it
+    // would replace, and calls itself a proposal.
+    renderActions({ identity: IDENTITY, lifecyclePreview, candidate: candidateFrom() });
+
+    expect(screen.queryByTestId('create-lifecycle-preview')).toBeNull();
+    expect(screen.getByTestId('refresh-lifecycle-preview')).toBeTruthy();
+    expect(screen.getByText(/all-tier publication candidate/i)).toBeTruthy();
+    expect(screen.getByText(/A PROPOSAL, not stored state/i)).toBeTruthy();
+  });
+
+  it('renders NO refresh proposal without the prop, so that panel is data-driven too', () => {
+    // The discrimination the Create panel already has. Without it the assertion
+    // above could pass against a hard-coded panel.
+    renderActions({ identity: IDENTITY, candidate: candidateFrom(), lifecyclePreview: undefined });
+
+    expect(screen.queryByTestId('refresh-lifecycle-preview')).toBeNull();
+  });
+
+  /**
+   * AND WITH NO PROPOSAL, THE SNAPSHOT WRITES ARE BLOCKED.
+   *
+   * Rendering no panel is only half a fix. A candidate-only row has a valid
+   * persisted identity, so `writeBlocked` stayed false and Refresh remained
+   * clickable with nothing shown -- the very defect the panel exists to prevent,
+   * reached by the path the panel does not cover. Two real ways in: an
+   * `outsidePreviewTier` row, whose upsert necessarily fails its medium-sample
+   * guard, and an unpublished soft-deleted DRA whose samples remain, whose upsert
+   * can rewrite the candidate from values never shown.
+   */
+  it('DISABLES Refresh when there is no all-tier proposal to show', () => {
+    renderActions({ identity: IDENTITY, candidate: candidateFrom(), lifecyclePreview: undefined });
+
+    const refresh = screen.getByRole('button', { name: /refresh candidate/i });
+    expect((refresh as HTMLButtonElement).disabled).toBe(true);
+    expect(refresh.getAttribute('title')).toMatch(/values you have not seen/i);
+  });
+
+  it('ENABLES Refresh once the proposal is present, so the gate is not blanket', () => {
+    // DISCRIMINATING: without this the assertion above could pass against a
+    // Refresh button that is simply always disabled.
+    renderActions({ identity: IDENTITY, candidate: candidateFrom(), lifecyclePreview });
+
+    const refresh = screen.getByRole('button', { name: /refresh candidate/i });
+    expect((refresh as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('DISABLES Create when there is no all-tier proposal to show', () => {
+    renderActions({ identity: IDENTITY, lifecyclePreview: undefined });
+
+    const create = screen.getByRole('button', { name: /create candidate/i });
+    expect((create as HTMLButtonElement).disabled).toBe(true);
+  });
+
+  it('ENABLES Create once the proposal is present', () => {
+    renderActions({ identity: IDENTITY, lifecyclePreview });
+
+    const create = screen.getByRole('button', { name: /create candidate/i });
+    expect((create as HTMLButtonElement).disabled).toBe(false);
+  });
+
+  it('leaves UNPUBLISH available with no proposal, because it REDUCES visibility', () => {
+    // The gate must not strand the only retraction path precisely when the
+    // preview is unavailable -- that would turn a read failure into stale
+    // member-visible data with no way to pull it back.
+    renderActions({
+      identity: IDENTITY,
+      candidate: candidateFrom({ is_published: true }),
+      lifecyclePreview: undefined,
+    });
+
+    const unpublish = screen.getByRole('button', { name: /unpublish/i });
+    expect((unpublish as HTMLButtonElement).disabled).toBe(false);
   });
 });

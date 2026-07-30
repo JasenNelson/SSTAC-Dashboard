@@ -19,6 +19,7 @@ import {
   siteAggregatePageArgs,
   siteAggregatePageIndexes,
 } from '../site-aggregate-pagination';
+import { MAX_CANONICAL_CLUSTER_ID_LENGTH } from '../cluster-identity';
 import { findForbiddenControlChars } from './guard-regex';
 
 const REPO_ROOT = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', '..', '..', '..');
@@ -287,41 +288,137 @@ describe('cross-layer: the bounded-pagination ceiling cannot drift', () => {
   });
 });
 
-describe('cross-layer: BOTH SQL dimensions are bound, per RPC', () => {
-  /** Executable body of one RPC, section-scoped so the two cannot be conflated. */
+describe('cross-layer: SQL paging dimensions are bound, per RPC', () => {
+  /**
+   * Executable body of one RPC, section-scoped so the RPCs cannot be conflated.
+   *
+   * ACCEPTS BOTH `CREATE FUNCTION` AND `CREATE OR REPLACE FUNCTION`, because
+   * `fetch_admin_site_aggregate_live_preview` is declared with the latter. To be
+   * accurate about why this changed: the old helper matched only the bare form,
+   * but the live-preview RPC was excluded from these assertions by OMISSION FROM
+   * THE RPC LIST, not by the helper silently skipping it -- had it been listed,
+   * the old helper would have failed LOUDLY on the existence assertion. Both the
+   * list and the helper needed fixing; only one of them was ever silent.
+   */
   function rpcBody(name: string): string {
-    const start = EXECUTABLE_SQL.indexOf(`CREATE FUNCTION matrix_map.${name}(`);
-    expect(start, `expected CREATE FUNCTION for ${name}`).toBeGreaterThan(-1);
+    const bareNeedle = `CREATE FUNCTION matrix_map.${name}(`;
+    const replaceNeedle = `CREATE OR REPLACE FUNCTION matrix_map.${name}(`;
+    // COUNTED, not merely located. `indexOf` finds the first occurrence of each
+    // form, so it cannot detect two `CREATE OR REPLACE` copies of the same
+    // function -- and that is exactly how these definitions evolve. With two
+    // copies, this helper would slice the FIRST while PostgreSQL executes the
+    // LAST, binding every assertion below to the wrong body.
+    const bareCount = EXECUTABLE_SQL.split(bareNeedle).length - 1;
+    const replaceCount = EXECUTABLE_SQL.split(replaceNeedle).length - 1;
+    expect(
+      bareCount + replaceCount,
+      `${name} must have exactly one definition (found ${bareCount} bare + ${replaceCount} or-replace)`,
+    ).toBe(1);
+    const start = bareCount === 1 ? EXECUTABLE_SQL.indexOf(bareNeedle) : EXECUTABLE_SQL.indexOf(replaceNeedle);
+    expect(start, `expected a CREATE [OR REPLACE] FUNCTION for ${name}`).toBeGreaterThan(-1);
     const end = EXECUTABLE_SQL.indexOf('\n$$;', start);
     expect(end, `expected an end for ${name}`).toBeGreaterThan(start);
     return EXECUTABLE_SQL.slice(start, end);
   }
 
-  const RPCS = [
-    { name: 'fetch_published_site_aggregates', label: 'member RPC' },
-    { name: 'fetch_admin_site_aggregate_publications', label: 'admin RPC' },
+  // ALL paging RPCs share the p_limit ceiling. `offsetPaged` is an EXPLICIT
+  // property rather than a positional `slice(0, 2)`: with a slice, APPENDING a
+  // future offset-paged RPC would leave it outside the offset assertions with no
+  // failure anywhere -- reintroducing, for the next RPC, exactly the
+  // unbound-ceiling defect this block was rewritten to close.
+  const PAGING_RPCS = [
+    { name: 'fetch_published_site_aggregates', label: 'member RPC', offsetPaged: true },
+    { name: 'fetch_admin_site_aggregate_publications', label: 'admin RPC', offsetPaged: true },
+    // KEYSET-paged: no p_offset at all, so asserting c_max_offset against it would
+    // be a false contract. Its cursor bound is asserted in its own describe below.
+    { name: 'fetch_admin_site_aggregate_live_preview', label: 'admin live-preview RPC', offsetPaged: false },
   ];
 
-  it.each(RPCS)('$label declares exactly one c_max_limit, equal to PAGE_SIZE', ({ name }) => {
+  const LIMIT_RPCS = PAGING_RPCS;
+  const OFFSET_RPCS = PAGING_RPCS.filter((r) => r.offsetPaged);
+
+  it.each(LIMIT_RPCS)('$label declares exactly one c_max_limit, equal to PAGE_SIZE', ({ name }) => {
     const body = rpcBody(name);
     const decls = [...body.matchAll(/c_max_limit\s+constant\s+integer\s*:=\s*(\d+)\s*;/g)];
     expect(decls).toHaveLength(1);
     expect(Number(decls[0][1])).toBe(PAGE_SIZE);
   });
 
-  it.each(RPCS)('$label declares exactly one c_max_offset, equal to MAX_PAGE_OFFSET', ({ name }) => {
+  it.each(LIMIT_RPCS)('$label USES c_max_limit in a fail-closed p_limit predicate', ({ name }) => {
+    const body = rpcBody(name);
+    // A declared-but-unused constant is the failure mode this guards: the
+    // binding above would still pass while nothing enforced it.
+    expect(body).toMatch(/IF p_limit IS NULL OR p_limit < 1 OR p_limit > c_max_limit THEN/);
+  });
+
+  it.each(OFFSET_RPCS)('$label declares exactly one c_max_offset, equal to MAX_PAGE_OFFSET', ({ name }) => {
     const body = rpcBody(name);
     const decls = [...body.matchAll(/c_max_offset\s+constant\s+integer\s*:=\s*(\d+)\s*;/g)];
     expect(decls).toHaveLength(1);
     expect(Number(decls[0][1])).toBe(MAX_PAGE_OFFSET);
   });
 
-  it.each(RPCS)('$label USES both bounds in its fail-closed predicates', ({ name }) => {
+  it.each(OFFSET_RPCS)('$label USES c_max_offset in a fail-closed p_offset predicate', ({ name }) => {
     const body = rpcBody(name);
-    // A declared-but-unused constant is the failure mode this guards: the
-    // binding above would still pass while nothing enforced it.
-    expect(body).toMatch(/IF p_limit IS NULL OR p_limit < 1 OR p_limit > c_max_limit THEN/);
     expect(body).toMatch(/IF p_offset IS NULL OR p_offset < 0 OR p_offset > c_max_offset THEN/);
+  });
+
+  it('the keyset RPC is NOT offset-paged, so the offset contract legitimately excludes it', () => {
+    // Pins the REASON for the exclusion. Were a p_offset ever added, this fails
+    // and forces the RPC back into OFFSET_RPCS rather than leaving it unbound.
+    const body = rpcBody('fetch_admin_site_aggregate_live_preview');
+    expect(body).not.toMatch(/p_offset/);
+    expect(body).not.toMatch(/c_max_offset/);
+    expect(OFFSET_RPCS.map((r) => r.name)).not.toContain('fetch_admin_site_aggregate_live_preview');
+  });
+
+  // Every declared RPC is actually covered by at least the limit contract, so a
+  // name added to the list but mistyped cannot sit there asserting nothing.
+  it('every paging RPC in the list resolves to exactly one body', () => {
+    for (const r of PAGING_RPCS) expect(rpcBody(r.name).length).toBeGreaterThan(0);
+  });
+});
+
+describe('cross-layer: the keyset RPC cursor bound is bound to the TypeScript parser', () => {
+  const NAME = 'fetch_admin_site_aggregate_live_preview';
+  const body = (() => {
+    const needle = `CREATE OR REPLACE FUNCTION matrix_map.${NAME}(`;
+    // ASSERTED, not assumed. Bare slicing on a `-1` index yields '' and turns a
+    // renamed function into three confusing "expected length 1, received 0"
+    // failures instead of one clear "function not found".
+    const count = EXECUTABLE_SQL.split(needle).length - 1;
+    if (count !== 1) {
+      throw new Error(`expected exactly one CREATE OR REPLACE FUNCTION for ${NAME}, found ${count}`);
+    }
+    const start = EXECUTABLE_SQL.indexOf(needle);
+    const end = EXECUTABLE_SQL.indexOf('\n$$;', start);
+    if (end <= start) throw new Error(`could not find the end of ${NAME}`);
+    return EXECUTABLE_SQL.slice(start, end);
+  })();
+
+  it('declares exactly one c_max_cursor_len, equal to MAX_CANONICAL_CLUSTER_ID_LENGTH', () => {
+    const decls = [...body.matchAll(/c_max_cursor_len\s+constant\s+integer\s*:=\s*(\d+)\s*;/g)];
+    expect(decls).toHaveLength(1);
+    // THE CROSS-LAYER BINDING. The TypeScript parser documents its 32-character
+    // ceiling as mirroring this constant; nothing tied them together, so either
+    // could move alone. Asserting the TS constant (and that it is still 32) makes
+    // the mirror executable rather than a comment.
+    expect(Number(decls[0][1])).toBe(MAX_CANONICAL_CLUSTER_ID_LENGTH);
+    expect(MAX_CANONICAL_CLUSTER_ID_LENGTH).toBe(32);
+  });
+
+  it('USES c_max_cursor_len in the cursor-length predicate', () => {
+    expect(body).toMatch(
+      /IF p_after_canonical_cluster IS NOT NULL\s*\n\s*AND length\(p_after_canonical_cluster\) > c_max_cursor_len THEN/,
+    );
+  });
+
+  it('requires the two cursor fields to be supplied together, fail-closed', () => {
+    // A half-supplied cursor is the dangerous case: it would otherwise silently
+    // degrade to a first-page read while the caller believed it was paging.
+    expect(body).toMatch(
+      /IF \(p_after_source_dra_id IS NULL\) <> \(p_after_canonical_cluster IS NULL\) THEN/,
+    );
   });
 });
 

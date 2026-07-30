@@ -2,6 +2,8 @@
 
 import { useRef, useState } from 'react';
 
+import type { ServerClusterIdentity } from '@/lib/matrix-map/cluster-identity';
+
 export interface SiteAggregateCandidate {
   publication_id?: string;
   source_dra_id: string;
@@ -105,7 +107,51 @@ export function resolveSnapshotDriftState(
 
 interface SiteAggregateAdminActionsProps {
   source_dra_id: string;
-  coordinate_cluster_id: string;
+  /**
+   * F2 -- THE SERVER-DERIVED IDENTITY, transported, never computed here.
+   *
+   * Carries the canonical cluster id AND the ALL-TIER representative coordinate
+   * pair it renders from. Both are sent on Create/Refresh: SQL re-derives the key
+   * from the pair, compares it against the assertion, and raises `UE412` on
+   * disagreement before writing anything. Passing only a key would be circular --
+   * the server would have nothing independent to check it against.
+   *
+   * The type is `ServerClusterIdentity`, whose `canonicalClusterId` is branded.
+   * A `DisplayClusterKey` (what `coordinateClusterId()` returns) cannot be
+   * substituted for it under ordinary type checking, so the TypeScript-derived
+   * key cannot reach this write path by refactor.
+   *
+   * NULL means no usable identity could be established for this row -- for
+   * example a persisted candidate whose stored key or representative pair does
+   * not parse. Create and Refresh are then unavailable, because there is nothing
+   * sound to assert. **Unpublish remains available**: it needs only
+   * `publication_id`, and stranding the retraction path is the one failure this
+   * surface must never have.
+   */
+  identity: ServerClusterIdentity | null;
+  /**
+   * F2 -- THE ALL-TIER SNAPSHOT CREATE WOULD PERSIST, shown BEFORE the write.
+   *
+   * The table row beside this shows the MEDIUM-TIER preview. On a mixed-tier
+   * cluster the all-tier values differ, and Create persists the ALL-TIER ones.
+   * Without this the operator saw medium-only counts, clicked Create, and only
+   * learned the persisted values afterwards -- which contradicts the entire
+   * premise of a live PREVIEW. A holistic review caught it: the lifecycle block
+   * was already being returned by the RPC and simply never displayed.
+   *
+   * Undefined for rows that have no live preview row of their own (the
+   * candidate-only buckets). Those always have a persisted `candidate`, whose own
+   * panel below shows the authoritative values, so nothing is lost there.
+   */
+  lifecyclePreview?: {
+    total: number;
+    high: number;
+    medium: number;
+    low: number;
+    tier: string | null;
+    source: string | null;
+    distinctPoints: number;
+  };
   defaultLabel: string;
   candidate?: SiteAggregateCandidate;
   /**
@@ -135,7 +181,8 @@ interface SiteAggregateAdminActionsProps {
 
 export function SiteAggregateAdminActions({
   source_dra_id,
-  coordinate_cluster_id,
+  identity,
+  lifecyclePreview,
   defaultLabel,
   candidate,
   disabled = false,
@@ -175,6 +222,45 @@ export function SiteAggregateAdminActions({
   // Publishing is permitted only on a confirmed match. `drift` and `unknown`
   // both block it, as does the incomplete-evidence flag.
   const publishBlocked = disabled || driftState !== 'match';
+  /**
+   * F2: Create and Refresh both ASSERT a cluster identity, so both require one.
+   * Without it there is nothing sound to send and the server would reject the
+   * request anyway -- refusing here states the reason instead of producing an
+   * opaque 400. Publish and Unpublish are unaffected: they address the
+   * publication by id and assert no identity at all.
+   */
+  const identityMissing = identity === null;
+  const writeBlocked = disabled || identityMissing;
+
+  /**
+   * A WRITE THAT SNAPSHOTS ALL TIERS NEEDS THE ALL-TIER PROPOSAL ON SCREEN.
+   *
+   * Create and Refresh both persist the CURRENT all-tier population, and both
+   * render that population in a proposal panel -- but the panel is conditional on
+   * `lifecyclePreview` while the buttons were gated only by `writeBlocked`
+   * (`disabled || identityMissing`). So a row with a valid persisted identity and
+   * NO live-preview row left Refresh enabled with nothing shown, which is the
+   * exact defect the proposal panel was added to fix, reached by the one path the
+   * panel does not cover.
+   *
+   * A review found two concrete ways in: `outsidePreviewTier` rows, where the
+   * upsert necessarily fails its medium-sample guard, and unpublished
+   * soft-deleted DRAs whose samples remain, where the upsert can REWRITE the
+   * candidate from values the operator was never shown.
+   *
+   * This is the component's own stated rule, not a new one -- the Refresh button
+   * already documents that it is "blocked only by incomplete evidence or a
+   * missing identity, both of which make the assertion it would send unsound".
+   * A missing all-tier proposal is incomplete evidence.
+   *
+   * UNPUBLISH IS DELIBERATELY NOT GATED: it REDUCES visibility, needs nothing
+   * from the preview, and gating it would strand the only retraction path
+   * precisely when the preview is unavailable.
+   */
+  const snapshotWriteBlocked = writeBlocked || !lifecyclePreview;
+  const missingProposalTitle = !lifecyclePreview
+    ? 'Disabled because this row has no live all-tier snapshot to show. Creating or refreshing would write values you have not seen. Reload the page; if the row has no medium-tier samples, it cannot be captured at all.'
+    : undefined;
 
   /**
    * The form's ONLY submission path.
@@ -227,11 +313,43 @@ export function SiteAggregateAdminActions({
     // Refuse outright once a post-commit outcome has been reported, so a
     // second submission cannot be issued even if the control is clicked again.
     if (nonRetryable) return;
+    /**
+     * The create/refresh request body, SERIALISED IN THE BLOCK THAT PROVES THE
+     * IDENTITY IS PRESENT.
+     *
+     * Built here rather than at the dispatch site on purpose: the null guard
+     * below narrows `identity` only within its own branch, and re-testing at
+     * dispatch would be a SECOND copy of the same guard -- the pattern this file
+     * already rejects for the in-flight lock, because a regression in either
+     * copy is masked by the other. One guard, one construction, one use.
+     */
+    let candidateRequestBody: string | null = null;
     if (actionType === 'create' || actionType === 'refresh') {
+      // FAIL CLOSED before dispatch. Reaching the network without an identity
+      // would send a payload the route must reject, and an unexplained 400 is
+      // worse than saying plainly that the identity is unavailable.
+      if (identity === null) {
+        setError(
+          'This row has no server-derived cluster identity, so a candidate cannot be created or refreshed from it. Reload the page; if it persists, the persisted candidate key or representative coordinate is unreadable and needs investigation.',
+        );
+        return;
+      }
       if (!label.trim() || !reason.trim()) {
         setError('Label and reason are required.');
         return;
       }
+      candidateRequestBody = JSON.stringify({
+        source_dra_id,
+        // F2: the ASSERTION plus the INDEPENDENT LOCATOR. SQL derives the key
+        // from the pair, compares, and refuses with UE412 -> HTTP 409
+        // `cluster_identity_mismatch` if they disagree. Nothing here is computed
+        // client-side; both values came from the server.
+        expected_cluster_id: identity.canonicalClusterId,
+        representative_latitude: identity.representative.latitude,
+        representative_longitude: identity.representative.longitude,
+        member_display_label: label,
+        reason,
+      });
     } else {
       if (!reason.trim()) {
         setError('Reason is required.');
@@ -249,16 +367,20 @@ export function SiteAggregateAdminActions({
 
     try {
       if (actionType === 'create' || actionType === 'refresh') {
+        if (candidateRequestBody === null) {
+          // INVARIANT, not dead code. The body is built in the validation block
+          // above for exactly these two action types, and every path that fails
+          // to build it returns. Reaching here means that block and this one
+          // have drifted apart -- so throw BEFORE `dispatched` is set, which
+          // keeps the outcome unambiguously pre-commit rather than latching the
+          // control on a request that was never sent.
+          throw new Error('candidate request body was not prepared');
+        }
         dispatched = true;
         const res = await fetch('/api/matrix-map/admin/site-aggregates/candidate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            source_dra_id,
-            coordinate_cluster_id,
-            member_display_label: label,
-            reason,
-          }),
+          body: candidateRequestBody,
         });
 
         if (!res.ok) {
@@ -442,12 +564,32 @@ export function SiteAggregateAdminActions({
             remains available)
           </div>
         )}
+        {identityMissing && (
+          // DISTINCT from the incomplete-evidence notice above. That one says the
+          // data load was unreliable; this one says the row's cluster identity
+          // itself is unreadable, which is a different condition with a different
+          // remedy. Unpublish is unaffected either way.
+          <div
+            className="text-[10px] font-semibold text-amber-700 dark:text-amber-400"
+            title="No server-derived cluster identity is available for this row, so there is nothing sound to assert on a write. Create and Refresh are unavailable. Unpublish is unaffected: it addresses the publication by id and asserts no identity."
+          >
+            Create and Refresh unavailable: no server-derived cluster identity
+          </div>
+        )}
         {!candidate && (
           <>
             <button
-              onClick={disabled ? undefined : () => openModal('create')}
+              // Create is gated on the SAME proposal for the same reason. Today
+              // the page always supplies `lifecyclePreview` alongside a live
+              // preview row, so this is defence in depth rather than a reachable
+              // bug -- but the guarantee lives in the caller, not in the prop's
+              // type, and the panel below is already conditional on it. Gating
+              // the button too keeps "what is written" and "what is shown"
+              // impossible to separate.
+              onClick={snapshotWriteBlocked ? undefined : () => openModal('create')}
               className="text-xs rounded bg-blue-600 px-2 py-1 text-white hover:bg-blue-700 disabled:opacity-50"
-              disabled={disabled || loading}
+              disabled={snapshotWriteBlocked || loading}
+              title={missingProposalTitle}
             >
               Create Candidate
             </button>
@@ -456,6 +598,33 @@ export function SiteAggregateAdminActions({
               table. Creating stages a candidate for review; it publishes
               nothing. Review the captured snapshot before Publish.
             </div>
+            {lifecyclePreview ? (
+              // WHAT CREATE WOULD PERSIST, shown BEFORE the write. These are the
+              // ALL-TIER values the live-preview RPC returned for this cluster --
+              // the same population the upsert will snapshot. On a mixed-tier
+              // cluster they differ from the medium-tier row beside them, and the
+              // operator has to be able to see that difference BEFORE clicking,
+              // not after. Sourced from the server; nothing here is recomputed.
+              <div
+                data-testid="create-lifecycle-preview"
+                className="rounded border border-amber-300 p-1 text-[10px] text-slate-600 dark:border-amber-700 dark:text-slate-300"
+              >
+                <div className="font-semibold">All-tier snapshot Create would persist</div>
+                <div>
+                  total {lifecyclePreview.total} (high {lifecyclePreview.high}, medium{' '}
+                  {lifecyclePreview.medium}, low {lifecyclePreview.low})
+                </div>
+                <div>distinct points {lifecyclePreview.distinctPoints}</div>
+                {lifecyclePreview.tier ? <div>dominant tier {lifecyclePreview.tier}</div> : null}
+                {lifecyclePreview.source ? (
+                  <div>coordinate source {lifecyclePreview.source}</div>
+                ) : null}
+                <div className="mt-0.5 italic">
+                  The row beside this shows the MEDIUM-TIER preview only. These
+                  all-tier values are what would be written.
+                </div>
+              </div>
+            ) : null}
           </>
         )}
 
@@ -498,6 +667,42 @@ export function SiteAggregateAdminActions({
             {candidate.count_bucket ? <div>bucket {candidate.count_bucket}</div> : null}
           </div>
         )}
+
+        {candidate && lifecyclePreview ? (
+          // WHAT REFRESH WOULD REPLACE THE PANEL ABOVE WITH.
+          //
+          // The persisted panel is what IS stored; Refresh overwrites it with the
+          // CURRENT all-tier snapshot. Without this the operator confirmed that
+          // overwrite while looking only at the values it was about to discard --
+          // on a drifted cluster, precisely the case where Refresh is the right
+          // action, the two differ and the difference is the entire reason to act.
+          //
+          // A prior version of this component suppressed the Create panel once a
+          // candidate existed, reasoning that "rendering both would invite the
+          // operator to compare a proposal against a persisted row as if they
+          // were the same kind of claim". That reasoning is RIGHT and is why this
+          // is a SEPARATE, differently-labelled panel rather than the Create one
+          // un-suppressed: it says what it is (a proposal, tied to Refresh),
+          // sits directly beneath the persisted values it would replace, and
+          // never presents itself as stored state.
+          <div
+            data-testid="refresh-lifecycle-preview"
+            className="rounded border border-amber-300 p-1 text-[10px] text-slate-600 dark:border-amber-700 dark:text-slate-300"
+          >
+            <div className="font-semibold">All-tier snapshot Refresh would write</div>
+            <div>
+              total {lifecyclePreview.total} (high {lifecyclePreview.high}, medium{' '}
+              {lifecyclePreview.medium}, low {lifecyclePreview.low})
+            </div>
+            <div>distinct points {lifecyclePreview.distinctPoints}</div>
+            {lifecyclePreview.tier ? <div>dominant tier {lifecyclePreview.tier}</div> : null}
+            {lifecyclePreview.source ? <div>coordinate source {lifecyclePreview.source}</div> : null}
+            <div className="mt-0.5 italic">
+              A PROPOSAL, not stored state. Refresh replaces the persisted values
+              above with these; Publish serves whatever is persisted at that time.
+            </div>
+          </div>
+        ) : null}
 
         {/*
           DRIFT STATE IS RENDERED OUTSIDE THE BUTTON BRANCHES, deliberately.
@@ -546,10 +751,13 @@ export function SiteAggregateAdminActions({
               Publish
             </button>
             <button
-              // Refresh stays available under drift -- it is the remedy.
-              onClick={disabled ? undefined : () => openModal('refresh')}
+              // Refresh stays available under drift -- it is the remedy. It is
+              // blocked only by incomplete evidence or a missing identity, both
+              // of which make the assertion it would send unsound.
+              onClick={snapshotWriteBlocked ? undefined : () => openModal('refresh')}
               className="text-xs rounded bg-slate-600 px-2 py-1 text-white hover:bg-slate-700 disabled:opacity-50"
-              disabled={disabled || loading}
+              disabled={snapshotWriteBlocked || loading}
+              title={missingProposalTitle}
             >
               Refresh Candidate
             </button>

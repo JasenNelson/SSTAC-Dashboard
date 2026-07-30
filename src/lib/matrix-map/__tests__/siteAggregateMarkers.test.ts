@@ -5,13 +5,18 @@ import {
   boundsForMarkers,
   type AggregateMarker,
 } from '../siteAggregateMarkers';
+import { asDisplayClusterKey } from '../cluster-identity';
 import type { SiteAggregate } from '../siteAggregates';
 
 function agg(over: Partial<SiteAggregate> = {}): SiteAggregate {
   return {
     aggregate_id: 'dra-1:49.28270,-123.12070',
     source_dra_id: 'dra-1',
-    coordinate_cluster_id: '49.28270,-123.12070',
+    // F2: `SiteAggregate.coordinate_cluster_id` is a branded DISPLAY key, so a
+    // bare string no longer satisfies it. Going through the display factory is
+    // the point: this fixture cannot stand in for a server-derived
+    // `CanonicalClusterId` either.
+    coordinate_cluster_id: asDisplayClusterKey('49.28270,-123.12070'),
     display_name: 'Site One',
     dra_public: false,
     representative_latitude: 49.2827,

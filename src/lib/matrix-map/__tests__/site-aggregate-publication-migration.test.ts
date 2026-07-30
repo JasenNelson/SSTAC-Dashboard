@@ -518,7 +518,12 @@ describe('F4 -- the admin page delegates its RPC loops to the extracted loaders'
       join(process.cwd(), 'src/app/(dashboard)/admin/matrix-map/site-aggregates/page.tsx'),
       'utf8',
     );
-    expect(page).toContain("from '@/lib/matrix-map/site-aggregate-admin-loaders'");
+    // F2: the page's ONE orchestration moved to the live-preview module, which
+    // internally still delegates the candidate loop to the extracted loaders.
+    // The invariant is unchanged -- no RPC loop is inlined back into the server
+    // component, where its arguments would again be unexecutable in a test.
+    expect(page).toContain("from '@/lib/matrix-map/site-aggregate-live-preview'");
     expect(page).not.toContain("rpc('fetch_admin_site_aggregate_publications'");
+    expect(page).not.toContain("rpc('fetch_admin_site_aggregate_live_preview'");
   });
 });

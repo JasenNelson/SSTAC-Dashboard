@@ -45,6 +45,18 @@ param(
   [Parameter(Mandatory = $false)]
   [switch]$NegativeLegacyReplay,
 
+  # F2 PERFORMANCE MODE (V6 section 8), added 2026-07-29.
+  #
+  # An ALTERNATIVE terminal path, not an addition to the standard run. The PERF
+  # fixture's page arithmetic is exact by construction -- 25,000 preview-eligible
+  # clusters at page size 1000 is exactly 25 full pages then a 26th call
+  # returning 0 -- and that only holds if the PERF fixture is the WHOLE
+  # population. So this mode skips the standard seed, the PAGE fixture, the test
+  # suite, the ELIG fixture and the concurrency check. An approximate page count
+  # cannot demonstrate an exact contract.
+  [Parameter(Mandatory = $false)]
+  [switch]$PerfFixture,
+
   # POSITIVE FULL-SCRIPT REAPPLY CONTROL (REAPPLY_01), added 2026-07-27 restack.
   #
   # NEG_01 proves the script aborts and rolls back on a malformed install. It
@@ -890,6 +902,80 @@ ALTER TABLE matrix_map.site_aggregate_candidate_audit
   }
   $fnDefReceipt | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $OutputDir "draft_function_definition_receipt.json") -Encoding Ascii
 
+  # ==========================================================================
+  # PERF MODE terminal path (V6 section 8). See the -PerfFixture switch comment
+  # for why this REPLACES the standard run rather than extending it.
+  # ==========================================================================
+  if ($PerfFixture) {
+    Write-HarnessLog "PERF MODE: seeding the admin auth context only, then loading the 502,000-row PERF fixture..."
+    $perfAuthSql = @"
+INSERT INTO auth.users (id, email) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'admin@example.com')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.user_roles (user_id, role) VALUES
+  ('11111111-1111-1111-1111-111111111111', 'admin'),
+  ('11111111-1111-1111-1111-111111111111', 'matrix_admin')
+ON CONFLICT DO NOTHING;
+"@
+    $perfAuthLog = $perfAuthSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "PERF auth seeding failed: $perfAuthLog" "ERROR"
+      exit 1
+    }
+
+    $PerfFixtureSqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\perf-fixture.sql"
+    if (-not (Test-Path $PerfFixtureSqlPath)) {
+      Write-HarnessLog "PERF fixture generator not found at $PerfFixtureSqlPath" "ERROR"
+      exit 1
+    }
+    $perfLoadStart = [DateTime]::UtcNow
+    $perfFixtureContent = Get-Content -Raw -Path $PerfFixtureSqlPath
+    $perfFixtureLog = $perfFixtureContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      # The fixture's own self-check block RAISES on any composition mismatch, so
+      # a non-zero exit means the fixture is not what the measurements assume.
+      Write-HarnessLog "PERF fixture load or self-check FAILED: $perfFixtureLog" "ERROR"
+      exit 1
+    }
+    Set-Content -Path (Join-Path $OutputDir "perf_fixture_load.log") -Value ($perfFixtureLog | Out-String) -Encoding Ascii
+    Write-HarnessLog ("PERF fixture loaded and self-checked in {0:N1}s. Running ANALYZE..." -f ([DateTime]::UtcNow - $perfLoadStart).TotalSeconds)
+
+    # ANALYZE BEFORE MEASURING. A plan built on stale statistics is one the
+    # production planner would never choose, which is worse than no measurement
+    # at all because it still looks like evidence.
+    $analyzeLog = "ANALYZE matrix_map.samples; ANALYZE matrix_map.dras;" |
+      docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+    if ($LASTEXITCODE -ne 0) {
+      Write-HarnessLog "ANALYZE failed: $analyzeLog" "ERROR"
+      exit 1
+    }
+
+    Write-HarnessLog "Running F2 Measurements A, B and C..."
+    # CAPTURED, not just invoked. The first version let a terminating error in
+    # the measurement script vanish -- the harness logged "Running F2
+    # Measurements", then stopped the container, with nothing in between. A step
+    # that can fail silently is not a step you can trust the result of.
+    $perfLogPath = Join-Path $OutputDir "perf_measure_stdout.log"
+    $perfExit = 1
+    try {
+      $perfOut = & (Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\perf-measure.ps1") `
+          -ContainerId $ContainerId -OutputDir $OutputDir -RepoRoot $RepoRoot 2>&1
+      $perfExit = $LASTEXITCODE
+      Set-Content -Path $perfLogPath -Value ($perfOut | Out-String) -Encoding Ascii
+      foreach ($line in @($perfOut)) { Write-HarnessLog ("  " + $line) }
+    } catch {
+      Set-Content -Path $perfLogPath -Value ($_ | Out-String) -Encoding Ascii
+      Write-HarnessLog ("F2 performance measurement THREW: " + ($_ | Out-String)) "ERROR"
+      $perfExit = 1
+    }
+    if ($perfExit -ne 0) {
+      Write-HarnessLog "F2 performance measurement FAILED (see perf_measure_stdout.log and perf_measurement_receipt.json)." "ERROR"
+      exit 1
+    }
+    Write-HarnessLog "F2 performance measurement PASSED."
+    exit 0
+  }
+
   # Seed test data for validation assertions
   Write-HarnessLog "Seeding test fixture data in sstac_replay for automated test suite..."
   $seedSql = @"
@@ -923,6 +1009,37 @@ ON CONFLICT (id) DO NOTHING;
     exit 1
   }
   Write-HarnessLog "Test fixture data seeded successfully."
+
+  # ==========================================================================
+  # Step 4b: F2 PAGE fixture (V6 8.5.2) -- the pagination fixture.
+  #
+  # Loaded ALONGSIDE the standard seed rather than in place of it, because it is
+  # reachable in ISOLATION: its three DRA uuids all start with `f`, and the
+  # live-preview total order leads with source_dra_id, so every one of its rows
+  # sorts strictly AFTER every other fixture row. A traversal that starts from a
+  # cursor positioned at the last non-PAGE row therefore returns exactly this
+  # fixture's 47 preview-eligible rows -- which is what gives TEST_81 its exact
+  # 4-full-pages-then-a-partial-7 arithmetic without needing its own database.
+  #
+  # It carries NO ineligible coordinates; eligibility is the ELIG fixture's job.
+  # ==========================================================================
+  $PageFixtureSqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\page-fixture.sql"
+  if (-not (Test-Path $PageFixtureSqlPath)) {
+    Write-HarnessLog "PAGE fixture generator not found at $PageFixtureSqlPath" "ERROR"
+    exit 1
+  }
+  Write-HarnessLog "Loading F2 PAGE pagination fixture..."
+  $pageFixtureContent = Get-Content -Raw -Path $PageFixtureSqlPath
+  $pageFixtureLog = $pageFixtureContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    # The fixture's own self-check block RAISES on any composition mismatch, so
+    # a non-zero exit here means either a load error or a failed self-check --
+    # both of which invalidate every pagination assertion downstream.
+    Write-HarnessLog "PAGE fixture load or self-check FAILED: $pageFixtureLog" "ERROR"
+    exit 1
+  }
+  Set-Content -Path (Join-Path $OutputDir "page_fixture_load.log") -Value ($pageFixtureLog | Out-String) -Encoding Ascii
+  Write-HarnessLog "F2 PAGE fixture loaded; its self-checks passed."
 
   # Step 5: Run Automated Test Suite against sstac_replay
   Write-HarnessLog "Executing automated PostgreSQL validation test suite against sstac_replay..."
@@ -962,7 +1079,19 @@ ON CONFLICT (id) DO NOTHING;
   #
   # WHEN YOU ADD A TEST to test-option-c.sql, extend this array in the same
   # commit. The `missing_test_ids` list is what fails closed if you do not.
-  $requiredTestIds = @(1..69 | ForEach-Object { 'TEST_{0:D2}' -f $_ })
+  # F2 (2026-07-29): raised 69 -> 75 in the SAME commit as TEST_70..TEST_75,
+  # then 75 -> 80 in the SAME commit as TEST_76..TEST_80 (preview/lifecycle
+  # divergence, row scope, window equivalence against REF, arbitrary cursors,
+  # COLLATE "C" ordering), then 80 -> 81 in the SAME commit as TEST_81 (the
+  # PAGE fixture's exact 4-full-pages-then-partial-7 arithmetic), then 81 -> 84
+  # in the SAME commit as TEST_82..TEST_84 (the three review-driven
+  # discrimination tests: UE412 ordering, authz-before-parameter-validation,
+  # and the set-based rewrite's tie and source semantics).
+  # This baseline is the gate's only defence against a suite that silently stops
+  # growing: it went stale at 64 once while the suite had reached 69, so a replay
+  # could report strict_pass with the newest checks absent. Extend it here every
+  # time a TEST_nn is added.
+  $requiredTestIds = @(1..85 | ForEach-Object { 'TEST_{0:D2}' -f $_ })
   $passCount = 0
   $failCount = 0
   $parsedResults = [System.Collections.Generic.List[PSCustomObject]]::new()
@@ -1020,6 +1149,179 @@ ON CONFLICT (id) DO NOTHING;
     Write-HarnessLog "Automated test suite evaluation FAILED!" "ERROR"
     exit 1
   }
+
+  # ==========================================================================
+  # Step 5b: F2 ELIG -- coordinate-eligibility fixture under the V6 section
+  # 13.2 CUSTODY MODEL.
+  #
+  # WHY THIS LIVES INSIDE THE HARNESS. The custody rule is that only the EXACT
+  # container this invocation created and identity-verified may be used -- not
+  # one found by name lookup, not a reused container from an earlier run, not
+  # one matching a pattern. That container only exists, and is only running,
+  # inside this script. A standalone script run afterwards would be operating
+  # on a stopped container it did not create, which is precisely the ambiguity
+  # 13.2.1 forbids.
+  #
+  # WHY IT IS NOT PART OF test-option-c.sql. Its assertions run inside an
+  # UNCOMMITTED transaction that ends in ROLLBACK, so they cannot be written to
+  # public.test_results -- the rollback would erase them. Results are therefore
+  # emitted on stdout and parsed here.
+  # ==========================================================================
+  Write-HarnessLog "Executing F2 ELIG coordinate-eligibility fixture under section 13.2 custody..."
+  $eligPass = $false
+  $eligAbortReason = $null
+  $eligResults = @()
+  $eligBaseline = @{}
+  $eligAfter = @{}
+  $eligStart = [DateTime]::UtcNow
+  # INITIALISED HERE, NOT ONLY WHERE THEY ARE MEASURED. These two were assigned
+  # exclusively inside the non-abort branch, so ANY custody precondition failing
+  # first -- a missing or mismatched container receipt, an absent SQL file --
+  # reached the receipt construction with both still undefined. Under
+  # `Set-StrictMode -Version Latest` (:106) that THROWS, so the abort path
+  # destroyed the very artifact it exists to produce: the failed
+  # `elig_custody_receipt.json` carrying `abort_reason` and `strict_pass: false`.
+  # An evidence harness whose failure path emits no evidence is worse than one
+  # that fails loudly. -1 means "the step never ran", which is distinct from any
+  # real psql exit code.
+  $eligCustodyExit = -1
+  $eligVerifyExit = -1
+
+  $eligCustodySqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\elig-custody.sql"
+  $eligVerifySqlPath = Join-Path $RepoRoot "scripts\matrix-map\validation\option-c-phase2\elig-rollback-verify.sql"
+
+  # -- CUSTODY PRECONDITIONS (V6 13.2.1). Each failure is an ABORT, never a
+  # -- workaround. "Never relax a custody check to make a test run."
+  $eligReceiptPath = Join-Path $OutputDir "container_identity_receipt.json"
+  if (-not (Test-Path $eligReceiptPath)) {
+    $eligAbortReason = "receipt ambiguity: container_identity_receipt.json is missing"
+  } else {
+    $eligReceipt = $null
+    try { $eligReceipt = Get-Content -Raw -Path $eligReceiptPath | ConvertFrom-Json } catch { $eligReceipt = $null }
+    if ($null -eq $eligReceipt) {
+      $eligAbortReason = "receipt ambiguity: container_identity_receipt.json is unreadable"
+    } elseif ($eligReceipt.container_id -ne $ContainerId) {
+      # The receipt must correspond to THIS invocation's container.
+      $eligAbortReason = "container ambiguity: receipt id '$($eligReceipt.container_id)' is not this run's container id '$ContainerId'"
+    } else {
+      # HOST PORT BINDINGS MUST BE ABSENT. A non-empty value means the container
+      # is reachable from the host and the isolation premise is broken. Note the
+      # harness creates the container with no -p / --publish at all, so this
+      # should be empty by construction -- which is exactly the kind of
+      # expectation that must be CHECKED rather than assumed.
+      $bindings = $eligReceipt.network_bindings
+      $bindingCount = 0
+      if ($null -ne $bindings) {
+        $bindingCount = @($bindings.PSObject.Properties).Count
+      }
+      if ($bindingCount -ne 0) {
+        $eligAbortReason = "port-binding ambiguity: network_bindings is non-empty ($bindingCount entries)"
+      }
+    }
+  }
+  if ($null -eq $eligAbortReason) {
+    if (-not (Test-Path $eligCustodySqlPath)) { $eligAbortReason = "elig-custody.sql is missing" }
+    elseif (-not (Test-Path $eligVerifySqlPath)) { $eligAbortReason = "elig-rollback-verify.sql is missing" }
+  }
+
+  if ($null -ne $eligAbortReason) {
+    Write-HarnessLog "ELIG custody ABORT: $eligAbortReason" "ERROR"
+  } else {
+    # -- The seeding + assertion connection. ONE psql invocation, ONE
+    # -- transaction, ending in ROLLBACK. Every assertion is inside it, because
+    # -- an assertion from any other connection cannot see the uncommitted rows
+    # -- and would pass vacuously.
+    $eligCustodyContent = Get-Content -Raw -Path $eligCustodySqlPath
+    $eligCustodyOut = $eligCustodyContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    $eligCustodyExit = $LASTEXITCODE
+    $eligCustodyText = ($eligCustodyOut | Out-String)
+    Set-Content -Path (Join-Path $OutputDir "elig_custody_stdout.log") -Value $eligCustodyText -Encoding Ascii
+
+    # -- The INDEPENDENT rollback verification, on a NEW connection (13.2.3).
+    $eligVerifyContent = Get-Content -Raw -Path $eligVerifySqlPath
+    $eligVerifyOut = $eligVerifyContent | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -v ON_ERROR_STOP=1 2>&1
+    $eligVerifyExit = $LASTEXITCODE
+    $eligVerifyText = ($eligVerifyOut | Out-String)
+    Set-Content -Path (Join-Path $OutputDir "elig_rollback_verify_stdout.log") -Value $eligVerifyText -Encoding Ascii
+
+    foreach ($line in ($eligCustodyText -split "`r?`n") + ($eligVerifyText -split "`r?`n")) {
+      $trimmed = $line.Trim()
+      if ($trimmed -like 'ELIG_RESULT|*') {
+        $parts = $trimmed.Split('|', 4)
+        $eligResults += [PSCustomObject]@{
+          id = $parts[1]; status = $parts[2]; details = $(if ($parts.Count -gt 3) { $parts[3] } else { '' })
+        }
+      } elseif ($trimmed -like 'ELIG_BASELINE|*') {
+        $parts = $trimmed.Split('|', 3)
+        $eligBaseline[$parts[1]] = $(if ($parts.Count -gt 2) { $parts[2] } else { '' })
+      } elseif ($trimmed -like 'ELIG_AFTER|*') {
+        $parts = $trimmed.Split('|', 3)
+        $eligAfter[$parts[1]] = $(if ($parts.Count -gt 2) { $parts[2] } else { '' })
+      }
+    }
+
+    # -- CATALOG RESTORATION, compared BASELINE (captured before suspension)
+    # -- against AFTER (read on a fresh connection post-rollback), byte for byte.
+    foreach ($key in @('tgenabled', 'condef', 'convalidated')) {
+      $b = $eligBaseline[$key]
+      $a = $eligAfter[$key]
+      $ok = ($null -ne $b) -and ($null -ne $a) -and ($b -ceq $a)
+      $eligResults += [PSCustomObject]@{
+        id = "ELIG_CATALOG_$key"
+        status = $(if ($ok) { 'PASS' } else { 'FAIL' })
+        details = "baseline='$b' after='$a'"
+      }
+    }
+    # The constraint must have been NOT VALID all along; a baseline of 'true'
+    # would mean the premise this fixture rests on is wrong.
+    $eligResults += [PSCustomObject]@{
+      id = 'ELIG_CONSTRAINT_NOT_VALID'
+      status = $(if ($eligBaseline['convalidated'] -eq 'false') { 'PASS' } else { 'FAIL' })
+      details = "baseline convalidated='$($eligBaseline['convalidated'])' (expected false -- the constraint is NOT VALID)"
+    }
+
+    # EVERY required id must be PRESENT and PASS. A missing id is a failure, not
+    # an absence: it means an assertion did not run at all.
+    $eligRequiredIds = @('ELIG_01','ELIG_02','ELIG_03','ELIG_04','ELIG_05','ELIG_06','ELIG_07',
+                         'ELIG_08','ELIG_09','ELIG_10',
+                         'ELIG_11A','ELIG_11B','ELIG_11C',
+                         'ELIG_CATALOG_tgenabled','ELIG_CATALOG_condef','ELIG_CATALOG_convalidated',
+                         'ELIG_CONSTRAINT_NOT_VALID')
+    $eligFoundIds = @($eligResults | ForEach-Object { $_.id })
+    $eligMissingIds = @($eligRequiredIds | Where-Object { $eligFoundIds -notcontains $_ })
+    $eligFailCount = @($eligResults | Where-Object { $_.status -ne 'PASS' }).Count
+
+    $eligPass = ($eligCustodyExit -eq 0) -and ($eligVerifyExit -eq 0) -and
+                ($eligMissingIds.Count -eq 0) -and ($eligFailCount -eq 0)
+
+    foreach ($r in $eligResults) {
+      Write-HarnessLog ("  {0} : {1} - {2}" -f $r.id, $r.status, $r.details)
+    }
+    if ($eligMissingIds.Count -gt 0) {
+      Write-HarnessLog ("ELIG missing assertions: {0}" -f ($eligMissingIds -join ', ')) "ERROR"
+    }
+  }
+
+  $eligReceiptOut = [PSCustomObject]@{
+    timestamp_utc = $eligStart.ToString('o')
+    duration_ms = ([DateTime]::UtcNow - $eligStart).TotalMilliseconds
+    container_id = $ContainerId
+    database = 'sstac_replay'
+    abort_reason = $eligAbortReason
+    custody_exit_code = $eligCustodyExit
+    rollback_verify_exit_code = $eligVerifyExit
+    baseline = $eligBaseline
+    after_rollback = $eligAfter
+    results = $eligResults
+    strict_pass = $eligPass
+  }
+  $eligReceiptOut | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $OutputDir "elig_custody_receipt.json") -Encoding Ascii
+
+  if (-not $eligPass) {
+    Write-HarnessLog "F2 ELIG coordinate-eligibility evaluation FAILED!" "ERROR"
+    exit 1
+  }
+  Write-HarnessLog "F2 ELIG coordinate-eligibility fixture PASSED under section 13.2 custody."
 
   # Step 6: Execute 2-Session Concurrency Test against sstac_replay
   Write-HarnessLog "Executing 2-Session Concurrency & SHARE Lock Blocking Test against sstac_replay..."
@@ -1126,6 +1428,130 @@ WHERE n.nspname = 'matrix_map' AND c.relname = 'samples' AND l.mode = 'RowExclus
     Write-HarnessLog "Concurrency test FAILED!" "ERROR"
     $concurrencyPass = $false
   }
+
+  # ==========================================================================
+  # Step 6b: F2 LOCK-ORDER -- UE412 is raised AHEAD OF THE ADVISORY LOCK.
+  #
+  # WHY A SECOND SESSION IS UNAVOIDABLE. TEST_82 proves UE412 precedes the
+  # `SELECT ... FOR UPDATE` published guard and the snapshot, because those steps
+  # answer with a DIFFERENT sqlstate. It cannot reach the advisory lock: moving
+  # UE412 to just AFTER `pg_advisory_xact_lock` and just BEFORE the FOR UPDATE
+  # would leave TEST_82 fully green. And a same-session probe cannot help either
+  # -- transaction-scoped advisory locks are re-entrant within a session, so the
+  # mismatched call would not block no matter where the compare sits.
+  #
+  # V6 section 9 step 5 states the property being tested: the compare is ahead of
+  # the advisory lock "so a mismatch writes nothing at all: no candidate row, no
+  # audit row, and no LOCK CONTENTION with a concurrent legitimate caller." That
+  # last clause is what this checks.
+  #
+  # Session A holds the advisory lock for the derived key. The PROBE then issues a
+  # MISMATCHED upsert under a short statement_timeout: it must answer UE412
+  # promptly. The CONTROL issues a MATCHING upsert, which must BLOCK and time out
+  # (57014) -- without that, the probe would pass against a build where the lock
+  # was simply never taken.
+  # ==========================================================================
+  Write-HarnessLog "Executing F2 lock-order check (UE412 ahead of the advisory lock)..."
+  $lockOrderResults = @()
+  $lockOrderPass = $false
+  $lockDra = 'a8500000-0000-4000-8000-000000000085'
+  $lockLat = '44.85001'
+  $lockLng = '-118.85001'
+
+  $lockSeed = @"
+INSERT INTO matrix_map.dras (id, title, citation, public, is_deleted)
+VALUES ('$lockDra', 'F2 Lock Order DRA 85', 'Citation 85', false, false)
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO matrix_map.samples (
+  id, bnrrm_station_id, station_id, display_name, latitude, longitude,
+  geometry, coordinate_quality_tier, coordinate_source, classification, classification_source, source_dra_id, public
+) VALUES (
+  'd0000085-0000-4000-8000-000000000085', 18500, 'STN-185', 'F2 Station 185', $lockLat, $lockLng,
+  extensions.st_setsrid(extensions.st_makepoint($lockLng, $lockLat), 4326)::extensions.geography,
+  'medium', 'bc_csr_centroid', 'reference', 'station_type', '$lockDra', false
+) ON CONFLICT (id) DO NOTHING;
+"@
+  $lockSeedOut = $lockSeed | docker exec -i $ContainerId psql -U postgres -d sstac_replay -v ON_ERROR_STOP=1 2>&1
+  if ($LASTEXITCODE -ne 0) {
+    Write-HarnessLog "F2 lock-order seed FAILED: $lockSeedOut" "ERROR"
+  } else {
+    $lockCluster = ([string]((docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t -c `
+      "SELECT matrix_map.canonical_five_decimal_cluster($lockLat, $lockLng);" 2>&1) -join '')).Trim()
+
+    # Session A: hold the transaction-scoped advisory lock on the DERIVED key.
+    $holderSql = @"
+BEGIN;
+SELECT pg_advisory_xact_lock(hashtextextended('$lockDra' || ':' || '$lockCluster', 0));
+SELECT pg_sleep(12);
+COMMIT;
+"@
+    $jobHolder = Start-Job -ScriptBlock {
+      param($cid, $sql)
+      $out = $sql | docker exec -i $cid psql -U postgres -d sstac_replay 2>&1
+      [PSCustomObject]@{ Output = ($out | Out-String) }
+    } -ArgumentList $ContainerId, $holderSql
+
+    Start-Sleep -Seconds 3
+
+    $claims = '{"sub":"11111111-1111-1111-1111-111111111111","email":"admin@example.com"}'
+    # PROBE -- mismatched assertion. Must answer UE412 without waiting.
+    $probeSql = @"
+SET statement_timeout = '4s';
+SELECT set_config('request.jwt.claims', '$claims', false);
+SELECT matrix_map.upsert_site_aggregate_candidate(
+  '$lockDra'::uuid, '11.11111,-22.22222', $lockLat, $lockLng,
+  'F2 Lock Probe', '11111111-1111-1111-1111-111111111111'::uuid, 'lock order probe');
+"@
+    $probeOut = ($probeSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t 2>&1 | Out-String)
+    $probeUe412 = $probeOut -match 'UE412|cluster identity mismatch'
+    $probeTimedOut = $probeOut -match 'statement timeout|57014'
+    $lockOrderResults += [PSCustomObject]@{
+      id = 'LOCK_ORDER_MISMATCH_NOT_BLOCKED'
+      status = $(if ($probeUe412 -and -not $probeTimedOut) { 'PASS' } else { 'FAIL' })
+      details = "mismatched upsert while the derived-key advisory lock is held by another session: ue412=$probeUe412 timed_out=$probeTimedOut (UE412 required, timeout forbidden -- a timeout means the compare sits BEHIND the advisory lock)"
+    }
+
+    # CONTROL -- matching assertion. Must BLOCK on the held lock and time out.
+    $controlSql = @"
+SET statement_timeout = '4s';
+SELECT set_config('request.jwt.claims', '$claims', false);
+SELECT matrix_map.upsert_site_aggregate_candidate(
+  '$lockDra'::uuid, '$lockCluster', $lockLat, $lockLng,
+  'F2 Lock Control', '11111111-1111-1111-1111-111111111111'::uuid, 'lock order control');
+"@
+    $controlOut = ($controlSql | docker exec -i $ContainerId psql -U postgres -d sstac_replay -A -t 2>&1 | Out-String)
+    $controlTimedOut = $controlOut -match 'statement timeout|57014'
+    $lockOrderResults += [PSCustomObject]@{
+      id = 'LOCK_ORDER_MATCH_DOES_BLOCK'
+      status = $(if ($controlTimedOut) { 'PASS' } else { 'FAIL' })
+      details = "matching upsert under the same held lock: timed_out=$controlTimedOut (a timeout is REQUIRED here -- it proves the lock is genuinely held, so the probe above is discriminating rather than vacuous)"
+    }
+
+    Wait-Job -Job $jobHolder -Timeout 40 | Out-Null
+    $resHolder = Receive-Job -Job $jobHolder
+    Remove-Job -Job $jobHolder -Force
+
+    Set-Content -Path (Join-Path $OutputDir "lock_order_probe.log") `
+      -Value (("--- probe ---`n" + $probeOut + "`n--- control ---`n" + $controlOut + "`n--- holder ---`n" + $(if ($null -ne $resHolder) { $resHolder.Output } else { '' }))) -Encoding Ascii
+
+    $lockOrderPass = -not ($lockOrderResults | Where-Object { $_.status -ne 'PASS' })
+    foreach ($r in $lockOrderResults) { Write-HarnessLog ("  {0} : {1} - {2}" -f $r.id, $r.status, $r.details) }
+  }
+
+  $lockOrderReceipt = [PSCustomObject]@{
+    timestamp_utc = [DateTime]::UtcNow.ToString('o')
+    container_id = $ContainerId
+    source_dra_id = $lockDra
+    results = $lockOrderResults
+    strict_pass = $lockOrderPass
+  }
+  $lockOrderReceipt | ConvertTo-Json -Depth 5 | Set-Content -Path (Join-Path $OutputDir "lock_order_receipt.json") -Encoding Ascii
+
+  if (-not $lockOrderPass) {
+    Write-HarnessLog "F2 lock-order check FAILED (see lock_order_receipt.json and lock_order_probe.log)." "ERROR"
+    exit 1
+  }
+  Write-HarnessLog "F2 lock-order check PASSED: UE412 is raised ahead of the advisory lock."
 
   $concurrencyReceipt = [PSCustomObject]@{
     timestamp_utc = $concStart.ToString('o')

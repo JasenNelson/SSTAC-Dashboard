@@ -55,9 +55,27 @@ const LOADERS_PATH = join(
   'matrix-map',
   'site-aggregate-admin-loaders.ts',
 );
+/**
+ * F2: the preview half of the surface moved again -- out of the page and out of
+ * the OFFSET loaders, into the live-preview module that consumes
+ * `matrix_map.fetch_admin_site_aggregate_live_preview`. It is read here for the
+ * same reason `site-aggregate-admin-loaders.ts` is: scanning only the files that
+ * used to hold a property would quietly stop checking it.
+ *
+ * `site-aggregate-admin-loaders.ts` stays in scope because the CANDIDATE loop
+ * still lives there and is still invoked, via the live-preview orchestration.
+ */
+const LIVE_PREVIEW_PATH = join(
+  process.cwd(),
+  'src',
+  'lib',
+  'matrix-map',
+  'site-aggregate-live-preview.ts',
+);
 const pageSource = readFileSync(PAGE_PATH, 'utf8');
 const loadersSource = readFileSync(LOADERS_PATH, 'utf8');
-const source = `${pageSource}\n${loadersSource}`;
+const livePreviewSource = readFileSync(LIVE_PREVIEW_PATH, 'utf8');
+const source = `${pageSource}\n${loadersSource}\n${livePreviewSource}`;
 
 /**
  * Source with comments stripped. The oracle-parameter assertions must test CODE, not prose --
@@ -141,8 +159,27 @@ describe('site-aggregate preview -- drift is SERVER-authoritative', () => {
   // snapshot_drift_state, so the page carries no comparison at all.
 
   it('keeps the visible preview medium-tier only', () => {
-    expect(code).toContain(".eq('coordinate_quality_tier', 'medium')");
-    expect(code).toContain("computeSiteAggregates(samples, dras, { tier: 'medium' })");
+    // F2: the medium-tier ROW SCOPE moved into SQL -- the live-preview RPC
+    // carries `HAVING count(*) FILTER (WHERE b.b_tier = 'medium') > 0`, and its
+    // PREVIEW block counts medium rows only. That is asserted where it can be
+    // EXECUTED, in the replay suite, not by scanning text here.
+    //
+    // What remains checkable at this level is the BINDING: the rendered table
+    // must read the PREVIEW block and never the LIFECYCLE block, because on a
+    // mixed-tier cluster the two legitimately differ and rendering the wrong one
+    // would misreport what the operator is previewing.
+    // ...and the ONE assertion here that is genuinely a source property: the
+    // TypeScript re-clustering is gone.
+    expect(code).not.toContain('computeSiteAggregates');
+
+    // THE PREVIEW-VS-LIFECYCLE BINDING IS ASSERTED BY EXECUTION, in
+    // site-aggregate-page-binding.test.ts, which renders the real page with
+    // DISTINCT preview and lifecycle values and requires only the preview ones to
+    // appear. A review showed why it cannot live here: `code` is the page
+    // concatenated with the loader and live-preview modules, so
+    // `preview_sample_count_total` is present in the PARSER regardless of what the
+    // page binds -- the token assertions passed even if the page rendered
+    // lifecycle counts. Do not reinstate them.
   });
 
   it('computes NO second all-tier aggregate for drift', () => {
@@ -245,7 +282,11 @@ describe('site-aggregate preview -- no write path', () => {
 describe('site-aggregate preview -- map layer containment', () => {
   it('passes ONLY server-derived markers to the client map, never raw samples or aggregates', () => {
     // The client map must receive the marker projection, which carries no per-sample data.
-    expect(code).toMatch(/const markers = toAggregateMarkers\(aggregates\)/);
+    // F2: the argument is now an explicit PREVIEW-block projection rather than
+    // the aggregate rows themselves, so the marker helper still receives no
+    // field a marker does not need -- and no cluster key at all.
+    expect(code).toMatch(/const markers = toAggregateMarkers\(/);
+    expect(code).toMatch(/representative_latitude: r\.preview_representative_latitude/);
     expect(code).toMatch(/<SiteAggregateMapLoader markers=\{markers\}/);
     // It must NOT hand the client the raw sample array or the full aggregate rows.
     expect(code).not.toMatch(/MapLoader[^>]*samples=/);
@@ -317,11 +358,17 @@ describe('site-aggregate preview -- DRA load is paged to exhaustion (F11)', () =
   });
 
   it('declares a drasTruncated flag and feeds it into the axes derivation', () => {
+    // The FLAG still exists and the DRA loader still sets it -- the PUBLIC path
+    // uses that loader. The ADMIN page no longer reads DRAs at all (F2: the
+    // live-preview RPC performs that join server-side), so the page-side half of
+    // this guard is now carried by the unreadable-row signal, which occupies the
+    // same evidence axis for the same reason.
     expect(code).toMatch(/let drasTruncated\s*=\s*false/);
     const deriveIdx = code.indexOf('deriveLifecycleEvidenceAxes({');
     expect(deriveIdx).toBeGreaterThan(-1);
     const deriveArgs = code.slice(deriveIdx, code.indexOf('});', deriveIdx));
-    expect(deriveArgs).toContain('drasTruncated');
+    expect(deriveArgs).toContain('previewRowsUnreadable');
+    expect(deriveArgs).toContain('unparsableRowCount');
   });
 
   it('sets drasTruncated only once the page ceiling is actually hit, mirroring the sample loop', () => {
@@ -335,9 +382,14 @@ describe('site-aggregate preview -- DRA load is paged to exhaustion (F11)', () =
     expect(slice).not.toMatch(/^\s*drasTruncated = true;\s*$/m);
   });
 
-  it('renders a distinct DRA-truncation warning', () => {
-    expect(source).toMatch(/\{drasTruncated \? \(/);
-    expect(source).toContain('DRA load hit the');
+  it('renders a distinct unreadable-row warning on the axis the DRA warning held', () => {
+    // F2 replaces the DRA-truncation warning, because the admin page no longer
+    // performs a DRA read that could truncate. What replaces it is the exact
+    // analogue: rows the server RETURNED that this build could not read are
+    // missing from the table below, and nothing else on the page would say so.
+    // It must be reported as loudly, and as INCOMPLETE.
+    expect(source).toMatch(/\{unparsableRowCount > 0 \? \(/);
+    expect(source).toContain('could not read');
     expect(source).toContain('INCOMPLETE');
   });
 
@@ -364,7 +416,12 @@ describe('site-aggregate preview -- evidence completeness gates classification (
     // The F6 regression: a candidate-RPC failure must not blank a preview that
     // loaded fine. `previewRenderable` is derived from preview signals only.
     expect(code).toContain('previewRenderable');
-    expect(code).toContain('? computeSiteAggregates(samples, dras');
+    // F2: the gate keeps its SHAPE -- `previewRenderable ? <rows> : []` -- but
+    // the rows are the server-grouped preview rows rather than a TypeScript
+    // re-clustering of raw samples, and they pass through the display sort that
+    // restores the documented sample-count-descending order (a review caught that
+    // rendering the keyset order directly contradicted the table's own caption).
+    expect(code).toContain('previewRenderable ? sortPreviewRowsForDisplay(previewRows) : []');
     // The old conflated gate must be gone.
     expect(code).not.toContain('loadError ? [] : computeSiteAggregates');
     expect(code).not.toContain('const incompleteLoad =');
