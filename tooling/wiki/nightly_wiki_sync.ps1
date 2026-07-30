@@ -1,5 +1,6 @@
 param(
     [string]$RepoRoot,
+    [guid]$TaskDefinitionId = [guid]::Empty,
     [switch]$SkipLabeling,
     [switch]$SkipSemantic
 )
@@ -11,9 +12,49 @@ $logDir = Join-Path $RepoRoot ".tmp_wiki_nightly"
 if (-not (Test-Path $logDir)) {
     $null = New-Item -ItemType Directory -Force -Path $logDir
 }
+$runId = [guid]::NewGuid().ToString('D').ToLowerInvariant()
+$startedAtUtc = [datetime]::UtcNow
+$terminalReceiptPath = Join-Path $logDir "terminal-receipt-$runId.json"
+$custodyBaselinePath = Join-Path $logDir "process-custody-baseline-$runId.json"
+$custodyTerminalPath = Join-Path $logDir "process-custody-terminal-$runId.json"
+$terminalGuardPath = Join-Path $logDir "terminal-guard-$runId.lock"
+$checkOrphansPath = Join-Path $RepoRoot 'tooling\wiki\check_orphans.ps1'
+$terminalizerPath = Join-Path $RepoRoot 'tooling\wiki\nightly_terminalizer.ps1'
 
 $transcriptPath = Join-Path $logDir "transcript-$stamp.log"
 Start-Transcript -Path $transcriptPath -Append
+
+function Exit-NightlyTerminalFailure([string]$Message) {
+    [Console]::Error.WriteLine("NIGHTLY_TERMINAL_FAILURE: $Message")
+    try { Stop-Transcript | Out-Null } catch {}
+    exit 1
+}
+
+function Get-NightlyFileSha256([string]$Path) {
+    $bytes = [IO.File]::ReadAllBytes($Path)
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash($bytes))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
+try { . $terminalizerPath }
+catch { Exit-NightlyTerminalFailure "terminalizer load failed: $($_.Exception.Message)" }
+
+$baselineExit = 1
+try {
+    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode CaptureBaseline -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyBaselinePath
+    $baselineExit = $LASTEXITCODE
+} catch {
+    Exit-NightlyTerminalFailure "process custody baseline invocation failed: $($_.Exception.Message)"
+}
+if ($baselineExit -ne 0 -or -not (Test-Path -LiteralPath $custodyBaselinePath -PathType Leaf)) {
+    Exit-NightlyTerminalFailure 'process custody baseline did not produce PASS evidence'
+}
+try { $custodyBaselineSha256 = Get-NightlyFileSha256 $custodyBaselinePath }
+catch { Exit-NightlyTerminalFailure "process custody baseline hashing failed: $($_.Exception.Message)" }
+if ($custodyBaselineSha256 -cnotmatch '^[0-9a-f]{64}$') {
+    Exit-NightlyTerminalFailure 'process custody baseline hash is invalid'
+}
 
 . (Join-Path $RepoRoot "tooling\wiki\graphify_guardrail.ps1")
 . (Join-Path $RepoRoot "tooling\wiki\ollama_lock.ps1")
@@ -61,14 +102,85 @@ $gpuOrphanRisk = $false
 $secretHit = $false
 $serveGateSummary = "not evaluated"
 $serveGateRequiredRef = "refs/remotes/origin/main"
+$n0OrphanStatus = "OK"
+
+function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
+    try { Enter-NightlyTerminalization -GuardPath $terminalGuardPath }
+    catch { Exit-NightlyTerminalFailure "terminal guard entry failed: $($_.Exception.Message)" }
+
+    try {
+        $finalHead = $null
+        $requiredRefOid = $null
+        try { $finalHead = (git -C $RepoRoot rev-parse HEAD).Trim() } catch {}
+        try { $requiredRefOid = (git -C $RepoRoot rev-parse --verify "$serveGateRequiredRef^{commit}").Trim() } catch {}
+        $buildStampOid = $null
+        try {
+            $stampText = Get-Content -LiteralPath (Join-Path $RepoRoot 'wiki\.build-stamp') -Raw
+            $stampMatches = [regex]::Matches($stampText, '(?m)^HEAD:\s*([0-9a-f]{40})\s*$')
+            if ($stampMatches.Count -eq 1) { $buildStampOid = $stampMatches[0].Groups[1].Value }
+        } catch {}
+        $serveGateResult = if ($serveGateSummary -match '^allowed=True;' -and $finalHead -and $requiredRefOid -and $finalHead -eq $requiredRefOid) { 'PASS' } else { 'FAIL' }
+        $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
+        $finalState = $TerminalState
+        $finalExit = $NativeExitCode
+        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS')) {
+            $finalState = 'FAILED'
+            $finalExit = 1
+        }
+
+        # Deliberately the last child process: all other external facts are frozen.
+        $custodyExit = 1
+        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode EvaluateTerminal -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyTerminalPath -BaselinePath $custodyBaselinePath -ExpectedBaselineSha256 $custodyBaselineSha256
+        $custodyExit = $LASTEXITCODE
+        if (-not (Test-Path -LiteralPath $custodyTerminalPath -PathType Leaf)) { throw 'terminal process custody evidence is missing' }
+        $terminalProcessCustodyEvidence = Get-Content -LiteralPath $custodyTerminalPath -Raw | ConvertFrom-Json
+        if ([string]$terminalProcessCustodyEvidence.expected_baseline_sha256 -cne $custodyBaselineSha256 -or
+            [string]$terminalProcessCustodyEvidence.observed_baseline_sha256 -cne $custodyBaselineSha256) {
+            throw 'terminal process custody baseline hash binding contradiction'
+        }
+        $custodyEvidencePass = ([string]$terminalProcessCustodyEvidence.result -ceq 'PASS')
+        if (($custodyExit -eq 0) -ne $custodyEvidencePass) { throw 'terminal process custody exit/evidence contradiction' }
+        $custody = if ($custodyEvidencePass) { 'PASS' } else { 'FAIL' }
+        if ($custody -ne 'PASS') { $finalState = 'FAILED'; $finalExit = 1 }
+
+        $completedAtUtc = [datetime]::UtcNow
+        $terminalReceipt = [ordered]@{
+            schema_version = '1.0'
+            run_id = $runId
+            task_definition_id = $TaskDefinitionId.ToString('D').ToLowerInvariant()
+            started_at_utc = $startedAtUtc.ToString('o')
+            completed_at_utc = $completedAtUtc.ToString('o')
+            duration_seconds = [math]::Round(($completedAtUtc - $startedAtUtc).TotalSeconds, 3)
+            terminal_state = $finalState
+            native_exit_code = $finalExit
+            n0_orphan = $n0OrphanStatus
+            n1_build = $step1Status
+            n2_cluster = $step2Status
+            n6_wiki = $step6Status
+            n6_publication = $n6Publication
+            serve_gate = $serveGateResult
+            required_ref = $serveGateRequiredRef
+            head_oid = $finalHead
+            required_ref_oid = $requiredRefOid
+            build_stamp_oid = $buildStampOid
+            terminal_process_custody = $custody
+            terminal_process_custody_evidence = $terminalProcessCustodyEvidence
+        }
+        Publish-NightlyTerminalReceipt -Receipt $terminalReceipt -ReceiptPath $terminalReceiptPath
+        try { Stop-Transcript | Out-Null } catch {}
+        exit $finalExit
+    } catch {
+        Exit-NightlyTerminalFailure "post-guard terminalization failed: $($_.Exception.Message)"
+    }
+}
+
+trap {
+    Write-Host "FAIL: UNHANDLED $($_.Exception.Message)"
+    Complete-NightlyRun 1 'FAILED'
+}
 
 Write-Host "--- N0 PREFLIGHT ---"
-& powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "tooling\wiki\check_orphans.ps1")
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "FAIL: ORPHANS DETECTED"
-    "SKIPPED_ORPHANS" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 1
-}
+Write-Host "PASS: process custody baseline $custodyBaselineSha256"
 
 $commonDir = (git -C $RepoRoot rev-parse --git-common-dir).Trim()
 $hookDrift = $false
@@ -83,7 +195,7 @@ if (Test-Path $hookPath) {
 if ($hookDrift) {
     Write-Host "FAIL: HOOK_DRIFT"
     "HOOK_DRIFT" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 1
+    Complete-NightlyRun 1 'FAILED'
 }
 
 $treeDirty = $false
@@ -93,7 +205,7 @@ if (Test-Path (Join-Path $RepoRoot "$commonDir\MERGE_HEAD")) { $treeDirty = $tru
 if ($treeDirty) {
     Write-Host "SKIP: SKIPPED_DIRTY_TREE"
     "SKIPPED_DIRTY_TREE" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 0
+    Complete-NightlyRun 0 'SKIPPED'
 }
 $n0PorcelainLines = @(git -C $RepoRoot status --porcelain).Count
 $n0Head = (git -C $RepoRoot rev-parse HEAD).Trim()
@@ -119,7 +231,7 @@ try {
 if ($LASTEXITCODE -eq 2) {
     Write-Host "FAIL: DOCS_SCOPE_FAIL"
     "DOCS_SCOPE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 1
+    Complete-NightlyRun 1 'FAILED'
 }
 
 $hashBytes = New-Object System.Collections.Generic.List[byte]
@@ -190,7 +302,7 @@ Write-Host "--- N3 SECRETS ---"
 if ($LASTEXITCODE -ne 0) {
     Write-Host "FAIL: SECRET_HIT"
     "SECRET_HIT" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 1
+    Complete-NightlyRun 1 'FAILED'
 }
 
 Write-Host "--- N4 SMOKE ---"
@@ -198,7 +310,7 @@ Write-Host "--- N4 SMOKE ---"
 if ($LASTEXITCODE -eq 1) {
     Write-Host "FAIL: SMOKE_FAIL"
     "SMOKE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    exit 1
+    Complete-NightlyRun 1 'FAILED'
 }
 
 Write-Host "--- N5 SEMANTIC ---"
@@ -291,8 +403,7 @@ if ($semanticSkippedReason) {
         }
         if ($secretHitPost) {
             "SECRET_HIT_POST" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-            Stop-Transcript | Out-Null
-            exit 1
+            Complete-NightlyRun 1 'FAILED'
         }
     }
 }
@@ -444,7 +555,6 @@ $receiptBody = @(
     "Freshness: $freshnessStr"
 )
 $receiptBody | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-Stop-Transcript
 
 # Final predicate includes EVERY red step (codex P1): a receipt that records a failed
 # cluster/semantic/wiki step must never pair with exit 0.
@@ -453,7 +563,7 @@ if ($n1BuildOk -and
     ($step5Status -ne "FAIL") -and
     ($step6Status -ne "FAIL") -and
     -not $graphOrphanRisk) {
-    exit 0
+    Complete-NightlyRun 0 'SUCCESS'
 } else {
-    exit 1
+    Complete-NightlyRun 1 'FAILED'
 }

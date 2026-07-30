@@ -32,7 +32,8 @@ reference implementation: OpenHarness-dev (bugs fixed during port, not copied --
 - Full nightly pipeline manually: `powershell -File tooling\wiki\nightly_wiki_sync.ps1`
   (steps N0-N7; receipt at `.tmp_wiki_nightly\receipt-<date>.md`; transcript alongside).
 - Freshness: `powershell -File tooling\wiki\check_nightly_freshness.ps1` (exit 1 = stale >48h).
-- Orphan check: `powershell -File tooling\wiki\check_orphans.ps1` (report-only).
+- Legacy orphan report: `powershell -File tooling\wiki\check_orphans.ps1` (report-only;
+  it is not Contract A process-custody proof). The run-bound custody modes are wrapper-only.
 - Guardrail self-test: `powershell -File tooling\wiki\guardrail_smoke.ps1`.
 - Sessions read ONLY the SERVED set: `wiki\` pages, `wiki\.graph\graph.json`,
   `wiki\.build-stamp`. `graphify-out\` is the pipeline-internal working copy -- never read it
@@ -178,3 +179,117 @@ tooling\wiki\requirements-graphify.txt`).
 - Suite: `python -m unittest discover -s tooling\wiki\tests`.
 - Graduation streak math + wiki-commit criteria: plan Phase 7 (unchanged; not yet started --
   the 10-counted-night window begins once the nightly is registered and producing receipts).
+
+## 10. Candidate Contract A scheduler preflight (not installation authority)
+
+This section documents a candidate-only verification interface. It does not authorize task
+creation, replacement, execution, or enablement. Contract A uses `Password` logon for true
+logged-out operation. Credential entry is an owner-only Task Scheduler action; a password must
+never appear in XML candidates, scripts, command lines, logs, receipts, or evidence.
+
+Use owner-recorded exact values for these variables:
+
+```powershell
+$runtimeRoot = 'C:\Projects\SSTAC-Dashboard-worktrees\kb-runtime-6bb43b-2026-07-23'
+$registrationDate = '<EXACT_REVIEWED_REGISTRATION_DATE>'
+$startBoundary = '<EXACT_TIMEZONELESS_LOCAL_YYYY-MM-DDT05:30:00>'
+$taskDefinitionId = '<NEW_CANONICAL_GUID_FOR_THIS_EXACT_DEFINITION>'
+$proofNotBeforeUtc = '<OWNER_RECORDED_UTC_TIMESTAMP_ENDING_IN_Z>'
+$activeTransitionReceipt = '<OWNER_ACCEPTED_IMMUTABLE_ACTIVE_TRANSITION_JSON_PATH>'
+$activeTransitionReceiptSha256 = '<EXACT_LOWERCASE_SHA256_OF_ACCEPTED_TRANSITION_BYTES>'
+```
+
+The exact read-only phase invocations are:
+
+```powershell
+# Replacement installed, task enabled, daily trigger disabled; no execution proof required.
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File "$runtimeRoot\tooling\wiki\activation_preflight.ps1" `
+  -RuntimeRoot $runtimeRoot -ExpectedSchedulerContract A `
+  -ExpectedSchedulerPhase StagedAwaitingManual `
+  -ExpectedStartBoundary $startBoundary -ExpectedRegistrationDate $registrationDate `
+  -ExpectedTaskDefinitionId $taskDefinitionId
+
+# Same staged definition after one separately authorized manual execution.
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File "$runtimeRoot\tooling\wiki\activation_preflight.ps1" `
+  -RuntimeRoot $runtimeRoot -ExpectedSchedulerContract A `
+  -ExpectedSchedulerPhase StagedManualProven `
+  -ExpectedStartBoundary $startBoundary -ExpectedRegistrationDate $registrationDate `
+  -ExpectedTaskDefinitionId $taskDefinitionId -ProofNotBeforeUtc $proofNotBeforeUtc
+
+# Trigger enabled, but no accepted 05:30-correlated execution yet. This always returns NOT_READY.
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File "$runtimeRoot\tooling\wiki\activation_preflight.ps1" `
+  -RuntimeRoot $runtimeRoot -ExpectedSchedulerContract A `
+  -ExpectedSchedulerPhase ActiveAwaitingNatural `
+  -ExpectedStartBoundary $startBoundary -ExpectedRegistrationDate $registrationDate `
+  -ExpectedTaskDefinitionId $taskDefinitionId `
+  -ActiveTransitionReceiptPath $activeTransitionReceipt `
+  -ExpectedActiveTransitionReceiptSha256 $activeTransitionReceiptSha256
+
+# Trigger enabled after one run correlated to the local 05:30 minute. Provenance remains external.
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File "$runtimeRoot\tooling\wiki\activation_preflight.ps1" `
+  -RuntimeRoot $runtimeRoot -ExpectedSchedulerContract A `
+  -ExpectedSchedulerPhase Active0530Correlated `
+  -ExpectedStartBoundary $startBoundary -ExpectedRegistrationDate $registrationDate `
+  -ExpectedTaskDefinitionId $taskDefinitionId -ProofNotBeforeUtc $proofNotBeforeUtc `
+  -ActiveTransitionReceiptPath $activeTransitionReceipt `
+  -ExpectedActiveTransitionReceiptSha256 $activeTransitionReceiptSha256
+
+# Installed definition intentionally disabled.
+powershell.exe -NoProfile -ExecutionPolicy Bypass `
+  -File "$runtimeRoot\tooling\wiki\activation_preflight.ps1" `
+  -RuntimeRoot $runtimeRoot -ExpectedSchedulerContract A `
+  -ExpectedSchedulerPhase Disabled `
+  -ExpectedStartBoundary $startBoundary -ExpectedRegistrationDate $registrationDate `
+  -ExpectedTaskDefinitionId $taskDefinitionId
+```
+
+Transitioning from the accepted staged definition to an active definition requires a new
+`TaskDefinitionId`. The active task action and its terminal receipts must contain that new ID;
+the owner-accepted transition JSON must identify a different canonical prior staged ID, bind the
+current active ID, exact registration date, exact start boundary, and activation time, and match
+the separately recorded lowercase SHA-256. A receipt from the staged/manual definition cannot
+qualify the active phase. Reusing a path with different bytes fails closed.
+
+The proof correlator accepts exactly one terminal receipt whose start is within 60 seconds of
+the scheduler `Last Run Time`. The verbose fixture parser intentionally recognizes the English
+labels emitted on the reviewed owner machine (`Status`, `Scheduled Task State`, `Last Run Time`,
+and `Last Result`). A missing or differently localized label fails closed; it is not evidence
+that the task is unhealthy.
+
+Preserved Task Scheduler XML demonstrates the reviewed encoding, namespace, SID-form `UserId`,
+and readback shape. Separate synthetic candidate fixtures test semantic equivalence when reviewed
+optional fields are omitted. Those synthetic omissions are not represented as preserved exports,
+and the list is not an assertion that every field has an XSD default. In particular, omission of
+`RunLevel` is a frozen reviewed normalization to `LeastPrivilege`, not an XSD-default claim.
+No normalization permits a changed semantic value, extra attribute, extra principal, extra
+trigger, executable surface, retry policy, or Task schema version other than 1.4.
+
+Phase verdicts are deliberately limited:
+
+- `READY_FOR_MANUAL_RUN_REVIEW` permits only a separate owner decision about a bounded manual run.
+- `READY_FOR_TRIGGER_ENABLE_REVIEW` permits only a separate owner decision about active-definition
+  installation and trigger enablement.
+- `NOT_READY_AWAITING_NATURAL_RUN` proves no unattended behavior.
+- `READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES` proves only that a run for the
+  accepted active definition correlated to the local 05:30 minute. A manual task run at exactly
+  05:30 can produce this result. Calendar-trigger provenance, owner-shell MCP health, and accepted
+  logged-out operation remain explicit external owner gates.
+- `READY_FOR_REPLACEMENT_REVIEW` reports only disabled-definition conformance.
+
+The original no-ID Legacy manual invocation in section 2 remains supported; its zero-definition
+terminal receipt is informational and cannot qualify Contract A. The no-argument
+`check_orphans.ps1` report is likewise informational and can never satisfy process-custody proof.
+For Contract A, the wrapper captures the fail-closed process baseline before workload execution,
+binds it to the canonical run ID and its immediate SHA-256, and performs terminal evaluation as
+the last child process while the nightly parent remains alive. The terminal receipt contains both
+the top-level process-custody verdict and bounded nested evidence; preflight rejects missing,
+malformed, contradictory, truncated, failed, or run/baseline/runtime-mismatched evidence.
+The Contract A action remains
+exact Windows PowerShell 5.1 with `-RepoRoot` and a nonempty `-TaskDefinitionId`; it never contains
+`-AutoCommit`. Successful proof additionally requires exact runtime HEAD/ref/build-stamp
+binding, a terminal `SUCCESS` receipt with native exit 0, build/cluster/publication/orphan/serve
+gates, terminal process custody, endpoint parity, portable IDs, and populated communities.
