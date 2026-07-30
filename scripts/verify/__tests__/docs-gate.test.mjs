@@ -28,6 +28,13 @@ const MANIFEST = JSON.parse(
 );
 
 const MATRIX_MAP_AUTHORITIES = ['matrixmap.plan_v3_4_2', 'matrixmap.option_c_design'];
+const AGY_GOVERNANCE_AUTHORITIES = [
+  'docs.index',
+  'core.agents',
+  'governance.gate_mode_sop',
+  'governance.agy_usage',
+  'governance.sstac_ai_pipeline',
+];
 
 function runGate(files) {
   const out = execFileSync('node', [GATE, '--json', '--files', ...files], {
@@ -113,6 +120,30 @@ describe('docs-gate bundle wiring - exact identity, never counts', () => {
     expect(result.activated_bundles).toContain('DOCS_GOVERNANCE_GATE');
   });
 
+  it('AGY usage changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['docs/AGY_USAGE.md']);
+    expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
+    expect(result.required_documents).toEqual(
+      expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
+    );
+  });
+
+  it('AI pipeline changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['SSTAC_AI_PIPELINE.md']);
+    expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
+    expect(result.required_documents).toEqual(
+      expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
+    );
+  });
+
+  it('AGY tooling changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['tooling/agy/Invoke-AgyAutonomousWorker.ps1']);
+    expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
+    expect(result.required_documents).toEqual(
+      expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
+    );
+  });
+
   it('NEGATIVE CONTROL: an unrelated path activates nothing', () => {
     // Without this, every assertion above could be satisfied by a trigger that
     // matches everything. This is what makes the identity assertions meaningful.
@@ -171,5 +202,16 @@ describe('docs-manifest integrity', () => {
     const triggers = MANIFEST.bundles?.DOCS_GOVERNANCE_GATE?.triggers ?? [];
     expect(triggers).toContain('scripts/verify/docs-gate.mjs');
     expect(triggers).toContain('scripts/verify/__tests__/docs-gate.test.mjs');
+  });
+
+  it('AGY_GOVERNANCE_GATE covers all three AGY governance surfaces', () => {
+    const triggers = MANIFEST.bundles?.AGY_GOVERNANCE_GATE?.triggers ?? [];
+    expect(triggers).toEqual(
+      expect.arrayContaining([
+        'docs/AGY_USAGE.md',
+        'SSTAC_AI_PIPELINE.md',
+        'tooling/agy/**',
+      ])
+    );
   });
 });

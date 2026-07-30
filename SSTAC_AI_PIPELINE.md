@@ -154,8 +154,7 @@ verification required by the current workstream.
 
 ## Long Runs
 
-`docs/AGY_USAGE.md` is the authority for SSTAC AGY launches. Any worker expected
-to exceed five minutes must use the `supervise-headless-ai-worker` contract.
+`docs/AGY_USAGE.md` is the authority for SSTAC AGY launches. For runs over five minutes, `supervise-headless-ai-worker` governs Mission Control custody; the foreground controller (`tooling/agy/Invoke-AgyAutonomousWorker.ps1`) is the worker launcher and does not itself recover after controller loss.
 Supervision detects and rejects bad runs; it does not prevent a write-enabled
 worker from mutating a granted root. Never grant the dirty primary checkout to
 an autonomous writer. Use an isolated worktree or an independently enforced
@@ -177,9 +176,7 @@ Required properties:
 - Native exit zero plus valid terminal breadcrumb and accepted artifacts before
   controller GREEN.
 
-Use `System.Diagnostics.ProcessStartInfo.ArgumentList`. For the live-verified
-Gemini 3.1 Pro High invocation, do not pass `--effort`; AGY rejects it. Never
-use `--dangerously-skip-permissions`.
+The tracked controller (`tooling/agy/Invoke-AgyAutonomousWorker.ps1`) intentionally uses the PowerShell foreground call operator (`&`) with stdout/stderr redirection. For AGY 1.1.8, use model slug `gemini-3.1-pro-high` with `--effort high` (the pinned project contract for the verified 1.1.8 model slug `gemini-3.1-pro-high`, not a universal CLI requirement), `--mode accept-edits`, `--sandbox=false`, `--output-format stream-json`, `--log-file <log.txt>`, `--print-timeout <duration>`, and `-p <prompt text>`. Never use `--dangerously-skip-permissions`.
 
 Do not start duplicate runners against the same DB/ledger. Verify process
 ownership and current command line before proposing any termination. Never kill
