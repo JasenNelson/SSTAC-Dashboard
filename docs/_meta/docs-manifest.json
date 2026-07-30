@@ -59,7 +59,7 @@
         "last_verified": "2025-12-18"
       },
       "current_grade": {
-        "status": "verified",
+        "status": "stale_unreconciled",
         "value": "A- (89%)",
         "source": "Re-analysis 2026-07-22 (resolves the 2026-07-22 stale_unreconciled flag; owner-sanctioned ruling 2026-07-22) using the 7-category weighted rubric in docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md. Metrics gathered against origin/main 5420253b (post-#740/#743/#744/#745 merges) with the metric census re-run at that tip and a fresh CI=true test:ci pass; all 2026-07-22 PR branches (#735-#745) reached green GitHub CI and are merged. Structural metrics: 622 source ts/tsx + 295 unit-test files + 14 e2e specs; vitest 5936 passed / 19 skipped / 2 todo; 29 ': any' annotations (down from 51; plus 89 no-explicit-any suppressions counted separately); 0 tsc errors; 0 lint errors / 40 warnings; 137 files over 500 lines (unchanged); 445 console.* sites. Category scores carried over UNCHANGED from the 2026-07-18 analysis per docs/review-analysis/GRADE_REANALYSIS_EVIDENCE_PACKET_2026-07-22.md section 3 (all drivers flat-or-improved).",
         "calculation_basis": {
@@ -74,7 +74,7 @@
         "weighted_average": "89.35% -> A- (89%)",
         "reanalysis_ref": "2026-07-22 grade re-analysis; evidence packet docs/review-analysis/GRADE_REANALYSIS_EVIDENCE_PACKET_2026-07-22.md (metrics refreshed at merge tip); ref origin/main 5420253b",
         "last_verified": "2026-07-22",
-        "staleness_note": "The A- (89%) snapshot and all calculation_basis structural metrics are PINNED to origin/main 5420253b (2026-07-22). Do NOT cite these structural metrics as current once the tip has materially advanced; a fresh 7-category re-analysis (HOW_TO_CONDUCT_GRADE_ANALYSIS.md, against the then-current tip + a green CI run) is due before the grade is treated as current again."
+        "staleness_note": "PINNED to origin/main 5420253b (2026-07-22). As of 2026-07-30 the tip has materially advanced to 79e9353d (F2 PR #756 and hotfix PR #758 merged), so the calculation_basis structural metrics no longer describe current main and this grade MUST NOT be cited as current. The VALUE is left unchanged rather than re-estimated: a fresh 7-category re-analysis per docs/review-analysis/HOW_TO_CONDUCT_GRADE_ANALYSIS.md, run against the then-current tip with a green CI run, is required before the grade returns to verified. Note that the embedded vitest figure (5936) is itself superseded by facts.testing.vitest_test_count = 6607 (2026-07-30)."
       },
       "target_grade": {
         "status": "in_progress",
@@ -87,9 +87,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 5821,
-        "source": "npm run test:ci output (2026-07-20)",
-        "last_verified": "2026-07-20"
+        "value": 6607,
+        "source": "npm run test:ci output (2026-07-30)",
+        "last_verified": "2026-07-30"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -1495,7 +1495,8 @@
         "orchestration"
       ],
       "notes": "Multi-AI role split and operating flow for mission control, AGY, Codex, OpenCode, and the owner."
-    },    {
+    },
+    {
       "id": "docs.readme_legacy",
       "path": "docs/README.md",
       "lifecycle": "REFERENCE",
@@ -3023,13 +3024,13 @@
     },
     {
       "id": "continuity.current_handoff",
-      "path": "FRESH_SESSION_HANDOFF_2026_07_27_OPTION_C_RESTACK_CORRECTION.md",
+      "path": "FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md",
       "lifecycle": "AUTHORITATIVE",
       "domain_tags": [
         "continuity",
         "handoff"
       ],
-      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-27. Supersedes FRESH_SESSION_HANDOFF_2026_07_26_PLANNING_AND_DOCS_RECOVERY.md, which predates the Option C correction and describes the superseded client-side drift comparison. Update this id path when a newer dated handoff supersedes it."
+      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-30. Supersedes FRESH_SESSION_HANDOFF_2026_07_27_OPTION_C_RESTACK_CORRECTION.md, which predates the F2 merge: it describes F2 as unresolved and cites a SUPERSEDED 99831-byte SQL pin (the current pinned artifact is 126552 bytes, SHA-256 E57B1E5EBD22BF3D15F577E759840C021AFC348BDF472887BCCF61199990DB72). This anchor records that F2 (PR #756) and the cookie-adapter hotfix (PR #758) are MERGED and deployed, while the Option C SQL remains UNAPPLIED and D2 remains BLOCKED pending an owner decision and an outstanding authenticated production retest. Update this id path when a newer dated handoff supersedes it."
     },
     {
       "id": "matrixmap.plan_v3_4_2",
@@ -3053,6 +3054,18 @@
         "security"
       ],
       "notes": "Option C site-aggregate architecture authority, including the aggregate-oracle hazard analysis. Architecture authority only; not an implementation-status page."
+    },
+    {
+      "id": "matrixmap.option_c_candidate_lifecycle_workplan",
+      "path": "docs/design/matrix-map/OPTION_C_CANDIDATE_LIFECYCLE_WORKPLAN_2026_07_25.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-map",
+        "option-c",
+        "design",
+        "lifecycle"
+      ],
+      "notes": "Early technical design for Option C candidate create/refresh (locking, authorization, audit). REFERENCE, not authoritative: SUPERSEDED IN PART by F2 (PR #756, merged e8daa2b8), which introduced the 7-argument upsert_site_aggregate_candidate, the UE412 pre-commit identity check and the live-preview RPC -- none of which this document mentions. The current RPC signature and identity contract live in the pinned Option C SQL and OPTION_C_PREAPPLY_RUNBOOK_2026_07_26.md."
     },
     {
       "id": "matrixmap.option_c_owner_decision_packet",

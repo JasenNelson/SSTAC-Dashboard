@@ -1,8 +1,28 @@
 # AGY CLI Usage - SSTAC-Dashboard
 
-Status: canonical repo-specific runbook.
+Status: canonical repo-specific runbook. **PARTIALLY STALE -- see the drift notice below.**
 Last verified: 2026-07-25.
 Scope: `C:\Projects\SSTAC-Dashboard` and its linked worktrees.
+
+> **STALE FOR AGY 1.1.8 (recorded 2026-07-30). Do not follow the invocation details in this
+> file without re-probing them first.**
+>
+> This runbook's invocation specifics were verified against **AGY 1.1.7 on 2026-07-25**. AGY
+> has since moved to **1.1.8**, and at least two classes of detail are known to have drifted:
+> **model slugs**, and **Go-duration syntax** for timeout-style flags. Any command below that
+> names a model or a duration should be treated as unverified until re-probed against the
+> installed CLI.
+>
+> WHAT IS NOT CLAIMED HERE. A replacement AGY-first workflow is **NOT** documented as proven.
+> Mission Control has containment and review canaries pending; **those receipts must land
+> before this runbook's workflow sections are rewritten.** Guessing the 1.1.8 invocation now
+> would repeat the exact failure this file exists to prevent -- a runbook that reads as
+> authoritative while describing a CLI that no longer behaves that way.
+>
+> FOLLOW-UP, owner-triaged: re-probe `agy --version`, `agy --help`, the model menu and the
+> duration/timeout flag syntax on 1.1.8, capture the receipts, and only then update the
+> invocation and workflow sections. Until then, prefer a bounded live probe over this file's
+> examples.
 
 This guide overrides generic AGY examples when work targets SSTAC-Dashboard.
 Read it with:
@@ -63,7 +83,11 @@ SSTAC differs from other projects on this machine:
 - Supabase is read/exploration first. No live SQL write, migration apply,
   publication flip, or data write without the owner's explicit approval of the
   exact operation and the preflight/postflight protocol in `AGENTS.md`.
-- The owner merges. AGY never runs `gh pr merge`.
+- Merge requires explicit owner/HITL APPROVAL of the exact reviewed SHA and scope, with
+  required CI green. Approval is not the same as execution: once the owner has approved
+  that exact SHA, an authorized executor may perform the merge. **AGY is not such an
+  executor** -- it must not run `gh pr merge` -- and no executor may ever self-approve.
+  See `AGENTS.md` MERGE protocol, corrected 2026-07-30.
 - Draft-to-ready conversion remains owner-gated and requires explicit authorization
   for that exact PR.
 - Scheduler, MCP, and Ollama mutation, deploy, cleanup, process termination,

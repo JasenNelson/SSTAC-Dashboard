@@ -19,6 +19,54 @@ Each deferred item must include: the date it was deferred, why it was deferred, 
 
 ## Deferred items
 
+### 2026-07-30 -- Two remaining UNGUARDED Supabase cookie adapters (same class as the PR #758 crash)
+
+Deferred because PR #758 was an emergency hotfix deliberately scoped to the one page that was
+crashing in production; widening it would have delayed the fix and enlarged the reviewed surface.
+Source: the PR #758 adversarial review plus a direct re-verification during the 2026-07-30 docs
+closeout.
+
+Both carry the same legacy `get`/`set`/`remove` adapter with an **unguarded** `cookieStore.set`,
+which is exactly the shape that took `/admin/matrix-map/site-aggregates` to the global error
+boundary when a token refresh landed mid-render (see `docs/LESSONS.md`, 2026-07-30):
+
+- `src/app/(dashboard)/admin/announcements/page.tsx:17-19`
+- `src/app/(dashboard)/admin/milestones/page.tsx:17-19`
+
+**COUNT CORRECTED.** The PR #758 review reported THREE such pages, naming
+`src/app/(dashboard)/regulatory-review/[submissionId]/page.tsx` as the third. Direct inspection at
+`79e9353d` shows that file's adapter at `:281-287` **is** already wrapped in `try/catch`, so it is
+NOT in this class. The verified count is TWO. Recorded rather than inheriting the reviewer's number.
+
+Secondary, lower priority: roughly nineteen further pages still use the legacy adapter SHAPE but ARE
+guarded, so they cannot crash this way. The residual concern is that the legacy `get` path probes
+only about five chunk indices per key and can silently truncate very large sessions. Migrating them
+to `getAll`/`setAll` is hygiene, not an incident.
+
+### 2026-07-30 -- Should `/admin/:path*` be in the middleware matcher?
+
+Deferred because it would change behaviour for EVERY admin route and is out of scope for a hotfix.
+Source: PR #758 root-cause analysis.
+
+`src/middleware.ts:155-165` matches `/dashboard`, `/twg`, `/survey-results`, `/cew-2025`,
+`/regulatory-review`, `/bn-rrm`, `/demo-matrix-graph`, `/matrix-options` -- **not `/admin`**. So no
+middleware session refresh runs on admin routes, which is why the refresh happens during render at
+all. The guarded `setAll` prevents the crash but does NOT persist a rotated refresh token, and
+`@supabase/ssr` warns that this can cause random logouts or early session termination. Adding
+`/admin` would address the cause rather than the symptom, and needs its own design and review.
+
+### 2026-07-30 -- AGY runbook is stale for AGY 1.1.8; workflow rewrite BLOCKED on canary receipts
+
+Deferred because the replacement workflow is not yet proven. Source: 2026-07-30 docs closeout.
+
+`docs/AGY_USAGE.md` was verified against AGY 1.1.7 (2026-07-25). AGY is now 1.1.8, and at least
+model slugs and Go-duration syntax have drifted. A drift banner was added to that file; the
+invocation and workflow sections were deliberately NOT rewritten.
+
+**Do not document a replacement AGY-first workflow as proven until Mission Control's containment and
+review canaries have produced receipts.** Re-probe `agy --version`, `agy --help`, the model menu and
+the duration/timeout flag syntax against the installed CLI, capture the receipts, then update.
+
 ### 2026-07-22 -- KB/Graphify source-trace + gap analysis formalized
 
 Formalized the KB-wiki/Graphify instruction lineage and OHD-vs-SSTAC gap as committed docs (companions

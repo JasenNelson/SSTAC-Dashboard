@@ -10,6 +10,98 @@
 
 ---
 
+## 2026-07-30 - A Server Component's Supabase cookie adapter must use guarded getAll/setAll, or a token refresh crashes the whole page [CRITICAL]
+
+**Area:** Auth / @supabase/ssr / Next.js App Router Server Components
+**Impact:** CRITICAL (took an authenticated admin page to the global error boundary in production)
+
+### Problem
+`/admin/matrix-map/site-aggregates` rendered an unstyled full-viewport warning icon instead of the
+page. Production error, 2026-07-30T16:37:33Z, digest `4193104151`:
+
+```
+Error: Cookies can only be modified in a Server Action or Route Handler.
+  at Object.set (page.js)                     <- the page's own cookie adapter
+  at setAll (@supabase/ssr)
+  at applyServerStorage
+  at SupabaseAuthClient._notifyAllSubscribers
+  at SupabaseAuthClient._callRefreshToken     <- a token refresh triggered it
+```
+
+### Root cause
+The page supplied the LEGACY `get`/`set`/`remove` cookie adapter with an UNGUARDED
+`cookieStore.set`. When `@supabase/ssr` refreshed an expiring access token DURING the Server
+Component render, it tried to persist the new token; Next.js forbids cookie mutation there and
+threw.
+
+**Why every existing guard missed it, and this is the transferable part:** the throw originates
+inside the auth client's refresh, NOT in a query result. Loaders inspect `{ data, error }` from
+queries -- no `if (error)` check anywhere in the data layer can observe an exception raised in
+`_callRefreshToken`. With no `error.tsx` on the segment, React escalated to `global-error.tsx`,
+which renders its own `<html><body>` WITHOUT the app stylesheet, so its `h-12 w-12` never applied
+and the SVG filled the viewport. The giant icon is a symptom of reaching that boundary, not a
+styling bug.
+
+### Pattern
+Use the modern shape, with the write guarded:
+
+```ts
+cookies: {
+  getAll() { return cookieStore.getAll(); },
+  setAll(cookiesToSet: Parameters<SetAllCookies>[0]) {
+    try {
+      cookiesToSet.forEach(({ name, value, options }) => cookieStore.set(name, value, options));
+    } catch {
+      // Called from a Server Component; safe to ignore when middleware refreshes sessions.
+    }
+  },
+}
+```
+
+Two details that are easy to get wrong:
+
+1. **`@supabase/ssr` dispatches on KEY PRESENCE** (`if ("get" in cookies)`,
+   `if ("set" in cookies && "remove" in cookies)`), not on value. An adapter shaped
+   `{ getAll, setAll, get: undefined, set: undefined }` still selects the legacy branch and throws.
+   Assert absence with the `in` operator, never `toBeUndefined()`.
+2. **`getAll()` returning every cookie is correct.** The library filters and reassembles chunks by
+   name prefix itself. The legacy `get` path probes only ~5 chunk indices per key and can silently
+   truncate large sessions.
+
+### The limitation this does NOT solve
+The catch is normally justified by "middleware refreshes user sessions." **`src/middleware.ts`'s
+matcher does not include `/admin`** (`src/middleware.ts:155-165`), so on admin routes the refresh
+genuinely happens during render and a ROTATED refresh token is never persisted. `@supabase/ssr`'s
+own source warns this can cause "random logouts, early session termination or increased token
+refresh requests" -- and silently, because exposing `setAll` suppresses its console warning.
+
+It is still the right trade: the unguarded version did not persist the rotation either (it threw
+FROM that write), so guarding removes a hard crash without adding a new session-loss mode, and the
+browser client's autoRefresh usually recovers the session. Do not read the guard as making `/admin`
+session handling correct.
+
+### Testing lesson
+The whole suite missed this because every test mocked `createServerClient`, so the adapter object
+the page passes in was never invoked, and the `next/headers` mock's `set` silently succeeded. A
+defect that only appears when a real cookie write is attempted mid-render was structurally
+invisible. The regression test captures the REAL adapter and executes it against a cookie store
+whose `set` throws the production message -- and was verified to discriminate by reverting the fix
+(6 of 7 assertions fail against the defective code).
+
+### File References
+- Fixed adapter: `src/app/(dashboard)/admin/matrix-map/site-aggregates/page.tsx:60-115`
+- Regression tests: `src/app/(dashboard)/admin/matrix-map/site-aggregates/__tests__/page.cookie-adapter.regression.test.tsx`
+- Middleware matcher (no `/admin`): `src/middleware.ts:155-165`
+- Global boundary: `src/app/global-error.tsx`
+- Introduced by `b84a7b44` (PR #711, 2026-07-20); fixed by PR #758 (`79e9353d`)
+
+### Key Takeaway
+In a Server Component, always use guarded `getAll`/`setAll` for the Supabase cookie adapter: an
+auth-refresh cookie write can throw where no query-error check can ever see it, and it takes the
+entire page down rather than degrading one panel.
+
+---
+
 ## 2026-07-13 - codex CLI can hang for a whole session; fall back to Sonnet adversarial review + kill hung codex by PID [MEDIUM]
 
 **Area:** Review tooling / codex CLI / autonomous ship gates

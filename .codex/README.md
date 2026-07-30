@@ -79,7 +79,10 @@ GitHub:
 
 - Public repo: `JasenNelson/SSTAC-Dashboard`.
 - Default branch: `main`.
-- Owner merges; agents never run `gh pr merge`.
+- Merge requires explicit owner/HITL APPROVAL of the exact reviewed SHA and scope, with
+  required CI green. Approval is not execution: after that approval an authorized executor
+  may run the merge. An executor may NEVER self-approve, and approval never carries forward
+  to a different SHA. See the MERGE protocol in `AGENTS.md` (corrected 2026-07-30).
 - After push, perform one CI status check and report the run URL/status.
 
 Supabase:
