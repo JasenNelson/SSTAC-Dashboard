@@ -1,5 +1,7 @@
 import argparse
+import hashlib
 import os
+import re
 import shutil
 import stat
 import sys
@@ -8,6 +10,26 @@ from pathlib import Path
 
 class PublishError(RuntimeError):
     pass
+
+
+def _validated_sha256(expected_sha256: str) -> str:
+    if re.fullmatch(r"[0-9a-f]{64}", expected_sha256) is None:
+        raise PublishError("expected graph SHA-256 must be 64 lowercase hex characters")
+    return expected_sha256
+
+
+def _require_graph_sha256(
+    graph_path: Path,
+    expected_sha256: str,
+    *,
+    surface: str,
+) -> None:
+    actual_sha256 = hashlib.sha256(graph_path.read_bytes()).hexdigest()
+    if actual_sha256 != expected_sha256:
+        raise PublishError(
+            f"{surface} graph SHA-256 mismatch: "
+            f"expected {expected_sha256}, found {actual_sha256}"
+        )
 
 
 def _is_link_or_junction(path: Path) -> bool:
@@ -83,8 +105,10 @@ def finalize_staging(
     graph_report: Path,
     stamp: str,
     head: str,
+    expected_graph_sha256: str,
     promotion_state: Path | None = None,
 ) -> None:
+    expected_graph_sha256 = _validated_sha256(expected_graph_sha256)
     if not staging.is_dir():
         raise PublishError(f"staging wiki does not exist: {staging}")
     validate_tree_no_links(staging)
@@ -93,7 +117,13 @@ def finalize_staging(
 
     graph_dir = staging / ".graph"
     graph_dir.mkdir(parents=True, exist_ok=True)
-    shutil.copy2(graph, graph_dir / "graph.json")
+    staged_graph = graph_dir / "graph.json"
+    shutil.copy2(graph, staged_graph)
+    _require_graph_sha256(
+        staged_graph,
+        expected_graph_sha256,
+        surface="staged",
+    )
 
     staged_report = graph_dir / "GRAPH_REPORT.md"
     if graph_report.is_file():
@@ -115,10 +145,22 @@ def finalize_staging(
     os.replace(stamp_tmp, stamp_path)
 
 
-def swap_staging(*, served: Path, staging: Path, backup: Path) -> None:
+def swap_staging(
+    *,
+    served: Path,
+    staging: Path,
+    backup: Path,
+    expected_graph_sha256: str,
+) -> None:
+    expected_graph_sha256 = _validated_sha256(expected_graph_sha256)
     if not staging.is_dir():
         raise PublishError(f"staging wiki does not exist: {staging}")
     validate_tree_no_links(staging)
+    _require_graph_sha256(
+        staging / ".graph" / "graph.json",
+        expected_graph_sha256,
+        surface="staged",
+    )
     if backup.exists():
         raise PublishError(f"backup path already exists: {backup}")
     backup.parent.mkdir(parents=True, exist_ok=True)
@@ -141,6 +183,36 @@ def swap_staging(*, served: Path, staging: Path, backup: Path) -> None:
                     f"publish failed and rollback failed: {publish_exc}; {rollback_exc}"
                 ) from rollback_exc
         raise PublishError(f"publish failed; last-good restored: {publish_exc}") from publish_exc
+
+    try:
+        _require_graph_sha256(
+            served / ".graph" / "graph.json",
+            expected_graph_sha256,
+            surface="served",
+        )
+    except (OSError, PublishError) as verification_exc:
+        try:
+            if staging.exists():
+                raise PublishError(
+                    f"rollback staging path unexpectedly exists: {staging}"
+                )
+            served.rename(staging)
+            if moved_old:
+                backup.rename(served)
+        except (OSError, PublishError) as rollback_exc:
+            raise PublishError(
+                "published graph verification failed and rollback failed: "
+                f"{verification_exc}; {rollback_exc}"
+            ) from rollback_exc
+        if moved_old:
+            raise PublishError(
+                "published graph verification failed; last-good restored: "
+                f"{verification_exc}"
+            ) from verification_exc
+        raise PublishError(
+            "published graph verification failed; rejected candidate retained "
+            f"at staging: {verification_exc}"
+        ) from verification_exc
 
     if moved_old:
         try:
@@ -166,12 +238,14 @@ def parse_args() -> argparse.Namespace:
     finalize.add_argument("--graph-report", type=Path, required=True)
     finalize.add_argument("--stamp", required=True)
     finalize.add_argument("--head", required=True)
+    finalize.add_argument("--expected-graph-sha256", required=True)
     finalize.add_argument("--promotion-state", type=Path)
 
     swap = subparsers.add_parser("swap")
     swap.add_argument("--served", type=Path, required=True)
     swap.add_argument("--staging", type=Path, required=True)
     swap.add_argument("--backup", type=Path, required=True)
+    swap.add_argument("--expected-graph-sha256", required=True)
     return parser.parse_args()
 
 
@@ -191,6 +265,7 @@ def main() -> int:
                 graph_report=checked_path(repo_root, args.graph_report),
                 stamp=args.stamp,
                 head=args.head,
+                expected_graph_sha256=args.expected_graph_sha256,
                 promotion_state=(
                     checked_path(repo_root, args.promotion_state)
                     if args.promotion_state is not None
@@ -202,6 +277,7 @@ def main() -> int:
                 served=checked_path(repo_root, args.served),
                 staging=checked_path(repo_root, args.staging),
                 backup=checked_path(repo_root, args.backup),
+                expected_graph_sha256=args.expected_graph_sha256,
             )
     except (OSError, PublishError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)

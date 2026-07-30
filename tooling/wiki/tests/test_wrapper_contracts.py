@@ -45,9 +45,13 @@ class TestWrapperContracts(unittest.TestCase):
             "n0_orphan",
             "n1_build",
             "n2_cluster",
+            "n5_semantic",
             "n6_wiki",
             "n6_publication",
             "serve_gate",
+            "final_canonicalization",
+            "final_graph_smoke",
+            "served_graph_sha256",
             "required_ref",
             "head_oid",
             "required_ref_oid",
@@ -85,9 +89,13 @@ class TestWrapperContracts(unittest.TestCase):
             "$n0OrphanStatus -ne 'OK'",
             "$step1Status -ne 'OK'",
             "$step2Status -ne 'OK'",
+            "$step5Status -eq 'FAIL'",
             "$step6Status -ne 'OK'",
             "$n6Publication -ne 'SERVED_WIKI_SWAPPED'",
             "$serveGateResult -ne 'PASS'",
+            "$finalCanonicalizationEvidence.status -ne 'PASS'",
+            "$finalGraphSmokeEvidence.status -ne 'PASS'",
+            "$servedGraphHashStatus -ne 'PASS'",
         ):
             with self.subTest(token=token):
                 self.assertIn(token, guard)
@@ -208,6 +216,197 @@ class TestWrapperContracts(unittest.TestCase):
         self.assertIn(expected, self.preflight)
         self.assertIn("task_definition_id", self.preflight)
         self.assertIn("matching terminal receipt cardinality", self.preflight)
+
+
+    def test_graph_canonicalization_and_smoke_precede_every_publish(self):
+        sync = (WIKI_DIR / "sync_wiki.ps1").read_text(encoding="ascii")
+        self.assertLess(
+            sync.index("canonicalize_graph.py"),
+            sync.index("graph_smoke.py"),
+        )
+        self.assertLess(
+            sync.index("graph_smoke.py"),
+            sync.index(" finalize "),
+        )
+
+        cluster = self.wrapper.index("'cluster-only'")
+        first_smoke = self.wrapper.index("graph_smoke.py")
+        final_canonical = self.wrapper.rindex("canonicalize_graph.py")
+        final_smoke = self.wrapper.rindex("graph_smoke.py")
+        finalize = self.wrapper.index(" finalize ")
+        self.assertLess(cluster, first_smoke)
+        self.assertLess(first_smoke, final_canonical)
+        self.assertLess(final_canonical, final_smoke)
+        self.assertLess(final_smoke, finalize)
+        self.assertGreaterEqual(
+            self.wrapper.count("--require-communities"), 2
+        )
+        self.assertNotIn("--require-communities", sync)
+
+    def test_each_identity_mutation_is_canonicalized_before_promotion(self):
+        label = self.wrapper.index("@('label'")
+        post_label = self.wrapper.index("canonicalization-postlabel-$runId.json")
+        semantic = self.wrapper.index("semantic_extract.ps1")
+        post_semantic = self.wrapper.index(
+            "canonicalization-postsemantic-$runId.json"
+        )
+        recluster = self.wrapper.index(
+            "$postSemanticCluster = Invoke-GraphifyGuarded"
+        )
+        clustered_smoke = self.wrapper.index("smoke-postsemantic-$runId.json")
+        promotion = self.wrapper.index("PROMOTION (THE ONLY invocation")
+        self.assertLess(label, post_label)
+        self.assertLess(post_label, semantic)
+        self.assertLess(semantic, post_semantic)
+        self.assertLess(post_semantic, recluster)
+        self.assertLess(recluster, clustered_smoke)
+        self.assertLess(clustered_smoke, promotion)
+        self.assertNotIn("canonicalization-postsemantic-cluster", self.wrapper)
+
+    def test_explicit_semantic_failure_blocks_integrity_publish_and_success(self):
+        n5b_guard = self.wrapper.split(
+            'Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"', 1
+        )[1].split('Write-Host "--- N6 WIKI ---"', 1)[0]
+        n6_guard = self.wrapper.split(
+            'Write-Host "--- N6 WIKI ---"', 1
+        )[1].split("& $pythonExe $publishHelper --repo-root $RepoRoot prepare", 1)[0]
+        final_predicate = self.wrapper.split("# Final predicate", 1)[1]
+        self.assertIn('$step5Status -ne "FAIL"', n5b_guard)
+        self.assertIn('$step5Status -eq "FAIL"', n6_guard)
+        self.assertIn('($step5Status -ne "FAIL")', final_predicate)
+        self.assertIn("PROMOTION_SKIPPED_SEMANTIC_FAIL", self.wrapper)
+
+    def test_terminal_receipt_binds_final_graph_receipts_and_link_count(self):
+        for token in (
+            '"canonicalization-prepublish-$runId.json"',
+            '"smoke-prepublish-$runId.json"',
+            "receipt_sha256 = Get-NightlyFileSha256",
+            "node_count = $canonicalNodeCount",
+            "link_count = $canonicalLinkCount",
+            "distinct_community_count = $smokeCommunityCount",
+            "final_canonicalization = $finalCanonicalizationEvidence",
+            "final_graph_smoke = $finalGraphSmokeEvidence",
+            '"Links: $linkCount"',
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, self.wrapper)
+        self.assertNotIn("d.get('edges',[])", self.wrapper)
+        self.assertNotIn('"Edges: $edgeCount"', self.wrapper)
+
+    def test_graph_hash_is_rechecked_before_finalize_and_after_swap(self):
+        before_finalize = self.wrapper.index(
+            "Test-NightlyGraphSha256 $graphPathForPublication"
+        )
+        finalize = self.wrapper.index(" finalize --staging")
+        swap = self.wrapper.index(" swap --served")
+        served_check = self.wrapper.index(
+            "Test-NightlyGraphSha256 $servedGraphPath"
+        )
+        success = self.wrapper.index('$wikiServedStatus = "SERVED_WIKI_SWAPPED"')
+        self.assertLess(before_finalize, finalize)
+        self.assertLess(finalize, swap)
+        self.assertLess(swap, served_check)
+        self.assertEqual(
+            self.wrapper.count(
+                "--expected-graph-sha256 $finalGraphSmokeEvidence.graph_sha256"
+            ),
+            2,
+        )
+        self.assertLess(served_check, success)
+        self.assertIn("graph bytes changed after final smoke", self.wrapper)
+        self.assertIn("SERVED_WIKI_HASH_MISMATCH", self.wrapper)
+        self.assertIn("served_graph_sha256 = $servedGraphSha256", self.wrapper)
+        self.assertIn("graph_sha256 = $smokeGraphSha256", self.wrapper)
+
+    def test_plain_sync_binds_smoked_graph_hash_to_publication(self):
+        sync = (WIKI_DIR / "sync_wiki.ps1").read_text(encoding="ascii")
+        smoke = sync.index("graph_smoke.py")
+        receipt = sync.index("$plainSyncSmokeEvidence = Get-Content")
+        digest = sync.index(
+            "$publishedGraphSha256 = [string]$plainSyncSmokeEvidence.graph_sha256"
+        )
+        finalize = sync.index(" finalize ")
+        swap = sync.index(" swap ")
+        self.assertLess(smoke, receipt)
+        self.assertLess(receipt, digest)
+        self.assertLess(digest, finalize)
+        self.assertLess(finalize, swap)
+        self.assertIn("--receipt $plainSyncSmokeReceipt", sync)
+        self.assertIn("graph_integrity.status -cne 'PASS'", sync)
+        self.assertNotIn("$publishedGraphSha256 = (Get-FileHash", sync)
+        self.assertEqual(
+            sync.count("--expected-graph-sha256 $publishedGraphSha256"),
+            2,
+        )
+
+    def test_graph_hash_helper_detects_post_smoke_mutation(self):
+        if not POWERSHELL:
+            self.skipTest("PowerShell unavailable")
+        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            graph = Path(temp_dir) / "graph.json"
+            graph.write_text('{"nodes":[],"links":[]}', encoding="ascii")
+            expected = hashlib.sha256(graph.read_bytes()).hexdigest()
+            helper = "function Get-NightlyFileSha256" + self.wrapper.split(
+                "function Get-NightlyFileSha256", 1
+            )[1].split("try { . $terminalizerPath", 1)[0]
+            command = (
+                helper
+                + f"; if (Test-NightlyGraphSha256 '{graph}' '{expected}') {{ exit 0 }} else {{ exit 1 }}"
+            )
+            first = subprocess.run(
+                [POWERSHELL, "-NoProfile", "-Command", command],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
+            graph.write_text(
+                '{"nodes":[],"links":[],"changed":true}', encoding="ascii"
+            )
+            second = subprocess.run(
+                [POWERSHELL, "-NoProfile", "-Command", command],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(second.returncode, 1, second.stdout + second.stderr)
+
+    def test_producer_integer_helper_rejects_missing_and_coercive_scalars(self):
+        if not POWERSHELL:
+            self.skipTest("PowerShell unavailable")
+        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
+        helper = "function Get-NightlyFileSha256" + self.wrapper.split(
+            "function Get-NightlyFileSha256", 1
+        )[1].split("try { . $terminalizerPath", 1)[0]
+        cases = (
+            ({"value": 1}, 0),
+            ({}, 1),
+            ({"value": "1"}, 1),
+            ({"value": 1.0}, 1),
+            ({"value": True}, 1),
+            ({"value": -1}, 1),
+        )
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            payload = Path(temp_dir) / "payload.json"
+            for value, expected_exit in cases:
+                with self.subTest(value=value):
+                    payload.write_text(json.dumps(value), encoding="ascii")
+                    command = (
+                        helper
+                        + f"; $d=Get-Content -LiteralPath '{payload}' -Raw|ConvertFrom-Json; "
+                        + "try { [void](Get-NightlyExactNonnegativeInteger $d 'value' 100); exit 0 } catch { exit 1 }"
+                    )
+                    result = subprocess.run(
+                        [POWERSHELL, "-NoProfile", "-Command", command],
+                        capture_output=True,
+                        text=True,
+                    )
+                    self.assertEqual(
+                        result.returncode,
+                        expected_exit,
+                        result.stdout + result.stderr,
+                    )
+        self.assertNotIn("[int]$canonicalData", self.wrapper)
+        self.assertNotIn("[int]$smokeData", self.wrapper)
 
 
 class TestProcessCustodyHelpers(unittest.TestCase):

@@ -213,6 +213,15 @@ function Get-CustodySha256Text([string]$Text) {
     finally { $sha.Dispose() }
 }
 
+function Get-PreflightFileSha256([string]$Path) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try {
+        return ([BitConverter]::ToString($sha.ComputeHash([IO.File]::ReadAllBytes($Path)))).Replace('-', '').ToLowerInvariant()
+    } finally {
+        $sha.Dispose()
+    }
+}
+
 function Get-CustodyIdentitySetHash([object[]]$Identities) {
     return (Get-CustodySha256Text ((@($Identities | ForEach-Object { [string]$_.identity_sha256 } | Sort-Object)) -join "`n"))
 }
@@ -427,8 +436,34 @@ if ($version -and $version.Trim() -eq '0.9.17') {
     Action 'Provision the pinned graphify virtual environment.'
 }
 
+function Get-RuntimeRootEncodingHits([string]$CandidateId, [string]$ExpectedRoot) {
+    if ($null -eq $CandidateId) { return @() }
+    $normalizedRoot = (($ExpectedRoot -replace '\\', '/') -replace '/+', '/').TrimEnd('/').ToLowerInvariant()
+    $normalizedId = (($CandidateId -replace '\\', '/') -replace '/+', '/').ToLowerInvariant()
+    $sluggedRoot = ([regex]::Replace($normalizedRoot, '[^a-z0-9]+', '_')).Trim('_')
+    $hits = New-Object System.Collections.Generic.List[string]
+    $literalPattern = '(?<![a-z0-9])' + [regex]::Escape($normalizedRoot) + '(?=$|[/\\:#@|])'
+    if ($normalizedRoot -and $normalizedId -match $literalPattern) {
+        [void]$hits.Add('normalized')
+    }
+    if ($CandidateId -cmatch '^[A-Za-z0-9_]+$' -and $sluggedRoot) {
+        $slugPattern = '(?:^|_)' + [regex]::Escape($sluggedRoot) + '(?:_|$)'
+        if ($CandidateId.ToLowerInvariant() -match $slugPattern) {
+            [void]$hits.Add('slugged')
+        }
+    }
+    return @($hits)
+}
+
+$servedGraphSha256 = $null
 try {
-    $graph = Get-Content -LiteralPath (Join-Path $RuntimeRoot 'wiki\.graph\graph.json') -Raw | ConvertFrom-Json
+    $servedGraphPath = Join-Path $RuntimeRoot 'wiki\.graph\graph.json'
+    $servedGraphBytes = [IO.File]::ReadAllBytes($servedGraphPath)
+    $servedGraphHasher = [Security.Cryptography.SHA256]::Create()
+    try { $servedGraphSha256 = ([BitConverter]::ToString($servedGraphHasher.ComputeHash($servedGraphBytes))).Replace('-', '').ToLowerInvariant() }
+    finally { $servedGraphHasher.Dispose() }
+    $servedGraphText = ([Text.Encoding]::UTF8.GetString($servedGraphBytes)).TrimStart([char]0xFEFF)
+    $graph = $servedGraphText | ConvertFrom-Json
     $nodes = @($graph.nodes)
     $links = @($graph.links)
     $nodeCount = $nodes.Count
@@ -436,56 +471,125 @@ try {
     if ($nodeCount -lt 1 -or $linkCount -lt 1) { throw 'nodes/links missing or empty' }
 
     $provenPhase = $ExpectedSchedulerContract -eq 'A' -and $ExpectedSchedulerPhase -in @('StagedManualProven', 'Active0530Correlated')
-    if ($provenPhase) {
-        $graphIssues = New-Object System.Collections.Generic.List[string]
-        $nodeIds = New-Object System.Collections.Generic.List[string]
-        $communityIds = @{}
-        foreach ($node in $nodes) {
-            $nodeId = [string]$node.id
-            if ([string]::IsNullOrWhiteSpace($nodeId)) { [void]$graphIssues.Add('node id missing'); continue }
-            [void]$nodeIds.Add($nodeId)
-            $communityValue = $node.PSObject.Properties['community']
-            $community = 0
-            if ($null -eq $communityValue -or -not [int]::TryParse([string]$communityValue.Value, [ref]$community) -or $community -lt 0) {
-                [void]$graphIssues.Add("node $nodeId community must be a non-negative integer")
-            } else {
+    $graphIssues = New-Object System.Collections.Generic.List[string]
+    $nodeIds = New-Object System.Collections.Generic.List[string]
+    $communityIds = @{}
+    $communityPresentCount = 0
+    $invalidCommunityCount = 0
+    foreach ($node in $nodes) {
+        $nodeId = [string]$node.id
+        if ([string]::IsNullOrWhiteSpace($nodeId)) {
+            [void]$graphIssues.Add('node id missing')
+            continue
+        }
+        [void]$nodeIds.Add($nodeId)
+        $communityValue = $node.PSObject.Properties['community']
+        if ($null -ne $communityValue -and $null -ne $communityValue.Value) {
+            $communityPresentCount++
+            try {
+                $community = Get-CustodyNonnegativeInteger $communityValue.Value 'community'
                 $communityIds[[string]$community] = $true
+            } catch {
+                $invalidCommunityCount++
             }
         }
-        if ($communityIds.Count -lt 1) { [void]$graphIssues.Add('at least one populated community is required') }
-        $uniqueNodeIds = @($nodeIds | Sort-Object -Unique)
-        if ($uniqueNodeIds.Count -ne $nodeIds.Count) { [void]$graphIssues.Add('node IDs must be unique') }
-        $declared = @{}
-        foreach ($nodeId in $uniqueNodeIds) { $declared[$nodeId] = $true }
-        $endpoints = New-Object System.Collections.Generic.List[string]
-        foreach ($link in $links) {
-            foreach ($endpoint in @([string]$link.source, [string]$link.target)) {
-                if ([string]::IsNullOrWhiteSpace($endpoint)) {
-                    [void]$graphIssues.Add('link endpoint missing')
-                } else {
-                    [void]$endpoints.Add($endpoint)
-                    if (-not $declared.ContainsKey($endpoint)) { [void]$graphIssues.Add("undeclared link endpoint $endpoint") }
-                }
-            }
-        }
-        $endpointSet = @($endpoints | Sort-Object -Unique)
-        $missingEndpoints = @($uniqueNodeIds | Where-Object { $_ -notin $endpointSet })
-        $extraEndpoints = @($endpointSet | Where-Object { $_ -notin $uniqueNodeIds })
-        if ($missingEndpoints.Count -gt 0 -or $extraEndpoints.Count -gt 0) { [void]$graphIssues.Add('link endpoint set must exactly equal declared node set') }
-
-        $normalizedRoot = ($RuntimeRoot -replace '\\', '/').TrimEnd('/').ToLowerInvariant()
-        foreach ($candidateId in @($nodeIds) + @($endpoints)) {
-            $normalizedId = ([string]$candidateId -replace '\\', '/').ToLowerInvariant()
-            if ($normalizedRoot -and $normalizedId.Contains($normalizedRoot)) {
-                [void]$graphIssues.Add('runtime-root-derived node or endpoint ID detected')
-                break
-            }
-        }
-        if ($graphIssues.Count -gt 0) { throw ($graphIssues -join ', ') }
-        Check PASS 'served-graph' "$nodeCount nodes, $linkCount links; proven graph invariants pass" $true
-    } else {
-        Check PASS 'served-graph' "$nodeCount nodes, $linkCount links" $true
     }
+    if ($invalidCommunityCount -gt 0) {
+        [void]$graphIssues.Add("$invalidCommunityCount community value(s) must be non-negative integers")
+    }
+    if ($communityPresentCount -gt 0 -and $communityPresentCount -ne $nodeCount) {
+        [void]$graphIssues.Add('community population must be all-or-none')
+    }
+    if ($provenPhase -and $communityPresentCount -ne $nodeCount) {
+        [void]$graphIssues.Add('proven manual/nightly graph requires every node community')
+    }
+    if ($provenPhase -and $communityIds.Count -lt 1) {
+        [void]$graphIssues.Add('at least one populated community is required')
+    }
+
+    $uniqueNodeIds = @($nodeIds | Sort-Object -Unique)
+    if ($uniqueNodeIds.Count -ne $nodeIds.Count) {
+        [void]$graphIssues.Add('node IDs must be unique')
+    }
+    $declared = @{}
+    foreach ($nodeId in $uniqueNodeIds) { $declared[$nodeId] = $true }
+
+    $endpoints = New-Object System.Collections.Generic.List[string]
+    $undeclaredCount = 0
+    $missingEndpointCount = 0
+    foreach ($link in $links) {
+        foreach ($endpoint in @([string]$link.source, [string]$link.target)) {
+            if ([string]::IsNullOrWhiteSpace($endpoint)) {
+                $missingEndpointCount++
+            } else {
+                [void]$endpoints.Add($endpoint)
+                if (-not $declared.ContainsKey($endpoint)) { $undeclaredCount++ }
+            }
+        }
+    }
+    $hyperedgesProperty = $graph.PSObject.Properties['hyperedges']
+    if ($null -ne $hyperedgesProperty) {
+        if ($null -eq $hyperedgesProperty.Value -or $hyperedgesProperty.Value -isnot [System.Array]) {
+            [void]$graphIssues.Add('hyperedges must be an array when present')
+        } else {
+            $hyperedgeIndex = 0
+            foreach ($hyperedge in @($hyperedgesProperty.Value)) {
+                if ($null -eq $hyperedge -or $hyperedge -isnot [pscustomobject]) {
+                    [void]$graphIssues.Add("hyperedge $hyperedgeIndex must be an object")
+                    $hyperedgeIndex++
+                    continue
+                }
+                if ($null -ne $hyperedge.PSObject.Properties['members'] -or $null -ne $hyperedge.PSObject.Properties['node_ids']) {
+                    [void]$graphIssues.Add("hyperedge $hyperedgeIndex uses a noncanonical member alias")
+                }
+                $membersProperty = $hyperedge.PSObject.Properties['nodes']
+                if ($null -eq $membersProperty -or $null -eq $membersProperty.Value -or $membersProperty.Value -isnot [System.Array] -or @($membersProperty.Value).Count -eq 0) {
+                    [void]$graphIssues.Add("hyperedge $hyperedgeIndex must have a nonempty nodes array")
+                } else {
+                    $memberIndex = 0
+                    foreach ($memberValue in @($membersProperty.Value)) {
+                        if ($memberValue -isnot [string] -or [string]::IsNullOrWhiteSpace([string]$memberValue)) {
+                            [void]$graphIssues.Add("hyperedge $hyperedgeIndex nodes[$memberIndex] must be a nonempty string")
+                        } else {
+                            $member = [string]$memberValue
+                            [void]$endpoints.Add($member)
+                            if (-not $declared.ContainsKey($member)) {
+                                [void]$graphIssues.Add("hyperedge $hyperedgeIndex nodes[$memberIndex] is undeclared")
+                            }
+                        }
+                        $memberIndex++
+                    }
+                }
+                $hyperedgeIndex++
+            }
+        }
+    }
+    if ($missingEndpointCount -gt 0) {
+        [void]$graphIssues.Add("$missingEndpointCount link endpoint(s) missing")
+    }
+    if ($undeclaredCount -gt 0) {
+        [void]$graphIssues.Add("$undeclaredCount link endpoint occurrence(s) are undeclared")
+    }
+
+    $runtimeHitCount = 0
+    foreach ($candidateId in @($nodeIds) + @($endpoints)) {
+        if (@(Get-RuntimeRootEncodingHits ([string]$candidateId) $RuntimeRoot).Count -gt 0) {
+            $runtimeHitCount++
+        }
+    }
+    if ($runtimeHitCount -gt 0) {
+        [void]$graphIssues.Add("$runtimeHitCount runtime-root-derived graph ID occurrence(s)")
+    }
+
+    if ($graphIssues.Count -gt 0) { throw ($graphIssues -join ', ') }
+    $endpointSet = @($endpoints | Sort-Object -Unique)
+    $isolatedCount = @($uniqueNodeIds | Where-Object { $_ -notin $endpointSet }).Count
+    $communityDetail = if ($communityPresentCount -eq 0) {
+        'communities omitted for deterministic graph'
+    } else {
+        "$($communityIds.Count) populated community label(s)"
+    }
+    Check PASS 'served-graph' "$nodeCount nodes, $linkCount links; every endpoint declared; $isolatedCount isolated node(s) retained; portable IDs; $communityDetail" $true
 } catch {
     Check FAIL 'served-graph' "missing, invalid, or unsafe graph.json: $($_.Exception.Message)" $true
     Action 'Run the deterministic wiki build in this runtime.'
@@ -875,8 +979,61 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
             if ([string]$data.n0_orphan -cne 'OK') { [void]$proofIssues.Add('N0 orphan proof must be OK') }
             if ([string]$data.n1_build -cne 'OK') { [void]$proofIssues.Add('N1 build proof must be OK') }
             if ([string]$data.n2_cluster -cne 'OK') { [void]$proofIssues.Add('N2 cluster proof must be OK') }
+            $semanticProof = [string]$data.n5_semantic
+            if ($semanticProof -cnotin @('OK', 'SEMANTIC_SKIPPED_SkipFlags', 'SEMANTIC_SKIPPED_LOCK')) { [void]$proofIssues.Add('N5 semantic proof is missing, failed, or not an allowed intentional skip') }
             if ([string]$data.n6_wiki -cne 'OK' -or [string]$data.n6_publication -cne 'SERVED_WIKI_SWAPPED') { [void]$proofIssues.Add('N6 Wiki publication proof must be successful') }
             if ([string]$data.serve_gate -cne 'PASS') { [void]$proofIssues.Add('serve gate proof must be PASS') }
+            try {
+                $canonicalEvidence = $data.PSObject.Properties['final_canonicalization'].Value
+                $smokeEvidence = $data.PSObject.Properties['final_graph_smoke'].Value
+                if ($null -eq $canonicalEvidence -or [string]$canonicalEvidence.status -cne 'PASS') { throw 'final canonicalization evidence must be PASS' }
+                if ($null -eq $smokeEvidence -or [string]$smokeEvidence.status -cne 'PASS') { throw 'final graph smoke evidence must be PASS' }
+
+                $expectedCanonicalName = "canonicalization-prepublish-$bodyRunId.json"
+                $expectedSmokeName = "smoke-prepublish-$bodyRunId.json"
+                if ([string]$canonicalEvidence.receipt_name -cne $expectedCanonicalName) { throw 'final canonicalization receipt name mismatch' }
+                if ([string]$smokeEvidence.receipt_name -cne $expectedSmokeName) { throw 'final graph smoke receipt name mismatch' }
+                if ([string]$canonicalEvidence.receipt_sha256 -cnotmatch '^[0-9a-f]{64}$' -or [string]$smokeEvidence.receipt_sha256 -cnotmatch '^[0-9a-f]{64}$') { throw 'final graph evidence hash is invalid' }
+
+                $canonicalPath = Join-Path $receiptDirectory $expectedCanonicalName
+                $smokePath = Join-Path $receiptDirectory $expectedSmokeName
+                if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf) -or -not (Test-Path -LiteralPath $smokePath -PathType Leaf)) { throw 'final graph evidence file is missing' }
+                if ((Get-PreflightFileSha256 $canonicalPath) -cne [string]$canonicalEvidence.receipt_sha256) { throw 'final canonicalization receipt SHA-256 mismatch' }
+                if ((Get-PreflightFileSha256 $smokePath) -cne [string]$smokeEvidence.receipt_sha256) { throw 'final graph smoke receipt SHA-256 mismatch' }
+
+                $canonicalNodeCount = Get-CustodyNonnegativeInteger $canonicalEvidence.node_count 'final_canonicalization.node_count'
+                $canonicalLinkCount = Get-CustodyNonnegativeInteger $canonicalEvidence.link_count 'final_canonicalization.link_count'
+                $canonicalMaterializedCount = Get-CustodyNonnegativeInteger $canonicalEvidence.materialized_endpoint_node_count 'final_canonicalization.materialized_endpoint_node_count'
+                $canonicalRemovedCount = Get-CustodyNonnegativeInteger $canonicalEvidence.removed_prior_materialized_endpoint_node_count 'final_canonicalization.removed_prior_materialized_endpoint_node_count'
+                if ($canonicalNodeCount -lt 1 -or $canonicalNodeCount -gt 10000000 -or $canonicalLinkCount -lt 1 -or $canonicalLinkCount -gt 50000000 -or $canonicalMaterializedCount -gt $canonicalNodeCount -or $canonicalRemovedCount -gt 10000000) { throw 'final canonicalization counts are out of bounds' }
+
+                $canonicalReceipt = Get-Content -LiteralPath $canonicalPath -Raw | ConvertFrom-Json
+                foreach ($field in @('undeclared_endpoint_occurrence_count', 'undeclared_hyperedge_member_occurrence_count', 'runtime_root_derived_id_occurrence_count')) {
+                    if ((Get-CustodyNonnegativeInteger $canonicalReceipt.$field "canonical receipt $field") -ne 0) { throw "canonical receipt $field must be zero" }
+                }
+                if ((Get-CustodyNonnegativeInteger $canonicalReceipt.node_count 'canonical receipt node_count') -ne $canonicalNodeCount -or
+                    (Get-CustodyNonnegativeInteger $canonicalReceipt.link_count 'canonical receipt link_count') -ne $canonicalLinkCount -or
+                    (Get-CustodyNonnegativeInteger $canonicalReceipt.materialized_endpoint_node_count 'canonical receipt materialized count') -ne $canonicalMaterializedCount -or
+                    (Get-CustodyNonnegativeInteger $canonicalReceipt.removed_prior_materialized_endpoint_node_count 'canonical receipt removed count') -ne $canonicalRemovedCount) { throw 'final canonicalization receipt counts mismatch terminal receipt' }
+
+                $smokeNodeCount = Get-CustodyNonnegativeInteger $smokeEvidence.node_count 'final_graph_smoke.node_count'
+                $smokeLinkCount = Get-CustodyNonnegativeInteger $smokeEvidence.link_count 'final_graph_smoke.link_count'
+                $smokeCommunityCount = Get-CustodyNonnegativeInteger $smokeEvidence.distinct_community_count 'final_graph_smoke.distinct_community_count'
+                $smokeGraphSha256 = [string]$smokeEvidence.graph_sha256
+                if ($smokeNodeCount -ne $canonicalNodeCount -or $smokeLinkCount -ne $canonicalLinkCount -or $smokeCommunityCount -lt 1 -or $smokeCommunityCount -gt $smokeNodeCount) { throw 'final graph smoke counts contradict canonicalization evidence' }
+                if ($smokeGraphSha256 -cnotmatch '^[0-9a-f]{64}$') { throw 'final graph smoke graph SHA-256 is invalid' }
+                if ($servedGraphSha256 -cne $smokeGraphSha256) { throw 'served graph SHA-256 differs from final smoke evidence' }
+                if ([string]$data.served_graph_sha256 -cne $smokeGraphSha256) { throw 'terminal served graph SHA-256 differs from final smoke evidence' }
+                $smokeReceipt = Get-Content -LiteralPath $smokePath -Raw | ConvertFrom-Json
+                if ($smokeReceipt.hard_abort -isnot [bool] -or $smokeReceipt.hard_abort -or [string]$smokeReceipt.graph_integrity.status -cne 'PASS' -or [string]$smokeReceipt.community_contract.status -cne 'PASS') { throw 'final graph smoke receipt is not successful' }
+                if ([string]$smokeReceipt.graph_sha256 -cne $smokeGraphSha256) { throw 'rehashed smoke receipt graph SHA-256 differs from terminal evidence' }
+                if ((Get-CustodyNonnegativeInteger $smokeReceipt.graph_integrity.node_count 'smoke receipt node_count') -ne $smokeNodeCount -or
+                    (Get-CustodyNonnegativeInteger $smokeReceipt.graph_integrity.link_count 'smoke receipt link_count') -ne $smokeLinkCount -or
+                    (Get-CustodyNonnegativeInteger $smokeReceipt.community_contract.populated_node_count 'smoke receipt populated count') -ne $smokeNodeCount -or
+                    (Get-CustodyNonnegativeInteger $smokeReceipt.community_contract.distinct_community_count 'smoke receipt community count') -ne $smokeCommunityCount) { throw 'final graph smoke receipt counts mismatch terminal receipt' }
+            } catch {
+                [void]$proofIssues.Add("final graph evidence invalid: $($_.Exception.Message)")
+            }
             if ([string]$data.required_ref -cne $requiredRef) { [void]$proofIssues.Add('receipt required_ref mismatch') }
             foreach ($oidField in @('head_oid', 'required_ref_oid', 'build_stamp_oid')) { if (-not [string]::Equals([string]$data.$oidField, $head, [System.StringComparison]::OrdinalIgnoreCase)) { [void]$proofIssues.Add("receipt $oidField mismatch") } }
             if ([string]$data.terminal_process_custody -cne 'PASS') {

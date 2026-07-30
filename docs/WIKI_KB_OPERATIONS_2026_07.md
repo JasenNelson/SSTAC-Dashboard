@@ -29,6 +29,17 @@ reference implementation: OpenHarness-dev (bugs fixed during port, not copied --
   rollback-safe served-package swap. A successful run publishes `wiki\.graph\graph.json` and
   `wiki\.build-stamp` together while preserving Manual Notes, promotion state, and contradiction
   state.
+- Graph closure and portability: immediately after every identity- or edge-producing
+  Graphify mutation, and before promotion or publication identity consumers, the
+  repository canonicalizer removes only the exact current absolute runtime-root
+  encoding, then rebuilds every edge-only reference as an explicit concept node
+  with current edge-derived provenance. It never drops edges. Canonical nonempty
+  `hyperedges[].nodes` members are remapped and must also resolve to declared nodes;
+  ambiguous aliases, malformed hyperedges, undeclared members, and runtime-derived
+  member IDs fail closed. Graph smoke requires portable IDs and closure while
+  preserving legitimate non-materialized declared isolates. A prior synthetic
+  endpoint community is preserved only when genuine-node community population is
+  already complete; deterministic graphs remain wholly unpopulated until clustering.
 - Full nightly pipeline manually: `powershell -File tooling\wiki\nightly_wiki_sync.ps1`
   (steps N0-N7; receipt at `.tmp_wiki_nightly\receipt-<date>.md`; transcript alongside).
 - Freshness: `powershell -File tooling\wiki\check_nightly_freshness.ps1` (exit 1 = stale >48h).
@@ -51,8 +62,15 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tooling\wiki\activation_pref
 ```
 
 The preflight is read-only: it does not fetch, register tasks, add or remove MCPs, invoke Ollama,
-alter standing blocks, or delete locks. `RESULT READY` requires a clean tracked runtime,
-graphifyy 0.9.17, a served graph with nodes and links, a build stamp matching `HEAD`, and `HEAD`
+alter standing blocks, or delete locks. Structural graph checks apply in every
+  scheduler phase: unique node IDs, declared edge and canonical hyperedge members,
+  portable IDs, and legitimate non-materialized isolate preservation.
+  Communities may be wholly absent after deterministic `--no-cluster`; partial
+  population is invalid, and accepted manual or natural nightly proof requires
+  complete non-negative integral JSON numeric community population with at least
+  one distinct label. Numeric strings, floats, booleans, and negative values fail
+  closed. `RESULT READY` requires a clean tracked runtime, Graphify 0.9.17, a served
+  graph with nodes and links, a build stamp matching `HEAD`, and `HEAD`
 matching the configured remote-tracking ref. If scheduler or MCP entries already exist, they must
 match the expected command shape for the selected runtime. Resolve FAIL before activation and
 resolve material UNKNOWN checks manually.
@@ -286,8 +304,11 @@ terminal receipt is informational and cannot qualify Contract A. The no-argument
 For Contract A, the wrapper captures the fail-closed process baseline before workload execution,
 binds it to the canonical run ID and its immediate SHA-256, and performs terminal evaluation as
 the last child process while the nightly parent remains alive. The terminal receipt contains both
-the top-level process-custody verdict and bounded nested evidence; preflight rejects missing,
-malformed, contradictory, truncated, failed, or run/baseline/runtime-mismatched evidence.
+  the top-level process-custody verdict and bounded nested evidence. It also binds
+  the run-unique final canonicalization and graph-smoke receipt names, SHA-256 hashes,
+  bounded node/link/materialization/community counts, closure status, and hard-abort
+  state. Preflight independently rehashes those files and rejects missing, malformed,
+  contradictory, truncated, failed, or run/baseline/runtime-mismatched evidence.
 The Contract A action remains
 exact Windows PowerShell 5.1 with `-RepoRoot` and a nonempty `-TaskDefinitionId`; it never contains
 `-AutoCommit`. Successful proof additionally requires exact runtime HEAD/ref/build-stamp

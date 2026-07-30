@@ -101,8 +101,11 @@ class ActivationPreflightTests(unittest.TestCase):
             text=True,
         ).stdout.strip()
 
-    def write_graph(self, nodes, links):
-        self.graph_path.write_text(json.dumps({"nodes": nodes, "links": links}), encoding="ascii")
+    def write_graph(self, nodes, links, hyperedges=None):
+        graph = {"nodes": nodes, "links": links}
+        if hyperedges is not None:
+            graph["hyperedges"] = hyperedges
+        self.graph_path.write_text(json.dumps(graph), encoding="ascii")
 
     def run_preflight(
         self,
@@ -413,6 +416,51 @@ class ActivationPreflightTests(unittest.TestCase):
             custody.pop(key, None)
         if custody_mutator:
             custody_mutator(custody)
+        canonical_name = f"canonicalization-prepublish-{run_id}.json"
+        smoke_name = f"smoke-prepublish-{run_id}.json"
+        canonical_path = receipt_dir / canonical_name
+        smoke_path = receipt_dir / smoke_name
+        graph = json.loads(self.graph_path.read_text(encoding="ascii"))
+        graph_sha256 = hashlib.sha256(self.graph_path.read_bytes()).hexdigest()
+        graph_node_count = len(graph.get("nodes", []))
+        graph_link_count = len(graph.get("links", []))
+        valid_communities = [
+            node.get("community")
+            for node in graph.get("nodes", [])
+            if type(node.get("community")) is int and node["community"] >= 0
+        ]
+        graph_community_count = len(set(valid_communities))
+        canonical_receipt = {
+            "schema_version": "1.0.0",
+            "node_count": graph_node_count,
+            "link_count": graph_link_count,
+            "hyperedge_count": 0,
+            "materialized_endpoint_node_count": 0,
+            "removed_prior_materialized_endpoint_node_count": 0,
+            "undeclared_endpoint_occurrence_count": 0,
+            "undeclared_hyperedge_member_occurrence_count": 0,
+            "runtime_root_derived_id_occurrence_count": 0,
+        }
+        smoke_receipt = {
+            "graph_sha256": graph_sha256,
+            "graph_integrity": {
+                "status": "PASS",
+                "node_count": graph_node_count,
+                "link_count": graph_link_count,
+            },
+            "community_contract": {
+                "status": "PASS",
+                "populated_node_count": len(valid_communities),
+                "distinct_community_count": graph_community_count,
+            },
+            "hard_abort": False,
+        }
+        canonical_path.write_text(
+            json.dumps(canonical_receipt, sort_keys=True), encoding="ascii"
+        )
+        smoke_path.write_text(
+            json.dumps(smoke_receipt, sort_keys=True), encoding="ascii"
+        )
         data = {
             "schema_version": "1.0",
             "run_id": run_id,
@@ -425,9 +473,33 @@ class ActivationPreflightTests(unittest.TestCase):
             "n0_orphan": "OK",
             "n1_build": "OK",
             "n2_cluster": "OK",
+            "n5_semantic": "OK",
             "n6_wiki": "OK",
             "n6_publication": "SERVED_WIKI_SWAPPED",
             "serve_gate": "PASS",
+            "final_canonicalization": {
+                "status": "PASS",
+                "receipt_name": canonical_name,
+                "receipt_sha256": hashlib.sha256(
+                    canonical_path.read_bytes()
+                ).hexdigest(),
+                "node_count": graph_node_count,
+                "link_count": graph_link_count,
+                "materialized_endpoint_node_count": 0,
+                "removed_prior_materialized_endpoint_node_count": 0,
+            },
+            "final_graph_smoke": {
+                "status": "PASS",
+                "receipt_name": smoke_name,
+                "receipt_sha256": hashlib.sha256(
+                    smoke_path.read_bytes()
+                ).hexdigest(),
+                "node_count": graph_node_count,
+                "link_count": graph_link_count,
+                "distinct_community_count": graph_community_count,
+                "graph_sha256": graph_sha256,
+            },
+            "served_graph_sha256": graph_sha256,
             "required_ref": "refs/remotes/origin/main",
             "head_oid": self.head,
             "required_ref_oid": self.head,
@@ -826,6 +898,7 @@ class ActivationPreflightTests(unittest.TestCase):
             "n0_orphan": "FAIL",
             "n1_build": "FAIL",
             "n2_cluster": "FAIL",
+            "n5_semantic": "FAIL",
             "n6_wiki": "FAIL",
             "n6_publication": "SERVED_WIKI_KEPT_LAST_GOOD",
             "serve_gate": "FAIL",
@@ -849,6 +922,143 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_terminal_receipt(remove=(field,))
                 self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "execution-proof")
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_final_graph_evidence_is_hash_bound_and_fail_closed(self):
+        cases = (
+            {"final_canonicalization": {"status": "FAIL"}},
+            {"final_graph_smoke": {"status": "FAIL"}},
+            {
+                "final_canonicalization": {
+                    "status": "PASS",
+                    "receipt_name": "arbitrary-proof.json",
+                    "receipt_sha256": "0" * 64,
+                    "node_count": 2,
+                    "link_count": 2,
+                    "materialized_endpoint_node_count": 0,
+                    "removed_prior_materialized_endpoint_node_count": 0,
+                }
+            },
+        )
+        for replacements in cases:
+            with self.subTest(replacements=replacements):
+                self.write_contract("StagedManualProven")
+                self.write_terminal_receipt(replacements=replacements)
+                self.assert_not_ready(
+                    self.run_preflight(contract="A", phase="StagedManualProven"),
+                    "execution-proof",
+                )
+                shutil.rmtree(
+                    self.root / ".tmp_wiki_nightly", ignore_errors=True
+                )
+
+        self.write_contract("StagedManualProven")
+        terminal = self.write_terminal_receipt()
+        terminal_data = json.loads(terminal.read_text(encoding="ascii"))
+        evidence_path = terminal.parent / terminal_data["final_graph_smoke"][
+            "receipt_name"
+        ]
+        evidence_path.unlink()
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+        shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+        self.write_contract("StagedManualProven")
+        terminal = self.write_terminal_receipt()
+        terminal_data = json.loads(terminal.read_text(encoding="ascii"))
+        evidence_path = terminal.parent / terminal_data["final_canonicalization"][
+            "receipt_name"
+        ]
+        evidence_path.write_text("{}", encoding="ascii")
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+        shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+        self.write_contract("StagedManualProven")
+        terminal = self.write_terminal_receipt()
+        terminal_data = json.loads(terminal.read_text(encoding="ascii"))
+        smoke_path = terminal.parent / terminal_data["final_graph_smoke"][
+            "receipt_name"
+        ]
+        smoke_data = json.loads(smoke_path.read_text(encoding="ascii"))
+        smoke_data["hard_abort"] = True
+        smoke_path.write_text(
+            json.dumps(smoke_data, sort_keys=True), encoding="ascii"
+        )
+        terminal_data["final_graph_smoke"]["receipt_sha256"] = hashlib.sha256(
+            smoke_path.read_bytes()
+        ).hexdigest()
+        terminal.write_text(
+            json.dumps(terminal_data, sort_keys=True), encoding="ascii"
+        )
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+        shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_final_graph_evidence_requires_numeric_bounded_counts(self):
+        for field in ("node_count", "link_count"):
+            with self.subTest(field=field):
+                self.write_contract("StagedManualProven")
+                terminal = self.write_terminal_receipt()
+                terminal_data = json.loads(terminal.read_text(encoding="ascii"))
+                terminal_data["final_canonicalization"][field] = "2"
+                terminal.write_text(
+                    json.dumps(terminal_data, sort_keys=True), encoding="ascii"
+                )
+                self.assert_not_ready(
+                    self.run_preflight(contract="A", phase="StagedManualProven"),
+                    "execution-proof",
+                )
+                shutil.rmtree(
+                    self.root / ".tmp_wiki_nightly", ignore_errors=True
+                )
+
+    def test_served_graph_change_after_smoke_receipt_fails_closed(self):
+        self.write_contract("StagedManualProven")
+        self.write_terminal_receipt()
+        graph = json.loads(self.graph_path.read_text(encoding="ascii"))
+        graph["post_smoke_mutation"] = True
+        self.graph_path.write_text(
+            json.dumps(graph, sort_keys=True), encoding="ascii"
+        )
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+
+    def test_terminal_and_smoke_graph_hash_mismatches_fail_closed(self):
+        self.write_contract("StagedManualProven")
+        terminal = self.write_terminal_receipt()
+        data = json.loads(terminal.read_text(encoding="ascii"))
+        data["served_graph_sha256"] = "0" * 64
+        terminal.write_text(json.dumps(data, sort_keys=True), encoding="ascii")
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+        shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+        self.write_contract("StagedManualProven")
+        terminal = self.write_terminal_receipt()
+        data = json.loads(terminal.read_text(encoding="ascii"))
+        smoke_path = terminal.parent / data["final_graph_smoke"]["receipt_name"]
+        smoke = json.loads(smoke_path.read_text(encoding="ascii"))
+        smoke["graph_sha256"] = "f" * 64
+        smoke_path.write_text(json.dumps(smoke, sort_keys=True), encoding="ascii")
+        data["final_graph_smoke"]["receipt_sha256"] = hashlib.sha256(
+            smoke_path.read_bytes()
+        ).hexdigest()
+        terminal.write_text(json.dumps(data, sort_keys=True), encoding="ascii")
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedManualProven"),
+            "execution-proof",
+        )
+    def test_receipt_schema_and_native_exit_values_fail_closed(self):
         self.write_contract("StagedManualProven")
         self.write_terminal_receipt(replacements={"schema_version": "2.0"})
         self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "execution-proof")
@@ -875,9 +1085,13 @@ class ActivationPreflightTests(unittest.TestCase):
             "n0_orphan",
             "n1_build",
             "n2_cluster",
+            "n5_semantic",
             "n6_wiki",
             "n6_publication",
             "serve_gate",
+            "final_canonicalization",
+            "final_graph_smoke",
+            "served_graph_sha256",
             "required_ref",
             "head_oid",
             "required_ref_oid",
@@ -1015,6 +1229,10 @@ class ActivationPreflightTests(unittest.TestCase):
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
 
     def test_active_transition_fields_identity_and_hash_fail_closed(self):
+        wrong_start_boundary = (
+            datetime.strptime(self.start_boundary, "%Y-%m-%dT%H:%M:%S")
+            + timedelta(days=1)
+        ).strftime("%Y-%m-%dT%H:%M:%S")
         invalid_cases = (
             {"remove": ("schema_version",)},
             {"remove": ("terminal_state",)},
@@ -1033,7 +1251,7 @@ class ActivationPreflightTests(unittest.TestCase):
             {"prior_definition_id": DEFINITION_ID, "active_definition_id": DEFINITION_ID},
             {"replacements": {"active_task_definition_id": ZERO_DEFINITION_ID}},
             {"replacements": {"registration_date": "2026-07-29T05:00:01"}},
-            {"replacements": {"start_boundary": "2026-07-30T05:30:00"}},
+            {"replacements": {"start_boundary": wrong_start_boundary}},
             {"replacements": {"activated_at_utc": "not-a-time"}},
             {"replacements": {"activated_at_utc": "2026-07-29T18:00:00+00:00"}},
             {"replacements": {"activated_at_utc": "2026-07-29T18:00:00"}},
@@ -1186,9 +1404,12 @@ class ActivationPreflightTests(unittest.TestCase):
         cases = (
             ([{"id": "n1", "community": 1}, {"id": "n1", "community": 2}], [{"source": "n1", "target": "n1"}]),
             ([{"id": "n1", "community": 1}], [{"source": "n1", "target": "missing"}]),
-            ([{"id": "n1", "community": 1}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n1"}]),
             ([{"id": "n1"}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
             ([{"id": "n1", "community": "x"}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
+            ([{"id": "n1", "community": "1"}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
+            ([{"id": "n1", "community": 1.0}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
+            ([{"id": "n1", "community": True}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
+            ([{"id": "n1", "community": -1}, {"id": "n2", "community": 2}], [{"source": "n1", "target": "n2"}]),
         )
         for nodes, links in cases:
             with self.subTest(nodes=nodes, links=links):
@@ -1197,6 +1418,49 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_terminal_receipt()
                 self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "served-graph")
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_canonical_hyperedge_is_accepted_and_counts_as_connected(self):
+        self.write_graph(
+            [
+                {"id": "n1", "community": 0},
+                {"id": "n2", "community": 1},
+                {"id": "hyper-only", "community": 0},
+            ],
+            [{"source": "n1", "target": "n2"}],
+            [{"id": "h1", "nodes": ["n1", "hyper-only"]}],
+        )
+        result = self.ready_phase("StagedManualProven")
+        self.assertIn("0 isolated node(s) retained", result.stdout)
+
+    def test_hyperedge_shapes_members_and_runtime_ids_fail_closed(self):
+        runtime_member = str(self.root) + r"\src\bad.ts"
+        cases = (
+            {"id": "h1", "members": ["n1"]},
+            {"id": "h1", "node_ids": ["n1"]},
+            {"id": "h1", "nodes": []},
+            {"id": "h1", "nodes": ["n1", "missing"]},
+            {"id": "h1", "nodes": ["n1", runtime_member]},
+            "not-an-object",
+        )
+        for hyperedge in cases:
+            with self.subTest(hyperedge=hyperedge):
+                self.write_graph(
+                    [
+                        {"id": "n1", "community": 0},
+                        {"id": "n2", "community": 1},
+                    ],
+                    [{"source": "n1", "target": "n2"}],
+                    [hyperedge],
+                )
+                self.write_contract("StagedManualProven")
+                self.write_terminal_receipt()
+                self.assert_not_ready(
+                    self.run_preflight(contract="A", phase="StagedManualProven"),
+                    "served-graph",
+                )
+                shutil.rmtree(
+                    self.root / ".tmp_wiki_nightly", ignore_errors=True
+                )
 
     def test_runtime_root_derived_node_and_endpoint_ids_fail(self):
         for path_text in (str(self.root), str(self.root).replace("\\", "/").upper()):
@@ -1209,6 +1473,89 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_terminal_receipt()
                 self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "served-graph")
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+
+    def test_declared_isolated_nodes_are_allowed(self):
+        self.write_graph(
+            [
+                {"id": "n1", "community": 0},
+                {"id": "n2", "community": 1},
+                {"id": "isolated", "community": 0},
+            ],
+            [{"source": "n1", "target": "n2"}],
+        )
+        self.ready_phase("StagedManualProven")
+
+    def test_all_scheduler_phases_reject_slugged_runtime_ids(self):
+        root_slug = re.sub(
+            r"[^a-z0-9]+", "_", str(self.root).casefold()
+        ).strip("_")
+        bad_id = root_slug + "_src_bad_ts"
+        for phase in (
+            "Disabled",
+            "StagedAwaitingManual",
+            "StagedManualProven",
+            "ActiveAwaitingNatural",
+            "Active0530Correlated",
+        ):
+            with self.subTest(phase=phase):
+                self.write_graph(
+                    [
+                        {"id": bad_id, "community": 0},
+                        {"id": "n2", "community": 1},
+                    ],
+                    [
+                        {"source": bad_id, "target": "n2"},
+                        {"source": "n2", "target": bad_id},
+                    ],
+                )
+                self.write_contract(phase)
+                if phase in ("StagedManualProven", "Active0530Correlated"):
+                    self.write_terminal_receipt()
+                if phase in ("ActiveAwaitingNatural", "Active0530Correlated"):
+                    self.write_active_transition()
+                self.assert_not_ready(
+                    self.run_preflight(contract="A", phase=phase),
+                    "served-graph",
+                )
+                shutil.rmtree(
+                    self.root / ".tmp_wiki_nightly", ignore_errors=True
+                )
+
+    def test_runtime_root_marker_near_miss_does_not_false_positive(self):
+        near_miss = str(self.root) + "-copy"
+        self.write_graph(
+            [{"id": near_miss, "community": 0}, {"id": "n2", "community": 1}],
+            [
+                {"source": near_miss, "target": "n2"},
+                {"source": "n2", "target": near_miss},
+            ],
+        )
+        self.ready_phase("StagedManualProven")
+
+    def test_deterministic_phase_allows_all_communities_absent(self):
+        self.write_graph(
+            [{"id": "n1"}, {"id": "n2"}],
+            [
+                {"source": "n1", "target": "n2"},
+                {"source": "n2", "target": "n1"},
+            ],
+        )
+        self.ready_phase("StagedAwaitingManual")
+
+    def test_deterministic_phase_rejects_partial_communities(self):
+        self.write_graph(
+            [{"id": "n1", "community": 0}, {"id": "n2"}],
+            [
+                {"source": "n1", "target": "n2"},
+                {"source": "n2", "target": "n1"},
+            ],
+        )
+        self.write_contract("StagedAwaitingManual")
+        self.assert_not_ready(
+            self.run_preflight(contract="A", phase="StagedAwaitingManual"),
+            "served-graph",
+        )
 
     def test_zero_is_a_valid_community_label_when_communities_are_populated(self):
         self.write_graph(

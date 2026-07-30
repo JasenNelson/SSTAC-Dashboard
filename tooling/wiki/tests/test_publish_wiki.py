@@ -1,3 +1,5 @@
+import hashlib
+import json
 import stat
 import tempfile
 import unittest
@@ -48,6 +50,9 @@ class TestPublishWiki(unittest.TestCase):
         )
         self.graph.parent.mkdir()
         self.graph.write_text('{"nodes":[],"links":[]}\n', encoding="ascii")
+        self.expected_graph_sha256 = hashlib.sha256(
+            self.graph.read_bytes()
+        ).hexdigest()
 
     def tearDown(self):
         self.temp_dir.cleanup()
@@ -66,8 +71,14 @@ class TestPublishWiki(unittest.TestCase):
             graph_report=self.report,
             stamp="2026-07-22",
             head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
         )
-        swap_staging(served=self.served, staging=self.staging, backup=self.backup)
+        swap_staging(
+            served=self.served,
+            staging=self.staging,
+            backup=self.backup,
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
 
         self.assertFalse(self.staging.exists())
         self.assertFalse(self.backup.exists())
@@ -104,6 +115,7 @@ class TestPublishWiki(unittest.TestCase):
             graph_report=self.report,
             stamp="2026-07-22",
             head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
         )
         self.assertFalse(
             (self.staging / ".graph" / "GRAPH_REPORT.md").exists()
@@ -123,6 +135,7 @@ class TestPublishWiki(unittest.TestCase):
             graph_report=self.report,
             stamp="2026-07-22",
             head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
             promotion_state=candidate,
         )
 
@@ -134,6 +147,14 @@ class TestPublishWiki(unittest.TestCase):
 
     def test_failed_swap_restores_last_good(self):
         prepare_staging(self.served, self.staging)
+        finalize_staging(
+            staging=self.staging,
+            graph=self.graph,
+            graph_report=self.report,
+            stamp="2026-07-22",
+            head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
         original_rename = Path.rename
         call_count = 0
 
@@ -150,6 +171,7 @@ class TestPublishWiki(unittest.TestCase):
                     served=self.served,
                     staging=self.staging,
                     backup=self.backup,
+                    expected_graph_sha256=self.expected_graph_sha256,
                 )
 
         self.assertTrue(self.served.exists())
@@ -159,6 +181,177 @@ class TestPublishWiki(unittest.TestCase):
         )
         self.assertTrue(self.staging.exists())
         self.assertFalse(self.backup.exists())
+
+    def test_smoke_receipt_hash_rejects_post_smoke_mutation_and_preserves_last_good(self):
+        smoke_receipt = self.root / "graphify-out" / "smoke-sync.json"
+        smoke_receipt.write_text(
+            json.dumps(
+                {
+                    "graph_sha256": self.expected_graph_sha256,
+                    "hard_abort": False,
+                    "graph_integrity": {"status": "PASS"},
+                }
+            ) + "\n",
+            encoding="ascii",
+        )
+        expected_smoked_sha256 = json.loads(
+            smoke_receipt.read_text(encoding="ascii")
+        )["graph_sha256"]
+        prepare_staging(self.served, self.staging)
+        original_served = (self.served / ".build-stamp").read_bytes()
+        self.graph.write_text('{"nodes":[{"id":"changed"}],"links":[]}\n', encoding="ascii")
+
+        with self.assertRaisesRegex(PublishError, "staged graph SHA-256 mismatch"):
+            finalize_staging(
+                staging=self.staging,
+                graph=self.graph,
+                graph_report=self.report,
+                stamp="2026-07-22",
+                head="abc123",
+                expected_graph_sha256=expected_smoked_sha256,
+            )
+        with self.assertRaisesRegex(PublishError, "staged graph SHA-256 mismatch"):
+            swap_staging(
+                served=self.served,
+                staging=self.staging,
+                backup=self.backup,
+                expected_graph_sha256=expected_smoked_sha256,
+            )
+
+        self.assertEqual((self.served / ".build-stamp").read_bytes(), original_served)
+        self.assertFalse(self.backup.exists())
+
+    def test_copy_mismatch_cannot_swap(self):
+        prepare_staging(self.served, self.staging)
+        original_copy2 = __import__("shutil").copy2
+
+        def corrupt_graph_copy(source, destination):
+            result = original_copy2(source, destination)
+            if Path(source) == self.graph:
+                Path(destination).write_bytes(b'{"corrupt":true}\n')
+            return result
+
+        with mock.patch(
+            "tooling.wiki.publish_wiki.shutil.copy2",
+            side_effect=corrupt_graph_copy,
+        ):
+            with self.assertRaisesRegex(PublishError, "staged graph SHA-256 mismatch"):
+                finalize_staging(
+                    staging=self.staging,
+                    graph=self.graph,
+                    graph_report=self.report,
+                    stamp="2026-07-22",
+                    head="abc123",
+                    expected_graph_sha256=self.expected_graph_sha256,
+                )
+        with self.assertRaisesRegex(PublishError, "staged graph SHA-256 mismatch"):
+            swap_staging(
+                served=self.served,
+                staging=self.staging,
+                backup=self.backup,
+                expected_graph_sha256=self.expected_graph_sha256,
+            )
+        self.assertTrue(self.served.exists())
+        self.assertFalse(self.backup.exists())
+
+    def test_staged_mismatch_is_rejected_before_last_good_moves(self):
+        prepare_staging(self.served, self.staging)
+        finalize_staging(
+            staging=self.staging,
+            graph=self.graph,
+            graph_report=self.report,
+            stamp="2026-07-22",
+            head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
+        original_served = (self.served / ".build-stamp").read_bytes()
+        (self.staging / ".graph" / "graph.json").write_bytes(b"changed\n")
+
+        with self.assertRaisesRegex(PublishError, "staged graph SHA-256 mismatch"):
+            swap_staging(
+                served=self.served,
+                staging=self.staging,
+                backup=self.backup,
+                expected_graph_sha256=self.expected_graph_sha256,
+            )
+
+        self.assertEqual((self.served / ".build-stamp").read_bytes(), original_served)
+        self.assertFalse(self.backup.exists())
+
+    def test_served_mismatch_restores_prior_served_bytes(self):
+        prepare_staging(self.served, self.staging)
+        finalize_staging(
+            staging=self.staging,
+            graph=self.graph,
+            graph_report=self.report,
+            stamp="2026-07-22",
+            head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
+        original_page = (self.served / "02_Modules" / "module.md").read_bytes()
+        original_rename = Path.rename
+        call_count = 0
+
+        def corrupt_after_publish(path, target):
+            nonlocal call_count
+            call_count += 1
+            result = original_rename(path, target)
+            if call_count == 2:
+                (Path(target) / ".graph" / "graph.json").write_bytes(b"changed\n")
+            return result
+
+        with mock.patch.object(
+            Path,
+            "rename",
+            autospec=True,
+            side_effect=corrupt_after_publish,
+        ):
+            with self.assertRaisesRegex(PublishError, "last-good restored"):
+                swap_staging(
+                    served=self.served,
+                    staging=self.staging,
+                    backup=self.backup,
+                    expected_graph_sha256=self.expected_graph_sha256,
+                )
+
+        self.assertEqual(
+            (self.served / "02_Modules" / "module.md").read_bytes(),
+            original_page,
+        )
+        self.assertTrue(self.staging.exists())
+        self.assertFalse(self.backup.exists())
+
+    def test_successful_hash_bound_swap_removes_backup(self):
+        prepare_staging(self.served, self.staging)
+        finalize_staging(
+            staging=self.staging,
+            graph=self.graph,
+            graph_report=self.report,
+            stamp="2026-07-22",
+            head="abc123",
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
+        swap_staging(
+            served=self.served,
+            staging=self.staging,
+            backup=self.backup,
+            expected_graph_sha256=self.expected_graph_sha256,
+        )
+        self.assertTrue(self.served.exists())
+        self.assertFalse(self.staging.exists())
+        self.assertFalse(self.backup.exists())
+
+    def test_invalid_expected_hash_fails_before_mutation(self):
+        prepare_staging(self.served, self.staging)
+        with self.assertRaisesRegex(PublishError, "64 lowercase hex"):
+            finalize_staging(
+                staging=self.staging,
+                graph=self.graph,
+                graph_report=self.report,
+                stamp="2026-07-22",
+                head="abc123",
+                expected_graph_sha256="NOT-A-HASH",
+            )
 
     def test_checked_path_rejects_repository_root_and_outside_path(self):
         with self.assertRaisesRegex(PublishError, "repository root"):
