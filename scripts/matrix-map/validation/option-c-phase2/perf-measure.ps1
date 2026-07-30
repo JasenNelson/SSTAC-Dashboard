@@ -34,6 +34,12 @@
   with literals. A pasted copy would drift from the function the moment either
   changed, and a measurement of a query the server does not run is worthless.
 #>
+#Requires -Version 7.0
+# ^ ProcessStartInfo.ArgumentList (used by the persistent warm session) does NOT
+# exist on .NET Framework, so this script cannot run under Windows PowerShell 5.1.
+# Declared rather than discovered: without this the PERF gate fails with an opaque
+# null-method error instead of a clear version refusal.
+
 [CmdletBinding()]
 param(
   [Parameter(Mandatory = $true)][string]$ContainerId,
@@ -303,20 +309,314 @@ foreach ($pos in $planCaptures.Keys) {
 # MEASUREMENT B -- end-to-end RPC wall clock, client side. EXPLAIN of the RPC
 # call is explicitly NOT evidence, so this times the real call.
 #
-# BOTH cache postures. COLD-SESSION means a fresh connection after DISCARD ALL;
-# the OS page cache is NOT cleared, and that is stated rather than implied.
+# WHAT THIS REPLACED, AND WHY THE REWRITE IS NOT COSMETIC. The previous version
+# distinguished the two postures ONLY by prefixing `DISCARD ALL;` for cold. But
+# `Invoke-ReplayPsql` starts a NEW `docker exec ... psql` process, and therefore a
+# NEW backend, on EVERY call -- so the "warm" arm was a fresh backend too, and
+# `DISCARD ALL` on a brand-new session has nothing to discard. BOTH arms measured
+# cold sessions while the receipt reported two postures passing. A codex review
+# caught it (2026-07-30). A posture is not warm because it runs after another
+# loop; it is warm only if it demonstrably reuses one backend.
+#
+# SO SESSION CUSTODY IS NOW PROVEN BY EXECUTION, not by a label:
+#   cold arm -- five timed calls over five DISTINCT backends. `DISCARD ALL` and
+#     the measured call run in the SAME cold session (one psql invocation).
+#   warm arm -- ONE persistent backend held open for the whole arm, ONE explicit
+#     UNTIMED priming call, then five timed calls in that SAME backend.
+# `pg_backend_pid()` is recorded next to every single measurement, and the
+# posture contract below requires five distinct cold pids and exactly one warm
+# pid. If the harness ever silently reverts to per-call connections, the warm arm
+# yields five pids and `strict_pass` goes FALSE instead of quietly lying.
+#
+# TIMING METHOD, stated because the two arms are deliberately NOT symmetric:
+#   cold -- wall clock around the whole `docker exec` (INCLUDES docker exec and
+#     backend startup, DISCARD ALL, the pid probe and the measured call). That is
+#     inherent to what "cold" means here and is disclosed, not hidden.
+#   warm -- wall clock around the measured statement's round trip inside the
+#     already-open backend (EXCLUDES process and connection startup). Stopped on
+#     receipt of the labelled count row, so the sentinel round trip that follows
+#     is not counted.
+# The OS page cache and shared buffers are NOT cleared in either arm. That
+# limitation is unchanged and is recorded in the receipt.
 # ---------------------------------------------------------------------------
-$timings = @{ cold = @(); warm = @() }
-foreach ($posture in @('cold', 'warm')) {
-  for ($i = 1; $i -le $Repeats; $i++) {
-    $prefix = if ($posture -eq 'cold') { "DISCARD ALL;`n" } else { "" }
-    $sql = "$prefix" + "SET statement_timeout = '120s';`nSELECT set_config('request.jwt.claims', '$adminClaims', false);`nSELECT count(*) FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, $PageSize);"
-    $sw = [System.Diagnostics.Stopwatch]::StartNew()
-    Invoke-ReplayPsql -Tuples -Sql $sql | Out-Null
-    $sw.Stop()
-    $timings[$posture] += [Math]::Round($sw.Elapsed.TotalMilliseconds, 2)
+
+# A persistent psql process == a persistent backend. Held open across the whole
+# warm arm; that is the entire point.
+#
+# STDERR IS DRAINED CONTINUOUSLY AND QUOTED BY EVERY THROW BELOW.
+#
+# WHY THIS MATTERS. An earlier draft redirected stderr and never read it, which
+# destroyed the one artifact that distinguishes "the backend died" from "the SQL was
+# wrong": under ON_ERROR_STOP=1 psql writes the real diagnostic to stderr and exits,
+# stdout closes, ReadLine returns null, and the harness blamed a backend death for
+# what may have been a malformed statement. That is the SAME mistake this file
+# already condemns for the cold path ("DISTINGUISH a timeout from any other error").
+# An undrained redirected pipe is also a deadlock risk once it fills.
+#
+# WHY ReadToEndAsync AND NOT Register-ObjectEvent. The obvious fix -- an
+# ErrorDataReceived handler appending to a script-scope StringBuilder -- DOES NOT
+# WORK, and fails SILENTLY: the -Action scriptblock runs in its own runspace, so
+# `$script:` inside it resolves to that runspace's variable and the parent's buffer
+# stays empty. MEASURED, not assumed: a probe with a process writing a known line to
+# stderr collected 0 bytes, which would have made this helper confidently report
+# "stderr was empty" for every real failure -- worse than no diagnostic at all.
+# ReadToEndAsync hands the draining to .NET, needs no cross-runspace state, and
+# keeps the pipe from filling.
+$script:warmStderrTask = $null
+function New-PersistentPsqlSession {
+  $psi = New-Object System.Diagnostics.ProcessStartInfo
+  $psi.FileName = 'docker'
+  foreach ($a in @('exec', '-i', $ContainerId, 'psql', '-U', 'postgres', '-d', 'sstac_replay',
+      '-v', 'ON_ERROR_STOP=1', '-A', '-t', '-q')) { [void]$psi.ArgumentList.Add($a) }
+  $psi.RedirectStandardInput = $true
+  $psi.RedirectStandardOutput = $true
+  $psi.RedirectStandardError = $true
+  $psi.UseShellExecute = $false
+  # RESET FIRST. There is one call site today, but if a second session were ever
+  # opened, carrying the previous task forward would make Get-WarmStderrTail quote
+  # the WRONG process's stderr -- a misattributed diagnostic, which is the failure
+  # class this whole helper exists to prevent.
+  $script:warmStderrTask = $null
+  $proc = [System.Diagnostics.Process]::Start($psi)
+  $script:warmStderrTask = $proc.StandardError.ReadToEndAsync()
+  return $proc
+}
+
+# Quoted by every persistent-session failure so the diagnostic is never lost.
+# NEVER blocks indefinitely: ReadToEndAsync completes at EOF, so a bounded wait is
+# used and a still-running process is reported as such rather than claimed empty.
+function Get-WarmStderrTail {
+  if ($null -eq $script:warmStderrTask) { return '(no stderr reader was attached)' }
+  try {
+    if (-not $script:warmStderrTask.Wait(2000)) {
+      return '(psql stderr not yet at EOF, so the process may still be running; no diagnostic available yet)'
+    }
+    $s = ([string]$script:warmStderrTask.Result).Trim()
+  }
+  catch {
+    return "(could not read psql stderr: $($_.Exception.Message))"
+  }
+  if ($s.Length -eq 0) { return '(psql stderr was empty)' }
+  return "psql stderr follows: $s"
+}
+
+# Every exchange is terminated by a unique sentinel SELECT, so a read can never
+# run past its own statement's output into the next one.
+#
+# WHAT BOUNDS THESE READS, stated because the cold path documents its own bound and
+# this one should too. `StandardOutput.ReadLine()` has no timeout of its own: it
+# returns when a line arrives, or null when stdout closes. Two things bound it.
+# (1) Server side: every session runs under `SET statement_timeout = '120s'`, so a
+# stalled query is aborted and psql reports the error. (2) Client side: under
+# `ON_ERROR_STOP=1` psql EXITS on error, which closes stdout, which makes ReadLine
+# return null and raises here with the stderr diagnostic attached. A hang would
+# require psql to neither answer, nor error, nor exit -- which the statement timeout
+# precludes. This is a real bound, not an assumed one, but it is the SERVER's bound
+# rather than a client deadline, and that distinction is worth knowing when reading
+# a stuck run.
+function Invoke-PersistentPsql {
+  param([Parameter(Mandatory = $true)]$Proc, [Parameter(Mandatory = $true)][string]$Sql)
+  $sentinel = 'SENTINEL_' + ([guid]::NewGuid().ToString('N'))
+  $Proc.StandardInput.WriteLine($Sql)
+  $Proc.StandardInput.WriteLine("SELECT 'ZZ$sentinel';")
+  $Proc.StandardInput.Flush()
+  $lines = @()
+  while ($true) {
+    $line = $Proc.StandardOutput.ReadLine()
+    if ($null -eq $line) { throw "persistent psql stdout closed before sentinel. $(Get-WarmStderrTail)" }
+    $t = $line.Trim()
+    if ($t -eq "ZZ$sentinel") { break }
+    if ($t.Length -gt 0) { $lines += $t }
+  }
+  # PLAIN `return $lines`, NOT `return , $lines`. The comma form wraps the array,
+  # so a caller's `@(...)` sees a NESTED array, `$row[0]` is an ARRAY rather than a
+  # string, and `-match` against an array silently performs FILTERING instead of a
+  # match -- which never populates `$Matches`. A mechanism smoke test against a
+  # real backend caught exactly that before this harness was trusted.
+  return $lines
+}
+
+# LABELLED-VALUE EXTRACTION VIA EXPLICIT REGEX, deliberately not `-match` plus the
+# `$Matches` automatic variable. `$Matches` is scope-sensitive and is not set at all
+# when the left operand happens to be an array, which makes a parse failure look
+# like a null-index crash rather than a bad line. This form cannot do that.
+function Get-LabeledInts {
+  param([Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Lines,
+        [Parameter(Mandatory = $true)][string]$Label)
+  $rx = [regex]('^' + [regex]::Escape($Label) + '=([0-9]+)$')
+  $hits = @()
+  foreach ($l in @($Lines)) {
+    $m = $rx.Match(([string]$l).Trim())
+    if ($m.Success) { $hits += [int]$m.Groups[1].Value }
+  }
+  return $hits
+}
+
+# Exactly-one-value accessor, so "no row" and "more than one row" are distinct,
+# loud failures rather than a silent first-wins pick.
+function Get-SingleLabeledInt {
+  param([Parameter(Mandatory = $true)][AllowEmptyCollection()][object[]]$Lines,
+        [Parameter(Mandatory = $true)][string]$Label,
+        [Parameter(Mandatory = $true)][string]$Context)
+  $hits = @(Get-LabeledInts -Lines $Lines -Label $Label)
+  if ($hits.Count -ne 1) {
+    throw "$Context did not yield exactly one $Label= row (got $($hits.Count))"
+  }
+  return $hits[0]
+}
+
+# The timed warm exchange. The clock stops on the labelled count row, BEFORE the
+# sentinel, so sentinel overhead is excluded from the reported figure.
+function Measure-PersistentRpcCall {
+  param([Parameter(Mandatory = $true)]$Proc)
+  $sentinel = 'SENTINEL_' + ([guid]::NewGuid().ToString('N'))
+  $sql = "SELECT 'CNT=' || count(*) FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, $PageSize);"
+  $elapsedMs = $null
+  $rowCount = $null
+  $sw = [System.Diagnostics.Stopwatch]::StartNew()
+  $Proc.StandardInput.WriteLine($sql)
+  $Proc.StandardInput.WriteLine("SELECT 'ZZ$sentinel';")
+  $Proc.StandardInput.Flush()
+  $cntRx = [regex]'^CNT=([0-9]+)$'
+  while ($true) {
+    $line = $Proc.StandardOutput.ReadLine()
+    if ($null -eq $line) { throw "persistent psql stdout closed during timed call. $(Get-WarmStderrTail)" }
+    $t = $line.Trim()
+    if ($null -eq $elapsedMs) {
+      $cm = $cntRx.Match($t)
+      if ($cm.Success) {
+        # CLOCK STOPS HERE, on the count row, so the sentinel round trip that
+        # terminates the exchange is excluded from the reported figure.
+        $sw.Stop()
+        $elapsedMs = [Math]::Round($sw.Elapsed.TotalMilliseconds, 2)
+        $rowCount = [int]$cm.Groups[1].Value
+        continue
+      }
+    }
+    if ($t -eq "ZZ$sentinel") { break }
+  }
+  if ($null -eq $elapsedMs) { throw "timed warm call produced no CNT= row" }
+  return [PSCustomObject]@{ ms = $elapsedMs; rows = $rowCount }
+}
+
+# THE POSTURE CONTRACT, as a pure function so it can be adversarially
+# self-checked below rather than only exercised on data that happens to pass.
+function Test-MeasBPostureContract {
+  param(
+    [double[]]$ColdMs, [int[]]$ColdPids,
+    [double[]]$WarmMs, [int[]]$WarmPids,
+    [bool]$WarmPrimed,
+    # The backend the UNTIMED priming call ran in. Required, because "primed" is
+    # only meaningful if the priming happened in the SAME backend that was then
+    # timed -- otherwise five identical NEW pids plus a successful prime elsewhere
+    # would satisfy every other predicate while the measured backend was cold.
+    [int]$WarmPrimedBackendPid,
+    [int]$Required, [int]$BudgetMs
+  )
+  # AT LEAST the contract minimum, never fewer. Expressed as `-ge` so raising
+  # `-Repeats` STRENGTHENS the evidence instead of breaking the gate, while lowering
+  # it cannot weaken the contract. An `-eq` here would make `-Repeats 10` fail for
+  # no good reason, and `-Repeats 1` pass for a very bad one.
+  $coldCount = (@($ColdMs)).Count
+  $warmCount = (@($WarmMs)).Count
+  $coldCountOk = ($coldCount -ge $Required)
+  $warmCountOk = ($warmCount -ge $Required)
+  # EVERY cold call must have had its OWN backend: distinct pids equal to the
+  # number of observations, not merely equal to the minimum.
+  $coldDistinctOk = $coldCountOk -and
+                    (@($ColdPids).Count -eq $coldCount) -and
+                    ((@($ColdPids | Sort-Object -Unique)).Count -eq $coldCount)
+  # ALL warm calls must have shared ONE backend, over at least the minimum number
+  # of observations -- one observation with one pid demonstrates no reuse.
+  $warmSingleOk = $warmCountOk -and
+                  (@($WarmPids).Count -eq $warmCount) -and
+                  ((@($WarmPids | Sort-Object -Unique)).Count -eq 1)
+  # Ties the primed backend to the measured backend. Guarded on $warmSingleOk so a
+  # multi-pid arm cannot accidentally satisfy this by matching only the first probe.
+  $primedIsMeasured = $warmSingleOk -and ($WarmPrimedBackendPid -eq (@($WarmPids))[0])
+  $primedOk = $WarmPrimed -and $primedIsMeasured
+  $budgetsOk = $false
+  if ($coldCountOk -and $warmCountOk) {
+    $budgetsOk = ((($ColdMs | Measure-Object -Maximum).Maximum) -le $BudgetMs) -and
+                 ((($WarmMs | Measure-Object -Maximum).Maximum) -le $BudgetMs)
+  }
+  return [PSCustomObject]@{
+    pass                                    = ($coldCountOk -and $coldDistinctOk -and $warmCountOk -and $warmSingleOk -and $primedOk -and $budgetsOk)
+    cold_count_ok                           = $coldCountOk
+    cold_distinct_pids_ok                   = $coldDistinctOk
+    warm_count_ok                           = $warmCountOk
+    warm_single_backend_ok                  = $warmSingleOk
+    warm_primed_ok                          = $primedOk
+    warm_primed_call_succeeded               = $WarmPrimed
+    warm_primed_backend_is_measured_backend = $primedIsMeasured
+    budgets_ok                              = $budgetsOk
   }
 }
+
+$measBSetup = "SET statement_timeout = '120s';`nSELECT set_config('request.jwt.claims', '$adminClaims', false);"
+
+# --- COLD ARM: five timed calls, five distinct backends -------------------
+$coldMs = @()
+$coldPids = @()
+for ($i = 1; $i -le $Repeats; $i++) {
+  # DISCARD ALL, the pid probe and the measured call are ONE psql invocation, so
+  # they are provably the same backend. Labelled outputs make parsing
+  # unambiguous: `set_config` also returns a bare string.
+  $sql = "DISCARD ALL;`n$measBSetup`nSELECT 'PID=' || pg_backend_pid();`nSELECT 'CNT=' || count(*) FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, $PageSize);"
+  $sw = [System.Diagnostics.Stopwatch]::StartNew()
+  $out = Invoke-ReplayPsql -Tuples -Sql $sql
+  $sw.Stop()
+  $coldMs += [Math]::Round($sw.Elapsed.TotalMilliseconds, 2)
+  $coldPids += Get-SingleLabeledInt -Lines @($out.Split("`n")) -Label 'PID' -Context "cold repeat $i"
+  # The measured call must actually have returned the whole population; a silently
+  # empty result would otherwise time as fast and pass the budget.
+  $coldCnt = Get-SingleLabeledInt -Lines @($out.Split("`n")) -Label 'CNT' -Context "cold repeat $i count"
+  if ($coldCnt -ne $PageSize) { throw "cold repeat $i returned $coldCnt rows, expected $PageSize" }
+}
+
+# --- WARM ARM: one backend, one untimed priming call, five timed calls -----
+$warmMs = @()
+$warmPids = @()
+$warmPrimed = $false
+$warmBackendPid = -1
+$warmProc = $null
+try {
+  $warmProc = New-PersistentPsqlSession
+  [void](Invoke-PersistentPsql -Proc $warmProc -Sql $measBSetup)
+  $warmBackendPid = Get-SingleLabeledInt `
+    -Lines @(Invoke-PersistentPsql -Proc $warmProc -Sql "SELECT 'PID=' || pg_backend_pid();") `
+    -Label 'PID' -Context 'warm session pid probe'
+
+  # THE PRIMING CALL IS EXPLICIT AND UNTIMED. Without it the first "warm"
+  # observation is really a first-touch, which is the defect this rewrite closes.
+  $primeCnt = Get-SingleLabeledInt `
+    -Lines @(Invoke-PersistentPsql -Proc $warmProc -Sql "SELECT 'CNT=' || count(*) FROM matrix_map.fetch_admin_site_aggregate_live_preview(NULL, NULL, $PageSize);") `
+    -Label 'CNT' -Context 'warm priming call'
+  # Primed means the priming call actually traversed the whole page, not merely
+  # that some row came back.
+  $warmPrimed = ($primeCnt -eq $PageSize)
+
+  for ($i = 1; $i -le $Repeats; $i++) {
+    $m = Measure-PersistentRpcCall -Proc $warmProc
+    if ($m.rows -ne $PageSize) { throw "warm repeat $i returned $($m.rows) rows, expected $PageSize" }
+    $warmMs += $m.ms
+    # Re-probed EVERY iteration. One probe at the start could not detect a
+    # mid-arm reconnect; the contract requires exactly one pid across all five.
+    $warmPids += Get-SingleLabeledInt `
+      -Lines @(Invoke-PersistentPsql -Proc $warmProc -Sql "SELECT 'PID=' || pg_backend_pid();") `
+      -Label 'PID' -Context "warm repeat $i pid probe"
+  }
+}
+finally {
+  if ($null -ne $warmProc) {
+    try { $warmProc.StandardInput.WriteLine('\q'); $warmProc.StandardInput.Flush() } catch { }
+    try { [void]$warmProc.WaitForExit(15000) } catch { }
+    try { if (-not $warmProc.HasExited) { $warmProc.Kill() } } catch { }
+    try { $warmProc.Dispose() } catch { }
+  }
+}
+
+$timings = @{ cold = $coldMs; warm = $warmMs }
 
 function Get-Median {
   param([double[]]$Values)
@@ -328,16 +628,106 @@ function Get-Median {
 }
 
 # ---------------------------------------------------------------------------
-# MEASUREMENT B THRESHOLDS. Applied to the MAXIMUM of each posture, per the
-# provisional release regression budget.
+# MEASUREMENT B THRESHOLDS + SESSION-CUSTODY CONTRACT.
+#
+# The budget is applied to the MAXIMUM of each posture. The custody assertions
+# are what make the word "warm" mean something; without them a green budget line
+# proves only that some query was fast twice.
+#
+# THE GATE COMPARES AGAINST A LITERAL, NOT AGAINST $Repeats. This is the SAME fix
+# Measurement C already carries at `$c_requiredTraversals` (see its comment), and
+# the first draft of this rewrite failed to carry it across: with `-Required
+# $Repeats`, a caller passing `-Repeats 1` satisfied every custody predicate
+# VACUOUSLY -- one warm observation trivially has "exactly one" pid while
+# demonstrating no reuse whatsoever, which is the entire property this arm exists
+# to prove. A gate any caller can switch off from the command line is not a gate.
+# The required count is a PROPERTY OF THE CONTRACT (V6 requires five), so five is
+# what the assertions compare to as a MINIMUM; raising `-Repeats` strengthens the
+# evidence, lowering it cannot weaken the contract.
 # ---------------------------------------------------------------------------
+$b_requiredRepeats = 5
+
+$measBContract = Test-MeasBPostureContract -ColdMs $coldMs -ColdPids $coldPids `
+  -WarmMs $warmMs -WarmPids $warmPids -WarmPrimed $warmPrimed `
+  -WarmPrimedBackendPid $warmBackendPid `
+  -Required $b_requiredRepeats -BudgetMs $MeasBMaxMs
+
+$coldDistinctCount = (@($coldPids | Sort-Object -Unique)).Count
+$warmDistinctCount = (@($warmPids | Sort-Object -Unique)).Count
+
+Add-Result -Id 'MEAS_B_COLD_OBSERVATIONS' -Ok $measBContract.cold_count_ok `
+  -Details "cold observations=$(@($coldMs).Count), required $b_requiredRepeats (contract literal, not the -Repeats parameter)"
+Add-Result -Id 'MEAS_B_COLD_DISTINCT_BACKENDS' -Ok $measBContract.cold_distinct_pids_ok `
+  -Details "distinct cold backend pids=$coldDistinctCount of $(@($coldPids).Count) observations, required $b_requiredRepeats distinct (pids: $($coldPids -join ', '))"
+Add-Result -Id 'MEAS_B_WARM_OBSERVATIONS' -Ok $measBContract.warm_count_ok `
+  -Details "warm observations=$(@($warmMs).Count), required $b_requiredRepeats (contract literal, not the -Repeats parameter)"
+Add-Result -Id 'MEAS_B_WARM_SINGLE_BACKEND' -Ok $measBContract.warm_single_backend_ok `
+  -Details "distinct warm backend pids=$warmDistinctCount across $(@($warmPids).Count) observations, required EXACTLY 1 across $b_requiredRepeats observations (pids: $($warmPids -join ', ')); a value above 1 means the arm reconnected and is not warm, and fewer than $b_requiredRepeats observations cannot demonstrate reuse at all"
+Add-Result -Id 'MEAS_B_WARM_PRIMED' -Ok $measBContract.warm_primed_ok `
+  -Details "explicit UNTIMED priming call in the persistent backend (pid $warmBackendPid) returned a FULL page of $PageSize rows: $warmPrimed; and that pid is the SAME backend the timed calls ran in: $($measBContract.warm_primed_backend_is_measured_backend)"
+
 foreach ($posture in @('cold', 'warm')) {
   $obs = @($timings[$posture])
   $maxMs = if ($obs.Count -gt 0) { ($obs | Measure-Object -Maximum).Maximum } else { -1 }
-  $bOk = ($obs.Count -eq $Repeats) -and ($maxMs -ge 0) -and ($maxMs -le $MeasBMaxMs)
+  $bOk = ($obs.Count -ge $b_requiredRepeats) -and ($maxMs -ge 0) -and ($maxMs -le $MeasBMaxMs)
   Add-Result -Id "MEAS_B_MAX_WITHIN_BUDGET_$posture" -Ok $bOk `
     -Details "$posture maximum=${maxMs}ms over $($obs.Count)/$Repeats repeats, budget ${MeasBMaxMs}ms (MAXIMUM, not median -- a median hides the worst load an operator waits through)"
 }
+
+# ---------------------------------------------------------------------------
+# NEGATIVE SELF-CHECK of the posture contract itself.
+#
+# WHY THIS EXISTS. Every assertion above is evaluated on data that passed. That
+# tells us nothing about whether the predicate can FAIL -- and an always-true
+# predicate is exactly the defect this rewrite closes, one layer up. So the
+# contract is re-evaluated on synthetic inputs whose ONLY defect is multiple warm
+# backends, and it MUST come back false. A harness that cannot demonstrate its own
+# gate discriminating is not evidence.
+# ---------------------------------------------------------------------------
+$selfGoodMs = @(10.0, 11.0, 12.0, 13.0, 14.0)
+$selfGoodCold = @(101, 102, 103, 104, 105)
+$selfGoodWarm = @(201, 201, 201, 201, 201)
+$selfR = $b_requiredRepeats
+function Invoke-SelfCase {
+  param([double[]]$ColdMs = $selfGoodMs, [int[]]$ColdPids = $selfGoodCold,
+        [double[]]$WarmMs = $selfGoodMs, [int[]]$WarmPids = $selfGoodWarm,
+        [bool]$WarmPrimed = $true, [int]$PrimedPid = 201)
+  return (Test-MeasBPostureContract -ColdMs $ColdMs -ColdPids $ColdPids `
+      -WarmMs $WarmMs -WarmPids $WarmPids -WarmPrimed $WarmPrimed `
+      -WarmPrimedBackendPid $PrimedPid -Required $selfR -BudgetMs $MeasBMaxMs).pass
+}
+$selfPosPass = Invoke-SelfCase
+# The ONLY difference from the passing case: two distinct warm pids.
+$selfMultiWarm = Invoke-SelfCase -WarmPids @(201, 201, 202, 201, 201)
+# The mirror defect on the cold side: one backend reused for every "cold" call.
+$selfSharedCold = Invoke-SelfCase -ColdPids @(101, 101, 101, 101, 101)
+$selfUnprimed = Invoke-SelfCase -WarmPrimed $false
+# Primed in a DIFFERENT backend than the one that was timed: every other predicate
+# holds, so this is the case a pid-agnostic "primed" flag would have waved through.
+$selfPrimedElsewhere = Invoke-SelfCase -PrimedPid 999
+# THE CALLER-SWITCHABLE-GATE CASE. A short run must NOT pass: one observation with
+# one pid satisfies "exactly one distinct pid" trivially while proving no reuse.
+# This is the defect the first draft of this rewrite shipped.
+$selfShortRun = Invoke-SelfCase -ColdMs @(10.0) -ColdPids @(101) -WarmMs @(10.0) -WarmPids @(201)
+# Budget breaches, one per arm.
+$selfColdOverBudget = Invoke-SelfCase -ColdMs @(10.0, 11.0, 12.0, 13.0, ($MeasBMaxMs + 1))
+$selfWarmOverBudget = Invoke-SelfCase -WarmMs @(10.0, 11.0, 12.0, 13.0, ($MeasBMaxMs + 1))
+$selfNegatives = @{
+  'multiple-warm-pids'  = $selfMultiWarm
+  'shared-cold-pid'     = $selfSharedCold
+  'unprimed'            = $selfUnprimed
+  'primed-elsewhere'    = $selfPrimedElsewhere
+  'short-run'           = $selfShortRun
+  'cold-over-budget'    = $selfColdOverBudget
+  'warm-over-budget'    = $selfWarmOverBudget
+}
+$selfCheckOk = $selfPosPass -and -not ($selfNegatives.Values -contains $true)
+Add-Result -Id 'MEAS_B_POSTURE_CONTRACT_SELF_CHECK' -Ok $selfCheckOk `
+  -Details ("predicate discriminates: clean=$selfPosPass (expect True); each of the following must be False -- " +
+    (($selfNegatives.GetEnumerator() | Sort-Object Name | ForEach-Object { "$($_.Key)=$($_.Value)" }) -join ', '))
+
+Add-Result -Id 'MEAS_B_POSTURE_CONTRACT' -Ok $measBContract.pass `
+  -Details "session-custody + budget contract over real measurements: $($measBContract | ConvertTo-Json -Compress)"
 
 # ---------------------------------------------------------------------------
 # MEASUREMENT C -- FIVE complete first-page-to-exhaustion traversals, then a
@@ -501,14 +891,62 @@ $receipt = [PSCustomObject]@{
     max_page_cursor = $maxPageCursor
   }
   measurement_b = [PSCustomObject]@{
-    posture_note = 'COLD-SESSION means a fresh connection after DISCARD ALL. The OS page cache was NOT cleared.'
+    # SESSION CUSTODY IS THE HEADLINE FIELD, not a footnote. The previous receipt
+    # asserted two cache postures while measuring one, because it labelled a
+    # posture instead of proving it. These pid arrays ARE the proof.
+    posture_custody_note = ('COLD = five timed calls over five DISTINCT backends; DISCARD ALL and the measured ' +
+      'call execute in the SAME cold session (one psql invocation). WARM = ONE persistent backend, ONE explicit ' +
+      'UNTIMED priming call, then five timed calls in that SAME backend, with pg_backend_pid() re-probed after ' +
+      'every timed call so a mid-arm reconnect cannot pass. A posture is NOT warm merely because it runs after ' +
+      'another loop.')
     repeats = $Repeats
-    cold_ms_all = $timings['cold']
-    cold_ms_median = Get-Median -Values $timings['cold']
-    cold_ms_max = ($timings['cold'] | Measure-Object -Maximum).Maximum
-    warm_ms_all = $timings['warm']
-    warm_ms_median = Get-Median -Values $timings['warm']
-    warm_ms_max = ($timings['warm'] | Measure-Object -Maximum).Maximum
+    required_repeats = $b_requiredRepeats
+    required_repeats_note = ('The gate compares against this CONTRACT LITERAL as a MINIMUM, not against the ' +
+      '-Repeats parameter. Raising -Repeats strengthens the evidence; lowering it cannot weaken the contract. An ' +
+      'earlier draft compared against -Repeats, which let a caller pass -Repeats 1 and satisfy "exactly one warm ' +
+      'backend pid" VACUOUSLY -- one observation cannot demonstrate reuse.')
+    # MAXIMUM against MAXIMUM. Contrasting the warm MINIMUM against the cold MAXIMUM
+    # would be the most flattering framing available, in a receipt that elsewhere
+    # insists the MAXIMUM is the reported figure. The point survives on max-to-max.
+    cold_figure_is_startup_dominated = ('READ THE COLD NUMBER WITH THIS IN MIND: the cold wall clock is dominated ' +
+      'by harness overhead, not by the query. In this run the same statement cost at most ' +
+      "$(($warmMs | Measure-Object -Maximum).Maximum) ms in the warm arm versus a cold maximum of " +
+      "$(($coldMs | Measure-Object -Maximum).Maximum) ms (maximum compared against maximum, not against the warm " +
+      'minimum), so most of the cold figure is docker exec plus backend startup plus the four extra statements in ' +
+      'the same invocation. The remaining margin against the budget is therefore NOT query headroom, and a red ' +
+      'cold gate on a slow host may be attributable to Docker rather than to the RPC.')
+    timing_method = ('Client-side System.Diagnostics.Stopwatch. COLD wall clock spans the whole docker exec and ' +
+      'therefore INCLUDES docker exec plus backend startup, DISCARD ALL, the pid probe and the measured call. ' +
+      'WARM wall clock spans only the measured statement round trip inside the already-open backend and ' +
+      'therefore EXCLUDES process and connection startup; the clock stops on receipt of the labelled count row, ' +
+      'so the terminating sentinel round trip is excluded. THE TWO ARMS ARE DELIBERATELY NOT SYMMETRIC and must ' +
+      'not be differenced to infer a connection cost.')
+    connection_startup_included_cold = $true
+    connection_startup_included_warm = $false
+    cache_limitation = ('UNCHANGED LIMITATION: neither the OS page cache nor PostgreSQL shared buffers are ' +
+      'cleared in either arm. "Cold" here means a cold SESSION, not a cold cache.')
+    threshold_ms = $MeasBMaxMs
+    threshold_applied_to = 'MAXIMUM of each posture, not the median -- a median hides the worst load an operator waits through'
+    cold_ms_all = @($coldMs)
+    cold_ms_median = Get-Median -Values $coldMs
+    cold_ms_max = ($coldMs | Measure-Object -Maximum).Maximum
+    cold_backend_pids = @($coldPids)
+    cold_backend_pids_distinct = (@($coldPids | Sort-Object -Unique)).Count
+    warm_ms_all = @($warmMs)
+    warm_ms_median = Get-Median -Values $warmMs
+    warm_ms_max = ($warmMs | Measure-Object -Maximum).Maximum
+    warm_backend_pids = @($warmPids)
+    warm_backend_pids_distinct = (@($warmPids | Sort-Object -Unique)).Count
+    warm_backend_pid = $warmBackendPid
+    warm_priming_call_performed = $warmPrimed
+    warm_priming_call_returned_full_page = $warmPrimed
+    warm_priming_call_timed = $false
+    warm_primed_backend_is_measured_backend = $measBContract.warm_primed_backend_is_measured_backend
+    posture_contract = $measBContract
+    posture_contract_self_check_passed = $selfCheckOk
+    posture_contract_self_check_note = ('The contract predicate is re-evaluated on synthetic inputs to prove it can ' +
+      'FAIL: a clean case must pass, and multiple-warm-pids, a shared cold pid, and an unprimed warm arm must each ' +
+      'make it false. Asserting only over data that passed would not show the gate discriminates.')
   }
   measurement_c = [PSCustomObject]@{
     # THE LITERAL GATE, not the requested count. Recording `$TraversalRuns` here
@@ -563,8 +1001,12 @@ $receipt = [PSCustomObject]@{
 $receipt | ConvertTo-Json -Depth 12 | Set-Content -Path (Join-Path $OutputDir "perf_measurement_receipt.json") -Encoding Ascii
 
 foreach ($r in $results) { Write-Host ("  {0} : {1} - {2}" -f $r.id, $r.status, $r.details) }
-Write-Host ("  MEAS_B cold max {0} ms, warm max {1} ms over {2} repeats (budget {3} ms)" -f `
-  ($timings['cold'] | Measure-Object -Maximum).Maximum, ($timings['warm'] | Measure-Object -Maximum).Maximum, $Repeats, $MeasBMaxMs)
+Write-Host ("  MEAS_B cold max {0} ms over {1} distinct backends, warm max {2} ms on {3} backend(s) (pid {4}), {5} repeats, budget {6} ms" -f `
+  ($coldMs | Measure-Object -Maximum).Maximum, (@($coldPids | Sort-Object -Unique)).Count, `
+  ($warmMs | Measure-Object -Maximum).Maximum, (@($warmPids | Sort-Object -Unique)).Count, $warmBackendPid, `
+  $Repeats, $MeasBMaxMs)
+Write-Host ("  MEAS_B custody: cold pids [{0}] warm pids [{1}] primed={2} contract_pass={3} self_check={4}" -f `
+  ($coldPids -join ' '), ($warmPids -join ' '), $warmPrimed, $measBContract.pass, $selfCheckOk)
 Write-Host ("  MEAS_C {0}/{1} traversals, slowest {2} ms (budget {3} ms); per-run {4}" -f `
   $traversals.Count, $TraversalRuns, $traversalMaxMs, $MeasCMaxMs, (@($traversals.wall_ms) -join ', '))
 Write-Host ("  MEAS_C buffers: {0} pages accounted, {1} failures, cumulative hit={2} read={3} blocks" -f `

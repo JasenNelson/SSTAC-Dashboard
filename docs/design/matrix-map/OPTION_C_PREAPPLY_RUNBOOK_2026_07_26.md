@@ -58,6 +58,44 @@ If any answer is NO, this apply is not authorized regardless of any other GREEN
 gate in this document. Background: section 0 of
 `FRESH_SESSION_HANDOFF_2026_07_27_OPTION_C_RESTACK_CORRECTION.md`.
 
+### 0.1 RELEASE ORDER IS NOW A HARD CONSTRAINT, AND IT IS NOT SOLVED BY THIS SECTION
+
+Added 2026-07-30, as an F2 merge-gate item. **Writing this down does NOT discharge
+it.** This section states a constraint and names who must resolve it; it does not
+resolve it. Do not read the presence of this text as evidence the sequence is
+handled.
+
+WHAT CHANGED. Before F2 the admin site-aggregate preview read `matrix_map.samples`
+and `matrix_map.dras` -- tables that EXIST in production today -- and clustered in
+TypeScript. It therefore rendered a live preview even with zero Option C objects
+installed. **After F2 the application's ONLY preview source is
+`matrix_map.fetch_admin_site_aggregate_live_preview`, which the pinned SQL in
+section 1 creates.** The application now DEPENDS on the new RPC.
+
+THE CONSEQUENCE, stated plainly: if the application is promoted to production
+BEFORE the pinned SQL is applied, the first RPC call returns PostgREST `PGRST202`,
+the loader sets its error path, and the admin preview surface FAILS CLOSED -- the
+table, the map and every summary statistic render empty behind a load-failure
+banner. This is a fail-CLOSED degradation, not a data-integrity or privacy defect,
+and no verdict, publication or coordinate is at risk. But it IS a visible outage of
+a working admin surface, and it lasts exactly as long as the gap between the two
+promotions.
+
+D2 / live SQL apply remains SEPARATELY OWNER-GATED AND UNAUTHORIZED (owner ruling
+2026-07-27, above). So the gap cannot be closed simply by applying the SQL first at
+an engineer's discretion.
+
+**BEFORE MERGE, the owner must do ONE of the following, explicitly:**
+
+| Option | What it means |
+|---|---|
+| Establish a coordinated release sequence | Guarantee, operationally, that the application is NOT promoted to production before the pinned SQL apply completes. This requires the D2 authorization to be granted and sequenced FIRST. |
+| Explicitly accept a temporary fail-closed outage | Acknowledge on the record that the admin site-aggregate preview will render empty behind an error banner from application promotion until the SQL apply lands, and accept that window. |
+
+Neither option is selectable by an agent, and neither is satisfied by this
+document. Until one is recorded, treat the deployment order as an OPEN owner
+decision.
+
 ## 1. What gets applied, and its exact identity
 
 Single artifact:
@@ -131,6 +169,95 @@ Single artifact:
 > **THE CURRENT EVIDENCE SET IS F2-V8**, whose positive, NEG_01 and REAPPLY_01
 > receipts bind `E57B1E5E...`.
 >
+> **PERFORMANCE EVIDENCE SUPERSEDED 2026-07-30: use `perf-v9-04`. `perf-v8-01`,
+> `perf-v9-01`, `perf-v9-02` AND `perf-v9-03` are all superseded.**
+> The SQL did not change, so the positive, NEG_01 and REAPPLY_01 receipts above
+> remain valid and were re-verified against `E57B1E5E...` rather than re-run. The
+> PERFORMANCE receipt is different: a codex review found that Measurement B's
+> "warm" cache posture never measured a warm session at all. Every timing went
+> through a helper that starts a NEW `docker exec ... psql` process, so both arms
+> used fresh backends and `DISCARD ALL` was a no-op on a connection that had
+> nothing to discard -- yet the receipt gated and reported BOTH postures as
+> passing. `perf-v8-01` therefore asserts a posture it did not exercise and MUST
+> NOT be cited as current.
+>
+> Measurement B now proves session custody by EXECUTION: the cold arm records five
+> timed calls over five DISTINCT `pg_backend_pid()` values, and the warm arm holds
+> ONE persistent backend across an explicit untimed priming call plus five timed
+> calls, re-probing the pid after every one.
+>
+> `strict_pass` requires ALL of: at least five cold observations; a distinct cold
+> backend pid for EVERY cold observation; at least five warm observations; exactly
+> ONE distinct warm pid across all of them; a priming call that returned a full
+> page AND ran in the SAME backend the timed calls used; and both posture maxima
+> within the 250 ms budget. The required count is a CONTRACT LITERAL, not the
+> `-Repeats` parameter -- raising `-Repeats` strengthens the evidence, and lowering
+> it cannot weaken the gate. A negative self-check proves the predicate goes FALSE
+> on multiple warm pids, a shared cold pid, an unprimed arm, priming in a different
+> backend, a short run, and a budget breach in either arm.
+>
+> The two arms are deliberately NOT symmetric -- cold wall clock includes process
+> and connection startup, warm excludes it -- so the two figures must not be
+> differenced to infer a connection cost. Neither arm clears the OS page cache or
+> shared buffers, so "cold" means a cold SESSION, not a cold cache. Note also that
+> the COLD figure is startup-DOMINATED: the same statement costs about 56 ms warm
+> against a cold maximum near 242 ms, so the remaining margin under the 250 ms
+> budget is NOT query headroom, and a red cold gate on a slow host may be
+> attributable to Docker rather than to the RPC. In `perf-v9-04` the same statement
+> cost at most 58.18 ms warm against a cold maximum of 242.03 ms, compared maximum
+> to maximum.
+>
+> `perf-v9-01` is ALSO superseded, for a narrower reason: a review of the rewrite
+> found that its gate still compared the observation counts against the `-Repeats`
+> PARAMETER rather than against a contract literal, so a caller passing
+> `-Repeats 1` would have satisfied "exactly one warm backend pid" VACUOUSLY. The
+> `perf-v9-01` numbers were not wrong (it ran at the default five), but it was
+> produced by a harness whose gate could be switched off from the command line, and
+> it therefore does not describe the bytes that ship. The same review also found
+> that the persistent session redirected psql's stderr without ever draining it,
+> which destroyed the diagnostic distinguishing a dead backend from bad SQL.
+>
+> `perf-v9-02` is superseded for one further reason, found by testing the fix rather
+> than trusting it: the stderr drain it introduced DID NOT WORK. It used an
+> `ErrorDataReceived` handler appending to a script-scope buffer, but a
+> `Register-ObjectEvent -Action` scriptblock runs in its own runspace, so `$script:`
+> inside it resolves to that runspace's variable and the parent's buffer stayed
+> empty. A probe against a process writing a known line to stderr collected zero
+> bytes -- meaning the helper would have confidently reported "psql stderr was
+> empty" for every real failure, which is WORSE than having no diagnostic. The
+> shipping harness drains stderr with `ReadToEndAsync` instead, which needs no
+> cross-runspace state and cannot fill the pipe.
+>
+> `perf-v9-03` is superseded for a documentation-honesty reason found on re-review:
+> its receipt contrasted the warm MINIMUM against the cold MAXIMUM, the most
+> flattering framing available, in a receipt that elsewhere insists the MAXIMUM is
+> the reported figure. The shipping harness compares maximum against maximum.
+>
+> **`perf-v9-04` IS THE CURRENT PERFORMANCE EVIDENCE**, generated by the shipping
+> harness bytes. Measured on the 502,000-row PERF fixture: cold pids
+> 687/694/701/708/715 (five distinct) with median 213.25 ms and maximum 242.03 ms;
+> warm pid 722 for all five observations with median 56.26 ms and maximum 58.18 ms,
+> and the priming call confirmed to have run in that SAME backend 722; Measurement C
+> five of five traversals with slowest 6231.26 ms against the 8000 ms budget; 26
+> buffer positions accounted with zero capture failures; all 24 assertions PASS and
+> `strict_pass: true` with zero failures and the negative self-check passing.
+>
+> **THE COLD GATE PASSED WITH ONLY ABOUT 8 MS OF MARGIN, AND ITS OWN RUN-TO-RUN
+> VARIANCE IS LARGER THAN THAT MARGIN. Surface this to the owner rather than
+> treating the green as comfortable.** Across the four measurement runs taken during
+> this change the cold maximum was 205.20, 219.74, 215.17 and 242.03 ms -- a spread
+> of about 37 ms against a 250 ms budget -- while the warm maximum over the same four
+> runs was 57.87, 57.99, 58.33 and 58.18 ms, a spread of under half a millisecond.
+> The query is evidently stable; the cold arm is measuring `docker exec` and backend
+> startup. A slower host can therefore turn the cold gate RED for reasons that have
+> nothing to do with the RPC. The 250 ms figure is a PROVISIONAL release regression
+> budget, not a service commitment, and whether to re-baseline the cold arm (or gate
+> only the warm arm, which is the one that isolates query cost) is an OWNER decision
+> that this change deliberately does not make.
+>
+> The separation between the arms is the point: the original `perf-v8-01` receipt
+> reported 213.20 ms cold and 235.42 ms warm, which were two COLD measurements.
+>
 > **PIN REFRESHED WITHIN THE SAME F2 CHANGE (2026-07-29, review round 1).** The
 > interim F2 pin `CB910E4E...` (121484 bytes) never left this branch and must not
 > be used. A targeted SQL review found that
@@ -147,9 +274,17 @@ Single artifact:
 > harness required test ids only through `TEST_64` while the suite had grown to
 > `TEST_69`, so a replay that never emitted the exact-ID contract checks could
 > still have reported `strict_pass: true`. FINAL32 is the first set generated
-> from the corrected harness. The active positive suite is now **81 tests**
-> (`TEST_01`..`TEST_85`), raised from 69 in the same change that added
+> from the corrected harness. The active positive suite is now **85 tests**
+> (`TEST_01`..`TEST_85`, no gaps), raised from 69 in the same change that added
 > `TEST_70`..`TEST_85`.
+>
+> **CORRECTED 2026-07-30.** This line previously read "81 tests" while the header,
+> the acceptance table (`required_test_count | 85`) and the section-5 STOP
+> condition all said 85 -- in a document whose own instruction is to STOP when the
+> count does not match. It was also self-contradictory: 69 plus
+> `TEST_70`..`TEST_85` is 85, not 81. Ground truth, measured rather than asserted:
+> `test-option-c.sql` contains exactly 85 distinct ids `TEST_01`..`TEST_85` with no
+> gaps, and `replay-migrations-postgis.ps1` builds `$requiredTestIds = @(1..85 ...)`.
 
 Verify before doing anything else:
 
