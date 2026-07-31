@@ -69,6 +69,11 @@ class TestWrapperContracts(unittest.TestCase):
         self.assertNotIn("$temporaryReceipt =", self.wrapper)
         self.assertNotIn("[System.IO.File]::Move($temporaryReceipt", self.wrapper)
 
+    def test_terminal_receipt_is_pscustomobject_ordered(self):
+        self.assertIn("$terminalReceipt = [pscustomobject][ordered]@{", self.wrapper)
+        self.assertNotIn("$terminalReceipt = [ordered]@{", self.wrapper)
+
+
     def test_every_exit_flows_through_single_terminalizer(self):
         calls = re.findall(r"(?m)^\s*Complete-NightlyRun\s+\d+\s+'(?:FAILED|SKIPPED|SUCCESS)'\s*$", self.wrapper)
         self.assertGreaterEqual(len(calls), 9)
@@ -407,6 +412,18 @@ class TestWrapperContracts(unittest.TestCase):
                     )
         self.assertNotIn("[int]$canonicalData", self.wrapper)
         self.assertNotIn("[int]$smokeData", self.wrapper)
+
+    def test_nightly_wiki_sync_array_wrapping_and_utf8_encoding(self):
+        self.assertIn(
+            '$hasReceipts = @(Get-ChildItem -Path $logDir -Filter "receipt-*.md" -File -ErrorAction SilentlyContinue).Count -gt 0',
+            self.wrapper,
+        )
+        self.assertEqual(
+            self.wrapper.count("open(sys.argv[1], encoding='utf-8')"),
+            2,
+        )
+        self.assertNotIn("json.load(open(sys.argv[1]))", self.wrapper)
+
 
 
 class TestProcessCustodyHelpers(unittest.TestCase):
@@ -753,6 +770,29 @@ class TestProcessCustodyHelpers(unittest.TestCase):
             candidate_guard = self.root / f"terminalizer-{index}.guard"; candidate_receipt = self.root / f"terminalizer-{index}.receipt.json"
             result = self.terminal_command(f"Enter-NightlyTerminalization -GuardPath '{candidate_guard}'; $r=Get-Content -LiteralPath '{candidate_path}' -Raw|ConvertFrom-Json; Publish-NightlyTerminalReceipt -Receipt $r -ReceiptPath '{candidate_receipt}'")
             self.assertEqual(result.returncode, 1, result.stdout + result.stderr); self.assertFalse(candidate_receipt.exists())
+
+    def test_publish_accepts_pscustomobject_ordered_receipt(self):
+        payload = self.root / "payload-pscustomobject.json"
+        receipt = self.root / "receipt-pscustomobject.json"
+        guard = self.root / "pscustomobject-guard"
+        payload.write_text(json.dumps(self.receipt_payload()), encoding="ascii")
+        ps_script = (
+            f"Enter-NightlyTerminalization -GuardPath '{guard}'; "
+            f"$p = Get-Content -LiteralPath '{payload}' -Raw | ConvertFrom-Json; "
+            "$r = [pscustomobject][ordered]@{ "
+            "run_id = $p.run_id; "
+            "started_at_utc = $p.started_at_utc; "
+            "completed_at_utc = $p.completed_at_utc; "
+            "terminal_state = $p.terminal_state; "
+            "native_exit_code = $p.native_exit_code; "
+            "terminal_process_custody = $p.terminal_process_custody; "
+            "terminal_process_custody_evidence = $p.terminal_process_custody_evidence }; "
+            f"Publish-NightlyTerminalReceipt -Receipt $r -ReceiptPath '{receipt}'"
+        )
+        result = self.terminal_command(ps_script)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(receipt.is_file())
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

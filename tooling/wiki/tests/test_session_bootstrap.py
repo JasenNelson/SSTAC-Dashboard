@@ -13,8 +13,12 @@ def run_main(root_dir, fake_main_root=None, runtime_root=None):
     env["WIKI_BOOTSTRAP_ROOT"] = str(root_dir)
     if fake_main_root:
         env["FAKE_GIT_COMMON_DIR"] = str(Path(fake_main_root) / ".git")
+    else:
+        env.pop("FAKE_GIT_COMMON_DIR", None)
     if runtime_root:
         env["SSTAC_WIKI_RUNTIME_ROOT"] = str(runtime_root)
+    else:
+        env.pop("SSTAC_WIKI_RUNTIME_ROOT", None)
     proc = subprocess.run(
         [sys.executable, str(SCRIPT_PATH)],
         env=env, capture_output=True, text=True,

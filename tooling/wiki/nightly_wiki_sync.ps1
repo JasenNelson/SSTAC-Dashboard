@@ -180,7 +180,7 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
         if ($custody -ne 'PASS') { $finalState = 'FAILED'; $finalExit = 1 }
 
         $completedAtUtc = [datetime]::UtcNow
-        $terminalReceipt = [ordered]@{
+        $terminalReceipt = [pscustomobject][ordered]@{
             schema_version = '1.0'
             run_id = $runId
             task_definition_id = $TaskDefinitionId.ToString('D').ToLowerInvariant()
@@ -629,7 +629,7 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK" -or $step5Sta
     # Freshness of receipt lineage OK
     $freshnessOk = $true
     # Skip clause on first run (if no receipt exists)
-    $hasReceipts = (Get-ChildItem -Path $logDir -Filter "receipt-*.md" -File -ErrorAction SilentlyContinue).Count -gt 0
+    $hasReceipts = @(Get-ChildItem -Path $logDir -Filter "receipt-*.md" -File -ErrorAction SilentlyContinue).Count -gt 0
     if ($hasReceipts) {
         if (Test-Path (Join-Path $RepoRoot "tooling\wiki\check_nightly_freshness.ps1")) {
             & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "tooling\wiki\check_nightly_freshness.ps1") -RepoRoot $RepoRoot
@@ -699,8 +699,8 @@ $linkCount = 0
 $gj = Join-Path $RepoRoot "graphify-out\graph.json"
 if (Test-Path $gj) {
     try {
-        $nodeCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1])); print(len(d.get('nodes',[])))" $gj
-        $linkCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1])); print(len(d.get('links',[])))" $gj
+        $nodeCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1], encoding='utf-8')); print(len(d.get('nodes',[])))" $gj
+        $linkCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1], encoding='utf-8')); print(len(d.get('links',[])))" $gj
     } catch {}
 }
 
