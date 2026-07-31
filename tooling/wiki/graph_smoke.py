@@ -19,10 +19,13 @@ Usage:
 """
 
 import argparse
+import hashlib
 import json
 import subprocess
 import sys
 from pathlib import Path
+
+from canonicalize_graph import GraphIntegrityError, validate_graph_integrity
 
 
 # (metric_key, description, healthy_fn, hard_fn) -- healthy_fn/hard_fn take the metric value.
@@ -106,6 +109,12 @@ def parse_args():
                               '(root-anchored, relative to --repo-root). Default: empty.')
     parser.add_argument('--receipt', required=False,
                          help='Optional path to write the metrics table as JSON.')
+    parser.add_argument(
+        '--require-communities',
+        action='store_true',
+        help='Require complete non-negative integer community population. '
+             'Use after cluster-only, not for deterministic --no-cluster builds.',
+    )
     return parser.parse_args()
 
 
@@ -158,6 +167,14 @@ def compute_metrics(graph, manifest, repo_root, worktree_names):
         tgt_node = node_by_id.get(tgt_id)
         if tgt_node is None:
             # Target node missing entirely -- cannot resolve.
+            continue
+        metadata = tgt_node.get('metadata')
+        if (
+            isinstance(metadata, dict)
+            and metadata.get('kind') == 'materialized_edge_endpoint'
+        ):
+            # Closure nodes preserve edges and provenance, but they do not prove
+            # that an import resolved to a concrete extracted declaration.
             continue
         if tgt_id.startswith('ref_'):
             label = tgt_node.get('label') or ''
@@ -295,12 +312,47 @@ def data_as_code_hits(graph, data_allowlist):
     return sorted(hits)
 
 
+def community_contract(graph, require_communities):
+    nodes = graph.get('nodes', [])
+    present = [
+        isinstance(node, dict)
+        and 'community' in node
+        and node.get('community') is not None
+        for node in nodes
+    ]
+    issues = []
+    if any(present) and not all(present):
+        issues.append('community population must be all-or-none')
+    if require_communities and not all(present):
+        issues.append('communities are required after cluster-only')
+    if all(present) and nodes:
+        for node in nodes:
+            value = node.get('community')
+            if isinstance(value, bool) or not isinstance(value, int) or value < 0:
+                issues.append('community values must be non-negative integers')
+                break
+        distinct = len({node.get('community') for node in nodes})
+        if require_communities and distinct < 1:
+            issues.append('at least one populated community is required')
+    else:
+        distinct = 0
+    return {
+        'required': bool(require_communities),
+        'populated_node_count': sum(present),
+        'node_count': len(nodes),
+        'distinct_community_count': distinct,
+        'issues': issues,
+        'status': 'HARD' if issues else 'PASS',
+    }
+
+
 def main():
     args = parse_args()
     repo_root = Path(args.repo_root)
 
-    with open(args.graph, 'r', encoding='utf-8') as f:
-        graph = json.load(f)
+    graph_bytes = Path(args.graph).read_bytes()
+    graph_sha256 = hashlib.sha256(graph_bytes).hexdigest()
+    graph = json.loads(graph_bytes)
 
     manifest = None
     if args.manifest and Path(args.manifest).exists():
@@ -332,6 +384,14 @@ def main():
     offenders = substrate_invariant_offenders(graph, repo_root, allowlist)
     path_hits = suspicious_path_hits(graph, worktree_names)
     data_hits = data_as_code_hits(graph, data_allowlist)
+    try:
+        graph_integrity = {
+            'status': 'PASS',
+            **validate_graph_integrity(graph, str(repo_root.resolve())),
+        }
+    except GraphIntegrityError as exc:
+        graph_integrity = {'status': 'HARD', 'error': str(exc)}
+    communities = community_contract(graph, args.require_communities)
 
     print("--- graph_smoke: metric table ---")
     for row in report_rows:
@@ -368,12 +428,42 @@ def main():
     else:
         print("  OK: zero data-extension source_files in graph scope.")
 
+    print("--- graph_smoke: GRAPH CLOSURE + PORTABLE IDs (zero-tolerance) ---")
+    if graph_integrity['status'] == 'HARD':
+        print(f"  HARD FAIL: {graph_integrity['error']}")
+        hard_abort = True
+    else:
+        print(
+            "  OK: every edge endpoint is declared; "
+            f"{graph_integrity['declared_isolated_node_count']} declared "
+            "isolated node(s) retained; zero runtime-root-derived IDs."
+        )
+
+    print("--- graph_smoke: COMMUNITY PHASE CONTRACT ---")
+    if communities['status'] == 'HARD':
+        for issue in communities['issues']:
+            print(f"  HARD FAIL: {issue}")
+        hard_abort = True
+    elif args.require_communities:
+        print(
+            "  OK: complete community population with "
+            f"{communities['distinct_community_count']} distinct label(s)."
+        )
+    else:
+        print(
+            "  OPTIONAL: deterministic --no-cluster graph may omit "
+            "communities."
+        )
+
     if args.receipt:
         receipt = {
+            'graph_sha256': graph_sha256,
             'metrics': report_rows,
             'substrate_invariant_offenders': offenders,
             'path_audit_hits': [{'source_file': sf, 'pattern': pat} for sf, pat in path_hits],
             'data_as_code_hits': data_hits,
+            'graph_integrity': graph_integrity,
+            'community_contract': communities,
             'hard_abort': hard_abort,
         }
         Path(args.receipt).parent.mkdir(parents=True, exist_ok=True)

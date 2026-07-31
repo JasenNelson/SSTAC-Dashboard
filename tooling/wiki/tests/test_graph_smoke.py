@@ -1,4 +1,6 @@
+import hashlib
 import json
+import re
 import subprocess
 import sys
 import tempfile
@@ -54,7 +56,9 @@ class TestGraphSmoke(unittest.TestCase):
             json.dump({'nodes': nodes, 'links': links or []}, f)
         return graph_path
 
-    def run_smoke(self, graph_path, manifest_path=None, allowlist_path=None, data_allowlist_path=None):
+    def run_smoke(self, graph_path, manifest_path=None, allowlist_path=None,
+                  data_allowlist_path=None, require_communities=False,
+                  receipt_path=None):
         cmd = [sys.executable, str(self.script_path),
                "--graph", str(graph_path), "--repo-root", str(self.repo_root)]
         if manifest_path:
@@ -63,7 +67,21 @@ class TestGraphSmoke(unittest.TestCase):
             cmd += ["--allowlist", str(allowlist_path)]
         if data_allowlist_path:
             cmd += ["--data-allowlist", str(data_allowlist_path)]
+        if require_communities:
+            cmd += ["--require-communities"]
+        if receipt_path:
+            cmd += ["--receipt", str(receipt_path)]
         return subprocess.run(cmd, capture_output=True, text=True)
+
+    def test_receipt_binds_exact_checked_graph_bytes(self):
+        nodes = self.filler_nodes()
+        graph_path = self.write_graph(nodes)
+        receipt_path = self.repo_root / "smoke-receipt.json"
+        expected_hash = hashlib.sha256(graph_path.read_bytes()).hexdigest()
+        result = self.run_smoke(graph_path, receipt_path=receipt_path)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
+        self.assertEqual(receipt["graph_sha256"], expected_hash)
 
     def test_substrate_invariant_passes_for_tracked_files(self):
         nodes = self.filler_nodes()
@@ -194,6 +212,108 @@ class TestGraphSmoke(unittest.TestCase):
         self.assertIn("DATA-AS-CODE audit", result.stdout)
         self.assertIn("OK: zero data-extension source_files", result.stdout)
 
+
+    def test_materialized_endpoint_does_not_inflate_import_resolution(self):
+        nodes = self.filler_nodes()
+        nodes.append({
+            "id": "materialized_target",
+            "label": "materialized_target",
+            "file_type": "concept",
+            "source_file": "",
+            "metadata": {"kind": "materialized_edge_endpoint"},
+            "community": 0,
+        })
+        links = [{
+            "source": "filler_0_0",
+            "target": "materialized_target",
+            "relation": "imports",
+        }]
+        result = self.run_smoke(self.write_graph(nodes, links))
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("internal_import_resolution_pct: 0.0 [HARD]", result.stdout)
+
+    def test_declared_isolated_node_is_valid(self):
+        nodes = self.filler_nodes()
+        nodes.append({
+            "id": "isolated",
+            "source_file": "filler_0.ts",
+            "community": 99,
+        })
+        result = self.run_smoke(self.write_graph(nodes))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("declared isolated node(s) retained", result.stdout)
+
+    def test_undeclared_source_and_target_are_hard(self):
+        nodes = self.filler_nodes()
+        for link in (
+            {"source": "missing", "target": "filler_0_0", "relation": "calls"},
+            {"source": "filler_0_0", "target": "missing", "relation": "calls"},
+        ):
+            with self.subTest(link=link):
+                result = self.run_smoke(self.write_graph(nodes, [link]))
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("endpoint occurrence(s) are undeclared", result.stdout)
+
+    def test_literal_and_slugged_runtime_ids_are_hard(self):
+        root_text = str(self.repo_root.resolve())
+        root_slug = re.sub(
+            r"[^a-z0-9]+", "_", root_text.casefold()
+        ).strip("_")
+        baseline_nodes = self.filler_nodes()
+        for bad_id in (
+            root_text + r"\src\bad.ts",
+            root_text.replace("\\", "/").upper() + "/src/bad.ts",
+            root_slug + "_src_bad_ts",
+        ):
+            with self.subTest(bad_id=bad_id):
+                nodes = [dict(node) for node in baseline_nodes]
+                nodes[0]["id"] = bad_id
+                result = self.run_smoke(self.write_graph(nodes))
+                self.assertEqual(result.returncode, 1, result.stdout)
+                self.assertIn("runtime-root-derived", result.stdout)
+
+    def test_runtime_root_near_misses_are_not_flagged(self):
+        root_text = str(self.repo_root.resolve())
+        nodes = self.filler_nodes()
+        nodes[0]["id"] = root_text + "-copy"
+        result = self.run_smoke(self.write_graph(nodes))
+        self.assertEqual(result.returncode, 0, result.stdout)
+
+    def test_deterministic_graph_allows_all_communities_absent(self):
+        nodes = self.filler_nodes()
+        for node in nodes:
+            node.pop("community", None)
+        result = self.run_smoke(self.write_graph(nodes))
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("deterministic --no-cluster graph may omit", result.stdout)
+
+    def test_deterministic_graph_rejects_partial_communities(self):
+        nodes = self.filler_nodes()
+        for node in nodes[1:]:
+            node.pop("community", None)
+        result = self.run_smoke(self.write_graph(nodes))
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("community population must be all-or-none", result.stdout)
+
+    def test_clustered_graph_requires_complete_communities(self):
+        nodes = self.filler_nodes()
+        for node in nodes:
+            node.pop("community", None)
+        result = self.run_smoke(
+            self.write_graph(nodes), require_communities=True
+        )
+        self.assertEqual(result.returncode, 1, result.stdout)
+        self.assertIn("communities are required after cluster-only", result.stdout)
+
+    def test_clustered_graph_accepts_zero_community_label(self):
+        nodes = self.filler_nodes()
+        for index, node in enumerate(nodes):
+            node["community"] = index % 4
+        result = self.run_smoke(
+            self.write_graph(nodes), require_communities=True
+        )
+        self.assertEqual(result.returncode, 0, result.stdout)
+        self.assertIn("complete community population", result.stdout)
 
 if __name__ == '__main__':
     unittest.main()

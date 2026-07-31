@@ -55,9 +55,29 @@ if (-not $SkipGraph) {
     }
 }
 
+Write-Host "--- 1a. Portable graph canonicalization ---"
+& $venvPython tooling\wiki\canonicalize_graph.py --graph graphify-out\graph.json --repo-root . --receipt graphify-out\canonicalization-receipt.json
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph canonicalization'; exit 1 }
+
 Write-Host "--- 1b. Graph smoke + secrets scan (Phase 4 gates) ---"
-& $venvPython tooling\wiki\graph_smoke.py --graph graphify-out\graph.json --repo-root .
+$plainSyncSmokeReceipt = Join-Path $repoRoot 'graphify-out\smoke-sync.json'
+& $venvPython tooling\wiki\graph_smoke.py --graph graphify-out\graph.json --repo-root . --receipt $plainSyncSmokeReceipt
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph smoke (hard abort)'; exit 1 }
+try {
+    $plainSyncSmokeEvidence = Get-Content -LiteralPath $plainSyncSmokeReceipt -Raw | ConvertFrom-Json
+    $publishedGraphSha256 = [string]$plainSyncSmokeEvidence.graph_sha256
+} catch {
+    Write-Host 'FAIL: graph smoke receipt is missing or malformed'
+    exit 1
+}
+if ($publishedGraphSha256 -cnotmatch '^[0-9a-f]{64}$' -or
+    $plainSyncSmokeEvidence.hard_abort -isnot [bool] -or
+    $plainSyncSmokeEvidence.hard_abort -or
+    [string]$plainSyncSmokeEvidence.graph_integrity.status -cne 'PASS') {
+    Write-Host 'FAIL: graph smoke receipt is not successful or hash-bound'
+    exit 1
+}
+$publishedGraphPath = Join-Path $repoRoot 'graphify-out\graph.json'
 & $venvPython tooling\wiki\scan_secrets.py --repo-root . --target graphify-out
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: secrets scan on graphify-out'; exit 1 }
 
@@ -93,9 +113,9 @@ if ((-not $?) -or ($LASTEXITCODE -ne 0) -or (-not $syncHead)) {
     Write-Host 'FAIL: could not resolve HEAD for build stamp'
     exit 1
 }
-& $venvPython $publishHelper --repo-root $repoRoot finalize --staging $stagingWiki --graph (Join-Path $repoRoot 'graphify-out\graph.json') --graph-report (Join-Path $repoRoot 'graphify-out\GRAPH_REPORT.md') --stamp $Stamp --head $syncHead
+& $venvPython $publishHelper --repo-root $repoRoot finalize --staging $stagingWiki --graph $publishedGraphPath --graph-report (Join-Path $repoRoot 'graphify-out\GRAPH_REPORT.md') --stamp $Stamp --head $syncHead --expected-graph-sha256 $publishedGraphSha256
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: staging package finalization'; exit 1 }
-& $venvPython $publishHelper --repo-root $repoRoot swap --served $servedWiki --staging $stagingWiki --backup $publishBackup
+& $venvPython $publishHelper --repo-root $repoRoot swap --served $servedWiki --staging $stagingWiki --backup $publishBackup --expected-graph-sha256 $publishedGraphSha256
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: served wiki swap'; exit 1 }
 
 Write-Host "--- 5. Changed Files ---"

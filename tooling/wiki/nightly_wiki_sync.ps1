@@ -37,6 +37,22 @@ function Get-NightlyFileSha256([string]$Path) {
     finally { $sha.Dispose() }
 }
 
+function Get-NightlyExactNonnegativeInteger([object]$Object, [string]$PropertyName, [int]$Maximum) {
+    if ($null -eq $Object) { throw "missing object for $PropertyName" }
+    $property = $Object.PSObject.Properties[$PropertyName]
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    if ($null -eq $property -or $null -eq $property.Value -or $integerTypes -notcontains $property.Value.GetType()) { throw "invalid integer type $PropertyName" }
+    $value = [int64]$property.Value
+    if ($value -lt 0 -or $value -gt $Maximum) { throw "invalid integer range $PropertyName" }
+    return [int]$value
+}
+
+function Test-NightlyGraphSha256([string]$Path, [string]$ExpectedSha256) {
+    if ($ExpectedSha256 -cnotmatch '^[0-9a-f]{64}$' -or -not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
+    try { return (Get-NightlyFileSha256 $Path) -ceq $ExpectedSha256 }
+    catch { return $false }
+}
+
 try { . $terminalizerPath }
 catch { Exit-NightlyTerminalFailure "terminalizer load failed: $($_.Exception.Message)" }
 
@@ -103,6 +119,26 @@ $secretHit = $false
 $serveGateSummary = "not evaluated"
 $serveGateRequiredRef = "refs/remotes/origin/main"
 $n0OrphanStatus = "OK"
+$servedGraphHashStatus = 'NOT_RUN'
+$servedGraphSha256 = $null
+$finalCanonicalizationEvidence = [ordered]@{
+    status = 'NOT_RUN'
+    receipt_name = $null
+    receipt_sha256 = $null
+    node_count = 0
+    link_count = 0
+    materialized_endpoint_node_count = 0
+    removed_prior_materialized_endpoint_node_count = 0
+}
+$finalGraphSmokeEvidence = [ordered]@{
+    status = 'NOT_RUN'
+    receipt_name = $null
+    receipt_sha256 = $null
+    node_count = 0
+    link_count = 0
+    distinct_community_count = 0
+    graph_sha256 = $null
+}
 
 function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
     try { Enter-NightlyTerminalization -GuardPath $terminalGuardPath }
@@ -123,7 +159,7 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
         $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
         $finalState = $TerminalState
         $finalExit = $NativeExitCode
-        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS')) {
+        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS')) {
             $finalState = 'FAILED'
             $finalExit = 1
         }
@@ -156,9 +192,13 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
             n0_orphan = $n0OrphanStatus
             n1_build = $step1Status
             n2_cluster = $step2Status
+            n5_semantic = $step5Status
             n6_wiki = $step6Status
             n6_publication = $n6Publication
             serve_gate = $serveGateResult
+            final_canonicalization = $finalCanonicalizationEvidence
+            final_graph_smoke = $finalGraphSmokeEvidence
+            served_graph_sha256 = $servedGraphSha256
             required_ref = $serveGateRequiredRef
             head_oid = $finalHead
             required_ref_oid = $requiredRefOid
@@ -273,15 +313,25 @@ if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
     $step1Status = "FAIL"
     if ($gr.TimedOut -and -not $gr.Killed) { $graphOrphanRisk = $true }
 } else {
-    $step1Status = "OK"
-    $n1BuildOk = $true
-    Set-Content -Path $hashFile -Value $hashString
+    $canonicalReceipt = Join-Path $logDir "canonicalization-precluster-$stamp.json"
+    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $canonicalReceipt
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "FAIL: graph canonicalization"
+        $step1Status = "FAIL"
+    } else {
+        $step1Status = "OK"
+        $n1BuildOk = $true
+        Set-Content -Path $hashFile -Value $hashString
+    }
 }
 
 Write-Host "--- N2 CLUSTER ---"
 if ($graphOrphanRisk) {
     Write-Host "SKIP: graphOrphanRisk"
     $step2Status = "SKIPPED_ORPHAN_RISK"
+} elseif (-not $n1BuildOk) {
+    Write-Host "SKIP: graph canonicalization failed"
+    $step2Status = "SKIPPED_BUILD_FAIL"
 } else {
     $gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('cluster-only', $RepoRoot, '--no-label', '--no-viz') -TimeoutSec $cfgTimeoutCluster
     if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
@@ -306,7 +356,7 @@ if ($LASTEXITCODE -ne 0) {
 }
 
 Write-Host "--- N4 SMOKE ---"
-& $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt (Join-Path $logDir "smoke-$stamp.json")
+& $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --require-communities --receipt (Join-Path $logDir "smoke-$stamp.json")
 if ($LASTEXITCODE -eq 1) {
     Write-Host "FAIL: SMOKE_FAIL"
     "SMOKE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
@@ -338,13 +388,31 @@ if ($semanticSkippedReason) {
             if (-not $SkipLabeling) {
                 $gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('label', $RepoRoot, '--backend=ollama', "--model=$cfgModel", '--max-concurrency=1') -TimeoutSec $cfgTimeoutLabel
                 if ($gr.TimedOut -and -not $gr.Killed) { $gpuOrphanRisk = $true }
-                if ($gr.TimedOut -or $gr.ExitCode -ne 0) { $step5Fail = $true }
+                if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
+                    $step5Fail = $true
+                } else {
+                    $postLabelCanonicalReceipt = Join-Path $logDir "canonicalization-postlabel-$runId.json"
+                    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $postLabelCanonicalReceipt
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "FAIL: post-label graph canonicalization"
+                        $step5Fail = $true
+                    }
+                }
             }
             if (-not $gpuOrphanRisk -and -not $step5Fail) {
                 $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"), '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner)
                 $sr = Invoke-GraphifyGuarded -GraphifyExe 'powershell' -GraphifyArgs $semArgs -TimeoutSec $cfgTimeoutSemOuter
                 if ($sr.TimedOut -and -not $sr.Killed) { $gpuOrphanRisk = $true }
-                if ($sr.TimedOut -or $sr.ExitCode -ne 0) { $step5Fail = $true }
+                if ($sr.TimedOut -or $sr.ExitCode -ne 0) {
+                    $step5Fail = $true
+                } else {
+                    $postSemanticCanonicalReceipt = Join-Path $logDir "canonicalization-postsemantic-$runId.json"
+                    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $postSemanticCanonicalReceipt
+                    if ($LASTEXITCODE -ne 0) {
+                        Write-Host "FAIL: post-semantic graph canonicalization"
+                        $step5Fail = $true
+                    }
+                }
 
                 # POST-SEMANTIC RE-SCAN (no early release/exit here -- flag and fall through
                 # so the single finally-release runs; receipt + exit happen after).
@@ -353,6 +421,22 @@ if ($semanticSkippedReason) {
                     Write-Host "FAIL: SECRET_HIT_POST"
                     $secretHitPost = $true
                     $step5Fail = $true
+                }
+
+                if (-not $step5Fail) {
+                    $postSemanticCluster = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('cluster-only', $RepoRoot, '--no-label', '--no-viz') -TimeoutSec $cfgTimeoutCluster
+                    if ($postSemanticCluster.TimedOut -and -not $postSemanticCluster.Killed) { $gpuOrphanRisk = $true }
+                    if ($postSemanticCluster.TimedOut -or $postSemanticCluster.ExitCode -ne 0) {
+                        Write-Host "FAIL: post-semantic graphify cluster-only"
+                        $step5Fail = $true
+                    } else {
+                        $postSemanticSmokeReceipt = Join-Path $logDir "smoke-postsemantic-$runId.json"
+                        & $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --require-communities --receipt $postSemanticSmokeReceipt
+                        if ($LASTEXITCODE -ne 0) {
+                            Write-Host "FAIL: post-semantic clustered graph smoke"
+                            $step5Fail = $true
+                        }
+                    }
                 }
 
                 # PROMOTION (THE ONLY invocation; skipped on any semantic-step failure --
@@ -408,13 +492,93 @@ if ($semanticSkippedReason) {
     }
 }
 
+Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"
+$prePublishGraphIntegrityOk = $false
+if (-not $graphOrphanRisk -and $n1BuildOk -and $step2Status -eq "OK" -and $step5Status -ne "FAIL") {
+    $canonicalReceipt = Join-Path $logDir "canonicalization-prepublish-$runId.json"
+    $finalCanonicalizationEvidence.status = 'FAIL'
+    $finalCanonicalizationEvidence.receipt_name = Split-Path -Leaf $canonicalReceipt
+    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $canonicalReceipt
+    $canonicalExit = $LASTEXITCODE
+    if ($canonicalExit -eq 0 -and (Test-Path -LiteralPath $canonicalReceipt -PathType Leaf)) {
+        try {
+            $canonicalData = Get-Content -LiteralPath $canonicalReceipt -Raw | ConvertFrom-Json
+            $canonicalNodeCount = Get-NightlyExactNonnegativeInteger $canonicalData 'node_count' 10000000
+            $canonicalLinkCount = Get-NightlyExactNonnegativeInteger $canonicalData 'link_count' 50000000
+            $canonicalMaterializedCount = Get-NightlyExactNonnegativeInteger $canonicalData 'materialized_endpoint_node_count' 10000000
+            $canonicalRemovedCount = Get-NightlyExactNonnegativeInteger $canonicalData 'removed_prior_materialized_endpoint_node_count' 10000000
+            $canonicalUndeclaredEndpointCount = Get-NightlyExactNonnegativeInteger $canonicalData 'undeclared_endpoint_occurrence_count' 50000000
+            $canonicalUndeclaredHyperedgeCount = Get-NightlyExactNonnegativeInteger $canonicalData 'undeclared_hyperedge_member_occurrence_count' 50000000
+            $canonicalRuntimeRootCount = Get-NightlyExactNonnegativeInteger $canonicalData 'runtime_root_derived_id_occurrence_count' 50000000
+            if ($canonicalNodeCount -lt 1 -or $canonicalNodeCount -gt 10000000 -or
+                $canonicalLinkCount -lt 1 -or $canonicalLinkCount -gt 50000000 -or
+                $canonicalMaterializedCount -lt 0 -or $canonicalMaterializedCount -gt $canonicalNodeCount -or
+                $canonicalRemovedCount -lt 0 -or $canonicalRemovedCount -gt 10000000 -or
+                $canonicalUndeclaredEndpointCount -ne 0 -or
+                $canonicalUndeclaredHyperedgeCount -ne 0 -or
+                $canonicalRuntimeRootCount -ne 0) {
+                throw 'canonicalization receipt contains unsafe graph counts'
+            }
+            $finalCanonicalizationEvidence.status = 'PASS'
+            $finalCanonicalizationEvidence.receipt_sha256 = Get-NightlyFileSha256 $canonicalReceipt
+            $finalCanonicalizationEvidence.node_count = $canonicalNodeCount
+            $finalCanonicalizationEvidence.link_count = $canonicalLinkCount
+            $finalCanonicalizationEvidence.materialized_endpoint_node_count = $canonicalMaterializedCount
+            $finalCanonicalizationEvidence.removed_prior_materialized_endpoint_node_count = $canonicalRemovedCount
+        } catch {
+            Write-Host "FAIL: final canonicalization receipt validation: $($_.Exception.Message)"
+            $finalCanonicalizationEvidence.status = 'FAIL'
+        }
+    }
+    if ($finalCanonicalizationEvidence.status -eq 'PASS') {
+        $smokeReceipt = Join-Path $logDir "smoke-prepublish-$runId.json"
+        $finalGraphSmokeEvidence.status = 'FAIL'
+        $finalGraphSmokeEvidence.receipt_name = Split-Path -Leaf $smokeReceipt
+        & $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --require-communities --receipt $smokeReceipt
+        $smokeExit = $LASTEXITCODE
+        if ($smokeExit -eq 0 -and (Test-Path -LiteralPath $smokeReceipt -PathType Leaf)) {
+            try {
+                $smokeData = Get-Content -LiteralPath $smokeReceipt -Raw | ConvertFrom-Json
+                $smokeNodeCount = Get-NightlyExactNonnegativeInteger $smokeData.graph_integrity 'node_count' 10000000
+                $smokeLinkCount = Get-NightlyExactNonnegativeInteger $smokeData.graph_integrity 'link_count' 50000000
+                $smokeCommunityCount = Get-NightlyExactNonnegativeInteger $smokeData.community_contract 'distinct_community_count' 10000000
+                $smokePopulatedNodeCount = Get-NightlyExactNonnegativeInteger $smokeData.community_contract 'populated_node_count' 10000000
+                $smokeGraphSha256 = [string]$smokeData.graph_sha256
+                if ($smokeData.hard_abort -isnot [bool] -or $smokeData.hard_abort -or
+                    [string]$smokeData.graph_integrity.status -cne 'PASS' -or
+                    [string]$smokeData.community_contract.status -cne 'PASS' -or
+                    $smokeNodeCount -ne $finalCanonicalizationEvidence.node_count -or
+                    $smokeLinkCount -ne $finalCanonicalizationEvidence.link_count -or
+                    $smokePopulatedNodeCount -ne $smokeNodeCount -or
+                    $smokeCommunityCount -lt 1 -or $smokeCommunityCount -gt $smokeNodeCount -or
+                    -not (Test-NightlyGraphSha256 (Join-Path $RepoRoot "graphify-out\graph.json") $smokeGraphSha256)) {
+                    throw 'smoke receipt contradicts final canonical graph'
+                }
+                $finalGraphSmokeEvidence.status = 'PASS'
+                $finalGraphSmokeEvidence.receipt_sha256 = Get-NightlyFileSha256 $smokeReceipt
+                $finalGraphSmokeEvidence.node_count = $smokeNodeCount
+                $finalGraphSmokeEvidence.link_count = $smokeLinkCount
+                $finalGraphSmokeEvidence.distinct_community_count = $smokeCommunityCount
+                $finalGraphSmokeEvidence.graph_sha256 = $smokeGraphSha256
+                $prePublishGraphIntegrityOk = $true
+            } catch {
+                Write-Host "FAIL: final smoke receipt validation: $($_.Exception.Message)"
+                $finalGraphSmokeEvidence.status = 'FAIL'
+            }
+        }
+    }
+}
+if (-not $prePublishGraphIntegrityOk) {
+    Write-Host "FAIL: pre-publication graph integrity"
+}
+
 Write-Host "--- N6 WIKI ---"
 $wikiServedStatus = ""
 $publishHelper = Join-Path $RepoRoot "tooling\wiki\publish_wiki.py"
 $ws = Join-Path $RepoRoot "wiki.staging"
 $w = Join-Path $RepoRoot "wiki"
 $publishBackup = Join-Path $logDir "wiki-backup-$stamp-$PID"
-if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
+if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK" -or $step5Status -eq "FAIL" -or -not $prePublishGraphIntegrityOk) {
     # A red cluster step blocks serve too (codex P2): never compile/serve over a graph
     # whose required cluster pass failed, even though the raw build succeeded.
     $step6Status = "SKIPPED_PREV_FAIL"
@@ -479,20 +643,38 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
         if ($promotionCandidateReady) {
             $promotionStateArgs = @('--promotion-state', $promotionCandidate)
         }
-        & $pythonExe $publishHelper --repo-root $RepoRoot finalize --staging $ws --graph (Join-Path $RepoRoot "graphify-out\graph.json") --graph-report $grpt --stamp $stamp --head $n0Head @promotionStateArgs
-        $finalizeExit = $LASTEXITCODE
-        if ($finalizeExit -eq 0) {
-            & $pythonExe $publishHelper --repo-root $RepoRoot swap --served $w --staging $ws --backup $publishBackup
-            $swapExit = $LASTEXITCODE
-        } else {
+        $graphPathForPublication = Join-Path $RepoRoot "graphify-out\graph.json"
+        if (-not (Test-NightlyGraphSha256 $graphPathForPublication $finalGraphSmokeEvidence.graph_sha256)) {
+            Write-Host "FAIL: graph bytes changed after final smoke and before finalize"
+            $finalizeExit = 1
             $swapExit = 1
-        }
-        if ($finalizeExit -eq 0 -and $swapExit -eq 0) {
-            $wikiServedStatus = "SERVED_WIKI_SWAPPED"
-            $step6Status = "OK"
-        } else {
-            $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD (Publish failed)"
+            $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD (Graph changed after smoke)"
             $step6Status = "FAIL"
+        } else {
+            & $pythonExe $publishHelper --repo-root $RepoRoot finalize --staging $ws --graph $graphPathForPublication --graph-report $grpt --stamp $stamp --head $n0Head --expected-graph-sha256 $finalGraphSmokeEvidence.graph_sha256 @promotionStateArgs
+            $finalizeExit = $LASTEXITCODE
+            if ($finalizeExit -eq 0) {
+                & $pythonExe $publishHelper --repo-root $RepoRoot swap --served $w --staging $ws --backup $publishBackup --expected-graph-sha256 $finalGraphSmokeEvidence.graph_sha256
+                $swapExit = $LASTEXITCODE
+            } else {
+                $swapExit = 1
+            }
+            if ($finalizeExit -eq 0 -and $swapExit -eq 0) {
+                $servedGraphPath = Join-Path $w '.graph\graph.json'
+                if (Test-NightlyGraphSha256 $servedGraphPath $finalGraphSmokeEvidence.graph_sha256) {
+                    $servedGraphSha256 = Get-NightlyFileSha256 $servedGraphPath
+                    $servedGraphHashStatus = 'PASS'
+                    $wikiServedStatus = "SERVED_WIKI_SWAPPED"
+                    $step6Status = "OK"
+                } else {
+                    $servedGraphHashStatus = 'FAIL'
+                    $wikiServedStatus = "SERVED_WIKI_HASH_MISMATCH"
+                    $step6Status = "FAIL"
+                }
+            } else {
+                $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD (Publish failed)"
+                $step6Status = "FAIL"
+            }
         }
     } else {
         $wikiServedStatus = "SERVED_WIKI_KEPT_LAST_GOOD"
@@ -513,12 +695,12 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -eq "FAIL") {
 
 Write-Host "--- N7 RECEIPT ---"
 $nodeCount = 0
-$edgeCount = 0
+$linkCount = 0
 $gj = Join-Path $RepoRoot "graphify-out\graph.json"
 if (Test-Path $gj) {
     try {
         $nodeCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1])); print(len(d.get('nodes',[])))" $gj
-        $edgeCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1])); print(len(d.get('edges',[])))" $gj
+        $linkCount = & $pythonExe -c "import sys, json; d=json.load(open(sys.argv[1])); print(len(d.get('links',[])))" $gj
     } catch {}
 }
 
@@ -550,8 +732,10 @@ $receiptBody = @(
     "Promotion: $promStatus"
     "N6 Wiki: $step6Status / $wikiServedStatus"
     "Serve Gate: $serveGateSummary"
+    "Final Canonicalization: $($finalCanonicalizationEvidence.status) / $($finalCanonicalizationEvidence.receipt_sha256)"
+    "Final Graph Smoke: $($finalGraphSmokeEvidence.status) / $($finalGraphSmokeEvidence.receipt_sha256)"
     "Nodes: $nodeCount"
-    "Edges: $edgeCount"
+    "Links: $linkCount"
     "Freshness: $freshnessStr"
 )
 $receiptBody | Set-Content (Join-Path $logDir "receipt-$stamp.md")
