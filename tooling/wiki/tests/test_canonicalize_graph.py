@@ -422,6 +422,18 @@ class CanonicalizeGraphTests(unittest.TestCase):
                     MODULE.runtime_root_encoding_hits(candidate, self.root_a)
                 )
 
+    def test_canonicalize_graph_without_hyperedges_key_is_idempotent(self):
+        graph = {
+            "nodes": [{"id": "n1", "label": "Node 1"}],
+            "links": [{"source": "n1", "target": "n1"}],
+        }
+        first, _ = MODULE.canonicalize_graph(graph, self.root_a)
+        self.assertEqual(first["hyperedges"], [])
+        second, _ = MODULE.canonicalize_graph(
+            copy.deepcopy(first), self.root_a
+        )
+        self.assertEqual(first, second)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

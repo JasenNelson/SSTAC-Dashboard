@@ -481,8 +481,7 @@ def canonicalize_graph(graph: dict, runtime_root: str) -> tuple[dict, dict]:
     result = dict(graph)
     result["nodes"] = remapped_nodes + materialized
     result["links"] = remapped_links
-    if "hyperedges" in result:
-        result["hyperedges"] = remapped_hyperedges
+    result["hyperedges"] = remapped_hyperedges
 
     integrity = validate_graph_integrity(result, runtime_root)
     receipt = {
