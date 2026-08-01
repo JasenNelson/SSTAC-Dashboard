@@ -94,6 +94,13 @@ def prepare_staging(served: Path, staging: Path) -> None:
         validate_tree_no_links(served)
         shutil.copytree(served, staging)
         validate_tree_no_links(staging)
+        stale_report = staging / ".graph" / "GRAPH_REPORT.md"
+        if stale_report.exists():
+            if not stale_report.is_file():
+                raise PublishError(
+                    f"staged graph report must be a regular file: {stale_report}"
+                )
+            stale_report.unlink()
     else:
         staging.mkdir(parents=True)
 
