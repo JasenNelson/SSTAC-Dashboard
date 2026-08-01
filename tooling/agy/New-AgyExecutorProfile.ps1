@@ -21,6 +21,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+
+
 function Resolve-AbsolutePath {
     param([string]$Path)
     if ([string]::IsNullOrWhiteSpace($Path)) {
@@ -197,23 +199,9 @@ if ($resolvedWritablePaths.Count -eq 0) {
 
 # 4. Mandatory Protected Paths Resolution (R2-2 & R3-3)
 $mandatoryReadWriteRelPaths = @(
-    '.git',
     'node_modules',
     'src/data',
     'supabase/migrations'
-)
-
-$mandatoryWriteOnlyRelPaths = @(
-    'AGENTS.md',
-    'CLAUDE.md',
-    '.agents',
-    '.claude',
-    '.codex',
-    '.gemini',
-    '.mcp.json',
-    'opencode.json',
-    'package.json',
-    'package-lock.json'
 )
 
 $mandatoryReadWritePaths = @()
@@ -238,6 +226,61 @@ foreach ($rel in $mandatoryReadWriteRelPaths) {
         }
     }
 }
+
+$oldLocationForGit = Get-Location
+try {
+    Set-Location -LiteralPath $resolvedWorkspace
+
+    # Protect the .git file/directory in the workspace root
+    $dotGit = Join-Path $resolvedWorkspace '.git'
+    if (Test-Path -LiteralPath $dotGit) {
+        $resDotGit = Resolve-AbsolutePath -Path $dotGit
+        if ($mandatoryReadWritePaths -notcontains $resDotGit) {
+            $mandatoryReadWritePaths += $resDotGit
+        }
+    }
+
+    $absGitDirRaw = (git rev-parse --absolute-git-dir 2>&1)
+    if ($LASTEXITCODE -ne 0) { throw "git rev-parse --absolute-git-dir failed: $absGitDirRaw" }
+    $absGitDir = ($absGitDirRaw | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($absGitDir)) { throw "git rev-parse --absolute-git-dir returned empty output." }
+    if (-not [System.IO.Path]::IsPathRooted($absGitDir)) {
+        $absGitDir = Join-Path $resolvedWorkspace $absGitDir
+    }
+    if (-not (Test-Path -LiteralPath $absGitDir)) { throw "Absolute git dir '$absGitDir' does not exist." }
+    $resAbsGitDir = Resolve-AbsolutePath -Path $absGitDir
+    if ($mandatoryReadWritePaths -notcontains $resAbsGitDir) {
+        $mandatoryReadWritePaths += $resAbsGitDir
+    }
+
+    $commonGitDirRaw = (git rev-parse --git-common-dir 2>&1)
+    if ($LASTEXITCODE -ne 0) { throw "git rev-parse --git-common-dir failed: $commonGitDirRaw" }
+    $commonGitDir = ($commonGitDirRaw | Out-String).Trim()
+    if ([string]::IsNullOrWhiteSpace($commonGitDir)) { throw "git rev-parse --git-common-dir returned empty output." }
+    if (-not [System.IO.Path]::IsPathRooted($commonGitDir)) {
+        $commonGitDir = Join-Path $resolvedWorkspace $commonGitDir
+    }
+    if (-not (Test-Path -LiteralPath $commonGitDir)) { throw "Common git dir '$commonGitDir' does not exist." }
+    $resCommonGitDir = Resolve-AbsolutePath -Path $commonGitDir
+    if ($mandatoryReadWritePaths -notcontains $resCommonGitDir) {
+        $mandatoryReadWritePaths += $resCommonGitDir
+    }
+} finally {
+    Set-Location -LiteralPath $oldLocationForGit
+}
+
+$mandatoryWriteOnlyRelPaths = @(
+    'AGENTS.md',
+    'CLAUDE.md',
+    '.agents',
+    '.claude',
+    '.codex',
+    '.gemini',
+    '.mcp.json',
+    'opencode.json',
+    'package.json',
+    'package-lock.json'
+)
 
 $mandatoryWriteOnlyPaths = @()
 foreach ($rel in $mandatoryWriteOnlyRelPaths) {

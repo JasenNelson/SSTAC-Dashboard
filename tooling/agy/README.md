@@ -25,6 +25,7 @@ Tooling for generating fail-closed Antigravity (AGY) executor profiles, executin
 - **Exact Command Authority vs. OS Containment**: Exact command rules reduce accidental authority, but they do **not** constitute OS-level containment. Receipt validation is receipt verification, not OS-level process isolation.
 
 ### 2. Live-Canary Evidence & Corrections (AGY 1.1.8)
+- **Version Status**: AGY 1.1.8 canaries are classified as historical local evidence. AGY 1.1.9 is unvalidated in this lane.
 - **Live-Canary Receipt Verification**:
   1. Protected `.env` read: Auto-denied natively without owner prompt. Stream receipt classified as `RED` with `READ_PATH_DENIED` and `TOOL_ERROR`.
   2. Protected sibling write: Auto-denied natively without owner prompt. Stream receipt classified as `RED` with `WRITE_PATH_DENIED` and `TOOL_ERROR`.
@@ -70,7 +71,7 @@ PowerShell 7 profile generator creating isolated AGY configuration (`settings.js
 - Always includes `read_file(<WorkspaceRoot>)` in `permissions.allow`.
 - Leaves `toolPermission` absent so AGY 1.1.8 retains its default `request-review` posture.
 - Configures explicit mandatory deny rules for dangerous CLI utilities (`git`, `gh`, `supabase`, `docker`, `rm`, `curl`, etc.), URLs, and MCP tools.
-- Restricts `permissions.allow` commands to caller-supplied exact command rules matching a strict grammar.
+- The profile generator restricts `permissions.allow` commands to caller-supplied exact command rules, but note that the production controller currently hard-rejects any nonempty `AllowedCommands` input until a real sandbox canary is accepted.
 
 ---
 
@@ -95,27 +96,27 @@ PowerShell 7 one-command foreground launcher executing tracked AGY 1.1.8 worker 
 - **Foreground Process Invocation**: Uses PowerShell call operator (`&`) for synchronous foreground execution with stdout and stderr redirection. Contains no forbidden background/detached process APIs (`Start-Process`, `Start-Job`, `System.Diagnostics.Process`, `Tee-Object`, etc.).
 - **Environment Isolation & Restoration**: Temporarily sets `USERPROFILE` to the generated profile root during AGY execution and restores the original `USERPROFILE` environment variable in a `finally` block on both GREEN and RED/thrown paths.
 - **Independent Manifest & Authority Derivation**: Validates manifest collection types, ordering, counts, absolute paths, `mandatory_protected_paths` modes, and `settings_sha256`. Authority arguments (`allowedReadRoot`, `allowedWriteRoots`, `allowedCommands`, `deniedReadRoots`, `deniedWriteRoots`) are derived strictly from generated `PROFILE_MANIFEST.json`.
-- **Durable Receipt Trail**: Generates controller receipts from startup to termination (`RUN_STATE.md`, `COMMAND_LOG.md`, `HEARTBEAT.log`, `RESUME_PROMPT.md`, `PR_MANIFEST.md`, `LAUNCH_CONTRACT.json`, `PROMPT.sha256`, `NATIVE_EXIT.txt`, `VALIDATOR_EXIT.txt`, `verdict.json`, `MANIFEST.sha256`, `stream.jsonl`, `stderr.log`, `log.txt`). `LAUNCH_CONTRACT.json` records the resolved `node_executable`, observed `node_version`, and accepted `tracked_dirty_files`.
-- **Fail-Closed Verdict**: Executes the post-run validator using strictly the resolved `NodeExecutable`. Returns success only when AGY native exit code is 0, validator exit code is 0, and parsed stream verdict is `GREEN`.
+- **Durable Receipt Trail**: Generates controller receipts from startup to termination (`RUN_STATE.md`, `COMMAND_LOG.md`, `HEARTBEAT.log`, `RESUME_PROMPT.md`, `PR_MANIFEST.md`, `LAUNCH_CONTRACT.json`, `PROMPT.sha256`, `NATIVE_EXIT.txt`, `VALIDATOR_EXIT.txt`, `verdict.json`, `MANIFEST.sha256`, `stream.jsonl`, `stderr.log`, `log.txt`, `POSTFLIGHT_WORKSPACE_AUTHORITY.json`). `LAUNCH_CONTRACT.json` records the resolved `node_executable`, observed `node_version`, and accepted `tracked_dirty_files`.
+- **Fail-Closed Verdict**: Executes the post-run validator using strictly the resolved `NodeExecutable`. Returns success only when AGY native exit code is 0, validator exit code is 0, parsed stream verdict is `GREEN`, and the `POSTFLIGHT_WORKSPACE_AUTHORITY.json` result is a `MATCH`. Note that workspace authority is detection, not OS-level write prevention.
 
 ### Example Controller Invocation Shape
 
 ```powershell
 pwsh -NoLogo -NoProfile -File "tooling/agy/Invoke-AgyAutonomousWorker.ps1" `
-  -WorkspaceRoot "C:\Projects\SSTAC-Dashboard-worktrees\agy-autonomy-bootstrap-20260730" `
-  -PromptFile "C:\Projects\SSTAC-Dashboard-worktrees\agy-autonomy-bootstrap-20260730\tooling\agy\WORKPLAN.md" `
-  -ExpectedPromptSha256 "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855" `
-  -ProfileRoot "C:\tmp\sstac-agy-profile-20260730" `
-  -ReceiptRoot "C:\tmp\sstac-agy-receipts-20260730" `
-  -WritablePaths @("C:\Projects\SSTAC-Dashboard-worktrees\agy-autonomy-bootstrap-20260730\tooling\agy") `
-  -ExpectedTrackedDirtyPaths @("C:\Projects\SSTAC-Dashboard-worktrees\agy-autonomy-bootstrap-20260730\tooling\agy\README.md") `
-  -ExpectedTrackedDirtySha256 @("a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f60718293a4b5c6d7e8f90") `
-  -ExpectedBaselineHead "f7329f150c0b683765f7bbe748a86ec3db8388e8" `
-  -ExpectedBranch "feat/agy-autonomy-bootstrap-20260730" `
+  -WorkspaceRoot "<ABSOLUTE_PATH_TO_WORKSPACE>" `
+  -PromptFile "<ABSOLUTE_PATH_TO_PROMPT_FILE>" `
+  -ExpectedPromptSha256 "<64_HEX_CHAR_HASH>" `
+  -ProfileRoot "<ABSOLUTE_PATH_FOR_NEW_PROFILE_ROOT>" `
+  -ReceiptRoot "<ABSOLUTE_PATH_FOR_NEW_RECEIPT_ROOT>" `
+  -WritablePaths @("<ABSOLUTE_PATH_TO_WRITABLE_DIRECTORY>") `
+  -ExpectedTrackedDirtyPaths @("<ABSOLUTE_PATH_TO_DIRTY_FILE>") `
+  -ExpectedTrackedDirtySha256 @("<64_HEX_CHAR_HASH>") `
+  -ExpectedBaselineHead "<40_HEX_CHAR_COMMIT_HASH>" `
+  -ExpectedBranch "<CURRENT_BRANCH_NAME>" `
   -ExpectedAgyVersion "1.1.8" `
   -ExpectedModel "gemini-3.1-pro-high" `
   -ExpectedEffort "high" `
-  -PrintTimeout "10m"
+  -PrintTimeout "<DURATION_STRING>"
 ```
 
 ---
@@ -153,21 +154,15 @@ Returns status `RED` with machine-readable reason codes if any of the following 
 
 ## Testing
 
-Deterministic unit tests using Node.js test runner (`node:test`):
+Deterministic unit tests using Node.js test runner (`node:test`). The test runner is authoritative for current counts.
 
 > [!NOTE]
-> **Junction Fixture Requirement**: Running `new-agy-executor-profile.node-test.mjs` requires pre-created NTFS junction fixtures. Environment variables `AGY_TEST_REPARSE_WORKSPACE`, `AGY_TEST_REPARSE_TARGET`, and `AGY_TEST_REPARSE_PROFILE_ROOT` must be set to point to valid, pre-existing junction fixtures before executing the test command. The test suite does **not** create or clean up these junction fixtures; they must be provided externally by Mission Control or the test runner environment. Executing the bare command without setting these environment variables will result in expected fixture assertions failing.
+> **Test Execution**: `npm run test:agy-tooling` is hermetic and creates temporary fixtures. `npm run test:agy-canary` is optional, evidence-driven, and separate.
 
 ```bash
-# Run profile generator test suite (requires pre-created junction fixtures set in environment)
-AGY_TEST_REPARSE_WORKSPACE="C:\path\to\ws" \
-AGY_TEST_REPARSE_TARGET="C:\path\to\target" \
-AGY_TEST_REPARSE_PROFILE_ROOT="C:\path\to\prof" \
-node --test tooling/agy/__tests__/new-agy-executor-profile.node-test.mjs
+# Run all deterministic suites
+npm run test:agy-tooling
 
-# Run stream validator test suite
-node --test tooling/agy/__tests__/validate-agy-stream.node-test.mjs
-
-# Run autonomous worker controller test suite
-node --test tooling/agy/__tests__/invoke-agy-autonomous-worker.node-test.mjs
+# Run optional real-AGY canary verification
+npm run test:agy-canary
 ```

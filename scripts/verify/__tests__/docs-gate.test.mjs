@@ -31,9 +31,19 @@ const MATRIX_MAP_AUTHORITIES = ['matrixmap.plan_v3_4_2', 'matrixmap.option_c_des
 const AGY_GOVERNANCE_AUTHORITIES = [
   'docs.index',
   'core.agents',
+  'root.agents',
   'governance.gate_mode_sop',
   'governance.agy_usage',
   'governance.sstac_ai_pipeline',
+];
+
+const AGY_SECTIONS = [
+  'agy.role_and_mode',
+  'agy.boundaries',
+  'agy.validated_invocation',
+  'agy.supervised_launch',
+  'root.mc_token_efficiency',
+  'root.agy_autonomous_runs',
 ];
 
 function runGate(files) {
@@ -120,27 +130,47 @@ describe('docs-gate bundle wiring - exact identity, never counts', () => {
     expect(result.activated_bundles).toContain('DOCS_GOVERNANCE_GATE');
   });
 
-  it('AGY usage changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+  it('root AGENTS.md changes activate AGY_GOVERNANCE_GATE with its authorities and sections', () => {
+    const result = runGate(['AGENTS.md']);
+    expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
+    expect(result.required_documents).toEqual(
+      expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
+    );
+    expect(result.required_sections).toEqual(
+      expect.arrayContaining(AGY_SECTIONS)
+    );
+  });
+
+  it('AGY usage changes activate AGY_GOVERNANCE_GATE with its authorities and sections', () => {
     const result = runGate(['docs/AGY_USAGE.md']);
     expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
     expect(result.required_documents).toEqual(
       expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
     );
+    expect(result.required_sections).toEqual(
+      expect.arrayContaining(AGY_SECTIONS)
+    );
   });
 
-  it('AI pipeline changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+  it('AI pipeline changes activate AGY_GOVERNANCE_GATE with its authorities and sections', () => {
     const result = runGate(['SSTAC_AI_PIPELINE.md']);
     expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
     expect(result.required_documents).toEqual(
       expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
     );
+    expect(result.required_sections).toEqual(
+      expect.arrayContaining(AGY_SECTIONS)
+    );
   });
 
-  it('AGY tooling changes activate AGY_GOVERNANCE_GATE with its authorities', () => {
+  it('AGY tooling changes activate AGY_GOVERNANCE_GATE with its authorities and sections', () => {
     const result = runGate(['tooling/agy/Invoke-AgyAutonomousWorker.ps1']);
     expect(result.activated_bundles).toContain('AGY_GOVERNANCE_GATE');
     expect(result.required_documents).toEqual(
       expect.arrayContaining(AGY_GOVERNANCE_AUTHORITIES)
+    );
+    expect(result.required_sections).toEqual(
+      expect.arrayContaining(AGY_SECTIONS)
     );
   });
 
@@ -204,10 +234,11 @@ describe('docs-manifest integrity', () => {
     expect(triggers).toContain('scripts/verify/__tests__/docs-gate.test.mjs');
   });
 
-  it('AGY_GOVERNANCE_GATE covers all three AGY governance surfaces', () => {
+  it('AGY_GOVERNANCE_GATE covers all four AGY governance surfaces', () => {
     const triggers = MANIFEST.bundles?.AGY_GOVERNANCE_GATE?.triggers ?? [];
     expect(triggers).toEqual(
       expect.arrayContaining([
+        'AGENTS.md',
         'docs/AGY_USAGE.md',
         'SSTAC_AI_PIPELINE.md',
         'tooling/agy/**',

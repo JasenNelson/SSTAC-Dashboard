@@ -7,10 +7,11 @@ import { execFileSync } from 'node:child_process';
 
 const SCRIPT_PATH = path.resolve('tooling/agy/New-AgyExecutorProfile.ps1');
 
-function runPwshScript(args) {
+function runPwshScript(args, env = {}) {
   try {
     const stdout = execFileSync('pwsh', ['-NoProfile', '-File', SCRIPT_PATH, ...args], {
       encoding: 'utf8',
+      env: { ...process.env, ...env },
       stdio: ['pipe', 'pipe', 'pipe']
     });
     return { exitCode: 0, stdout, stderr: '' };
@@ -57,6 +58,18 @@ function cleanTempDir(dir) {
   } catch {}
 }
 
+function initGitWorkspace(workspaceDir) {
+  try {
+    execFileSync('git', ['init'], { cwd: workspaceDir, stdio: 'ignore' });
+    try { execFileSync('git', ['checkout', '-b', 'main'], { cwd: workspaceDir, stdio: 'ignore' }); } catch(e) {}
+    execFileSync('git', ['config', 'user.name', 'AGY Test Worker'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: workspaceDir, stdio: 'ignore' });
+    return workspaceDir;
+  } catch (err) {
+    throw new Error(`Failed to initialize git test workspace: ${err.message}`);
+  }
+}
+
 function assertStringArray(arr, name) {
   assert.ok(Array.isArray(arr), `${name} must be an array`);
   assert.ok(arr.every(item => typeof item === 'string'), `${name} must contain only strings`);
@@ -66,6 +79,7 @@ function assertStringArray(arr, name) {
 test('safe empty-command profile', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -114,6 +128,7 @@ test('safe empty-command profile', () => {
 test('normal profile generation handles multi-level nested relative writable paths', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const nestedWritableDir = path.join(workspaceDir, 'nested', 'sub', 'tooling');
 
   try {
@@ -135,6 +150,7 @@ test('normal profile generation handles multi-level nested relative writable pat
 test('safe exact-command profile', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -170,7 +186,7 @@ test('mandatory protected paths emitted and recorded when fixtures exist', () =>
   const gitDir = path.join(workspaceDir, '.git');
   const envFile = path.join(workspaceDir, '.env');
   const pkgFile = path.join(workspaceDir, 'package.json');
-  fs.mkdirSync(gitDir, { recursive: true });
+  initGitWorkspace(workspaceDir);
   fs.writeFileSync(envFile, 'SECRET=123');
   fs.writeFileSync(pkgFile, '{}');
 
@@ -212,6 +228,7 @@ test('mandatory protected paths emitted and recorded when fixtures exist', () =>
 test('unlisted .env* files dynamically discovered and protected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   const envTestFile = path.join(workspaceDir, '.env.test');
@@ -254,9 +271,9 @@ test('unlisted .env* files dynamically discovered and protected', () => {
 test('attempting to make mandatory protected path writable is rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
 
   const gitDir = path.join(workspaceDir, '.git');
-  fs.mkdirSync(gitDir, { recursive: true });
 
   try {
     const res = runPwshScript([
@@ -266,75 +283,89 @@ test('attempting to make mandatory protected path writable is rejected', () => {
     ]);
 
     assert.notEqual(res.exitCode, 0, 'Making mandatory protected path writable must be rejected');
+    assert.ok(res.stderr.includes('Overlap detected'), 'Must fail specifically for overlap with mandatory protected path');
   } finally {
     cleanTempDir(profileDir);
     cleanTempDir(workspaceDir);
   }
 });
 
-test('reparse-point escape rejected', () => {
-  const reparseWs = process.env.AGY_TEST_REPARSE_WORKSPACE;
-  const reparseTarget = process.env.AGY_TEST_REPARSE_TARGET;
-  if (!reparseWs || !reparseTarget) {
-    assert.fail('Environment variables AGY_TEST_REPARSE_WORKSPACE and AGY_TEST_REPARSE_TARGET must be set for reparse point test.');
-  }
-
+test('reparse-point escape rejected', (t) => {
+  const reparseWs = createTempDir('agy-test-ws-');
+  initGitWorkspace(reparseWs);
+  const reparseTarget = createTempDir('agy-test-target-');
   const junctionPath = path.join(reparseWs, 'escape-junction');
-  assert.ok(fs.existsSync(junctionPath), `Junction path '${junctionPath}' must exist`);
-
-  const stats = fs.lstatSync(junctionPath);
-  assert.ok(stats.isSymbolicLink() || stats.isDirectory(), `Junction path '${junctionPath}' must exist`);
-
-  const realTarget = fs.realpathSync(junctionPath);
-  assert.equal(
-    path.resolve(realTarget).toLowerCase(),
-    path.resolve(reparseTarget).toLowerCase(),
-    'Junction target must correspond to AGY_TEST_REPARSE_TARGET'
-  );
-
-  const writableScope = path.join(junctionPath, 'write-scope');
-  const profileDir = createTempDir('agy-test-profile-');
 
   try {
-    const res = runPwshScript([
-      '-WorkspaceRoot', reparseWs,
-      '-ProfileRoot', profileDir,
-      '-WritablePaths', writableScope
-    ]);
+    try {
+      fs.symlinkSync(reparseTarget, junctionPath, 'junction');
+    } catch (e) {
+      if (e.code === 'EPERM' || e.code === 'EACCES' || e.code === 'ENOSYS') {
+        t.skip(`Failed to create junction fixture: ${e.code}`);
+        return;
+      }
+      throw e;
+    }
+    assert.ok(fs.lstatSync(junctionPath).isSymbolicLink(), 'Fixture must be a symbolic link/reparse point');
+    assert.strictEqual(fs.realpathSync(junctionPath), fs.realpathSync(reparseTarget), 'Fixture must resolve to target');
 
-    assert.notEqual(res.exitCode, 0, 'Writable path traversing junction inside workspace must be rejected');
-    assert.ok(
-      res.stderr.includes('reparse point') || res.stdout.includes('reparse point'),
-      `Error must specifically indicate reparse point rejection. Got stderr: ${res.stderr}`
-    );
+    const writableScope = path.join(junctionPath, 'write-scope');
+    const profileDir = createTempDir('agy-test-profile-');
+
+    try {
+      const res = runPwshScript([
+        '-WorkspaceRoot', reparseWs,
+        '-ProfileRoot', profileDir,
+        '-WritablePaths', writableScope
+      ]);
+
+      assert.notEqual(res.exitCode, 0, 'Writable path traversing junction inside workspace must be rejected');
+      assert.ok(res.stderr.includes('reparse point') || res.stdout.includes('reparse point'), 'Should explicitly cite reparse point rule');
+    } finally {
+      cleanTempDir(profileDir);
+    }
   } finally {
-    cleanTempDir(profileDir);
+    cleanTempDir(reparseWs);
+    cleanTempDir(reparseTarget);
   }
 });
 
-test('reparse-point profile root rejected', () => {
-  const reparseProfileRoot = process.env.AGY_TEST_REPARSE_PROFILE_ROOT;
-  if (!reparseProfileRoot) {
-    assert.fail('Environment variable AGY_TEST_REPARSE_PROFILE_ROOT must be set for profile root reparse point test.');
-  }
-
-  const workspaceDir = createTempDir('agy-test-ws-');
-  const writableDir = path.join(workspaceDir, 'tooling');
+test('reparse-point profile root rejected', (t) => {
+  const reparseTarget = createTempDir('agy-test-profile-target-');
+  const reparseProfileRoot = path.join(createTempDir('agy-test-profile-base-'), 'profile-junction');
 
   try {
-    const res = runPwshScript([
-      '-WorkspaceRoot', workspaceDir,
-      '-ProfileRoot', reparseProfileRoot,
-      '-WritablePaths', writableDir
-    ]);
+    try {
+      fs.symlinkSync(reparseTarget, reparseProfileRoot, 'junction');
+    } catch (e) {
+      if (e.code === 'EPERM' || e.code === 'EACCES' || e.code === 'ENOSYS') {
+        t.skip(`Failed to create junction fixture: ${e.code}`);
+        return;
+      }
+      throw e;
+    }
+    assert.ok(fs.lstatSync(reparseProfileRoot).isSymbolicLink(), 'Fixture must be a symbolic link/reparse point');
+    assert.strictEqual(fs.realpathSync(reparseProfileRoot), fs.realpathSync(reparseTarget), 'Fixture must resolve to target');
 
-    assert.notEqual(res.exitCode, 0, 'ProfileRoot traversing junction must be rejected');
-    assert.ok(
-      res.stderr.includes('reparse point') || res.stdout.includes('reparse point'),
-      `Stderr/stdout must mention reparse point. Got stderr: ${res.stderr}`
-    );
+    const workspaceDir = createTempDir('agy-test-ws-');
+    initGitWorkspace(workspaceDir);
+    const writableDir = path.join(workspaceDir, 'tooling');
+
+    try {
+      const res = runPwshScript([
+        '-WorkspaceRoot', workspaceDir,
+        '-ProfileRoot', reparseProfileRoot,
+        '-WritablePaths', writableDir
+      ]);
+
+      assert.notEqual(res.exitCode, 0, 'ProfileRoot traversing junction must be rejected');
+      assert.ok(res.stderr.includes('reparse point'), 'Must explicitly cite reparse point rule');
+    } finally {
+      cleanTempDir(workspaceDir);
+    }
   } finally {
-    cleanTempDir(workspaceDir);
+    cleanTempDir(reparseTarget);
+    cleanTempDir(path.dirname(reparseProfileRoot));
   }
 });
 
@@ -342,6 +373,7 @@ test('deterministic settings content', () => {
   const profileDir1 = createTempDir('agy-test-profile1-');
   const profileDir2 = createTempDir('agy-test-profile2-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -368,6 +400,7 @@ test('deterministic settings content', () => {
 test('old npx tsc --noEmit spelling is rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -379,6 +412,7 @@ test('old npx tsc --noEmit spelling is rejected', () => {
     ]);
 
     assert.notEqual(res.exitCode, 0, 'Old npx tsc --noEmit spelling must be rejected');
+    assert.ok(res.stderr.includes('does not conform to the permitted grammar'), 'Must fail specifically for spelling');
   } finally {
     cleanTempDir(profileDir);
     cleanTempDir(workspaceDir);
@@ -396,6 +430,7 @@ test('global settings are untouched', () => {
 
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -441,6 +476,7 @@ test('broad workspace roots rejected', () => {
 
 test('profile root equal to or inside workspace rejected', () => {
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const profileDir = path.join(workspaceDir, 'profile');
   const writableDir = path.join(workspaceDir, 'tooling');
 
@@ -451,6 +487,7 @@ test('profile root equal to or inside workspace rejected', () => {
       '-WritablePaths', writableDir
     ]);
     assert.notEqual(res.exitCode, 0, 'ProfileRoot inside WorkspaceRoot should be rejected');
+    assert.ok(res.stderr.includes('cannot equal or descend from WorkspaceRoot'), 'Must fail for ProfileRoot containment');
   } finally {
     cleanTempDir(workspaceDir);
   }
@@ -459,6 +496,7 @@ test('profile root equal to or inside workspace rejected', () => {
 test('dirty/nonempty profile replacement rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -472,6 +510,7 @@ test('dirty/nonempty profile replacement rejected', () => {
     ]);
 
     assert.notEqual(res.exitCode, 0, 'Nonempty profile containing non-generated files should be rejected even with -ReplaceEmptyGeneratedProfile');
+    assert.ok(res.stderr.includes('contains non-generated item'), 'Must fail specifically for nonempty profile');
   } finally {
     cleanTempDir(profileDir);
     cleanTempDir(workspaceDir);
@@ -481,24 +520,26 @@ test('dirty/nonempty profile replacement rejected', () => {
 test('wildcard and dangerous allow rules rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
     const dangerousCommands = [
-      'command(*)',
-      'git *',
-      'node *.mjs',
-      'rm -rf /'
+      { cmd: 'command(*)', expected: 'contains forbidden characters' },
+      { cmd: 'git *', expected: 'contains forbidden characters' },
+      { cmd: 'node *.mjs', expected: 'contains forbidden characters' },
+      { cmd: 'rm -rf /', expected: 'does not conform to the permitted grammar' }
     ];
 
-    for (const cmd of dangerousCommands) {
+    for (const item of dangerousCommands) {
       const res = runPwshScript([
         '-WorkspaceRoot', workspaceDir,
         '-ProfileRoot', profileDir,
         '-WritablePaths', writableDir,
-        '-AllowedCommands', cmd
+        '-AllowedCommands', item.cmd
       ]);
-      assert.notEqual(res.exitCode, 0, `Dangerous command '${cmd}' should have been rejected`);
+      assert.notEqual(res.exitCode, 0, `Dangerous command '${item.cmd}' should have been rejected`);
+      assert.ok(res.stderr.includes(item.expected), `Must fail specifically for invalid command`);
     }
   } finally {
     cleanTempDir(profileDir);
@@ -509,6 +550,7 @@ test('wildcard and dangerous allow rules rejected', () => {
 test('shell operators, redirection, substitutions, and newlines rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -529,6 +571,7 @@ test('shell operators, redirection, substitutions, and newlines rejected', () =>
         '-AllowedCommands', cmd
       ]);
       assert.notEqual(res.exitCode, 0, `Shell operator/metacharacter command '${cmd}' should have been rejected`);
+      assert.ok(res.stderr.includes('contains forbidden characters'), 'Must fail specifically for shell metacharacters');
     }
   } finally {
     cleanTempDir(profileDir);
@@ -539,6 +582,7 @@ test('shell operators, redirection, substitutions, and newlines rejected', () =>
 test('protected-path deny rules emitted', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
   const protectedDir = createTempDir('agy-test-protected-');
 
@@ -571,6 +615,7 @@ test('protected-path deny rules emitted', () => {
 test('protected-path overlap with writable path rejected', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const sharedSubDir = path.join(workspaceDir, 'sub');
   fs.mkdirSync(sharedSubDir, { recursive: true });
 
@@ -583,6 +628,7 @@ test('protected-path overlap with writable path rejected', () => {
     ]);
 
     assert.notEqual(res.exitCode, 0, 'Overlap between WritablePaths and ProtectedPaths should be rejected');
+    assert.ok(res.stderr.includes('Overlap detected'), 'Must fail specifically for overlap');
   } finally {
     cleanTempDir(profileDir);
     cleanTempDir(workspaceDir);
@@ -592,6 +638,7 @@ test('protected-path overlap with writable path rejected', () => {
 test('no wildcard allow, unrestricted write, unsandboxed, or secret content', () => {
   const profileDir = createTempDir('agy-test-profile-');
   const workspaceDir = createTempDir('agy-test-ws-');
+  initGitWorkspace(workspaceDir);
   const writableDir = path.join(workspaceDir, 'tooling');
 
   try {
@@ -622,6 +669,7 @@ test('no wildcard allow, unrestricted write, unsandboxed, or secret content', ()
 test('manifest array schema invariant for zero, one, and multiple collection entries', () => {
   const profileDir = createTempDir('agy-test-manifest-arr-');
   const workspaceDir = createTempDir('agy-test-ws-arr-');
+  initGitWorkspace(workspaceDir);
   const writableDir1 = path.join(workspaceDir, 'w1');
   const writableDir2 = path.join(workspaceDir, 'w2');
   const protDir1 = createTempDir('agy-test-prot1-');
@@ -701,11 +749,83 @@ test('manifest array schema invariant for zero, one, and multiple collection ent
     assert.deepEqual(manifest.protected_paths, [path.resolve(protDir1), path.resolve(protDir2)]);
 
     assert.ok(Array.isArray(manifest.mandatory_protected_paths), 'mandatory_protected_paths must be an array');
-    assert.equal(manifest.mandatory_protected_paths.length, 0, 'temporary workspace has no mandatory protected paths');
+    const normGit = path.resolve(workspaceDir, '.git');
+    const gitEntry = manifest.mandatory_protected_paths.find(e => e.path === normGit);
+    assert.ok(gitEntry, '.git must be in mandatory_protected_paths for git workspace');
+    assert.equal(gitEntry.mode, 'read_write');
   } finally {
     cleanTempDir(profileDir);
     cleanTempDir(workspaceDir);
     cleanTempDir(protDir1);
     cleanTempDir(protDir2);
+  }
+});
+
+test('D4: Git discovery failures terminate profile generator and produce no output', () => {
+  const workspaceDir = createTempDir('agy-d4-ws-');
+  const fakeGitPath = path.join(workspaceDir, 'git.cmd');
+
+  try {
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+    initGitWorkspace(workspaceDir);
+
+    const resolveRes = runPwshScriptCommand('(Get-Command git.exe).Source');
+    const realGitPath = resolveRes.stdout.trim();
+    if (!realGitPath) { throw new Error('Could not resolve git.exe'); }
+
+    // Case 1: git rev-parse --absolute-git-dir fails
+    const profileDir1 = createTempDir('agy-d4-prof1-');
+    try {
+      let fakeGitScript1 = "@echo off\n" +
+        "if \"%1\"==\"rev-parse\" if \"%2\"==\"--absolute-git-dir\" (echo fatal: not a git repository && exit /b 128)\n" +
+        "\"" + realGitPath + "\" %*\n";
+      fs.writeFileSync(fakeGitPath, fakeGitScript1, 'utf8');
+
+      let resFail1 = runPwshScript([
+        '-WorkspaceRoot', workspaceDir,
+        '-ProfileRoot', profileDir1,
+        '-WritablePaths', writableDir
+      ], {
+        PATH: workspaceDir + ';' + process.env.PATH
+      });
+
+      assert.notEqual(resFail1.exitCode, 0, 'Generator must fail if absolute-git-dir fails');
+      assert.ok(resFail1.stderr.includes('git rev-parse --absolute-git-dir failed'), 'Must emit specific absolute-git-dir error');
+
+      const geminiDir1 = path.join(profileDir1, '.gemini', 'antigravity-cli');
+      assert.ok(!fs.existsSync(path.join(geminiDir1, 'settings.json')), 'settings.json must not be emitted on failure 1');
+      assert.ok(!fs.existsSync(path.join(geminiDir1, 'PROFILE_MANIFEST.json')), 'PROFILE_MANIFEST.json must not be emitted on failure 1');
+    } finally {
+      cleanTempDir(profileDir1);
+    }
+
+    // Case 2: git rev-parse --git-common-dir fails
+    const profileDir2 = createTempDir('agy-d4-prof2-');
+    try {
+      let fakeGitScript2 = "@echo off\n" +
+        "if \"%1\"==\"rev-parse\" if \"%2\"==\"--git-common-dir\" (echo fatal: not a git repository && exit /b 128)\n" +
+        "\"" + realGitPath + "\" %*\n";
+      fs.writeFileSync(fakeGitPath, fakeGitScript2, 'utf8');
+
+      let resFail2 = runPwshScript([
+        '-WorkspaceRoot', workspaceDir,
+        '-ProfileRoot', profileDir2,
+        '-WritablePaths', writableDir
+      ], {
+        PATH: workspaceDir + ';' + process.env.PATH
+      });
+
+      assert.notEqual(resFail2.exitCode, 0, 'Generator must fail if git-common-dir fails');
+      assert.ok(resFail2.stderr.includes('git rev-parse --git-common-dir failed'), 'Must emit specific git-common-dir error');
+
+      const geminiDir2 = path.join(profileDir2, '.gemini', 'antigravity-cli');
+      assert.ok(!fs.existsSync(path.join(geminiDir2, 'settings.json')), 'settings.json must not be emitted on failure 2');
+      assert.ok(!fs.existsSync(path.join(geminiDir2, 'PROFILE_MANIFEST.json')), 'PROFILE_MANIFEST.json must not be emitted on failure 2');
+    } finally {
+      cleanTempDir(profileDir2);
+    }
+  } finally {
+    cleanTempDir(workspaceDir);
   }
 });

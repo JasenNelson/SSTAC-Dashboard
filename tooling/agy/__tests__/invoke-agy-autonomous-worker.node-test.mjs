@@ -62,7 +62,11 @@ if (args[0] === '--version') {
 }
 
 // Worker mode execution
-fs.writeFileSync(${JSON.stringify(breadcrumbPath)}, 'launched\\n', 'utf8');
+if (process.env.FAKE_AGY_RECORD_ARGS) {
+  fs.writeFileSync(${JSON.stringify(breadcrumbPath)}, args.join('\\n') + '\\n', 'utf8');
+} else {
+  fs.writeFileSync(${JSON.stringify(breadcrumbPath)}, 'launched\\n', 'utf8');
+}
 
 if (process.env.FAKE_AGY_MUTATE_SETTINGS === 'MODIFY') {
   const settingsPath = require('node:path').join(process.env.USERPROFILE, '.gemini', 'antigravity-cli', 'settings.json');
@@ -197,13 +201,14 @@ function createValidStreamFile(dir, cwd, model = 'gemini-3.1-pro-high') {
 function initGitWorkspace(workspaceDir) {
   try {
     execFileSync('git', ['init'], { cwd: workspaceDir, stdio: 'ignore' });
+    try { execFileSync('git', ['checkout', '-b', 'main'], { cwd: workspaceDir, stdio: 'ignore' }); } catch(e) {}
     execFileSync('git', ['config', 'user.name', 'AGY Test Worker'], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: workspaceDir, stdio: 'ignore' });
 
     const dummyFile = path.join(workspaceDir, 'README.md');
     fs.writeFileSync(dummyFile, '# Test Workspace\n', 'utf8');
 
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', 'README.md'], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Initial commit'], { cwd: workspaceDir, stdio: 'ignore' });
 
     const head = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
@@ -279,6 +284,105 @@ test('plain ASCII and LF line endings verification for all authored files', () =
   }
 });
 
+test('affirmative --sandbox argument is passed to worker', () => {
+  const workspaceDir = createTempDir('agy-sandbox-ws-');
+  const profileDir = createTempDir('agy-sandbox-prof-');
+  const receiptDir = createTempDir('agy-sandbox-rcpt-');
+  const fakeAgyDir = createTempDir('agy-sandbox-fake-');
+
+  try {
+    initGitWorkspace(workspaceDir);
+    const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
+
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Test sandbox arg\n', 'utf8');
+    const promptHash = getSha256('Test sandbox arg\n');
+
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    const { cmdPath, breadcrumbPath } = createFakeAgyScript(fakeAgyDir);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', writableDir,
+      '-ExpectedBaselineHead', headHash,
+      '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath
+    ], {
+      FAKE_AGY_STREAM_FILE: validStreamPath,
+      FAKE_AGY_RECORD_ARGS: '1'
+    });
+
+    assert.equal(res.exitCode, 0, 'Should launch successfully');
+    assert.ok(fs.existsSync(breadcrumbPath), 'Worker launched');
+    const capturedArgs = fs.readFileSync(breadcrumbPath, 'utf8').split('\n');
+    assert.ok(capturedArgs.includes('--sandbox'), 'Must pass affirmative --sandbox argument');
+    const sandboxArgs = capturedArgs.filter(a => a.startsWith('--sandbox'));
+    assert.equal(sandboxArgs.length, 1, 'Must have exactly one standalone --sandbox token');
+    assert.equal(sandboxArgs[0], '--sandbox', 'Sandbox token must not have an attached value');
+    const sandboxIdx = capturedArgs.indexOf('--sandbox');
+    if (sandboxIdx >= 0 && sandboxIdx < capturedArgs.length - 1) {
+      assert.ok(!['false', '0', 'no', 'off'].includes(capturedArgs[sandboxIdx + 1].toLowerCase()), 'Must not have an adjacent disabling value');
+    }
+
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
+test('controller rejects nonempty AllowedCommands before worker launch', () => {
+  const workspaceDir = createTempDir('agy-allowcmd-ws-');
+  const profileDir = createTempDir('agy-allowcmd-prof-');
+  const receiptDir = createTempDir('agy-allowcmd-rcpt-');
+  const fakeAgyDir = createTempDir('agy-allowcmd-fake-');
+
+  try {
+    initGitWorkspace(workspaceDir);
+    const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
+
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Test allowed cmds\n', 'utf8');
+    const promptHash = getSha256('Test allowed cmds\n');
+
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    const { cmdPath, breadcrumbPath } = createFakeAgyScript(fakeAgyDir);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', writableDir,
+      '-ExpectedBaselineHead', headHash,
+      '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath,
+      '-AllowedCommands', 'npm run build'
+    ], {});
+
+    assert.notEqual(res.exitCode, 0, 'Should fail closed when AllowedCommands is not empty');
+    assert.ok(res.stderr.includes('rejects all AllowedCommands'), 'Must emit explicit rejection message');
+    assert.ok(!fs.existsSync(breadcrumbPath), 'Worker must not launch');
+
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
 // -----------------------------------------------------------------------------
 // DYNAMIC FUNCTIONAL TESTS
 // -----------------------------------------------------------------------------
@@ -310,7 +414,7 @@ test('happy path foreground launcher execution returns GREEN with complete recei
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -398,7 +502,7 @@ test('exact native exit code capture is retained and not replaced by pipeline ex
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -447,7 +551,7 @@ test('exact stdout/stderr/native-log separation', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -495,7 +599,7 @@ test('prompt expected-hash mismatch before launch', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', path.join(workspaceDir, 'tooling'),
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
 
@@ -538,7 +642,7 @@ test('exact prompt read and write denial', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -602,7 +706,7 @@ test('zero, one, and many caller protected paths', () => {
         '-ReceiptRoot', rcpt0,
         '-WritablePaths', writableDir,
         '-ExpectedBaselineHead', head,
-        '-ExpectedBranch', branch,
+        '-ExpectedBranch', 'main',
         '-AgyExecutable', fakeAgyPath
       ], {
         FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -638,7 +742,7 @@ test('zero, one, and many caller protected paths', () => {
         '-WritablePaths', writableDir,
         '-ProtectedPaths', protFile1,
         '-ExpectedBaselineHead', head,
-        '-ExpectedBranch', branch,
+        '-ExpectedBranch', 'main',
         '-AgyExecutable', fakeAgyPath
       ], {
         FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -789,7 +893,7 @@ test('profile and receipt roots inside workspace or overlapping writable scope a
       '-ReceiptRoot', outerReceipt,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
     assert.notEqual(resProf.exitCode, 0, 'ProfileRoot inside WorkspaceRoot must be rejected');
@@ -807,7 +911,7 @@ test('profile and receipt roots inside workspace or overlapping writable scope a
       '-ReceiptRoot', innerReceipt,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
     assert.notEqual(resRcpt.exitCode, 0, 'ReceiptRoot inside WritablePaths must be rejected');
@@ -845,7 +949,7 @@ test('prompt hash, baseline, branch, version, model, effort, and manifest bindin
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', '0000000000000000000000000000000000000000',
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
     assert.notEqual(resHead.exitCode, 0, 'Baseline HEAD mismatch must be rejected');
@@ -873,7 +977,7 @@ test('prompt hash, baseline, branch, version, model, effort, and manifest bindin
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedAgyVersion', '1.1.7',
       '-AgyExecutable', fakeAgyPath
     ]);
@@ -888,7 +992,7 @@ test('prompt hash, baseline, branch, version, model, effort, and manifest bindin
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedModel', 'gemini-2.5-flash',
       '-AgyExecutable', fakeAgyPath
     ]);
@@ -931,7 +1035,7 @@ test('exact version rejection cases (x1.1.8, 1.1.80, multiline output, nonzero e
         '-ReceiptRoot', rcpt0,
         '-WritablePaths', writableDir,
         '-ExpectedBaselineHead', head,
-        '-ExpectedBranch', branch,
+        '-ExpectedBranch', 'main',
         '-AgyExecutable', v0
       ], {
         FAKE_AGY_STREAM_FILE: validStreamPath0,
@@ -948,35 +1052,35 @@ test('exact version rejection cases (x1.1.8, 1.1.80, multiline output, nonzero e
 
     // Case 1: Prefixed x1.1.8
     const { cmdPath: v1, breadcrumbPath: b1 } = createCustomVersionFakeAgy(fakeAgyDir, 'x1.1.8', 0);
-    const r1 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', branch, '-AgyExecutable', v1]);
+    const r1 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', 'main', '-AgyExecutable', v1]);
     assert.notEqual(r1.exitCode, 0, 'x1.1.8 version must be rejected');
     assert.ok(r1.stderr.includes('AGY version mismatch'), 'x1.1.8 rejection reason must be version mismatch');
     assert.equal(fs.existsSync(b1), false, 'x1.1.8 version rejection must not reach worker mode');
 
     // Case 2: Suffixed 1.1.80
     const { cmdPath: v2, breadcrumbPath: b2 } = createCustomVersionFakeAgy(fakeAgyDir, '1.1.80', 0);
-    const r2 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', branch, '-AgyExecutable', v2]);
+    const r2 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', 'main', '-AgyExecutable', v2]);
     assert.notEqual(r2.exitCode, 0, '1.1.80 version must be rejected');
     assert.ok(r2.stderr.includes('AGY version mismatch'), '1.1.80 rejection reason must be version mismatch');
     assert.equal(fs.existsSync(b2), false, '1.1.80 version rejection must not reach worker mode');
 
     // Case 3: Multiline output
     const { cmdPath: v3, breadcrumbPath: b3 } = createCustomVersionFakeAgy(fakeAgyDir, '1.1.8\nextra line', 0);
-    const r3 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', branch, '-AgyExecutable', v3]);
+    const r3 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', 'main', '-AgyExecutable', v3]);
     assert.notEqual(r3.exitCode, 0, 'Multiline version output must be rejected');
     assert.ok(r3.stderr.includes('multiline'), 'Multiline rejection reason must be multiline output');
     assert.equal(fs.existsSync(b3), false, 'Multiline version output must not reach worker mode');
 
     // Case 4: Nonzero exit code
     const { cmdPath: v4, breadcrumbPath: b4 } = createCustomVersionFakeAgy(fakeAgyDir, '1.1.8', 1);
-    const r4 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', branch, '-AgyExecutable', v4]);
+    const r4 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', 'main', '-AgyExecutable', v4]);
     assert.notEqual(r4.exitCode, 0, 'Nonzero exit version probe must be rejected');
     assert.ok(r4.stderr.includes('nonzero exit code'), 'Nonzero exit rejection reason must be nonzero exit code');
     assert.equal(fs.existsSync(b4), false, 'Nonzero exit version probe must not reach worker mode');
 
     // Case 5: Empty output
     const { cmdPath: v5, breadcrumbPath: b5 } = createCustomVersionFakeAgy(fakeAgyDir, '', 0);
-    const r5 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', branch, '-AgyExecutable', v5]);
+    const r5 = runPwshScript(['-WorkspaceRoot', workspaceDir, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash, '-ProfileRoot', profileDir, '-ReceiptRoot', receiptDir, '-WritablePaths', writableDir, '-ExpectedBaselineHead', head, '-ExpectedBranch', 'main', '-AgyExecutable', v5]);
     assert.notEqual(r5.exitCode, 0, 'Empty version output must be rejected');
     assert.ok(r5.stderr.includes('output is empty'), 'Empty version output rejection reason must be empty output');
     assert.equal(fs.existsSync(b5), false, 'Empty version output must not reach worker mode');
@@ -1023,7 +1127,7 @@ test('AGY exit 0 plus terminal SUCCESS plus tool error remains RED', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: streamPath,
@@ -1075,7 +1179,7 @@ test('dirty tracked files in git workspace are rejected', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
 
@@ -1173,7 +1277,7 @@ if (Test-Path $manifestPathToTamper) {
         '-ReceiptRoot', receiptDir,
         '-WritablePaths', writableDir,
         '-ExpectedBaselineHead', head,
-        '-ExpectedBranch', branch,
+        '-ExpectedBranch', 'main',
         '-AgyExecutable', fakeAgyPath,
         '-ReplaceEmptyGeneratedProfile'
       ], {
@@ -1228,7 +1332,7 @@ test('[ADVERSARIAL BOUNDARY FIXTURE 2] Nonempty receipt root containing pre-exis
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ]);
 
@@ -1238,6 +1342,57 @@ test('[ADVERSARIAL BOUNDARY FIXTURE 2] Nonempty receipt root containing pre-exis
       '[ADVERSARIAL BOUNDARY FIXTURE 2] Nonempty receipt root with unauthorized file must be rejected'
     );
     assert.equal(fs.existsSync(breadcrumbPath), false, 'Worker launch breadcrumb must be absent on nonempty receipt root rejection');
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
+test('[ADVERSARIAL BOUNDARY FIXTURE 3] Nonempty receipt root containing valid artifact is accepted with -ReplaceEmptyGeneratedProfile', () => {
+  const workspaceDir = createTempDir('agy-ctrl-ws-adv3-');
+  const profileDir = createTempDir('agy-ctrl-prof-adv3-');
+  const receiptDir = createTempDir('agy-ctrl-rcpt-adv3-');
+  const fakeAgyDir = createTempDir('agy-ctrl-fake-adv3-');
+
+  try {
+    const { head, branch } = initGitWorkspace(workspaceDir);
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    const promptContent = 'Adversarial test prompt 3\n';
+    fs.writeFileSync(promptFile, promptContent, 'utf8');
+    const promptHash = getSha256(promptContent);
+
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    const { cmdPath: fakeAgyPath, breadcrumbPath } = createFakeAgyScript(fakeAgyDir);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    fs.writeFileSync(path.join(receiptDir, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json'), '{}', 'utf8');
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', writableDir,
+      '-ExpectedBaselineHead', head,
+      '-ExpectedBranch', branch,
+      '-AgyExecutable', fakeAgyPath,
+      '-ReplaceEmptyGeneratedProfile'
+    ], {
+      FAKE_AGY_STREAM_FILE: validStreamPath,
+      PATH: process.env.PATH
+    });
+
+    assert.equal(
+      res.exitCode,
+      0,
+      '[ADVERSARIAL BOUNDARY FIXTURE 3] Nonempty receipt root with authorized file must be accepted'
+    );
+    assert.equal(fs.existsSync(breadcrumbPath), true, 'Worker launch breadcrumb must be present');
   } finally {
     cleanTempDir(workspaceDir);
     cleanTempDir(profileDir);
@@ -1274,7 +1429,7 @@ test('[REVIEWER BOUNDARY FIXTURE] native diagnostic log starting with JSON does 
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_LOG_TEXT: diagnosticLogText,
@@ -1326,7 +1481,7 @@ test('fake AGY modifying settings.json after launch fails closed with MISMATCH p
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -1402,7 +1557,7 @@ test('deleting settings.json after launch fails closed with sealed diagnostic re
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath
     ], {
       FAKE_AGY_STREAM_FILE: validStreamPath,
@@ -1458,7 +1613,7 @@ test('missing Node executable fails before fake AGY launch breadcrumb', () => {
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath,
       '-NodeExecutable', missingNodePath
     ]);
@@ -1520,7 +1675,7 @@ process.exit(0);
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath,
       '-NodeExecutable', fakeNodeCmd
     ]);
@@ -1591,7 +1746,7 @@ process.exit(res.status !== null ? res.status : 1);
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-AgyExecutable', fakeAgyPath,
       '-NodeExecutable', fakeNodeCmd
     ], {
@@ -1640,7 +1795,7 @@ test('tracked dirty continuation: exact dirty path plus exact hash launches and 
 
     const trackedFile = path.join(writableDir, 'tracked-file.txt');
     fs.writeFileSync(trackedFile, 'initial content\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', trackedFile], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add tracked file'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -1659,7 +1814,7 @@ test('tracked dirty continuation: exact dirty path plus exact hash launches and 
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', trackedFile,
       '-ExpectedTrackedDirtySha256', dirtyHash,
       '-AgyExecutable', fakeAgyPath
@@ -1704,7 +1859,7 @@ test('tracked dirty continuation: multiple tracked unstaged dirty files are pars
     const trackedFile2 = path.join(writableDir, 'a-tracked-file.txt');
     fs.writeFileSync(trackedFile1, 'initial content 1\n', 'utf8');
     fs.writeFileSync(trackedFile2, 'initial content 2\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', trackedFile1, trackedFile2], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add multi tracked files'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -1786,7 +1941,7 @@ test('tracked dirty continuation: wrong hash fails before fake AGY launch', () =
 
     const trackedFile = path.join(writableDir, 'tracked-file.txt');
     fs.writeFileSync(trackedFile, 'initial content\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', trackedFile], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add tracked file'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -1803,7 +1958,7 @@ test('tracked dirty continuation: wrong hash fails before fake AGY launch', () =
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', trackedFile,
       '-ExpectedTrackedDirtySha256', wrongHash,
       '-AgyExecutable', fakeAgyPath
@@ -1838,7 +1993,7 @@ test('tracked dirty continuation: missing expected path or extra live dirty path
     const fileB = path.join(writableDir, 'fileB.txt');
     fs.writeFileSync(fileA, 'A\n', 'utf8');
     fs.writeFileSync(fileB, 'B\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', fileA, fileB], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add files'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -1887,7 +2042,7 @@ test('tracked dirty continuation: missing expected path or extra live dirty path
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', fileA,
       '-ExpectedTrackedDirtySha256', hashA,
       '-AgyExecutable', fakeAgyPath
@@ -1931,7 +2086,7 @@ test('tracked dirty continuation: expected dirty path outside WritablePaths fail
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', head,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', rootTrackedFile,
       '-ExpectedTrackedDirtySha256', dirtyHash,
       '-AgyExecutable', fakeAgyPath
@@ -1964,7 +2119,7 @@ test('tracked dirty continuation: any staged change fails even with otherwise co
 
     const trackedFile = path.join(writableDir, 'tracked-file.txt');
     fs.writeFileSync(trackedFile, 'initial content\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', trackedFile], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add tracked file'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -1983,7 +2138,7 @@ test('tracked dirty continuation: any staged change fails even with otherwise co
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', trackedFile,
       '-ExpectedTrackedDirtySha256', dirtyHash,
       '-AgyExecutable', fakeAgyPath
@@ -2016,7 +2171,7 @@ test('tracked dirty continuation: duplicates, count mismatch, invalid hash, miss
 
     const trackedFile = path.join(writableDir, 'tracked-file.txt');
     fs.writeFileSync(trackedFile, 'initial content\n', 'utf8');
-    execFileSync('git', ['add', '.'], { cwd: workspaceDir, stdio: 'ignore' });
+    execFileSync('git', ['add', trackedFile], { cwd: workspaceDir, stdio: 'ignore' });
     execFileSync('git', ['commit', '-m', 'Add tracked file'], { cwd: workspaceDir, stdio: 'ignore' });
     const newHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
 
@@ -2095,7 +2250,7 @@ test('tracked dirty continuation: duplicates, count mismatch, invalid hash, miss
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', [trackedFile],
       '-ExpectedTrackedDirtySha256', ['invalid-sha256'],
       '-AgyExecutable', fakeAgyPath
@@ -2113,7 +2268,7 @@ test('tracked dirty continuation: duplicates, count mismatch, invalid hash, miss
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', [missingFilePath],
       '-ExpectedTrackedDirtySha256', [dirtyHash],
       '-AgyExecutable', fakeAgyPath
@@ -2130,13 +2285,1011 @@ test('tracked dirty continuation: duplicates, count mismatch, invalid hash, miss
       '-ReceiptRoot', receiptDir,
       '-WritablePaths', writableDir,
       '-ExpectedBaselineHead', newHead,
-      '-ExpectedBranch', branch,
+      '-ExpectedBranch', 'main',
       '-ExpectedTrackedDirtyPaths', [writableDir],
       '-ExpectedTrackedDirtySha256', [dirtyHash],
       '-AgyExecutable', fakeAgyPath
     ]);
     assert.notEqual(resDir.exitCode, 0, 'Directory input must fail');
     assert.equal(fs.existsSync(breadcrumbPath), false);
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
+function createMutatorFixture(fakeAgyDir, id) {
+  const fixturePath = path.join(fakeAgyDir, `mutator-agy-${id}.cjs`);
+  const cmdPath = path.join(fakeAgyDir, `mutator-agy-${id}.cmd`);
+  const breadcrumbPath = path.join(fakeAgyDir, `launch_breadcrumb-${id}.json`);
+
+  const fixtureContent = `
+const fs = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const path = require('node:path');
+const inheritedCwd = process.cwd();
+const args = process.argv.slice(2);
+
+if (args[0] === '--version') {
+  process.stdout.write('1.1.8\\n');
+  process.exit(0);
+}
+
+const expectedRoot = process.env.EXPECTED_MUTATION_ROOT || '';
+let canonInherited = '';
+let canonExpected = '';
+try { canonInherited = fs.realpathSync(inheritedCwd).toLowerCase(); } catch(e){}
+try { if (expectedRoot !== '') { canonExpected = fs.realpathSync(expectedRoot).toLowerCase(); } } catch(e){}
+
+const breadcrumb = {
+  status: (canonInherited === canonExpected && canonExpected !== '') ? 'MATCH' : 'MISMATCH',
+  inheritedCwd,
+  expectedRoot,
+  canonInherited,
+  canonExpected
+};
+fs.writeFileSync(${JSON.stringify(breadcrumbPath)}, JSON.stringify(breadcrumb), 'utf8');
+
+if (breadcrumb.status !== 'MATCH') {
+  process.exit(1);
+}
+
+const mutateType = process.env.MUTATE_TYPE;
+const cwd = expectedRoot;
+
+// Resolve common git metadata from validated root
+const gitCommonDirRaw = execFileSync('git', ['rev-parse', '--git-common-dir'], { cwd, encoding: 'utf8' }).trim();
+const absGitCommonDir = path.isAbsolute(gitCommonDirRaw) ? gitCommonDirRaw : path.join(cwd, gitCommonDirRaw);
+
+if (mutateType === 'HEAD') {
+  execFileSync('git', ['commit', '--allow-empty', '-m', 'Mutation'], { cwd, stdio: 'ignore' });
+} else if (mutateType === 'INDEX') {
+  fs.writeFileSync(path.join(cwd, 'staged_file.txt'), 'x', 'utf8');
+  execFileSync('git', ['add', path.join(cwd, 'staged_file.txt')], { cwd, stdio: 'ignore' });
+} else if (mutateType === 'CONFIG') {
+  execFileSync('git', ['config', 'test.fake', '1'], { cwd, stdio: 'ignore' });
+} else if (mutateType === 'HOOKS') {
+  const hooksDir = path.join(absGitCommonDir, 'hooks');
+  if (!fs.existsSync(hooksDir)) fs.mkdirSync(hooksDir, { recursive: true });
+  fs.writeFileSync(path.join(hooksDir, 'pre-commit'), 'echo 1', 'utf8');
+} else if (mutateType === 'REFS') {
+  execFileSync('git', ['branch', 'other-branch'], { cwd, stdio: 'ignore' });
+} else if (mutateType === 'CALLER_PROTECTED') {
+  const protectedRel = process.env.PROTECTED_REL_PATH;
+  if (!protectedRel || path.isAbsolute(protectedRel)) process.exit(1);
+  const target = path.resolve(cwd, protectedRel);
+  const rel = path.relative(cwd, target);
+  if (rel.startsWith('..') || path.isAbsolute(rel)) process.exit(1);
+
+  try { execFileSync('attrib', ['-H', target]); } catch(e){}
+  fs.writeFileSync(target, 'mutated\\n', 'utf8');
+  try { execFileSync('attrib', ['+H', target]); } catch(e){}
+
+} else if (mutateType === 'ENV_FILE') {
+  fs.writeFileSync(path.join(cwd, '.env.local'), 'SECRET=1', 'utf8');
+} else if (mutateType === 'RENAME_FILE') {
+  const oldPath = path.join(cwd, 'file_to_rename.txt');
+  const newPath = path.join(cwd, 'renamed_file.txt');
+  fs.renameSync(oldPath, newPath);
+  execFileSync('git', ['add', oldPath, newPath], { cwd, stdio: 'ignore' });
+}
+
+let logFile = null;
+for (let i = 0; i < args.length; i++) {
+  if (args[i] === '--log-file' && (i + 1) < args.length) {
+    logFile = args[i + 1];
+    break;
+  }
+}
+if (logFile) fs.writeFileSync(logFile, 'log\\n', 'utf8');
+const streamFile = process.env.FAKE_AGY_STREAM_FILE;
+if (streamFile && fs.existsSync(streamFile)) {
+  process.stdout.write(fs.readFileSync(streamFile, 'utf8'));
+}
+process.exit(0);
+`;
+  fs.writeFileSync(fixturePath, fixtureContent.replace(/\r?\n/g, '\n'), 'utf8');
+  const nodeExec = process.execPath;
+  const cmdContent = `@echo off\n"${nodeExec}" "${fixturePath}" %*\nexit /b %ERRORLEVEL%\n`;
+  fs.writeFileSync(cmdPath, cmdContent.replace(/\r?\n/g, '\n'), 'utf8');
+
+  return { fixturePath, cmdPath, breadcrumbPath };
+}
+
+const mutations = [
+  { type: 'HEAD', reason: 'MISMATCH_HEAD' },
+  { type: 'INDEX', reason: 'STAGED_CHANGES' },
+  { type: 'CONFIG', reason: 'MODIFIED_PREFLIGHT_FILE' },
+  { type: 'HOOKS', reason: 'NEW_PROTECTED_FILE' },
+  { type: 'REFS', reason: 'MODIFIED_PREFLIGHT_FILE' },
+  { type: 'CALLER_PROTECTED', reason: 'MODIFIED_PREFLIGHT_FILE' },
+  { type: 'ENV_FILE', reason: 'NEW_PROTECTED_FILE' },
+  { type: 'RENAME_FILE', reason: 'MODIFIED_PREFLIGHT_FILE' }
+];
+
+for (const { type, reason } of mutations) {
+  test(`linked worktree postflight detection proves failure on mutation: ${type}`, () => {
+    const profileDir = createTempDir(`agy-ctrl-prof-wt-${type}-`);
+    const receiptDir = createTempDir(`agy-ctrl-rcpt-wt-${type}-`);
+    const fakeAgyDir = createTempDir(`agy-ctrl-fake-wt-${type}-`);
+    const runMain = createTempDir(`agy-main-run-${type}-`);
+    const runWt = createTempDir(`agy-wt-run-${type}-`);
+
+    try {
+      initGitWorkspace(runMain);
+      fs.writeFileSync(path.join(runMain, 'file_to_rename.txt'), 'old', 'utf8');
+      execFileSync('git', ['add', 'file_to_rename.txt'], { cwd: runMain, stdio: 'ignore' });
+      execFileSync('git', ['commit', '-m', 'Add file_to_rename'], { cwd: runMain, stdio: 'ignore' });
+      fs.rmSync(runWt, { recursive: true, force: true });
+      execFileSync('git', ['worktree', 'add', runWt, '-b', 'wt-branch'], { cwd: runMain, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.name', 'AGY Test Worker'], { cwd: runWt, stdio: 'ignore' });
+      execFileSync('git', ['config', 'user.email', 'test@example.com'], { cwd: runWt, stdio: 'ignore' });
+
+      const currentHead = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: runWt, encoding: 'utf8' }).trim();
+      const promptContent = 'Test linked worktree\n';
+      const currentPromptFile = path.join(runWt, 'PROMPT.md');
+      fs.writeFileSync(currentPromptFile, promptContent, 'utf8');
+      const promptHash = getSha256(promptContent);
+
+      const currentWritable = path.join(runWt, 'tooling');
+      fs.mkdirSync(currentWritable, { recursive: true });
+      const currentCallerProt = path.join(runWt, 'SECRET.txt');
+      fs.writeFileSync(currentCallerProt, 'shh\n', 'utf8');
+
+      const id = Math.random().toString(36).substring(2);
+      const { cmdPath, breadcrumbPath } = createMutatorFixture(fakeAgyDir, id);
+      const runValidStreamPath = createValidStreamFile(fakeAgyDir, runWt);
+
+      const res = runPwshScript([
+        '-WorkspaceRoot', runWt,
+        '-PromptFile', currentPromptFile,
+        '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', profileDir,
+        '-ReceiptRoot', receiptDir,
+        '-WritablePaths', currentWritable,
+        '-ProtectedPaths', currentCallerProt,
+        '-ExpectedBaselineHead', currentHead,
+        '-ExpectedBranch', 'wt-branch',
+        '-AgyExecutable', cmdPath
+      ], {
+        FAKE_AGY_STREAM_FILE: runValidStreamPath,
+        MUTATE_TYPE: type,
+        EXPECTED_MUTATION_ROOT: runWt,
+        PROTECTED_REL_PATH: 'SECRET.txt'
+      });
+
+      assert.notEqual(res.exitCode, 0, `Mutation ${type} must fail closed`);
+      assert.ok(fs.existsSync(breadcrumbPath), `Worker launched for ${type}`);
+
+      const bc = JSON.parse(fs.readFileSync(breadcrumbPath, 'utf8'));
+      assert.equal(bc.status, 'MATCH', 'Root guard failed unexpectedly on valid root');
+      assert.equal(bc.canonExpected, fs.realpathSync(runWt).toLowerCase(), 'Breadcrumb canonical expected root must match actual worktree root');
+
+      const authJsonPath = path.join(receiptDir, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json');
+      assert.ok(fs.existsSync(authJsonPath), `POSTFLIGHT_WORKSPACE_AUTHORITY.json missing for ${type}. Stderr: ${res.stderr}`);
+      const auth = JSON.parse(fs.readFileSync(authJsonPath, 'utf8'));
+      assert.notEqual(auth.status, 'MATCH', `Status must not be MATCH for ${type}`);
+      assert.ok(auth.reason_codes.includes(reason), `Reason codes must include ${reason} for ${type}, got: ${auth.reason_codes.join(', ')}`);
+      if (type === 'RENAME_FILE') {
+        assert.ok(!auth.reason_codes.includes('STAGED_CHANGES'), 'RENAME_FILE must not contain STAGED_CHANGES reason code');
+      }
+
+    } finally {
+      cleanTempDir(runMain);
+      cleanTempDir(runWt);
+      cleanTempDir(profileDir);
+      cleanTempDir(receiptDir);
+      cleanTempDir(fakeAgyDir);
+    }
+  });
+}
+
+test('root guard direct negative tests: missing, mismatched, sibling prefix, and traversal fail closed safely', () => {
+  const fakeAgyDir = createTempDir('agy-rootguard-fake-');
+  const baseDir = createTempDir('agy-rootguard-base-');
+  const otherDir = path.join(baseDir, 'root-other');
+  const ambientDir = path.join(baseDir, 'root');
+
+  try {
+    fs.mkdirSync(otherDir, { recursive: true });
+    fs.mkdirSync(ambientDir, { recursive: true });
+
+    const id = Math.random().toString(36).substring(2);
+    const { fixturePath, breadcrumbPath } = createMutatorFixture(fakeAgyDir, id);
+
+    // Case 1: Missing root
+    if (fs.existsSync(breadcrumbPath)) fs.unlinkSync(breadcrumbPath);
+    let exitCodeMissing = 0;
+    try {
+      execFileSync(process.execPath, [fixturePath], {
+        cwd: ambientDir,
+        env: { ...process.env, EXPECTED_MUTATION_ROOT: '' },
+        stdio: 'pipe'
+      });
+    } catch (e) { exitCodeMissing = e.status; }
+    assert.equal(exitCodeMissing, 1, 'Missing root must exit 1');
+    const bcMissing = JSON.parse(fs.readFileSync(breadcrumbPath, 'utf8'));
+    assert.equal(bcMissing.status, 'MISMATCH');
+
+    // Case 2: Mismatched root
+    if (fs.existsSync(breadcrumbPath)) fs.unlinkSync(breadcrumbPath);
+    let exitCodeMismatch = 0;
+    try {
+      execFileSync(process.execPath, [fixturePath], {
+        cwd: ambientDir,
+        env: { ...process.env, EXPECTED_MUTATION_ROOT: otherDir },
+        stdio: 'pipe'
+      });
+    } catch (e) { exitCodeMismatch = e.status; }
+    assert.equal(exitCodeMismatch, 1, 'Mismatched root must exit 1');
+    const bcMismatch = JSON.parse(fs.readFileSync(breadcrumbPath, 'utf8'));
+    assert.equal(bcMismatch.status, 'MISMATCH');
+
+    // Case 3: Absolute protected path traversal
+    if (fs.existsSync(breadcrumbPath)) fs.unlinkSync(breadcrumbPath);
+    let exitCodeAbs = 0;
+    try {
+      execFileSync(process.execPath, [fixturePath], {
+        cwd: ambientDir,
+        env: { ...process.env, EXPECTED_MUTATION_ROOT: ambientDir, MUTATE_TYPE: 'CALLER_PROTECTED', PROTECTED_REL_PATH: path.resolve(ambientDir, '..', 'evil.txt') },
+        stdio: 'pipe'
+      });
+    } catch (e) { exitCodeAbs = e.status; }
+    assert.equal(exitCodeAbs, 1, 'Absolute protected path must exit 1');
+
+    // Case 4: Sibling prefix / traversal
+    if (fs.existsSync(breadcrumbPath)) fs.unlinkSync(breadcrumbPath);
+    let exitCodeTrav = 0;
+    try {
+      execFileSync(process.execPath, [fixturePath], {
+        cwd: ambientDir,
+        env: { ...process.env, EXPECTED_MUTATION_ROOT: ambientDir, MUTATE_TYPE: 'CALLER_PROTECTED', PROTECTED_REL_PATH: '../root-other/evil.txt' },
+        stdio: 'pipe'
+      });
+    } catch (e) { exitCodeTrav = e.status; }
+    assert.equal(exitCodeTrav, 1, 'Traversal protected path must exit 1');
+    assert.equal(fs.existsSync(path.join(otherDir, 'evil.txt')), false, 'Traversal must not mutate sibling directory');
+
+  } finally {
+    cleanTempDir(fakeAgyDir);
+    cleanTempDir(baseDir);
+  }
+});
+
+test('Get-GitCriticalSnapshot hashes directories correctly while excluding node_modules and .git', () => {
+  const workspaceDir = createTempDir('agy-snapshot-ws-');
+  const profileDir = createTempDir('agy-snapshot-prof-');
+  const receiptDir = createTempDir('agy-snapshot-rcpt-');
+  const fakeAgyDir = createTempDir('agy-snapshot-fake-');
+
+  try {
+    initGitWorkspace(workspaceDir);
+    const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
+
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Test snapshot\\n', 'utf8');
+    const promptHash = getSha256('Test snapshot\\n');
+
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    const protectedDir = path.join(workspaceDir, 'protected_dir');
+    fs.mkdirSync(protectedDir, { recursive: true });
+
+    const file1 = path.join(protectedDir, 'file1.txt');
+    fs.writeFileSync(file1, 'content1\\n', 'utf8');
+    const file2 = path.join(protectedDir, 'sub', 'file2.txt');
+    fs.mkdirSync(path.join(protectedDir, 'sub'), { recursive: true });
+    fs.writeFileSync(file2, 'content2\\n', 'utf8');
+
+    // These should be excluded
+    const nodeModulesDir = path.join(protectedDir, 'node_modules', 'pkg');
+    fs.mkdirSync(nodeModulesDir, { recursive: true });
+    fs.writeFileSync(path.join(nodeModulesDir, 'bad.txt'), 'bad\\n', 'utf8');
+
+    const gitDir = path.join(protectedDir, '.git', 'objects');
+    fs.mkdirSync(gitDir, { recursive: true });
+    fs.writeFileSync(path.join(gitDir, 'bad.txt'), 'bad\\n', 'utf8');
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fakeAgyDir, id);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', writableDir,
+      '-ProtectedPaths', protectedDir,
+      '-ExpectedBaselineHead', headHash,
+      '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath
+    ], {
+      FAKE_AGY_STREAM_FILE: validStreamPath,
+      MUTATE_TYPE: 'NONE',
+      EXPECTED_MUTATION_ROOT: workspaceDir
+    });
+
+    assert.equal(res.exitCode, 0, 'Should launch successfully');
+
+    const postflightPath = path.join(receiptDir, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json');
+    assert.ok(fs.existsSync(postflightPath), 'Postflight receipt must exist');
+    const postflight = JSON.parse(fs.readFileSync(postflightPath, 'utf8'));
+
+    const keys = Object.keys(postflight.critical_path_hashes_post);
+    assert.ok(keys.includes(file1), 'Snapshot must include file1.txt');
+    assert.ok(keys.includes(file2), 'Snapshot must include file2.txt');
+
+    const excludedBad = keys.find(k => k.includes('node_modules') || k.includes('.git\\\\objects') || k.includes('.git/objects'));
+    assert.ok(!excludedBad, 'Snapshot must not include node_modules or .git files');
+
+    assert.equal(postflight.command_exit_codes['post_rev_parse_head'], 0, 'post_rev_parse_head must be 0');
+
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
+test('Preflight critical Git exits fail closed (show-ref)', () => {
+  const workspaceDir = createTempDir('agy-preflight-ws-');
+  const profileDir = createTempDir('agy-preflight-prof-');
+  const receiptDir = createTempDir('agy-preflight-rcpt-');
+  const fakeAgyDir = createTempDir('agy-preflight-fake-');
+  const fakeGitDir = createTempDir('agy-fake-git-');
+
+  try {
+    initGitWorkspace(workspaceDir);
+    const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: workspaceDir, encoding: 'utf8' }).trim();
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Test preflight\n', 'utf8');
+    const promptHash = getSha256('Test preflight\n');
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    // Create a fake git that fails on show-ref
+    const isWindows = process.platform === 'win32';
+    const whereCmd = isWindows ? 'where' : 'which';
+    const realGitExe = execFileSync(whereCmd, ['git'], { encoding: 'utf8' }).split('\n')[0].trim();
+    const breadcrumbPathGit = path.join(fakeGitDir, 'git-calls.txt');
+    fs.writeFileSync(breadcrumbPathGit, '', 'utf8');
+
+    const fakeGitScript = `
+      const fs = require('fs');
+      const args = process.argv.slice(2);
+      fs.appendFileSync(${JSON.stringify(breadcrumbPathGit)}, args.join(' ') + '\\n');
+      if (args[0] === 'show-ref') {
+        console.error('fatal: No match');
+        process.exit(1);
+      }
+      const { execFileSync } = require('child_process');
+      try {
+        execFileSync(${JSON.stringify(realGitExe)}, args, { stdio: 'inherit' });
+      } catch (e) {
+        process.exit(e.status || 1);
+      }
+    `;
+    fs.writeFileSync(path.join(fakeGitDir, 'git.js'), fakeGitScript, 'utf8');
+    const nodeExec = process.execPath;
+    fs.writeFileSync(path.join(fakeGitDir, 'git.cmd'), `@echo off\n"${nodeExec}" "${path.join(fakeGitDir, 'git.js')}" %*\nexit /b %ERRORLEVEL%\n`, 'utf8');
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath, breadcrumbPath } = createMutatorFixture(fakeAgyDir, id);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    const env = { ...process.env, PATH: `${fakeGitDir};${process.env.PATH}`, FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: workspaceDir };
+
+    let res = null;
+    try {
+      res = execFileSync('pwsh', [
+        '-NoProfile', '-NonInteractive', '-File',
+        path.join(process.cwd(), 'tooling', 'agy', 'Invoke-AgyAutonomousWorker.ps1'),
+        '-WorkspaceRoot', workspaceDir,
+        '-PromptFile', promptFile,
+        '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', profileDir,
+        '-ReceiptRoot', receiptDir,
+        '-WritablePaths', writableDir,
+        '-ProtectedPaths', workspaceDir,
+        '-ExpectedBaselineHead', headHash,
+        '-ExpectedBranch', 'main',
+        '-AgyExecutable', cmdPath
+      ], { env, encoding: 'utf8', stdio: 'pipe' });
+    } catch (e) {
+      res = e;
+    }
+
+    assert.notEqual(res.status || res.exitCode, 0, 'Preflight git show-ref failure must fail closed');
+    assert.ok(res.stderr.includes('git show-ref failed'), 'Error message must mention git show-ref failed');
+
+    const gitCalls = fs.readFileSync(breadcrumbPathGit, 'utf8');
+    assert.ok(gitCalls.includes('show-ref'), 'Fake git must have intercepted show-ref');
+
+    // Confirm AGY worker was never launched by checking if breadcrumbPath exists
+    assert.ok(!fs.existsSync(breadcrumbPath), 'AGY worker mutator breadcrumb must not exist if preflight fails');
+
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+    cleanTempDir(fakeGitDir);
+  }
+});
+
+function setupLimitsTest(name) {
+  const ws = createTempDir(name + '-ws-');
+  const prof = createTempDir(name + '-prof-');
+  const rcpt = createTempDir(name + '-rcpt-');
+  const fake = createTempDir(name + '-fake-');
+  initGitWorkspace(ws);
+  const headHash = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: ws, encoding: 'utf8' }).trim();
+  const promptFile = path.join(ws, 'PROMPT.md');
+  fs.writeFileSync(promptFile, 'Test limits\n', 'utf8');
+  const promptHash = getSha256('Test limits\n');
+  const writableDir = path.join(ws, 'tooling');
+  fs.mkdirSync(writableDir, { recursive: true });
+  return { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir };
+}
+
+test('Snapshot limits fail closed (depth limit)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-depth');
+  try {
+    const deepDir = path.join(ws, 'deep');
+    let currDeep = deepDir;
+    for (let i = 0; i <= 11; i++) {
+        fs.mkdirSync(currDeep, { recursive: true });
+        currDeep = path.join(currDeep, `sub${i}`);
+    }
+
+    const id1 = Math.random().toString(36).substring(2);
+    const { cmdPath: cmdPath1 } = createMutatorFixture(fake, id1);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const resDepth = runPwshScript([
+      '-WorkspaceRoot', ws,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof,
+      '-ReceiptRoot', rcpt,
+      '-WritablePaths', writableDir,
+      '-ProtectedPaths', deepDir,
+      '-ExpectedBaselineHead', headHash,
+      '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath1
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(resDepth.exitCode, 0, 'Must fail closed on depth limit');
+    assert.ok(resDepth.stderr.includes('exceeds maximum depth'), 'Error message must mention maximum depth');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (size limit)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-size');
+  try {
+    const sizeDir = path.join(ws, 'size');
+    fs.mkdirSync(sizeDir, { recursive: true });
+    const buf = Buffer.alloc(11 * 1024 * 1024, 'a');
+    fs.writeFileSync(path.join(sizeDir, 'big.txt'), buf);
+
+    const id2 = Math.random().toString(36).substring(2);
+    const { cmdPath: cmdPath2 } = createMutatorFixture(fake, id2);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const resSize = runPwshScript([
+      '-WorkspaceRoot', ws,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof,
+      '-ReceiptRoot', rcpt,
+      '-WritablePaths', writableDir,
+      '-ProtectedPaths', sizeDir,
+      '-ExpectedBaselineHead', headHash,
+      '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath2
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(resSize.exitCode, 0, 'Must fail closed on size limit');
+    assert.ok(resSize.stderr.includes('exceeded maximum cumulative size'), 'Error message must mention maximum cumulative size');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (file count limit)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-filecnt');
+  try {
+    const fileCountDir = path.join(ws, 'filecount');
+    fs.mkdirSync(fileCountDir, { recursive: true });
+    for (let i = 0; i <= 1000; i++) {
+        fs.writeFileSync(path.join(fileCountDir, `f${i}.txt`), 'a', 'utf8');
+    }
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, id);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+      '-ProtectedPaths', fileCountDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(res.exitCode, 0, 'Must fail closed');
+    assert.ok(res.stderr.includes('exceeds 1000 file limit'), 'Error message must mention file limit');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (directory queue limit)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-queue');
+  try {
+    const queueDir = path.join(ws, 'queue');
+    fs.mkdirSync(queueDir, { recursive: true });
+    for (let i = 0; i <= 1000; i++) {
+        fs.mkdirSync(path.join(queueDir, `q${i}`), { recursive: true });
+    }
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, id);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+      '-ProtectedPaths', queueDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(res.exitCode, 0, 'Must fail closed');
+    assert.ok(res.stderr.includes('exceeds maximum directory queue entries'), 'Error message must mention queue limit');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (reparse hidden child)', (t) => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-reparse-child');
+  try {
+    const targetDir = path.join(ws, 'target');
+    fs.mkdirSync(targetDir, { recursive: true });
+    const reparseDir = path.join(ws, 'reparse');
+    fs.mkdirSync(reparseDir, { recursive: true });
+
+    let canHide = true;
+    try {
+        const junc = path.join(reparseDir, 'sym');
+        fs.symlinkSync(targetDir, junc, 'junction');
+        execFileSync('attrib', ['+H', junc], { encoding: 'utf8' });
+        const attrs = execFileSync('attrib', [junc], { encoding: 'utf8' });
+        if (!attrs.includes('H')) {
+            canHide = false;
+        }
+    } catch(e) {
+        canHide = false;
+    }
+
+    if (!canHide) {
+        t.skip('Skipping reparse test due to lack of symlink or hidden attribute privilege');
+        return;
+    }
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, id);
+    const validStreamPath = createValidStreamFile(fake, ws);
+    const res = runPwshScript([
+      '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+      '-ProtectedPaths', reparseDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(res.exitCode, 0, 'Must fail on child reparse');
+    assert.ok(res.stderr.includes('Reparse point encountered'), 'Error message must mention Reparse point');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (reparse root)', (t) => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-reparse-root');
+  try {
+    const targetDir = path.join(ws, 'target');
+    fs.mkdirSync(targetDir, { recursive: true });
+    const rootJunction = path.join(ws, 'root_junc');
+
+    let supportsSymlink = true;
+    try {
+        fs.symlinkSync(targetDir, rootJunction, 'junction');
+    } catch(e) {
+        supportsSymlink = false;
+    }
+
+    if (!supportsSymlink) {
+        t.skip('Skipping reparse root test due to lack of symlink privilege');
+        return;
+    }
+
+    const id2 = Math.random().toString(36).substring(2);
+    const { cmdPath: cmdPath2 } = createMutatorFixture(fake, id2);
+    const validStreamPath2 = createValidStreamFile(fake, ws);
+    const res2 = runPwshScript([
+      '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+      '-ProtectedPaths', rootJunction, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+      '-AgyExecutable', cmdPath2
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath2, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.notEqual(res2.exitCode, 0, 'Must fail on root reparse');
+    assert.ok(res2.stderr.toLowerCase().includes('reparse point'), 'Error message must mention Reparse point');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits fail closed (hidden file mutation)', (t) => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-hidden');
+  try {
+    const hiddenDir = path.join(ws, 'hidden');
+    fs.mkdirSync(hiddenDir, { recursive: true });
+    const hiddenFilePath = path.join(hiddenDir, '.hidden_file');
+    fs.writeFileSync(hiddenFilePath, 'hidden', 'utf8');
+
+    let canHide = true;
+    try {
+        execFileSync('attrib', ['+H', hiddenFilePath], { encoding: 'utf8' });
+        const attrs = execFileSync('attrib', [hiddenFilePath], { encoding: 'utf8' });
+        // The output of attrib typically starts with the attributes, e.g., "A  SH... " or "    H   ..."
+        if (!attrs.includes('H')) {
+            canHide = false;
+        }
+    } catch(e) {
+        canHide = false;
+    }
+
+    if (!canHide) {
+        t.skip('Platform cannot represent true hidden file attribute');
+        return;
+    }
+
+    const idHidden = Math.random().toString(36).substring(2);
+    const { cmdPath: cmdPathHidden } = createMutatorFixture(fake, idHidden);
+    const validStreamPathHidden = createValidStreamFile(fake, ws);
+
+    // Test mutation of hidden file.
+    const envHidden = {
+        ...process.env,
+        FAKE_AGY_STREAM_FILE: validStreamPathHidden,
+        MUTATE_TYPE: 'CALLER_PROTECTED',
+        PROTECTED_REL_PATH: 'hidden/.hidden_file',
+        EXPECTED_MUTATION_ROOT: ws
+    };
+
+    let resHidden = runPwshScript([
+        '-WorkspaceRoot', ws,
+        '-PromptFile', promptFile,
+        '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', prof,
+        '-ReceiptRoot', rcpt,
+        '-WritablePaths', writableDir,
+        '-ProtectedPaths', hiddenDir,
+        '-ExpectedBaselineHead', headHash,
+        '-ExpectedBranch', 'main',
+        '-AgyExecutable', cmdPathHidden
+    ], envHidden);
+    assert.notEqual(resHidden.exitCode, 0, 'Mutating hidden protected file must fail'); console.log('STDERR:\n' + resHidden.stderr);
+
+    const mutContent = fs.readFileSync(hiddenFilePath, 'utf8');
+    assert.ok(mutContent.includes('mutated'), 'File must be physically mutated to trigger detection');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot limits skip pruned directories (.git and node_modules)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-prune');
+  try {
+    const pruneDir = path.join(ws, 'prune');
+    const gitDir = path.join(pruneDir, '.git');
+    const nmDir = path.join(pruneDir, 'node_modules');
+    fs.mkdirSync(gitDir, { recursive: true });
+    fs.mkdirSync(nmDir, { recursive: true });
+
+    // Create depth 12 inside pruned dirs (beyond depth limit of 10)
+    let currGit = gitDir;
+    let currNm = nmDir;
+    for (let i = 0; i <= 12; i++) {
+        fs.mkdirSync(path.join(currGit, `sub${i}`), { recursive: true });
+        currGit = path.join(currGit, `sub${i}`);
+        fs.mkdirSync(path.join(currNm, `sub${i}`), { recursive: true });
+        currNm = path.join(currNm, `sub${i}`);
+    }
+
+    const idPrune = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, idPrune);
+    const validStreamPath = createValidStreamFile(fake, ws);
+    const resPrune = runPwshScript([
+        '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+        '-ProtectedPaths', pruneDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+        '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    if (resPrune.exitCode !== 0) { console.error('STDERR:', resPrune.stderr); console.error('STDOUT:', resPrune.stdout); }
+    assert.equal(resPrune.exitCode, 0, 'Must succeed because .git and node_modules are pruned and not traversed');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot deterministic order and overlap deduplication', () => {
+  const { ws, prof, rcpt, fake, headHash, writableDir } = setupLimitsTest('agy-overlap');
+  try {
+    const overlapDir = path.join(ws, 'overlap');
+    fs.mkdirSync(overlapDir, { recursive: true });
+    for(let i=0; i<5; i++) {
+        fs.writeFileSync(path.join(overlapDir, `f${i}.txt`), `file ${i}`, 'utf8');
+    }
+    const promptFile = path.join(overlapDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Test limits\n', 'utf8');
+    const promptHash = getSha256('Test limits\n');
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, id);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const res = runPwshScript([
+        '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+        '-ProtectedPaths', overlapDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+        '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    assert.equal(res.exitCode, 0, 'Must succeed with duplicate overlapping paths');
+
+    const authPath = path.join(rcpt, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json');
+    const authJson = JSON.parse(fs.readFileSync(authPath, 'utf8'));
+    const preSnapshot = authJson.critical_path_hashes_pre;
+
+    const overlapFiles = Object.keys(preSnapshot).filter(k => k.toLowerCase().startsWith(overlapDir.toLowerCase() + path.sep));
+    assert.equal(overlapFiles.length, 6, 'Overlapping paths must be deduplicated exactly (5 files + PROMPT.md)');
+    const relativePaths = overlapFiles.map(k => k.substring(overlapDir.length + 1)).sort();
+    assert.deepEqual(relativePaths, ['PROMPT.md', 'f0.txt', 'f1.txt', 'f2.txt', 'f3.txt', 'f4.txt'], 'Must contain exactly the 6 expected files each once');
+    const keys = Object.keys(preSnapshot);
+    const sortedKeys = [...keys].sort((a,b) => {
+      const uA = a.toUpperCase();
+      const uB = b.toUpperCase();
+      return uA < uB ? -1 : (uA > uB ? 1 : 0);
+    });
+    assert.deepEqual(keys, sortedKeys, 'Snapshot keys must be deterministically sorted by upper-case code units');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('Snapshot local counter leakage (valid large tree passes preflight and postflight)', () => {
+  const { ws, prof, rcpt, fake, headHash, promptFile, promptHash, writableDir } = setupLimitsTest('agy-leak');
+  try {
+    const validDir = path.join(ws, 'valid');
+    fs.mkdirSync(validDir, { recursive: true });
+    // Near limit (e.g. 600 files). If it leaked, preflight + postflight = 1200 > 1000 limit.
+    for(let i=0; i<600; i++) {
+        fs.writeFileSync(path.join(validDir, `v${i}.txt`), 'v', 'utf8');
+    }
+
+    const id = Math.random().toString(36).substring(2);
+    const { cmdPath } = createMutatorFixture(fake, id);
+    const validStreamPath = createValidStreamFile(fake, ws);
+
+    const res = runPwshScript([
+        '-WorkspaceRoot', ws, '-PromptFile', promptFile, '-ExpectedPromptSha256', promptHash,
+        '-ProfileRoot', prof, '-ReceiptRoot', rcpt, '-WritablePaths', writableDir,
+        '-ProtectedPaths', validDir, '-ExpectedBaselineHead', headHash, '-ExpectedBranch', 'main',
+        '-AgyExecutable', cmdPath
+    ], { FAKE_AGY_STREAM_FILE: validStreamPath, MUTATE_TYPE: 'NONE', EXPECTED_MUTATION_ROOT: ws });
+
+    if(res.exitCode!==0) console.error('LEAK ERR:', res.stderr, res.stdout); assert.equal(res.exitCode, 0, 'Must succeed when preflight and postflight count is under limit');
+  } finally {
+    cleanTempDir(ws); cleanTempDir(prof); cleanTempDir(rcpt); cleanTempDir(fake);
+  }
+});
+
+test('D1 D2: Postflight receipt correctly handles preflight codes and show-ref duplication', () => {
+  const workspaceDir = createTempDir('agy-b-ws-');
+  const profileDir = createTempDir('agy-b-prof-');
+  const receiptDir = createTempDir('agy-b-rcpt-');
+  const fakeAgyDir = createTempDir('agy-b-fake-');
+
+  // D1: Place fake git outside WorkspaceRoot
+  const fakeGitPath = path.join(fakeAgyDir, 'git.cmd');
+  const fakeGitLog = path.join(fakeAgyDir, 'fake-git.log');
+
+  try {
+    const { head, branch } = initGitWorkspace(workspaceDir);
+    fs.mkdirSync(path.join(workspaceDir, 'tooling'), { recursive: true });
+
+    // Resolve real git for the shim
+    const resolveRes = execFileSync('where.exe', ['git.exe'], { encoding: 'utf8' });
+    const realGitPath = resolveRes.split(/\r?\n/)[0].trim();
+    if (!realGitPath) { throw new Error('Could not resolve git.exe'); }
+    assert.ok(path.isAbsolute(realGitPath), 'Resolved git path must be absolute');
+    assert.ok(fs.statSync(realGitPath).isFile(), 'Resolved git path must be a regular file');
+    assert.ok(realGitPath.toLowerCase().endsWith('.exe'), 'Resolved git path must end in .exe');
+
+    const fakeGitScript = "@echo off\necho %* >> \"" + fakeGitLog + "\"\n\"" + realGitPath + "\" %*\n";
+    fs.writeFileSync(fakeGitPath, fakeGitScript, 'utf8');
+
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Execute test\n', 'utf8');
+    const promptHash = getSha256('Execute test\n');
+
+    const { cmdPath: fakeAgyPath, breadcrumbPath } = createFakeAgyScript(fakeAgyDir);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    // D2: Valid custom fake AGY that doesn't mutate on --version
+    const customFakeAgyScript = "const fs = require('fs');\n" +
+      "const args = process.argv.slice(2);\n" +
+      "if (args[0] === '--version') {\n" +
+      "  console.log('1.1.8');\n" +
+      "  process.exit(0);\n" +
+      "}\n" +
+      "fs.writeFileSync(require('path').join(process.env.WORKSPACE_DIR, 'tooling', 'file_d.txt'), 'D', 'utf8');\n" +
+      "require(process.env.FAKE_AGY_PATH);\n";
+
+    const customFakeAgyPath = path.join(fakeAgyDir, 'custom-fake-agy.cjs');
+    fs.writeFileSync(customFakeAgyPath, customFakeAgyScript, 'utf8');
+
+    const customFakeAgyCmd = path.join(fakeAgyDir, 'custom-fake-agy.cmd');
+    const customFakeAgyCmdContent = "@echo off\n\"" + process.execPath + "\" \"" + customFakeAgyPath + "\" %*\n";
+    fs.writeFileSync(customFakeAgyCmd, customFakeAgyCmdContent, 'utf8');
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', path.join(workspaceDir, 'tooling'),
+      '-ExpectedBaselineHead', head,
+      '-ExpectedBranch', branch,
+      '-AgyExecutable', customFakeAgyCmd
+    ], {
+      FAKE_AGY_STREAM_FILE: validStreamPath,
+      FAKE_AGY_PATH: path.join(fakeAgyDir, 'fake-agy-fixture.cjs').replace(/\\/g, '/'),
+      WORKSPACE_DIR: workspaceDir,
+      PATH: fakeAgyDir + ';' + process.env.PATH
+    });
+
+    assert.equal(res.exitCode, 0, 'Controller must succeed ' + res.stderr);
+
+    const authPath = path.join(receiptDir, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json');
+    assert.ok(fs.existsSync(authPath), 'Authority file must exist');
+    const auth = JSON.parse(fs.readFileSync(authPath, 'utf8'));
+
+    const requiredKeys = ['pre_abs_git_dir', 'pre_common_git_dir', 'pre_rev_parse_head', 'pre_rev_parse_branch', 'pre_status_uno', 'pre_status_uall', 'pre_show_ref', 'post_rev_parse_head', 'post_rev_parse_branch', 'post_show_ref', 'post_status'];
+    for (const key of requiredKeys) {
+      assert.strictEqual(auth.command_exit_codes[key], 0, 'Key ' + key + ' must be 0');
+    }
+
+    const gitLogs = fs.readFileSync(fakeGitLog, 'utf8').split('\n');
+    const showRefCalls = gitLogs.filter(l => l.includes('show-ref'));
+    assert.equal(showRefCalls.length, 2, 'show-ref must be called exactly twice (once pre, once post)');
+
+    const observedCount = auth.observed_status_paths.filter(p => p.includes('file_d.txt')).length;
+    assert.equal(observedCount, 1, 'Observed status path must appear exactly once without duplicates');
+  } finally {
+    cleanTempDir(workspaceDir);
+    cleanTempDir(profileDir);
+    cleanTempDir(receiptDir);
+    cleanTempDir(fakeAgyDir);
+  }
+});
+
+test('D3: Ordinal-ignore-case ordering of mixed-case snapshot keys', () => {
+  const workspaceDir = createTempDir('agy-c3-ws-');
+  const profileDir = createTempDir('agy-c3-prof-');
+  const receiptDir = createTempDir('agy-c3-rcpt-');
+  const fakeAgyDir = createTempDir('agy-c3-fake-');
+
+  try {
+    const { head, branch } = initGitWorkspace(workspaceDir);
+
+    const protectedDir = path.join(workspaceDir, 'protected_docs');
+    fs.mkdirSync(protectedDir, { recursive: true });
+
+    // Explicit paths
+    const pathA = path.join(protectedDir, 'File_A.txt');
+    const pathB = path.join(protectedDir, 'file_[b].txt');
+    const pathC = path.join(protectedDir, 'file_c.txt');
+
+    fs.writeFileSync(pathA, 'A', 'utf8');
+    fs.writeFileSync(pathB, 'B', 'utf8');
+    fs.writeFileSync(pathC, 'C', 'utf8');
+
+    const writableDir = path.join(workspaceDir, 'tooling');
+    fs.mkdirSync(writableDir, { recursive: true });
+
+    const promptFile = path.join(workspaceDir, 'PROMPT.md');
+    fs.writeFileSync(promptFile, 'Execute test\n', 'utf8');
+    const promptHash = getSha256('Execute test\n');
+
+    const { cmdPath: fakeAgyPath, breadcrumbPath } = createFakeAgyScript(fakeAgyDir);
+    const validStreamPath = createValidStreamFile(fakeAgyDir, workspaceDir);
+
+    const res = runPwshScript([
+      '-WorkspaceRoot', workspaceDir,
+      '-PromptFile', promptFile,
+      '-ExpectedPromptSha256', promptHash,
+      '-ProfileRoot', profileDir,
+      '-ReceiptRoot', receiptDir,
+      '-WritablePaths', writableDir,
+      '-ProtectedPaths', protectedDir,
+      '-ExpectedBaselineHead', head,
+      '-ExpectedBranch', branch,
+      '-AgyExecutable', fakeAgyPath
+    ], {
+      FAKE_AGY_STREAM_FILE: validStreamPath,
+      PATH: process.env.PATH
+    });
+
+    assert.equal(res.exitCode, 0, 'Controller must succeed ' + res.stderr);
+
+    const authPath = path.join(receiptDir, 'POSTFLIGHT_WORKSPACE_AUTHORITY.json');
+    assert.ok(fs.existsSync(authPath), 'Authority file must exist');
+    const auth = JSON.parse(fs.readFileSync(authPath, 'utf8'));
+
+    const preSnapshot = auth.critical_path_hashes_pre;
+    const postSnapshot = auth.critical_path_hashes_post;
+
+    const absA = path.resolve(pathA);
+    const absB = path.resolve(pathB);
+    const absC = path.resolve(pathC);
+
+    // Assert exactly present in both snapshots
+    assert.ok(preSnapshot[absA], 'File_A.txt must be in preSnapshot');
+    assert.ok(preSnapshot[absB], 'file_[b].txt must be in preSnapshot');
+    assert.ok(preSnapshot[absC], 'file_c.txt must be in preSnapshot');
+
+    assert.ok(postSnapshot[absA], 'File_A.txt must be in postSnapshot');
+    assert.ok(postSnapshot[absB], 'file_[b].txt must be in postSnapshot');
+    assert.ok(postSnapshot[absC], 'file_c.txt must be in postSnapshot');
+
+    // Assert ordinal-ignore-case sort on full key arrays
+    const compareOrdinalIgnoreCaseAscii = (a, b) => {
+      const upperA = a.toUpperCase();
+      const upperB = b.toUpperCase();
+      if (upperA < upperB) return -1;
+      if (upperA > upperB) return 1;
+      return 0;
+    };
+
+    const keysPre = Object.keys(preSnapshot);
+    const sortedPre = [...keysPre].sort(compareOrdinalIgnoreCaseAscii);
+    assert.deepEqual(keysPre, sortedPre, 'critical_path_hashes_pre must be sorted OrdinalIgnoreCase');
+
+    const keysPost = Object.keys(postSnapshot);
+    const sortedPost = [...keysPost].sort(compareOrdinalIgnoreCaseAscii);
+    assert.deepEqual(keysPost, sortedPost, 'critical_path_hashes_post must be sorted OrdinalIgnoreCase');
+
+    const idxA_pre = keysPre.indexOf(absA);
+    const idxC_pre = keysPre.indexOf(absC);
+    const idxB_pre = keysPre.indexOf(absB);
+    assert.ok(idxA_pre < idxC_pre && idxC_pre < idxB_pre, 'preSnapshot relative order must be A, C, B');
+
+    const idxA_post = keysPost.indexOf(absA);
+    const idxC_post = keysPost.indexOf(absC);
+    const idxB_post = keysPost.indexOf(absB);
+    assert.ok(idxA_post < idxC_post && idxC_post < idxB_post, 'postSnapshot relative order must be A, C, B');
   } finally {
     cleanTempDir(workspaceDir);
     cleanTempDir(profileDir);

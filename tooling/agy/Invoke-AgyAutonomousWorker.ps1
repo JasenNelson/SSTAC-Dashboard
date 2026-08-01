@@ -118,6 +118,9 @@ if ([string]::IsNullOrWhiteSpace($scriptDir)) {
 }
 
 # 1. Pinned Parameters Strict Checks
+if ($null -ne $AllowedCommands -and $AllowedCommands.Count -gt 0) {
+    throw "Production controller rejects all AllowedCommands until a verifiable real sandbox canary is proven."
+}
 if ($ExpectedAgyVersion -ne '1.1.8') {
     throw "ExpectedAgyVersion must be exactly '1.1.8'. Got '$ExpectedAgyVersion'."
 }
@@ -163,27 +166,104 @@ if ($normWorkspace -ieq $wsDrive -or [string]::IsNullOrWhiteSpace($normWorkspace
     throw "WorkspaceRoot '$WorkspaceRoot' cannot be a filesystem root."
 }
 
-# 3. Git Baseline, Branch, and Dirty State Probe
-$oldLocation = Get-Location
-try {
-    Set-Location -LiteralPath $resolvedWorkspace
-    $gitHead = (git rev-parse HEAD 2>$null) | Out-String
-    $gitHead = $gitHead.Trim()
 
-    $gitBranch = (git rev-parse --abbrev-ref HEAD 2>$null) | Out-String
-    $gitBranch = $gitBranch.Trim()
+function Get-GitCriticalSnapshot {
+    param(
+        [string]$WsPath,
+        [string[]]$ProtectedArr,
+        [string]$AbsGit,
+        [string]$CommonGit
+    )
 
-    $gitStatus = (git status --porcelain -uno 2>$null) | Out-String
-    $gitStatus = $gitStatus.TrimEnd("`r", "`n")
-} finally {
-    Set-Location -LiteralPath $oldLocation
-}
+    $dict = [ordered]@{}
+    $state = @{
+        FileCount = 0
+        TotalBytes = 0
+        QueueEntries = 0
+        MaxFiles = 1000
+        MaxBytes = 10485760
+        MaxQueue = 1000
+        MaxDepth = 10
+        SeenPaths = [System.Collections.Generic.HashSet[string]]::new([System.StringComparer]::OrdinalIgnoreCase)
+        OrdinalComparer = [System.StringComparer]::OrdinalIgnoreCase
+    }
 
-if ($gitHead -ine $ExpectedBaselineHead) {
-    throw "Git baseline HEAD mismatch. Expected '$ExpectedBaselineHead', got '$gitHead'."
-}
-if ($gitBranch -ine $ExpectedBranch) {
-    throw "Git branch mismatch. Expected '$ExpectedBranch', got '$gitBranch'."
+    function Process-Item {
+        param($item, $depth)
+
+        if ($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) {
+            throw "Reparse point encountered at '$($item.FullName)'."
+        }
+
+        $abs = $item.FullName; if ($abs.EndsWith('\') -or $abs.EndsWith('/')) { $abs = $abs.Substring(0, $abs.Length - 1) }
+        if ($state.SeenPaths.Add($abs)) {
+            if ($item.PSIsContainer) {
+                $name = $item.Name
+                if ($name -eq '.git' -or $name -eq 'node_modules') { return }
+
+                $state.QueueEntries++
+                if ($state.QueueEntries -gt $state.MaxQueue) {
+                    throw "exceeds maximum directory queue entries"
+                }
+                if ($depth -ge $state.MaxDepth) {
+                    throw "exceeds maximum depth"
+                }
+
+                Get-ChildItem -LiteralPath $abs -Force -ErrorAction Stop | ForEach-Object {
+                    Process-Item -item $_ -depth ($depth + 1)
+                }
+            } else {
+                $state.FileCount++
+                if ($state.FileCount -gt $state.MaxFiles) {
+                    throw "exceeds 1000 file limit"
+                }
+                $state.TotalBytes += $item.Length
+                if ($state.TotalBytes -gt $state.MaxBytes) {
+                    throw "exceeded maximum cumulative size"
+                }
+            }
+        }
+    }
+
+    $envFiles = Get-ChildItem -LiteralPath $WsPath -Filter ".env*" -Force -File -ErrorAction Stop
+    foreach ($env in $envFiles) {
+        Process-Item -item $env -depth 0
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($AbsGit) -and (Test-Path -LiteralPath $AbsGit)) {
+        $gitConfig = Join-Path $AbsGit 'config'
+        if (Test-Path -LiteralPath $gitConfig -PathType Leaf) { Process-Item -item (Get-Item -LiteralPath $gitConfig -Force -ErrorAction Stop) -depth 0 }
+        $absHooksDir = Join-Path $AbsGit 'hooks'
+        if (Test-Path -LiteralPath $absHooksDir) { Process-Item -item (Get-Item -LiteralPath $absHooksDir -Force -ErrorAction Stop) -depth 0 }
+    }
+
+    if (-not [string]::IsNullOrWhiteSpace($CommonGit) -and $CommonGit -ne $AbsGit -and (Test-Path -LiteralPath $CommonGit)) {
+        $commonGitConfig = Join-Path $CommonGit 'config'
+        if (Test-Path -LiteralPath $commonGitConfig -PathType Leaf) { Process-Item -item (Get-Item -LiteralPath $commonGitConfig -Force -ErrorAction Stop) -depth 0 }
+        $commonHooksDir = Join-Path $CommonGit 'hooks'
+        if (Test-Path -LiteralPath $commonHooksDir) { Process-Item -item (Get-Item -LiteralPath $commonHooksDir -Force -ErrorAction Stop) -depth 0 }
+    }
+
+    foreach ($pp in $ProtectedArr) {
+        if (Test-Path -LiteralPath $pp) {
+            $ppItem = Get-Item -LiteralPath $pp -Force -ErrorAction Stop
+            Process-Item -item $ppItem -depth 0
+        }
+    }
+
+    $sortedPaths = [System.Collections.Generic.List[string]]::new()
+    foreach ($p in $state.SeenPaths) {
+        if (Test-Path -LiteralPath $p -PathType Leaf) {
+            $sortedPaths.Add($p)
+        }
+    }
+    $sortedPaths.Sort([System.StringComparer]::OrdinalIgnoreCase)
+
+    foreach ($p in $sortedPaths) {
+        $dict[$p] = Get-FileSha256 -Path $p
+    }
+
+    return $dict
 }
 
 # 4. Resolve, Validate, and Hash PromptFile
@@ -226,6 +306,87 @@ foreach ($pp in $resolvedCallerProtectedPaths) {
     if ($combinedProtectedPaths -notcontains $pp) {
         $combinedProtectedPaths += $pp
     }
+}
+
+
+$command_exit_codes = [ordered]@{}
+
+# 3. Git Baseline, Branch, and Dirty State Probe
+$oldLocation = Get-Location
+try {
+    Set-Location -LiteralPath $resolvedWorkspace
+
+    $absGitDirRaw = (git rev-parse --absolute-git-dir 2>&1)
+    $absGitDirExit = $LASTEXITCODE
+    $command_exit_codes['pre_abs_git_dir'] = $absGitDirExit
+    if ($absGitDirExit -ne 0) { throw "git rev-parse --absolute-git-dir failed: $absGitDirRaw" }
+    $absGitDir = ($absGitDirRaw | Out-String).Trim()
+
+    $commonGitDirRaw = (git rev-parse --git-common-dir 2>&1)
+    $commonGitDirExit = $LASTEXITCODE
+    $command_exit_codes['pre_common_git_dir'] = $commonGitDirExit
+    if ($commonGitDirExit -ne 0) { throw "git rev-parse --git-common-dir failed: $commonGitDirRaw" }
+    $commonGitDir = ($commonGitDirRaw | Out-String).Trim()
+    if (-not [System.IO.Path]::IsPathRooted($commonGitDir)) {
+        $commonGitDir = Resolve-AbsolutePath -Path (Join-Path $resolvedWorkspace $commonGitDir)
+    }
+
+    $preflightSnapshot = Get-GitCriticalSnapshot -WsPath $resolvedWorkspace -ProtectedArr $combinedProtectedPaths -AbsGit $absGitDir -CommonGit $commonGitDir
+
+    $gitHeadRaw = (git rev-parse HEAD 2>&1)
+    $gitHeadExit = $LASTEXITCODE
+    $command_exit_codes['pre_rev_parse_head'] = $gitHeadExit
+    if ($gitHeadExit -ne 0) { throw "git rev-parse HEAD failed: $gitHeadRaw" }
+    $gitHead = ($gitHeadRaw | Out-String).Trim()
+
+    $gitBranchRaw = (git rev-parse --abbrev-ref HEAD 2>&1)
+    $gitBranchExit = $LASTEXITCODE
+    $command_exit_codes['pre_rev_parse_branch'] = $gitBranchExit
+    if ($gitBranchExit -ne 0) { throw "git rev-parse --abbrev-ref HEAD failed: $gitBranchRaw" }
+    $gitBranch = ($gitBranchRaw | Out-String).Trim()
+
+    $gitStatusRaw = (git status --porcelain -uno 2>&1)
+    $gitStatusExit = $LASTEXITCODE
+    $command_exit_codes['pre_status_uno'] = $gitStatusExit
+    if ($gitStatusExit -ne 0) { throw "git status --porcelain -uno failed: $gitStatusRaw" }
+    $gitStatus = ($gitStatusRaw | Out-String).TrimEnd("`r", "`n")
+
+    $gitStatusUallRaw = (git status --porcelain -uall 2>&1)
+    $gitStatusUallExit = $LASTEXITCODE
+    $command_exit_codes['pre_status_uall'] = $gitStatusUallExit
+    if ($gitStatusUallExit -ne 0) { throw "git status --porcelain -uall failed: $gitStatusUallRaw" }
+    $gitStatusUall = ($gitStatusUallRaw | Out-String)
+
+    $showRefRaw = (git show-ref 2>&1)
+    $showRefExit = $LASTEXITCODE
+    $command_exit_codes['pre_show_ref'] = $showRefExit
+    if ($showRefExit -ne 0) { throw "git show-ref failed: $showRefRaw" }
+    $refsLines = [System.Collections.Generic.List[string]]::new([string[]](($showRefRaw | Out-String) -split "`n" | Where-Object { $_.Trim() -ne '' }))
+    $refsLines.Sort([System.StringComparer]::OrdinalIgnoreCase)
+    $preflightSnapshot['GIT_REFS_DIGEST'] = Get-StringSha256 -Text ($refsLines -join "`n")
+
+    $preExistingUntracked = @()
+    foreach ($line in ($gitStatusUall -split '\r?\n' | Where-Object { $_ -ne "" })) {
+        if ($line.StartsWith('?? ')) {
+            $rel = $line.Substring(3).Trim()
+            $parts = $rel -split '/'
+            if ($parts -contains '.git' -or $parts -contains 'node_modules') { continue }
+            $preExistingUntracked += $rel
+            $abs = (Join-Path $resolvedWorkspace $rel).Replace('/', '\')
+            if (Test-Path -LiteralPath $abs -PathType Leaf) {
+                $preflightSnapshot[$abs] = (Get-FileSha256 -Path $abs)
+            }
+        }
+    }
+} finally {
+    Set-Location -LiteralPath $oldLocation
+}
+
+if ($gitHead -ine $ExpectedBaselineHead) {
+    throw "Git baseline HEAD mismatch. Expected '$ExpectedBaselineHead', got '$gitHead'."
+}
+if ($gitBranch -ine $ExpectedBranch) {
+    throw "Git branch mismatch. Expected '$ExpectedBranch', got '$gitBranch'."
 }
 
 # 6. Resolve and Validate ProfileRoot
@@ -282,7 +443,7 @@ if (Test-Path -LiteralPath $resolvedReceiptRoot) {
             'RUN_STATE.md', 'COMMAND_LOG.md', 'HEARTBEAT.log', 'RESUME_PROMPT.md',
             'PR_MANIFEST.md', 'LAUNCH_CONTRACT.json', 'PROMPT.sha256',
             'NATIVE_EXIT.txt', 'VALIDATOR_EXIT.txt', 'MANIFEST.sha256',
-            'POSTFLIGHT_SETTINGS_AUTHORITY.json',
+            'POSTFLIGHT_SETTINGS_AUTHORITY.json', 'POSTFLIGHT_WORKSPACE_AUTHORITY.json',
             'stream.jsonl', 'stderr.log', 'verdict.json', 'log.txt'
         )
         foreach ($item in $existingReceiptItems) {
@@ -425,6 +586,11 @@ if (-not $isContinuationSupplied) {
 
         if ($idxStatus -ne ' ') {
             throw "Workspace '$resolvedWorkspace' contains staged changes in index. Staged changes are strictly rejected."
+        }
+
+        $allowedStatuses = @('M', 'A', 'D', 'R', 'C', 'U', ' ')
+        if ($allowedStatuses -notcontains $idxStatus -or $allowedStatuses -notcontains $wtStatus) {
+            throw "Unexpected Git status '$idxStatus$wtStatus' for '$relPath'."
         }
 
         if ($relPath.StartsWith('"') -or $relPath.EndsWith('"') -or $relPath.Contains(' -> ') -or $relPath.Contains('\')) {
@@ -792,7 +958,7 @@ $agyArgs = @(
     '--model', $ExpectedModel,
     '--effort', $ExpectedEffort,
     '--mode', 'accept-edits',
-    '--sandbox=false',
+    '--sandbox',
     '--output-format', 'stream-json',
     '--log-file', $logPath,
     '--print-timeout', $PrintTimeout,
@@ -806,11 +972,14 @@ Write-LfFile -Path (Join-Path $resolvedReceiptRoot 'HEARTBEAT.log') -Content "[$
 
 $oldUserProfile = $env:USERPROFILE
 $nativeExitCode = -1
+$oldLocationForAgy = Get-Location
 try {
     $env:USERPROFILE = $resolvedProfileRoot
+    Set-Location -LiteralPath $resolvedWorkspace
     & $resolvedAgyExec @agyArgs > $streamPath 2> $stderrPath
     $nativeExitCode = $LASTEXITCODE
 } finally {
+    Set-Location -LiteralPath $oldLocationForAgy
     $env:USERPROFILE = $oldUserProfile
 }
 
@@ -892,8 +1061,247 @@ try {
     $verdictStatus = 'RED'
 }
 
+
+# Post-run Git Integrity Verification
+$postflightGitStatus = 'MATCH'
+$gitReasonCodes = @()
+$oldLocForGit = Get-Location
+
+$postflightSnapshot = @{}
+$sortedPreflightSnapshot = [ordered]@{}
+$preflightKeys = [System.Collections.Generic.List[string]]::new([string[]]@($preflightSnapshot.Keys))
+$preflightKeys.Sort([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($k in $preflightKeys) {
+    $sortedPreflightSnapshot[$k] = $preflightSnapshot[$k]
+}
+$preflightSnapshot = $sortedPreflightSnapshot
+
+$clonedExitCodes = [ordered]@{}
+foreach ($k in $command_exit_codes.Keys) {
+    $clonedExitCodes[$k] = $command_exit_codes[$k]
+}
+
+$postflightAuth = [ordered]@{
+    pre_expected_head = $ExpectedBaselineHead
+    command_exit_codes = $clonedExitCodes
+    pre_expected_branch = $ExpectedBranch
+    post_actual_head = $null
+    post_actual_branch = $null
+    worktree_git_dir = $absGitDir
+    common_git_dir = $commonGitDir
+    reason_codes = $gitReasonCodes
+    command_failures = @()
+    unauthorized_mutations = @()
+    observed_status_paths = @()
+    critical_path_hashes_pre = $preflightSnapshot
+    critical_path_hashes_post = $null
+    status = 'MATCH'
+}
+
+try {
+    Set-Location -LiteralPath $resolvedWorkspace
+
+    $postHeadRaw = (git rev-parse HEAD 2>&1)
+    $postflightAuth.command_exit_codes['post_rev_parse_head'] = $LASTEXITCODE
+    if ($LASTEXITCODE -ne 0) {
+        $postflightGitStatus = 'MISMATCH_GIT_FAILURE'
+        $gitReasonCodes += 'HEAD_PARSE_FAILED'
+        $postflightAuth.command_failures += "git rev-parse HEAD failed"
+    } else {
+        $postHead = ($postHeadRaw | Out-String).Trim()
+        $postflightAuth.post_actual_head = $postHead
+        if ($postHead -ne $ExpectedBaselineHead) {
+            $postflightGitStatus = 'MISMATCH_HEAD'
+            $gitReasonCodes += 'MISMATCH_HEAD'
+            $postflightAuth.unauthorized_mutations += "HEAD mutated"
+        }
+    }
+
+    $postBranchRaw = (git rev-parse --abbrev-ref HEAD 2>&1)
+    $postflightAuth.command_exit_codes['post_rev_parse_branch'] = $LASTEXITCODE
+    if ($LASTEXITCODE -ne 0) {
+        $postflightGitStatus = 'MISMATCH_GIT_FAILURE'
+        $gitReasonCodes += 'BRANCH_PARSE_FAILED'
+        $postflightAuth.command_failures += "git rev-parse --abbrev-ref HEAD failed"
+    } else {
+        $postBranch = ($postBranchRaw | Out-String).Trim()
+        $postflightAuth.post_actual_branch = $postBranch
+        if ($postBranch -ne $ExpectedBranch) {
+            if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_BRANCH' }
+            $gitReasonCodes += 'MISMATCH_BRANCH'
+            $postflightAuth.unauthorized_mutations += "Branch mutated"
+        }
+    }
+
+    $postShowRefRaw = (git show-ref 2>&1)
+    $postflightAuth.command_exit_codes['post_show_ref'] = $LASTEXITCODE
+    if ($LASTEXITCODE -ne 0) {
+        $postflightGitStatus = 'MISMATCH_GIT_FAILURE'
+        $gitReasonCodes += 'SHOW_REF_FAILED'
+        $postflightAuth.command_failures += "git show-ref failed"
+    } else {
+        $refsLines = [System.Collections.Generic.List[string]]::new([string[]](($postShowRefRaw | Out-String) -split "`n" | Where-Object { $_.Trim() -ne '' }))
+        $refsLines.Sort([System.StringComparer]::OrdinalIgnoreCase)
+        $postflightSnapshot['GIT_REFS_DIGEST'] = Get-StringSha256 -Text ($refsLines -join "`n")
+    }
+
+    $tempSnapshot = Get-GitCriticalSnapshot -WsPath $resolvedWorkspace -ProtectedArr $combinedProtectedPaths -AbsGit $absGitDir -CommonGit $commonGitDir
+    foreach ($k in $tempSnapshot.Keys) { $postflightSnapshot[$k] = $tempSnapshot[$k] }
+    foreach ($rel in $preExistingUntracked) {
+        $abs = (Join-Path $resolvedWorkspace $rel).Replace('/', '\')
+        if (Test-Path -LiteralPath $abs -PathType Leaf) {
+            $postflightSnapshot[$abs] = (Get-FileSha256 -Path $abs)
+        }
+    }
+    foreach ($k in $preflightSnapshot.Keys) {
+        if (-not $postflightSnapshot.Contains($k)) {
+            if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_PROTECTED_STATE' }
+            $gitReasonCodes += 'MISSING_PREFLIGHT_FILE'
+            $postflightAuth.unauthorized_mutations += "Deleted: $k"
+        } elseif ($preflightSnapshot[$k] -ne $postflightSnapshot[$k]) {
+            if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_PROTECTED_STATE' }
+            $gitReasonCodes += 'MODIFIED_PREFLIGHT_FILE'
+            $postflightAuth.unauthorized_mutations += "Modified: $k"
+        }
+    }
+    foreach ($k in $postflightSnapshot.Keys) {
+        if (-not $preflightSnapshot.Contains($k)) {
+            if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_PROTECTED_STATE' }
+            $gitReasonCodes += 'NEW_PROTECTED_FILE'
+            $postflightAuth.unauthorized_mutations += "Created: $k"
+        }
+    }
+
+    $postStatusRaw = (git status --porcelain -uall 2>&1)
+    $postflightAuth.command_exit_codes['post_status'] = $LASTEXITCODE
+    if ($LASTEXITCODE -ne 0) {
+        $postflightGitStatus = 'MISMATCH_GIT_FAILURE'
+        $gitReasonCodes += 'STATUS_FAILED'
+        $postflightAuth.command_failures += "git status failed"
+    } else {
+        $postStatusLines = ($postStatusRaw | Out-String) -split "`n" | Where-Object { $_.Trim() -ne '' }
+        foreach ($line in $postStatusLines) {
+            $isInvalid = $false
+            for ($c = 0; $c -lt $line.Length; $c++) {
+                if ([int]$line[$c] -gt 127) {
+                    $isInvalid = $true; break
+                }
+            }
+            if ($isInvalid) {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_MODIFIED_PREFLIGHT_FILE' }
+                $gitReasonCodes += 'MODIFIED_PREFLIGHT_FILE'
+                $postflightAuth.unauthorized_mutations += "Non-ASCII character in Git status output: '$line'"
+                continue
+            }
+
+            if ($line.Length -lt 4 -or $line[2] -ne ' ') {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_MODIFIED_PREFLIGHT_FILE' }
+                $gitReasonCodes += 'MODIFIED_PREFLIGHT_FILE'
+                $postflightAuth.unauthorized_mutations += "Unexpected Git status line format: '$line'"
+                continue
+            }
+
+            $idxStatus = $line[0]
+            $wtStatus  = $line[1]
+            $relPath = $line.Substring(3).Trim()
+
+            $allowedStatuses = @('M', 'A', 'D', 'R', 'C', 'U', ' ', '?')
+            if ($allowedStatuses -notcontains $idxStatus -or $allowedStatuses -notcontains $wtStatus) {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_MODIFIED_PREFLIGHT_FILE' }
+                $gitReasonCodes += 'MODIFIED_PREFLIGHT_FILE'
+                $postflightAuth.unauthorized_mutations += "Unexpected Git status '$idxStatus$wtStatus' for '$relPath'"
+                continue
+            }
+
+            if ($relPath.StartsWith('"') -or $relPath.EndsWith('"') -or $relPath.Contains(' -> ') -or $relPath.Contains('\')) {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_MODIFIED_PREFLIGHT_FILE' }
+                $gitReasonCodes += 'MODIFIED_PREFLIGHT_FILE'
+                $postflightAuth.unauthorized_mutations += "Unexpected path representation: $relPath"
+                continue
+            }
+
+            if ($idxStatus -ne ' ' -and $idxStatus -ne '?') {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_STAGED_CHANGES' }
+                $gitReasonCodes += 'STAGED_CHANGES'
+                $postflightAuth.unauthorized_mutations += "Staged: $line"
+                continue
+            }
+            $postflightAuth.observed_status_paths += $relPath
+            $parts = $relPath -split '/'
+            if ($parts -contains '.git' -or $parts -contains 'node_modules') { continue }
+            $absPath = (Join-Path $resolvedWorkspace $relPath).Replace('/', '\')
+
+            $wasExpectedDirty = $false
+            if ($null -ne $acceptedTrackedDirtyEntries) {
+                foreach ($dirty in $acceptedTrackedDirtyEntries) {
+                    $dirtyAbs = (Join-Path $resolvedWorkspace $dirty.path).Replace('/', '\')
+                    if ($absPath -eq $dirtyAbs) {
+                        $wasExpectedDirty = $true
+                        break
+                    }
+                }
+            }
+            if ($wasExpectedDirty) { continue }
+
+            if ($postflightSnapshot.Contains($absPath)) { continue }
+
+            $isAllowed = $false
+            foreach ($w in $derivedAllowedWriteRoots) {
+                if (Test-PathEqualsOrDescends -ChildPath $absPath -ParentPath $w) {
+                    $isAllowed = $true
+                    break
+                }
+            }
+
+            if ($isAllowed) {
+                foreach ($p in $combinedProtectedPaths) {
+                    if (Test-PathEqualsOrDescends -ChildPath $absPath -ParentPath $p) {
+                        $isAllowed = $false
+                        break
+                    }
+                }
+            }
+
+            if (-not $isAllowed) {
+                if ($postflightGitStatus -eq 'MATCH') { $postflightGitStatus = 'MISMATCH_DIRTY_OUTOFSCOPE' }
+                $gitReasonCodes += 'OUTOFSCOPE_CHANGE'
+                $postflightAuth.unauthorized_mutations += "Out of scope: $absPath"
+            }
+        }
+    }
+} catch {
+    Write-Host "CATCH EXCEPTION: $($_)"
+    Write-Host "STACKTRACE: $($_.ScriptStackTrace)"
+    $postflightGitStatus = 'MISMATCH_GIT_ERROR'
+    $gitReasonCodes += 'UNHANDLED_ERROR'
+    $postflightAuth.command_failures += $_.Exception.Message
+} finally {
+    Set-Location -LiteralPath $oldLocForGit
+}
+
+$sortedPostflightSnapshot = [ordered]@{}
+$postflightKeys = [System.Collections.Generic.List[string]]::new([string[]]@($postflightSnapshot.Keys))
+$postflightKeys.Sort([System.StringComparer]::OrdinalIgnoreCase)
+foreach ($k in $postflightKeys) {
+    $sortedPostflightSnapshot[$k] = $postflightSnapshot[$k]
+}
+$postflightSnapshot = $sortedPostflightSnapshot
+
+$postflightAuth.critical_path_hashes_post = $postflightSnapshot
+$postflightAuth.reason_codes = $gitReasonCodes
+
+if ($postflightGitStatus -ne 'MATCH') {
+    $verdictStatus = 'RED'
+    $postflightAuth.status = $postflightGitStatus
+}
+
+
+$postflightAuthJson = ConvertTo-Json -InputObject $postflightAuth -Depth 10
+Write-LfFile -Path (Join-Path $resolvedReceiptRoot 'POSTFLIGHT_WORKSPACE_AUTHORITY.json') -Content $postflightAuthJson
+
+
 $termUtc = (Get-Date).ToUniversalTime().ToString("yyyy-MM-ddTHH:mm:ssZ")
-$isSuccess = ($nativeExitCode -eq 0) -and ($validatorExitCode -eq 0) -and ($verdictStatus -eq 'GREEN') -and ($postflightStatus -eq 'MATCH')
+$isSuccess = ($nativeExitCode -eq 0) -and ($validatorExitCode -eq 0) -and ($verdictStatus -eq 'GREEN') -and ($postflightStatus -eq 'MATCH') -and ($postflightGitStatus -eq 'MATCH')
 
 if ($isSuccess) {
     $runStateContent = $runStateContent.Replace('Status: RUNNING', 'Status: COMPLETED_GREEN')
@@ -919,6 +1327,9 @@ $manifestShaContent = ($manifestLinesSorted -join "`n") + "`n"
 Write-LfFile -Path (Join-Path $resolvedReceiptRoot 'MANIFEST.sha256') -Content $manifestShaContent
 
 if (-not $isSuccess) {
+    if ($postflightGitStatus -ne 'MATCH') {
+        throw "AGY autonomous worker execution failed closed due to post-run git integrity violation. Status=$postflightGitStatus. NativeExit=$nativeExitCode, ValidatorExit=$validatorExitCode, VerdictStatus=$verdictStatus."
+    }
     if ($postflightStatus -ne 'MATCH') {
         throw "AGY autonomous worker execution failed closed due to post-run settings authority mismatch. PreLaunchHash=$actualSettingsHash, PostRunHash=$postRunSettingsHash, PostflightStatus=$postflightStatus. NativeExit=$nativeExitCode, ValidatorExit=$validatorExitCode, VerdictStatus=$verdictStatus."
     }

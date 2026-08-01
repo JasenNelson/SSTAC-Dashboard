@@ -22,10 +22,11 @@ acceptance rules.
 - Claude or the active mission-control Codex session owns scope, safety,
   sequencing, final verification, and owner-facing decisions.
 - AGY owns bounded mechanical implementation, evidence gathering, test
-  harnesses, inventories, long verification runs, and packet drafting.
-- Codex review runs inside the AGY runway at planned checkpoints. AGY must
-  correct accepted findings and re-review; a one-shot review label is not a
-  ship gate.
+  harnesses, inventories, and packet drafting.
+- AGY prepares object-pinned review prompts in the authorized mailbox.
+- AGY pauses for interactive orchestration.
+- Mission Control (or designated interactive orchestrator) runs Codex and returns findings.
+- AGY resolves accepted findings and iterates to mutual-agreement GREEN.
 - The owner should not be a prompt courier. Mission control launches AGY
   directly when its environment permits. Otherwise it provides one file-backed
   workplan and one short PowerShell command.
@@ -103,7 +104,7 @@ Treat all previous handoffs and closeouts as claim lists. Require AGY to
 re-prove volatile SHAs, PR state, worktree state, runtime state, test counts,
 and external-check status.
 
-## Codex Review Loops Inside AGY
+## Brokered Codex Review Loops
 
 Scale review depth with the work:
 
@@ -115,17 +116,14 @@ Scale review depth with the work:
 At every checkpoint AGY must:
 
 1. create an object-pinned, self-contained review prompt;
-2. run Codex and save the full receipt;
-3. classify each finding as accepted, disputed with evidence, or owner-gated;
-4. correct accepted findings and perform a ripple sweep;
-5. re-run a fresh review over the corrected bytes;
-6. iterate to mutual-agreement GREEN or preserve an evidence-backed
-   YELLOW/RED result.
+2. write the prompt to the authorized mailbox protocol directory;
+3. pause execution and return control;
+4. Mission Control or the designated interactive orchestrator will invoke Codex and provide the receipt;
+5. classify each finding as accepted, disputed with evidence, or owner-gated;
+6. correct accepted findings and perform a ripple sweep;
+7. iterate the brokered loop to mutual-agreement GREEN or preserve an evidence-backed YELLOW/RED result.
 
-Use the current `codex-review` skill for the two-tier model strategy. Never
-guess a model ID. A first-round GREEN satisfies an iterative checkpoint only
-when it contains no actionable findings and the required high-reasoning
-confirmation is GREEN on identical bytes.
+Note: The root-AGENTS conflict remains an owner-policy decision because root `AGENTS.md` is read-only. Do not attempt to bypass the read-only constraint or self-approve conflict resolution.
 
 ## Validated AGY Invocation
 
@@ -136,20 +134,20 @@ Preferred project launcher:
 - `tooling/agy/New-AgyExecutorProfile.ps1` (isolated profile generator)
 - `tooling/agy/validate-agy-stream.mjs` (stream receipt validator)
 
-The controller pins prompt SHA-256, branch, baseline, exact AGY version (`1.1.8`), model (`gemini-3.1-pro-high`), effort (`high`), exact writable paths, optional exact commands, mandatory protected paths, Node/validator preflight, post-run settings byte identity, and optional hash-bound tracked dirty continuation paths/hashes (`-ExpectedTrackedDirtyPaths` and `-ExpectedTrackedDirtySha256`).
+The controller pins prompt SHA-256, branch, baseline, exact AGY version (`1.1.8`), model (`gemini-3.1-pro-high`), effort (`high`), exact writable paths, the rejection of every nonempty `AllowedCommands` input, mandatory protected paths, Node/validator preflight, post-run settings byte identity, and optional hash-bound tracked dirty continuation paths/hashes (`-ExpectedTrackedDirtyPaths` and `-ExpectedTrackedDirtySha256`).
 
-Real canaries proved an exact one-file write GREEN, a protected `.env.example` read RED without owner approval prompts, and a hash-bound tracked-dirty continuation GREEN, with settings pre/post hashes matching. AGY 1.1.8 removes the unsupported `allowNonWorkspaceAccess` key at startup; the generator no longer emits or relies on it. The deterministic tooling suite is 85/85 GREEN (20 generator, 35 validator, 30 controller).
+Real canaries proved an exact one-file write GREEN, a protected `.env.example` read RED without owner approval prompts, and a hash-bound tracked-dirty continuation GREEN, with settings pre/post hashes matching. AGY 1.1.8 removes the unsupported `allowNonWorkspaceAccess` key at startup; the generator no longer emits or relies on it. `npm run test:agy-tooling` is hermetic and creates temporary fixtures. `npm run test:agy-canary` is optional, evidence-driven, and separate. The test runner is authoritative for current counts.
 
 A raw invocation may appear only as the controller-owned underlying shape:
 
 ```text
-agy --model gemini-3.1-pro-high --effort high --mode accept-edits --sandbox=false --output-format stream-json --log-file <log.txt> --print-timeout 5m -p "<prompt text>"
+agy --model gemini-3.1-pro-high --effort high --mode accept-edits --sandbox --output-format stream-json --log-file <log.txt> --print-timeout 5m -p "<prompt text>"
 ```
 
 Important:
 
 - Use model slug `gemini-3.1-pro-high` and reasoning flag `--effort high` (note that `--effort high` is the pinned project contract for the verified 1.1.8 model slug `gemini-3.1-pro-high`, not a universal CLI requirement).
-- Explicitly approve the sandbox flag `--sandbox=false`.
+- Use the affirmative standalone `--sandbox` token. Command execution is disabled in the production controller until a separately accepted real sandbox canary exists.
 - Output structured stream JSON via `--output-format stream-json` and record diagnostic logs with `--log-file <log.txt>`.
 - Specify timeouts using Go-duration syntax like `--print-timeout 5m`.
 - Do not pass `--dangerously-skip-permissions`.
