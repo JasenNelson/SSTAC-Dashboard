@@ -107,8 +107,41 @@ class TestPublishWiki(unittest.TestCase):
             "Build Stamp: 2026-07-22\nHEAD: abc123\n",
         )
 
+    def test_prepare_drops_stale_graph_report_before_wiki_lint(self):
+        prepare_staging(self.served, self.staging)
+
+        self.assertFalse(
+            (self.staging / ".graph" / "GRAPH_REPORT.md").exists()
+        )
+        self.assertEqual(
+            (self.staging / ".graph" / "promotion.json").read_text(
+                encoding="ascii"
+            ),
+            '{"ledger":"keep"}\n',
+        )
+        self.assertEqual(
+            (self.staging / ".graph" / "contradictions.json").read_text(
+                encoding="ascii"
+            ),
+            '[{"existing":true}]\n',
+        )
+
+    def test_prepare_rejects_directory_at_stale_graph_report_path(self):
+        stale_report = self.served / ".graph" / "GRAPH_REPORT.md"
+        stale_report.unlink()
+        stale_report.mkdir()
+
+        with self.assertRaisesRegex(PublishError, "must be a regular file"):
+            prepare_staging(self.served, self.staging)
+
+        self.assertTrue(stale_report.is_dir())
+
     def test_missing_new_report_removes_stale_staged_report(self):
         prepare_staging(self.served, self.staging)
+        (self.staging / ".graph" / "GRAPH_REPORT.md").write_text(
+            "stale report restored after prepare\n",
+            encoding="ascii",
+        )
         finalize_staging(
             staging=self.staging,
             graph=self.graph,
