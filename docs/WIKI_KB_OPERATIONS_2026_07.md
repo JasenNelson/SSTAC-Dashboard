@@ -314,3 +314,19 @@ exact Windows PowerShell 5.1 with `-RepoRoot` and a nonempty `-TaskDefinitionId`
 `-AutoCommit`. Successful proof additionally requires exact runtime HEAD/ref/build-stamp
 binding, a terminal `SUCCESS` receipt with native exit 0, build/cluster/publication/orphan/serve
 gates, terminal process custody, endpoint parity, portable IDs, and populated communities.
+
+### Contract A XML Generation
+
+To generate the exact deterministic XML required for the Contract A staged task:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$runtimeRoot\tooling\wiki\register_wiki_nightly_task.ps1" `
+  -SchedulerContract A `
+  -RuntimeRoot $runtimeRoot `
+  -RegistrationDate $registrationDate `
+  -StartBoundary $startBoundary `
+  -TaskDefinitionId $taskDefinitionId `
+  -OutputXmlPath "C:\tmp\contract_a_staged.xml"
+```
+
+This generation never imports, installs, enables, or executes a task. Credential entry and XML import remain separate owner-only actions.
