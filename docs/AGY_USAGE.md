@@ -1,28 +1,8 @@
 # AGY CLI Usage - SSTAC-Dashboard
 
-Status: canonical repo-specific runbook. **PARTIALLY STALE -- see the drift notice below.**
-Last verified: 2026-07-25.
+Status: canonical repo-specific runbook.
+Last verified: 2026-07-30.
 Scope: `C:\Projects\SSTAC-Dashboard` and its linked worktrees.
-
-> **STALE FOR AGY 1.1.8 (recorded 2026-07-30). Do not follow the invocation details in this
-> file without re-probing them first.**
->
-> This runbook's invocation specifics were verified against **AGY 1.1.7 on 2026-07-25**. AGY
-> has since moved to **1.1.8**, and at least two classes of detail are known to have drifted:
-> **model slugs**, and **Go-duration syntax** for timeout-style flags. Any command below that
-> names a model or a duration should be treated as unverified until re-probed against the
-> installed CLI.
->
-> WHAT IS NOT CLAIMED HERE. A replacement AGY-first workflow is **NOT** documented as proven.
-> Mission Control has containment and review canaries pending; **those receipts must land
-> before this runbook's workflow sections are rewritten.** Guessing the 1.1.8 invocation now
-> would repeat the exact failure this file exists to prevent -- a runbook that reads as
-> authoritative while describing a CLI that no longer behaves that way.
->
-> FOLLOW-UP, owner-triaged: re-probe `agy --version`, `agy --help`, the model menu and the
-> duration/timeout flag syntax on 1.1.8, capture the receipts, and only then update the
-> invocation and workflow sections. Until then, prefer a bounded live probe over this file's
-> examples.
 
 This guide overrides generic AGY examples when work targets SSTAC-Dashboard.
 Read it with:
@@ -42,10 +22,11 @@ acceptance rules.
 - Claude or the active mission-control Codex session owns scope, safety,
   sequencing, final verification, and owner-facing decisions.
 - AGY owns bounded mechanical implementation, evidence gathering, test
-  harnesses, inventories, long verification runs, and packet drafting.
-- Codex review runs inside the AGY runway at planned checkpoints. AGY must
-  correct accepted findings and re-review; a one-shot review label is not a
-  ship gate.
+  harnesses, inventories, and packet drafting.
+- AGY prepares object-pinned review prompts in the authorized mailbox.
+- AGY pauses for interactive orchestration.
+- Mission Control (or designated interactive orchestrator) runs Codex and returns findings.
+- AGY resolves accepted findings and iterates to mutual-agreement GREEN.
 - The owner should not be a prompt courier. Mission control launches AGY
   directly when its environment permits. Otherwise it provides one file-backed
   workplan and one short PowerShell command.
@@ -123,7 +104,7 @@ Treat all previous handoffs and closeouts as claim lists. Require AGY to
 re-prove volatile SHAs, PR state, worktree state, runtime state, test counts,
 and external-check status.
 
-## Codex Review Loops Inside AGY
+## Brokered Codex Review Loops
 
 Scale review depth with the work:
 
@@ -135,54 +116,48 @@ Scale review depth with the work:
 At every checkpoint AGY must:
 
 1. create an object-pinned, self-contained review prompt;
-2. run Codex and save the full receipt;
-3. classify each finding as accepted, disputed with evidence, or owner-gated;
-4. correct accepted findings and perform a ripple sweep;
-5. re-run a fresh review over the corrected bytes;
-6. iterate to mutual-agreement GREEN or preserve an evidence-backed
-   YELLOW/RED result.
+2. write the prompt to the authorized mailbox protocol directory;
+3. pause execution and return control;
+4. Mission Control or the designated interactive orchestrator will invoke Codex and provide the receipt;
+5. classify each finding as accepted, disputed with evidence, or owner-gated;
+6. correct accepted findings and perform a ripple sweep;
+7. iterate the brokered loop to mutual-agreement GREEN or preserve an evidence-backed YELLOW/RED result.
 
-Use the current `codex-review` skill for the two-tier model strategy. Never
-guess a model ID. A first-round GREEN satisfies an iterative checkpoint only
-when it contains no actionable findings and the required high-reasoning
-confirmation is GREEN on identical bytes.
+Note: The root-AGENTS conflict remains an owner-policy decision because root `AGENTS.md` is read-only. Do not attempt to bypass the read-only constraint or self-approve conflict resolution.
 
 ## Validated AGY Invocation
 
-The live CLI was AGY 1.1.7 when rechecked on 2026-07-25. The exact SSTAC
-model/mode/root invocation passed bounded probes and launched with:
+SSTAC AGY invocations are **controller-first**, managed through the repo's tracked tooling suite verified on 2026-07-30 against AGY CLI version `1.1.8`.
+
+Preferred project launcher:
+- `tooling/agy/Invoke-AgyAutonomousWorker.ps1` (controller)
+- `tooling/agy/New-AgyExecutorProfile.ps1` (isolated profile generator)
+- `tooling/agy/validate-agy-stream.mjs` (stream receipt validator)
+
+The controller pins prompt SHA-256, branch, baseline, exact AGY version (`1.1.8`), model (`gemini-3.1-pro-high`), effort (`high`), exact writable paths, the rejection of every nonempty `AllowedCommands` input, mandatory protected paths, Node/validator preflight, post-run settings byte identity, and optional hash-bound tracked dirty continuation paths/hashes (`-ExpectedTrackedDirtyPaths` and `-ExpectedTrackedDirtySha256`).
+
+Real canaries proved an exact one-file write GREEN, a protected `.env.example` read RED without owner approval prompts, and a hash-bound tracked-dirty continuation GREEN, with settings pre/post hashes matching. AGY 1.1.8 removes the unsupported `allowNonWorkspaceAccess` key at startup; the generator no longer emits or relies on it. `npm run test:agy-tooling` is hermetic and creates temporary fixtures. `npm run test:agy-canary` is optional, evidence-driven, and separate. The test runner is authoritative for current counts.
+
+A raw invocation may appear only as the controller-owned underlying shape:
 
 ```text
---model "Gemini 3.1 Pro (High)"
---mode accept-edits
---add-dir "<each exact required root>"
---print-timeout "<the bounded run time>"
--p "Read <absolute workplan path> and execute it exactly."
+agy --model gemini-3.1-pro-high --effort high --mode accept-edits --sandbox --output-format stream-json --log-file <log.txt> --print-timeout 5m -p "<prompt text>"
 ```
 
 Important:
 
-- Do not pass `--effort` with `Gemini 3.1 Pro (High)`. AGY rejects that
-  combination before doing work.
+- Use model slug `gemini-3.1-pro-high` and reasoning flag `--effort high` (note that `--effort high` is the pinned project contract for the verified 1.1.8 model slug `gemini-3.1-pro-high`, not a universal CLI requirement).
+- Use the affirmative standalone `--sandbox` token. Command execution is disabled in the production controller until a separately accepted real sandbox canary exists.
+- Output structured stream JSON via `--output-format stream-json` and record diagnostic logs with `--log-file <log.txt>`.
+- Specify timeouts using Go-duration syntax like `--print-timeout 5m`.
 - Do not pass `--dangerously-skip-permissions`.
-- Use one `--add-dir` per exact repo, worktree, scratch, or skill root required
-  by the contract. Do not grant `C:\Projects` or a whole `.git` parent merely
-  for convenience.
-- Verify `agy --version`, `agy --help`, the selected model, login, and a bounded
-  smoke from the actual launch environment before a long run.
-- Use `System.Diagnostics.ProcessStartInfo.ArgumentList` rather than building a
-  shell-quoted command string. Set `UseShellExecute = $false`,
-  `CreateNoWindow = $true`, and redirect stdout/stderr.
-- AGY output is evidence, not authority. Final acceptance uses live files,
-  receipts, exit status, and independent verification.
-- A successful invocation probe does not establish multi-hour reliability. The
-  2026-07-25 broad recovery worker accepted the invocation but closed RED after
-  about 12 minutes with 11 of 22 required artifacts.
+- Verify `agy --version`, `agy --help`, the selected model slug, login, and a bounded smoke from the actual launch environment before a long run.
+- The tracked controller intentionally uses the PowerShell foreground call operator (`&`) with stdout/stderr redirection (`> stream.jsonl 2> stderr.log`) rather than building a shell-quoted command string.
+- AGY output is evidence, not authority. Final acceptance uses live files, receipts, exit status, and independent verification.
 
 ## Supervised Multi-Hour Launch
 
-Every AGY run expected to exceed five minutes uses the
-`supervise-headless-ai-worker` skill and a controller-owned contract.
+For runs over five minutes, `supervise-headless-ai-worker` governs Mission Control custody; the foreground controller (`tooling/agy/Invoke-AgyAutonomousWorker.ps1`) is the worker launcher and does not itself recover after controller loss.
 
 Recommended bundle:
 
@@ -239,8 +214,7 @@ are not a permission boundary.
   status is consistent.
 - Default retry budget is zero. A retry uses a new attempt/controller
   directory after proving prior process cleanup and unchanged authority.
-- The reference supervisor cannot recover after controller loss. Never claim
-  that a new session adopted an unknown worker.
+- Evidence establishes bounded foreground runs, not recovery after controller loss. The foreground controller is the worker launcher and does not itself recover after controller loss; the reference supervisor cannot recover after controller loss; never claim that a new session adopted an unknown worker or recovered after controller loss.
 - Never kill by image name. Re-prove PID, start time, executable path, and
   ownership before any bounded termination.
 
@@ -269,7 +243,7 @@ proof of a stall.
 | `ControllerRoot must be new or empty` | Prompt or another file was written under the controller root before launch | Put prompts in the run root and create a new controller directory per attempt |
 | `INVALID_BREADCRUMB: progress is in the future` | Startup timestamp was slightly ahead of the supervisor clock comparison | Use process start UTC initially and safely non-future UTC for later writes |
 | `INVALID_BREADCRUMB: invalid status` | Wrapper used a status outside the supervisor schema | Use only the supervisor's documented states |
-| Immediate nonzero exit with no artifacts | `--effort high` was passed to a model that does not support it | Probe the exact production invocation and omit unsupported flags |
+| Immediate startup rejection | Using obsolete model display names or omitting required `--effort high` on 1.1.8 | Use controller tooling with model slug `gemini-3.1-pro-high` and `--effort high` |
 | False or fabricated state-map facts | AGY trusted prior packets or expanded short SHAs | Re-run volatile facts, store raw receipts, and never construct a full SHA |
 | Premature `COMPLETED_GREEN` | A broad inventory was treated as a short checklist | Enforce minimum runtime, fallback backlog, iterative reviews, and artifact acceptance |
 | Primary checkout mutation despite a read-only prompt | A write-enabled worker received the dirty primary repo and ran stash, backup/move, and pull operations | Do not grant the primary checkout; use an isolated worktree or enforced read-only boundary and pre-captured receipts |

@@ -18,8 +18,8 @@ OpenCode/GLM-5.2 as a low-risk context and review-prep assistant.
 | Role | Primary tool | Responsibility |
 |---|---|---|
 | Orchestrator | Claude or mission-control Codex | Decide scope, sequence work, adjudicate tradeoffs, stop unsafe runs, synthesize handoffs. |
-| Workhorse | AGY CLI | Execute bounded implementation, multimodal extraction, PDF/image/database work, long verification runs, and autonomous multi-hour runways. |
-| Reviewer | Codex CLI | Perform targeted, strategic, holistic, and comprehensive adversarial review loops. Prefer running Codex inside AGY and iterating corrections to mutual GREEN. |
+| Workhorse | AGY CLI | Execute bounded implementation, multimodal extraction, PDF/image/database work, and autonomous multi-hour runways. |
+| Reviewer | Codex CLI | Perform targeted, strategic, holistic, and comprehensive adversarial review loops. Iterate corrections to mutual GREEN through brokered mailbox prompts. |
 | Scout | OpenCode/GLM-5.2 | Read-only repo scouting, stale-doc detection, log triage, test-output clustering, handoff drafting, Codex review-bundle preparation. |
 | Owner | J. Nelson | Gate live data loads, destructive process actions, major architecture shifts, and cross-lane scheduling conflicts. |
 
@@ -29,8 +29,8 @@ OpenCode/GLM-5.2 as a low-risk context and review-prep assistant.
    escalation triggers.
 2. Mission control selects Rapid Interactive, Bounded Batch, Autonomous
    Multi-Hour, or Correction/Recovery mode and writes one file-backed workplan.
-3. AGY executes the bounded runway and runs Codex review/correction loops at
-   the planned checkpoints.
+3. AGY executes the bounded runway and prepares review prompts in the authorized
+   mailbox for interactive orchestration.
 4. A controller supervises every run over five minutes using PID custody,
    breadcrumbs, logs, stall thresholds, and required artifact acceptance.
 5. AGY produces a closeout with changed files, commands, results, review
@@ -154,8 +154,7 @@ verification required by the current workstream.
 
 ## Long Runs
 
-`docs/AGY_USAGE.md` is the authority for SSTAC AGY launches. Any worker expected
-to exceed five minutes must use the `supervise-headless-ai-worker` contract.
+`docs/AGY_USAGE.md` is the authority for SSTAC AGY launches. For runs over five minutes, `supervise-headless-ai-worker` governs Mission Control custody; the foreground controller (`tooling/agy/Invoke-AgyAutonomousWorker.ps1`) is the worker launcher and does not itself recover after controller loss.
 Supervision detects and rejects bad runs; it does not prevent a write-enabled
 worker from mutating a granted root. Never grant the dirty primary checkout to
 an autonomous writer. Use an isolated worktree or an independently enforced
@@ -177,9 +176,7 @@ Required properties:
 - Native exit zero plus valid terminal breadcrumb and accepted artifacts before
   controller GREEN.
 
-Use `System.Diagnostics.ProcessStartInfo.ArgumentList`. For the live-verified
-Gemini 3.1 Pro High invocation, do not pass `--effort`; AGY rejects it. Never
-use `--dangerously-skip-permissions`.
+The tracked controller (`tooling/agy/Invoke-AgyAutonomousWorker.ps1`) intentionally uses the PowerShell foreground call operator (`&`) with stdout/stderr redirection. For AGY 1.1.8, use model slug `gemini-3.1-pro-high` with `--effort high` (the pinned project contract for the verified 1.1.8 model slug `gemini-3.1-pro-high`, not a universal CLI requirement), `--mode accept-edits`, `--sandbox`, `--output-format stream-json`, `--log-file <log.txt>`, `--print-timeout <duration>`, and `-p <prompt text>`. Never use `--dangerously-skip-permissions`. The production controller rejects every nonempty `AllowedCommands` input, and command execution remains disabled until a separately accepted real sandbox canary.
 
 Do not start duplicate runners against the same DB/ledger. Verify process
 ownership and current command line before proposing any termination. Never kill
@@ -189,9 +186,9 @@ For a multi-hour mission, include a minimum useful runtime and fallback backlog.
 The launch queue is not the entire mission, and AGY must not close early merely
 because the first units are complete.
 
-## Review Depth Inside AGY
+## Review Depth via Brokered Checkpoints
 
-AGY invokes Codex itself at planned checkpoints:
+AGY writes a self-contained review prompt to the mailbox and returns control at planned checkpoints:
 
 - targeted after code, SQL, test, harness, auth, or security-sensitive diffs;
 - strategic before changing architecture, sequencing, or project framing;
@@ -246,7 +243,7 @@ You are the SSTAC AGY-primary executor. Read:
 
 Execute the file-backed workplan for its full bounded runway. Maintain the
 required state, heartbeat, command log, review receipts, and resume artifact.
-Run the specified Codex review/correction loops to mutual GREEN.
+Prepare the specified Codex review prompts in the mailbox and return control to the orchestrator.
 
 Do not write live Supabase, mutate scheduler/MCP/Ollama, deploy, merge, clean,
 prune, delete worktrees, kill unowned processes, or broaden staging. Treat

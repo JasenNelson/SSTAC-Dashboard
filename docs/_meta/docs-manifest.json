@@ -1453,6 +1453,17 @@
       ]
     },
     {
+      "id": "root.agents",
+      "path": "AGENTS.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "safety",
+        "architecture",
+        "codex",
+        "agy"
+      ]
+    },
+    {
       "id": "core.agents",
       "path": "docs/AGENTS.md",
       "lifecycle": "AUTHORITATIVE",
@@ -3122,6 +3133,30 @@
     }
   ],
   "section_catalog": {
+    "agy.role_and_mode": {
+      "path": "docs/AGY_USAGE.md",
+      "heading_text_exact": "Role And Mode Selection"
+    },
+    "agy.boundaries": {
+      "path": "docs/AGY_USAGE.md",
+      "heading_text_exact": "SSTAC-Specific Boundaries"
+    },
+    "agy.validated_invocation": {
+      "path": "docs/AGY_USAGE.md",
+      "heading_text_exact": "Validated AGY Invocation"
+    },
+    "agy.supervised_launch": {
+      "path": "docs/AGY_USAGE.md",
+      "heading_text_exact": "Supervised Multi-Hour Launch"
+    },
+    "root.agy_autonomous_runs": {
+      "path": "AGENTS.md",
+      "heading_text_exact": "AGY Autonomous Runs"
+    },
+    "root.mc_token_efficiency": {
+      "path": "AGENTS.md",
+      "heading_text_exact": "Mission-Control Token Efficiency"
+    },
     "pcg.actual_db_structure": {
       "path": "docs/poll-system/POLL_SYSTEM_COMPLETE_GUIDE.md",
       "heading_text_exact": "📊 **ACTUAL Database Structure (Based on CSV Analysis)**"
@@ -3335,6 +3370,49 @@
           "doc_id": "governance.gate_mode_sop",
           "why": "Gate discipline authority; gate changes must be checked against it."
         }
+      ]
+    },
+    "AGY_GOVERNANCE_GATE": {
+      "description": "Triggered by changes to the SSTAC AGY operating contract, role split, or tracked AGY controller tooling. Added 2026-07-30 after docs:gate passed vacuously on all three AGY governance surfaces.",
+      "triggers": [
+        "AGENTS.md",
+        "docs/AGY_USAGE.md",
+        "SSTAC_AI_PIPELINE.md",
+        "tooling/agy/**"
+      ],
+      "requires_documents": [
+        {
+          "doc_id": "docs.index",
+          "why": "Canonical navigation and documentation-gate entrypoint."
+        },
+        {
+          "doc_id": "core.agents",
+          "why": "Repository safety, autonomous-worker, and release rules."
+        },
+        {
+          "doc_id": "governance.gate_mode_sop",
+          "why": "Commit, push, CI, and owner-gated merge protocol authority."
+        },
+        {
+          "doc_id": "root.agents",
+          "why": "Root safety rules."
+        },
+        {
+          "doc_id": "governance.agy_usage",
+          "why": "Canonical SSTAC-specific AGY launch, supervision, and acceptance contract."
+        },
+        {
+          "doc_id": "governance.sstac_ai_pipeline",
+          "why": "Authoritative role split for Mission Control, AGY, reviewers, and the owner."
+        }
+      ],
+      "requires_sections": [
+        "agy.role_and_mode",
+        "agy.boundaries",
+        "agy.validated_invocation",
+        "agy.supervised_launch",
+        "root.agy_autonomous_runs",
+        "root.mc_token_efficiency"
       ]
     },
     "MATRIX_MAP_GATE": {
