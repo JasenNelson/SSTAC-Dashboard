@@ -1485,6 +1485,17 @@
       "notes": "Gate-discipline authority: Gate Mode, the full six-gate push suite (lint/typecheck/test:ci/monitored build/e2e/docs gate), and commit/push/merge protocols. Cited by CLAUDE.md as the gate authority."
     },
     {
+      "id": "wiki.operations_runbook",
+      "path": "docs/WIKI_KB_OPERATIONS_2026_07.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "wiki",
+        "graphify",
+        "operations"
+      ],
+      "notes": "Canonical Wiki/Graphify operations runbook."
+    },
+    {
       "id": "governance.agy_usage",
       "path": "docs/AGY_USAGE.md",
       "lifecycle": "AUTHORITATIVE",
@@ -3369,6 +3380,35 @@
         {
           "doc_id": "governance.gate_mode_sop",
           "why": "Gate discipline authority; gate changes must be checked against it."
+        }
+      ]
+    },
+    "WIKI_GOVERNANCE_GATE": {
+      "description": "Triggered by changes to the authoritative Wiki/Graphify operations runbook or the complete Wiki production and test surface.",
+      "triggers": [
+        "docs/WIKI_KB_OPERATIONS_2026_07.md",
+        "tooling/wiki/**"
+      ],
+      "requires_documents": [
+        {
+          "doc_id": "docs.index",
+          "why": "Canonical documentation entrypoint."
+        },
+        {
+          "doc_id": "docs.manifest",
+          "why": "Documentation registration and bundle authority."
+        },
+        {
+          "doc_id": "root.agents",
+          "why": "Repository Wiki and agent safety rules."
+        },
+        {
+          "doc_id": "governance.gate_mode_sop",
+          "why": "Commit, push, and merge gate discipline."
+        },
+        {
+          "doc_id": "wiki.operations_runbook",
+          "why": "Canonical Wiki/Graphify operational authority."
         }
       ]
     },
