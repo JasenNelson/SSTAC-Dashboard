@@ -10,7 +10,9 @@ from pathlib import Path
 
 WIKI_DIR = Path(__file__).parent.parent
 POWERSHELL = os.environ.get("PREFLIGHT_POWERSHELL") or shutil.which("powershell")
-EVIDENCE_ROOT = WIKI_DIR.parents[2]
+EVIDENCE_ROOT = Path(
+    os.environ.get("SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT") or WIKI_DIR.parents[2]
+)
 FOCUSED_TEST_TMP = EVIDENCE_ROOT / "focused-test-tmp"
 
 
@@ -424,6 +426,1586 @@ class TestWrapperContracts(unittest.TestCase):
         )
         self.assertNotIn("json.load(open(sys.argv[1]))", self.wrapper)
 
+
+
+class TestGraphifyGuardrailRootOnly(unittest.TestCase):
+    def setUp(self):
+        if not POWERSHELL:
+            self.skipTest("PowerShell unavailable")
+        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
+        self.guardrail_path = WIKI_DIR / "graphify_guardrail.ps1"
+        self.guardrail = self.guardrail_path.read_text(encoding="ascii")
+        self.nightly = (WIKI_DIR / "nightly_wiki_sync.ps1").read_text(encoding="ascii")
+        self.semantic = (WIKI_DIR / "semantic_extract.ps1").read_text(encoding="ascii")
+        self.sync = (WIKI_DIR / "sync_wiki.ps1").read_text(encoding="ascii")
+        self.ollama_lock_path = WIKI_DIR / "ollama_lock.ps1"
+        self.ollama_lock = self.ollama_lock_path.read_text(encoding="ascii")
+        self.runbook = (WIKI_DIR.parents[1] / "docs" / "WIKI_KB_OPERATIONS_2026_07.md").read_text(
+            encoding="ascii"
+        )
+
+    def run_guardrail_command(self, command):
+        result = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-Command",
+                f". '{self.guardrail_path}'; {command}",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        return json.loads(result.stdout.strip().splitlines()[-1])
+
+    @staticmethod
+    def fake_start_process(
+        timeout=True,
+        exit_code=0,
+        dispose_throws=False,
+        initial_wait_throws=False,
+        kill_throws=False,
+    ):
+        initial_has_exited = "$false" if timeout else "$true"
+        first_wait = "$false" if timeout else "$true"
+        dispose_body = "throw 'dispose failed'" if dispose_throws else "$script:disposed=$true"
+        kill_body = (
+            "$script:killCalls++;throw 'synthetic root kill failure'"
+            if kill_throws
+            else "$script:killCalls++;$this.HasExited=$true"
+        )
+        wait_failure = (
+            "if ($milliseconds -eq 1000) { throw 'synthetic initial wait failure' };"
+            if initial_wait_throws
+            else ""
+        )
+        return (
+            "$script:killCalls=0;$script:waitArgs=@();$script:disposed=$false;"
+            f"$fake=[pscustomobject]@{{Id=[int]42;Handle=[int]99;HasExited={initial_has_exited};"
+            f"ExitCode=[int]{exit_code}}};"
+            f"$fake|Add-Member ScriptMethod Kill {{ {kill_body} }};"
+            "$fake|Add-Member ScriptMethod WaitForExit { param($milliseconds) "
+            "$script:waitArgs+=@($milliseconds);"
+            "if ($null -eq $milliseconds) { return };"
+            + wait_failure
+            +
+            f"if ($milliseconds -eq 1000) {{ return {first_wait} }};return $this.HasExited }};"
+            f"$fake|Add-Member ScriptMethod Dispose {{ {dispose_body} }};"
+            "function Start-Process { param($FilePath,$ArgumentList,[switch]$PassThru,"
+            "[switch]$NoNewWindow,$RedirectStandardOutput,$RedirectStandardError) return $script:fake };"
+        )
+
+    @staticmethod
+    def temp_cleanup_failure_mock():
+        return (
+            "$script:removeCalls=0;"
+            "function Remove-Item { param($LiteralPath,[switch]$Force,$ErrorAction) "
+            "$script:removeCalls++;Microsoft.PowerShell.Management\\Remove-Item "
+            "-LiteralPath $LiteralPath -Force -ErrorAction SilentlyContinue;"
+            "if ($script:removeCalls -eq 1) { throw 'synthetic temp cleanup failure' } };"
+        )
+
+    def test_timeout_uses_exact_retained_root_and_never_claims_tree_killed(self):
+        command = self.fake_start_process() + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' -GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls;"
+            "WaitArgs=$script:waitArgs;Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertTrue(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 124)
+        self.assertEqual(result["ProcId"], 42)
+        self.assertFalse(result["Killed"])
+        self.assertFalse(result["GuardrailFailed"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertTrue(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertEqual(evidence["KillCalls"], 1)
+        self.assertEqual(evidence["WaitArgs"], [1000, 5000])
+        self.assertTrue(evidence["Disposed"])
+
+    def test_pre_start_failures_are_structured_without_orphan_claim(self):
+        start_failure = (
+            "function Start-Process { throw 'synthetic start failure' };"
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 5 -Compress"
+        )
+        result = self.run_guardrail_command(start_failure)
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertFalse(result["TimedOut"])
+        self.assertNotEqual(result["ExitCode"], 0)
+        self.assertIsNone(result["ProcId"])
+        self.assertEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertIn("synthetic start failure", result["GuardrailError"])
+
+        capture_failure = (
+            "function Start-Process { throw 'synthetic capture start failure' };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 5 -Compress"
+        )
+        capture_result = self.run_guardrail_command(capture_failure)
+        self.assertTrue(capture_result["GuardrailFailed"])
+        self.assertFalse(capture_result["OrphanRisk"])
+        self.assertFalse(capture_result["TimedOut"])
+        self.assertIsNone(capture_result["ProcId"])
+        self.assertEqual(capture_result["TempCleanupStatus"], "REMOVED")
+
+    def test_capture_temp_allocation_failures_are_honestly_classified(self):
+        first_failure = (
+            "$script:allocCalls=0;"
+            "function New-GuardedTempFile { $script:allocCalls++;"
+            "throw 'synthetic first allocation failure' };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;AllocCalls=$script:allocCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        first = self.run_guardrail_command(first_failure)
+        self.assertEqual(first["AllocCalls"], 1)
+        self.assertTrue(first["Result"]["GuardrailFailed"])
+        self.assertFalse(first["Result"]["OrphanRisk"])
+        self.assertEqual(first["Result"]["CleanupStatus"], "START_FAILED")
+        self.assertEqual(first["Result"]["TempCleanupStatus"], "NOT_CREATED")
+        self.assertIsNone(first["Result"]["TempCleanupError"])
+
+        second_failure = (
+            "$script:allocCalls=0;"
+            "function New-GuardedTempFile { $script:allocCalls++;"
+            "if($script:allocCalls -eq 2){throw 'synthetic second allocation failure'};"
+            "return [System.IO.Path]::GetTempFileName() };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;AllocCalls=$script:allocCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        second = self.run_guardrail_command(second_failure)
+        self.assertEqual(second["AllocCalls"], 2)
+        self.assertTrue(second["Result"]["GuardrailFailed"])
+        self.assertFalse(second["Result"]["OrphanRisk"])
+        self.assertEqual(second["Result"]["CleanupStatus"], "START_FAILED")
+        self.assertEqual(second["Result"]["TempCleanupStatus"], "PARTIAL_REMOVED")
+        self.assertIsNone(second["Result"]["TempCleanupError"])
+
+    def test_initial_wait_exception_attempts_exact_root_cleanup(self):
+        command = self.fake_start_process(initial_wait_throws=True) + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls;"
+            "WaitArgs=$script:waitArgs;Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertFalse(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 1)
+        self.assertTrue(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertIn("synthetic initial wait failure", result["GuardrailError"])
+        self.assertEqual(evidence["KillCalls"], 1)
+        self.assertEqual(evidence["WaitArgs"], [1000, 5000])
+        self.assertTrue(evidence["Disposed"])
+
+    def test_root_kill_and_wait_failures_are_surfaced(self):
+        kill_failure = (
+            "$fake=[pscustomobject]@{Id=[int]42;Handle=[int]99;HasExited=$false};"
+            "$fake|Add-Member ScriptMethod Kill { throw 'synthetic kill failure' };"
+            "$fake|Add-Member ScriptMethod WaitForExit { param($milliseconds) $false };"
+            "$result=Stop-GuardedRootProcess -Process $fake;"
+            "$result|ConvertTo-Json -Compress"
+        )
+        kill_result = self.run_guardrail_command(kill_failure)
+        self.assertFalse(kill_result["RootTerminated"])
+        self.assertEqual(kill_result["Status"], "ROOT_TERMINATION_FAILED")
+        self.assertIn("synthetic kill failure", kill_result["Error"])
+        self.assertIn("WaitForExit timed out", kill_result["Error"])
+
+        wait_failure = (
+            "$fake=[pscustomobject]@{Id=[int]42;Handle=[int]99;HasExited=$false};"
+            "$fake|Add-Member ScriptMethod Kill { $this.HasExited=$true };"
+            "$fake|Add-Member ScriptMethod WaitForExit { param($milliseconds) "
+            "throw 'synthetic wait failure' };"
+            "$result=Stop-GuardedRootProcess -Process $fake;"
+            "$result|ConvertTo-Json -Compress"
+        )
+        wait_result = self.run_guardrail_command(wait_failure)
+        self.assertTrue(wait_result["RootTerminated"])
+        self.assertEqual(wait_result["Status"], "ROOT_TERMINATION_FAILED")
+        self.assertIn("synthetic wait failure", wait_result["Error"])
+
+    def test_normal_completion_and_dispose_error_are_compatible(self):
+        command = self.fake_start_process(timeout=False, exit_code=7) + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' -GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls;"
+            "Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertFalse(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 7)
+        self.assertEqual(result["ProcId"], 42)
+        self.assertFalse(result["Killed"])
+        self.assertFalse(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertFalse(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(evidence["KillCalls"], 0)
+        self.assertTrue(evidence["Disposed"])
+
+        capture_command = self.fake_start_process(timeout=False, exit_code=3) + (
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 5 -Compress"
+        )
+        capture_result = self.run_guardrail_command(capture_command)
+        self.assertFalse(capture_result["TimedOut"])
+        self.assertEqual(capture_result["ExitCode"], 3)
+        self.assertEqual(capture_result["ProcId"], 42)
+        self.assertFalse(capture_result["Killed"])
+        self.assertFalse(capture_result["GuardrailFailed"])
+        self.assertFalse(capture_result["OrphanRisk"])
+        self.assertEqual(capture_result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(capture_result["TempCleanupStatus"], "REMOVED")
+
+        capture_dispose_command = self.fake_start_process(
+            timeout=False, exit_code=0, dispose_throws=True
+        ) + (
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        capture_dispose_evidence = self.run_guardrail_command(capture_dispose_command)
+        capture_dispose_result = capture_dispose_evidence["Result"]
+        self.assertEqual(capture_dispose_result["ExitCode"], 1)
+        self.assertTrue(capture_dispose_result["GuardrailFailed"])
+        self.assertFalse(capture_dispose_result["OrphanRisk"])
+        self.assertFalse(capture_dispose_result["RootTerminated"])
+        self.assertEqual(capture_dispose_result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertIn("dispose failed", capture_dispose_result["ProcessDisposeError"])
+        self.assertEqual(capture_dispose_evidence["KillCalls"], 0)
+
+        dispose_command = self.fake_start_process(
+            timeout=False, exit_code=0, dispose_throws=True
+        ) + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' -GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        dispose_evidence = self.run_guardrail_command(dispose_command)
+        dispose_result = dispose_evidence["Result"]
+        self.assertEqual(dispose_result["ExitCode"], 1)
+        self.assertTrue(dispose_result["GuardrailFailed"])
+        self.assertFalse(dispose_result["OrphanRisk"])
+        self.assertFalse(dispose_result["RootTerminated"])
+        self.assertEqual(dispose_result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertIn("dispose failed", dispose_result["ProcessDisposeError"])
+        self.assertEqual(dispose_evidence["KillCalls"], 0)
+
+    def test_capture_cleanup_failure_does_not_mask_timeout_124(self):
+        command = self.fake_start_process() + self.temp_cleanup_failure_mock() + (
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;RemoveCalls=$script:removeCalls;"
+            "Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertTrue(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 124)
+        self.assertFalse(result["Killed"])
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertTrue(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertEqual(result["TempCleanupStatus"], "REMOVAL_FAILED")
+        self.assertIn("synthetic temp cleanup failure", result["TempCleanupError"])
+        self.assertEqual(evidence["RemoveCalls"], 2)
+        self.assertTrue(evidence["Disposed"])
+
+        nonzero_command = (
+            self.fake_start_process(timeout=False, exit_code=9)
+            + self.temp_cleanup_failure_mock()
+            + (
+                "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+                "-GraphifyArgs @('arg') -TimeoutSec 1;"
+                "$result|ConvertTo-Json -Depth 5 -Compress"
+            )
+        )
+        nonzero_result = self.run_guardrail_command(nonzero_command)
+        self.assertFalse(nonzero_result["TimedOut"])
+        self.assertEqual(nonzero_result["ExitCode"], 9)
+        self.assertTrue(nonzero_result["GuardrailFailed"])
+        self.assertFalse(nonzero_result["OrphanRisk"])
+        self.assertEqual(nonzero_result["TempCleanupStatus"], "REMOVAL_FAILED")
+        self.assertIn("synthetic temp cleanup failure", nonzero_result["TempCleanupError"])
+
+        success_command = (
+            self.fake_start_process(timeout=False, exit_code=0)
+            + self.temp_cleanup_failure_mock()
+            + (
+                "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+                "-GraphifyArgs @('arg') -TimeoutSec 1;"
+                "$result|ConvertTo-Json -Depth 5 -Compress"
+            )
+        )
+        success_result = self.run_guardrail_command(success_command)
+        self.assertFalse(success_result["TimedOut"])
+        self.assertEqual(success_result["ExitCode"], 1)
+        self.assertTrue(success_result["GuardrailFailed"])
+        self.assertFalse(success_result["OrphanRisk"])
+        self.assertEqual(success_result["TempCleanupStatus"], "REMOVAL_FAILED")
+        self.assertIn("synthetic temp cleanup failure", success_result["TempCleanupError"])
+
+        partial_command = (
+            "$script:allocCalls=0;"
+            "function New-GuardedTempFile { $script:allocCalls++;"
+            "if($script:allocCalls -eq 2){throw 'synthetic second allocation failure'};"
+            "return [System.IO.Path]::GetTempFileName() };"
+            "function Remove-Item { param($LiteralPath,[switch]$Force,$ErrorAction) "
+            "Microsoft.PowerShell.Management\\Remove-Item -LiteralPath $LiteralPath "
+            "-Force -ErrorAction SilentlyContinue;throw 'synthetic partial cleanup failure' };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 5 -Compress"
+        )
+        partial_result = self.run_guardrail_command(partial_command)
+        self.assertEqual(partial_result["ExitCode"], 1)
+        self.assertTrue(partial_result["GuardrailFailed"])
+        self.assertFalse(partial_result["OrphanRisk"])
+        self.assertEqual(
+            partial_result["TempCleanupStatus"], "PARTIAL_REMOVAL_FAILED"
+        )
+
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            fixture_root = Path(temp_dir)
+            stdout_path = fixture_root / "stdout.tmp"
+            stderr_path = fixture_root / "stderr.tmp"
+            stdout_path.write_text("", encoding="ascii")
+            stderr_path.write_text("", encoding="ascii")
+            no_op_removal = (
+                f"$script:tempPaths=@('{stdout_path}','{stderr_path}');"
+                "$script:tempIndex=0;function New-GuardedTempFile {"
+                "$path=$script:tempPaths[$script:tempIndex];$script:tempIndex++;return $path};"
+                "function Remove-Item { param($LiteralPath,[switch]$Force,$ErrorAction) return };"
+            )
+            no_op_command = (
+                self.fake_start_process(timeout=False, exit_code=0)
+                + no_op_removal
+                + "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+                "-GraphifyArgs @('arg') -TimeoutSec 1;"
+                "$result|ConvertTo-Json -Depth 5 -Compress"
+            )
+            no_op_result = self.run_guardrail_command(no_op_command)
+            self.assertTrue(stdout_path.exists())
+            self.assertTrue(stderr_path.exists())
+            self.assertEqual(no_op_result["ExitCode"], 1)
+            self.assertTrue(no_op_result["GuardrailFailed"])
+            self.assertFalse(no_op_result["OrphanRisk"])
+            self.assertEqual(no_op_result["TempCleanupStatus"], "REMOVAL_FAILED")
+            self.assertIn("survived terminating removal", no_op_result["TempCleanupError"])
+
+            partial_path = fixture_root / "partial.tmp"
+            partial_path.write_text("", encoding="ascii")
+            partial_no_op_command = (
+                "$script:allocCalls=0;function New-GuardedTempFile {"
+                "$script:allocCalls++;if($script:allocCalls -eq 2){"
+                "throw 'synthetic second allocation failure'};"
+                f"return '{partial_path}' }};"
+                "function Remove-Item { param($LiteralPath,[switch]$Force,$ErrorAction) return };"
+                "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+                "-GraphifyArgs @('arg') -TimeoutSec 1;"
+                "$result|ConvertTo-Json -Depth 5 -Compress"
+            )
+            partial_no_op_result = self.run_guardrail_command(partial_no_op_command)
+            self.assertTrue(partial_path.exists())
+            self.assertEqual(partial_no_op_result["ExitCode"], 1)
+            self.assertTrue(partial_no_op_result["GuardrailFailed"])
+            self.assertFalse(partial_no_op_result["OrphanRisk"])
+            self.assertEqual(
+                partial_no_op_result["TempCleanupStatus"],
+                "PARTIAL_REMOVAL_FAILED",
+            )
+            self.assertIn(
+                "survived terminating removal",
+                partial_no_op_result["TempCleanupError"],
+            )
+
+        semantic = (WIKI_DIR / "semantic_extract.ps1").read_text(encoding="ascii")
+        self.assertLess(
+            semantic.index("$tempCleanupStatus = [string]$gr.TempCleanupStatus"),
+            semantic.index("if ($gr.TimedOut)"),
+        )
+        self.assertIn(
+            'Write-Log "Graphify temp cleanup evidence: '
+            'status=$tempCleanupStatus; error=$tempCleanupError"',
+            semantic,
+        )
+        self.assertIn('"Temp Cleanup Status: $tempCleanupStatus"', semantic)
+        self.assertIn('"Temp Cleanup Error: $tempCleanupError"', semantic)
+        self.assertIn("redirected temp cleanup failed", self.guardrail)
+        self.assertIn("$releaseFailed", semantic)
+
+    def test_capture_output_read_failure_preserves_timeout_evidence(self):
+        normal_command = self.fake_start_process(timeout=False, exit_code=0) + (
+            "function Get-Content { throw 'synthetic normal output read failure' };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls;"
+            "Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        normal_evidence = self.run_guardrail_command(normal_command)
+        normal_result = normal_evidence["Result"]
+        self.assertFalse(normal_result["TimedOut"])
+        self.assertEqual(normal_result["ExitCode"], 1)
+        self.assertTrue(normal_result["GuardrailFailed"])
+        self.assertFalse(normal_result["OrphanRisk"])
+        self.assertFalse(normal_result["RootTerminated"])
+        self.assertEqual(normal_result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertIn("normal output read failure", normal_result["OutputReadError"])
+        self.assertEqual(normal_evidence["KillCalls"], 0)
+        self.assertTrue(normal_evidence["Disposed"])
+
+        command = self.fake_start_process(kill_throws=True) + (
+            "function Get-Content { throw 'synthetic output read failure' };"
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls;"
+            "Disposed=$script:disposed}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertTrue(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 124)
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertFalse(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATION_FAILED")
+        self.assertIn("synthetic root kill failure", result["CleanupError"])
+        self.assertIn("WaitForExit timed out", result["CleanupError"])
+        self.assertIn("synthetic output read failure", result["OutputReadError"])
+        self.assertIn("redirected output read failed", result["GuardrailError"])
+        self.assertEqual(evidence["KillCalls"], 1)
+        self.assertTrue(evidence["Disposed"])
+
+    def test_timeout_cleanup_failures_are_wrapper_guardrail_failures(self):
+        standard_command = self.fake_start_process(kill_throws=True) + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        standard_evidence = self.run_guardrail_command(standard_command)
+        standard = standard_evidence["Result"]
+        self.assertTrue(standard["TimedOut"])
+        self.assertEqual(standard["ExitCode"], 124)
+        self.assertEqual(standard["ProcId"], 42)
+        self.assertFalse(standard["Killed"])
+        self.assertTrue(standard["GuardrailFailed"])
+        self.assertTrue(standard["OrphanRisk"])
+        self.assertFalse(standard["RootTerminated"])
+        self.assertEqual(standard["CleanupStatus"], "ROOT_TERMINATION_FAILED")
+        self.assertIn("synthetic root kill failure", standard["CleanupError"])
+        self.assertEqual(standard_evidence["KillCalls"], 1)
+
+        capture_command = self.fake_start_process(kill_throws=True) + (
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 1;"
+            "[pscustomobject]@{Result=$result;KillCalls=$script:killCalls}"
+            "|ConvertTo-Json -Depth 5 -Compress"
+        )
+        capture_evidence = self.run_guardrail_command(capture_command)
+        capture = capture_evidence["Result"]
+        self.assertTrue(capture["TimedOut"])
+        self.assertEqual(capture["ExitCode"], 124)
+        self.assertEqual(capture["ProcId"], 42)
+        self.assertFalse(capture["Killed"])
+        self.assertTrue(capture["GuardrailFailed"])
+        self.assertTrue(capture["OrphanRisk"])
+        self.assertFalse(capture["RootTerminated"])
+        self.assertEqual(capture["CleanupStatus"], "ROOT_TERMINATION_FAILED")
+        self.assertIn("synthetic root kill failure", capture["CleanupError"])
+        self.assertIsNone(capture["OutputReadError"])
+        self.assertEqual(capture_evidence["KillCalls"], 1)
+
+    def test_nightly_semantic_exit_124_always_sets_orphan_risk(self):
+        condition = next(
+            line.strip()
+            for line in self.nightly.splitlines()
+            if line.strip().startswith("if ($sr.OrphanRisk")
+        )
+        self.assertEqual(self.nightly.count(condition), 1)
+        command = (
+            "$cases=@("
+            "[pscustomobject]@{OrphanRisk=$false;ExitCode=124},"
+            "[pscustomobject]@{OrphanRisk=$true;ExitCode=1},"
+            "[pscustomobject]@{OrphanRisk=$false;ExitCode=1});"
+            "$risks=@();foreach($sr in $cases){$gpuOrphanRisk=$false;"
+            + condition
+            + ";$risks+=@($gpuOrphanRisk)};$risks|ConvertTo-Json -Compress"
+        )
+        risks = self.run_guardrail_command(command)
+        self.assertEqual(risks, [True, True, False])
+
+    def test_production_n5_plan_truth_table_and_source_binding(self):
+        helper_tail = self.nightly.split(
+            "function Get-NightlyN5Plan", 1
+        )[1]
+        helper = (
+            "function Get-NightlyN5Plan"
+            + helper_tail.split("\nfunction Get-NightlyN5ReleaseMode", 1)[0]
+        )
+        command = (
+            helper
+            + ";$plans=@("
+            "(Get-NightlyN5Plan -SkipLabeling $false -SkipSemantic $false "
+            "-LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150),"
+            "(Get-NightlyN5Plan -SkipLabeling $false -SkipSemantic $true "
+            "-LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150),"
+            "(Get-NightlyN5Plan -SkipLabeling $true -SkipSemantic $false "
+            "-LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150),"
+            "(Get-NightlyN5Plan -SkipLabeling $true -SkipSemantic $true "
+            "-LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150));"
+            "$plans|ConvertTo-Json -Depth 5 -Compress"
+        )
+        plans = self.run_guardrail_command(command)
+        self.assertEqual(
+            plans,
+            [
+                {
+                    "Mode": "LABEL_AND_SEMANTIC",
+                    "SkipAll": False,
+                    "RunLabel": True,
+                    "RunSemantic": True,
+                    "LockExpiryMinutes": 150,
+                },
+                {
+                    "Mode": "LABEL_ONLY",
+                    "SkipAll": False,
+                    "RunLabel": True,
+                    "RunSemantic": False,
+                    "LockExpiryMinutes": 60,
+                },
+                {
+                    "Mode": "SEMANTIC_ONLY",
+                    "SkipAll": False,
+                    "RunLabel": False,
+                    "RunSemantic": True,
+                    "LockExpiryMinutes": 150,
+                },
+                {
+                    "Mode": "SKIP_ALL",
+                    "SkipAll": True,
+                    "RunLabel": False,
+                    "RunSemantic": False,
+                    "LockExpiryMinutes": 0,
+                },
+            ],
+        )
+        n5 = self.nightly.split('Write-Host "--- N5 SEMANTIC ---"', 1)[1].split(
+            'Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"', 1
+        )[0]
+        for production_binding in (
+            "$n5Plan = Get-NightlyN5Plan",
+            "$($n5Plan.Mode)",
+            "elseif ($n5Plan.SkipAll)",
+            "$lockMins = $n5Plan.LockExpiryMinutes",
+            "if ($n5Plan.RunLabel)",
+            "if ($n5Plan.RunSemantic -and -not $gpuOrphanRisk -and -not $step5Fail)",
+        ):
+            with self.subTest(production_binding=production_binding):
+                self.assertIn(production_binding, n5)
+        after_plan_creation = n5.split(
+            "-LabelAndSemanticExpiryMinutes $cfgExpiryLabelSem", 1
+        )[1]
+        self.assertNotIn("$SkipLabeling", after_plan_creation)
+        self.assertNotIn("$SkipSemantic", after_plan_creation)
+        self.assertEqual(n5.count("Invoke-NightlyN5Release"), 1)
+        self.assertEqual(n5.count("Invoke-OllamaLockRelease"), 0)
+        unexpected = n5.index('Write-Host "FAIL: unexpected N5 exception:')
+        self.assertLess(n5.rindex("} catch {", 0, unexpected), unexpected)
+        self.assertGreater(n5.index("} finally {", unexpected), unexpected)
+
+    def test_production_n5_release_selection_is_fail_closed(self):
+        helper_tail = self.nightly.split(
+            "function Get-NightlyN5ReleaseMode", 1
+        )[1]
+        helper = (
+            "function Get-NightlyN5ReleaseMode"
+            + helper_tail.split("\ntry { . $terminalizerPath }", 1)[0]
+        )
+        command = (
+            helper
+            + ";$script:calls=@();"
+            "function New-OllamaReleaseResult { param([string]$RequestedMode,[string]$Error='');"
+            "[pscustomobject]@{schema_version='1.0';requested_mode=$RequestedMode;"
+            "outcome='FAILED';evidence_valid=$false;ownership_matched=$false;"
+            "lock_absent=$false;manual_hold_verified=$false;drift_log_written=$false;"
+            "marker_written=$false;error=$Error} };"
+            "function Test-OllamaReleaseResult { param($Result,[string]$ExpectedRequestedMode);"
+            "return ($Result.evidence_valid -and $Result.requested_mode -ceq $ExpectedRequestedMode) };"
+            "function Invoke-OllamaLockRelease { param($Handle,[switch]$GpuOrphanRisk,"
+            "[string]$Status);$manual=$PSBoundParameters.ContainsKey('GpuOrphanRisk');"
+            "$requested=if($manual){'MANUAL_HOLD'}else{$Status};"
+            "$script:calls+=@([pscustomobject]@{Handle=$Handle;GpuSwitch=$manual;Status=$Status});"
+            "[pscustomobject]@{schema_version='1.0';requested_mode=$requested;"
+            "outcome=if($manual){'VERIFIED_MANUAL_HOLD'}else{'VERIFIED_RELEASED'};"
+            "evidence_valid=$true;ownership_matched=$true;lock_absent=(-not $manual);"
+            "manual_hold_verified=$manual;drift_log_written=$true;marker_written=$manual;error=''} };"
+            "$cases=@("
+            "[pscustomobject]@{O=$false;F=$false;U=$false},"
+            "[pscustomobject]@{O=$false;F=$false;U=$true},"
+            "[pscustomobject]@{O=$false;F=$true;U=$false},"
+            "[pscustomobject]@{O=$false;F=$true;U=$true},"
+            "[pscustomobject]@{O=$true;F=$false;U=$false},"
+            "[pscustomobject]@{O=$true;F=$false;U=$true},"
+            "[pscustomobject]@{O=$true;F=$true;U=$false},"
+            "[pscustomobject]@{O=$true;F=$true;U=$true});"
+            "$results=@();foreach($case in $cases){$before=$script:calls.Count;"
+            "$release=Invoke-NightlyN5Release -Handle 'h' -GpuOrphanRisk $case.O "
+            "-Step5Fail $case.F -UnexpectedException $case.U;"
+            "$call=$script:calls[-1];$results+=@([pscustomobject]@{"
+            "O=$case.O;F=$case.F;U=$case.U;InvocationCount=$script:calls.Count-$before;"
+            "SelectedMode=$release.selected_mode;EvidenceStatus=$release.status;"
+            "ObservedMode=$release.observed.requested_mode;ObservedOutcome=$release.observed.outcome;"
+            "GraphOrphanRisk=$release.GraphOrphanRisk;GpuSwitch=$call.GpuSwitch;Status=$call.Status})};"
+            "$results|ConvertTo-Json -Depth 5 -Compress"
+        )
+        releases = self.run_guardrail_command(command)
+        expected_modes = (
+            "COMPLETED_GREEN",
+            "COMPLETED_RED",
+            "COMPLETED_RED",
+            "COMPLETED_RED",
+            "MANUAL_HOLD",
+            "MANUAL_HOLD",
+            "MANUAL_HOLD",
+            "MANUAL_HOLD",
+        )
+        for result, expected_mode in zip(releases, expected_modes):
+            self.assertEqual(result["InvocationCount"], 1)
+            self.assertEqual(result["SelectedMode"], expected_mode)
+            self.assertEqual(result["ObservedMode"], expected_mode)
+            self.assertEqual(result["EvidenceStatus"], "PASS")
+            self.assertEqual(result["GraphOrphanRisk"], result["O"])
+            self.assertEqual(result["GpuSwitch"], expected_mode == "MANUAL_HOLD")
+            expected_status = "" if expected_mode == "MANUAL_HOLD" else expected_mode
+            self.assertEqual(result.get("Status"), expected_status)
+
+        failure_command = (
+            helper
+            + ";$script:releaseCalls=0;"
+            "function New-OllamaReleaseResult { param([string]$RequestedMode,[string]$Error='');"
+            "[pscustomobject]@{schema_version='1.0';requested_mode=$RequestedMode;"
+            "outcome='FAILED';evidence_valid=$false;ownership_matched=$false;"
+            "lock_absent=$false;manual_hold_verified=$false;drift_log_written=$false;"
+            "marker_written=$false;error=$Error} };"
+            "function Test-OllamaReleaseResult { return $false };"
+            "function Invoke-OllamaLockRelease { param($Handle,[switch]$GpuOrphanRisk,"
+            "[string]$Status);$script:releaseCalls++;throw 'synthetic release failure' };"
+            "$releaseResult=Invoke-NightlyN5Release -Handle 'h' "
+            "-GpuOrphanRisk $false -Step5Fail $false -UnexpectedException $false;"
+            "[pscustomobject]@{Calls=$script:releaseCalls;Status=$releaseResult.status;"
+            "Error=$releaseResult.observed.error}|ConvertTo-Json -Compress"
+        )
+        failure = self.run_guardrail_command(failure_command)
+        self.assertEqual(failure["Calls"], 1)
+        self.assertIn("synthetic release failure", failure["Error"])
+        self.assertEqual(failure["Status"], "FAIL")
+
+        release_result_tail = self.ollama_lock.split(
+            "function New-OllamaReleaseResult", 1
+        )[1]
+        release_result_helpers = (
+            "function New-OllamaReleaseResult"
+            + release_result_tail.split("\nfunction Remove-OllamaOwnedLockFile", 1)[0]
+        )
+        validator_tail = self.nightly.split(
+            "function Test-NightlyN5ReleaseEvidence", 1
+        )[1]
+        release_validator = (
+            "function Test-NightlyN5ReleaseEvidence"
+            + validator_tail.split("\nfunction Test-NightlySemanticEvidenceSuccess", 1)[0]
+        )
+        validator_command = (
+            release_result_helpers
+            + ";"
+            + release_validator
+            + ";$normal=New-OllamaReleaseResult -RequestedMode COMPLETED_GREEN "
+            "-Outcome VERIFIED_RELEASED -EvidenceValid $true -OwnershipMatched $true "
+            "-LockAbsent $true -DriftLogWritten $true;"
+            "$manual=New-OllamaReleaseResult -RequestedMode MANUAL_HOLD "
+            "-Outcome VERIFIED_MANUAL_HOLD -EvidenceValid $true -OwnershipMatched $true "
+            "-ManualHoldVerified $true -DriftLogWritten $true -MarkerWritten $true;"
+            "$failedObserved=New-OllamaReleaseResult -RequestedMode COMPLETED_GREEN "
+            "-Error 'release failed';"
+            "$thrownObserved=New-OllamaReleaseResult -RequestedMode COMPLETED_GREEN "
+            "-Error 'release helper threw: synthetic';"
+            "$contradict=New-OllamaReleaseResult -RequestedMode COMPLETED_GREEN "
+            "-Outcome VERIFIED_RELEASED -EvidenceValid $true -OwnershipMatched $true "
+            "-LockAbsent $true -DriftLogWritten $true -MarkerWritten $true;"
+            "function Envelope($Mode,$Observed,[bool]$Risk,[string]$Status='PASS',[string]$Error=''){"
+            "[pscustomobject][ordered]@{required=$true;status=$Status;selected_mode=$Mode;"
+            "observed=$Observed;error=$Error;GraphOrphanRisk=$Risk}};"
+            "$valid=Envelope COMPLETED_GREEN $normal $false;"
+            "$validManual=Envelope MANUAL_HOLD $manual $true;"
+            "$notRequired=[pscustomobject][ordered]@{required=$false;status='NOT_REQUIRED';"
+            "selected_mode=$null;observed=$null;error='';GraphOrphanRisk=$false};"
+            "$absent=[pscustomobject][ordered]@{required=$true;status='PASS';"
+            "selected_mode='COMPLETED_GREEN';error='';GraphOrphanRisk=$false};"
+            "$extra=[pscustomobject][ordered]@{required=$true;status='PASS';"
+            "selected_mode='COMPLETED_GREEN';observed=$normal;error='';"
+            "GraphOrphanRisk=$false;extra='x'};"
+            "$checks=[pscustomobject][ordered]@{"
+            "Valid=(Test-NightlyN5ReleaseEvidence -Evidence $valid -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "ValidManual=(Test-NightlyN5ReleaseEvidence -Evidence $validManual -ExpectedRequired $true -ExpectedGraphOrphanRisk $true);"
+            "NotRequired=(Test-NightlyN5ReleaseEvidence -Evidence $notRequired -ExpectedRequired $false -ExpectedGraphOrphanRisk $false);"
+            "Null=(Test-NightlyN5ReleaseEvidence -Evidence $null -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Absent=(Test-NightlyN5ReleaseEvidence -Evidence $absent -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Array=(Test-NightlyN5ReleaseEvidence -Evidence @($valid,$valid) -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Extra=(Test-NightlyN5ReleaseEvidence -Evidence $extra -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Failed=(Test-NightlyN5ReleaseEvidence -Evidence (Envelope COMPLETED_GREEN $failedObserved $false 'FAIL' 'release failed') -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Thrown=(Test-NightlyN5ReleaseEvidence -Evidence (Envelope COMPLETED_GREEN $thrownObserved $false 'FAIL' 'release helper threw') -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "ModeMismatch=(Test-NightlyN5ReleaseEvidence -Evidence (Envelope COMPLETED_RED $normal $false) -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "Contradict=(Test-NightlyN5ReleaseEvidence -Evidence (Envelope COMPLETED_GREEN $contradict $false) -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "StatusMismatch=(Test-NightlyN5ReleaseEvidence -Evidence (Envelope COMPLETED_GREEN $normal $false 'FAIL' '') -ExpectedRequired $true -ExpectedGraphOrphanRisk $false);"
+            "GraphRiskMismatch=(Test-NightlyN5ReleaseEvidence -Evidence $valid -ExpectedRequired $true -ExpectedGraphOrphanRisk $true)};"
+            "$checks|ConvertTo-Json -Compress"
+        )
+        validator_result = self.run_guardrail_command(validator_command)
+        self.assertTrue(validator_result["Valid"])
+        self.assertTrue(validator_result["ValidManual"])
+        self.assertTrue(validator_result["NotRequired"])
+        for rejected in (
+            "Null",
+            "Absent",
+            "Array",
+            "Extra",
+            "Failed",
+            "Thrown",
+            "ModeMismatch",
+            "Contradict",
+            "StatusMismatch",
+            "GraphRiskMismatch",
+        ):
+            with self.subTest(release_validator_rejects=rejected):
+                self.assertFalse(validator_result[rejected])
+
+        release_seam = self.nightly.split(
+            "function Invoke-NightlyN5Release", 1
+        )[1].split("\nfunction Test-NightlySemanticEvidenceSuccess", 1)[0]
+        self.assertEqual(release_seam.count("Invoke-OllamaLockRelease"), 1)
+        self.assertIn("Get-NightlyN5ReleaseMode", release_seam)
+        self.assertIn("Test-NightlyN5ReleaseEvidence", self.nightly)
+        release_finally = self.nightly.split(
+            'Write-Host "FAIL: unexpected N5 exception:', 1
+        )[1].split("$step5Status =", 1)[0]
+        self.assertIn("Test-NightlyN5ReleaseEvidence", release_finally)
+        terminal_predicate = self.nightly.split(
+            "if ($finalState -eq 'SUCCESS'", 1
+        )[1].split("# Deliberately the last child process", 1)[0]
+        self.assertIn("Test-NightlyN5ReleaseEvidence", terminal_predicate)
+        self.assertIn("$n5ReleaseRequired", terminal_predicate)
+        self.assertIn("$n5ReleaseExpectedGraphOrphanRisk", terminal_predicate)
+        self.assertIn("trap {", self.nightly)
+        self.assertIn("Complete-NightlyRun 1 'FAILED'", self.nightly)
+        self.assertIn("$n5UnexpectedException = $true", self.nightly)
+        self.assertIn(
+            "Write-Host \"FAIL: unexpected N5 exception:",
+            self.nightly,
+        )
+        self.assertLess(
+            self.semantic.index("if ($gr.OrphanRisk)"),
+            self.semantic.index("foreach ($line in $gr.OutputLines)"),
+        )
+        self.assertLess(
+            self.semantic.index("$guardrailFailed = $gr.GuardrailFailed"),
+            self.semantic.index("foreach ($line in $gr.OutputLines)"),
+        )
+        self.assertLess(
+            self.semantic.index("if (-not $guardrailFailed)"),
+            self.semantic.index("foreach ($line in $gr.OutputLines)"),
+        )
+        skip_guard = (
+            'if ($graphOrphanRisk -or -not $n1BuildOk -or '
+            '$step2Status -ne "OK")'
+        )
+        self.assertEqual(self.nightly.count(skip_guard), 2)
+        self.assertIn("SKIP: N3 secrets requires proven N1/N2", self.nightly)
+        self.assertIn("SKIP: N4 smoke requires proven N1/N2", self.nightly)
+        self.assertNotIn(".TimedOut -and -not $gr.Killed", self.nightly)
+        for token in (
+            "if ($gr.OrphanRisk) { $graphOrphanRisk = $true }",
+            "if ($gr.OrphanRisk) { $gpuOrphanRisk = $true }",
+            "if ($postSemanticCluster.OrphanRisk) { $gpuOrphanRisk = $true }",
+            "$gr.GuardrailFailed -or $gr.TimedOut -or $gr.ExitCode -ne 0",
+            "$sr.GuardrailFailed -or $sr.TimedOut -or $sr.ExitCode -ne 0",
+        ):
+            with self.subTest(token=token):
+                self.assertIn(token, self.nightly)
+
+    def test_semantic_evidence_writer_validator_and_terminal_binding(self):
+        writer_tail = self.semantic.split(
+            "function Write-SemanticEvidenceFile", 1
+        )[1]
+        writer = (
+            "function Write-SemanticEvidenceFile"
+            + writer_tail.split('\nWrite-Log "--- START SEMANTIC EXTRACT', 1)[0]
+        )
+        hash_tail = self.nightly.split("function Get-NightlyFileSha256", 1)[1]
+        hash_helper = (
+            "function Get-NightlyFileSha256"
+            + hash_tail.split("\nfunction Get-NightlyExactNonnegativeInteger", 1)[0]
+        )
+        validator_tail = self.nightly.split(
+            "function Get-NightlyValidatedSemanticEvidence", 1
+        )[1]
+        validator = (
+            "function Get-NightlyValidatedSemanticEvidence"
+            + validator_tail.split("\ntry { . $terminalizerPath }", 1)[0]
+        )
+        run_id = "12345678-1234-4123-8123-123456789abc"
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            evidence_path = str(Path(temp_dir) / "semantic-evidence.json")
+            bad_path = str(Path(temp_dir) / "bad-evidence.json")
+            command = (
+                writer
+                + ";"
+                + hash_helper
+                + ";"
+                + validator
+                + f";$path='{evidence_path}';$badPath='{bad_path}';"
+                "$evidence=[pscustomobject][ordered]@{schema_version='1.0';"
+                f"run_id='{run_id}';graphify_exit_code=[int]0;graphify_status='OK';"
+                "timed_out=$false;guardrail_failed=$false;orphan_risk=$false;"
+                "temp_cleanup_status='REMOVED';temp_cleanup_error=''};"
+                "Write-SemanticEvidenceFile -Path $path -Evidence $evidence;"
+                "$before=[IO.File]::ReadAllText($path);$overwriteError=$null;"
+                "try{Write-SemanticEvidenceFile -Path $path -Evidence $evidence}"
+                "catch{$overwriteError=$_.Exception.Message};"
+                "$after=[IO.File]::ReadAllText($path);"
+                f"$valid=Get-NightlyValidatedSemanticEvidence -Path $path -ExpectedRunId '{run_id}' -ObservedWrapperExitCode ([int]0);"
+                "$bad=[pscustomobject][ordered]@{schema_version='1.0';"
+                f"run_id='{run_id}';graphify_exit_code=[int]0;graphify_status='OK';"
+                "timed_out='false';guardrail_failed=$false;orphan_risk=$false;"
+                "temp_cleanup_status='REMOVED';temp_cleanup_error=''};"
+                "$bad|ConvertTo-Json|Set-Content -LiteralPath $badPath -Encoding UTF8;"
+                "$validationError=$null;try{Get-NightlyValidatedSemanticEvidence "
+                f"-Path $badPath -ExpectedRunId '{run_id}' -ObservedWrapperExitCode ([int]0)|Out-Null"
+                "}catch{$validationError=$_.Exception.Message};"
+                "[pscustomobject]@{Valid=$valid;OverwriteError=$overwriteError;"
+                "Unchanged=($before -ceq $after);ValidationError=$validationError}"
+                "|ConvertTo-Json -Depth 6 -Compress"
+            )
+            result = self.run_guardrail_command(command)
+        self.assertEqual(result["Valid"]["status"], "PASS")
+        self.assertEqual(result["Valid"]["receipt_name"], "semantic-evidence.json")
+        self.assertRegex(result["Valid"]["sha256"], r"^[0-9a-f]{64}$")
+        self.assertEqual(result["Valid"]["observed_wrapper_exit_code"], 0)
+        self.assertEqual(result["Valid"]["temp_cleanup_status"], "REMOVED")
+        self.assertEqual(result["Valid"]["temp_cleanup_error"], "")
+        self.assertTrue(result["Unchanged"])
+        self.assertTrue(result["OverwriteError"])
+        self.assertIn("timed_out type is invalid", result["ValidationError"])
+        for source_binding in (
+            "-EvidencePath', $semanticEvidencePath, '-EvidenceRunId', $runId",
+            "$semanticEvidence = Get-NightlyValidatedSemanticEvidence",
+            "semantic_evidence = $semanticEvidence",
+            "$semanticExecutionAttempted -and -not (Test-NightlySemanticEvidenceSuccess",
+        ):
+            with self.subTest(source_binding=source_binding):
+                self.assertIn(source_binding, self.nightly)
+        self.assertIn("[System.IO.FileMode]::CreateNew", self.semantic)
+        self.assertIn("EvidencePath and EvidenceRunId must be provided together", self.semantic)
+        self.assertIn("nightly evidence requires SkipLock", self.semantic)
+        self.assertIn("$evidenceWriteFailed = $true", self.semantic)
+        self.assertIn(
+            "$semanticTerminalExit = Get-SemanticTerminalExitCode", self.semantic
+        )
+        self.assertIn("-ReleaseFailed $releaseFailed", self.semantic)
+
+    def test_semantic_evidence_contradiction_table_and_terminal_defense(self):
+        hash_tail = self.nightly.split("function Get-NightlyFileSha256", 1)[1]
+        hash_helper = (
+            "function Get-NightlyFileSha256"
+            + hash_tail.split("\nfunction Get-NightlyExactNonnegativeInteger", 1)[0]
+        )
+        semantic_tail = self.nightly.split(
+            "function Test-NightlySemanticEvidenceSuccess", 1
+        )[1]
+        semantic_helpers = (
+            "function Test-NightlySemanticEvidenceSuccess"
+            + semantic_tail.split("\nfunction Invoke-NightlyN5PostMutationScan", 1)[0]
+        )
+        run_id = "12345678-1234-4123-8123-123456789abc"
+        base = {
+            "schema_version": "1.0",
+            "run_id": run_id,
+            "graphify_exit_code": 0,
+            "graphify_status": "OK",
+            "timed_out": False,
+            "guardrail_failed": False,
+            "orphan_risk": False,
+            "temp_cleanup_status": "REMOVED",
+            "temp_cleanup_error": "",
+        }
+        cases = [
+            ("graphify_exit", {"graphify_exit_code": 7}, 0),
+            ("graphify_status", {"graphify_status": "FAIL"}, 0),
+            ("timeout", {"timed_out": True}, 0),
+            ("guardrail", {"guardrail_failed": True}, 0),
+            ("orphan", {"orphan_risk": True}, 0),
+            ("cleanup_not_run", {"temp_cleanup_status": "NOT_RUN"}, 0),
+            ("cleanup_not_created", {"temp_cleanup_status": "NOT_CREATED"}, 0),
+            ("cleanup_partial", {"temp_cleanup_status": "PARTIAL_REMOVED"}, 0),
+            (
+                "cleanup_partial_failure",
+                {"temp_cleanup_status": "PARTIAL_REMOVAL_FAILED"},
+                0,
+            ),
+            ("cleanup_failure", {"temp_cleanup_status": "REMOVAL_FAILED"}, 0),
+            ("cleanup_error", {"temp_cleanup_error": "residue"}, 0),
+            ("run_id", {"run_id": "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa"}, 0),
+            ("outer_exit", {}, 1),
+        ]
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            payload = Path(temp_dir) / "semantic-evidence.json"
+            for label, changes, observed_exit in cases:
+                with self.subTest(label=label):
+                    candidate = dict(base)
+                    candidate.update(changes)
+                    payload.write_text(json.dumps(candidate), encoding="ascii")
+                    command = (
+                        hash_helper
+                        + ";"
+                        + semantic_helpers
+                        + ";$errorText='';$passed=$false;try{"
+                        + f"Get-NightlyValidatedSemanticEvidence -Path '{payload}' "
+                        + f"-ExpectedRunId '{run_id}' -ObservedWrapperExitCode ([int]{observed_exit})|Out-Null;"
+                        + "$passed=$true}catch{$errorText=$_.Exception.Message};"
+                        + "[pscustomobject]@{Passed=$passed;Error=$errorText}|ConvertTo-Json -Compress"
+                    )
+                    result = self.run_guardrail_command(command)
+                    self.assertFalse(result["Passed"], result)
+                    self.assertTrue(result["Error"], result)
+
+            forged_cases = cases
+            for label, changes, observed_exit in forged_cases:
+                with self.subTest(forged=label):
+                    candidate = dict(base)
+                    candidate.update(changes)
+                    candidate.update(
+                        {
+                            "status": "PASS",
+                            "source_property_schema_valid": True,
+                            "observed_wrapper_exit_code": observed_exit,
+                        }
+                    )
+                    payload.write_text(json.dumps(candidate), encoding="ascii")
+                    command = (
+                        semantic_helpers.split(
+                            "function Get-NightlyValidatedSemanticEvidence", 1
+                        )[0]
+                        + f";$d=Get-Content -LiteralPath '{payload}' -Raw|ConvertFrom-Json;"
+                        + f"$ok=Test-NightlySemanticEvidenceSuccess -Evidence $d -ExpectedRunId '{run_id}';"
+                        + "[pscustomobject]@{Passed=$ok}|ConvertTo-Json -Compress"
+                    )
+                    result = self.run_guardrail_command(command)
+                    self.assertFalse(result["Passed"], result)
+
+    def test_n5_common_post_mutation_scan_and_exact_zero_gates(self):
+        exact_tail = self.nightly.split("function Test-NightlyExactZero", 1)[1]
+        exact_helper = (
+            "function Test-NightlyExactZero"
+            + exact_tail.split("\nfunction Get-NightlyN5Plan", 1)[0]
+        )
+        scan_tail = self.nightly.split(
+            "function Test-NightlyN5PostMutationScanEvidence", 1
+        )[1]
+        scan_helpers = (
+            "function Test-NightlyN5PostMutationScanEvidence"
+            + scan_tail.split("\ntry { . $terminalizerPath }", 1)[0]
+        )
+        exact_command = (
+            exact_helper
+            + ";$values=@([int]0,[int]1,[int]2,[int]7,[int]124);$out=@();"
+            + "foreach($value in $values){$out+=@(Test-NightlyExactZero $value)};"
+            + "$out|ConvertTo-Json -Compress"
+        )
+        self.assertEqual(
+            self.run_guardrail_command(exact_command),
+            [True, False, False, False, False],
+        )
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            root = Path(temp_dir)
+            valid_root = root / "valid"
+            valid_graph = valid_root / "graphify-out"
+            valid_graph.mkdir(parents=True)
+            (valid_graph / "graph.json").write_text("{}", encoding="ascii")
+            missing_target_root = root / "missing-target"
+            missing_target_root.mkdir()
+            missing_graph_root = root / "missing-graph"
+            (missing_graph_root / "graphify-out").mkdir(parents=True)
+            zero = root / "scan-zero.cmd"
+            red = root / "scan-red.cmd"
+            zero.write_text(
+                "@echo off\necho noisy scan line one\necho noisy scan line two\nexit /b 0\n",
+                encoding="ascii",
+            )
+            red.write_text("@echo off\nexit /b 7\n", encoding="ascii")
+            command = (
+                exact_helper
+                + ";"
+                + scan_helpers
+                + f";$pass=Invoke-NightlyN5PostMutationScan -MutationAttempted $true -PythonExe '{zero}' -RepoRoot '{valid_root}';"
+                + "$passCount=@($pass).Count;$passProperties=@($pass.PSObject.Properties.Name);"
+                + "$passValid=Test-NightlyN5PostMutationScanEvidence -Evidence $pass -ExpectedMutationAttempted $true;"
+                + f"$red=Invoke-NightlyN5PostMutationScan -MutationAttempted $true -PythonExe '{red}' -RepoRoot '{valid_root}';"
+                + f"$thrown=Invoke-NightlyN5PostMutationScan -MutationAttempted $true -PythonExe '{root / 'missing.exe'}' -RepoRoot '{valid_root}';"
+                + f"$missingTarget=Invoke-NightlyN5PostMutationScan -MutationAttempted $true -PythonExe '{zero}' -RepoRoot '{missing_target_root}';"
+                + f"$missingGraph=Invoke-NightlyN5PostMutationScan -MutationAttempted $true -PythonExe '{zero}' -RepoRoot '{missing_graph_root}';"
+                + f"$skip=Invoke-NightlyN5PostMutationScan -MutationAttempted $false -PythonExe '{root / 'missing.exe'}' -RepoRoot '{missing_target_root}';"
+                + "$valid=[pscustomobject][ordered]@{status='PASS';mutation_attempted=$true;exit_code=[int]0;error=''};"
+                + "$notRequired=[pscustomobject][ordered]@{status='NOT_REQUIRED';mutation_attempted=$false;exit_code=$null;error=''};"
+                + "$failed=[pscustomobject][ordered]@{status='FAIL';mutation_attempted=$true;exit_code=[int]7;error='red'};"
+                + "$extra=[pscustomobject][ordered]@{status='PASS';mutation_attempted=$true;exit_code=[int]0;error='';extra='x'};"
+                + "$missing=[pscustomobject][ordered]@{status='PASS';mutation_attempted=$true;exit_code=[int]0};"
+                + "$wrongType=[pscustomobject][ordered]@{status='PASS';mutation_attempted=$true;exit_code='0';error=''};"
+                + "$contradict=[pscustomobject][ordered]@{status='PASS';mutation_attempted=$true;exit_code=[int]7;error=''};"
+                + "$validator=[pscustomobject][ordered]@{"
+                + "Null=(Test-NightlyN5PostMutationScanEvidence -Evidence $null -ExpectedMutationAttempted $true);"
+                + "Array=(Test-NightlyN5PostMutationScanEvidence -Evidence @($valid,$valid) -ExpectedMutationAttempted $true);"
+                + "Extra=(Test-NightlyN5PostMutationScanEvidence -Evidence $extra -ExpectedMutationAttempted $true);"
+                + "Missing=(Test-NightlyN5PostMutationScanEvidence -Evidence $missing -ExpectedMutationAttempted $true);"
+                + "WrongType=(Test-NightlyN5PostMutationScanEvidence -Evidence $wrongType -ExpectedMutationAttempted $true);"
+                + "Contradict=(Test-NightlyN5PostMutationScanEvidence -Evidence $contradict -ExpectedMutationAttempted $true);"
+                + "Failed=(Test-NightlyN5PostMutationScanEvidence -Evidence $failed -ExpectedMutationAttempted $true);"
+                + "WrongExpected=(Test-NightlyN5PostMutationScanEvidence -Evidence $valid -ExpectedMutationAttempted $false);"
+                + "NotRequired=(Test-NightlyN5PostMutationScanEvidence -Evidence $notRequired -ExpectedMutationAttempted $false)};"
+                + "[pscustomobject]@{Pass=$pass;PassCount=$passCount;PassProperties=$passProperties;PassValid=$passValid;"
+                + "PassStatusType=$pass.status.GetType().FullName;PassMutationType=$pass.mutation_attempted.GetType().FullName;"
+                + "PassExitType=$pass.exit_code.GetType().FullName;PassErrorType=$pass.error.GetType().FullName;"
+                + "Red=$red;Thrown=$thrown;MissingTarget=$missingTarget;MissingGraph=$missingGraph;Skip=$skip;Validator=$validator}"
+                + "|ConvertTo-Json -Depth 7 -Compress"
+            )
+            result = self.run_guardrail_command(command)
+        self.assertEqual(result["PassCount"], 1)
+        self.assertEqual(
+            result["PassProperties"],
+            ["status", "mutation_attempted", "exit_code", "error"],
+        )
+        self.assertTrue(result["PassValid"])
+        self.assertEqual(result["Pass"]["status"], "PASS")
+        self.assertTrue(result["Pass"]["mutation_attempted"])
+        self.assertEqual(result["Pass"]["exit_code"], 0)
+        self.assertEqual(result["Pass"]["error"], "")
+        self.assertEqual(result["PassStatusType"], "System.String")
+        self.assertEqual(result["PassMutationType"], "System.Boolean")
+        self.assertIn(result["PassExitType"], ("System.Int32", "System.Int64"))
+        self.assertEqual(result["PassErrorType"], "System.String")
+        self.assertEqual(result["Red"]["status"], "FAIL")
+        self.assertEqual(result["Red"]["exit_code"], 7)
+        self.assertEqual(result["Thrown"]["status"], "FAIL")
+        self.assertEqual(result["MissingTarget"]["status"], "FAIL")
+        self.assertIn("target directory is missing", result["MissingTarget"]["error"])
+        self.assertEqual(result["MissingGraph"]["status"], "FAIL")
+        self.assertIn("graph.json is missing", result["MissingGraph"]["error"])
+        self.assertEqual(result["Skip"]["status"], "NOT_REQUIRED")
+        self.assertTrue(result["Validator"]["NotRequired"])
+        for rejected in (
+            "Null",
+            "Array",
+            "Extra",
+            "Missing",
+            "WrongType",
+            "Contradict",
+            "Failed",
+            "WrongExpected",
+        ):
+            with self.subTest(scan_validator_rejects=rejected):
+                self.assertFalse(result["Validator"][rejected])
+
+        n5 = self.nightly.split('Write-Host "--- N5 SEMANTIC ---"', 1)[1].split(
+            'Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"', 1
+        )[0]
+        self.assertEqual(n5.count("Invoke-NightlyN5PostMutationScan"), 1)
+        self.assertEqual(n5.count("$n5MutationAttempted = $true"), 3)
+        scan = n5.index("$n5PostMutationScan = Invoke-NightlyN5PostMutationScan")
+        for mutation_site in (
+            "$gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('label'",
+            "$sr = Invoke-GraphifyGuarded -GraphifyExe 'powershell'",
+            "$postSemanticCluster = Invoke-GraphifyGuarded",
+        ):
+            with self.subTest(scan_after_mutation_site=mutation_site):
+                self.assertGreater(scan, n5.index(mutation_site))
+        self.assertLess(scan, n5.index("PROMOTION (THE ONLY invocation"))
+        self.assertIn("-MutationAttempted $n5MutationAttempted", n5)
+        scan_validation = n5.index(
+            "Test-NightlyN5PostMutationScanEvidence -Evidence $n5PostMutationScan"
+        )
+        self.assertGreater(scan_validation, scan)
+        self.assertLess(scan_validation, n5.index("$step5Fail = $true", scan_validation))
+        terminal_predicate = self.nightly.split(
+            "if ($finalState -eq 'SUCCESS'", 1
+        )[1].split("# Deliberately the last child process", 1)[0]
+        self.assertIn("Test-NightlyN5PostMutationScanEvidence", terminal_predicate)
+        self.assertIn("n5_post_mutation_scan = $n5PostMutationScan", self.nightly)
+        self.assertIn("n5_release = $n5ReleaseEvidence", self.nightly)
+        self.assertRegex(
+            self.nightly,
+            r"gen_docs_scope\.py[^\n]+\n\$docsScopeExit = \$LASTEXITCODE\nif \(-not \(Test-NightlyExactZero \$docsScopeExit\)\)",
+        )
+        self.assertRegex(
+            self.nightly,
+            r"graph_smoke\.py[^\n]+\n\s*\$n4SmokeExit = \$LASTEXITCODE\n\s*if \(-not \(Test-NightlyExactZero \$n4SmokeExit\)\)",
+        )
+        n1_gate = self.nightly.split("gen_docs_scope.py", 1)[1].split(
+            "$hashBytes =", 1
+        )[0]
+        n4_gate = self.nightly.split('Write-Host "--- N4 SMOKE ---"', 1)[1].split(
+            'Write-Host "--- N5 SEMANTIC ---"', 1
+        )[0]
+        self.assertIn("Complete-NightlyRun 1 'FAILED'", n1_gate)
+        self.assertIn("Complete-NightlyRun 1 'FAILED'", n4_gate)
+
+    def test_real_release_seam_is_redirected_structured_and_fail_closed(self):
+        handle = (
+            "$h=[pscustomobject]@{LaneId='sstac-wiki';SessionId='session-r10';"
+            "OwnerPid=[int]4242;BlockId='SSTAC-R10';"
+            "AcquiredAt=[datetime]'2026-08-01T18:00:00Z'};"
+        )
+
+        def run_release(root, body):
+            command = (
+                f". '{self.ollama_lock_path}';"
+                + f"$script:OllamaControlRoot='{root}';"
+                + handle
+                + body
+            )
+            return self.run_guardrail_command(command)
+
+        def write_lock(root, **changes):
+            payload = {
+                "lane_id": "sstac-wiki",
+                "session_id": "session-r10",
+                "process_id": 4242,
+                "scheduled_block_id": "SSTAC-R10",
+                "block_or_adhoc": "block",
+                "purpose": "test",
+                "acquired_at": "2026-08-01T18:00:00.0000000Z",
+                "expires_at": "2026-08-01T20:00:00.0000000Z",
+            }
+            payload.update(changes)
+            path = root / "OLLAMA_ACTIVE.lock"
+            path.write_text(json.dumps(payload), encoding="ascii")
+            return path
+
+        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            base_root = Path(temp_dir)
+
+            missing_root = base_root / "missing"
+            missing_root.mkdir()
+            missing = run_release(
+                missing_root,
+                "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                "$r|ConvertTo-Json -Depth 5 -Compress",
+            )
+            self.assertEqual(missing["outcome"], "FAILED")
+            self.assertIn("missing", missing["error"])
+
+            normal_root = base_root / "normal"
+            normal_root.mkdir()
+            write_lock(normal_root)
+            normal = run_release(
+                normal_root,
+                "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_GREEN;"
+                "$ok=Test-OllamaReleaseResult -Result $r -ExpectedRequestedMode COMPLETED_GREEN;"
+                "[pscustomobject]@{Result=$r;Valid=$ok;LockExists=(Test-Path -LiteralPath (Get-OllamaLockPath));"
+                "ScheduleCount=@(Get-ChildItem -LiteralPath $script:OllamaControlRoot -Filter 'OLLAMA_SCHEDULE_*.md').Count}"
+                "|ConvertTo-Json -Depth 6 -Compress",
+            )
+            self.assertTrue(normal["Valid"])
+            self.assertFalse(normal["LockExists"])
+            self.assertEqual(normal["ScheduleCount"], 1)
+            self.assertEqual(normal["Result"]["outcome"], "VERIFIED_RELEASED")
+
+            mismatch_cases = (
+                ("lane", {"lane_id": "other-lane"}),
+                ("session", {"session_id": "other-session"}),
+                ("pid", {"process_id": 9999}),
+                ("block", {"scheduled_block_id": "OTHER-BLOCK"}),
+            )
+            for label, changes in mismatch_cases:
+                with self.subTest(mismatch=label):
+                    root = base_root / f"mismatch-{label}"
+                    root.mkdir()
+                    lock = write_lock(root, **changes)
+                    before = lock.read_bytes()
+                    result = run_release(
+                        root,
+                        "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                        "$r|ConvertTo-Json -Depth 5 -Compress",
+                    )
+                    self.assertEqual(result["outcome"], "FAILED")
+                    self.assertFalse(result["ownership_matched"])
+                    self.assertEqual(lock.read_bytes(), before)
+
+            delete_root = base_root / "delete-failure"
+            delete_root.mkdir()
+            write_lock(delete_root)
+            deletion = run_release(
+                delete_root,
+                "function Remove-OllamaOwnedLockFile { throw 'synthetic deletion failure' };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                "[pscustomobject]@{Result=$r;LockExists=(Test-Path -LiteralPath (Get-OllamaLockPath))}"
+                "|ConvertTo-Json -Depth 6 -Compress",
+            )
+            self.assertEqual(deletion["Result"]["outcome"], "FAILED")
+            self.assertTrue(deletion["LockExists"])
+
+            surviving_root = base_root / "surviving-readback"
+            surviving_root.mkdir()
+            write_lock(surviving_root)
+            surviving = run_release(
+                surviving_root,
+                "function Remove-OllamaOwnedLockFile { param($Path) return };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                "[pscustomobject]@{Result=$r;LockExists=(Test-Path -LiteralPath (Get-OllamaLockPath))}"
+                "|ConvertTo-Json -Depth 6 -Compress",
+            )
+            self.assertEqual(surviving["Result"]["outcome"], "FAILED")
+            self.assertIn("survived deletion", surviving["Result"]["error"])
+            self.assertTrue(surviving["LockExists"])
+
+            drift_root = base_root / "normal-drift-failure"
+            drift_root.mkdir()
+            write_lock(drift_root)
+            drift = run_release(
+                drift_root,
+                "function Write-OllamaDriftLogRow { return $false };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                "[pscustomobject]@{Result=$r;LockExists=(Test-Path -LiteralPath (Get-OllamaLockPath));"
+                "MarkerCount=@(Get-ChildItem -LiteralPath $script:OllamaControlRoot -Filter 'HITL_OLLAMA_DRIFTLOG_APPEND_FAILED_*.md').Count}"
+                "|ConvertTo-Json -Depth 6 -Compress",
+            )
+            self.assertEqual(drift["Result"]["outcome"], "FAILED")
+            self.assertTrue(drift["Result"]["lock_absent"])
+            self.assertTrue(drift["Result"]["marker_written"])
+            self.assertFalse(drift["LockExists"])
+            self.assertEqual(drift["MarkerCount"], 1)
+
+            hold_root = base_root / "hold-success"
+            hold_root.mkdir()
+            hold_path = write_lock(hold_root)
+            hold = run_release(
+                hold_root,
+                "$r=Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk;"
+                "$ok=Test-OllamaReleaseResult -Result $r -ExpectedRequestedMode MANUAL_HOLD;"
+                "$body=Get-Content -LiteralPath (Get-OllamaLockPath) -Raw|ConvertFrom-Json;"
+                "[pscustomobject]@{Result=$r;Valid=$ok;Body=$body;"
+                "MarkerCount=@(Get-ChildItem -LiteralPath $script:OllamaControlRoot -Filter 'HITL_OLLAMA_GPU_ORPHAN_SSTAC_*.md').Count}"
+                "|ConvertTo-Json -Depth 7 -Compress",
+            )
+            self.assertTrue(hold["Valid"], hold)
+            self.assertEqual(hold["Result"]["outcome"], "VERIFIED_MANUAL_HOLD")
+            self.assertEqual(hold["Body"]["process_id"], "MANUAL_HOLD")
+            self.assertEqual(hold["MarkerCount"], 1)
+            self.assertTrue(hold_path.exists())
+
+            hold_write_root = base_root / "hold-write-failure"
+            hold_write_root.mkdir()
+            hold_write_path = write_lock(hold_write_root)
+            hold_before = hold_write_path.read_bytes()
+            hold_write = run_release(
+                hold_write_root,
+                "function Set-OllamaManualHoldContent { throw 'synthetic hold write failure' };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk;"
+                "$r|ConvertTo-Json -Depth 5 -Compress",
+            )
+            self.assertEqual(hold_write["outcome"], "FAILED")
+            self.assertEqual(hold_write_path.read_bytes(), hold_before)
+
+            contradiction_root = base_root / "hold-contradiction"
+            contradiction_root.mkdir()
+            write_lock(contradiction_root)
+            contradiction = run_release(
+                contradiction_root,
+                "function Set-OllamaManualHoldContent { param($Path,$Content);"
+                "$d=$Content|ConvertFrom-Json;$d.session_id='contradiction';"
+                "$d|ConvertTo-Json|Set-Content -LiteralPath $Path -Encoding ascii -ErrorAction Stop };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk;"
+                "$r|ConvertTo-Json -Depth 5 -Compress",
+            )
+            self.assertEqual(contradiction["outcome"], "FAILED")
+            self.assertIn("readback contradiction", contradiction["error"])
+
+            marker_root = base_root / "hold-marker-failure"
+            marker_root.mkdir()
+            write_lock(marker_root)
+            marker = run_release(
+                marker_root,
+                "function Write-OllamaMarkerFile { throw 'synthetic marker failure' };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk;"
+                "$r|ConvertTo-Json -Depth 5 -Compress",
+            )
+            self.assertEqual(marker["outcome"], "FAILED")
+            self.assertTrue(marker["manual_hold_verified"])
+            self.assertFalse(marker["marker_written"])
+
+            hold_drift_root = base_root / "hold-drift-failure"
+            hold_drift_root.mkdir()
+            write_lock(hold_drift_root)
+            hold_drift = run_release(
+                hold_drift_root,
+                "function Write-OllamaDriftLogRow { return $false };"
+                "$r=Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk;"
+                "$r|ConvertTo-Json -Depth 5 -Compress",
+            )
+            self.assertEqual(hold_drift["outcome"], "FAILED")
+            self.assertTrue(hold_drift["manual_hold_verified"])
+            self.assertTrue(hold_drift["marker_written"])
+            self.assertFalse(hold_drift["drift_log_written"])
+
+        self.assertIn("$script:OllamaControlRoot = 'C:\\Projects'", self.ollama_lock)
+        self.assertNotIn("param([string]$OllamaControlRoot", self.ollama_lock)
+        self.assertIn("lane_id -ceq $expectedLane", self.ollama_lock)
+        self.assertIn("session_id -ceq $expectedSession", self.ollama_lock)
+        self.assertIn("process_id -ceq $expectedPid", self.ollama_lock)
+        self.assertIn("scheduled_block_id -ceq $expectedBlock", self.ollama_lock)
+
+    def test_release_absence_readback_error_is_structured_and_blocks_drift(self):
+        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            root = Path(temp_dir)
+            lock_path = root / "OLLAMA_ACTIVE.lock"
+            lock_path.write_text(
+                json.dumps(
+                    {
+                        "lane_id": "sstac-wiki",
+                        "session_id": "session-readback-error",
+                        "process_id": 4242,
+                        "scheduled_block_id": "SSTAC-READBACK",
+                        "block_or_adhoc": "block",
+                        "purpose": "isolated readback regression fixture",
+                        "acquired_at": "2026-08-01T18:00:00.0000000Z",
+                        "expires_at": "2026-08-01T20:00:00.0000000Z",
+                    }
+                ),
+                encoding="ascii",
+            )
+            command = (
+                f". '{self.ollama_lock_path}';"
+                + f"$script:OllamaControlRoot='{root}';"
+                + "$h=[pscustomobject]@{LaneId='sstac-wiki';"
+                + "SessionId='session-readback-error';OwnerPid=[int]4242;"
+                + "BlockId='SSTAC-READBACK';"
+                + "AcquiredAt=[datetime]'2026-08-01T18:00:00Z'};"
+                + "$script:fixtureLockPath=Get-OllamaLockPath;"
+                + "$script:afterRemoval=$false;$script:driftCalls=0;"
+                + "function Remove-OllamaOwnedLockFile { param([string]$Path);"
+                + "[System.IO.File]::Delete($Path);$script:afterRemoval=$true };"
+                + "function Test-Path { [CmdletBinding()] param([string]$LiteralPath,[string]$PathType);"
+                + "if($script:afterRemoval -and $LiteralPath -eq $script:fixtureLockPath){"
+                + "Write-Error 'synthetic release absence readback failure';return };"
+                + "if([string]::IsNullOrEmpty($PathType)){"
+                + "return Microsoft.PowerShell.Management\\Test-Path -LiteralPath $LiteralPath};"
+                + "return Microsoft.PowerShell.Management\\Test-Path -LiteralPath $LiteralPath -PathType $PathType };"
+                + "function Write-OllamaDriftLogRow { param([string]$Line);"
+                + "$script:driftCalls++;return $true };"
+                + "$r=Invoke-OllamaLockRelease -Handle $h -Status COMPLETED_RED;"
+                + "[pscustomobject]@{Result=$r;DriftCalls=$script:driftCalls;"
+                + "ControlRoot=$script:OllamaControlRoot;"
+                + "LockExistsAfter=(Microsoft.PowerShell.Management\\Test-Path -LiteralPath $script:fixtureLockPath)}"
+                + "|ConvertTo-Json -Depth 6 -Compress"
+            )
+            result = self.run_guardrail_command(command)
+            release = result["Result"]
+            self.assertEqual(release["outcome"], "FAILED")
+            self.assertFalse(release["evidence_valid"])
+            self.assertTrue(release["ownership_matched"])
+            self.assertFalse(release["lock_absent"])
+            self.assertFalse(release["drift_log_written"])
+            self.assertIn("absence readback failed", release["error"])
+            self.assertIn("synthetic release absence readback failure", release["error"])
+            self.assertEqual(result["DriftCalls"], 0)
+            self.assertFalse(result["LockExistsAfter"])
+            self.assertEqual(Path(result["ControlRoot"]).resolve(), root.resolve())
+
+    def test_release_callers_consume_observed_evidence_exactly_once(self):
+        semantic_tail = self.semantic.split(
+            "function Invoke-SemanticObservedRelease", 1
+        )[1]
+        semantic_helper = (
+            "function Invoke-SemanticObservedRelease"
+            + semantic_tail.split('\nWrite-Log "--- START SEMANTIC EXTRACT', 1)[0]
+        )
+        command = (
+            semantic_helper
+            + ";$script:calls=0;"
+            + "function New-OllamaReleaseResult { param([string]$RequestedMode,[string]$Error='');"
+            + "[pscustomobject]@{schema_version='1.0';requested_mode=$RequestedMode;outcome='FAILED';"
+            + "evidence_valid=$false;ownership_matched=$false;lock_absent=$false;"
+            + "manual_hold_verified=$false;drift_log_written=$false;marker_written=$false;error=$Error} };"
+            + "function Invoke-OllamaLockRelease {$script:calls++;throw 'synthetic standalone release failure'};"
+            + "$r=Invoke-SemanticObservedRelease -Handle 'h' -RequestedMode COMPLETED_RED -GpuOrphanRisk $false;"
+            + "[pscustomobject]@{Calls=$script:calls;Result=$r}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertEqual(result["Calls"], 1)
+        self.assertEqual(result["Result"]["outcome"], "FAILED")
+        self.assertIn("synthetic standalone release failure", result["Result"]["error"])
+
+        semantic_finally = self.semantic.split("if ($lockAcquired)", 1)[1].split(
+            "$endIso =", 1
+        )[0]
+        self.assertEqual(semantic_finally.count("Invoke-SemanticObservedRelease"), 1)
+        self.assertIn("Test-OllamaReleaseResult", semantic_finally)
+        self.assertIn("$releaseFailed", self.semantic)
+        self.assertIn("Get-SemanticSelectedReleaseMode", semantic_finally)
+        self.assertIn("-TimedOut $timedOut", semantic_finally)
+        self.assertNotIn("$gpuOrphanRisk = $true", semantic_finally)
+        self.assertIn("if ($TimedOut -or $GpuOrphanRisk)", self.semantic)
+        self.assertIn("Get-SemanticTerminalExitCode", self.semantic)
+        self.assertIn("exit $semanticTerminalExit", self.semantic)
+
+    def test_standalone_release_mode_and_terminal_exit_classifiers(self):
+        classifier_tail = self.semantic.split(
+            "function Get-SemanticSelectedReleaseMode", 1
+        )[1]
+        classifiers = (
+            "function Get-SemanticSelectedReleaseMode"
+            + classifier_tail.split('\nWrite-Log "--- START SEMANTIC EXTRACT', 1)[0]
+        )
+        command = (
+            classifiers
+            + ";$cases=@("
+            "[pscustomobject]@{Name='normal';TimedOut=$false;Orphan=$false;Evidence=$false;Release=$false;Status='OK'},"
+            "[pscustomobject]@{Name='ordinary';TimedOut=$false;Orphan=$false;Evidence=$false;Release=$false;Status='FAIL'},"
+            "[pscustomobject]@{Name='release_failure';TimedOut=$false;Orphan=$false;Evidence=$false;Release=$true;Status='OK'},"
+            "[pscustomobject]@{Name='residue';TimedOut=$false;Orphan=$false;Evidence=$false;Release=$false;Status='FAIL'},"
+            "[pscustomobject]@{Name='timeout';TimedOut=$true;Orphan=$false;Evidence=$false;Release=$false;Status='FAIL'},"
+            "[pscustomobject]@{Name='gpu_orphan';TimedOut=$false;Orphan=$true;Evidence=$false;Release=$true;Status='FAIL'});"
+            "$out=@();foreach($case in $cases){$out+=@([pscustomobject]@{Name=$case.Name;"
+            "Mode=(Get-SemanticSelectedReleaseMode -TimedOut $case.TimedOut -GpuOrphanRisk $case.Orphan -GraphifyStatus $case.Status);"
+            "Exit=(Get-SemanticTerminalExitCode -TimedOut $case.TimedOut -GpuOrphanRisk $case.Orphan "
+            "-EvidenceWriteFailed $case.Evidence -ReleaseFailed $case.Release -GraphifyStatus $case.Status)})};"
+            "$out|ConvertTo-Json -Compress"
+        )
+        results = self.run_guardrail_command(command)
+        expected = {
+            "normal": ("COMPLETED_GREEN", 0),
+            "ordinary": ("COMPLETED_RED", 1),
+            "release_failure": ("COMPLETED_GREEN", 1),
+            "residue": ("COMPLETED_RED", 1),
+            "timeout": ("MANUAL_HOLD", 124),
+            "gpu_orphan": ("MANUAL_HOLD", 124),
+        }
+        for result in results:
+            with self.subTest(classifier=result["Name"]):
+                self.assertEqual(
+                    (result["Mode"], result["Exit"]), expected[result["Name"]]
+                )
+        semantic_finally = self.semantic.split("if ($lockAcquired)", 1)[1].split(
+            "$endIso =", 1
+        )[0]
+        self.assertIn("Get-SemanticSelectedReleaseMode", semantic_finally)
+        terminal = self.semantic.split("$semanticTerminalExit =", 1)[1]
+        self.assertIn("Get-SemanticTerminalExitCode", "$semanticTerminalExit =" + terminal)
+        self.assertIn("exit $semanticTerminalExit", terminal)
+
+    def test_sync_exit_helper_and_runbook_contract(self):
+        helper_tail = self.sync.split("function Get-WikiSyncGraphifyExitCode", 1)[1]
+        helper = (
+            "function Get-WikiSyncGraphifyExitCode"
+            + helper_tail.split("\n# Both Python call sites", 1)[0]
+        )
+        command = (
+            helper
+            + ";$cases=@("
+            "[pscustomobject]@{TimedOut=$true;OrphanRisk=$false;GuardrailFailed=$false;ExitCode=124},"
+            "[pscustomobject]@{TimedOut=$false;OrphanRisk=$true;GuardrailFailed=$false;ExitCode=0},"
+            "[pscustomobject]@{TimedOut=$false;OrphanRisk=$false;GuardrailFailed=$true;ExitCode=0},"
+            "[pscustomobject]@{TimedOut=$false;OrphanRisk=$false;GuardrailFailed=$false;ExitCode=7},"
+            "[pscustomobject]@{TimedOut=$false;OrphanRisk=$false;GuardrailFailed=$false;ExitCode=0});"
+            "$codes=@();foreach($case in $cases){$codes+=@("
+            "Get-WikiSyncGraphifyExitCode -Result $case)};"
+            "$codes|ConvertTo-Json -Compress"
+        )
+        self.assertEqual(self.run_guardrail_command(command), [124, 124, 1, 1, 0])
+        self.assertIn(
+            "$graphDecisionExit = Get-WikiSyncGraphifyExitCode -Result $graphResult",
+            self.sync,
+        )
+        self.assertIn("exit 124", self.sync)
+        phrase = "124 = hard timeout or explicit GPU-orphan/custody risk"
+        self.assertIn(phrase, self.runbook)
+        self.assertIn("if ($TimedOut -or $GpuOrphanRisk)", self.semantic)
+        self.assertIn("return 124", self.semantic)
+        self.assertIn("exit $semanticTerminalExit", self.semantic)
+        for warning in (
+            "only the exact retained root `Process` object",
+            "`Killed` remains false",
+            "descendant termination is unproven without a Windows Job Object",
+            "not eligible",
+        ):
+            with self.subTest(runbook_process_warning=warning):
+                self.assertIn(warning, self.runbook)
+        self.assertRegex(self.runbook, r"unattended\s+scheduling")
+
+    def test_both_wrappers_share_root_only_cleanup_and_callers_are_honest(self):
+        self.assertEqual(
+            self.guardrail.count("Stop-GuardedRootProcess -Process $p"),
+            2,
+        )
+        self.assertEqual(
+            self.guardrail.count("Set-GuardedCustodyFailure -Result"),
+            4,
+        )
+        for forbidden in (
+            "Win32_Process",
+            "Get-CimInstance",
+            "GetProcessById",
+            "taskkill",
+            "Stop-Process",
+            "Get-Process -Id",
+            "-Name",
+            "ORIGINAL_IDENTITIES_GONE",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, self.guardrail)
+        root_helper = self.guardrail.split("function Stop-GuardedRootProcess", 1)[1].split(
+            "function Invoke-GraphifyGuarded", 1
+        )[0]
+        self.assertIn("$Process.Kill()", root_helper)
+        self.assertIn("$Process.WaitForExit(5000)", root_helper)
+        self.assertNotIn("-Id", root_helper)
+        standard = self.guardrail.split("function Invoke-GraphifyGuarded", 1)[1].split(
+            "function Invoke-GraphifyGuardedCapture", 1
+        )[0]
+        capture = self.guardrail.split("function Invoke-GraphifyGuardedCapture", 1)[1]
+        self.assertIn("$exitCode = 124", standard)
+        self.assertIn("-ExitCode 124", standard)
+        self.assertIn("$exitCode = 124", capture)
+        self.assertIn("-ExitCode 124", capture)
+        self.assertEqual(self.guardrail.count("Killed = $false"), 1)
+        self.assertEqual(self.guardrail.count("$Result.CleanupStatus = $cleanup.Status"), 1)
+        auxiliary = self.guardrail.split(
+            "function Set-GuardedAuxiliaryFailure", 1
+        )[1].split("function Invoke-GraphifyGuarded", 1)[0]
+        self.assertNotIn("Stop-GuardedRootProcess", auxiliary)
+        smoke = (WIKI_DIR / "guardrail_smoke.ps1").read_text(encoding="ascii")
+        sync = (WIKI_DIR / "sync_wiki.ps1").read_text(encoding="ascii")
+        semantic = (WIKI_DIR / "semantic_extract.ps1").read_text(encoding="ascii")
+        self.assertNotIn("Get-Process -Id", smoke)
+        self.assertIn("ROOT_TERMINATED_TREE_UNPROVEN", smoke)
+        self.assertIn("descendant tree unproven", sync)
+        self.assertIn("$gpuOrphanRisk = $true", semantic)
 
 
 class TestProcessCustodyHelpers(unittest.TestCase):

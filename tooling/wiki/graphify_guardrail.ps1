@@ -1,49 +1,141 @@
-# graphify_guardrail.ps1 -- run graphify (or any exe) with a hard timeout + tree-kill-by-PID.
-# Ported/improved from the oc-worker.ps1 timeout pattern: uses Start-Process -PassThru to get the
-# EXACT child PID and taskkill /T /F to kill the whole tree by PID on timeout -- this is more robust
-# than filtering Win32_Process by name + CommandLine (it also kills the `graphify query` case, whose
-# command line does not contain the repo root). FAIL CLOSED: a timeout is a failure (ExitCode 124),
-# never a silent success.
+# graphify_guardrail.ps1 -- run graphify (or any exe) with a hard timeout.
+# Cleanup terminates only the exact retained root Process object. Descendant cleanup is deliberately
+# unproven without a Windows Job Object, so Killed remains false and OrphanRisk carries uncertainty.
 
 function Get-GuardedArgList {
     param([string[]]$GraphifyArgs)
-    # INPUT CONTRACT: this guardrail is for the NIGHTLY's controlled graphify calls -- a subcommand
-    # (update/cluster-only/label), the repo root path, and simple flags. Those may contain SPACES
-    # (e.g. a spaced install path) but NOT embedded double-quotes or trailing backslashes. Whitespace
-    # quoting below preserves spaced elements; fully general Windows command-line escaping (embedded
-    # quotes, trailing-backslash-before-quote per CommandLineToArgvW) is deliberately OUT OF SCOPE --
-    # a caller needing arbitrary `query "..."` text must escape it itself.
-    #
-    # Windows PowerShell 5.1 Start-Process -ArgumentList flattens a string array into one command line
-    # WITHOUT preserving element boundaries or quoting, so a multi-word element (a `query` question, or
-    # a path containing spaces) would be split and reach graphify as the wrong argument (fail-open).
-    # Quote any element containing whitespace so its boundary survives.
+    # Windows PowerShell 5.1 Start-Process flattens -ArgumentList. Quote whitespace-bearing elements
+    # for the NIGHTLY's controlled arguments. Embedded quotes and trailing backslashes are out of scope.
     return @($GraphifyArgs | ForEach-Object {
         if ($_ -match '\s') { '"' + $_ + '"' } else { $_ }
     })
 }
 
-function Get-ProcessTreeIds {
-    param([Parameter(Mandatory=$true)][int]$RootId)
-    # Return the root PID plus ALL descendant PIDs, discovered via Win32_Process ParentProcessId (BFS).
-    # This MUST be called BEFORE any kill: once a parent dies, its children are reparented and the
-    # ParentProcessId links break, so post-kill discovery would miss survivors. The caller kills the
-    # returned snapshot unconditionally (a partial taskkill can kill the wrapper but miss a GPU child).
-    $all = @(Get-CimInstance Win32_Process -ErrorAction SilentlyContinue)
-    $ids = New-Object System.Collections.Generic.List[int]
-    $queue = New-Object System.Collections.Generic.Queue[int]
-    $queue.Enqueue($RootId)
-    while ($queue.Count -gt 0) {
-        $id = $queue.Dequeue()
-        if (-not $ids.Contains($id)) {
-            $ids.Add($id)
-            foreach ($c in ($all | Where-Object { $_.ParentProcessId -eq $id })) {
-                $cid = [int]$c.ProcessId
-                if (-not $ids.Contains($cid)) { $queue.Enqueue($cid) }
-            }
+function Join-GuardedError {
+    param([string]$Existing, [string]$Message)
+    if ([string]::IsNullOrWhiteSpace($Existing)) { return $Message }
+    if ([string]::IsNullOrWhiteSpace($Message)) { return $Existing }
+    return "$Existing; $Message"
+}
+
+function New-GuardedResult {
+    param(
+        [bool]$TimedOut,
+        [int]$ExitCode,
+        [Nullable[int]]$ProcId,
+        [bool]$RootTerminated,
+        [string]$CleanupStatus,
+        [string]$CleanupError,
+        [bool]$GuardrailFailed,
+        [bool]$OrphanRisk,
+        [string]$GuardrailError
+    )
+    return [pscustomobject]@{
+        TimedOut = $TimedOut
+        ExitCode = $ExitCode
+        ProcId = if ($null -eq $ProcId) { $null } else { [int]$ProcId }
+        Killed = $false
+        RootTerminated = $RootTerminated
+        CleanupStatus = $CleanupStatus
+        CleanupError = $CleanupError
+        GuardrailFailed = $GuardrailFailed
+        OrphanRisk = $OrphanRisk
+        GuardrailError = $GuardrailError
+        ProcessDisposeError = $null
+    }
+}
+
+function New-GuardedCaptureResult {
+    param(
+        [bool]$TimedOut,
+        [int]$ExitCode,
+        [Nullable[int]]$ProcId,
+        [bool]$RootTerminated,
+        [string]$CleanupStatus,
+        [string]$CleanupError,
+        [bool]$GuardrailFailed,
+        [bool]$OrphanRisk,
+        [string]$GuardrailError
+    )
+    $result = New-GuardedResult @PSBoundParameters
+    $result | Add-Member NoteProperty OutputReadError $null
+    $result | Add-Member NoteProperty TempCleanupStatus 'PENDING'
+    $result | Add-Member NoteProperty TempCleanupError $null
+    $result | Add-Member NoteProperty OutputLines @()
+    return $result
+}
+
+function New-GuardedTempFile {
+    return [System.IO.Path]::GetTempFileName()
+}
+
+function Stop-GuardedRootProcess {
+    param([Parameter(Mandatory=$true)]$Process)
+    $errors = @()
+    $rootTerminated = $false
+    try {
+        if ($Process.HasExited) { $rootTerminated = $true } else { $Process.Kill() }
+    } catch { $errors += "root Kill failed: $($_.Exception.Message)" }
+    try {
+        $waited = $Process.WaitForExit(5000)
+        if (-not $waited) {
+            $errors += "root WaitForExit timed out after 5000 ms"
+        } elseif ($Process.HasExited) {
+            $rootTerminated = $true
+        } else {
+            $errors += "root WaitForExit returned without a terminated root"
+        }
+    } catch { $errors += "root WaitForExit failed: $($_.Exception.Message)" }
+    if (-not $rootTerminated) {
+        try { if ($Process.HasExited) { $rootTerminated = $true } }
+        catch { $errors += "root termination state check failed: $($_.Exception.Message)" }
+    }
+    if ($errors.Count -gt 0 -or -not $rootTerminated) {
+        return [pscustomobject]@{
+            RootTerminated = $rootTerminated
+            Status = 'ROOT_TERMINATION_FAILED'
+            Error = ($errors -join '; ')
         }
     }
-    return ,$ids.ToArray()
+    return [pscustomobject]@{
+        RootTerminated = $true
+        Status = 'ROOT_TERMINATED_TREE_UNPROVEN'
+        Error = $null
+    }
+}
+
+function Set-GuardedCustodyFailure {
+    param(
+        [Parameter(Mandatory=$true)]$Result,
+        [Parameter(Mandatory=$true)]$Process,
+        [Parameter(Mandatory=$true)][string]$Message
+    )
+    $Result.GuardrailFailed = $true
+    $Result.OrphanRisk = $true
+    $Result.GuardrailError = Join-GuardedError $Result.GuardrailError $Message
+    if (-not $Result.TimedOut -and $Result.ExitCode -eq 0) { $Result.ExitCode = 1 }
+    try {
+        $cleanup = Stop-GuardedRootProcess -Process $Process
+        $Result.RootTerminated = $cleanup.RootTerminated
+        $Result.CleanupStatus = $cleanup.Status
+        $Result.CleanupError = $cleanup.Error
+    } catch {
+        $Result.RootTerminated = $false
+        $Result.CleanupStatus = 'ROOT_TERMINATION_FAILED'
+        $Result.CleanupError = Join-GuardedError $Result.CleanupError $_.Exception.Message
+    }
+    return $Result
+}
+
+function Set-GuardedAuxiliaryFailure {
+    param(
+        [Parameter(Mandatory=$true)]$Result,
+        [Parameter(Mandatory=$true)][string]$Message
+    )
+    $Result.GuardrailFailed = $true
+    $Result.GuardrailError = Join-GuardedError $Result.GuardrailError $Message
+    if (-not $Result.TimedOut -and $Result.ExitCode -eq 0) { $Result.ExitCode = 1 }
+    return $Result
 }
 
 function Invoke-GraphifyGuarded {
@@ -54,37 +146,70 @@ function Invoke-GraphifyGuarded {
         [int]$TimeoutSec = 600
     )
     $safeArgs = Get-GuardedArgList $GraphifyArgs
-    $p = Start-Process -FilePath $GraphifyExe -ArgumentList $safeArgs -PassThru -NoNewWindow
-    # Cache the process handle immediately: without this, a Start-Process -PassThru object can report
-    # a null ExitCode after WaitForExit (well-known PowerShell gotcha) -- the success-path exit code
-    # would be lost, so a real graphify failure could be misread as success. Accessing .Handle retains
-    # the handle so .ExitCode is reliable.
-    $null = $p.Handle
-    if (-not $p.WaitForExit($TimeoutSec * 1000)) {
-        # Hung -> kill the whole process tree ROBUSTLY. Snapshot every PID in the tree FIRST (before any
-        # kill reparents the survivors), then kill the whole snapshot UNCONDITIONALLY by PID -- do NOT
-        # gate on the root having exited, because a partial taskkill can terminate the wrapper while a
-        # GPU descendant (graphify extract / python promotion) survives and keeps holding the lock.
-        $treeIds = Get-ProcessTreeIds -RootId $p.Id
-        try { & taskkill /PID $p.Id /T /F 2>$null | Out-Null } catch {}
-        Start-Sleep -Milliseconds 300
-        foreach ($id in ($treeIds | Sort-Object -Descending)) {
-            try { & taskkill /PID $id /F 2>$null | Out-Null } catch {}
-            try { Stop-Process -Id $id -Force -ErrorAction SilentlyContinue } catch {}
+    $p = $null
+    $procId = $null
+    $result = $null
+    $timedOut = $false
+    $exitCode = 0
+    try {
+        try {
+            $p = Start-Process -FilePath $GraphifyExe -ArgumentList $safeArgs -PassThru -NoNewWindow
+        } catch {
+            $result = New-GuardedResult -TimedOut $false -ExitCode 1 -ProcId $null `
+                -RootTerminated $false -CleanupStatus 'START_FAILED' -CleanupError $null `
+                -GuardrailFailed $true -OrphanRisk $false -GuardrailError $_.Exception.Message
         }
-        if (-not $p.HasExited) { try { $p.Kill() } catch {} }
-        try { $p.WaitForExit(5000) | Out-Null } catch {}
-        # Killed reflects whether EVERY snapshot PID is gone (not just the root) -- the honest signal
-        # the nightly needs before it releases the GPU lock.
-        $survivors = @($treeIds | Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
-        return [pscustomobject]@{ TimedOut = $true; ExitCode = 124; ProcId = $p.Id; Killed = ($survivors.Count -eq 0) }
+
+        if ($null -ne $p -and $null -eq $result) {
+            try {
+                $procId = [int]$p.Id
+                $null = $p.Handle
+                $waited = $p.WaitForExit($TimeoutSec * 1000)
+                if (-not $waited) {
+                    $timedOut = $true
+                    $exitCode = 124
+                    $cleanup = Stop-GuardedRootProcess -Process $p
+                    $cleanupFailed = (-not $cleanup.RootTerminated -or
+                        $cleanup.Status -eq 'ROOT_TERMINATION_FAILED')
+                    $result = New-GuardedResult -TimedOut $true -ExitCode 124 -ProcId $procId `
+                        -RootTerminated $cleanup.RootTerminated -CleanupStatus $cleanup.Status `
+                        -CleanupError $cleanup.Error -GuardrailFailed $cleanupFailed -OrphanRisk $true `
+                        -GuardrailError $null
+                } else {
+                    $p.WaitForExit()
+                    $exitCode = [int]$p.ExitCode
+                    $result = New-GuardedResult -TimedOut $false -ExitCode $exitCode -ProcId $procId `
+                        -RootTerminated $false -CleanupStatus 'NOT_REQUIRED' -CleanupError $null `
+                        -GuardrailFailed $false -OrphanRisk $false -GuardrailError $null
+                }
+            } catch {
+                $failureExit = if ($timedOut) { 124 } elseif ($exitCode -ne 0) { $exitCode } else { 1 }
+                $result = New-GuardedResult -TimedOut $timedOut -ExitCode $failureExit -ProcId $procId `
+                    -RootTerminated $false -CleanupStatus 'POST_START_FAILURE' -CleanupError $null `
+                    -GuardrailFailed $true -OrphanRisk $true -GuardrailError $null
+                $result = Set-GuardedCustodyFailure -Result $result -Process $p -Message $_.Exception.Message
+            }
+        }
+    } finally {
+        if ($null -ne $p) {
+            if ($null -eq $result) {
+                $result = New-GuardedResult -TimedOut $timedOut `
+                    -ExitCode $(if ($timedOut) { 124 } else { 1 }) -ProcId $procId `
+                    -RootTerminated $false -CleanupStatus 'POST_START_FAILURE' `
+                    -CleanupError $null -GuardrailFailed $true -OrphanRisk $true `
+                    -GuardrailError $null
+                $result = Set-GuardedCustodyFailure -Result $result -Process $p `
+                    -Message 'guardrail produced no result after process start'
+            }
+            try { $p.Dispose() }
+            catch {
+                $result.ProcessDisposeError = $_.Exception.Message
+                $result = Set-GuardedAuxiliaryFailure -Result $result `
+                    -Message "process Dispose failed: $($_.Exception.Message)"
+            }
+        }
     }
-    $p.WaitForExit()  # no-arg flush so ExitCode is fully populated before we read it
-    # Killed = $false here: this is the normal-completion path, no tree-kill was performed. Only the
-    # timeout branch above sets Killed, and there it means "the kill attempt fully succeeded" (no
-    # survivors) -- conflating the two would make a clean run look like a forced-termination event to
-    # any caller that checks this flag.
-    return [pscustomobject]@{ TimedOut = $false; ExitCode = $p.ExitCode; ProcId = $p.Id; Killed = $false }
+    return $result
 }
 
 function Invoke-GraphifyGuardedCapture {
@@ -94,45 +219,125 @@ function Invoke-GraphifyGuardedCapture {
         [Parameter(Mandatory=$true)][string[]]$GraphifyArgs,
         [int]$TimeoutSec = 1800
     )
-    # Like Invoke-GraphifyGuarded (hard timeout + snapshot-then-tree-kill-by-PID, fail-closed exit 124)
-    # but captures stdout+stderr to temp files and returns them as OutputLines. Start-Process requires
-    # DISTINCT redirect files for stdout and stderr.
     $safeArgs = Get-GuardedArgList $GraphifyArgs
-    $so = [System.IO.Path]::GetTempFileName()
-    $se = [System.IO.Path]::GetTempFileName()
+    $so = $null
+    $se = $null
+    $p = $null
+    $procId = $null
+    $result = $null
+    $timedOut = $false
+    $exitCode = 0
+    $tempCleanupErrors = @()
+    $allocatedTempPaths = @()
     try {
-        $p = Start-Process -FilePath $GraphifyExe -ArgumentList $safeArgs -PassThru -NoNewWindow -RedirectStandardOutput $so -RedirectStandardError $se
-        $null = $p.Handle
-        $timedOut = $false
-        $exitCode = $null
-        # Default $false: the non-timeout ('else') branch below never touches $killed, so this default
-        # is what a normal completion reports. Only the timeout branch overwrites it, where $true means
-        # "the kill attempt fully succeeded" (no survivors) -- see Invoke-GraphifyGuarded above for why
-        # conflating the two is a real bug (codex P2, 2026-07-17).
-        $killed = $false
-        if (-not $p.WaitForExit($TimeoutSec * 1000)) {
-            $timedOut = $true
-            $treeIds = Get-ProcessTreeIds -RootId $p.Id
-            try { & taskkill /PID $p.Id /T /F 2>$null | Out-Null } catch {}
-            Start-Sleep -Milliseconds 300
-            foreach ($id in ($treeIds | Sort-Object -Descending)) {
-                try { & taskkill /PID $id /F 2>$null | Out-Null } catch {}
-                try { Stop-Process -Id $id -Force -ErrorAction SilentlyContinue } catch {}
-            }
-            if (-not $p.HasExited) { try { $p.Kill() } catch {} }
-            try { $p.WaitForExit(5000) | Out-Null } catch {}
-            $survivors = @($treeIds | Where-Object { Get-Process -Id $_ -ErrorAction SilentlyContinue })
-            $killed = ($survivors.Count -eq 0)
-            $exitCode = 124
-        } else {
-            $p.WaitForExit()
-            $exitCode = $p.ExitCode
+        try {
+            $so = New-GuardedTempFile
+            if ([string]::IsNullOrWhiteSpace($so)) { throw 'stdout temp allocation returned no path' }
+            $allocatedTempPaths += $so
+            $se = New-GuardedTempFile
+            if ([string]::IsNullOrWhiteSpace($se)) { throw 'stderr temp allocation returned no path' }
+            $allocatedTempPaths += $se
+            $p = Start-Process -FilePath $GraphifyExe -ArgumentList $safeArgs -PassThru -NoNewWindow `
+                -RedirectStandardOutput $so -RedirectStandardError $se
+        } catch {
+            $result = New-GuardedCaptureResult -TimedOut $false -ExitCode 1 -ProcId $null `
+                -RootTerminated $false -CleanupStatus 'START_FAILED' -CleanupError $null `
+                -GuardrailFailed $true -OrphanRisk $false -GuardrailError $_.Exception.Message
         }
-        $lines = @()
-        if (Test-Path $so) { $lines += Get-Content $so }
-        if (Test-Path $se) { $lines += Get-Content $se }
-        return [pscustomobject]@{ TimedOut = $timedOut; ExitCode = $exitCode; ProcId = $p.Id; Killed = $killed; OutputLines = $lines }
+
+        if ($null -ne $p -and $null -eq $result) {
+            try {
+                $procId = [int]$p.Id
+                $null = $p.Handle
+                $waited = $p.WaitForExit($TimeoutSec * 1000)
+                if (-not $waited) {
+                    $timedOut = $true
+                    $exitCode = 124
+                    $cleanup = Stop-GuardedRootProcess -Process $p
+                    $cleanupFailed = (-not $cleanup.RootTerminated -or
+                        $cleanup.Status -eq 'ROOT_TERMINATION_FAILED')
+                    # Build timeout evidence before reading redirected output so it cannot be lost.
+                    $result = New-GuardedCaptureResult -TimedOut $true -ExitCode 124 -ProcId $procId `
+                        -RootTerminated $cleanup.RootTerminated -CleanupStatus $cleanup.Status `
+                        -CleanupError $cleanup.Error -GuardrailFailed $cleanupFailed -OrphanRisk $true `
+                        -GuardrailError $null
+                } else {
+                    $p.WaitForExit()
+                    $exitCode = [int]$p.ExitCode
+                    $result = New-GuardedCaptureResult -TimedOut $false -ExitCode $exitCode -ProcId $procId `
+                        -RootTerminated $false -CleanupStatus 'NOT_REQUIRED' -CleanupError $null `
+                        -GuardrailFailed $false -OrphanRisk $false -GuardrailError $null
+                }
+            } catch {
+                $failureExit = if ($timedOut) { 124 } elseif ($exitCode -ne 0) { $exitCode } else { 1 }
+                $result = New-GuardedCaptureResult -TimedOut $timedOut -ExitCode $failureExit -ProcId $procId `
+                    -RootTerminated $false -CleanupStatus 'POST_START_FAILURE' -CleanupError $null `
+                    -GuardrailFailed $true -OrphanRisk $true -GuardrailError $null
+                $result = Set-GuardedCustodyFailure -Result $result -Process $p -Message $_.Exception.Message
+            }
+
+            try {
+                $lines = @()
+                if (Test-Path -LiteralPath $so -ErrorAction Stop) {
+                    $lines += Get-Content -LiteralPath $so -ErrorAction Stop
+                }
+                if (Test-Path -LiteralPath $se -ErrorAction Stop) {
+                    $lines += Get-Content -LiteralPath $se -ErrorAction Stop
+                }
+                $result.OutputLines = $lines
+            } catch {
+                $result.OutputReadError = $_.Exception.Message
+                $result = Set-GuardedAuxiliaryFailure -Result $result `
+                    -Message "redirected output read failed: $($_.Exception.Message)"
+            }
+        }
     } finally {
-        Remove-Item $so, $se -Force -ErrorAction SilentlyContinue
+        if ($null -ne $p) {
+            if ($null -eq $result) {
+                $result = New-GuardedCaptureResult -TimedOut $timedOut `
+                    -ExitCode $(if ($timedOut) { 124 } else { 1 }) -ProcId $procId `
+                    -RootTerminated $false -CleanupStatus 'POST_START_FAILURE' -CleanupError $null `
+                    -GuardrailFailed $true -OrphanRisk $true -GuardrailError $null
+                $result = Set-GuardedCustodyFailure -Result $result -Process $p `
+                    -Message 'guardrail produced no result after process start'
+            }
+            try { $p.Dispose() }
+            catch {
+                $result.ProcessDisposeError = $_.Exception.Message
+                $result = Set-GuardedAuxiliaryFailure -Result $result `
+                    -Message "process Dispose failed: $($_.Exception.Message)"
+            }
+        }
+        foreach ($tempPath in $allocatedTempPaths) {
+            if (-not [string]::IsNullOrWhiteSpace($tempPath)) {
+                try {
+                    Remove-Item -LiteralPath $tempPath -Force -ErrorAction Stop
+                    if (Test-Path -LiteralPath $tempPath -ErrorAction Stop) {
+                        throw 'redirected temp path survived terminating removal'
+                    }
+                }
+                catch { $tempCleanupErrors += "$tempPath`: $($_.Exception.Message)" }
+            }
+        }
+        if ($null -ne $result) {
+            if ($allocatedTempPaths.Count -eq 0) {
+                $result.TempCleanupStatus = 'NOT_CREATED'
+            } elseif ($tempCleanupErrors.Count -gt 0 -and $allocatedTempPaths.Count -lt 2) {
+                $result.TempCleanupStatus = 'PARTIAL_REMOVAL_FAILED'
+                $result.TempCleanupError = ($tempCleanupErrors -join '; ')
+            } elseif ($tempCleanupErrors.Count -gt 0) {
+                $result.TempCleanupStatus = 'REMOVAL_FAILED'
+                $result.TempCleanupError = ($tempCleanupErrors -join '; ')
+            } elseif ($allocatedTempPaths.Count -lt 2) {
+                $result.TempCleanupStatus = 'PARTIAL_REMOVED'
+            } else {
+                $result.TempCleanupStatus = 'REMOVED'
+            }
+            if ($result.TempCleanupStatus -in @('PARTIAL_REMOVAL_FAILED', 'REMOVAL_FAILED')) {
+                $result = Set-GuardedAuxiliaryFailure -Result $result `
+                    -Message "redirected temp cleanup failed: $($result.TempCleanupError)"
+            }
+        }
     }
+    return $result
 }
