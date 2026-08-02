@@ -53,6 +53,354 @@ function Test-NightlyGraphSha256([string]$Path, [string]$ExpectedSha256) {
     catch { return $false }
 }
 
+function Test-NightlyExactZero([object]$ExitCode) {
+    if ($null -eq $ExitCode) { return $false }
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    return ($integerTypes -contains $ExitCode.GetType() -and [int64]$ExitCode -eq 0)
+}
+
+function Get-NightlyN5Plan(
+    [bool]$SkipLabeling,
+    [bool]$SkipSemantic,
+    [int]$LabelOnlyExpiryMinutes,
+    [int]$LabelAndSemanticExpiryMinutes
+) {
+    $skipAll = ($SkipLabeling -and $SkipSemantic)
+    $runLabel = -not $SkipLabeling
+    $runSemantic = -not $SkipSemantic
+    $mode = if ($skipAll) {
+        'SKIP_ALL'
+    } elseif ($runLabel -and $runSemantic) {
+        'LABEL_AND_SEMANTIC'
+    } elseif ($runLabel) {
+        'LABEL_ONLY'
+    } else {
+        'SEMANTIC_ONLY'
+    }
+    $lockExpiryMinutes = if ($skipAll) {
+        0
+    } elseif ($runSemantic) {
+        $LabelAndSemanticExpiryMinutes
+    } else {
+        $LabelOnlyExpiryMinutes
+    }
+    return [pscustomobject]@{
+        Mode = $mode
+        SkipAll = $skipAll
+        RunLabel = $runLabel
+        RunSemantic = $runSemantic
+        LockExpiryMinutes = $lockExpiryMinutes
+    }
+}
+
+function Get-NightlyN5ReleaseMode(
+    [bool]$GpuOrphanRisk,
+    [bool]$Step5Fail,
+    [bool]$UnexpectedException
+) {
+    if ($GpuOrphanRisk) { return 'MANUAL_HOLD' }
+    if ($Step5Fail -or $UnexpectedException) { return 'COMPLETED_RED' }
+    return 'COMPLETED_GREEN'
+}
+
+function Invoke-NightlyN5Release {
+    param(
+        [Parameter(Mandatory=$true)]$Handle,
+        [bool]$GpuOrphanRisk,
+        [bool]$Step5Fail,
+        [bool]$UnexpectedException
+    )
+    $releaseMode = Get-NightlyN5ReleaseMode -GpuOrphanRisk $GpuOrphanRisk `
+        -Step5Fail $Step5Fail -UnexpectedException $UnexpectedException
+    $releaseArgs = @{ Handle = $Handle }
+    if ($releaseMode -eq 'MANUAL_HOLD') {
+        $releaseArgs.GpuOrphanRisk = $true
+    } else {
+        $releaseArgs.Status = $releaseMode
+    }
+    try {
+        $observed = Invoke-OllamaLockRelease @releaseArgs
+        if ($null -eq $observed) {
+            $observed = New-OllamaReleaseResult -RequestedMode $releaseMode `
+                -Error 'release helper returned no evidence'
+        }
+    } catch {
+        $observed = New-OllamaReleaseResult -RequestedMode $releaseMode `
+            -Error "release helper threw: $($_.Exception.Message)"
+    }
+    $passed = Test-OllamaReleaseResult -Result $observed -ExpectedRequestedMode $releaseMode
+    return [pscustomobject][ordered]@{
+        required = $true
+        status = if ($passed) { 'PASS' } else { 'FAIL' }
+        selected_mode = $releaseMode
+        observed = $observed
+        error = if ($passed) { '' } else { [string]$observed.error }
+        GraphOrphanRisk = $GpuOrphanRisk
+    }
+}
+
+function Test-NightlyN5ReleaseEvidence {
+    param(
+        $Evidence,
+        [bool]$ExpectedRequired,
+        [bool]$ExpectedGraphOrphanRisk
+    )
+    if ($null -eq $Evidence -or $Evidence -is [array]) { return $false }
+    $expectedProperties = @(
+        'required', 'status', 'selected_mode', 'observed', 'error', 'GraphOrphanRisk'
+    )
+    $actualProperties = @($Evidence.PSObject.Properties.Name)
+    if ($actualProperties.Count -ne $expectedProperties.Count -or
+        @($expectedProperties | Where-Object { $actualProperties -cnotcontains $_ }).Count -ne 0) {
+        return $false
+    }
+    if ($Evidence.required -isnot [bool] -or
+        $Evidence.GraphOrphanRisk -isnot [bool] -or
+        $Evidence.status -isnot [string] -or
+        $Evidence.error -isnot [string] -or
+        $Evidence.required -ne $ExpectedRequired -or
+        $Evidence.GraphOrphanRisk -ne $ExpectedGraphOrphanRisk) {
+        return $false
+    }
+    if (-not $ExpectedRequired) {
+        return (-not $ExpectedGraphOrphanRisk -and
+            [string]$Evidence.status -ceq 'NOT_REQUIRED' -and
+            $null -eq $Evidence.selected_mode -and $null -eq $Evidence.observed -and
+            [string]::IsNullOrEmpty($Evidence.error))
+    }
+    if ($Evidence.selected_mode -isnot [string] -or
+        $null -eq $Evidence.observed -or $Evidence.observed -is [array]) {
+        return $false
+    }
+    $allowedModes = @(
+        'COMPLETED_GREEN', 'COMPLETED_RED', 'COMPLETED_YELLOW',
+        'EARLY_RELEASE', 'OVERRUN_CONTAINED', 'MANUAL_HOLD'
+    )
+    if ($allowedModes -cnotcontains [string]$Evidence.selected_mode -or
+        ($ExpectedGraphOrphanRisk -and [string]$Evidence.selected_mode -cne 'MANUAL_HOLD') -or
+        (-not $ExpectedGraphOrphanRisk -and [string]$Evidence.selected_mode -ceq 'MANUAL_HOLD')) {
+        return $false
+    }
+    $observedValid = Test-OllamaReleaseResult -Result $Evidence.observed `
+        -ExpectedRequestedMode ([string]$Evidence.selected_mode)
+    return ($observedValid -and [string]$Evidence.status -ceq 'PASS' -and
+        [string]::IsNullOrEmpty($Evidence.error))
+}
+
+function Test-NightlySemanticEvidenceSuccess {
+    param(
+        [Parameter(Mandatory=$true)]$Evidence,
+        [Parameter(Mandatory=$true)][string]$ExpectedRunId
+    )
+    if ($null -eq $Evidence) { return $false }
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    if ($null -eq $Evidence.PSObject.Properties['observed_wrapper_exit_code'] -or
+        $null -eq $Evidence.observed_wrapper_exit_code -or
+        $null -eq $Evidence.PSObject.Properties['graphify_exit_code'] -or
+        $null -eq $Evidence.graphify_exit_code) {
+        return $false
+    }
+    return ([string]$Evidence.status -ceq 'PASS' -and
+        [string]$Evidence.schema_version -ceq '1.0' -and
+        [string]$Evidence.run_id -ceq $ExpectedRunId -and
+        $Evidence.source_property_schema_valid -is [bool] -and
+        $Evidence.source_property_schema_valid -and
+        $integerTypes -contains $Evidence.observed_wrapper_exit_code.GetType() -and
+        [int64]$Evidence.observed_wrapper_exit_code -eq 0 -and
+        $integerTypes -contains $Evidence.graphify_exit_code.GetType() -and
+        [int64]$Evidence.graphify_exit_code -eq 0 -and
+        [string]$Evidence.graphify_status -ceq 'OK' -and
+        $Evidence.timed_out -is [bool] -and -not $Evidence.timed_out -and
+        $Evidence.guardrail_failed -is [bool] -and -not $Evidence.guardrail_failed -and
+        $Evidence.orphan_risk -is [bool] -and -not $Evidence.orphan_risk -and
+        [string]$Evidence.temp_cleanup_status -ceq 'REMOVED' -and
+        $Evidence.temp_cleanup_error -is [string] -and
+        [string]::IsNullOrEmpty($Evidence.temp_cleanup_error))
+}
+
+function Get-NightlyValidatedSemanticEvidence {
+    param(
+        [Parameter(Mandatory=$true)][string]$Path,
+        [Parameter(Mandatory=$true)][string]$ExpectedRunId,
+        [Parameter(Mandatory=$true)][object]$ObservedWrapperExitCode
+    )
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) {
+        throw 'semantic evidence is missing'
+    }
+    $data = Get-Content -LiteralPath $Path -Raw | ConvertFrom-Json
+    $expectedProperties = @(
+        'schema_version',
+        'run_id',
+        'graphify_exit_code',
+        'graphify_status',
+        'timed_out',
+        'guardrail_failed',
+        'orphan_risk',
+        'temp_cleanup_status',
+        'temp_cleanup_error'
+    )
+    $actualProperties = @($data.PSObject.Properties.Name)
+    if ($actualProperties.Count -ne $expectedProperties.Count -or
+        @($expectedProperties | Where-Object { $actualProperties -cnotcontains $_ }).Count -ne 0) {
+        throw 'semantic evidence property schema is invalid'
+    }
+    if ([string]$data.schema_version -cne '1.0') { throw 'semantic evidence schema_version is invalid' }
+    if ([string]$data.run_id -cne $ExpectedRunId) { throw 'semantic evidence run_id is invalid' }
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    if ($null -eq $data.PSObject.Properties['graphify_exit_code'] -or
+        $integerTypes -notcontains $data.graphify_exit_code.GetType()) {
+        throw 'semantic evidence graphify_exit_code type is invalid'
+    }
+    if (@('OK', 'FAIL') -cnotcontains [string]$data.graphify_status) {
+        throw 'semantic evidence graphify_status is invalid'
+    }
+    foreach ($name in @('timed_out', 'guardrail_failed', 'orphan_risk')) {
+        if ($null -eq $data.PSObject.Properties[$name] -or $data.$name -isnot [bool]) {
+            throw "semantic evidence $name type is invalid"
+        }
+    }
+    $allowedCleanup = @(
+        'NOT_RUN',
+        'NOT_CREATED',
+        'PARTIAL_REMOVED',
+        'PARTIAL_REMOVAL_FAILED',
+        'REMOVED',
+        'REMOVAL_FAILED'
+    )
+    if ($allowedCleanup -cnotcontains [string]$data.temp_cleanup_status) {
+        throw 'semantic evidence temp_cleanup_status is invalid'
+    }
+    if ($null -eq $data.PSObject.Properties['temp_cleanup_error'] -or
+        $data.temp_cleanup_error -isnot [string]) {
+        throw 'semantic evidence temp_cleanup_error type is invalid'
+    }
+    if ($null -eq $ObservedWrapperExitCode -or
+        $integerTypes -notcontains $ObservedWrapperExitCode.GetType()) {
+        throw 'semantic evidence observed wrapper exit type is invalid'
+    }
+    $validated = [pscustomobject][ordered]@{
+        status = 'PASS'
+        schema_version = '1.0'
+        run_id = [string]$data.run_id
+        source_property_schema_valid = $true
+        receipt_name = Split-Path -Leaf $Path
+        sha256 = Get-NightlyFileSha256 $Path
+        observed_wrapper_exit_code = $ObservedWrapperExitCode
+        graphify_exit_code = [int]$data.graphify_exit_code
+        graphify_status = [string]$data.graphify_status
+        timed_out = [bool]$data.timed_out
+        guardrail_failed = [bool]$data.guardrail_failed
+        orphan_risk = [bool]$data.orphan_risk
+        temp_cleanup_status = [string]$data.temp_cleanup_status
+        temp_cleanup_error = [string]$data.temp_cleanup_error
+    }
+    if (-not (Test-NightlySemanticEvidenceSuccess -Evidence $validated `
+        -ExpectedRunId $ExpectedRunId)) {
+        throw 'semantic evidence success fields are contradictory'
+    }
+    return $validated
+}
+
+function Test-NightlyN5PostMutationScanEvidence {
+    param(
+        $Evidence,
+        [bool]$ExpectedMutationAttempted
+    )
+    if ($null -eq $Evidence -or $Evidence -is [array]) { return $false }
+    $expectedProperties = @('status', 'mutation_attempted', 'exit_code', 'error')
+    $actualProperties = @($Evidence.PSObject.Properties.Name)
+    if ($actualProperties.Count -ne $expectedProperties.Count -or
+        @($expectedProperties | Where-Object { $actualProperties -cnotcontains $_ }).Count -ne 0 -or
+        $Evidence.status -isnot [string] -or
+        $Evidence.mutation_attempted -isnot [bool] -or
+        $Evidence.error -isnot [string] -or
+        $Evidence.mutation_attempted -ne $ExpectedMutationAttempted) {
+        return $false
+    }
+    if (-not $ExpectedMutationAttempted) {
+        return ([string]$Evidence.status -ceq 'NOT_REQUIRED' -and
+            $null -eq $Evidence.exit_code -and [string]::IsNullOrEmpty($Evidence.error))
+    }
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    return ([string]$Evidence.status -ceq 'PASS' -and
+        $null -ne $Evidence.exit_code -and
+        $integerTypes -contains $Evidence.exit_code.GetType() -and
+        [int64]$Evidence.exit_code -eq 0 -and [string]::IsNullOrEmpty($Evidence.error))
+}
+
+function Invoke-NightlyN5PostMutationScan {
+    param(
+        [bool]$MutationAttempted,
+        [Parameter(Mandatory=$true)][string]$PythonExe,
+        [Parameter(Mandatory=$true)][string]$RepoRoot
+    )
+    if (-not $MutationAttempted) {
+        return [pscustomobject][ordered]@{
+            status = 'NOT_REQUIRED'
+            mutation_attempted = $false
+            exit_code = $null
+            error = ''
+        }
+    }
+    $targetDirectory = Join-Path $RepoRoot 'graphify-out'
+    $graphPath = Join-Path $targetDirectory 'graph.json'
+    try {
+        if (-not (Test-Path -LiteralPath $targetDirectory -PathType Container -ErrorAction Stop)) {
+            return [pscustomobject][ordered]@{
+                status = 'FAIL'
+                mutation_attempted = $true
+                exit_code = $null
+                error = 'post-mutation secrets scan target directory is missing'
+            }
+        }
+        if (-not (Test-Path -LiteralPath $graphPath -PathType Leaf -ErrorAction Stop)) {
+            return [pscustomobject][ordered]@{
+                status = 'FAIL'
+                mutation_attempted = $true
+                exit_code = $null
+                error = 'post-mutation secrets scan graph.json is missing'
+            }
+        }
+    } catch {
+        return [pscustomobject][ordered]@{
+            status = 'FAIL'
+            mutation_attempted = $true
+            exit_code = $null
+            error = "post-mutation secrets scan target preflight failed: $($_.Exception.Message)"
+        }
+    }
+    try {
+        $scanOutput = @(& $PythonExe (Join-Path $RepoRoot 'tooling\wiki\scan_secrets.py') --repo-root $RepoRoot --target graphify-out 2>&1)
+        $scanExit = $LASTEXITCODE
+        if ($scanOutput.Count -gt 0) {
+            $boundedOutput = (($scanOutput | ForEach-Object { "$_" }) -join "`n")
+            if ($boundedOutput.Length -gt 4096) { $boundedOutput = $boundedOutput.Substring(0, 4096) }
+            Write-Host "N5 post-mutation secrets scan output:`n$boundedOutput"
+        }
+        if (-not (Test-NightlyExactZero $scanExit)) {
+            return [pscustomobject][ordered]@{
+                status = 'FAIL'
+                mutation_attempted = $true
+                exit_code = $scanExit
+                error = 'post-mutation secrets scan returned nonzero or malformed exit'
+            }
+        }
+        return [pscustomobject][ordered]@{
+            status = 'PASS'
+            mutation_attempted = $true
+            exit_code = $scanExit
+            error = ''
+        }
+    } catch {
+        return [pscustomobject][ordered]@{
+            status = 'FAIL'
+            mutation_attempted = $true
+            exit_code = $null
+            error = "post-mutation secrets scan threw: $($_.Exception.Message)"
+        }
+    }
+}
+
 try { . $terminalizerPath }
 catch { Exit-NightlyTerminalFailure "terminalizer load failed: $($_.Exception.Message)" }
 
@@ -139,6 +487,41 @@ $finalGraphSmokeEvidence = [ordered]@{
     distinct_community_count = 0
     graph_sha256 = $null
 }
+$semanticExecutionAttempted = $false
+$semanticEvidencePath = Join-Path $logDir "semantic-evidence-$runId.json"
+$semanticEvidence = [pscustomobject][ordered]@{
+    status = 'NOT_RUN'
+    schema_version = '1.0'
+    run_id = $runId
+    source_property_schema_valid = $false
+    receipt_name = $null
+    sha256 = $null
+    observed_wrapper_exit_code = $null
+    graphify_exit_code = $null
+    graphify_status = 'NOT_RUN'
+    timed_out = $false
+    guardrail_failed = $false
+    orphan_risk = $false
+    temp_cleanup_status = 'NOT_RUN'
+    temp_cleanup_error = ''
+}
+$n5MutationAttempted = $false
+$n5PostMutationScan = [pscustomobject][ordered]@{
+    status = 'NOT_REQUIRED'
+    mutation_attempted = $false
+    exit_code = $null
+    error = ''
+}
+$n5ReleaseRequired = $false
+$n5ReleaseExpectedGraphOrphanRisk = $false
+$n5ReleaseEvidence = [pscustomobject][ordered]@{
+    required = $false
+    status = 'NOT_REQUIRED'
+    selected_mode = $null
+    observed = $null
+    error = ''
+    GraphOrphanRisk = $false
+}
 
 function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
     try { Enter-NightlyTerminalization -GuardPath $terminalGuardPath }
@@ -159,7 +542,7 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
         $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
         $finalState = $TerminalState
         $finalExit = $NativeExitCode
-        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS')) {
+        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS' -or ($semanticExecutionAttempted -and -not (Test-NightlySemanticEvidenceSuccess -Evidence $semanticEvidence -ExpectedRunId $runId)) -or (-not (Test-NightlyN5PostMutationScanEvidence -Evidence $n5PostMutationScan -ExpectedMutationAttempted $n5MutationAttempted)) -or (-not (Test-NightlyN5ReleaseEvidence -Evidence $n5ReleaseEvidence -ExpectedRequired $n5ReleaseRequired -ExpectedGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk)))) {
             $finalState = 'FAILED'
             $finalExit = 1
         }
@@ -198,6 +581,9 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
             serve_gate = $serveGateResult
             final_canonicalization = $finalCanonicalizationEvidence
             final_graph_smoke = $finalGraphSmokeEvidence
+            semantic_evidence = $semanticEvidence
+            n5_post_mutation_scan = $n5PostMutationScan
+            n5_release = $n5ReleaseEvidence
             served_graph_sha256 = $servedGraphSha256
             required_ref = $serveGateRequiredRef
             head_oid = $finalHead
@@ -268,7 +654,8 @@ try {
 # --emit-overlay is REQUIRED here (codex P2): without regenerating the docs-trust
 # negation overlay the root *.md blanket excludes every registered doc from N1 build.
 & $pythonExe (Join-Path $RepoRoot "tooling\wiki\gen_docs_scope.py") --repo-root $RepoRoot --out (Join-Path $RepoRoot "graphify-out\docs_scope.json") --emit-overlay
-if ($LASTEXITCODE -eq 2) {
+$docsScopeExit = $LASTEXITCODE
+if (-not (Test-NightlyExactZero $docsScopeExit)) {
     Write-Host "FAIL: DOCS_SCOPE_FAIL"
     "DOCS_SCOPE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
     Complete-NightlyRun 1 'FAILED'
@@ -308,10 +695,10 @@ if ($forceFull) {
     $gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('update', $RepoRoot, '--no-cluster') -TimeoutSec $cfgTimeoutUpdateInc
 }
 
-if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
+if ($gr.OrphanRisk) { $graphOrphanRisk = $true }
+if ($gr.GuardrailFailed -or $gr.TimedOut -or $gr.ExitCode -ne 0) {
     Write-Host "FAIL: graphify update"
     $step1Status = "FAIL"
-    if ($gr.TimedOut -and -not $gr.Killed) { $graphOrphanRisk = $true }
 } else {
     $canonicalReceipt = Join-Path $logDir "canonicalization-precluster-$stamp.json"
     & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $canonicalReceipt
@@ -334,10 +721,10 @@ if ($graphOrphanRisk) {
     $step2Status = "SKIPPED_BUILD_FAIL"
 } else {
     $gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('cluster-only', $RepoRoot, '--no-label', '--no-viz') -TimeoutSec $cfgTimeoutCluster
-    if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
+    if ($gr.OrphanRisk) { $graphOrphanRisk = $true }
+    if ($gr.GuardrailFailed -or $gr.TimedOut -or $gr.ExitCode -ne 0) {
         Write-Host "FAIL: graphify cluster-only"
         $step2Status = "FAIL"
-        if ($gr.TimedOut -and -not $gr.Killed) { $graphOrphanRisk = $true }
     } else {
         $step2Status = "OK"
     }
@@ -348,33 +735,49 @@ if (-not (Test-Path (Join-Path $RepoRoot "graphify-out\graph.json"))) {
 }
 
 Write-Host "--- N3 SECRETS ---"
-& $pythonExe (Join-Path $RepoRoot "tooling\wiki\scan_secrets.py") --repo-root $RepoRoot --target graphify-out
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "FAIL: SECRET_HIT"
-    "SECRET_HIT" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    Complete-NightlyRun 1 'FAILED'
+if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK") {
+    Write-Host "SKIP: N3 secrets requires proven N1/N2 graph completion without orphan risk"
+} else {
+    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\scan_secrets.py") --repo-root $RepoRoot --target graphify-out
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "FAIL: SECRET_HIT"
+        "SECRET_HIT" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
+        Complete-NightlyRun 1 'FAILED'
+    }
 }
 
 Write-Host "--- N4 SMOKE ---"
-& $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --require-communities --receipt (Join-Path $logDir "smoke-$stamp.json")
-if ($LASTEXITCODE -eq 1) {
-    Write-Host "FAIL: SMOKE_FAIL"
-    "SMOKE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
-    Complete-NightlyRun 1 'FAILED'
+if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK") {
+    Write-Host "SKIP: N4 smoke requires proven N1/N2 graph completion without orphan risk"
+} else {
+    & $pythonExe (Join-Path $RepoRoot "tooling\wiki\graph_smoke.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --require-communities --receipt (Join-Path $logDir "smoke-$stamp.json")
+    $n4SmokeExit = $LASTEXITCODE
+    if (-not (Test-NightlyExactZero $n4SmokeExit)) {
+        Write-Host "FAIL: SMOKE_FAIL"
+        "SMOKE_FAIL" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
+        Complete-NightlyRun 1 'FAILED'
+    }
 }
 
 Write-Host "--- N5 SEMANTIC ---"
 $semanticSkippedReason = ""
+$n5Plan = Get-NightlyN5Plan -SkipLabeling $SkipLabeling -SkipSemantic $SkipSemantic `
+    -LabelOnlyExpiryMinutes $cfgExpiryLabelOnly -LabelAndSemanticExpiryMinutes $cfgExpiryLabelSem
+Write-Host "N5 plan mode: $($n5Plan.Mode)"
 if ($graphOrphanRisk) {
     $semanticSkippedReason = "graphOrphanRisk"
-} elseif ($SkipSemantic -or ($SkipLabeling -and $SkipSemantic)) {
+} elseif (-not $n1BuildOk) {
+    $semanticSkippedReason = "N1BuildFail"
+} elseif ($step2Status -ne "OK") {
+    $semanticSkippedReason = "N2ClusterFail"
+} elseif ($n5Plan.SkipAll) {
     $semanticSkippedReason = "SkipFlags"
 }
 
 if ($semanticSkippedReason) {
     $step5Status = "SEMANTIC_SKIPPED_$semanticSkippedReason"
 } else {
-    $lockMins = if ($SkipSemantic) { $cfgExpiryLabelOnly } else { $cfgExpiryLabelSem }
+    $lockMins = $n5Plan.LockExpiryMinutes
     $h = Invoke-OllamaLockAcquire -BlockId 'SSTAC-NIGHTLY' -Purpose 'nightly label+semantic' -ExpiryMinutes $lockMins -Model $cfgModel
     if ($null -eq $h) {
         $step5Status = "SEMANTIC_SKIPPED_LOCK"
@@ -384,11 +787,13 @@ if ($semanticSkippedReason) {
         # release site (the finally) -- no branch releases early (no double-release).
         $step5Fail = $false
         $secretHitPost = $false
+        $n5UnexpectedException = $false
         try {
-            if (-not $SkipLabeling) {
+            if ($n5Plan.RunLabel) {
+                $n5MutationAttempted = $true
                 $gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('label', $RepoRoot, '--backend=ollama', "--model=$cfgModel", '--max-concurrency=1') -TimeoutSec $cfgTimeoutLabel
-                if ($gr.TimedOut -and -not $gr.Killed) { $gpuOrphanRisk = $true }
-                if ($gr.TimedOut -or $gr.ExitCode -ne 0) {
+                if ($gr.OrphanRisk) { $gpuOrphanRisk = $true }
+                if ($gr.GuardrailFailed -or $gr.TimedOut -or $gr.ExitCode -ne 0) {
                     $step5Fail = $true
                 } else {
                     $postLabelCanonicalReceipt = Join-Path $logDir "canonicalization-postlabel-$runId.json"
@@ -399,13 +804,25 @@ if ($semanticSkippedReason) {
                     }
                 }
             }
-            if (-not $gpuOrphanRisk -and -not $step5Fail) {
-                $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"), '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner)
+            if ($n5Plan.RunSemantic -and -not $gpuOrphanRisk -and -not $step5Fail) {
+                $semanticExecutionAttempted = $true
+                $semanticEvidence.receipt_name = Split-Path -Leaf $semanticEvidencePath
+                $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"), '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner, '-EvidencePath', $semanticEvidencePath, '-EvidenceRunId', $runId)
+                $n5MutationAttempted = $true
                 $sr = Invoke-GraphifyGuarded -GraphifyExe 'powershell' -GraphifyArgs $semArgs -TimeoutSec $cfgTimeoutSemOuter
-                if ($sr.TimedOut -and -not $sr.Killed) { $gpuOrphanRisk = $true }
-                if ($sr.TimedOut -or $sr.ExitCode -ne 0) {
+                try {
+                    $semanticEvidence = Get-NightlyValidatedSemanticEvidence `
+                        -Path $semanticEvidencePath -ExpectedRunId $runId `
+                        -ObservedWrapperExitCode $sr.ExitCode
+                } catch {
+                    $semanticEvidence.status = 'FAIL'
+                    Write-Host "FAIL: semantic evidence validation: $($_.Exception.Message)"
                     $step5Fail = $true
-                } else {
+                }
+                if ($sr.OrphanRisk -or ($sr.ExitCode -eq 124)) { $gpuOrphanRisk = $true }
+                if ($sr.GuardrailFailed -or $sr.TimedOut -or $sr.ExitCode -ne 0) {
+                    $step5Fail = $true
+                } elseif (-not $step5Fail) {
                     $postSemanticCanonicalReceipt = Join-Path $logDir "canonicalization-postsemantic-$runId.json"
                     & $pythonExe (Join-Path $RepoRoot "tooling\wiki\canonicalize_graph.py") --graph (Join-Path $RepoRoot "graphify-out\graph.json") --repo-root $RepoRoot --receipt $postSemanticCanonicalReceipt
                     if ($LASTEXITCODE -ne 0) {
@@ -414,19 +831,11 @@ if ($semanticSkippedReason) {
                     }
                 }
 
-                # POST-SEMANTIC RE-SCAN (no early release/exit here -- flag and fall through
-                # so the single finally-release runs; receipt + exit happen after).
-                & $pythonExe (Join-Path $RepoRoot "tooling\wiki\scan_secrets.py") --repo-root $RepoRoot --target graphify-out
-                if ($LASTEXITCODE -ne 0) {
-                    Write-Host "FAIL: SECRET_HIT_POST"
-                    $secretHitPost = $true
-                    $step5Fail = $true
-                }
-
                 if (-not $step5Fail) {
+                    $n5MutationAttempted = $true
                     $postSemanticCluster = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('cluster-only', $RepoRoot, '--no-label', '--no-viz') -TimeoutSec $cfgTimeoutCluster
-                    if ($postSemanticCluster.TimedOut -and -not $postSemanticCluster.Killed) { $gpuOrphanRisk = $true }
-                    if ($postSemanticCluster.TimedOut -or $postSemanticCluster.ExitCode -ne 0) {
+                    if ($postSemanticCluster.OrphanRisk) { $gpuOrphanRisk = $true }
+                    if ($postSemanticCluster.GuardrailFailed -or $postSemanticCluster.TimedOut -or $postSemanticCluster.ExitCode -ne 0) {
                         Write-Host "FAIL: post-semantic graphify cluster-only"
                         $step5Fail = $true
                     } else {
@@ -439,9 +848,21 @@ if ($semanticSkippedReason) {
                     }
                 }
 
-                # PROMOTION (THE ONLY invocation; skipped on any semantic-step failure --
-                # promotion over a red/partial extract is exactly what the coverage guard
-                # + this skip both exist to prevent).
+            }
+
+            # One common post-mutation secrets scan covers LABEL_ONLY, SEMANTIC_ONLY,
+            # and LABEL_AND_SEMANTIC after the final attempted graph mutator.
+            $n5PostMutationScan = Invoke-NightlyN5PostMutationScan `
+                -MutationAttempted $n5MutationAttempted -PythonExe $pythonExe -RepoRoot $RepoRoot
+            if (-not (Test-NightlyN5PostMutationScanEvidence -Evidence $n5PostMutationScan `
+                -ExpectedMutationAttempted $n5MutationAttempted)) {
+                Write-Host "FAIL: N5 post-mutation secrets scan: $($n5PostMutationScan.error)"
+                $secretHitPost = $true
+                $step5Fail = $true
+            }
+
+            # PROMOTION (THE ONLY invocation; skipped on any semantic-step or scan failure).
+            if ($n5Plan.RunSemantic) {
                 if ($step5Fail) {
                     $promStatus = "PROMOTION_SKIPPED_SEMANTIC_FAIL"
                 } else {
@@ -474,17 +895,23 @@ if ($semanticSkippedReason) {
                     }
                 }
             }
-            $step5Status = if ($step5Fail) { "FAIL" } else { "OK" }
+        } catch {
+            $step5Fail = $true
+            $n5UnexpectedException = $true
+            $step5Status = "FAIL"
+            Write-Host "FAIL: unexpected N5 exception: $($_.Exception.Message)"
         } finally {
-            if ($gpuOrphanRisk) {
-                Invoke-OllamaLockRelease -Handle $h -GpuOrphanRisk
-                $graphOrphanRisk = $true
-            } elseif ($step5Fail) {
-                Invoke-OllamaLockRelease -Handle $h -Status 'COMPLETED_RED'
-            } else {
-                Invoke-OllamaLockRelease -Handle $h -Status 'COMPLETED_GREEN'
+            $n5ReleaseRequired = $true
+            $n5ReleaseExpectedGraphOrphanRisk = [bool]$gpuOrphanRisk
+            $n5ReleaseEvidence = Invoke-NightlyN5Release -Handle $h -GpuOrphanRisk $gpuOrphanRisk `
+                -Step5Fail $step5Fail -UnexpectedException $n5UnexpectedException
+            if (-not (Test-NightlyN5ReleaseEvidence -Evidence $n5ReleaseEvidence `
+                -ExpectedRequired $true -ExpectedGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk)) {
+                $step5Fail = $true
             }
+            if ($n5ReleaseExpectedGraphOrphanRisk) { $graphOrphanRisk = $true }
         }
+        $step5Status = if ($step5Fail) { "FAIL" } else { "OK" }
         if ($secretHitPost) {
             "SECRET_HIT_POST" | Set-Content (Join-Path $logDir "receipt-$stamp.md")
             Complete-NightlyRun 1 'FAILED'

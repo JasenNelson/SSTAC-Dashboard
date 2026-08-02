@@ -5,7 +5,8 @@ param (
     [string]$GraphifyExe = 'graphify',
     # Hard timeout (seconds) for the guarded `graphify update` graph build. graphify has no
     # timeout/memory cap on Windows, so the build MUST go through Invoke-GraphifyGuarded, which
-    # fails closed (exit 124 + tree-kill-by-PID) if the build hangs past this. Generous default
+    # fails closed (exit 124 + exact-root termination; descendant tree unproven) if the build hangs
+    # past this. Generous default
     # for a full first build; override for a large graph.
     [int]$GraphTimeoutSec = 1800,
     [switch]$AutoCommit
@@ -20,11 +21,18 @@ param (
 $repoRoot = (Resolve-Path "$PSScriptRoot\..\..").Path
 Set-Location -Path $repoRoot
 
-# Dot-source the graphify guardrail (hard timeout + fail-closed snapshot-then-tree-kill-by-PID).
+# Dot-source the graphify guardrail (hard timeout + fail-closed exact-root termination).
 # The graph build in step 1 MUST go through Invoke-GraphifyGuarded -- graphify has no timeout /
 # memory cap on Windows, so an unguarded graph-build invocation could hang unbounded (D1 fix
 # 2026-07-22; plan section 7 requires zero bare graphify calls outside Invoke-GraphifyGuarded).
 . (Join-Path $PSScriptRoot 'graphify_guardrail.ps1')
+
+function Get-WikiSyncGraphifyExitCode {
+    param([Parameter(Mandatory=$true)]$Result)
+    if ($Result.TimedOut -or $Result.OrphanRisk) { return 124 }
+    if ($Result.GuardrailFailed -or $Result.ExitCode -ne 0) { return 1 }
+    return 0
+}
 
 # Both Python call sites below deliberately use the pinned .venv-graphify interpreter, not
 # a bare `python` on PATH -- the pilot's graphifyy[sql,mcp]==0.9.17 pin (and its transitive
@@ -42,15 +50,16 @@ if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: docs scope/overlay 
 
 Write-Host "--- 1. Graph Generation ---"
 if (-not $SkipGraph) {
-    # Guarded build: fail closed on hang (timeout -> exit 124 + tree-kill) AND on a non-zero
+    # Guarded build: fail closed on hang (timeout -> exit 124; descendant tree unproven) AND on a non-zero
     # graphify exit. Never a silent success. (D1 fix: replaces the former unguarded graph-build call.)
     $graphResult = Invoke-GraphifyGuarded -GraphifyExe $GraphifyExe -GraphifyArgs @('update', '.', '--no-cluster') -TimeoutSec $GraphTimeoutSec
-    if ($graphResult.TimedOut) {
-        Write-Host "FAIL: graph generation TIMED OUT after ${GraphTimeoutSec}s (guarded; tree fully killed=$($graphResult.Killed))"
-        exit 1
+    $graphDecisionExit = Get-WikiSyncGraphifyExitCode -Result $graphResult
+    if ($graphDecisionExit -eq 124) {
+        Write-Host "FAIL: graph generation timeout or explicit orphan/custody risk (exit 124; timed out=$($graphResult.TimedOut); guardrail failed=$($graphResult.GuardrailFailed); orphan risk=$($graphResult.OrphanRisk); root terminated=$($graphResult.RootTerminated); cleanup=$($graphResult.CleanupStatus); error=$($graphResult.CleanupError); descendant tree unproven)"
+        exit 124
     }
-    if ($graphResult.ExitCode -ne 0) {
-        Write-Host "FAIL: graph generation (graphify exit $($graphResult.ExitCode))"
+    if ($graphDecisionExit -ne 0) {
+        Write-Host "FAIL: graph generation guardrail/nonzero failure (graphify exit=$($graphResult.ExitCode); guardrail failed=$($graphResult.GuardrailFailed); error=$($graphResult.GuardrailError))"
         exit 1
     }
 }

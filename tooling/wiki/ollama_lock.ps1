@@ -17,13 +17,25 @@
 #      (+24h, non-numeric process_id) and drops an SSTAC-suffixed HITL marker instead of
 #      releasing onto a possibly-live GPU process.
 
-$script:OllamaLockPath      = 'C:\Projects\OLLAMA_ACTIVE.lock'
-$script:StandingBlockPath   = 'C:\Projects\OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md'
-$script:LaneId              = 'sstac-wiki'
+$script:OllamaControlRoot = 'C:\Projects'
+$script:LaneId = 'sstac-wiki'
+
+function Get-OllamaControlPath {
+    param([Parameter(Mandatory)][string]$ChildPath)
+    return Join-Path $script:OllamaControlRoot $ChildPath
+}
+
+function Get-OllamaLockPath {
+    return Get-OllamaControlPath 'OLLAMA_ACTIVE.lock'
+}
+
+function Get-OllamaStandingBlockPath {
+    return Get-OllamaControlPath 'OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md'
+}
 
 function Get-OllamaSchedulePath {
     $date = Get-Date -Format 'yyyy-MM-dd'
-    return "C:\Projects\OLLAMA_SCHEDULE_$date.md"
+    return Get-OllamaControlPath "OLLAMA_SCHEDULE_$date.md"
 }
 
 function Write-OllamaDriftLogRow {
@@ -76,8 +88,9 @@ function Test-OllamaPreflight {
     # Callers treat $false as SKIP-tonight (fail-soft for the nightly; fail-closed for standalone).
 
     # Clause 1: standing block (lane authorization). Absent -> not authorized, ever.
-    if (-not (Test-Path $script:StandingBlockPath)) {
-        Write-Host "ollama_lock preflight: standing block absent ($script:StandingBlockPath) -> SKIP (lane not authorized)"
+    $standingBlockPath = Get-OllamaStandingBlockPath
+    if (-not (Test-Path $standingBlockPath)) {
+        Write-Host "ollama_lock preflight: standing block absent ($standingBlockPath) -> SKIP (lane not authorized)"
         return $false
     }
 
@@ -108,9 +121,10 @@ function Test-OllamaPreflight {
     }
 
     # Clause 3: peer lock file -- liveness FIRST, then expiry. MANUAL_HOLD is never reclaimed.
-    if (Test-Path $script:OllamaLockPath) {
+    $lockPath = Get-OllamaLockPath
+    if (Test-Path $lockPath) {
         $peer = $null
-        try { $peer = Get-Content $script:OllamaLockPath -Raw | ConvertFrom-Json } catch {}
+        try { $peer = Get-Content $lockPath -Raw | ConvertFrom-Json } catch {}
         $peerPid = if ($peer) { "$($peer.process_id)" } else { '' }
         if ($peerPid -notmatch '^\d+$') {
             Write-Host "ollama_lock preflight: peer lock is MANUAL_HOLD/non-numeric ($peerPid) -> NEVER reclaimed -> SKIP"
@@ -124,9 +138,9 @@ function Test-OllamaPreflight {
         }
         # Dead PID: expired -> stale-recovery is a HITL path, not ours; not expired -> HITL signal.
         $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $marker = "C:\Projects\HITL_OLLAMA_STALE_LOCK_$stamp.md"
+        $marker = Get-OllamaControlPath "HITL_OLLAMA_STALE_LOCK_$stamp.md"
         "Stale ollama lock observed by lane $script:LaneId at $stamp. Holder PID $peerPid not alive. Lock body follows.`n" +
-            (Get-Content $script:OllamaLockPath -Raw -ErrorAction SilentlyContinue) |
+            (Get-Content $lockPath -Raw -ErrorAction SilentlyContinue) |
             Out-File -FilePath $marker -Encoding ascii
         Write-Host "ollama_lock preflight: peer lock PID dead -> wrote $marker for owner mediation -> SKIP (never self-reclaim)"
         return $false
@@ -159,9 +173,10 @@ function Invoke-OllamaLockAcquire {
     )
     if (-not (Test-OllamaPreflight)) { return $null }
 
+    $lockPath = Get-OllamaLockPath
     $fs = $null
     try {
-        $fs = [System.IO.File]::Open($script:OllamaLockPath, [System.IO.FileMode]::CreateNew)
+        $fs = [System.IO.File]::Open($lockPath, [System.IO.FileMode]::CreateNew)
     } catch {
         if ($_.Exception.HResult -eq -2147024816) {
             Write-Host "ollama_lock: peer won the CreateNew race -> SKIP"
@@ -192,11 +207,118 @@ function Invoke-OllamaLockAcquire {
     $declared = Write-OllamaDriftLogRow ("| $BlockId | IN_FLIGHT | actual_start $($now.ToString('HH:mm:ss')) | $script:LaneId | $SessionId | pid $PID | model $Model | expiry +${ExpiryMinutes}m | log $LogPath | $Purpose |")
     if (-not $declared) {
         Write-Warning "ollama_lock: IN_FLIGHT declaration could not be written -> rolling back acquisition"
-        Remove-Item -Path $script:OllamaLockPath -Force -ErrorAction SilentlyContinue
+        Remove-Item -Path $lockPath -Force -ErrorAction SilentlyContinue
         return $null
     }
 
-    return [pscustomobject]@{ BlockId = $BlockId; SessionId = $SessionId; AcquiredAt = $now; OwnerPid = $PID }
+    return [pscustomobject]@{
+        LaneId = $script:LaneId
+        BlockId = $BlockId
+        SessionId = $SessionId
+        AcquiredAt = $now
+        OwnerPid = $PID
+    }
+}
+
+function New-OllamaReleaseResult {
+    param(
+        [Parameter(Mandatory)][string]$RequestedMode,
+        [ValidateSet('VERIFIED_RELEASED','VERIFIED_MANUAL_HOLD','FAILED')][string]$Outcome = 'FAILED',
+        [bool]$EvidenceValid = $false,
+        [bool]$OwnershipMatched = $false,
+        [bool]$LockAbsent = $false,
+        [bool]$ManualHoldVerified = $false,
+        [bool]$DriftLogWritten = $false,
+        [bool]$MarkerWritten = $false,
+        [string]$Error = ''
+    )
+    return [pscustomobject][ordered]@{
+        schema_version = '1.0'
+        requested_mode = $RequestedMode
+        outcome = $Outcome
+        evidence_valid = $EvidenceValid
+        ownership_matched = $OwnershipMatched
+        lock_absent = $LockAbsent
+        manual_hold_verified = $ManualHoldVerified
+        drift_log_written = $DriftLogWritten
+        marker_written = $MarkerWritten
+        error = $Error
+    }
+}
+
+function Test-OllamaReleaseResult {
+    param(
+        [Parameter(Mandatory)]$Result,
+        [Parameter(Mandatory)][string]$ExpectedRequestedMode
+    )
+    if ($null -eq $Result) { return $false }
+    $expectedProperties = @(
+        'schema_version', 'requested_mode', 'outcome', 'evidence_valid',
+        'ownership_matched', 'lock_absent', 'manual_hold_verified',
+        'drift_log_written', 'marker_written', 'error'
+    )
+    $actualProperties = @($Result.PSObject.Properties.Name)
+    if ($actualProperties.Count -ne $expectedProperties.Count -or
+        @($expectedProperties | Where-Object { $actualProperties -cnotcontains $_ }).Count -ne 0) {
+        return $false
+    }
+    if ([string]$Result.schema_version -cne '1.0' -or
+        [string]$Result.requested_mode -cne $ExpectedRequestedMode -or
+        $Result.error -isnot [string]) {
+        return $false
+    }
+    foreach ($name in @('evidence_valid','ownership_matched','lock_absent','manual_hold_verified','drift_log_written','marker_written')) {
+        if ($Result.$name -isnot [bool]) { return $false }
+    }
+    if ($ExpectedRequestedMode -eq 'MANUAL_HOLD') {
+        return ([string]$Result.outcome -ceq 'VERIFIED_MANUAL_HOLD' -and
+            $Result.evidence_valid -and $Result.ownership_matched -and
+            -not $Result.lock_absent -and $Result.manual_hold_verified -and
+            $Result.drift_log_written -and $Result.marker_written -and
+            [string]::IsNullOrEmpty($Result.error))
+    }
+    return ([string]$Result.outcome -ceq 'VERIFIED_RELEASED' -and
+        $Result.evidence_valid -and $Result.ownership_matched -and
+        $Result.lock_absent -and -not $Result.manual_hold_verified -and
+        $Result.drift_log_written -and -not $Result.marker_written -and
+        [string]::IsNullOrEmpty($Result.error))
+}
+
+function Remove-OllamaOwnedLockFile {
+    param([Parameter(Mandatory)][string]$Path)
+    Remove-Item -LiteralPath $Path -Force -ErrorAction Stop
+}
+
+function Set-OllamaManualHoldContent {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Content
+    )
+    $temporaryPath = "$Path.hold.$PID.$([guid]::NewGuid().ToString('N')).tmp"
+    try {
+        [System.IO.File]::WriteAllText($temporaryPath, $Content, [System.Text.Encoding]::ASCII)
+        Move-Item -LiteralPath $temporaryPath -Destination $Path -Force -ErrorAction Stop
+    } finally {
+        if (Test-Path -LiteralPath $temporaryPath) {
+            Remove-Item -LiteralPath $temporaryPath -Force -ErrorAction SilentlyContinue
+        }
+    }
+}
+
+function Write-OllamaMarkerFile {
+    param(
+        [Parameter(Mandatory)][string]$Path,
+        [Parameter(Mandatory)][string]$Content
+    )
+    $bytes = [System.Text.Encoding]::ASCII.GetBytes($Content)
+    $stream = [System.IO.File]::Open(
+        $Path,
+        [System.IO.FileMode]::CreateNew,
+        [System.IO.FileAccess]::Write,
+        [System.IO.FileShare]::None
+    )
+    try { $stream.Write($bytes, 0, $bytes.Length) }
+    finally { $stream.Dispose() }
 }
 
 function Invoke-OllamaLockRelease {
@@ -207,54 +329,136 @@ function Invoke-OllamaLockRelease {
         [switch]$GpuOrphanRisk
     )
     $now = Get-Date
+    $requestedMode = if ($GpuOrphanRisk) { 'MANUAL_HOLD' } else { $Status }
+    $lockPath = Get-OllamaLockPath
 
-    # OWNERSHIP CHECK (codex P3, 2026-07-22): never rewrite/delete a lock this handle does not
-    # own -- the file may have been replaced by another actor (stale-recovery peer, manual
-    # intervention). Mismatch -> leave the file alone, log the anomaly, and return.
     $current = $null
-    try { $current = Get-Content $script:OllamaLockPath -Raw -ErrorAction Stop | ConvertFrom-Json } catch {}
-    $ownPid = if ($Handle.PSObject.Properties['OwnerPid']) { "$($Handle.OwnerPid)" } else { "$PID" }
-    if ($null -eq $current -or "$($current.process_id)" -ne $ownPid -or "$($current.scheduled_block_id)" -ne "$($Handle.BlockId)") {
-        Write-Warning "ollama_lock: release skipped -- lock file absent or not owned by this handle (found pid '$($current.process_id)' block '$($current.scheduled_block_id)')"
-        Write-OllamaDriftLogRow ("| $($Handle.BlockId) | RELEASE_ANOMALY | $($now.ToString('HH:mm:ss')) | $script:LaneId | $($Handle.SessionId) | lock not owned at release; left untouched |") | Out-Null
-        return
+    try {
+        if (-not (Test-Path -LiteralPath $lockPath -PathType Leaf)) { throw 'lock file is missing' }
+        $current = Get-Content -LiteralPath $lockPath -Raw -ErrorAction Stop | ConvertFrom-Json
+    } catch {
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -Error "release read failed: $($_.Exception.Message)")
+    }
+
+    $expectedLane = if ($Handle.PSObject.Properties['LaneId']) { [string]$Handle.LaneId } else { '' }
+    $expectedSession = if ($Handle.PSObject.Properties['SessionId']) { [string]$Handle.SessionId } else { '' }
+    $expectedPid = if ($Handle.PSObject.Properties['OwnerPid']) { [string]$Handle.OwnerPid } else { '' }
+    $expectedBlock = if ($Handle.PSObject.Properties['BlockId']) { [string]$Handle.BlockId } else { '' }
+    $ownershipMatched = (-not [string]::IsNullOrWhiteSpace($expectedLane) -and
+        -not [string]::IsNullOrWhiteSpace($expectedSession) -and
+        -not [string]::IsNullOrWhiteSpace($expectedPid) -and
+        -not [string]::IsNullOrWhiteSpace($expectedBlock) -and
+        [string]$current.lane_id -ceq $expectedLane -and
+        [string]$current.session_id -ceq $expectedSession -and
+        [string]$current.process_id -ceq $expectedPid -and
+        [string]$current.scheduled_block_id -ceq $expectedBlock)
+    if (-not $ownershipMatched) {
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode `
+            -Error 'release ownership mismatch; lock left untouched')
     }
 
     if ($GpuOrphanRisk) {
-        # Do NOT release onto a possibly-live GPU process: rewrite to MANUAL_HOLD (+24h),
-        # non-numeric process_id so no peer ever auto-reclaims it; drop the SSTAC HITL marker.
-        $hold = @{
-            lane_id            = $script:LaneId
-            session_id         = $Handle.SessionId
+        $holdExpiry = $now.AddHours(24).ToString('o')
+        $holdAcquiredAt = ([datetime]$Handle.AcquiredAt).ToString('o')
+        $hold = [pscustomobject][ordered]@{
+            lane_id            = $expectedLane
+            session_id         = $expectedSession
             process_id         = 'MANUAL_HOLD'
-            scheduled_block_id = $Handle.BlockId
+            scheduled_block_id = $expectedBlock
             block_or_adhoc     = 'block'
             purpose            = 'MANUAL_HOLD after gpuOrphanRisk -- owner must clear'
-            acquired_at        = $Handle.AcquiredAt.ToString('o')
-            expires_at         = $now.AddHours(24).ToString('o')
+            acquired_at        = $holdAcquiredAt
+            expires_at         = $holdExpiry
+            hold_reason        = 'gpu_orphan_risk'
+            hold_hours         = 24
         } | ConvertTo-Json
-        Set-Content -Path $script:OllamaLockPath -Value $hold -Encoding ascii
+        try {
+            Set-OllamaManualHoldContent -Path $lockPath -Content $hold
+        } catch {
+            return (New-OllamaReleaseResult -RequestedMode $requestedMode `
+                -OwnershipMatched $true -Error "manual hold write failed: $($_.Exception.Message)")
+        }
+        $holdVerified = $false
+        $holdReadbackError = ''
+        try {
+            $observedHold = Get-Content -LiteralPath $lockPath -Raw -ErrorAction Stop | ConvertFrom-Json
+            $expectedAcquiredInstant = [datetimeoffset]::Parse($holdAcquiredAt)
+            $observedAcquiredInstant = if ($observedHold.acquired_at -is [datetime]) {
+                [datetimeoffset]$observedHold.acquired_at
+            } else { [datetimeoffset]::Parse([string]$observedHold.acquired_at) }
+            $expectedExpiryInstant = [datetimeoffset]::Parse($holdExpiry)
+            $observedExpiryInstant = if ($observedHold.expires_at -is [datetime]) {
+                [datetimeoffset]$observedHold.expires_at
+            } else { [datetimeoffset]::Parse([string]$observedHold.expires_at) }
+            $holdMismatches = @()
+            if ([string]$observedHold.lane_id -cne $expectedLane) { $holdMismatches += 'lane_id' }
+            if ([string]$observedHold.session_id -cne $expectedSession) { $holdMismatches += 'session_id' }
+            if ([string]$observedHold.process_id -cne 'MANUAL_HOLD') { $holdMismatches += 'process_id' }
+            if ([string]$observedHold.scheduled_block_id -cne $expectedBlock) { $holdMismatches += 'scheduled_block_id' }
+            if ([string]$observedHold.block_or_adhoc -cne 'block') { $holdMismatches += 'block_or_adhoc' }
+            if ([string]$observedHold.purpose -cne 'MANUAL_HOLD after gpuOrphanRisk -- owner must clear') { $holdMismatches += 'purpose' }
+            if ($observedAcquiredInstant -ne $expectedAcquiredInstant) { $holdMismatches += 'acquired_at' }
+            if ($observedExpiryInstant -ne $expectedExpiryInstant) { $holdMismatches += 'expires_at' }
+            if ([string]$observedHold.hold_reason -cne 'gpu_orphan_risk') { $holdMismatches += 'hold_reason' }
+            if ([int64]$observedHold.hold_hours -ne 24) { $holdMismatches += 'hold_hours' }
+            $holdVerified = ($holdMismatches.Count -eq 0)
+            if (-not $holdVerified) { $holdReadbackError = $holdMismatches -join ',' }
+        } catch { $holdReadbackError = $_.Exception.Message }
+        if (-not $holdVerified) {
+            return (New-OllamaReleaseResult -RequestedMode $requestedMode `
+                -OwnershipMatched $true -Error "manual hold readback contradiction: $holdReadbackError")
+        }
         $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-        $marker = "C:\Projects\HITL_OLLAMA_GPU_ORPHAN_SSTAC_$stamp.md"
-        "GPU orphan risk in lane $script:LaneId block $($Handle.BlockId) at $stamp. Lock rewritten to MANUAL_HOLD (+24h). Owner: verify GPU idle (nvidia-smi / ollama ps), then delete $script:OllamaLockPath." |
-            Out-File -FilePath $marker -Encoding ascii
-        Write-OllamaDriftLogRow ("| $($Handle.BlockId) | MANUAL_HOLD | actual_end $($now.ToString('HH:mm:ss')) | $script:LaneId | $($Handle.SessionId) | gpuOrphanRisk -> lock held; marker $marker |") | Out-Null
-        return
+        $marker = Get-OllamaControlPath "HITL_OLLAMA_GPU_ORPHAN_SSTAC_$stamp-$PID.md"
+        try {
+            Write-OllamaMarkerFile -Path $marker -Content "GPU orphan risk in lane $expectedLane block $expectedBlock at $stamp. Lock verified as MANUAL_HOLD (+24h). Owner must verify GPU idle before clearing $lockPath."
+        } catch {
+            return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+                -ManualHoldVerified $true -Error "manual hold marker failed: $($_.Exception.Message)")
+        }
+        $driftWritten = Write-OllamaDriftLogRow ("| $expectedBlock | MANUAL_HOLD | actual_end $($now.ToString('HH:mm:ss')) | $expectedLane | $expectedSession | gpuOrphanRisk -> lock held; marker $marker |")
+        if (-not $driftWritten) {
+            return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+                -ManualHoldVerified $true -MarkerWritten $true -Error 'manual hold drift-log append failed')
+        }
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -Outcome 'VERIFIED_MANUAL_HOLD' `
+            -EvidenceValid $true -OwnershipMatched $true -ManualHoldVerified $true `
+            -DriftLogWritten $true -MarkerWritten $true)
     }
-    # Closeout row FIRST (while still holding the mutex-of-record), so the IN_FLIGHT row
-    # gets its terminal row before the lock disappears (codex P2, 2026-07-22). If the append
-    # fails after a retry, STILL delete the lock (a logging failure must never keep the GPU
-    # mutex held) but drop an HITL marker so the dangling IN_FLIGHT row is owner-visible.
-    $closeRow = "| $($Handle.BlockId) | $Status | actual_end $($now.ToString('HH:mm:ss')) | $script:LaneId | $($Handle.SessionId) |"
-    $wrote = Write-OllamaDriftLogRow $closeRow
-    if (-not $wrote) {
-        Start-Sleep -Seconds 5
-        $wrote = Write-OllamaDriftLogRow $closeRow
+
+    try {
+        Remove-OllamaOwnedLockFile -Path $lockPath
+    } catch {
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+            -Error "lock deletion failed: $($_.Exception.Message)")
     }
-    if (-not $wrote) {
+    $lockAbsent = $false
+    try {
+        $lockAbsent = -not (Test-Path -LiteralPath $lockPath -ErrorAction Stop)
+    } catch {
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+            -Error "lock absence readback failed: $($_.Exception.Message)")
+    }
+    if (-not $lockAbsent) {
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+            -Error 'lock survived deletion')
+    }
+
+    $closeRow = "| $expectedBlock | $Status | actual_end $($now.ToString('HH:mm:ss')) | $expectedLane | $expectedSession |"
+    $driftWritten = Write-OllamaDriftLogRow $closeRow
+    if (-not $driftWritten) {
         $stamp = Get-Date -Format 'yyyyMMdd_HHmmss'
-        "Drift-log closeout append FAILED twice for lane $script:LaneId block $($Handle.BlockId) at $stamp. The IN_FLIGHT row in the per-day schedule is DANGLING; treat the block as ended at this timestamp. Lock was released normally." |
-            Out-File -FilePath "C:\Projects\HITL_OLLAMA_DRIFTLOG_APPEND_FAILED_$stamp.md" -Encoding ascii
+        $marker = Get-OllamaControlPath "HITL_OLLAMA_DRIFTLOG_APPEND_FAILED_$stamp-$PID.md"
+        $markerWritten = $false
+        $markerError = ''
+        try {
+            Write-OllamaMarkerFile -Path $marker -Content "Drift-log closeout append failed for lane $expectedLane block $expectedBlock at $stamp. Lock absence was verified, but release evidence is FAILED."
+            $markerWritten = $true
+        } catch { $markerError = "; marker failed: $($_.Exception.Message)" }
+        return (New-OllamaReleaseResult -RequestedMode $requestedMode -OwnershipMatched $true `
+            -LockAbsent $true -MarkerWritten $markerWritten `
+            -Error "drift-log closeout append failed$markerError")
     }
-    Remove-Item -Path $script:OllamaLockPath -Force -ErrorAction SilentlyContinue
+    return (New-OllamaReleaseResult -RequestedMode $requestedMode -Outcome 'VERIFIED_RELEASED' `
+        -EvidenceValid $true -OwnershipMatched $true -LockAbsent $true -DriftLogWritten $true)
 }

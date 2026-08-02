@@ -118,17 +118,41 @@ resolve material UNKNOWN checks manually.
 2. Every Ollama call path goes through `tooling\wiki\ollama_lock.ps1`: full 4-clause preflight
    (standing block, drift-log scan, peer-lock liveness-first, /api/ps fail-closed), CreateNew
    acquire, declare-before-call (mandatory -- acquisition rolls back if the drift row cannot be
-   written), ownership-checked release, MANUAL_HOLD on GPU-orphan risk.
+   written), and observed release evidence. Release ownership must match lane, session, owner PID,
+   and scheduled block. Normal release is successful only after terminating deletion, absence
+   readback, and the terminal drift row. MANUAL_HOLD is successful only after exact hold readback,
+   GPU-orphan marker creation, and the MANUAL_HOLD drift row. Missing, mismatched, failed, or
+   contradictory release evidence is red; selected release intent is never reported as observed
+   disposition.
 3. FIRST semantic pass (standalone, 2-5h): owner declares a reserved block in
    `OLLAMA_SCHEDULE_<date>.md`, then
    `powershell -File tooling\wiki\semantic_extract.ps1 -TimeoutSec 14400 -LockExpiryMinutes 270`.
-   Exit codes: 0 ok / 1 fail / 3 lock-unavailable / 124 hard timeout. Promotion runs ONLY from
+   Exit codes: 0 ok / 1 fail / 3 lock-unavailable / 124 = hard timeout or explicit GPU-orphan/custody risk. Promotion runs ONLY from
    the nightly N5 (single-invocation rule); after a standalone pass run
    `python tooling\wiki\promotion.py --graph graphify-out\graph.json --state
    wiki\.graph\promotion.json --commit <short-sha> --report` explicitly.
 4. MANUAL_HOLD recovery: a lock whose `process_id` is non-numeric is NEVER auto-reclaimed.
    Owner: verify GPU idle (`nvidia-smi`, `ollama ps`), then delete `C:\Projects\OLLAMA_ACTIVE.lock`
    and clear the `HITL_OLLAMA_GPU_ORPHAN_SSTAC_*.md` marker.
+
+Semantic and label graph mutations have one common post-N5 `graphify-out` secrets scan after the
+final graph mutator and before promotion or publication. LABEL_ONLY, SEMANTIC_ONLY, and
+LABEL_AND_SEMANTIC require an exact exit 0 from that scan. SKIP_ALL and lock-unavailable runs with
+no mutation record the scan as NOT_REQUIRED. Semantic success also requires observed wrapper exit
+0, graphify exit 0/status OK, no timeout, no guardrail or orphan risk, and redirect cleanup status
+REMOVED with an empty cleanup error.
+
+Redirected graphify stdout/stderr files are security-sensitive temporary evidence. Either
+PARTIAL_REMOVAL_FAILED or REMOVAL_FAILED is an auxiliary guardrail failure. Residue preserves an
+existing nonzero child exit or timeout 124; otherwise it forces exit 1. Residue alone does not set
+OrphanRisk, request MANUAL_HOLD, or create a GPU-orphan marker. Standalone and nightly callers use
+an observed normal COMPLETED_RED release for residue-only failure and block promotion,
+compilation, publication, and terminal success.
+
+Timeout cleanup terminates only the exact retained root `Process` object. `Killed` remains false,
+and descendant termination is unproven without a Windows Job Object. The root-only termination
+evidence is fail-closed custody evidence; by itself, it is not eligible evidence for unattended
+scheduling.
 
 ## 5. MCP registration (after the first served wiki exists in the canonical runtime)
 
