@@ -36,6 +36,13 @@ const AGY_GOVERNANCE_AUTHORITIES = [
   'governance.agy_usage',
   'governance.sstac_ai_pipeline',
 ];
+const WIKI_GOVERNANCE_AUTHORITIES = [
+  'docs.index',
+  'docs.manifest',
+  'root.agents',
+  'governance.gate_mode_sop',
+  'wiki.operations_runbook',
+];
 
 const AGY_SECTIONS = [
   'agy.role_and_mode',
@@ -128,6 +135,35 @@ describe('docs-gate bundle wiring - exact identity, never counts', () => {
   it('the gate TEST activates DOCS_GOVERNANCE_GATE (was self-ungated)', () => {
     const result = runGate(['scripts/verify/__tests__/docs-gate.test.mjs']);
     expect(result.activated_bundles).toContain('DOCS_GOVERNANCE_GATE');
+  });
+
+  it('Wiki operations runbook changes activate WIKI_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['docs/WIKI_KB_OPERATIONS_2026_07.md']);
+    expect(result.activated_bundles).toEqual(['WIKI_GOVERNANCE_GATE']);
+    expect(result.required_documents).toEqual(
+      [...WIKI_GOVERNANCE_AUTHORITIES].sort()
+    );
+  });
+
+  it('Wiki production changes activate WIKI_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['tooling/wiki/activation_preflight.ps1']);
+    expect(result.activated_bundles).toEqual(['WIKI_GOVERNANCE_GATE']);
+    expect(result.required_documents).toEqual(
+      [...WIKI_GOVERNANCE_AUTHORITIES].sort()
+    );
+  });
+
+  it('Wiki test changes activate WIKI_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['tooling/wiki/tests/test_activation_preflight.py']);
+    expect(result.activated_bundles).toEqual(['WIKI_GOVERNANCE_GATE']);
+    expect(result.required_documents).toEqual(
+      [...WIKI_GOVERNANCE_AUTHORITIES].sort()
+    );
+  });
+
+  it('unrelated paths do not activate WIKI_GOVERNANCE_GATE', () => {
+    const result = runGate(['README.md']);
+    expect(result.activated_bundles).not.toContain('WIKI_GOVERNANCE_GATE');
   });
 
   it('root AGENTS.md changes activate AGY_GOVERNANCE_GATE with its authorities and sections', () => {
@@ -243,6 +279,33 @@ describe('docs-manifest integrity', () => {
         'SSTAC_AI_PIPELINE.md',
         'tooling/agy/**',
       ])
+    );
+  });
+
+  it('registers the Wiki operations runbook with exact identity', () => {
+    const document = MANIFEST.documents.find(
+      (entry) => entry.id === 'wiki.operations_runbook'
+    );
+    expect({
+      id: document?.id,
+      path: document?.path,
+      lifecycle: document?.lifecycle,
+    }).toEqual({
+      id: 'wiki.operations_runbook',
+      path: 'docs/WIKI_KB_OPERATIONS_2026_07.md',
+      lifecycle: 'AUTHORITATIVE',
+    });
+    expect(document?.domain_tags).toEqual(['wiki', 'graphify', 'operations']);
+  });
+
+  it('WIKI_GOVERNANCE_GATE has the exact bounded triggers and authorities', () => {
+    const bundle = MANIFEST.bundles?.WIKI_GOVERNANCE_GATE;
+    expect(bundle?.triggers).toEqual([
+      'docs/WIKI_KB_OPERATIONS_2026_07.md',
+      'tooling/wiki/**',
+    ]);
+    expect(bundle?.requires_documents.map((entry) => entry.doc_id)).toEqual(
+      WIKI_GOVERNANCE_AUTHORITIES
     );
   });
 });

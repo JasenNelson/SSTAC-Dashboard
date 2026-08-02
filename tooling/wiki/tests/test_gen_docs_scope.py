@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 import tempfile
 import unittest
 import subprocess
@@ -28,9 +29,19 @@ class TestGenDocsScope(unittest.TestCase):
         
     def tearDown(self):
         shutil.rmtree(self.temp_dir)
-        
+
+    def build_command(self):
+        return [
+            sys.executable,
+            self.script_path,
+            "--repo-root",
+            self.repo_root,
+            "--out",
+            self.out_file,
+        ]
+
     def run_script(self, scan_paths=None):
-        cmd = ["python", self.script_path, "--repo-root", self.repo_root, "--out", self.out_file]
+        cmd = self.build_command()
         if scan_paths is not None:
             with open(self.scan_file, "w", encoding="utf-8") as f:
                 f.write("\n".join(scan_paths))
@@ -38,7 +49,37 @@ class TestGenDocsScope(unittest.TestCase):
             
         result = subprocess.run(cmd, capture_output=True, text=True)
         return result
-        
+
+    def test_subprocess_command_uses_current_interpreter(self):
+        self.assertEqual(self.build_command()[0], sys.executable)
+
+    def test_manifest_registration_includes_runbook_without_index_entry(self):
+        runbook = "docs/WIKI_KB_OPERATIONS_2026_07.md"
+        with open(os.path.join(self.repo_root, "docs", "INDEX.md"), "r", encoding="utf-8") as f:
+            self.assertNotIn(runbook, f.read())
+        manifest_content = {
+            "documents": [
+                {
+                    "id": "wiki.operations_runbook",
+                    "path": runbook,
+                    "lifecycle": "AUTHORITATIVE",
+                }
+            ]
+        }
+        with open(
+            os.path.join(self.repo_root, "docs", "_meta", "docs-manifest.json"),
+            "w",
+            encoding="utf-8",
+        ) as f:
+            json.dump(manifest_content, f)
+
+        res = self.run_script()
+
+        self.assertEqual(res.returncode, 0, res.stderr)
+        with open(self.out_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        self.assertIn(runbook, data["registered"])
+
     def test_registered_doc_ok(self):
         # (a) registered doc -> OK
         res = self.run_script(["docs/foo.md"])
