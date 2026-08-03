@@ -75,6 +75,41 @@ matching the configured remote-tracking ref. If scheduler or MCP entries already
 match the expected command shape for the selected runtime. Resolve FAIL before activation and
 resolve material UNKNOWN checks manually.
 
+`EvidenceMode`, `ExpectedSchedulerContract`, `ExpectedSchedulerPhase`, and generator
+`SchedulerContract` values are case-sensitive. They must use the exact documented spellings;
+recased values fail before path resolution, control reads, XML output, or scheduler handling.
+`EvidenceMode` is exactly `Live` or `Fixture`; `Live` is the default. Live uses the canonical
+runtime configuration, scheduler query/XML, MCP status, Graphify version, standing-block path,
+and active-lock path. It rejects `ConfigPath` and every fixture or evidence override. `Fixture`
+requires one complete base tuple: an isolated ordinary `RuntimeRoot`, task query text, task XML,
+MCP text, Graphify version, standing-block evidence path, and active-lock evidence path. Active
+Fixture phases additionally require `ActiveTransitionReceiptPath` and
+`ExpectedActiveTransitionReceiptSha256` as one complete pair; non-active Fixture phases reject
+either parameter. Every fixture path must resolve below the exact
+`SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT` and the fixture runtime before it is read, and must cross no
+reparse point or alternate data stream. An absent standing-block or active-lock leaf is valid only
+below an existing ordinary parent. An existing optional leaf must itself be an ordinary file, and
+its full ancestor chain must remain ordinary. Missing, partial, mixed, escaping, or malformed
+tuples fail before a real scheduler, MCP, version, runtime-pointer, configuration, standing-block,
+or lock call. An early invalid or incomplete Fixture invocation ends with `RESULT NOT_READY`.
+
+Both standing-block and active-lock reads use one production exact-literal-path evidence helper.
+Its canonical compact ASCII JSON has exactly these ordered fields:
+
+```text
+schema_version,evidence_type,path,status,present,error
+```
+
+`PASS` requires one boolean `present` value and JSON null `error`. `ERROR` requires JSON null
+`present` and one bounded nonempty diagnostic. No value, multiple values, incidental output,
+wrong types, missing or extra fields, changed order or casing, contradictions, or changed bytes
+fail validation. Immediate validation records the exact JSON bytes and SHA-256. Terminal defense
+freshly calls the same exact-path helper for both paths, serializes and hashes each new object, and
+requires the fresh object, JSON, hash, status, and presence to match the initial observation.
+Owner actions, when any, are printed before exactly one
+last `RESULT` line. A complete passing Fixture run ends with `RESULT FIXTURE_NON_ACTIVATION` and
+native exit 1. Fixture evidence never grants READY status or activation eligibility.
+
 ### Canonical runtime and detached worktrees
 
 - The default canonical runtime is `C:\Projects\SSTAC-Dashboard`. To use a dedicated worktree,
@@ -195,7 +230,7 @@ tooling\wiki\requirements-graphify.txt`).
 - Pin upgrade (graphifyy 0.9.17 -> newer): fresh `.venv-graphify`, re-run in order:
   `guardrail_smoke.ps1`, the from-scratch rebuild, `graph_smoke.py`, `wiki_compile` +
   `wiki_lint` + both secrets scans, the MCP handshake probe, and the python test suite
-  (`python -m unittest discover -s tooling\wiki\tests`). Rollback pin: 0.9.6 (documented).
+  (`python -m unittest discover -v -s tooling\wiki\tests`). Rollback pin: 0.9.6 (documented).
 
 ## 8. Port provenance (OHD -> SSTAC; what was deliberately changed)
 
@@ -218,7 +253,7 @@ tooling\wiki\requirements-graphify.txt`).
 - Nightly receipt: `.tmp_wiki_nightly\receipt-<date>.md` (step statuses, durations, graph
   metrics, promotion +P/-D/~R, freshness block: commits-behind/age vs the configured serve-gate
   remote branch; thresholds >50 commits / >7 days).
-- Suite: `python -m unittest discover -s tooling\wiki\tests`.
+- Suite: `python -m unittest discover -v -s tooling\wiki\tests`.
 - Graduation streak math + wiki-commit criteria: plan Phase 7 (unchanged; not yet started --
   the 10-counted-night window begins once the nightly is registered and producing receipts).
 
@@ -354,3 +389,68 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$runtimeRoot\tooling\wiki\r
 ```
 
 This generation never imports, installs, enables, or executes a task. Credential entry and XML import remain separate owner-only actions.
+
+## 11. Candidate Contract D deterministic-only scheduler preflight
+
+Contract D is a sibling of Contract A and does not change Contract A behavior. Generation is
+dry-run only and refuses both `-Apply` and `-Unregister`. It uses the same exact task identity,
+fresh canonical definition ID, local daily 05:30 boundary, `Password` logon,
+`LeastPrivilege`, one disabled daily trigger, Contract A settings, and `PT6H` limit. Its exact
+description is:
+
+```text
+SSTAC Wiki nightly candidate D: deterministic-only network-capable run; label and semantic disabled. Staged with the daily trigger disabled.
+```
+
+Its exact action is the absolute Windows PowerShell 5.1 executable followed by exactly:
+
+```text
+-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "<runtime>\tooling\wiki\nightly_wiki_sync.ps1" -RepoRoot "<runtime>" -TaskDefinitionId "<id>" -SkipLabeling -SkipSemantic
+```
+
+The two skip flags are inseparable and ordered. A missing, single, duplicate, reversed, recased,
+or extra flag, `-AutoCommit`, a relative host, changed working directory, changed definition ID,
+or Contract A/D cross-use fails closed. Generate a staged candidate with:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File "$runtimeRoot\tooling\wiki\register_wiki_nightly_task.ps1" `
+  -SchedulerContract D `
+  -RuntimeRoot $runtimeRoot `
+  -RegistrationDate $registrationDate `
+  -StartBoundary $startBoundary `
+  -TaskDefinitionId $taskDefinitionId `
+  -OutputXmlPath "C:\tmp\contract_d_staged.xml"
+```
+
+Contract D remains network-capable only because the existing N1 serve gate fetches the configured
+remote. N5 is exactly `SKIP_ALL`: no label, semantic extraction, Ollama lock, Ollama call, GPU,
+promotion mutation, or N5 post-mutation scan occurs. The terminal JSON adds these ordered typed
+decision fields:
+
+```text
+n5_mode,n5_skip_labeling,n5_skip_semantic,n5_run_label,n5_run_semantic,n5_lock_expiry_minutes,n5_mutation_attempted,semantic_execution_attempted,n5_release_required
+```
+
+A Contract D success requires exact values `SKIP_ALL`, true, true, false, false, 0, false, false,
+false; `n5_semantic=SEMANTIC_SKIPPED_SkipFlags`; post-mutation scan `NOT_REQUIRED`; release
+evidence not required; all existing deterministic N0-N4/N6, serve, graph, secrets, and custody
+gates; and native exit 0. Manual and natural proof type-check every field and reject nulls,
+string booleans, wrong integers, mutations, semantic execution, lock/release activity, or other
+contradictions.
+
+The Contract D phase results are:
+
+- Disabled: `READY_FOR_DETERMINISTIC_REPLACEMENT_REVIEW`, exit 0.
+- StagedAwaitingManual: `READY_FOR_DETERMINISTIC_MANUAL_RUN_REVIEW`, exit 0.
+- StagedManualProven: `READY_FOR_DETERMINISTIC_TRIGGER_ENABLE_REVIEW`, exit 0.
+- ActiveAwaitingNatural: `NOT_READY_DETERMINISTIC_AWAITING_NATURAL_RUN`, exit 1.
+- Active0530Correlated: `READY_FOR_OWNER_DETERMINISTIC_NATURAL_PROVENANCE_REVIEW`, exit 0.
+
+Every progression still requires attended proof and a separate owner decision. A later reduced-risk
+owner exception to enable Contract D would not prove descendant custody: timeout cleanup terminates
+only the retained root `Process` object, `Killed` remains false, and descendant termination remains
+unproven without a Windows Job Object. This evidence alone is not eligible for unattended
+scheduling. The Phase-7 window remains 10 counted nights. Contract D can count toward deterministic
+reliability, but it cannot satisfy the separate `semantic ran >=5/10 nights` criterion. Semantic
+operation, MCP registration, `-AutoCommit`, committed `wiki/`, task import/enablement, and the
+graduation decision remain deferred.

@@ -20,6 +20,7 @@ $custodyTerminalPath = Join-Path $logDir "process-custody-terminal-$runId.json"
 $terminalGuardPath = Join-Path $logDir "terminal-guard-$runId.lock"
 $checkOrphansPath = Join-Path $RepoRoot 'tooling\wiki\check_orphans.ps1'
 $terminalizerPath = Join-Path $RepoRoot 'tooling\wiki\nightly_terminalizer.ps1'
+$windowsPowerShell51 = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
 
 $transcriptPath = Join-Path $logDir "transcript-$stamp.log"
 Start-Transcript -Path $transcriptPath -Append
@@ -91,6 +92,42 @@ function Get-NightlyN5Plan(
         RunSemantic = $runSemantic
         LockExpiryMinutes = $lockExpiryMinutes
     }
+}
+
+function Test-NightlyN5DecisionEvidence {
+    param(
+        $Plan,
+        [bool]$ExpectedSkipLabeling,
+        [bool]$ExpectedSkipSemantic,
+        [bool]$MutationAttempted,
+        [bool]$SemanticExecutionAttempted,
+        [bool]$ReleaseRequired,
+        [bool]$ExpectedReleaseGraphOrphanRisk,
+        [string]$SemanticStatus,
+        $PostMutationScan,
+        $ReleaseEvidence
+    )
+    if ($null -eq $Plan -or $Plan -is [array] -or
+        $Plan.Mode -isnot [string] -or $Plan.SkipAll -isnot [bool] -or
+        $Plan.RunLabel -isnot [bool] -or $Plan.RunSemantic -isnot [bool]) { return $false }
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    if ($null -eq $Plan.LockExpiryMinutes -or $integerTypes -notcontains $Plan.LockExpiryMinutes.GetType()) { return $false }
+    $expectedSkipAll = ($ExpectedSkipLabeling -and $ExpectedSkipSemantic)
+    $expectedRunLabel = -not $ExpectedSkipLabeling
+    $expectedRunSemantic = -not $ExpectedSkipSemantic
+    $expectedMode = if ($expectedSkipAll) { 'SKIP_ALL' } elseif ($expectedRunLabel -and $expectedRunSemantic) { 'LABEL_AND_SEMANTIC' } elseif ($expectedRunLabel) { 'LABEL_ONLY' } else { 'SEMANTIC_ONLY' }
+    if ([string]$Plan.Mode -cne $expectedMode -or $Plan.SkipAll -ne $expectedSkipAll -or
+        $Plan.RunLabel -ne $expectedRunLabel -or $Plan.RunSemantic -ne $expectedRunSemantic) { return $false }
+    if ($expectedSkipAll) {
+        return ([int64]$Plan.LockExpiryMinutes -eq 0 -and -not $MutationAttempted -and
+            -not $SemanticExecutionAttempted -and -not $ReleaseRequired -and -not $ExpectedReleaseGraphOrphanRisk -and
+            $SemanticStatus -ceq 'SEMANTIC_SKIPPED_SkipFlags' -and
+            (Test-NightlyN5PostMutationScanEvidence -Evidence $PostMutationScan -ExpectedMutationAttempted $false) -and
+            (Test-NightlyN5ReleaseEvidence -Evidence $ReleaseEvidence -ExpectedRequired $false -ExpectedGraphOrphanRisk $false))
+    }
+    return (([int64]$Plan.LockExpiryMinutes -gt 0) -and
+        (Test-NightlyN5PostMutationScanEvidence -Evidence $PostMutationScan -ExpectedMutationAttempted $MutationAttempted) -and
+        (Test-NightlyN5ReleaseEvidence -Evidence $ReleaseEvidence -ExpectedRequired $ReleaseRequired -ExpectedGraphOrphanRisk $ExpectedReleaseGraphOrphanRisk))
 }
 
 function Get-NightlyN5ReleaseMode(
@@ -406,7 +443,7 @@ catch { Exit-NightlyTerminalFailure "terminalizer load failed: $($_.Exception.Me
 
 $baselineExit = 1
 try {
-    & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode CaptureBaseline -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyBaselinePath
+    & $windowsPowerShell51 -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode CaptureBaseline -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyBaselinePath
     $baselineExit = $LASTEXITCODE
 } catch {
     Exit-NightlyTerminalFailure "process custody baseline invocation failed: $($_.Exception.Message)"
@@ -488,6 +525,8 @@ $finalGraphSmokeEvidence = [ordered]@{
     graph_sha256 = $null
 }
 $semanticExecutionAttempted = $false
+$n5Plan = Get-NightlyN5Plan -SkipLabeling $SkipLabeling -SkipSemantic $SkipSemantic `
+    -LabelOnlyExpiryMinutes $cfgExpiryLabelOnly -LabelAndSemanticExpiryMinutes $cfgExpiryLabelSem
 $semanticEvidencePath = Join-Path $logDir "semantic-evidence-$runId.json"
 $semanticEvidence = [pscustomobject][ordered]@{
     status = 'NOT_RUN'
@@ -542,14 +581,14 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
         $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
         $finalState = $TerminalState
         $finalExit = $NativeExitCode
-        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS' -or ($semanticExecutionAttempted -and -not (Test-NightlySemanticEvidenceSuccess -Evidence $semanticEvidence -ExpectedRunId $runId)) -or (-not (Test-NightlyN5PostMutationScanEvidence -Evidence $n5PostMutationScan -ExpectedMutationAttempted $n5MutationAttempted)) -or (-not (Test-NightlyN5ReleaseEvidence -Evidence $n5ReleaseEvidence -ExpectedRequired $n5ReleaseRequired -ExpectedGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk)))) {
+        if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS' -or ($semanticExecutionAttempted -and -not (Test-NightlySemanticEvidenceSuccess -Evidence $semanticEvidence -ExpectedRunId $runId)) -or (-not (Test-NightlyN5DecisionEvidence -Plan $n5Plan -ExpectedSkipLabeling ([bool]$SkipLabeling) -ExpectedSkipSemantic ([bool]$SkipSemantic) -MutationAttempted $n5MutationAttempted -SemanticExecutionAttempted $semanticExecutionAttempted -ReleaseRequired $n5ReleaseRequired -ExpectedReleaseGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk -SemanticStatus $step5Status -PostMutationScan $n5PostMutationScan -ReleaseEvidence $n5ReleaseEvidence)))) {
             $finalState = 'FAILED'
             $finalExit = 1
         }
 
         # Deliberately the last child process: all other external facts are frozen.
         $custodyExit = 1
-        & powershell.exe -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode EvaluateTerminal -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyTerminalPath -BaselinePath $custodyBaselinePath -ExpectedBaselineSha256 $custodyBaselineSha256
+        & $windowsPowerShell51 -NoProfile -ExecutionPolicy Bypass -File $checkOrphansPath -Mode EvaluateTerminal -RunId $runId -RuntimeRoot $RepoRoot -RunParentPid $PID -OutputPath $custodyTerminalPath -BaselinePath $custodyBaselinePath -ExpectedBaselineSha256 $custodyBaselineSha256
         $custodyExit = $LASTEXITCODE
         if (-not (Test-Path -LiteralPath $custodyTerminalPath -PathType Leaf)) { throw 'terminal process custody evidence is missing' }
         $terminalProcessCustodyEvidence = Get-Content -LiteralPath $custodyTerminalPath -Raw | ConvertFrom-Json
@@ -575,6 +614,15 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
             n0_orphan = $n0OrphanStatus
             n1_build = $step1Status
             n2_cluster = $step2Status
+            n5_mode = [string]$n5Plan.Mode
+            n5_skip_labeling = [bool]$SkipLabeling
+            n5_skip_semantic = [bool]$SkipSemantic
+            n5_run_label = [bool]$n5Plan.RunLabel
+            n5_run_semantic = [bool]$n5Plan.RunSemantic
+            n5_lock_expiry_minutes = [int]$n5Plan.LockExpiryMinutes
+            n5_mutation_attempted = [bool]$n5MutationAttempted
+            semantic_execution_attempted = [bool]$semanticExecutionAttempted
+            n5_release_required = [bool]$n5ReleaseRequired
             n5_semantic = $step5Status
             n6_wiki = $step6Status
             n6_publication = $n6Publication
@@ -809,7 +857,7 @@ if ($semanticSkippedReason) {
                 $semanticEvidence.receipt_name = Split-Path -Leaf $semanticEvidencePath
                 $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"), '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner, '-EvidencePath', $semanticEvidencePath, '-EvidenceRunId', $runId)
                 $n5MutationAttempted = $true
-                $sr = Invoke-GraphifyGuarded -GraphifyExe 'powershell' -GraphifyArgs $semArgs -TimeoutSec $cfgTimeoutSemOuter
+                $sr = Invoke-GraphifyGuarded -GraphifyExe $windowsPowerShell51 -GraphifyArgs $semArgs -TimeoutSec $cfgTimeoutSemOuter
                 try {
                     $semanticEvidence = Get-NightlyValidatedSemanticEvidence `
                         -Path $semanticEvidencePath -ExpectedRunId $runId `
@@ -1059,7 +1107,7 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK" -or $step5Sta
     $hasReceipts = @(Get-ChildItem -Path $logDir -Filter "receipt-*.md" -File -ErrorAction SilentlyContinue).Count -gt 0
     if ($hasReceipts) {
         if (Test-Path (Join-Path $RepoRoot "tooling\wiki\check_nightly_freshness.ps1")) {
-            & powershell -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "tooling\wiki\check_nightly_freshness.ps1") -RepoRoot $RepoRoot
+            & $windowsPowerShell51 -NoProfile -ExecutionPolicy Bypass -File (Join-Path $RepoRoot "tooling\wiki\check_nightly_freshness.ps1") -RepoRoot $RepoRoot
             if ($LASTEXITCODE -ne 0) { $freshnessOk = $false }
         }
     }

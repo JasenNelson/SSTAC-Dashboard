@@ -33,21 +33,25 @@ param(
 
 $ErrorActionPreference = 'Stop'
 
+if ($SchedulerContract -cnotin @('', 'Legacy', 'A', 'D')) {
+    throw "Unsupported SchedulerContract: $SchedulerContract. Values are exact and case-sensitive: empty, Legacy, A, or D."
+}
+
 $ScriptDir = $PSScriptRoot
 $Wrapper = (Resolve-Path -LiteralPath (Join-Path $ScriptDir 'nightly_wiki_sync.ps1')).Path
 
-if ($SchedulerContract -eq 'A') {
+if ($SchedulerContract -in @('A', 'D')) {
     if ($Apply) {
-        throw "Contract A generation must never install the task. Owner must manually import the XML in Task Scheduler and enter credentials."
+        throw "Contract $SchedulerContract generation must never install the task. Owner must manually import the XML in Task Scheduler and enter credentials."
     }
     if ($Unregister) {
-        throw "Contract A does not support -Unregister."
+        throw "Contract $SchedulerContract does not support -Unregister."
     }
     if ($TaskName -cne '\SSTAC-Wiki-Nightly') {
-        throw "Contract A task name must be exactly \SSTAC-Wiki-Nightly"
+        throw "Contract $SchedulerContract task name must be exactly \SSTAC-Wiki-Nightly"
     }
     if ($StartTime -ne '05:30') {
-        throw "Contract A does not support arbitrary StartTime."
+        throw "Contract $SchedulerContract does not support arbitrary StartTime."
     }
 
     if (-not $RuntimeRoot -or -not (Test-Path -LiteralPath $RuntimeRoot -PathType Container)) {
@@ -100,6 +104,12 @@ if ($SchedulerContract -eq 'A') {
         throw "Wrapper script not found in RuntimeRoot: $scriptPath"
     }
     $argsStr = "-NoProfile -NonInteractive -ExecutionPolicy Bypass -File `"$scriptPath`" -RepoRoot `"$resolvedRuntimeRoot`" -TaskDefinitionId `"$TaskDefinitionId`""
+    if ($SchedulerContract -ceq 'D') { $argsStr += ' -SkipLabeling -SkipSemantic' }
+    $description = if ($SchedulerContract -ceq 'D') {
+        'SSTAC Wiki nightly candidate D: deterministic-only network-capable run; label and semantic disabled. Staged with the daily trigger disabled.'
+    } else {
+        'SSTAC Wiki nightly candidate A: true unattended network-capable run. Staged with the daily trigger disabled.'
+    }
 
     $xml = @"
 <?xml version="1.0" encoding="UTF-8"?>
@@ -107,7 +117,7 @@ if ($SchedulerContract -eq 'A') {
   <RegistrationInfo>
     <Date>$RegistrationDate</Date>
     <Author>DINGAPC\jasen</Author>
-    <Description>SSTAC Wiki nightly candidate A: true unattended network-capable run. Staged with the daily trigger disabled.</Description>
+    <Description>$description</Description>
     <URI>$TaskName</URI>
   </RegistrationInfo>
   <Triggers>
@@ -181,16 +191,20 @@ if ($SchedulerContract -eq 'A') {
     $hashBytes = $sha256.ComputeHash($bytesForHash)
     $hash = [BitConverter]::ToString($hashBytes).Replace('-', '').ToLowerInvariant()
 
-    Write-Host "Contract A generated successfully."
+    Write-Host "Contract $SchedulerContract generated successfully."
     Write-Host "Path: $OutputXmlPath"
     Write-Host "Bytes: $bytes"
     Write-Host "SHA-256: $hash"
-    Write-Host "Semantic summary: Enabled task with its daily trigger disabled for manual owner import."
+    if ($SchedulerContract -ceq 'D') {
+        Write-Host "Semantic summary: Enabled deterministic-only task with label and semantic disabled; daily trigger disabled for manual owner import."
+    } else {
+        Write-Host "Semantic summary: Enabled task with its daily trigger disabled for manual owner import."
+    }
     Write-Host "Note: No task was installed."
     exit 0
 }
 
-if ($SchedulerContract -ne '' -and $SchedulerContract -ne 'Legacy' -and $SchedulerContract -ne 'A') {
+if ($SchedulerContract -ne '' -and $SchedulerContract -ne 'Legacy' -and $SchedulerContract -ne 'A' -and $SchedulerContract -ne 'D') {
     throw "Unsupported SchedulerContract: $SchedulerContract"
 }
 
