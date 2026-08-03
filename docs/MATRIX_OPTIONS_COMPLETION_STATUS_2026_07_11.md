@@ -1,5 +1,20 @@
 # Matrix Options Completion Status (2026-07-11)
 
+## SUPERSEDED 2026-08-03 -- read `docs/MATRIX_OPTIONS_STATUS.md` for current status
+
+Current Matrix Options lane status lives in `docs/MATRIX_OPTIONS_STATUS.md`, verified against
+`origin/main` `9e501267` on 2026-08-03. This file remains a dated historical claim list.
+
+Specific claims below that are NOW WRONG (NON-EXHAUSTIVE -- other dated items here, including the
+T34 inhalation model decision and the T33 unit-basis item, were NOT re-verified in this pass; see
+`docs/MATRIX_OPTIONS_STATUS.md` section 8.1, which carries them forward as still-open):
+
+- "Inhalation: still scaffold-only" and "Inhalation is scaffold-only". Inhalation is implemented
+  and wired; it is fail-closed pending user-supplied VF/PEF by owner ruling.
+- "A3b cumulative UI" listed as remaining owner-gated work. The cumulative UI is implemented with
+  per-congener and per-PAH input grids; the `equationDispatch` registration it depended on was
+  deliberately not done (Decision D0) and is superseded rather than pending.
+
 ## 0. CONTINUATION UPDATE (2026-07-11d)
 
 Section 1's "Base SHA a5ac86a" and its PR list (#595-#603) are STALE as of this update. Current

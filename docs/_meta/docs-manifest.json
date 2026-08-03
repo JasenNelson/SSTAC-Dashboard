@@ -103,6 +103,94 @@
         "source": "tests/k6-*.js inventory (2026-04-20)",
         "last_verified": "2026-04-20"
       }
+    },
+    "matrix_options_catalog": {
+      "parameter_record_count": {
+        "status": "verified",
+        "value": 1783,
+        "source": "Recomputed by script over matrix_research/reference_catalog/{parameter_values,human_health_trv_values,eco_values}.json at origin/main 9e5012670c5efed942a196aeb71584f7d77a4f1b. These three files are the exact inputs concatenated into PARAMETER_VALUE_RECORDS by src/lib/matrix-options/provenance/catalog.ts. Catalog is repository-local JSON imported statically, NOT Supabase-backed.",
+        "last_verified": "2026-08-03"
+      },
+      "distinct_substance_count": {
+        "status": "verified",
+        "value": 561,
+        "source": "Distinct substance_key over the same three catalog files at origin/main 9e501267.",
+        "last_verified": "2026-08-03"
+      },
+      "pathway_count": {
+        "status": "verified",
+        "value": 4,
+        "source": "Distinct pathway over the same three catalog files at origin/main 9e501267: human-health-direct (988), human-health-food (690), eco-direct-eqp (55), eco-food-bsaf (50).",
+        "last_verified": "2026-08-03"
+      },
+      "qa_status_counts": {
+        "status": "verified",
+        "value": "approved 1312 / needs_review 422 / superseded 49",
+        "source": "qa_status tally over the same three catalog files at origin/main 9e501267. No other qa_status values present.",
+        "last_verified": "2026-08-03"
+      },
+      "current_default_count": {
+        "status": "verified",
+        "value": 84,
+        "source": "default_status = current_default over the same three catalog files at origin/main 9e501267 (default_status is tri-valued: current_default 84 / available_option 1678 / not_default 21). RECORD count only. Do NOT compare this against distinct_substance_count: they are different units. Use the slot-level coverage facts below for any coverage claim.",
+        "last_verified": "2026-08-03"
+      },
+      "default_coverage_substance_pathway_pairs": {
+        "status": "verified",
+        "value": "1104 distinct pairs / 47 with at least one current_default / 1057 with none",
+        "source": "Independently recomputed by script over the same three catalog files at origin/main 9e501267, grouping on (substance_key, pathway). Identity 47 + 1057 = 1104 verified.",
+        "last_verified": "2026-08-03"
+      },
+      "default_coverage_input_slots": {
+        "status": "verified",
+        "value": "1386 distinct slots / 84 with current_default / 1302 with none",
+        "source": "Independently recomputed by script over the same three catalog files at origin/main 9e501267, grouping on (substance_key, pathway, input_key); input_key is present on all 1783 records. Identity 84 + 1302 = 1386 verified. THIS is the correct denominator for default-coverage claims: one designated default per substance/pathway/input slot.",
+        "last_verified": "2026-08-03"
+      },
+      "source_counts": {
+        "status": "verified",
+        "value": "total 43 / current 27 / needs_currentness_check 15 / superseded 1",
+        "source": "currentness_status tally over matrix_research/reference_catalog/sources.json at origin/main 9e501267.",
+        "last_verified": "2026-08-03"
+      },
+      "equation_counts": {
+        "status": "verified",
+        "value": "total 5 / needs_review 5",
+        "source": "qa_status tally over matrix_research/reference_catalog/equations.json at origin/main 9e501267. All five equation records remaining needs_review is ONE CONCRETE INDICATOR of incomplete methodology validation; it is not by itself the reason outputs are screening-only. The screening-only contract is broader: outputs remain screening-only until the full methodology package and validation gates are complete.",
+        "last_verified": "2026-08-03"
+      }
+    },
+    "option_c_d2_apply": {
+      "lifecycle_tables": {
+        "status": "verified",
+        "value": 3,
+        "source": "Postflight of the 2026-08-01 Option C D2 pooler apply: matrix_map.site_aggregate_publications, site_aggregate_publication_audit, site_aggregate_candidate_audit. Receipt status GREEN_APPLIED_AND_POSTFLIGHT_VERIFIED.",
+        "last_verified": "2026-08-03"
+      },
+      "required_function_signatures": {
+        "status": "verified",
+        "value": 15,
+        "source": "Postflight of the 2026-08-01 apply: expected_signatures 15, matching_signatures 15, missing none, no unexpected overloads. These are all REQUIRED FUNCTIONS, not 15 client-callable RPCs; several are internal helpers and trigger functions.",
+        "last_verified": "2026-08-03"
+      },
+      "admin_preview_counts": {
+        "status": "verified",
+        "value": "118 aggregate sites / 4418 represented samples / 118 coordinates / 118 markers / 118 table rows",
+        "source": "Authenticated production ADMIN preview census taken during the 2026-08-01 D2 acceptance. Admin-shaped projection only; the member projection is bucketed and coordinate-rounded and must never receive these values.",
+        "last_verified": "2026-08-03"
+      },
+      "member_published_aggregates": {
+        "status": "verified",
+        "value": 0,
+        "source": "Member production evidence at the 2026-08-01 acceptance: published aggregate markers 0, Site Aggregates legend count 0, aggregate-summary matches 0. Postflight publications: published 0, total 0. No candidate has been created and no publication has occurred.",
+        "last_verified": "2026-08-03"
+      },
+      "committed_migrations_referencing_site_aggregate": {
+        "status": "verified",
+        "value": "0 of 48 files under supabase/migrations/",
+        "source": "Repository grep at origin/main 9e501267. The Option C schema is LIVE in the database but has no committed migration; it exists in-repo only as draft SQL under docs/design/matrix-map/. VOLATILE: the 48 denominator changes on the very next migration added, so re-derive rather than citing this value forward.",
+        "last_verified": "2026-08-03"
+      }
     }
   },
   "facts_history": {
@@ -1432,6 +1520,18 @@
       "scan_scope": "docs/**",
       "broken_count": 0,
       "note": "Resolved: internal docs link scan currently reports 0 broken links."
+    },
+    "no_registered_current_continuity_anchor": {
+      "opened": "2026-08-03",
+      "note": "There is currently NO registered current session-to-session continuity anchor. The prior entry continuity.current_handoff pointed at FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md and was reclassified to REFERENCE and renamed continuity.handoff_2026_07_30_historical on 2026-08-03 because its D2 claims had gone stale; no successor was registered in the same change. CLAUDE.md 'Session End' makes refreshing and COMMITTING the current dated root handoff a mandatory close-out step, so this gap must not persist. docs/MATRIX_OPTIONS_STATUS.md cannot serve as the anchor: it is lane-scoped by design and explicitly does not claim global status.",
+      "next_action": "The next session that writes a dated root handoff must register it here as the current continuity anchor.",
+      "related_hazard": "The 2026-07-30 handoff FILE itself still contains an all-caps directive not to describe D2 as complete, plus rows marking the Option C SQL UNAPPLIED, D2 BLOCKED, and an authenticated production retest OUTSTANDING. The 2026-08-01 apply resolved all three. Correcting that file was outside the reviewed scope of the 2026-08-03 documentation candidate and is flagged for a follow-up decision."
+    },
+    "matrix_options_paths_have_no_docs_gate": {
+      "opened": "2026-08-03",
+      "note": "No bundle triggers on the Matrix OPTIONS source paths. Enumerated across all six bundles on 2026-08-03: src/app/(dashboard)/matrix-options/**, src/lib/matrix-options/**, src/components/matrix-options/**, and matrix_research/reference_catalog/** appear in NO bundle's triggers. MATRIX_MAP_GATE covers only matrix-MAP paths. Consequence: a change to the Matrix Options calculators or to the reference catalog activates no documentation gate, so docs/MATRIX_OPTIONS_STATUS.md sections 2, 3, 7.2 and 7.4 -- exactly the content that went stale before this consolidation -- can drift with nothing forcing a re-check.",
+      "second_limitation": "Even where a gate DOES fire, scripts/verify/docs-gate.mjs only checks that required documents EXIST. It performs no freshness, modification-time, or content verification. Registering a document in requires_documents therefore prevents deletion and forces awareness; it does NOT prevent staleness.",
+      "proposed_fix": "Either add ALL FOUR path globs above -- including src/app/(dashboard)/matrix-options/**, which is the lane's entry route -- to MATRIX_MAP_GATE.triggers, or create a MATRIX_OPTIONS_GATE bundle requiring matrix_options.status_current and core.agents. NOT done in the 2026-08-03 documentation pass because widening gate triggers changes what future PRs are required to satisfy, which is a policy change beyond a documentation consolidation and should be an explicit owner decision."
     }
   },
   "documents": [
@@ -2800,7 +2900,7 @@
         "status",
         "finalization"
       ],
-      "notes": "Matrix-Options-scoped finalization status map (2026-07-10). Reduces drift across the dated MO snapshots; defers to docs/INDEX.md for global current status."
+      "notes": "Matrix-Options-scoped finalization status map (2026-07-10). Reduces drift across the dated MO snapshots; defers to docs/INDEX.md for global current status. SUPERSEDED for current lane status 2026-08-03 by matrix_options.status_current; retained as a dated claim list. The file itself now carries a SUPERSEDED banner naming the specific claims overtaken by shipped code (the inhalation 'fail-closed scaffold' framing and the cumulative A3b input UI described as a gated deliverable)."
     },
     {
       "id": "matrix_options.agy_12h_execution_plan_2026_07_08",
@@ -3045,14 +3145,15 @@
       "notes": "Runtime/UI backlog packet for safe post-PR #545 Matrix Options follow-up work."
     },
     {
-      "id": "continuity.current_handoff",
+      "id": "continuity.handoff_2026_07_30_historical",
       "path": "FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md",
-      "lifecycle": "AUTHORITATIVE",
+      "lifecycle": "REFERENCE",
       "domain_tags": [
         "continuity",
-        "handoff"
+        "handoff",
+        "historical"
       ],
-      "notes": "CURRENT session-to-session continuity anchor as of 2026-07-30. Supersedes FRESH_SESSION_HANDOFF_2026_07_27_OPTION_C_RESTACK_CORRECTION.md, which predates the F2 merge: it describes F2 as unresolved and cites a SUPERSEDED 99831-byte SQL pin (the current pinned artifact is 126552 bytes, SHA-256 E57B1E5EBD22BF3D15F577E759840C021AFC348BDF472887BCCF61199990DB72). This anchor records that F2 (PR #756) and the cookie-adapter hotfix (PR #758) are MERGED and deployed, while the Option C SQL remains UNAPPLIED and D2 remains BLOCKED pending an owner decision and an outstanding authenticated production retest. Update this id path when a newer dated handoff supersedes it."
+      "notes": "HISTORICAL dated handoff (2026-07-30). Reclassified from AUTHORITATIVE to REFERENCE and renamed from the id continuity.current_handoff on 2026-08-03: that id asserted a standing 'current handoff' claim that had gone stale, and a repository search found no consumers of the old id other than this manifest entry itself. Still accurate for its date: F2 (PR #756) and the cookie-adapter hotfix (PR #758) are MERGED and deployed. NO LONGER accurate: its three D2 claims -- that the Option C SQL had not yet been applied, that D2 was blocked pending an owner decision, and that an authenticated production retest was still pending -- were all resolved by the successful D2 apply on 2026-08-01 (see matrix_options.status_current). Its filename retains the obsolete D2_BLOCKED wording. This entry deliberately does NOT establish a replacement global current-handoff claim; current lane status lives in docs/MATRIX_OPTIONS_STATUS.md and global status in docs/INDEX.md."
     },
     {
       "id": "matrixmap.plan_v3_4_2",
@@ -3098,7 +3199,7 @@
         "option-c",
         "owner-decision"
       ],
-      "notes": "Owner decision packet for Option C publication semantics (shape a vs b) and the matrix_map.samples.public disposition. Both sub-decisions remain open."
+      "notes": "Dated (2026-07-20) owner decision packet for Option C publication semantics (shape a vs b) and the matrix_map.samples.public disposition. STATUS CORRECTED 2026-08-03, without editing the historical packet itself: the two sub-decisions are NOT in the same state. Publication semantics is RESOLVED in implementation -- shape (b), independent aggregate publication without exposing samples, is implemented and deployed as of the 2026-08-01 D2 apply, though it has NOT been exercised through candidate creation or publication. The matrix_map.samples.public disposition REMAINS OPEN. Read the packet for the original decision framing, not for current status. Lifecycle deliberately REMAINS AUTHORITATIVE: the packet is an owner artifact whose decision framing and defined options must be kept correct, and only its STATUS framing is dated. Reclassifying an owner decision packet is an owner call and was not taken unilaterally in the 2026-08-03 documentation pass."
     },
     {
       "id": "matrixmap.option_c_preapply_runbook",
@@ -3109,7 +3210,19 @@
         "option-c",
         "runbook"
       ],
-      "notes": "OWNER-RUN pre-apply procedure for the Option C publication primitive: exact reviewed SQL bytes and SHA-256, the mandatory replay-and-GREEN gate, read-only preflight and postflight, and the visibility invariant. Documents a procedure; authorizes nothing (owner decision D2 remains NOT AUTHORIZED)."
+      "notes": "OWNER-RUN pre-apply procedure for the Option C publication primitive: exact reviewed SQL bytes and SHA-256, the mandatory replay-and-GREEN gate, read-only preflight and postflight, and the visibility invariant. STATUS UPDATED 2026-08-03: the D2 apply this runbook governs COMPLETED SUCCESSFULLY on 2026-08-01 (three lifecycle tables and all 15 required function signatures postflight-verified), so the procedure reads as executed rather than pending. The apply conferred no write authority: candidate creation, refresh, publish, and unpublish remain separately owner-gated, and no candidate or publication has occurred."
+    },
+    {
+      "id": "matrix_options.status_current",
+      "path": "docs/MATRIX_OPTIONS_STATUS.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "matrix-options",
+        "matrix-map",
+        "option-c",
+        "status"
+      ],
+      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Added 2026-08-03 during cross-lane documentation recovery: the lane had many dated snapshots whose claims had drifted and had been overtaken by shipped code (inhalation described as scaffold-only, cumulative UI as unimplemented). Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the 2026-08-01 Option C D2 apply (3 lifecycle tables, 15 required function signatures, admin preview 118/4418), zero member publication, and the repo-vs-database drift (no committed migration under supabase/migrations/)."
     },
     {
       "id": "status.top50_reconciled_2026_07_20",
@@ -3482,6 +3595,10 @@
         {
           "doc_id": "matrixmap.option_c_design",
           "why": "Option C architecture authority, including the aggregate-oracle hazard that any new aggregate surface must not reintroduce."
+        },
+        {
+          "doc_id": "matrix_options.status_current",
+          "why": "Current lane deployment/implementation status; a matrix-map change must not leave it contradicted. Added 2026-08-03. SCOPE OF THIS CONTROL, stated precisely so it is not over-trusted: docs-gate.mjs verifies only that a required document EXISTS (see its missing_doc_file check); it performs NO freshness, modification, or content check. It also only fires on the MATRIX_MAP_GATE triggers, which are matrix-map paths -- no bundle currently triggers on src/lib/matrix-options/**, src/components/matrix-options/**, or matrix_research/reference_catalog/**, so the matrix-OPTIONS half of this document is not gate-covered at all. See known_issues.matrix_options_paths_have_no_docs_gate."
         }
       ]
     },

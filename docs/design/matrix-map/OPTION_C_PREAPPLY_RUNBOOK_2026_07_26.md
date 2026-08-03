@@ -2,6 +2,27 @@
 
 **Status: AUTHORITATIVE procedure. NOT an authorization.**
 
+## STATUS UPDATE 2026-08-03 -- THE APPLY THIS RUNBOOK GOVERNS HAS COMPLETED
+
+Read this before anything below it.
+
+- The **2026-07-27 owner ruling that BLOCKED D2** pending a single authoritative
+  cluster-identity path **was subsequently SATISFIED** (F2, PR #756, merged
+  `e8daa2b8`).
+- **D2 applied successfully on 2026-08-01.**
+- **Three lifecycle tables and all 15 required function signatures passed
+  postflight.**
+- **No candidate has been created and no publication has occurred.** Member
+  aggregate publication remains zero.
+- **Candidate creation, refresh, publish, and unpublish remain separately
+  owner-gated.** The apply conferred none of them.
+
+Everything below this section is the ORIGINAL 2026-07-26 procedure, preserved
+unchanged as the historical record of how the apply was prepared and run. Its
+statements that the SQL is unapplied, that D2 is NOT AUTHORIZED, and that the
+live SQL apply is BLOCKED describe the **pre-resolution state as of 2026-07-26/27**.
+They are NOT current status. Current status: `docs/MATRIX_OPTIONS_STATUS.md`.
+
 ## 0. This procedure is OWNER-RUN. Never Claude-run.
 
 Every command in sections 3 through 6 is executed by the owner, or by someone the

@@ -1,5 +1,13 @@
 # Matrix Map -- Data-Truth Status (2026-07-11)
 
+## SUPERSEDED 2026-08-03 for Option C state -- read `docs/MATRIX_OPTIONS_STATUS.md`
+
+This file predates the Option C D2 schema apply (2026-08-01) and says nothing about the three
+lifecycle tables, the 15 required function signatures, or the admin preview. For current Matrix Map / Option C deployment
+and lifecycle status, read `docs/MATRIX_OPTIONS_STATUS.md` (verified against `origin/main`
+`9e501267` on 2026-08-03). The 2026-07-11 data-access and coordinate-provenance findings below
+remain a valid dated record of what was measured on that date.
+
 Purpose: durable record of the Matrix Map data-access / coordinate-provenance / ETL truth,
 derived from read-only Supabase diagnostics (project qyrhsieynzfgyuqzznap) verified 2026-07-11
 against origin/main = 4506a4e. Supersedes conversational claims; every number here is from raw

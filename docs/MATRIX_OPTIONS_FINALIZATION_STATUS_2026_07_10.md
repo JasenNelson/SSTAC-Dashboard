@@ -1,5 +1,19 @@
 # Matrix Options -- finalization status (2026-07-10)
 
+## SUPERSEDED 2026-08-03 -- read `docs/MATRIX_OPTIONS_STATUS.md` for current status
+
+Current Matrix Options lane status lives in `docs/MATRIX_OPTIONS_STATUS.md`, verified against
+`origin/main` `9e501267` on 2026-08-03. This file remains a dated historical claim list.
+
+Specific claims below that are NOW WRONG (NON-EXHAUSTIVE -- other dated figures and status items in
+this file were NOT re-verified in this pass and should not be assumed still correct):
+
+- "the inhalation fail-closed scaffold". Inhalation is a complete calculator with its own math
+  library; fail-closed on user-supplied VF/PEF is a deliberate owner-ruled design contract, not
+  scaffolding.
+- "Cumulative A3b per-congener/PAH input UI: the deliverable grid; gated behind Phase C." That grid
+  is implemented and wired.
+
 ## 2026-07-14 current-state correction
 
 This older finalization document is superseded for T40 member-tier state. Member-tier authenticated E2E is active: repo secrets `E2E_TEST_EMAIL` / `E2E_TEST_PASSWORD` and repo variable `E2E_AUTH_ENABLED=true` were verified on 2026-07-14; `.env.local` also has the member credential key names. Remaining T40 gate is admin-tier positive coverage only (`E2E_ADMIN_EMAIL` / `E2E_ADMIN_PASSWORD`).

@@ -67,6 +67,14 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
 - `docs/system-design/README.md`
 - `docs/system-design/MATRIX_GRAPH_VISUALIZATION.md`
 
+### Matrix Options and Matrix Map -- CURRENT lane status (authoritative)
+- `docs/MATRIX_OPTIONS_STATUS.md` - the SINGLE current-status entrypoint for the Matrix Options and
+  Matrix Map / Option C lane. Added 2026-08-03: the lane had accumulated many dated snapshots whose
+  claims had drifted apart and, in several cases, had been overtaken by shipped code. Start here for
+  what is actually built and deployed; use the dated snapshots below only as historical claim lists.
+  Lane-scoped only -- it does not claim global project status, which stays in this index and the
+  manifest `facts`.
+
 ### Matrix Map and Option C (authoritative design + open owner decisions)
 Added 2026-07-26 during documentation recovery: this lane was the active flagship
 workstream yet had no route from this index, and none of its authorities were
@@ -80,14 +88,19 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
 - `docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md` - Option C
   architecture authority, including the aggregate-oracle hazard. Architecture
   authority only; it is NOT an implementation-status page.
-- `docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md` - the two OPEN
-  owner sub-decisions: publication semantics (shape a vs shape b) and the
-  `matrix_map.samples.public` disposition.
+- `docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md` - the dated owner
+  decision packet for publication semantics (shape a vs shape b) and the
+  `matrix_map.samples.public` disposition. Historical packet; do not read its
+  status framing as current. Current position: shape (b), independent aggregate
+  publication without exposing samples, is IMPLEMENTED AND DEPLOYED in D2 but has
+  NOT been exercised through candidate creation or publication. The
+  `matrix_map.samples.public` disposition REMAINS OPEN.
 - `docs/design/matrix-map/OPTION_C_PREAPPLY_RUNBOOK_2026_07_26.md` - OWNER-RUN
   pre-apply procedure: exact reviewed SQL bytes and SHA-256, the mandatory
   replay-and-GREEN gate, read-only preflight and postflight, and the visibility
-  invariant. It documents a procedure and authorizes nothing; the live apply
-  remains an OPEN owner decision.
+  invariant. The D2 apply it governs COMPLETED SUCCESSFULLY on 2026-08-01; the
+  runbook now reads as the executed procedure. Candidate creation and publication
+  writes remain separately owner-gated.
 - `docs/design/matrix-map/OPTION_C_CANDIDATE_LIFECYCLE_WORKPLAN_2026_07_25.md` -
   REFERENCE. Early technical design for candidate create/refresh.
   **SUPERSEDED IN PART by F2 (PR #756, merged `e8daa2b8`): it predates the
@@ -99,16 +112,34 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
 ### F2 cluster-identity program (2026-07-29/30)
 - F2 (PR #756) is MERGED as `e8daa2b8`; the follow-on cookie-adapter hotfix
   (PR #758) is MERGED as `79e9353d` and deployed.
-- **The Option C SQL remains UNAPPLIED and D2 remains BLOCKED**, pending an owner
-  decision and an outstanding authenticated production retest. Do not describe D2
-  as complete or authorized.
-- Root continuity anchor:
-  `FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md`.
+- **The Option C D2 apply COMPLETED SUCCESSFULLY on 2026-08-01.** Three lifecycle
+  tables and all 15 required function signatures passed postflight, and the
+  authenticated production admin preview was exercised. Three claims that earlier
+  documents made about D2 -- that its SQL had not yet been applied, that it was
+  blocked pending an owner decision, and that an authenticated production retest
+  was still pending -- are all RESOLVED and no longer current.
+- What D2 did NOT do: no candidate has been created and no publication has
+  occurred. Member aggregate publication remains zero. Candidate creation,
+  refresh, publish, and unpublish are each still separately owner-gated, and the
+  schema apply grants none of them. Do not describe publication as authorized.
+- Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
+- `FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md` is a
+  HISTORICAL 2026-07-30 handoff, not the current continuity anchor. Its
+  "D2 BLOCKED" framing, including its filename, predates the 2026-08-01 apply.
 - Reusable auth lesson from the hotfix: `docs/LESSONS.md` (2026-07-30, guarded
   `getAll`/`setAll` Supabase cookie adapters in Server Components).
 
 ### Status snapshots (reference; dated, not current state)
 Treat every file below as a claim list tied to its date, never as live status.
+For the Matrix Options lane specifically, current status is `docs/MATRIX_OPTIONS_STATUS.md`.
+FOUR dated status files now carry a SUPERSEDED banner. Three of them NAME the specific claims
+overtaken by shipped code; the fourth, `docs/MATRIX_MAP_STATUS_2026_07_11.md`, names none because it
+predates the Option C D2 apply entirely and says nothing about it. The four:
+`docs/MATRIX_OPTIONS_FINALIZATION_STATUS_2026_07_10.md`,
+`docs/MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md`,
+`docs/MATRIX_OPTIONS_LIVE_STATUS_2026_07_13.md`, and `docs/MATRIX_MAP_STATUS_2026_07_11.md`
+(none of which are listed below). The TOP50 files listed below carry NO banner and were
+deliberately left unedited -- absence of a banner there does NOT mean their claims are current.
 - `docs/SSTAC_TOP50_RECONCILED_2026_07_20.md` - supersedes the July 11-13 status docs.
 - `docs/TOP50_CONTINUATION_STATUS_2026-07-21.md`
 - `docs/TOP50_CONTINUATION_STATUS_2026-07-22.md` - records the safe-autonomous

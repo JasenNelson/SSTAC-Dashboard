@@ -431,6 +431,69 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
 
 ---
 
+### 2026-08-03 -- Matrix Options cross-lane documentation recovery pass
+
+Surfaced while re-verifying the whole Matrix Options / Matrix Map lane against `origin/main`
+`9e5012670c5efed942a196aeb71584f7d77a4f1b`. Current lane status is now
+`docs/MATRIX_OPTIONS_STATUS.md`; these are the items that pass deferred.
+**Source:** the 2026-08-03 cross-lane `/update-docs` run
+(`.tmp/mission-control/cross-lane-update-docs-20260803/`).
+
+1. **Option C repository-versus-database drift (OWNER-GATED).** The Option C D2 lifecycle schema is
+   LIVE (applied 2026-08-01, tables and required function signatures postflight-verified -- counts
+   in manifest `facts.option_c_d2_apply`) but has NO committed migration: no file under
+   `supabase/migrations/` references `site_aggregate`. The SQL
+   exists in-repo only as draft under `docs/design/matrix-map/`. Deferred because
+   `supabase/migrations/` is append-only and protected, and writing a migration that creates
+   already-existing objects has migration-history implications the owner must rule on.
+
+2. **Supabase advisors were not collected for the D2 acceptance.** Security and performance
+   advisors were unavailable in both executor surfaces and were explicitly NOT substituted; no
+   advisor result is claimed. Deferred to an explicit pre-publication follow-up once a
+   project-scoped advisor surface is configured.
+
+3. **Mobile read-only summary for the Matrix Map (PR-MAP-17b) is unimplemented.** The current
+   sub-768px experience is a fallback banner that documents itself as a temporary shim. A
+   repository-wide search found no implementation file. Whether it remains mandatory v1 scope is an
+   open owner decision ALREADY recorded in `docs/INDEX.md` ("That scope question is an OPEN owner
+   decision", added 2026-07-26) and re-confirmed by the 2026-08-03 pass:
+   `docs/design/matrix-map/PLAN_V3_4_2.md` is LOCKED and lists "Mobile: read-only summary view
+   below 768px viewport" under v1 INCLUDES, so de-scoping it would require revising a
+   decision-locked plan -- an owner call.
+
+4. **Every catalog equation record remains `needs_review`** (count canonically in manifest
+   `facts.matrix_options_catalog.equation_counts`). This is ONE CONCRETE INDICATOR of
+   incomplete methodology validation. It is not the whole of that validation gap, and it is not by
+   itself the reason calculator outputs are documented as screening-only: clearing those equation
+   records alone would NOT lift the broader methodology/validation contract, which holds that
+   outputs remain screening-only until the full methodology package and validation gates are
+   complete. Deferred pending that package.
+
+5. **Catalog default coverage is thin.** Most substance/pathway/`input_key` slots have no
+   designated current default. Coverage must be stated per SLOT, never as a record count against a
+   substance count -- those are different units. Numerals are canonically in
+   `docs/_meta/docs-manifest.json` `facts.matrix_options_catalog.default_coverage_input_slots` and
+   are deliberately not restated here. A substantial minority of records also remain
+   `needs_review`, and a third of sources need a currentness review.
+
+6. **Most `docs/MATRIX_OPTIONS_*` files remain unregistered in the docs manifest.** Only a small
+   subset is registered. Bulk registration was deliberately not attempted in this pass to keep the
+   diff reviewable; it would need its own scoped run.
+
+7. **THREE dated TOP50 priority documents still carry the historical "inhalation parked" Tier 7
+   ranking** (`MATRIX_OPTIONS_TOP50_PRIORITY_TASKS_2026_07_13.md`,
+   `SSTAC_TOP50_PRIORITY_TASKS_2026_07_14.md`, `SSTAC_TOP50_RECONCILED_2026_07_15.md`; verified
+   2026-08-03 by grepping the HEADING `### Tier 7 -- inhalation`, not a bare `Tier 7` string, which
+   also matches a non-TOP50 file that merely cites the bucket). The work that ranking deferred has
+   since shipped.
+   The LATER TOP50 documents do NOT carry it: `SSTAC_TOP50_RECONCILED_2026_07_20.md` already records
+   the inhalation calculator as shipped, and the two continuation files do not mention inhalation.
+   The three were left unedited because they are dated priority snapshots rather than
+   implementation-status authorities. Whether to formally retire the ranking in them is an open
+   owner decision.
+
+---
+
 ## How to add a new deferred item
 
 Append under a new `### YYYY-MM-DD — Source/session` subheading. Each item should include:

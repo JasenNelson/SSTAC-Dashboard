@@ -10,6 +10,69 @@
 
 ---
 
+## 2026-08-03 - Schema applied is not feature delivered: separate DATABASE completion from OPERATIONAL acceptance for durable audited writes [HIGH]
+
+**Area:** Architecture / release semantics / documentation truth
+**Impact:** HIGH (drives what "done" means, what a status doc may claim, and what a schema apply authorizes)
+**Status:** Documented
+
+### Problem or Discovery
+The Option C lane produced a genuinely successful database milestone on 2026-08-01: the D2 schema
+applied through a one-shot fail-closed pooler controller with receipt status
+`GREEN_APPLIED_AND_POSTFLIGHT_VERIFIED`, three lifecycle tables live, all 15 required function
+signatures matched with no missing entries and no unexpected overloads, and a production admin
+preview rendering 118 aggregate sites over 4418 represented samples.
+
+It would be easy, and wrong, to document that as "Option C is done". At the same moment: member
+aggregate publication was zero, no candidate had ever been created, no publication had occurred,
+the controller that performs the one durable write was still frozen awaiting independent review
+(its preceding review round returned RED with P1=1, P2=2), and Supabase advisors had been
+unavailable and were explicitly not substituted.
+
+### Root Cause or Context
+For a feature whose payload is a DURABLE, AUDITED, HARD-TO-REVERSE WRITE, there are two
+independent completion axes that a single "status" word collapses:
+
+1. **Database/schema completion** - the objects exist, signatures match, postflight passes. This is
+   verifiable mechanically and can legitimately be GREEN.
+2. **Operational acceptance** - the one-shot path that performs the write has been independently
+   reviewed, the owner has authorized that exact write, preflight ran, and the write happened.
+
+Axis 1 reaching GREEN says nothing about axis 2. Worse, axis 1 succeeding creates a false sense of
+imminence that pressures axis 2 to be treated as a formality.
+
+A second, related discovery: the applied schema had NO committed migration. No file
+under `supabase/migrations/` referenced `site_aggregate`; the SQL existed only as draft under
+`docs/design/matrix-map/`. So "applied to the database" and "recorded in the repository" are a
+THIRD axis that can also diverge, silently, and a source-only audit will conclude the feature is
+undeployed while a database-only audit concludes it is deployed.
+
+### Solution or Pattern
+1. In any status document covering a durable-write feature, state the axes SEPARATELY and never let
+   one stand in for the other. State what was applied, and immediately state what has NOT happened.
+2. Treat "schema applied" as granting ZERO lifecycle-write authority. Record that explicitly in the
+   acceptance artifact so a later reader cannot mistake the apply for authorization.
+3. Keep the preflight authorization and the exact one-write authorization as DISTINCT owner gates.
+   Do not combine or pre-authorize them.
+4. When auditing deployment state, check BOTH `supabase/migrations/` AND the apply receipts. If they
+   disagree, that is a finding, not a resolution: neither source alone is authoritative.
+5. Never cite a frozen, review-pending evidence package as authority. "Its tests are GREEN" and
+   "it has been accepted" are different claims; the second requires a review artifact that exists.
+
+### File References
+- Current lane status separating the axes: `docs/MATRIX_OPTIONS_STATUS.md` sections 1.1, 1.2, 1.4, 1.5
+- Fail-closed member path (empty-by-design vs RPC-absent): `src/lib/matrix-map/fetch-site-aggregates-server.ts`
+- Draft-only schema with no committed migration: `docs/design/matrix-map/OPTION_C_PHASE2_SITE_AGGREGATE_PUBLICATIONS_DRAFT_2026_07_24.sql`
+- Owner-run pre-apply procedure that documents a procedure and authorizes nothing: `docs/design/matrix-map/OPTION_C_PREAPPLY_RUNBOOK_2026_07_26.md`
+
+### Key Takeaway
+For durable audited writes, "the schema is live" and "the feature is delivered" are independent
+claims, and "applied to the database" and "recorded in version control" are a third. Document all
+three separately, or the status doc will overstate readiness at exactly the moment the remaining
+gates matter most.
+
+---
+
 ## 2026-07-30 - A Server Component's Supabase cookie adapter must use guarded getAll/setAll, or a token refresh crashes the whole page [CRITICAL]
 
 **Area:** Auth / @supabase/ssr / Next.js App Router Server Components
