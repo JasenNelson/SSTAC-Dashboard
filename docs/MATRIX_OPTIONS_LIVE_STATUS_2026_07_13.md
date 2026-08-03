@@ -3,7 +3,26 @@ from the source docs named inline; nothing here was independently re-derived. Pl
 
 # Matrix Options -- Live Status (2026-07-13)
 
-**This is the single entry-point status doc for Matrix Options.** Start here. It supersedes the
+## SUPERSEDED 2026-08-03 -- read `docs/MATRIX_OPTIONS_STATUS.md` instead
+
+This file is no longer the entry-point status doc. The current single entrypoint for Matrix Options
+lane status is `docs/MATRIX_OPTIONS_STATUS.md`, verified against `origin/main` `9e501267` on
+2026-08-03. This file remains on disk as a dated historical claim list.
+
+Specific claims below that are NOW WRONG (NON-EXHAUSTIVE -- other dated figures here, such as the
+recorded catalog row count, the recorded `origin/main` SHA, the open-PR list, and the T33 item, were
+NOT re-verified in this pass and should not be assumed still correct):
+
+- The "Inhalation | PARKED" row and item 15. Inhalation is implemented and wired; it is fail-closed
+  pending user-supplied VF/PEF by owner ruling, not parked or scaffolded.
+- The "Cumulative UI (A3b) | OWNER-GATED (blocked)" row. The cumulative UI is implemented, with
+  per-congener and per-PAH input grids. The `equationDispatch` registration it describes as
+  outstanding was deliberately NOT done (Decision D0) and is superseded, not pending.
+
+This file also predates the Option C D2 schema apply (2026-08-01) entirely.
+
+**Historical entry-point claim (as written 2026-07-13):** This is the single entry-point status doc
+for Matrix Options. Start here. It supersedes the
 docs listed in section 5 as the first thing to read; those docs remain on disk as detail/evidence
 references, not as competing entry points.
 
