@@ -3,6 +3,7 @@ import hashlib
 import os
 import re
 import shutil
+import stat
 import subprocess
 import tempfile
 import unittest
@@ -11,12 +12,76 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 SCRIPT = Path(__file__).parent.parent / "activation_preflight.ps1"
-EVIDENCE_ROOT = SCRIPT.parents[3]
+_ORIGINAL_EVIDENCE_ROOT = os.environ.get("SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT")
+
+
+def _path_at_or_below(candidate, protected):
+    try:
+        return os.path.normcase(os.path.commonpath((candidate, protected))) == os.path.normcase(protected)
+    except ValueError:
+        return False
+
+
+def _validate_supplied_evidence_parent(parent):
+    if not os.path.lexists(parent):
+        raise RuntimeError("supplied evidence root must already exist")
+    repository_root = Path(__file__).resolve().parents[3]
+    protected_roots = (
+        Path(r"C:\Projects"),
+        Path(r"C:\Projects\SSTAC-Dashboard"),
+        repository_root,
+        repository_root.parent,
+    )
+    if any(_path_at_or_below(str(parent), str(root)) for root in protected_roots):
+        raise RuntimeError("supplied evidence root must not be at or below a project, repository, worktree, or shared worktree root")
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    cursor = parent
+    while True:
+        cursor_stat = os.lstat(cursor)
+        attributes = getattr(cursor_stat, "st_file_attributes", 0)
+        if stat.S_ISLNK(cursor_stat.st_mode) or attributes & reparse or not stat.S_ISDIR(cursor_stat.st_mode):
+            raise RuntimeError("supplied evidence root and every lexical ancestor must be ordinary directories")
+        next_cursor = cursor.parent
+        if next_cursor == cursor:
+            break
+        cursor = next_cursor
+    return parent
+
+
+def _create_owned_evidence_root():
+    if _ORIGINAL_EVIDENCE_ROOT:
+        parent = Path(os.path.abspath(_ORIGINAL_EVIDENCE_ROOT))
+        _validate_supplied_evidence_parent(parent)
+        owned = Path(tempfile.mkdtemp(prefix="wiki_activation_", dir=parent))
+    else:
+        owned = Path(tempfile.mkdtemp(prefix="wiki_activation_"))
+    owned_stat = os.lstat(owned)
+    if not stat.S_ISDIR(owned_stat.st_mode) or getattr(owned_stat, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+        raise RuntimeError("owned evidence root must be an ordinary directory")
+    if _ORIGINAL_EVIDENCE_ROOT and os.path.normcase(str(owned.parent)) != os.path.normcase(str(parent)):
+        raise RuntimeError("owned evidence root must be one direct child of the supplied parent")
+    return owned
+
+
+EVIDENCE_ROOT = _create_owned_evidence_root()
 ACTIVATION_TEST_TMP = EVIDENCE_ROOT / "activation-test-tmp"
+
+
+def fixture_environment():
+    environment = os.environ.copy()
+    environment["SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT"] = str(EVIDENCE_ROOT)
+    return environment
+
+
+def tearDownModule():
+    shutil.rmtree(EVIDENCE_ROOT)
+
+
 POWERSHELL = os.environ.get("PREFLIGHT_POWERSHELL") or shutil.which("powershell")
 TASK_NS = "http://schemas.microsoft.com/windows/2004/02/mit/task"
 EXPECTED_ACCOUNT = r"DINGAPC\jasen"
 DESCRIPTION = "SSTAC Wiki nightly candidate A: true unattended network-capable run. Staged with the daily trigger disabled."
+DESCRIPTION_D = "SSTAC Wiki nightly candidate D: deterministic-only network-capable run; label and semantic disabled. Staged with the daily trigger disabled."
 DEFINITION_ID = "11111111-2222-4333-8444-555555555555"
 OTHER_DEFINITION_ID = "aaaaaaaa-bbbb-4ccc-8ddd-eeeeeeeeeeee"
 ZERO_DEFINITION_ID = "00000000-0000-0000-0000-000000000000"
@@ -69,6 +134,10 @@ class ActivationPreflightTests(unittest.TestCase):
         self.task.write_text("ERROR: The system cannot find the file specified.", encoding="ascii")
         self.task_xml.write_text("", encoding="ascii")
         self.mcp.write_text("graphify not found", encoding="ascii")
+        self.control_fixture = self.root / "control-evidence"
+        self.control_fixture.mkdir()
+        self.standing_block = self.control_fixture / "standing-block.md"
+        self.active_lock = self.control_fixture / "active.lock"
 
         sid_command = (
             f"(New-Object System.Security.Principal.NTAccount('{EXPECTED_ACCOUNT}'))."
@@ -79,6 +148,7 @@ class ActivationPreflightTests(unittest.TestCase):
             check=True,
             capture_output=True,
             text=True,
+            env=fixture_environment(),
         ).stdout.strip()
         self.assertRegex(self.expected_sid, r"^S-\d(?:-\d+)+$")
 
@@ -118,6 +188,11 @@ class ActivationPreflightTests(unittest.TestCase):
         proof_not_before=None,
         active_transition_path=None,
         active_transition_sha256=None,
+        evidence_mode="Fixture",
+        include_fixture_tuple=True,
+        omit_fixture_fields=(),
+        extra_args=(),
+        environment=None,
     ):
         command = [
             POWERSHELL,
@@ -126,12 +201,10 @@ class ActivationPreflightTests(unittest.TestCase):
             "Bypass",
             "-File",
             str(SCRIPT),
+            "-EvidenceMode",
+            evidence_mode,
             "-RuntimeRoot",
             str(self.root),
-            "-TaskQueryOutputPath",
-            str(self.task),
-            "-TaskXmlOutputPath",
-            str(self.task_xml),
             "-ExpectedSchedulerContract",
             contract,
             "-ExpectedSchedulerPhase",
@@ -142,9 +215,18 @@ class ActivationPreflightTests(unittest.TestCase):
             registration_date,
             "-ExpectedTaskDefinitionId",
             definition_id,
-            "-McpStatusOutputPath",
-            str(self.mcp),
         ]
+        if include_fixture_tuple:
+            fixture_values = {
+                "TaskQueryOutputPath": self.task,
+                "TaskXmlOutputPath": self.task_xml,
+                "McpStatusOutputPath": self.mcp,
+                "StandingBlockEvidencePath": self.standing_block,
+                "ActiveLockEvidencePath": self.active_lock,
+            }
+            for name, value in fixture_values.items():
+                if name not in omit_fixture_fields:
+                    command.extend([f"-{name}", str(value)])
         proof = proof_not_before if proof_not_before is not None else self.proof_not_before
         if proof is not None:
             command.extend(["-ProofNotBeforeUtc", proof])
@@ -154,14 +236,77 @@ class ActivationPreflightTests(unittest.TestCase):
             command.extend(["-ActiveTransitionReceiptPath", str(transition_path)])
         if transition_sha256 is not None:
             command.extend(["-ExpectedActiveTransitionReceiptSha256", transition_sha256])
-        if version is not None:
+        if version is not None and "GraphifyVersionOverride" not in omit_fixture_fields:
             command.extend(["-GraphifyVersionOverride", version])
-        return subprocess.run(command, capture_output=True, text=True, check=False)
+        command.extend(extra_args)
+        return subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=environment or fixture_environment(),
+        )
+
+    def make_junction(self, path, target):
+        quoted_path = str(path).replace("'", "''")
+        quoted_target = str(target).replace("'", "''")
+        result = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                (
+                    "New-Item -ItemType Junction "
+                    f"-Path '{quoted_path}' "
+                    f"-Target '{quoted_target}' "
+                    "-ErrorAction Stop | Out-Null"
+                ),
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def assert_fixture_non_activation(self, result):
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        result_lines = [line for line in result.stdout.splitlines() if line.startswith("RESULT ")]
+        self.assertEqual(result_lines, ["RESULT FIXTURE_NON_ACTIVATION"], result.stdout + result.stderr)
+        self.assertEqual(result.stdout.splitlines()[-1], "RESULT FIXTURE_NON_ACTIVATION")
 
     def assert_not_ready(self, result, check_name):
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
         self.assertIn(f"FAIL    {check_name}:", result.stdout)
-        self.assertIn("RESULT NOT_READY", result.stdout)
+
+    def assert_evidence_mode_failure(self, result, diagnostic=None):
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assertIn("FAIL    evidence-mode:", result.stdout)
+        self.assertEqual(
+            [line for line in result.stdout.splitlines() if line.startswith("RESULT ")],
+            ["RESULT NOT_READY"],
+        )
+        if diagnostic:
+            self.assertIn(diagnostic, result.stdout)
+
+    def run_preflight_function_probe(self, body):
+        source_path = str(SCRIPT).replace("'", "''")
+        command = (
+            f"$source=Get-Content -LiteralPath '{source_path}' -Raw;"
+            "$marker='$fixtureParameterNames = @(';"
+            "$index=$source.IndexOf($marker,[StringComparison]::Ordinal);"
+            "if($index -lt 1){throw 'function seam marker missing'};"
+            ". ([scriptblock]::Create($source.Substring(0,$index)));"
+            + body
+        )
+        return subprocess.run(
+            [POWERSHELL, "-NoProfile", "-NonInteractive", "-Command", command],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
 
     def write_verbose(self, phase, last_result="0", last_run=None, status="Ready"):
         state = "Disabled" if phase == "Disabled" else "Enabled"
@@ -196,6 +341,7 @@ class ActivationPreflightTests(unittest.TestCase):
         omit=(),
         prefixed=False,
         start_boundary=None,
+        contract="A",
     ):
         user_id = user_id or EXPECTED_ACCOUNT
         task_enabled = "false" if phase == "Disabled" else "true"
@@ -205,6 +351,8 @@ class ActivationPreflightTests(unittest.TestCase):
         p = "t:" if prefixed else ""
         namespace = f'xmlns:t="{TASK_NS}"' if prefixed else f'xmlns="{TASK_NS}"'
         start_boundary = start_boundary or self.start_boundary
+        description = DESCRIPTION_D if contract == "D" else DESCRIPTION
+        skip_arguments = " -SkipLabeling -SkipSemantic" if contract == "D" else ""
         optional = {
             "RunLevel": f"<{p}RunLevel>LeastPrivilege</{p}RunLevel>",
             "TaskEnabled": f"<{p}Enabled>{task_enabled}</{p}Enabled>",
@@ -222,7 +370,7 @@ class ActivationPreflightTests(unittest.TestCase):
             optional[name] = ""
         return f'''<?xml version="1.0" encoding="UTF-8"?>
 <{p}Task version="1.4" {namespace}>
-  <{p}RegistrationInfo><{p}Date>{REGISTRATION_DATE}</{p}Date><{p}Author>{EXPECTED_ACCOUNT}</{p}Author><{p}Description>{DESCRIPTION}</{p}Description><{p}URI>\SSTAC-Wiki-Nightly</{p}URI></{p}RegistrationInfo>
+  <{p}RegistrationInfo><{p}Date>{REGISTRATION_DATE}</{p}Date><{p}Author>{EXPECTED_ACCOUNT}</{p}Author><{p}Description>{description}</{p}Description><{p}URI>\SSTAC-Wiki-Nightly</{p}URI></{p}RegistrationInfo>
   <{p}Principals><{p}Principal id="Author"><{p}UserId>{user_id}</{p}UserId><{p}LogonType>Password</{p}LogonType>{optional["RunLevel"]}</{p}Principal></{p}Principals>
   <{p}Settings>
     <{p}MultipleInstancesPolicy>IgnoreNew</{p}MultipleInstancesPolicy>
@@ -236,7 +384,7 @@ class ActivationPreflightTests(unittest.TestCase):
     <{p}WakeToRun>true</{p}WakeToRun><{p}ExecutionTimeLimit>PT6H</{p}ExecutionTimeLimit>{optional["Priority"]}
   </{p}Settings>
   <{p}Triggers><{p}CalendarTrigger><{p}StartBoundary>{start_boundary}</{p}StartBoundary>{optional["TriggerEnabled"]}<{p}ScheduleByDay><{p}DaysInterval>1</{p}DaysInterval></{p}ScheduleByDay></{p}CalendarTrigger></{p}Triggers>
-  <{p}Actions Context="Author"><{p}Exec><{p}Command>{powershell}</{p}Command><{p}Arguments>-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{script}" -RepoRoot "{self.root}" -TaskDefinitionId "{definition_id}"</{p}Arguments><{p}WorkingDirectory>{self.root}</{p}WorkingDirectory></{p}Exec></{p}Actions>
+  <{p}Actions Context="Author"><{p}Exec><{p}Command>{powershell}</{p}Command><{p}Arguments>-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "{script}" -RepoRoot "{self.root}" -TaskDefinitionId "{definition_id}"{skip_arguments}</{p}Arguments><{p}WorkingDirectory>{self.root}</{p}WorkingDirectory></{p}Exec></{p}Actions>
 </{p}Task>
 '''
 
@@ -252,9 +400,10 @@ class ActivationPreflightTests(unittest.TestCase):
         last_run=None,
         status="Ready",
         last_result="0",
+        contract="A",
     ):
         self.write_verbose(phase, last_result=last_result, last_run=last_run, status=status)
-        xml = self.task_xml_text(phase, definition_id, user_id, omit, prefixed)
+        xml = self.task_xml_text(phase, definition_id, user_id, omit, prefixed, contract=contract)
         for old, new in replacements:
             self.assertIn(old, xml, old)
             xml = xml.replace(old, new, 1)
@@ -401,6 +550,7 @@ class ActivationPreflightTests(unittest.TestCase):
         custody_replacements=None,
         custody_remove=(),
         custody_mutator=None,
+        contract="A",
     ):
         receipt_dir = self.root / ".tmp_wiki_nightly"
         receipt_dir.mkdir(exist_ok=True)
@@ -461,6 +611,7 @@ class ActivationPreflightTests(unittest.TestCase):
         smoke_path.write_text(
             json.dumps(smoke_receipt, sort_keys=True), encoding="ascii"
         )
+        deterministic = contract == "D"
         data = {
             "schema_version": "1.0",
             "run_id": run_id,
@@ -473,7 +624,16 @@ class ActivationPreflightTests(unittest.TestCase):
             "n0_orphan": "OK",
             "n1_build": "OK",
             "n2_cluster": "OK",
-            "n5_semantic": "OK",
+            "n5_mode": "SKIP_ALL" if deterministic else "LABEL_AND_SEMANTIC",
+            "n5_skip_labeling": deterministic,
+            "n5_skip_semantic": deterministic,
+            "n5_run_label": not deterministic,
+            "n5_run_semantic": not deterministic,
+            "n5_lock_expiry_minutes": 0 if deterministic else 150,
+            "n5_mutation_attempted": not deterministic,
+            "semantic_execution_attempted": not deterministic,
+            "n5_release_required": not deterministic,
+            "n5_semantic": "SEMANTIC_SKIPPED_SkipFlags" if deterministic else "OK",
             "n6_wiki": "OK",
             "n6_publication": "SERVED_WIKI_SWAPPED",
             "serve_gate": "PASS",
@@ -499,6 +659,36 @@ class ActivationPreflightTests(unittest.TestCase):
                 "distinct_community_count": graph_community_count,
                 "graph_sha256": graph_sha256,
             },
+            "semantic_evidence": {
+                "status": "NOT_RUN" if deterministic else "PASS",
+                "schema_version": "1.0",
+                "run_id": run_id,
+                "source_property_schema_valid": not deterministic,
+                "receipt_name": None,
+                "sha256": None,
+                "observed_wrapper_exit_code": None if deterministic else 0,
+                "graphify_exit_code": None if deterministic else 0,
+                "graphify_status": "NOT_RUN" if deterministic else "OK",
+                "timed_out": False,
+                "guardrail_failed": False,
+                "orphan_risk": False,
+                "temp_cleanup_status": "NOT_RUN" if deterministic else "REMOVED",
+                "temp_cleanup_error": "",
+            },
+            "n5_post_mutation_scan": {
+                "status": "NOT_REQUIRED" if deterministic else "PASS",
+                "mutation_attempted": not deterministic,
+                "exit_code": None if deterministic else 0,
+                "error": "",
+            },
+            "n5_release": {
+                "required": not deterministic,
+                "status": "NOT_REQUIRED" if deterministic else "PASS",
+                "selected_mode": None if deterministic else "COMPLETED_GREEN",
+                "observed": None,
+                "error": "",
+                "GraphOrphanRisk": False,
+            },
             "served_graph_sha256": graph_sha256,
             "required_ref": "refs/remotes/origin/main",
             "head_oid": self.head,
@@ -512,7 +702,7 @@ class ActivationPreflightTests(unittest.TestCase):
         for key in remove:
             data.pop(key, None)
         path = receipt_dir / f"terminal-receipt-{filename_run_id}.json"
-        path.write_text(json.dumps(data, sort_keys=True), encoding="ascii")
+        path.write_text(json.dumps(data, separators=(",", ":")), encoding="ascii")
         self.proof_not_before = self.utc_z(start_aware - timedelta(minutes=1))
         return path
 
@@ -524,26 +714,19 @@ class ActivationPreflightTests(unittest.TestCase):
 
     def ready_phase(self, phase):
         self.write_contract(phase)
-        expected = {
-            "Disabled": "READY_FOR_REPLACEMENT_REVIEW",
-            "StagedAwaitingManual": "READY_FOR_MANUAL_RUN_REVIEW",
-            "StagedManualProven": "READY_FOR_TRIGGER_ENABLE_REVIEW",
-            "Active0530Correlated": "READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES",
-        }[phase]
         if phase in ("ActiveAwaitingNatural", "Active0530Correlated"):
             self.write_active_transition()
         if phase in ("StagedManualProven", "Active0530Correlated"):
             self.write_terminal_receipt()
         result = self.run_preflight(contract="A", phase=phase)
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn(f"RESULT {expected}", result.stdout)
+        self.assert_fixture_non_activation(result)
+        self.assertIn(f"PASS    scheduler-contract: contract A/{phase}", result.stdout)
         return result
 
     def test_legacy_ready_and_config_without_freshness(self):
         self.config.write_text(json.dumps({"serve_gate": {"remote": "origin", "branch": "main"}}), encoding="ascii")
         result = self.run_preflight()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("RESULT READY", result.stdout)
+        self.assert_fixture_non_activation(result)
 
     def test_phase_success_matrix(self):
         for phase in ("Disabled", "StagedAwaitingManual", "StagedManualProven", "Active0530Correlated"):
@@ -555,8 +738,7 @@ class ActivationPreflightTests(unittest.TestCase):
         self.write_contract("ActiveAwaitingNatural")
         self.write_active_transition()
         result = self.run_preflight(contract="A", phase="ActiveAwaitingNatural")
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
-        self.assertIn("RESULT NOT_READY_AWAITING_NATURAL_RUN", result.stdout)
+        self.assert_fixture_non_activation(result)
 
     def test_explicit_phase_required(self):
         self.write_contract("StagedAwaitingManual")
@@ -574,11 +756,15 @@ class ActivationPreflightTests(unittest.TestCase):
             for needle, wrong in ((f"<Enabled>{task_state}</Enabled>", f"<Enabled>{'false' if task_state == 'true' else 'true'}</Enabled>"),):
                 with self.subTest(phase=phase, field="task"):
                     self.write_contract(phase, replacements=((needle, wrong),))
+                    if phase in ("ActiveAwaitingNatural", "Active0530Correlated"):
+                        self.write_active_transition()
                     self.assert_not_ready(self.run_preflight(contract="A", phase=phase), "scheduler-contract")
             trigger_needle = f"<Enabled>{trigger_state}</Enabled><ScheduleByDay>"
             trigger_wrong = f"<Enabled>{'false' if trigger_state == 'true' else 'true'}</Enabled><ScheduleByDay>"
             with self.subTest(phase=phase, field="trigger"):
                 self.write_contract(phase, replacements=((trigger_needle, trigger_wrong),))
+                if phase in ("ActiveAwaitingNatural", "Active0530Correlated"):
+                    self.write_active_transition()
                 self.assert_not_ready(self.run_preflight(contract="A", phase=phase), "scheduler-contract")
 
     def test_registration_info_exact_metadata_and_cardinality(self):
@@ -636,10 +822,10 @@ class ActivationPreflightTests(unittest.TestCase):
     def test_sid_equivalence_and_wrong_sid(self):
         self.write_contract("StagedAwaitingManual", user_id=EXPECTED_ACCOUNT)
         result = self.run_preflight(contract="A", phase="StagedAwaitingManual")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
         self.write_contract("StagedAwaitingManual", user_id=self.expected_sid)
         result = self.run_preflight(contract="A", phase="StagedAwaitingManual")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
         self.write_contract("StagedAwaitingManual", user_id="S-1-5-18")
         self.assert_not_ready(self.run_preflight(contract="A", phase="StagedAwaitingManual"), "scheduler-contract")
 
@@ -665,7 +851,7 @@ class ActivationPreflightTests(unittest.TestCase):
             with self.subTest(case=case):
                 self.write_contract("StagedAwaitingManual", **case)
                 result = self.run_preflight(contract="A", phase="StagedAwaitingManual")
-                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assert_fixture_non_activation(result)
 
     def test_structural_cardinality_and_executable_surfaces_fail_closed(self):
         mutations = (
@@ -838,7 +1024,7 @@ class ActivationPreflightTests(unittest.TestCase):
         self.write_contract("StagedManualProven", last_run=base)
         self.write_terminal_receipt(start_local=base + timedelta(seconds=60))
         result = self.run_preflight(contract="A", phase="StagedManualProven")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
 
         shutil.rmtree(self.root / ".tmp_wiki_nightly")
         self.write_contract("StagedManualProven", last_run=base)
@@ -1225,7 +1411,10 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_contract(phase)
                 if phase == "Active0530Correlated":
                     self.write_terminal_receipt()
-                self.assert_not_ready(self.run_preflight(contract="A", phase=phase), "active-transition")
+                self.assert_evidence_mode_failure(
+                    self.run_preflight(contract="A", phase=phase),
+                    "one complete pair",
+                )
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
 
     def test_active_transition_fields_identity_and_hash_fail_closed(self):
@@ -1281,18 +1470,17 @@ class ActivationPreflightTests(unittest.TestCase):
             self.run_preflight(contract="A", phase="ActiveAwaitingNatural", active_transition_sha256="0" * 64),
             "active-transition",
         )
-        self.assert_not_ready(
+        self.assert_evidence_mode_failure(
             self.run_preflight(contract="A", phase="ActiveAwaitingNatural", active_transition_sha256=""),
-            "active-transition",
+            "one complete pair",
         )
 
     def test_active_transition_exact_date_tokens_are_cross_edition_stable(self):
         self.write_contract("ActiveAwaitingNatural")
         self.write_active_transition()
         result = self.run_preflight(contract="A", phase="ActiveAwaitingNatural")
-        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
         self.assertIn("PASS    active-transition:", result.stdout)
-        self.assertIn("RESULT NOT_READY_AWAITING_NATURAL_RUN", result.stdout)
 
         altered_values = (
             {"registration_date": REGISTRATION_DATE + ".000"},
@@ -1364,8 +1552,8 @@ class ActivationPreflightTests(unittest.TestCase):
         self.write_active_transition(activated_local=manual - timedelta(minutes=5))
         self.write_terminal_receipt(start_local=manual)
         result = self.run_preflight(contract="A", phase="Active0530Correlated")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("RESULT READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES", result.stdout)
+        self.assert_fixture_non_activation(result)
+        self.assertIn("PASS    execution-proof:", result.stdout)
         self.assertNotIn("UNATTENDED_PROVEN", result.stdout)
 
     def test_active_0530_receipt_must_follow_transition_and_proof_cutoff(self):
@@ -1387,7 +1575,7 @@ class ActivationPreflightTests(unittest.TestCase):
         self.write_contract("StagedManualProven", last_run=manual)
         self.write_terminal_receipt(start_local=manual)
         result = self.run_preflight(contract="A", phase="StagedManualProven")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
 
     def test_active_0530_correlation_requires_receipt_after_exact_boundary(self):
         boundary = (self.active_run_local + timedelta(days=1)).strftime("%Y-%m-%dT05:30:00")
@@ -1565,7 +1753,7 @@ class ActivationPreflightTests(unittest.TestCase):
         self.write_contract("StagedManualProven")
         self.write_terminal_receipt()
         result = self.run_preflight(contract="A", phase="StagedManualProven")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
 
     def test_contract_a_build_stamp_exactness_and_legacy_compatibility(self):
         for content in (
@@ -1581,7 +1769,7 @@ class ActivationPreflightTests(unittest.TestCase):
         self.stamp_path.write_text(f"legacy prefix {self.head} suffix\n", encoding="ascii")
         self.task.write_text("ERROR: The system cannot find the file specified.", encoding="ascii")
         result = self.run_preflight()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
 
     def test_contract_a_requires_freshness_config(self):
         self.config.write_text(json.dumps({"serve_gate": {"remote": "origin", "branch": "main"}}), encoding="ascii")
@@ -1609,17 +1797,945 @@ class ActivationPreflightTests(unittest.TestCase):
         self.config.write_text(json.dumps({"serve_gate": {"remote": "origin", "branch": "main"}}), encoding="ascii")
         self.task.write_text("ERROR: The system cannot find the file specified.", encoding="ascii")
         result = self.run_preflight(contract="Legacy", phase="Any")
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
-        self.assertIn("RESULT READY", result.stdout)
+        self.assert_fixture_non_activation(result)
 
     def test_mcp_binding_and_core_guards_are_preserved(self):
         python = self.root / ".venv-graphify" / "Scripts" / "python.exe"
         graph = self.root / "wiki" / ".graph" / "graph.json"
         self.mcp.write_text(f"Command: {python}\nArgs: -m graphify.serve {graph} --transport stdio", encoding="ascii")
         result = self.run_preflight()
-        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assert_fixture_non_activation(result)
         (self.root / "seed.txt").write_text("dirty\n", encoding="ascii")
         self.assert_not_ready(self.run_preflight(), "tracked-tree")
+
+    def test_parameter_identities_reject_recased_values_before_any_result(self):
+        cases = (
+            {"evidence_mode": "live"},
+            {"evidence_mode": "fixture"},
+            {"contract": "legacy"},
+            {"contract": "a"},
+            {"contract": "d"},
+            {"phase": "any"},
+            {"phase": "stagedAwaitingManual"},
+            {"phase": "stagedmanualproven"},
+            {"phase": "activeAwaitingNatural"},
+            {"phase": "active0530correlated"},
+            {"phase": "disabled"},
+        )
+        for arguments in cases:
+            with self.subTest(arguments=arguments):
+                result = self.run_preflight(**arguments)
+                self.assertNotEqual(result.returncode, 0, result.stdout + result.stderr)
+                self.assertEqual(
+                    [line for line in result.stdout.splitlines() if line.startswith("RESULT ")],
+                    [],
+                    result.stdout + result.stderr,
+                )
+                self.assertIn("case-sensitive", result.stderr)
+                self.assertNotIn("runtime-root", result.stdout)
+
+    def test_live_default_and_every_fixture_override_fail_before_surface_use(self):
+        text = SCRIPT.read_text(encoding="ascii")
+        self.assertRegex(text, r"\[string\]\$EvidenceMode = 'Live'")
+        overrides = (
+            ("ConfigPath", self.config),
+            ("TaskQueryOutputPath", self.task),
+            ("TaskXmlOutputPath", self.task_xml),
+            ("McpStatusOutputPath", self.mcp),
+            ("GraphifyVersionOverride", "0.9.17"),
+            ("StandingBlockEvidencePath", self.standing_block),
+            ("ActiveLockEvidencePath", self.active_lock),
+        )
+        for name, value in overrides:
+            with self.subTest(name=name):
+                result = self.run_preflight(
+                    version=None,
+                    evidence_mode="Live",
+                    include_fixture_tuple=False,
+                    extra_args=(f"-{name}", str(value)),
+                )
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("FAIL    evidence-mode:", result.stdout)
+                self.assertEqual(
+                    [line for line in result.stdout.splitlines() if line.startswith("RESULT ")],
+                    ["RESULT NOT_READY"],
+                )
+                self.assertNotIn("runtime-root", result.stdout)
+
+    def test_fixture_tuple_is_complete_and_rejects_missing_escape_ads_and_reparse(self):
+        complete = self.run_preflight()
+        self.assert_fixture_non_activation(complete)
+        self.assertIn("PASS    evidence-mode: Fixture tuple is complete and contained", complete.stdout)
+        for name in (
+            "TaskQueryOutputPath",
+            "TaskXmlOutputPath",
+            "McpStatusOutputPath",
+            "GraphifyVersionOverride",
+            "StandingBlockEvidencePath",
+            "ActiveLockEvidencePath",
+        ):
+            with self.subTest(missing=name):
+                result = self.run_preflight(omit_fixture_fields=(name,))
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                self.assertIn("FAIL    evidence-mode:", result.stdout)
+                self.assertIn("RESULT NOT_READY", result.stdout)
+
+        original = self.standing_block
+        try:
+            self.standing_block = EVIDENCE_ROOT.parent / "escape-standing-block.md"
+            escaped = self.run_preflight()
+            self.assertIn("FAIL    evidence-mode:", escaped.stdout)
+            self.assertIn("escapes evidence root", escaped.stdout)
+
+            self.standing_block = self.control_fixture / "standing-block.md:ads"
+            ads = self.run_preflight()
+            self.assertIn("FAIL    evidence-mode:", ads.stdout)
+            self.assertIn("alternate data stream", ads.stdout)
+
+            target = self.control_fixture / "junction-target"
+            target.mkdir()
+            junction = self.control_fixture / "junction"
+            create = subprocess.run(
+                [
+                    POWERSHELL,
+                    "-NoProfile",
+                    "-NonInteractive",
+                    "-Command",
+                    f"New-Item -ItemType Junction -Path '{junction}' -Target '{target}' -ErrorAction Stop | Out-Null",
+                ],
+                capture_output=True,
+                text=True,
+                check=False,
+                env=fixture_environment(),
+            )
+            self.assertEqual(create.returncode, 0, create.stdout + create.stderr)
+            try:
+                self.standing_block = junction / "standing-block.md"
+                reparse = self.run_preflight()
+                self.assertIn("FAIL    evidence-mode:", reparse.stdout)
+                self.assertIn("reparse point", reparse.stdout)
+            finally:
+                os.rmdir(junction)
+        finally:
+            self.standing_block = original
+
+
+    def test_fixture_transition_pair_and_raw_containment_fail_closed(self):
+        self.write_contract("ActiveAwaitingNatural")
+        valid_path = self.write_active_transition()
+        valid_hash = self.active_transition_sha256
+
+        saved_path, saved_hash = self.active_transition_path, self.active_transition_sha256
+        try:
+            self.active_transition_sha256 = None
+            self.assert_evidence_mode_failure(
+                self.run_preflight(contract="A", phase="ActiveAwaitingNatural"),
+                "one complete pair",
+            )
+            self.active_transition_path = None
+            self.active_transition_sha256 = saved_hash
+            self.assert_evidence_mode_failure(
+                self.run_preflight(contract="A", phase="ActiveAwaitingNatural"),
+                "one complete pair",
+            )
+        finally:
+            self.active_transition_path, self.active_transition_sha256 = saved_path, saved_hash
+
+        for phase in ("Disabled", "StagedAwaitingManual", "StagedManualProven"):
+            with self.subTest(non_active_path=phase):
+                self.write_contract(phase)
+                saved_hash = self.active_transition_sha256
+                self.active_transition_sha256 = None
+                try:
+                    self.assert_evidence_mode_failure(
+                        self.run_preflight(contract="A", phase=phase),
+                        "non-active phases reject",
+                    )
+                finally:
+                    self.active_transition_sha256 = saved_hash
+            with self.subTest(non_active_hash=phase):
+                saved_path = self.active_transition_path
+                self.active_transition_path = None
+                try:
+                    self.assert_evidence_mode_failure(
+                        self.run_preflight(contract="A", phase=phase),
+                        "non-active phases reject",
+                    )
+                finally:
+                    self.active_transition_path = saved_path
+
+        saved_path, saved_hash = self.active_transition_path, self.active_transition_sha256
+        self.active_transition_path = None
+        self.active_transition_sha256 = None
+        try:
+            for name in ("ActiveTransitionReceiptPath", "ExpectedActiveTransitionReceiptSha256"):
+                with self.subTest(non_active_empty=name):
+                    self.assert_evidence_mode_failure(
+                        self.run_preflight(
+                            contract="A",
+                            phase="Disabled",
+                            extra_args=(f"-{name}", ""),
+                        ),
+                        "non-active phases reject",
+                    )
+        finally:
+            self.active_transition_path, self.active_transition_sha256 = saved_path, saved_hash
+
+        escaped = EVIDENCE_ROOT / f"escaped-transition-{uuid.uuid4().hex}.json"
+        escaped.write_bytes(valid_path.read_bytes())
+        try:
+            self.assert_evidence_mode_failure(
+                self.run_preflight(
+                    contract="A",
+                    phase="ActiveAwaitingNatural",
+                    active_transition_path=escaped,
+                    active_transition_sha256=valid_hash,
+                ),
+                "escapes evidence root",
+            )
+        finally:
+            escaped.unlink()
+
+        self.assert_evidence_mode_failure(
+            self.run_preflight(
+                contract="A",
+                phase="ActiveAwaitingNatural",
+                active_transition_path=str(valid_path) + ":ads",
+                active_transition_sha256=valid_hash,
+            ),
+            "alternate data stream",
+        )
+
+    def test_fixture_transition_and_optional_leaf_reparse_boundaries(self):
+        self.write_contract("ActiveAwaitingNatural")
+        valid_path = self.write_active_transition()
+        valid_hash = self.active_transition_sha256
+        target_dir = self.root / "transition-leaf-target"
+        target_dir.mkdir()
+        leaf_link = self.root / "transition-leaf-link.json"
+        create_leaf = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"New-Item -ItemType Junction -Path '{leaf_link}' -Target '{target_dir}' -ErrorAction Stop | Out-Null",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        if create_leaf.returncode != 0:
+            self.skipTest("junction leaf fixture unavailable: " + create_leaf.stderr.strip())
+        try:
+            self.assert_evidence_mode_failure(
+                self.run_preflight(
+                    contract="A",
+                    phase="ActiveAwaitingNatural",
+                    active_transition_path=leaf_link,
+                    active_transition_sha256=valid_hash,
+                ),
+                "reparse point",
+            )
+        finally:
+            os.rmdir(leaf_link)
+
+        outside = EVIDENCE_ROOT / f"transition-outside-{uuid.uuid4().hex}"
+        outside.mkdir()
+        outside_receipt = outside / "receipt.json"
+        outside_receipt.write_bytes(valid_path.read_bytes())
+        junction = self.root / "transition-junction"
+        create_junction = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"New-Item -ItemType Junction -Path '{junction}' -Target '{outside}' -ErrorAction Stop | Out-Null",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        if create_junction.returncode != 0:
+            shutil.rmtree(outside)
+            self.skipTest("junction fixture unavailable: " + create_junction.stderr.strip())
+        try:
+            self.assert_evidence_mode_failure(
+                self.run_preflight(
+                    contract="A",
+                    phase="ActiveAwaitingNatural",
+                    active_transition_path=junction / "receipt.json",
+                    active_transition_sha256=valid_hash,
+                ),
+                "reparse point",
+            )
+        finally:
+            os.rmdir(junction)
+            shutil.rmtree(outside)
+
+        self.active_transition_path = None
+        self.active_transition_sha256 = None
+        self.standing_block.write_text("ordinary\n", encoding="ascii")
+        try:
+            ordinary = self.run_preflight()
+            self.assert_fixture_non_activation(ordinary)
+            self.assertIn("PASS    terminal-path-evidence:", ordinary.stdout)
+        finally:
+            self.standing_block.unlink()
+
+        optional_target = self.control_fixture / "optional-target"
+        optional_target.mkdir()
+        create_optional = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"New-Item -ItemType Junction -Path '{self.standing_block}' -Target '{optional_target}' -ErrorAction Stop | Out-Null",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        if create_optional.returncode != 0:
+            self.skipTest("optional junction fixture unavailable: " + create_optional.stderr.strip())
+        try:
+            self.assert_evidence_mode_failure(self.run_preflight(), "reparse point")
+        finally:
+            os.rmdir(self.standing_block)
+
+    def test_terminal_exact_path_reobservation_rejects_state_changes_and_errors(self):
+        cases = (
+            ("same_false", "$false", "$false", True, "PASS", False),
+            ("false_to_true", "$false", "$true", False, "PASS", True),
+            ("true_to_false", "$true", "$false", False, "PASS", False),
+            ("second_error", "$false", "'ERROR'", False, "ERROR", None),
+        )
+        for name, initial, fresh, expected_valid, expected_status, expected_present in cases:
+            with self.subTest(name=name):
+                body = (
+                    f"$script:sequence=@({initial},{fresh});"
+                    "function Test-Path { param($LiteralPath,$ErrorAction,$ErrorVariable) "
+                    "$next=$script:sequence[0];$script:sequence=@($script:sequence|Select-Object -Skip 1);"
+                    "if($next -is [string]){Write-Error -ErrorAction Continue 'forced second observation error';return};"
+                    "return $next };"
+                    "$initial=Get-ExactPathEvidence -LiteralPath 'C:\\tmp\\fixture-terminal-evidence';"
+                    "$initialJson=$initial|ConvertTo-Json -Compress -Depth 4;"
+                    "$initialHash=Get-PreflightTextSha256 $initialJson;"
+                    "$binding=Get-FreshExactPathEvidenceBinding 'C:\\tmp\\fixture-terminal-evidence' $initial $initialJson $initialHash;"
+                    "[pscustomobject]@{binding_valid=$binding.binding_valid;envelope_valid=$binding.envelope_valid;status=$binding.evidence.status;present=$binding.evidence.present;error=$binding.evidence.error}|ConvertTo-Json -Compress"
+                )
+                result = self.run_preflight_function_probe(body)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                data = json.loads(result.stdout.splitlines()[-1])
+                self.assertIs(data["binding_valid"], expected_valid)
+                self.assertTrue(data["envelope_valid"])
+                self.assertEqual(data["status"], expected_status)
+                self.assertIs(data["present"], expected_present)
+                if expected_status == "ERROR":
+                    self.assertTrue(data["error"])
+
+    def test_exact_path_helper_rejects_all_malformed_success_streams(self):
+        cases = {
+            "true": ("return $true", "PASS", True),
+            "false": ("return $false", "PASS", False),
+            "terminating": ("throw 'forced terminating error'", "ERROR", None),
+            "nonterminating_no_value": ("Write-Error -ErrorAction Continue 'forced nonterminating error'; return", "ERROR", None),
+            "wrong_type": ("return 'true'", "ERROR", None),
+            "multiple": ("$true; $false", "ERROR", None),
+            "incidental": ("'noise'; $true", "ERROR", None),
+        }
+        for name, (behavior, status, present) in cases.items():
+            with self.subTest(name=name):
+                body = (
+                    "function Test-Path { param($LiteralPath,$ErrorAction,$ErrorVariable) "
+                    + behavior
+                    + " };"
+                    "$e=Get-ExactPathEvidence -LiteralPath 'C:\\tmp\\fixture-evidence';"
+                    "$j=$e|ConvertTo-Json -Compress -Depth 4;"
+                    "$h=Get-PreflightTextSha256 $j;"
+                    "$valid=Test-ExactPathEvidence $e 'C:\\tmp\\fixture-evidence' $j $h;"
+                    "[pscustomobject]@{evidence=$e;valid=$valid}|ConvertTo-Json -Compress -Depth 6"
+                )
+                result = self.run_preflight_function_probe(body)
+                self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                data = json.loads(result.stdout.splitlines()[-1])
+                self.assertTrue(data["valid"])
+                self.assertEqual(data["evidence"]["status"], status)
+                self.assertIs(data["evidence"]["present"], present)
+                if status == "ERROR":
+                    self.assertTrue(data["evidence"]["error"])
+
+    def test_exact_path_validator_rejects_array_null_extra_reordered_and_changed_bytes(self):
+        body = (
+            "$good=[pscustomobject][ordered]@{schema_version='1.0';evidence_type='EXACT_PATH_PRESENCE';path='C:\\tmp\\x';status='PASS';present=$false;error=$null};"
+            "$json=$good|ConvertTo-Json -Compress;$sha=Get-PreflightTextSha256 $json;"
+            "$extra=[pscustomobject][ordered]@{schema_version='1.0';evidence_type='EXACT_PATH_PRESENCE';path='C:\\tmp\\x';status='PASS';present=$false;error=$null;extra=1};"
+            "$reordered=[pscustomobject][ordered]@{evidence_type='EXACT_PATH_PRESENCE';schema_version='1.0';path='C:\\tmp\\x';status='PASS';present=$false;error=$null};"
+            "@((Test-ExactPathEvidence @($good,$good) 'C:\\tmp\\x' $json $sha),(Test-ExactPathEvidence $null 'C:\\tmp\\x' $json $sha),(Test-ExactPathEvidence $extra 'C:\\tmp\\x' $json $sha),(Test-ExactPathEvidence $reordered 'C:\\tmp\\x' $json $sha),(Test-ExactPathEvidence $good 'C:\\tmp\\x' ($json+' ') $sha))|ConvertTo-Json -Compress"
+        )
+        result = self.run_preflight_function_probe(body)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(result.stdout.splitlines()[-1]), [False] * 5)
+
+    def test_contract_d_phase_matrix_and_exact_fixture_terminal(self):
+        for phase in ("Disabled", "StagedAwaitingManual", "StagedManualProven", "ActiveAwaitingNatural", "Active0530Correlated"):
+            with self.subTest(phase=phase):
+                self.write_contract(phase, contract="D")
+                if phase in ("ActiveAwaitingNatural", "Active0530Correlated"):
+                    self.write_active_transition()
+                if phase in ("StagedManualProven", "Active0530Correlated"):
+                    self.write_terminal_receipt(contract="D")
+                result = self.run_preflight(contract="D", phase=phase)
+                self.assert_fixture_non_activation(result)
+                self.assertIn(f"PASS    scheduler-contract: contract D/{phase}", result.stdout)
+                if phase in ("StagedManualProven", "Active0530Correlated"):
+                    self.assertIn("PASS    execution-proof:", result.stdout)
+                shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_contract_d_action_mutations_and_contract_cross_use_fail_closed(self):
+        exact = self.task_xml_text("StagedAwaitingManual", contract="D")
+        marker = " -SkipLabeling -SkipSemantic</Arguments>"
+        self.assertIn(marker, exact)
+        mutations = (
+            "</Arguments>",
+            " -SkipLabeling</Arguments>",
+            " -SkipSemantic</Arguments>",
+            " -SkipLabeling -SkipSemantic -SkipSemantic</Arguments>",
+            " -SkipSemantic -SkipLabeling</Arguments>",
+            " -SkipLabeling -SkipSemantic -Extra</Arguments>",
+            " -skiplabeling -SkipSemantic</Arguments>",
+            " -SkipLabeling -SkipSemantic -AutoCommit</Arguments>",
+        )
+        for replacement in mutations:
+            with self.subTest(replacement=replacement):
+                self.write_contract("StagedAwaitingManual", contract="D", replacements=((marker, replacement),))
+                self.assert_not_ready(self.run_preflight(contract="D", phase="StagedAwaitingManual"), "scheduler-contract")
+
+        self.write_contract("StagedAwaitingManual", contract="A")
+        self.assert_not_ready(self.run_preflight(contract="D", phase="StagedAwaitingManual"), "scheduler-contract")
+        self.write_contract("StagedAwaitingManual", contract="D")
+        self.assert_not_ready(self.run_preflight(contract="A", phase="StagedAwaitingManual"), "scheduler-contract")
+
+    def test_contract_d_d8_type_value_and_contradiction_matrix_fails_closed(self):
+        cases = (
+            {"n5_mode": "LABEL_ONLY"},
+            {"n5_skip_labeling": "true"},
+            {"n5_skip_semantic": False},
+            {"n5_run_label": True},
+            {"n5_run_semantic": True},
+            {"n5_lock_expiry_minutes": "0"},
+            {"n5_mutation_attempted": True},
+            {"semantic_execution_attempted": True},
+            {"n5_release_required": True},
+            {"n5_semantic": "OK"},
+            {"n5_post_mutation_scan": {"status": "PASS", "mutation_attempted": False, "exit_code": 0, "error": ""}},
+            {"n5_release": {"required": False, "status": "PASS", "selected_mode": None, "observed": None, "error": "", "GraphOrphanRisk": False}},
+        )
+        for replacement in cases:
+            with self.subTest(replacement=replacement):
+                self.write_contract("StagedManualProven", contract="D")
+                self.write_terminal_receipt(contract="D", replacements=replacement)
+                self.assert_not_ready(self.run_preflight(contract="D", phase="StagedManualProven"), "execution-proof")
+                shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_contract_d_freshness_fail_closed(self):
+        cases = (
+            ("missing", object()),
+            ("null", None),
+            ("nan", float("nan")),
+            ("positive_infinity", float("inf")),
+            ("negative_infinity", float("-inf")),
+            ("zero", 0),
+            ("negative", -1),
+            ("string", "48"),
+            ("boolean", True),
+            ("array", [48]),
+            ("object", {"value": 48}),
+        )
+        for name, value in cases:
+            with self.subTest(name=name):
+                config = {"serve_gate": {"remote": "origin", "branch": "main"}}
+                if name != "missing":
+                    config["freshness_max_age_hours"] = value
+                self.config.write_text(
+                    json.dumps(config, separators=(",", ":")),
+                    encoding="ascii",
+                )
+                self.write_contract("StagedAwaitingManual", contract="D")
+                result = self.run_preflight(
+                    contract="D", phase="StagedAwaitingManual"
+                )
+                self.assert_not_ready(result, "serve-config")
+                self.assertNotIn("PASS    serve-config:", result.stdout)
+
+        self.config.write_text(
+            json.dumps(
+                {
+                    "freshness_max_age_hours": 24.5,
+                    "serve_gate": {"remote": "origin", "branch": "main"},
+                },
+                separators=(",", ":"),
+            ),
+            encoding="ascii",
+        )
+        self.write_contract("StagedAwaitingManual", contract="D")
+        valid = self.run_preflight(contract="D", phase="StagedAwaitingManual")
+        self.assert_fixture_non_activation(valid)
+        self.assertIn("PASS    serve-config:", valid.stdout)
+        self.assertIn(
+            "PASS    scheduler-contract: contract D/StagedAwaitingManual",
+            valid.stdout,
+        )
+
+    def test_contract_d_build_stamp_is_canonical(self):
+        def write_stamp_bytes(content):
+            payload = content.encode("ascii")
+            self.stamp_path.write_bytes(payload)
+            self.assertEqual(payload, self.stamp_path.read_bytes())
+
+        other_oid = "0" * 40
+        malformed = (
+            f"HEAD: {self.head} suffix\n",
+            f"prefix HEAD: {self.head}\n",
+            f"HEAD: {self.head}\nHEAD: {self.head}\n",
+            f"HEAD:{self.head}\n",
+            f"HEAD:  {self.head}\n",
+            f"HEAD: {self.head.upper()}\n",
+            f"Head: {self.head}\n",
+            f"HEAD: {other_oid}\n",
+        )
+        composite_siblings = (
+            f"prefix HEAD: {other_oid}",
+            f"HEAD: {other_oid} suffix",
+            f"HEAD:{self.head}",
+            f"Head: {self.head}",
+            f"HEAD: {self.head.upper()}",
+            f"HEAD: {other_oid}",
+        )
+        canonical_line = f"HEAD: {self.head}"
+        newline_siblings = composite_siblings[:2]
+        newline_composites = []
+        for separator in ("\r\n", "\r"):
+            for sibling in newline_siblings:
+                newline_composites.extend(
+                    (
+                        separator.join((canonical_line, sibling)) + separator,
+                        separator.join((sibling, canonical_line)) + separator,
+                    )
+                )
+        for sibling in (
+            f"metadata\rprefix HEAD: {other_oid}",
+            f"metadata\rHEAD: {other_oid} suffix",
+        ):
+            newline_composites.extend(
+                (
+                    canonical_line + "\n" + sibling + "\n",
+                    sibling + "\n" + canonical_line + "\n",
+                )
+            )
+        for sibling in newline_siblings:
+            newline_composites.extend(
+                (
+                    canonical_line + "\n" + sibling + "\r\r\n",
+                    sibling + "\r\r\n" + canonical_line + "\n",
+                )
+            )
+        newline_composites.extend(
+            (
+                canonical_line + "\r\n" + newline_siblings[0] + "\r",
+                newline_siblings[0] + "\r" + canonical_line + "\r\n",
+            )
+        )
+        for contract in ("A", "D"):
+            for content in malformed:
+                with self.subTest(contract=contract, content=content):
+                    write_stamp_bytes(content)
+                    self.write_contract(
+                        "StagedAwaitingManual", contract=contract
+                    )
+                    self.assert_not_ready(
+                        self.run_preflight(
+                            contract=contract,
+                            phase="StagedAwaitingManual",
+                        ),
+                        "build-stamp",
+                    )
+
+            for sibling in composite_siblings:
+                for lines in (
+                    (canonical_line, sibling),
+                    (sibling, canonical_line),
+                ):
+                    content = "\n".join(lines) + "\n"
+                    with self.subTest(
+                        contract=contract, composite=content
+                    ):
+                        write_stamp_bytes(content)
+                        self.write_contract(
+                            "StagedAwaitingManual", contract=contract
+                        )
+                        self.assert_not_ready(
+                            self.run_preflight(
+                                contract=contract,
+                                phase="StagedAwaitingManual",
+                            ),
+                            "build-stamp",
+                        )
+
+            for content in newline_composites:
+                with self.subTest(contract=contract, newline_content=content):
+                    write_stamp_bytes(content)
+                    self.write_contract(
+                        "StagedAwaitingManual", contract=contract
+                    )
+                    self.assert_not_ready(
+                        self.run_preflight(
+                            contract=contract,
+                            phase="StagedAwaitingManual",
+                        ),
+                        "build-stamp",
+                    )
+
+            for separator in ("\n", "\r\n"):
+                write_stamp_bytes(
+                    separator.join(("Build Stamp: fixture", canonical_line))
+                    + separator
+                )
+                self.write_contract(
+                    "StagedAwaitingManual", contract=contract
+                )
+                canonical = self.run_preflight(
+                    contract=contract, phase="StagedAwaitingManual"
+                )
+                self.assert_fixture_non_activation(canonical)
+                self.assertIn("PASS    build-stamp:", canonical.stdout)
+
+        write_stamp_bytes(f"legacy prefix {self.head} suffix\n")
+        self.task.write_text(
+            "ERROR: The system cannot find the file specified.", encoding="ascii"
+        )
+        legacy = self.run_preflight(contract="Legacy", phase="Any")
+        self.assert_fixture_non_activation(legacy)
+        self.assertIn("PASS    build-stamp: matches HEAD", legacy.stdout)
+
+    def test_contract_d_proven_graph_recomputes_communities(self):
+        self.write_graph(
+            [{"id": "n1"}, {"id": "n2"}],
+            [
+                {"source": "n1", "target": "n2"},
+                {"source": "n2", "target": "n1"},
+            ],
+        )
+        self.write_contract("StagedManualProven", contract="D")
+        terminal_path = self.write_terminal_receipt(contract="D")
+        terminal = json.loads(terminal_path.read_text(encoding="ascii"))
+        smoke_path = (
+            terminal_path.parent
+            / terminal["final_graph_smoke"]["receipt_name"]
+        )
+        smoke = json.loads(smoke_path.read_text(encoding="ascii"))
+        smoke["community_contract"]["populated_node_count"] = 2
+        smoke["community_contract"]["distinct_community_count"] = 1
+        smoke_path.write_text(
+            json.dumps(smoke, separators=(",", ":")), encoding="ascii"
+        )
+        terminal["final_graph_smoke"]["distinct_community_count"] = 1
+        terminal["final_graph_smoke"]["receipt_sha256"] = hashlib.sha256(
+            smoke_path.read_bytes()
+        ).hexdigest()
+        terminal_path.write_text(
+            json.dumps(terminal, separators=(",", ":")), encoding="ascii"
+        )
+        missing = self.run_preflight(
+            contract="D", phase="StagedManualProven"
+        )
+        self.assert_not_ready(missing, "served-graph")
+        self.assertIn(
+            "proven manual/nightly graph requires every node community",
+            missing.stdout,
+        )
+
+        shutil.rmtree(self.root / ".tmp_wiki_nightly")
+        self.write_graph(
+            [
+                {"id": "n1", "community": 0},
+                {"id": "n2", "community": 1},
+            ],
+            [
+                {"source": "n1", "target": "n2"},
+                {"source": "n2", "target": "n1"},
+            ],
+        )
+        self.write_contract("StagedManualProven", contract="D")
+        self.write_terminal_receipt(contract="D")
+        populated = self.run_preflight(
+            contract="D", phase="StagedManualProven"
+        )
+        self.assert_fixture_non_activation(populated)
+        self.assertIn("PASS    served-graph:", populated.stdout)
+        self.assertIn("PASS    execution-proof:", populated.stdout)
+
+    def test_terminal_json_duplicate_safe_exact_schema(self):
+        for contract in ("A", "D"):
+            with self.subTest(canonical=contract):
+                self.write_contract("StagedManualProven", contract=contract)
+                self.write_terminal_receipt(contract=contract)
+                canonical = self.run_preflight(
+                    contract=contract, phase="StagedManualProven"
+                )
+                self.assert_fixture_non_activation(canonical)
+                self.assertIn("PASS    execution-proof:", canonical.stdout)
+                shutil.rmtree(self.root / ".tmp_wiki_nightly")
+
+        mutations = (
+            (
+                "duplicate_mode_wrong_then_expected",
+                lambda raw: raw.replace(
+                    '"n5_mode":"SKIP_ALL"',
+                    '"n5_mode":"LABEL_ONLY","n5_mode":"SKIP_ALL"',
+                    1,
+                ),
+            ),
+            (
+                "duplicate_mode_expected_then_wrong",
+                lambda raw: raw.replace(
+                    '"n5_mode":"SKIP_ALL"',
+                    '"n5_mode":"SKIP_ALL","n5_mode":"LABEL_ONLY"',
+                    1,
+                ),
+            ),
+            (
+                "duplicate_release_required",
+                lambda raw: raw.replace(
+                    '"n5_release":{"required":false,',
+                    '"n5_release":{"required":true,"required":false,',
+                    1,
+                ),
+            ),
+            (
+                "extra_ollama_top_level",
+                lambda raw: raw[:-1] + ',"ollama_invoked":true}',
+            ),
+            (
+                "extra_scan_field",
+                lambda raw: raw.replace(
+                    '"n5_post_mutation_scan":{"status":"NOT_REQUIRED","mutation_attempted":false,"exit_code":null,"error":""}',
+                    '"n5_post_mutation_scan":{"status":"NOT_REQUIRED","mutation_attempted":false,"exit_code":null,"error":"","gpu_used":false}',
+                    1,
+                ),
+            ),
+            (
+                "extra_release_field",
+                lambda raw: raw.replace(
+                    '"n5_release":{"required":false,"status":"NOT_REQUIRED","selected_mode":null,"observed":null,"error":"","GraphOrphanRisk":false}',
+                    '"n5_release":{"required":false,"status":"NOT_REQUIRED","selected_mode":null,"observed":null,"error":"","GraphOrphanRisk":false,"lock_touched":false}',
+                    1,
+                ),
+            ),
+            (
+                "reordered_top_level",
+                lambda raw: re.sub(
+                    r'^\{"schema_version":"1\.0","run_id":"([^"]+)",',
+                    r'{"run_id":"\1","schema_version":"1.0",',
+                    raw,
+                    count=1,
+                ),
+            ),
+            (
+                "unknown_top_level",
+                lambda raw: raw[:-1] + ',"unknown_terminal_field":null}',
+            ),
+            (
+                "missing_d_decision",
+                lambda raw: raw.replace('"n5_skip_semantic":true,', "", 1),
+            ),
+        )
+        for name, mutate in mutations:
+            with self.subTest(name=name):
+                self.write_contract("StagedManualProven", contract="D")
+                terminal_path = self.write_terminal_receipt(contract="D")
+                raw = terminal_path.read_text(encoding="ascii")
+                changed = mutate(raw)
+                self.assertNotEqual(changed, raw)
+                terminal_path.write_text(changed, encoding="ascii")
+                rejected = self.run_preflight(
+                    contract="D", phase="StagedManualProven"
+                )
+                self.assert_not_ready(rejected, "execution-proof")
+                self.assertIn("raw terminal schema invalid", rejected.stdout)
+                shutil.rmtree(self.root / ".tmp_wiki_nightly")
+
+    def test_fixture_containment_covers_ancestors_and_derived_paths(self):
+        self.write_contract("StagedAwaitingManual", contract="D")
+        ordinary = self.run_preflight(
+            contract="D", phase="StagedAwaitingManual"
+        )
+        self.assert_fixture_non_activation(ordinary)
+        self.assertIn("PASS    evidence-mode:", ordinary.stdout)
+        self.assertIn("PASS    receipt-containment:", ordinary.stdout)
+
+        ancestor_target = EVIDENCE_ROOT / f"ancestor-target-{uuid.uuid4().hex}"
+        ancestor_target.mkdir()
+        (ancestor_target / "evidence").mkdir()
+        ancestor_junction = EVIDENCE_ROOT / f"ancestor-junction-{uuid.uuid4().hex}"
+        self.make_junction(ancestor_junction, ancestor_target)
+        try:
+            environment = fixture_environment()
+            environment["SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT"] = str(
+                ancestor_junction / "evidence"
+            )
+            rejected = self.run_preflight(
+                contract="D",
+                phase="StagedAwaitingManual",
+                environment=environment,
+            )
+            self.assert_evidence_mode_failure(
+                rejected, "ancestor is not an ordinary directory"
+            )
+        finally:
+            os.rmdir(ancestor_junction)
+            shutil.rmtree(ancestor_target)
+
+        wiki_path = self.root / "wiki"
+        wiki_target = self.root / "wiki-contained-target"
+        wiki_path.rename(wiki_target)
+        wiki_sentinel = wiki_target / "junction-sentinel.txt"
+        wiki_sentinel.write_text("unchanged\n", encoding="ascii")
+        self.make_junction(wiki_path, wiki_target)
+        try:
+            rejected = self.run_preflight(
+                contract="D", phase="StagedAwaitingManual"
+            )
+            self.assert_not_ready(rejected, "served-graph")
+            self.assertIn("reparse point", rejected.stdout)
+            self.assertEqual(
+                wiki_sentinel.read_text(encoding="ascii"), "unchanged\n"
+            )
+        finally:
+            os.rmdir(wiki_path)
+            wiki_target.rename(wiki_path)
+
+        for leaf_name, leaf_path, check_name in (
+            ("graph", self.graph_path, "served-graph"),
+            ("stamp", self.stamp_path, "build-stamp"),
+        ):
+            with self.subTest(leaf=leaf_name):
+                backup = leaf_path.with_name(leaf_path.name + ".ordinary")
+                target = self.root / f"{leaf_name}-leaf-target"
+                target.mkdir()
+                sentinel = target / "sentinel.txt"
+                sentinel.write_text("unchanged\n", encoding="ascii")
+                leaf_path.rename(backup)
+                self.make_junction(leaf_path, target)
+                try:
+                    rejected = self.run_preflight(
+                        contract="D", phase="StagedAwaitingManual"
+                    )
+                    self.assert_not_ready(rejected, check_name)
+                    self.assertIn("reparse point", rejected.stdout)
+                    self.assertEqual(
+                        sentinel.read_text(encoding="ascii"), "unchanged\n"
+                    )
+                finally:
+                    os.rmdir(leaf_path)
+                    backup.rename(leaf_path)
+                    shutil.rmtree(target)
+
+        self.write_contract("StagedManualProven", contract="D")
+        self.write_terminal_receipt(contract="D")
+        receipt_path = self.root / ".tmp_wiki_nightly"
+        receipt_target = self.root / "receipt-directory-target"
+        receipt_path.rename(receipt_target)
+        receipt_sentinel = receipt_target / "sentinel.txt"
+        receipt_sentinel.write_text("unchanged\n", encoding="ascii")
+        self.make_junction(receipt_path, receipt_target)
+        try:
+            rejected = self.run_preflight(
+                contract="D", phase="StagedManualProven"
+            )
+            self.assert_not_ready(rejected, "receipt-containment")
+            self.assertIn("reparse point", rejected.stdout)
+            self.assertEqual(
+                receipt_sentinel.read_text(encoding="ascii"), "unchanged\n"
+            )
+        finally:
+            os.rmdir(receipt_path)
+            receipt_sentinel.unlink()
+            receipt_target.rename(receipt_path)
+            shutil.rmtree(receipt_path)
+
+        for receipt_kind in ("terminal", "canonical", "smoke"):
+            with self.subTest(receipt_kind=receipt_kind):
+                self.write_contract("StagedManualProven", contract="D")
+                terminal_path = self.write_terminal_receipt(contract="D")
+                terminal = json.loads(terminal_path.read_text(encoding="ascii"))
+                if receipt_kind == "terminal":
+                    derived_path = terminal_path
+                elif receipt_kind == "canonical":
+                    derived_path = (
+                        terminal_path.parent
+                        / terminal["final_canonicalization"]["receipt_name"]
+                    )
+                else:
+                    derived_path = (
+                        terminal_path.parent
+                        / terminal["final_graph_smoke"]["receipt_name"]
+                    )
+                backup = derived_path.with_name(derived_path.name + ".ordinary")
+                target = self.root / f"{receipt_kind}-receipt-target"
+                target.mkdir()
+                sentinel = target / "sentinel.txt"
+                sentinel.write_text("unchanged\n", encoding="ascii")
+                derived_path.rename(backup)
+                self.make_junction(derived_path, target)
+                try:
+                    rejected = self.run_preflight(
+                        contract="D", phase="StagedManualProven"
+                    )
+                    self.assert_not_ready(rejected, "execution-proof")
+                    self.assertIn("reparse point", rejected.stdout)
+                    self.assertEqual(
+                        sentinel.read_text(encoding="ascii"), "unchanged\n"
+                    )
+                finally:
+                    os.rmdir(derived_path)
+                    backup.rename(derived_path)
+                    shutil.rmtree(target)
+                    shutil.rmtree(self.root / ".tmp_wiki_nightly")
+
+        self.assertFalse(ancestor_junction.exists())
+        self.assertFalse((self.root / "wiki-contained-target").exists())
+        self.assertFalse((self.root / "receipt-directory-target").exists())
+
+    def test_production_terminal_classifier_preserves_a_and_adds_d_pairs(self):
+        expected = {
+            "A/Disabled": ("READY_FOR_REPLACEMENT_REVIEW", 0),
+            "A/StagedAwaitingManual": ("READY_FOR_MANUAL_RUN_REVIEW", 0),
+            "A/StagedManualProven": ("READY_FOR_TRIGGER_ENABLE_REVIEW", 0),
+            "A/ActiveAwaitingNatural": ("NOT_READY_AWAITING_NATURAL_RUN", 1),
+            "A/Active0530Correlated": ("READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES", 0),
+            "D/Disabled": ("READY_FOR_DETERMINISTIC_REPLACEMENT_REVIEW", 0),
+            "D/StagedAwaitingManual": ("READY_FOR_DETERMINISTIC_MANUAL_RUN_REVIEW", 0),
+            "D/StagedManualProven": ("READY_FOR_DETERMINISTIC_TRIGGER_ENABLE_REVIEW", 0),
+            "D/ActiveAwaitingNatural": ("NOT_READY_DETERMINISTIC_AWAITING_NATURAL_RUN", 1),
+            "D/Active0530Correlated": ("READY_FOR_OWNER_DETERMINISTIC_NATURAL_PROVENANCE_REVIEW", 0),
+        }
+        body = (
+            "$rows=@();foreach($contract in @('A','D')){foreach($phase in @('Disabled','StagedAwaitingManual','StagedManualProven','ActiveAwaitingNatural','Active0530Correlated')){$c=Get-SchedulerTerminalClassification $contract $phase;$rows+=($contract+'/'+$phase+'|'+$c.result+'|'+$c.exit_code)}};$rows|ConvertTo-Json -Compress"
+        )
+        result = self.run_preflight_function_probe(body)
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        rows = json.loads(result.stdout.splitlines()[-1])
+        observed = {}
+        for row in rows:
+            key, terminal, exit_code = row.split("|")
+            observed[key] = (terminal, int(exit_code))
+        self.assertEqual(observed, expected)
 
     def test_source_remains_read_only_and_fixture_driven(self):
         text = SCRIPT.read_text(encoding="ascii")

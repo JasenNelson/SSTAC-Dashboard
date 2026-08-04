@@ -1,9 +1,11 @@
 param(
     [string]$RuntimeRoot,
     [string]$ConfigPath,
+    [ValidateSet('Live', 'Fixture')]
+    [string]$EvidenceMode = 'Live',
     [string]$TaskQueryOutputPath,
     [string]$TaskXmlOutputPath,
-    [ValidateSet('Legacy', 'A')]
+    [ValidateSet('Legacy', 'A', 'D')]
     [string]$ExpectedSchedulerContract = 'Legacy',
     [ValidateSet('Any', 'StagedAwaitingManual', 'StagedManualProven', 'ActiveAwaitingNatural', 'Active0530Correlated', 'Disabled')]
     [string]$ExpectedSchedulerPhase = 'Any',
@@ -15,11 +17,24 @@ param(
     [string]$ExpectedActiveTransitionReceiptSha256,
     [string]$McpStatusOutputPath,
     [string]$GraphifyVersionOverride,
+    [string]$StandingBlockEvidencePath,
+    [string]$ActiveLockEvidencePath,
     [int]$CommandTimeoutSeconds = 10
 )
 
 # Read-only owner preflight: no fetch, registration, MCP mutation, Ollama call, lock mutation, or repo write.
 $ErrorActionPreference = 'Stop'
+
+if ($EvidenceMode -cnotin @('Live', 'Fixture')) {
+    throw 'EvidenceMode must be exact and case-sensitive: Live or Fixture'
+}
+if ($ExpectedSchedulerContract -cnotin @('Legacy', 'A', 'D')) {
+    throw 'ExpectedSchedulerContract must be exact and case-sensitive: Legacy, A, or D'
+}
+if ($ExpectedSchedulerPhase -cnotin @('Any', 'StagedAwaitingManual', 'StagedManualProven', 'ActiveAwaitingNatural', 'Active0530Correlated', 'Disabled')) {
+    throw 'ExpectedSchedulerPhase must use an exact documented case-sensitive spelling'
+}
+
 $script:Failed = $false
 $script:Actions = New-Object System.Collections.Generic.List[string]
 
@@ -30,6 +45,35 @@ function Check([string]$state, [string]$name, [string]$detail, [bool]$required =
 
 function Action([string]$text) {
     if (-not $script:Actions.Contains($text)) { [void]$script:Actions.Add($text) }
+}
+
+function Exit-PreflightNotReady {
+    if ($script:Actions.Count) {
+        Write-Output 'NEXT OWNER ACTIONS:'
+        $script:Actions | ForEach-Object { Write-Output "- $_" }
+    }
+    Write-Output 'RESULT NOT_READY'
+    exit 1
+}
+
+function Get-SchedulerTerminalClassification([string]$Contract, [string]$Phase) {
+    $table = @{
+        'A/Disabled' = @('READY_FOR_REPLACEMENT_REVIEW', 0)
+        'A/StagedAwaitingManual' = @('READY_FOR_MANUAL_RUN_REVIEW', 0)
+        'A/StagedManualProven' = @('READY_FOR_TRIGGER_ENABLE_REVIEW', 0)
+        'A/ActiveAwaitingNatural' = @('NOT_READY_AWAITING_NATURAL_RUN', 1)
+        'A/Active0530Correlated' = @('READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES', 0)
+        'D/Disabled' = @('READY_FOR_DETERMINISTIC_REPLACEMENT_REVIEW', 0)
+        'D/StagedAwaitingManual' = @('READY_FOR_DETERMINISTIC_MANUAL_RUN_REVIEW', 0)
+        'D/StagedManualProven' = @('READY_FOR_DETERMINISTIC_TRIGGER_ENABLE_REVIEW', 0)
+        'D/ActiveAwaitingNatural' = @('NOT_READY_DETERMINISTIC_AWAITING_NATURAL_RUN', 1)
+        'D/Active0530Correlated' = @('READY_FOR_OWNER_DETERMINISTIC_NATURAL_PROVENANCE_REVIEW', 0)
+    }
+    $key = "$Contract/$Phase"
+    if (-not $table.ContainsKey($key)) {
+        return [pscustomobject][ordered]@{ result = 'NOT_READY'; exit_code = 1 }
+    }
+    return [pscustomobject][ordered]@{ result = [string]$table[$key][0]; exit_code = [int]$table[$key][1] }
 }
 
 function Join-ProcessArguments([string[]]$arguments) {
@@ -207,6 +251,19 @@ function Try-GetFiniteDouble($value, [ref]$result) {
     return $true
 }
 
+function Try-GetFiniteJsonNumber($value, [ref]$result) {
+    if ($null -eq $value) { return $false }
+    $numericTypes = @(
+        [byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64], [uint64],
+        [single], [double], [decimal]
+    )
+    if ($numericTypes -notcontains $value.GetType()) { return $false }
+    try { $parsed = [double]$value } catch { return $false }
+    if ([double]::IsNaN($parsed) -or [double]::IsInfinity($parsed)) { return $false }
+    $result.Value = $parsed
+    return $true
+}
+
 function Get-CustodySha256Text([string]$Text) {
     $sha = [Security.Cryptography.SHA256]::Create()
     try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))).Replace('-', '').ToLowerInvariant() }
@@ -379,6 +436,427 @@ function Get-FlatJsonStringField([string]$json, [string]$name, $issues) {
     try { return [regex]::Unescape($matches[0].Groups[1].Value) }
     catch { [void]$issues.Add("transition field $name contains invalid escaping"); return $null }
 }
+
+function Get-PreflightTextSha256([string]$Text) {
+    $sha = [Security.Cryptography.SHA256]::Create()
+    try { return ([BitConverter]::ToString($sha.ComputeHash([Text.Encoding]::UTF8.GetBytes($Text)))).Replace('-', '').ToLowerInvariant() }
+    finally { $sha.Dispose() }
+}
+
+function New-ExactPathEvidenceError([string]$LiteralPath, [string]$Diagnostic) {
+    $bounded = ([string]$Diagnostic -replace '[\r\n\t]+', ' ').Trim()
+    $bounded = -join @($bounded.ToCharArray() | ForEach-Object { if ([int]$_ -le 127) { $_ } else { '?' } })
+    if ([string]::IsNullOrWhiteSpace($bounded)) { $bounded = 'exact-path evidence read failed' }
+    if ($bounded.Length -gt 512) { $bounded = $bounded.Substring(0, 512) }
+    return [pscustomobject][ordered]@{
+        schema_version = '1.0'
+        evidence_type = 'EXACT_PATH_PRESENCE'
+        path = $LiteralPath
+        status = 'ERROR'
+        present = $null
+        error = $bounded
+    }
+}
+
+function Get-ExactPathEvidence([string]$LiteralPath) {
+    try { $canonicalPath = [IO.Path]::GetFullPath($LiteralPath) }
+    catch { return New-ExactPathEvidenceError -LiteralPath ([string]$LiteralPath) -Diagnostic "invalid literal path: $($_.Exception.Message)" }
+    $readErrors = @()
+    try {
+        $successValues = @(Test-Path -LiteralPath $canonicalPath -ErrorAction Stop -ErrorVariable +readErrors)
+    } catch {
+        $readErrors = @($readErrors) + $_
+        $successValues = @()
+    }
+    if (@($readErrors).Count -ne 0) {
+        return New-ExactPathEvidenceError -LiteralPath $canonicalPath -Diagnostic ([string]@($readErrors)[0])
+    }
+    if ($successValues.Count -ne 1 -or $successValues[0] -isnot [bool]) {
+        return New-ExactPathEvidenceError -LiteralPath $canonicalPath -Diagnostic "exact-path Test-Path returned $($successValues.Count) success values; expected one boolean"
+    }
+    return [pscustomobject][ordered]@{
+        schema_version = '1.0'
+        evidence_type = 'EXACT_PATH_PRESENCE'
+        path = $canonicalPath
+        status = 'PASS'
+        present = [bool]$successValues[0]
+        error = $null
+    }
+}
+
+function Test-ExactPathEvidence(
+    $Evidence,
+    [string]$ExpectedPath,
+    [string]$ExpectedJson,
+    [string]$ExpectedSha256
+) {
+    if ($null -eq $Evidence -or $Evidence -is [array]) { return $false }
+    $expectedProperties = @('schema_version', 'evidence_type', 'path', 'status', 'present', 'error')
+    $actualProperties = @($Evidence.PSObject.Properties.Name)
+    if ($actualProperties.Count -ne $expectedProperties.Count) { return $false }
+    for ($index = 0; $index -lt $expectedProperties.Count; $index++) {
+        if ($actualProperties[$index] -cne $expectedProperties[$index]) { return $false }
+    }
+    try { $canonicalPath = [IO.Path]::GetFullPath($ExpectedPath) } catch { return $false }
+    if ([string]$Evidence.schema_version -cne '1.0' -or
+        [string]$Evidence.evidence_type -cne 'EXACT_PATH_PRESENCE' -or
+        -not [string]::Equals([string]$Evidence.path, $canonicalPath, [StringComparison]::OrdinalIgnoreCase) -or
+        $Evidence.status -isnot [string]) { return $false }
+    if ([string]$Evidence.status -ceq 'PASS') {
+        if ($Evidence.present -isnot [bool] -or $null -ne $Evidence.error) { return $false }
+    } elseif ([string]$Evidence.status -ceq 'ERROR') {
+        if ($null -ne $Evidence.present -or $Evidence.error -isnot [string] -or
+            [string]::IsNullOrWhiteSpace([string]$Evidence.error) -or ([string]$Evidence.error).Length -gt 512) { return $false }
+    } else { return $false }
+    $json = $Evidence | ConvertTo-Json -Compress -Depth 4
+    if (@($json.ToCharArray() | Where-Object { [int]$_ -gt 127 }).Count -ne 0) { return $false }
+    if ($json -cne $ExpectedJson -or (Get-PreflightTextSha256 $json) -cne $ExpectedSha256) { return $false }
+    try {
+        $roundTrip = $json | ConvertFrom-Json
+        if (($roundTrip | ConvertTo-Json -Compress -Depth 4) -cne $json) { return $false }
+    } catch { return $false }
+    return $true
+}
+
+function Get-FreshExactPathEvidenceBinding(
+    [string]$LiteralPath,
+    $InitialEvidence,
+    [string]$InitialJson,
+    [string]$InitialSha256
+) {
+    $freshEvidence = Get-ExactPathEvidence -LiteralPath $LiteralPath
+    $freshJson = $freshEvidence | ConvertTo-Json -Compress -Depth 4
+    $freshSha256 = Get-PreflightTextSha256 $freshJson
+    $freshEnvelopeValid = Test-ExactPathEvidence $freshEvidence $LiteralPath $freshJson $freshSha256
+    $statusMatches = ([string]$freshEvidence.status -ceq [string]$InitialEvidence.status)
+    $presenceMatches = [object]::Equals($freshEvidence.present, $InitialEvidence.present)
+    $matchesInitial = (
+        $freshJson -ceq $InitialJson -and
+        $freshSha256 -ceq $InitialSha256 -and
+        $statusMatches -and
+        $presenceMatches
+    )
+    return [pscustomobject][ordered]@{
+        evidence = $freshEvidence
+        canonical_json = $freshJson
+        sha256 = $freshSha256
+        envelope_valid = [bool]$freshEnvelopeValid
+        status_matches = [bool]$statusMatches
+        presence_matches = [bool]$presenceMatches
+        matches_initial = [bool]$matchesInitial
+        binding_valid = [bool]($freshEnvelopeValid -and $matchesInitial)
+    }
+}
+
+function Resolve-ContainedFixturePath(
+    [string]$Candidate,
+    [string]$ContainmentRoot,
+    [bool]$RequireExisting,
+    [bool]$RequireDirectory
+) {
+    if ([string]::IsNullOrWhiteSpace($Candidate)) { throw 'fixture path is missing' }
+    $colonSearchStart = 0
+    if ($Candidate.Length -ge 2 -and $Candidate[1] -eq ':' -and [char]::IsLetter($Candidate[0])) {
+        $colonSearchStart = 2
+    }
+    if ($Candidate.IndexOf(':', $colonSearchStart) -ge 0) {
+        throw 'fixture path contains an alternate data stream'
+    }
+    $full = [IO.Path]::GetFullPath($Candidate)
+    $prefix = $ContainmentRoot.TrimEnd('\', '/') + [IO.Path]::DirectorySeparatorChar
+    if (-not $full.StartsWith($prefix, [StringComparison]::OrdinalIgnoreCase)) { throw "fixture path escapes evidence root: $Candidate" }
+    $probe = $full
+    if (-not $RequireExisting) {
+        try {
+            $item = Get-Item -LiteralPath $full -Force -ErrorAction Stop
+        } catch [System.Management.Automation.ItemNotFoundException] {
+            $probe = Split-Path -Parent $full
+            if ([string]::IsNullOrWhiteSpace($probe)) { throw "fixture path has no parent: $Candidate" }
+            $item = Get-Item -LiteralPath $probe -Force -ErrorAction Stop
+        }
+    } else {
+        $item = Get-Item -LiteralPath $full -Force -ErrorAction Stop
+    }
+    if (($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+        throw "fixture path crosses a reparse point: $($item.FullName)"
+    }
+    if ($RequireExisting) {
+        if ($RequireDirectory -and -not $item.PSIsContainer) { throw "fixture directory is not a directory: $Candidate" }
+        if (-not $RequireDirectory -and $item.PSIsContainer) { throw "fixture file is not a file: $Candidate" }
+    } elseif ($probe -ceq $full) {
+        if ($RequireDirectory -and -not $item.PSIsContainer) { throw "fixture directory is not a directory: $Candidate" }
+        if (-not $RequireDirectory -and $item.PSIsContainer) { throw "fixture file is not a file: $Candidate" }
+    } elseif (-not $item.PSIsContainer) { throw "fixture parent is not a directory: $Candidate" }
+    $cursorPath = $probe
+    $reachedContainmentRoot = $false
+    while (-not [string]::IsNullOrWhiteSpace($cursorPath)) {
+        $cursorItem = Get-Item -LiteralPath $cursorPath -Force -ErrorAction Stop
+        if (($cursorItem.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "fixture path crosses a reparse point: $cursorPath"
+        }
+        if ([string]::Equals($cursorPath.TrimEnd('\', '/'), $ContainmentRoot.TrimEnd('\', '/'), [StringComparison]::OrdinalIgnoreCase)) {
+            $reachedContainmentRoot = $true
+            break
+        }
+        $parentPath = Split-Path -Parent $cursorPath
+        if ([string]::IsNullOrWhiteSpace($parentPath) -or [string]::Equals($parentPath, $cursorPath, [StringComparison]::OrdinalIgnoreCase)) {
+            break
+        }
+        $cursorPath = $parentPath
+    }
+    if (-not $reachedContainmentRoot) { throw "fixture path ancestor chain does not reach containment root: $Candidate" }
+    return $full
+}
+
+function Resolve-OrdinaryFixtureEvidenceRoot([string]$Candidate) {
+    if ([string]::IsNullOrWhiteSpace($Candidate)) { throw 'SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT is required' }
+    $colonSearchStart = 0
+    if ($Candidate.Length -ge 2 -and $Candidate[1] -eq ':' -and [char]::IsLetter($Candidate[0])) {
+        $colonSearchStart = 2
+    }
+    if ($Candidate.IndexOf(':', $colonSearchStart) -ge 0) {
+        throw 'fixture evidence root contains an alternate data stream'
+    }
+    $full = [IO.Path]::GetFullPath($Candidate).TrimEnd('\', '/')
+    $projectsRoot = [IO.Path]::GetFullPath('C:\Projects').TrimEnd('\', '/')
+    $projectsPrefix = $projectsRoot + [IO.Path]::DirectorySeparatorChar
+    if ([string]::Equals($full, $projectsRoot, [StringComparison]::OrdinalIgnoreCase) -or
+        $full.StartsWith($projectsPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'fixture evidence root must not be a project or runtime root'
+    }
+    $cursor = $full
+    while (-not [string]::IsNullOrWhiteSpace($cursor)) {
+        $item = Get-Item -LiteralPath $cursor -Force -ErrorAction Stop
+        if (-not $item.PSIsContainer -or ($item.Attributes -band [IO.FileAttributes]::ReparsePoint) -ne 0) {
+            throw "fixture evidence root ancestor is not an ordinary directory: $cursor"
+        }
+        $parent = Split-Path -Parent $cursor
+        if ([string]::IsNullOrWhiteSpace($parent) -or [string]::Equals($parent, $cursor, [StringComparison]::OrdinalIgnoreCase)) { break }
+        $cursor = $parent
+    }
+    $resolved = [IO.Path]::GetFullPath((Resolve-Path -LiteralPath $full -ErrorAction Stop).Path).TrimEnd('\', '/')
+    if ([string]::Equals($resolved, $projectsRoot, [StringComparison]::OrdinalIgnoreCase) -or
+        $resolved.StartsWith($projectsPrefix, [StringComparison]::OrdinalIgnoreCase)) {
+        throw 'resolved fixture evidence root must not be a project or runtime root'
+    }
+    return $resolved
+}
+
+function Move-PastJsonWhitespace([string]$Json, [ref]$Index) {
+    while ($Index.Value -lt $Json.Length -and [char]::IsWhiteSpace($Json[$Index.Value])) {
+        $Index.Value++
+    }
+}
+
+function Get-JsonStringTokenEnd([string]$Json, [int]$StartIndex) {
+    if ($StartIndex -ge $Json.Length -or $Json[$StartIndex] -ne '"') {
+        throw 'JSON string token is missing'
+    }
+    $index = $StartIndex + 1
+    while ($index -lt $Json.Length) {
+        $character = $Json[$index]
+        if ([int]$character -lt 0x20) { throw 'JSON string contains a control character' }
+        if ($character -eq '\') {
+            $index += 2
+            continue
+        }
+        if ($character -eq '"') { return ($index + 1) }
+        $index++
+    }
+    throw 'JSON string token is unterminated'
+}
+
+function Get-JsonValueEnd([string]$Json, [int]$StartIndex) {
+    $index = $StartIndex
+    Move-PastJsonWhitespace $Json ([ref]$index)
+    if ($index -ge $Json.Length) { throw 'JSON value is missing' }
+    $first = $Json[$index]
+    if ($first -eq '"') { return (Get-JsonStringTokenEnd $Json $index) }
+    if ($first -eq '{' -or $first -eq '[') {
+        $closers = New-Object 'System.Collections.Generic.Stack[char]'
+        $closers.Push($(if ($first -eq '{') { '}' } else { ']' }))
+        $index++
+        while ($index -lt $Json.Length) {
+            $character = $Json[$index]
+            if ($character -eq '"') {
+                $index = Get-JsonStringTokenEnd $Json $index
+                continue
+            }
+            if ($character -eq '{') { $closers.Push('}'); $index++; continue }
+            if ($character -eq '[') { $closers.Push(']'); $index++; continue }
+            if ($character -eq '}' -or $character -eq ']') {
+                if ($closers.Count -eq 0 -or $closers.Pop() -ne $character) {
+                    throw 'JSON nested delimiter mismatch'
+                }
+                $index++
+                if ($closers.Count -eq 0) { return $index }
+                continue
+            }
+            $index++
+        }
+        throw 'JSON nested value is unterminated'
+    }
+    $primitiveStart = $index
+    while ($index -lt $Json.Length -and
+        $Json[$index] -ne ',' -and $Json[$index] -ne '}' -and $Json[$index] -ne ']' -and
+        -not [char]::IsWhiteSpace($Json[$index])) {
+        $index++
+    }
+    if ($index -eq $primitiveStart) { throw 'JSON primitive value is missing' }
+    return $index
+}
+
+function Get-JsonObjectMembers([string]$Json) {
+    $index = 0
+    Move-PastJsonWhitespace $Json ([ref]$index)
+    if ($index -ge $Json.Length -or $Json[$index] -ne '{') { throw 'JSON value must be an object' }
+    $index++
+    $members = New-Object System.Collections.Generic.List[object]
+    while ($true) {
+        Move-PastJsonWhitespace $Json ([ref]$index)
+        if ($index -ge $Json.Length) { throw 'JSON object is unterminated' }
+        if ($Json[$index] -eq '}') {
+            $index++
+            Move-PastJsonWhitespace $Json ([ref]$index)
+            if ($index -ne $Json.Length) { throw 'JSON object has trailing data' }
+            return $members.ToArray()
+        }
+        $nameStart = $index
+        $nameEnd = Get-JsonStringTokenEnd $Json $nameStart
+        $rawName = $Json.Substring($nameStart, $nameEnd - $nameStart)
+        try { $name = $rawName | ConvertFrom-Json } catch { throw 'JSON property name is invalid' }
+        if ($name -isnot [string]) { throw 'JSON property name is not a string' }
+        $index = $nameEnd
+        Move-PastJsonWhitespace $Json ([ref]$index)
+        if ($index -ge $Json.Length -or $Json[$index] -ne ':') { throw 'JSON property separator is missing' }
+        $index++
+        Move-PastJsonWhitespace $Json ([ref]$index)
+        $valueStart = $index
+        $valueEnd = Get-JsonValueEnd $Json $valueStart
+        [void]$members.Add([pscustomobject][ordered]@{
+            Name = [string]$name
+            RawValue = $Json.Substring($valueStart, $valueEnd - $valueStart)
+        })
+        $index = $valueEnd
+        Move-PastJsonWhitespace $Json ([ref]$index)
+        if ($index -ge $Json.Length) { throw 'JSON object is unterminated' }
+        if ($Json[$index] -eq ',') { $index++; continue }
+        if ($Json[$index] -eq '}') { continue }
+        throw 'JSON object delimiter is invalid'
+    }
+}
+
+function Test-TerminalReceiptRawSchema([string]$RawJson, [ref]$Diagnostic) {
+    try {
+        $expectedTop = @(
+            'schema_version', 'run_id', 'task_definition_id', 'started_at_utc',
+            'completed_at_utc', 'duration_seconds', 'terminal_state', 'native_exit_code',
+            'n0_orphan', 'n1_build', 'n2_cluster', 'n5_mode', 'n5_skip_labeling',
+            'n5_skip_semantic', 'n5_run_label', 'n5_run_semantic',
+            'n5_lock_expiry_minutes', 'n5_mutation_attempted',
+            'semantic_execution_attempted', 'n5_release_required', 'n5_semantic',
+            'n6_wiki', 'n6_publication', 'serve_gate', 'final_canonicalization',
+            'final_graph_smoke', 'semantic_evidence', 'n5_post_mutation_scan',
+            'n5_release', 'served_graph_sha256', 'required_ref', 'head_oid',
+            'required_ref_oid', 'build_stamp_oid', 'terminal_process_custody',
+            'terminal_process_custody_evidence'
+        )
+        $top = @(Get-JsonObjectMembers $RawJson)
+        if ($top.Count -ne $expectedTop.Count) {
+            throw "terminal top-level property count $($top.Count), expected $($expectedTop.Count)"
+        }
+        for ($index = 0; $index -lt $expectedTop.Count; $index++) {
+            if ($top[$index].Name -cne $expectedTop[$index]) {
+                throw "terminal top-level property $index is $($top[$index].Name), expected $($expectedTop[$index])"
+            }
+        }
+        $expectedScan = @('status', 'mutation_attempted', 'exit_code', 'error')
+        $scan = @(Get-JsonObjectMembers ([string]$top[27].RawValue))
+        if ($scan.Count -ne $expectedScan.Count) {
+            throw "post-mutation scan property count $($scan.Count), expected $($expectedScan.Count)"
+        }
+        for ($index = 0; $index -lt $expectedScan.Count; $index++) {
+            if ($scan[$index].Name -cne $expectedScan[$index]) {
+                throw "post-mutation scan property $index is $($scan[$index].Name), expected $($expectedScan[$index])"
+            }
+        }
+        $expectedRelease = @('required', 'status', 'selected_mode', 'observed', 'error', 'GraphOrphanRisk')
+        $release = @(Get-JsonObjectMembers ([string]$top[28].RawValue))
+        if ($release.Count -ne $expectedRelease.Count) {
+            throw "release property count $($release.Count), expected $($expectedRelease.Count)"
+        }
+        for ($index = 0; $index -lt $expectedRelease.Count; $index++) {
+            if ($release[$index].Name -cne $expectedRelease[$index]) {
+                throw "release property $index is $($release[$index].Name), expected $($expectedRelease[$index])"
+            }
+        }
+        $Diagnostic.Value = ''
+        return $true
+    } catch {
+        $Diagnostic.Value = $_.Exception.Message
+        return $false
+    }
+}
+
+$fixtureParameterNames = @(
+    'ConfigPath', 'TaskQueryOutputPath', 'TaskXmlOutputPath', 'McpStatusOutputPath',
+    'GraphifyVersionOverride', 'StandingBlockEvidencePath', 'ActiveLockEvidencePath'
+)
+if ($EvidenceMode -ceq 'Live') {
+    $suppliedOverrides = @($fixtureParameterNames | Where-Object { $PSBoundParameters.ContainsKey($_) })
+    if ($suppliedOverrides.Count -ne 0) {
+        Check FAIL 'evidence-mode' ("Live rejects fixture/override parameters: " + ($suppliedOverrides -join ', ')) $true
+        Action 'Remove all fixture and override parameters for Live admission.'
+        Exit-PreflightNotReady
+    }
+    $StandingBlockEvidencePath = 'C:\Projects\OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md'
+    $ActiveLockEvidencePath = 'C:\Projects\OLLAMA_ACTIVE.lock'
+} else {
+    $requiredFixtureParameters = @(
+        'RuntimeRoot', 'TaskQueryOutputPath', 'TaskXmlOutputPath', 'McpStatusOutputPath',
+        'GraphifyVersionOverride', 'StandingBlockEvidencePath', 'ActiveLockEvidencePath'
+    )
+    $missingFixtureParameters = @($requiredFixtureParameters | Where-Object {
+        -not $PSBoundParameters.ContainsKey($_) -or [string]::IsNullOrWhiteSpace([string](Get-Variable -Name $_ -ValueOnly))
+    })
+    if ($PSBoundParameters.ContainsKey('ConfigPath')) { $missingFixtureParameters += 'ConfigPath is not accepted in Fixture mode' }
+    try {
+        if ($missingFixtureParameters.Count -ne 0) { throw ("Fixture requires the complete tuple: " + ($missingFixtureParameters -join ', ')) }
+        $evidenceRootRaw = [string]$env:SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT
+        if ([string]::IsNullOrWhiteSpace($evidenceRootRaw)) { throw 'SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT is required' }
+        $evidenceRoot = Resolve-OrdinaryFixtureEvidenceRoot $evidenceRootRaw
+        $RuntimeRoot = Resolve-ContainedFixturePath $RuntimeRoot $evidenceRoot $true $true
+        $activeFixturePhase = $ExpectedSchedulerPhase -in @('ActiveAwaitingNatural', 'Active0530Correlated')
+        $transitionPathBound = $PSBoundParameters.ContainsKey('ActiveTransitionReceiptPath')
+        $transitionHashBound = $PSBoundParameters.ContainsKey('ExpectedActiveTransitionReceiptSha256')
+        $transitionPathSupplied = $transitionPathBound -and -not [string]::IsNullOrWhiteSpace($ActiveTransitionReceiptPath)
+        $transitionHashSupplied = $transitionHashBound -and -not [string]::IsNullOrWhiteSpace($ExpectedActiveTransitionReceiptSha256)
+        if ($activeFixturePhase) {
+            if (-not $transitionPathSupplied -or -not $transitionHashSupplied) {
+                throw 'Fixture active phases require ActiveTransitionReceiptPath and ExpectedActiveTransitionReceiptSha256 as one complete pair'
+            }
+            if ($ExpectedActiveTransitionReceiptSha256 -cnotmatch '^[0-9a-f]{64}$') {
+                throw 'ExpectedActiveTransitionReceiptSha256 must be exact lowercase SHA-256'
+            }
+            $ActiveTransitionReceiptPath = Resolve-ContainedFixturePath $ActiveTransitionReceiptPath $RuntimeRoot $true $false
+        } elseif ($transitionPathBound -or $transitionHashBound) {
+            throw 'Fixture non-active phases reject active transition receipt parameters'
+        }
+        foreach ($name in @('TaskQueryOutputPath', 'TaskXmlOutputPath', 'McpStatusOutputPath')) {
+            Set-Variable -Name $name -Value (Resolve-ContainedFixturePath ([string](Get-Variable -Name $name -ValueOnly)) $RuntimeRoot $true $false)
+        }
+        foreach ($name in @('StandingBlockEvidencePath', 'ActiveLockEvidencePath')) {
+            Set-Variable -Name $name -Value (Resolve-ContainedFixturePath ([string](Get-Variable -Name $name -ValueOnly)) $RuntimeRoot $false $false)
+        }
+        $ConfigPath = Resolve-ContainedFixturePath (Join-Path $RuntimeRoot 'tooling\wiki\wiki_nightly_config.json') $RuntimeRoot $true $false
+    } catch {
+        Check FAIL 'evidence-mode' $_.Exception.Message $true
+        Action 'Provide one complete ordinary Fixture tree below the exact executor evidence root.'
+        Exit-PreflightNotReady
+    }
+    Check PASS 'evidence-mode' 'Fixture tuple is complete and contained' $true
+}
+
 if (-not $RuntimeRoot) { $RuntimeRoot = $env:SSTAC_WIKI_RUNTIME_ROOT }
 if (-not $RuntimeRoot) { $RuntimeRoot = (Resolve-Path (Join-Path $PSScriptRoot '..\..')).Path }
 try {
@@ -386,8 +864,7 @@ try {
 } catch {
     Check FAIL 'runtime-root' "unavailable: $RuntimeRoot" $true
     Action 'Select an existing canonical runtime root and rerun.'
-    Write-Output 'RESULT NOT_READY'
-    exit 1
+    Exit-PreflightNotReady
 }
 Check PASS 'runtime-root' $RuntimeRoot $true
 
@@ -397,8 +874,8 @@ try {
     $config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
     if (-not $config.serve_gate.remote -or -not $config.serve_gate.branch) { throw 'serve_gate remote/branch missing' }
     $freshnessMaxAgeHours = 48.0
-    if ($ExpectedSchedulerContract -eq 'A') {
-        if (-not (Try-GetFiniteDouble $config.freshness_max_age_hours ([ref]$freshnessMaxAgeHours)) -or $freshnessMaxAgeHours -le 0) { throw 'freshness_max_age_hours must be finite and positive for contract A' }
+    if ($ExpectedSchedulerContract -in @('A', 'D')) {
+        if (-not (Try-GetFiniteJsonNumber $config.freshness_max_age_hours ([ref]$freshnessMaxAgeHours)) -or $freshnessMaxAgeHours -le 0) { throw 'freshness_max_age_hours must be a finite positive JSON number for contract A or D' }
     } elseif ($null -ne $config.freshness_max_age_hours) {
         $candidateFreshness = 0.0
         if ((Try-GetFiniteDouble $config.freshness_max_age_hours ([ref]$candidateFreshness)) -and $candidateFreshness -gt 0) { $freshnessMaxAgeHours = $candidateFreshness }
@@ -458,6 +935,9 @@ function Get-RuntimeRootEncodingHits([string]$CandidateId, [string]$ExpectedRoot
 $servedGraphSha256 = $null
 try {
     $servedGraphPath = Join-Path $RuntimeRoot 'wiki\.graph\graph.json'
+    if ($EvidenceMode -ceq 'Fixture') {
+        $servedGraphPath = Resolve-ContainedFixturePath $servedGraphPath $RuntimeRoot $true $false
+    }
     $servedGraphBytes = [IO.File]::ReadAllBytes($servedGraphPath)
     $servedGraphHasher = [Security.Cryptography.SHA256]::Create()
     try { $servedGraphSha256 = ([BitConverter]::ToString($servedGraphHasher.ComputeHash($servedGraphBytes))).Replace('-', '').ToLowerInvariant() }
@@ -470,7 +950,7 @@ try {
     $linkCount = $links.Count
     if ($nodeCount -lt 1 -or $linkCount -lt 1) { throw 'nodes/links missing or empty' }
 
-    $provenPhase = $ExpectedSchedulerContract -eq 'A' -and $ExpectedSchedulerPhase -in @('StagedManualProven', 'Active0530Correlated')
+    $provenPhase = $ExpectedSchedulerContract -in @('A', 'D') -and $ExpectedSchedulerPhase -in @('StagedManualProven', 'Active0530Correlated')
     $graphIssues = New-Object System.Collections.Generic.List[string]
     $nodeIds = New-Object System.Collections.Generic.List[string]
     $communityIds = @{}
@@ -599,11 +1079,20 @@ $headStatus = Invoke-GitReadOnly @('rev-parse', 'HEAD')
 $head = Get-TrimmedText $headStatus
 $stampPath = Join-Path $RuntimeRoot 'wiki\.build-stamp'
 try {
+    if ($EvidenceMode -ceq 'Fixture') {
+        $stampPath = Resolve-ContainedFixturePath $stampPath $RuntimeRoot $true $false
+    }
     $stamp = Get-Content -LiteralPath $stampPath -Raw
-    if ($ExpectedSchedulerContract -eq 'A') {
-        $headLines = [regex]::Matches($stamp, '(?m)^HEAD: ([0-9a-f]{40})\r?$')
-        if (-not $head -or $headLines.Count -ne 1 -or $headLines[0].Groups[1].Value -cne $head) {
-            throw 'contract A requires exactly one canonical HEAD line equal to live HEAD'
+    if ($ExpectedSchedulerContract -in @('A', 'D')) {
+        $logicalLines = [regex]::Split($stamp, '\r\n|\r|\n')
+        $headBearingLines = @($logicalLines | Where-Object { $_ -imatch 'HEAD[ \t]*:' })
+        $canonicalHeadLine = if ($headBearingLines.Count -eq 1) {
+            [regex]::Match([string]$headBearingLines[0], '^HEAD: ([0-9a-f]{40})$')
+        } else {
+            $null
+        }
+        if (-not $head -or $headBearingLines.Count -ne 1 -or -not $canonicalHeadLine.Success -or $canonicalHeadLine.Groups[1].Value -cne $head) {
+            throw 'contract A or D requires exactly one canonical HEAD line equal to live HEAD'
         }
         Check PASS 'build-stamp' 'exact canonical HEAD line matches live HEAD' $true
     } elseif ($head -and $stamp -match [regex]::Escape($head)) {
@@ -631,12 +1120,25 @@ if ($config) {
 }
 
 $receiptDirectory = Join-Path $RuntimeRoot '.tmp_wiki_nightly'
+$receiptDirectorySafe = $true
+if ($EvidenceMode -ceq 'Fixture') {
+    try {
+        $receiptDirectory = Resolve-ContainedFixturePath $receiptDirectory $RuntimeRoot $false $true
+        Check PASS 'receipt-containment' 'nightly receipt directory is contained' $true
+    } catch {
+        $receiptDirectorySafe = $false
+        Check FAIL 'receipt-containment' "nightly receipt directory is unsafe: $($_.Exception.Message)" $true
+        Action 'Replace the fixture receipt path with an ordinary contained directory.'
+    }
+}
 $schtasks = Join-Path $env:SystemRoot 'System32\schtasks.exe'
 $taskName = '\SSTAC-Wiki-Nightly'
 $task = Status $TaskQueryOutputPath $schtasks @('/Query', '/TN', $taskName, '/FO', 'LIST', '/V')
 $taskPresent = $false
 if ($ExpectedSchedulerContract -eq 'Legacy') {
-    $receipt = Get-ChildItem -LiteralPath $receiptDirectory -Filter 'receipt-*.md' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    $receipt = if ($receiptDirectorySafe) {
+        Get-ChildItem -LiteralPath $receiptDirectory -Filter 'receipt-*.md' -File -ErrorAction SilentlyContinue | Sort-Object LastWriteTime -Descending | Select-Object -First 1
+    } else { $null }
     if ($task.State -eq 'UNKNOWN') {
         Check UNKNOWN 'scheduler' $task.Text $true
         Action 'Confirm scheduled-task status manually.'
@@ -713,7 +1215,12 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
                     $uri = Get-SemanticText $registration 'URI' $namespaceUri $true '' $false 'task URI' $contractIssues
                     if ($registrationDate -cne $ExpectedRegistrationDate) { [void]$contractIssues.Add('RegistrationInfo Date mismatch') }
                     if ($author -cne 'DINGAPC\jasen') { [void]$contractIssues.Add('RegistrationInfo Author mismatch') }
-                    if ($description -cne 'SSTAC Wiki nightly candidate A: true unattended network-capable run. Staged with the daily trigger disabled.') { [void]$contractIssues.Add('RegistrationInfo Description mismatch') }
+                    $expectedDescription = if ($ExpectedSchedulerContract -ceq 'D') {
+                        'SSTAC Wiki nightly candidate D: deterministic-only network-capable run; label and semantic disabled. Staged with the daily trigger disabled.'
+                    } else {
+                        'SSTAC Wiki nightly candidate A: true unattended network-capable run. Staged with the daily trigger disabled.'
+                    }
+                    if ($description -cne $expectedDescription) { [void]$contractIssues.Add('RegistrationInfo Description mismatch') }
                     if ($uri -cne $taskName) { [void]$contractIssues.Add('task URI mismatch') }
                 }
 
@@ -815,6 +1322,7 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
                     $expectedScript = Join-Path $RuntimeRoot 'tooling\wiki\nightly_wiki_sync.ps1'
                     $expectedDefinitionId = $taskDefinitionGuid.ToString('D').ToLowerInvariant()
                     $expectedArguments = '-NoProfile -NonInteractive -ExecutionPolicy Bypass -File "' + $expectedScript + '" -RepoRoot "' + $RuntimeRoot + '" -TaskDefinitionId "' + $expectedDefinitionId + '"'
+                    if ($ExpectedSchedulerContract -ceq 'D') { $expectedArguments += ' -SkipLabeling -SkipSemantic' }
                     $command = Get-SemanticText $exec 'Command' $namespaceUri $true '' $false 'Command' $contractIssues
                     $arguments = Get-SemanticText $exec 'Arguments' $namespaceUri $true '' $false 'Arguments' $contractIssues
                     $working = Get-SemanticText $exec 'WorkingDirectory' $namespaceUri $true '' $false 'WorkingDirectory' $contractIssues
@@ -889,7 +1397,7 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
     }
 
     if ($contractIssues.Count -eq 0) {
-        Check PASS 'scheduler-contract' "contract A/$ExpectedSchedulerPhase matches frozen semantics" $true
+        Check PASS 'scheduler-contract' "contract $ExpectedSchedulerContract/$ExpectedSchedulerPhase matches frozen semantics" $true
     } else {
         Check FAIL 'scheduler-contract' ($contractIssues -join ', ') $true
         Action 'Keep the task disabled and review the exact scheduler XML and verbose readback.'
@@ -921,13 +1429,30 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
         }
         if ($taskDefinitionGuid -eq [guid]::Empty) { [void]$proofIssues.Add('valid task definition identity is required for proof') }
         $nowUtc = [datetimeoffset]::UtcNow
-        $allReceipts = @(Get-ChildItem -LiteralPath $receiptDirectory -Filter 'terminal-receipt-*.json' -File -ErrorAction SilentlyContinue)
+        $allReceipts = if ($receiptDirectorySafe) {
+            @(Get-ChildItem -LiteralPath $receiptDirectory -Filter 'terminal-receipt-*.json' -ErrorAction SilentlyContinue)
+        } else { @() }
         $definitionReceipts = New-Object System.Collections.Generic.List[object]
         $matchingReceipts = New-Object System.Collections.Generic.List[object]
+        if (-not $receiptDirectorySafe) { [void]$proofIssues.Add('terminal receipt directory containment failed') }
         foreach ($receiptFile in $allReceipts) {
             $nameMatch = [regex]::Match($receiptFile.Name, '^terminal-receipt-([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\.json$')
             if (-not $nameMatch.Success) { [void]$proofIssues.Add("malformed terminal receipt filename $($receiptFile.Name)"); continue }
-            try { $receiptObject = Get-Content -LiteralPath $receiptFile.FullName -Raw | ConvertFrom-Json } catch { [void]$proofIssues.Add("malformed terminal receipt JSON $($receiptFile.Name)"); continue }
+            try {
+                $receiptPath = $receiptFile.FullName
+                if ($EvidenceMode -ceq 'Fixture') {
+                    $receiptPath = Resolve-ContainedFixturePath $receiptPath $RuntimeRoot $true $false
+                }
+                $receiptRaw = Get-Content -LiteralPath $receiptPath -Raw
+                $rawSchemaDiagnostic = ''
+                if (-not (Test-TerminalReceiptRawSchema $receiptRaw ([ref]$rawSchemaDiagnostic))) {
+                    throw "raw terminal schema invalid: $rawSchemaDiagnostic"
+                }
+                $receiptObject = $receiptRaw | ConvertFrom-Json
+            } catch {
+                [void]$proofIssues.Add("malformed or unsafe terminal receipt JSON $($receiptFile.Name): $($_.Exception.Message)")
+                continue
+            }
             $bodyRunId = [string]$receiptObject.run_id
             if ($bodyRunId -cne $nameMatch.Groups[1].Value) { [void]$proofIssues.Add("terminal receipt filename/body UUID mismatch $($receiptFile.Name)"); continue }
             $parsedRunId = [guid]::Empty
@@ -981,6 +1506,44 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
             if ([string]$data.n2_cluster -cne 'OK') { [void]$proofIssues.Add('N2 cluster proof must be OK') }
             $semanticProof = [string]$data.n5_semantic
             if ($semanticProof -cnotin @('OK', 'SEMANTIC_SKIPPED_SkipFlags', 'SEMANTIC_SKIPPED_LOCK')) { [void]$proofIssues.Add('N5 semantic proof is missing, failed, or not an allowed intentional skip') }
+            if ($ExpectedSchedulerContract -ceq 'D') {
+                if ($semanticProof -cne 'SEMANTIC_SKIPPED_SkipFlags') { [void]$proofIssues.Add('Contract D N5 semantic proof must be SEMANTIC_SKIPPED_SkipFlags') }
+                $modeProperty = $data.PSObject.Properties['n5_mode']
+                if ($null -eq $modeProperty -or $modeProperty.Value -isnot [string] -or [string]$modeProperty.Value -cne 'SKIP_ALL') { [void]$proofIssues.Add('Contract D n5_mode must be exact SKIP_ALL string') }
+                $dBooleanExpectations = [ordered]@{
+                    n5_skip_labeling = $true
+                    n5_skip_semantic = $true
+                    n5_run_label = $false
+                    n5_run_semantic = $false
+                    n5_mutation_attempted = $false
+                    semantic_execution_attempted = $false
+                    n5_release_required = $false
+                }
+                foreach ($entry in $dBooleanExpectations.GetEnumerator()) {
+                    $property = $data.PSObject.Properties[$entry.Key]
+                    if ($null -eq $property -or $property.Value -isnot [bool] -or $property.Value -ne $entry.Value) { [void]$proofIssues.Add("Contract D $($entry.Key) type/value mismatch") }
+                }
+                $lockProperty = $data.PSObject.Properties['n5_lock_expiry_minutes']
+                try {
+                    if ($null -eq $lockProperty -or (Get-CustodyNonnegativeInteger $lockProperty.Value 'n5_lock_expiry_minutes') -ne 0) { throw 'not zero' }
+                } catch { [void]$proofIssues.Add('Contract D n5_lock_expiry_minutes must be exact integer 0') }
+                $scanProperty = $data.PSObject.Properties['n5_post_mutation_scan']
+                if ($null -eq $scanProperty -or $null -eq $scanProperty.Value -or $scanProperty.Value -is [array] -or
+                    [string]$scanProperty.Value.status -cne 'NOT_REQUIRED' -or $scanProperty.Value.mutation_attempted -isnot [bool] -or
+                    $scanProperty.Value.mutation_attempted -or $null -ne $scanProperty.Value.exit_code -or
+                    $scanProperty.Value.error -isnot [string] -or -not [string]::IsNullOrEmpty([string]$scanProperty.Value.error)) {
+                    [void]$proofIssues.Add('Contract D post-mutation scan must be exact NOT_REQUIRED evidence')
+                }
+                $releaseProperty = $data.PSObject.Properties['n5_release']
+                if ($null -eq $releaseProperty -or $null -eq $releaseProperty.Value -or $releaseProperty.Value -is [array] -or
+                    $releaseProperty.Value.required -isnot [bool] -or $releaseProperty.Value.required -or
+                    [string]$releaseProperty.Value.status -cne 'NOT_REQUIRED' -or $null -ne $releaseProperty.Value.selected_mode -or
+                    $null -ne $releaseProperty.Value.observed -or $releaseProperty.Value.error -isnot [string] -or
+                    -not [string]::IsNullOrEmpty([string]$releaseProperty.Value.error) -or
+                    $releaseProperty.Value.GraphOrphanRisk -isnot [bool] -or $releaseProperty.Value.GraphOrphanRisk) {
+                    [void]$proofIssues.Add('Contract D release evidence must be exact not-required evidence')
+                }
+            }
             if ([string]$data.n6_wiki -cne 'OK' -or [string]$data.n6_publication -cne 'SERVED_WIKI_SWAPPED') { [void]$proofIssues.Add('N6 Wiki publication proof must be successful') }
             if ([string]$data.serve_gate -cne 'PASS') { [void]$proofIssues.Add('serve gate proof must be PASS') }
             try {
@@ -997,6 +1560,10 @@ if ($ExpectedSchedulerContract -eq 'Legacy') {
 
                 $canonicalPath = Join-Path $receiptDirectory $expectedCanonicalName
                 $smokePath = Join-Path $receiptDirectory $expectedSmokeName
+                if ($EvidenceMode -ceq 'Fixture') {
+                    $canonicalPath = Resolve-ContainedFixturePath $canonicalPath $RuntimeRoot $true $false
+                    $smokePath = Resolve-ContainedFixturePath $smokePath $RuntimeRoot $true $false
+                }
                 if (-not (Test-Path -LiteralPath $canonicalPath -PathType Leaf) -or -not (Test-Path -LiteralPath $smokePath -PathType Leaf)) { throw 'final graph evidence file is missing' }
                 if ((Get-PreflightFileSha256 $canonicalPath) -cne [string]$canonicalEvidence.receipt_sha256) { throw 'final canonicalization receipt SHA-256 mismatch' }
                 if ((Get-PreflightFileSha256 $smokePath) -cne [string]$smokeEvidence.receipt_sha256) { throw 'final graph smoke receipt SHA-256 mismatch' }
@@ -1081,32 +1648,56 @@ if ($mcp.State -eq 'UNKNOWN') {
     }
 }
 
-if (Test-Path -LiteralPath 'C:\Projects\OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md') { Check INFO 'standing-block' 'present' }
+$standingBlockEvidence = Get-ExactPathEvidence -LiteralPath $StandingBlockEvidencePath
+$standingBlockEvidenceJson = $standingBlockEvidence | ConvertTo-Json -Compress -Depth 4
+$standingBlockEvidenceSha256 = Get-PreflightTextSha256 $standingBlockEvidenceJson
+$standingBlockEvidenceValid = Test-ExactPathEvidence $standingBlockEvidence $StandingBlockEvidencePath $standingBlockEvidenceJson $standingBlockEvidenceSha256
+if (-not $standingBlockEvidenceValid -or [string]$standingBlockEvidence.status -cne 'PASS') {
+    Check FAIL 'standing-block-evidence' "exact-path evidence failed: $($standingBlockEvidence.error)" $true
+    Action 'Resolve the standing-block exact-path evidence failure.'
+} elseif ($standingBlockEvidence.present) { Check INFO 'standing-block' 'present' }
 else { Check INFO 'standing-block' 'absent; semantic tier owner-gated' }
-if (Test-Path -LiteralPath 'C:\Projects\OLLAMA_ACTIVE.lock') { Check INFO 'active-lock' 'present; do not delete' }
+
+$activeLockEvidence = Get-ExactPathEvidence -LiteralPath $ActiveLockEvidencePath
+$activeLockEvidenceJson = $activeLockEvidence | ConvertTo-Json -Compress -Depth 4
+$activeLockEvidenceSha256 = Get-PreflightTextSha256 $activeLockEvidenceJson
+$activeLockEvidenceValid = Test-ExactPathEvidence $activeLockEvidence $ActiveLockEvidencePath $activeLockEvidenceJson $activeLockEvidenceSha256
+if (-not $activeLockEvidenceValid -or [string]$activeLockEvidence.status -cne 'PASS') {
+    Check FAIL 'active-lock-evidence' "exact-path evidence failed: $($activeLockEvidence.error)" $true
+    Action 'Resolve the active-lock exact-path evidence failure.'
+} elseif ($activeLockEvidence.present) { Check INFO 'active-lock' 'present; do not delete' }
 else { Check INFO 'active-lock' 'absent' }
 
-if ($script:Failed) {
-    Write-Output 'RESULT NOT_READY'
+$freshStandingBlockBinding = Get-FreshExactPathEvidenceBinding $StandingBlockEvidencePath $standingBlockEvidence $standingBlockEvidenceJson $standingBlockEvidenceSha256
+$freshActiveLockBinding = Get-FreshExactPathEvidenceBinding $ActiveLockEvidencePath $activeLockEvidence $activeLockEvidenceJson $activeLockEvidenceSha256
+$terminalEvidenceValid = ($freshStandingBlockBinding.binding_valid -and $freshActiveLockBinding.binding_valid)
+if (-not $terminalEvidenceValid) {
+    Check FAIL 'terminal-path-evidence' 'fresh exact-path evidence differs from the initial object, JSON, SHA-256, status, or presence state' $true
+    Action 'Re-establish stable exact-path evidence and rerun.'
+} else {
+    Check PASS 'terminal-path-evidence' 'fresh exact-path evidence was re-observed and matches the initial binding' $true
+}
+
+if ($EvidenceMode -ceq 'Fixture') {
     if ($script:Actions.Count) {
         Write-Output 'NEXT OWNER ACTIONS:'
         $script:Actions | ForEach-Object { Write-Output "- $_" }
     }
+    Write-Output 'RESULT FIXTURE_NON_ACTIVATION'
     exit 1
 }
-if ($ExpectedSchedulerContract -eq 'A') {
-    switch ($ExpectedSchedulerPhase) {
-        'Disabled' { Write-Output 'RESULT READY_FOR_REPLACEMENT_REVIEW'; exit 0 }
-        'StagedAwaitingManual' { Write-Output 'RESULT READY_FOR_MANUAL_RUN_REVIEW'; exit 0 }
-        'StagedManualProven' { Write-Output 'RESULT READY_FOR_TRIGGER_ENABLE_REVIEW'; exit 0 }
-        'ActiveAwaitingNatural' { Write-Output 'RESULT NOT_READY_AWAITING_NATURAL_RUN'; exit 1 }
-        'Active0530Correlated' { Write-Output 'RESULT READY_FOR_OWNER_NATURAL_PROVENANCE_MCP_AND_LOGGED_OUT_GATES'; exit 0 }
-        default { Write-Output 'RESULT NOT_READY'; exit 1 }
-    }
+
+if ($script:Failed) {
+    Exit-PreflightNotReady
 }
-Write-Output 'RESULT READY'
+if ($ExpectedSchedulerContract -in @('A', 'D')) {
+    $classification = Get-SchedulerTerminalClassification $ExpectedSchedulerContract $ExpectedSchedulerPhase
+    Write-Output "RESULT $($classification.result)"
+    exit $classification.exit_code
+}
 if ($script:Actions.Count) {
     Write-Output 'NEXT OWNER ACTIONS:'
     $script:Actions | ForEach-Object { Write-Output "- $_" }
 }
+Write-Output 'RESULT READY'
 exit 0

@@ -3,23 +3,236 @@ import json
 import os
 import re
 import shutil
+import stat
 import subprocess
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
 WIKI_DIR = Path(__file__).parent.parent
 POWERSHELL = os.environ.get("PREFLIGHT_POWERSHELL") or shutil.which("powershell")
-EVIDENCE_ROOT = Path(
-    os.environ.get("SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT") or WIKI_DIR.parents[2]
-)
+_ORIGINAL_EVIDENCE_ROOT = os.environ.get("SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT")
+
+
+def _path_at_or_below(candidate, protected):
+    try:
+        return os.path.normcase(os.path.commonpath((candidate, protected))) == os.path.normcase(protected)
+    except ValueError:
+        return False
+
+
+def _validate_supplied_evidence_parent(parent):
+    if not os.path.lexists(parent):
+        raise RuntimeError("supplied evidence root must already exist")
+    repository_root = Path(__file__).resolve().parents[3]
+    protected_roots = (
+        Path(r"C:\Projects"),
+        Path(r"C:\Projects\SSTAC-Dashboard"),
+        repository_root,
+        repository_root.parent,
+    )
+    if any(_path_at_or_below(str(parent), str(root)) for root in protected_roots):
+        raise RuntimeError("supplied evidence root must not be at or below a project, repository, worktree, or shared worktree root")
+    reparse = getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400)
+    cursor = parent
+    while True:
+        cursor_stat = os.lstat(cursor)
+        attributes = getattr(cursor_stat, "st_file_attributes", 0)
+        if stat.S_ISLNK(cursor_stat.st_mode) or attributes & reparse or not stat.S_ISDIR(cursor_stat.st_mode):
+            raise RuntimeError("supplied evidence root and every lexical ancestor must be ordinary directories")
+        next_cursor = cursor.parent
+        if next_cursor == cursor:
+            break
+        cursor = next_cursor
+    return parent
+
+
+def _create_owned_evidence_root():
+    if _ORIGINAL_EVIDENCE_ROOT:
+        parent = Path(os.path.abspath(_ORIGINAL_EVIDENCE_ROOT))
+        _validate_supplied_evidence_parent(parent)
+        owned = Path(tempfile.mkdtemp(prefix="wiki_wrapper_", dir=parent))
+    else:
+        owned = Path(tempfile.mkdtemp(prefix="wiki_wrapper_"))
+    owned_stat = os.lstat(owned)
+    if not stat.S_ISDIR(owned_stat.st_mode) or getattr(owned_stat, "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400):
+        raise RuntimeError("owned evidence root must be an ordinary directory")
+    if _ORIGINAL_EVIDENCE_ROOT and os.path.normcase(str(owned.parent)) != os.path.normcase(str(parent)):
+        raise RuntimeError("owned evidence root must be one direct child of the supplied parent")
+    return owned
+
+
+EVIDENCE_ROOT = _create_owned_evidence_root()
 FOCUSED_TEST_TMP = EVIDENCE_ROOT / "focused-test-tmp"
 
 
+def fixture_environment():
+    environment = os.environ.copy()
+    environment["SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT"] = str(EVIDENCE_ROOT)
+    return environment
+
+
+def tearDownModule():
+    shutil.rmtree(EVIDENCE_ROOT)
+
+
+
+
 class TestWrapperContracts(unittest.TestCase):
+    ROOT_MODULES = (
+        ("tooling.wiki.tests.test_activation_preflight", "wiki_activation_"),
+        ("tooling.wiki.tests.test_registration_contracts", "wiki_registration_"),
+        ("tooling.wiki.tests.test_wrapper_contracts", "wiki_wrapper_"),
+    )
+
     def setUp(self):
         self.wrapper = (WIKI_DIR / "nightly_wiki_sync.ps1").read_text(encoding="ascii")
         self.preflight = (WIKI_DIR / "activation_preflight.ps1").read_text(encoding="ascii")
+
+    def write_evidence_root_probe(self, directory):
+        probe = Path(directory) / "evidence_root_probe.py"
+        probe.write_text(
+            "\n".join(
+                (
+                    "import importlib",
+                    "import json",
+                    "import os",
+                    "import sys",
+                    "module = importlib.import_module(sys.argv[1])",
+                    "owned = str(module.EVIDENCE_ROOT)",
+                    "module.tearDownModule()",
+                    "print(json.dumps({'owned': owned, 'owned_absent': not os.path.lexists(owned)}, sort_keys=True))",
+                    "",
+                )
+            ),
+            encoding="ascii",
+        )
+        return probe
+
+    def run_evidence_root_probe(self, probe, module_name, supplied_parent):
+        environment = fixture_environment()
+        environment["SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT"] = str(supplied_parent)
+        environment["PYTHONDONTWRITEBYTECODE"] = "1"
+        environment["PYTHONPATH"] = str(WIKI_DIR.parent.parent)
+        return subprocess.run(
+            [sys.executable, str(probe), module_name],
+            cwd=str(WIKI_DIR.parent.parent),
+            capture_output=True,
+            text=True,
+            check=False,
+            env=environment,
+        )
+
+    def create_required_junction(self, link, target):
+        self.assertIsNotNone(POWERSHELL)
+        link_text = str(link).replace("'", "''")
+        target_text = str(target).replace("'", "''")
+        result = subprocess.run(
+            [
+                POWERSHELL,
+                "-NoProfile",
+                "-NonInteractive",
+                "-Command",
+                f"New-Item -ItemType Junction -Path '{link_text}' -Target '{target_text}' -ErrorAction Stop | Out-Null",
+            ],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+    def test_supplied_root_missing_and_projects_rejected_all_modules(self):
+        FOCUSED_TEST_TMP.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            fixture = Path(temp_dir)
+            probe = self.write_evidence_root_probe(fixture)
+            protected = WIKI_DIR.parent.parent
+            protected_before = sorted(item.name for item in protected.iterdir())
+            for index, (module_name, _) in enumerate(self.ROOT_MODULES):
+                with self.subTest(module=module_name, case="missing"):
+                    missing = fixture / f"missing-{index}"
+                    result = self.run_evidence_root_probe(probe, module_name, missing)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertFalse(os.path.lexists(missing))
+                    self.assertIn("must already exist", result.stderr)
+                with self.subTest(module=module_name, case="projects"):
+                    result = self.run_evidence_root_probe(probe, module_name, protected)
+                    self.assertNotEqual(result.returncode, 0)
+                    self.assertIn("must not be at or below", result.stderr)
+                    self.assertEqual(sorted(item.name for item in protected.iterdir()), protected_before)
+
+    def test_supplied_root_leaf_reparse_rejected_all_modules(self):
+        FOCUSED_TEST_TMP.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            fixture = Path(temp_dir)
+            probe = self.write_evidence_root_probe(fixture)
+            target = fixture / "leaf-target"
+            target.mkdir()
+            sentinel = target / "sentinel.txt"
+            sentinel.write_text("unchanged\n", encoding="ascii")
+            link = fixture / "leaf-link"
+            self.create_required_junction(link, target)
+            try:
+                for module_name, _ in self.ROOT_MODULES:
+                    with self.subTest(module=module_name):
+                        result = self.run_evidence_root_probe(probe, module_name, link)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("ordinary directories", result.stderr)
+                        self.assertEqual(sentinel.read_text(encoding="ascii"), "unchanged\n")
+                        self.assertEqual(sorted(item.name for item in target.iterdir()), ["sentinel.txt"])
+                        self.assertTrue(getattr(os.lstat(link), "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+            finally:
+                os.rmdir(link)
+
+    def test_supplied_root_intermediate_reparse_rejected_all_modules(self):
+        FOCUSED_TEST_TMP.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            fixture = Path(temp_dir)
+            probe = self.write_evidence_root_probe(fixture)
+            target = fixture / "intermediate-target"
+            supplied_target = target / "ordinary-parent"
+            supplied_target.mkdir(parents=True)
+            sentinel = supplied_target / "sentinel.txt"
+            sentinel.write_text("unchanged\n", encoding="ascii")
+            link = fixture / "intermediate-link"
+            self.create_required_junction(link, target)
+            apparent_parent = link / supplied_target.name
+            try:
+                for module_name, _ in self.ROOT_MODULES:
+                    with self.subTest(module=module_name):
+                        result = self.run_evidence_root_probe(probe, module_name, apparent_parent)
+                        self.assertNotEqual(result.returncode, 0)
+                        self.assertIn("ordinary directories", result.stderr)
+                        self.assertEqual(sentinel.read_text(encoding="ascii"), "unchanged\n")
+                        self.assertEqual(sorted(item.name for item in supplied_target.iterdir()), ["sentinel.txt"])
+                        self.assertTrue(getattr(os.lstat(link), "st_file_attributes", 0) & getattr(stat, "FILE_ATTRIBUTE_REPARSE_POINT", 0x400))
+            finally:
+                os.rmdir(link)
+
+    def test_supplied_root_valid_parent_owns_and_removes_one_child_all_modules(self):
+        FOCUSED_TEST_TMP.mkdir(parents=True, exist_ok=True)
+        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as temp_dir:
+            fixture = Path(temp_dir)
+            probe = self.write_evidence_root_probe(fixture)
+            for index, (module_name, expected_prefix) in enumerate(self.ROOT_MODULES):
+                with self.subTest(module=module_name):
+                    supplied = fixture / f"valid-parent-{index}"
+                    supplied.mkdir()
+                    sibling = supplied / "sibling.txt"
+                    sibling.write_text("unchanged\n", encoding="ascii")
+                    before = sorted(item.name for item in supplied.iterdir())
+                    result = self.run_evidence_root_probe(probe, module_name, supplied)
+                    self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+                    details = json.loads(result.stdout.splitlines()[-1])
+                    owned = Path(details["owned"])
+                    self.assertEqual(os.path.normcase(str(owned.parent)), os.path.normcase(str(supplied)))
+                    self.assertTrue(owned.name.startswith(expected_prefix))
+                    self.assertTrue(details["owned_absent"])
+                    self.assertFalse(os.path.lexists(owned))
+                    self.assertEqual(sorted(item.name for item in supplied.iterdir()), before)
+                    self.assertEqual(sibling.read_text(encoding="ascii"), "unchanged\n")
 
     def test_terminal_receipt_has_definition_and_canonical_uuid_identity(self):
         self.assertIn("[guid]$TaskDefinitionId = [guid]::Empty", self.wrapper)
@@ -47,6 +260,15 @@ class TestWrapperContracts(unittest.TestCase):
             "n0_orphan",
             "n1_build",
             "n2_cluster",
+            "n5_mode",
+            "n5_skip_labeling",
+            "n5_skip_semantic",
+            "n5_run_label",
+            "n5_run_semantic",
+            "n5_lock_expiry_minutes",
+            "n5_mutation_attempted",
+            "semantic_execution_attempted",
+            "n5_release_required",
             "n5_semantic",
             "n6_wiki",
             "n6_publication",
@@ -365,6 +587,7 @@ class TestWrapperContracts(unittest.TestCase):
                 [POWERSHELL, "-NoProfile", "-Command", command],
                 capture_output=True,
                 text=True,
+                env=fixture_environment(),
             )
             self.assertEqual(first.returncode, 0, first.stdout + first.stderr)
             graph.write_text(
@@ -374,6 +597,7 @@ class TestWrapperContracts(unittest.TestCase):
                 [POWERSHELL, "-NoProfile", "-Command", command],
                 capture_output=True,
                 text=True,
+                env=fixture_environment(),
             )
             self.assertEqual(second.returncode, 1, second.stdout + second.stderr)
 
@@ -406,6 +630,7 @@ class TestWrapperContracts(unittest.TestCase):
                         [POWERSHELL, "-NoProfile", "-Command", command],
                         capture_output=True,
                         text=True,
+                        env=fixture_environment(),
                     )
                     self.assertEqual(
                         result.returncode,
@@ -455,6 +680,7 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
             capture_output=True,
             text=True,
             check=False,
+            env=fixture_environment(),
         )
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         return json.loads(result.stdout.strip().splitlines()[-1])
@@ -1031,6 +1257,72 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         self.assertLess(n5.rindex("} catch {", 0, unexpected), unexpected)
         self.assertGreater(n5.index("} finally {", unexpected), unexpected)
 
+    def test_contract_d_skip_all_decision_is_behaviorally_exact_and_side_effect_free(self):
+        plan_tail = self.nightly.split("function Get-NightlyN5Plan", 1)[1]
+        plan_helper = "function Get-NightlyN5Plan" + plan_tail.split(
+            "\nfunction Test-NightlyN5DecisionEvidence", 1
+        )[0]
+        decision_tail = self.nightly.split("function Test-NightlyN5DecisionEvidence", 1)[1]
+        decision_helper = "function Test-NightlyN5DecisionEvidence" + decision_tail.split(
+            "\nfunction Get-NightlyN5ReleaseMode", 1
+        )[0]
+        release_tail = self.nightly.split("function Test-NightlyN5ReleaseEvidence", 1)[1]
+        release_validator = "function Test-NightlyN5ReleaseEvidence" + release_tail.split(
+            "\nfunction Test-NightlySemanticEvidenceSuccess", 1
+        )[0]
+        scan_tail = self.nightly.split("function Test-NightlyN5PostMutationScanEvidence", 1)[1]
+        scan_validator = "function Test-NightlyN5PostMutationScanEvidence" + scan_tail.split(
+            "\nfunction Invoke-NightlyN5PostMutationScan", 1
+        )[0]
+        command = (
+            plan_helper
+            + decision_helper
+            + release_validator
+            + scan_validator
+            + ";$plan=Get-NightlyN5Plan -SkipLabeling $true -SkipSemantic $true -LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150;"
+            + "$scan=[pscustomobject][ordered]@{status='NOT_REQUIRED';mutation_attempted=$false;exit_code=$null;error=''};"
+            + "$release=[pscustomobject][ordered]@{required=$false;status='NOT_REQUIRED';selected_mode=$null;observed=$null;error='';GraphOrphanRisk=$false};"
+            + "$ok=Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $true -ExpectedSkipSemantic $true -MutationAttempted $false -SemanticExecutionAttempted $false -ReleaseRequired $false -ExpectedReleaseGraphOrphanRisk $false -SemanticStatus 'SEMANTIC_SKIPPED_SkipFlags' -PostMutationScan $scan -ReleaseEvidence $release;"
+            + "$bad=@();foreach($case in @('mutation','semantic','release','status','expectedRisk')){$m=$false;$s=$false;$r=$false;$risk=$false;$status='SEMANTIC_SKIPPED_SkipFlags';if($case-eq'mutation'){$m=$true};if($case-eq'semantic'){$s=$true};if($case-eq'release'){$r=$true};if($case-eq'status'){$status='OK'};if($case-eq'expectedRisk'){$risk=$true};$bad+=@(Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $true -ExpectedSkipSemantic $true -MutationAttempted $m -SemanticExecutionAttempted $s -ReleaseRequired $r -ExpectedReleaseGraphOrphanRisk $risk -SemanticStatus $status -PostMutationScan $scan -ReleaseEvidence $release)};"
+            + "[pscustomobject]@{Plan=$plan;Valid=$ok;Contradictions=$bad}|ConvertTo-Json -Depth 5 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertEqual(
+            result["Plan"],
+            {
+                "Mode": "SKIP_ALL",
+                "SkipAll": True,
+                "RunLabel": False,
+                "RunSemantic": False,
+                "LockExpiryMinutes": 0,
+            },
+        )
+        self.assertTrue(result["Valid"])
+        self.assertEqual(result["Contradictions"], [False, False, False, False, False])
+
+        n5 = self.nightly.split('Write-Host "--- N5 SEMANTIC ---"', 1)[1].split(
+            'Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"', 1
+        )[0]
+        skip_branch = n5.split("if ($semanticSkippedReason)", 1)[1].split("} else {", 1)[0]
+        for forbidden in (
+            "Invoke-OllamaLockAcquire",
+            "Invoke-GraphifyGuarded",
+            "promotion.py",
+            "Invoke-NightlyN5PostMutationScan",
+        ):
+            self.assertNotIn(forbidden, skip_branch)
+
+    def test_nightly_binds_one_absolute_ps51_host_for_every_powershell_child(self):
+        assignment = "$windowsPowerShell51 = Join-Path $env:SystemRoot 'System32\\WindowsPowerShell\\v1.0\\powershell.exe'"
+        self.assertEqual(self.nightly.count(assignment), 1)
+        self.assertEqual(self.nightly.count("& $windowsPowerShell51 -NoProfile"), 3)
+        self.assertEqual(
+            self.nightly.count("Invoke-GraphifyGuarded -GraphifyExe $windowsPowerShell51"),
+            1,
+        )
+        self.assertNotRegex(self.nightly, r"(?im)^\s*&\s+powershell(?:\.exe)?\b")
+        self.assertNotRegex(self.nightly, r"-GraphifyExe\s+['\"]powershell(?:\.exe)?['\"]")
+
     def test_production_n5_release_selection_is_fail_closed(self):
         helper_tail = self.nightly.split(
             "function Get-NightlyN5ReleaseMode", 1
@@ -1196,6 +1488,44 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
             with self.subTest(release_validator_rejects=rejected):
                 self.assertFalse(validator_result[rejected])
 
+        plan_tail = self.nightly.split("function Get-NightlyN5Plan", 1)[1]
+        plan_helper = "function Get-NightlyN5Plan" + plan_tail.split(
+            "\nfunction Test-NightlyN5DecisionEvidence", 1
+        )[0]
+        decision_tail = self.nightly.split("function Test-NightlyN5DecisionEvidence", 1)[1]
+        decision_helper = "function Test-NightlyN5DecisionEvidence" + decision_tail.split(
+            "\nfunction Get-NightlyN5ReleaseMode", 1
+        )[0]
+        scan_tail = self.nightly.split("function Test-NightlyN5PostMutationScanEvidence", 1)[1]
+        scan_validator = "function Test-NightlyN5PostMutationScanEvidence" + scan_tail.split(
+            "\nfunction Invoke-NightlyN5PostMutationScan", 1
+        )[0]
+        decision_command = (
+            release_result_helpers
+            + ";"
+            + plan_helper
+            + decision_helper
+            + release_validator
+            + scan_validator
+            + ";$plan=Get-NightlyN5Plan -SkipLabeling $false -SkipSemantic $false -LabelOnlyExpiryMinutes 60 -LabelAndSemanticExpiryMinutes 150;"
+            "$scan=[pscustomobject][ordered]@{status='NOT_REQUIRED';mutation_attempted=$false;exit_code=$null;error=''};"
+            "$normal=New-OllamaReleaseResult -RequestedMode COMPLETED_GREEN -Outcome VERIFIED_RELEASED -EvidenceValid $true -OwnershipMatched $true -LockAbsent $true -DriftLogWritten $true;"
+            "$manual=New-OllamaReleaseResult -RequestedMode MANUAL_HOLD -Outcome VERIFIED_MANUAL_HOLD -EvidenceValid $true -OwnershipMatched $true -ManualHoldVerified $true -DriftLogWritten $true -MarkerWritten $true;"
+            "function Envelope($Mode,$Observed,[bool]$Risk){[pscustomobject][ordered]@{required=$true;status='PASS';selected_mode=$Mode;observed=$Observed;error='';GraphOrphanRisk=$Risk}};"
+            "$normalEnvelope=Envelope COMPLETED_GREEN $normal $false;$manualEnvelope=Envelope MANUAL_HOLD $manual $true;"
+            "$checks=[pscustomobject][ordered]@{"
+            "ManualExpectedTrue=(Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $false -ExpectedSkipSemantic $false -MutationAttempted $false -SemanticExecutionAttempted $false -ReleaseRequired $true -ExpectedReleaseGraphOrphanRisk $true -SemanticStatus 'OK' -PostMutationScan $scan -ReleaseEvidence $manualEnvelope);"
+            "ManualExpectedFalse=(Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $false -ExpectedSkipSemantic $false -MutationAttempted $false -SemanticExecutionAttempted $false -ReleaseRequired $true -ExpectedReleaseGraphOrphanRisk $false -SemanticStatus 'OK' -PostMutationScan $scan -ReleaseEvidence $manualEnvelope);"
+            "NormalExpectedFalse=(Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $false -ExpectedSkipSemantic $false -MutationAttempted $false -SemanticExecutionAttempted $false -ReleaseRequired $true -ExpectedReleaseGraphOrphanRisk $false -SemanticStatus 'OK' -PostMutationScan $scan -ReleaseEvidence $normalEnvelope);"
+            "NormalExpectedTrue=(Test-NightlyN5DecisionEvidence -Plan $plan -ExpectedSkipLabeling $false -ExpectedSkipSemantic $false -MutationAttempted $false -SemanticExecutionAttempted $false -ReleaseRequired $true -ExpectedReleaseGraphOrphanRisk $true -SemanticStatus 'OK' -PostMutationScan $scan -ReleaseEvidence $normalEnvelope)};"
+            "$checks|ConvertTo-Json -Compress"
+        )
+        decision_result = self.run_guardrail_command(decision_command)
+        self.assertTrue(decision_result["ManualExpectedTrue"])
+        self.assertFalse(decision_result["ManualExpectedFalse"])
+        self.assertTrue(decision_result["NormalExpectedFalse"])
+        self.assertFalse(decision_result["NormalExpectedTrue"])
+
         release_seam = self.nightly.split(
             "function Invoke-NightlyN5Release", 1
         )[1].split("\nfunction Test-NightlySemanticEvidenceSuccess", 1)[0]
@@ -1209,9 +1539,21 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         terminal_predicate = self.nightly.split(
             "if ($finalState -eq 'SUCCESS'", 1
         )[1].split("# Deliberately the last child process", 1)[0]
-        self.assertIn("Test-NightlyN5ReleaseEvidence", terminal_predicate)
-        self.assertIn("$n5ReleaseRequired", terminal_predicate)
-        self.assertIn("$n5ReleaseExpectedGraphOrphanRisk", terminal_predicate)
+        self.assertIn("Test-NightlyN5DecisionEvidence", terminal_predicate)
+        self.assertNotIn("Test-NightlyN5ReleaseEvidence", terminal_predicate)
+        self.assertIn("-ReleaseRequired $n5ReleaseRequired", terminal_predicate)
+        self.assertIn(
+            "-ExpectedReleaseGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk",
+            terminal_predicate,
+        )
+        self.assertIn("Test-NightlyN5ReleaseEvidence", decision_helper)
+        self.assertIn(
+            "-ExpectedGraphOrphanRisk $ExpectedReleaseGraphOrphanRisk",
+            decision_helper,
+        )
+        self.assertNotIn(
+            "([bool]$ReleaseEvidence.GraphOrphanRisk)", decision_helper
+        )
         self.assertIn("trap {", self.nightly)
         self.assertIn("Complete-NightlyRun 1 'FAILED'", self.nightly)
         self.assertIn("$n5UnexpectedException = $true", self.nightly)
@@ -1538,7 +1880,7 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         scan = n5.index("$n5PostMutationScan = Invoke-NightlyN5PostMutationScan")
         for mutation_site in (
             "$gr = Invoke-GraphifyGuarded -GraphifyExe $graphifyExe -GraphifyArgs @('label'",
-            "$sr = Invoke-GraphifyGuarded -GraphifyExe 'powershell'",
+            "$sr = Invoke-GraphifyGuarded -GraphifyExe $windowsPowerShell51",
             "$postSemanticCluster = Invoke-GraphifyGuarded",
         ):
             with self.subTest(scan_after_mutation_site=mutation_site):
@@ -1553,7 +1895,7 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         terminal_predicate = self.nightly.split(
             "if ($finalState -eq 'SUCCESS'", 1
         )[1].split("# Deliberately the last child process", 1)[0]
-        self.assertIn("Test-NightlyN5PostMutationScanEvidence", terminal_predicate)
+        self.assertIn("Test-NightlyN5DecisionEvidence", terminal_predicate)
         self.assertIn("n5_post_mutation_scan = $n5PostMutationScan", self.nightly)
         self.assertIn("n5_release = $n5ReleaseEvidence", self.nightly)
         self.assertRegex(
@@ -2058,7 +2400,13 @@ class TestProcessCustodyHelpers(unittest.TestCase):
             command += ["-RunId", run_id]
         if baseline:
             command += ["-BaselinePath", str(baseline), "-ExpectedBaselineSha256", expected or hashlib.sha256(baseline.read_bytes()).hexdigest()]
-        return subprocess.run(command, capture_output=True, text=True, check=False), output
+        return subprocess.run(
+            command,
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        ), output
 
     def capture(self, rows, stem="baseline", status="PASS", run_id=RUN_ID):
         return self.invoke("CaptureBaseline", rows, stem, status=status, run_id=run_id)
@@ -2239,11 +2587,11 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         parent = self.row(50, 0, "powershell.exe", command="powershell.exe")
         legacy = self.row(200, 50, "python.exe", command=r"python.exe C:\Projects\SSTAC-Dashboard\wiki\server.py")
         alive = self.snapshot([parent, legacy], "legacy-alive.json")
-        result = subprocess.run([POWERSHELL, "-NoProfile", "-File", str(self.checker), "-ProcessSnapshotPath", str(alive)], capture_output=True, text=True, check=False)
+        result = subprocess.run([POWERSHELL, "-NoProfile", "-File", str(self.checker), "-ProcessSnapshotPath", str(alive)], capture_output=True, text=True, check=False, env=fixture_environment())
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertIn("ALIVE", result.stdout)
         orphan = self.snapshot([dict(legacy, parent_process_id=999)], "legacy-orphan.json")
-        result = subprocess.run([POWERSHELL, "-NoProfile", "-File", str(self.checker), "-ProcessSnapshotPath", str(orphan)], capture_output=True, text=True, check=False)
+        result = subprocess.run([POWERSHELL, "-NoProfile", "-File", str(self.checker), "-ProcessSnapshotPath", str(orphan)], capture_output=True, text=True, check=False, env=fixture_environment())
         self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
         self.assertIn("ORPHANED", result.stdout)
 
@@ -2309,7 +2657,7 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         }
 
     def terminal_command(self, command):
-        return subprocess.run([POWERSHELL, "-NoProfile", "-Command", f"$ErrorActionPreference='Stop'; . '{self.terminalizer}'; {command}"], capture_output=True, text=True, check=False)
+        return subprocess.run([POWERSHELL, "-NoProfile", "-Command", f"$ErrorActionPreference='Stop'; . '{self.terminalizer}'; {command}"], capture_output=True, text=True, check=False, env=fixture_environment())
 
     def test_terminalizer_guard_first_publish_write_failure_reentry_and_custody(self):
         payload = self.root / "payload.json"; receipt = self.root / "receipt.json"; guard = self.root / "guard"
