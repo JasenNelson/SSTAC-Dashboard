@@ -5,6 +5,15 @@ the PR-A2 merge (`87935db`) + Q3 inventory pass + 2 codex CLI adversarial
 rounds (xhigh v1 RED -> medium v2 YELLOW) + owner walk-through of 14
 residuals (all accepted as recommended).
 
+**Owner scope amendment (2026-08-04):** The initial v1 release uses the
+existing baseline screening calculators and supports desktop/tablet at 768px
+or wider. PR-MAP-6, PR-MAP-7, and the mobile read-only summary are retained
+roadmap work but are deferred from v1. Aggregate publication is excluded from
+v1 and remains blocked until repository-versus-database migration
+reconciliation and a separate owner-gated publication sequence are complete.
+This amendment supersedes the original v1 labels below where they conflict; it
+does not delete the retained design.
+
 **Supersedes:** `.tmp_interactive_map_plan_v1.md`. Decision trail at
 `.tmp_interactive_map_recommendations_v1.md` (initial AI recommendations)
 + `.tmp_interactive_map_inventory_and_recommendations_v2.md` (inventory +
@@ -25,9 +34,10 @@ codex-corrected recommendations + owner sign-off log).
 Province-wide BC sediment-data interactive map on the Matrix Options
 tab. Reviewer selects sample stations on the map; the system computes
 screening-grade background statistics (provincial UTL 95/95 +
-site-specific stats) from the selection; reviewer can port those stats
-into the Calculator tab's Background Adjustment panel as a defensibly-
-audited input. v1 is screening-quality; v1.x adds ProUCL validation +
+site-specific stats) from the selection. The retained roadmap can later port
+those stats into the Calculator tab's Background Adjustment panel as a
+defensibly audited input. v1 is screening-quality and desktop/tablet only;
+v1.x adds the deferred bridge, mobile summary, ProUCL validation, and
 province-wide coverage.
 
 ## 2. Scope (v1 includes; v1.x deferred)
@@ -48,15 +58,18 @@ province-wide coverage.
   mode); screening-only labels propagate throughout
 - Right panel: MeasurementWorkbench (raw measurements behind the
   selection; observation-only including unknowns)
-- Calculator bridge: "Use Provincial Background in Calculator" + "Use
-  Site-specific Background in Calculator" one-shot snapshot with
-  full-payload audit token
 - Sediment + toxicity + community + env_modifiers media (data extracted)
 - Cost control: 5-dimensional budget breaker + dev allowlist (R-5 starts
   at jasen.nelson@gmail.com only)
-- Mobile: read-only summary view below 768px viewport
+- Desktop/tablet viewport at 768px or wider
+- No aggregate publication requirement; v1 remains unpublished
 
 **v1.x deferred:**
+- PR-MAP-6 Calculator bridge: "Use Provincial Background in Calculator" +
+  "Use Site-specific Background in Calculator" one-shot snapshot with
+  full-payload audit token
+- PR-MAP-7 admin grants UI
+- Mobile read-only summary below 768px viewport
 - ProUCL validation + lifting the "screening-only" label per R-4/R-8
 - BC EMS / B-1 / B-2 geocoding scale-up to all 1554 stations
 - Steward propose/approve UI per R-12
@@ -517,8 +530,8 @@ between PR-MAP-3 and PR-MAP-4. Outline:
 | **METHODOLOGY APPENDIX SIGN-OFF GATE (R-13)** | Owner signs off on the methodology appendix language before PR-MAP-4 | PR-MAP-3 done |
 | PR-MAP-4 | Selection tools (pan / select / select area / identify area) + SelectionStore + left-panel Selection Stats with screening-only labels + methodology badge | METHODOLOGY APPENDIX SIGN-OFF DONE |
 | PR-MAP-5 | Right-panel MeasurementWorkbench + raw-measurements API + admin-only CSV export + export_audit logging | PR-MAP-4 done |
-| PR-MAP-6 | Calculator bridge: **`matrix_map.bridge_audit` table DDL migration** (deferred from PR-MAP-1 per codex v3 finding -- table form was a candidate at R-13 sign-off and lands here in final form) + token contract implementation with `grants_used` IMMUTABLE-SNAPSHOT JSONB shape (codex grants-v1 C-1) + "Sourced from N samples (screening-only; token #abc, computed YYYY-MM-DD UTC)" badge on BackgroundAdjustment panel + click-through restore + "Refresh from current map selection" button | PR-MAP-5 done; R-13 methodology appendix signed off |
-| **PR-MAP-7 (NEW v3.4)** | Admin UI `/admin/matrix-map/grants` (matrix_admin only): active grants table + grant form with **renew-vs-new mode semantics (codex grants-v1 A-1)** + service-role-keyed user autocomplete (codex A-3) + free-form rationale field + revoked history tab + per-user view + per-DRA view + **DRA-flip review modal (codex D-2: NOT one-click bulk; per-grant rationale required)** + auth.users delete trigger that soft-revokes user's grants. Does NOT gate PR-MAP-2..6; ships parallel after PR-MAP-1. NOTE: DUA acceptance flow (codex E-1) owner-overridden 2026-05-19 -- not in scope. | PR-MAP-1 done |
+| **PR-MAP-6 (POST-v1, RETAINED)** | Calculator bridge: **`matrix_map.bridge_audit` table DDL migration** (deferred from PR-MAP-1 per codex v3 finding -- table form was a candidate at R-13 sign-off and lands here in final form) + token contract implementation with `grants_used` IMMUTABLE-SNAPSHOT JSONB shape (codex grants-v1 C-1) + "Sourced from N samples (screening-only; token #abc, computed YYYY-MM-DD UTC)" badge on BackgroundAdjustment panel + click-through restore + "Refresh from current map selection" button | Deferred from v1 by owner 2026-08-04; PR-MAP-5 done; R-13 methodology appendix signed off |
+| **PR-MAP-7 (POST-v1, RETAINED)** | Admin UI `/admin/matrix-map/grants` (matrix_admin only): active grants table + grant form with **renew-vs-new mode semantics (codex grants-v1 A-1)** + service-role-keyed user autocomplete (codex A-3) + free-form rationale field + revoked history tab + per-user view + per-DRA view + **DRA-flip review modal (codex D-2: NOT one-click bulk; per-grant rationale required)** + auth.users delete trigger that soft-revokes user's grants. Does NOT gate PR-MAP-2..6; ships parallel after PR-MAP-1. NOTE: DUA acceptance flow (codex E-1) owner-overridden 2026-05-19 -- not in scope. | Deferred from v1 by owner 2026-08-04; retained after PR-MAP-1 |
 
 ## 8. Risks
 
@@ -540,6 +553,9 @@ between PR-MAP-3 and PR-MAP-4. Outline:
 
 ## 9. Effort estimate
 
+The table retains the full roadmap estimate. PR-MAP-6 and PR-MAP-7 hours are
+post-v1 and are not part of the initial v1 release estimate.
+
 | Phase | Hours |
 | --- | --- |
 | PR-MAP-0 geocoding | 4-6 |
@@ -548,12 +564,12 @@ between PR-MAP-3 and PR-MAP-4. Outline:
 | PR-MAP-3 sample render + identify + partial-visibility banner | 7-10 |
 | PR-MAP-4 selection + stats | 10-14 |
 | PR-MAP-5 workbench + CSV | 5-7 |
-| PR-MAP-6 Calculator bridge + audit (immutable grants_used snapshot) | 6-8 |
-| PR-MAP-7 Admin grants UI + DRA-flip modal | 5-7 |
+| PR-MAP-6 Calculator bridge + audit (post-v1 retained) | 6-8 |
+| PR-MAP-7 Admin grants UI + DRA-flip modal (post-v1 retained) | 5-7 |
 | Per-PR codex iterate (~2 rounds) | 10-14 |
 | 4-gate suites (~30 min x 7) | 4 |
 | Methodology appendix authoring + owner sign-off | 4-6 |
-| **Total orchestrator-side** | **70-97h** (+9-11h vs pre-grants v3) |
+| **Total retained roadmap, not initial v1** | **70-97h** (+9-11h vs pre-grants v3) |
 | **Owner HITL** | **5-9h** (R-3 seed sign-off + methodology appendix + ~7 PR review/merge + grants policy decisions) |
 
 ## 10. Adversarial review path

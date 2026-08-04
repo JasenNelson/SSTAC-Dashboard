@@ -75,16 +75,21 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
   Lane-scoped only -- it does not claim global project status, which stays in this index and the
   manifest `facts`.
 
-### Matrix Map and Option C (authoritative design + open owner decisions)
+### Matrix Map and Option C (authoritative design + owner-amended v1 scope)
 Added 2026-07-26 during documentation recovery: this lane was the active flagship
 workstream yet had no route from this index, and none of its authorities were
 registered in `docs/_meta/docs-manifest.json`. Changes under
 `src/app/(dashboard)/matrix-map/**`, `src/app/(dashboard)/admin/matrix-map/**`,
 `src/app/api/matrix-map/**`, `src/lib/matrix-map/**`, `docs/design/matrix-map/**`,
 or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
-- `docs/design/matrix-map/PLAN_V3_4_2.md` - LOCKED v1 scope (PR-MAP-0..7, effort
-  table, risks). Authority for whether PR-MAP-6, PR-MAP-7, and the mobile summary
-  remain mandatory v1 scope. That scope question is an OPEN owner decision.
+- `docs/design/matrix-map/PLAN_V3_4_2.md` - LOCKED roadmap with a 2026-08-04
+  owner amendment. Initial v1 uses existing baseline screening calculators,
+  supports desktop/tablet at 768px or wider, and defers PR-MAP-6, PR-MAP-7,
+  and the mobile read-only summary while retaining them as post-v1 work.
+- `docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md`
+  - source-pinned baseline-v1 input census across all 426 selectable substances.
+  It selects, promotes, and modifies no regulatory value; Cohort 1 still
+  requires an owner/QP-selected workflow and substance set.
 - `docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md` - Option C
   architecture authority, including the aggregate-oracle hazard. Architecture
   authority only; it is NOT an implementation-status page.
@@ -108,6 +113,14 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   check, and the live-preview RPC, none of which it mentions.** Read it for the
   lifecycle intent (locking, authorization, audit), not for the current RPC
   signature or identity contract, which live in the pinned SQL and the runbook.
+- Aggregate publication is excluded from v1 and remains blocked until the
+  repository-versus-database migration drift is reconciled and a separate
+  owner-gated publication sequence is approved.
+- The R20/R20-C1 controller evidence roots are frozen. Their exact-R20-byte
+  process-execution provenance is unproven, the final C1 comprehensive review
+  is RED with P0=0/P1=1/P2=0, and R20 is not a production prerequisite or
+  application-canary authority. Current disposition:
+  `docs/MATRIX_OPTIONS_STATUS.md`.
 
 ### F2 cluster-identity program (2026-07-29/30)
 - F2 (PR #756) is MERGED as `e8daa2b8`; the follow-on cookie-adapter hotfix
