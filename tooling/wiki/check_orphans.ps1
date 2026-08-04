@@ -258,7 +258,8 @@ function Test-ExpectedRunConsoleHost(
     [object]$Identity,
     [object]$ExpectedParentIdentity,
     [string]$Runtime,
-    [bool]$RuntimeReference
+    [bool]$RuntimeReference,
+    [datetimeoffset]$ObservationAt
 ) {
     if ([string]::IsNullOrWhiteSpace([string]$Identity.executable_path)) {
         return $false
@@ -279,6 +280,7 @@ function Test-ExpectedRunConsoleHost(
     ($Identity.process_id -gt 0 -and
         $Identity.parent_process_id -eq $ExpectedParentPid -and
         $identityCreated -ge $parentCreated -and
+        $identityCreated -le $ObservationAt -and
         [string]::Equals([string]$Identity.name, 'conhost.exe', [StringComparison]::OrdinalIgnoreCase) -and
         -not [string]::IsNullOrWhiteSpace([string]$Identity.command_line) -and
         [string]::Equals($observedExecutable, $expectedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
@@ -344,7 +346,7 @@ function Read-Rows {
     return $rows
 }
 
-function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentity, [int]$CheckerPid, [string]$Runtime) {
+function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentity, [int]$CheckerPid, [string]$Runtime, [datetimeoffset]$ObservationAt) {
     $result = @()
     $parentPid = [int]$ParentIdentity.process_id
     foreach ($row in $Rows) {
@@ -353,7 +355,7 @@ function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentit
         $descendant = Test-Descendant $row.process_id $ByPid $ParentPid
         if ($runtimeRef -or $descendant) {
             $full = Convert-Full $row
-            if (Test-ExpectedRunConsoleHost $full $ParentIdentity $Runtime $runtimeRef) { continue }
+            if (Test-ExpectedRunConsoleHost $full $ParentIdentity $Runtime $runtimeRef $ObservationAt) { continue }
             $class = if ($runtimeRef -and -not $descendant -and (Test-Graphify $full $Runtime)) {
                 'PREEXISTING_GRAPHIFY_MCP'
             } else {
@@ -424,6 +426,7 @@ $checkerPid = if ($ProcessSnapshotPath -and $PSBoundParameters.ContainsKey('Fixt
 
 try {
     $rows = @(Read-Rows)
+    $observationAt = [datetimeoffset]::UtcNow
     $byPid = @{}
     foreach ($row in $rows) { $byPid[[int]$row.process_id] = $row }
     if (-not $byPid.ContainsKey($RunParentPid)) { throw 'run parent row is absent' }
@@ -436,12 +439,12 @@ try {
     }
     $parentSummary = Get-Summary $parent
     $checkerSummary = Get-Summary $checker
-    $relevant = @(Get-Relevant $rows $byPid $parent $checkerPid $runtime)
+    $relevant = @(Get-Relevant $rows $byPid $parent $checkerPid $runtime $observationAt)
     $script:classificationSucceeded = $true
 
     if ($Mode -eq 'CaptureBaseline') {
         $notAllowed = @($relevant | Where-Object { [string]$_.process_class -cne 'PREEXISTING_GRAPHIFY_MCP' })
-        $capturedAt = [datetimeoffset]::UtcNow
+        $capturedAt = $observationAt
         $futureIdentity = @($relevant + @($parentSummary, $checkerSummary) | Where-Object { (Convert-StrictUtc $_.creation_utc 'capture identity creation_utc') -gt $capturedAt })
         if ($futureIdentity.Count -ne 0) { throw 'baseline identity creation is after captured_at_utc' }
         $result = if ($notAllowed.Count -eq 0) { 'PASS' } else { 'FAIL' }
@@ -577,7 +580,7 @@ try {
     }
     $terminalIdentities = @($terminalIdentities | Sort-Object identity_sha256)
 
-    $evaluatedAt = [datetimeoffset]::UtcNow
+    $evaluatedAt = $observationAt
     if ($baselineCaptured -gt $evaluatedAt) { throw 'baseline captured_at_utc is after terminal evaluation' }
     $futureTerminalIdentity = @($terminalIdentities + @($parentSummary, $checkerSummary) | Where-Object { (Convert-StrictUtc $_.creation_utc 'terminal identity creation_utc') -gt $evaluatedAt })
     if ($futureTerminalIdentity.Count -ne 0) { throw 'terminal identity creation is after evaluated_at_utc' }

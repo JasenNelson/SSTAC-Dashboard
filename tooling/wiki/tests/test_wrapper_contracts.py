@@ -2514,6 +2514,32 @@ class TestProcessCustodyHelpers(unittest.TestCase):
                 self.assertEqual(data["result"], "FAIL")
                 self.assertFalse(data["classification_succeeded"])
 
+    def test_console_host_chronology_is_bound_to_observation_time(self):
+        future_conhost = self.conhost(created="2999-01-01T00:00:00Z")
+        result, _ = self.capture(self.base(False) + [future_conhost], "future-conhost-baseline")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+        result, baseline = self.capture(self.base(False), "conhost-chronology-baseline")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+        result, _ = self.terminal(
+            baseline,
+            self.base(False) + [future_conhost],
+            "future-conhost-terminal",
+        )
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+
+        result, receipt = self.terminal(
+            baseline,
+            self.base(False) + [self.conhost()],
+            "valid-conhost-terminal",
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        self.assertEqual(data["terminal_relevant_count"], 0)
+        self.assertEqual(data["survivor_count"], 0)
+
     def test_new_descendant_parent_dead_runtime_child_and_pid_reuse_fail(self):
         result, baseline = self.capture(self.base())
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
