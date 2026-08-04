@@ -19,8 +19,8 @@ verification date; and the co-update rule in item 4 below names every site that 
 If the owner prefers, the durable fix is a lane-scoped carve-out added to
 `current_status_claims_policy` itself -- that is a manifest policy change and was not made
 unilaterally here.
-**Verified against:** `origin/main` `9e5012670c5efed942a196aeb71584f7d77a4f1b`
-**Verification date:** 2026-08-03
+**Verified against:** `origin/main` `9af819af01e30d097a3ea492a9354f9378be3f58`
+**Verification date:** 2026-08-04
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -193,20 +193,20 @@ real drift between deployed state and version-controlled state. Reconciling it i
 has its own migration-history implications, and `supabase/migrations/` is append-only and
 protected.
 
-### 1.5 R16 candidate-controller package -- FROZEN, NOT ACCEPTED
+### 1.5 R20/R20-C1 controller workstream -- FROZEN, NOT A PRODUCTION PREREQUISITE
 
-A separate workstream hardened the one-shot candidate controller. Its R16 package is frozen at
-`.tmp/mission-control/option-c-d2-readiness-20260731/CLAUDE_TO_MC/canary-prewrite-recovery-r16-20260803`.
+The R20 and R20-C1 evidence roots are frozen. No C2, R21, READY marker, or accepted-review receipt
+is authorized.
 
-- Reported results: core 283/283 GREEN run twice; full 288/288 GREEN run twice.
-- The package performed no live, database, network, or authentication action.
-- **It is AWAITING independent Mission Control review and has NOT been accepted.** Its own closeout
-  states that only if that review is GREEN with P0=P1=P2=0 may an accepted-review artifact be
-  created; that artifact does not exist.
-- The most recent completed Mission Control review round in the evidence set (R15) returned RED
-  with P0=0, P1=1, P2=2. R16 is the correction response to that round, not an accepted outcome.
+- The final R20-C1 comprehensive review is RED with P0=0, P1=1, P2=0.
+- Two AGY process-capable receipts report mechanically consistent 308/308 runs, but they do not
+  record the controller or suite hashes at execution time.
+- Exact-R20-byte execution provenance is therefore **UNPROVEN**. Post-hoc co-binding does not repair
+  that causal gap.
+- R20 is not a production prerequisite, is not canary authority, and must not be used in place of
+  the attended application path.
 
-Do not cite R16 as authority for anything. It is evidence pending review.
+Historical R16-R20 artifacts remain evidence for their own bounded runs, not production authority.
 
 ---
 
@@ -326,6 +326,22 @@ Both must be preserved in any documentation:
 
 Implementation completeness of a calculator does NOT imply methodology completeness. See section 7
 for the methodology, default, and equation-validation work that remains.
+
+### 3.4 Owner-approved v1 release boundary
+
+The owner approved the following v1 definition on 2026-08-04:
+
+- existing baseline screening calculators only; frame-specific calculator parity is not promised;
+- desktop/tablet support at 768px or wider;
+- PR-MAP-6, PR-MAP-7, and the mobile read-only summary deferred but retained after v1;
+- aggregate publication excluded from v1; and
+- any future publication blocked until repository-versus-database migration reconciliation and a
+  separate owner-gated publication sequence are complete.
+
+The Cohort 0 baseline-v1 reachability census is recorded in
+`docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md`. It covers all
+426 selectable substances because no smaller v1 substance set has been selected. It performs no
+regulatory-value selection or promotion.
 
 ---
 
@@ -468,15 +484,15 @@ Grouped as requested. Items marked OWNER-GATED are decisions, not tasks this lan
 
 ### 7.1 Database
 
-1. Reconcile the repository-versus-database drift in section 1.4 (OWNER-GATED).
+1. Reconcile the repository-versus-database drift in section 1.4 before any publication
+   (OWNER-GATED). Publication is excluded from v1.
 2. Supabase security and performance advisors were unavailable during the D2 acceptance and were
    NOT substituted; no advisor result is claimed. Advisor collection remains an explicit
    pre-publication follow-up once a project-scoped advisor surface is configured.
-3. Candidate creation, refresh, publish, and unpublish remain separately owner-gated. The read-only
-   preflight authorization and the exact one-write decision are DISTINCT gates and must not be
-   combined or pre-authorized.
-4. Independent Mission Control review of the frozen R16 controller package is the next gate for
-   that workstream (section 1.5).
+3. One attended, unpublished application canary may be considered through a separate exact owner
+   gate. Candidate creation, lifecycle Refresh Candidate, publish, and unpublish remain distinct
+   actions and must not be combined or pre-authorized.
+4. R20/R20-C1 is frozen and is not a production prerequisite or a future live gate (section 1.5).
 
 ### 7.2 Catalog
 
@@ -488,20 +504,19 @@ Numerals for all four items are in section 2 and, canonically, in manifest
 2. A third of sources still need a currentness review, and one is superseded.
 3. Every equation record is still `needs_review` -- see 7.4.
 4. Default coverage is thin at the substance/pathway/`input_key` slot level (section 2.1).
+5. Cohort 0 now narrows the release question to baseline-v1 reachable inputs without selecting or
+   promoting values. Its exact counts and Cohort 1 decision inputs are in
+   `docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md`.
 
 ### 7.3 Map
 
-1. Mobile read-only summary (PR-MAP-17b) is unimplemented; the fallback banner is a shim.
-2. Whether PR-MAP-6, PR-MAP-7, and the mobile summary remain mandatory v1 scope is an OPEN owner
-   decision (section 8.2 item 3). It was ALREADY recorded as open in `docs/INDEX.md` -- "That scope
-   question is an OPEN owner decision", added during the 2026-07-26 documentation recovery -- so
-   this pass RE-CONFIRMS it rather than surfacing it.
-   `docs/design/matrix-map/PLAN_V3_4_2.md` is where that scope is currently LOCKED: it is headed
-   "Plan v3 -- Matrix Options Interactive Map (LOCKED)" with "**Status:** Decision-locked canonical
-   reference", and its section "2. Scope (v1 includes; v1.x deferred)" lists "Mobile: read-only
-   summary view below 768px viewport" under v1 INCLUDES. Revising that is an owner call, not a
-   documentation change. Verified 2026-08-03.
-3. Member aggregate publication has not occurred (owner-gated, section 7.1 item 3).
+1. Mobile read-only summary (PR-MAP-17b) is unimplemented; the fallback banner is the accepted v1
+   limitation below 768px, not a summary view.
+2. PR-MAP-6, PR-MAP-7, and the mobile summary are deferred from v1 by the 2026-08-04 owner decision.
+   They remain retained post-v1 roadmap work in the amended
+   `docs/design/matrix-map/PLAN_V3_4_2.md`.
+3. Member aggregate publication has not occurred, is excluded from v1, and is blocked pending
+   migration reconciliation plus a separate owner-gated publication sequence.
 
 ### 7.4 Calculator
 
@@ -533,11 +548,8 @@ Numerals for all four items are in section 2 and, canonically, in manifest
 3. THREE dated TOP50 priority documents still carry the historical "inhalation parked" Tier 7
    ranking (named and verified in section 6). The later TOP50 documents do not and need no
    correction.
-4. The carried-forward catalog owner-decision register in section 8.1 is PARTIALLY re-verified. The
-   D1, D4, and PR #628/#629/#630 rows WERE confirmed against the base history of `9e501267` on
-   2026-08-03 and are recorded CLOSED. The D2, D3, and IRIS/copper/Protocol 28 rows and the T33 and
-   T34 bullets were NOT re-verified: they carry the superseded document's status as of its own date
-   and must be re-checked before being acted on.
+4. Catalog D2 and D3 and calculator T33 and T34 are now re-verified and CLOSED as the original owner
+   decisions. Their narrower future follow-ups remain separate and do not reopen them (section 8.1).
 5. The repository has NO registered current session-to-session continuity anchor. The prior
    `continuity.current_handoff` entry was reclassified to historical REFERENCE in this pass and no
    successor was registered. Tracked in manifest
@@ -556,32 +568,29 @@ Numerals for all four items are in section 2 and, canonically, in manifest
 
 ---
 
-## 8. Open owner decisions
+## 8. Decision register and remaining owner gates
 
-### 8.1 CARRIED FORWARD from superseded documents -- catalog lane, PARTIALLY re-verified
+### 8.1 Carried forward from superseded documents -- catalog and calculator lane
 
 This file supersedes the dated snapshots in section 6, which means their open items would otherwise
 fall off the queue entirely. They are carried forward here so they stay visible.
 
-**Verification status is per-item and is stated explicitly on every row and bullet.** Items marked
-"Verified 2026-08-03" were checked against the base history of `9e501267`; items marked NOT
-re-verified carry the superseded document's status as of its own date and MUST be re-checked before
-being acted on. Carrying an item forward is NOT an assertion that it is still open: several items
-below were found already CLOSED and are recorded as such precisely so they are not re-opened by
-mistake.
+**Verification status is per-item and is stated explicitly.** Carrying an item forward is not an
+assertion that it is still open: CLOSED rows stay visible so later readers do not reopen stale
+snapshot claims.
 
 #### Catalog owner-decision register (CATALOG D-series -- unrelated to the Option C "D2" apply)
 
 Two consecutive reviews of this pass each found one already-CLOSED item being carried forward as
 open, because the status was being restated in prose from four dated snapshots. This register
-replaces that prose. **Check the SHA, do not re-read the snapshots.** Every CLOSED row was verified
-on 2026-08-03 by confirming the merge commit is an ancestor of the base `9e501267`.
+replaces that prose. **Check the named current evidence, do not re-read the snapshots.** The
+verification date and basis are stated per row.
 
 | Item | Status | Evidence | Verified |
 |---|---|---|---|
 | D1 -- dioxin TEQ promote | **CLOSED** | Applied + merged PR #627, merge `e4253693`, ancestor of base. Source records it "DONE". | 2026-08-03 |
-| D2 -- BaP anchor | OPEN (as recorded 2026-07-13) | `docs/MATRIX_OPTIONS_LIVE_STATUS_2026_07_13.md` reads "Remaining: D2/D3/IRIS/copper/P28 arbitration." NOTE a lane PR #542 (`4f071ac7`, BaP/ADAF anchor) IS merged, yet the LATER document still lists D2 as remaining, so the merged lane work did not close the decision. | NOT re-verified |
-| D3 -- PCB Option A | OPEN (as recorded 2026-07-13) | Same source sentence: "Remaining: D2/D3/IRIS/copper/P28 arbitration." | NOT re-verified |
+| D2 -- BaP anchor | **CLOSED** | `docs/STAGE1_DECISION_LOG_2026_07_15.md` records the owner ruling to keep EPA 2.0 with embedded lifetime ADAF; no value write was needed. HC 1.289 future eligibility under a separately reviewed ADAF contract does not reopen D2. | 2026-08-04 |
+| D3 -- PCB Option A | **CLOSED** | The same decision log records Option A plus relabel. Later default and dual-screen/TEQ work shipped. Cosmetic Total-PCBs re-key/catalog-row migration remains separately deferred behind QP and exact-write gates; it does not reopen D3. | 2026-08-04 |
 | D4 -- BC PAH scheme remap | **CLOSED** | `docs/MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md` records "RESOLVED 2026-07-11d (verified in code) ... No longer an open owner decision. D1-D3 remain open." Shipped PR #541, merge `96f22648`, ancestor of base. | 2026-08-03 |
 | IRIS / copper / Protocol 28 arbitration | OPEN (as recorded 2026-07-13) | Same source sentence as D2/D3: "Remaining: D2/D3/IRIS/copper/P28 arbitration." | NOT re-verified |
 | PRs #628, #629, #630 | **CLOSED** | All merged in base history (`16e9dd3e`, `995c5ded`, `a463020e`). Also mislabelled as catalog PRs in the source: #628 is security hardening, #629 a DRA coord-extraction harness draft, #630 DL-PCB card copy. | 2026-08-03 |
@@ -589,37 +598,32 @@ on 2026-08-03 by confirming the merge commit is an ancestor of the base `9e50126
 CLOSED rows are listed deliberately: they are recorded here so the superseded snapshots' stale
 "open" rows are not carried forward as live work by a future reader.
 
-#### Other carried-forward items (NOT re-verified in this pass)
+#### Calculator task closures
 
-- **T33 unit-basis settle** -- recorded as remaining owner-gated work in
-  `docs/MATRIX_OPTIONS_COMPLETION_STATUS_2026_07_11.md`. NOT re-verified in this pass.
-- **T34 inhalation model decision** -- recorded as open in that same document. PARTIALLY informed,
-  not closed. In-repo evidence bearing on it, verified 2026-08-03:
-  `docs/SSTAC_TOP50_RECONCILED_2026_07_20.md` records the inhalation calculator as shipped in
-  `dc26f858` (#673, merge `d721ce26`, both ancestors of the base), and separately records
-  "Owner chose Option A" on the Option B intake-based inhalation model, describing that as "gated
-  future scope, not urgent". Combined with the 2026-07-17 VF/PEF owner ruling (section 3.1), T34 as
-  originally scoped appears substantially overtaken -- but the superseded document was not formally
-  closed out, so the remaining question is narrow: confirm that the Option A choice plus the VF/PEF
-  ruling fully discharge T34, and retire it explicitly.
+- **T33 unit-basis settle -- CLOSED in implementation.** The calculator contract consumes IUR per
+  mg/m3; catalog per-ug/m3 values are multiplied by 1000 exactly once at data wiring, with
+  unit-basis tests. Future catalog additions must preserve that contract.
+- **T34 inhalation model decision -- CLOSED as the original architecture decision.** The owner
+  selected user-supplied VF/PEF. The shipped calculator never seeds or hardcodes either transport
+  factor and fails closed until one is supplied. A future intake-based model is separate scope.
 
-Re-verifying and re-triaging this carried-forward list is itself outstanding work (section 7.5).
-
-### 8.2 Raised for owner action by this pass -- database, map, and documentation
+### 8.2 Remaining owner action -- database, catalog, and historical documentation
 
 Grouping label only. Some items were newly surfaced here; others were already recorded elsewhere and
 are re-confirmed. Provenance is stated per item.
 
 1. **Repository-versus-database drift for Option C.** The lifecycle schema is live but absent from
    `supabase/migrations/`. Decide how to record deployed state without violating the append-only
-   migration contract.
+   migration contract. This reconciliation is required before publication, which is excluded from
+   v1.
 2. **The `matrix_map.samples.public` disposition.** Still OPEN. Publication semantics is NOT open in
    the same sense: shape (b) is implemented and deployed, though not yet exercised (section 1.2a).
    The dated packet `docs/MATRIX_MAP_OPTION_C_OWNER_DECISION_PACKET_2026-07-20.md` describes both as
    open, which was correct for its date.
-3. **Whether PR-MAP-6, PR-MAP-7, and the mobile read-only summary remain mandatory v1 scope.**
-   See `docs/design/matrix-map/PLAN_V3_4_2.md`, where that scope is LOCKED. Already recorded as open
-   in `docs/INDEX.md` since 2026-07-26; RE-CONFIRMED rather than surfaced here (section 7.3 item 2).
+3. **Cohort 1 workflow and substances.** Select one baseline workflow and 3-5 owner/QP-chosen
+   substances, then bind receptor, endpoints, primary source/version, units, worked example,
+   acceptance tolerance, alternate treatment, and fail-closed behavior. The Cohort 0 census makes
+   no regulatory selection.
 4. **Whether the historical TOP50 "inhalation parked" Tier 7 ranking should be formally retired**
    in the THREE dated files that actually carry it (named and verified in section 6), or left as a
    historical record. The later TOP50 documents do not carry it and are not affected.
@@ -628,7 +632,10 @@ are re-confirmed. Provenance is stated per item.
 
 ## 9. Authorities for this lane
 
-- `docs/design/matrix-map/PLAN_V3_4_2.md` -- LOCKED v1 scope authority.
+- `docs/design/matrix-map/PLAN_V3_4_2.md` -- owner-amended v1 scope authority; retained roadmap
+  details remain locked except where the 2026-08-04 amendment explicitly defers them.
+- `docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md` -- frozen
+  source-derived release-reachability census; no regulatory-value selection or promotion.
 - `docs/design/matrix-map/OPTION_C_SITE_AGGREGATE_DESIGN_2026-07-20.md` -- Option C architecture
   authority, including the aggregate-oracle hazard. Architecture only; not an implementation-status
   page.

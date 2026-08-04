@@ -158,6 +158,36 @@
         "value": "total 5 / needs_review 5",
         "source": "qa_status tally over matrix_research/reference_catalog/equations.json at origin/main 9e501267. All five equation records remaining needs_review is ONE CONCRETE INDICATOR of incomplete methodology validation; it is not by itself the reason outputs are screening-only. The screening-only contract is broader: outputs remain screening-only until the full methodology package and validation gates are complete.",
         "last_verified": "2026-08-03"
+      },
+      "cohort0_baseline_v1_reachability": {
+        "status": "verified",
+        "value": "426 selectable substances; 5964 substance-bound rows = defaulted 2321 / required_user_input 1365 / supported_alternate 724 / unsupported_fail_closed 1554; 55 separate non-substance/UI rows = defaulted 46 / required_user_input 2 / supported_alternate 7 / unsupported_fail_closed 0; route rollup across 2130 substance/pathway routes = defaulted 461 / required_user_input 892 / supported_alternate 0 / unsupported_fail_closed 777",
+        "source": "Read-only mechanical census and independent 1/1 Vitest recomputation from exact source bytes at origin/main 9af819af01e30d097a3ea492a9354f9378be3f58. Full definitions, load-bearing hashes, route counts, and exception sets: docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md. No regulatory value was selected, promoted, or modified.",
+        "last_verified": "2026-08-04"
+      }
+    },
+    "matrix_options_v1_scope": {
+      "approved_definition": {
+        "status": "verified",
+        "value": "baseline screening calculators only; desktop/tablet minimum 768px; PR-MAP-6 deferred; PR-MAP-7 deferred; mobile summary deferred; aggregate publication excluded from v1; future publication blocked pending migration reconciliation and a separate owner gate",
+        "source": "Owner approval of the R2 project-alignment definition on 2026-08-04; recorded in docs/MATRIX_OPTIONS_STATUS.md and the owner-amended docs/design/matrix-map/PLAN_V3_4_2.md.",
+        "last_verified": "2026-08-04"
+      }
+    },
+    "matrix_options_decision_closures": {
+      "d2_d3_t33_t34": {
+        "status": "verified",
+        "value": "Catalog D2 CLOSED; Catalog D3 CLOSED; calculator T33 CLOSED in implementation; calculator T34 CLOSED as the original architecture decision",
+        "source": "D2/D3: docs/STAGE1_DECISION_LOG_2026_07_15.md. T33: src/lib/matrix-options/inhalation/calculator.ts, src/lib/matrix-options/substanceLibrary.ts, src/lib/matrix-options/__tests__/unitNormalization.test.ts, and src/lib/matrix-options/inhalation/__tests__/calculator.test.ts. T34: user-supplied VF/PEF fail-closed contract in src/lib/matrix-options/inhalation/calculator.ts and src/components/matrix-options/__tests__/HHInhalationCalculator.test.tsx. Narrower future re-key, catalog-addition, or intake-model work does not reopen these decisions.",
+        "last_verified": "2026-08-04"
+      }
+    },
+    "option_c_controller_disposition": {
+      "r20_c1": {
+        "status": "verified",
+        "value": "R20 and R20-C1 frozen; final C1 comprehensive review RED P0=0/P1=1/P2=0; exact-R20-byte process-execution provenance UNPROVEN; not a production prerequisite or application-canary authority",
+        "source": "Mission Control R2 project-alignment disposition dated 2026-08-04, decision packet SHA-256 6B1687B01B3894774346F64D4E08C9C9F7EA9D21BA3B2689AD0C2EFDE8F3E4EE; current disposition recorded in docs/MATRIX_OPTIONS_STATUS.md.",
+        "last_verified": "2026-08-04"
       }
     },
     "option_c_d2_apply": {
@@ -3164,7 +3194,19 @@
         "design",
         "scope"
       ],
-      "notes": "LOCKED Matrix Map v1 plan: PR-MAP-0..7 scope, effort table, risk register. Authority for whether PR-MAP-6/PR-MAP-7/mobile-summary remain mandatory v1 scope (owner decision D3)."
+      "notes": "LOCKED Matrix Map roadmap with a 2026-08-04 owner scope amendment. Initial v1 uses baseline screening calculators, supports desktop/tablet at 768px or wider, and excludes aggregate publication. PR-MAP-6, PR-MAP-7, and the mobile summary remain retained post-v1 work. Publication remains blocked pending migration reconciliation and a separate owner gate."
+    },
+    {
+      "id": "matrix_options.cohort0_baseline_v1_reachability_2026_08_04",
+      "path": "docs/design/matrix-options/COHORT0_BASELINE_V1_REACHABILITY_CENSUS_2026_08_04.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "matrix-options",
+        "catalog",
+        "release-readiness",
+        "census"
+      ],
+      "notes": "Source-pinned Cohort 0 baseline-v1 reachability census across all 426 selectable substances. Keeps 5964 substance-bound rows separate from 55 non-substance/UI rows and uses only defaulted, required_user_input, supported_alternate, and unsupported_fail_closed. It selects, promotes, and modifies no regulatory value; Cohort 1 still requires owner/QP selection."
     },
     {
       "id": "matrixmap.option_c_design",
@@ -3222,7 +3264,7 @@
         "option-c",
         "status"
       ],
-      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Added 2026-08-03 during cross-lane documentation recovery: the lane had many dated snapshots whose claims had drifted and had been overtaken by shipped code (inhalation described as scaffold-only, cumulative UI as unimplemented). Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the 2026-08-01 Option C D2 apply (3 lifecycle tables, 15 required function signatures, admin preview 118/4418), zero member publication, and the repo-vs-database drift (no committed migration under supabase/migrations/)."
+      "notes": "SINGLE current-status entrypoint for the Matrix Options / Matrix Map / Option C lane. Lane-scoped ONLY -- it does not claim global project status, which remains docs/INDEX.md plus facts. Records the 2026-08-01 Option C D2 apply, zero member publication, repository-versus-database drift, the 2026-08-04 owner-approved baseline-only v1 boundary, D2/D3/T33/T34 closure, Cohort 0 reachability, and the frozen R20/C1 not-a-production-prerequisite disposition."
     },
     {
       "id": "status.top50_reconciled_2026_07_20",
@@ -3590,7 +3632,7 @@
         },
         {
           "doc_id": "matrixmap.plan_v3_4_2",
-          "why": "LOCKED v1 scope authority; changes must be checked against it or explicitly de-scoped."
+          "why": "Owner-amended v1 scope authority and retained roadmap; changes must respect the 2026-08-04 baseline-only, desktop/tablet, deferred PR-MAP-6/7/mobile, and no-publication v1 boundary."
         },
         {
           "doc_id": "matrixmap.option_c_design",
