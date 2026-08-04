@@ -2384,6 +2384,11 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         graph, exe = root / "wiki" / ".graph" / "graph.json", root / ".venv-graphify" / "Scripts" / "python.exe"
         return self.row(pid, parent, "python.exe", created, f'"{exe}" -m graphify.serve "{graph}" --transport stdio', str(exe))
 
+    def conhost(self, pid=300, parent=100, name="conhost.exe", executable=None, command=None, created="2026-07-30T01:00:00Z"):
+        executable = executable or str(Path(os.environ["SystemRoot"]) / "System32" / "conhost.exe")
+        command = command if command is not None else f'"{executable}" 0x4'
+        return self.row(pid, parent, name, created, command=command, executable=executable)
+
     def base(self, graph=True):
         rows = [self.row(0, 0, None, None), self.row(10, 0, None, None), self.parent(), self.checker_row()]
         return rows + ([self.graphify()] if graph else [])
@@ -2442,6 +2447,72 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         self.assertEqual((data["survivor_count"], data["departed_baseline_count"], data["result"]), (0, 1, "PASS"))
         self.assertTrue(data["baseline_captured_at_utc"].endswith("Z"))
         self.assertTrue(data["evaluated_at_utc"].endswith("Z"))
+
+    def test_only_exact_direct_system_conhost_is_excluded(self):
+        system_conhost = str(Path(os.environ["SystemRoot"]) / "System32" / "conhost.exe")
+        exact = self.conhost(executable=system_conhost)
+        result, receipt = self.capture(self.base(False) + [exact], "direct-system-conhost")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        self.assertEqual(data["relevant_count"], 0)
+        self.assertEqual(data["disallowed_relevant_count"], 0)
+
+        normalized = str(Path(system_conhost).parent / "unused" / ".." / "conhost.exe")
+        result, receipt = self.capture(self.base(False) + [self.conhost(pid=301, executable=normalized)], "normalized-system-conhost")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertEqual(json.loads(receipt.read_text(encoding="utf-8"))["relevant_count"], 0)
+
+        result, receipt = self.capture(self.base() + [self.conhost(pid=302)], "conhost-with-graphify")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["relevant_count"], 1)
+        self.assertEqual(data["relevant_identities"][0]["process_class"], "PREEXISTING_GRAPHIFY_MCP")
+
+        nt_runtime = "\\??\\" + str(self.root)
+        win32_runtime = "\\\\?\\" + str(self.root)
+        nested_parent = self.row(310, 100, "worker.exe", command="worker.exe", executable=r"C:\Tools\worker.exe")
+        cases = (
+            ("wrong-path", [self.conhost(executable=r"C:\Temp\conhost.exe")], 300),
+            ("missing-path", [dict(self.conhost(), executable_path=None)], 300),
+            ("nested", [nested_parent, self.conhost(pid=311, parent=310)], 311),
+            ("pre-parent", [self.conhost(created="2026-07-30T00:58:59Z")], 300),
+            ("runtime-reference", [self.conhost(command=f'"{system_conhost}" "{self.root}"')], 300),
+            ("nt-runtime-reference", [self.conhost(command=f'"{system_conhost}" "{nt_runtime}"')], 300),
+            ("win32-runtime-reference", [self.conhost(command=f'"{system_conhost}" "{win32_runtime}"')], 300),
+            (
+                "similar-name",
+                [self.conhost(name="conhost-helper.exe", executable=str(Path(system_conhost).with_name("conhost-helper.exe")))],
+                300,
+            ),
+            (
+                "arbitrary-child",
+                [self.row(300, 100, "worker.exe", command="worker.exe", executable=r"C:\Tools\worker.exe")],
+                300,
+            ),
+            ("missing-command", [dict(self.conhost(), command_line=None)], 300),
+        )
+        for label, extra_rows, target_pid in cases:
+            with self.subTest(case=label):
+                result, receipt = self.capture(self.base(False) + extra_rows, f"conhost-{label}")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                data = json.loads(receipt.read_text(encoding="utf-8"))
+                self.assertEqual(data["result"], "FAIL")
+                target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == target_pid)
+                self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+        for label, bad_parent in (("missing-parent", None), ("malformed-parent", "100")):
+            with self.subTest(case=label):
+                invalid = self.conhost()
+                if bad_parent is None:
+                    invalid.pop("parent_process_id")
+                else:
+                    invalid["parent_process_id"] = bad_parent
+                result, receipt = self.capture(self.base(False) + [invalid], f"conhost-{label}")
+                self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+                data = json.loads(receipt.read_text(encoding="utf-8"))
+                self.assertEqual(data["result"], "FAIL")
+                self.assertFalse(data["classification_succeeded"])
 
     def test_new_descendant_parent_dead_runtime_child_and_pid_reuse_fail(self):
         result, baseline = self.capture(self.base())

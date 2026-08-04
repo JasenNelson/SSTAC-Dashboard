@@ -209,6 +209,14 @@ function Test-PathToken([string]$Text, [string]$ExactPath) {
     $false
 }
 
+function Test-NamespacePrefixedPathToken([string]$Text, [string]$ExactPath) {
+    if ([string]::IsNullOrEmpty($Text)) { return $false }
+    foreach ($prefix in @('\\?\', '\??\')) {
+        if (Test-PathToken $Text ($prefix + $ExactPath)) { return $true }
+    }
+    $false
+}
+
 function Test-ExactArgumentToken([string]$Text, [string]$ExactValue) {
     if ([string]::IsNullOrEmpty($Text)) { return $false }
     $source = $Text.Replace('/', '\')
@@ -244,6 +252,39 @@ function Test-Descendant([int]$ProcessId, [hashtable]$ByPid, [int]$ParentPid) {
         if ($next -le 0 -or $next -eq $cursor) { return $false }
         $cursor = $next
     }
+}
+
+function Test-ExpectedRunConsoleHost(
+    [object]$Identity,
+    [object]$ExpectedParentIdentity,
+    [string]$Runtime,
+    [bool]$RuntimeReference
+) {
+    if ([string]::IsNullOrWhiteSpace([string]$Identity.executable_path)) {
+        return $false
+    }
+    try {
+        $expectedParentPid = Get-StrictNonnegativeInteger $ExpectedParentIdentity.process_id 'expected parent process_id'
+        if ($expectedParentPid -le 0 -or
+            [string]$ExpectedParentIdentity.identity_sha256 -cnotmatch '^[0-9a-f]{64}$') {
+            return $false
+        }
+        $identityCreated = Convert-StrictUtc $Identity.creation_utc 'console host creation_utc'
+        $parentCreated = Convert-StrictUtc $ExpectedParentIdentity.creation_utc 'expected parent creation_utc'
+        $expectedExecutable = [IO.Path]::GetFullPath((Join-Path ([Environment]::SystemDirectory) 'conhost.exe'))
+        $observedExecutable = [IO.Path]::GetFullPath([string]$Identity.executable_path)
+    } catch {
+        return $false
+    }
+    ($Identity.process_id -gt 0 -and
+        $Identity.parent_process_id -eq $ExpectedParentPid -and
+        $identityCreated -ge $parentCreated -and
+        [string]::Equals([string]$Identity.name, 'conhost.exe', [StringComparison]::OrdinalIgnoreCase) -and
+        -not [string]::IsNullOrWhiteSpace([string]$Identity.command_line) -and
+        [string]::Equals($observedExecutable, $expectedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
+        [string]$Identity.identity_sha256 -cmatch '^[0-9a-f]{64}$' -and
+        -not $RuntimeReference -and
+        -not (Test-NamespacePrefixedPathToken ([string]$Identity.command_line) $Runtime))
 }
 
 function Test-Graphify([object]$Identity, [string]$Runtime) {
@@ -303,14 +344,16 @@ function Read-Rows {
     return $rows
 }
 
-function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [int]$ParentPid, [int]$CheckerPid, [string]$Runtime) {
+function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentity, [int]$CheckerPid, [string]$Runtime) {
     $result = @()
+    $parentPid = [int]$ParentIdentity.process_id
     foreach ($row in $Rows) {
         if ($row.process_id -eq $ParentPid -or $row.process_id -eq $CheckerPid) { continue }
         $runtimeRef = Test-RuntimeReference $row $Runtime
         $descendant = Test-Descendant $row.process_id $ByPid $ParentPid
         if ($runtimeRef -or $descendant) {
             $full = Convert-Full $row
+            if (Test-ExpectedRunConsoleHost $full $ParentIdentity $Runtime $runtimeRef) { continue }
             $class = if ($runtimeRef -and -not $descendant -and (Test-Graphify $full $Runtime)) {
                 'PREEXISTING_GRAPHIFY_MCP'
             } else {
@@ -393,7 +436,7 @@ try {
     }
     $parentSummary = Get-Summary $parent
     $checkerSummary = Get-Summary $checker
-    $relevant = @(Get-Relevant $rows $byPid $RunParentPid $checkerPid $runtime)
+    $relevant = @(Get-Relevant $rows $byPid $parent $checkerPid $runtime)
     $script:classificationSucceeded = $true
 
     if ($Mode -eq 'CaptureBaseline') {
