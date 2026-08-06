@@ -119,9 +119,44 @@ native exit 1. Fixture evidence never grants READY status or activation eligibil
 - A dedicated runtime may be detached. Branch name is not trusted: N1 fetches exactly the
   configured remote/branch from `wiki_nightly_config.json` and records its OID; N6 serves only
   when `HEAD`, the remote-tracking ref, and that same-run fetched OID still match.
-- Before registering or manually running nightly, advance the detached runtime to the desired
-  remote commit and verify a clean tracked tree. If the remote advances later, nightly keeps the
-  last-good served wiki until an operator advances runtime `HEAD`.
+- The N0 autofollow evaluation checks and repins the runtime `HEAD` to match the configured
+  remote-tracking ref. It operates in sequentially gated phases:
+  1. Hook-drift and dirty-tree gates run first.
+  2. `rev-parse HEAD` validity check (`REFUSED_UNEXPECTED`). Failure or empty stdout -> FAILED / exit 1.
+  3. HEAD branch-attachment check (`REFUSED_ATTACHED`). HEAD attached -> FAILED / exit 1.
+  4. Git-dir and working tree checks:
+     - 4a. Git-dir resolution. Failure or empty stdout -> `REFUSED_UNEXPECTED`, FAILED / exit 1.
+     - 4b. Working-tree cleanliness and merge/rebase/cherry-pick/bisect state -> `REFUSED_DIRTY`,
+       FAILED / exit 1. All refusals (listed below) terminalize as FAILED / exit 1.
+  5. Fetch validity check (`REFUSED_FETCH_FAIL`).
+  6. Fast-forward ancestry check (`REFUSED_DIVERGENT`).
+  7. The `diff --name-only` protected-pathspec check (`REFUSED_TOOLING_CHANGE`),
+     which is the operationally dominant gate.
+  8. `ls-tree` enumerates protected paths to build a pre-checkout SHA-256 baseline
+     (`REFUSED_UNEXPECTED` / `ls-tree failed or empty`).
+  9. Hook suppression setup (`REFUSED_HOOK_SETUP_FAILED`).
+  10. Checkout and post-checkout manifest comparison (`REFUSED_REPIN_VERIFY_FAILED`).
+
+  | Decision Value | Autorepin Result | Terminal State | Exit Code | Description |
+  | :--- | :--- | :--- | :--- | :--- |
+  | `NOT_EVALUATED` | `NOT_RUN` | `FAILED` | 1 | Sentinel value, default state before evaluation. |
+  | `REFUSED_UNEXPECTED` | `SKIP` | `FAILED` | 1 | Unexpected Git error, missing configuration, or parsing failure. |
+  | `REFUSED_ATTACHED` | `SKIP` | `FAILED` | 1 | HEAD is attached to a branch (must be detached). |
+  | `REFUSED_DIRTY` | `SKIP` | `FAILED` | 1 | Working tree dirty or merge/rebase/cherry-pick/bisect in progress. |
+  | `REFUSED_FETCH_FAIL` | `SKIP` | `FAILED` | 1 | Fetch failed or returned an invalid OID format. |
+  | `REFUSED_DIVERGENT` | `SKIP` | `FAILED` | 1 | Target is not a fast-forward descendant of HEAD (or is a rewind/ancestor). |
+  | `REFUSED_TOOLING_CHANGE` | `SKIP` | `FAILED` | 1 | Diff touches protected pathspec (requires manual operator repin). |
+  | `REFUSED_HOOK_SETUP_FAILED` | `SKIP` | `FAILED` | 1 | Failed to set up the empty/suppressed hooks directory. |
+  | `REFUSED_REPIN_VERIFY_FAILED` | `FAIL` | `FAILED` | 1 | Post-checkout validation checks failed or post-checkout state was dirty. |
+  | `ALREADY_CURRENT` | `PASS` | `SUCCESS` / `FAILED` | 0 / 1 | HEAD is already at target_oid. Run continues to N1-N6. |
+  | `REPINNED` | `PASS` | `SUCCESS` / `FAILED` | 0 / 1 | Successfully checked out target_oid. Run continues to N1-N6. |
+
+  CRITICAL: `REFUSED_TOOLING_CHANGE` and `REFUSED_DIVERGENT` both terminalize as FAILED
+  (exit 1). So every merge to `main` touching `wiki`, `tooling/wiki`, `.gitignore`,
+  `.graphifyignore`, `AGENTS.md`, `.gitattributes`, or `tooling/.gitattributes` hard-fails the nightly run, every
+  night, until manual repin (replacing the previous serve-last-good degradation). To
+  remediate a tooling-change failure, the operator must manually repin: fetch, then run
+  `git -C <runtime> checkout --detach <reviewed oid>`, and then rebuild the wiki.
 - The registration script records the wrapper path from the checkout where it is invoked. Inspect
   its dry-run output. Task registration remains an owner action; this runbook does not authorize
   `-Apply`.
