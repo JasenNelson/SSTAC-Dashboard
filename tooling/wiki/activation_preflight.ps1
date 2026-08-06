@@ -759,7 +759,9 @@ function Test-TerminalReceiptRawSchema([string]$RawJson, [ref]$Diagnostic) {
             'final_graph_smoke', 'semantic_evidence', 'n5_post_mutation_scan',
             'n5_release', 'served_graph_sha256', 'required_ref', 'head_oid',
             'required_ref_oid', 'build_stamp_oid', 'terminal_process_custody',
-            'terminal_process_custody_evidence'
+            'terminal_process_custody_evidence', 'autofollow_starting_head',
+            'autofollow_fetched_oid', 'autofollow_decision', 'autofollow_attempted',
+            'autofollow_result', 'autofollow_final_head', 'autofollow_rejection_reason'
         )
         $top = @(Get-JsonObjectMembers $RawJson)
         if ($top.Count -ne $expectedTop.Count) {

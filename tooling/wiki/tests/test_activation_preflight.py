@@ -696,6 +696,13 @@ class ActivationPreflightTests(unittest.TestCase):
             "build_stamp_oid": self.head,
             "terminal_process_custody": "PASS",
             "terminal_process_custody_evidence": custody,
+            "autofollow_starting_head": self.head,
+            "autofollow_fetched_oid": self.head,
+            "autofollow_decision": "ALREADY_CURRENT",
+            "autofollow_attempted": False,
+            "autofollow_result": "PASS",
+            "autofollow_final_head": self.head,
+            "autofollow_rejection_reason": "",
         }
         if replacements:
             data.update(replacements)
@@ -1259,6 +1266,21 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_terminal_receipt(replacements={"native_exit_code": value})
                 self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "execution-proof")
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_terminal_receipt_schema_order_and_count(self):
+        preflight_content = SCRIPT.read_text(encoding="ascii")
+        expected_top_match = re.search(r"\$expectedTop\s*=\s*@\((.*?)\)", preflight_content, re.DOTALL)
+        self.assertIsNotNone(expected_top_match, "Could not find $expectedTop definition in activation_preflight.ps1")
+        expected_order = re.findall(r"['\"]([a-z0-9_]+)['\"]", expected_top_match.group(1))
+
+        wrapper_path = SCRIPT.parent / "nightly_wiki_sync.ps1"
+        wrapper_content = wrapper_path.read_text(encoding="ascii")
+        receipt_match = re.search(r"\$terminalReceipt\s*=\s*\[pscustomobject\]\[ordered\]@\{(.*?)\}", wrapper_content, re.DOTALL)
+        self.assertIsNotNone(receipt_match, "Could not find $terminalReceipt definition in nightly_wiki_sync.ps1")
+        fields = re.findall(r"^\s*([a-z0-9_]+)\s*=", receipt_match.group(1), re.MULTILINE)
+
+        self.assertEqual(len(fields), len(expected_order), f"Expected {len(expected_order)} fields, got {len(fields)}")
+        self.assertEqual(fields, expected_order)
 
     def test_every_load_bearing_receipt_field_is_required(self):
         fields = (

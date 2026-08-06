@@ -45,7 +45,7 @@ def run_git(
     *args: str,
     timeout_seconds: int | None = None,
 ) -> subprocess.CompletedProcess[str]:
-    command = ["git", "-C", str(repo_root), *args]
+    command = ["git", "-C", str(repo_root), "-c", "gc.auto=0", "-c", "maintenance.auto=false", *args]
     environment = os.environ.copy()
     environment["GIT_TERMINAL_PROMPT"] = "0"
     environment["GCM_INTERACTIVE"] = "Never"
