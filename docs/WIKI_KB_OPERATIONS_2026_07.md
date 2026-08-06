@@ -13,10 +13,10 @@ reference implementation: OpenHarness-dev (bugs fixed during port, not copied --
 | Docs semantic TRUST FILTER (default-deny + generated overlay) | ENABLED | `gen_docs_scope.py --emit-overlay`; overlay absent => zero md in scope |
 | Session hooks (bootstrap, freshness advisory, graphify nudge) | ENABLED via tracked `.claude/settings.json` | all advisory, exit-0-always, 5-10s timeouts, `SSTAC_WIKI_HOOKS_OFF=1` kill-switch |
 | Ollama semantic extraction (label + extract + promotion) | GATED-OFF until the standing block exists | `C:\Projects\OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md` absent => every Ollama step auto-skips (fail-soft); creating it is an OWNER action (section 4) |
-| Nightly scheduled task `SSTAC-Wiki-Nightly` (05:30) | NOT REGISTERED -- registration is OWNER-RUN | `tooling\wiki\register_wiki_nightly_task.ps1` is DRY-RUN by default; invoke it from the selected canonical runtime so the /TR path is right |
-| Watchdog task | NOT REGISTERED (same owner-run pattern) | `tooling\wiki\wiki_watchdog.ps1`; register like the nightly if wanted |
-| graphify MCP server | AVAILABLE + VERIFIED, NOT registered | live stdio JSON-RPC handshake verified against graphifyy 0.9.17 on 2026-07-22; register AFTER the first served wiki exists (section 5) |
-| Committed `wiki/` output | OFF (gitignored) | graduation criteria unmet (zero counted nightly receipts); revisit per plan Phase 7 streak math |
+| Nightly scheduled task `SSTAC-Wiki-Nightly` (05:30) | REGISTERED + ENABLED; task state `Ready` (as of 2026-08-06) | Deterministic-only, derived from Contract D but running as an owner-approved `InteractiveToken` EXCEPTION, not strict Contract D (which mandates `Password` logon -- see section 11 and known issue 5 in section 12). CONSEQUENCE: it only fires while the owner is signed in. Last run 2026-08-06 `LastTaskResult 0`; next 2026-08-07 05:30. Receipts and the counted streak are in section 12 |
+| Watchdog task | NOT REGISTERED (owner-run pattern) | `tooling\wiki\wiki_watchdog.ps1`; if registered, schedule it well clear of 05:30 -- it runs `check_orphans.ps1` with the runtime path in its command line and would otherwise trip the nightly's own custody baseline |
+| graphify MCP server | TWO SEPARATE DEFECTS (as of 2026-08-06): canonical-runtime server cannot START, and the only existing registration points at a SUPERSEDED runtime | (a) In the canonical runtime, `mcp==2.0.0` no longer exports `mcp.types.AnyUrl`, so `graphify.serve` exits 1 (sections 5 and 12). (b) The one registration in `~/.claude.json` (project key `C:/Projects/SSTAC-Dashboard`) targets `kb-runtime-6bb43b-2026-07-23`, NOT the canonical runtime. That venv has `mcp 1.28.1` and DOES start -- so it serves a stale graph rather than failing. These are INDEPENDENT: repairing the canonical venv does not fix the registration. Do NOT add a second registration |
+| Committed `wiki/` output | OFF (gitignored) | graduation criteria unmet; counted natural streak is at DAY 1 of 10 as of 2026-08-06 (section 12), and the semantic >=5/10 criterion is not yet startable. Also blocked by the protected-pathspec interaction (section 12, known issue 2) |
 | `-AutoCommit` | OFF, never passed | unattended commits need an explicit recorded owner ruling first |
 | Post-commit git hook | INTENTIONALLY ABSENT | 82-worktree shared `.git/hooks` = orphan-process factory; the nightly N0 asserts it stays absent |
 
@@ -154,7 +154,11 @@ native exit 1. Fixture evidence never grants READY status or activation eligibil
   CRITICAL: `REFUSED_TOOLING_CHANGE` and `REFUSED_DIVERGENT` both terminalize as FAILED
   (exit 1). So every merge to `main` touching `wiki`, `tooling/wiki`, `.gitignore`,
   `.graphifyignore`, `AGENTS.md`, `.gitattributes`, or `tooling/.gitattributes` hard-fails the nightly run, every
-  night, until manual repin (replacing the previous serve-last-good degradation). To
+  night, until manual repin. (Do NOT read this as a severity increase over pre-#771: a stale pin
+  ALSO hard-failed the night then -- receipt `f7db140f` shows `serve_gate=FAIL`, exit 1,
+  `terminal_state=FAILED` AND `SERVED_WIKI_KEPT_LAST_GOOD`. Both regimes fail the night and leave
+  the last-good package served; the only change is that the run now stops at N0 instead of the N6
+  serve gate. See section 12, known issue 2.) To
   remediate a tooling-change failure, the operator must manually repin: fetch, then run
   `git -C <runtime> checkout --detach <reviewed oid>`, and then rebuild the wiki.
 - The registration script records the wrapper path from the checkout where it is invoked. Inspect
@@ -227,7 +231,23 @@ scheduling.
 ## 5. MCP registration (after the first served wiki exists in the canonical runtime)
 
 Verified available (live stdio handshake, 2026-07-22). Register LOCAL scope only (a project
-.mcp.json would propagate to worktrees where the venv/graph do not exist):
+.mcp.json would propagate to worktrees where the venv/graph do not exist).
+
+WARNING -- `--scope local` binds to the CURRENT project namespace in `~/.claude.json`, and this repo
+already has several colliding namespace keys (see the third caution below). Running the bare `add`
+below from a different directory than the existing entry's key would create a SECOND `graphify`
+entry rather than replacing the stale one, leaving the false-healthy registration intact. Do a
+namespace-bound REPLACEMENT instead: remove/update the entry under the key that currently holds it
+(`C:/Projects/SSTAC-Dashboard`), add the canonical target under the one namespace you intend to
+keep, then verify exactly ONE `graphify` entry exists across all keys:
+
+```powershell
+$h = Get-Content "$env:USERPROFILE\.claude.json" -Raw | ConvertFrom-Json -AsHashtable
+($h.projects.Keys | Where-Object { $h.projects[$_].mcpServers.ContainsKey('graphify') })  # expect exactly 1
+```
+
+The same namespace caveat applies to any `claude mcp remove` in the rollback section -- scope it to
+the key that actually holds the entry, then re-verify the count.
 
 ```powershell
 $runtimeRoot = if ($env:SSTAC_WIKI_RUNTIME_ROOT) {
@@ -239,6 +259,58 @@ claude mcp add --scope local graphify -- `
     (Join-Path $runtimeRoot '.venv-graphify\Scripts\python.exe') `
     -m graphify.serve (Join-Path $runtimeRoot 'wiki\.graph\graph.json') --transport stdio
 ```
+
+BLOCKED as of 2026-08-06: a registration against the CANONICAL runtime cannot currently work (for
+the separate stale-registration problem, see the third caution below). The canonical `.venv-graphify` has
+`mcp==2.0.0`, whose `mcp.types` no longer exports `AnyUrl`; graphify 0.9.17 `serve.py` requires it, so
+`python -m graphify.serve` exits 1. The 2026-07-22 handshake above predates that drift. Root cause
+and the deferred fix are in section 12.
+
+Three cautions when checking this (all verified 2026-08-06):
+
+- **Do not probe with `--help` or a bare import.** `python -c "import graphify.serve"` and
+  `python -m graphify.serve --help` BOTH exit 0. `serve.py` does the `from mcp.types import AnyUrl`
+  INSIDE `_build_server`, not at module scope, so nothing fails until a server is actually
+  constructed. The error it then raises,
+  `ImportError: mcp not installed. Run: pip install "graphifyy[mcp]"`, is misleading -- `mcp` IS
+  installed, at the wrong major -- so do not act on it literally.
+- **Judge the real probe by EXIT CODE, not by process liveness.** Start it for real
+  (`python -m graphify.serve <graph.json> --transport stdio`) and check for exit 1 plus the
+  `mcp not installed` traceback on stderr. Do NOT use "the process stays alive" as the pass
+  criterion: under stdio with no stdin attached, a correctly-working server also terminates promptly
+  on EOF, so "it exited" would read as failure even after the fix lands. Broken = exit 1 with that
+  ImportError traceback. A clean exit 0 with no traceback only clears THIS specific `AnyUrl`
+  startup-compatibility failure -- treat it as an `AnyUrl startup check`, NOT as "healthy". It does
+  not demonstrate MCP initialization, tool registration, or working graph queries. Reserve "healthy"
+  for a real MCP client attaching over stdio plus the documented tool smoke below
+  (`graph_stats`, `get_node`, one `query_graph`).
+- **A registration already exists, and it points at a SUPERSEDED runtime -- it does not fail, it
+  serves stale data.** `claude mcp add` was run in an earlier session, and `~/.claude.json` carries a
+  `graphify` entry under project key `C:/Projects/SSTAC-Dashboard`. Verified 2026-08-06, it targets:
+
+  ```
+  command: ...\kb-runtime-6bb43b-2026-07-23\.venv-graphify\Scripts\python.exe
+  args:    -m graphify.serve ...\kb-runtime-6bb43b-2026-07-23\wiki\.graph\graph.json --transport stdio
+  ```
+
+  That is NOT the canonical runtime. Its venv has `mcp 1.28.1` (which DOES export `AnyUrl`) and the
+  server starts cleanly, but its graph is from build stamp 2026-07-30 at HEAD `d298f548`
+  (`graph.json` = `b105d670...`) versus the canonical 2026-08-06 / `a821e519` (`f8331a34...`). So
+  anyone attaching to it gets confident answers from a stale graph -- a FALSE-HEALTHY outcome, which
+  is more dangerous than an outright failure.
+
+  **These are two independent defects.** Repairing the canonical runtime's `.venv-graphify` does
+  NOTHING for this registration; re-pointing or removing the registration does NOTHING for the venv.
+  Fix them separately, and do not treat either as done because the other was.
+  Beware the separator/case collision: `~/.claude.json` currently holds FOUR distinct ROOT project
+  keys for this one repo -- `C:/Projects/SSTAC-Dashboard` (the one carrying the `graphify` entry),
+  `C:/Projects/sstac-dashboard`, `C:\Projects\SSTAC-Dashboard`, and `C:/projects/sstac-dashboard`
+  (plus several further keys under `...\.claude\worktrees\`). They differ by path separator AND
+  case, and each is a separate config namespace, so this entry is invisible from the other three.
+  Remove or re-point it INDEPENDENTLY of the venv fix; a registration that silently serves a stale
+  graph is worse than none.
+  (Because of those colliding keys the file must be parsed with `ConvertFrom-Json -AsHashtable`;
+  plain `ConvertFrom-Json` throws.)
 
 Smoke after registration: `graph_stats`, `get_node` on a known module, one `query_graph`.
 NOTE: requires `.venv-graphify` provisioned in the canonical runtime
@@ -289,8 +361,10 @@ tooling\wiki\requirements-graphify.txt`).
   metrics, promotion +P/-D/~R, freshness block: commits-behind/age vs the configured serve-gate
   remote branch; thresholds >50 commits / >7 days).
 - Suite: `python -m unittest discover -v -s tooling\wiki\tests`.
-- Graduation streak math + wiki-commit criteria: plan Phase 7 (unchanged; not yet started --
-  the 10-counted-night window begins once the nightly is registered and producing receipts).
+- Graduation streak math + wiki-commit criteria: plan Phase 7. The 10-counted-night window has
+  STARTED: the nightly is registered and producing receipts, and the counted natural streak is at
+  DAY 1 of 10 as of 2026-08-06 (section 12). The separate `semantic ran >=5/10 nights` criterion
+  has NOT started and cannot be satisfied by Contract D.
 
 ## 10. Candidate Contract A scheduler preflight (not installation authority)
 
@@ -489,3 +563,165 @@ scheduling. The Phase-7 window remains 10 counted nights. Contract D can count t
 reliability, but it cannot satisfy the separate `semantic ran >=5/10 nights` criterion. Semantic
 operation, MCP registration, `-AutoCommit`, committed `wiki/`, task import/enablement, and the
 graduation decision remain deferred.
+
+SUPERSEDED IN PART 2026-08-06: task import/enablement is DONE -- `SSTAC-Wiki-Nightly` is registered
+and enabled (state `Ready`, `LastTaskResult 0`, next run 2026-08-07 05:30), and the counted natural
+streak is at DAY 1 of 10. IMPORTANT: what was installed is NOT strict Contract D. The live task uses
+`LogonType=InteractiveToken`, whereas the Contract D definition above mandates `Password` and
+`activation_preflight.ps1` rejects anything else. It runs as an owner-approved deterministic-only
+exception, and therefore only fires while an interactive session exists (section 12, known issue 5).
+
+An MCP registration also already exists, but it targets a superseded runtime, so a WORKING
+canonical-runtime MCP registration still remains deferred (sections 1, 5, and 12, known issue 1).
+Semantic operation, `-AutoCommit`, committed `wiki/`, and the graduation decision DO remain
+deferred.
+
+## 12. Current operational state and known issues (as of 2026-08-06)
+
+### Runtime state
+
+The runtime now runs the auto-follow wrapper (section 2, "Canonical runtime and detached worktrees").
+Merges to `main` that do NOT touch the protected pathspec no longer cost a night. Merges that DO
+touch it still hard-fail the night (`REFUSED_TOOLING_CHANGE`, terminal FAILED / exit 1) until an
+operator manually repins -- see section 2 and known issue 2 below. Landed by PR #771, squash-merged as
+`a821e51968982c0b3dfe2b40e910e9aac1c112c6` (8 files, +1395/-28), which added the guarded in-wrapper
+N0 auto-follow. The frozen design and test spec are
+`docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_DESIGN_2026_08_05.md`
+(sha256 `a46929bd0f06d2ab67f915ffbe3eb283965bb6e447916559528d6d65cffb08f2`) and
+`docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_TEST_SPEC_2026_08_05.md`
+(sha256 `fd6ac80767a451c59fc24ffac3886ed50395befb50a9daa2bb21f7a777348cdf`).
+
+Motivating incident: on 2026-08-05 the first natural nightly (run `f7db140f`) passed custody, build,
+cluster, canonicalization, and smoke, then stopped at `serve_gate=FAIL` because `main` had advanced
+via PR #770. Every gate worked; the defect was drift, and each drift night is a lost night against
+the Phase 7 10-counted-night window.
+
+### Counted natural streak
+
+| Date / time | Run id | Result |
+| :--- | :--- | :--- |
+| 2026-08-06 05:30 (natural nightly) | `65672054-2f94-4279-ad10-f424ce9453f5` | PASS. `LastTaskResult 0`; custody PASS / 0 survivors; `serve_gate=PASS`; `SERVED_WIKI_SWAPPED`. COUNTED NATURAL STREAK DAY 1 of 10. |
+| 2026-08-06 07:33 (post-merge bootstrap, scheduler-fired) | `14459a28-4f81-437d-afba-329f393fc8cc` | PASS. `autofollow_decision=ALREADY_CURRENT`; `autofollow_attempted=false`; `autofollow_result=PASS`. The `bfa344dd` -> `a821e519` repin was done OUT OF BAND by the one-time bootstrap script (STEP 2, explicit `git checkout --detach`; ephemeral, under `C:\tmp`, not in this repo) BEFORE this run -- which is why the run observed `ALREADY_CURRENT`. Task XML byte-identical before and after: sha256 `484f791453c8b9d6969390480eee8d4c2fac471723c6cfab9a49ff6a4c91b3f4` (recompute with `schtasks /Query /TN SSTAC-Wiki-Nightly /XML ONE \| Out-String` -> `WriteAllText` -> `Get-FileHash`; other serializations give different hashes). |
+
+**Neither run exercised the `REPINNED` path.** Run `65672054` has no `autofollow_*` fields at all (it
+ran the pre-#771 wrapper); run `14459a28` recorded `autofollow_attempted=false`. The only auto-follow
+decision observed in production so far is the no-op. The first merge to `main` that avoids the
+protected pathspec SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0
+gates also pass (a dirty or attached runtime, a fetch failure, or divergence would each refuse for
+their own reason). Capture that receipt -- it is the real end-to-end proof.
+
+### Known issues (open)
+
+1. **TWO INDEPENDENT graphify MCP defects: (a) the CANONICAL runtime's server cannot START, and
+   (b) the only existing registration targets a SUPERSEDED runtime and serves a stale graph
+   (see section 5).** Repairing the venv does NOT fix the registration, and re-pointing the
+   registration does NOT fix the venv -- do not treat either as done because the other was.
+   For (a): the CANONICAL runtime's `.venv-graphify` has `mcp==2.0.0`, whose `mcp.types` no
+   longer exports `AnyUrl`; graphify 0.9.17 `serve.py` requires it, so `python -m graphify.serve`
+   exits 1 (see section 5). Root cause: `tooling/wiki/requirements-graphify.txt` pins only the
+   top-level `graphifyy[sql,mcp]==0.9.17` and carries an explicit unresolved TODO that transitive
+   pins were never frozen, so `mcp` drifted to a new major. The fix requires pinning a compatible
+   `mcp` in the LIVE runtime venv that the nightly depends on, so it must be sequenced against the
+   nightly schedule rather than applied casually.
+
+2. **The protected-pathspec refusal is LIVE today, and committed wiki output would widen it.**
+   The pathspec is seven paths (section 2): `wiki`, `tooling/wiki`, `.gitignore`, `.graphifyignore`,
+   `AGENTS.md`, `.gitattributes`, `tooling/.gitattributes`. FOUR are tracked right now
+   (`tooling/wiki` at 44 files, `.gitignore`, `.graphifyignore`, `AGENTS.md`).
+   - **Live:** any merge touching one of those four makes auto-follow refuse
+     (`REFUSED_TOOLING_CHANGE`) and terminalize the night FAILED / exit 1, repeating every night
+     until an operator manually repins. PR #771 itself touched `tooling/wiki`. Plan a bootstrap in
+     the same sitting as any such merge. Do not overstate the change versus pre-#771: a stale pin
+     ALSO lost the night then (receipt `f7db140f`: `serve_gate=FAIL`, exit 1, `terminal_state=FAILED`
+     AND `SERVED_WIKI_KEPT_LAST_GOOD`). The delta is only where the run stops -- N0 refusal rather
+     than the N6 serve gate. Both lose the night; the served package is untouched either way.
+   - **Future:** if `wiki/` becomes tracked, it joins that class and every wiki-bearing merge
+     refuses. Phase 7 graduation to committed wiki output must resolve this interaction FIRST.
+
+3. **Two unaudited scheduled tasks are in `Ready` state.**
+   `SSTAC-Wiki-FirstNightly-Verify-20260724` (one-time trigger already past,
+   `LastTaskResult 2147946720`) and `SSTAC-Wiki-Nightly-Streak-Verify` (daily 06:15 trigger, never
+   run, empty `NextRunTime`). Both point at scripts under `C:\tmp\sstac-kb-post750-20260723\`, which
+   still exist. Neither was created or audited by the auto-follow session; disposition is an owner
+   decision (this runbook does not authorize task changes).
+
+4. **Phase 7 graduation needs BOTH criteria.** 10 counted nights AND semantic having run on at least
+   5 of those 10. Per section 11, Contract D is deterministic-only and cannot satisfy the semantic
+   half, so banking deterministic nights alone does not graduate.
+
+5. **The installed task is an `InteractiveToken` EXCEPTION, not strict Contract D -- and it only
+   runs while the owner is signed in.** Verified 2026-08-06: the live task XML carries
+   `<LogonType>InteractiveToken</LogonType>`, while `tooling/wiki/activation_preflight.ps1`
+   (line ~1244) requires `LogonType must be Password` for Contract D conformance, and the Contract D
+   generator refuses to install otherwise. Two consequences, both material to the Phase 7 window:
+   - **Streak risk:** an `InteractiveToken` task does not fire when no interactive session is
+     present. A logout, a reboot without signing back in, or a locked-out console before 05:30 costs
+     a counted night through no fault of the pipeline. Anyone banking the 10-night window must keep
+     a signed-in session alive across the boundary, or accept the gap.
+   - **False-unhealthy risk:** running the documented Contract D preflight against the live task
+     will report it NON-CONFORMANT on `LogonType`. That is the expected result of the accepted
+     exception, NOT evidence of a broken task. Do not "fix" it by re-registering under Contract D
+     without an explicit owner decision -- switching to `Password` logon is a separate, owner-gated
+     change with its own preflight cycle.
+
+### Working-session hazard: your own shell can fail the night's custody baseline
+
+The N0 custody baseline classifies a process as relevant if the full runtime root path appears as a
+delimited token in its COMMAND LINE, or if its executable lives under the runtime root
+(`check_orphans.ps1::Test-RuntimeReference`). That test does not care whether the process is a wiki
+worker. **Any ordinary working session -- a Claude/Codex shell, an editor terminal, a
+`git -C <runtime> ...` command -- becomes a candidate `DISALLOWED_RELEVANT_PROCESS` for as long as it
+lives, simply by carrying the runtime path.** If such a process is alive at 05:30, it can trip the
+baseline and cost a counted night. (The one exemption is a correctly-classified pre-existing graphify
+MCP process; see below.)
+
+Observed directly on 2026-08-06: a read-only verification shell that merely ran
+`git -C <runtime-root> status` showed up in
+`Get-CimInstance Win32_Process | Where-Object { $_.CommandLine -like "*wiki-runtime-9af819a-20260804*" }`
+for its lifetime. It was transient and exited, so no night was at risk -- but a long-lived shell,
+a paused agent, or a background task would not have.
+
+This was previously understood only as a LAUNCHER problem (it is what failed the very first canary).
+It is broader than that: it is a standing hazard for ordinary sessions.
+
+Practical rules:
+
+- Prefer inspecting the runtime through short-lived commands; do not leave a long-running shell
+  parked on a command line containing the runtime path.
+- Before ending any session that touched the runtime, confirm nothing is left referencing it. Do NOT
+  exclude your own `$PID` from that check: the N0 baseline does not exclude the operator's shell, so
+  a self-excluding check reports "clear" while the very shell running it is what trips the baseline.
+
+  **There is NO supported standalone authoritative check.** Know what the production classifier
+  (`tooling/wiki/check_orphans.ps1::Test-RuntimeReference`) actually does, because its semantics are
+  both narrower and wider than a naive `-like "*name*"` test:
+  - It matches the FULL runtime path as a DELIMITED TOKEN in the command line (`Test-PathToken`).
+    The delimiters are ASYMMETRIC: on the LEFT the match must be preceded by start-of-string,
+    whitespace, `"`, `'`, or `=`; on the RIGHT it must be followed by end-of-string, `\`, `/`, `"`,
+    `'`, or whitespace. A leaf-name substring test is not equivalent.
+  - It ALSO flags a process whose `ExecutablePath` lives under the runtime root even when the
+    command line never mentions it -- a case a command-line-only query silently MISSES.
+  - It EXEMPTS correctly-classified `PREEXISTING_GRAPHIFY_MCP` processes (executable
+    `.venv-graphify\Scripts\python.exe` running `-m graphify.serve`, runtime-referencing but not a
+    run descendant). A naive query flags these as violations when they are allowed.
+  - KNOWN BLIND SPOT: namespace-prefixed paths (`\\?\`, `\??\`) are NOT covered here.
+    `Test-NamespacePrefixedPathToken` is called from exactly one site --
+    `Test-ExpectedRunConsoleHost`, and negated -- NOT from `Test-RuntimeReference`. A command line
+    carrying only the `\\?\C:\...` form fails `Test-PathToken` (the leading `\` is not in the
+    allowed left-delimiter set) and goes unflagged.
+
+  So a raw substring count both false-clears and false-flags. Treat ad-hoc queries as a SCREEN only:
+  if one returns something, investigate; if it returns nothing, that is NOT proof. Do NOT run
+  `check_orphans.ps1` expecting an authoritative answer -- invoked without `-Mode` it falls through
+  to `Invoke-LegacyReportOnly`, which this runbook already states (section 2) is not Contract A
+  process-custody proof. The run-bound `CaptureBaseline` / `EvaluateTerminal` modes are wrapper-only:
+  they require a canonical run id, the exact nightly parent PID, output paths, and validated
+  parent/checker ancestry. The ONLY authoritative custody evidence is the nightly's own run-bound N0
+  baseline receipt.
+
+- If the only hit is the shell you are typing in, that is still a hit -- it is safe only because you
+  are about to close it. Anything else must be closed before 05:30.
+- Scope the check to the RESOURCE (processes referencing this runtime root), never to an image name
+  such as `agy.exe` or `python.exe` -- image-name gates produce both false alarms and false clears.
+- Windows just AFTER a nightly are the safest time to do runtime-referencing work, because a
+  forgotten shell then has the full day to be noticed before the next 05:30 boundary.
