@@ -578,6 +578,38 @@ merges still refuse and leave the runtime stale until a manual repin.
    `UNVERIFIED: <what to probe>` rather than prose whenever it cannot back a state claim with a
    probe.
 
+### 2026-08-07 -- Permanently-queued CI run 31123692717 (do not "fix"); CI hardening landed
+
+Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z to
+2026-08-07T02:04:44Z) and the PR #772 recovery.
+
+1. **Workflow run `31123692717` is permanently `queued` and CANNOT be cancelled or removed.**
+   Verified 2026-08-07: top level `status: queued` / `run_attempt: 1` frozen at 2026-08-06T19:10:52Z;
+   `/attempts/1` = `completed`/`failure`; `/attempts/2` = 404 (never created); `jobs?filter=latest`
+   = 0 while `filter=all` = 8; check-suite 84431969145 = `queued` with 0 check runs. Both
+   `POST .../cancel` and `POST .../force-cancel` return **HTTP 409**. Cause: a `gh run rerun
+   --failed` issued INSIDE the active incident, which reset the run and detached three passing
+   check runs from `ea073364`.
+   **DO NOT DELETE IT.** `gh run delete` would succeed but would destroy the only surviving record
+   of `Lint & TypeScript Check`, `Unit Tests` and `Security Scan` passing on `ea073364`, which
+   PR #772's body cites as the judgment evidence for the owner waiver under which it was merged.
+   It is harmless: check runs are commit-scoped and it is bound to a superseded, already-merged SHA.
+   Full diagnosis is recorded as a comment on PR #772.
+
+2. **Landed in this PR:** `ci.yml` gains a `concurrency` group with `cancel-in-progress` scoped to
+   pull requests (so superseded PR runs are auto-cancelled instead of accumulating, while
+   push-to-main runs still complete for the record), plus `workflow_dispatch` so a run can be
+   triggered without a commit, plus removal of non-ASCII characters per CLAUDE.md rule 9.
+
+3. **STILL DEFERRED -- `Run docs gate` is not a required status check.** Branch protection on `main`
+   requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests` --
+   four checks that contain no reference to `docs/` anywhere in `src/`, `e2e/`,
+   `playwright.config.ts` or `next.config.ts`. The only check that actually reads a docs diff,
+   `Run docs gate`, is NOT required. The gate set is inverted for docs-only changes. Making it
+   required needs care: it carries a `paths:` filter, and a required workflow filtered out by paths
+   stays Pending forever and would deadlock any PR that does not touch its paths. The correct
+   pattern is an always-run job that skips work internally. Owner decision.
+
 ---
 
 ## How to add a new deferred item

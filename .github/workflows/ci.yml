@@ -5,6 +5,11 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  workflow_dispatch: {}
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint-and-typecheck:
@@ -127,7 +132,7 @@ jobs:
             echo "ERROR: NEXT_PUBLIC_SUPABASE_ANON_KEY secret is not set"
             exit 1
           fi
-          echo "✓ Environment variables are set"
+          echo "[OK] Environment variables are set"
       
       - name: Build application
         run: npm run build
@@ -303,9 +308,9 @@ jobs:
           TARGET_KB=250
 
           if [ "$SHARED_KB" -gt "$TARGET_KB" ]; then
-            echo "⚠️ Performance Warning: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+            echo "[WARN] Performance Warning: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
           else
-            echo "✓ Performance OK: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+            echo "[OK] Performance OK: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
           fi
         continue-on-error: true
 
@@ -367,10 +372,10 @@ jobs:
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.build.result }}" = "failure" ] || \
              [ "${{ needs.e2e-tests.result }}" = "failure" ]; then
-            echo "❌ CI Pipeline Failed"
+            echo "[FAIL] CI Pipeline Failed"
             exit 1
           else
-            echo "✅ CI Pipeline Passed"
+            echo "[PASS] CI Pipeline Passed"
           fi
 
       - name: Report status to job summary
