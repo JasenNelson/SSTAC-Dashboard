@@ -601,16 +601,19 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
 
 2. **Landed in this PR:** `ci.yml` gains a `concurrency` group with `cancel-in-progress` scoped to
    pull requests (so superseded PR runs are auto-cancelled instead of accumulating), while NON-PR
-   runs key on `github.run_id` so each push-to-main and each dispatch gets its OWN group and can
-   neither cancel nor be blocked by another. Plus `workflow_dispatch` so a run can be triggered
-   without a commit, plus removal of non-ASCII characters per CLAUDE.md rule 9.
+   runs key on `run_id` + `run_attempt`, so each push-to-main run AND each rerun attempt gets its
+   OWN group. Plus removal of non-ASCII characters per CLAUDE.md rule 9.
+   **`run_attempt` is load-bearing, not belt-and-braces:** `github.run_id` is STABLE across reruns
+   (only `run_attempt` changes -- verified on run `31123692740`, whose attempts 1 and 2 share one
+   `run_id`). Keying on `run_id` alone would mean re-running a stuck push run re-enters the same
+   group and can be blocked by the original attempt, failing in exactly the recovery case this
+   block exists for.
    **RESIDUAL HAZARD, stated deliberately:** run `31123692717` was a `pull_request` event, and the
    PR path DOES share a group per PR number. Before this change a stuck run blocked nothing (there
    was no grouping at all); after it, a recurrence would leave later runs for that same PR waiting
    on the group. `cancel-in-progress: true` mitigates the normal case but is unproven against a run
-   that rejects cancellation. The escape hatch is `workflow_dispatch`, which lands in its own group
-   -- and which only becomes usable once this PR is merged, because GitHub registers
-   `workflow_dispatch` from the workflow file on the DEFAULT BRANCH only.
+   that rejects cancellation. **There is no in-repo escape hatch for that case** (see item 4);
+   recovery would be a new PR on a fresh branch, or GitHub Support.
 
 3. **STILL DEFERRED -- `Run docs gate` is not a required status check.** Branch protection on `main`
    requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests`, and
@@ -632,18 +635,22 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
    filtered out by paths stays Pending forever and would deadlock any PR that does not touch its
    paths. The correct pattern is an always-run job that skips work internally. Owner decision.
 
-4. **WARNING on the `workflow_dispatch` trigger added in this PR -- it can bypass the gate.**
-   A dispatched `ci.yml` run emits check runs under the SAME four required context names, but it
-   runs against the branch HEAD ref rather than the `pull_request` MERGE ref. Branch protection
-   evaluates the LATEST check run per name on the head SHA, so **a dispatched run OVERWRITES those
-   four contexts and a dispatched green can mask a genuine `pull_request` red, unblocking merge.**
-   That is a process bypass gated only by write access, not merely a weakening -- treat it as such.
-   Note also `strict: false` does NOT compensate for this; it long predates this trigger and was not
-   set for it.
-   So: a dispatched green does NOT prove the PR merges cleanly with current `main`, and must never
-   be treated as equivalent evidence to a `pull_request` run. Fork PRs cannot use it.
-   Availability: `workflow_dispatch` only becomes usable once this PR is merged, because GitHub
-   registers it from the workflow file on the DEFAULT BRANCH only.
+4. **`workflow_dispatch` on `ci.yml` was PROPOSED AND REJECTED. Do not re-add it without solving
+   both problems below.** It was drafted into this PR as a manual recovery lever, then removed on
+   adversarial review. Recorded here so the idea is not revived on its surface appeal:
+   - **SECRET EXPOSURE.** `ci.yml` receives `SENTRY_AUTH_TOKEN`, `CODECOV_TOKEN`,
+     `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` and E2E credentials. A dispatch runs
+     BRANCH-CONTROLLED code against those real secrets, on nothing more than write access and with
+     no PR review in the path.
+   - **GATE BYPASS.** A dispatched run emits the SAME four required context names but builds the
+     branch HEAD ref rather than the `pull_request` MERGE ref. Branch protection takes the LATEST
+     check run per name on the head SHA, so a dispatched green OVERWRITES those contexts and can
+     mask a genuine `pull_request` red, unblocking merge. `strict: false` does not compensate -- it
+     long predates the idea and was not set for it.
+   - It would also not have solved the case it was proposed for: `workflow_dispatch` only registers
+     from the DEFAULT BRANCH, so it is unavailable on the very PR that needs rescuing.
+   If a manual recovery lever is ever wanted, it needs a SEPARATE secret-free workflow, not a
+   trigger bolted onto the secret-bearing one.
 
 ---
 

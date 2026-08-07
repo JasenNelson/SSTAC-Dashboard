@@ -5,20 +5,24 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
-  workflow_dispatch: {}
+  # NO workflow_dispatch here, deliberately. It was proposed as a manual recovery lever and
+  # REJECTED on review: this workflow receives SENTRY_AUTH_TOKEN, CODECOV_TOKEN and Supabase
+  # credentials, so a dispatch would run branch-controlled code against real secrets; and a
+  # dispatched run would overwrite the four required contexts on the head SHA, letting a green
+  # mask a genuine pull_request red. See docs/NEXT_STEPS.md.
 
 concurrency:
   # PR runs share a group per PR number so a newer push supersedes an older run.
-  # NON-PR runs (push to main/develop, workflow_dispatch) fall through to github.run_id, which is
-  # unique per run, so each gets its OWN group. That is deliberate: keying non-PR runs on github.ref
-  # would put every push to main in one group, where (a) back-to-back merges cancel each other's
-  # pending runs, leaving a commit on main with no CI record, and (b) a stuck run that cannot be
-  # cancelled (see docs/NEXT_STEPS.md, run 31123692717, which returns HTTP 409 to both cancel and
-  # force-cancel) would block every later push run indefinitely -- and would trap workflow_dispatch,
-  # the manual recovery lever, in the same group.
-  # NOTE: workflow_dispatch only becomes usable once this file is on the DEFAULT BRANCH, and a
-  # dispatched run OVERWRITES the four required contexts on the head SHA. See docs/NEXT_STEPS.md.
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  # NON-PR runs (push to main/develop) fall through to run_id + run_attempt, so each run AND each
+  # RERUN ATTEMPT gets its own group. Both halves matter:
+  #   - keying on github.ref would put every push to main in one group, where back-to-back merges
+  #     cancel each other's PENDING run (leaving a commit on main with no CI record), and a stuck
+  #     run would block every later push run indefinitely;
+  #   - github.run_id alone is NOT enough, because it is STABLE across reruns (only run_attempt
+  #     changes). Without run_attempt, re-running a stuck push run re-enters the same group and can
+  #     be blocked by the original attempt -- i.e. it would fail in exactly the recovery case this
+  #     block exists for. Verified on run 31123692740, whose attempts 1 and 2 share one run_id.
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.run_id, github.run_attempt) }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
