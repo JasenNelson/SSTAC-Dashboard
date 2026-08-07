@@ -8,7 +8,15 @@ on:
   workflow_dispatch: {}
 
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  # PR runs share a group per PR number so a newer push supersedes an older run.
+  # NON-PR runs (push to main/develop, workflow_dispatch) fall through to github.run_id, which is
+  # unique per run, so each gets its OWN group. That is deliberate: keying non-PR runs on github.ref
+  # would put every push to main in one group, where (a) back-to-back merges cancel each other's
+  # pending runs, leaving a commit on main with no CI record, and (b) a stuck run that cannot be
+  # cancelled (see docs/NEXT_STEPS.md, run 31123692717, which returns HTTP 409 to both cancel and
+  # force-cancel) would block every later push run indefinitely -- and would trap workflow_dispatch,
+  # the manual recovery lever, in the same group.
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:

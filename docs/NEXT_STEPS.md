@@ -602,13 +602,28 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
    triggered without a commit, plus removal of non-ASCII characters per CLAUDE.md rule 9.
 
 3. **STILL DEFERRED -- `Run docs gate` is not a required status check.** Branch protection on `main`
-   requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests` --
-   four checks that contain no reference to `docs/` anywhere in `src/`, `e2e/`,
-   `playwright.config.ts` or `next.config.ts`. The only check that actually reads a docs diff,
-   `Run docs gate`, is NOT required. The gate set is inverted for docs-only changes. Making it
-   required needs care: it carries a `paths:` filter, and a required workflow filtered out by paths
-   stays Pending forever and would deadlock any PR that does not touch its paths. The correct
-   pattern is an always-run job that skips work internally. Owner decision.
+   requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests`, and
+   `Run docs gate` is NOT among them.
+   BE PRECISE ABOUT WHAT THAT DOES AND DOES NOT MEAN: `Unit Tests` DOES cover
+   `docs/_meta/docs-manifest.json` integrity, because `scripts/verify/__tests__/docs-gate.test.mjs`
+   is tracked, is matched by the vitest `include` glob, reads the real manifest, and shells out to
+   `scripts/verify/docs-gate.mjs`; and `ci.yml` has no `paths:` filter, so it runs on docs-only PRs.
+   What no REQUIRED check enforces is the docs-gate bundle / required-reading rules themselves.
+   (An earlier draft of this entry claimed the four required checks "contain no reference to `docs/`"
+   and that "the gate set is inverted for docs-only changes." That was wrong -- the search scope
+   excluded `vitest.config.ts` and the test above. Corrected here so a future owner decision is not
+   made on a false premise.)
+   Making `Run docs gate` required needs care: it carries a `paths:` filter, and a required workflow
+   filtered out by paths stays Pending forever and would deadlock any PR that does not touch its
+   paths. The correct pattern is an always-run job that skips work internally. Owner decision.
+
+4. **NOTE on the `workflow_dispatch` trigger added in this PR.** A dispatched `ci.yml` run emits
+   check runs under the same four required context names, but it runs against the branch HEAD ref
+   rather than the `pull_request` MERGE ref, and branch protection has `strict: false` (no
+   up-to-date requirement) to compensate. So a dispatched green does NOT prove the PR merges
+   cleanly with the current `main`. Do not treat it as equivalent evidence to a `pull_request` run.
+   It requires write access, and fork PRs cannot use it, so this is a mild weakening rather than a
+   bypass.
 
 ---
 
