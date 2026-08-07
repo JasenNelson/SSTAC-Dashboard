@@ -416,7 +416,10 @@ Items surfaced by `docs/_meta/DOCUMENTATION_AUDIT_2026-04.md` and the Phase 3b r
   enhancements + tests; `/sync-wiki` skill shipped in #731), and the deterministic **test suite passes
   48/48** under plain Python (stdlib-only, no graphify). Phases 4-7 are confirmed fully UNLANDED (no Ollama third-lane, no nightly scripts, no
   `.claude/settings.json` hooks, no graphify MCP, no committed wiki) -- correctly gated behind Phase
-  3.5. **Row 9 (land `/sync-wiki`) is DONE (#731).**
+  3.5. [SUPERSEDED 2026-08-06 for three of those clauses: nightly scripts, `.claude/settings.json`
+  hooks, and a graphify MCP registration all now exist. Only "no Ollama third-lane" and "no
+  committed wiki" still hold. See the 2026-08-05 entry below and
+  `docs/WIKI_KB_OPERATIONS_2026_07.md` sections 1 and 12.] **Row 9 (land `/sync-wiki`) is DONE (#731).**
 - **Phase 3.5 go/no-go is the open owner gate (Top-50 row 48).** Three options: STOP-HERE (default;
   keep only the deterministic on-demand layer), PROCEED to Phases 4-7 (only on affirmative evidence:
   healthy smoke metrics AND the wiki demonstrably helped real work AND priority re-affirmed vs Matrix
@@ -491,6 +494,89 @@ Surfaced while re-verifying the whole Matrix Options / Matrix Map lane against `
    The three were left unedited because they are dated priority snapshots rather than
    implementation-status authorities. Whether to formally retire the ranking in them is an open
    owner decision.
+
+---
+
+### 2026-08-05/06 -- Wiki runtime auto-follow shipped; seven items deferred
+
+Surfaced while shipping PR #771 (squash-merged as
+`a821e51968982c0b3dfe2b40e910e9aac1c112c6`), which added guarded in-wrapper auto-follow of the
+serve-gate branch at N0 so the detached Wiki runtime stops going stale after ELIGIBLE merges to
+`main` (those not touching the protected pathspec, when the remaining N0 gates pass); protected-path
+merges still refuse and leave the runtime stale until a manual repin.
+**Source:** the 2026-08-05 wiki runtime auto-follow / bootstrap session and its `/update-docs` run.
+
+1. **TWO independent graphify MCP defects (DEFERRED; one touches the live nightly venv).**
+   (a) The CANONICAL runtime's server cannot START. (b) The only existing registration in
+   `~/.claude.json` targets the SUPERSEDED `kb-runtime-6bb43b-2026-07-23` worktree, whose venv has
+   `mcp 1.28.1` and starts fine -- so it serves a stale graph (build stamp 2026-07-30 / HEAD
+   `d298f548`) rather than failing, which is a false-healthy outcome. Repairing the venv does NOT
+   fix the registration and vice versa; they must be fixed separately.
+   On (a): the CANONICAL runtime's
+   `.venv-graphify` has `mcp==2.0.0`, whose `mcp.types` no longer exports `AnyUrl`; graphify 0.9.17
+   `serve.py` requires it, so `python -m graphify.serve` exits 1. Root cause is that
+   `tooling/wiki/requirements-graphify.txt` pins only the top-level `graphifyy[sql,mcp]==0.9.17` and
+   carries an explicit unresolved TODO that transitive pins were never frozen, so `mcp` drifted to a
+   new major. Deferred because the fix means pinning a compatible `mcp` in the LIVE runtime venv that
+   the nightly depends on -- that is a scheduled change, not a casual one.
+
+2. **Protected-pathspec refusal is LIVE, and committed wiki output would widen it (BLOCKS Phase 7
+   graduation).** The pathspec that gates auto-follow is seven paths: `wiki`, `tooling/wiki`,
+   `.gitignore`, `.graphifyignore`, `AGENTS.md`, `.gitattributes`, `tooling/.gitattributes`. FOUR
+   are tracked today (`tooling/wiki` at 44 files, `.gitignore`, `.graphifyignore`, `AGENTS.md`), so
+   any merge touching those already makes auto-follow refuse (`REFUSED_TOOLING_CHANGE`) and
+   hard-fail the night until an operator manually repins -- PR #771 itself was such a merge. This is
+   a live operational cost, not a future one; plan a bootstrap alongside any such merge. Separately,
+   if `wiki/` ever becomes tracked it joins that class, so graduation to committed wiki output must
+   resolve the pathspec interaction FIRST.
+
+3. **Two unaudited scheduled tasks are in `Ready` state.**
+   `SSTAC-Wiki-FirstNightly-Verify-20260724` (one-time trigger already in the past,
+   `LastTaskResult 2147946720`) and `SSTAC-Wiki-Nightly-Streak-Verify` (daily 06:15 trigger, never
+   run, empty `NextRunTime`). Both point at scripts under `C:\tmp\sstac-kb-post750-20260723\`, which
+   still exist. Deferred because scheduled-task changes are owner-gated; neither was created or
+   audited by this session.
+
+4. **Phase 7 needs BOTH 10 counted nights AND semantic having run on at least 5 of 10.**
+   Contract D is deterministic-only and cannot satisfy the semantic half, so banking deterministic
+   nights alone does not graduate. The counted natural streak is at DAY 1 of 10 as of the
+   2026-08-06 05:30 nightly. An owner decision on the semantic/Ollama enablement path is required
+   before the window can close.
+
+5. **The installed nightly task is an `InteractiveToken` exception, not strict Contract D -- it only
+   fires while someone is signed in.** Verified 2026-08-06: the live task XML has
+   `LogonType=InteractiveToken`, while `tooling/wiki/activation_preflight.ps1` requires
+   `LogonType must be Password` and the Contract D generator refuses to install otherwise. Two
+   consequences: (i) STREAK RISK -- a logout, or a reboot without signing back in before 05:30,
+   costs a counted night through no fault of the pipeline, which bears directly on item 4's 10-night
+   window; (ii) FALSE-UNHEALTHY RISK -- running the documented Contract D preflight against the live
+   task reports NON-CONFORMANT on `LogonType`, which is the accepted exception, not a broken task.
+   Deferred: switching to `Password` logon is a separate owner-gated change requiring a new
+   `TaskDefinitionId` and a fresh activation-preflight cycle.
+
+6. **The auto-follow `REPINNED` path has never executed in production -- the end-to-end proof is
+   still outstanding.** Neither 2026-08-06 run exercised it: run `65672054` has no `autofollow_*`
+   fields at all (it ran the pre-#771 wrapper), and run `14459a28` recorded
+   `autofollow_attempted=false` / `ALREADY_CURRENT` because an out-of-band `git checkout --detach`
+   had already repinned the runtime. The first merge to `main` that avoids the protected pathspec
+   SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates pass.
+   CAPTURE THAT RECEIPT -- it is the highest-value outstanding observation for this lane, and until
+   it exists the feature is contract-tested only.
+
+7. **Live-state facts in these docs are hand-restated in 7-12 places each, with no single source of
+   truth.** A 2026-08-06 root-cause review of this document set found that every state claim
+   (`mcp==2.0.0`, the protected pathspec, the stale MCP registration, task/streak state) is written
+   out verbatim across `LESSONS.md`, `NEXT_STEPS.md`, `WIKI_KB_OPERATIONS_2026_07.md` and
+   `docs/_meta/docs-manifest.json` -- so a single correction needs an 11-way edit, while reviews are
+   scoped to changed lines and cannot see stale copies in untouched text. That combination produced
+   four review rounds whose later findings were almost entirely incomplete propagation rather than
+   new facts. PROPOSED FIX (not yet built): emit the live-state facts from a PROBE script into one
+   dated generated block (task XML for state/LogonType, `~/.claude.json` for registrations,
+   `pip show mcp` per venv, `git ls-files` for the pathspec, receipts for streak/auto-follow), and
+   have the prose cross-reference it rather than restate it. Every fact that cost those four rounds
+   is machine-checkable in seconds. Also worth folding in: `/update-docs` should emit
+   `UNVERIFIED: <what to probe>` rather than prose whenever it cannot back a state claim with a
+   probe.
 
 ---
 

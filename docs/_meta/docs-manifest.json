@@ -87,9 +87,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 6607,
-        "source": "npm run test:ci output (2026-07-30)",
-        "last_verified": "2026-07-30"
+        "value": 6618,
+        "source": "npm run test:ci on PR #771 head 909a7eb9 (2026-08-05); tree byte-identical to the squash-merged a821e519 (committed 2026-08-06), so the count transfers. No gate was run against a821e519 itself.",
+        "last_verified": "2026-08-05"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -1543,6 +1543,36 @@
       "last_verified": "2026-07-04",
       "superseded_by": "facts.testing.vitest_test_count = 4960 (cyanide-salts cohort +16).",
       "note": "Prior live vitest_test_count -> facts_history per facts_policy.live_vs_history_rule when refreshed to 4960 after PR #488 wired 8 build-first cyanide-salt substances (calcium/copper/potassium/potassium_silver/silver/sodium cyanide + cyanide_free + hydrogen_cyanide_and_cyanide_salts) to their single approved US EPA IRIS oral RfD rows. Net +16: 8 substanceLibrary wiring assertions + 8 resolver.integration SOURCED cases; SUBSTANCE_LIBRARY 415 -> 423. From the Lane C wire-recon clean-candidate backlog (uncontested single-approved values); no catalog data changed."
+    },
+    "vitest_test_count_2026_07_30_pre_autofollow": {
+      "status": "superseded",
+      "value": 6607,
+      "source": "npm run test:ci output (2026-07-30)",
+      "last_verified": "2026-07-30",
+      "superseded_by": "facts.testing.vitest_test_count = 6618 (npm run test:ci on PR #771 head 909a7eb9, 2026-08-05; tree byte-identical to the squash-merged a821e519)."
+    },
+    "session_2026_08_05_wiki_runtime_autofollow_bootstrap": {
+      "status": "complete",
+      "session_date": "2026-08-05",
+      "work_summary": "PR #771 squash-merged as a821e51968982c0b3dfe2b40e910e9aac1c112c6 (8 files, +1395/-28). Adds guarded in-wrapper auto-follow of the serve-gate branch to tooling/wiki/nightly_wiki_sync.ps1 at N0, so the detached Wiki runtime no longer goes stale after ELIGIBLE merges to main (those not touching the protected pathspec, when the remaining N0 gates pass); protected-path merges still refuse and leave the runtime stale until a manual repin. Motivating incident: the 2026-08-05 first natural nightly (run f7db140f) passed custody, build, cluster, canonicalization and smoke, then stopped at serve_gate=FAIL because main had advanced via PR #770; every gate worked, the defect was drift, and each drift night is a lost night against the Phase 7 10-counted-night window.",
+      "design_artifacts": {
+        "docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_DESIGN_2026_08_05.md": "sha256 a46929bd0f06d2ab67f915ffbe3eb283965bb6e447916559528d6d65cffb08f2",
+        "docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_TEST_SPEC_2026_08_05.md": "sha256 fd6ac80767a451c59fc24ffac3886ed50395befb50a9daa2bb21f7a777348cdf"
+      },
+      "gates": "All six push gates GREEN on PR #771 head 909a7eb9 (2026-08-05), the tip they were actually run against: lint 0 errors; tsc 0; test:ci 6618 passed; monitored clean build 0; e2e 132 passed / 102 skipped; docs:gate PASS. Plus 323 wiki tests. 13/13 GitHub CI checks passed. NOTE the e2e 132+102=234 does NOT contradict facts.testing.playwright_test_count=228: that fact is a 2026-07-18 list-only enumeration (playwright test --list, 13 spec files x 3 browser projects, no auth-gated projects counted), whereas 132/102 is an actual run under this branch's gate configuration. Different methodologies and different dates; neither supersedes the other. The squash-merged a821e519 (committed 2026-08-06) has a byte-identical tree, so these results transfer, but no gate was executed against a821e519 itself.",
+      "operational_verification": {
+        "natural_nightly_2026_08_06_0530": "PASS. run 65672054-2f94-4279-ad10-f424ce9453f5; LastTaskResult 0; custody PASS / 0 survivors; serve_gate=PASS; SERVED_WIKI_SWAPPED. COUNTED NATURAL STREAK DAY 1 of 10.",
+        "post_merge_bootstrap_2026_08_06_0733": "PASS. run 14459a28-4f81-437d-afba-329f393fc8cc; scheduler-fired; autofollow_decision=ALREADY_CURRENT; autofollow_attempted=false; autofollow_result=PASS; task XML proven byte-identical afterwards (sha256 484f791453c8b9d6969390480eee8d4c2fac471723c6cfab9a49ff6a4c91b3f4, reproducible only via `schtasks /Query /XML ONE | Out-String` + WriteAllText + Get-FileHash). The bfa344dd -> a821e519 repin was performed by BOOTSTRAP_POST_MERGE.ps1 STEP 2 (explicit git checkout --detach) BEFORE this run, not by the wrapper's auto-follow.",
+        "repinned_path_not_yet_exercised": "NEITHER production run exercised the new REPINNED branch. Run 65672054 has no autofollow_* fields (it ran the pre-#771 wrapper at pin bfa344dd); run 14459a28 recorded autofollow_attempted=false. The only auto-follow decision observed in production is the no-op ALREADY_CURRENT. The first merge to main avoiding the protected pathspec should produce the first genuine REPINNED receipt, assuming the remaining N0 gates also pass (dirty/attached runtime, fetch failure, or divergence would each refuse for their own reason)."
+      },
+      "known_issues_open": [
+        "TWO independent graphify MCP defects. (a) The CANONICAL runtime's server cannot START: its .venv-graphify has mcp==2.0.0 whose mcp.types no longer exports AnyUrl; graphify 0.9.17 serve.py requires it, so python -m graphify.serve exits 1. Root cause: tooling/wiki/requirements-graphify.txt pins only top-level graphifyy[sql,mcp]==0.9.17 with an unresolved TODO that transitive pins were never frozen. Fix must pin a compatible mcp in the LIVE runtime venv the nightly depends on, so it is a scheduled change, not a casual one. (b) SEPARATELY, the only existing registration in ~/.claude.json (project key C:/Projects/SSTAC-Dashboard) targets the SUPERSEDED kb-runtime-6bb43b-2026-07-23 worktree, whose venv has mcp 1.28.1 and DOES start -- so it serves a stale graph (build stamp 2026-07-30, HEAD d298f548, graph b105d670) instead of failing, a false-healthy outcome. The two defects are independent: repairing the canonical venv does not fix the registration, and re-pointing the registration does not fix the venv.",
+        "Protected-pathspec refusal is LIVE today, not hypothetical: the pathspec is 7 paths (wiki, tooling/wiki, .gitignore, .graphifyignore, AGENTS.md, .gitattributes, tooling/.gitattributes) and 4 are tracked now (tooling/wiki at 44 files, .gitignore, .graphifyignore, AGENTS.md). Any merge touching those 4 makes auto-follow refuse (REFUSED_TOOLING_CHANGE) and terminalize the night FAILED/exit 1, every night, until an operator manually repins; PR #771 itself touched tooling/wiki. Not more severe than pre-#771: a stale pin also lost the night then (receipt f7db140f: serve_gate=FAIL, exit 1, terminal_state=FAILED AND SERVED_WIKI_KEPT_LAST_GOOD); the only delta is that the run now stops at N0 rather than the N6 serve gate. Separately, if wiki/ becomes tracked it joins that class, so Phase 7 graduation to committed wiki output must resolve the interaction first.",
+        "Two unaudited scheduled tasks are Ready: SSTAC-Wiki-FirstNightly-Verify-20260724 (one-time trigger already past, LastTaskResult 2147946720) and SSTAC-Wiki-Nightly-Streak-Verify (daily 06:15 trigger, never run, empty NextRunTime). Both point at scripts under C:\\tmp\\sstac-kb-post750-20260723\\ which still exist. Owner-gated disposition.",
+        "Phase 7 needs BOTH 10 counted nights AND semantic having run on at least 5 of 10. Contract D is deterministic-only and cannot satisfy the semantic half, so banking deterministic nights alone does not graduate.",
+        "The installed SSTAC-Wiki-Nightly task is an owner-approved InteractiveToken EXCEPTION, not strict Contract D: the live task XML has LogonType=InteractiveToken while tooling/wiki/activation_preflight.ps1 requires LogonType must be Password and the Contract D generator refuses to install otherwise (verified 2026-08-06). Consequences: (a) STREAK RISK -- an InteractiveToken task does not fire without an interactive session, so a logout or a reboot without signing back in before 05:30 costs a counted night; (b) FALSE-UNHEALTHY RISK -- running the documented Contract D preflight against the live task reports NON-CONFORMANT on LogonType, which is the expected result of the accepted exception, not a broken task. Switching to Password logon is a separate owner-gated change with its own preflight cycle."
+      ],
+      "last_verified": "2026-08-06"
     }
   },
   "known_issues": {

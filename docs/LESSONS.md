@@ -3380,8 +3380,270 @@ rather than escalating tooling against absent data.
 
 ---
 
-**Last Updated:** July 21, 2026 (Option D read-only premise-first extraction discipline)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); prior totals not re-tallied.
+## 2026-08-05 - A Detached Runtime Pinned to a Commit Silently Rots on Every Merge to main [HIGH]
+
+**Area:** Wiki/Graphify nightly runtime, scheduled long-lived workers, gate design
+**Impact:** HIGH (any inter-nightly interval containing a merge to `main` cost that counted nightly
+run -- one lost night per affected interval, not per merge; all gates worked, the
+defect was pure drift)
+**Status:** Implemented and contract-tested (PR #771, squash-merged as `a821e519`). The `REPINNED`
+path has NOT yet been observed in a scheduled run -- the only auto-follow decision seen in production
+to date is `ALREADY_CURRENT`. See "Limits of the verification" below.
+
+### Problem or Discovery
+The Wiki runtime lives in a DETACHED worktree pinned to a specific commit. The nightly sync ran a
+serve gate that compares the runtime pin against the branch it is supposed to serve. On 2026-08-05
+the first natural nightly (run `f7db140f`) passed custody, build, cluster, canonicalization and
+smoke, then stopped at `serve_gate=FAIL` -- solely because `main` had advanced via PR #770 the
+previous day (`bfa344dd`, merged 2026-08-04 11:21 -0700). Nothing was broken. The runtime was simply behind, and a behind-runtime is
+indistinguishable from a real failure at the gate.
+
+The compounding cost is what makes this HIGH: the runtime is banking a Phase 7 window of 10 COUNTED
+nights. Any inter-nightly interval containing at least one merge to `main` burned that night (one
+night per affected interval, however many merges landed in it), so ordinary
+day-to-day shipping was structurally preventing the acceptance window from ever closing.
+
+### Root Cause or Context
+A pinned runtime plus a strict serve gate is a correct safety design, but it has no way to make
+progress on its own. The gate can only say "these two commits differ"; it cannot decide whether the
+difference is benign. Left to a human, the repin is a manual step nobody remembers to run right after
+a merge -- so the failure mode is not "the gate is wrong", it is "the system has no self-healing
+step between two correct components".
+
+### Solution or Pattern
+Move the repin INTO the wrapper, at the earliest stage (N0), behind an explicit guard rather than
+making it unconditional:
+
+1. The wrapper computes an auto-follow DECISION before doing any work, and records it as a first-class
+   receipt field (`autofollow_decision` / `autofollow_result`) so a passing night and a
+   nothing-to-do night are distinguishable after the fact. `ALREADY_CURRENT` is a normal, healthy
+   observed value, not an anomaly.
+2. Auto-follow is REFUSED, not silently forced, when the incoming diff touches a protected pathspec.
+   Merges that only move product code repin freely; merges that could change what the runtime itself
+   produces stop and require a human.
+3. The guard is proven by an invariant OUTSIDE the wrapper's own logs: after the post-merge bootstrap
+   run, the scheduled-task XML was verified BYTE-IDENTICAL
+   (`484f791453c8b9d6969390480eee8d4c2fac471723c6cfab9a49ff6a4c91b3f4`). A self-repinning wrapper that
+   could also mutate its own schedule would be a much larger blast radius; proving the XML did not
+   move is what bounds it.
+
+   **Record the serialization method with any such hash, or the invariant is not re-checkable.** This
+   value is reproducible ONLY via this exact sequence (a reviewer who tried nine other
+   encoding/line-ending combinations could not reproduce it, which is how this gap was found):
+
+   ```powershell
+   $xml = & schtasks /Query /TN 'SSTAC-Wiki-Nightly' /XML ONE 2>&1 | Out-String
+   [System.IO.File]::WriteAllText($path, $xml)
+   (Get-FileHash -LiteralPath $path -Algorithm SHA256).Hash.ToLowerInvariant()
+   ```
+
+   `Export-ScheduledTask` piped through `Set-Content`/`Out-File` produces a DIFFERENT hash at every
+   encoding. A safety invariant nobody else can recompute is not an invariant.
+
+   The byte-identity claim rests on retained BEFORE/AFTER captures, not on a single post-hoc hash:
+   `15_TASK_PRE_BOOTSTRAP.xml` and `17_TASK_AFTER_BOOTSTRAP.xml` (plus seven earlier snapshots) all
+   hash to the same `484f7914...`. Those captures live in the same ephemeral mission directory under
+   `C:\tmp` and are NOT retained in the repo -- so treat the invariant as re-verifiable going forward
+   via the recipe above (the live task still hashes `484f7914...`), but treat the historical
+   before/after comparison as session-observed evidence that was not durably archived. Next time,
+   archive the before/after captures alongside the hash.
+4. Verification is operational, not just unit-level: the deterministic nightly (run
+   `65672054-2f94-4279-ad10-f424ce9453f5`, `LastTaskResult 0`, custody PASS / 0 survivors,
+   `serve_gate=PASS`, `SERVED_WIKI_SWAPPED`) and a separate scheduler-fired post-merge bootstrap (run
+   `14459a28-4f81-437d-afba-329f393fc8cc`, `autofollow_decision=ALREADY_CURRENT`,
+   `autofollow_result=PASS`) were both required before calling it done.
+
+### Limits of the verification (read before trusting the status above)
+
+Neither production run exercised the new code path, and saying so plainly is the point of this
+section:
+
+- Run `65672054` (05:30 natural) has **no `autofollow_*` fields at all** in its receipt. It ran the
+  PRE-#771 wrapper, at pin `bfa344dd`. It proves the deterministic spine, not auto-follow.
+- Run `14459a28` (07:33 bootstrap) recorded `autofollow_attempted=false` and
+  `autofollow_starting_head=a821e519` -- it was ALREADY at the target when it started. The
+  `bfa344dd -> a821e519` repin was performed by the bootstrap SCRIPT
+  (STEP 2 of the one-time bootstrap script: an explicit hook-suppressed `git checkout --detach`),
+  NOT by the wrapper's auto-follow. Do not cite this run as evidence that auto-follow repins
+  correctly. NOTE the script is NOT in this repository -- it was an ephemeral mission artifact at
+  `C:\tmp\SSTAC_WIKI_MC_L3_READINESS_20260805T145415Z\BOOTSTRAP_POST_MERGE.ps1`, under `C:\tmp` and
+  therefore not durable. If that directory is gone, the operative fact is simply that an explicit
+  out-of-band `git checkout --detach <target>` performed the repin before the run started.
+
+So the only auto-follow branch ever observed in production is the no-op one. `ALREADY_CURRENT` and
+`REPINNED` are mutually exclusive decisions in the wrapper; the `REPINNED` branch remains
+contract-tested only. The first merge to `main` that does not touch the protected pathspec SHOULD
+produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates also pass (a dirty or
+attached runtime, a fetch failure, or divergence would each refuse for their own reason). Capture
+it, because it is the actual end-to-end proof.
+
+### File References
+- Wrapper (auto-follow at N0): `tooling/wiki/nightly_wiki_sync.ps1`
+- Serve gate: `tooling/wiki/serve_gate.py`
+- Contract tests: `tooling/wiki/tests/test_wrapper_contracts.py`
+- Frozen design: `docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_DESIGN_2026_08_05.md`
+  (sha256 `a46929bd0f06d2ab67f915ffbe3eb283965bb6e447916559528d6d65cffb08f2`)
+- Frozen test spec: `docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_TEST_SPEC_2026_08_05.md`
+  (sha256 `fd6ac80767a451c59fc24ffac3886ed50395befb50a9daa2bb21f7a777348cdf`)
+- Operations runbook: `docs/WIKI_KB_OPERATIONS_2026_07.md`
+
+### Known follow-on hazard -- ALREADY LIVE, not hypothetical
+
+The protected pathspec is SEVEN paths (`nightly_wiki_sync.ps1`): `wiki`, `tooling/wiki`,
+`.gitignore`, `.graphifyignore`, `AGENTS.md`, `.gitattributes`, `tooling/.gitattributes`. FOUR of
+them are tracked today (`tooling/wiki` at 44 files, `.gitignore`, `.graphifyignore`, `AGENTS.md`).
+
+So this is NOT dormant. Any merge to `main` touching one of those four makes auto-follow refuse
+(`REFUSED_TOOLING_CHANGE`) and TERMINALIZE THE NIGHT AS FAILED / exit 1, every night, until an
+operator manually repins. PR #771 itself touched `tooling/wiki` -- the fix belongs to exactly the
+class of change it cannot auto-follow.
+
+Be precise about what changed, because it is easy to overstate: pre-#771 a stale pin ALSO lost the
+night. The motivating receipt (`f7db140f`) records `serve_gate=FAIL`, `native_exit_code=1`,
+`terminal_state=FAILED` AND `n6_publication=SERVED_WIKI_KEPT_LAST_GOOD` -- it hard-failed and kept
+serving the last good package; those were never alternatives. The real delta is only WHERE the run
+stops: N0 (refusal) instead of N6 (serve gate). Both lose the night, and the served package is left
+untouched either way.
+
+Two distinct problems, do not conflate them:
+
+- **Live today:** merges touching the four tracked protected paths hard-fail nights until a manual
+  repin. Plan a bootstrap in the same sitting as any such merge.
+- **Future:** if the project graduates to COMMITTED wiki output, `wiki/` becomes a fifth tracked
+  protected path and every wiki-bearing merge joins that class -- converting the fix into the
+  original bug with extra steps. Committed-wiki-output graduation must resolve the pathspec
+  interaction FIRST.
+
+### Key Takeaway
+Any long-lived worker pinned to a commit needs an explicit, guarded self-advance step, or every
+ordinary merge silently costs it a run. Put the advance inside the worker at its earliest stage,
+record the decision as a receipt field so no-op nights are auditable, refuse rather than force when
+the incoming diff touches anything that changes what the worker itself produces, and bound the blast
+radius by proving an external invariant (here: the scheduled-task XML hash) did not move.
+
+---
+
+## 2026-08-05 - Pinning Only the Top-Level Package Lets a Transitive Major Break a Live Runtime [HIGH]
+
+**Area:** Python runtime venvs, dependency pinning, graphify/MCP integration
+**Impact:** HIGH (the canonical runtime's graphify MCP server cannot START, and the one existing
+registration silently points at a superseded runtime; both discovered only when the feature was
+attempted, long after the drift happened)
+**Status:** Documented, NOT fixed. Two independent repairs: (a) pinning a compatible `mcp` touches
+the live nightly venv and must be scheduled; (b) re-pointing the stale registration is a config
+write that touches no venv. Both deferred deliberately.
+
+### Problem or Discovery
+`python -m graphify.serve` exits 1 in the CANONICAL runtime's `.venv-graphify`, so a registration
+pointed at that runtime could not serve. That venv has `mcp==2.0.0`, whose `mcp.types` no longer
+exports `AnyUrl`; graphify 0.9.17's `serve.py` requires it.
+
+(Registration itself is just a config write and was in fact done -- but against an OLDER runtime
+worktree, `kb-runtime-6bb43b-2026-07-23`, whose venv has `mcp 1.28.1` and starts fine. That
+registration therefore serves a stale graph instead of failing. The two problems are independent;
+see the operations runbook section 5.)
+
+The failure is NOT at import time, and two obvious probes both report healthy (verified 2026-08-06):
+`python -c "import graphify.serve"` exits 0, and `python -m graphify.serve --help` exits 0 and prints
+full usage. The break happens later, at `serve.py::_build_server` when a server is actually
+constructed -- so it only shows up when the process really tries to serve. Worse, `_build_server`
+catches the underlying `ImportError` and re-raises it as
+`ImportError: mcp not installed. Run: pip install "graphifyy[mcp]"`, which is actively misleading:
+`mcp` IS installed, at the wrong major. An operator following that message would reinstall the extra
+and see no change.
+
+The only probe that reflects reality is starting the server for real
+(`python -m graphify.serve <graph.json> --transport stdio`) and judging it by EXIT CODE, NOT by
+whether the process stays alive. Broken = exit 1 with the `mcp not installed` ImportError traceback.
+Do NOT treat "the process exited" as failure: under stdio with no stdin attached a correctly-working
+server also terminates promptly on EOF (confirmed against a healthy `mcp 1.28.1` install, which
+exits 0 immediately). A clean exit 0 with no traceback clears only this `AnyUrl` startup check -- it
+does not prove MCP initialization, tool registration, or working graph queries.
+
+### Root Cause or Context
+`tooling/wiki/requirements-graphify.txt` pins ONLY the top-level distribution
+(`graphifyy[sql,mcp]==0.9.17`) and carries an explicit, still-unresolved TODO noting that transitive
+pins were never frozen. With the dependency left unconstrained -- no UPPER bound and no exact pin --
+the resolver was free to install a NEW MAJOR version of `mcp`. (A lower bound would not have helped;
+the missing protection is a ceiling or an exact transitive pin.) The top-level pin created a false
+sense of reproducibility: the pinned thing was pinned, and
+everything it depends on was not.
+
+The second-order problem is WHERE the breakage lives. The fix is "pin a compatible `mcp`", but the
+only place that matters is the LIVE runtime venv that the nightly depends on -- so the repair is not
+a casual `pip install`; it has to be sequenced against the nightly schedule.
+
+### Solution or Pattern
+- Treat a requirements file that pins only top-level distributions as UNPINNED for reproducibility
+  purposes. Freeze the full resolved set (or use a lockfile) for any venv a scheduled job depends on.
+- An unresolved TODO inside a requirements file is a live defect with a delayed trigger, not a note.
+  It will surface at the moment someone first tries to use the un-exercised feature.
+- Repairing a venv that a scheduled nightly runs out of is a scheduled-change, not an ad-hoc one:
+  plan it against the schedule and re-verify the nightly afterward.
+
+### File References
+- `tooling/wiki/requirements-graphify.txt` (top-level-only pin + unresolved transitive-pin TODO)
+- `docs/WIKI_KB_OPERATIONS_2026_07.md` (MCP registration section)
+
+### Key Takeaway
+Pinning the top-level package does not pin the environment. For any venv a scheduled or long-lived
+job depends on, freeze the transitive set too -- otherwise a dependency's major bump lands silently
+and is only discovered when someone finally exercises the affected code path, at which point the fix
+has to be sequenced around a live schedule.
+
+---
+
+## 2026-08-06 - An Unattended Scheduler Contract Is Only As Good As Its Logon Type [HIGH]
+
+**Area:** Windows Task Scheduler, unattended runs, acceptance-window accounting
+**Impact:** HIGH (the nightly banking a 10-counted-night acceptance window does not fire unless
+someone is signed in; a logout or an unattended reboot silently costs a night)
+**Status:** Documented and accepted as an owner exception; NOT changed
+
+### Problem or Discovery
+The installed `SSTAC-Wiki-Nightly` task was described everywhere as "Contract D (deterministic-only)".
+Its live XML actually carries `<LogonType>InteractiveToken</LogonType>`, while the Contract D
+definition mandates `Password` -- `tooling/wiki/activation_preflight.ps1` explicitly fails with
+`LogonType must be Password`, and the Contract D generator refuses to install otherwise. So the
+running task is an owner-approved exception DERIVED from Contract D, not Contract D.
+
+Nobody had asserted this incorrectly from bad data; nobody had probed the logon type at all. It
+surfaced only when a reviewer read the retained task XML directly, on the fourth review pass of the
+documents describing that task.
+
+### Root Cause or Context
+`InteractiveToken` runs a task only when an interactive session exists. That is invisible in every
+success path: the task shows `Ready`, `LastTaskResult 0`, and a correct `NextRunTime`, and it fires
+perfectly every day the machine happens to be logged in. The failure mode is a NON-EVENT -- on a
+night with no session, nothing runs, nothing errors, and the only evidence is a missing receipt.
+
+For a project whose acceptance criterion is a COUNT of consecutive successful nights, a silent
+non-event is the worst possible failure shape: it does not fail the night, it deletes it.
+
+### Solution or Pattern
+- For any unattended scheduled work, treat the logon type as part of the CONTRACT, and assert it in
+  the same preflight that checks the action string and triggers. A contract that specifies the
+  command but not the run-as conditions is not an unattended contract.
+- Where an exception is accepted, RECORD it as an exception with its operational consequence, and
+  expect the conformance checker to report NON-CONFORMANT. A preflight that flags the accepted
+  exception is working correctly; do not "fix" the task to silence it.
+- When an acceptance window counts successful runs, add a check for MISSING runs, not just failed
+  ones. Absence needs its own detector.
+
+### File References
+- `tooling/wiki/activation_preflight.ps1` (the `LogonType must be Password` contract assertion)
+- `docs/WIKI_KB_OPERATIONS_2026_07.md` sections 1, 11, and 12 (known issue 5)
+
+### Key Takeaway
+`InteractiveToken` means "runs only while someone is logged in", and that is indistinguishable from
+healthy on every night it happens to work. If a scheduled job must run unattended, verify the logon
+type explicitly -- and if an acceptance window counts successful runs, make sure something detects
+the night that never started at all.
+
+---
+
+**Last Updated:** August 6, 2026 (Wiki runtime auto-follow; transitive-pin drift; scheduler logon type)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill

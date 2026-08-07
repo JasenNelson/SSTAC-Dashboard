@@ -426,6 +426,9 @@ infer process ownership from timing. Read the command line.
 - **Deploy health:** compare the Vercel production alias SHA against `origin/main`; the check added
   in Lane 2 should fail loudly when they diverge.
 - **KB:** `tooling/wiki` tests plus `graph_smoke.py` thresholds; no Ollama, no nightly, no hooks.
+  [HISTORICAL as of 2026-07-20; SUPERSEDED 2026-08-06 -- the nightly task and session hooks now
+  exist and are enabled; only "no Ollama" still holds. See `docs/WIKI_KB_OPERATIONS_2026_07.md`
+  sections 1 and 12.]
 - **Docs:** `npm run docs:gate -- --base origin/main --head HEAD` must pass, including the row-35 fix.
 - **Regression safety:** never delete a regression test to make a gate pass; investigate why it exists.
 
