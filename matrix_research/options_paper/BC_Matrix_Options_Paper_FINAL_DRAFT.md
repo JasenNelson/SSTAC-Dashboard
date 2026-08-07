@@ -1,385 +1,1647 @@
-# Matrix Sediment Standards Derivation Options Paper
+# DRAFT Matrix Sediment Standards Options Paper
 
-**Prepared for:**  The British Columbia Ministry of Environment & The Science and Standards Technical Advisory Committee (SSTAC)
+### Conceptual Rough Draft for Phase 2 Development
 
-> **Revision note (2026-06-08):** Restructured to a 14-section table of contents per TWG reviewer feedback. New/expanded sections (Regulatory Context, Risk and Decision-Making Gaps, Vision, expanded Evaluation Criteria, Phase 2 governance, Risks and Mitigation, Conclusions) were drafted to final form for owner sign-off; reviewer-provided text (problem statement, vision statement, Phase 2 deliverables and workstreams) is inserted verbatim; all other prose is relocated from the prior approved draft.
+**Draft status:** Conceptual rough draft for iterative Phase 2
+development
+
+**Purpose:** This document is intended to serve as the working draft of
+the final Matrix Options Paper deliverable identified in the approved
+Phase 2 Project Plan. It will be iteratively refined over the course of
+Phase 2 as research tasks are completed, reviewed, synthesized, and
+appended.
 
 ## 1.0 Executive Summary
 
-The Science Advisory Board for Contaminated Sites (SABCS), in partnership with the BC Ministry of Environment and Parks, is developing a scientific framework to modernize the province's sediment quality standards. The Science and Standards Technical Advisory Committee (SSTAC) leads the Sediment Standards Project, integrating best-available science to protect aquatic ecosystems and the communities that depend on them. BC's current framework (CSR Schedule 3.4) is pathway-limited: it primarily addresses benthic invertebrate protection through direct contact and does not systematically address food-web exposures (ecological or human) or human health direct contact. For decades, the province has also relied on empirical, co-occurrence-based guidelines that are overly conservative and scientifically limited, failing to account for the site-specific bioavailability of contaminants.
+British Columbia's current CSR Schedule 3.4 Generic Numerical Sediment
+Standards are more than two decades behind the current state of sediment
+science. The existing standards primarily protect benthic invertebrates
+from direct exposure and do not systematically address food-web
+transfer, bioaccumulative substances, human health direct contact, human
+health dietary exposure, Indigenous food-based exposure pathways, modern
+bioavailability adjustment, or emerging contaminants.
 
-To address these limitations, this paper evaluates a transition toward a modernized, multi-pathway framework. Mechanistic methods -- Equilibrium Partitioning (EqP) for direct ecological contact, Biota-Sediment Accumulation Factors (BSAF) for food web transfer, and localized consumption modifiers for human health -- would let the province account for site-specific bioavailability and trophic transfer across the four protection pathways (ecological direct contact and food web; human health direct contact and food web), applied where the recommended framework calls for them.
+The Phase 1 White Paper established the scientific rationale for
+modernizing BC's sediment standards and proposed a matrix-based
+framework that distinguishes between ecological and human health
+protection goals, and between direct sediment exposure and exposure
+through food-web transfer. That work identified the need to move beyond
+a single-pathway, benthic-focused standards structure toward a framework
+that is more scientifically defensible, adaptable, and protective of
+aquatic ecosystems and the communities that depend on them.
 
-Assessed against criteria of scientific defensibility, feasibility, Indigenous integration, data availability, and regulatory alignment, this paper recommends, for the Ministry's consideration, **the Tiered Hybrid Framework** (Section 8) -- a tiered approach that pairs rapid empirical screening (Tiers 0-1) with site-specific mechanistic derivation at Tier 2, and provides the foundation for a multi-pathway expansion of CSR Schedule 3.4.
+The approved Phase 2 Project Plan defines the work now underway. Phase 2
+is focused on research, framework development, options analysis, and
+preparation of this Matrix Options Paper. It is not intended to
+calculate final numerical standards, propose regulatory amendments,
+complete the full sediment database, or develop final supporting
+technical guidance or protocols.
 
-The Tiered Hybrid Framework is intended to provide a scientifically defensible, feasible, and equitable system that integrates Indigenous traditional knowledge and protects subsistence harvesting rights. Section 9 sets out the proposed Phase 2 (2026) work plan and deliverables that would operationalize this recommendation.
+This Options Paper is therefore structured as a living technical
+synthesis document. It will be iteratively refined over the course of
+Phase 2 as research tasks are completed. The body of the paper
+summarizes the purpose, rationale, proposed framework architecture,
+technical options considered, emerging findings, and recommendations.
+Detailed technical products from the Phase 2 workstreams will be
+appended as supporting research reports, including reports on
+bioavailability adjustment, bioaccumulation, substance classification,
+substance prioritization, matrix standards derivation options, generic
+standards adoption, the BC Aquatic Database, and policy-ready input
+parameters.
+
+The proposed modernization direction is no longer framed as a question
+of whether to develop a matrix framework. That work is already underway
+and is the core of Phase 2. Instead, this paper evaluates the technical
+and policy-design options for how the matrix standards framework should
+be structured, supported, and documented.
+
+The approved Phase 2 vision is to develop a modernized Schedule 3.4
+structure consisting of three parts:
+
+1.  **Part 1: Matrix Numerical Sediment Standards** to protect human and
+    ecological health across four receptor-pathway combinations;
+
+2.  **Part 2: Generic Numerical Sediment Standards** to protect human
+    health; and
+
+3.  **Part 3: Generic Numerical Sediment Standards** to protect
+    ecological health.
+
+Matrix Numerical Sediment Standards are intended for priority substances
+that warrant a high duty of care based on factors such as
+biomagnification potential, toxicity, persistence, and local occurrence.
+Generic Numerical Sediment Standards are intended for substances where
+it is not feasible or necessary to develop full matrix standards, and
+where scientifically defensible values can be adopted or adapted from
+other jurisdictions.
+
+The preliminary direction presented in this working draft is to develop
+a multi-part hybrid framework supported by a structured substance
+classification and prioritization process. This approach preserves the
+matrix framework as the core modernization pathway while recognizing
+that not every substance can be addressed through full matrix
+derivation.
 
 ## 2.0 Context and Problem Statement
 
-The modernization of sediment quality standards in British Columbia requires a fundamental shift from historical evaluation paradigms toward a more nuanced, site-specific understanding of contaminant behavior. Historically, regulatory frameworks have relied heavily on empirical, co-occurrence-based guidelines. While these approaches established a necessary baseline for environmental protection, they inherently fail to capture the complex physicochemical dynamics that dictate actual exposure and risk within aquatic ecosystems.
+Sediment is a dynamic environmental matrix that can act as both a sink
+and a source of contaminants. Contaminants may accumulate in sediments,
+become biologically available to benthic organisms, transfer into
+aquatic food webs, and contribute to long-term ecological and human
+health risks.
 
-> **Problem statement (reviewer-provided):** BC's current sediment standards framework (CSR Schedule 3.4) is pathway-limited, primarily addressing benthic invertebrate protection through direct contact. This creates systemic gaps in protection for bioaccumulative substances affecting food webs, and human health via direct contact and dietary exposure. The result is that the current framework does not fully align with risk assessment best practices; limits the ability to consistently assess high risk sites; and requires increasing reliance on ad hoc site-specific assessments.
+BC's current CSR Schedule 3.4 sediment standards were developed in the
+early 2000s using approaches and data that primarily focused on direct
+toxicity to benthic invertebrates. Although this provided an important
+foundation for contaminated sediment assessment, it does not reflect the
+full range of pathways, receptors, and scientific tools now understood
+to be relevant to sediment risk.
 
-### 2.1 Regulatory Context (CSR / Schedule 3.4)
+Several limitations of the current framework are central to the need for
+modernization:
 
-British Columbia's Contaminated Sites Regulation (CSR) establishes numerical sediment standards through Schedule 3.4. As currently structured, Schedule 3.4 is largely limited to the protection of benthic invertebrates via direct contact. It does not systematically address the transfer of bioaccumulative contaminants through aquatic food webs, nor does it address human health exposures arising from direct contact with sediment or from dietary consumption of aquatic organisms. Consequently, the existing schedule does not, on its own, protect higher-trophic ecological receptors or human consumers. This regulatory gap is the central driver for building toward a multi-pathway Schedule 3.4 framework.
+- The standards primarily address ecological direct contact for benthic
+  invertebrates and do not systematically protect higher-trophic
+  ecological receptors.
 
-### 2.2 Limitations of Current Framework
+- Food-web transfer and bioaccumulation are not directly integrated into
+  Schedule 3.4.
 
-The primary limitation of traditional empirical guidelines is the assumption that the "total recoverable" concentration of a contaminant directly correlates with its toxicity. This correlative approach leads to significant regulatory and ecological shortcomings:
+- Human health pathways, including direct contact with sediment and
+  dietary exposure through aquatic foods, are not systematically
+  addressed through sediment-specific standards.
 
-- **Bioavailability Ignored:**  Empirical methods fail to distinguish between inert, bound contaminants and the biologically active fraction available for uptake by organisms.
-- **Overly Conservative Remediation:**  Assuming 100% bioavailability often results in highly conservative standards that trigger costly, unnecessary remediation of sediments where contaminants are tightly bound and pose no genuine toxicological threat.
-- **False Negatives in Sensitive Environments:**  Conversely, in environments with low binding capacity, empirical standards may underestimate risk, leading to false negatives that fail to protect sensitive benthic or human receptors.
+- Current standards do not adequately reflect Indigenous uses, including
+  traditional food consumption and culturally important aquatic
+  resources.
 
-### 2.3 Risk and Decision-Making Gaps
+- The framework does not systematically incorporate bioavailability
+  adjustment, despite established scientific understanding that sediment
+  chemistry can strongly influence contaminant exposure and toxicity.
 
-The pathway and bioavailability limitations above translate directly into risk-management and decision-making gaps:
+- The contaminant list does not adequately address emerging contaminants
+  or substances that are now recognized as important in aquatic systems.
 
-- **Unprotected pathways:**  Food-web transfer (ecological and human) and human direct contact are not systematically captured, leaving bioaccumulative substances and higher-trophic receptors inadequately protected.
-- **Inconsistent assessment of high-risk sites:**  Without standardized multi-pathway standards, complex or high-risk sites cannot be evaluated consistently across the province.
-- **Reliance on ad hoc assessment:**  The gaps force increasing reliance on case-by-case, site-specific risk assessments, which reduces regulatory predictability and strains both proponent and regulator capacity.
+- The lack of a modernized framework increases reliance on site-specific
+  risk assessments, which can be costly, inconsistent, and difficult to
+  manage for high-risk or high-profile sites.
 
-## 3.0 Vision for Modernized Sediment Standards
+The central problem is therefore not simply that individual numerical
+values are outdated. The broader issue is that the current Schedule 3.4
+structure is pathway-limited and does not provide a comprehensive,
+scalable, or adaptable framework for deriving and applying modern
+sediment standards.
 
-> **Vision statement (reviewer-provided):** Vision for Schedule 3.4 Modernization: Establish a fully integrated multi-pathway standards framework protective of ecological direct contact and food web, and human health direct contact and food web, to enable a tiered regulatory approach that has transparent triggers for Tier 2. Substances will be prioritized considering their biomagnification potential, toxicity, persistence, and occurrence in BC. The outcome will be a defensible, scalable, and adaptable CSR Schedule 3.4.
+## 3.0 Purpose, Scope, and Role of this Options Paper
 
-### 3.1 Multi-Pathway Protection Goals
+This paper is intended to serve as the working draft of the final
+**Matrix Options Paper** identified as the primary Phase 2 deliverable
+in the approved Project Plan. It will be refined over the course of
+Phase 2 as technical research is completed and appended to the report.
 
-The modernized framework is built around four protection pathways, each of which must be explicitly derivable:
+The purpose of this paper is to:
 
-- **Ecological Direct Contact:**  Protection of benthic organisms living in or on the sediment.
-- **Ecological Food Web:**  Protection of higher-trophic aquatic life and wildlife from bioaccumulative substances.
-- **Human Health Direct Contact:**  Protection of people from incidental ingestion and dermal exposure to sediment.
-- **Human Health Food Web:**  Protection of people, including high-consumption and subsistence harvesters, from dietary exposure via aquatic organisms.
+1.  Summarize the scientific and regulatory rationale for modernizing
+    BC's sediment standards.
 
-A mechanistic, multi-pathway matrix relies on thermodynamic and biological principles to predict the actual freely dissolved, bioavailable concentration of a contaminant. By integrating normalizing factors -- such as Total Organic Carbon (TOC) for non-ionic organic compounds and Acid Volatile Sulfides (AVS) for divalent metals -- regulators can accurately assess site-specific toxicity, and standards are dynamically tailored to protect ecological receptors and human health rather than relying on a static, one-size-fits-all number.
+2.  Synthesize the Phase 1 White Paper foundation into the Phase 2
+    options-analysis framework.
 
-### 3.2 Schedule 3.4 Expansion Vision
+3.  Describe the proposed matrix standards framework that Phase 2 is
+    developing.
 
-Realizing the vision means evolving Schedule 3.4 from a single-pathway (benthic direct contact) schedule into an integrated multi-pathway standards structure. The target end-state is a tiered regulatory approach with transparent Tier 2 triggers, populated by substances prioritized on biomagnification potential, toxicity, persistence, and BC occurrence. The result is intended to be defensible, scalable, and adaptable, allowing new substances and pathways to be incorporated over time without re-architecting the regulation.
+4.  Identify and evaluate technical options associated with the Phase 2
+    research tasks.
 
-## 4.0 Scientific Framework
+5.  Provide a structure for integrating technical workstream reports
+    into the final Matrix Options Paper.
 
-This section summarizes the derivation science for each of the four pathways. Full mathematical derivations are provided in the Technical Appendices (Section 14).
+6.  Document the rationale for emerging recommendations.
 
-### 4.1 Ecological Direct Contact
+7.  Support future ENV consideration of a scientifically defensible
+    Schedule 3.4 modernization package.
 
-The Ecological Direct Contact pathway focuses on the protection of benthic macroinvertebrates that live within or directly upon the sediment matrix. To accurately assess toxicity, the framework relies on Equilibrium Partitioning (EqP) theory for non-ionic organic compounds and Acid Volatile Sulfide (AVS) normalization for divalent metals.
+This paper does not determine whether the sediment standards
+modernization project should proceed. That direction has already been
+established through the Phase 1 White Paper and the approved Phase 2
+Project Plan. The purpose of this paper is to evaluate how the matrix
+framework should be designed, supported, documented, and carried
+forward.
 
-- **Organic Compounds:**  Toxicity is governed by the concentration of the contaminant freely dissolved in the interstitial porewater, which is highly dependent on the sediment's Total Organic Carbon (TOC) fraction.
-- **Metals:**  The toxicity of cationic metals (e.g., Cd, Cu, Pb, Ni, Zn, Ag) is mitigated by their binding affinity to sulfide in anaerobic sediments.
+The following items are outside the scope of Phase 2:
 
-*(For full mathematical derivations, see Technical Appendix A: EqP & AVS Framework).*
+- final numerical sediment standards;
 
-### 4.2 Ecological Food Web
+- regulatory amendments;
 
-The Ecological Food Web pathway is designed to protect higher-trophic-level aquatic life and piscivorous wildlife from bioaccumulative contaminants (e.g., PCBs, dioxins, methylmercury). This framework utilizes Biota-Sediment Accumulation Factors (BSAF) to back-calculate protective sediment concentrations from established fish or wildlife tissue thresholds. Following methodologies pioneered by the California State Water Resources Control Board (SWRCB) and the Athabasca Chipewyan First Nation (ACFN), this approach explicitly accounts for site-specific lipid fractions in target species and the organic carbon content of the sediment, enabling a dynamic assessment of trophic transfer risks.
+- supporting technical guidance or protocols; and
 
-*(For full mathematical derivations, see Technical Appendix B: BSAF Framework).*
+- a complete sediment database.
 
-### 4.3 Human Health Direct Contact
+The final Matrix Options Paper is expected to summarize research
+findings, progress made, options considered, and the rationale
+supporting recommendations. It will also document the collaborative
+partnership between ENV, SABCS, SSTAC, and the TWG.
 
-Protecting human populations requires assessing direct contact with contaminated sediments. Standard deterministic risk assessment equations are modified for aquatic and estuarine environments to reflect high-frequency contact scenarios.
+## 4.0 Vision for Modernized Sediment Standards
 
-- **Incidental Ingestion and Dermal Contact:**  Variables are adjusted to account for wetted-sediment adherence factors and localized recreational or occupational exposure frequencies.
+The vision for modernized sediment standards is to establish a fully
+integrated framework that protects ecological and human health across
+all major exposure routes. The future framework should be scientifically
+defensible, scalable, adaptable, transparent, and practical for
+contaminated sites decision-making.
 
-*(For full mathematical derivations, see Technical Appendix C: Human Health Pathways.)*
+The approved Phase 2 Project Plan identifies a three-part future
+Schedule 3.4 structure.
 
-### 4.4 Human Health Food Web
+### 4.1 Part 1: Matrix Numerical Sediment Standards
 
-The Human Health Food Web pathway protects human consumers from sediment-bound toxicants that bioaccumulate in aquatic organisms.
+Part 1 would include Matrix Numerical Sediment Standards for priority
+substances that warrant a refined, pathway-specific approach. These
+standards would address four receptor-pathway combinations:
 
-- **Traditional Food Consumption:**  Incorporating elevated, highly specific ingestion rates of local fish and shellfish ensures the protection of high-exposure subpopulations, notably Indigenous communities relying on traditional aquatic diets.
+- protection of human health from direct exposure to sediment
+  contaminants;
 
-*(For full mathematical derivations, see Technical Appendix C: Human Health Pathways.)*
+- protection of human health from exposure to sediment contaminants in
+  food;
 
-## 5.0 Jurisdictional Scan
+- protection of ecological health from direct exposure to sediment
+  contaminants; and
 
-Leading international regulatory bodies -- most notably the United States Environmental Protection Agency (US EPA) and the Australian and New Zealand Guidelines for Fresh and Marine Water Quality (ANZG) -- have successfully navigated the transition away from strictly empirical, correlative sediment guidelines. By adopting mechanistic models rooted in equilibrium partitioning and bioavailability, these jurisdictions have established frameworks that are both more scientifically robust and practically effective at diagnosing site-specific toxicity. This paradigm shift provides a proven roadmap for British Columbia's modernization efforts.
+- protection of ecological health from exposure to sediment contaminants
+  in food.
 
-## 6.0 Evaluation Criteria
+### 4.2 Part 2: Generic Numerical Sediment Standards to Protect Human Health
 
-To ensure a rigorous, objective, and transparent decision-making process, the Technical Working Group (TWG) will assess all proposed regulatory frameworks against a standardized rubric.
+Part 2 would include generic sediment standards to protect human health.
+These values may be adopted or adapted from other jurisdictions where
+matrix derivation is not feasible, not warranted, or not supported by
+adequate data.
 
-### 6.1 Scientific Defensibility
+### 4.3 Part 3: Generic Numerical Sediment Standards to Protect Ecological Health
 
-The foundational criterion for any proposed matrix option is its alignment with modern, peer-reviewed aquatic toxicology and environmental chemistry.
+Part 3 would include generic sediment standards to protect ecological
+health. These values would also be adopted or adapted through a
+transparent and scientifically defensible procedure.
 
-- Does the framework accurately capture the thermodynamic principles of bioavailability?
-- Does it correctly model bioaccumulation dynamics (e.g., BSAF) for higher trophic levels?
+This three-part structure recognizes that Matrix Numerical Sediment
+Standards require substantial data, technical review, equations, input
+parameters, and supporting rationale. It also recognizes that broader
+contaminant coverage may be achieved more efficiently by adopting
+generic standards for substances where full matrix derivation is not
+appropriate or feasible.
 
-### 6.2 Feasibility
+The matrix framework therefore represents the refined standards pathway
+for priority substances, while the generic standards pathway provides a
+practical mechanism for expanding Schedule 3.4 coverage. Together, these
+components are intended to create a defensible, scalable, and adaptable
+foundation for modernized sediment standards.
 
-A scientifically perfect model is useless if it cannot be practically enforced or measured by industry and regulators.
+## 5.0 Scientific Foundation from Phase 1
 
-- **Analytical Capacity:**  Can commercial environmental laboratories reliably and cost-effectively measure the required input parameters (e.g., TOC, AVS) at the necessary detection limits?
-- **Regulatory Burden:**  Does the framework impose an unmanageable regulatory burden on proponents for low-risk, routine dredging or remediation sites?
+The Phase 1 White Paper provides the scientific and engagement
+foundation for this Options Paper. It reviewed the derivation and
+limitations of current Schedule 3.4 standards, summarized scientific
+concepts relevant to modern sediment standards, completed a
+jurisdictional scan, documented engagement feedback, and proposed a
+preliminary matrix standards framework.
 
-### 6.3 Indigenous Integration
+Key Phase 1 findings include:
 
-In alignment with the province's commitment to reconciliation and the Declaration on the Rights of Indigenous Peoples Act (DRIPA), the framework must accommodate and protect Indigenous values.
+- Modern sediment standards should distinguish between direct exposure
+  and food-pathway exposure.
 
-- Does the framework possess the flexibility to incorporate site-specific traditional use modifiers (e.g., localized, high-frequency aquatic food consumption rates)?
-- Can Indigenous knowledge be effectively interwoven with the mechanistic science (Two-Eyed Seeing)?
+- Modern sediment standards should distinguish between ecological and
+  human health protection goals.
 
-### 6.4 Data Availability and BC Representativeness
+- Bioavailability adjustment is needed to improve the scientific
+  relevance of sediment standards and site assessments.
 
-A framework is only operable where the data required to parameterize it exist and are representative of BC conditions.
+- Bioaccumulation and food-web transfer must be addressed for substances
+  that can accumulate in aquatic organisms and expose wildlife or people
+  through diet.
 
-- Are the input parameters (background concentrations, bioavailability factors, BSAFs, consumption rates) available from BC or geologically/ecologically analogous sources?
-- Where BC-specific data are lacking, can defensible interim values be sourced, and is there a clear path to fill the gaps through the data compilation workstream?
+- Substance prioritization is needed because not every contaminant can
+  be addressed through full matrix derivation.
 
-### 6.5 Regulatory Alignment (CSR Legal Framework)
+- The framework should be supported by a BC-specific data foundation,
+  including occurrence data, background data, bioavailability
+  information, and bioaccumulation information.
 
-The framework must integrate cleanly with the existing CSR legal structure and the evolution of Schedule 3.4.
+- Indigenous uses and food-based exposure pathways need to be
+  incorporated through respectful and appropriate processes.
 
-- Can the framework's outputs be expressed as enforceable standards within the CSR and Schedule 3.4 structure?
-- Does the tiered approach (including Tier 2 triggers) map onto existing regulatory decision points and approvals?
+- Clear guidance, decision tools, and transparent documentation will be
+  essential for future implementation.
 
-### 6.6 Applicability to Substance Prioritization
+The Phase 2 Project Plan builds directly on this foundation. It converts
+the conceptual framework into a set of technical workstreams intended to
+support development of the final Matrix Options Paper.
 
-The framework should support a transparent basis for deciding which substances are addressed first.
+## 6.0 Proposed Matrix Standards Framework
 
-- Does the approach support prioritization based on biomagnification potential, toxicity, persistence, and BC occurrence?
-- Can substances be added incrementally as data and methods mature?
+The proposed framework is based on the concept that sediment standards
+should be organized around both the receptor to be protected and the
+exposure pathway of concern. This results in four matrix standard types.
 
-## 7.0 Implementation Options
+### 6.1 Ecological Health, Direct Exposure
 
-Based on the jurisdictional scan and the established evaluation criteria, the following implementation options were considered by the BC Ministry of Environment. The recommended approach is presented separately in Section 8.
+This standard type is intended to protect benthic and
+sediment-associated ecological receptors from direct exposure to
+contaminants in sediment. It builds on the historic focus of Schedule
+3.4 but would use updated scientific methods, broader data, and
+bioavailability considerations where appropriate.
 
-### Option 1: Status Quo (Empirical Guidelines)
+### 6.2 Ecological Health, Food-Pathway Exposure
 
-This option maintains the current framework, relying entirely on static, co-occurrence-based empirical guidelines for "total recoverable" contaminants.
+This standard type is intended to protect ecological receptors,
+including higher-trophic organisms and wildlife, from contaminants that
+bioaccumulate or biomagnify through aquatic food webs. This pathway
+addresses a major gap in the current Schedule 3.4 structure.
 
-- **Assessment:**  While highly feasible due to established laboratory practices, this option critically fails the Scientific Defensibility criterion by ignoring bioavailability. Furthermore, its static nature fails the Indigenous Integration criterion, as it lacks the mechanical flexibility to adjust for site-specific traditional consumption rates.
+### 6.3 Human Health, Direct Exposure
 
-### Option 2: Universal Mechanistic Adoption
+This standard type is intended to protect people from direct contact
+with contaminated sediment, including incidental ingestion and dermal
+exposure during relevant recreational, harvesting, occupational, or
+other use scenarios.
 
-This option mandates the strict, universal application of full mechanistic modeling (EqP, AVS, and BSAF frameworks) across all contaminated aquatic sites in the province, regardless of size or risk profile.
+### 6.4 Human Health, Food-Pathway Exposure
 
-- **Assessment:**  This option maximizes Scientific Defensibility and enables dynamic Indigenous Integration. However, it catastrophically fails the Regulatory & Analytical Feasibility criterion. Mandating complex, expensive AVS and detailed lipid fraction analyses for every minor, low-risk project would paralyze the regulatory review process and overwhelm commercial laboratory capacity.
+This standard type is intended to protect people from dietary exposure
+to sediment-associated contaminants in fish, shellfish, or other aquatic
+foods. This pathway is particularly important for high-consumption
+populations, including Indigenous communities and others who rely on
+aquatic foods.
 
-## 8.0 Recommended Approach: Tiered Hybrid Framework
+### 6.5 Relationship Between Matrix and Generic Standards
 
-This option implements a pragmatic, multi-tiered approach that harmonizes empirical screening with mechanistic precision, while providing a statistical off-ramp for naturally mineralized geography. It is the recommended approach.
+Matrix standards are intended for priority substances where a refined,
+pathway-specific approach is warranted. Generic standards are intended
+for other substances where external values can be adopted or adapted
+through a transparent procedure.
 
-- **Tier 0 (Background Pre-Screening):**  Utilizes regional Upper Tolerance Limits (UTLs) to prevent anti-degradation policies from forcing the remediation of naturally occurring background metals *(See Technical Appendix D)*.
-- **Tier 1 (Screening):**  Utilizes highly conservative empirical values as a rapid, cost-effective screening tool for low-risk sites.
-- **Tier 2 (Mechanistic Matrix):**  If a site fails the Tier 1 screen, or if it intersects with specific Indigenous harvesting rights or sensitive ecological zones, it triggers a mandatory site-specific mechanistic derivation (EqP, BSAF, or Human Health modifiers).
-- **Assessment:**  This approach perfectly balances all criteria: preserving regulatory Feasibility for routine sites, upholding rigorous Scientific Defensibility for complex or highly contaminated areas, and providing the localized mechanical flexibility necessary for genuine Indigenous Integration.
+This distinction allows the framework to focus intensive derivation
+resources on substances with the greatest potential risk while still
+expanding Schedule 3.4 coverage for other substances.
 
-## 9.0 Phase 2 (2026) Work Plan and Deliverables
+## 7.0 Phase 2 Research Topics Supporting the Matrix Options Paper
 
-### 9.1 Strategic Objective for Phase 2 (2026)
+Phase 2 research tasks are the technical foundation of this Matrix
+Options Paper. Each research task will generate two types of content for
+the final paper: (1) a concise synthesis in the relevant subsection of
+this Section 7, and (2) a more detailed technical appendix documenting
+the research methods, information reviewed, options considered,
+technical findings, uncertainties, and rationale supporting the
+recommendations.
 
-Phase 2 is defined as the **design and operationalization of the multi-pathway matrix framework**, explicitly tied to building the foundations for expanding CSR Schedule 3.4 into an integrated, multi-pathway standards structure.
+The purpose of Section 7 is therefore to summarize the key findings and
+implications of each workstream for the overall matrix standards
+framework. Detailed technical material should generally be placed in the
+appendices to keep the main body of the Options Paper focused on
+synthesis, options analysis, and recommendations. As Phase 2 progresses,
+the subsections below will be iteratively updated based on the completed
+technical research reports appended to this paper.
 
-### 9.2 Phase 2 Deliverables
+This structure is intended to allow the working draft to mature into the
+final Matrix Options Paper deliverable identified in the approved Phase
+2 Project Plan. The final paper will summarize research findings,
+progress made, options considered, and the rationale supporting
+recommendations, while the appendices will provide the detailed
+technical support for those conclusions.
 
-- Draft Matrix Framework Architecture
-- Draft Substance Prioritization Framework
-- Draft Schedule 3.4 expansion concept (policy-ready outline)
-- BC Aquatic/Sediment Data Inventory
-- TWG reports:
-  - Bioavailability
-  - Bioaccumulation classification
-  - Matrix framework
+### 7.1 Bioavailability Adjustment
 
-### 9.3 Phase 2 Workstreams
+A central limitation of the current sediment standards is that they rely
+primarily on bulk sediment concentrations and do not systematically
+account for the fraction of a contaminant that is biologically
+available. Bioavailability can be influenced by organic carbon,
+sulfides, grain size, redox conditions, porewater concentrations,
+contaminant form, and other sediment characteristics.
 
-1. Data & Evidence Base
-2. Bioavailability & Mechanistic Tools
-3. Bioaccumulation & Substance Classification
-4. Regulatory Framework Design (Schedule 3.4 expansion)
+The bioavailability research task will evaluate approaches such as:
 
-### 9.4 Phase 2 Governance and Roles
+- organic carbon normalization for non-ionic organic contaminants;
 
-Phase 2 separates decision authority from advisory input. The specific bodies that fill these roles, their names, and their membership are formalized at Phase 2 adoption; this section describes the functional roles, not yet-constituted bodies.
+- AVS/SEM approaches for certain metals;
 
-- **Decision authority (standards and policy roles):**  A standards-decision role sets scientific direction and approves methodological choices. A policy role owns the CSR/Schedule 3.4 regulatory framing and approves the expansion concept. Together these roles hold final decision authority over Phase 2 deliverables.
-- **Technical Working Groups (TWGs) -- advisory:**  TWGs aligned to the Phase 2 workstreams (Bioavailability, Bioaccumulation Classification, Data Compilation, Matrix Framework) develop technical content, options, and draft deliverables for review. TWGs recommend; they do not decide.
-- **Decision vs advisory boundary:**  Each deliverable in Section 9.2 is produced by a TWG (advisory) and accepted or revised by the relevant decision role (decision authority).
+- sediment grain size considerations;
 
-*(The named decision bodies, their membership, and the formal decision/advisory split are confirmed when the Phase 2 governance is constituted at adoption.)*
+- porewater-based methods;
 
-## 10.0 Phased Implementation Roadmap (2025-2028+)
+- passive sampling tools;
 
-To navigate the complexity of this modernization within the constraints of available resources, the strategic path forward is a data-driven Phased Modernization led by the Science and Standards Technical Advisory Committee (SSTAC). To maximize efficiency and manage volunteer capacity, the implementation utilizes a "Smart Stagger" strategy.
+- bioaccessibility methods relevant to human health pathways; and
 
-**Phase 1 (2025): Project Initiation and Scoping (Completed)**
+- limits on applicability for different sediment settings.
 
-This phase established the scientific rationale and community mandate for reform through preliminary literature reviews, jurisdictional scans, and targeted engagement via the online survey and the Canadian Ecotoxicity Workshop (CEW).
+The purpose of this work is not simply to confirm that bioavailability
+matters. That conclusion is already part of the project foundation. The
+purpose is to evaluate which approaches are scientifically defensible,
+practical, measurable, and suitable for incorporation into the proposed
+matrix framework.
 
-**Phase 2 (2026): Foundational Research & Study Design**
+Detailed findings from the bioavailability research task will be
+documented in **Appendix A: Bioavailability Adjustment Research
+Report**.
 
-This phase focuses on the foundational actions executable within the SABCS baseline budget, launching Technical Working Groups (TWGs) in sequential waves rather than concurrently. The detailed Phase 2 work plan, deliverables, workstreams, and governance are set out in Section 9.
+### 7.2 Bioaccumulation
 
-- **Wave 1 (Design & Data):**
-  - **Study Design TWG (Bioavailability):**  Tasked with evaluating approaches to develop a research plan for creating BC-specific bioavailability tools.
-  - **Data Compilation TWG:**  Tasked with designing the database architecture, setting up the BC aquatic database, and overseeing the execution of the Data Compilation Project.
-  - **Deliverable:**  The BC Aquatic Database.
-- **Wave 2 (Classification & Scoping):**
-  - **Bioaccumulation Classification TWG:**  Tasked with developing a framework for classifying bioaccumulative substances for food pathways.
-  - **Matrix Standards Framework TWG:**  Tasked with conducting an enhanced jurisdictional review and developing a Matrix Options Paper to evaluate the merits of direct adoption, modification, or *de novo* derivation.
-- **Indigenous Engagement Support:**  The SSTAC will prepare a proposed strategy for supporting respectful Indigenous engagement throughout the scientific development process.
+The current standards do not systematically address substances that
+accumulate through food webs and expose higher-trophic ecological
+receptors or human consumers. Phase 2 therefore includes research on
+bioaccumulation and food-web transfer.
 
-**Phase 3 (2027): Scientific Development and Derivation**
+The bioaccumulation task will evaluate approaches such as:
 
-This phase utilizes the BC aquatic database and the Matrix Options Paper to develop the technical procedures required for standard derivation.
+- biota-sediment accumulation factors;
 
-- **Establish Matrix Standards Derivation TWGs:**  Four separate TWGs will be established (SedS-contactHH, SedS-contactECO, SedS-foodHH, and SedS-foodECO) to develop the scientific framework for deriving each standard type.
-- **Establish Substance Prioritization TWG:**  Tasked with developing a Prioritization Grid Classification System (assessing Hazard vs. Occurrence).
-- **Deliverables:**
-  - A Detailed Derivation Approach (the "how-to" guides).
-  - Draft SSTAC Technical Procedures (e.g., Technical Procedure for Bioavailability Adjustment; Technical Procedure for Updating CSR Standards with Values Adopted from Other Jurisdictions).
+- tissue residue guidelines;
 
-**Phase 4 (2028+): Application of the Scientific Framework & Final Scientific Package**
+- food web models;
 
-This phase involves the first application of the new procedures to develop proposed standards and finalize the package for BC ENV handoff.
+- trophic transfer factors;
 
-- **Draft the Updated Scientific Framework Document:**  Synthesizing the work of all TWGs into a single comprehensive document detailing the tiered assessment process and matrix approach.
-- **Draft Proposed Numerical Standards:**  Developing draft proposed matrix standards for the priority list of contaminants.
-- **Collaborate on Technical Engagement:**  Co-facilitating technical engagement with experts and stakeholders on the draft scientific proposals.
-- **Compile Final Recommendation Package:**  The final, unified scientific recommendation package will be officially handed off to the BC Ministry of Environment for policy review, consultation, and legal promulgation.
+- human and ecological toxicity reference values;
 
-## 11.0 Indigenous Engagement Approach
+- receptor-specific exposure assumptions;
 
-A modernized sediment quality framework must actively support the province's commitment to reconciliation and align with the Declaration on the Rights of Indigenous Peoples Act (DRIPA). The recommended tiered matrix framework achieves this by explicitly integrating Indigenous rights and traditional knowledge into the core mechanical derivations of sediment standards.
+- classification of bioaccumulative substances; and
 
-### 11.1 Two-Eyed Seeing Approach
+- relative suitability of these tools for BC aquatic environments.
 
-The framework is structurally guided by the principle of "Two-Eyed Seeing" (Etuaptmumk). It weaves together the strengths of Western mechanistic science with Indigenous traditional knowledge (localized ecological baselines, harvesting practices, and culturally significant receptor identification).
+This work will inform the ecological food-pathway and human health
+food-pathway components of the matrix standards framework. It will also
+inform substance classification and prioritization.
 
-### 11.2 Quantitative Integration (Consumption Modifiers)
+Detailed findings from the bioaccumulation research task will be
+documented in **Appendix B: Bioaccumulation Research Report**.
 
-The primary mechanism for integrating Indigenous rights within the matrix framework occurs during the Tier 2 Human Health pathway derivations (see Section 4.4). Standard deterministic risk assessments often rely on generalized recreational consumption rates (e.g., 32 g/day). To protect subsistence harvesting and traditional diets, the framework mechanically inserts localized, high-volume consumption modifiers (e.g., 142 g/day to 388 g/day) directly into the exposure equations.
+### 7.3 Substance Classification
 
-### 11.3 Collaborative Governance
+Substance classification is needed to determine which substances may
+require matrix standards, generic standards, watch-list status, or
+additional research. Classification provides the technical basis for
+prioritization.
 
-During any Tier 2 site-specific assessment that intersects with traditional territories or harvesting rights, Indigenous participation is essential for determining the appropriate localized input parameters (e.g., identifying target species for BSAF modeling, establishing site-specific exposure frequencies).
+The classification framework should consider:
 
-## 12.0 Risks and Mitigation
+- toxicity;
 
-| Risk | Description | Mitigation |
-|---|---|---|
-| **Data gaps / BC representativeness** | BC-specific background, bioavailability, and bioaccumulation data may be insufficient to parameterize the matrix. | Prioritize the Data & Evidence Base workstream (Section 9.3); permit defensible analog/interim values with a documented path to replacement. |
-| **Analytical / laboratory capacity** | Commercial labs may have limited capacity for AVS/SEM, TOC, and lipid analyses at required detection limits. | Keep mechanistic analyses Tier 2 (triggered) rather than universal; engage labs early on method readiness. |
-| **TWG volunteer capacity** | The Smart Stagger relies on volunteer TWG effort that may be over-committed. | Sequential waves (Section 10); clear charters, workplans, and scoped deliverables (Section 9). |
-| **Indigenous engagement adequacy** | Engagement that is late or under-resourced would undermine legitimacy and DRIPA alignment. | Stand up the engagement strategy in Phase 2; embed collaborative governance in Tier 2 (Section 11). |
-| **Regulatory / legal alignment** | The matrix outputs may not map cleanly onto CSR Schedule 3.4 structure. | Run the Regulatory Framework Design workstream in parallel; produce a policy-ready Schedule 3.4 expansion concept (Section 9.2). |
-| **Schedule slippage** | Dependencies (data before derivation) could cascade delays across phases. | Phase gating with defined deliverables; decouple workstreams where possible. |
-| **Scientific defensibility challenges** | Proposed methods may face technical challenge during consultation. | Anchor methods in peer-reviewed practice and the jurisdictional scan; document derivations in the Technical Appendices. |
+- persistence;
 
-## 13.0 Conclusions and Next Steps
+- bioaccumulation potential;
 
-This Options Paper recommends the **Tiered Hybrid Framework** (Section 8) as the path to a modernized, multi-pathway CSR Schedule 3.4 that protects ecological direct contact and food web, and human health direct contact and food web. The framework balances scientific defensibility with regulatory feasibility and provides explicit mechanisms for Indigenous integration and substance prioritization.
+- biomagnification potential;
 
-The immediate priority is execution of the Phase 2 (2026) work plan (Section 9): standing up the four workstreams, producing the draft matrix framework architecture, substance prioritization framework, Schedule 3.4 expansion concept, and the BC aquatic/sediment data inventory, supported by the Bioavailability, Bioaccumulation Classification, and Matrix Framework TWGs.
+- occurrence in BC sediments;
 
-Next steps:
+- potential for direct exposure risk;
 
-- Finalize this Options Paper following TWG review.
-- Confirm TWG structure, membership, charters, and workplans (Sections 9 and 10).
-- Launch the Data & Evidence Base workstream as the foundational dependency for all subsequent derivation work.
-- Initiate the Indigenous engagement strategy in parallel with technical work.
+- potential for food-pathway risk;
 
-# TECHNICAL APPENDICES
+- data availability;
 
-*(The Mathematical and Policy Derivation Architecture for the Tiered Hybrid Framework)*
+- analytical feasibility;
 
-## Appendix A: Ecological Direct Contact (Bioavailability Mechanics)
+- availability of values from other jurisdictions; and
 
-### A.1 The Limitation of Generic Standards
+- feasibility of matrix derivation.
 
-Generic Tier 1 numerical standards are inherently designed to be conservative, operating on the precautionary assumption of 100% contaminant bioavailability. To provide a pragmatic, scientifically defensible regulatory off-ramp, the framework establishes the mathematical mechanics for a **Tier 2 Site-Specific Adjustment**. This allows site owners to modify the strict generic standards by measuring specific geochemical modifying factors, specifically Total Organic Carbon (TOC) and Acid Volatile Sulfides (AVS).
+Potential classification outcomes include:
 
-### A.2 Non-Ionic Organic Compounds (TOC Normalization)
+- matrix candidate;
 
-For non-ionic organic contaminants, bioavailability is governed by the amount of organic matter present. To transition to a Tier 2 standard, risk assessors must calculate the carbon-normalized concentration ($C_{oc}$) using Equilibrium Partitioning (EqP) theory and the site-specific fraction of organic carbon ($f_{oc}$):
+- generic standards candidate;
 
-$$C_{oc} = \frac{C_s}{f_{oc}}$$
+- watch-list substance;
 
-*Limitation:*  The TOC normalization protocol may only be applied where the site-specific $f_{oc}$ falls between **0.2% and 10%**.
+- research-needed substance;
 
-### A.3 Divalent Metals (The AVS/SEM Framework)
+- low-priority substance; or
 
-For divalent heavy metals (Cd, Cu, Pb, Ni, Zn), bioavailability in anaerobic sediments is controlled by Acid Volatile Sulfides (AVS). To execute a Tier 2 adjustment, assessors must simultaneously extract and measure both the AVS and the target metals (Simultaneously Extracted Metals, or SEM):
+- substance requiring further screening before classification.
 
-$$\Sigma [SEM] - [AVS] \le 0$$
+Detailed findings from the substance classification task will be
+documented in **Appendix C: Substance Classification Framework**.
 
-*(Concentrations expressed in $\mu mol/g$).*  If the sum of SEM minus AVS is less than or equal to zero, the site is deemed to have **no predicted benthic toxicity** for that metal suite.
+### 7.4 Substance Prioritization
 
-### A.4 The Coastal Redox Caveat
+Substance prioritization is required because it is not feasible to
+develop Matrix Numerical Sediment Standards for every substance. Phase 2
+will develop a prioritization framework to identify which substances
+should be considered first for matrix standards.
 
-In intertidal zones, tidal flushing introduces dissolved oxygen into the sediment bed, rapidly oxidizing AVS and releasing toxic metals. Therefore, AVS/SEM Tier 2 adjustments cannot be applied in highly dynamic coastal intertidal or riverine erosional zones unless accompanied by a robust seasonal monitoring program.
+The prioritization framework should consider the following factors.
 
-## Appendix B: Ecological Food Web (The Bioaccumulation Engine)
+#### 7.4.1 Occurrence
 
-### B.1 Strategic Intent and Foundational Mechanics
+Occurrence should be informed by literature, site reports, submitted
+data, shared datasets, and the BC Aquatic Database. Occurrence analysis
+should identify substances detected in BC sediments, concentration
+ranges, regional patterns, exceedance frequency, and substances that
+currently drive site-specific assessments.
 
-Adapting the foundational logic of the Athabasca Chipewyan First Nation (ACFN) framework, this engine mathematically derives the maximum permissible concentration of a contaminant in sediment ($SedS_{food}$) by working backward from a human health Toxicity Reference Value (TRV):
+#### 7.4.2 Persistence, Bioaccumulation, and Toxicity
 
-$$SedS_{food} = \frac{TRV \times BW}{IR \times BSAF \times F_{site}}$$
+Substances with persistent, bioaccumulative, and toxic properties may
+warrant higher priority because of their ability to persist in
+sediments, move through food webs, and affect ecological or human
+receptors.
 
-*(Where TRV = Toxicity Reference Value, BW = Body Weight, IR = Ingestion Rate, BSAF = Biota-Sediment Accumulation Factor, and $F_{site}$ = Site-Use Fraction).*
+#### 7.4.3 Feasibility
 
-### B.2 The Tiered Regional Dietary Matrix (IR)
+Feasibility should consider whether sufficient information exists to
+derive a matrix standard, whether external values can be adopted,
+whether analytical methods are available, and whether required input
+parameters can be compiled.
 
-To execute the derivation in BC, the Ministry will implement a **Tiered Regional Dietary Matrix**. Risk assessors must parameterize the Ingestion Rate (IR) based on geographical location, utilizing 90th or 95th percentile consumption rates.
+#### 7.4.4 Urgency
 
-- **Coastal/Marine Zones:**  High-volume rates accounting for anadromous species and marine bivalves.
-- **Inland/Fluvial Zones:**  High-volume rates accounting for resident freshwater species.
+Urgency should consider whether a substance is associated with high-risk
+sites, frequent exceedances, public or Indigenous concern, emerging
+contaminant status, lack of current standards, or inconsistent site
+management.
 
-### B.3 The Geochemical Translation Protocol (BSAF Normalization)
+#### 7.4.5 Resource Requirements
 
-A BSAF derived for a freshwater lake cannot be applied to a coastal marine estuary due to variances in salinity, speciation, and carbon loads. The framework mandates **Lipid and Carbon Normalization** for all non-ionic organic compounds. To calculate an accurate BSAF, the raw tissue concentration ($C_t$) is normalized to the organism's lipid fraction ($f_{lipid}$), and the raw sediment concentration ($C_s$) is normalized to the sediment's organic carbon ($f_{oc}$):
+Resource requirements should consider the technical effort, staff time,
+TWG support, data review, toxicological analysis, modelling, engagement,
+and future guidance development needed to support a defensible standard.
 
-$$BSAF_{lipid/oc} = \frac{C_t / f_{lipid}}{C_s / f_{oc}}$$
+The final prioritization framework should produce a clear recommendation
+for each substance or substance group, including whether it should
+proceed toward matrix derivation, generic adoption, watch-list status,
+or further research.
 
-## Appendix C: Human Health Pathways (The Dual-Derivation Mandate)
+Detailed findings from the substance prioritization task will be
+documented in **Appendix D: Substance Prioritization Framework**.
 
-### C.1 The Regulatory Paradigm Shift
+### 7.5 Matrix Standards Derivation Options
 
-Historically, environmental frameworks assumed that protecting a high-volume subsistence consumer ($SedS_{food}$) inherently eclipses the risks associated with all other human exposure pathways. While true for bioaccumulating compounds, for contaminants with low BSAFs but high direct mammalian toxicity (e.g., lead, high-molecular-weight PAHs), the risk driver shifts to direct environmental contact (incidental ingestion and dermal absorption of wet sediment).
+Phase 2 will evaluate options for equations and technical approaches for
+each of the four receptor-pathway combinations.
 
-### C.2 The Dual-Derivation Policy Architecture
+For ecological direct exposure, possible approaches include updated
+empirical values, species sensitivity distributions, equilibrium
+partitioning methods, adopted or adapted jurisdictional values, or
+hybrid approaches.
 
-The options paper mandates a **Dual-Derivation Protocol**. For any given substance, risk assessors must independently calculate both the food-web standard ($SedS_{food}$) and the direct-contact standard ($SedS_{contact}$). The final generic numerical sediment standard must mathematically be the more conservative of the two:
+For ecological food-pathway exposure, possible approaches include tissue
+residue translation, BSAF-based approaches, food web models,
+receptor-specific modelling, or adopted values where available and
+defensible.
 
-$$Generic\ Standard_{HH} = \min(SedS_{food}, SedS_{contact})$$
+For human health direct exposure, possible approaches include adapted
+human health risk assessment equations, sediment-specific ingestion and
+dermal exposure assumptions, bioaccessibility adjustments, and use-based
+exposure scenarios.
 
-### C.3 Calculating Direct Contact ($SedS_{contact}$)
+For human health food-pathway exposure, possible approaches include
+general population consumption assumptions, high-consumption
+assumptions, Indigenous food-based exposure considerations, tissue-based
+thresholds, BSAFs, and food web models.
 
-The calculation of $SedS_{contact}$ utilizes exposure parameters centered on a sensitive receptor (toddler) engaging in high-frequency contact with wet sediment, synthesizing:
+Detailed findings from the matrix standards derivation review will be
+documented in **Appendix E: Matrix Standards Derivation Options
+Review**.
 
-- **Incidental Ingestion:**  Utilizing age-adjusted wetted-sediment ingestion rates.
-- **Dermal Absorption:**  Utilizing chemical-specific dermal absorption fractions and elevated wet-sediment Dermal Adherence Factors (DAF).
+### 7.6 Generic Standards Adoption Procedure
 
-## Appendix D: The "Tier 0" Background Solution
+Phase 2 will develop a procedure for adopting Generic Numerical Sediment
+Standards from other jurisdictions for substances that are not selected
+for matrix derivation.
 
-### D.1 The Anti-Degradation Paradox in BC
+The adoption procedure should evaluate:
 
-Enforcing strict, generic anti-degradation models creates a paradox in BC due to naturally mineralized geology. Fluvial and estuarine sediments frequently exhibit naturally elevated concentrations of metals (arsenic, copper, zinc) that exceed generic thresholds. Enforcing a static standard would legally force site owners to "clean up" naturally occurring geology.
+- source jurisdiction;
 
-### D.2 The "Tier 0" Screening Architecture
+- derivation method;
 
-This protocol acts as a mandatory pre-screening step before a site is evaluated against Tier 1 standards.
+- protection goal;
 
-- **The Policy Rule:**  If the measured concentration of a contaminant is statistically demonstrated to be less than or equal to the established natural regional background concentration, the site is deemed uncontaminated. The natural background mathematically supersedes the Tier 1 generic standard.
+- receptor and exposure pathway;
 
-### D.3 Statistical Methodology: The Upper Tolerance Limit (UTL)
+- protection level;
 
-The Ministry will mandate the use of the **95th percentile Upper Tolerance Limit with 95% confidence ($UTL_{95/95}$)**, derived from pristine, geologically analogous reference sites:
+- freshwater, marine, or estuarine applicability;
 
-$$UTL_{95/95} = \bar{x} + (K \times s)$$
+- relevance to BC species and sediment conditions;
 
-*(Where $\bar{x}$ = sample mean, $s$ = standard deviation, and $K$ = tolerance factor).*
+- treatment of bioavailability;
 
-### D.4 Sourcing Reference Data
+- treatment of bioaccumulation;
 
-To execute a Tier 0 screening, the spatial analog must meet strict criteria:
+- analytical feasibility;
 
-- **Geochemical Equivalence:**  Same parent geology, grain size, and TOC profile.
-- **Hydrological Equivalence:**  Same watershed or tidal circulation cell.
-- **Anthropogenic Isolation:**  Demonstrably free from localized point-source pollution.
+- uncertainty;
+
+- documentation requirements; and
+
+- schedule for future review.
+
+Detailed findings from the generic standards adoption task will be
+documented in **Appendix F: Generic Standards Adoption Procedure**.
+
+### 7.7 BC Aquatic Database
+
+The BC Aquatic Database is a core Phase 2 deliverable. It will support
+occurrence analysis, background concentration evaluation,
+prioritization, and future standards derivation.
+
+The database should support:
+
+- identification of substances detected in BC sediments;
+
+- concentration ranges for substances in sediments across BC;
+
+- development of provincial or regional background concentration
+  information;
+
+- identification of substances exceeding current Schedule 3.4 standards
+  or external screening values;
+
+- identification of substances that commonly require site-specific risk
+  assessment; and
+
+- evaluation of where bioavailability adjustments have affected risk
+  management outcomes.
+
+The database is not expected to be complete in Phase 2, but it should be
+sufficiently developed to support the final Matrix Options Paper and
+future standards work.
+
+Detailed information on the BC Aquatic Database structure, data sources,
+QA/QC approach, and preliminary findings will be documented in
+**Appendix G: BC Aquatic Database Summary**.
+
+### 7.8 Policy-Ready Input Parameters
+
+Matrix standards require a comprehensive set of input parameters. Phase
+2 will begin compiling policy-ready inputs needed for future calculation
+of preliminary toxicity-based standards in Phase 3.
+
+These inputs may include:
+
+- toxicity reference values for human health;
+
+- toxicity reference values for ecological health;
+
+- receptor characteristics;
+
+- exposure assumptions;
+
+- consumption rates;
+
+- tissue thresholds;
+
+- sediment grain size thresholds;
+
+- water lot use classifications;
+
+- bioavailability parameters;
+
+- BSAFs or model inputs; and
+
+- other values needed for receptor-pathway equations.
+
+The input parameter compendium should identify preferred values,
+alternative values, sources, uncertainty, and whether policy review is
+needed before use in standards derivation.
+
+Detailed information on compiled input parameters, sources, uncertainty,
+and remaining data gaps will be documented in **Appendix H: Policy-Ready
+Input Parameter Compendium**.
+
+## 8.0 Evaluation Criteria
+
+The options considered in this paper should be evaluated using a
+consistent set of criteria. These criteria apply to technical options
+within the framework, not to the question of whether to proceed with
+modernization.
+
+### 8.1 Scientific Defensibility
+
+The approach should reflect current sediment science, toxicology,
+bioavailability, bioaccumulation, food-web transfer, exposure
+assessment, and data quality expectations.
+
+### 8.2 Protectiveness
+
+The approach should protect ecological and human receptors across
+relevant direct exposure and food-pathway exposure routes.
+
+### 8.3 Feasibility
+
+The approach should be implementable using available data, analytical
+methods, technical expertise, laboratory capacity, and regulatory
+resources.
+
+### 8.4 BC Representativeness
+
+The approach should be relevant to BC sediment conditions, aquatic
+settings, species, geochemistry, contaminant occurrence patterns, and
+site management needs.
+
+### 8.5 Transparency
+
+The approach should be understandable, reproducible, and clearly
+documented so that regulators, practitioners, Indigenous partners, and
+affected parties can understand the rationale.
+
+### 8.6 Indigenous Use and Rights Considerations
+
+The approach should be capable of considering Indigenous food-based
+exposure pathways, culturally important receptors, and Indigenous
+Knowledge where appropriate and supported through respectful engagement.
+
+### 8.7 Regulatory Alignment
+
+The approach should be capable of fitting within a future Schedule 3.4
+structure and supporting ENV's future policy and legal review processes.
+
+### 8.8 Scalability
+
+The approach should allow new substances, methods, and data to be
+incorporated over time without redesigning the entire framework.
+
+### 8.9 Resource Efficiency
+
+The approach should make effective use of limited ENV capacity, SABCS
+support, SSTAC expertise, and TWG volunteer contributions.
+
+## 9.0 Technical Options Analysis
+
+This section is the core options-analysis section of the Matrix Options
+Paper. The options evaluated here are specific technical and
+policy-design choices within the matrix standards framework. The purpose
+is not to evaluate whether to develop the framework, because that work
+is already underway.
+
+### 9.1 Bioavailability Adjustment Options
+
+#### Option A: Baseline Bioavailability Assumptions Only
+
+This option would incorporate standardized assumptions into Tier 1
+matrix standards where appropriate, such as organic carbon normalization
+for selected organic substances. It would improve consistency and reduce
+complexity but may not adequately reflect site-specific sediment
+conditions.
+
+#### Option B: Baseline Assumptions Plus Site-Specific Adjustment
+
+This option would use standard assumptions for initial matrix standards
+while allowing higher-tier site-specific adjustment using tools such as
+TOC, AVS/SEM, porewater, passive sampling, or bioaccessibility methods
+where scientifically appropriate. This approach balances defensibility
+and feasibility.
+
+#### Option C: Expanded Mechanistic Bioavailability Toolkit
+
+This option would make broader use of mechanistic and measurement-based
+tools across substances and settings. It may provide strong scientific
+resolution but could be limited by laboratory capacity, data
+requirements, cost, and implementation complexity.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop a tiered bioavailability
+approach that includes baseline assumptions where defensible and
+site-specific adjustment tools where appropriate. The final
+recommendation will depend on the Phase 2 bioavailability review,
+including applicability to BC sediment types, analytical capacity, and
+uncertainty.
+
+### 9.2 Bioaccumulation Options
+
+#### Option A: BSAF-Based Sediment Translation
+
+This option would derive food-pathway sediment values by translating
+protective tissue concentrations or toxicity thresholds to sediment
+concentrations using BSAFs. It may be efficient where suitable BSAFs
+exist, but it depends strongly on data quality and relevance.
+
+#### Option B: Tissue Residue and Food Consumption Approach
+
+This option would focus on identifying protective tissue concentrations
+for ecological or human receptors, then determining whether sediment
+standards can be linked to those tissue values. It may be useful where
+tissue thresholds are better established than sediment relationships.
+
+#### Option C: Food Web Model Approach
+
+This option would use food web models for substances or receptors
+requiring more detailed trophic transfer analysis. It may be most
+appropriate for complex substances, sensitive receptors, or high-profile
+aquatic systems, but it requires more data and modelling expertise.
+
+#### Option D: Tiered Bioaccumulation Framework
+
+This option would use simpler BSAF or tissue-based approaches where
+defensible and reserve food web modelling for priority substances or
+more complex cases.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop a tiered bioaccumulation
+framework. The final recommendation should distinguish between
+substances suitable for BSAF-based approaches, substances requiring food
+web modelling, and substances requiring additional research before
+food-pathway standards can be derived.
+
+### 9.3 Substance Classification Options
+
+#### Option A: Hazard-Based Classification
+
+This option would classify substances primarily by toxicity,
+persistence, and bioaccumulation potential. It is scientifically
+straightforward but may not reflect whether substances actually occur in
+BC sediments.
+
+#### Option B: Occurrence-Based Classification
+
+This option would classify substances primarily by detection frequency,
+concentration range, and exceedance patterns in BC sediments. It is
+highly relevant to BC but may under-prioritize highly hazardous
+substances with limited current data.
+
+#### Option C: PBT Classification
+
+This option would focus on persistence, bioaccumulation, and toxicity.
+It is important for food-web substances but may not adequately address
+non-bioaccumulative substances that are important for direct contact
+pathways.
+
+#### Option D: Multi-Factor Classification
+
+This option would combine hazard, occurrence, exposure pathway
+relevance, data availability, matrix feasibility, and generic standards
+availability. It is more complex but better suited to the broader
+Schedule 3.4 modernization framework.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop a multi-factor classification
+framework. This provides a defensible bridge between technical hazard
+assessment, BC occurrence data, substance prioritization, and the
+selection of matrix versus generic standards pathways.
+
+### 9.4 Substance Prioritization Options
+
+#### Option A: Hazard-First Prioritization
+
+This option would prioritize substances with the greatest toxicity,
+persistence, or bioaccumulation potential. It is protective but may not
+reflect BC occurrence or feasibility.
+
+#### Option B: Occurrence-First Prioritization
+
+This option would prioritize substances most frequently detected or most
+often exceeding existing values in BC sediments. It is practical but may
+understate substances of high concern with incomplete occurrence data.
+
+#### Option C: Hazard and Occurrence Matrix
+
+This option would prioritize substances based on the intersection of
+hazard and BC occurrence. It provides a more balanced approach than
+either factor alone.
+
+#### Option D: Integrated Prioritization Framework
+
+This option would combine hazard, occurrence, feasibility, urgency,
+resource requirements, and availability of external values. It provides
+the most complete basis for determining matrix versus generic pathways.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop an integrated prioritization
+framework that includes hazard, occurrence, feasibility, urgency, and
+resource requirements. This aligns directly with the approved Phase 2
+task structure.
+
+### 9.5 Matrix Standards Derivation Options
+
+#### 9.5.1 Ecological Direct Contact
+
+Options include updated empirical values, SSD-based derivation,
+EqP-based derivation for appropriate substances, adopted or adapted
+values, and hybrid approaches. The preferred approach may vary by
+substance and data availability.
+
+#### 9.5.2 Ecological Food Pathway
+
+Options include BSAF-based translation, tissue residue approaches, food
+web models, receptor-specific modelling, and adopted or adapted values.
+The preferred approach should depend on bioaccumulation potential,
+receptor relevance, and data availability.
+
+#### 9.5.3 Human Health Direct Contact
+
+Options include applying soil-based human health values, adapting
+existing human health risk assessment equations, developing
+sediment-specific direct contact equations, and using use-specific
+exposure scenarios. The preliminary direction is to evaluate
+sediment-specific equations rather than relying solely on soil
+analogues.
+
+#### 9.5.4 Human Health Food Pathway
+
+Options include general consumption assumptions, high-consumption
+assumptions, regionalized consumption scenarios, Indigenous food-based
+exposure scenarios where appropriate, BSAF-based approaches, and food
+web models. The preliminary direction is to develop a framework capable
+of incorporating high-use and Indigenous food-based exposure
+considerations through appropriate engagement and technical support.
+
+### 9.6 Generic Standards Adoption Options
+
+#### Option A: Direct Adoption
+
+This option would adopt external standards without significant
+adjustment. It is efficient but may not account for differences in
+derivation methods, protection goals, species, sediment conditions, or
+regulatory context.
+
+#### Option B: Adoption with Screening Review
+
+This option would adopt external values after a screening-level review
+of source, protection goal, and apparent relevance. It is more
+defensible than direct adoption but may still lack sufficient
+documentation.
+
+#### Option C: Structured Adoption Procedure
+
+This option would establish a formal procedure for evaluating external
+values based on source jurisdiction, derivation method, protection goal,
+pathway, uncertainty, analytical feasibility, BC relevance, and
+documentation requirements.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop a structured adoption procedure
+for generic standards. This is necessary to support Parts 2 and 3 of the
+proposed Schedule 3.4 structure.
+
+### 9.7 Schedule 3.4 Structure Options
+
+#### Option A: Single Consolidated Schedule
+
+This option would list all sediment standards together without
+distinguishing matrix and generic values. It may appear simple but would
+obscure differences in derivation basis, pathway coverage, and intended
+use.
+
+#### Option B: Matrix Standards Only
+
+This option would include only matrix standards. It would be
+scientifically refined but not feasible for all substances due to data
+and resource requirements.
+
+#### Option C: Generic Standards Only with Expanded List
+
+This option would expand contaminant coverage but would not adequately
+address priority substances requiring pathway-specific matrix standards.
+
+#### Option D: Three-Part Structure
+
+This option would include matrix standards for priority substances and
+separate generic standards for human health and ecological health. It
+aligns with the approved Phase 2 vision.
+
+#### Preliminary Direction
+
+The preliminary direction is to develop the three-part Schedule 3.4
+structure described in the approved Project Plan.
+
+## 10.0 Emerging Recommended Framework
+
+Based on the Phase 1 White Paper and the approved Phase 2 Project Plan,
+the emerging recommended framework is a **multi-part hybrid sediment
+standards framework** that combines matrix standards for priority
+substances with generic standards for broader contaminant coverage.
+
+### 10.1 Matrix Standards for Priority Substances
+
+Priority substances should be identified through a structured
+classification and prioritization process. Matrix standards should be
+developed where substances warrant pathway-specific derivation and where
+sufficient data and input parameters are available or can be developed.
+
+### 10.2 Generic Standards for Other Substances
+
+Generic standards should be adopted or adapted from other jurisdictions
+where matrix derivation is not feasible, not necessary, or not
+proportionate. A structured adoption procedure is needed to ensure
+values are scientifically defensible and relevant to BC.
+
+### 10.3 Research-Driven Framework Refinement
+
+The final recommendations in this paper should be refined as Phase 2
+research is completed. Each workstream should contribute to the final
+Matrix Options Paper through both a body-section synthesis and a
+detailed appendix.
+
+## 11.0 Indigenous Engagement and Integration
+
+A modernized sediment standards framework must be capable of considering
+Indigenous uses, including traditional food consumption, culturally
+important species, and aquatic resources that support Indigenous rights
+and lifeways. The Phase 1 White Paper identified this as a core gap in
+the current framework and a key component of a modernized approach.
+
+Phase 2 should distinguish between technical framework development and
+engagement with Indigenous Nations. Technical work can identify where
+Indigenous food-based exposure pathways are relevant and what kinds of
+parameters may be needed, but it cannot substitute for respectful
+engagement.
+
+Key principles include:
+
+- Indigenous Nations are rights holders, not merely stakeholders.
+
+- Indigenous food-based exposure pathways should be explicitly
+  recognized in the framework.
+
+- Community-specific consumption assumptions should only be used where
+  appropriate and supported by engagement.
+
+- Indigenous Knowledge should be integrated respectfully and through
+  appropriate processes.
+
+- The matrix framework should be flexible enough to accommodate high-use
+  scenarios and culturally important receptors where relevant.
+
+The final Matrix Options Paper should include an engagement summary and
+describe how Indigenous considerations were addressed within the Phase 2
+scope.
+
+Detailed engagement information will be documented in **Appendix I:
+Engagement Summary**.
+
+## 12.0 Governance, Collaboration, and Workstream Integration
+
+Phase 2 is a collaborative effort involving ENV, SABCS, SSTAC, and the
+TWG. ENV is responsible for standards development and regulatory
+decision-making, while SABCS, SSTAC, and TWG members contribute
+scientific expertise, research support, review, and collaborative
+capacity.
+
+The final Matrix Options Paper should clearly distinguish between
+advisory technical input and ENV decision authority. TWGs may develop
+technical content, evaluate options, and recommend approaches, but ENV
+retains responsibility for future policy, regulatory, and standards
+decisions.
+
+Workstream integration is essential because the Phase 2 topics are
+interdependent. Bioavailability work affects matrix derivation.
+Bioaccumulation work affects classification. Database development
+affects prioritization. Input parameters affect future standards
+calculation. Generic standards adoption affects the proposed Schedule
+3.4 structure.
+
+The integration section of the final Matrix Options Paper should
+summarize how the following workstreams were aligned:
+
+- data and evidence base;
+
+- bioavailability;
+
+- bioaccumulation;
+
+- substance classification;
+
+- substance prioritization;
+
+- matrix framework design;
+
+- generic standards adoption;
+
+- policy integration; and
+
+- engagement.
+
+## 13.0 Risks, Constraints, and Mitigation
+
+### 13.1 Data Gaps
+
+Data gaps may limit the ability to derive matrix standards or classify
+substances with confidence. Mitigation includes developing the BC
+Aquatic Database, identifying data quality limitations, and using
+generic standards or research-needed categories where matrix derivation
+is not currently feasible.
+
+### 13.2 Internal Capacity
+
+Phase 2 is constrained by limited internal ENV capacity, with
+approximately 1.0 FTE distributed across the internal project team.
+Mitigation includes smart staggering, clear scope boundaries, and use of
+TWG support for research, drafting, and review.
+
+### 13.3 TWG Capacity
+
+TWG members provide volunteer expertise, but volunteer capacity is not
+unlimited. Mitigation includes defined workplans, focused review
+requests, clear timelines, and prioritization of high-value tasks.
+
+### 13.4 Scope Creep
+
+Phase 2 could expand beyond approved scope if final numerical standards,
+regulatory amendments, or final technical guidance are added
+prematurely. Mitigation includes maintaining the approved Phase 2
+boundary and clearly identifying future-phase work.
+
+### 13.5 Laboratory and Analytical Constraints
+
+Some bioavailability and bioaccumulation methods may not be routinely
+available or standardized. Mitigation includes evaluating analytical
+feasibility, engaging laboratories where needed, and reserving
+specialized tools for higher-tier or substance-specific applications.
+
+### 13.6 Indigenous Engagement Adequacy
+
+Inadequate engagement could undermine the legitimacy and usefulness of
+the framework. Mitigation includes developing an engagement strategy and
+avoiding unsupported assumptions about Indigenous use.
+
+### 13.7 Schedule Compression
+
+Several Phase 2 tasks converge during later project months, including
+classification, prioritization, matrix framework design, integration,
+and final drafting. Mitigation includes early development of the paper
+structure and iterative refinement as research products are completed.
+
+## 14.0 Phase 2 Deliverables and Technical Appendices
+
+The final Matrix Options Paper will be supported by detailed technical
+appendices that document the research completed during Phase 2. The main
+body of the paper is intended to provide synthesis, options analysis,
+and recommendations. The appendices are intended to provide the detailed
+technical basis for those conclusions.
+
+This structure reflects the purpose of the Matrix Options Paper as the
+final Phase 2 deliverable. The paper will summarize research findings,
+progress made, options considered, and the rationale supporting
+recommendations, while the appendices will preserve the detailed
+technical work completed by ENV, SABCS, SSTAC, and TWG contributors.
+
+The appendices should be developed iteratively as Phase 2 work
+progresses. Early versions may contain outlines, preliminary findings,
+literature summaries, jurisdictional comparisons, or draft decision
+logic. As the workstreams are completed, these appendices should be
+updated to include finalized technical findings, options considered,
+uncertainties, and recommended approaches.
+
+### 14.1 Relationship Between Report Body and Appendices
+
+The report body should answer the following questions:
+
+- What issue is being addressed?
+
+- What options were considered?
+
+- How were the options evaluated?
+
+- What are the key findings?
+
+- What is the recommended or emerging preferred approach?
+
+- What uncertainties or future work remain?
+
+The appendices should answer the more detailed technical questions,
+including:
+
+- What literature, data, guidance, or jurisdictional examples were
+  reviewed?
+
+- What methods were considered?
+
+- What assumptions were used?
+
+- What technical constraints were identified?
+
+- What data gaps remain?
+
+- What rationale supports the recommended approach?
+
+- What information should be carried forward into Phase 3 standards
+  derivation?
+
+### 14.2 Planned Technical Appendices
+
+The following appendices are planned for the final Matrix Options Paper.
+
+#### Appendix A: Bioavailability Adjustment Research Report
+
+This appendix will document the review of bioavailability adjustment
+approaches, including organic carbon normalization, AVS/SEM, grain size
+considerations, porewater methods, passive sampling, bioaccessibility
+considerations, and applicability to BC sediment types. It will support
+Section 7.1 and the bioavailability-related components of the matrix
+standards framework.
+
+#### Appendix B: Bioaccumulation Research Report
+
+This appendix will document the review of bioaccumulation and food-web
+approaches, including BSAFs, tissue residue guidelines, food web models,
+trophic transfer considerations, receptor-specific assumptions, and
+applicability to ecological and human health food-pathway standards. It
+will support Section 7.2 and the food-pathway components of the matrix
+framework.
+
+#### Appendix C: Substance Classification Framework
+
+This appendix will document the proposed classification system for
+substances, including criteria related to toxicity, persistence,
+bioaccumulation, biomagnification, exposure pathway relevance, data
+availability, analytical feasibility, and suitability for matrix or
+generic standards pathways. It will support Section 7.3.
+
+#### Appendix D: Substance Prioritization Framework
+
+This appendix will document the proposed prioritization framework for
+identifying substances that should be considered for Matrix Numerical
+Sediment Standards. It will include consideration of occurrence,
+persistence, bioaccumulation, toxicity, feasibility, urgency, and
+resource requirements. It will support Section 7.4.
+
+#### Appendix E: Matrix Standards Derivation Options Review
+
+This appendix will document options for deriving Matrix Numerical
+Sediment Standards for each of the four receptor-pathway combinations:
+ecological direct exposure, ecological food-pathway exposure, human
+health direct exposure, and human health food-pathway exposure. It will
+support Section 7.5 and Section 9.5.
+
+#### Appendix F: Generic Standards Adoption Procedure
+
+This appendix will document the proposed procedure for adopting or
+adapting Generic Numerical Sediment Standards from other jurisdictions.
+It will address source selection, derivation basis, protection goals,
+pathway relevance, uncertainty, BC applicability, and documentation
+requirements. It will support Section 7.6 and Section 9.6.
+
+#### Appendix G: BC Aquatic Database Summary
+
+This appendix will summarize the BC Aquatic Database, including data
+sources, database structure, QA/QC approach, data usability
+considerations, preliminary occurrence findings, background
+concentration relevance, and how the database supports substance
+prioritization and future standards derivation. It will support Section
+7.7.
+
+#### Appendix H: Policy-Ready Input Parameter Compendium
+
+This appendix will document the input parameters compiled during Phase 2
+to support future matrix standards derivation. Examples include toxicity
+reference values, receptor characteristics, exposure assumptions,
+sediment grain size thresholds, consumption rates, water lot use
+classifications, bioavailability parameters, BSAFs, and other
+pathway-specific inputs. It will support Section 7.8.
+
+#### Appendix I: Engagement Summary
+
+This appendix will summarize the collaborative engagement process
+supporting Phase 2, including SSTAC and TWG involvement, review
+checkpoints, technical feedback, and how comments were considered in the
+development of the Matrix Options Paper. It will also identify
+Indigenous engagement considerations within the scope of Phase 2.
+
+#### Appendix J: Supporting Technical Memoranda
+
+This appendix will contain additional technical memoranda, decision
+records, jurisdictional comparison tables, method screening summaries,
+or other supporting materials that do not fit within Appendices A
+through I but are relevant to the final Matrix Options Paper.
+
+### 14.3 Appendix Development Process
+
+The appendices should be developed in parallel with the Phase 2
+workstreams. Each appendix should initially be created as a structured
+working document, then updated as research findings are completed and
+reviewed. Where a workstream produces a standalone technical report,
+that report may be inserted directly as the relevant appendix or
+summarized in the appendix with the full report attached as supporting
+material.
+
+The final Matrix Options Paper should not duplicate all technical
+details in the main body. Instead, the body should synthesize the
+technical appendices and clearly explain how the findings support the
+options analysis and recommendations.
+
+## 15.0 Phased Path Forward
+
+The sediment standards modernization work is being advanced through a
+phased process. This paper should distinguish clearly between completed
+work, current Phase 2 work, and future standards derivation work.
+
+### 15.1 Phase 1: Project Initiation and Scoping
+
+Phase 1 was completed through preliminary literature review,
+jurisdictional scan, engagement, and development of the Phase 1 White
+Paper.
+
+### 15.2 Phase 2: Research, Framework Development, and Matrix Options Paper
+
+Phase 2 is the current phase. It focuses on developing the research,
+framework architecture, classification and prioritization methods,
+database foundation, input parameter compilation, generic standards
+procedure, and final Matrix Options Paper.
+
+### 15.3 Phase 3: Application of Framework and Standards Derivation
+
+A future phase is expected to use the Phase 2 framework, data, and input
+parameters to calculate preliminary toxicity-based standards for
+prioritized substances.
+
+Future ENV policy, consultation, approval, and regulatory processes
+would occur separately from the technical scope of this Phase 2 Options
+Paper.
+
+## 16.0 Conclusions and Next Steps
+
+BC's current sediment standards do not provide a comprehensive framework
+for modern sediment risk management. They are primarily focused on
+benthic direct exposure and do not systematically address
+bioavailability, bioaccumulation, human health pathways, Indigenous
+food-based exposure, emerging contaminants, or a structured approach for
+prioritizing substances.
+
+The Phase 1 White Paper established the scientific rationale for
+modernization. The approved Phase 2 Project Plan establishes the current
+work program. This Matrix Options Paper is intended to become the final
+Phase 2 deliverable by progressively incorporating the findings from
+each research task.
+
+The preferred emerging architecture is a multi-part hybrid framework
+consisting of:
+
+- Matrix Numerical Sediment Standards for priority substances;
+
+- Generic Numerical Sediment Standards for human health;
+
+- Generic Numerical Sediment Standards for ecological health;
+
+- a classification and prioritization framework;
+
+- a transparent generic standards adoption procedure;
+
+- bioavailability adjustment tools where scientifically defensible;
+
+- bioaccumulation and food-web evaluation for relevant substances;
+
+- a BC Aquatic Database to support occurrence and background evaluation;
+
+- policy-ready input parameters for future derivation; and
+
+- technical appendices documenting the Phase 2 research products.
+
+Immediate next steps are to:
+
+1.  Use this draft as the replacement structure for the current
+    conceptual Options Paper.
+
+2.  Align each Phase 2 research task with the relevant report body
+    section and appendix.
+
+3.  Begin populating the technical appendices as workstream outputs are
+    completed.
+
+4.  Update the body of the paper iteratively to summarize findings,
+    options considered, and emerging recommendations.
+
+5.  Use the final integration process to convert this working draft into
+    the final Matrix Options Paper deliverable.
+
+This structure allows the paper to function as both a working draft and
+the foundation for the final deliverable. It creates the necessary space
+for the Phase 2 research topics while preserving the final purpose of
+the document: to summarize technical work, evaluate options, and provide
+a defensible recommendation package for ENV consideration.
+
+# Technical Appendices
+
+The following appendices are placeholders in this conceptual rough
+draft. They will be populated as Phase 2 research tasks are completed
+and reviewed.
+
+## Appendix A: Bioavailability Adjustment Research Report
+
+To be developed through the Phase 2 bioavailability workstream.
+
+Expected content:
+
+- Purpose and scope
+
+- Literature and jurisdictional review
+
+- Bioavailability concepts relevant to sediment standards
+
+- Evaluation of TOC normalization
+
+- Evaluation of AVS/SEM approaches
+
+- Evaluation of porewater and passive sampling approaches
+
+- Human health bioaccessibility considerations
+
+- Applicability to BC sediment settings
+
+- Analytical and laboratory considerations
+
+- Options considered
+
+- Recommended or emerging preferred approach
+
+- Uncertainties and future work
+
+## Appendix B: Bioaccumulation Research Report
+
+To be developed through the Phase 2 bioaccumulation workstream.
+
+Expected content:
+
+- Purpose and scope
+
+- Literature and jurisdictional review
+
+- Bioaccumulation and biomagnification concepts
+
+- BSAF approaches
+
+- Tissue residue approaches
+
+- Food web modelling approaches
+
+- Ecological receptor considerations
+
+- Human health food-pathway considerations
+
+- Applicability to BC aquatic environments
+
+- Options considered
+
+- Recommended or emerging preferred approach
+
+- Uncertainties and future work
+
+## Appendix C: Substance Classification Framework
+
+To be developed through the Phase 2 substance classification work.
+
+Expected content:
+
+- Purpose and scope
+
+- Classification objectives
+
+- Hazard criteria
+
+- Persistence criteria
+
+- Bioaccumulation and biomagnification criteria
+
+- Toxicity criteria
+
+- Exposure pathway relevance
+
+- Data availability considerations
+
+- Classification categories
+
+- Decision logic
+
+- Example classifications
+
+- Uncertainties and future work
+
+## Appendix D: Substance Prioritization Framework
+
+To be developed through the Phase 2 prioritization work.
+
+Expected content:
+
+- Purpose and scope
+
+- Relationship between classification and prioritization
+
+- Occurrence criteria
+
+- PBT criteria
+
+- Feasibility criteria
+
+- Urgency criteria
+
+- Resource requirement criteria
+
+- Prioritization scoring or decision matrix
+
+- Matrix versus generic standards pathway decision logic
+
+- Example prioritization outcomes
+
+- Uncertainties and future work
+
+## Appendix E: Matrix Standards Derivation Options Review
+
+To be developed through the Phase 2 matrix framework design work.
+
+Expected content:
+
+- Purpose and scope
+
+- Overview of four receptor-pathway combinations
+
+- Ecological direct exposure equation options
+
+- Ecological food-pathway equation options
+
+- Human health direct exposure equation options
+
+- Human health food-pathway equation options
+
+- Input parameter requirements
+
+- Applicability and trigger considerations
+
+- Options considered
+
+- Recommended or emerging preferred approaches
+
+- Uncertainties and future work
+
+## Appendix F: Generic Standards Adoption Procedure
+
+To be developed through the Phase 2 generic standards and policy
+integration work.
+
+Expected content:
+
+- Purpose and scope
+
+- Candidate source jurisdictions
+
+- Source hierarchy
+
+- Screening criteria
+
+- Evaluation criteria
+
+- Documentation requirements
+
+- Human health generic standards considerations
+
+- Ecological health generic standards considerations
+
+- Relationship to matrix standards
+
+- Options considered
+
+- Recommended adoption procedure
+
+- Uncertainties and future work
+
+## Appendix G: BC Aquatic Database Summary
+
+To be developed through the Phase 2 data and evidence base workstream.
+
+Expected content:
+
+- Purpose and scope
+
+- Data sources
+
+- Data acceptance criteria
+
+- Database structure
+
+- QA/QC process
+
+- Data usability categories
+
+- Occurrence summaries
+
+- Background concentration relevance
+
+- Exceedance summaries
+
+- Limitations
+
+- Future database development needs
+
+## Appendix H: Policy-Ready Input Parameter Compendium
+
+To be developed through the Phase 2 input parameter compilation work.
+
+Expected content:
+
+- Purpose and scope
+
+- Input parameter categories
+
+- Human health toxicity reference values
+
+- Ecological toxicity reference values
+
+- Receptor assumptions
+
+- Exposure assumptions
+
+- Consumption assumptions
+
+- Bioavailability parameters
+
+- Bioaccumulation parameters
+
+- Water lot or use classifications
+
+- Preferred values and alternatives
+
+- Data sources
+
+- Uncertainty and policy review needs
+
+## Appendix I: Engagement Summary
+
+To be developed through the Phase 2 engagement and review process.
+
+Expected content:
+
+- Purpose and scope
+
+- SSTAC engagement
+
+- TWG engagement
+
+- Focused TWG review
+
+- Full TWG review
+
+- ENV review
+
+- Summary of key comments
+
+- How comments were addressed
+
+- Indigenous engagement considerations
+
+- Future engagement needs
+
+## Appendix J: Supporting Technical Memoranda
+
+To be populated as needed.
+
+Expected content:
+
+- Jurisdictional comparison tables
+
+- Decision records
+
+- Technical memoranda
+
+- Method screening summaries
+
+- Supplementary literature summaries
+
+- Supporting calculations or worked examples where appropriate

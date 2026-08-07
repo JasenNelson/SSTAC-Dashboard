@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import React, { useState } from 'react';
 import { ChevronDown, ChevronUp } from 'lucide-react';
 import { cn } from '@/utils/cn';
 import { phase2Tasks, type Phase2Task, type Phase2Subtask } from './phase2Tasks';
+import Phase2GanttChart from './Phase2GanttChart';
 
 // OWNER DECISION 2026-06-08: HIDE hours in the TWG-facing Guide by default.
 // Flip this boolean to show/hide estimated hours.
@@ -11,40 +12,55 @@ const SHOW_ESTIMATED_HOURS = false;
 
 function getLeadType(task: Phase2Task): 'Internal' | 'TWG' | 'Mixed' {
   const leads = task.subtasks.map((s) => s.lead.toLowerCase());
-  const hasInternal = leads.some((l) => l.includes('internal'));
-  const hasTwg = leads.some((l) => l.includes('twg'));
+  const hasInternal = leads.some((l) => /\b(internal|env)\b/.test(l));
+  const hasExternal = leads.some((l) => /\b(twg|sabcs|sstac)\b/.test(l));
 
-  if (hasInternal && hasTwg) return 'Mixed';
-  if (hasTwg) return 'TWG';
+  if (hasInternal && hasExternal) return 'Mixed';
+  if (hasExternal) return 'TWG';
   return 'Internal';
 }
 
 function deriveDeadlineSpan(subtasks: Phase2Subtask[]): string {
   if (subtasks.length === 0) return '';
-  const start = subtasks[0].deadline;
-  const end = subtasks[subtasks.length - 1].deadline;
-  if (start === end) return start;
+  const weeks: number[] = [];
+  const months: number[] = [];
+  let hasOngoing = false;
 
-  // Manual mappings to guarantee clean, verified display formatting matching requirements
-  const startMatch = start.match(/^(Week|Month)s?\s*(\d+)/i);
-  const endMatch = end.match(/^(Week|Month)s?\s*(\d+)/i);
-
-  if (startMatch && endMatch) {
-    const type = startMatch[1]; // "Week" or "Month"
-    const startNum = startMatch[2];
-    
-    // Extract last number from end deadline (e.g. "Months 4-6" -> "6", "Month 9" -> "9")
-    const endParts = end.split(/[-\u2013]/);
-    const endNum = endParts[endParts.length - 1].trim().replace(/[^\d]/g, '');
-
-    if (startNum === endNum) {
-      return `${type} ${startNum}`;
+  for (const s of subtasks) {
+    const d = s.deadline.toLowerCase();
+    if (d.includes('ongoing')) hasOngoing = true;
+    const matches = Array.from(d.matchAll(/\d+/g)).map(m => parseInt(m[0], 10));
+    if (d.includes('week')) {
+      weeks.push(...matches);
+    } else if (d.includes('month')) {
+      months.push(...matches);
     }
-    return `${type}s ${startNum}-${endNum}`;
   }
 
-  // Fallback for cross Week -> Month or other custom spans
-  return `${start}-${end}`;
+  const minWeek = weeks.length ? Math.min(...weeks) : null;
+  const maxWeek = weeks.length ? Math.max(...weeks) : null;
+  const minMonth = months.length ? Math.min(...months) : null;
+  const maxMonth = months.length ? Math.max(...months) : null;
+
+  if (minWeek === null && minMonth === null) {
+    return hasOngoing ? 'Ongoing' : subtasks[0].deadline;
+  }
+
+  if (minWeek !== null && minMonth !== null) {
+    const startStr = `Week ${minWeek}`;
+    const endStr = hasOngoing ? 'Ongoing' : `Month ${maxMonth}`;
+    return `${startStr} to ${endStr}`;
+  } else if (minWeek !== null) {
+    if (hasOngoing) return `Week ${minWeek} to Ongoing`;
+    if (minWeek === maxWeek) return `Week ${minWeek}`;
+    return `Weeks ${minWeek}-${maxWeek}`;
+  } else if (minMonth !== null) {
+    if (hasOngoing) return `Month ${minMonth} to Ongoing`;
+    if (minMonth === maxMonth) return `Month ${minMonth}`;
+    return `Months ${minMonth}-${maxMonth}`;
+  }
+
+  return '';
 }
 
 export default function Phase2TasksSection() {
@@ -83,6 +99,8 @@ export default function Phase2TasksSection() {
         Phase 2 (2026) Tasks and Activities
       </h2>
 
+      <Phase2GanttChart />
+
       {/* Summary line + controls */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">
         <div className="text-slate-600 dark:text-slate-400">
@@ -97,12 +115,14 @@ export default function Phase2TasksSection() {
         </div>
         <div className="flex gap-2">
           <button
+            type="button"
             onClick={handleExpandAll}
             className="px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
             Expand all
           </button>
           <button
+            type="button"
             onClick={handleCollapseAll}
             className="px-3 py-1.5 text-xs font-medium bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
           >
@@ -117,7 +137,7 @@ export default function Phase2TasksSection() {
           const isExpanded = expandedTasks[task.id] ?? false;
           const contentId = `content-${task.id.replace(/\s+/g, '-')}`;
           const leadType = getLeadType(task);
-          
+
           let badgeColor = '';
           if (leadType === 'Internal') {
             badgeColor = 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border border-blue-200/50 dark:border-blue-800/30';
@@ -136,6 +156,7 @@ export default function Phase2TasksSection() {
               className="border border-slate-200 dark:border-slate-700 rounded-lg overflow-hidden bg-white dark:bg-slate-900 shadow-sm"
             >
               <button
+                type="button"
                 onClick={() => handleToggle(task.id)}
                 className="w-full flex items-center justify-between p-4 text-left bg-slate-50 dark:bg-slate-800/50 hover:bg-slate-100/70 dark:hover:bg-slate-800 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-inset"
                 aria-expanded={isExpanded}
@@ -160,47 +181,46 @@ export default function Phase2TasksSection() {
                 )}
               </button>
 
-              {isExpanded && (
-                <div
-                  id={contentId}
-                  className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
-                >
-                  <div className="overflow-x-auto">
-                    <table className="w-full text-sm text-left border-collapse">
-                      <thead>
-                        <tr className="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-semibold">
-                          <th className="py-2 px-3 pl-0">Subtask</th>
-                          <th className="py-2 px-3">Deadline</th>
-                          {SHOW_ESTIMATED_HOURS && <th className="py-2 px-3 text-right">Est. Hours</th>}
-                          <th className="py-2 px-3 pr-0 text-right">Lead</th>
+              <div
+                id={contentId}
+                hidden={!isExpanded}
+                className="p-4 border-t border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900"
+              >
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm text-left border-collapse">
+                    <thead>
+                      <tr className="border-b border-slate-200 dark:border-slate-700 text-slate-500 dark:text-slate-400 font-semibold">
+                        <th className="py-2 px-3 pl-0">Subtask</th>
+                        <th className="py-2 px-3">Deadline</th>
+                        {SHOW_ESTIMATED_HOURS && <th className="py-2 px-3 text-right">Est. Hours</th>}
+                        <th className="py-2 px-3 pr-0 text-right">Lead</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
+                      {task.subtasks.map((subtask) => (
+                        <tr key={subtask.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
+                          <td className="py-3 px-3 pl-0 font-medium">
+                            {subtask.id} {subtask.subtask}
+                          </td>
+                          <td className="py-3 px-3 whitespace-nowrap">{subtask.deadline}</td>
+                          {SHOW_ESTIMATED_HOURS && (
+                            <td className="py-3 px-3 text-right font-mono">{subtask.estHours}</td>
+                          )}
+                          <td className="py-3 px-3 pr-0 text-right whitespace-nowrap">{subtask.lead}</td>
                         </tr>
-                      </thead>
-                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800 text-slate-700 dark:text-slate-300">
-                        {task.subtasks.map((subtask) => (
-                          <tr key={subtask.id} className="hover:bg-slate-50/50 dark:hover:bg-slate-800/20 transition-colors">
-                            <td className="py-3 px-3 pl-0 font-medium">
-                              {subtask.id} {subtask.subtask}
-                            </td>
-                            <td className="py-3 px-3 whitespace-nowrap">{subtask.deadline}</td>
-                            {SHOW_ESTIMATED_HOURS && (
-                              <td className="py-3 px-3 text-right font-mono">{subtask.estHours}</td>
-                            )}
-                            <td className="py-3 px-3 pr-0 text-right whitespace-nowrap">{subtask.lead}</td>
-                          </tr>
-                        ))}
-                        {SHOW_ESTIMATED_HOURS && (
-                          <tr className="font-semibold text-slate-900 dark:text-slate-100 border-t border-slate-200 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/10">
-                            <td className="py-2 px-3 pl-0">Total</td>
-                            <td className="py-2 px-3"></td>
-                            <td className="py-2 px-3 text-right font-mono">{taskHours}</td>
-                            <td className="py-2 px-3 pr-0"></td>
-                          </tr>
-                        )}
-                      </tbody>
-                    </table>
-                  </div>
+                      ))}
+                      {SHOW_ESTIMATED_HOURS && (
+                        <tr className="font-semibold text-slate-900 dark:text-slate-100 border-t border-slate-200 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/10">
+                          <td className="py-2 px-3 pl-0">Total</td>
+                          <td className="py-2 px-3"></td>
+                          <td className="py-2 px-3 text-right font-mono">{taskHours}</td>
+                          <td className="py-2 px-3 pr-0"></td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
-              )}
+              </div>
             </div>
           );
         })}
