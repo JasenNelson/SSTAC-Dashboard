@@ -597,9 +597,17 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
    Full diagnosis is recorded as a comment on PR #772.
 
 2. **Landed in this PR:** `ci.yml` gains a `concurrency` group with `cancel-in-progress` scoped to
-   pull requests (so superseded PR runs are auto-cancelled instead of accumulating, while
-   push-to-main runs still complete for the record), plus `workflow_dispatch` so a run can be
-   triggered without a commit, plus removal of non-ASCII characters per CLAUDE.md rule 9.
+   pull requests (so superseded PR runs are auto-cancelled instead of accumulating), while NON-PR
+   runs key on `github.run_id` so each push-to-main and each dispatch gets its OWN group and can
+   neither cancel nor be blocked by another. Plus `workflow_dispatch` so a run can be triggered
+   without a commit, plus removal of non-ASCII characters per CLAUDE.md rule 9.
+   **RESIDUAL HAZARD, stated deliberately:** run `31123692717` was a `pull_request` event, and the
+   PR path DOES share a group per PR number. Before this change a stuck run blocked nothing (there
+   was no grouping at all); after it, a recurrence would leave later runs for that same PR waiting
+   on the group. `cancel-in-progress: true` mitigates the normal case but is unproven against a run
+   that rejects cancellation. The escape hatch is `workflow_dispatch`, which lands in its own group
+   -- and which only becomes usable once this PR is merged, because GitHub registers
+   `workflow_dispatch` from the workflow file on the DEFAULT BRANCH only.
 
 3. **STILL DEFERRED -- `Run docs gate` is not a required status check.** Branch protection on `main`
    requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests`, and
@@ -608,7 +616,11 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
    `docs/_meta/docs-manifest.json` integrity, because `scripts/verify/__tests__/docs-gate.test.mjs`
    is tracked, is matched by the vitest `include` glob, reads the real manifest, and shells out to
    `scripts/verify/docs-gate.mjs`; and `ci.yml` has no `paths:` filter, so it runs on docs-only PRs.
-   What no REQUIRED check enforces is the docs-gate bundle / required-reading rules themselves.
+   `docs-gate.test.mjs` also asserts the bundle wiring by exact identity (`activated_bundles`
+   containing named bundles, `required_documents` containing named authorities), so a required check
+   DOES enforce the bundle / required-reading MAPPING. What no REQUIRED check does is run the gate
+   against THIS PR's ACTUAL DIFF -- `docs:gate --base/--head` runs only in the non-required
+   `Run docs gate` job.
    (An earlier draft of this entry claimed the four required checks "contain no reference to `docs/`"
    and that "the gate set is inverted for docs-only changes." That was wrong -- the search scope
    excluded `vitest.config.ts` and the test above. Corrected here so a future owner decision is not
@@ -617,13 +629,18 @@ Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z
    filtered out by paths stays Pending forever and would deadlock any PR that does not touch its
    paths. The correct pattern is an always-run job that skips work internally. Owner decision.
 
-4. **NOTE on the `workflow_dispatch` trigger added in this PR.** A dispatched `ci.yml` run emits
-   check runs under the same four required context names, but it runs against the branch HEAD ref
-   rather than the `pull_request` MERGE ref, and branch protection has `strict: false` (no
-   up-to-date requirement) to compensate. So a dispatched green does NOT prove the PR merges
-   cleanly with the current `main`. Do not treat it as equivalent evidence to a `pull_request` run.
-   It requires write access, and fork PRs cannot use it, so this is a mild weakening rather than a
-   bypass.
+4. **WARNING on the `workflow_dispatch` trigger added in this PR -- it can bypass the gate.**
+   A dispatched `ci.yml` run emits check runs under the SAME four required context names, but it
+   runs against the branch HEAD ref rather than the `pull_request` MERGE ref. Branch protection
+   evaluates the LATEST check run per name on the head SHA, so **a dispatched run OVERWRITES those
+   four contexts and a dispatched green can mask a genuine `pull_request` red, unblocking merge.**
+   That is a process bypass gated only by write access, not merely a weakening -- treat it as such.
+   Note also `strict: false` does NOT compensate for this; it long predates this trigger and was not
+   set for it.
+   So: a dispatched green does NOT prove the PR merges cleanly with current `main`, and must never
+   be treated as equivalent evidence to a `pull_request` run. Fork PRs cannot use it.
+   Availability: `workflow_dispatch` only becomes usable once this PR is merged, because GitHub
+   registers it from the workflow file on the DEFAULT BRANCH only.
 
 ---
 

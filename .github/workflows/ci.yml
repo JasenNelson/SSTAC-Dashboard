@@ -16,6 +16,8 @@ concurrency:
   # cancelled (see docs/NEXT_STEPS.md, run 31123692717, which returns HTTP 409 to both cancel and
   # force-cancel) would block every later push run indefinitely -- and would trap workflow_dispatch,
   # the manual recovery lever, in the same group.
+  # NOTE: workflow_dispatch only becomes usable once this file is on the DEFAULT BRANCH, and a
+  # dispatched run OVERWRITES the four required contexts on the head SHA. See docs/NEXT_STEPS.md.
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
