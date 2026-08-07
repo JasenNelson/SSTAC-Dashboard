@@ -583,16 +583,19 @@ merges still refuse and leave the runtime stale until a manual repin.
 Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z to
 2026-08-07T02:04:44Z) and the PR #772 recovery.
 
-1. **Workflow run `31123692717` is permanently `queued` and CANNOT be cancelled or removed.**
+1. **Workflow run `31123692717` is permanently `queued` and CANNOT BE CANCELLED. It could be
+   DELETED, but must not be -- see below.**
    Verified 2026-08-07: top level `status: queued` / `run_attempt: 1` frozen at 2026-08-06T19:10:52Z;
    `/attempts/1` = `completed`/`failure`; `/attempts/2` = 404 (never created); `jobs?filter=latest`
    = 0 while `filter=all` = 8; check-suite 84431969145 = `queued` with 0 check runs. Both
    `POST .../cancel` and `POST .../force-cancel` return **HTTP 409**. Cause: a `gh run rerun
    --failed` issued INSIDE the active incident, which reset the run and detached three passing
    check runs from `ea073364`.
-   **DO NOT DELETE IT.** `gh run delete` would succeed but would destroy the only surviving record
-   of `Lint & TypeScript Check`, `Unit Tests` and `Security Scan` passing on `ea073364`, which
-   PR #772's body cites as the judgment evidence for the owner waiver under which it was merged.
+   **DO NOT DELETE IT.** `gh run delete` WOULD succeed. It would destroy the only surviving record
+   that `Lint & TypeScript Check`, `Unit Tests` and `Security Scan` ran green against `ea073364` --
+   that record now exists ONLY as job history on the run object (`runs/31123692717/jobs?filter=all`),
+   because the check runs were already detached from the commit's check-run list. PR #772's body
+   cites it as the judgment evidence for the owner waiver under which that PR was merged.
    It is harmless: check runs are commit-scoped and it is bound to a superseded, already-merged SHA.
    Full diagnosis is recorded as a comment on PR #772.
 
