@@ -797,13 +797,35 @@ export default function MatrixDashboard({
             <MathRenderer content={contentToRender} />
           </div>
         );
-      case 'The Guide':
+      case 'The Guide': {
+        const guideParts = guideContent.split('<!-- SECTION_BOUNDARY -->');
+        const introContent = guideParts[0] || '';
+        const section1Content = guideParts[1] || '';
+        const section2Content = guideParts[2] || '';
+
+        const cardClassName = "bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-700";
+
         return (
           <div className="space-y-6">
-            <MathRenderer content={guideContent} />
-            <Phase2TasksSection />
+            <div className={cardClassName}>
+              <MathRenderer content={introContent} />
+            </div>
+            {section1Content && (
+              <div className={cardClassName}>
+                <MathRenderer content={section1Content} />
+              </div>
+            )}
+            {section2Content && (
+              <div className={cardClassName}>
+                <MathRenderer content={section2Content} />
+              </div>
+            )}
+            <div className={cardClassName}>
+              <Phase2TasksSection />
+            </div>
           </div>
         );
+      }
       case 'Conceptual Model':
         return (
           <div className="w-full">
@@ -1230,8 +1252,8 @@ export default function MatrixDashboard({
             </div>
           </div>
         ) : (
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-900">
-            <div className="max-w-4xl mx-auto px-8 py-12">
+          <div className={`flex-1 overflow-y-auto ${activeTopTab === 'The Guide' ? 'bg-slate-50' : 'bg-white'} dark:bg-slate-900`}>
+            <div className={`${activeTopTab === 'The Guide' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-8 py-12`}>
               {renderContent()}
             </div>
           </div>

@@ -13,7 +13,7 @@ export default function ProjectPhases() {
           <span className="text-2xl">🚀</span>
         </div>
         <div className="flex-1">
-          <h3 className="text-xl font-bold text-sky-700 dark:text-sky-400 mb-2">Phase 2: Foundational Research (2026)</h3>
+          <h3 className="text-xl font-bold text-sky-700 dark:text-sky-400 mb-2">Phase 2: Foundational Research and Framework Development (2026-2027)</h3>
           <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
             Currently active phase focusing on the Matrix Sediment Standards Derivation Options and BN-RRM implementation.
           </p>

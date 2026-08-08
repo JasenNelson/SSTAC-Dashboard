@@ -178,19 +178,6 @@ export function MatrixMapRightPanel({
     [rows, filterState],
   );
 
-  const coordBasis = useMemo(() => {
-    const seen = new Map<string, CoordinateQualityTier>();
-    for (const row of filteredRows) {
-      if (!seen.has(row.sample_id)) seen.set(row.sample_id, row.coordinate_quality_tier);
-    }
-    let surveyed = 0, centroid = 0, manual = 0;
-    for (const tier of seen.values()) {
-      if (tier === 'high') surveyed++;
-      else if (tier === 'medium') centroid++;
-      else manual++;
-    }
-    return { surveyed, centroid, manual };
-  }, [filteredRows]);
 
   const matchingSampleIdsForRows = useMemo(
     () => Array.from(new Set(filteredRows.map((row) => row.sample_id))),
@@ -441,15 +428,18 @@ function FilterControls({
       <button
         type="button"
         aria-expanded={isExpanded}
+        aria-controls="filter-controls-panel"
         onClick={onToggleExpand}
         className="flex w-full items-center justify-between p-3 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
       >
         <span>Map & Data Filters {activeFilters && '(Active)'}</span>
-        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        {isExpanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
       </button>
-
-      {isExpanded && (
-        <div className="space-y-3 px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+      <div
+        id="filter-controls-panel"
+        hidden={!isExpanded}
+        className="space-y-3 px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-700"
+      >
       <SubstanceMultiSelect
         options={substanceOptions}
         selectedOptions={selectedSubstanceOptions}
@@ -514,8 +504,7 @@ function FilterControls({
           Clear all filters
         </button>
       )}
-        </div>
-      )}
+      </div>
     </div>
   );
 }

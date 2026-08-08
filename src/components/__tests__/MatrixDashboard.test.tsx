@@ -109,12 +109,10 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
   it('renders the v1 guide workflow copy in the Guide tab', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
 
-    expect(screen.getByTestId('math-renderer-mock')).toHaveTextContent(
-      /How to Use This Workspace/,
-    );
-    expect(screen.getByTestId('math-renderer-mock')).toHaveTextContent(
-      /Project Roadmap/,
-    );
+    const renderers = screen.getAllByTestId('math-renderer-mock');
+    expect(renderers[0]).toHaveTextContent(/The Guide: Matrix Options Workspace/);
+    expect(renderers[1]).toHaveTextContent(/How to Use This Workspace/);
+    expect(renderers[2]).toHaveTextContent(/Project Roadmap/);
     expect(screen.queryByText(/Coming Soon/i)).not.toBeInTheDocument();
   });
 });

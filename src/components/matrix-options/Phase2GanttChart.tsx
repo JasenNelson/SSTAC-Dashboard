@@ -124,10 +124,10 @@ export default function Phase2GanttChart() {
       </table>
 
       {/* Visual Gantt Chart (Hidden from AT) */}
-      <div className="min-w-[900px]" aria-hidden="true">
+      <div className="min-w-[1000px]" aria-hidden="true">
         {/* Header */}
         <div className="flex items-end mb-4">
-          <div className="w-64 font-semibold text-slate-800 dark:text-slate-200">Project Tasks</div>
+          <div className="w-80 font-semibold text-slate-800 dark:text-slate-200 shrink-0">Project Tasks</div>
           <div className="flex-1 grid gap-1 text-center text-xs font-medium text-slate-500" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
             {MONTHS.map((m, i) => (
               <div key={m} className={cn("pb-2 border-b-2", i === 0 ? "border-blue-500 text-blue-600" : "border-slate-100 dark:border-slate-800")}>
@@ -141,17 +141,17 @@ export default function Phase2GanttChart() {
         {/* Rows */}
         <div className="space-y-2">
           {GANTT_DATA.map((row) => (
-            <div key={row.id} className="flex items-center group">
-              <div className="w-64 flex gap-3 text-sm border-r border-slate-100 dark:border-slate-800 pr-2">
-                <span className="text-slate-400 font-mono text-xs mt-0.5 w-7">{row.id}</span>
+            <div key={row.id} className="flex items-center group min-h-[2.5rem]">
+              <div className="w-80 flex gap-3 text-sm border-r border-slate-100 dark:border-slate-800 pr-3 shrink-0 py-1">
+                <span className="text-slate-400 font-mono text-xs mt-0.5 w-6 text-right shrink-0">{row.id}</span>
                 <span 
-                  className="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors truncate"
+                  className="text-slate-700 dark:text-slate-300 group-hover:text-slate-900 dark:group-hover:text-slate-100 transition-colors leading-snug break-words"
                   title={row.title}
                 >
                   {row.title}
                 </span>
               </div>
-              <div className="flex-1 grid gap-1 h-8 items-center px-1" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
+              <div className="flex-1 grid gap-1 items-center px-1 self-stretch" style={{ gridTemplateColumns: 'repeat(14, minmax(0, 1fr))' }}>
                 {row.segments.map((seg, idx) => (
                   <div
                     key={idx}

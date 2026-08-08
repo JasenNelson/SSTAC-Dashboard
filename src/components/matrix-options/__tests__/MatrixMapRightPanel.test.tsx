@@ -128,7 +128,36 @@ describe('MatrixMapRightPanel', () => {
   it('renders the empty state without calling the RPC when no samples are selected', () => {
     renderPanel();
     expect(screen.getByTestId('matrix-map-right-panel-empty')).toBeInTheDocument();
+    
+    // Disclosure button should be present even when empty
+    const filterBtn = screen.getByRole('button', { name: /Map & Data Filters/i });
+    expect(filterBtn).toBeInTheDocument();
+    expect(filterBtn).toHaveAttribute('aria-expanded', 'false');
+    
     expect(rpcMock).not.toHaveBeenCalled();
+  });
+
+  it('toggles filter controls visibility and aria-expanded state', () => {
+    renderPanel();
+    
+    const filterBtn = screen.getByRole('button', { name: /Map & Data Filters/i });
+    expect(filterBtn).toHaveAttribute('aria-expanded', 'false');
+    // Ensure the panel is present in the DOM but hidden
+    const panel = document.getElementById('filter-controls-panel');
+    expect(panel).toBeInTheDocument();
+    expect(panel).toHaveAttribute('hidden');
+    expect(screen.queryByRole('button', { name: /All substances/i })).not.toBeInTheDocument();
+    
+    fireEvent.click(filterBtn);
+    expect(filterBtn).toHaveAttribute('aria-expanded', 'true');
+    expect(filterBtn).toHaveAttribute('aria-controls', 'filter-controls-panel');
+    expect(panel).not.toHaveAttribute('hidden');
+    expect(screen.getByRole('button', { name: /All substances/i })).toBeInTheDocument();
+    
+    fireEvent.click(filterBtn);
+    expect(filterBtn).toHaveAttribute('aria-expanded', 'false');
+    expect(panel).toHaveAttribute('hidden');
+    expect(screen.queryByRole('button', { name: /All substances/i })).not.toBeInTheDocument();
   });
 
   it('fetches measurements for selected samples and does not auto-filter to Calculator substance', async () => {
@@ -303,17 +332,20 @@ describe('MatrixMapRightPanel', () => {
 
     const sedimentChip = screen.getByRole('button', { name: /^sediment$/i });
     const waterChip = screen.getByRole('button', { name: /^water$/i });
-    // toxicity and community have no rows -> disabled with (none) suffix
+    // toxicity, community, and soil have no rows -> disabled with (none) suffix
     const toxicityChip = screen.getByRole('button', { name: /toxicity/i });
     const communityChip = screen.getByRole('button', { name: /community/i });
+    const soilChip = screen.getByRole('button', { name: /soil/i });
 
     expect(sedimentChip).not.toBeDisabled();
     expect(waterChip).not.toBeDisabled();
     expect(toxicityChip).toBeDisabled();
     expect(communityChip).toBeDisabled();
+    expect(soilChip).toBeDisabled();
     // Disabled chips carry the (none) suffix text
     expect(toxicityChip).toHaveTextContent('(none)');
     expect(communityChip).toHaveTextContent('(none)');
+    expect(soilChip).toHaveTextContent('(none)');
   });
 
   it('selecting one medium leaves other present media enabled', async () => {

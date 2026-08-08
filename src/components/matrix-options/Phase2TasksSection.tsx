@@ -66,12 +66,7 @@ function deriveDeadlineSpan(subtasks: Phase2Subtask[]): string {
 export default function Phase2TasksSection() {
   const [expandedTasks, setExpandedTasks] = useState<Record<string, boolean>>({});
 
-  const totalTasks = phase2Tasks.length;
-  const totalSubtasks = phase2Tasks.reduce((sum, t) => sum + t.subtasks.length, 0);
-  const totalHours = phase2Tasks.reduce((sum, t) => sum + t.subtasks.reduce((sSum, s) => sSum + s.estHours, 0), 0);
 
-  const startSpan = phase2Tasks[0].subtasks[0].deadline;
-  const endSpan = phase2Tasks[totalTasks - 1].subtasks[phase2Tasks[totalTasks - 1].subtasks.length - 1].deadline;
 
   const handleToggle = (taskId: string) => {
     setExpandedTasks((prev) => ({
@@ -93,27 +88,20 @@ export default function Phase2TasksSection() {
   };
 
   return (
-    <div className="space-y-6 mt-8">
+    <div className="space-y-6">
       {/* Visual H2 heading styled to match markdown h2 */}
-      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2 mt-8 mb-4">
-        Phase 2 (2026) Tasks and Activities
+      <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100 border-b border-slate-200 dark:border-slate-700 pb-2 mb-4">
+        Phase 2 (2026 - 2027) Gantt Chart
       </h2>
 
       <Phase2GanttChart />
 
-      {/* Summary line + controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 p-4 bg-slate-50 dark:bg-slate-800/40 rounded-lg border border-slate-200 dark:border-slate-700 text-sm">
-        <div className="text-slate-600 dark:text-slate-400">
-          <span className="font-semibold text-slate-800 dark:text-slate-200">{totalTasks}</span> tasks |{' '}
-          <span className="font-semibold text-slate-800 dark:text-slate-200">{totalSubtasks}</span> subtasks |{' '}
-          Phase 2 spans {startSpan} to {endSpan}.
-          {SHOW_ESTIMATED_HOURS && (
-            <>
-              {' '}| <span className="font-semibold text-slate-800 dark:text-slate-200">~{totalHours.toLocaleString()}</span> estimated hours
-            </>
-          )}
-        </div>
-        <div className="flex gap-2">
+      {/* Task List Header + controls */}
+      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between border-b border-slate-200 dark:border-slate-700 pb-2 mt-12 mb-4">
+        <h2 className="text-2xl font-bold text-slate-800 dark:text-slate-100">
+          Detailed Task List
+        </h2>
+        <div className="flex gap-2 mt-4 sm:mt-0">
           <button
             type="button"
             onClick={handleExpandAll}

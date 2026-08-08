@@ -11,7 +11,7 @@ import {
 
 describe('matrix-map filter type guards', () => {
   it('isMatrixMapMedium accepts only the known media strings', () => {
-    for (const m of ['sediment', 'water', 'tissue', 'toxicity', 'community']) {
+    for (const m of ['sediment', 'soil', 'water', 'tissue', 'toxicity', 'community']) {
       expect(isMatrixMapMedium(m), m).toBe(true);
     }
     expect(isMatrixMapMedium('air')).toBe(false);

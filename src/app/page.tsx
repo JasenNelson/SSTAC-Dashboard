@@ -28,7 +28,7 @@ export default function Home() {
             </p>
             <div className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl mb-4">
               <span className="text-white text-sm font-bold tracking-wide uppercase">
-                🚀 Current Focus: Phase 2 - Foundational Research (2026)
+                🚀 Current Focus: Phase 2 - Foundational Research and Framework Development (2026-2027)
               </span>
             </div>
             <p className="text-sky-100 max-w-2xl mx-auto">

@@ -10,7 +10,7 @@ export const runtime = 'nodejs';
 
 const ADMIN_ROLES = ['admin', 'matrix_admin'];
 const EXPORT_TYPES = ['selection', 'measurements'] as const;
-const MEDIUMS = ['all', 'sediment', 'water', 'tissue', 'toxicity', 'community'] as const;
+const MEDIUMS = ['all', 'sediment', 'soil', 'water', 'tissue', 'toxicity', 'community'] as const;
 const QA_FLAGS = ['all', 'detected', 'censored'] as const;
 const CLASSIFICATIONS = ['all', 'reference', 'impacted', 'unknown'] as const;
 const MAX_SELECTED_SAMPLE_IDS = 1000;
