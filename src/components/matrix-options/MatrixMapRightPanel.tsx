@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { Maximize2, Minimize2, Search, X } from 'lucide-react';
+import { Maximize2, Minimize2, Search, X, ChevronDown, ChevronUp } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { cn } from '@/utils/cn';
@@ -89,6 +89,7 @@ export function MatrixMapRightPanel({
   const [substanceSearch, setSubstanceSearch] = useState('');
   const [isSubstancePickerOpen, setIsSubstancePickerOpen] = useState(false);
   const [activeRowKey, setActiveRowKey] = useState<string | null>(null);
+  const [isFiltersExpanded, setIsFiltersExpanded] = useState(false);
 
   const selectedIdKey = selectedSampleIds.join('|');
   const selectedIdsForFetch = useMemo(
@@ -273,17 +274,40 @@ export function MatrixMapRightPanel({
           onClick={onToggleFocus}
           aria-label={isFocused ? 'Collapse measurement workbench focus' : 'Focus measurement workbench'}
           title={isFocused ? 'Collapse measurement workbench focus' : 'Focus measurement workbench'}
-          className="rounded-md border border-slate-200 bg-white p-2 text-slate-600 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-300 dark:hover:bg-slate-800"
+          className={cn(
+            "rounded-md border p-2 transition-colors",
+            isFocused 
+              ? "border-green-300 bg-green-50 text-green-700 hover:bg-green-100 dark:border-green-800 dark:bg-green-950 dark:text-green-300 dark:hover:bg-green-900"
+              : "border-green-300 bg-white text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-800 dark:bg-slate-950 dark:text-green-500 dark:hover:bg-green-950"
+          )}
         >
           {isFocused ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
         </button>
       </div>
 
-      <div className="flex-1 min-h-0 overflow-hidden p-4">
+      <div className="flex-1 min-h-0 overflow-hidden p-4 flex flex-col gap-3">
+        <div className="shrink-0">
+          <FilterControls
+            filterState={filterState}
+            onFilterState={setFilterState}
+            onReset={resetFilters}
+            substanceOptions={substanceOptions}
+            selectedSubstanceOptions={selectedSubstanceOptions}
+            calculatorSubstanceOption={calculatorSubstanceOption}
+            substanceSearch={substanceSearch}
+            onSubstanceSearch={setSubstanceSearch}
+            isSubstancePickerOpen={isSubstancePickerOpen}
+            onSubstancePickerOpen={setIsSubstancePickerOpen}
+            disabledMedia={disabledMedia}
+            isExpanded={isFiltersExpanded}
+            onToggleExpand={() => setIsFiltersExpanded(!isFiltersExpanded)}
+          />
+        </div>
+
         {selectedSampleIds.length === 0 ? (
           <div
             data-testid="matrix-map-right-panel-empty"
-            className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/30"
+            className="rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 dark:border-slate-600 dark:bg-slate-900/30 flex-1 flex flex-col items-center justify-center text-center"
           >
             <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
               No samples selected
@@ -293,34 +317,7 @@ export function MatrixMapRightPanel({
             </p>
           </div>
         ) : (
-          <div className="flex h-full min-h-0 flex-col gap-3">
-            <div className="rounded-lg border border-slate-200 bg-white p-3 dark:border-slate-700 dark:bg-slate-900/30">
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                {selectedSampleIds.length} selected samples, {filteredRows.length} matching measurements
-              </p>
-              <p data-testid="matrix-map-coord-basis" className="mt-1 text-[11px] text-slate-400 dark:text-slate-500">
-                Coordinate basis:{' '}
-                {[
-                  coordBasis.surveyed > 0 ? `${coordBasis.surveyed} surveyed` : null,
-                  coordBasis.centroid > 0 ? `${coordBasis.centroid} centroid` : null,
-                  coordBasis.manual > 0 ? `${coordBasis.manual} manual` : null,
-                ].filter(Boolean).join(', ') || 'n/a'}
-              </p>
-            </div>
-
-            <FilterControls
-              filterState={filterState}
-              onFilterState={setFilterState}
-              onReset={resetFilters}
-              substanceOptions={substanceOptions}
-              selectedSubstanceOptions={selectedSubstanceOptions}
-              calculatorSubstanceOption={calculatorSubstanceOption}
-              substanceSearch={substanceSearch}
-              onSubstanceSearch={setSubstanceSearch}
-              isSubstancePickerOpen={isSubstancePickerOpen}
-              onSubstancePickerOpen={setIsSubstancePickerOpen}
-              disabledMedia={disabledMedia}
-            />
+          <div className="flex flex-1 min-h-0 flex-col gap-3">
 
             {hiddenSelectedSampleIds.length > 0 && activeFilters && (
               <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100">
@@ -419,6 +416,8 @@ function FilterControls({
   isSubstancePickerOpen,
   onSubstancePickerOpen,
   disabledMedia,
+  isExpanded,
+  onToggleExpand,
 }: {
   filterState: MatrixMapFilterState;
   onFilterState: (patch: Partial<MatrixMapFilterState>) => void;
@@ -431,12 +430,26 @@ function FilterControls({
   isSubstancePickerOpen: boolean;
   onSubstancePickerOpen: (value: boolean) => void;
   disabledMedia: readonly MatrixMapMedium[];
+  isExpanded: boolean;
+  onToggleExpand: () => void;
 }) {
   const activeFilters =
     hasActiveMatrixMapFilters(filterState) || Boolean(filterState.surveyed_only);
 
   return (
-    <div className="space-y-3 rounded-lg border border-slate-200 bg-slate-50 p-3 dark:border-slate-700 dark:bg-slate-900/30">
+    <div className="rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-900/30">
+      <button
+        type="button"
+        aria-expanded={isExpanded}
+        onClick={onToggleExpand}
+        className="flex w-full items-center justify-between p-3 text-xs font-semibold uppercase tracking-wider text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200"
+      >
+        <span>Map & Data Filters {activeFilters && '(Active)'}</span>
+        {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+      </button>
+
+      {isExpanded && (
+        <div className="space-y-3 px-3 pb-3 pt-2 border-t border-slate-200 dark:border-slate-700">
       <SubstanceMultiSelect
         options={substanceOptions}
         selectedOptions={selectedSubstanceOptions}
@@ -500,6 +513,8 @@ function FilterControls({
         >
           Clear all filters
         </button>
+      )}
+        </div>
       )}
     </div>
   );

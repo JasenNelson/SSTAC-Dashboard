@@ -144,12 +144,13 @@ describe('MatrixMapRightPanel', () => {
       expect(screen.getByText('Copper')).toBeInTheDocument();
       expect(screen.getByText('Lead')).toBeInTheDocument();
     });
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     expect(rpcMock).toHaveBeenCalledWith('fetch_measurements_for_samples', {
       p_sample_ids: ['sample-a', 'sample-b'],
     });
   });
 
-  it('computes coordinate basis coverage and formats tier labels correctly', async () => {
+  it('formats coordinate tier labels correctly in the data table', async () => {
     rpcMock.mockResolvedValue({ data: measurementRows(), error: null });
     useMatrixMapSelectionStore.setState({
       selectedSampleIds: ['sample-a', 'sample-b'],
@@ -159,9 +160,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
-
-    const basisElement = screen.getByTestId('matrix-map-coord-basis');
-    expect(basisElement).toHaveTextContent('Coordinate basis: 1 surveyed, 1 centroid');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
 
     const scrollRegion = screen.getByTestId('matrix-map-measurement-table-scroll');
     expect(within(scrollRegion).getByText('Surveyed')).toBeInTheDocument();
@@ -178,6 +177,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     fireEvent.click(screen.getByRole('button', { name: /All substances/i }));
     fireEvent.change(screen.getByLabelText(/Search substances/i), {
       target: { value: 'lead' },
@@ -207,6 +207,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel({ substanceKey: 'copper' });
 
     await screen.findByText('Lead');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     fireEvent.click(screen.getByRole('button', { name: /All substances/i }));
     fireEvent.click(screen.getByRole('button', { name: /Filter to Calculator substance/i }));
 
@@ -226,6 +227,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     const scrollRegion = screen.getByTestId('matrix-map-measurement-table-scroll');
     expect(scrollRegion.className).toContain('overflow-auto');
     expect(screen.getByRole('columnheader', { name: 'Sample' }).className).toContain('sticky');
@@ -242,6 +244,7 @@ describe('MatrixMapRightPanel', () => {
     const { rerender } = renderPanel({ isFocused: false, onToggleFocus });
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     fireEvent.click(screen.getByRole('button', { name: /All substances/i }));
     fireEvent.click(screen.getByLabelText('Copper'));
     await act(async () => {
@@ -275,6 +278,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     fireEvent.click(screen.getByRole('button', { name: /All substances/i }));
     fireEvent.click(screen.getByLabelText('Copper'));
 
@@ -295,6 +299,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
 
     const sedimentChip = screen.getByRole('button', { name: /^sediment$/i });
     const waterChip = screen.getByRole('button', { name: /^water$/i });
@@ -321,6 +326,7 @@ describe('MatrixMapRightPanel', () => {
     renderPanel();
 
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     // Click sediment chip to select it
     fireEvent.click(screen.getByRole('button', { name: /^sediment$/i }));
 
@@ -349,6 +355,7 @@ describe('MatrixMapRightPanel', () => {
 
     // Now select sediment in the filter -- this makes it selected-but-unavailable
     // (the RPC only has water rows). Chip must remain enabled for deselect.
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     useMatrixMapFilterStore.getState().setFilterState({ mediums: ['sediment'] });
 
     // sediment has no rows in the dataset, but it IS in filterState.mediums.
@@ -374,6 +381,7 @@ describe('MatrixMapRightPanel', () => {
 
     renderPanel();
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
     expect(screen.getByRole('button', { name: /^sediment$/i })).not.toBeDisabled();
 
     // Change the selection; the new fetch never resolves -> loading window.
@@ -418,6 +426,7 @@ describe('MatrixMapRightPanel', () => {
 
     renderPanel();
     await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
 
     await act(async () => {
       fireEvent.click(screen.getByText('STA-1'));

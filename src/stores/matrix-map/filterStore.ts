@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Classification, MatrixSample } from '@/app/(dashboard)/matrix-map/types';
 
-export const MATRIX_MAP_MEDIA = ['sediment', 'water', 'tissue', 'toxicity', 'community'] as const;
+export const MATRIX_MAP_MEDIA = ['sediment', 'soil', 'water', 'tissue', 'toxicity', 'community'] as const;
 export const MATRIX_MAP_QA_FILTERS = ['all', 'detected', 'censored'] as const;
 export const MATRIX_MAP_CLASSIFICATION_FILTERS = ['all', 'reference', 'impacted', 'unknown'] as const;
 

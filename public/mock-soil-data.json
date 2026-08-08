@@ -1,0 +1,34 @@
+[
+  {
+    "site_id": "1154",
+    "sample_id": "BH-1",
+    "latitude": 49.2827,
+    "longitude": -123.1207,
+    "depth_top_m": 0.5,
+    "depth_bottom_m": 1.0,
+    "stratigraphy": "Silt to Clayey Silt",
+    "sample_date": "2021-10-27",
+    "metals_data": {
+      "Arsenic (As)": "12.5",
+      "Cadmium (Cd)": "0.5",
+      "Lead (Pb)": "45.0",
+      "Zinc (Zn)": "120.0"
+    }
+  },
+  {
+    "site_id": "1154",
+    "sample_id": "BH-2",
+    "latitude": 49.2830,
+    "longitude": -123.1210,
+    "depth_top_m": 1.5,
+    "depth_bottom_m": 2.0,
+    "stratigraphy": "Sand and Gravel",
+    "sample_date": "2021-10-27",
+    "metals_data": {
+      "Arsenic (As)": "5.0",
+      "Cadmium (Cd)": "<0.1",
+      "Lead (Pb)": "15.0",
+      "Zinc (Zn)": "60.0"
+    }
+  }
+]
