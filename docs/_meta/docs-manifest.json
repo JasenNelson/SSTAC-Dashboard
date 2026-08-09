@@ -87,9 +87,9 @@
     "testing": {
       "vitest_test_count": {
         "status": "verified",
-        "value": 6618,
-        "source": "npm run test:ci on PR #771 head 909a7eb9 (2026-08-05); tree byte-identical to the squash-merged a821e519 (committed 2026-08-06), so the count transfers. No gate was run against a821e519 itself.",
-        "last_verified": "2026-08-05"
+        "value": 6625,
+        "source": "npm run test:ci on codex/wiki-recovery-20260808 pre-documentation-correction code/test tip c0a454869ddc2cdbf56d2e2a8fb5df187ae51474 (2026-08-09), gate G3 of the six-gate push suite; measured BEFORE the documentation-correction commit, so this tip is not the branch final tip and the complete ordered six-gate suite must be rerun on the actual final tip after that commit and before any push; receipt .tmp/gate-logs/g3-testci-20260809-103245.log records 'Tests 6625 passed | 19 skipped | 2 todo (6646)' with native exit 0. Net +7 over the prior 6618; the delta was not decomposed and spans both this branch's one added docs-gate case and everything merged to main between a821e519 and base 0b6103da. The prior 6618 value (npm run test:ci on PR #771 head 909a7eb9, 2026-08-05) is preserved as historical evidence in facts_history.session_2026_08_05_wiki_runtime_autofollow_bootstrap.gates and is not duplicated as a separate history entry. NOT YET MERGED: measured on a branch tip, not on main.",
+        "last_verified": "2026-08-09"
       },
       "playwright_test_count": {
         "status": "verified",
@@ -108,16 +108,16 @@
       "counted_window": {
         "status": "verified",
         "value": {
-          "window_through": "2026-08-08",
-          "counted_nights": 3,
+          "window_through": "2026-08-09",
+          "counted_nights": 4,
           "required_nights": 10,
-          "successful_nights": 3,
+          "successful_nights": 4,
           "semantic_nights": 0,
           "required_semantic_nights": 5,
           "phase_7_ready": false
         },
-        "source": "Read-only canonical-runtime evidence snapshot: .tmp_wiki_nightly/receipt-2026-08-06.md, receipt-2026-08-07.md, receipt-2026-08-08.md and terminal receipts 65672054-2f94-4279-ad10-f424ce9453f5, 3646680a-5dc5-4e0b-b332-ab52d847e874, and 96502ca2-80da-4b27-9716-31f634407ed0. Reverify the canonical runtime before operational use.",
-        "last_verified": "2026-08-08"
+        "source": "Read-only canonical-runtime evidence snapshot: .tmp_wiki_nightly/receipt-2026-08-06.md, receipt-2026-08-07.md, receipt-2026-08-08.md, receipt-2026-08-09.md and terminal receipts 65672054-2f94-4279-ad10-f424ce9453f5, 3646680a-5dc5-4e0b-b332-ab52d847e874, 96502ca2-80da-4b27-9716-31f634407ed0, and c8df3813-0ea5-4a6e-a28a-7e28c0421b5c. DAY 4 is bound to run c8df3813-0ea5-4a6e-a28a-7e28c0421b5c: terminal receipt .tmp_wiki_nightly/terminal-receipt-c8df3813-0ea5-4a6e-a28a-7e28c0421b5c.json sha256 72ad4daf8dafd881e992fdaed51321cfe87df8a29f594dfcb6591e0fe6f83d87, summary receipt .tmp_wiki_nightly/receipt-2026-08-09.md sha256 83c33286be2a00f6d4e528fd78b8709e9c34f5361a5f50c0f884125b4dbd120d; terminal_state SUCCESS, native_exit_code 0, terminal_process_custody PASS with survivor_count 0, serve_gate PASS, n6_publication SERVED_WIKI_SWAPPED, autofollow_decision ALREADY_CURRENT with head/required_ref/build_stamp all 50d42e0a, semantic NOT_RUN (n5_mode SKIP_ALL). EXTERNAL ASSUMPTION: calendar-trigger provenance is not receipt-provable -- per the runbook section 10, a manual run at the local 05:30 minute produces the same correlation, so the 'natural' label rests on an external owner gate, accepted here consistently with the 2026-08-07 and 2026-08-08 nights. Semantic remains 0 of 4, so the separate 'semantic ran >=5/10 nights' criterion is unmet and Phase 7 is NOT READY. Reverify the canonical runtime before operational use.",
+        "last_verified": "2026-08-09"
       },
       "first_repinned": {
         "status": "verified",

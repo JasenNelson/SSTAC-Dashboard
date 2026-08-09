@@ -13,10 +13,10 @@ reference implementation: OpenHarness-dev (bugs fixed during port, not copied --
 | Docs semantic TRUST FILTER (default-deny + generated overlay) | ENABLED | `gen_docs_scope.py --emit-overlay`; overlay absent => zero md in scope |
 | Session hooks (bootstrap, freshness advisory, graphify nudge) | ENABLED via tracked `.claude/settings.json` | all advisory, exit-0-always, 5-10s timeouts, `SSTAC_WIKI_HOOKS_OFF=1` kill-switch |
 | Ollama semantic extraction (label + extract + promotion) | GATED-OFF until the standing block exists | `C:\Projects\OLLAMA_STANDING_BLOCK_SSTAC_WIKI.md` absent => every Ollama step auto-skips (fail-soft); creating it is an OWNER action (section 4) |
-| Nightly scheduled task `SSTAC-Wiki-Nightly` (05:30) | REGISTERED + ENABLED; task state last read as `Ready` on 2026-08-06 | Deterministic-only, derived from Contract D but running as an owner-approved `InteractiveToken` EXCEPTION, not strict Contract D (which mandates `Password` logon -- see section 11 and known issue 5 in section 12). CONSEQUENCE: it only fires while the owner is signed in. Durable successful natural-run receipts exist through 2026-08-08; current task state was not reread in this correction lane. Receipts and counted streak are in section 12 |
+| Nightly scheduled task `SSTAC-Wiki-Nightly` (05:30) | REGISTERED + ENABLED; task state last read as `Ready` on 2026-08-06 | Deterministic-only, derived from Contract D but running as an owner-approved `InteractiveToken` EXCEPTION, not strict Contract D (which mandates `Password` logon -- see section 11 and known issue 5 in section 12). CONSEQUENCE: it only fires while the owner is signed in. Durable successful natural-run receipts exist through 2026-08-09; current task state was not reread in this correction lane. The counted streak is canonical only at `facts.wiki_runtime.counted_window` in `docs/_meta/docs-manifest.json`; per-night receipts are in section 12 |
 | Watchdog task | NOT REGISTERED (owner-run pattern) | `tooling\wiki\wiki_watchdog.ps1`; if registered, schedule it well clear of 05:30 -- it runs `check_orphans.ps1` with the runtime path in its command line and would otherwise trip the nightly's own custody baseline |
 | graphify MCP server | TWO SEPARATE DEFECTS (read-only reverified 2026-08-08): canonical-runtime server cannot START, and the only existing registration points at a SUPERSEDED runtime | (a) In the canonical runtime, `mcp==2.0.0` no longer exports `mcp.types.AnyUrl`, so `graphify.serve` exits 1 (sections 5 and 12). (b) The one registration in `~/.claude.json` (project key `C:/Projects/SSTAC-Dashboard`) targets `kb-runtime-6bb43b-2026-07-23`, NOT the canonical runtime. That venv has `mcp 1.28.1` and DOES start -- so it serves a stale graph rather than failing. These are INDEPENDENT: repairing the canonical venv does not fix the registration. Do NOT add a second registration; the registered non-authoritative repair packet remains `CANDIDATE_UNVERIFIED` |
-| Committed `wiki/` output | OFF (gitignored) | graduation criteria unmet; durable natural-night receipts establish DAY 3 of 10 through 2026-08-08 (section 12), while semantic ran 0/3 in that window and the semantic >=5/10 criterion remains blocked. Also blocked by the protected-pathspec interaction (section 12, known issue 2) |
+| Committed `wiki/` output | OFF (gitignored) | graduation criteria unmet; the counted window and semantic count are canonical at `facts.wiki_runtime.counted_window` (do not restate them here), and the semantic >=5/10 criterion remains blocked because every counted night so far ran deterministic-only. Per-night receipts are in section 12. Also blocked by the protected-pathspec interaction (section 12, known issue 2) |
 | `-AutoCommit` | OFF, never passed | unattended commits need an explicit recorded owner ruling first |
 | Post-commit git hook | INTENTIONALLY ABSENT | 82-worktree shared `.git/hooks` = orphan-process factory; the nightly N0 asserts it stays absent |
 
@@ -380,9 +380,11 @@ tooling\wiki\requirements-graphify.txt`).
   remote branch; thresholds >50 commits / >7 days).
 - Suite: `python -m unittest discover -v -s tooling\wiki\tests`.
 - Graduation streak math + wiki-commit criteria: plan Phase 7. The 10-counted-night window has
-  STARTED: durable natural-night receipts for 2026-08-06, 2026-08-07, and 2026-08-08 establish
-  DAY 3 of 10 (section 12). All three receipts record semantic skipped, so the same window is at
-  semantic 0/3 and cannot satisfy `semantic ran >=5/10 nights` under deterministic-only Contract D.
+  STARTED. Do NOT restate the count here -- it is canonical only at
+  `facts.wiki_runtime.counted_window` in `docs/_meta/docs-manifest.json`, with the per-night
+  receipts in section 12. Every counted night so far records semantic SKIPPED, so the window
+  cannot satisfy `semantic ran >=5/10 nights` under deterministic-only Contract D, and Phase 7
+  remains NOT READY regardless of how many deterministic nights accumulate.
 
 ## 10. Candidate Contract A scheduler preflight (not installation authority)
 
@@ -595,7 +597,26 @@ canonical-runtime MCP registration still remains deferred (sections 1, 5, and 12
 Semantic operation, `-AutoCommit`, committed `wiki/`, and the graduation decision DO remain
 deferred.
 
-## 12. Current operational state and known issues (as of 2026-08-06)
+## 12. Operational state and known issues
+
+EVIDENCE BOUNDARY -- read before citing anything in this section. The observations below are
+ACCEPTED THROUGH 2026-08-09; individual claims carry their own verification dates. This section is
+NOT a live dashboard, and its heading deliberately carries no "as of" date because the underlying
+state changes nightly while this prose does not. Current accepted facts live in
+`docs/_meta/docs-manifest.json` under `facts` (`facts.wiki_runtime.counted_window` and
+`facts.wiki_runtime.first_repinned` for this lane); `facts_history` is frozen history and is never
+current authority. Reverify against the canonical runtime before any operational use.
+
+The 2026-08-09 night HAS been adjudicated against its terminal receipt and IS counted -- see the
+streak table below and `facts.wiki_runtime.counted_window`. Accepted evidence therefore runs
+THROUGH 2026-08-09.
+
+PROVENANCE CAVEAT, applying to every "natural nightly" row in the table below: calendar-trigger
+provenance is NOT receipt-provable. Per section 10, a manual task run at the local 05:30 minute
+produces the same correlation a scheduler-fired run does, so the "natural" label rests on an
+external owner gate rather than on receipt evidence. It is accepted here on the same basis for the
+2026-08-07, 2026-08-08, and 2026-08-09 nights. Every OTHER counting criterion in those rows is
+carried by the terminal receipts themselves.
 
 ### Runtime state
 
@@ -623,6 +644,7 @@ the Phase 7 10-counted-night window.
 | 2026-08-06 07:33 (post-merge bootstrap, scheduler-fired) | `14459a28-4f81-437d-afba-329f393fc8cc` | PASS. `autofollow_decision=ALREADY_CURRENT`; `autofollow_attempted=false`; `autofollow_result=PASS`. The `bfa344dd` -> `a821e519` repin was done OUT OF BAND by the one-time bootstrap script (STEP 2, explicit `git checkout --detach`; ephemeral, under `C:\tmp`, not in this repo) BEFORE this run -- which is why the run observed `ALREADY_CURRENT`. Task XML byte-identical before and after: sha256 `484f791453c8b9d6969390480eee8d4c2fac471723c6cfab9a49ff6a4c91b3f4` (recompute with `schtasks /Query /TN SSTAC-Wiki-Nightly /XML ONE \| Out-String` -> `WriteAllText` -> `Get-FileHash`; other serializations give different hashes). |
 | 2026-08-07 05:30 (natural nightly) | `3646680a-5dc5-4e0b-b332-ab52d847e874` | PASS. Terminal receipt records `SUCCESS`, native exit 0, custody PASS, `SERVED_WIKI_SWAPPED`, and `autofollow_decision=ALREADY_CURRENT`. COUNTED NATURAL STREAK DAY 2 of 10; semantic skipped. |
 | 2026-08-08 05:30 (natural nightly) | `96502ca2-80da-4b27-9716-31f634407ed0` | PASS. Terminal receipt records `SUCCESS`, native exit 0, custody PASS, `SERVED_WIKI_SWAPPED`, and the first production `autofollow_decision=REPINNED`: `a821e519` -> `50d42e0`, attempted true, result PASS, final HEAD/ref/build-stamp all `50d42e0`. COUNTED NATURAL STREAK DAY 3 of 10; semantic skipped. Receipt SHA-256 `469f887fdb22ef3fa54317ef08d9da25ef943c66e8a42b40648357e80c4773b1`. |
+| 2026-08-09 05:30 (natural nightly) | `c8df3813-0ea5-4a6e-a28a-7e28c0421b5c` | PASS. Terminal receipt records `SUCCESS`, native exit 0, custody PASS with `survivor_count` 0, `serve_gate=PASS`, `SERVED_WIKI_SWAPPED`, and `autofollow_decision=ALREADY_CURRENT` (`attempted=false`, `result=PASS`) because `origin/main` was still `50d42e0a` at 05:30; head, required-ref, and build-stamp OIDs all `50d42e0a`. Graph 12115 nodes / 23762 links / 687 communities. COUNTED NATURAL STREAK DAY 4 of 10; semantic skipped (`n5_mode=SKIP_ALL`). Terminal receipt SHA-256 `72ad4daf8dafd881e992fdaed51321cfe87df8a29f594dfcb6591e0fe6f83d87`; summary receipt SHA-256 `83c33286be2a00f6d4e528fd78b8709e9c34f5361a5f50c0f884125b4dbd120d`. `ALREADY_CURRENT` here is CORRECT, not a regression from the 2026-08-08 `REPINNED`: there was nothing to follow. |
 
 **The first production `REPINNED` path is now durably proven.** The canonical-runtime terminal
 receipt `.tmp_wiki_nightly\terminal-receipt-96502ca2-80da-4b27-9716-31f634407ed0.json` records the

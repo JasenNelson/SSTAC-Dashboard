@@ -596,6 +596,28 @@ merges still refuse and leave the runtime stale until a manual repin.
   tests.** The candidate pins runtime-local executables, restores deterministic clustering and
   community-required publication gates, and adds focused helper/sequence tests. It grants no
   activation or commit authority.
+
+  **Superseded in part 2026-08-09 -- the "pending executable tests" half is RESOLVED.** The Python
+  contract suites were executed against pre-documentation-correction code/test tip `c0a45486` with
+  the canonical Graphify interpreter
+  (`<runtime>\.venv-graphify\Scripts\python.exe`), file-backed under `.tmp/gate-logs/`:
+  - focused `tooling.wiki.tests.test_sync_wiki_contract` + `test_wrapper_contracts` -- 98 tests, OK,
+    native exit 0 (`py-focused-c0a45486.log`, sha256
+    `8c2073051c78eacbc5bdd960e5aa5eb3326a7e742807eac876a5d562ce1fefe5`);
+  - full discovery over `tooling\wiki\tests` -- 332 tests, OK, native exit 0
+    (`py-full-c0a45486.log`, sha256
+    `55ff18eace298771bca384b7e41e26837d006fb326af5121b3640f42fcdcced9`).
+
+  The "pending external review" half is NOT resolved here, and its live state is deliberately not
+  restated in this document: current publication and review status is whatever Git, the PR, and CI
+  say for this branch. Read those, not this line. Executed tests are evidence about the candidate's
+  contracts only. They confer no activation, no commit, no scheduler, no MCP, no Ollama, and no
+  runtime-mutation authority; the no-activation boundary is unchanged.
+
+  These results were measured BEFORE the documentation-correction commit, so `c0a45486` is not the
+  branch's final tip. The complete ordered six-gate suite (lint, `tsc --noEmit`, `test:ci`, monitored
+  clean build, e2e, `docs:gate`) must be rerun on the ACTUAL final tip after that commit lands, and
+  before any push.
 - **Graphify MCP repair remains `CANDIDATE_UNVERIFIED`.** The compatible dependency constraint,
   disposable acceptance protocol, exact two-value registration replacement, and rollback contract
   are in `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md`. No package, venv, MCP, or user
