@@ -578,6 +578,80 @@ merges still refuse and leave the runtime stale until a manual repin.
    `UNVERIFIED: <what to probe>` rather than prose whenever it cannot back a state claim with a
    probe.
 
+### 2026-08-07 -- Permanently-queued CI run 31123692717 (do not "fix"); CI hardening landed
+
+Source: the 2026-08-06 GitHub Actions major incident (impact Critical, 15:22:49Z to
+2026-08-07T02:04:44Z) and the PR #772 recovery.
+
+1. **Workflow run `31123692717` is permanently `queued` and CANNOT BE CANCELLED. It could be
+   DELETED, but must not be -- see below.**
+   Verified 2026-08-07: top level `status: queued` / `run_attempt: 1` frozen at 2026-08-06T19:10:52Z;
+   `/attempts/1` = `completed`/`failure`; `/attempts/2` = 404 (never created); `jobs?filter=latest`
+   = 0 while `filter=all` = 8; check-suite 84431969145 = `queued` with 0 check runs. Both
+   `POST .../cancel` and `POST .../force-cancel` return **HTTP 409**. Cause: a `gh run rerun
+   --failed` issued INSIDE the active incident, which reset the run and detached three passing
+   check runs from `ea073364`.
+   **DO NOT DELETE IT.** `gh run delete` WOULD succeed. It would destroy the only surviving record
+   that `Lint & TypeScript Check`, `Unit Tests` and `Security Scan` ran green against `ea073364` --
+   that record now exists ONLY as job history on the run object (`runs/31123692717/jobs?filter=all`),
+   because the check runs were already detached from the commit's check-run list. PR #772's body
+   cites it as the judgment evidence for the owner waiver under which that PR was merged.
+   It is harmless: check runs are commit-scoped and it is bound to a superseded, already-merged SHA.
+   Full diagnosis is recorded as a comment on PR #772.
+
+2. **Landed in this PR:** `ci.yml` gains a `concurrency` group with `cancel-in-progress` scoped to
+   pull requests (so superseded PR runs are auto-cancelled instead of accumulating), while NON-PR
+   runs key on `run_id` + `run_attempt`, so each push-to-main run AND each rerun attempt gets its
+   OWN group. Plus removal of non-ASCII characters per CLAUDE.md rule 9.
+   **`run_attempt` is load-bearing, not belt-and-braces:** `github.run_id` is STABLE across reruns
+   (only `run_attempt` changes -- verified on run `31123692740`, whose attempts 1 and 2 share one
+   `run_id`). Keying on `run_id` alone would mean re-running a stuck push run re-enters the same
+   group and can be blocked by the original attempt, failing in exactly the recovery case this
+   block exists for.
+   **RESIDUAL HAZARD, stated deliberately:** run `31123692717` was a `pull_request` event, and the
+   PR path DOES share a group per PR number. Before this change a stuck run blocked nothing (there
+   was no grouping at all); after it, a recurrence would leave later runs for that same PR waiting
+   on the group. `cancel-in-progress: true` mitigates the normal case but is unproven against a run
+   that rejects cancellation. **There is no in-repo escape hatch for that case** (see item 4);
+   recovery would be a new PR on a fresh branch, or GitHub Support.
+
+3. **STILL DEFERRED -- `Run docs gate` is not a required status check.** Branch protection on `main`
+   requires exactly `Lint & TypeScript Check`, `Unit Tests`, `Production Build`, `E2E Tests`, and
+   `Run docs gate` is NOT among them.
+   BE PRECISE ABOUT WHAT THAT DOES AND DOES NOT MEAN: `Unit Tests` DOES cover
+   `docs/_meta/docs-manifest.json` integrity, because `scripts/verify/__tests__/docs-gate.test.mjs`
+   is tracked, is matched by the vitest `include` glob, reads the real manifest, and shells out to
+   `scripts/verify/docs-gate.mjs`; and `ci.yml` has no `paths:` filter, so it runs on docs-only PRs.
+   `docs-gate.test.mjs` also asserts the bundle wiring by exact identity (`activated_bundles`
+   containing named bundles, `required_documents` containing named authorities), so a required check
+   DOES enforce the bundle / required-reading MAPPING. What no REQUIRED check does is run the gate
+   against THIS PR's ACTUAL DIFF -- `docs:gate --base/--head` runs only in the non-required
+   `Run docs gate` job.
+   (An earlier draft of this entry claimed the four required checks "contain no reference to `docs/`"
+   and that "the gate set is inverted for docs-only changes." That was wrong -- the search scope
+   excluded `vitest.config.ts` and the test above. Corrected here so a future owner decision is not
+   made on a false premise.)
+   Making `Run docs gate` required needs care: it carries a `paths:` filter, and a required workflow
+   filtered out by paths stays Pending forever and would deadlock any PR that does not touch its
+   paths. The correct pattern is an always-run job that skips work internally. Owner decision.
+
+4. **`workflow_dispatch` on `ci.yml` was PROPOSED AND REJECTED. Do not re-add it without solving
+   both problems below.** It was drafted into this PR as a manual recovery lever, then removed on
+   adversarial review. Recorded here so the idea is not revived on its surface appeal:
+   - **SECRET EXPOSURE.** `ci.yml` receives `SENTRY_AUTH_TOKEN`, `CODECOV_TOKEN`,
+     `NEXT_PUBLIC_SUPABASE_URL` / `_ANON_KEY` and E2E credentials. A dispatch runs
+     BRANCH-CONTROLLED code against those real secrets, on nothing more than write access and with
+     no PR review in the path.
+   - **GATE BYPASS.** A dispatched run emits the SAME four required context names but builds the
+     branch HEAD ref rather than the `pull_request` MERGE ref. Branch protection takes the LATEST
+     check run per name on the head SHA, so a dispatched green OVERWRITES those contexts and can
+     mask a genuine `pull_request` red, unblocking merge. `strict: false` does not compensate -- it
+     long predates the idea and was not set for it.
+   - It would also not have solved the case it was proposed for: `workflow_dispatch` only registers
+     from the DEFAULT BRANCH, so it is unavailable on the very PR that needs rescuing.
+   If a manual recovery lever is ever wanted, it needs a SEPARATE secret-free workflow, not a
+   trigger bolted onto the secret-bearing one.
+
 ---
 
 ## How to add a new deferred item

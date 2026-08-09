@@ -5,6 +5,25 @@ on:
     branches: [main, develop]
   pull_request:
     branches: [main, develop]
+  # NO workflow_dispatch here, deliberately. It was proposed as a manual recovery lever and
+  # REJECTED on review: this workflow receives SENTRY_AUTH_TOKEN, CODECOV_TOKEN and Supabase
+  # credentials, so a dispatch would run branch-controlled code against real secrets; and a
+  # dispatched run would overwrite the four required contexts on the head SHA, letting a green
+  # mask a genuine pull_request red. See docs/NEXT_STEPS.md.
+
+concurrency:
+  # PR runs share a group per PR number so a newer push supersedes an older run.
+  # NON-PR runs (push to main/develop) fall through to run_id + run_attempt, so each run AND each
+  # RERUN ATTEMPT gets its own group. Both halves matter:
+  #   - keying on github.ref would put every push to main in one group, where back-to-back merges
+  #     cancel each other's PENDING run (leaving a commit on main with no CI record), and a stuck
+  #     run would block every later push run indefinitely;
+  #   - github.run_id alone is NOT enough, because it is STABLE across reruns (only run_attempt
+  #     changes). Without run_attempt, re-running a stuck push run re-enters the same group and can
+  #     be blocked by the original attempt -- i.e. it would fail in exactly the recovery case this
+  #     block exists for. Verified on run 31123692740, whose attempts 1 and 2 share one run_id.
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || format('{0}-{1}', github.run_id, github.run_attempt) }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   lint-and-typecheck:
@@ -127,7 +146,7 @@ jobs:
             echo "ERROR: NEXT_PUBLIC_SUPABASE_ANON_KEY secret is not set"
             exit 1
           fi
-          echo "✓ Environment variables are set"
+          echo "[OK] Environment variables are set"
       
       - name: Build application
         run: npm run build
@@ -303,9 +322,9 @@ jobs:
           TARGET_KB=250
 
           if [ "$SHARED_KB" -gt "$TARGET_KB" ]; then
-            echo "⚠️ Performance Warning: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+            echo "[WARN] Performance Warning: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
           else
-            echo "✓ Performance OK: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
+            echo "[OK] Performance OK: Shared bundle is ${SHARED_KB}KB (target: ${TARGET_KB}KB)"
           fi
         continue-on-error: true
 
@@ -367,10 +386,10 @@ jobs:
              [ "${{ needs.unit-tests.result }}" = "failure" ] || \
              [ "${{ needs.build.result }}" = "failure" ] || \
              [ "${{ needs.e2e-tests.result }}" = "failure" ]; then
-            echo "❌ CI Pipeline Failed"
+            echo "[FAIL] CI Pipeline Failed"
             exit 1
           else
-            echo "✅ CI Pipeline Passed"
+            echo "[PASS] CI Pipeline Passed"
           fi
 
       - name: Report status to job summary
