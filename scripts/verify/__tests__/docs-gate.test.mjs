@@ -161,6 +161,14 @@ describe('docs-gate bundle wiring - exact identity, never counts', () => {
     );
   });
 
+  it('sync-wiki skill changes activate WIKI_GOVERNANCE_GATE with its authorities', () => {
+    const result = runGate(['.claude/skills/sync-wiki/SKILL.md']);
+    expect(result.activated_bundles).toEqual(['WIKI_GOVERNANCE_GATE']);
+    expect(result.required_documents).toEqual(
+      [...WIKI_GOVERNANCE_AUTHORITIES].sort()
+    );
+  });
+
   it('unrelated paths do not activate WIKI_GOVERNANCE_GATE', () => {
     const result = runGate(['README.md']);
     expect(result.activated_bundles).not.toContain('WIKI_GOVERNANCE_GATE');
@@ -303,6 +311,7 @@ describe('docs-manifest integrity', () => {
     expect(bundle?.triggers).toEqual([
       'docs/WIKI_KB_OPERATIONS_2026_07.md',
       'tooling/wiki/**',
+      '.claude/skills/sync-wiki/**',
     ]);
     expect(bundle?.requires_documents.map((entry) => entry.doc_id)).toEqual(
       WIKI_GOVERNANCE_AUTHORITIES

@@ -14,6 +14,18 @@ This file is the **single canonical entrypoint** for project documentation.
    untracked pilot output, read-only from worktrees via the absolute path) before repo-wide
    searches. Operations: `docs/WIKI_KB_OPERATIONS_2026_07.md`.
 
+### Wiki / Graphify recovery reference packets
+
+- `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` - `CANDIDATE_UNVERIFIED`,
+  non-authoritative dependency, disposable MCP acceptance, sole-registration replacement, and
+  rollback packet. No activation authority.
+- `docs/design/wiki/SEMANTIC_PROMOTION_READINESS_PACKET_2026_08_08.md` - `CANDIDATE_UNVERIFIED` and
+  `NOT_READY_FOR_SEMANTIC_OR_GRADUATION`, non-authoritative seed, canary, custody, preservation, and
+  rolling-window packet. No semantic or runtime authority.
+
+Current facts and lifecycle authority remain in `docs/_meta/docs-manifest.json`; operational
+authority remains in `docs/WIKI_KB_OPERATIONS_2026_07.md`.
+
 ## Gate system (deterministic doc review)
 
 To resolve which documentation must be reviewed for a given change, run:

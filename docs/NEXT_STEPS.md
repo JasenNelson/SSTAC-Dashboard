@@ -554,15 +554,6 @@ merges still refuse and leave the runtime stale until a manual repin.
    Deferred: switching to `Password` logon is a separate owner-gated change requiring a new
    `TaskDefinitionId` and a fresh activation-preflight cycle.
 
-6. **The auto-follow `REPINNED` path has never executed in production -- the end-to-end proof is
-   still outstanding.** Neither 2026-08-06 run exercised it: run `65672054` has no `autofollow_*`
-   fields at all (it ran the pre-#771 wrapper), and run `14459a28` recorded
-   `autofollow_attempted=false` / `ALREADY_CURRENT` because an out-of-band `git checkout --detach`
-   had already repinned the runtime. The first merge to `main` that avoids the protected pathspec
-   SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates pass.
-   CAPTURE THAT RECEIPT -- it is the highest-value outstanding observation for this lane, and until
-   it exists the feature is contract-tested only.
-
 7. **Live-state facts in these docs are hand-restated in 7-12 places each, with no single source of
    truth.** A 2026-08-06 root-cause review of this document set found that every state claim
    (`mcp==2.0.0`, the protected pathspec, the stale MCP registration, task/streak state) is written
@@ -577,6 +568,69 @@ merges still refuse and leave the runtime stale until a manual repin.
    is machine-checkable in seconds. Also worth folding in: `/update-docs` should emit
    `UNVERIFIED: <what to probe>` rather than prose whenever it cannot back a state claim with a
    probe.
+
+#### Resolved
+
+6. **The auto-follow `REPINNED` path has never executed in production -- the end-to-end proof is
+   still outstanding.** Neither 2026-08-06 run exercised it: run `65672054` has no `autofollow_*`
+   fields at all (it ran the pre-#771 wrapper), and run `14459a28` recorded
+   `autofollow_attempted=false` / `ALREADY_CURRENT` because an out-of-band `git checkout --detach`
+   had already repinned the runtime. The first merge to `main` that avoids the protected pathspec
+   SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates pass.
+   CAPTURE THAT RECEIPT -- it is the highest-value outstanding observation for this lane, and until
+   it exists the feature is contract-tested only.
+
+   **Resolved 2026-08-08:** The immutable receipt snapshot is recorded in
+   `facts_history.session_2026_08_08_wiki_runtime_first_repinned`. That history entry is not current
+   authority. Current status and provenance are canonical only at `facts.wiki_runtime.first_repinned`
+   in `docs/_meta/docs-manifest.json` and must be reverified before operational use.
+
+### 2026-08-08 -- Wiki correction and recovery reference packets
+
+- **Current counted-window and first-REPINNED status live only in the canonical manifest.** Use
+  `facts.wiki_runtime.counted_window` and `facts.wiki_runtime.first_repinned` in
+  `docs/_meta/docs-manifest.json`; do not cite `facts_history` as current authority. Reverify the
+  live facts before operational use. Activation remains blocked.
+
+- **Manual `/sync-wiki` correction remains candidate-only pending external review and executable
+  tests.** The candidate pins runtime-local executables, restores deterministic clustering and
+  community-required publication gates, and adds focused helper/sequence tests. It grants no
+  activation or commit authority.
+
+  **Superseded in part 2026-08-09 -- the "pending executable tests" half is RESOLVED.** The Python
+  contract suites were executed against pre-documentation-correction code/test tip `c0a45486` with
+  the canonical Graphify interpreter
+  (`<runtime>\.venv-graphify\Scripts\python.exe`), file-backed under `.tmp/gate-logs/`:
+  - focused `tooling.wiki.tests.test_sync_wiki_contract` + `test_wrapper_contracts` -- 98 tests, OK,
+    native exit 0 (`py-focused-c0a45486.log`, sha256
+    `8c2073051c78eacbc5bdd960e5aa5eb3326a7e742807eac876a5d562ce1fefe5`);
+  - full discovery over `tooling\wiki\tests` -- 332 tests, OK, native exit 0
+    (`py-full-c0a45486.log`, sha256
+    `55ff18eace298771bca384b7e41e26837d006fb326af5121b3640f42fcdcced9`).
+
+  The "pending external review" half is NOT resolved here, and its live state is deliberately not
+  restated in this document: current publication and review status is whatever Git, the PR, and CI
+  say for this branch. Read those, not this line. Executed tests are evidence about the candidate's
+  contracts only. They confer no activation, no commit, no scheduler, no MCP, no Ollama, and no
+  runtime-mutation authority; the no-activation boundary is unchanged.
+
+  These results were measured BEFORE the documentation-correction commit, so `c0a45486` is not the
+  branch's final tip. The complete ordered six-gate suite (lint, `tsc --noEmit`, `test:ci`, monitored
+  clean build, e2e, `docs:gate`) must be rerun on the ACTUAL final tip after that commit lands, and
+  before any push.
+- **Graphify MCP repair remains `CANDIDATE_UNVERIFIED`.** The compatible dependency constraint,
+  disposable acceptance protocol, exact two-value registration replacement, and rollback contract
+  are in `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md`. No package, venv, MCP, or user
+  configuration change is authorized.
+- **Semantic/promotion remains `NOT_READY_FOR_SEMANTIC_OR_GRADUATION`.** The August 8 frozen packet
+  records an inferred-link graph and absent promotion/contradiction state; those observations require
+  reverification. Isolated seed preconditions, attended canary, custody requirement, and 10-night
+  math are in
+  `docs/design/wiki/SEMANTIC_PROMOTION_READINESS_PACKET_2026_08_08.md`. No Ollama, seed, scheduler,
+  or canonical-runtime operation is authorized.
+  - **Source:** Mission Control correction checkpoint
+    `wiki-codex-recovery-20260808-precommit-r1`; both packets are registered REFERENCE documents in
+    `docs/_meta/docs-manifest.json` and are non-authoritative.
 
 ---
 

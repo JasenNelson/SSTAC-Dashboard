@@ -1,8 +1,8 @@
 ---
 name: sync-wiki
-version: 1.1
-last_updated: 2026-07-22
-description: "On-demand deterministic rebuild of the SSTAC-Dashboard Knowledge-Base wiki. Runs docs-scope generation, guarded graph build, staging compile/lint/secrets gates, and rollback-safe served-package swap. Use for /sync-wiki or a requested KB refresh. Non-Ollama and never auto-commit unless separately owner-authorized."
+version: 1.2
+last_updated: 2026-08-08
+description: "On-demand deterministic rebuild of the SSTAC-Dashboard Knowledge-Base wiki. Runs docs-scope generation, guarded update and clustering, a community-required final smoke, staging compile/lint/secrets gates, and rollback-safe served-package swap. Use for /sync-wiki or a requested KB refresh. Non-Ollama and never auto-commit unless separately owner-authorized."
 disable-model-invocation: false
 ---
 
@@ -39,18 +39,25 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass -File tooling\wiki\sync_wiki.p
 
 - **`-Stamp` is MANDATORY** -- pass a run timestamp (e.g. the current date-time) used to stamp the
   compiled wiki. It is a plain label, not fetched by the script.
-- **`-SkipGraph`** skips step 1 (graphify graph generation) and recompiles from the existing
-  `graphify-out/graph.json` -- the fast path when the graph is already current. Omit it to regenerate
-  the graph first (slower).
+- **`-SkipGraph`** skips Graphify update and clustering, then canonicalizes and validates the
+  existing `graphify-out/graph.json`. Publication still requires complete communities and every
+  final graph, hash, secrets, staging, and swap gate. Use it only when the existing clustered graph
+  is already current. Omit it to regenerate and re-cluster the graph first (slower).
 - **NEVER pass `-AutoCommit`** without a separate recorded owner ruling. The current wiki remains
   gitignored and unattended commits are off.
 
-The script uses the pinned `.venv-graphify` interpreter (graphifyy[sql,mcp]==0.9.17); do not
-substitute a bare `python`.
+The script resolves both Python and, by default, Graphify from the selected runtime's pinned
+`.venv-graphify\Scripts\` directory. It fails before scope generation if the exact pinned Python
+is absent, and a full run also fails if the exact Graphify executable is absent. Bare executable
+names and PATH fallback are not accepted.
 
 ## What it does (steps)
-1. **Scope + graph gates** -- regenerates the docs trust overlay; guarded graph update (unless
-   `-SkipGraph`); graph smoke; graph-output secrets scan.
+1. **Scope + graph gates** -- regenerates the docs trust overlay. A full run performs guarded
+   `update --no-cluster`, pre-cluster canonicalization and deterministic smoke, guarded
+   `cluster-only --no-label --no-viz`, final canonicalization, final smoke with required complete
+   communities, graph-hash binding, and the graph-output secrets scan. Any update or cluster
+   timeout, custody risk, guardrail failure, nonzero exit, malformed receipt, incomplete community
+   population, hash failure, or secret hit stops before publication.
 2. **Staging compile** -- seeds `wiki.staging/` from the last-good served wiki so Manual Notes,
    promotion state, and contradiction state survive; compiles into staging.
 3. **Staging gates** -- wiki lint and staging secrets scan.
@@ -58,7 +65,8 @@ substitute a bare `python`.
    with rollback to the last-good wiki on rename failure.
 5. **Changed Files** -- `git status --porcelain -- wiki/` for operator visibility only (untracked; not stageable).
 
-A non-zero exit at any step fails the run; report the failing step. `promotion.py` is deliberately
+A non-zero exit at any step fails the run; report the failing step. No graph from a failed or
+incomplete clustering path is staged or published. `promotion.py` is deliberately
 NOT invoked here (single-invocation rule; see `conventions.md` section 4.1) -- seed/refresh the
 ledger by running `tooling/wiki/promotion.py` directly.
 
