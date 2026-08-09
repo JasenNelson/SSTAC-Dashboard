@@ -554,15 +554,6 @@ merges still refuse and leave the runtime stale until a manual repin.
    Deferred: switching to `Password` logon is a separate owner-gated change requiring a new
    `TaskDefinitionId` and a fresh activation-preflight cycle.
 
-6. **The auto-follow `REPINNED` path has never executed in production -- the end-to-end proof is
-   still outstanding.** Neither 2026-08-06 run exercised it: run `65672054` has no `autofollow_*`
-   fields at all (it ran the pre-#771 wrapper), and run `14459a28` recorded
-   `autofollow_attempted=false` / `ALREADY_CURRENT` because an out-of-band `git checkout --detach`
-   had already repinned the runtime. The first merge to `main` that avoids the protected pathspec
-   SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates pass.
-   CAPTURE THAT RECEIPT -- it is the highest-value outstanding observation for this lane, and until
-   it exists the feature is contract-tested only.
-
 7. **Live-state facts in these docs are hand-restated in 7-12 places each, with no single source of
    truth.** A 2026-08-06 root-cause review of this document set found that every state claim
    (`mcp==2.0.0`, the protected pathspec, the stale MCP registration, task/streak state) is written
@@ -577,6 +568,47 @@ merges still refuse and leave the runtime stale until a manual repin.
    is machine-checkable in seconds. Also worth folding in: `/update-docs` should emit
    `UNVERIFIED: <what to probe>` rather than prose whenever it cannot back a state claim with a
    probe.
+
+#### Resolved
+
+6. **The auto-follow `REPINNED` path has never executed in production -- the end-to-end proof is
+   still outstanding.** Neither 2026-08-06 run exercised it: run `65672054` has no `autofollow_*`
+   fields at all (it ran the pre-#771 wrapper), and run `14459a28` recorded
+   `autofollow_attempted=false` / `ALREADY_CURRENT` because an out-of-band `git checkout --detach`
+   had already repinned the runtime. The first merge to `main` that avoids the protected pathspec
+   SHOULD produce the first genuine `REPINNED` receipt, assuming the remaining N0 gates pass.
+   CAPTURE THAT RECEIPT -- it is the highest-value outstanding observation for this lane, and until
+   it exists the feature is contract-tested only.
+
+   **Resolved 2026-08-08:** The immutable receipt snapshot is recorded in
+   `facts_history.session_2026_08_08_wiki_runtime_first_repinned`. That history entry is not current
+   authority. Current status and provenance are canonical only at `facts.wiki_runtime.first_repinned`
+   in `docs/_meta/docs-manifest.json` and must be reverified before operational use.
+
+### 2026-08-08 -- Wiki correction and recovery reference packets
+
+- **Current counted-window and first-REPINNED status live only in the canonical manifest.** Use
+  `facts.wiki_runtime.counted_window` and `facts.wiki_runtime.first_repinned` in
+  `docs/_meta/docs-manifest.json`; do not cite `facts_history` as current authority. Reverify the
+  live facts before operational use. Activation remains blocked.
+
+- **Manual `/sync-wiki` correction remains candidate-only pending external review and executable
+  tests.** The candidate pins runtime-local executables, restores deterministic clustering and
+  community-required publication gates, and adds focused helper/sequence tests. It grants no
+  activation or commit authority.
+- **Graphify MCP repair remains `CANDIDATE_UNVERIFIED`.** The compatible dependency constraint,
+  disposable acceptance protocol, exact two-value registration replacement, and rollback contract
+  are in `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md`. No package, venv, MCP, or user
+  configuration change is authorized.
+- **Semantic/promotion remains `NOT_READY_FOR_SEMANTIC_OR_GRADUATION`.** The August 8 frozen packet
+  records an inferred-link graph and absent promotion/contradiction state; those observations require
+  reverification. Isolated seed preconditions, attended canary, custody requirement, and 10-night
+  math are in
+  `docs/design/wiki/SEMANTIC_PROMOTION_READINESS_PACKET_2026_08_08.md`. No Ollama, seed, scheduler,
+  or canonical-runtime operation is authorized.
+  - **Source:** Mission Control correction checkpoint
+    `wiki-codex-recovery-20260808-precommit-r1`; both packets are registered REFERENCE documents in
+    `docs/_meta/docs-manifest.json` and are non-authoritative.
 
 ---
 

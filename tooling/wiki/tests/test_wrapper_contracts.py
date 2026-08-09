@@ -526,7 +526,7 @@ class TestWrapperContracts(unittest.TestCase):
         self.assertGreaterEqual(
             self.wrapper.count("--require-communities"), 2
         )
-        self.assertNotIn("--require-communities", sync)
+        self.assertEqual(sync.count("--require-communities"), 1)
 
     def test_each_identity_mutation_is_canonicalized_before_promotion(self):
         label = self.wrapper.index("@('label'")
@@ -2919,7 +2919,7 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         helper_tail = self.sync.split("function Get-WikiSyncGraphifyExitCode", 1)[1]
         helper = (
             "function Get-WikiSyncGraphifyExitCode"
-            + helper_tail.split("\n# Both Python call sites", 1)[0]
+            + helper_tail.split("\nfunction Get-WikiSyncExactNonnegativeInteger", 1)[0]
         )
         command = (
             helper

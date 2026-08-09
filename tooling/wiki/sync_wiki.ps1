@@ -2,7 +2,7 @@ param (
     [switch]$SkipGraph,
     [Parameter(Mandatory=$true)]
     [string]$Stamp,
-    [string]$GraphifyExe = 'graphify',
+    [string]$GraphifyExe = '',
     # Hard timeout (seconds) for the guarded `graphify update` graph build. graphify has no
     # timeout/memory cap on Windows, so the build MUST go through Invoke-GraphifyGuarded, which
     # fails closed (exit 124 + exact-root termination; descendant tree unproven) if the build hangs
@@ -34,11 +34,58 @@ function Get-WikiSyncGraphifyExitCode {
     return 0
 }
 
-# Both Python call sites below deliberately use the pinned .venv-graphify interpreter, not
-# a bare `python` on PATH -- the pilot's graphifyy[sql,mcp]==0.9.17 pin (and its transitive
-# deps) live ONLY in that venv (see requirements-graphify.txt); a bare `python` call would
-# silently run against whatever interpreter happens to be first on PATH.
-$venvPython = Join-Path $repoRoot '.venv-graphify\Scripts\python.exe'
+function Get-WikiSyncExactNonnegativeInteger {
+    param(
+        [Parameter(Mandatory=$true)]$Object,
+        [Parameter(Mandatory=$true)][string]$PropertyName,
+        [Parameter(Mandatory=$true)][int]$Maximum
+    )
+    $property = $Object.PSObject.Properties[$PropertyName]
+    $integerTypes = @([byte], [sbyte], [int16], [uint16], [int32], [uint32], [int64])
+    if ($null -eq $property -or $null -eq $property.Value -or
+        $integerTypes -notcontains $property.Value.GetType()) {
+        throw "invalid integer type $PropertyName"
+    }
+    $value = [int64]$property.Value
+    if ($value -lt 0 -or $value -gt $Maximum) {
+        throw "invalid integer range $PropertyName"
+    }
+    return [int]$value
+}
+
+function Resolve-WikiSyncExecutable {
+    param(
+        [string]$Candidate,
+        [Parameter(Mandatory=$true)][string]$DefaultPath,
+        [Parameter(Mandatory=$true)][string]$Label
+    )
+    $requested = if ([string]::IsNullOrWhiteSpace($Candidate)) { $DefaultPath } else { $Candidate }
+    if (-not [System.IO.Path]::IsPathRooted($requested)) {
+        throw "$Label must be an exact absolute path: $requested"
+    }
+    if (-not (Test-Path -LiteralPath $requested -PathType Leaf)) {
+        throw "$Label is missing or is not a file: $requested"
+    }
+    return (Resolve-Path -LiteralPath $requested -ErrorAction Stop).Path
+}
+
+# Every Python call deliberately uses the selected runtime's pinned .venv-graphify
+# interpreter. A full graph rebuild also defaults to that same venv's graphify.exe.
+# Bare PATH resolution is rejected so an incomplete runtime cannot silently publish a
+# graph built by a different Graphify installation.
+$venvPythonDefault = Join-Path $repoRoot '.venv-graphify\Scripts\python.exe'
+$graphifyDefault = Join-Path $repoRoot '.venv-graphify\Scripts\graphify.exe'
+try {
+    $venvPython = Resolve-WikiSyncExecutable -Candidate $venvPythonDefault -DefaultPath $venvPythonDefault -Label 'Pinned Python executable'
+    if (-not $SkipGraph) {
+        $GraphifyExe = Resolve-WikiSyncExecutable -Candidate $GraphifyExe -DefaultPath $graphifyDefault -Label 'Graphify executable'
+    }
+} catch {
+    Write-Host "FAIL: executable resolution: $($_.Exception.Message)"
+    exit 1
+}
+
+$graphPath = Join-Path $repoRoot 'graphify-out\graph.json'
 
 Write-Host "--- 0. Docs scope + trust overlay (Phase 4) ---"
 # The docs-trust negation overlay (docs\.graphifyignore) is untracked and MUST be
@@ -62,31 +109,61 @@ if (-not $SkipGraph) {
         Write-Host "FAIL: graph generation guardrail/nonzero failure (graphify exit=$($graphResult.ExitCode); guardrail failed=$($graphResult.GuardrailFailed); error=$($graphResult.GuardrailError))"
         exit 1
     }
+
+    Write-Host "--- 1a. Deterministic pre-cluster canonicalization + smoke ---"
+    & $venvPython tooling\wiki\canonicalize_graph.py --graph $graphPath --repo-root . --receipt graphify-out\canonicalization-precluster-sync.json
+    if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: pre-cluster graph canonicalization'; exit 1 }
+    & $venvPython tooling\wiki\graph_smoke.py --graph $graphPath --repo-root . --receipt graphify-out\smoke-precluster-sync.json
+    if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: deterministic pre-cluster graph smoke'; exit 1 }
+
+    Write-Host "--- 1b. Deterministic clustering ---"
+    $clusterResult = Invoke-GraphifyGuarded -GraphifyExe $GraphifyExe -GraphifyArgs @('cluster-only', $repoRoot, '--no-label', '--no-viz') -TimeoutSec $GraphTimeoutSec
+    $clusterDecisionExit = Get-WikiSyncGraphifyExitCode -Result $clusterResult
+    if ($clusterDecisionExit -eq 124) {
+        Write-Host "FAIL: graph clustering timeout or explicit orphan/custody risk (exit 124; timed out=$($clusterResult.TimedOut); guardrail failed=$($clusterResult.GuardrailFailed); orphan risk=$($clusterResult.OrphanRisk); root terminated=$($clusterResult.RootTerminated); cleanup=$($clusterResult.CleanupStatus); error=$($clusterResult.CleanupError); descendant tree unproven)"
+        exit 124
+    }
+    if ($clusterDecisionExit -ne 0) {
+        Write-Host "FAIL: graph clustering guardrail/nonzero failure (graphify exit=$($clusterResult.ExitCode); guardrail failed=$($clusterResult.GuardrailFailed); error=$($clusterResult.GuardrailError))"
+        exit 1
+    }
+} else {
+    Write-Host "SKIP: graph update and clustering disabled; validating the existing clustered graph before publication"
+    if (-not (Test-Path -LiteralPath $graphPath -PathType Leaf)) {
+        Write-Host 'FAIL: -SkipGraph requires an existing graphify-out\graph.json'
+        exit 1
+    }
 }
 
-Write-Host "--- 1a. Portable graph canonicalization ---"
-& $venvPython tooling\wiki\canonicalize_graph.py --graph graphify-out\graph.json --repo-root . --receipt graphify-out\canonicalization-receipt.json
-if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph canonicalization'; exit 1 }
+Write-Host "--- 1c. Final canonicalization ---"
+& $venvPython tooling\wiki\canonicalize_graph.py --graph $graphPath --repo-root . --receipt graphify-out\canonicalization-sync-final.json
+if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: final graph canonicalization'; exit 1 }
 
-Write-Host "--- 1b. Graph smoke + secrets scan (Phase 4 gates) ---"
+Write-Host "--- 1d. Community-required final smoke + secrets scan (Phase 4 gates) ---"
 $plainSyncSmokeReceipt = Join-Path $repoRoot 'graphify-out\smoke-sync.json'
-& $venvPython tooling\wiki\graph_smoke.py --graph graphify-out\graph.json --repo-root . --receipt $plainSyncSmokeReceipt
+& $venvPython tooling\wiki\graph_smoke.py --graph $graphPath --repo-root . --require-communities --receipt $plainSyncSmokeReceipt
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: graph smoke (hard abort)'; exit 1 }
 try {
     $plainSyncSmokeEvidence = Get-Content -LiteralPath $plainSyncSmokeReceipt -Raw | ConvertFrom-Json
     $publishedGraphSha256 = [string]$plainSyncSmokeEvidence.graph_sha256
+    $smokeNodeCount = Get-WikiSyncExactNonnegativeInteger -Object $plainSyncSmokeEvidence.graph_integrity -PropertyName 'node_count' -Maximum 10000000
+    $smokePopulatedNodeCount = Get-WikiSyncExactNonnegativeInteger -Object $plainSyncSmokeEvidence.community_contract -PropertyName 'populated_node_count' -Maximum 10000000
+    $smokeCommunityCount = Get-WikiSyncExactNonnegativeInteger -Object $plainSyncSmokeEvidence.community_contract -PropertyName 'distinct_community_count' -Maximum 10000000
 } catch {
-    Write-Host 'FAIL: graph smoke receipt is missing or malformed'
+    Write-Host "FAIL: graph smoke receipt is missing or malformed: $($_.Exception.Message)"
     exit 1
 }
 if ($publishedGraphSha256 -cnotmatch '^[0-9a-f]{64}$' -or
     $plainSyncSmokeEvidence.hard_abort -isnot [bool] -or
     $plainSyncSmokeEvidence.hard_abort -or
-    [string]$plainSyncSmokeEvidence.graph_integrity.status -cne 'PASS') {
-    Write-Host 'FAIL: graph smoke receipt is not successful or hash-bound'
+    [string]$plainSyncSmokeEvidence.graph_integrity.status -cne 'PASS' -or
+    [string]$plainSyncSmokeEvidence.community_contract.status -cne 'PASS' -or
+    $smokePopulatedNodeCount -ne $smokeNodeCount -or
+    $smokeCommunityCount -lt 1 -or $smokeCommunityCount -gt $smokeNodeCount) {
+    Write-Host 'FAIL: graph smoke receipt is not successful, community-complete, or hash-bound'
     exit 1
 }
-$publishedGraphPath = Join-Path $repoRoot 'graphify-out\graph.json'
+$publishedGraphPath = $graphPath
 & $venvPython tooling\wiki\scan_secrets.py --repo-root . --target graphify-out
 if ((-not $?) -or ($LASTEXITCODE -ne 0)) { Write-Host 'FAIL: secrets scan on graphify-out'; exit 1 }
 

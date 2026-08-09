@@ -104,6 +104,39 @@
         "last_verified": "2026-04-20"
       }
     },
+    "wiki_runtime": {
+      "counted_window": {
+        "status": "verified",
+        "value": {
+          "window_through": "2026-08-08",
+          "counted_nights": 3,
+          "required_nights": 10,
+          "successful_nights": 3,
+          "semantic_nights": 0,
+          "required_semantic_nights": 5,
+          "phase_7_ready": false
+        },
+        "source": "Read-only canonical-runtime evidence snapshot: .tmp_wiki_nightly/receipt-2026-08-06.md, receipt-2026-08-07.md, receipt-2026-08-08.md and terminal receipts 65672054-2f94-4279-ad10-f424ce9453f5, 3646680a-5dc5-4e0b-b332-ab52d847e874, and 96502ca2-80da-4b27-9716-31f634407ed0. Reverify the canonical runtime before operational use.",
+        "last_verified": "2026-08-08"
+      },
+      "first_repinned": {
+        "status": "verified",
+        "value": {
+          "observed": true,
+          "run_id": "96502ca2-80da-4b27-9716-31f634407ed0",
+          "starting_head": "a821e51968982c0b3dfe2b40e910e9aac1c112c6",
+          "final_head": "50d42e0a582992082833852e67bc503c9c9296b8",
+          "autofollow_decision": "REPINNED",
+          "autofollow_attempted": true,
+          "autofollow_result": "PASS",
+          "terminal_state": "SUCCESS",
+          "native_exit_code": 0,
+          "receipt_sha256": "469f887fdb22ef3fa54317ef08d9da25ef943c66e8a42b40648357e80c4773b1"
+        },
+        "source": "Canonical runtime .tmp_wiki_nightly/terminal-receipt-96502ca2-80da-4b27-9716-31f634407ed0.json, read and hashed without mutation on 2026-08-08. Reverify path and hash before operational use.",
+        "last_verified": "2026-08-08"
+      }
+    },
     "matrix_options_catalog": {
       "parameter_record_count": {
         "status": "verified",
@@ -1573,6 +1606,31 @@
         "The installed SSTAC-Wiki-Nightly task is an owner-approved InteractiveToken EXCEPTION, not strict Contract D: the live task XML has LogonType=InteractiveToken while tooling/wiki/activation_preflight.ps1 requires LogonType must be Password and the Contract D generator refuses to install otherwise (verified 2026-08-06). Consequences: (a) STREAK RISK -- an InteractiveToken task does not fire without an interactive session, so a logout or a reboot without signing back in before 05:30 costs a counted night; (b) FALSE-UNHEALTHY RISK -- running the documented Contract D preflight against the live task reports NON-CONFORMANT on LogonType, which is the expected result of the accepted exception, not a broken task. Switching to Password logon is a separate owner-gated change with its own preflight cycle."
       ],
       "last_verified": "2026-08-06"
+    },
+    "session_2026_08_08_wiki_runtime_first_repinned": {
+      "status": "complete",
+      "session_date": "2026-08-08",
+      "evidence_snapshot": {
+        "runtime_root": "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-runtime-9af819a-20260804",
+        "receipt_path": ".tmp_wiki_nightly/terminal-receipt-96502ca2-80da-4b27-9716-31f634407ed0.json",
+        "receipt_sha256": "469f887fdb22ef3fa54317ef08d9da25ef943c66e8a42b40648357e80c4773b1",
+        "run_id": "96502ca2-80da-4b27-9716-31f634407ed0",
+        "started_at_utc": "2026-08-08T12:30:02.7800032Z",
+        "completed_at_utc": "2026-08-08T12:31:29.6178623Z",
+        "starting_head": "a821e51968982c0b3dfe2b40e910e9aac1c112c6",
+        "fetched_oid": "50d42e0a582992082833852e67bc503c9c9296b8",
+        "autofollow_decision": "REPINNED",
+        "autofollow_attempted": true,
+        "autofollow_result": "PASS",
+        "final_head": "50d42e0a582992082833852e67bc503c9c9296b8",
+        "terminal_state": "SUCCESS",
+        "native_exit_code": 0,
+        "terminal_process_custody": "PASS",
+        "n6_publication": "SERVED_WIKI_SWAPPED"
+      },
+      "source": "Frozen read-only evidence snapshot of the canonical runtime receipt and its immutable SHA-256 on 2026-08-08.",
+      "last_verified": "2026-08-08",
+      "authority_note": "HISTORICAL SNAPSHOT ONLY. Never cite facts_history as current authority; use facts.wiki_runtime and reverify before operational use."
     }
   },
   "known_issues": {
@@ -1654,6 +1712,31 @@
         "operations"
       ],
       "notes": "Canonical Wiki/Graphify operations runbook."
+    },
+    {
+      "id": "wiki.graphify_mcp_repair_packet_2026_08_08",
+      "path": "docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "wiki",
+        "graphify",
+        "mcp",
+        "design"
+      ],
+      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Disposable compatibility and sole-registration replacement evidence packet; grants no package, venv, MCP, or user-config authority."
+    },
+    {
+      "id": "wiki.semantic_promotion_readiness_packet_2026_08_08",
+      "path": "docs/design/wiki/SEMANTIC_PROMOTION_READINESS_PACKET_2026_08_08.md",
+      "lifecycle": "REFERENCE",
+      "domain_tags": [
+        "wiki",
+        "graphify",
+        "semantic",
+        "promotion",
+        "design"
+      ],
+      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Semantic baseline and promotion readiness packet; status NOT_READY_FOR_SEMANTIC_OR_GRADUATION and grants no Ollama, seed, scheduler, or runtime authority."
     },
     {
       "id": "governance.agy_usage",
@@ -3572,7 +3655,8 @@
       "description": "Triggered by changes to the authoritative Wiki/Graphify operations runbook or the complete Wiki production and test surface.",
       "triggers": [
         "docs/WIKI_KB_OPERATIONS_2026_07.md",
-        "tooling/wiki/**"
+        "tooling/wiki/**",
+        ".claude/skills/sync-wiki/**"
       ],
       "requires_documents": [
         {
