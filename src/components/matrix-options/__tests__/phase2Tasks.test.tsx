@@ -29,16 +29,13 @@ describe('Phase2TasksSection Component', () => {
     render(<Phase2TasksSection />);
 
     // Check header
-    expect(screen.getByText('Phase 2 (2026) Tasks and Activities')).toBeInTheDocument();
+    expect(screen.getByText('Phase 2 (2026 - 2027) Gantt Chart')).toBeInTheDocument();
 
-    // Check summary line (default hides hours)
-    expect(screen.getByText((_content, element) => {
-      return element?.tagName === 'DIV' &&
-             element?.classList.contains('text-slate-600') &&
-             element?.textContent?.includes('10 tasks') === true &&
-             element?.textContent?.includes('54 subtasks') === true &&
-             element?.textContent?.includes('Phase 2 spans Week 1 to Ongoing.') === true;
-    })).toBeInTheDocument();
+    // Check the current Gantt and detailed-task structure (default hides hours)
+    expect(screen.getByText(
+      'Gantt chart showing the timeline for Phase 2 tasks from May 2026 to June 2027.'
+    )).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Detailed Task List' })).toBeInTheDocument();
     expect(screen.queryByText(/estimated hours/i)).not.toBeInTheDocument();
 
     // All accordion headers should be rendered
@@ -82,4 +79,3 @@ describe('Phase2TasksSection Component', () => {
     expect(screen.getByText(/Communications/i)).not.toBeVisible();
   });
 });
-
