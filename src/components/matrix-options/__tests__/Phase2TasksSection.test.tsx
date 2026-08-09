@@ -73,17 +73,21 @@ vi.mock('../phase2Tasks', () => ({
 }));
 
 describe('Phase2TasksSection (internal pure logic via component rendering)', () => {
-  it('mounts and renders the title and summary', () => {
+  it('mounts and renders the Gantt and detailed task list', () => {
     render(<Phase2TasksSection />);
-    expect(screen.getByRole('heading', { name: /Phase 2 \(2026\) Tasks and Activities/i })).toBeInTheDocument();
-    
-    // Total tasks = 8
-    // Total subtasks = 14
-    // Phase 2 spans Week 1 to Ongoing.
-    const summaryEl = screen.getByText(/Phase 2 spans/i).closest('p, div');
-    expect(summaryEl?.textContent).toContain('8 tasks'); // totalTasks
-    expect(summaryEl?.textContent).toContain('14 subtasks'); // totalSubtasks
-    expect(summaryEl?.textContent).toContain('Phase 2 spans Week 1 to Ongoing');
+    expect(screen.getByRole('heading', { name: /Phase 2 \(2026 - 2027\) Gantt Chart/i })).toBeInTheDocument();
+    expect(screen.getByText(
+      'Gantt chart showing the timeline for Phase 2 tasks from May 2026 to June 2027.'
+    )).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'Detailed Task List' })).toBeInTheDocument();
+
+    const taskButtons = screen.getAllByRole('button', { name: /^T\d+ - / });
+    expect(taskButtons).toHaveLength(8);
+    const renderedSubtaskTotal = taskButtons.reduce((sum, button) => {
+      const match = button.textContent?.match(/(\d+) subtasks/);
+      return sum + Number(match?.[1] ?? 0);
+    }, 0);
+    expect(renderedSubtaskTotal).toBe(14);
   });
 
   it('computes correct Lead Type badges (Mixed, TWG, Internal)', () => {
@@ -128,4 +132,3 @@ describe('Phase2TasksSection (internal pure logic via component rendering)', () 
     expect(screen.getByText('1.1 A')).toBeVisible();
   });
 });
-
