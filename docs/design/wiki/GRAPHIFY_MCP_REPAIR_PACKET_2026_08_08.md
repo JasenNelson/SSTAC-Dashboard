@@ -2,6 +2,11 @@
 
 Status: CANDIDATE_UNVERIFIED / NON-AUTHORITATIVE
 
+ADDENDUM 2026-08-10: sections 9 and 10 were appended after a compatibility-proof attempt (R13)
+failed BEFORE it reached Graphify or MCP. Section 9 records that attempt; section 10 drafts a
+materially simpler replacement contract. Neither section grants execution authority, and
+Graphify/MCP compatibility remains UNKNOWN. Sections 1 through 8 are unchanged 2026-08-08 content.
+
 Use `docs/INDEX.md` for canonical navigation and `docs/_meta/docs-manifest.json` for registered
 lifecycle and current-fact authority.
 
@@ -244,3 +249,375 @@ has not been accepted.
 7. Accept final sole-registration and canonical-query evidence.
 
 Until gates 1-7 complete, verdict remains `CANDIDATE_UNVERIFIED`.
+
+## 9. R13 attempt, 2026-08-10 -- PRE-MCP CONTROLLER-PREFLIGHT FAILURE
+
+This section is an immutable record of one attempt. It is not a compatibility result.
+
+**Do not describe R13 as a Graphify failure or an MCP failure.** It never reached Graphify and never
+reached MCP. It terminated inside its own controller's preflight, before package installation, so it
+produced no evidence whatsoever about the candidate pin.
+
+### 9.1 What was run
+
+| Item | Value |
+| :--- | :--- |
+| Date | 2026-08-10 |
+| Disposable evidence root | `C:\tmp\sstac-graphify-mcp-compat-r13-20260810` |
+| Controller exit code | 5 |
+| Terminal phase | Phase/Step 5, before package installation and before MCP |
+| Retry | None occurred |
+
+Exact source paths and SHA-256 of the three authority artifacts. All three live in the R13 working
+directory `C:\Projects\SSTAC-Dashboard-worktrees\wiki-mcp-harness-20260809\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\`
+(untracked in that worktree, branch `feat/wiki-mcp-harness-20260809`), and each hash below was
+recomputed read-only on 2026-08-10 against the file at that path:
+
+| Artifact | Path (basename under the directory above) | SHA-256 |
+| :--- | :--- | :--- |
+| Controller | `ROUTE_B_NETWORK_CONTROLLER.ps1` | `9d67db0fc2692d70ad2c96e8681216016a87c2200e02d083a1c41ffede4f624a` |
+| Authority packet | `DISPOSABLE_COMPATIBILITY_RUN_PACKET.md` | `4f27e5e51379ac9f0b6c24aee50a02b980befc059e79920b9ea28e9e225476b0` |
+| OWNER_DECISIONS | `OWNER_DECISIONS.md` | `f99869b942fd4d80ef14805da5591e651e895565a7f003669d02ecf27a83e39b` |
+
+### 9.1.1 The literal invocation that ran once
+
+This is the exact PowerShell invocation and argv. It was run ONCE and never retried:
+
+```powershell
+& 'C:\Program Files\PowerShell\7\pwsh.exe' -NoProfile -File `
+  'C:\Projects\SSTAC-Dashboard-worktrees\wiki-mcp-harness-20260809\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\ROUTE_B_NETWORK_CONTROLLER.ps1' `
+  -Execute `
+  -ApprovedControllerSha256 '9d67db0fc2692d70ad2c96e8681216016a87c2200e02d083a1c41ffede4f624a' `
+  -DisposableRoot 'C:\tmp\sstac-graphify-mcp-compat-r13-20260810'
+```
+
+No compatibility receipt was produced by this invocation and none is claimed to exist.
+
+### 9.2 What did NOT happen
+
+- No package was downloaded or installed.
+- No Graphify server was launched.
+- No MCP session was launched.
+- No compatibility receipt exists.
+- No package was reviewed, installed, or tested.
+- No canonical runtime, venv, requirements file, MCP registration, or user configuration changed.
+
+**Compatibility between `graphifyy[sql,mcp]==0.9.17` and `mcp==1.28.1` therefore remains UNKNOWN.**
+It is not verified, not refuted, and not pending-with-partial-evidence. There is no evidence.
+
+### 9.3 Custody
+
+- Pip debug custody: `JOB_CLEAN`, root reaped, zero active descendants.
+- Final custody: 420 processes inspected, zero offenders, zero indeterminate entries, nothing
+  terminated.
+
+### 9.4 Root cause
+
+The controller's own preflight parser rejected a correct environment:
+
+1. The minimal child environment contained only `PIP_CONFIG_FILE=nul` among `PIP_*` variables.
+2. The reviewed pip argv included `--isolated` and `--no-input`.
+3. Pip ITSELF sets `PIP_NO_INPUT=1` when it processes `--no-input`, so that variable appears in
+   `pip config debug` output as a pip-created artifact of the reviewed argv, not as ambient host
+   leakage.
+4. Pip explicitly recognizes `PIP_CONFIG_FILE == os.devnull` and skips loading configuration files.
+   On Windows that value is the string `nul`, which `pip config debug` reports as `exists: True`.
+5. R13's parser incorrectly rejected the pip-created `PIP_NO_INPUT`, and separately treated Windows
+   `nul` as an unknown effective configuration source.
+6. The offline self-test that passed 29 of 29 used a synthetic "good" fixture that omitted BOTH of
+   those real pip behaviours, so the defect could not be caught before first contact.
+
+No ambient host pip index, proxy, credential, or configuration leaked. The environment was correct;
+the assertion about it was wrong.
+
+The reusable lesson is recorded in `docs/LESSONS.md`: a synthetic contract fixture must reproduce
+the real tool's SELF-GENERATED state, not merely the expected ideal output.
+
+### 9.5 Disposition
+
+- The disposable evidence root is PRESERVED. No cleanup and no reuse is authorized.
+- The R13 authorization is CONSUMED. It does not carry to any further run.
+- There is no R14, and no patch to the R13 controller or its parser is authorized by this record.
+- Any further attempt requires the separate owner gate described in section 10, item 12.
+
+## 10. Simplified proof contract -- DRAFT ONLY, NOT AUTHORIZED, NOT EXECUTED
+
+DRAFT. This section proposes a materially simpler replacement for the section 4 protocol. It is
+written, not approved. Nothing here has been run, and nothing here authorizes a run. Section 4
+remains the 2026-08-08 historical text and is superseded only if and when this draft is accepted.
+
+The simplification is deliberate: R13 died in bespoke preflight-parsing infrastructure that existed
+only to prove an environment property the environment already guaranteed by construction. This draft
+deletes that layer instead of repairing it. **It introduces no new script, no new controller, no new
+harness, and no new design-document family.**
+
+1. **New disposable root.** A fresh ordinary directory outside both runtime venvs. NEVER reuse and
+   NEVER clean the R13 root at `C:\tmp\sstac-graphify-mcp-compat-r13-20260810`.
+2. **Exact direct requirements**, and only these two:
+
+   ```text
+   graphifyy[sql,mcp]==0.9.17
+   mcp==1.28.1
+   ```
+
+3. **Closed child environment plus explicit pip flags.** The child process receives a closed
+   allowlist environment with `PIP_CONFIG_FILE` set to the interpreter's own `os.devnull`, and pip
+   is invoked with `--isolated`, `--no-input`, `--no-cache-dir`, `--disable-pip-version-check`,
+   `--only-binary=:all:`, the single explicit index bound in section 10.1, and a mandatory install
+   report.
+4. **Do NOT run or parse `pip config debug`.** The closed environment and
+   `PIP_CONFIG_FILE=os.devnull` ARE the preflight evidence. This is the single change that removes
+   the R13 failure class: there is no parser to be wrong, because there is nothing to parse.
+5. **Artifact validation retained, at the strength the frozen bytes actually provide.**
+   Final-download-URL validation and DECLARED-hash validation of every resolved artifact from the
+   preserved raw install report, adjudicated against the allowlist and the narrowed receipt fields
+   in section 10.1, plus `pip freeze` and an exact-zero `python -m pip check`. No redirect-chain
+   evidence and no independent byte rehash are claimed -- see RESIDUAL 1 and RESIDUAL 2.
+6. **Process custody retained**, using the exact frozen R13 candidate bytes bound in section 10.2.
+   Windows Job Object custody with `KILL_ON_JOB_CLOSE`, the Job created and configured BEFORE the
+   child exists and the child created suspended and assigned before it can execute one instruction.
+   Algorithm ids `sstac-wiki/contained-run/v1` and `sstac-wiki/job-containment/v1`, as recorded in
+   the R13 evidence receipts.
+7. **Read-only canonical graph copy.** Copy the canonical served graph into the disposable root and
+   require the source hash and the copy hash to be equal. The canonical graph is never opened for
+   write and never mutated.
+8. **Run the existing real-profile harness** -- the exact frozen R13 candidate bytes bound in
+   section 10.2, entrypoint `real_profile_entry.py` -- directly against the disposable environment.
+   Do not author a replacement harness.
+9. **External adjudication.** The receipt is adjudicated externally, not self-graded, and must carry
+   the exact `tools/list` result, the exact `resources/list` result, and the exact canonical
+   graph-query result.
+10. **Containment scope stated honestly.** The run executes as an ordinary UNELEVATED user. The Job
+    Object provides PROCESS custody only. It is NOT filesystem isolation, NOT credential isolation,
+    NOT registry isolation, and NOT network isolation, and the receipt must say so rather than imply
+    a sandbox.
+11. **Out of scope, absolutely.** No MCP registration, no activation, no mutation of
+    `tooling/wiki/requirements-graphify.txt`, no canonical-runtime writes, no semantic work, no
+    scheduler action, and no publication.
+12. **Execution gate.** Any future execution requires new exact bytes, a comprehensive and
+    adversarial GREEN review of those bytes, and a separate explicit owner approval. Neither the R13
+    authorization nor this draft supplies it.
+
+**Simplification status: SUCCEEDED**, and it is retained ONLY on the narrowed terms below. Every
+evidence requirement in this contract is now matched to what the frozen existing bytes can actually
+produce: items 6 and 8 reuse the exact frozen R13 candidate bytes bound in section 10.2, item 4
+removes infrastructure rather than adding it, and section 10.1 was narrowed (2026-08-10, R3) so that
+no requirement demands a new controller, parser, script, or harness. Two evidence limits that would
+have required new infrastructure are recorded as NAMED RESIDUALS in section 10.1 rather than
+designed around; each needs explicit owner acceptance before any execution. Had the contract instead
+kept requirements the frozen bytes cannot satisfy, this section would report that simplification
+failed.
+
+### 10.1 Package-source route (BOUND, network-backed) -- DRAFT CHOICE, NOT EXECUTION APPROVAL
+
+This draft SELECTS the network-backed route and closes the offline-wheelhouse-versus-network
+question for THIS proposed simplified experiment only. **If this draft is later accepted, it
+supersedes the section 4 step 3 package-source choice for this experiment alone. Section 4 remains
+historical text and is not otherwise amended.** Selecting a route is a drafting decision. **It is
+not execution approval**, and it does not satisfy or pre-empt owner gate 2 in section 8.
+
+**Allowlist (exact, closed).**
+
+| Role | Bound value |
+| :--- | :--- |
+| Index (metadata resolution) | `https://pypi.org/simple` -- the single `--index-url`, exact, no trailing variation |
+| Artifact host (wheel bytes) | `files.pythonhosted.org` -- the only permitted download host |
+| Scheme | `https` only; enforced and PROVEN on the final artifact URL, and required but not independently proven for intermediate hops (RESIDUAL 1) |
+
+The index host and the artifact host are DIFFERENT by design: pip's simple index resolves metadata
+on `pypi.org` and serves wheel bytes from `files.pythonhosted.org`. Both, and only both, are
+permitted.
+
+**Forbidden as a command-line package source, without exception:** `--extra-index-url`,
+`--find-links`, `--no-index` with any local directory, dependency-links, any alternate or mirror
+index, any credential-bearing source URL (userinfo, token, or query-string secret), any `http://`
+URL, and any host not named above.
+
+**Exact reviewed pip argv (flag set bound).** The install runs exactly this flag set, with only the
+disposable-root interpreter path and the report output path supplied at execution time:
+
+```text
+<disposable-root>\.venv\Scripts\python.exe -m pip install
+  --isolated
+  --no-input
+  --no-cache-dir
+  --disable-pip-version-check
+  --only-binary=:all:
+  --index-url https://pypi.org/simple
+  --report <disposable-root>\evidence\pip-install-report.json
+  graphifyy[sql,mcp]==0.9.17
+  mcp==1.28.1
+```
+
+**What the frozen candidate actually validates.** `contained_run.py::validate_pip_report()` parses
+every `install[]` entry's `download_info.url` as a URI (never a string-prefix test) and requires:
+scheme exactly `https`; no URL userinfo; hostname canonicalized to lowercase exactly equal to
+`files.pythonhosted.org`; a non-empty path; and a declared SHA-256 in `archive_info` that is exactly
+64 lowercase hex characters. Any absence or malformation is a hard failure
+(`PIP_REPORT_ABSENT` / `PIP_REPORT_MALFORMED` / `PIP_REPORT_EMPTY` / `PIP_REPORT_INVALID`). On
+success it returns `artifact_count` plus, per artifact, the final URL and the declared SHA-256. That
+is the complete set of package-source assurances this contract may claim.
+
+**RESIDUAL 1 -- redirect hops are NOT proven.** Pip's report exposes the FINAL
+`download_info.url`, not the redirect chain that produced it. The frozen candidate validates that
+final parsed URL only. **Intermediate redirect hops are not captured, not recorded, and not
+independently proven, and no receipt produced under this contract may claim redirect-chain
+validation.** Capturing hops would require new or modified execution infrastructure, which this
+draft deliberately refuses. Residual id: `redirect_chain_unproven`. Future execution requires the
+owner to accept THIS NAMED RESIDUAL explicitly, for the exact candidate hash and for that one
+experiment, evidenced by the bound Group B receipt below -- never by an executor-set Boolean.
+
+**RESIDUAL 2 -- the artifact hash is DECLARED, not independently observed.** The SHA-256 validated
+above is the hash pip records in its own report. Because the argv includes `--no-cache-dir`, the
+wheel archives are NOT retained after installation, so there is no on-disk artifact left to hash a
+second time. **This contract therefore performs no independent byte rehash, and the declared report
+hash must never be described as an independently observed hash, nor compared against one.** Adding
+retention plus rehashing would require new or modified execution infrastructure, which this draft
+deliberately refuses. Residual id: `no_independent_artifact_rehash`. Future execution requires the
+owner to accept THIS NAMED RESIDUAL explicitly, for the exact candidate hash and for that one
+experiment, evidenced by the bound Group B receipt below -- never by an executor-set Boolean.
+
+**Install report requirement (narrowed to what exists).** The install is run with a mandatory
+machine-readable report, the COMPLETE RAW report is preserved as evidence, and every `install[]`
+entry must carry `download_info.url` and a declared SHA-256 in `archive_info`. An entry missing
+either fails closed through the validator above.
+
+**Adjudication lifecycle -- POST-INSTALL, PRE-CANDIDATE-EXECUTION.** This is not a pre-install
+supply-chain gate and must not be described as one. The order is exact:
+
+1. Pip completes installation into the disposable root and writes its report.
+2. `validate_pip_report()` runs over that report; `pip freeze` and `python -m pip check` are
+   captured.
+3. The RAW report and the frozen validator's output are adjudicated EXTERNALLY, by Mission Control,
+   not self-graded.
+4. Only after Mission Control accepts the evidence AND the owner has accepted the named residuals
+   may the real-profile compatibility harness execute.
+
+**The barrier, stated precisely.** "Nothing runs before adjudication" would be false, because the
+installer itself is installed tooling. The boundary is therefore drawn by operation, not by the word
+"installed":
+
+- **Permitted before external adjudication:** ONLY the installer and metadata-validation operations
+  explicitly listed in lifecycle steps 1 and 2 -- `pip install`, production and preservation of the
+  pip report, `validate_pip_report()`, `pip freeze`, and `pip check`. Nothing else.
+- **Forbidden before acceptance:** importing or executing Graphify, MCP, or any code, console
+  script, module, or entrypoint originating from ANY resolved candidate or transitive distribution.
+  Installing a distribution is not permission to run one line of it.
+- **Permitted only after acceptance:** execution of the real-profile compatibility harness bound in
+  section 10.2, which is what actually exercises Graphify and MCP.
+
+**On adjudication failure:** preserve the disposable root, execute NOTHING further from it, perform
+NO retry, and return to Mission Control. There is no warn-and-continue path and no in-session
+repair.
+
+**Receipt fields required for external adjudication.** Two GROUPS, kept strictly apart. Group A is
+what the tools themselves produce. Group B is what other parties decide, and no Group B value may be
+manufactured by the executor. Adjudication happens after installation and before any candidate or
+transitive code executes.
+
+**GROUP A -- tool-derived evidence.** Every row below, and ONLY these rows, may be described as
+present in or directly derivable from the reviewed pip argv, the raw pip report,
+`validate_pip_report()` output, `pip freeze`, or `pip check`:
+
+| Field | Purpose |
+| :--- | :--- |
+| `pip_argv` | The exact reviewed argv as executed, verbatim |
+| `index_url` | `https://pypi.org/simple`, derived from `pip_argv`; proves the single index used |
+| `approved_artifact_host` | `files.pythonhosted.org`, the value passed to the validator |
+| `raw_pip_report_path`, `raw_pip_report_sha256` | The COMPLETE raw report, preserved verbatim as the primary evidence |
+| `validate_pip_report_result` | `success` or `failure`; success means every entry passed the scheme, no-userinfo, exact-host, non-empty-path, and 64-hex-declared-SHA-256 checks |
+| `validator_error_code` | `null` on success; otherwise the exact `PIP_REPORT_*` code raised |
+| `artifact_count` | The validator's returned count |
+| `artifacts[].url` | The FINAL `download_info.url` retained by the validator |
+| `artifacts[].declared_sha256` | The SHA-256 as DECLARED in `archive_info` -- explicitly not an observed hash |
+| `pip_freeze_path`, `pip_freeze_sha256` | The resolved environment as installed |
+| `pip_check_exit_code` | `python -m pip check`; must be exactly 0 |
+
+**No Group A field asserting redirect-chain evidence, an independently observed artifact hash, or a
+declared-versus-observed hash comparison may appear**, because the frozen bytes cannot produce any
+of them.
+
+**GROUP B -- external disposition.** These fields BIND external decisions by receipt path, hash, and
+identifier; they do not assert them. **A Boolean set by the executor cannot prove owner acceptance**,
+which is precisely why the R3 self-asserting `residual_*` Booleans are replaced here:
+
+| Field | Purpose |
+| :--- | :--- |
+| `owner_residual_acceptance_receipt_path` | Path to the owner's acceptance receipt |
+| `owner_residual_acceptance_receipt_sha256` | SHA-256 of that receipt, bound so the accepted text cannot drift |
+| `owner_residual_acceptance_decision_id` | The owner's identifier for that specific decision |
+| `accepted_residual_ids` | Exactly `redirect_chain_unproven` and `no_independent_artifact_rehash` -- both, or the run is forbidden |
+| `accepted_candidate_hash` | The exact future candidate hash the owner accepted the residuals FOR |
+| `mission_control_adjudication_receipt_path` | Path to Mission Control's adjudication output |
+| `mission_control_adjudication_receipt_sha256` | SHA-256 of that adjudication receipt |
+| `mission_control_checkpoint_id` | The external checkpoint under which adjudication occurred |
+| `mission_control_verdict` | Mission Control's verdict, as issued externally |
+| `post_install_pre_candidate_execution_adjudication` | Marker that both external acceptances completed BEFORE any candidate or transitive code executed |
+
+Stated explicitly, so none of it can be read as self-granted:
+
+- A Boolean set by the executor cannot prove owner acceptance. Only a bound external receipt can.
+- The owner receipt must explicitly accept BOTH named residuals, for the EXACT future candidate
+  hash, and for ONE experiment only. A general or undated acceptance does not satisfy this.
+- Mission Control's adjudication is an EXTERNAL output. It is not tool-derived evidence and is never
+  self-granted by the harness or by this session.
+- **These are schema requirements for a FUTURE run. No owner receipt, no Mission Control receipt, no
+  execution approval, and no filled disposition value exists now.** Every Group B field is currently
+  unpopulated by construction.
+- If either external receipt is absent, hash-mismatched, candidate-mismatched, or does not accept
+  both residuals, **Graphify and MCP execution is FORBIDDEN.** There is no partial-acceptance path.
+
+**Transitive disclosure (retained, unchanged).** Only the two direct requirements in item 2 are
+pinned. Every transitive dependency is RESOLVER-SELECTED at install time. Transitives are NOT
+pre-reviewed and NOT pre-pinned; they are adjudicated AFTER installation from the install report,
+by the URL and hash checks above. This experiment does not claim a reproducible transitive closure,
+and a future live-runtime change would need its own pinning decision.
+
+### 10.2 Reused execution artifacts (exact provenance, frozen R13 candidate bytes)
+
+Items 6 and 8 reuse four existing Python files. They are **untracked R13 execution candidates living
+in another worktree of THIS repository** -- not files absent from this repository, and not an
+external third-party bundle. Location, verified read-only on 2026-08-10:
+
+- Worktree: `C:\Projects\SSTAC-Dashboard-worktrees\wiki-mcp-harness-20260809`, branch
+  `feat/wiki-mcp-harness-20260809`
+- Directory: `tooling/ops/wiki/` (reported by `git status` as untracked in that worktree)
+
+| Repo-relative path | SHA-256 | Bytes |
+| :--- | :--- | :--- |
+| `tooling/ops/wiki/contained_run.py` | `401840aa72d892b0b05f9671850c080bf9bd4f73b3cf22075d34047d6f99f31f` | 40700 |
+| `tooling/ops/wiki/job_containment.py` | `40fde546d5a7a06ae62f6f32b4e36c4b964e3d77162348b7b24b5dbaa7cbe13a` | 20460 |
+| `tooling/ops/wiki/real_profile_entry.py` | `57f64ad997845ddff45235f33b1c8728cdee8600e87b9be1a1eba25050c91295` | 34717 |
+| `tooling/ops/wiki/mcp_harness.py` | `5b69e2b56cfbdc2bb490da417a384b610850c8235e9fdeffb498b1ba3d813fff` | 60877 |
+
+**Entrypoints and relationships.**
+
+- `real_profile_entry.py` is **the exact direct entrypoint** for the real-profile acceptance run
+  referenced by item 8. It exposes `main(argv)` under an `if __name__ == "__main__"` guard, and the
+  R13 controller binds it as `$EntryScript`. At startup it hash-pins and loads `job_containment.py`
+  and `mcp_harness.py` as in-process modules (compiled and injected into `sys.modules`), declaring
+  `EXECUTION_BEARING_MODULES = ("real_profile_entry", "job_containment", "mcp_harness")`. Those two
+  are therefore NOT independently invoked on the harness path; they are loaded by this entrypoint,
+  and a byte change in either changes what this entrypoint executes.
+- `mcp_harness.py` is the bounded MCP client harness. It owns the stdio child, applies the timeout,
+  and produces the structured MCP results. It is loaded by `real_profile_entry.py` and uses
+  `job_containment.py`.
+- `job_containment.py` is the leaf Win32 Job Object primitive (ctypes only, no intra-bundle
+  imports). It is used by both `contained_run.py` and the harness path.
+- `contained_run.py` is a **separate CLI entrypoint** (`main(argv)` plus `__main__`, argparse). It is
+  what item 6 uses to run each native command -- venv creation, pip -- under Job Object containment.
+  It uses `job_containment.py` and is NOT on the `real_profile_entry.py` import path.
+
+**Review provenance -- stated honestly, and this is a CORRECTION.** An earlier revision of this
+section called these primitives "already-reviewed". **That claim is withdrawn: no exact review
+receipt for these four hashes could be identified.** The R13 artifacts that reference these same
+four hashes (`DISPOSABLE_COMPATIBILITY_RUN_PACKET.md`, `OWNER_DECISIONS.md`, `FINAL_REPORT.md`,
+`RESUME_PROMPT.md`, `RUN_STATE.md`) explicitly state that "No GREEN, compatibility, owner-acceptance,
+or Route B authority is claimed." Accordingly these are **frozen R13 candidate bytes**, nothing more.
+**Comprehensive and adversarial review of the FUTURE COMPLETE EXECUTION CANDIDATE remains
+MANDATORY** and is not discharged, in whole or in part, by their prior existence or by their use in
+R13.
+
+**Byte-binding rule.** Reuse is bound to these exact hashes. **Any changed byte in any of the four
+files invalidates reuse and requires a new candidate review.** The hashes must be recomputed and
+required to match immediately before any future execution; a mismatch fails closed.

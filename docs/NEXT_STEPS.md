@@ -632,6 +632,45 @@ merges still refuse and leave the runtime stale until a manual repin.
     `wiki-codex-recovery-20260808-precommit-r1`; both packets are registered REFERENCE documents in
     `docs/_meta/docs-manifest.json` and are non-authoritative.
 
+### 2026-08-10 -- Graphify MCP compatibility proof attempt R13 failed before it reached MCP
+
+Appended, not a rewrite. The 2026-08-08 entry above stated Graphify MCP repair was
+`CANDIDATE_UNVERIFIED` with disposable compatibility testing required before any venv or
+registration change. That statement was correct when written and is left intact. This entry records
+what happened when the disposable test was attempted.
+
+- **Disposition: attempt made once, failed BEFORE Graphify and before MCP; compatibility remains
+  UNKNOWN.** On 2026-08-10 the exact approved command was run once. The controller exited 5 at
+  Phase/Step 5 of its own preflight, before package installation. No package was downloaded,
+  installed, reviewed, or tested. No Graphify server and no MCP session were launched. No
+  compatibility receipt exists. There was no retry.
+- **This is a pre-MCP controller-preflight failure, not a Graphify or MCP compatibility failure.**
+  Do not cite it as evidence for or against `graphifyy[sql,mcp]==0.9.17` with `mcp==1.28.1`.
+- **Root cause was the attempt's own preflight parser.** Pip sets `PIP_NO_INPUT=1` itself when it
+  processes the reviewed `--no-input` flag, and pip skips configuration loading when
+  `PIP_CONFIG_FILE` equals `os.devnull` (Windows `nul`, reported by `pip config debug` as existing).
+  The parser rejected both as violations. Its 29-of-29 offline self-test used a synthetic "good"
+  fixture that omitted both real pip behaviours. No ambient host pip index, proxy, credential, or
+  configuration leaked; the closed environment worked as designed.
+- **Custody was clean.** Pip debug custody `JOB_CLEAN` with the root reaped and zero active
+  descendants; final custody inspected 420 processes with zero offenders, zero indeterminate
+  entries, and nothing terminated.
+- **Not progress of any counted kind.** This attempt is NOT a deterministic night and NOT semantic
+  progress. It does not advance, reset, or otherwise touch the Phase 7 window. Deterministic and
+  semantic counts remain canonical only at `facts.wiki_runtime.counted_window` in
+  `docs/_meta/docs-manifest.json`.
+- **Preservation and consumed authorization.** The disposable evidence root
+  `C:\tmp\sstac-graphify-mcp-compat-r13-20260810` is preserved; no cleanup and no reuse is
+  authorized. The R13 authorization is consumed. There is no R14 and no authorized patch to the R13
+  controller or its parser.
+- **Next gate:** owner review of the materially simpler DRAFT proof contract now in section 10 of
+  `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` (section 9 of the same packet holds
+  the immutable attempt record). That draft is unapproved and grants no execution authority; any
+  future run needs new exact bytes, a comprehensive adversarial GREEN, and separate owner approval.
+- **Source:** 2026-08-10 documentation reconciliation session on branch
+  `docs/wiki-continuity-20260809`, reconciling canonical documentation against the R13 attempt
+  evidence root.
+
 ---
 
 ## How to add a new deferred item
