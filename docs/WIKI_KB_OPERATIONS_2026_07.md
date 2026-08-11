@@ -284,6 +284,15 @@ the separate stale-registration problem, see the third caution below). The canon
 `python -m graphify.serve` exits 1. The 2026-07-22 handshake above predates that drift. Root cause
 and the deferred fix are in section 12.
 
+STILL BLOCKED as of 2026-08-10. A disposable compatibility-proof attempt (R13) was made on that date
+and terminated in its own controller preflight, BEFORE package installation and before any Graphify
+or MCP process existed. It installed nothing, launched nothing, and produced no compatibility
+receipt, so the compatibility of the candidate pin remains UNKNOWN. Do not read the attempt as
+evidence in either direction. The immutable attempt record, its root cause, and a materially simpler
+DRAFT replacement contract are sections 9 and 10 of
+`docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md`; that draft is not approved and grants no
+execution authority.
+
 Three cautions when checking this (all verified 2026-08-06):
 
 - **Do not probe with `--help` or a bare import.** `python -c "import graphify.serve"` and
@@ -667,6 +676,27 @@ failure, and it does not establish semantic or Phase 7 graduation.
    pins were never frozen, so `mcp` drifted to a new major. The fix requires pinning a compatible
    `mcp` in the LIVE runtime venv that the nightly depends on, so it must be sequenced against the
    nightly schedule rather than applied casually.
+
+   **Update 2026-08-10 -- attempt R13 failed BEFORE MCP; defect (a) is unchanged.** One disposable
+   proof attempt was run once on 2026-08-10 under an owner-approved command and exited 5 at
+   Phase/Step 5 of its own controller, before package installation. No package was downloaded,
+   installed, reviewed, or tested; no Graphify server and no MCP session were launched; no
+   compatibility receipt exists. Custody was clean (pip debug `JOB_CLEAN` with the root reaped and
+   zero active descendants; final custody inspected 420 processes with zero offenders, zero
+   indeterminate entries, and nothing terminated). Root cause was the controller's own preflight
+   parser, not Graphify, not MCP, and not the host: pip sets `PIP_NO_INPUT=1` itself when processing
+   the reviewed `--no-input`, and pip skips configuration loading when `PIP_CONFIG_FILE` equals
+   `os.devnull` (Windows `nul`, which `pip config debug` reports as existing); the parser rejected
+   both. Its 29-of-29 offline self-test used a synthetic fixture that omitted both behaviours. No
+   ambient host pip index, proxy, credential, or configuration leaked. **Call this a pre-MCP
+   controller-preflight failure, never a Graphify or MCP compatibility failure**, and treat
+   compatibility as UNKNOWN. The R13 authorization is consumed, its evidence root
+   (`C:\tmp\sstac-graphify-mcp-compat-r13-20260810`) is preserved with no cleanup or reuse
+   authorized, and there is no R14 and no authorized controller/parser patch. Record and simpler
+   draft contract: sections 9 and 10 of
+   `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md`. This attempt is NOT a deterministic
+   night, NOT semantic progress, and does not touch the counted window; read
+   `facts.wiki_runtime.counted_window` in `docs/_meta/docs-manifest.json` for that.
 
 2. **The protected-pathspec refusal is LIVE today, and committed wiki output would widen it.**
    The pathspec is seven paths (section 2): `wiki`, `tooling/wiki`, `.gitignore`, `.graphifyignore`,

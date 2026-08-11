@@ -2,6 +2,10 @@
 
 This file is the **single canonical entrypoint** for project documentation.
 
+- **Current continuity anchor (authoritative)**: `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
+  -- the repository-wide ROUTING anchor for a fresh session. Registered as
+  `continuity.current_handoff`. It routes; it deliberately holds no volatile metrics and is not a
+  status dashboard.
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
 - **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
@@ -18,7 +22,13 @@ This file is the **single canonical entrypoint** for project documentation.
 
 - `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` - `CANDIDATE_UNVERIFIED`,
   non-authoritative dependency, disposable MCP acceptance, sole-registration replacement, and
-  rollback packet. No activation authority.
+  rollback packet. No activation authority. Its section 9 (added 2026-08-10) is the immutable record
+  of proof attempt R13, which failed in its own controller preflight BEFORE package installation and
+  before any Graphify or MCP process existed -- a pre-MCP controller-preflight failure, NOT a
+  Graphify or MCP compatibility failure. Compatibility is UNKNOWN; the live status is
+  `facts.wiki_runtime.graphify_mcp_compatibility` and the immutable attempt is
+  `facts_history.session_2026_08_10_graphify_mcp_compat_r13_attempt`. Its section 10 is an
+  UNAPPROVED DRAFT of a materially simpler proof contract and grants no execution authority.
 - `docs/design/wiki/SEMANTIC_PROMOTION_READINESS_PACKET_2026_08_08.md` - `CANDIDATE_UNVERIFIED` and
   `NOT_READY_FOR_SEMANTIC_OR_GRADUATION`, non-authoritative seed, canary, custody, preservation, and
   rolling-window packet. No semantic or runtime authority.
@@ -148,6 +158,10 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   refresh, publish, and unpublish are each still separately owner-gated, and the
   schema apply grants none of them. Do not describe publication as authorized.
 - Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
+- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
+  (`continuity.current_handoff`). Archived predecessor, byte-identical historical import:
+  `docs/archive/2026-08-09_wiki-recovery/` (see that folder's `README.md` for source path, hash,
+  and replacement pointer).
 - `FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md` is a
   HISTORICAL 2026-07-30 handoff, not the current continuity anchor. Its
   "D2 BLOCKED" framing, including its filename, predates the 2026-08-01 apply.

@@ -3642,8 +3642,74 @@ the night that never started at all.
 
 ---
 
-**Last Updated:** August 6, 2026 (Wiki runtime auto-follow; transitive-pin drift; scheduler logon type)
-**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); prior totals not re-tallied.
+## 2026-08-10 - A Synthetic Contract Fixture That Omits the Tool's Self-Generated State Passes Every Offline Test and Still Fails on First Contact [HIGH]
+
+**Area:** Testing / contract harness design / preflight assertions
+**Impact:** HIGH (a 29-of-29 GREEN self-test gave false confidence and a single-use authorization was consumed on a defect the tests were structurally unable to see)
+**Status:** Documented
+
+### Problem or Discovery
+A single-use, owner-approved disposable experiment was launched to test one dependency pin. Its
+controller had an offline self-test suite that passed 29 of 29. On its one authorized run it exited
+5 in its own preflight, before it installed anything, before it launched the subject process, and
+therefore before it could produce one byte of evidence about the thing it existed to measure. The
+authorization was single-use, so the failure cost the whole attempt.
+
+The preflight was asserting that no unexpected configuration had leaked into a deliberately closed
+child environment. It rejected two states that were both CORRECT:
+
+1. An environment variable that the tool sets ON ITSELF as a direct consequence of a reviewed
+   command-line flag, which the parser read as ambient host leakage.
+2. A sentinel configuration path that the tool special-cases to mean "load nothing", which the
+   parser read as an unknown effective configuration source because the platform reports that
+   sentinel as existing.
+
+### Root Cause or Context
+The self-test's "good" fixture was written from the ideal output the author EXPECTED the tool to
+produce, not from the output the tool ACTUALLY produces. Real tools emit self-generated state:
+flags that materialize as environment variables, defaults that appear as if configured, platform
+sentinels that report as real files. None of that appeared in the fixture, so every assertion about
+it was untested by construction. The suite could only ever confirm that the parser agreed with the
+fixture author's imagination.
+
+This is why the count was reassuring and meaningless. Twenty-nine passing tests over a fixture that
+omits the failure mode is zero tests over the failure mode.
+
+### Solution or Pattern
+For any harness whose preflight ASSERTS a property of an external tool's output:
+
+- **Capture the fixture from the real tool, once, and pin it.** Run the exact reviewed argv in the
+  exact reviewed environment, save the real stdout/stderr bytes with their hash, and make that the
+  "good" fixture. A hand-authored ideal-output fixture is acceptable only as an ADDITIONAL negative
+  case, never as the sole positive case.
+- **Enumerate the tool's self-generated state explicitly.** For every flag in the reviewed argv, ask
+  what that flag makes the tool do to its own environment or configuration, and allowlist those
+  effects by name with a comment citing why.
+- **Prefer deleting an assertion over repairing it.** If a property is already guaranteed by
+  construction -- a closed allowlist environment already guarantees nothing leaked -- then parsing
+  the tool's own diagnostics to re-prove it adds a failure mode and no safety. The environment IS
+  the evidence.
+- **Treat single-use authorizations as demanding a first-contact rehearsal.** Where the reviewed
+  operation is expensive or single-shot, rehearse the preflight alone against the real tool before
+  spending the authorization on the full run.
+
+### File References
+- Attempt record and root cause:
+  `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` section 9
+- Simpler replacement contract that deletes the offending assertion rather than fixing it:
+  `docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md` section 10, item 4
+- Operational disposition: `docs/WIKI_KB_OPERATIONS_2026_07.md` section 12, known issue 1
+- Dated disposition: `docs/NEXT_STEPS.md`, entry `2026-08-10`
+
+### Key Takeaway
+A synthetic contract fixture must reproduce the real tool's SELF-GENERATED state, not merely the
+expected ideal output -- otherwise the passing test count measures agreement with the author's
+assumptions, not correctness against the tool.
+
+---
+
+**Last Updated:** August 10, 2026 (Wiki runtime auto-follow; transitive-pin drift; scheduler logon type; synthetic-fixture blind spot)
+**Lesson Count:** 2026-06-08 added 4 (3 HIGH, 1 MEDIUM); 2026-07-13 added 1 (HIGH); 2026-07-21 added 1 (HIGH); 2026-08-05 added 2 (2 HIGH); 2026-08-06 added 1 (HIGH); 2026-08-10 added 1 (HIGH); prior totals not re-tallied.
 **Security Status:** Phase 2 COMPLETE - All 5 tasks done, 3 critical vulnerabilities fixed, 6 security headers added
 **Refactoring Status:** TWGReviewClient Phase 2 COMPLETE (deployed, enables Phase 3 lazy loading)
 **Maintained By:** Claude Sessions with /update-docs skill

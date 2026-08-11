@@ -88,7 +88,7 @@
       "vitest_test_count": {
         "status": "verified",
         "value": 6625,
-        "source": "npm run test:ci on codex/wiki-recovery-20260808 pre-documentation-correction code/test tip c0a454869ddc2cdbf56d2e2a8fb5df187ae51474 (2026-08-09), gate G3 of the six-gate push suite; measured BEFORE the documentation-correction commit, so this tip is not the branch final tip and the complete ordered six-gate suite must be rerun on the actual final tip after that commit and before any push; receipt .tmp/gate-logs/g3-testci-20260809-103245.log records 'Tests 6625 passed | 19 skipped | 2 todo (6646)' with native exit 0. Net +7 over the prior 6618; the delta was not decomposed and spans both this branch's one added docs-gate case and everything merged to main between a821e519 and base 0b6103da. The prior 6618 value (npm run test:ci on PR #771 head 909a7eb9, 2026-08-05) is preserved as historical evidence in facts_history.session_2026_08_05_wiki_runtime_autofollow_bootstrap.gates and is not duplicated as a separate history entry. NOT YET MERGED: measured on a branch tip, not on main.",
+        "source": "npm run test:ci (gate G3 of the six-gate push suite) executed on the FINAL PR HEAD 4a291d4e47a771f6f1a06a06c9032fe6cedb5267 of PR #776 on 2026-08-09, reporting 6625 passed / 19 skipped / 2 todo with native exit 0. PR #776 was SUBSEQUENTLY squash-merged to main as d6690b6f0f7262ead9027225442289d5e1e964e5. THE GATE WAS NOT RUN ON d6690b6f ITSELF and no such claim is made here: the squash commit is a different object, and only the PR head carries executed local gate evidence (GitHub CI separately passed all four required contexts on that same head 4a291d4e). An identical 6625 was also observed at the pre-documentation-correction tip c0a45486, so the documentation-only commit introduced no test delta; receipt .tmp/gate-logs/g3-testci-20260809-103245.log records 'Tests 6625 passed | 19 skipped | 2 todo (6646)' with native exit 0. Net +7 over the prior 6618; the delta was not decomposed and spans both this branch's one added docs-gate case and everything merged to main between a821e519 and base 0b6103da. The prior 6618 value (npm run test:ci on PR #771 head 909a7eb9, 2026-08-05) is preserved as historical evidence in facts_history.session_2026_08_05_wiki_runtime_autofollow_bootstrap.gates and is not duplicated as a separate history entry.",
         "last_verified": "2026-08-09"
       },
       "playwright_test_count": {
@@ -135,6 +135,21 @@
         },
         "source": "Canonical runtime .tmp_wiki_nightly/terminal-receipt-96502ca2-80da-4b27-9716-31f634407ed0.json, read and hashed without mutation on 2026-08-08. Reverify path and hash before operational use.",
         "last_verified": "2026-08-08"
+      },
+      "graphify_mcp_compatibility": {
+        "status": "unknown",
+        "value": {
+          "compatible": null,
+          "candidate_pin": "graphifyy[sql,mcp]==0.9.17 with mcp==1.28.1",
+          "evidence_exists": false,
+          "receipt_exists": false,
+          "packages_installed": false,
+          "server_launched": false,
+          "mcp_session_launched": false,
+          "verdict": "UNKNOWN"
+        },
+        "source": "There is NO compatibility evidence in either direction. The only proof attempt to date, R13 on 2026-08-10, terminated inside its own controller preflight at Phase/Step 5 with controller exit 5, BEFORE package installation and before any Graphify or MCP process existed; it downloaded, installed, reviewed and tested no package, launched no Graphify server and no MCP session, and produced no compatibility receipt. That attempt is a PRE-MCP CONTROLLER-PREFLIGHT FAILURE and must never be cited as a Graphify or MCP compatibility failure, nor as evidence for or against the candidate pin. The immutable attempt record is facts_history.session_2026_08_10_graphify_mcp_compat_r13_attempt and docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md section 9. This value must not be changed to anything other than unknown without an externally adjudicated receipt produced under a separately owner-approved contract.",
+        "last_verified": "2026-08-10"
       }
     },
     "matrix_options_catalog": {
@@ -1631,6 +1646,83 @@
       "source": "Frozen read-only evidence snapshot of the canonical runtime receipt and its immutable SHA-256 on 2026-08-08.",
       "last_verified": "2026-08-08",
       "authority_note": "HISTORICAL SNAPSHOT ONLY. Never cite facts_history as current authority; use facts.wiki_runtime and reverify before operational use."
+    },
+    "session_2026_08_10_graphify_mcp_compat_r13_attempt": {
+      "status": "failed_before_subject",
+      "session_date": "2026-08-10",
+      "work_summary": "One disposable Graphify MCP compatibility-proof attempt (R13) was run once under the exact approved command and terminated in its own controller preflight before package installation and before any Graphify or MCP process existed. It is a PRE-MCP CONTROLLER-PREFLIGHT FAILURE, not a Graphify or MCP compatibility failure, and it produced no compatibility evidence in either direction.",
+      "attempt": {
+        "artifact_source_directory": "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809",
+        "artifact_source_worktree_branch": "feat/wiki-mcp-harness-20260809",
+        "controller_path": "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\\ROUTE_B_NETWORK_CONTROLLER.ps1",
+        "controller_sha256": "9d67db0fc2692d70ad2c96e8681216016a87c2200e02d083a1c41ffede4f624a",
+        "authority_packet_path": "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\\DISPOSABLE_COMPATIBILITY_RUN_PACKET.md",
+        "authority_packet_sha256": "4f27e5e51379ac9f0b6c24aee50a02b980befc059e79920b9ea28e9e225476b0",
+        "owner_decisions_path": "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\\OWNER_DECISIONS.md",
+        "owner_decisions_sha256": "f99869b942fd4d80ef14805da5591e651e895565a7f003669d02ecf27a83e39b",
+        "disposable_evidence_root": "C:\\tmp\\sstac-graphify-mcp-compat-r13-20260810",
+        "exact_approved_command_ran_once": true,
+        "invocation_host": "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+        "invocation_literal_lines": [
+          "& 'C:\\Program Files\\PowerShell\\7\\pwsh.exe' -NoProfile -File `",
+          "  'C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\\ROUTE_B_NETWORK_CONTROLLER.ps1' `",
+          "  -Execute `",
+          "  -ApprovedControllerSha256 '9d67db0fc2692d70ad2c96e8681216016a87c2200e02d083a1c41ffede4f624a' `",
+          "  -DisposableRoot 'C:\\tmp\\sstac-graphify-mcp-compat-r13-20260810'"
+        ],
+        "invocation_argv": [
+          "C:\\Program Files\\PowerShell\\7\\pwsh.exe",
+          "-NoProfile",
+          "-File",
+          "C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809\\ROUTE_B_NETWORK_CONTROLLER.ps1",
+          "-Execute",
+          "-ApprovedControllerSha256",
+          "9d67db0fc2692d70ad2c96e8681216016a87c2200e02d083a1c41ffede4f624a",
+          "-DisposableRoot",
+          "C:\\tmp\\sstac-graphify-mcp-compat-r13-20260810"
+        ],
+        "controller_exit_code": 5,
+        "terminal_phase": "Phase/Step 5, before package installation and before MCP",
+        "retry_occurred": false,
+        "package_downloaded_or_installed": false,
+        "graphify_server_launched": false,
+        "mcp_session_launched": false,
+        "compatibility_receipt_exists": false,
+        "compatibility": "UNKNOWN"
+      },
+      "custody": {
+        "pip_debug_custody": "JOB_CLEAN",
+        "pip_debug_root_reaped": true,
+        "pip_debug_active_descendants": 0,
+        "final_custody_inspected": 420,
+        "final_custody_offenders": 0,
+        "final_custody_indeterminate": 0,
+        "final_custody_terminated": 0
+      },
+      "root_cause": {
+        "summary": "The controller's own preflight parser rejected a correct minimal child environment.",
+        "child_env_pip_vars": "PIP_CONFIG_FILE=nul was the only PIP_* variable in the minimal child environment.",
+        "reviewed_pip_argv_flags": "The reviewed pip argv included --isolated and --no-input.",
+        "pip_self_generated_state": "Pip itself sets PIP_NO_INPUT=1 when processing --no-input, so that variable is an artifact of the reviewed argv, not ambient host leakage.",
+        "pip_devnull_behaviour": "Pip explicitly recognizes PIP_CONFIG_FILE == os.devnull and skips loading configuration files; on Windows that value is 'nul', which pip config debug reports as existing.",
+        "parser_defect": "R13's parser incorrectly rejected the pip-created PIP_NO_INPUT and separately treated Windows nul as an unknown effective configuration source.",
+        "test_blind_spot": "The 29/29 offline self-test used a synthetic 'good' fixture that omitted both pieces of real pip output.",
+        "leakage": "No ambient host pip index, proxy, credential, or configuration leaked.",
+        "reusable_lesson": "Synthetic contract fixtures must reproduce the real tool's self-generated state, not merely the expected ideal output. Recorded in docs/LESSONS.md (2026-08-10)."
+      },
+      "disposition": {
+        "evidence_root_preserved": true,
+        "cleanup_or_reuse_authorized": false,
+        "r13_authorization": "CONSUMED",
+        "r14_authorized": false,
+        "controller_or_parser_patch_authorized": false,
+        "counts_as_deterministic_night": false,
+        "counts_as_semantic_progress": false,
+        "next_gate": "Owner review of the UNAPPROVED simplified DRAFT proof contract in docs/design/wiki/GRAPHIFY_MCP_REPAIR_PACKET_2026_08_08.md section 10. Any future execution requires new exact bytes, comprehensive/adversarial GREEN, and separate owner approval."
+      },
+      "source": "Immutable record of the 2026-08-10 attempt, reconciled against the preserved read-only evidence root C:\\tmp\\sstac-graphify-mcp-compat-r13-20260810 (evidence/minimal-env.json, evidence/pip-config-debug-stdout.txt, evidence/pip-config-assert-stderr.txt, evidence/pip-config-debug-custody-receipt.json, evidence/final-custody-result.json). The controller, authority-packet, and OWNER_DECISIONS paths and hashes recorded above were additionally recomputed read-only on 2026-08-10 against the files in C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809\\.tmp_ai_worker_wiki_mcp_r7_overnight_20260809 and matched exactly. No file in either location was created, modified, moved, or removed by this documentation session.",
+      "last_verified": "2026-08-10",
+      "authority_note": "HISTORICAL SNAPSHOT ONLY. Never cite facts_history as current authority. The live compatibility status is facts.wiki_runtime.graphify_mcp_compatibility and it is UNKNOWN. This entry records an ATTEMPT, never a result, and must not be cited as evidence for or against the candidate pin. Deterministic and semantic counters remain canonical only at facts.wiki_runtime.counted_window; this attempt does not advance, reset, or otherwise touch them."
     }
   },
   "known_issues": {
@@ -1639,11 +1731,10 @@
       "broken_count": 0,
       "note": "Resolved: internal docs link scan currently reports 0 broken links."
     },
-    "no_registered_current_continuity_anchor": {
-      "opened": "2026-08-03",
-      "note": "There is currently NO registered current session-to-session continuity anchor. The prior entry continuity.current_handoff pointed at FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md and was reclassified to REFERENCE and renamed continuity.handoff_2026_07_30_historical on 2026-08-03 because its D2 claims had gone stale; no successor was registered in the same change. CLAUDE.md 'Session End' makes refreshing and COMMITTING the current dated root handoff a mandatory close-out step, so this gap must not persist. docs/MATRIX_OPTIONS_STATUS.md cannot serve as the anchor: it is lane-scoped by design and explicitly does not claim global status.",
-      "next_action": "The next session that writes a dated root handoff must register it here as the current continuity anchor.",
-      "related_hazard": "The 2026-07-30 handoff FILE itself still contains an all-caps directive not to describe D2 as complete, plus rows marking the Option C SQL UNAPPLIED, D2 BLOCKED, and an authenticated production retest OUTSTANDING. The 2026-08-01 apply resolved all three. Correcting that file was outside the reviewed scope of the 2026-08-03 documentation candidate and is flagged for a follow-up decision."
+    "handoff_2026_07_30_file_retains_stale_d2_claims": {
+      "opened": "2026-08-09",
+      "note": "Carried forward so it is not lost when known_issues.no_registered_current_continuity_anchor was removed on 2026-08-09 (its registered replacement, continuity.current_handoff, now exists). This hazard is INDEPENDENT of the anchor gap and remains open: the file FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md still contains an all-caps directive not to describe D2 as complete, plus rows marking the Option C SQL UNAPPLIED, D2 BLOCKED, and an authenticated production retest OUTSTANDING. The 2026-08-01 apply resolved all three, and its filename retains the obsolete D2_BLOCKED wording.",
+      "next_action": "Owner decision on whether to correct, banner, or archive that file. Correcting it was outside the reviewed scope of the 2026-08-03 documentation candidate and outside the 2026-08-09 continuity candidate."
     },
     "matrix_options_paths_have_no_docs_gate": {
       "opened": "2026-08-03",
@@ -1723,7 +1814,7 @@
         "mcp",
         "design"
       ],
-      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Disposable compatibility and sole-registration replacement evidence packet; grants no package, venv, MCP, or user-config authority."
+      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Disposable compatibility and sole-registration replacement evidence packet; grants no package, venv, MCP, or user-config authority. EXTENDED 2026-08-10 with two appended sections; sections 1-8 are unchanged 2026-08-08 content. Section 9 is the immutable record of proof attempt R13 (2026-08-10), which exited 5 at Phase/Step 5 of its own controller preflight, before package installation and before any Graphify or MCP process existed -- a PRE-MCP CONTROLLER-PREFLIGHT FAILURE, never to be described as a Graphify or MCP compatibility failure, and not evidence for or against the candidate pin; compatibility remains UNKNOWN per facts.wiki_runtime.graphify_mcp_compatibility, with the attempt frozen at facts_history.session_2026_08_10_graphify_mcp_compat_r13_attempt. Section 10 is an UNAPPROVED, UNEXECUTED DRAFT of a materially simpler proof contract that adds no script, controller, harness, or design-document family and grants no execution authority; section 4 remains the historical 2026-08-08 protocol and is superseded only if that draft is accepted. CORRECTED 2026-08-10 (checkpoint WIKI-R13-FAILURE-DOCS-SIMPLIFIED-DRAFT-R1, verdict BLOCKED / CORRECT_AND_RESUBMIT): section 9.1 now carries the exact source paths for the controller, authority packet, and OWNER_DECISIONS bytes plus the literal single PowerShell invocation and argv in 9.1.1; new section 10.1 binds ONE package-source route (network-backed, index https://pypi.org/simple, sole artifact host files.pythonhosted.org, HTTPS only, no extra index/find-links/dependency-links/credential URLs, explicit fail-closed redirect policy, per-artifact URL and hash recording, pre-import external adjudication fields, retained resolver-selected-transitives disclosure, and an explicit statement that the draft choice is not execution approval and supersedes the section 4 package-source choice only for this proposed experiment); new section 10.2 binds the four reused Python execution artifacts by exact SHA-256 as UNTRACKED R13 execution candidates in the sibling worktree C:\\Projects\\SSTAC-Dashboard-worktrees\\wiki-mcp-harness-20260809 (branch feat/wiki-mcp-harness-20260809, directory tooling/ops/wiki/), names the direct entrypoint real_profile_entry.py and the module relationships, WITHDRAWS the prior 'already-reviewed' characterization because no exact review receipt could be identified, calls them frozen R13 candidate bytes, keeps comprehensive/adversarial review of the future complete execution candidate MANDATORY, and states that any changed byte invalidates reuse and requires a new candidate review."
     },
     {
       "id": "wiki.semantic_promotion_readiness_packet_2026_08_08",
@@ -1736,7 +1827,7 @@
         "promotion",
         "design"
       ],
-      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Semantic baseline and promotion readiness packet; status NOT_READY_FOR_SEMANTIC_OR_GRADUATION and grants no Ollama, seed, scheduler, or runtime authority."
+      "notes": "CANDIDATE_UNVERIFIED and non-authoritative. Semantic baseline and promotion readiness packet; status NOT_READY_FOR_SEMANTIC_OR_GRADUATION and grants no Ollama, seed, scheduler, or runtime authority. A short section 10a was added 2026-08-10 recording only that the failed Graphify MCP proof attempt R13 ran no Ollama, no semantic extraction, no promotion seed, and no contradiction write, is neither a deterministic night nor semantic progress, resolves none of the section 9 owner decisions, and leaves every verdict and gate in this packet unchanged."
     },
     {
       "id": "governance.agy_usage",
@@ -3286,6 +3377,29 @@
         "backlog"
       ],
       "notes": "Runtime/UI backlog packet for safe post-PR #545 Matrix Options follow-up work."
+    },
+    {
+      "id": "continuity.current_handoff",
+      "path": "FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md",
+      "lifecycle": "AUTHORITATIVE",
+      "domain_tags": [
+        "continuity",
+        "handoff",
+        "routing"
+      ],
+      "notes": "The registered CURRENT session-to-session continuity anchor (2026-08-09), replacing the gap recorded by the now-removed known_issues.no_registered_current_continuity_anchor. It is a repository-wide ROUTING anchor by design: it names where current truth lives (facts in this manifest; routing in docs/INDEX.md; Matrix Options lane status in docs/MATRIX_OPTIONS_STATUS.md; Wiki operations in docs/WIKI_KB_OPERATIONS_2026_07.md; gates in docs/GATE_MODE_SOP.md) and deliberately duplicates NO volatile counter, because every prior root handoff that restated metrics went stale and had to be corrected. Dated live-verified content is limited to the PR #776 merge (d6690b6f0f7262ead9027225442289d5e1e964e5) and the required manual runtime repin/rebuild/postflight to that OID; it routes ALL current counter values to facts.wiki_runtime.counted_window rather than restating them, carries the deterministic 4-of-10 and semantic-qualifying 0-of-5 figures only as an explicitly frozen 2026-08-09 dated snapshot, makes no live claim about the counted window and no claim about any night after 2026-08-09, and explicitly declines to claim PR #773/#774 or any other lane state. Archived byte-identical predecessor: docs/archive/2026-08-09_wiki-recovery/. EXTENDED 2026-08-10 with section 7, an explicitly dated addendum recording that Graphify MCP proof attempt R13 failed before MCP and changed nothing this anchor routes to; it adds no route and no counter, does not restate or revise the frozen 2026-08-09 snapshot, and makes no claim about any night after 2026-08-09. The reading rule in section 1 was correspondingly narrowed to say sections 2-6 are dated 2026-08-09 while section 7 carries its own date."
+    },
+    {
+      "id": "continuity.handoff_2026_08_07b_historical",
+      "path": "docs/archive/2026-08-09_wiki-recovery/FRESH_SESSION_HANDOFF_2026_08_07b_VERIFICATION_AND_REPINNED_CAPTURE.md",
+      "lifecycle": "HISTORICAL",
+      "domain_tags": [
+        "continuity",
+        "handoff",
+        "historical",
+        "wiki"
+      ],
+      "notes": "BYTE-IDENTICAL HISTORICAL IMPORT of the primary-checkout recovery handoff, copied verbatim on 2026-08-09; source SHA-256 de844ac914bcdbbe22e7720d5c9c7985899ef0eadd887599925e3e1e2884a416 (14724 bytes), hashed before copy and re-hashed at the destination with equality required. Nothing was edited, reflowed, corrected, or re-dated on import, including claims now known to be stale. THE ORIGINAL REMAINS UNTRACKED AND UNTOUCHED in the primary checkout at the repo-relative root path FRESH_SESSION_HANDOFF_2026_08_07b_VERIFICATION_AND_REPINNED_CAPTURE.md; this is a copy, not a relocation. The source was untracked. No source-path commit provenance was available or supplied. Import provenance is the recorded SHA-256. Not current authority for anything: its filename says 2026_08_07b while its status block is dated 2026-08-09, and its section 1a hazard reads as a live imperative although its own section 0 records the hazard has lapsed. Preserved for the L0 1.4 incident record, its re-probed verified-facts list, and the age-is-not-parentage process-baseline correction. Replacement: continuity.current_handoff. See docs/archive/2026-08-09_wiki-recovery/README.md."
     },
     {
       "id": "continuity.handoff_2026_07_30_historical",
