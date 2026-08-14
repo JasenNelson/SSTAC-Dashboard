@@ -30,6 +30,7 @@ import {
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
 
 // Unsourced calculator baselines for the seven HC PQRA exposure-factor inputs, used
 // when the selected frame has no active human-health-direct frame default. Each value
@@ -77,6 +78,16 @@ export interface HHDirectContactCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward
+   * so a parent (e.g. the Calculator tab's summary bar) can display it
+   * without recomputing anything. Purely a read of the already-memoized
+   * hhResult; never changes what is computed or displayed here. Called
+   * with null when no valid preliminary standard is currently available.
+   */
+  onPreliminaryStandardChange?: (
+    result: { value: number; unit: string; driver: string } | null,
+  ) => void;
 }
 
 export default function HHDirectContactCalculator({
@@ -84,6 +95,7 @@ export default function HHDirectContactCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
 }: HHDirectContactCalculatorProps) {
   const substance = findSubstance(substanceKey);
   // The frame that PROVIDES the receptor scenarios + their seeds. The receptor (age / land-use)
@@ -351,6 +363,63 @@ export default function HHDirectContactCalculator({
 
   const hhResult = 'error' in result ? null : result;
 
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3).
+  // Purely derived from EXISTING inputs/result for display -- it reads
+  // fields already computed above, never adds a new calculation branch.
+  // Stage 1 (exposure factors) is BLOCKED only when one of the seven
+  // exposure-factor fields itself is invalid; re-running positiveInput on
+  // those seven fields (the same pure validator already used in `fields`
+  // above) lets Stage 1 report which field is at fault even when the
+  // combined `result` error actually came from a Stage-2-only field
+  // (toxicity/target-risk/HQ/absorption).
+  const stage1FieldError = [
+    positiveInput(bwInput, 'Body weight'),
+    positiveInput(edInput, 'Exposure duration'),
+    positiveInput(efInput, 'Exposure frequency'),
+    positiveInput(atCancerInput, 'Cancer averaging time'),
+    positiveInput(irSedInput, 'Sediment ingestion rate'),
+    positiveInput(skinAreaInput, 'Skin surface area'),
+    positiveInput(adherenceInput, 'Sediment adherence factor'),
+  ].find(
+    (value): value is { error: string } =>
+      typeof value === 'object' && value !== null && 'error' in value,
+  );
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError.error
+    : 'All seven exposure-factor inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : 'error' in result
+      ? 'blocked'
+      : hhResult
+        ? 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure-factor input above.'
+    : 'error' in result
+      ? result.error
+      : hhResult
+        ? `Preliminary standard computed: ${hhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${hhResult.driver}).`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab
+  // summary bar). Reads hhResult only -- no new computation.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    if (hhResult) {
+      onPreliminaryStandardChange({
+        value: hhResult.sedS,
+        unit: 'mg/kg dry',
+        driver: hhResult.driver,
+      });
+    } else {
+      onPreliminaryStandardChange(null);
+    }
+  }, [hhResult, onPreliminaryStandardChange]);
+
   // Row #23: the dl-PCB TEQ sub-value is now just a field on the SINGLE combined hhResult
   // (dlPcbTeqSedS) rather than a separately-computed/blocked parallel result. It is only
   // BLOCKED when the catalog TDI itself failed to resolve, or when the combined calculation
@@ -595,6 +664,15 @@ export default function HHDirectContactCalculator({
         )}
       </header>
 
+      <CalculatorStage
+        number={1}
+        totalStages={2}
+        title="Exposure Factors"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={!stage1Blocked}
+        testId="hh-direct-stage-1"
+      >
       <FrameImpactCard
         frameId={jurisdiction}
         pathway="human-health-direct"
@@ -766,7 +844,18 @@ export default function HHDirectContactCalculator({
           </label>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={2}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure factors' : undefined}
+        current={!stage1Blocked}
+        testId="hh-direct-stage-2"
+      >
       {'error' in result && (
         <div
           className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
@@ -937,6 +1026,7 @@ export default function HHDirectContactCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

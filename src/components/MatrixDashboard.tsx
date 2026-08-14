@@ -31,6 +31,10 @@ import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
+import ExposureScenarioControl from './matrix-options/ExposureScenarioControl';
+import CalculatorSummaryBar, {
+  type SummaryBarSlot,
+} from './matrix-options/CalculatorSummaryBar';
 import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
@@ -394,6 +398,16 @@ export default function MatrixDashboard({
   const [evidenceLibraryFilters, setEvidenceLibraryFilters] =
     useState<EvidenceLibraryFilters>(() => createEvidenceLibraryFilters());
   const [calculatorReceipt, setCalculatorReceipt] = useState<CalculatorReceipt | null>(null);
+  // Calculator summary bar (step 3 of the redesign): the HH Direct Contact
+  // calculator is the only pathway currently wrapped in numbered stages, so
+  // this is the only preliminary-standard value the summary bar can show
+  // today. Background UTL 95/95 and the adjusted standard stay PENDING
+  // until step 4 wires BackgroundAdjustment into the stage sequence.
+  const [hhDirectPreliminary, setHhDirectPreliminary] = useState<{
+    value: number;
+    unit: string;
+    driver: string;
+  } | null>(null);
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -661,6 +675,43 @@ export default function MatrixDashboard({
   );
   const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
   const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
+  // Summary bar slots (step 3 of the redesign, DESIGN.md "sticky summary
+  // bar ... carries the preliminary, the UTL, and the adjusted standard").
+  // Only hh-direct is wired to a real stage sequence today; every other
+  // pathway (and the UTL / adjusted slots for every pathway) correctly
+  // reads PENDING until the corresponding wiring step lands -- PENDING is
+  // the honest "not entered yet, no error" state here, not an error.
+  const preliminarySlot: SummaryBarSlot =
+    activeCategory === 'hh-direct'
+      ? {
+          label: 'Preliminary standard',
+          value: hhDirectPreliminary?.value ?? null,
+          unit: hhDirectPreliminary?.unit ?? 'mg/kg dry',
+          state: hhDirectPreliminary ? 'computed' : 'pending',
+          note: hhDirectPreliminary ? `Driver: ${hhDirectPreliminary.driver}.` : undefined,
+          formatValue: (value) => value.toPrecision(4),
+        }
+      : {
+          label: 'Preliminary standard',
+          value: null,
+          unit: 'mg/kg dry',
+          state: 'pending',
+          note: 'Not yet wired into the staged summary for this pathway.',
+        };
+  const utlSlot: SummaryBarSlot = {
+    label: 'Background UTL 95/95',
+    value: null,
+    unit: 'mg/kg',
+    state: 'pending',
+    note: 'Background wiring lands in the next step of the redesign.',
+  };
+  const adjustedSlot: SummaryBarSlot = {
+    label: 'Adjusted standard',
+    value: null,
+    unit: 'mg/kg dry',
+    state: 'pending',
+    note: 'Depends on the preliminary standard and the background UTL.',
+  };
   // Derivation equations shown in the Jurisdictional Frameworks Quick Reference,
   // filtered to the active side-tab's pathway(s). The cross-cutting
   // 'background-adjustment' equation is intentionally excluded (see
@@ -814,6 +865,14 @@ export default function MatrixDashboard({
               onSubstanceKeyChange={setSubstanceKey}
               onJurisdictionChange={setJurisdiction}
             />
+            {/*
+              Exposure scenario (PRODUCT.md "Exposure Scenarios" + DESIGN.md
+              "Exposure scenario is a first-class control"). Custom-only in
+              this step -- Protocol 28 presets are separately scoped work.
+            */}
+            <div className="border-t border-[var(--db-border)] pt-5">
+              <ExposureScenarioControl />
+            </div>
             <div className="border-t border-[var(--db-border)] pt-5">
               <div
                 className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
@@ -1044,6 +1103,12 @@ export default function MatrixDashboard({
                    own internals, props, or behaviour.
                 2. BackgroundAdjustment (post-derivation panel)
             */}
+            <CalculatorSummaryBar
+              pathwayLabel={calculatorCategoryLabel}
+              preliminary={preliminarySlot}
+              utl={utlSlot}
+              adjusted={adjustedSlot}
+            />
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
                 substanceKey={substanceKey}
@@ -1063,6 +1128,7 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setHhDirectPreliminary}
               />
             )}
             {activeCategory === 'hh-food' && (
