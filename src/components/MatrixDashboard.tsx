@@ -16,7 +16,11 @@ import {
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
-import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
+import BackgroundAdjustment, {
+  type AdjustedStandardReport,
+  type BackgroundAdjustmentPreliminaryStandard,
+  type BackgroundUtlReport,
+} from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
@@ -440,6 +444,15 @@ export default function MatrixDashboard({
     unit: string;
     driver: string;
   } | null>(null);
+  // Step 4 of the redesign: BackgroundAdjustment now reports its Stage 3
+  // (UTL) and Stage 4 (adjusted standard = max(preliminary, UTL)) results
+  // upward via callback, same pattern as onPreliminaryStandardChange above.
+  // Neither state here recomputes anything -- both are plain reads of
+  // BackgroundAdjustment's own already-memoized values.
+  const [backgroundUtlReport, setBackgroundUtlReport] =
+    useState<BackgroundUtlReport | null>(null);
+  const [adjustedStandardReport, setAdjustedStandardReport] =
+    useState<AdjustedStandardReport | null>(null);
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -757,20 +770,56 @@ export default function MatrixDashboard({
                   state: 'pending',
                   note: 'Not yet wired into the staged summary for this pathway.',
                 };
+  // Step 4: the preliminary standard for whichever pathway is active is the
+  // OTHER operand BackgroundAdjustment's Stage 4 needs for max(preliminary,
+  // UTL). Built from the same preliminarySlot computed above -- no new value,
+  // just relabeled for BackgroundAdjustment's prop shape.
+  const preliminaryStandardForBackground: BackgroundAdjustmentPreliminaryStandard = {
+    value: preliminarySlot.value,
+    unit: preliminarySlot.unit,
+    state: preliminarySlot.state,
+    label: `Preliminary standard (${calculatorCategoryLabel})`,
+  };
+  // Background UTL 95/95 (Stage 3) is mathematically independent of the
+  // preliminary standard (DESIGN.md), so its state/value come straight from
+  // BackgroundAdjustment's own onUtlChange report, never gated on
+  // preliminarySlot.
   const utlSlot: SummaryBarSlot = {
     label: 'Background UTL 95/95',
-    value: null,
-    unit: 'mg/kg',
-    state: 'pending',
-    note: 'Background wiring lands in the next step of the redesign.',
+    value: backgroundUtlReport?.value ?? null,
+    unit: backgroundUtlReport?.unit ?? 'mg/kg',
+    state: backgroundUtlReport?.state ?? 'pending',
+    note: backgroundUtlReport
+      ? `${backgroundUtlReport.scope === 'provincial' ? 'Provincial' : 'Regional'} scope, n = ${backgroundUtlReport.n}. Screening-only K.`
+      : 'Computed from reference samples only -- see Stage 3.',
+    formatValue: (value) => value.toFixed(4),
   };
+  // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
+  // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
+  // either operand is unavailable -- see BackgroundAdjustment.tsx Stage 4.
   const adjustedSlot: SummaryBarSlot = {
     label: 'Adjusted standard',
-    value: null,
-    unit: 'mg/kg dry',
-    state: 'pending',
-    note: 'Depends on the preliminary standard and the background UTL.',
+    value: adjustedStandardReport?.value ?? null,
+    unit: adjustedStandardReport?.unit ?? preliminarySlot.unit,
+    state: adjustedStandardReport?.state ?? 'waiting',
+    note:
+      adjustedStandardReport?.state === 'computed'
+        ? `${adjustedStandardReport.governedBy === 'background' ? 'Background UTL' : 'Preliminary standard'} governs -- see Stage 4.`
+        : 'Depends on the preliminary standard and the background UTL.',
+    formatValue: (value) => value.toFixed(4),
   };
+  const governingLabel =
+    adjustedStandardReport?.state === 'computed' && adjustedStandardReport.value != null
+      ? adjustedStandardReport.governedBy === 'background'
+        ? `background UTL 95/95 (${adjustedStandardReport.value.toFixed(4)} ${adjustedStandardReport.unit})`
+        : `preliminary standard (${adjustedStandardReport.value.toFixed(4)} ${adjustedStandardReport.unit})`
+      : undefined;
+  const governingNote =
+    adjustedStandardReport?.state === 'computed'
+      ? adjustedStandardReport.governedBy === 'background'
+        ? 'It exceeds the preliminary standard, so it sets the adjusted standard.'
+        : 'It is at or above the background UTL, so it sets the adjusted standard.'
+      : undefined;
   // Derivation equations shown in the Jurisdictional Frameworks Quick Reference,
   // filtered to the active side-tab's pathway(s). The cross-cutting
   // 'background-adjustment' equation is intentionally excluded (see
@@ -1167,6 +1216,8 @@ export default function MatrixDashboard({
               preliminary={preliminarySlot}
               utl={utlSlot}
               adjusted={adjustedSlot}
+              governingLabel={governingLabel}
+              governingNote={governingNote}
             />
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
@@ -1244,6 +1295,9 @@ export default function MatrixDashboard({
             <BackgroundAdjustment
               jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+              preliminaryStandard={preliminaryStandardForBackground}
+              onUtlChange={setBackgroundUtlReport}
+              onAdjustedStandardChange={setAdjustedStandardReport}
             />
           </div>
         );

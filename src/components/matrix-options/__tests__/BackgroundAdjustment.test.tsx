@@ -204,4 +204,112 @@ describe('BackgroundAdjustment', () => {
     expect(screen.queryByTestId('provenance-equation-records')).not.toBeInTheDocument();
     expect(screen.queryByTestId('provenance-source-records')).not.toBeInTheDocument();
   });
+
+  // Step 4 of the redesign: Stage 4 (Adjusted Standard) = max(preliminary,
+  // UTL). The default Provincial reference set (n = 10) computes to
+  // UTL = 5.7516 (5.0000 + 2.8393 x 0.2582), unchanged from before this
+  // step -- these tests only cover the NEW max() presentation layered on
+  // top of that pre-existing, unchanged UTL.
+  describe('Stage 4 -- Adjusted Standard (max(preliminary, UTL))', () => {
+    it('is WAITING when no preliminaryStandard prop is supplied (operand unavailable)', () => {
+      render(<BackgroundAdjustment />);
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toBeInTheDocument();
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+    });
+
+    it('is WAITING when preliminaryStandard is present but not yet computed (blocked upstream)', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: null, unit: 'mg/kg dry', state: 'blocked' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /preliminary standard \(currently BLOCKED\)/i,
+      );
+    });
+
+    it('is WAITING when the background UTL is not yet computable (fewer than 2 samples), even with a valid preliminary standard', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 1.5, unit: 'mg/kg dry', state: 'computed' }}
+        />,
+      );
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: '4.8' } });
+
+      expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('PENDING');
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /background UTL 95\/95 from Stage 3/i,
+      );
+    });
+
+    it('governs on the BACKGROUND UTL when it exceeds the preliminary standard, and reports it to onAdjustedStandardChange', () => {
+      const onAdjustedStandardChange = vi.fn();
+      // Default Provincial UTL = 5.7516; a tiny risk-based preliminary
+      // standard (0.0001136, matching the mockup's HH Food Web example)
+      // sits well below it, so background governs.
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 0.0001136, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      const result = screen.getByTestId('bg-adjust-result');
+      expect(result).toHaveTextContent('5.7516');
+      const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
+      expect(governingSentence).toHaveTextContent(/background UTL 95\/95.*governs/i);
+      expect(governingSentence).toHaveTextContent(/naturally/i);
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          value: expect.closeTo(5.7516, 4),
+          unit: 'mg/kg dry',
+          state: 'computed',
+          governedBy: 'background',
+        }),
+      );
+    });
+
+    it('governs on the PRELIMINARY standard when it is at or above the background UTL, and reports it to onAdjustedStandardChange', () => {
+      const onAdjustedStandardChange = vi.fn();
+      // Preliminary standard (10) is above the default Provincial UTL
+      // (5.7516), so the preliminary standard governs.
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      const result = screen.getByTestId('bg-adjust-result');
+      expect(result).toHaveTextContent('10.0000');
+      const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
+      expect(governingSentence).toHaveTextContent(/preliminary standard.*governs/i);
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith({
+        value: 10,
+        unit: 'mg/kg dry',
+        state: 'computed',
+        governedBy: 'preliminary',
+      });
+    });
+
+    it('reports the background UTL to onUtlChange independently of the preliminary standard prop', () => {
+      const onUtlChange = vi.fn();
+      render(<BackgroundAdjustment onUtlChange={onUtlChange} />);
+      expect(onUtlChange).toHaveBeenLastCalledWith({
+        value: expect.closeTo(5.7516, 4),
+        unit: 'mg/kg',
+        state: 'computed',
+        scope: 'provincial',
+        n: 10,
+      });
+    });
+  });
 });
