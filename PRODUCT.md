@@ -204,6 +204,32 @@ applied one level up to the scenario itself.
 Preset values must be sourced from Protocol 28 and verified. They must never be invented, and a
 preset whose value could not be sourced must say so rather than showing a plausible number.
 
+## What the Calculator compares against
+
+Owner correction 2026-08-14. Earlier design work in this session assumed the final step was a site
+assessment. It is not.
+
+**There should be no measured site concentration in this tool at all.** This product DERIVES
+standards; it does not assess whether a particular sample is contaminated. Putting a site
+concentration in the derivation confuses two different jobs.
+
+The comparison that belongs here is between **the standard being derived** and **the existing CSR
+Schedule 3.4 sediment numerical standards**. That answers the question the project actually asks: is
+the standard we are deriving more or less stringent than what is currently in force, and by how much.
+
+### Consequences
+
+- The existing measured-concentration input in `BackgroundAdjustment.tsx`, and its
+  `csAtOrBelowBackground` comparison, are conceptually misplaced for this workflow. They have NOT
+  been removed - removing a live comparison is an owner decision, not a UI cleanup - but they should
+  not be treated as the model for the final stage.
+- The correct final stage needs the CSR Schedule 3.4 sediment numerical standards as data. Those are
+  NOT in this codebase. `src/lib/regulatory-review/schedule3.ts` is CSR Schedule 2 and 3 professional
+  SERVICES, an unrelated dataset that shares part of the name.
+- Sourcing Schedule 3.4 is therefore its own task with the same discipline as the Protocol 28 preset
+  work: values recorded with citations, verified, never invented, and a gap stated as a gap rather
+  than filled with a plausible number.
+
 ## Open Decisions
 
 Recorded, not invented:

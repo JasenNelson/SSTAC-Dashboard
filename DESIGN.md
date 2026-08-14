@@ -123,6 +123,27 @@ Chosen from three options, then refined through a second round.
 Stages are numbered because a derivation genuinely is sequential. Do not number anything that is not
 a real sequence.
 
+### Stage 5 is a standards comparison, not a site assessment
+
+Correction 2026-08-14, superseding the earlier stage definition. See PRODUCT.md for the full
+statement. Stage 5 does NOT take a measured site concentration. It compares the DERIVED standard
+against the existing CSR Schedule 3.4 sediment numerical standards, so the user can see whether what
+they have derived is more or less stringent than what is currently in force.
+
+Design consequences:
+
+- The stage needs the substance's existing Schedule 3.4 value, which the codebase does not yet have.
+  Until it does, the stage should say the reference value is unavailable rather than comparing
+  against a substitute or showing nothing.
+- The comparison should express DIRECTION and MAGNITUDE, not a pass or fail. "More stringent than the
+  current standard by a factor of N" is the useful statement; "PASS" is not, because there is nothing
+  being passed or failed.
+- A substance with no Schedule 3.4 entry is a real and important case - this project exists partly
+  because sediment standards are incomplete. Absence must read as a stated finding, not as an error
+  or an empty cell.
+- The measured-concentration input currently in BackgroundAdjustment stays untouched until the owner
+  decides its fate. It is not the model for this stage.
+
 ## Standing principles
 
 ### Fail loudly and specifically
