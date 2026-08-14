@@ -254,6 +254,29 @@ const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
   'Human Health Pathways': ['human-health-direct', 'human-health-food'],
 };
 
+// A11y (A1/A2 fixes, 2026-08-14): id helpers for the two tab/tabpanel pairs
+// in this file -- the primary 8-tab top nav and the Jurisdictional
+// Frameworks side-tab list. Same roving-tabindex pattern as
+// matrix-options/CategorySelector.tsx (the in-repo reference
+// implementation); forked here rather than re-invented.
+function slugifyTabId(label: string): string {
+  return label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-+|-+$)/g, '');
+}
+
+const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
+const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
+
+function primaryTabId(tab: string): string {
+  return `matrix-tab-${slugifyTabId(tab)}`;
+}
+
+function sideTabId(tab: string): string {
+  return `matrix-side-tab-${slugifyTabId(tab)}`;
+}
+
 export default function MatrixDashboard({
   eqpCaseStudyContent,
   bsafCaseStudyContent,
@@ -306,6 +329,34 @@ export default function MatrixDashboard({
   // single recompute without waiting for the ref to update post-render.
   const leftWidthRef = useRef(MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH);
   const rightWidthRef = useRef(MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH);
+  // A11y (A1/A2): roving-tabindex focus targets for the two tab lists in
+  // this file, keyed by tab label. Same pattern as CategorySelector's
+  // buttonRefs.
+  const primaryTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  const sideTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
+  // P3-1 (a11y audit 2026-08-14): manual-activation roving-tabindex focus
+  // target for the primary 8-tab top nav, tracked separately from
+  // activeTopTab. See handlePrimaryTabKeyDown below for why this tablist
+  // uses manual (not automatic) activation.
+  const [focusedPrimaryTab, setFocusedPrimaryTab] = useState(TABS[0]);
+  // Interactivity marker for the primary tablist (2026-08-14 a11y e2e).
+  // /matrix-options paints its full SSR markup -- including every tab button
+  // with correct role/ARIA/tabindex -- before React has client-rendered this
+  // component. Inside that window the buttons are inert DOM: no onKeyDown, no
+  // onClick. Worse, the client render REPLACES those nodes rather than
+  // hydrating them in place (measured 2026-08-14: the SSR node identity does
+  // not survive, and DOM focus is dropped to <body> when it happens), so a
+  // real-browser test that focuses a tab and presses a key during that window
+  // silently no-ops against a doomed node. Waiting on any SSR-present element
+  // (a heading, the tablist itself) cannot detect this. This flag is set in a
+  // mount-only effect, so the data attribute below can only ever appear on the
+  // live, handler-bearing render -- making it a deterministic "the tablist is
+  // interactive now" gate for e2e (see gotoMatrixOptionsOrSkip in
+  // e2e/matrix-options.spec.ts).
+  const [primaryTablistReady, setPrimaryTablistReady] = useState(false);
+  useEffect(() => {
+    setPrimaryTablistReady(true);
+  }, []);
   // ARIA ranges for the resize separators. aria-valuemax depends on
   // window.innerWidth, which differs between SSR and the client; computing
   // it at render time would ship an invalid SSR range (valuemax below
@@ -551,6 +602,15 @@ export default function MatrixDashboard({
     if (!showRightPanel) setMatrixMapWorkbenchFocused(false);
   }, [showRightPanel]);
 
+  // Keep the primary tablist's roving-tabindex focus target in sync when
+  // activeTopTab changes by any means other than an explicit arrow-key
+  // focus move (click activation, or a programmatic jump such as
+  // handleOpenEvidenceLibrary switching to 'References & Values'), so the
+  // next Tab-into-the-tablist lands on the now-active tab.
+  useEffect(() => {
+    setFocusedPrimaryTab(activeTopTab);
+  }, [activeTopTab]);
+
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const onResize = () => {
@@ -613,25 +673,119 @@ export default function MatrixDashboard({
   const rightPanelInnerWidth =
     activeTopTab === 'Calculator' ? 'w-[384px]' : 'w-[320px]';
 
+  // A11y (A2/P3-1): roving-tabindex arrow-key navigation for the primary
+  // 8-tab top nav, using MANUAL activation per the ARIA Authoring
+  // Practices Guide (https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ --
+  // "Tabs With Manual Activation"). Arrow/Home/End move DOM focus only
+  // (roving tabindex, tracked by focusedPrimaryTab); they do NOT call
+  // setActiveTopTab. Activation happens on click or on Enter/Space, which
+  // native <button> already turns into a click event, so no separate
+  // Enter/Space handling is needed here.
+  //
+  // Manual activation was chosen for THIS tablist because its panels are
+  // expensive to mount/unmount: Conceptual Model, the Jurisdictional
+  // Frameworks document, TWG Review, the Leaflet-based Interactive Map,
+  // the Calculator (5 stacked calculators + in-progress user input), and
+  // the SSD Workbench. Automatic activation would mount-then-unmount each
+  // of these in sequence while a keyboard user simply arrows past them to
+  // reach a farther tab, and would silently discard any in-progress
+  // Calculator input the moment the user arrowed off that tab.
+  //
+  // The Jurisdictional Frameworks side-tab list (handleSideTabKeyDown
+  // below) keeps AUTOMATIC activation: its three panels only swap which
+  // already-in-memory case-study string is passed to MathRenderer, no
+  // component mount/unmount, so there is no expensive-panel cost to avoid.
+  const handlePrimaryTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentTab: string,
+  ): void => {
+    const navKeys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
+    if (!navKeys.includes(event.key)) return;
+    event.preventDefault();
+
+    const currentIdx = TABS.indexOf(currentTab);
+    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+    let nextIdx = safeIdx;
+    if (event.key === 'ArrowRight') {
+      nextIdx = (safeIdx + 1) % TABS.length;
+    } else if (event.key === 'ArrowLeft') {
+      nextIdx = (safeIdx - 1 + TABS.length) % TABS.length;
+    } else if (event.key === 'Home') {
+      nextIdx = 0;
+    } else if (event.key === 'End') {
+      nextIdx = TABS.length - 1;
+    }
+
+    const nextTab = TABS[nextIdx];
+    setFocusedPrimaryTab(nextTab);
+    primaryTabRefs.current[nextTab]?.focus();
+  };
+
+  // A11y (A1): roving-tabindex arrow-key navigation for the Jurisdictional
+  // Frameworks side-tab list (vertical list -> ArrowUp/ArrowDown).
+  const handleSideTabKeyDown = (
+    event: React.KeyboardEvent<HTMLButtonElement>,
+    currentTab: string,
+  ): void => {
+    const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
+    if (!navKeys.includes(event.key)) return;
+    event.preventDefault();
+
+    const currentIdx = JURISDICTIONAL_SIDE_TABS.indexOf(currentTab);
+    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
+    let nextIdx = safeIdx;
+    if (event.key === 'ArrowDown') {
+      nextIdx = (safeIdx + 1) % JURISDICTIONAL_SIDE_TABS.length;
+    } else if (event.key === 'ArrowUp') {
+      nextIdx = (safeIdx - 1 + JURISDICTIONAL_SIDE_TABS.length) % JURISDICTIONAL_SIDE_TABS.length;
+    } else if (event.key === 'Home') {
+      nextIdx = 0;
+    } else if (event.key === 'End') {
+      nextIdx = JURISDICTIONAL_SIDE_TABS.length - 1;
+    }
+
+    const nextTab = JURISDICTIONAL_SIDE_TABS[nextIdx];
+    setActiveSideTab(nextTab);
+    sideTabRefs.current[nextTab]?.focus();
+  };
+
   const renderSidebar = () => {
     switch (activeTopTab) {
       case 'Jurisdictional Frameworks':
         return (
-          <ul className="space-y-2">
-            {JURISDICTIONAL_SIDE_TABS.map((tab) => (
-              <li
-                key={tab}
-                onClick={() => setActiveSideTab(tab)}
-                className={`p-3 rounded-lg cursor-pointer font-medium transition-colors ${
-                  activeSideTab === tab
-                    ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-semibold text-sky-700 dark:text-sky-400'
-                    : 'hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                }`}
-              >
-                {tab}
-              </li>
-            ))}
-          </ul>
+          <div
+            role="tablist"
+            aria-orientation="vertical"
+            aria-label="Pathway sections"
+            className="space-y-2"
+          >
+            {JURISDICTIONAL_SIDE_TABS.map((tab) => {
+              const selected = activeSideTab === tab;
+              return (
+                <button
+                  key={tab}
+                  ref={(el) => {
+                    sideTabRefs.current[tab] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={sideTabId(tab)}
+                  aria-selected={selected}
+                  aria-controls={JURISDICTIONAL_SIDE_TABPANEL_ID}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveSideTab(tab)}
+                  onKeyDown={(e) => handleSideTabKeyDown(e, tab)}
+                  className={`w-full text-left p-3 rounded-lg cursor-pointer font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                    selected
+                      ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-semibold text-sky-700 dark:text-sky-400'
+                      : 'hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
         );
       case 'Calculator': {
         const tierContent = GUIDE_TIER_CONTENT[activeTier];
@@ -788,7 +942,12 @@ export default function MatrixDashboard({
         else if (activeSideTab === 'Human Health Pathways') contentToRender = humanHealthContent;
 
         return (
-          <div className="space-y-6">
+          <div
+            className="space-y-6"
+            role="tabpanel"
+            id={JURISDICTIONAL_SIDE_TABPANEL_ID}
+            aria-labelledby={sideTabId(activeSideTab)}
+          >
             <div className="bg-sky-50 dark:bg-sky-900/20 border-l-4 border-sky-500 p-4 rounded-r-lg">
               <p className="text-sm text-sky-800 dark:text-sky-200 font-medium">
                 Currently reviewing the <span className="font-bold">{activeSideTab}</span> methodology. Scroll to locate specific regulatory derivations within the document below.
@@ -987,6 +1146,14 @@ export default function MatrixDashboard({
                   !showLeftPanel && 'pointer-events-none',
                 )}
                 style={{ width: showLeftPanel ? `${matrixMapLeftPanelWidth}px` : '0px' }}
+                // NEW-P3-3 (a11y audit round 3): same zero-width-collapse
+                // pattern as left-sidebar-wrapper below -- pointer-events-none
+                // only blocks the mouse, so keyboard-focusable content inside
+                // (e.g. the MatrixMapLeftPanel UCL retry button) stayed
+                // reachable by Tab while visually clipped to 0px. inert
+                // removes it from the focus/tab order (and AT) without
+                // touching the width transition.
+                inert={showLeftPanel ? undefined : true}
               >
                 {/* Left separator: handle on the RIGHT edge of the left panel */}
                 {showLeftPanel && !matrixMapWorkbenchFocused && (
@@ -1066,6 +1233,14 @@ export default function MatrixDashboard({
                       ? `${matrixMapRightPanelWidth}px`
                       : '0px',
                 }}
+                // NEW-P3-3 (a11y audit round 3): same fix as
+                // matrix-map-left-panel-wrapper above -- this panel also
+                // collapses to 0px width via pointer-events-none alone,
+                // leaving MatrixMapRightPanel's focusable controls (and the
+                // resize separator button, when rendered) keyboard-reachable
+                // while clipped. inert only when actually collapsed (not
+                // shown and not focused-fullscreen).
+                inert={!showRightPanel && !matrixMapWorkbenchFocused ? true : undefined}
               >
                 {/* Right separator: handle on the LEFT edge of the right panel */}
                 {showRightPanel && !matrixMapWorkbenchFocused && (
@@ -1146,25 +1321,56 @@ export default function MatrixDashboard({
              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"><FileText className="w-5 h-5 text-white" /></div>
              <div><h1 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Matrix Options</h1><p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Policy Review</p></div>
           </div>
-          <nav className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTopTab(tab)}
-                className={cn('relative flex items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap', activeTopTab === tab ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
-              >
-                <span>{TAB_LABELS[tab] ?? tab}</span>
-              </button>
-            ))}
+          <nav aria-label="Matrix Options primary">
+            <div
+              role="tablist"
+              aria-label="Matrix Options"
+              data-primary-tablist-ready={primaryTablistReady ? 'true' : undefined}
+              className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1"
+            >
+            {TABS.map((tab) => {
+              const selected = activeTopTab === tab;
+              return (
+                <button
+                  key={tab}
+                  ref={(el) => {
+                    primaryTabRefs.current[tab] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={primaryTabId(tab)}
+                  aria-selected={selected}
+                  aria-controls={PRIMARY_TABPANEL_ID}
+                  tabIndex={focusedPrimaryTab === tab ? 0 : -1}
+                  onClick={() => {
+                    // NEW-P3-2 (a11y audit round 3): set focusedPrimaryTab
+                    // directly here instead of relying solely on the
+                    // activeTopTab-sync effect above. Clicking the already-
+                    // active tab (e.g. after an arrow key moved DOM focus to
+                    // a different, not-yet-activated tab) makes
+                    // setActiveTopTab(tab) a same-value no-op, so that effect
+                    // never re-fires and tabIndex=0 would otherwise stay on
+                    // the previously-arrowed-to tab while focus is here.
+                    setFocusedPrimaryTab(tab);
+                    setActiveTopTab(tab);
+                  }}
+                  onKeyDown={(e) => handlePrimaryTabKeyDown(e, tab)}
+                  className={cn('relative flex min-h-[44px] items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900', selected ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
+                >
+                  <span>{TAB_LABELS[tab] ?? tab}</span>
+                </button>
+              );
+            })}
+            </div>
           </nav>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
            {(isToolMode || isReviewMode || (isEvidenceLibraryMode && !isMobile) || (isMapMode && !isMobile)) && (
              <>
-               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('p-2 rounded-lg transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
+               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                </button>
-               <button onClick={toggleRightPanel} className={cn('p-2 rounded-lg transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
+               <button onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
                  {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                </button>
              </>
@@ -1187,20 +1393,47 @@ export default function MatrixDashboard({
                 // body + Background Adjustment panel.
                 hideSidebarOnPrint && 'print:hidden',
               )}
+              // P3-6 (a11y audit 2026-08-14): the collapsed (w-0) state uses
+              // overflow-hidden, not `hidden`, so children (side-tab
+              // buttons here, and the Calculator audience-tier buttons at
+              // renderSidebar()'s 'Calculator' case, which renders inside
+              // this same wrapper -- one fix covers both) stay in the DOM
+              // and, without this, stay keyboard-focusable while clipped to
+              // zero width. `inert` removes them from focus/tab order (and
+              // hides them from AT) without touching the width/opacity
+              // transition classes that drive the collapse animation.
+              inert={showLeftPanel ? undefined : true}
             >
               <div className="w-full min-w-[270px]">
-                <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">{leftSidebarHeading}</h3>
+                <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">{leftSidebarHeading}</h2>
                 {renderSidebar()}
               </div>
             </div>
 
             {/* Main Content */}
-            <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8">
+            <div
+              className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8"
+              role="tabpanel"
+              id={PRIMARY_TABPANEL_ID}
+              aria-labelledby={primaryTabId(activeTopTab)}
+              tabIndex={-1}
+            >
               {renderContent()}
             </div>
 
             {/* Right Drawer */}
-            <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? rightPanelOpenWidth : 'w-0')}>
+            <div
+              className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? rightPanelOpenWidth : 'w-0')}
+              // NEW-P3-3 (a11y audit round 3): same collapse pattern as the
+              // left-sidebar-wrapper and the two matrix-map panel wrappers
+              // above -- w-0 + overflow-hidden alone leaves this drawer's
+              // renderToolReference() content (details/summary disclosures,
+              // CalculatorValueSearchPanel controls) keyboard-focusable while
+              // visually clipped to zero width. inert removes it from the
+              // focus/tab order (and AT) without touching the width
+              // transition.
+              inert={showRightPanel ? undefined : true}
+            >
               <div className={cn(rightPanelInnerWidth, 'h-full flex flex-col')}>
                 <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
                   <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
@@ -1219,7 +1452,13 @@ export default function MatrixDashboard({
             </div>
           </>
         ) : isReviewMode ? (
-          <div className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto">
+          <div
+            className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto"
+            role="tabpanel"
+            id={PRIMARY_TABPANEL_ID}
+            aria-labelledby={primaryTabId(activeTopTab)}
+            tabIndex={-1}
+          >
             {renderContent()}
           </div>
         ) : isMapMode ? (
@@ -1230,29 +1469,73 @@ export default function MatrixDashboard({
           // count card) are absolutely positioned inside this box.
           // PR-MAP-4 + PR-MAP-5 will introduce left + right side panels
           // around the map inside this same container.
-          <div className="flex-1 flex overflow-hidden print:hidden">
+          <div
+            className="flex-1 flex overflow-hidden print:hidden"
+            role="tabpanel"
+            id={PRIMARY_TABPANEL_ID}
+            aria-labelledby={primaryTabId(activeTopTab)}
+            tabIndex={-1}
+          >
             {renderContent()}
           </div>
         ) : isEvidenceLibraryMode ? (
-          <EvidenceLibrary
-            filters={evidenceLibraryFilters}
-            onFiltersChange={handleEvidenceLibraryFiltersChange}
-            regulatoryFrameId={jurisdiction}
-            calculatorReceipt={calculatorReceipt}
-            onDismissReceipt={handleDismissReceipt}
-            showLeftPanel={!isMobile && showLeftPanel}
-            showRightPanel={!isMobile && showRightPanel}
-            onRequestOpenRightPanel={isMobile ? undefined : () => setShowRightPanel(true)}
-            className="flex-1 w-full"
-          />
+          // P2-5 (a11y audit 2026-08-14): give this branch a real tabpanel,
+          // same id/aria-labelledby/tabIndex contract as its five sibling
+          // branches above, so the 8-tab tablist's aria-controls IDREF is
+          // never dangling when 'References & Values' is active. An
+          // ordinary wrapper (not display:contents, which would drop the
+          // role/id ARIA semantics) carrying the same flex layout class the
+          // isMapMode/isReviewMode wrappers use; EvidenceLibrary keeps its
+          // own "flex-1 w-full" so it still fills the wrapper exactly as
+          // before.
+          <div
+            className="flex-1 flex overflow-hidden"
+            role="tabpanel"
+            id={PRIMARY_TABPANEL_ID}
+            aria-labelledby={primaryTabId(activeTopTab)}
+            tabIndex={-1}
+          >
+            <EvidenceLibrary
+              filters={evidenceLibraryFilters}
+              onFiltersChange={handleEvidenceLibraryFiltersChange}
+              regulatoryFrameId={jurisdiction}
+              calculatorReceipt={calculatorReceipt}
+              onDismissReceipt={handleDismissReceipt}
+              showLeftPanel={!isMobile && showLeftPanel}
+              showRightPanel={!isMobile && showRightPanel}
+              onRequestOpenRightPanel={isMobile ? undefined : () => setShowRightPanel(true)}
+              className="flex-1 w-full"
+            />
+          </div>
         ) : isSsdWorkbenchMode ? (
-          <div className="flex-1 overflow-y-auto bg-white dark:bg-slate-950">
+          <div
+            className="flex-1 overflow-y-auto bg-white dark:bg-slate-950"
+            role="tabpanel"
+            id={PRIMARY_TABPANEL_ID}
+            aria-labelledby={primaryTabId(activeTopTab)}
+            tabIndex={-1}
+          >
             <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-8">
               {renderContent()}
             </div>
           </div>
         ) : (
-          <div className={`flex-1 overflow-y-auto ${activeTopTab === 'The Guide' ? 'bg-slate-50' : 'bg-white'} dark:bg-slate-900`}>
+          <div
+            className={`flex-1 overflow-y-auto ${activeTopTab === 'The Guide' ? 'bg-slate-50' : 'bg-white'} dark:bg-slate-900`}
+            role="tabpanel"
+            id={PRIMARY_TABPANEL_ID}
+            aria-labelledby={primaryTabId(activeTopTab)}
+            // NEW-P3-2 (a11y audit 2026-08-14): this wrapper serves two
+            // different tabs with different focusable-content shapes. 'The
+            // Guide' always renders Phase2TasksSection's Expand-all /
+            // Collapse-all / per-task toggle buttons, so it already has a
+            // keyboard path in and tabIndex={-1} (per APG) is correct.
+            // 'Conceptual Model' renders ConceptualMatrix, which has no
+            // interactive elements at all (verified: no button/input/
+            // select/anchor in ConceptualMatrix.tsx) -- without tabIndex={0}
+            // a keyboard user cannot focus this panel to scroll it.
+            tabIndex={activeTopTab === 'Conceptual Model' ? 0 : -1}
+          >
             <div className={`${activeTopTab === 'The Guide' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-8 py-12`}>
               {renderContent()}
             </div>
