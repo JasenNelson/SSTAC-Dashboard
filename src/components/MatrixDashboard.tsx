@@ -441,6 +441,12 @@ export default function MatrixDashboard({
   // dashboard-level left-sidebar / right-drawer until PR-MAP-4 + PR-MAP-5
   // populate Selection Stats + MeasurementWorkbench.
   const isMapMode = activeTopTab === 'Interactive Map';
+  // Step-2 shell restructure: gates the new top-of-tab pathway-switch band
+  // and the Bathymetric --db-* token styling on the shared left-sidebar /
+  // main-content / right-drawer wrapper elements. Scoped tightly to the
+  // Calculator tab only (isToolMode also covers Jurisdictional Frameworks,
+  // which must render exactly as before).
+  const isCalculatorMode = activeTopTab === 'Calculator';
   // print:hidden on the entire left sidebar column when the Calculator tab
   // is active, per plan v3 section 4.2 + section 10. The sidebar stays
   // visible on print for the Jurisdictional Frameworks tab (where the
@@ -794,43 +800,59 @@ export default function MatrixDashboard({
             className="space-y-5"
             data-testid="calculator-guide-sidebar"
           >
-            <div
-              className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
-              aria-label="Calculator guide audience"
-            >
-              {ALL_AUDIENCE_TIERS.map((tier) => (
-                <button
-                  key={tier}
-                  type="button"
-                  aria-pressed={activeTier === tier}
-                  onClick={() => setActiveTier(tier)}
-                  className={cn(
-                    'rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors',
-                    activeTier === tier
-                      ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {GUIDE_TIER_LABELS[tier]}
-                </button>
-              ))}
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                {tierContent.title}
-              </h4>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {tierContent.summary}
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                {tierContent.bullets.map((bullet) => (
-                  <li key={bullet}>{bullet}</li>
+            {/*
+              Left rail = OPTIONS (DESIGN.md "Layout: stages inside rails").
+              SharedGlobalInputs (substance + regulatory frame) moved here
+              from the centre column in the step-2 shell restructure -- it
+              is a shared input, not a per-pathway calculation, so it
+              belongs with the other options rather than stacked above the
+              active calculator. Component internals are untouched.
+            */}
+            <SharedGlobalInputs
+              substanceKey={substanceKey}
+              jurisdiction={jurisdiction}
+              onSubstanceKeyChange={setSubstanceKey}
+              onJurisdictionChange={setJurisdiction}
+            />
+            <div className="border-t border-[var(--db-border)] pt-5">
+              <div
+                className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
+                aria-label="Calculator guide audience"
+              >
+                {ALL_AUDIENCE_TIERS.map((tier) => (
+                  <button
+                    key={tier}
+                    type="button"
+                    aria-pressed={activeTier === tier}
+                    onClick={() => setActiveTier(tier)}
+                    className={cn(
+                      'rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors',
+                      activeTier === tier
+                        ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    {GUIDE_TIER_LABELS[tier]}
+                  </button>
                 ))}
-              </ul>
-            </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-              Screening-only outputs still require professional judgment before
-              regulator-facing use.
+              </div>
+              <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {tierContent.title}
+                </h4>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {tierContent.summary}
+                </p>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  {tierContent.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+                Screening-only outputs still require professional judgment
+                before regulator-facing use.
+              </div>
             </div>
           </div>
         );
@@ -854,7 +876,7 @@ export default function MatrixDashboard({
 
   const leftSidebarHeading =
     activeTopTab === 'Calculator'
-      ? 'CALCULATOR GUIDE'
+      ? 'OPTIONS'
       : activeTopTab === 'Jurisdictional Frameworks'
         ? 'PATHWAY / APPROACH'
         : 'CONTEXT';
@@ -1010,22 +1032,18 @@ export default function MatrixDashboard({
         return (
           <div className="w-full space-y-6" data-testid="calculator-tab-content">
             {/*
-              Calculator-tab vertical flow:
-                1. CategorySelector (1x4 row at top)
-                2. SharedGlobalInputs (substance + jurisdiction selectors)
-                3. Active category calculator (switches on activeCategory)
-                4. BackgroundAdjustment (post-derivation panel)
+              Calculator-tab vertical flow (step-2 shell restructure):
+                1. Active category calculator (switches on activeCategory).
+                   CategorySelector (the pathway switch) now renders in the
+                   top chrome band, above the 3-column shell, at primary
+                   navigation weight -- see the isCalculatorMode block in
+                   the component return below. SharedGlobalInputs (substance
+                   + regulatory frame) now renders in the left OPTIONS rail
+                   -- see renderSidebar()'s 'Calculator' case. Both moved
+                   out of this centre column without any change to their
+                   own internals, props, or behaviour.
+                2. BackgroundAdjustment (post-derivation panel)
             */}
-            <CategorySelector
-              activeCategory={activeCategory}
-              onChange={setActiveCategory}
-            />
-            <SharedGlobalInputs
-              substanceKey={substanceKey}
-              jurisdiction={jurisdiction}
-              onSubstanceKeyChange={setSubstanceKey}
-              onJurisdictionChange={setJurisdiction}
-            />
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
                 substanceKey={substanceKey}
@@ -1378,6 +1396,38 @@ export default function MatrixDashboard({
         </div>
       </div>
 
+      {/*
+        Pathway switch (DESIGN.md "Layout: stages inside rails" +
+        "The four pathways are four independent derivations"): a primary-
+        navigation-weight control directly beneath the app tab bar,
+        Calculator-tab only. Promotes CategorySelector's four options out
+        of the centre column without touching its internals -- its roving
+        tabindex, arrow-key handling, and radiogroup ARIA semantics are
+        unchanged; only the calling location moved.
+      */}
+      {isCalculatorMode && (
+        <div
+          data-testid="calculator-pathway-switch"
+          className="shrink-0 border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-4 print:hidden md:px-8"
+        >
+          <div className="mx-auto max-w-5xl">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--db-text-secondary)]">
+              Pathway
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--db-text-primary)]">
+              Each pathway below is an independent derivation. Switching
+              pathways produces a separate concentration -- not a different
+              view of the same number.
+            </p>
+            <CategorySelector
+              activeCategory={activeCategory}
+              onChange={setActiveCategory}
+              className="mt-3"
+            />
+          </div>
+        </div>
+      )}
+
       <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
@@ -1385,8 +1435,14 @@ export default function MatrixDashboard({
             <div
               data-testid="left-sidebar-wrapper"
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
-                showLeftPanel ? 'w-80 p-6' : 'w-0',
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 border-r',
+                // Bathymetric shell chrome (DESIGN.md), Calculator tab only.
+                // Jurisdictional Frameworks (the other isToolMode tab) keeps
+                // its original slate styling unchanged.
+                isCalculatorMode
+                  ? 'bg-[var(--db-depth-1)] border-[var(--db-border)]'
+                  : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800',
+                showLeftPanel ? (isCalculatorMode ? 'w-96 p-6' : 'w-80 p-6') : 'w-0',
                 // Plan v3 section 4.2 + section 10: hide the entire left
                 // sidebar when printing the Calculator tab so window.print()
                 // produces a chrome-free PDF anchored on the calculator
@@ -1405,14 +1461,28 @@ export default function MatrixDashboard({
               inert={showLeftPanel ? undefined : true}
             >
               <div className="w-full min-w-[270px]">
-                <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">{leftSidebarHeading}</h2>
+                <h2
+                  className={cn(
+                    'text-xs font-bold uppercase tracking-wider mb-4',
+                    isCalculatorMode
+                      ? 'text-[var(--db-text-secondary)]'
+                      : 'text-slate-400 dark:text-slate-500',
+                  )}
+                >
+                  {leftSidebarHeading}
+                </h2>
                 {renderSidebar()}
               </div>
             </div>
 
             {/* Main Content */}
             <div
-              className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8"
+              className={cn(
+                'flex-1 relative overflow-y-auto p-8',
+                isCalculatorMode
+                  ? 'bg-[var(--db-surface)]'
+                  : 'bg-white dark:bg-slate-950',
+              )}
               role="tabpanel"
               id={PRIMARY_TABPANEL_ID}
               aria-labelledby={primaryTabId(activeTopTab)}
@@ -1423,7 +1493,13 @@ export default function MatrixDashboard({
 
             {/* Right Drawer */}
             <div
-              className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? rightPanelOpenWidth : 'w-0')}
+              className={cn(
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 border-l shadow-2xl',
+                isCalculatorMode
+                  ? 'bg-[var(--db-surface)] border-[var(--db-border)]'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800',
+                showRightPanel ? rightPanelOpenWidth : 'w-0',
+              )}
               // NEW-P3-3 (a11y audit round 3): same collapse pattern as the
               // left-sidebar-wrapper and the two matrix-map panel wrappers
               // above -- w-0 + overflow-hidden alone leaves this drawer's
@@ -1435,10 +1511,31 @@ export default function MatrixDashboard({
               inert={showRightPanel ? undefined : true}
             >
               <div className={cn(rightPanelInnerWidth, 'h-full flex flex-col')}>
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <div
+                  className={cn(
+                    'p-5 border-b flex justify-between items-center',
+                    isCalculatorMode
+                      ? 'border-[var(--db-border)] bg-[var(--db-depth-1)]'
+                      : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50',
+                  )}
+                >
+                  <h3
+                    className={cn(
+                      'font-bold flex items-center space-x-2',
+                      isCalculatorMode
+                        ? 'text-[var(--db-text-primary)]'
+                        : 'text-slate-900 dark:text-white',
+                    )}
+                  >
                     {activeTopTab === 'Calculator' ? (
-                      <Database className="w-5 h-5 text-sky-500" />
+                      <Database
+                        className={cn(
+                          'w-5 h-5',
+                          isCalculatorMode
+                            ? 'text-[var(--db-accent)]'
+                            : 'text-sky-500',
+                        )}
+                      />
                     ) : (
                       <FileText className="w-5 h-5 text-sky-500" />
                     )}
