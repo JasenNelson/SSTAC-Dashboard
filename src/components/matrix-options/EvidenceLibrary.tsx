@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { VALUES_PAGE_SIZE, computeValuesPagination } from './evidenceLibraryPagination';
 import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
@@ -23,7 +23,7 @@ import {
   deleteSavedView,
   importLegacySavedViews,
 } from '@/lib/matrix-options/provenance/saved-views-sync';
-import type { SavedViewRow } from '@/lib/matrix-options/provenance/saved-views-sync';
+import type { SavedViewRow, SaveViewResult } from '@/lib/matrix-options/provenance/saved-views-sync';
 import { usePromotedCandidatesStore } from '@/stores/matrix-options/promotedCandidatesStore';
 import { cn } from '@/utils/cn';
 import {
@@ -89,6 +89,25 @@ interface EvidenceLibraryProps {
   showLeftPanel?: boolean;
   showRightPanel?: boolean;
   onRequestOpenRightPanel?: () => void;
+}
+
+// ---------------------------------------------------------------------------
+// EvidenceLibraryAnnounce -- shared aria-live="polite" outcome channel (A5).
+//
+// A single visually-hidden live region is rendered near the top of the main
+// panel by the default-exported EvidenceLibrary component. Nested components
+// (QaReviewActions, AddEvidenceLocatorForm, LeadTriageControls, the saved-views
+// form, ...) call announce() to have their SUCCESS outcomes read out by screen
+// readers. FAILURES are rendered as a local role="alert" at the point of
+// failure (per A4) rather than only routed through this polite channel.
+// ---------------------------------------------------------------------------
+
+const EvidenceLibraryAnnounceContext = createContext<(message: string) => void>(
+  () => {},
+);
+
+function useEvidenceLibraryAnnounce(): (message: string) => void {
+  return useContext(EvidenceLibraryAnnounceContext);
 }
 
 // References & Values is the catalog browser: the Values table (default), the Sources table
@@ -240,6 +259,14 @@ type SavedFilterView = {
 
 // Per-browser sentinel so the one-time localStorage -> Supabase import runs at most once.
 const SAVED_VIEWS_MIGRATED_KEY = 'matrix-options-saved-views-migrated-v1';
+
+// Matches a Postgres UUID (the `user_saved_views.id` column type). A saved-view id that
+// does not match this was never persisted to Supabase (e.g. the client-generated
+// `${Date.now()...}` optimistic id used before a create round-trips) -- attempting a
+// server delete with it is guaranteed to fail with an invalid-uuid error, so callers
+// should treat a non-match as "local-only, nothing to sync" rather than a server call.
+const SUPABASE_SAVED_VIEW_ID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 function rowToSavedFilterView(row: SavedViewRow): SavedFilterView {
   return {
@@ -1395,6 +1422,8 @@ function QaReviewActions({
   const [reviews, setReviews] = useState<ParameterValueReview[]>([]);
   const [showHistory, setShowHistory] = useState(false);
   const [effectiveQaStatus, setEffectiveQaStatus] = useState(currentQaStatus);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const announce = useEvidenceLibraryAnnounce();
 
   useEffect(() => {
     setEffectiveQaStatus(currentQaStatus);
@@ -1407,6 +1436,7 @@ function QaReviewActions({
   const handleSubmit = async () => {
     if (!targetStatus) return;
     setSubmitting(true);
+    setSubmitError(null);
     const ok = await submitReview(
       parameterValueId,
       effectiveQaStatus,
@@ -1419,11 +1449,17 @@ function QaReviewActions({
       setEffectiveQaStatus(targetStatus);
       const updated = await fetchReviewHistory(parameterValueId);
       setReviews(updated);
+      setSubmitting(false);
+      setShowForm(false);
+      setNote('');
+      setTargetStatus('');
+      announce(`QA status updated to ${humanizeCatalogLabel(targetStatus)}.`);
+      return;
     }
     setSubmitting(false);
-    setShowForm(false);
-    setNote('');
-    setTargetStatus('');
+    setSubmitError(
+      'Your review was not saved. This looks like a connection or server problem -- your note below has not been lost. Check your connection and try Confirm again.',
+    );
   };
 
   const transitions =
@@ -1501,12 +1537,23 @@ function QaReviewActions({
                 setShowForm(false);
                 setNote('');
                 setTargetStatus('');
+                setSubmitError(null);
               }}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+              disabled={submitting}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
             >
               Cancel
             </button>
           </div>
+          {submitError && (
+            <div
+              role="alert"
+              className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              data-testid="qa-review-error"
+            >
+              {submitError}
+            </div>
+          )}
         </div>
       )}
 
@@ -1630,6 +1677,8 @@ function AddEvidenceLocatorForm({
   const [valueText, setValueText] = useState('');
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const announce = useEvidenceLibraryAnnounce();
 
   const trimmedLocator = locator.trim();
   const canSubmit = !!sourceId && trimmedLocator.length > 0;
@@ -1637,6 +1686,7 @@ function AddEvidenceLocatorForm({
   const handleSubmit = async () => {
     if (!canSubmit) return;
     setSubmitting(true);
+    setSubmitError(null);
     const ok = await submitEvidenceItem({
       parameter_value_id: parameterValueId,
       source_id: sourceId,
@@ -1647,14 +1697,20 @@ function AddEvidenceLocatorForm({
     });
     if (ok) {
       onAdded();
+      setSubmitting(false);
       setShowForm(false);
       setSourceId('');
       setLocator('');
       setValueText('');
       setNote('');
       setLocatorType('source_page');
+      announce('Evidence locator saved.');
+      return;
     }
     setSubmitting(false);
+    setSubmitError(
+      'This locator was not saved. This looks like a connection or server problem -- everything you entered is still here. Check your connection and try Save locator again.',
+    );
   };
 
   if (!showForm) {
@@ -1752,12 +1808,25 @@ function AddEvidenceLocatorForm({
         </button>
         <button
           type="button"
-          onClick={() => setShowForm(false)}
-          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+          onClick={() => {
+            setShowForm(false);
+            setSubmitError(null);
+          }}
+          disabled={submitting}
+          className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
         >
           Cancel
         </button>
       </div>
+      {submitError && (
+        <div
+          role="alert"
+          className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-xs text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          data-testid="evidence-locator-error"
+        >
+          {submitError}
+        </div>
+      )}
     </div>
   );
 }
@@ -2435,16 +2504,25 @@ function LeadTriageControls({
   const [showNoteForm, setShowNoteForm] = useState<TriageStatus | null>(null);
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [triageError, setTriageError] = useState<string | null>(null);
+  const announce = useEvidenceLibraryAnnounce();
 
   const handleTriage = async (status: TriageStatus) => {
     setSubmitting(true);
+    setTriageError(null);
     const ok = await setTriageStatus(leadSetId, status, note.trim());
     if (ok) {
       onTriaged(status);
+      setSubmitting(false);
       setShowNoteForm(null);
       setNote('');
+      announce(`Triage status updated to ${status}.`);
+      return;
     }
     setSubmitting(false);
+    setTriageError(
+      'Triage status was not saved. This looks like a connection or server problem -- your note has not been lost. Check your connection and try Confirm again.',
+    );
   };
 
   if (showNoteForm) {
@@ -2472,52 +2550,73 @@ function LeadTriageControls({
           </button>
           <button
             type="button"
-            onClick={() => { setShowNoteForm(null); setNote(''); }}
-            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            onClick={() => { setShowNoteForm(null); setNote(''); setTriageError(null); }}
+            disabled={submitting}
+            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
           >
             Cancel
           </button>
         </div>
+        {triageError && (
+          <div
+            role="alert"
+            className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+            data-testid="triage-error"
+          >
+            {triageError}
+          </div>
+        )}
       </div>
     );
   }
 
   return (
-    <div className="flex items-center gap-1" data-testid="lead-triage-controls">
-      <span className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
-        Triage:
-      </span>
-      <TriageStatusBadge status={currentStatus} />
-      {currentStatus !== 'dismissed' && (
-        <button
-          type="button"
-          onClick={() => setShowNoteForm('dismissed')}
-          className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
-          data-testid="triage-dismiss"
+    <div className="flex flex-col gap-1" data-testid="lead-triage-controls">
+      <div className="flex items-center gap-1">
+        <span className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
+          Triage:
+        </span>
+        <TriageStatusBadge status={currentStatus} />
+        {currentStatus !== 'dismissed' && (
+          <button
+            type="button"
+            onClick={() => setShowNoteForm('dismissed')}
+            className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+            data-testid="triage-dismiss"
+          >
+            Dismiss
+          </button>
+        )}
+        {currentStatus !== 'deferred' && (
+          <button
+            type="button"
+            onClick={() => setShowNoteForm('deferred')}
+            className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+            data-testid="triage-defer"
+          >
+            Defer
+          </button>
+        )}
+        {currentStatus !== 'untriaged' && (
+          <button
+            type="button"
+            onClick={() => handleTriage('untriaged')}
+            disabled={submitting}
+            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            data-testid="triage-reset"
+          >
+            Reset
+          </button>
+        )}
+      </div>
+      {triageError && (
+        <div
+          role="alert"
+          className="rounded-md border border-red-300 bg-red-50 p-1.5 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+          data-testid="triage-error"
         >
-          Dismiss
-        </button>
-      )}
-      {currentStatus !== 'deferred' && (
-        <button
-          type="button"
-          onClick={() => setShowNoteForm('deferred')}
-          className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
-          data-testid="triage-defer"
-        >
-          Defer
-        </button>
-      )}
-      {currentStatus !== 'untriaged' && (
-        <button
-          type="button"
-          onClick={() => handleTriage('untriaged')}
-          disabled={submitting}
-          className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
-          data-testid="triage-reset"
-        >
-          Reset
-        </button>
+          {triageError}
+        </div>
       )}
     </div>
   );
@@ -2532,19 +2631,51 @@ function PromoteLeadButton({
   onPromoted,
 }: {
   lead: EvidenceLibrarySourceLeadSummary;
-  onPromoted?: () => void;
+  // P2-4 fix: onPromoted now reports whether the underlying write actually
+  // succeeded (Promise<boolean>) so handleConfirm can decide whether to commit the
+  // optimistic addCandidate() store write. A caller that has no server-side write to
+  // perform may still return void/undefined -- treated as success, matching the
+  // pre-existing behavior for callers with no async step.
+  onPromoted?: () => Promise<boolean> | void;
 }) {
   const { addCandidate, isPromoted } = usePromotedCandidatesStore();
   const [showPopover, setShowPopover] = useState(false);
   const [selectedPathway, setSelectedPathway] = useState<ProvenancePathway>('eco-direct-eqp');
+  const [submitting, setSubmitting] = useState(false);
+  const [promoteError, setPromoteError] = useState<string | null>(null);
 
   const alreadyPromoted = isPromoted(lead.leadSetId);
 
-  const handleConfirm = () => {
-    const record = promoteSourceLead(lead, 'admin', selectedPathway);
-    addCandidate(record);
-    setShowPopover(false);
-    onPromoted?.();
+  // P2-4 fix: previously this committed addCandidate() to the Zustand store BEFORE
+  // onPromoted() resolved, and the "Promoted to candidate" badge (below, keyed off
+  // isPromoted()) rendered immediately from that optimistic commit -- so a FAILED
+  // server write (onPromoted resolving false, or throwing) still showed the terminal
+  // green success state, with only a console.error marking the real outcome. Now the
+  // store write is NOT committed until onPromoted confirms success; on failure the
+  // popover stays open, submitting resets, and a role="alert" reports the failure
+  // (matching the sibling triage/save-view error sites in this file).
+  const handleConfirm = async () => {
+    setSubmitting(true);
+    setPromoteError(null);
+    try {
+      const ok = await onPromoted?.();
+      if (ok === false) {
+        setPromoteError(
+          'Promotion could not be saved. The lead has not been promoted to a candidate -- try again.',
+        );
+        return;
+      }
+      const record = promoteSourceLead(lead, 'admin', selectedPathway);
+      addCandidate(record);
+      setShowPopover(false);
+    } catch (err) {
+      console.error('[EvidenceLibrary] promoteSourceLead/onPromoted failed', err);
+      setPromoteError(
+        'Promotion could not be saved. The lead has not been promoted to a candidate -- try again.',
+      );
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (alreadyPromoted) {
@@ -2597,20 +2728,34 @@ function PromoteLeadButton({
             <button
               type="button"
               onClick={handleConfirm}
-              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700"
+              disabled={submitting}
+              className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-700 disabled:opacity-50"
               data-testid="promote-lead-confirm"
             >
-              Confirm promotion
+              {submitting ? 'Promoting...' : 'Confirm promotion'}
             </button>
             <button
               type="button"
-              onClick={() => setShowPopover(false)}
-              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
+              onClick={() => {
+                setShowPopover(false);
+                setPromoteError(null);
+              }}
+              disabled={submitting}
+              className="rounded-md border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
               data-testid="promote-lead-cancel"
             >
               Cancel
             </button>
           </div>
+          {promoteError && (
+            <div
+              role="alert"
+              className="mt-2 rounded-md border border-red-300 bg-red-50 p-2 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+              data-testid="promote-lead-error"
+            >
+              {promoteError}
+            </div>
+          )}
         </div>
       )}
     </div>
@@ -2687,8 +2832,25 @@ function SourceLeadCard({
               <PromoteLeadButton
                 lead={lead}
                 onPromoted={async () => {
-                  await setTriageStatus(lead.leadSetId, 'promoted', '');
-                  onTriaged?.(lead.leadSetId, 'promoted');
+                  // setTriageStatus returns Promise<boolean>; only report the triage
+                  // change upward when the write actually succeeded (matches the fix
+                  // applied to LeadTriageControls.handleTriage above) -- discarding the
+                  // result here previously let the UI show "promoted" even when the
+                  // server rejected the write, reverting silently on reload. The
+                  // return value is now also handed back to PromoteLeadButton
+                  // (P2-4 fix) so it can gate the optimistic addCandidate() store
+                  // write and the "Promoted to candidate" badge on this same result,
+                  // instead of committing that state unconditionally.
+                  const ok = await setTriageStatus(lead.leadSetId, 'promoted', '');
+                  if (ok) {
+                    onTriaged?.(lead.leadSetId, 'promoted');
+                  } else {
+                    console.error(
+                      '[EvidenceLibrary] setTriageStatus(promoted) failed for lead',
+                      lead.leadSetId,
+                    );
+                  }
+                  return ok;
                 }}
               />
             </div>
@@ -2819,6 +2981,7 @@ function PromotedCandidateCard({
           className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
           data-testid="promoted-remove-button"
           title="Remove promoted candidate"
+          aria-label="Remove promoted candidate"
         >
           <X className="h-3.5 w-3.5" />
         </button>
@@ -3293,7 +3456,28 @@ export default function EvidenceLibrary({
   const [savedViews, setSavedViews] = useState<SavedFilterView[]>([]);
   const [savingView, setSavingView] = useState(false);
   const [savedViewName, setSavedViewName] = useState('');
+  const [savingViewSubmitting, setSavingViewSubmitting] = useState(false);
+  const [saveViewError, setSaveViewError] = useState<string | null>(null);
+  const [savedViewsActionError, setSavedViewsActionError] = useState<string | null>(null);
   const [statusAdminOpen, setStatusAdminOpen] = useState(false);
+  // A5: shared aria-live="polite" outcome channel. announce() is provided to descendants
+  // via EvidenceLibraryAnnounceContext so nested forms (QaReviewActions,
+  // AddEvidenceLocatorForm, LeadTriageControls, ...) can report SUCCESS outcomes without
+  // prop-drilling a callback through every intermediate component.
+  // Stored as {text, seq} rather than a bare string: setting React state to a value
+  // EQUAL to the current value is a no-op bail-out (no re-render, no DOM mutation, no
+  // screen-reader announcement). Two consecutive identical announcements (e.g.
+  // dismissing two leads in a row both say "Triage status updated to dismissed.")
+  // would otherwise silently drop the second one. The monotonic seq guarantees the
+  // state object is always a new reference even when the text repeats; only text is
+  // rendered into the live region.
+  const [liveMessage, setLiveMessage] = useState<{ text: string; seq: number }>({
+    text: '',
+    seq: 0,
+  });
+  const announce = useCallback((message: string) => {
+    setLiveMessage((current) => ({ text: message, seq: current.seq + 1 }));
+  }, []);
   // 'loading' until the Supabase probe resolves; 'supabase' when views sync to the
   // signed-in account; 'local' when signed-out / offline (localStorage fallback).
   const [savedViewsBackend, setSavedViewsBackend] = useState<
@@ -3482,9 +3666,20 @@ export default function EvidenceLibrary({
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(view.filters);
   };
-  const saveCurrentView = async (name: string) => {
+  // Returns { ok, message }: ok is false whenever the view was NOT actually saved --
+  // either rejected by the server (any success:false result from createSavedView,
+  // including an unrecognized/'unknown' error code, which defaults to failure) or an
+  // unexpected exception. ok is true only for a confirmed server save or the
+  // intentional signed-out/local-only path. createSavedView (saved-views-sync.ts) has
+  // its own top-level try/catch and NEVER throws -- every failure comes back as
+  // {success:false, error:...} -- so the branch on `result` below is the real contract;
+  // the try/catch here is purely defensive against a future change to that contract,
+  // and on catch it now fails and rolls back rather than pretending success.
+  const saveCurrentView = async (
+    name: string,
+  ): Promise<{ ok: boolean; message: string | null }> => {
     const trimmed = name.trim();
-    if (!trimmed) return;
+    if (!trimmed) return { ok: false, message: null };
     const optimistic: SavedFilterView = {
       id: `${Date.now().toString(36)}-${Math.round(Math.random() * 1e6).toString(36)}`,
       name: trimmed,
@@ -3494,11 +3689,32 @@ export default function EvidenceLibrary({
     const next = [...savedViews, optimistic];
     setSavedViews(next);
     persistSavedViews(next); // keep the local mirror in sync (offline cache)
-    const result = await createSavedView({
-      name: trimmed,
-      filters,
-      view_mode: viewMode,
-    });
+    // Roll the optimistic row back out of local state. Used for every failure path so
+    // a rejected/errored create never leaves an orphaned local-only row behind -- that
+    // orphan is what made the row undeletable later (its id is a client-generated
+    // string, not a Postgres UUID, so a server delete against it always fails).
+    const rollbackOptimistic = () => {
+      setSavedViews((current) => {
+        const rolledBack = current.filter((v) => v.id !== optimistic.id);
+        persistSavedViews(rolledBack);
+        return rolledBack;
+      });
+    };
+    let result: SaveViewResult;
+    try {
+      result = await createSavedView({
+        name: trimmed,
+        filters,
+        view_mode: viewMode,
+      });
+    } catch (err) {
+      console.error('[EvidenceLibrary] createSavedView unexpected error:', err);
+      rollbackOptimistic();
+      return {
+        ok: false,
+        message: `"${trimmed}" could not be saved: an unexpected error occurred. Try again.`,
+      };
+    }
     if (result.success && result.view) {
       const serverView = rowToSavedFilterView(result.view);
       setSavedViews((current) => {
@@ -3512,25 +3728,115 @@ export default function EvidenceLibrary({
         return reconciled;
       });
       setSavedViewsBackend('supabase');
-    } else if (result.error === 'unauthenticated') {
-      // Signed-out: local-only is correct; keep the optimistic row.
-      setSavedViewsBackend('local');
-    } else if (result.error === 'limit_reached') {
-      // Roll back the optimistic add.
-      setSavedViews((current) => {
-        const rolledBack = current.filter((v) => v.id !== optimistic.id);
-        persistSavedViews(rolledBack);
-        return rolledBack;
-      });
+      return { ok: true, message: null };
     }
-    // 'unknown' -> keep the local mirror; it persists offline and re-syncs next session.
+    if (result.error === 'unauthenticated') {
+      // Signed-out: local-only is correct; keep the optimistic row. The announcement
+      // must say so explicitly -- returning message:null here previously let the
+      // caller's generic 'Saved view "X" created.' fallback announce success without
+      // telling the user the view never left the browser (NEW-P3-1).
+      setSavedViewsBackend('local');
+      return {
+        ok: true,
+        message: `Saved view "${trimmed}" created in this browser only. Sign in to sync it to your account.`,
+      };
+    }
+    if (result.error === 'limit_reached') {
+      rollbackOptimistic();
+      return {
+        ok: false,
+        message: `"${trimmed}" was not saved: you have reached the saved-view limit. Delete an existing saved view, then try again.`,
+      };
+    }
+    if (result.error === 'invalid_name') {
+      rollbackOptimistic();
+      return {
+        ok: false,
+        message: `"${trimmed}" was not saved: that name is not valid. Try a different name.`,
+      };
+    }
+    // Any other outcome -- including the 'unknown' error code createSavedView returns
+    // for an RLS rejection, a Postgres error, or a network drop -- is a REAL failure.
+    // The previous version treated this branch as a soft success ("keep the local
+    // mirror; it persists offline and re-syncs next session"), which told the user
+    // their save worked when it had not. Default to failure and roll back.
+    rollbackOptimistic();
+    return {
+      ok: false,
+      message: `"${trimmed}" was not saved: could not sync to your account. Check your connection and try again.`,
+    };
   };
   const removeSavedView = async (id: string) => {
+    setSavedViewsActionError(null);
+    const removedView = savedViews.find((view) => view.id === id) ?? null;
     const next = savedViews.filter((view) => view.id !== id);
     setSavedViews(next);
     persistSavedViews(next);
-    // RLS-scoped; harmless no-op when signed out or when the row was never on the server.
-    void deleteSavedView(id);
+    // NEW-P2-2 fix: decide whether to attempt a server delete based on whether `id`
+    // LOOKS LIKE a Supabase-issued UUID (SUPABASE_SAVED_VIEW_ID_RE), NOT on the
+    // savedViewsBackend state variable. The backend flag is unreliable at exactly the
+    // moments that matter: (1) a signed-in read that ERRORS sets it to 'local' while
+    // savedViews may already be hydrated from the localStorage mirror holding REAL
+    // server UUID rows; (2) the same catch-all applies to the outer try/catch's
+    // 'local' fallback; (3) it starts as 'loading' while the local mirror is painted
+    // synchronously and the Supabase probe is still async, so a fast click can land
+    // before the probe resolves. Gating on the id's shape instead means a real server
+    // row is ALWAYS sent to deleteSavedView, regardless of what backend state happens
+    // to be set at click time. A client-generated optimistic id (never persisted to
+    // Supabase, e.g. a create that failed before this fix, or one still in flight)
+    // never matches this regex, so it correctly skips the server round-trip -- that
+    // is the only case with nothing to delete server-side.
+    if (!SUPABASE_SAVED_VIEW_ID_RE.test(id)) return;
+    const ok = await deleteSavedView(id);
+    if (!ok && removedView) {
+      // deleteSavedView (saved-views-sync.ts) returns false both for a genuine
+      // server/network failure AND for an expired session (no signed-in user) -- it
+      // cannot distinguish the two, and the expired-session case will never succeed
+      // on retry. Resurrecting the row here (the earlier "fix") created an infinite
+      // loop for that case: the row comes back, the user deletes it again, it comes
+      // back again, all while claiming a "connection" problem that may not be what
+      // actually happened. Do not resurrect -- the user's delete intent stands
+      // locally either way.
+      //
+      // P2-A / NEW-P2-3 fix: this branch is ALSO reached by a signed-out user whose
+      // local mirror still holds real Supabase UUID rows from before they signed
+      // out (fetchSavedViewsResult confirmed signedIn:false on mount, which is what
+      // set savedViewsBackend to 'local' in the first place -- deleteSavedView then
+      // fails because there is no user, not because of a network problem). For that
+      // case the old copy ("...will reappear the next time this page loads and
+      // re-syncs...") is affirmatively FALSE: signed out, the mount effect never
+      // overwrites the local mirror (see the fetch effect above), so the row will
+      // NOT reappear, and surfacing a red failure banner for what is really just a
+      // local-only delete misleads the user into thinking something went wrong.
+      // Branch on savedViewsBackend to pick the message, but NOTE what the flag
+      // actually means: savedViewsBackend === 'local' does NOT mean the probe
+      // confirmed signed-out. It is set to 'local' from four places, and three of
+      // them can happen while the user is SIGNED IN: (1) a signed-in read that
+      // errored (RLS / missing table / outage) at line ~3507; (2) a signed-in,
+      // successful, genuinely-empty read that still has local-only rows at line
+      // ~3544; (3) the outer catch-all at line ~3549. Only a subset of the paths
+      // into 'local' are an actual confirmed sign-out. So the copy below must not
+      // assert "you are signed out" -- it cannot be told apart from "signed in but
+      // the read/delete could not reach the account" using state already present,
+      // and inventing a new probe is out of scope here.
+      //   - 'local': the delete is real (removed from this browser); it could not
+      //     be confirmed removed from the account, and the cause may be either
+      //     signed-out or a sync/read failure while signed in. Say both are
+      //     possible and give an action that works either way.
+      //   - 'supabase' / 'loading': the delete was expected to reach the server and
+      //     didn't -- an expired session or outage genuinely is the likely cause, so
+      //     keep the original wording (it is accurate for these states: a signed-in
+      //     mount WILL re-sync from the server and can bring the row back).
+      if (savedViewsBackend === 'local') {
+        setSavedViewsActionError(
+          `"${removedView.name}" was removed from this browser, but it could not be confirmed removed from your account (you may be signed out, or your account sync could not be reached). If you are signed in, check your connection and delete it again; if you are signed out, sign in and delete it again to remove it there too.`,
+        );
+      } else {
+        setSavedViewsActionError(
+          `"${removedView.name}" was removed from this list, but the delete could not be confirmed on the server (this can happen if your session expired or you are offline). The view still exists in your account and will reappear the next time this page loads and re-syncs. If you are still signed in, check your connection and delete it again; if not, sign in again first.`,
+        );
+      }
+    }
   };
   const applyAuditFilter = (
     nextViewMode: EvidenceLibraryViewMode,
@@ -3695,10 +4001,45 @@ export default function EvidenceLibrary({
   );
 
   return (
+    <EvidenceLibraryAnnounceContext.Provider value={announce}>
     <section
       className={cn('flex h-full overflow-hidden', className)}
       data-testid="references-values-tab"
     >
+      {/* A5: single shared aria-live="polite" outcome channel for the whole Evidence
+          Library panel (saves, QA outcomes, triage updates, filter results). Visually
+          hidden via sr-only. Failure messages are rendered separately as role="alert"
+          at their point of failure (see A4 fixes above) so they are announced
+          assertively rather than only through this polite channel. */}
+      {/* ROUND-3 REGRESSION FIXED: keying the OUTER aria-live div on seq (previous
+          attempt) makes React destroy and recreate the live-region node itself on
+          every announcement. Per the ARIA live-region contract, a region must already
+          be present in the accessibility tree BEFORE its contents change -- content
+          that arrives in the SAME commit as the region's own insertion is not
+          announced. That was worse than the original bug: it guaranteed silence on
+          every announcement, not just repeats.
+          FIX (approach a, chosen for minimal surface area -- one region, no
+          alternation bookkeeping): the OUTER <div aria-live="polite"> below is
+          mounted unconditionally on first render and NEVER re-keyed, so it has a
+          stable identity for the lifetime of this component -- requirement (1) and
+          (2) of the self-check. The key={liveMessage.seq} moves to an INNER <span>
+          child instead. React's DOM prop diff still bails out on identical
+          `children` text for an in-place update, but a changed key on the span makes
+          React unmount the OLD span and mount a NEW span with the new text as a
+          child of the (unchanged, still-mounted) outer div -- see self-check answer
+          3 below for exactly what DOM node is added/removed. That child swap is a
+          real DOM mutation happening INSIDE an already-present live region, which is
+          exactly what the ARIA contract requires for an announcement to fire,
+          including for a byte-identical repeat message (the span is still a new
+          node each time, regardless of its text content). */}
+      <div
+        aria-live="polite"
+        role="status"
+        className="sr-only"
+        data-testid="evidence-library-live-region"
+      >
+        <span key={liveMessage.seq}>{liveMessage.text}</span>
+      </div>
       {/* LEFT PANEL -- catalog dashboard, audit panels, saved review filters */}
       <div
         className={cn(
@@ -3728,6 +4069,7 @@ export default function EvidenceLibrary({
                   type="button"
                   onClick={() => {
                     setSavedViewName('');
+                    setSaveViewError(null);
                     setSavingView(true);
                   }}
                   data-testid="evidence-library-save-view-button"
@@ -3740,33 +4082,82 @@ export default function EvidenceLibrary({
             </div>
 
             {savingView && (
-              <div className="mb-2 flex items-center gap-1">
-                <input
-                  value={savedViewName}
-                  onChange={(event) => setSavedViewName(event.target.value)}
-                  placeholder="Name this view"
-                  aria-label="Saved view name"
-                  data-testid="evidence-library-save-view-input"
-                  className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
-                />
+              <div className="mb-2">
+                <div className="flex items-center gap-1">
+                  <input
+                    value={savedViewName}
+                    onChange={(event) => setSavedViewName(event.target.value)}
+                    placeholder="Name this view"
+                    aria-label="Saved view name"
+                    data-testid="evidence-library-save-view-input"
+                    className="w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs text-slate-800 dark:border-slate-700 dark:bg-slate-950 dark:text-slate-100"
+                  />
+                  <button
+                    type="button"
+                    disabled={!savedViewName.trim() || savingViewSubmitting}
+                    onClick={async () => {
+                      const nameToSave = savedViewName;
+                      setSavingViewSubmitting(true);
+                      setSaveViewError(null);
+                      const outcome = await saveCurrentView(nameToSave);
+                      setSavingViewSubmitting(false);
+                      if (outcome.ok) {
+                        setSavingView(false);
+                        setSavedViewName('');
+                        announce(
+                          outcome.message ??
+                            `Saved view "${nameToSave.trim()}" created.`,
+                        );
+                      } else {
+                        // Keep the form open and the typed name in place so the
+                        // reviewer does not have to retype it after a failure.
+                        setSaveViewError(outcome.message);
+                      }
+                    }}
+                    data-testid="evidence-library-save-view-confirm"
+                    className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                  >
+                    {savingViewSubmitting ? 'Saving...' : 'Save'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSavingView(false);
+                      setSaveViewError(null);
+                    }}
+                    disabled={savingViewSubmitting}
+                    className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {saveViewError && (
+                  <div
+                    role="alert"
+                    className="mt-1 rounded-md border border-red-300 bg-red-50 p-1.5 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+                    data-testid="evidence-library-save-view-error"
+                  >
+                    {saveViewError}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {savedViewsActionError && (
+              <div
+                role="alert"
+                className="mb-2 flex items-start gap-2 rounded-md border border-red-300 bg-red-50 p-1.5 text-[11px] text-red-700 dark:border-red-800 dark:bg-red-950/30 dark:text-red-300"
+                data-testid="evidence-library-saved-views-error"
+              >
+                <span className="flex-1">{savedViewsActionError}</span>
                 <button
                   type="button"
-                  disabled={!savedViewName.trim()}
-                  onClick={() => {
-                    saveCurrentView(savedViewName);
-                    setSavingView(false);
-                  }}
-                  data-testid="evidence-library-save-view-confirm"
-                  className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                  onClick={() => setSavedViewsActionError(null)}
+                  aria-label="Dismiss saved views error"
+                  data-testid="evidence-library-saved-views-error-dismiss"
+                  className="shrink-0 rounded p-0.5 text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
                 >
-                  Save
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSavingView(false)}
-                  className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-                >
-                  Cancel
+                  <X className="h-3 w-3" />
                 </button>
               </div>
             )}
@@ -4548,5 +4939,6 @@ export default function EvidenceLibrary({
         )}
       </div>
     </section>
+    </EvidenceLibraryAnnounceContext.Provider>
   );
 }
