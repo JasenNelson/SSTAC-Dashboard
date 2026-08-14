@@ -44,6 +44,7 @@ export function MatrixMapSelectionStats({
   const [censoredMethod, setCensoredMethod] = useState<'KM' | 'ROS' | 'DL2'>('KM');
   const [bootstrapCache, setBootstrapCache] = useState<Record<string, BootstrapResults>>({});
   const [calculatingKeys, setCalculatingKeys] = useState<Record<string, boolean>>({});
+  const [failedKeys, setFailedKeys] = useState<Record<string, boolean>>({});
 
   const result = useMemo(() => {
     if (!ready || isLoading) return null;
@@ -68,7 +69,7 @@ export function MatrixMapSelectionStats({
         const sortedVals = [...bucket.acceptedValues].sort((a, b) => a - b);
         const cacheKey = bucket.bucketKey + '::' + sortedVals.join(',');
 
-        if (!bootstrapCache[cacheKey] && !calculatingKeys[cacheKey]) {
+        if (!bootstrapCache[cacheKey] && !calculatingKeys[cacheKey] && !failedKeys[cacheKey]) {
           missingBuckets.push({
             bucketKey: bucket.bucketKey,
             values: sortedVals,
@@ -97,9 +98,21 @@ export function MatrixMapSelectionStats({
             ...prev,
             [item.cacheKey]: res,
           }));
+          // Keep failed/succeeded mutually exclusive by construction: a value
+          // that lands successfully clears any stale failed flag for the same key.
+          setFailedKeys((prev) => {
+            if (!prev[item.cacheKey]) return prev;
+            const next = { ...prev };
+            delete next[item.cacheKey];
+            return next;
+          });
         })
         .catch((err) => {
           console.error('Bootstrap worker failed for ' + item.bucketKey, err);
+          setFailedKeys((prev) => ({
+            ...prev,
+            [item.cacheKey]: true,
+          }));
         })
         .finally(() => {
           setCalculatingKeys((prev) => {
@@ -109,7 +122,19 @@ export function MatrixMapSelectionStats({
           });
         });
     }
-  }, [result, selectedMethod, bootstrapCache, calculatingKeys]);
+  }, [result, selectedMethod, bootstrapCache, calculatingKeys, failedKeys]);
+
+  // Retry handler: clears a failed cache key so the effect above will pick it
+  // back up as a "missing bucket" on the next render and re-attempt the
+  // bootstrap calculation. Keyed (not global) so retrying one bucket does not
+  // disturb any other bucket's cached/failed/calculating state.
+  const retryBootstrap = (cacheKey: string) => {
+    setFailedKeys((prev) => {
+      const next = { ...prev };
+      delete next[cacheKey];
+      return next;
+    });
+  };
 
   // Not-ready / loading state.
   if (!ready || isLoading) {
@@ -209,6 +234,8 @@ export function MatrixMapSelectionStats({
             censoredMethod={censoredMethod}
             bootstrapCache={bootstrapCache}
             calculatingKeys={calculatingKeys}
+            failedKeys={failedKeys}
+            onRetryBootstrap={retryBootstrap}
           />
         ))}
       </div>
@@ -226,6 +253,8 @@ interface BucketCardProps {
   censoredMethod: string;
   bootstrapCache: Record<string, BootstrapResults>;
   calculatingKeys: Record<string, boolean>;
+  failedKeys: Record<string, boolean>;
+  onRetryBootstrap: (cacheKey: string) => void;
 }
 
 function BucketCard({
@@ -234,6 +263,8 @@ function BucketCard({
   censoredMethod,
   bootstrapCache,
   calculatingKeys,
+  failedKeys,
+  onRetryBootstrap,
 }: BucketCardProps) {
 
   const d = bucket.descriptive;
@@ -247,6 +278,7 @@ function BucketCard({
   const cacheKey = bucket.bucketKey + '::' + sortedVals.join(',');
   const isCalculating = calculatingKeys[cacheKey];
   const bData = bootstrapCache[cacheKey];
+  const isFailed = !!failedKeys[cacheKey];
 
   const isKm = censoredMethod === 'KM' && bucket.descriptive.nonDetects > 0;
   const isRos = censoredMethod === 'ROS' && bucket.descriptive.nonDetects > 0;
@@ -297,10 +329,12 @@ function BucketCard({
   let displayVal = 'N/A';
   if (bucket.acceptedValues.length < 2) {
     displayVal = 'N/A';
-  } else if (isBootstrap && (isCalculating || !bData)) {
-    displayVal = 'Calculating...';
   } else if (uclValue !== null) {
     displayVal = fmtNum(uclValue);
+  } else if (isBootstrap && isFailed) {
+    displayVal = 'Could not compute';
+  } else if (isBootstrap && (isCalculating || !bData)) {
+    displayVal = 'Calculating...';
   }
 
   let basisText = bucket.ucl.basis;
@@ -372,7 +406,7 @@ function BucketCard({
       </div>
 
       {/* UCL block */}
-      {(uclValue !== null || isCalculating || activeMethod === 'none') && (
+      {(uclValue !== null || isCalculating || (isBootstrap && isFailed) || activeMethod === 'none') && (
         <div data-testid="matrix-map-stats-ucl" className="space-y-1 pt-1 border-t border-slate-100 dark:border-slate-700/50">
           <div className="flex justify-between items-center mb-1">
             <p className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
@@ -389,12 +423,32 @@ function BucketCard({
             value={displayVal}
             testid="matrix-map-stats-ucl-value"
           />
-          <p
-            data-testid="matrix-map-stats-ucl-basis"
-            className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-1"
-          >
-            {basisText}
-          </p>
+          {isBootstrap && isFailed ? (
+            <div
+              data-testid="matrix-map-stats-ucl-failed"
+              role="alert"
+              className="flex items-center justify-between gap-2 mt-1"
+            >
+              <p className="text-xs text-red-600 dark:text-red-400 leading-relaxed">
+                Could not compute - retry
+              </p>
+              <button
+                type="button"
+                data-testid="matrix-map-stats-ucl-retry"
+                onClick={() => onRetryBootstrap(cacheKey)}
+                className="text-[10px] font-semibold text-blue-600 dark:text-blue-400 hover:underline"
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <p
+              data-testid="matrix-map-stats-ucl-basis"
+              className="text-xs text-slate-400 dark:text-slate-500 leading-relaxed mt-1"
+            >
+              {basisText}
+            </p>
+          )}
         </div>
       )}
 
