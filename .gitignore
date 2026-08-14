@@ -39,6 +39,13 @@ yarn-error.log*
 # Vercel
 .vercel
 
+# Impeccable design skill: vendored third-party tooling installed via npx.
+# Reinstallable at any time; not part of this codebase. The design reports it
+# produces under .impeccable/reports/ ARE tracked; its runtime cache is not.
+/.claude/skills/impeccable/
+/.agents/skills/impeccable/
+/.impeccable/hook.cache.json
+
 # TypeScript
 *.tsbuildinfo
 next-env.d.ts

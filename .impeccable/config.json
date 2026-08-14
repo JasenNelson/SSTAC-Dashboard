@@ -1,0 +1,28 @@
+{
+  "detector": {
+    "ignoreRules": [],
+    "ignoreFiles": [],
+    "ignoreValues": [
+      {
+        "rule": "gray-on-color",
+        "value": "text-slate-500 on bg-sky-50",
+        "createdAt": "2026-08-14T18:56:33.179Z"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-slate-400 on bg-sky-50",
+        "createdAt": "2026-08-14T18:56:33.219Z"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-slate-600 on bg-sky-50",
+        "createdAt": "2026-08-14T18:56:33.256Z"
+      },
+      {
+        "rule": "gray-on-color",
+        "value": "text-slate-200 on bg-sky-50",
+        "createdAt": "2026-08-14T18:56:33.293Z"
+      }
+    ]
+  }
+}
