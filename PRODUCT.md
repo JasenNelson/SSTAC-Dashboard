@@ -159,6 +159,51 @@ run. Two known constraints are real regardless:
   Matrix Options surface is currently unusable on a phone. Whether that stays true is an OPEN
   product decision for the owner, not something a UI pass should change unilaterally.
 
+## Exposure Scenarios
+
+Owner-stated 2026-08-14. This is load-bearing product truth and earlier design work got the
+terminology wrong (it invented a "receptor scenario" control that does not exist).
+
+An EXPOSURE SCENARIO describes how receptors are exposed to contaminants through specific pathways.
+It carries two kinds of content:
+
+- **Media-use considerations.** For example, residential land assumes all age groups, 24 hours a
+  day, 365 days a year, for an entire lifetime.
+- **Exposure assumptions**, which are wide-ranging.
+
+Scenarios must be available BOTH as presets aligned to the exposure scenarios described in
+Protocol 28, AND as customizable inputs. Presets differ along two axes:
+
+- receptor type: human versus ecological
+- media type: soil, sediment, water, air and vapour
+
+Protocol 28 (January 2021 revisions, signed):
+https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p28__jan_2021_revisions_final_signed.pdf
+
+### Why Protocol 28 is not sufficient on its own
+
+This is the crux of the project and must not be lost:
+
+1. The current CSR sediment standards **do not include human health protection at all**.
+2. Human-health sediment standards therefore have to draw on **soil** exposure scenarios as the
+   closest available basis.
+3. But the soil scenarios **do not include the food pathway**, which sediment work needs.
+
+So Protocol 28 does not contain everything required. The project is developing genuinely new
+sediment standards for a framework that does not currently exist. That is the whole purpose of the
+work.
+
+### Consequence for the interface
+
+Because scenario assumptions will come from three different kinds of source, every assumption needs
+visible PROVENANCE: taken directly from Protocol 28, adapted from a soil scenario, or novel to this
+project. A derivation whose assumptions came from several places with no way to tell which is not
+defensible to a reviewer. This is the same standard already applied to toxicity-value citations,
+applied one level up to the scenario itself.
+
+Preset values must be sourced from Protocol 28 and verified. They must never be invented, and a
+preset whose value could not be sourced must say so rather than showing a plausible number.
+
 ## Open Decisions
 
 Recorded, not invented:

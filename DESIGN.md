@@ -87,6 +87,28 @@ Stage 3 is mathematically independent of Stages 1 and 2 - the UTL depends only o
 samples. When an exposure input is invalid, Stage 3 still computes; only Stage 4's `max` and
 Stage 5's comparison wait. Three independent reviews of `BackgroundAdjustment.tsx` confirmed this.
 
+### Exposure scenario is a first-class control, and it carries provenance
+
+Correction 2026-08-14: earlier design work in this session invented a "receptor scenario" control
+that does not exist in the app. The real concept is the EXPOSURE SCENARIO. See PRODUCT.md for the
+full definition; the design consequences are:
+
+- It belongs in the left rail with the other options, as a first-class control rather than a buried
+  field. It determines what the exposure factors mean.
+- It needs BOTH preset selection (Protocol 28 scenarios, which differ by receptor type and by media
+  type) AND per-assumption customization. Choosing a preset must not lock the user out of adjusting
+  individual assumptions.
+- EVERY assumption must show where it came from: directly from Protocol 28, adapted from a soil
+  scenario, or novel to this project. Protocol 28 does not cover sediment human-health work - the
+  soil scenarios it does cover omit the food pathway - so a real derivation will mix all three
+  sources. Without visible provenance the result is not defensible to a reviewer.
+- A customized assumption must be visibly distinguishable from its preset default, and the preset it
+  departed from should remain identifiable.
+- Never invent a preset value. If a Protocol 28 value could not be sourced, the interface says so
+  instead of showing a plausible number.
+
+This is the same provenance discipline already applied to toxicity values, one level up.
+
 ## Layout: stages inside rails
 
 Chosen from three options, then refined through a second round.
