@@ -46,6 +46,7 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -68,6 +69,17 @@ export interface EcoFoodBSAFCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
+   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
+   * read of the already-memoized result; never changes what is computed or displayed here.
+   * Called with null when no valid preliminary standard is currently available, INCLUDING when
+   * the result is blocked (diagnostic-only per the design doc -- must not be quoted as a
+   * benchmark).
+   */
+  onPreliminaryStandardChange?: (
+    result: { value: number; unit: string; note?: string } | null,
+  ) => void;
 }
 
 // Eco-food TRVs are per-receptor (dose-based wildlife values). The receptor selector picks which
@@ -133,6 +145,7 @@ export default function EcoFoodBSAFCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
 }: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -383,6 +396,65 @@ export default function EcoFoodBSAFCalculator({
 
   const isResult = result !== null && !('error' in result);
   const ecoResult = isResult ? (result as EcoFoodBSAFResult) : null;
+
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3b). Purely derived
+  // from EXISTING inputs for display -- re-runs the SAME parseDecimalInput checks already used
+  // inside the `result` useMemo above, in the same order and with the same messages, so Stage 1
+  // can report which local field is at fault even when the combined `result` error actually
+  // came from the substance-level BSAF/TRV gate (a global-input concern, not one of this
+  // component's own Stage-1 fields).
+  const trvStageCheck = parseDecimalInput(trvInput, { allowNegative: false });
+  const bwStageCheck = parseDecimalInput(bwInput, { allowNegative: false });
+  const irStageCheck = parseDecimalInput(irInput, { allowNegative: false });
+  const bsafStageCheck = parseDecimalInput(bsafInput, { allowNegative: false });
+  const fsiteStageCheck = parseDecimalInput(fsiteInput, { allowNegative: false });
+  const stage1FieldError =
+    trvStageCheck.state !== 'valid' || trvStageCheck.value <= 0
+      ? 'TRV_eco must be a positive decimal number (mg/kg-bw/day).'
+      : bwStageCheck.state !== 'valid' || bwStageCheck.value <= 0
+        ? 'Body weight must be a positive decimal number (kg).'
+        : irStageCheck.state !== 'valid' || irStageCheck.value <= 0
+          ? 'Ingestion rate must be a positive decimal number (kg-wet/day).'
+          : bsafStageCheck.state !== 'valid' || bsafStageCheck.value <= 0
+            ? (substance?.bsaf_loc_freshwater === null
+                ? 'Enter a site-specific BSAF_loc to compute (this substance has no library BSAF).'
+                : 'BSAF_loc must be a positive decimal number.')
+            : fsiteStageCheck.state !== 'valid' || fsiteStageCheck.value <= 0
+              ? 'F_site must be a positive decimal number.'
+              : undefined;
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError
+    : 'Receptor, TRV, BSAF, and site-use inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : result && 'error' in result
+      ? 'blocked'
+      : isResult
+        ? 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure input above.'
+    : result && 'error' in result
+      ? result.error
+      : ecoResult
+        ? `Preliminary standard computed: ${ecoResult.sedS.toPrecision(4)} mg/kg dry.`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
+  // already-memoized result only -- no new computation. Withheld (null) when blocked === true:
+  // per the design doc, a blocked sedS is diagnostic-only and must not be quoted as a benchmark.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    if (ecoResult && !ecoResult.blocked) {
+      onPreliminaryStandardChange({ value: ecoResult.sedS, unit: 'mg/kg dry' });
+    } else {
+      onPreliminaryStandardChange(null);
+    }
+  }, [ecoResult, onPreliminaryStandardChange]);
+
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
       {
@@ -523,6 +595,15 @@ export default function EcoFoodBSAFCalculator({
       */}
 
       {/* 1. INPUTS section */}
+      <CalculatorStage
+        number={1}
+        totalStages={2}
+        title="Exposure Inputs"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={!stage1Blocked}
+        testId="eco-food-stage-1"
+      >
       <div
         className="space-y-4 mb-6"
         data-testid="ecofood-inputs-section"
@@ -843,7 +924,18 @@ export default function EcoFoodBSAFCalculator({
           </div>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={2}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure inputs' : undefined}
+        current={!stage1Blocked}
+        testId="eco-food-stage-2"
+      >
       {/* 2. ERROR box */}
       {result && 'error' in result && (
         <div
@@ -986,6 +1078,7 @@ export default function EcoFoodBSAFCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

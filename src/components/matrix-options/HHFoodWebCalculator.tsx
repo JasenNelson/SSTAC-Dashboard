@@ -29,6 +29,7 @@ import {
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
 
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
@@ -99,6 +100,16 @@ export interface HHFoodWebCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
+   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
+   * read of the already-memoized hhResult; never changes what is computed or displayed here.
+   * Called with null when no valid preliminary standard is currently available, INCLUDING when
+   * the result is blocked (diagnostic-only -- must not be quoted as a benchmark).
+   */
+  onPreliminaryStandardChange?: (
+    result: { value: number; unit: string; driver: string } | null,
+  ) => void;
 }
 
 export default function HHFoodWebCalculator({
@@ -106,6 +117,7 @@ export default function HHFoodWebCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
 }: HHFoodWebCalculatorProps) {
   const substance = findSubstance(substanceKey);
   // The frame that PROVIDES the receptor scenarios + their seeds. The receptor (fisher
@@ -344,6 +356,62 @@ export default function HHFoodWebCalculator({
   ]);
 
   const hhResult = 'error' in result ? null : result;
+
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3b). Purely derived
+  // from EXISTING inputs for display -- re-runs the SAME positiveInput validator already used
+  // inside the `result` useMemo above (on the required, always-editable exposure-factor fields:
+  // body weight, food ingestion, target risk, hazard quotient, BSAF, oral bioavailability) so
+  // Stage 1 can report which field is at fault even when the combined `result` error actually
+  // came from the OPTIONAL toxicity fields (RfD/oral slope factor), which stay out of Stage 1's
+  // own gate the same way HHDirectContactCalculator keeps toxicity errors out of its Stage 1.
+  const stage1FieldError = [
+    positiveInput(bwInput, 'Body weight'),
+    positiveInput(foodIrInput, 'Food ingestion rate'),
+    positiveInput(targetRiskInput, 'Target risk'),
+    positiveInput(hazardQuotientInput, 'Hazard quotient'),
+    positiveInput(bsafInput, 'BSAF_loc'),
+    positiveInput(baOralInput, 'Oral bioavailability'),
+  ].find(
+    (value): value is { error: string } =>
+      typeof value === 'object' && value !== null && 'error' in value,
+  );
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError.error
+    : 'All exposure-factor inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : 'error' in result
+      ? 'blocked'
+      : hhResult
+        ? 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure-factor input above.'
+    : 'error' in result
+      ? result.error
+      : hhResult
+        ? `Preliminary standard computed: ${hhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${hhResult.driver}).`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads
+  // hhResult only -- no new computation. Withheld (null) when blocked === true: a blocked sedS
+  // is diagnostic-only and must not be quoted as a benchmark.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    if (hhResult && !hhResult.blocked) {
+      onPreliminaryStandardChange({
+        value: hhResult.sedS,
+        unit: 'mg/kg dry',
+        driver: hhResult.driver,
+      });
+    } else {
+      onPreliminaryStandardChange(null);
+    }
+  }, [hhResult, onPreliminaryStandardChange]);
+
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
       {
@@ -492,6 +560,15 @@ export default function HHFoodWebCalculator({
         )}
       </header>
 
+      <CalculatorStage
+        number={1}
+        totalStages={2}
+        title="Exposure Factors"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={!stage1Blocked}
+        testId="hh-food-stage-1"
+      >
       <FrameImpactCard
         frameId={jurisdiction}
         pathway="human-health-food"
@@ -658,7 +735,18 @@ export default function HHFoodWebCalculator({
           </div>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={2}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure factors' : undefined}
+        current={!stage1Blocked}
+        testId="hh-food-stage-2"
+      >
       {'error' in result && (
         <div
           className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
@@ -769,6 +857,7 @@ export default function HHFoodWebCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

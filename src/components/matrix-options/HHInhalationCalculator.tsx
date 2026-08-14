@@ -39,6 +39,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import CalculatorStage, { type StageState } from './CalculatorStage';
 
 // Unsourced (screening-assumption) exposure-factor baselines. EF/ED/AT_cancer default
 // to the EPA/540/R-96/018 (1996 SSG) residential Table 1 defaults reproduced in the
@@ -88,6 +89,17 @@ export interface HHInhalationCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
+   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
+   * read of the already-memoized inhResult; never changes what is computed or displayed here.
+   * Called with null when no valid preliminary standard is currently available, INCLUDING when
+   * the pathway is blocked (fail-closed by design -- neither endpoint could be computed) or
+   * sedS itself is null.
+   */
+  onPreliminaryStandardChange?: (
+    result: { value: number; unit: string; driver: string } | null,
+  ) => void;
 }
 
 export default function HHInhalationCalculator({
@@ -95,6 +107,7 @@ export default function HHInhalationCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
 }: HHInhalationCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -175,6 +188,63 @@ export default function HHInhalationCalculator({
   ]);
 
   const inhResult = 'error' in result ? null : result;
+
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3b). Purely derived
+  // from EXISTING inputs for display -- re-runs the SAME positiveInput validator already used
+  // inside the `result` useMemo above, on the required, always-editable exposure-factor fields
+  // (exposure frequency/duration, cancer averaging time, target risk, hazard quotient). VF, PEF,
+  // RfC, and IUR stay OUT of Stage 1's own gate: they are optionalPositiveInput (user-supplied,
+  // fail-closed by owner ruling -- see module header), so a blank value is not a Stage 1 field
+  // error, and their combined sufficiency (at least one transport factor + one toxicity value)
+  // is what Stage 2's blocked/computed distinction already reports.
+  const stage1FieldError = [
+    positiveInput(efInput, 'Exposure frequency'),
+    positiveInput(edInput, 'Exposure duration'),
+    positiveInput(atCancerInput, 'Cancer averaging time'),
+    positiveInput(targetRiskInput, 'Target risk'),
+    positiveInput(hazardQuotientInput, 'Hazard quotient'),
+  ].find(
+    (value): value is { error: string } =>
+      typeof value === 'object' && value !== null && 'error' in value,
+  );
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError.error
+    : 'Exposure frequency, duration, and risk-threshold inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : 'error' in result
+      ? 'blocked'
+      : inhResult
+        ? 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure-factor input above.'
+    : 'error' in result
+      ? result.error
+      : inhResult && inhResult.blocked
+        ? 'Inhalation pathway blocked: no transport factor (VF/PEF) and toxicity value (RfC/IUR) pairing is available yet.'
+        : inhResult && inhResult.sedS !== null
+          ? `Preliminary standard computed: ${inhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${inhResult.driver}).`
+          : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads
+  // inhResult only -- no new computation. Withheld (null) when the pathway is blocked or sedS is
+  // null: neither is a value that may be quoted as a benchmark.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    if (inhResult && !inhResult.blocked && inhResult.sedS !== null) {
+      onPreliminaryStandardChange({
+        value: inhResult.sedS,
+        unit: 'mg/kg dry',
+        driver: inhResult.driver,
+      });
+    } else {
+      onPreliminaryStandardChange(null);
+    }
+  }, [inhResult, onPreliminaryStandardChange]);
 
   // Exact-id provenance attribution (codex ship-gate P2, 2026-07-17): only attach the
   // catalog parameter_value_id while the input still equals the as-wired seed for a
@@ -347,6 +417,15 @@ export default function HHInhalationCalculator({
         )}
       </header>
 
+      <CalculatorStage
+        number={1}
+        totalStages={2}
+        title="Exposure Factors"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={!stage1Blocked}
+        testId="hh-inhalation-stage-1"
+      >
       <div
         className="mb-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
         data-testid="hh-inhalation-vfpef-notice"
@@ -458,7 +537,18 @@ export default function HHInhalationCalculator({
           </label>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={2}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure factors' : undefined}
+        current={!stage1Blocked}
+        testId="hh-inhalation-stage-2"
+      >
       {'error' in result && (
         <div
           className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
@@ -585,6 +675,7 @@ export default function HHInhalationCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

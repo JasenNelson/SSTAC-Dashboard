@@ -408,6 +408,38 @@ export default function MatrixDashboard({
     unit: string;
     driver: string;
   } | null>(null);
+  // Step 3b: the same wiring extended to the four sibling calculators wrapped in stages.
+  // eco-direct and eco-food have no MIN-selected "driver" concept (single-pathway result), so
+  // their reported shape carries an optional `note` instead of a required `driver`.
+  const [ecoDirectPreliminary, setEcoDirectPreliminary] = useState<{
+    value: number;
+    unit: string;
+    note?: string;
+  } | null>(null);
+  const [ecoFoodPreliminary, setEcoFoodPreliminary] = useState<{
+    value: number;
+    unit: string;
+    note?: string;
+  } | null>(null);
+  const [hhFoodPreliminary, setHhFoodPreliminary] = useState<{
+    value: number;
+    unit: string;
+    driver: string;
+  } | null>(null);
+  // Human Health Inhalation is orthogonal to the activeCategory CategorySelector (see the
+  // "Human Health Inhalation" stacking comment near its render call below) -- it renders
+  // unconditionally regardless of which of the four eco/hh categories is active. The summary
+  // bar's single "preliminary standard" slot is scoped to calculatorCategoryLabel (the ACTIVE
+  // category), so merging inhalation's value into that slot would misrepresent it as belonging
+  // to whichever category happens to be selected. Its preliminary value is still captured here
+  // (same reporting contract as the other four) for a future inhalation-specific display; it is
+  // deliberately NOT read by preliminarySlot below. Only the setter is used today (no display
+  // reads the captured value yet), so the value half is intentionally left undestructured.
+  const [, setHhInhalationPreliminary] = useState<{
+    value: number;
+    unit: string;
+    driver: string;
+  } | null>(null);
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -677,10 +709,10 @@ export default function MatrixDashboard({
   const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
   // Summary bar slots (step 3 of the redesign, DESIGN.md "sticky summary
   // bar ... carries the preliminary, the UTL, and the adjusted standard").
-  // Only hh-direct is wired to a real stage sequence today; every other
-  // pathway (and the UTL / adjusted slots for every pathway) correctly
-  // reads PENDING until the corresponding wiring step lands -- PENDING is
-  // the honest "not entered yet, no error" state here, not an error.
+  // Step 3b: all four activeCategory pathways (hh-direct, eco-direct, eco-food, hh-food) are
+  // now wired to a real stage sequence. The UTL / adjusted slots for every pathway correctly
+  // read PENDING until the corresponding wiring step lands -- PENDING is the honest "not
+  // entered yet, no error" state here, not an error.
   const preliminarySlot: SummaryBarSlot =
     activeCategory === 'hh-direct'
       ? {
@@ -691,13 +723,40 @@ export default function MatrixDashboard({
           note: hhDirectPreliminary ? `Driver: ${hhDirectPreliminary.driver}.` : undefined,
           formatValue: (value) => value.toPrecision(4),
         }
-      : {
-          label: 'Preliminary standard',
-          value: null,
-          unit: 'mg/kg dry',
-          state: 'pending',
-          note: 'Not yet wired into the staged summary for this pathway.',
-        };
+      : activeCategory === 'eco-direct'
+        ? {
+            label: 'Preliminary standard',
+            value: ecoDirectPreliminary?.value ?? null,
+            unit: ecoDirectPreliminary?.unit ?? 'mg/kg dry',
+            state: ecoDirectPreliminary ? 'computed' : 'pending',
+            note: ecoDirectPreliminary?.note,
+            formatValue: (value) => value.toPrecision(4),
+          }
+        : activeCategory === 'eco-food'
+          ? {
+              label: 'Preliminary standard',
+              value: ecoFoodPreliminary?.value ?? null,
+              unit: ecoFoodPreliminary?.unit ?? 'mg/kg dry',
+              state: ecoFoodPreliminary ? 'computed' : 'pending',
+              note: ecoFoodPreliminary?.note,
+              formatValue: (value) => value.toPrecision(4),
+            }
+          : activeCategory === 'hh-food'
+            ? {
+                label: 'Preliminary standard',
+                value: hhFoodPreliminary?.value ?? null,
+                unit: hhFoodPreliminary?.unit ?? 'mg/kg dry',
+                state: hhFoodPreliminary ? 'computed' : 'pending',
+                note: hhFoodPreliminary ? `Driver: ${hhFoodPreliminary.driver}.` : undefined,
+                formatValue: (value) => value.toPrecision(4),
+              }
+              : {
+                  label: 'Preliminary standard',
+                  value: null,
+                  unit: 'mg/kg dry',
+                  state: 'pending',
+                  note: 'Not yet wired into the staged summary for this pathway.',
+                };
   const utlSlot: SummaryBarSlot = {
     label: 'Background UTL 95/95',
     value: null,
@@ -1114,6 +1173,7 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setEcoDirectPreliminary}
               />
             )}
             {activeCategory === 'eco-food' && (
@@ -1121,6 +1181,7 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setEcoFoodPreliminary}
               />
             )}
             {activeCategory === 'hh-direct' && (
@@ -1136,6 +1197,7 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setHhFoodPreliminary}
               />
             )}
             {/*
@@ -1170,6 +1232,7 @@ export default function MatrixDashboard({
               substanceKey={substanceKey}
               jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+              onPreliminaryStandardChange={setHhInhalationPreliminary}
             />
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
