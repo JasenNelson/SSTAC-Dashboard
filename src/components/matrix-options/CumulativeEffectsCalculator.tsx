@@ -205,6 +205,8 @@ function CumulativeResultView({
         <div
           className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-4 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-4"
           data-testid={`${testIdPrefix}-equivalent`}
+          role="status"
+          aria-live="polite"
         >
           <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
             Equivalent concentration
