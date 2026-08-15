@@ -158,7 +158,11 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   refresh, publish, and unpublish are each still separately owner-gated, and the
   schema apply grants none of them. Do not describe publication as authorized.
 - Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
-- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
+- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_15_UI_QA_AUDIT.md`
+  (UI/UX audit lane; PR #778 merged, PR #779 open awaiting owner approval; carries the
+  gate-hygiene traps that made several green runs meaningless -- read section 5 before
+  quoting any e2e pass count as evidence). Immediate predecessor:
+  `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
   (`continuity.current_handoff`). Archived predecessor, byte-identical historical import:
   `docs/archive/2026-08-09_wiki-recovery/` (see that folder's `README.md` for source path, hash,
   and replacement pointer).
