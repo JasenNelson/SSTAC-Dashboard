@@ -4,7 +4,7 @@ This workspace supports the 2026 Matrix Sediment Standards Derivation Options An
 
 Use it to test options, compare pathways, and record review feedback. Calculator outputs are screening-level results, not final sediment standards.
 
----
+<!-- SECTION_BOUNDARY -->
 
 ## 1. How to Use This Workspace
 
@@ -17,7 +17,7 @@ Use the top tabs to move between the main review surfaces:
 
 A typical 2026 review flow is: read the Guide, check the conceptual model, compare regulatory approaches, review the draft Matrix Options Paper and record feedback in TWG Review.
 
----
+<!-- SECTION_BOUNDARY -->
 
 ## 2. Project Roadmap
 
@@ -27,13 +27,11 @@ The sediment standards modernization work is moving through three broad phases:
     *   Included a Scientific Literature Search and Jurisdictional Scan.
     *   Collaboratively developed the scientific framework for developing modern sediment standards.
     *   Multi-faceted engagement informed the strategic phased approach currently underway.
-*   **Phase 2 (2026): Foundational Research**
+*   **Phase 2 (2026-2027): Foundational Research and Framework Development**
     *   Supports the Matrix Sediment Standards Derivation Options Analysis.
     *   Supports development of a scientific model for bioavailability adjustment, such as the Bayesian Network Relative Risk Model.
     *   Uses regulatory review, data analysis, calculators, map review, and Technical Working Group feedback to test practical derivation options.
-    *   Dashboard tabs serving Phase 2: The Guide, Conceptual Model, Methodology by pathway, TWG Review.
-*   **Phase 3 (2027): Framework Development and Prioritized Standards**
-    *   May include development of Matrix Sediment Standards Derivation Frameworks.
-    *   May end with new sediment standards for prioritized substances.
+    *   All dashboard tabs (including Calculator, Interactive Map, and SSD Workbench) currently serve the Phase 2 options analysis.
+*   **Phase 3 (2028+): Staged Development of Sediment Standards**
+    *   Utilize framework to derive new numerical standards for substances on a prioritized basis.
     *   Continues research and database development needed to support defensible standards over time.
-    *   Dashboard tabs serving Phase 3: Interactive Map, Calculator, SSD Workbench, References & Values.

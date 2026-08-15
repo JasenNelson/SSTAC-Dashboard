@@ -106,15 +106,49 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
     expect(GUIDE_MARKDOWN).not.toMatch(/What Is Working Now/i);
   });
 
-  it('renders the v1 guide workflow copy in the Guide tab', () => {
+  it('splits the guide into its three section cards in the Guide tab', () => {
+    // BEHAVIOUR CHANGE, deliberate. `MatrixDashboard.tsx` has always split the guide on
+    // `<!-- SECTION_BOUNDARY -->` into an intro card + two section cards, but the committed
+    // The_Guide.md never contained a single boundary marker -- it separated its sections
+    // with plain `---` horizontal rules. The split therefore always found exactly one part,
+    // the two conditional cards never rendered, and the whole guide painted as ONE card.
+    //
+    // The previous assertion here (`toHaveLength(1)`) pinned that broken state: it did not
+    // describe an intended single-card design, it recorded the symptom of content that did
+    // not match the renderer. This commit adds the boundary markers to the content, which
+    // activates the three-card layout the component was written for.
+    //
+    // Two-sided falsification:
+    //  - Positive: three cards, each carrying its OWN section, asserted per-index so a
+    //    regression that merged them back into one (or mis-ordered them) fails by name
+    //    rather than merely changing a count.
+    //  - Negative: the intro card must NOT still contain the later sections' headings.
+    //    That half is what actually distinguishes a real split from a single card that
+    //    happens to be rendered three times, which a bare length check cannot tell apart.
     render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
 
     const renderers = screen.getAllByTestId('math-renderer-mock');
-    expect(renderers).toHaveLength(1);
+    expect(renderers).toHaveLength(3);
+
     expect(renderers[0]).toHaveTextContent(/The Guide: Matrix Options Workspace/);
-    expect(renderers[0]).toHaveTextContent(/How to Use This Workspace/);
-    expect(renderers[0]).toHaveTextContent(/Project Roadmap/);
+    expect(renderers[1]).toHaveTextContent(/How to Use This Workspace/);
+    expect(renderers[2]).toHaveTextContent(/Project Roadmap/);
+
+    // Negative half: the sections are genuinely separated, not duplicated into one card.
+    expect(renderers[0]).not.toHaveTextContent(/How to Use This Workspace/);
+    expect(renderers[0]).not.toHaveTextContent(/Project Roadmap/);
+    expect(renderers[1]).not.toHaveTextContent(/Project Roadmap/);
+
     expect(screen.queryByText(/Coming Soon/i)).not.toBeInTheDocument();
+  });
+
+  it('keeps the boundary markers the three-card guide layout depends on', () => {
+    // Guards the content/renderer contract directly. If a future content edit strips the
+    // markers again (e.g. reformatting back to `---` rules), the guide silently collapses
+    // to a single card -- no error, no failing render, just a quietly worse page. That is
+    // the "correct content hidden rather than corrupted" class, so it gets its own guard
+    // at the content level rather than relying on the render test alone.
+    expect(GUIDE_MARKDOWN.split('<!-- SECTION_BOUNDARY -->')).toHaveLength(3);
   });
 });
 
