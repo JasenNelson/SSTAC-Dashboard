@@ -23,15 +23,30 @@
 #   npx playwright test --project=chromium-auth
 #
 # SAFETY
-# Only a node process is killed. A port held by anything else is reported and
-# the script exits non-zero, because that is someone else's work and the owner
-# runs parallel sessions -- see the L0 rule that a process census is never a
-# gate and that foreign processes are never killed by name.
+# Two conditions must BOTH hold before anything is killed:
+#   1. the process is node, and
+#   2. its command line references THIS worktree root.
+# Condition 2 is the actual ownership proof. An earlier version had only
+# condition 1 while its comment claimed parallel sessions were protected -- they
+# were not: a sibling worktree's dev server is also "a node process". The owner
+# runs parallel sessions, so the guard is scoped to the protected RESOURCE (this
+# runtime root) rather than to an image name, per the L0 rule that a process
+# census is never a gate and foreign processes are never killed by name.
+# Anything indeterminate (WMI failure, empty command line) is reported, never killed.
 
 param(
-    [int]$Port = 3100,
+    [int]$Port = 0,
     [switch]$Kill
 )
+
+# Default MUST track playwright.config.ts, which reads
+# `process.env.PLAYWRIGHT_TEST_PORT || 3100`. Hardcoding 3100 here meant that
+# with the env var set, this script cheerfully reported "port 3100 is free"
+# while the port actually under test was held -- a preflight that passes for the
+# wrong port is worse than no preflight, because it reads as evidence.
+if ($Port -eq 0) {
+    $Port = if ($env:PLAYWRIGHT_TEST_PORT) { [int]$env:PLAYWRIGHT_TEST_PORT } else { 3100 }
+}
 
 $conn = Get-NetTCPConnection -LocalPort $Port -State Listen -ErrorAction SilentlyContinue
 if (-not $conn) {
@@ -56,6 +71,36 @@ if ($name -ne "node") {
     exit 1
 }
 
+# Being a node process is NOT ownership. The owner runs parallel sessions in
+# sibling worktrees, and any of them may hold a dev server on this port; killing
+# one because it is "a node" would terminate another session's in-flight work.
+# The protected resource is THIS worktree, so require the process command line to
+# reference THIS repo root before terminating it. An indeterminate lookup (WMI
+# error, access denied, empty command line) fails SAFE: reported, never killed.
+$repoRoot = (Resolve-Path (Join-Path $PSScriptRoot "..\..")).Path
+$cmdLine = $null
+try {
+    $cmdLine = (Get-CimInstance Win32_Process -Filter "ProcessId = $procId" -ErrorAction Stop).CommandLine
+} catch {
+    Write-Output "REFUSING to kill PID ${procId}: could not read its command line ($($_.Exception.Message))."
+    Write-Output "Cannot establish ownership. Free port $Port manually."
+    exit 1
+}
+
+if ([string]::IsNullOrWhiteSpace($cmdLine)) {
+    Write-Output "REFUSING to kill PID ${procId}: empty command line, ownership indeterminate."
+    exit 1
+}
+
+if ($cmdLine -notlike "*$repoRoot*") {
+    Write-Output "REFUSING to kill PID ${procId}: it does not reference this worktree."
+    Write-Output "  this worktree: $repoRoot"
+    Write-Output "  process cmd:   $cmdLine"
+    Write-Output "This is most likely a parallel session. Free port $Port manually, or stop that session yourself."
+    exit 1
+}
+
+Write-Output "Ownership established: PID $procId references $repoRoot"
 Stop-Process -Id $procId -Force
 Start-Sleep -Seconds 2
 

@@ -7,12 +7,31 @@ import { expect, type Locator, type Page, test } from '@playwright/test';
 // ssd-workbench.spec.ts carried their own unpatched copies -- the same defect
 // under a different filename. Do not fork this file per-spec again; import it.
 
+// The one project that is SUPPOSED to be authenticated. Everywhere else, landing
+// on /login is an expected environment condition; here it is a failure.
+const AUTHENTICATED_PROJECT = 'chromium-auth';
+
 // /matrix-options is auth-gated (middleware matcher) as of 2026-06-15. CI has no
 // shared auth storageState, so auth-dependent assertions are explicitly guarded and
 // skipped if we land on /login.
+//
+// EXCEPT under the authenticated project. Skipping unconditionally here silently
+// deleted the T40 member-visibility guarantee the moment member credentials
+// expired: the suite would report all-green while no longer checking the thing
+// the test exists to check. A skip is the correct response to "this environment
+// has no credentials"; it is the wrong response to "the credentials we were
+// given did not work". Only the second case can occur under chromium-auth.
 export async function gotoMatrixOptionsOrSkip(page: Page): Promise<void> {
   await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
   if (page.url().includes('/login')) {
+    if (test.info().project.name === AUTHENTICATED_PROJECT) {
+      throw new Error(
+        `Bounced to /login under the "${AUTHENTICATED_PROJECT}" project, which runs with a ` +
+          'storageState that is supposed to be authenticated. The stored session has most ' +
+          'likely expired -- regenerate it. Failing rather than skipping, so this cannot ' +
+          'silently remove authenticated coverage from a green run.',
+      );
+    }
     test.skip(true, 'Not authenticated; /matrix-options is gated. Skipping authenticated assertions.');
   }
   // Deterministic readiness (replaces a blind fixed-timeout settle): the authenticated

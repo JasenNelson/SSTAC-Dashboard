@@ -225,10 +225,16 @@ export default function BackgroundAdjustment({
   // BC CSR comparison is against `max(Tier 1 generic, UTL)`, derived elsewhere.
   // UNCHANGED per the Stage 5 caution above -- still Cs vs UTL, not Cs vs the
   // new Stage 4 adjusted standard.
+  // Guards on parsed.rejected for the same reason stage3State does: utlResult is
+  // computed from the ACCEPTED SUBSET, so comparing against it while tokens were
+  // rejected would report a site as at-or-below a background derived from an
+  // incomplete reference set. Uses parsed.rejected directly rather than
+  // stage3Blocked only because that constant is declared below this memo.
   const csAtOrBelowBackground: boolean | null = useMemo(() => {
+    if (parsed.rejected.length > 0) return null;
     if (!utlResult || !csIsValid) return null;
     return csParsed <= utlResult.utl;
-  }, [utlResult, csIsValid, csParsed]);
+  }, [parsed.rejected, utlResult, csIsValid, csParsed]);
 
   const scopeLabel = scope === 'provincial' ? 'Provincial' : 'Regional';
   const scopeDescription =
@@ -240,16 +246,29 @@ export default function BackgroundAdjustment({
   // Stage 3 -- Background Reference. Independent of Stages 1-2: computes
   // from the reference samples alone, so it is never WAITING.
   // ---------------------------------------------------------------------
+  // The rejected-token check MUST come before the utlResult check. Testing the
+  // value first made 'blocked' unreachable whenever >= 2 valid samples arrived
+  // alongside garbage: utl9595() happily computed from the ACCEPTED SUBSET, the
+  // stage reported COMPUTED, and that partial-set UTL flowed into Stage 4's
+  // max() as the adjusted standard -- a regulatory value derived from an
+  // incomplete reference set while the interface called it computed.
+  // The rejection was not invisible: the n-count line under the textarea has
+  // always listed rejected tokens (see "rejected non-numeric tokens" below).
+  // But a small grey note under an input does not outweigh a COMPUTED chip and
+  // a confidently-rendered adjusted standard; the stage state is the signal a
+  // user actually reads. Surfacing it weakly is not the same as failing loudly.
+  // Every other stage in this feature already tests its blocking flag first
+  // (stage1State, stage2State, inhalationState); this was the lone inversion.
   const stage3Blocked = parsed.rejected.length > 0;
-  const stage3State: StageState = utlResult
-    ? 'computed'
-    : stage3Blocked
-      ? 'blocked'
+  const stage3State: StageState = stage3Blocked
+    ? 'blocked'
+    : utlResult
+      ? 'computed'
       : 'pending';
-  const stage3Detail = utlResult
-    ? `UTL 95/95 computed from n = ${utlResult.n} ${scopeLabel.toLowerCase()} reference samples.`
-    : stage3Blocked
-      ? `Rejected non-numeric tokens: ${parsed.rejected.join(', ')}. Fix the reference samples below.`
+  const stage3Detail = stage3Blocked
+    ? `Rejected non-numeric tokens: ${parsed.rejected.join(', ')}. Fix the reference samples below.`
+    : utlResult
+      ? `UTL 95/95 computed from n = ${utlResult.n} ${scopeLabel.toLowerCase()} reference samples.`
       : 'Provide at least 2 numeric reference samples to compute the UTL.';
 
   // ---------------------------------------------------------------------

@@ -118,6 +118,14 @@ export interface FormatMagnitudeOptions {
  *   displayed values of 0.1 and up): four decimal places always carries
  *   at least `significantFigures` significant digits here, so nothing is
  *   lost relative to the historical .toFixed(4) behaviour.
+ *
+ *   PRECISE INVARIANT -- state it with BOTH bounds. Output is byte-identical
+ *   to the legacy .toFixed(4) on the HALF-OPEN interval [0.1, 1e9) only, NOT
+ *   "at and above 0.1". At and above 1e9 the exponential branch below
+ *   deliberately diverges (1e9 renders "1.000e+9", where legacy gave
+ *   "1000000000.0000"). The unbounded-interval phrasing is wrong and was
+ *   asserted repeatedly during review before an external reviewer caught it;
+ *   the divergence is covered by tests in __tests__/formatMagnitude.test.ts.
  * - |value| below that threshold (and below UPPER_EXPONENTIAL_THRESHOLD,
  *   see next bullet) -> value.toPrecision(significantFigures). This is the
  *   regime where .toFixed(4) used to either lose significant digits or

@@ -159,8 +159,13 @@ describe('BackgroundAdjustment', () => {
       target: { value: '4.8, -0.5, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4' },
     });
 
-    expect(screen.getByText(/rejected non-numeric tokens.*-0\.5/i))
-      .toBeInTheDocument();
+    // getAllByText, not getByText: the token list now appears TWICE -- in the
+    // n-count line under the textarea (which always showed it) and in the
+    // Stage 3 detail (which shows it now that rejected tokens block the stage).
+    // Two matches is the fix working, so assert on both plus the stage state.
+    expect(screen.getAllByText(/rejected non-numeric tokens.*-0\.5/i).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
   });
 
   it('rejects hex-like tokens (e.g., 0x10) rather than silently parsing as 16', () => {
@@ -171,8 +176,10 @@ describe('BackgroundAdjustment', () => {
       target: { value: '4.8, 0x10, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4' },
     });
 
-    expect(screen.getByText(/rejected non-numeric tokens.*0x10/i))
-      .toBeInTheDocument();
+    // Two matches expected -- see the note on the negative-sample test above.
+    expect(screen.getAllByText(/rejected non-numeric tokens.*0x10/i).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
   });
 
   it('shows the K-factor clamp warning for n < 5', () => {
@@ -245,6 +252,54 @@ describe('BackgroundAdjustment', () => {
       expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
         /background UTL 95\/95 from Stage 3/i,
       );
+    });
+
+    // Regression: rejected tokens must BLOCK Stage 3 even when enough valid
+    // samples remain to compute a UTL from the accepted subset.
+    //
+    // The pre-fix ordering tested utlResult BEFORE the rejected-token flag, so
+    // 'blocked' was unreachable whenever >= 2 valid samples arrived alongside
+    // garbage: Stage 3 reported COMPUTED from a PARTIAL reference set and that
+    // UTL became the adjusted standard. The existing rejection tests above did
+    // not catch it because they assert only the n-count line under the
+    // textarea, which renders independently of the stage state.
+    //
+    // This test therefore asserts the STAGE STATE and the ABSENCE of a computed
+    // adjusted standard, not the token message -- assert the thing that was
+    // wrong, not the thing that already worked.
+    it('BLOCKS Stage 3 (and holds Stage 4 at WAITING) when tokens are rejected but >= 2 valid samples remain', () => {
+      const onAdjustedStandardChange = vi.fn();
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 1.5, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      // Nine parseable samples plus one bad token: utl9595() would happily
+      // compute from the nine.
+      fireEvent.change(samplesInput, {
+        target: { value: '4.8, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4, NOT_A_NUMBER' },
+      });
+
+      expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      // No adjusted standard may be rendered from a partial reference set.
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toBeInTheDocument();
+      // ...and the CURRENT report upward must not be computed. Deliberately the
+      // last call, not all calls: the initial mount legitimately computes from
+      // the all-valid default samples, so a filter across the whole call history
+      // would fail on correct behaviour. What must hold is that the state after
+      // the bad token arrives is no longer computed.
+      const lastReport =
+        onAdjustedStandardChange.mock.calls[
+          onAdjustedStandardChange.mock.calls.length - 1
+        ]?.[0];
+      expect(lastReport).toBeDefined();
+      expect(lastReport.state).not.toBe('computed');
+      expect(lastReport.value).toBeNull();
     });
 
     it('governs on the BACKGROUND UTL when it exceeds the preliminary standard, and reports it to onAdjustedStandardChange', () => {
