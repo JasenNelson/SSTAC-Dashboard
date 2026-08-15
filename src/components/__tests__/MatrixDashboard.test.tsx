@@ -1692,6 +1692,229 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     });
   });
 
+  // Owner 2026-08-14: "reference only shown when working in stage 3" -- the
+  // right rail (data-testid calculator-reference-rail) now follows
+  // backgroundReferenceNeedsAttention instead of defaulting open. These
+  // three tests drive the same preliminary/UTL state machine the
+  // "genuinely-nothing-entered" test above already exercises, but assert
+  // the RAIL's open/closed state rather than the summary-bar chips. Two
+  // independent signals per assertion: the toggle button's aria-label
+  // (Hide/Show right panel, unaffected by any styling refactor) and the
+  // rail wrapper's `inert` attribute (the actual a11y mechanism that keeps
+  // a collapsed rail out of the focus/tab order -- see the wrapper's own
+  // comment in MatrixDashboard.tsx).
+  describe('MatrixDashboard -- Calculator reference rail follows Stage 3 (2026-08-14)', () => {
+    function expectRailOpen() {
+      expect(
+        screen.getByRole('button', { name: /^Hide right panel$/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('calculator-reference-rail')).not.toHaveAttribute('inert');
+    }
+
+    function expectRailClosed() {
+      expect(
+        screen.getByRole('button', { name: /^Show right panel$/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
+    }
+
+    it('is CLOSED when the preliminary standard is not yet computed', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Every seeded default computes immediately (both the preliminary
+      // standard and the UTL), so the rail starts closed too -- confirm that
+      // baseline first, then break ONLY the preliminary standard using the
+      // same Stage-2-only lever ("a Stage-2-only invalid input" test above):
+      // target risk is not one of Stage 1's seven fields, so Stage 1 (and
+      // therefore the UTL, which does not depend on it) stay untouched while
+      // Stage 2 goes BLOCKED. backgroundReferenceNeedsAttention requires
+      // preliminarySlot.state === 'computed', so a BLOCKED preliminary keeps
+      // the rail shut for the same reason a not-yet-computed one would.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      const hhDirect = screen.getByTestId('hh-direct-contact-calculator');
+      fireEvent.change(within(hhDirect).getByLabelText(/target risk/i), {
+        target: { value: '-1' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).not.toHaveTextContent(
+        /computed/i,
+      );
+
+      expectRailClosed();
+    });
+
+    it('OPENS when the preliminary standard is computed but the UTL is not (Stage 3 actionable)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // hh-direct's preliminary standard computes immediately from its seeded
+      // defaults (same baseline the "genuinely-nothing-entered" test above
+      // relies on).
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Drop the reference-sample count below 2 -- the UTL slot falls back
+      // to 'pending' (same lever as the "genuinely-nothing-entered" test).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+
+      expectRailOpen();
+    });
+
+    it('CLOSES again once the UTL is computed', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Restore a valid reference-sample set (n = 10, same set used
+      // elsewhere in this file) -- Stage 3 recomputes the UTL and the rail
+      // follows it back shut.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      expectRailClosed();
+    });
+
+    // Defect fix 2026-08-14: the rail's open state is DERIVED
+    // (calcRailOverride ?? backgroundReferenceNeedsAttention), not written by
+    // an effect. These three tests cover the override mechanism itself.
+    it('manual close STICKS across an unrelated re-render while the stage is unchanged', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Reach Stage-3-actionable so the rail auto-opens (same lever as the
+      // "OPENS when..." test above).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Manual close.
+      fireEvent.click(screen.getByRole('button', { name: /^Hide right panel$/ }));
+      expectRailClosed();
+
+      // An unrelated re-render: change a Stage 1 input that does not flip
+      // either chip's state (cancer averaging time stays a valid positive
+      // number, so the preliminary standard remains 'computed' and the UTL
+      // slot -- driven only by the reference-sample field -- is untouched).
+      fireEvent.change(screen.getByTestId('hh-direct-at-cancer-input'), {
+        target: { value: '80' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+
+      // The manual close must still hold -- neither chip's state changed, so
+      // nothing should have cleared the override.
+      expectRailClosed();
+    });
+
+    it('manual open is CLEARED by a pathway switch, even though Stage 3 stays non-actionable throughout', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: seeded defaults compute both the preliminary standard and
+      // the UTL immediately, so backgroundReferenceNeedsAttention is false
+      // and the rail starts closed (same baseline the "is CLOSED when..."
+      // test above starts from).
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+
+      // Manual open, while Stage 3 is NOT actionable -- this only exercises
+      // the override, not the derived value.
+      fireEvent.click(screen.getByRole('button', { name: /^Show right panel$/ }));
+      expectRailOpen();
+
+      // Switch pathway. hh-direct unmounts (its preliminary report briefly
+      // clears to 'pending' during the transition) and eco-direct mounts
+      // with its own seeded defaults, which also compute both slots
+      // immediately -- so backgroundReferenceNeedsAttention is false both
+      // before AND after the switch, with no transient change of VALUE in
+      // between (pending && anything is already false, same as computed &&
+      // computed). A dependency-array fix keyed only on
+      // backgroundReferenceNeedsAttention would therefore NOT re-fire here;
+      // only a fix that also keys on activeCategory clears the override on
+      // this switch. Assert the manual OPEN is gone and the rail follows
+      // Stage 3 (closed) for the new pathway.
+      fireEvent.click(screen.getByTestId('category-selector-eco-direct'));
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+    });
+
+    it('does not flash open-then-closed on Calculator entry when defaults are already fully computed', () => {
+      // A plain before/after DOM assertion cannot distinguish "closed from
+      // the first commit" (derived value) from "opened, then an effect
+      // corrected it to closed" (the flash) -- @testing-library/react's
+      // fireEvent flushes passive effects synchronously via act(), so both
+      // implementations read identically AFTER the click settles. A
+      // MutationObserver watching the toggle button's aria-label makes the
+      // extra corrective render visible: the derived fix inserts the button
+      // already reading "Show right panel" (one childList insertion, zero
+      // attribute mutations); an effect-writer inserts it open, then
+      // mutates the SAME node's aria-label once the effect fires.
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+
+      // MutationObserver callbacks fire as a microtask; disconnect() alone
+      // discards any queued-but-undelivered records, so pull them
+      // synchronously with takeRecords() before disconnecting -- otherwise
+      // this assertion would silently pass regardless of the flash (the
+      // callback array would still be empty at assertion time even though a
+      // real mutation happened).
+      const observer = new MutationObserver(() => {});
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['aria-label'],
+        subtree: true,
+      });
+
+      clickCalculatorTab();
+
+      const mutations = observer.takeRecords();
+      observer.disconnect();
+
+      const toggleButton = screen.getByRole('button', { name: /^Show right panel$/ });
+      const flashMutation = mutations.find(
+        (record) => record.type === 'attributes' && record.target === toggleButton,
+      );
+      expect(flashMutation).toBeUndefined();
+      expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
+    });
+  });
+
   // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
   it('pointercancel restores body cursor and userSelect (drag cleanup on cancel)', () => {
     Object.defineProperty(window, 'innerWidth', {

@@ -497,7 +497,11 @@ export default function CumulativeEffectsCalculator({
 
         {lifetimeAdaf && (
           <div
-            className="grid grid-cols-3 gap-2 mb-3"
+            // grid-cols-1 below sm: 3 unscoped columns of number inputs have no
+            // fixed width, so a native <input>'s intrinsic min-content width
+            // (wider than a 320px/3 share) forces the grid track past the
+            // viewport rather than shrinking.
+            className="grid grid-cols-1 gap-2 mb-3 sm:grid-cols-3"
             data-testid="cum-bapeq-agebins"
           >
             {(Object.keys(ageBinFractions) as AdafBin[]).map((bin) => (

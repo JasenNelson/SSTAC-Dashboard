@@ -325,6 +325,20 @@ export default function MatrixDashboard({
   // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  // Calculator's reference rail is DERIVED from backgroundReferenceNeedsAttention
+  // (see that flag's declaration below), never written by an effect -- an
+  // effect-writer painted the rail open on the first Calculator frame and then
+  // closed it, producing a visible flash on every entry. `null` = follow
+  // Stage 3; a boolean = the user's explicit manual toggle. See the
+  // override-clearing effect near backgroundReferenceNeedsAttention.
+  const [calcRailOverride, setCalcRailOverride] = useState<boolean | null>(
+    null,
+  );
+  // toggleRightPanel (above backgroundReferenceNeedsAttention in source order)
+  // needs that flag's latest value; this ref is kept in sync in-render (see
+  // the assignment near backgroundReferenceNeedsAttention) so the callback
+  // never captures a stale closure without reordering unrelated hooks.
+  const backgroundReferenceRef = useRef(false);
   const [matrixMapLeftPanelWidth, setMatrixMapLeftPanelWidth] = useState(
     MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
   );
@@ -546,12 +560,23 @@ export default function MatrixDashboard({
   const handleDismissReceipt = useCallback(() => {
     setCalculatorReceipt(null);
   }, []);
+  // toggleRightPanel is defined here (before backgroundReferenceNeedsAttention
+  // is computed further down) but needs that flag's latest value in
+  // Calculator mode. Rather than reordering unrelated hooks/derivations to
+  // move this callback below the flag's declaration, a ref holds the latest
+  // value and the callback reads from it -- see backgroundReferenceRef below.
   const toggleRightPanel = useCallback(() => {
+    if (isCalculatorMode) {
+      setCalcRailOverride(
+        (current) => !(current ?? backgroundReferenceRef.current),
+      );
+      return;
+    }
     setShowRightPanel((current) => {
       if (current) setMatrixMapWorkbenchFocused(false);
       return !current;
     });
-  }, []);
+  }, [isCalculatorMode]);
   // Left separator is on the panel's RIGHT edge. Dragging right widens the
   // left panel; dragging left narrows it.
   // delta = clientX - startX (positive = moving right = wider left panel).
@@ -846,6 +871,30 @@ export default function MatrixDashboard({
   // numbered stages (see the assembled-page test asserting exactly that).
   const backgroundReferenceNeedsAttention =
     preliminarySlot.state === 'computed' && utlSlot.state !== 'computed';
+  // Kept in sync every render (not in an effect -- toggleRightPanel needs the
+  // CURRENT value at click time, and an effect would lag one render behind).
+  backgroundReferenceRef.current = backgroundReferenceNeedsAttention;
+  // Owner 2026-08-14: "reference only shown when working in stage 3". The flag
+  // above already means exactly "Stage 3 is the actionable step", so the
+  // Calculator reference rail follows it -- as a DERIVED value, not an
+  // effect-driven write. See calculatorRailOpen / effectiveShowRightPanel
+  // below: deriving means the first Calculator frame already paints the
+  // correct state, instead of painting open and then closing on the next
+  // effect pass (the flash the prior effect-writer produced).
+  //
+  // Deliberately NOT a hard lock: calcRailOverride lets the header toggle
+  // still work, and a manual choice survives until the stage genuinely
+  // changes OR the pathway is switched (a pathway switch is a CONTEXT change,
+  // not a parameter change -- the new pathway's rail is a fresh derivation).
+  // A user who opens the rail early to read the K-factor table is not fought
+  // by an effect on every render.
+  useEffect(() => {
+    setCalcRailOverride(null);
+  }, [backgroundReferenceNeedsAttention, activeCategory]);
+  const calculatorRailOpen = calcRailOverride ?? backgroundReferenceNeedsAttention;
+  const effectiveShowRightPanel = isCalculatorMode
+    ? calculatorRailOpen
+    : showRightPanel;
   // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
   // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
   // either operand is unavailable -- see BackgroundAdjustment.tsx Stage 4.
@@ -884,10 +933,16 @@ export default function MatrixDashboard({
   );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
+  // Both are lg-scoped so the rail is full-width when the shell is stacked and
+  // fixed-width only once it sits beside the content. The INNER width matters
+  // most: a bare w-[384px] is wider than a 375 px viewport, so the old value
+  // overflowed the page horizontally on a phone no matter what the outer
+  // wrapper did. Scoping (rather than replacing) keeps the desktop widths
+  // exactly as they were.
   const rightPanelOpenWidth =
-    activeTopTab === 'Calculator' ? 'w-96' : 'w-80';
+    activeTopTab === 'Calculator' ? 'lg:w-96' : 'lg:w-80';
   const rightPanelInnerWidth =
-    activeTopTab === 'Calculator' ? 'w-[384px]' : 'w-[320px]';
+    activeTopTab === 'Calculator' ? 'w-full lg:w-[384px]' : 'w-full lg:w-[320px]';
 
   // A11y (A2/P3-1): roving-tabindex arrow-key navigation for the primary
   // 8-tab top nav, using MANUAL activation per the ARIA Authoring
@@ -1629,8 +1684,8 @@ export default function MatrixDashboard({
                <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                </button>
-               <button onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
-                 {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+               <button onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', effectiveShowRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={effectiveShowRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={effectiveShowRightPanel ? 'Hide right panel' : 'Show right panel'}>
+                 {effectiveShowRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                </button>
              </>
            )}
@@ -1669,21 +1724,46 @@ export default function MatrixDashboard({
         </div>
       )}
 
-      <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:h-auto">
+      {/*
+        Option A responsive shell (owner-selected 2026-08-14). Below `lg` the
+        three zones stack into one column and each rail becomes a drawer above
+        the main content; at `lg` and up the original three-column layout is
+        byte-for-byte what it was. The breakpoint work is pure CSS rather than a
+        JS `isMobile` branch on purpose: this subtree is server-rendered before
+        React attaches, and a JS breakpoint would render the desktop shell on
+        the server and the phone shell on the client -- the same
+        SSR-before-hydration mismatch that the e2e readiness gate exists to
+        absorb. CSS reflows identically in both renders.
+
+        Stacked, the column must scroll as a whole (each zone is auto-height),
+        so overflow-hidden is deferred to `lg` where the inner panes scroll
+        themselves.
+      */}
+      <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
             {/* Left Sidebar */}
             <div
               data-testid="left-sidebar-wrapper"
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 border-r',
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0',
+                // Stacked below lg, the divider belongs on the bottom edge;
+                // side-by-side at lg and up, on the right edge as before.
+                'border-b lg:border-b-0 lg:border-r',
                 // Bathymetric shell chrome (DESIGN.md), Calculator tab only.
                 // Jurisdictional Frameworks (the other isToolMode tab) keeps
                 // its original slate styling unchanged.
                 isCalculatorMode
                   ? 'bg-[var(--db-depth-1)] border-[var(--db-border)]'
                   : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800',
-                showLeftPanel ? (isCalculatorMode ? 'w-96 p-6' : 'w-80 p-6') : 'w-0',
+                // Collapse axis differs by layout. Side-by-side it is WIDTH
+                // (w-0), which is what the transition has always animated.
+                // Stacked, w-0 would collapse the rail to a zero-width strip
+                // that still occupies full column height, so the collapse must
+                // be HEIGHT instead -- full width, max-h-0, no padding.
+                showLeftPanel
+                  ? cn('w-full p-6', isCalculatorMode ? 'lg:w-96' : 'lg:w-80')
+                  : 'max-h-0 w-full border-b-0 p-0 lg:max-h-none lg:w-0',
                 // Plan v3 section 4.2 + section 10: hide the entire left
                 // sidebar when printing the Calculator tab so window.print()
                 // produces a chrome-free PDF anchored on the calculator
@@ -1701,7 +1781,12 @@ export default function MatrixDashboard({
               // transition classes that drive the collapse animation.
               inert={showLeftPanel ? undefined : true}
             >
-              <div className="w-full min-w-[270px]">
+              {/* min-w-[270px] is a desktop guard against the rail being
+                  squeezed narrower than its controls read at. Stacked, the rail
+                  is already full viewport width and the floor instead becomes an
+                  overflow source on a 320 px phone (320 - 48 px padding = 272),
+                  so it applies only from lg up. */}
+              <div className="w-full min-w-0 lg:min-w-[270px]">
                 <h2
                   className={cn(
                     'text-xs font-bold uppercase tracking-wider mb-4',
@@ -1719,7 +1804,9 @@ export default function MatrixDashboard({
             {/* Main Content */}
             <div
               className={cn(
-                'flex-1 relative overflow-y-auto p-8',
+                // p-8 (32 px each side) costs 64 px of a 375 px viewport before
+                // any content renders; halved below lg, unchanged at desktop.
+                'flex-1 relative overflow-y-auto p-4 lg:p-8',
                 isCalculatorMode
                   ? 'bg-[var(--db-surface)]'
                   : 'bg-white dark:bg-slate-950',
@@ -1734,12 +1821,21 @@ export default function MatrixDashboard({
 
             {/* Right Drawer */}
             <div
+              data-testid="calculator-reference-rail"
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 border-l shadow-2xl',
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 shadow-2xl',
+                // Stacked below lg this rail sits ABOVE the main content (DOM
+                // order puts it after, so it is ordered up), making its divider
+                // a bottom edge; side-by-side it keeps the left edge.
+                'border-b lg:border-b-0 lg:border-l',
                 isCalculatorMode
                   ? 'bg-[var(--db-surface)] border-[var(--db-border)]'
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800',
-                showRightPanel ? rightPanelOpenWidth : 'w-0',
+                // Height-collapse when stacked, width-collapse when side by
+                // side -- same reasoning as the left rail.
+                effectiveShowRightPanel
+                  ? cn('w-full', rightPanelOpenWidth)
+                  : 'max-h-0 w-full border-b-0 lg:max-h-none lg:w-0',
               )}
               // NEW-P3-3 (a11y audit round 3): same collapse pattern as the
               // left-sidebar-wrapper and the two matrix-map panel wrappers
@@ -1749,7 +1845,7 @@ export default function MatrixDashboard({
               // visually clipped to zero width. inert removes it from the
               // focus/tab order (and AT) without touching the width
               // transition.
-              inert={showRightPanel ? undefined : true}
+              inert={effectiveShowRightPanel ? undefined : true}
             >
               <div className={cn(rightPanelInnerWidth, 'h-full flex flex-col')}>
                 <div
