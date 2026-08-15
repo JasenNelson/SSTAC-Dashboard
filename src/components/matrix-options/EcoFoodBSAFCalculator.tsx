@@ -47,6 +47,7 @@ import type {
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -444,7 +445,7 @@ export default function EcoFoodBSAFCalculator({
       : ecoResult
         ? ecoResult.blocked
           ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${ecoResult.warnings.join(' ') || 'input validity constraint violated.'}`
-          : `Preliminary standard computed: ${ecoResult.sedS.toPrecision(4)} mg/kg dry.`
+          : `Preliminary standard computed: ${formatMagnitude(ecoResult.sedS)} mg/kg dry.`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
@@ -1001,7 +1002,7 @@ export default function EcoFoodBSAFCalculator({
         </div>
         <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
           {ecoResult && !ecoResult.blocked
-            ? ecoResult.sedS.toPrecision(4)
+            ? formatMagnitude(ecoResult.sedS)
             : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">
             mg/kg dry

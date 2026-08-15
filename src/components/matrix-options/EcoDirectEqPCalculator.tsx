@@ -43,6 +43,7 @@ import type {
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -270,7 +271,7 @@ export default function EcoDirectEqPCalculator({
       : isResult
         ? (result as EcoDirectEqPResult).blocked
           ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${(result as EcoDirectEqPResult).warnings.join(' ') || 'input validity constraint violated.'}`
-          : `Preliminary standard computed: ${(result as EcoDirectEqPResult).sedS.toPrecision(4)} mg/kg dry.`
+          : `Preliminary standard computed: ${formatMagnitude((result as EcoDirectEqPResult).sedS)} mg/kg dry.`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
@@ -591,7 +592,7 @@ export default function EcoDirectEqPCalculator({
               when blocked -- the verdict is already suppressed and the warnings box explains why.
               Matches the HHFoodWeb/EcoFoodBSAF blocked-render contract. */}
           {isResult && !(result as EcoDirectEqPResult).blocked
-            ? (result as EcoDirectEqPResult).sedS.toPrecision(4)
+            ? formatMagnitude((result as EcoDirectEqPResult).sedS)
             : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">
             mg/kg dry

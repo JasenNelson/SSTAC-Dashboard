@@ -35,7 +35,6 @@ import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
-import ExposureScenarioControl from './matrix-options/ExposureScenarioControl';
 import CalculatorSummaryBar, {
   type SummaryBarSlot,
 } from './matrix-options/CalculatorSummaryBar';
@@ -979,13 +978,16 @@ export default function MatrixDashboard({
               onJurisdictionChange={setJurisdiction}
             />
             {/*
-              Exposure scenario (PRODUCT.md "Exposure Scenarios" + DESIGN.md
-              "Exposure scenario is a first-class control"). Custom-only in
-              this step -- Protocol 28 presets are separately scoped work.
+              Fix 1 (owner decision, 2026-08-14 UI QA audit): the inert
+              ExposureScenarioControl (single "Custom" option) that used to
+              render here has been removed. It duplicated the ALREADY-WORKING
+              receptor-scenario selector inside the pathway calculators
+              (HHDirectContactCalculator's hh-direct-receptor-scenario-select,
+              HHFoodWebCalculator's hh-food-receptor-scenario-select), which
+              actually switches real exposure-factor defaults. Later Protocol
+              28 preset work extends THAT control rather than adding a
+              parallel one here.
             */}
-            <div className="border-t border-[var(--db-border)] pt-5">
-              <ExposureScenarioControl />
-            </div>
             <div className="border-t border-[var(--db-border)] pt-5">
               <div
                 className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"

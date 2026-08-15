@@ -114,8 +114,19 @@ const TOTAL_STAGES = 4;
 // summary bar (it used to be a bare 'mg/kg' here vs 'mg/kg dry' elsewhere).
 const UTL_UNIT = 'mg/kg dry';
 
+// Fix 2 (P2-A): 'mg/kg' and 'mg/kg dry' denote the same physical basis in
+// this component -- every reference sample / site concentration entered here
+// is a dry-weight soil/sediment concentration compared directly against the
+// UTL (itself 'mg/kg dry'), so the bare 'mg/kg' string this component's own
+// inputs used to print is an equivalent spelling, not a different unit. A
+// genuinely different unit (e.g. 'ug/kg dry') must still be rejected.
+const UNIT_ALIASES: Record<string, string> = {
+  'mg/kg': 'mg/kg dry',
+};
+
 function normalizeUnit(unit: string): string {
-  return unit.trim().toLowerCase();
+  const trimmed = unit.trim().toLowerCase();
+  return UNIT_ALIASES[trimmed] ?? trimmed;
 }
 
 // The preliminary standard from an earlier pathway calculator's own Stage 2
@@ -319,18 +330,20 @@ export default function BackgroundAdjustment({
   // ---------------------------------------------------------------------
   // Site Comparison -- NOT a derivation stage (fix 3/P2-4/P2-7; see the
   // file header comment). Presentation-only wrap of the EXISTING Cs-vs-UTL
-  // comparison (see the Site Comparison caution in the file header). The
-  // stage5* variable names are kept for git-diff minimality -- the "5" no
-  // longer denotes a stage number anywhere in the rendered UI.
+  // comparison (see the Site Comparison caution in the file header). Fix 4
+  // (P3-D, 2026-08-14): renamed from stage5State/stage5Detail (and the
+  // matching bg-adjust-stage-5* testids below) -- "stage 5" no longer
+  // denotes a stage number anywhere, including the DOM/test contract, so the
+  // block is named for what it IS: the site comparison.
   // ---------------------------------------------------------------------
-  const stage5State: StageState = csIsInvalid || csIsNegative
+  const siteComparisonState: StageState = csIsInvalid || csIsNegative
     ? 'blocked'
     : csIsBlank
       ? 'pending'
       : utlResult
         ? 'computed'
         : 'waiting';
-  const stage5Detail = csIsInvalid
+  const siteComparisonDetail = csIsInvalid
     ? 'Blocked: the measured site concentration is not a valid decimal number.'
     : csIsNegative
       ? 'Blocked: the measured site concentration cannot be negative.'
@@ -373,7 +386,7 @@ export default function BackgroundAdjustment({
         input_key: 'Cs_mg_per_kg',
         label: 'Measured site concentration',
         value: csInput === '' ? null : csInput,
-        unit: 'mg/kg',
+        unit: 'mg/kg dry',
         role: 'user-entered value',
         note: 'Optional diagnostic comparison input.',
       },
@@ -383,7 +396,12 @@ export default function BackgroundAdjustment({
 
   // Report Stage 3's UTL and Stage 4's adjusted standard upward (e.g. to the
   // Calculator tab summary bar). Both effects read already-memoized values
-  // only -- neither computes anything new.
+  // only -- neither computes anything new. Fix 3 (P3-C): cleanup added for
+  // consistency with the five pathway calculators' reporting effects, which
+  // all clear their reported slot on unmount/dep-change so a parent summary
+  // bar never keeps a stale value around after this component stops
+  // reporting. Benign today (this component does not unmount while its tab
+  // is open) but kept consistent.
   useEffect(() => {
     if (!onUtlChange) return;
     onUtlChange({
@@ -393,6 +411,15 @@ export default function BackgroundAdjustment({
       scope,
       n: parsed.samples.length,
     });
+    return () => {
+      onUtlChange({
+        value: null,
+        unit: UTL_UNIT,
+        state: 'pending',
+        scope,
+        n: 0,
+      });
+    };
   }, [onUtlChange, utlResult, stage3State, scope, parsed.samples.length]);
 
   useEffect(() => {
@@ -403,6 +430,14 @@ export default function BackgroundAdjustment({
       state: stage4State,
       governedBy,
     });
+    return () => {
+      onAdjustedStandardChange({
+        value: null,
+        unit: adjustedUnit,
+        state: 'pending',
+        governedBy: null,
+      });
+    };
   }, [onAdjustedStandardChange, adjustedValue, adjustedUnit, stage4State, governedBy]);
 
   return (
@@ -447,7 +482,24 @@ export default function BackgroundAdjustment({
         title="Background Reference"
         state={stage3State}
         stateDetail={stage3Detail}
-        current={stage4State !== 'computed'}
+        // Fix 5 (P2-C, this component's half): previously `stage4State !==
+        // 'computed'`, which kept Stage 3 lit as "current" for as long as
+        // Stage 4 was waiting -- including while Stage 4 was waiting SOLELY
+        // on the external preliminary standard from the active pathway
+        // calculator, i.e. after Stage 3 itself was already done. That let
+        // this component's Stage 3 and the calculator's own current stage
+        // both light up at once on the assembled page.
+        // Rule applied here (safe in isolation): a stage is "current" only
+        // while ITS OWN prerequisites are already met (true for Stage 3 --
+        // it is mathematically independent of Stages 1-2/4) AND it is
+        // genuinely the next actionable step for the user, i.e. it has not
+        // finished yet. Once Stage 3 computes, this component has nothing
+        // further for the user to do here, so it stops claiming "current"
+        // regardless of what Stage 4 (which has no user input of its own)
+        // is still waiting on. Stage 4 itself is never marked current below
+        // for the same reason -- it is a pure derivation with no action a
+        // user takes on it directly.
+        current={stage3State !== 'computed'}
         testId="bg-adjust-stage-3"
       >
         <fieldset className="mb-4">
@@ -505,7 +557,7 @@ export default function BackgroundAdjustment({
             htmlFor="bg-adjust-samples"
             className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            {scopeLabel} reference samples (comma- or whitespace-separated, mg/kg)
+            {scopeLabel} reference samples (comma- or whitespace-separated, mg/kg dry)
           </label>
           <textarea
             id="bg-adjust-samples"
@@ -725,7 +777,7 @@ export default function BackgroundAdjustment({
       */}
       <section
         className="border-t-2 border-dashed border-[var(--db-border)] pt-6"
-        data-testid="bg-adjust-stage-5"
+        data-testid="bg-adjust-site-comparison"
         aria-labelledby="bg-adjust-site-comparison-title"
       >
         <div className="mb-3 flex flex-wrap items-center gap-2">
@@ -735,20 +787,20 @@ export default function BackgroundAdjustment({
           >
             Site Comparison
           </h4>
-          <StageStateChip state={stage5State} testId="bg-adjust-stage-5-chip" />
+          <StageStateChip state={siteComparisonState} testId="bg-adjust-site-comparison-chip" />
         </div>
-        <p className="mb-4 text-xs text-[var(--db-text-muted)]" data-testid="bg-adjust-stage-5-state-detail">
+        <p className="mb-4 text-xs text-[var(--db-text-muted)]" data-testid="bg-adjust-site-comparison-state-detail">
           Not part of the standards derivation above (Stages 1-4). Optional,
           diagnostic-only comparison of a measured site concentration against
           the background UTL; its role in this tool is under review.
-          {stage5Detail ? ` ${stage5Detail}` : ''}
+          {siteComparisonDetail ? ` ${siteComparisonDetail}` : ''}
         </p>
         <div>
           <label
             htmlFor="bg-adjust-cs"
             className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1"
           >
-            Measured site concentration C<sub>s</sub> (mg/kg, optional)
+            Measured site concentration C<sub>s</sub> (mg/kg dry, optional)
           </label>
           <input
             id="bg-adjust-cs"

@@ -31,6 +31,7 @@ import {
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 
 // Unsourced calculator baselines for the seven HC PQRA exposure-factor inputs, used
 // when the selected frame has no active human-health-direct frame default. Each value
@@ -402,7 +403,7 @@ export default function HHDirectContactCalculator({
     : 'error' in result
       ? result.error
       : hhResult
-        ? `Preliminary standard computed: ${hhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${hhResult.driver}).`
+        ? `Preliminary standard computed: ${formatMagnitude(hhResult.sedS)} mg/kg dry (driver: ${hhResult.driver}).`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab
@@ -884,7 +885,7 @@ export default function HHDirectContactCalculator({
           Preliminary Human Health Screening Value (Direct Contact)
         </div>
         <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-          {hhResult ? hhResult.sedS.toPrecision(4) : '--'}{' '}
+          {hhResult ? formatMagnitude(hhResult.sedS) : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">mg/kg dry</span>
         </div>
         {hhResult && (
@@ -932,7 +933,7 @@ export default function HHDirectContactCalculator({
           {dlPcbTeqSedS !== null ? (
             <>
               <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-                {dlPcbTeqSedS.toPrecision(4)}{' '}
+                {formatMagnitude(dlPcbTeqSedS)}{' '}
                 <span className="text-lg text-slate-500 font-medium">mg TEQ/kg dry</span>
               </div>
               {hhResult?.driver === 'dl-pcb-teq' && (
@@ -998,16 +999,16 @@ export default function HHDirectContactCalculator({
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Non-cancer value</span>
-                <span>{hhResult.nonCancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(hhResult.nonCancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Cancer value</span>
-                <span>{hhResult.cancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(hhResult.cancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               {isDlPcbSubstance && (
                 <div className="flex justify-between font-mono">
                   <span className="text-slate-500">dl-PCB TEQ value</span>
-                  <span>{hhResult.dlPcbTeqSedS?.toPrecision(4) ?? 'n/a'}</span>
+                  <span>{formatMagnitude(hhResult.dlPcbTeqSedS, { placeholder: 'n/a' })}</span>
                 </div>
               )}
               <div className="flex justify-between font-mono">

@@ -366,5 +366,33 @@ describe('BackgroundAdjustment', () => {
       expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
       expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
     });
+
+    // Fix 2 (P2-A, 2026-08-14): 'mg/kg' and 'mg/kg dry' are the same basis in
+    // this component (this component's own inputs used to print the bare
+    // 'mg/kg' spelling while asserting a 'mg/kg dry' UTL) -- an equivalent
+    // spelling must NOT be blocked as a unit mismatch.
+    it('is unaffected (still computes) when the preliminary standard unit is the equivalent bare "mg/kg" spelling', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'mg/kg', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
+      expect(screen.queryByTestId('bg-adjust-result-blocked')).not.toBeInTheDocument();
+    });
+
+    // A genuinely different unit must still be refused -- this is the
+    // pre-existing 'ug/kg dry' test above; this second case confirms a
+    // different magnitude prefix on the bare spelling is caught too.
+    it('still blocks a genuinely different unit ("ug/kg", not just "ug/kg dry")', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'ug/kg', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      expect(screen.getByTestId('bg-adjust-result-blocked')).toBeInTheDocument();
+    });
   });
 });
