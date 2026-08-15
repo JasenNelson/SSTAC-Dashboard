@@ -741,6 +741,13 @@ export default function EcoFoodBSAFCalculator({
           </div>
         </div>
 
+        {/*
+          UI QA audit (2026-08-14, fix 3/P3): fLipidPercent and focPercent
+          keep toFixed(2) deliberately. Both are PERCENTAGES (0-100 slider
+          readouts of their own live input state), not mass-per-mass
+          concentrations, and neither is ever displayed next to or compared
+          against a standard.
+        */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label
@@ -1061,6 +1068,11 @@ export default function EcoFoodBSAFCalculator({
           />
 
           {ecoResult && (
+            // UI QA audit (2026-08-14, fix 3/P3): BSAF_effective keeps
+            // toPrecision(4) deliberately -- it is a dimensionless
+            // partitioning ratio (table/regression lookup), not a
+            // mass-per-mass concentration, and is never compared against a
+            // standard.
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">M_eco</span>

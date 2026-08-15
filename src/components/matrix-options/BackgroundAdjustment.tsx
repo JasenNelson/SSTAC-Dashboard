@@ -370,10 +370,12 @@ export default function BackgroundAdjustment({
         note: 'Reference-set data entered or seeded in the UI. Source data set provenance is tracked outside this v1 panel.',
       },
       {
-        // K is a statistics-table lookup value (typically O(1-3)), not a
-        // standard-like magnitude compared against other stages -- decimal-
-        // place precision stays appropriate here (see the mean/sd/K stat
-        // card decision in the file's Stage 3 render below).
+        // K is a dimensionless statistics-table lookup/interpolation
+        // constant, not a mass-per-mass concentration, and is never
+        // compared against a standard -- unlike Mean/Std Dev (fixed to
+        // formatMagnitude in the Stage 3 render below, 2026-08-14 fix 1),
+        // K's exemption from formatMagnitude rests on this property, not on
+        // an assumed magnitude.
         input_key: 'K_95_95',
         label: 'K factor',
         value: utlResult ? utlResult.K.toFixed(4) : null,
@@ -599,36 +601,56 @@ export default function BackgroundAdjustment({
         </div>
 
         {/*
-          Mean / Std Dev / K stay on toFixed(4) deliberately (P1-1 audit
-          decision): they are reference-sample STATISTICS, not standard-like
-          magnitudes maxed or compared across stages the way the UTL,
-          preliminary, and adjusted-standard values are. This reference
-          sample set is always O(1-10) mg/kg, so decimal-place precision is
-          the more legible choice here; formatMagnitude is reserved for the
-          values that can legitimately be sub-1e-4 screening standards.
+          Fix 1 (P1, 2026-08-14 UI QA audit): Mean and Std Dev are OPERANDS
+          of the UTL rendered directly beneath them (utl = mean + K * sd,
+          same unit, same card group) -- they are exactly the kind of
+          standard-like, potentially-sub-1e-4 magnitude formatMagnitude
+          exists to protect. The prior toFixed(4) exemption was justified by
+          "this reference sample set is always O(1-10) mg/kg" -- an
+          ASSUMPTION ABOUT USER INPUT, not a property of the value. The
+          textarea above is free input, and sediment background for dioxins,
+          PCBs, and other organics is legitimately sub-0.1 mg/kg dry, so a
+          real, non-zero UTL could render as derived from two displayed
+          zeros. Both now use formatMagnitude.
+
+          K stays on toFixed(4): it is a dimensionless statistics-table
+          lookup/interpolation constant (the one-sided 95/95 tolerance
+          factor for sample size n), never itself a mass-per-mass
+          concentration and never compared against a standard -- unlike Mean
+          and Std Dev, no assumption about its expected magnitude is doing
+          any work here, so it is not the same exemption.
         */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Mean
             </div>
-            <div className="text-xl font-mono text-slate-900 dark:text-white">
-              {utlResult ? utlResult.mean.toFixed(4) : '--'}
+            <div
+              className="text-xl font-mono text-slate-900 dark:text-white"
+              data-testid="bg-adjust-mean-value"
+            >
+              {utlResult ? formatMagnitude(utlResult.mean) : '--'}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Std Dev (n-1)
             </div>
-            <div className="text-xl font-mono text-slate-900 dark:text-white">
-              {utlResult ? utlResult.sd.toFixed(4) : '--'}
+            <div
+              className="text-xl font-mono text-slate-900 dark:text-white"
+              data-testid="bg-adjust-sd-value"
+            >
+              {utlResult ? formatMagnitude(utlResult.sd) : '--'}
             </div>
           </div>
           <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               K (n = {utlResult ? utlResult.n : '--'})
             </div>
-            <div className="text-xl font-mono text-slate-900 dark:text-white">
+            <div
+              className="text-xl font-mono text-slate-900 dark:text-white"
+              data-testid="bg-adjust-k-value"
+            >
               {utlResult ? utlResult.K.toFixed(4) : '--'}
             </div>
           </div>
@@ -863,9 +885,19 @@ export default function BackgroundAdjustment({
             }`}
             data-testid="bg-adjust-cs-comparison"
           >
+            {/*
+              Fix 2 (P1, 2026-08-14 UI QA audit): csParsed is a PARSED
+              NUMBER (parseDecimalInput's result), not an echo of the user's
+              keystrokes, so default String() coercion here is a displayed
+              numeric value going through the plain-number path. This
+              sentence's whole purpose is comparing Cs against the UTL,
+              which is rendered with formatMagnitude directly above -- a
+              value formatMagnitude renders as 9.000e-7 would render here as
+              9e-7, forty pixels apart. Fixed to formatMagnitude(csParsed).
+            */}
             {csAtOrBelowBackground
-              ? `Measured Cs (${csParsed}) is at or below the ${scopeLabel.toLowerCase()} background UTL. The background adjustment may apply: compare your Tier 1 derived standard against the max(Tier 1 generic, UTL) above.`
-              : `Measured Cs (${csParsed}) exceeds the ${scopeLabel.toLowerCase()} background UTL. The background adjustment will not relax your Tier 1 standard; compare Cs against your Tier 1 generic standard directly.`}
+              ? `Measured Cs (${formatMagnitude(csParsed)}) is at or below the ${scopeLabel.toLowerCase()} background UTL. The background adjustment may apply: compare your Tier 1 derived standard against the max(Tier 1 generic, UTL) above.`
+              : `Measured Cs (${formatMagnitude(csParsed)}) exceeds the ${scopeLabel.toLowerCase()} background UTL. The background adjustment will not relax your Tier 1 standard; compare Cs against your Tier 1 generic standard directly.`}
           </div>
         )}
       </section>

@@ -1026,6 +1026,13 @@ export default function HHDirectContactCalculator({
                   <span>{formatMagnitude(hhResult.dlPcbTeqSedS, { placeholder: 'n/a' })}</span>
                 </div>
               )}
+              {/*
+                UI QA audit (2026-08-14, fix 3/P3): contactRate_mg_per_day
+                keeps toPrecision(4) deliberately despite sitting in the same
+                card group as the formatMagnitude'd mg/kg-dry values above --
+                its unit is mg/day (an exposure rate), not mg/kg dry, so it
+                is never comparable to, or compared against, those standards.
+              */}
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Adjusted contact rate</span>
                 <span>{hhResult.contactRate_mg_per_day.toPrecision(4)} mg/day</span>

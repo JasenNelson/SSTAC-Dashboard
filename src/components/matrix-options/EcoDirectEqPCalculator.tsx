@@ -656,6 +656,15 @@ export default function EcoDirectEqPCalculator({
           />
 
           {isResult && (
+            // UI QA audit (2026-08-14, fix 3/P3): logKoc, Koc_L_per_kg_OC,
+            // and ESBoc_mg_per_kg_OC keep their own formatting deliberately.
+            // logKoc is a dimensionless log-partitioning coefficient.
+            // Koc_L_per_kg_OC is L/kg-OC (a partitioning coefficient), not a
+            // mass-per-mass concentration. ESBoc_mg_per_kg_OC is normalized
+            // to organic carbon (mg/kg-OC), a different basis than the
+            // mg/kg-dry sediment standards it feeds into via f_oc below --
+            // none of the three is ever displayed next to, or compared
+            // against, a mg/kg-dry standard.
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">log K_oc</span>

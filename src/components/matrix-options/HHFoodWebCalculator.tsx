@@ -737,6 +737,13 @@ export default function HHFoodWebCalculator({
           </label>
         </div>
 
+        {/*
+          UI QA audit (2026-08-14, fix 3/P3): fLipidPercent and focPercent
+          keep toFixed(2) deliberately. Both are PERCENTAGES (0-100 slider
+          readouts of their own live input state), not mass-per-mass
+          concentrations, and neither is ever displayed next to or compared
+          against a standard.
+        */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <div className="flex justify-between items-center mb-2">
@@ -851,6 +858,16 @@ export default function HHFoodWebCalculator({
             }
           />
           {hhResult && (
+            // UI QA audit (2026-08-14, fix 3/P3): tissueTarget_mg_per_kg and
+            // BSAF_effective keep their own formatting deliberately, not by
+            // omission. tissueTarget_mg_per_kg is WET-WEIGHT TISSUE mg/kg,
+            // not the sediment mg/kg-dry basis used by the preliminary/UTL/
+            // adjusted-standard values elsewhere in this feature -- it is
+            // never compared against a mg/kg-dry standard, so formatMagnitude
+            // (reserved for that comparable-standard family) does not apply.
+            // BSAF_effective is a dimensionless partitioning ratio (a table/
+            // regression lookup), not a mass-per-mass concentration, and is
+            // never compared against a standard either.
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Tissue target</span>

@@ -1335,6 +1335,27 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       return match[1];
     }
 
+    // Fix 4 (P3, 2026-08-14 UI QA audit): extracts the SAME numeric-token
+    // pattern from an operand row (bg-adjust-operand-preliminary /
+    // bg-adjust-operand-utl) so the governing-operand assertions below
+    // compare exact numeric tokens, not `toContain` substrings. Under the
+    // levers used in these tests the two operands differ by ~13 orders of
+    // magnitude so a substring collision cannot currently happen, but
+    // `toContain` would also pass if, say, the preliminary operand were
+    // "5.0000" and the UTL were "15.0000" (a false pass on a substring
+    // match). Exact-token comparison closes that gap regardless of lever
+    // values.
+    function operandValueText(testId: string): string {
+      const el = screen.getByTestId(testId);
+      const match = el.textContent?.match(/([\d.]+(?:e[+-]?\d+)?)\s*mg\/kg dry/i);
+      if (!match) {
+        throw new Error(
+          `${testId} did not contain a "<value> mg/kg dry" run: "${el.textContent}"`,
+        );
+      }
+      return match[1];
+    }
+
     // CASE 1: BACKGROUND GOVERNS -- the case the adjustment exists for.
     // Lever 1 (reference samples -> HUGE_SAMPLES) pushes the UTL to
     // ~1,000,000 mg/kg dry. Lever 2 (IR_sed -> 1e13) pushes the preliminary
@@ -1381,12 +1402,11 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       // The adjusted value equals the UTL operand, not the preliminary
       // operand -- read from Stage 4's own two operand rows, not
       // recomputed here.
-      const preliminaryOperand =
-        screen.getByTestId('bg-adjust-operand-preliminary').textContent ?? '';
-      const utlOperand = screen.getByTestId('bg-adjust-operand-utl').textContent ?? '';
+      const preliminaryOperandValue = operandValueText('bg-adjust-operand-preliminary');
+      const utlOperandValue = operandValueText('bg-adjust-operand-utl');
       const stage4ValueText = stage4ResultValueText();
-      expect(utlOperand).toContain(stage4ValueText);
-      expect(preliminaryOperand).not.toContain(stage4ValueText);
+      expect(utlOperandValue).toBe(stage4ValueText);
+      expect(preliminaryOperandValue).not.toBe(stage4ValueText);
 
       // The SAME adjusted-value STRING (not just the same number) appears
       // in the summary bar's adjusted slot -- this is the formatter-
@@ -1437,12 +1457,11 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
         /governs, because it is at or above the background UTL 95\/95/,
       );
 
-      const preliminaryOperand =
-        screen.getByTestId('bg-adjust-operand-preliminary').textContent ?? '';
-      const utlOperand = screen.getByTestId('bg-adjust-operand-utl').textContent ?? '';
+      const preliminaryOperandValue = operandValueText('bg-adjust-operand-preliminary');
+      const utlOperandValue = operandValueText('bg-adjust-operand-utl');
       const stage4ValueText = stage4ResultValueText();
-      expect(preliminaryOperand).toContain(stage4ValueText);
-      expect(utlOperand).not.toContain(stage4ValueText);
+      expect(preliminaryOperandValue).toBe(stage4ValueText);
+      expect(utlOperandValue).not.toBe(stage4ValueText);
 
       const summaryAdjustedValue = screen
         .getByTestId('calculator-summary-bar-adjusted-value')

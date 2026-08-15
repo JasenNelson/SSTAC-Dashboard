@@ -576,6 +576,15 @@ export default function HHInhalationCalculator({
                 <span className="text-slate-500">Cancer value</span>
                 <span>{formatMagnitude(inhResult.cancerSedS, { placeholder: 'n/a' })}</span>
               </div>
+              {/*
+                UI QA audit (2026-08-14, fix 3/P3): vfPefCombined_m3_per_kg
+                and airConcentration_mg_per_m3 keep toPrecision(4)
+                deliberately despite sitting in the same card group as the
+                formatMagnitude'd mg/kg-dry values above. vfPefCombined is
+                m3/kg (a transport factor), and airConcentration is mg/m3 (an
+                air concentration) -- neither shares the mg/kg-dry sediment
+                basis, so neither is ever compared against those standards.
+              */}
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Combined VF/PEF transport factor</span>
                 <span>
