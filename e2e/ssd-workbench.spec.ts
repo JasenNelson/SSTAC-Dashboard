@@ -5,7 +5,7 @@ async function clickUntilVisible(
   triggerName: string,
   visibleTestId: string,
 ) {
-  const trigger = page.getByRole('button', {
+  const trigger = page.getByRole('tab', {
     name: triggerName,
     exact: true,
   });

@@ -1,5 +1,23 @@
 import { defineConfig, devices } from '@playwright/test';
+import { loadEnvConfig } from '@next/env';
 import path from 'path';
+
+// Load .env.local (and Next.js's other env-file tiers) into process.env so the
+// credentials e2e/global.setup.ts / e2e/admin.setup.ts read (E2E_TEST_EMAIL,
+// E2E_TEST_PASSWORD, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, E2E_AUTH_ENABLED)
+// are actually present when Playwright is invoked directly (`npx playwright
+// test`), not only when something upstream already sourced them. Nothing in
+// this file previously loaded .env.local, so the chromium-auth /
+// chromium-admin-auth projects below were unconditionally skipped locally.
+//
+// Uses @next/env (shipped by `next`, already a direct dependency here) rather
+// than adding a new `dotenv` dependency -- `dotenv` itself is only a
+// transitive dependency of @sentry/bundler-plugin-core, not something this
+// project can rely on directly. @next/env's loadEnvConfig only fills in keys
+// that are NOT already present in process.env (see node_modules/@next/env's
+// processEnv/populate logic), so real environment variables -- e.g. secrets
+// CI injects directly -- always take precedence over .env.local.
+loadEnvConfig(process.cwd());
 
 const playwrightPort = Number(process.env.PLAYWRIGHT_TEST_PORT || '3100');
 const playwrightHost = process.env.PLAYWRIGHT_TEST_HOST || '127.0.0.1';
@@ -62,7 +80,10 @@ export default defineConfig({
             use: { ...devices['Desktop Chrome'], storageState: userAuthState },
             dependencies: ['setup'],
             // T40: run the member-fixture RBAC specs authenticated alongside matrix-options.
-            testMatch: /(matrix-options|mo-map-access|mo-publish-rbac)\.spec\.ts/,
+            // ssd-workbench added: it navigates to the auth-gated /matrix-options route and
+            // was previously excluded here, so its authenticated assertions never ran anywhere
+            // (unauth chromium/firefox/webkit projects hit the /login bounce and test.skip).
+            testMatch: /(matrix-options|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
           },
         ]
       : []),

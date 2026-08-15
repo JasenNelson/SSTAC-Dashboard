@@ -13,7 +13,7 @@ import { expect, type Page, test } from '@playwright/test';
 // Mirror of the clickUntilVisible helper in matrix-options.spec.ts (tab open is retry-flaky under
 // cold-compile dev server).
 async function clickUntilVisible(page: Page, triggerName: string, visibleTestId: string) {
-  const trigger = page.getByRole('button', { name: triggerName, exact: true });
+  const trigger = page.getByRole('tab', { name: triggerName, exact: true });
   const target = page.getByTestId(visibleTestId);
   for (let attempt = 0; attempt < 5; attempt += 1) {
     await expect(trigger).toBeVisible();

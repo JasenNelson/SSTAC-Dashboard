@@ -1478,3 +1478,117 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     );
   });
 });
+
+// ---------------------------------------------------------------------------
+// A5 aria-live outcome channel -- regression coverage for the bug that survived
+// three separate fix attempts (see EvidenceLibrary.tsx ROUND-3 REGRESSION FIXED
+// comment near the aria-live div). This suite is deliberately about DOM MUTATION
+// and NODE IDENTITY, not about text content, because a text-content-only
+// assertion passes against all three broken implementations:
+//
+//   Attempt 1: liveMessage was a plain string. React's Object.is bail-out means
+//              an identical repeat setLiveMessage(sameText) call triggers no
+//              re-render at all -- no DOM mutation, so the inner node reference
+//              (and its content) never changes on a repeat announcement. SILENT.
+//   Attempt 2: liveMessage became {text, seq}, defeating the state bail-out, but
+//              the div's children were rendered as plain text (no keyed inner
+//              element). React's DOM prop diff skips setTextContent when the
+//              computed `children` string is unchanged, so a repeat message
+//              still produces no DOM mutation. STILL SILENT.
+//   Attempt 3: key={seq} was moved onto the aria-live DIV ITSELF, remounting the
+//              live region on every announcement. The region's own insertion and
+//              its content arrive in the same commit, which the ARIA live-region
+//              contract does not announce. WORSE: this breaks even the FIRST
+//              announcement, and the container's own DOM node identity changes
+//              on every single announce.
+//
+// The fixed implementation keeps a stable, unkeyed aria-live container and
+// swaps a keyed inner <span> on every announce() call, including for a
+// byte-identical repeat message.
+// ---------------------------------------------------------------------------
+
+describe('EvidenceLibrary -- aria-live outcome channel (A5 regression)', () => {
+  // Drives an announce() call through the real "Save current" saved-view flow
+  // (see saveCurrentView / the save-view-confirm handler around line ~4090),
+  // which is one of the announce() call sites exercised elsewhere in this file
+  // (see 'saves the current filters as a named view, then deletes it' above).
+  // The default module mock has createSavedView resolve
+  // { success: false, error: 'unauthenticated' }, which saveCurrentView treats
+  // as signed-out/local-only SUCCESS and announces:
+  //   `Saved view "<name>" created in this browser only. Sign in to sync it to
+  //   your account.`
+  // Calling this helper twice with the SAME name produces a byte-identical
+  // repeat announcement, which is exactly the case that killed attempts 1 and 2.
+  async function saveViewNamed(name: string) {
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-button'));
+    fireEvent.change(screen.getByTestId('evidence-library-save-view-input'), {
+      target: { value: name },
+    });
+    fireEvent.click(screen.getByTestId('evidence-library-save-view-confirm'));
+  }
+
+  it('exists on first render, keeps a stable container identity, and mutates its inner node on a repeat announcement', async () => {
+    window.localStorage.clear();
+    renderControlled();
+
+    // (1) The aria-live container exists on FIRST render, before any
+    // announcement occurs -- catches any future conditional rendering of the
+    // region itself.
+    const liveRegion = screen.getByTestId('evidence-library-live-region');
+    expect(liveRegion).toBeInTheDocument();
+    expect(liveRegion).toHaveAttribute('aria-live', 'polite');
+
+    const REPEAT_NAME = 'Repeat announce regression view';
+
+    // First announcement.
+    await saveViewNamed(REPEAT_NAME);
+    await waitFor(() => {
+      expect(liveRegion).toHaveTextContent(
+        new RegExp(`Saved view "${REPEAT_NAME}" created in this browser only`),
+      );
+    });
+
+    // (2) Container DOM node identity is stable across the announcement --
+    // re-querying by the same test id must return the SAME element object.
+    // This is what kills attempt 3 (keying the outer div itself, which
+    // remounts the region -- a fresh node fails this identity check).
+    expect(screen.getByTestId('evidence-library-live-region')).toBe(liveRegion);
+
+    const firstInnerNode = liveRegion.firstElementChild;
+    expect(firstInnerNode).not.toBeNull();
+
+    // Second announcement with the EXACT SAME message text (not a different
+    // string) -- this is deliberately NOT about the text differing.
+    await saveViewNamed(REPEAT_NAME);
+
+    // (3) Triggering the SAME message twice must produce an observable DOM
+    // mutation the second time: a NEW inner node replaces the old one, even
+    // though the rendered text is identical both times. Node-identity
+    // comparison (rather than MutationObserver) is used per the task's
+    // stated preference. This is what kills attempts 1 and 2:
+    //   - Attempt 1 (plain string state): React's Object.is bail-out means the
+    //     second identical setState is a no-op -- firstInnerNode would still
+    //     be liveRegion.firstElementChild, so `not.toBe` below would fail.
+    //   - Attempt 2 ({text, seq} but no keyed inner span): the state DOES
+    //     change (seq increments) and a re-render happens, but with no keyed
+    //     inner element there is no inner element node to swap -- the DOM
+    //     prop diff skips the no-op text update, so the node identity again
+    //     does not change (or no element child exists at all), and this
+    //     assertion again fails.
+    await waitFor(() => {
+      expect(liveRegion.firstElementChild).not.toBeNull();
+      expect(liveRegion.firstElementChild).not.toBe(firstInnerNode);
+    });
+
+    // Container identity is STILL the same node after the second announcement
+    // (re-asserted post-mutation; attempt 3 would have swapped this too).
+    expect(screen.getByTestId('evidence-library-live-region')).toBe(liveRegion);
+
+    // (4) The announced text is actually present in the container.
+    expect(liveRegion).toHaveTextContent(
+      new RegExp(`Saved view "${REPEAT_NAME}" created in this browser only`),
+    );
+
+    window.localStorage.clear();
+  });
+});

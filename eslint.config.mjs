@@ -30,6 +30,13 @@ const eslintConfig = [
       // site-packages trees.
       "**/.venv/**",
       "**/site-packages/**",
+      // Same class as the venv trees above: the Impeccable design skill is vendored third-party
+      // tooling installed via npx into .claude/ and .agents/. It is gitignored and never shipped,
+      // but `eslint .` was picking it up and producing 316 of the repo's 392 warnings -- 81% of the
+      // baseline, from code that is not ours and never reaches CI (which checks out without it).
+      // That gap made the local lint number useless for judging our own changes.
+      ".claude/skills/impeccable/**",
+      ".agents/skills/impeccable/**",
       "tests/**/*.js",
       "tests/archive/**",
       "*.config.js",

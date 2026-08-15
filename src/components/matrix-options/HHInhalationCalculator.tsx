@@ -463,6 +463,7 @@ export default function HHInhalationCalculator({
         <div
           className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
           data-testid="hh-inhalation-error"
+          role="alert"
         >
           {result.error}
         </div>
@@ -472,6 +473,8 @@ export default function HHInhalationCalculator({
         <div
           className="bg-slate-50 dark:bg-slate-800/60 rounded-xl p-6 text-center border border-slate-200 dark:border-slate-700 shadow-inner mb-6"
           data-testid="hh-inhalation-blocked"
+          role="status"
+          aria-live="polite"
         >
           <div className="text-xs font-bold text-slate-600 dark:text-slate-300 uppercase tracking-widest mb-1">
             Inhalation pathway blocked
@@ -486,6 +489,8 @@ export default function HHInhalationCalculator({
           <div
             className="bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner mb-6"
             data-testid="hh-inhalation-preliminary-standard"
+            role="status"
+            aria-live="polite"
           >
             <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
               Preliminary Human Health Screening Value (Inhalation)

@@ -83,7 +83,7 @@ const GUIDE_MARKDOWN = fs.readFileSync(
 
 function clickCalculatorTab() {
   // The Calculator top-tab nav button.
-  const tabBtn = screen.getByRole('button', { name: /^Calculator$/ });
+  const tabBtn = screen.getByRole('tab', { name: /^Calculator$/ });
   fireEvent.click(tabBtn);
 }
 
@@ -469,7 +469,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
   it('renders the References & Values tab with the evidence library', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^References & Values$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^References & Values$/ }));
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
     // Defaults to the Values table (By Parameter / Equations tabs were retired).
@@ -534,7 +534,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('shows methodology quick-reference copy on Methodology by pathway', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(
-      screen.getByRole('button', { name: /^Methodology by pathway$/ }),
+      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
     );
 
     expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
@@ -552,7 +552,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('shows pathway-filtered derivation equations in the Methodology by pathway drawer', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     fireEvent.click(
-      screen.getByRole('button', { name: /^Methodology by pathway$/ }),
+      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
     );
 
     // Default side-tab (Ecological: EqP & AVS) -> one EqP equation.
@@ -599,7 +599,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
   it('does NOT apply print:hidden on the left sidebar when on Methodology by pathway tab', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    const jurisTab = screen.getByRole('button', {
+    const jurisTab = screen.getByRole('tab', {
       name: /^Methodology by pathway$/,
     });
     fireEvent.click(jurisTab);
@@ -640,7 +640,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     expect(wrapper).toHaveStyle({ width: '480px' });
@@ -654,7 +654,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     // Default left panel width = 320px (MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH).
@@ -667,7 +667,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   it('renders the SSD Workbench as a Matrix Options top-level tab', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
 
-    fireEvent.click(screen.getByRole('button', { name: /^SSD Workbench$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^SSD Workbench$/ }));
 
     expect(screen.getByTestId('ssd-workbench-mock')).toBeInTheDocument();
     expect(screen.queryByTestId('left-sidebar-wrapper')).not.toBeInTheDocument();
@@ -680,7 +680,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     fireEvent.click(screen.getByRole('button', { name: /Focus measurement workbench/i }));
@@ -708,7 +708,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     // Both handles present before focusing.
     expect(
@@ -738,7 +738,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     // Initial width = 480px.
@@ -763,7 +763,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -784,7 +784,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -804,7 +804,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     // Initial width = 320px.
@@ -828,7 +828,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -849,7 +849,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -871,7 +871,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -889,7 +889,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -908,7 +908,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -926,7 +926,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -944,7 +944,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -965,7 +965,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('button', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
 
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
     // Start a drag -- body cursor should be col-resize.
