@@ -301,6 +301,72 @@ CLAUDE.md (authored 2026-05-27) is the L1 project anchor and already references 
 
 ---
 
+## Gate hygiene: three failures that cost a full session (2026-08-14)
+
+Added after a session in which each of these recurred repeatedly and was
+diagnosed only after the damage. All three are cheap to prevent and expensive to
+discover.
+
+### 1. Run the port preflight before any gate run that includes e2e
+
+`playwright.config.ts` sets `reuseExistingServer: false`, so ANY listener on the
+Playwright port fails the run before a single test executes. The error names the
+port, not the cause, so it reads as an environment problem rather than as
+leftover state from your own session -- a dev server you started earlier to look
+at the app is the usual culprit.
+
+    powershell -NoProfile -ExecutionPolicy Bypass -File scripts/verify/gate-preflight.ps1 -Port 3100 -Kill
+    if ($LASTEXITCODE -ne 0) { "preflight failed"; exit 1 }
+
+It exits non-zero when blocked so the gate stops early instead of burning a full
+suite run. It kills only a `node` process; anything else is reported and left
+alone, because parallel sessions are normal here and a process census is never a
+gate.
+
+This failed three times in one session. The correction was described after each
+one and implemented after none of them.
+
+### 2. A gate result is only valid if nothing changed during the run
+
+Reviews may read a live tree. Gates may not. Before reporting any gate block,
+confirm no changed file's modification time postdates the run's start, and say
+so in the report:
+
+    $start = Get-Date
+    # ... run gates ...
+    if ((git status --porcelain).Count -eq 0) { "CLEAN" } else { "DIRTY"; git status --porcelain }
+
+Two variants of this occurred: editing files while a suite ran, and refreshing
+the cheap gates while carrying an older e2e result forward. The second is more
+dangerous because the block looks complete.
+
+Where a file genuinely cannot affect a gate -- a `.ps1`, a `.md` -- say which
+file and why rather than omitting the discrepancy. The guard reporting DIRTY is
+the guard working.
+
+### 3. Never use `git stash` for a baseline while other work is in flight
+
+`git stash` operates on the whole repository, not on the files you are working
+on. Taking a before-and-after measurement by stashing will silently revert any
+concurrent edit and can lose it on the pop.
+
+This happened: one agent stashed to count tests while another was mid-edit, and
+part of the second agent's work was lost. It was recovered only by diffing the
+orphaned stash entry against the working tree.
+
+Take a baseline from `git show HEAD:<path>` instead. It reads history without
+touching the working tree.
+
+### Related: scope a fix by property, not by file list
+
+Not gate discipline, but it cost the same session five review rounds. A fix
+scoped as "these four files" misses the fifth every time. Scope it as the
+property -- "every component that renders a value comparable to another value on
+screen" -- and search for that. Five successive rounds each found one more
+instance; the round that finally enumerated the property found them all.
+
+---
+
 ## Reference
 
 - L0 cross-project rule 1.1 (ASCII only): `C:\Projects\CLAUDE.md`

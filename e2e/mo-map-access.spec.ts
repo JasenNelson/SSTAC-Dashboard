@@ -1,4 +1,5 @@
-import { expect, type Page, test } from '@playwright/test';
+import { expect, test } from '@playwright/test';
+import { clickUntilVisible, gotoMatrixOptionsOrSkip } from './fixtures/matrix-options-nav';
 
 // T40 Lane 3: member-vs-admin Matrix Map access. Skip-safe by construction:
 // - Unauthenticated projects (chromium/firefox/webkit): /matrix-options is middleware-gated, so we
@@ -10,30 +11,16 @@ import { expect, type Page, test } from '@playwright/test';
 // reach /admin/matrix-map/publish) requires a SECOND admin-role test user + storageState -- an OWNER
 // GATE, documented in docs/MATRIX_OPTIONS_T40_ADMIN_TIER_OWNER_GATE_2026_07_12.md. Not exercised here.
 
-// Mirror of the clickUntilVisible helper in matrix-options.spec.ts (tab open is retry-flaky under
-// cold-compile dev server).
-async function clickUntilVisible(page: Page, triggerName: string, visibleTestId: string) {
-  const trigger = page.getByRole('tab', { name: triggerName, exact: true });
-  const target = page.getByTestId(visibleTestId);
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    await expect(trigger).toBeVisible();
-    await trigger.click();
-    await page.waitForTimeout(500);
-    if (await target.isVisible({ timeout: 1000 }).catch(() => false)) return;
-  }
-  await expect(target).toBeVisible();
-}
-
 test.describe('Matrix Map member visibility (T40)', () => {
   test('interactive map: authenticated member reaches it and sees the partial-visibility banner; unauth bounces to /login', async ({ page }, testInfo) => {
-    await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-
     if (testInfo.project.name === 'chromium-auth') {
+      // gotoMatrixOptionsOrSkip navigates, skips if bounced to /login, and gates on the
+      // mount-only data-primary-tablist-ready marker (see fixtures/matrix-options-nav.ts) so
+      // the Interactive Map tab click below always lands on a hydrated, handler-bearing tab
+      // instead of racing SSR markup under a cold Leaflet-map dev-server compile.
+      await gotoMatrixOptionsOrSkip(page);
       // Authenticated MEMBER: not bounced; the Matrix Options dashboard renders.
       await expect(page).not.toHaveURL(/\/login/);
-      await expect(
-        page.getByRole('heading', { name: 'Matrix Options', exact: true }),
-      ).toBeVisible({ timeout: 15_000 });
 
       // Open the embedded Interactive Map tab.
       await clickUntilVisible(page, 'Interactive Map', 'matrix-options-interactive-map-embed');
@@ -56,6 +43,7 @@ test.describe('Matrix Map member visibility (T40)', () => {
       await expect(banner.getByRole('button', { name: 'Refresh matrix map samples' })).toBeVisible();
     } else {
       // Unauthenticated: /matrix-options is middleware-gated.
+      await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
       await expect(page).toHaveURL(/\/login/);
     }
   });
