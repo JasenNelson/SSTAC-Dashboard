@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -334,11 +340,66 @@ export default function MatrixDashboard({
   const [calcRailOverride, setCalcRailOverride] = useState<boolean | null>(
     null,
   );
-  // toggleRightPanel (above backgroundReferenceNeedsAttention in source order)
-  // needs that flag's latest value; this ref is kept in sync in-render (see
-  // the assignment near backgroundReferenceNeedsAttention) so the callback
-  // never captures a stale closure without reordering unrelated hooks.
-  const backgroundReferenceRef = useRef(false);
+  // A11y fix (F1, 2026-08-14 adversarial review): the right rail wrapper
+  // (calculator-reference-rail, shared by Calculator + Jurisdictional
+  // Frameworks) goes `inert` whenever it closes, including the AUTOMATIC
+  // close driven by backgroundReferenceNeedsAttention flipping to false. If
+  // the user's focus was inside the rail when that happens (e.g. a Value
+  // Search input), the browser drops focus to <body> with no announcement.
+  // rightPanelFocusInsideRef is kept current by onFocus/onBlur handlers on
+  // the wrapper div (see its JSX below), NOT by a render-driven effect --
+  // ordinary focus changes (a plain `.focus()` call, or a user Tab/click)
+  // never touch React state, so an effect keyed on re-renders would miss
+  // them entirely.
+  //
+  // D2 fix (2026-08-15 adversarial review): the ref used to be cleared
+  // "only when relatedTarget is a real element outside the wrapper", on the
+  // theory that a null relatedTarget only ever happens from the browser's
+  // own inert-triggered blur. That theory is false -- EVERY blur to a
+  // non-focusable target (a tap on a paragraph, or the iOS soft keyboard
+  // being dismissed) also reports relatedTarget === null, and those are
+  // ordinary "user left the rail" events, not the closing blur. Inferring
+  // cause from relatedTarget alone cannot tell the two apart, so a user who
+  // taps blank space to dismiss the keyboard kept the flag set, and a later
+  // unrelated auto-close then yanked focus to the toggle button and scrolled
+  // the page back to the header -- away from whatever field the user had
+  // moved on to.
+  //
+  // The explicit signal that actually distinguishes them: the wrapper's own
+  // `inert` DOM property. E3 fix (third adversarial round, 2026-08-15): the
+  // prior version of this comment claimed the browser applies `inert` and
+  // unfocuses the wrapper "synchronously, as part of the same commit" that
+  // closes the rail. MEASURED across chromium, firefox and webkit: that is
+  // false -- the inert-triggered focusout fires ASYNCHRONOUSLY, in a later
+  // task, in every engine tested; nothing about it is synchronous. The
+  // conclusion this relies on is still correct, and was verified in all
+  // three engines: whenever that focusout does eventually arrive,
+  // `event.currentTarget.inert` already reads true, because `inert` was set
+  // on the wrapper before the focusout task ran. So checking `inert` still
+  // needs no relatedTarget inference: only clear the ref when the wrapper is
+  // NOT inert (a genuine "user left" event); when it IS inert, leave the ref
+  // untouched so the closing effect below still knows focus was inside right
+  // up to the close.
+  //
+  // See E1 below (the rescue effect) for a second, independent gap this
+  // onBlur/onFocus tracking cannot close on its own: on firefox and webkit,
+  // removing the focused element from the DOM (rather than blurring it)
+  // fires no focusout at all, so this handler never runs and the ref can go
+  // stale. The rescue effect reconciles against document.activeElement to
+  // cover that case; this handler is unchanged.
+  //
+  // (A queueMicrotask-based document.activeElement re-check was considered
+  // and rejected: by the time a queued microtask runs, the rescue effect
+  // below has not yet fired -- passive effects are scheduled on a later
+  // macrotask -- but the microtask itself would ALSO observe focus already
+  // moved off the wrapper for the legitimate inert-close case, clearing the
+  // ref before the rescue effect ever reads it and silently defeating F1.
+  // The `inert` property check has no such race in the SYNCHRONOUS-handler
+  // sense: whichever task the focusout runs in, `inert` already reads true
+  // by the time that handler runs, so it never needs to race a microtask.)
+  const rightPanelWrapperRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelToggleRef = useRef<HTMLButtonElement | null>(null);
+  const rightPanelFocusInsideRef = useRef(false);
   const [matrixMapLeftPanelWidth, setMatrixMapLeftPanelWidth] = useState(
     MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
   );
@@ -560,23 +621,6 @@ export default function MatrixDashboard({
   const handleDismissReceipt = useCallback(() => {
     setCalculatorReceipt(null);
   }, []);
-  // toggleRightPanel is defined here (before backgroundReferenceNeedsAttention
-  // is computed further down) but needs that flag's latest value in
-  // Calculator mode. Rather than reordering unrelated hooks/derivations to
-  // move this callback below the flag's declaration, a ref holds the latest
-  // value and the callback reads from it -- see backgroundReferenceRef below.
-  const toggleRightPanel = useCallback(() => {
-    if (isCalculatorMode) {
-      setCalcRailOverride(
-        (current) => !(current ?? backgroundReferenceRef.current),
-      );
-      return;
-    }
-    setShowRightPanel((current) => {
-      if (current) setMatrixMapWorkbenchFocused(false);
-      return !current;
-    });
-  }, [isCalculatorMode]);
   // Left separator is on the panel's RIGHT edge. Dragging right widens the
   // left panel; dragging left narrows it.
   // delta = clientX - startX (positive = moving right = wider left panel).
@@ -871,9 +915,26 @@ export default function MatrixDashboard({
   // numbered stages (see the assembled-page test asserting exactly that).
   const backgroundReferenceNeedsAttention =
     preliminarySlot.state === 'computed' && utlSlot.state !== 'computed';
-  // Kept in sync every render (not in an effect -- toggleRightPanel needs the
-  // CURRENT value at click time, and an effect would lag one render behind).
-  backgroundReferenceRef.current = backgroundReferenceNeedsAttention;
+  // P3-1 fix (2026-08-14 adversarial review): toggleRightPanel used to live
+  // above this declaration and read a ref (backgroundReferenceRef) synced
+  // in-render on every pass purely to dodge a hook-reorder. Defining the
+  // callback HERE instead -- after backgroundReferenceNeedsAttention already
+  // exists -- lets it close over the value directly; no ref, no in-render
+  // side-write. Hook order stays stable across renders (this useCallback call
+  // itself is unconditional, same as it was above), so this move does not
+  // violate the rules of hooks.
+  const toggleRightPanel = useCallback(() => {
+    if (isCalculatorMode) {
+      setCalcRailOverride(
+        (current) => !(current ?? backgroundReferenceNeedsAttention),
+      );
+      return;
+    }
+    setShowRightPanel((current) => {
+      if (current) setMatrixMapWorkbenchFocused(false);
+      return !current;
+    });
+  }, [isCalculatorMode, backgroundReferenceNeedsAttention]);
   // Owner 2026-08-14: "reference only shown when working in stage 3". The flag
   // above already means exactly "Stage 3 is the actionable step", so the
   // Calculator reference rail follows it -- as a DERIVED value, not an
@@ -888,13 +949,73 @@ export default function MatrixDashboard({
   // not a parameter change -- the new pathway's rail is a fresh derivation).
   // A user who opens the rail early to read the K-factor table is not fought
   // by an effect on every render.
+  //
+  // P3-2 fix (2026-08-14 adversarial review): isCalculatorMode is now also a
+  // dep. Without it, a manual override set while ON the Calculator tab
+  // survived a round trip through another top tab and back -- leaving the
+  // rail's derivation frozen from before the visit, even though re-entering
+  // the Calculator tab is exactly the kind of "context change" this effect
+  // already treats a pathway switch as. Keying on isCalculatorMode clears the
+  // override on EVERY tab transition into or out of Calculator, so
+  // re-entering always restores stage-following.
   useEffect(() => {
     setCalcRailOverride(null);
-  }, [backgroundReferenceNeedsAttention, activeCategory]);
+  }, [backgroundReferenceNeedsAttention, activeCategory, isCalculatorMode]);
   const calculatorRailOpen = calcRailOverride ?? backgroundReferenceNeedsAttention;
   const effectiveShowRightPanel = isCalculatorMode
     ? calculatorRailOpen
     : showRightPanel;
+  // F1 fix, part 2: on the transition from open -> closed, if focus was
+  // inside the rail, move it to the rail's own toggle button -- the control
+  // that can bring the rail back, and an announced, sensible landing spot.
+  // Never fires when focus was NOT inside the rail (manual toggle by a user
+  // whose focus is elsewhere, or an auto-close nobody was reading).
+  const prevEffectiveShowRightPanelRef = useRef(effectiveShowRightPanel);
+  useEffect(() => {
+    const wasOpen = prevEffectiveShowRightPanelRef.current;
+    prevEffectiveShowRightPanelRef.current = effectiveShowRightPanel;
+    // E1 fix (third adversarial round, 2026-08-15): the flag alone is not
+    // trustworthy. It is maintained only by onFocus/onBlur on the wrapper,
+    // and a focusout is not guaranteed to fire when the focused element is
+    // removed from the DOM out from under it -- MEASURED across engines:
+    // chromium fires focusout on element removal (activeElement -> body);
+    // firefox and webkit do NOT fire it (activeElement also ends up at
+    // body, but silently, with no onBlur call to clear the ref). That is
+    // reachable here: CalculatorValueSearchPanel's "Clear value search" X
+    // button unmounts itself on click while holding focus. On
+    // firefox/webkit the ref then stays stuck true, and a later, unrelated
+    // auto-close would wrongly steal focus from whatever the user moved on
+    // to next.
+    //
+    // Reconcile the flag against document.activeElement at the point of
+    // use rather than trusting it blindly: only rescue when the flag says
+    // focus was inside AND activeElement is either genuinely orphaned
+    // (reset to body, the state left behind by both the tracked-blur path
+    // and the untracked DOM-removal path) or still physically inside the
+    // wrapper (defensive; covers a focus that never blurred at all). A
+    // pure activeElement check without the flag was rejected: whether the
+    // passive effect below runs before or after the browser's own
+    // deferred focus fixup after an inert-close is not established, so the
+    // flag remains the primary signal and activeElement is the
+    // reconciliation, not a replacement.
+    if (
+      wasOpen &&
+      !effectiveShowRightPanel &&
+      rightPanelFocusInsideRef.current &&
+      (document.activeElement === document.body ||
+        rightPanelWrapperRef.current?.contains(document.activeElement))
+    ) {
+      rightPanelFocusInsideRef.current = false;
+      // preventScroll: true is deliberate. The toggle lives in the header
+      // chrome, so there is nothing to gain by scrolling to it, and this
+      // rescue can fire while the page is scrolled far down a stacked phone
+      // layout (~11,000px tall on some routes). Without preventScroll,
+      // WebKit's focus() call scrolls the whole page back up to the header
+      // -- a jarring jump, not a correctness defect (nothing is stolen and
+      // no value is hidden; focus was genuinely orphaned), but avoidable.
+      rightPanelToggleRef.current?.focus({ preventScroll: true });
+    }
+  }, [effectiveShowRightPanel]);
   // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
   // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
   // either operand is unavailable -- see BackgroundAdjustment.tsx Stage 4.
@@ -933,6 +1054,17 @@ export default function MatrixDashboard({
   );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
+  // A11y fix (F2, 2026-08-14 adversarial review): the toggle's aria-label
+  // used to read the generic "Show/Hide right panel" in every mode, telling
+  // a screen-reader user a layout term instead of what the panel holds. In
+  // Calculator mode the rail's own on-screen heading already reads
+  // "Value Search" (rightPanelTitle above), so reuse that exact, verified
+  // string rather than inventing new copy. Scoped to Calculator only, per
+  // the finding: Jurisdictional Frameworks shares the same wrapper but was
+  // not named in the finding, so it keeps the generic label.
+  const rightPanelToggleLabel = isCalculatorMode
+    ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} ${rightPanelTitle} panel`
+    : `${effectiveShowRightPanel ? 'Hide' : 'Show'} right panel`;
   // Both are lg-scoped so the rail is full-width when the shell is stacked and
   // fixed-width only once it sits beside the content. The INNER width matters
   // most: a bare w-[384px] is wider than a 375 px viewport, so the old value
@@ -1681,10 +1813,30 @@ export default function MatrixDashboard({
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
            {(isToolMode || isReviewMode || (isEvidenceLibraryMode && !isMobile) || (isMapMode && !isMobile)) && (
              <>
-               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
+               {/*
+                 F3 fix (2026-08-14 adversarial review): aria-expanded reflects
+                 the actual panel state (not a static role). aria-controls is
+                 deliberately omitted -- this single toggle drives a DIFFERENT
+                 underlying wrapper depending on the active tab (left-sidebar-
+                 wrapper / matrix-map-left-panel-wrapper), none of which carry a
+                 stable id, and inventing one solely for this attribute was out
+                 of scope per the finding's own caveat.
+               */}
+               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-expanded={showLeftPanel}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                </button>
-               <button onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', effectiveShowRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={effectiveShowRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={effectiveShowRightPanel ? 'Hide right panel' : 'Show right panel'}>
+               {/*
+                 F1 fix: rightPanelToggleRef is the focus-rescue target when
+                 the rail closes (auto or manual) while focus was inside it --
+                 see the onFocus/onBlur handlers on the rail wrapper and the
+                 closing effect near effectiveShowRightPanel's declaration.
+                 F2/F3 fix: rightPanelToggleLabel is content-aware
+                 in Calculator mode (reuses the rail's own on-screen heading,
+                 rightPanelTitle) instead of the generic "right panel" term;
+                 aria-expanded reflects effectiveShowRightPanel (same
+                 aria-controls caveat as the left toggle above).
+               */}
+               <button ref={rightPanelToggleRef} onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', effectiveShowRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={rightPanelToggleLabel} aria-label={rightPanelToggleLabel} aria-expanded={effectiveShowRightPanel}>
                  {effectiveShowRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                </button>
              </>
@@ -1726,8 +1878,11 @@ export default function MatrixDashboard({
 
       {/*
         Option A responsive shell (owner-selected 2026-08-14). Below `lg` the
-        three zones stack into one column and each rail becomes a drawer above
-        the main content; at `lg` and up the original three-column layout is
+        three zones stack into one column: DOM order puts the left rail ABOVE
+        the main content and the right rail BELOW it (no `order-first` or
+        other order utility is applied anywhere in this shell, so plain DOM
+        order decides stacked position -- see the right rail's own P2-2
+        comment below). At `lg` and up the original three-column layout is
         byte-for-byte what it was. The breakpoint work is pure CSS rather than a
         JS `isMobile` branch on purpose: this subtree is server-rendered before
         React attaches, and a JS breakpoint would render the desktop shell on
@@ -1737,7 +1892,10 @@ export default function MatrixDashboard({
 
         Stacked, the column must scroll as a whole (each zone is auto-height),
         so overflow-hidden is deferred to `lg` where the inner panes scroll
-        themselves.
+        themselves. P1 fix (2026-08-14 adversarial review): "each zone is
+        auto-height" was the INTENT here, but the Main Content zone below did
+        not actually implement it -- see the comment on that div for the
+        mechanism and the fix.
       */}
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
@@ -1746,7 +1904,11 @@ export default function MatrixDashboard({
             <div
               data-testid="left-sidebar-wrapper"
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0',
+                // F4 fix (2026-08-14 adversarial review): motion-reduce:transition-none
+                // honours prefers-reduced-motion -- this wrapper's own width/height
+                // collapse animation is exactly the kind of non-essential motion that
+                // preference asks to skip.
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 motion-reduce:transition-none',
                 // Stacked below lg, the divider belongs on the bottom edge;
                 // side-by-side at lg and up, on the right edge as before.
                 'border-b lg:border-b-0 lg:border-r',
@@ -1761,8 +1923,42 @@ export default function MatrixDashboard({
                 // Stacked, w-0 would collapse the rail to a zero-width strip
                 // that still occupies full column height, so the collapse must
                 // be HEIGHT instead -- full width, max-h-0, no padding.
+                //
+                // D1 fix (2026-08-15 adversarial review): a P3-4 fix
+                // (2026-08-14) previously gave the OPEN branch an explicit
+                // `max-h-[2400px]` here, paired with `max-h-0` on the CLOSED
+                // branch, so `transition-all` had two interpolable px values
+                // to animate between below `lg`. That cap was ITSELF a
+                // silent-hiding defect and has been reverted:
+                //   - Below `lg` this wrapper's height is `auto` (only
+                //     max-height is constrained), so per CSS 2.1 10.5 the
+                //     inner `h-full` pane resolves to auto too -- the
+                //     `flex-1 overflow-y-auto` body pane inside never gets a
+                //     bounded box to scroll within. Content past 2400px was
+                //     CLIPPED with no scrollbar and no indicator, not
+                //     scrolled.
+                //   - This is reachable in normal use: the value-search list
+                //     is capped at 3 rows only while its query is empty; one
+                //     tap on a suggestion chip makes it unbounded, and at
+                //     ~180-230px/row on a 375px viewport the cap was exceeded
+                //     at roughly 8-10 rows of regulatory values with units
+                //     and source attribution.
+                //   - Print is worse: Tailwind `lg:` is a min-width query, so
+                //     `lg:max-h-none` does not apply to the print page box
+                //     (~624-816 CSS px), and this rail has no `print:hidden`
+                //     -- printing the Calculator truncated the rail at
+                //     2400px in the PDF, a path that was uncapped before the
+                //     P3-4 fix.
+                // A cosmetic snap-instead-of-animate collapse is preferable
+                // to a silent-hiding path on regulatory values. If the
+                // animation is wanted later, the safe technique is an
+                // interpolable `grid-template-rows: 0fr <-> 1fr` pair, which
+                // needs no max-height cap at all.
                 showLeftPanel
-                  ? cn('w-full p-6', isCalculatorMode ? 'lg:w-96' : 'lg:w-80')
+                  ? cn(
+                      'w-full p-6',
+                      isCalculatorMode ? 'lg:w-96' : 'lg:w-80',
+                    )
                   : 'max-h-0 w-full border-b-0 p-0 lg:max-h-none lg:w-0',
                 // Plan v3 section 4.2 + section 10: hide the entire left
                 // sidebar when printing the Calculator tab so window.print()
@@ -1806,7 +2002,28 @@ export default function MatrixDashboard({
               className={cn(
                 // p-8 (32 px each side) costs 64 px of a 375 px viewport before
                 // any content renders; halved below lg, unchanged at desktop.
-                'flex-1 relative overflow-y-auto p-4 lg:p-8',
+                //
+                // P1 fix (2026-08-14 adversarial review): this div is a flex
+                // item (flex-1) inside a flex-col container below `lg`. Per
+                // CSS Flexbox 4.5 (automatic minimum size), a flex item's
+                // default min-height along the main axis is its CONTENT size --
+                // UNLESS the item's own overflow is something other than
+                // `visible`, in which case the automatic minimum resolves to 0
+                // instead. This div used to carry an unscoped `overflow-y-auto`,
+                // so below `lg` its minimum size was 0: with the left/right
+                // rails both flex-shrink-0 (refusing to shrink) and the shell
+                // height definite (page.tsx's h-[calc(100vh-4rem)]), free space
+                // went negative and this flex-1 item was squeezed to 0px --
+                // silently clipping the entire calculator body on a phone,
+                // values and all. Scoping overflow-y-auto to `lg:` restores
+                // `min-height: auto` (content-based) below `lg`, so this zone
+                // takes its natural content height and the SHELL wrapper's own
+                // overflow-y-auto (see the comment above this three-zone
+                // container) does the scrolling instead -- which is what that
+                // comment already claimed happened. At `lg` and up the layout
+                // is unchanged: this pane scrolls itself again, byte-for-byte
+                // the prior desktop behavior.
+                'flex-1 relative p-4 lg:overflow-y-auto lg:p-8',
                 isCalculatorMode
                   ? 'bg-[var(--db-surface)]'
                   : 'bg-white dark:bg-slate-950',
@@ -1821,21 +2038,65 @@ export default function MatrixDashboard({
 
             {/* Right Drawer */}
             <div
-              data-testid="calculator-reference-rail"
+              // F5 fix (2026-08-14 adversarial review): this testid used to be
+              // unconditional, so it was also present when isToolMode covers
+              // Jurisdictional Frameworks -- a test selecting by this testid
+              // could silently pass against the wrong tab's drawer. No existing
+              // test relies on it being present outside Calculator mode (the
+              // only describe block that reads it is scoped to Calculator, per
+              // MatrixDashboard.test.tsx), so restricting it is safe.
+              data-testid={isCalculatorMode ? 'calculator-reference-rail' : undefined}
+              ref={rightPanelWrapperRef}
+              // F1 fix: React's onFocus/onBlur use the focusin/focusout event
+              // model, so they fire for ANY descendant gaining/losing focus,
+              // not just this element itself -- see the ref declaration's
+              // comment above for why this is event-driven rather than
+              // render-driven.
+              onFocus={() => {
+                rightPanelFocusInsideRef.current = true;
+              }}
+              onBlur={(event) => {
+                // D2 fix: see the rightPanelFocusInsideRef declaration above
+                // for why this reads `inert` instead of inferring cause from
+                // relatedTarget. `inert` true means the browser is
+                // unfocusing this element as a synchronous consequence of
+                // the rail closing -- leave the ref alone. `inert` false
+                // means the rail is still open and focus genuinely left on
+                // its own (a real element, or null from a tap on
+                // non-focusable content / keyboard dismissal) -- clear it.
+                if (!event.currentTarget.inert) {
+                  rightPanelFocusInsideRef.current = false;
+                }
+              }}
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 shadow-2xl',
-                // Stacked below lg this rail sits ABOVE the main content (DOM
-                // order puts it after, so it is ordered up), making its divider
-                // a bottom edge; side-by-side it keeps the left edge.
-                'border-b lg:border-b-0 lg:border-l',
+                // F4 fix: see the matching motion-reduce comment on the left
+                // sidebar wrapper above -- same rationale, same fix.
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 shadow-2xl motion-reduce:transition-none',
+                // P2-2 fix (2026-08-14 adversarial review): this rail has no
+                // `order-first` (or any order utility) anywhere in its class
+                // list, so DOM order alone decides stacked position -- and DOM
+                // order puts it AFTER Main Content, i.e. it renders BELOW the
+                // main content when stacked, not above. The old comment and
+                // border-b/lg:border-l pairing both assumed an ordering trick
+                // that is not present in this code; border-t is the correct
+                // divider edge for a zone that sits below its neighbor.
+                'border-t lg:border-t-0 lg:border-l',
                 isCalculatorMode
                   ? 'bg-[var(--db-surface)] border-[var(--db-border)]'
                   : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800',
                 // Height-collapse when stacked, width-collapse when side by
-                // side -- same reasoning as the left rail.
+                // side -- same reasoning as the left rail. D1 fix
+                // (2026-08-15 adversarial review): this rail carried the same
+                // `max-h-[2400px]` cap the left sidebar did, and the same
+                // fix applies -- see the D1 comment on the left sidebar
+                // wrapper above for the full reasoning (no inner scroller
+                // below `lg`, so the cap clips value-search results instead
+                // of scrolling them; `lg:` does not apply in print, so the
+                // cap truncated printed output). Reverted; the collapse
+                // snaps instead of animating below `lg`.
                 effectiveShowRightPanel
                   ? cn('w-full', rightPanelOpenWidth)
-                  : 'max-h-0 w-full border-b-0 lg:max-h-none lg:w-0',
+                  : 'max-h-0 w-full border-t-0 lg:max-h-none lg:w-0',
               )}
               // NEW-P3-3 (a11y audit round 3): same collapse pattern as the
               // left-sidebar-wrapper and the two matrix-map panel wrappers

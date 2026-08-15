@@ -1699,42 +1699,65 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   // "genuinely-nothing-entered" test above already exercises, but assert
   // the RAIL's open/closed state rather than the summary-bar chips. Two
   // independent signals per assertion: the toggle button's aria-label
-  // (Hide/Show right panel, unaffected by any styling refactor) and the
-  // rail wrapper's `inert` attribute (the actual a11y mechanism that keeps
-  // a collapsed rail out of the focus/tab order -- see the wrapper's own
-  // comment in MatrixDashboard.tsx).
+  // (Hide/Show Value Search panel -- the F2 fix, 2026-08-14 adversarial
+  // review, made this label content-aware in Calculator mode instead of the
+  // old generic "right panel" term; unaffected by any OTHER styling
+  // refactor) and the rail wrapper's `inert` attribute (the actual a11y
+  // mechanism that keeps a collapsed rail out of the focus/tab order -- see
+  // the wrapper's own comment in MatrixDashboard.tsx).
   describe('MatrixDashboard -- Calculator reference rail follows Stage 3 (2026-08-14)', () => {
     function expectRailOpen() {
       expect(
-        screen.getByRole('button', { name: /^Hide right panel$/ }),
+        screen.getByRole('button', { name: /^Hide Value Search panel$/ }),
       ).toBeInTheDocument();
       expect(screen.getByTestId('calculator-reference-rail')).not.toHaveAttribute('inert');
     }
 
     function expectRailClosed() {
       expect(
-        screen.getByRole('button', { name: /^Show right panel$/ }),
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
       ).toBeInTheDocument();
       expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
     }
 
     it('is CLOSED when the preliminary standard is not yet computed', () => {
+      // P3-5 fix (2026-08-14 adversarial review): the original version of
+      // this test started from an already-closed baseline and never observed
+      // a transition, so it would pass against a rail that was hard-coded
+      // shut regardless of state. This version first forces the rail OPEN
+      // (the same reference-samples lever the "OPENS when..." test uses), so
+      // the closing assertion below actually discriminates "derives closed
+      // from a BLOCKED preliminary" from "always closed."
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
       fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
 
       // Every seeded default computes immediately (both the preliminary
-      // standard and the UTL), so the rail starts closed too -- confirm that
-      // baseline first, then break ONLY the preliminary standard using the
-      // same Stage-2-only lever ("a Stage-2-only invalid input" test above):
-      // target risk is not one of Stage 1's seven fields, so Stage 1 (and
-      // therefore the UTL, which does not depend on it) stay untouched while
-      // Stage 2 goes BLOCKED. backgroundReferenceNeedsAttention requires
-      // preliminarySlot.state === 'computed', so a BLOCKED preliminary keeps
-      // the rail shut for the same reason a not-yet-computed one would.
+      // standard and the UTL), so the rail starts closed.
       expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
         /computed/i,
       );
+      expectRailClosed();
+
+      // Break only the UTL (reference-sample count below 2) -- Stage 3
+      // becomes actionable and the rail opens. This is the discriminating
+      // transition: a hard-coded-shut rail would fail HERE, before this test
+      // even reaches its real assertion.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Now break ONLY the preliminary standard too, using the same
+      // Stage-2-only lever ("a Stage-2-only invalid input" test above):
+      // target risk is not one of Stage 1's seven fields, so Stage 1 (and
+      // therefore the UTL, which does not depend on it) stay untouched while
+      // Stage 2 goes BLOCKED. backgroundReferenceNeedsAttention requires
+      // preliminarySlot.state === 'computed', so a BLOCKED preliminary closes
+      // the rail again even though the UTL is STILL not computed -- proving
+      // the closing behavior is driven by the preliminary standard's state,
+      // not merely by the UTL settling back to computed.
       const hhDirect = screen.getByTestId('hh-direct-contact-calculator');
       fireEvent.change(within(hhDirect).getByLabelText(/target risk/i), {
         target: { value: '-1' },
@@ -1742,6 +1765,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).not.toHaveTextContent(
         /computed/i,
       );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
 
       expectRailClosed();
     });
@@ -1812,7 +1836,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       expectRailOpen();
 
       // Manual close.
-      fireEvent.click(screen.getByRole('button', { name: /^Hide right panel$/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Hide Value Search panel$/ }));
       expectRailClosed();
 
       // An unrelated re-render: change a Stage 1 input that does not flip
@@ -1851,7 +1875,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
       // Manual open, while Stage 3 is NOT actionable -- this only exercises
       // the override, not the derived value.
-      fireEvent.click(screen.getByRole('button', { name: /^Show right panel$/ }));
+      fireEvent.click(screen.getByRole('button', { name: /^Show Value Search panel$/ }));
       expectRailOpen();
 
       // Switch pathway. hh-direct unmounts (its preliminary report briefly
@@ -1883,8 +1907,8 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       // implementations read identically AFTER the click settles. A
       // MutationObserver watching the toggle button's aria-label makes the
       // extra corrective render visible: the derived fix inserts the button
-      // already reading "Show right panel" (one childList insertion, zero
-      // attribute mutations); an effect-writer inserts it open, then
+      // already reading "Show Value Search panel" (one childList insertion,
+      // zero attribute mutations); an effect-writer inserts it open, then
       // mutates the SAME node's aria-label once the effect fires.
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
 
@@ -1906,12 +1930,236 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       const mutations = observer.takeRecords();
       observer.disconnect();
 
-      const toggleButton = screen.getByRole('button', { name: /^Show right panel$/ });
+      const toggleButton = screen.getByRole('button', { name: /^Show Value Search panel$/ });
       const flashMutation = mutations.find(
         (record) => record.type === 'attributes' && record.target === toggleButton,
       );
       expect(flashMutation).toBeUndefined();
       expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
+    });
+
+    // F1 (2026-08-14 adversarial review): the rail's own toggle button is the
+    // focus-rescue target when it closes -- auto or manual -- while focus was
+    // inside it.
+    it('F1: closing the rail while focus is inside moves focus to the toggle button', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Force the rail open (Stage 3 actionable) -- same lever as "OPENS
+      // when..." above.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something INSIDE the rail (the Value Search input).
+      const searchInput = screen.getByPlaceholderText(/search parameter or source/i);
+      searchInput.focus();
+      expect(document.activeElement).toBe(searchInput);
+
+      // Restore a valid reference-sample set -- Stage 3 recomputes the UTL
+      // and the rail auto-closes (same lever "CLOSES again once the UTL is
+      // computed" uses). This is the AUTOMATIC close the finding described;
+      // nothing here clicks the toggle.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+
+      // Focus must have moved to the toggle button -- not dropped to <body>.
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
+      );
+    });
+
+    // F1 negative case: the fix must NOT steal focus when the rail closes and
+    // focus was never inside it. Neutralizes the F1 test above in the other
+    // direction -- a naive "always focus the toggle on close" implementation
+    // would pass the positive test but fail this one.
+    it('F1 (negative): closing the rail does NOT move focus when focus was outside it', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something OUTSIDE the rail -- the substance combobox in the
+      // left OPTIONS rail.
+      const outsideEl = screen.getByTestId('substance-combobox-input');
+      outsideEl.focus();
+      expect(document.activeElement).toBe(outsideEl);
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expectRailClosed();
+
+      // Focus must NOT have been stolen.
+      expect(document.activeElement).toBe(outsideEl);
+    });
+
+    // D2 (2026-08-15 adversarial review): the case that actually discriminates
+    // the fix. Neither F1 above (focus never leaves the rail before it
+    // closes) nor F1 (negative) above (focus was never inside the rail to
+    // begin with) exercises the "focus WAS inside, then genuinely left,
+    // BEFORE the rail closed" transition -- and that transition is exactly
+    // where the old relatedTarget-null-means-stay inference broke: a tap on
+    // non-focusable content (a paragraph, or the iOS keyboard being
+    // dismissed) reports relatedTarget === null, identically to the
+    // browser's own inert-triggered close blur, so the old code left the
+    // "focus inside" ref wrongly set to true. This test reproduces that
+    // exact blur (fireEvent.blur with relatedTarget: null, fired while the
+    // rail is still open and therefore NOT yet inert) and asserts the
+    // later close does not then steal focus to the toggle -- which it would
+    // under the old inference, since the ref was never correctly cleared.
+    it('F1 (D2 case): a null-relatedTarget blur BEFORE the rail closes (e.g. tap on non-focusable content) does not leave focus stealable on close', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something INSIDE the rail (same lever as F1 above).
+      const searchInput = screen.getByPlaceholderText(/search parameter or source/i);
+      searchInput.focus();
+      expect(document.activeElement).toBe(searchInput);
+
+      // Simulate a tap on non-focusable page content (a paragraph, or the
+      // soft keyboard being dismissed): relatedTarget is null, but this
+      // happens while the rail is still OPEN -- the wrapper is not yet
+      // `inert` -- unlike the browser's own close-triggered blur, which is
+      // also relatedTarget-null but happens exactly when the wrapper
+      // becomes inert. The D2 fix reads `event.currentTarget.inert` to tell
+      // these apart instead of inferring from relatedTarget alone.
+      fireEvent.blur(searchInput, { relatedTarget: null });
+
+      // Now close the rail (same lever as F1 above: restore a valid
+      // reference-sample set).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expectRailClosed();
+
+      // Focus must NOT have been moved to the toggle button -- the blur
+      // above was a genuine "user left" event, not the rail closing, so the
+      // rescue effect should see the ref already cleared.
+      expect(document.activeElement).not.toBe(
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
+      );
+    });
+
+    // F2 (2026-08-14 adversarial review): the toggle's aria-label is
+    // content-aware ("Value Search panel") in Calculator mode, using the same
+    // string as the rail's own on-screen heading, and stays generic
+    // ("right panel") on Jurisdictional Frameworks, which shares the wrapper
+    // but was not named in the finding.
+    it('F2: right panel toggle label is content-aware in Calculator, generic elsewhere', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      expect(
+        screen.getByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /^(Show|Hide) right panel$/ }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
+      expect(
+        screen.getByRole('button', { name: /^(Show|Hide) right panel$/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    // F3 (2026-08-14 adversarial review): aria-expanded reflects the actual
+    // panel state on both header toggles.
+    it('F3: left panel toggle aria-expanded matches panel state', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      const leftToggle = screen.getByRole('button', { name: /left panel$/i });
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
+      fireEvent.click(leftToggle);
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'false');
+      fireEvent.click(leftToggle);
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('F3: right panel toggle aria-expanded matches the rail state', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Seeded defaults compute both slots immediately -> rail starts closed.
+      const rightToggle = () =>
+        screen.getByRole('button', { name: /Value Search panel$/ });
+      expect(rightToggle()).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /pending/i,
+      );
+      expect(rightToggle()).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    // F5 (2026-08-14 adversarial review): calculator-reference-rail is the
+    // SHARED right-drawer wrapper for both Calculator and Jurisdictional
+    // Frameworks (both isToolMode), but the testid itself must only ever
+    // resolve on the Calculator tab.
+    it('F5: the calculator-reference-rail testid is scoped to Calculator mode only', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      expect(screen.getByTestId('calculator-reference-rail')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
+      expect(screen.queryByTestId('calculator-reference-rail')).not.toBeInTheDocument();
+    });
+
+    // P3-2 (2026-08-14 adversarial review): a manual override must not
+    // survive a round trip through another top tab -- re-entering Calculator
+    // is a context change, same as switching pathways already is.
+    it('P3-2: manual open is CLEARED by a tab round trip through The Guide', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: seeded defaults compute both slots immediately, rail
+      // starts closed.
+      expectRailClosed();
+
+      // Manual open while Stage 3 is NOT actionable.
+      fireEvent.click(screen.getByRole('button', { name: /^Show Value Search panel$/ }));
+      expectRailOpen();
+
+      // Leave the Calculator tab and come back, with Stage 3 still not
+      // actionable throughout (no state that would change
+      // backgroundReferenceNeedsAttention is touched).
+      fireEvent.click(screen.getByRole('tab', { name: /^The Guide$/ }));
+      clickCalculatorTab();
+
+      // The override must be gone; the rail follows Stage 3 (closed) again.
+      expectRailClosed();
     });
   });
 

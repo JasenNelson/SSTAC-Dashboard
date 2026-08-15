@@ -26,6 +26,16 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
     await page.getByTestId('category-selector-hh-food').click();
 
+    // The right rail (Value Search panel, which hosts this shortcut) is
+    // deliberately gated to Stage 3 per owner instruction (2026-08-14): it is
+    // reference DATA, shown only while working in Stage 3, and is collapsed
+    // (and `inert`) by default otherwise. "Review candidate defaults" is an
+    // ACTION, not reference data, but it lives inside that same panel, so the
+    // real user flow to reach it is: open the panel via the header toggle
+    // first. Its accessible name in Calculator mode is "Show Value Search
+    // panel" (content-aware per the F2 fix, 2026-08-14 adversarial review).
+    await page.getByRole('button', { name: 'Show Value Search panel', exact: true }).click();
+
     const reviewButton = page.getByRole('button', {
       name: 'Review candidate defaults',
       exact: true,

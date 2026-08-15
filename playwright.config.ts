@@ -28,6 +28,22 @@ const playwrightBaseURL =
 // when E2E_TEST_EMAIL/PASSWORD are present AND E2E_AUTH_ENABLED=true is explicitly set.
 // This ensures secrets alone do not enable auth setup on every branch, avoiding CI failures.
 // (unauth specs skip on the /login bounce exactly as before).
+//
+// E6 note (third adversarial round, 2026-08-15): E2E_AUTH_ENABLED is a SEPARATE
+// gate from having credentials -- both are required, and credentials alone are
+// NOT enough. Locally, a .env.local with E2E_TEST_EMAIL/E2E_TEST_PASSWORD set but
+// no E2E_AUTH_ENABLED='true' silently produces zero chromium-auth/chromium-admin-auth
+// projects (VERIFIED via `npx playwright test --list`: 3 projects without the var,
+// 5 with it, including the chromium-auth run of this file's own phone-layout spec).
+// Every auth-gated spec (including matrix-options-phone-layout.spec.ts) also
+// matches the unauthenticated chromium/firefox/webkit projects below (those
+// projects only testIgnore the setup files, not this spec), where it hits the
+// /login bounce and test.skip()s; chromium-auth is the only project where it
+// actually exercises the phone layout. Without chromium-auth existing at all,
+// a local `npm run test:e2e` reports green having never executed the
+// auth-gated assertions -- a silent coverage reduction, not a failure. CI sets this repo
+// variable to true, so CI does exercise chromium-auth; to run it locally, set the
+// var explicitly, e.g. (PowerShell) `$env:E2E_AUTH_ENABLED='true'; npm run test:e2e`.
 const hasE2ECreds = Boolean(process.env.E2E_TEST_EMAIL && process.env.E2E_TEST_PASSWORD);
 const authEnabled = process.env.E2E_AUTH_ENABLED === 'true';
 const runAuthenticatedE2E = hasE2ECreds && authEnabled;
@@ -43,7 +59,14 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
-  reporter: 'html',
+  // 'open: never' stops Playwright from spawning the "Serving HTML report at
+  // http://localhost:PORT" server and blocking on it after the run finishes.
+  // A background gate run (test:e2e piped through a gate script) never sends
+  // the Ctrl+C that server waits for, so the whole gate command hangs
+  // forever and downstream gates never run. The report is still written to
+  // disk (default playwright-report/) for manual `npx playwright show-report`
+  // inspection -- only the auto-serve-and-block behavior is disabled.
+  reporter: [['html', { open: 'never' }]],
   use: {
     baseURL: playwrightBaseURL,
     trace: 'on-first-retry',
@@ -83,7 +106,9 @@ export default defineConfig({
             // ssd-workbench added: it navigates to the auth-gated /matrix-options route and
             // was previously excluded here, so its authenticated assertions never ran anywhere
             // (unauth chromium/firefox/webkit projects hit the /login bounce and test.skip).
-            testMatch: /(matrix-options|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
+            // matrix-options-phone-layout added (D3, 2026-08-15): the phone-viewport
+            // Calculator regression guard also needs auth, same as matrix-options itself.
+            testMatch: /(matrix-options(-phone-layout)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
           },
         ]
       : []),
