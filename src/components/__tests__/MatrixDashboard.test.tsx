@@ -957,6 +957,224 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(leftWrapper).toHaveStyle({ width: '280px' });
   });
 
+  // Regression suite: the ASSEMBLED Calculator tab. Both defects below shipped
+  // because every component numbered/formatted itself correctly IN ISOLATION;
+  // nothing tested the page as a whole. These tests read the whole rendered
+  // Calculator tab (CalculatorSummaryBar + the active pathway calculator +
+  // CumulativeEffectsCalculator + HHInhalationCalculator + BackgroundAdjustment,
+  // all stacked together exactly as MatrixDashboard.tsx composes them) and
+  // assert properties of the COMPOSITION, not of any one child.
+  describe('MatrixDashboard -- ASSEMBLED Calculator tab coherence', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    // Collects every CalculatorStage-wrapped section currently in the
+    // document. CalculatorStage (src/components/matrix-options/CalculatorStage.tsx)
+    // is the ONLY component that stamps data-stage-state, so this walks the
+    // whole assembled page, not any single calculator's subtree.
+    interface CollectedStage {
+      testId: string;
+      label: string;
+      number: number;
+      total: number;
+      current: boolean;
+    }
+
+    function collectStages(): CollectedStage[] {
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-stage-state]'),
+      );
+      return sections.map((el) => {
+        const labelEl = within(el).getByText(/^Stage \d+ of \d+$/);
+        const label = labelEl.textContent ?? '';
+        const match = label.match(/^Stage (\d+) of (\d+)$/);
+        return {
+          testId: el.getAttribute('data-testid') ?? '(no testid)',
+          label,
+          number: match ? Number(match[1]) : NaN,
+          total: match ? Number(match[2]) : NaN,
+          current: el.getAttribute('data-stage-current') === 'true',
+        };
+      });
+    }
+
+    function describeStages(stages: CollectedStage[]): string {
+      if (stages.length === 0) return '(no stages found on the page)';
+      return stages
+        .map(
+          (s) =>
+            `  ${s.testId}: "${s.label}"${s.current ? ' [CURRENT]' : ''}`,
+        )
+        .join('\n');
+    }
+
+    it('renders the assembled stage sequence as exactly 1, 2, 3, 4 with no duplicates, no gaps, and one shared denominator', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      const stages = collectStages();
+      const failureContext = () =>
+        `Actual stages rendered on the assembled Calculator tab:\n${describeStages(stages)}`;
+
+      // Regression guard for defect 1: two competing "Stage 1 of 2" blocks
+      // followed by a "Stage 3 of 5" (contradictory denominators) is exactly
+      // what this assertion set catches. If a calculator or
+      // BackgroundAdjustment is ever wired with the wrong `number` or
+      // `totalStages` prop, or a duplicate stage 1 reappears, this fails here.
+      const numbers = stages.map((s) => s.number).sort((a, b) => a - b);
+      expect(numbers, failureContext()).toEqual([1, 2, 3, 4]);
+
+      const totals = new Set(stages.map((s) => s.total));
+      expect(
+        totals.size,
+        `Every stage must report the SAME total ("of N"), but found ${totals.size} distinct totals: ${[...totals].join(', ')}.\n${failureContext()}`,
+      ).toBe(1);
+
+      const sharedTotal = [...totals][0];
+      for (const s of stages) {
+        expect(
+          s.number <= sharedTotal,
+          `Stage "${s.testId}" claims to be stage ${s.number} of ${s.total}, which is beyond the shared total of ${sharedTotal}.\n${failureContext()}`,
+        ).toBe(true);
+      }
+    });
+
+    it('renders the assembled stage sequence in the same 1-4 coherent shape for a different active category (eco-food)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-eco-food'));
+
+      const stages = collectStages();
+      const numbers = stages.map((s) => s.number).sort((a, b) => a - b);
+      expect(
+        numbers,
+        `Actual stages rendered:\n${describeStages(stages)}`,
+      ).toEqual([1, 2, 3, 4]);
+      const totals = new Set(stages.map((s) => s.total));
+      expect(totals).toEqual(new Set([4]));
+    });
+
+    it('shows exactly one "current" stage when every upstream input is valid', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+    });
+
+    it('shows exactly one "current" stage when an upstream input is invalid (never zero, never more than one)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Break Stage 1 (exposure factors) with an invalid body weight. This
+      // flips hh-direct-stage-1 to blocked/current and hh-direct-stage-2 to
+      // waiting/not-current (see HHDirectContactCalculator.tsx stage1Blocked).
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage after an upstream input went invalid; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+      // The current stage must be the one that is actually broken (Stage 1),
+      // not the one waiting on it (Stage 2) -- a test that only counted
+      // "exactly one" without checking WHICH one would pass even if the
+      // current marker pointed at the wrong stage.
+      expect(currentStages[0].testId).toBe('hh-direct-stage-1');
+    });
+
+    // Regression guard for defect 2: the same preliminary standard rendered
+    // as "5.7516" in the summary bar and "5.752" in the calculator hero
+    // because the two components used different formatters
+    // (toFixed(4) vs toPrecision(4)). Both now default to the shared
+        // formatMagnitude() (src/lib/matrix-options/formatMagnitude.ts), but a
+    // regression could reintroduce a divergent formatter (e.g. a
+    // `formatValue` override on the summary-bar slot, or a hardcoded
+    // toPrecision/toFixed call in the calculator hero) without either
+    // component's own isolated test catching it, because each would still
+    // render internally consistently -- only comparing the two rendered
+    // STRINGS side by side catches this.
+    it('renders the SAME preliminary-standard string in the summary bar and the calculator hero', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Push body weight way up (the preliminary standard scales with BW in
+      // the numerator -- see humanHealthDirectContact) so the preliminary
+      // standard's magnitude lands comfortably at or above 0.1 --
+      // formatMagnitude's two branches (toFixed(4) vs toPrecision(4)) only
+      // actually diverge from each other at/above that threshold (see
+      // formatMagnitude.ts's doc comment: below 0.1, toPrecision(4) is used
+      // on both sides of any hypothetical divergence and would
+      // coincidentally agree). A value below 0.1 would pass under both the
+      // old broken formatting and the current fixed formatting, proving
+      // nothing.
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '100000000' },
+      });
+
+      const summaryValueEl = screen.getByTestId(
+        'calculator-summary-bar-preliminary-value',
+      );
+      const heroEl = screen.getByTestId('hh-direct-preliminary-standard');
+
+      const summaryText = summaryValueEl.textContent?.trim() ?? '';
+      // The hero renders "<value> mg/kg dry" inside one text node run;
+      // pull out just the numeric token for a like-for-like comparison
+      // with the summary bar's isolated value slot.
+      const heroMatch = heroEl.textContent?.match(/([\d.]+)\s*mg\/kg dry/);
+      const heroValueText = heroMatch ? heroMatch[1] : '(no numeric value found)';
+
+      const parsedMagnitude = Number(summaryText);
+      expect(
+        Number.isFinite(parsedMagnitude) && parsedMagnitude >= 0.1,
+        `Test setup did not reach the >= 0.1 magnitude range needed to distinguish the two formatMagnitude branches (summary bar showed "${summaryText}"). Adjust the hh-direct-ir-sed-input value above.`,
+      ).toBe(true);
+
+      expect(
+        summaryText,
+        `Summary bar preliminary value ("${summaryText}") and calculator hero preliminary value ("${heroValueText}") disagree. This is exactly the "5.7516 vs 5.752" defect: two different formatters were applied to the same number in two different components.`,
+      ).toBe(heroValueText);
+    });
+
+    it('does not render any stage number inside Cumulative Effects, HH Inhalation, or the Background Adjustment Site Comparison block', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      // These three surfaces are tools, not steps in the derivation
+      // sequence (DESIGN.md: Cumulative Effects and HH Inhalation are
+      // orthogonal to the 4-stage pathway; the Background Adjustment
+      // "Site Comparison" block is explicitly NOT part of the derivation --
+      // see BackgroundAdjustment.tsx's file-header comment). None of the
+      // three should carry a data-stage-state marker or a "Stage N of M"
+      // label; if a future edit wraps one in CalculatorStage without an
+      // owner decision to make it a real derivation step, this fails.
+      const cumulativeEffects = screen.getByTestId('cumulative-effects-calculator');
+      expect(
+        cumulativeEffects.querySelector('[data-stage-state]'),
+      ).toBeNull();
+      expect(within(cumulativeEffects).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+
+      const hhInhalation = screen.getByTestId('hh-inhalation-calculator');
+      expect(hhInhalation.querySelector('[data-stage-state]')).toBeNull();
+      expect(within(hhInhalation).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+
+      const siteComparison = screen.getByTestId('bg-adjust-site-comparison');
+      expect(siteComparison.querySelector('[data-stage-state]')).toBeNull();
+      expect(within(siteComparison).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+    });
+  });
+
   // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
   it('pointercancel restores body cursor and userSelect (drag cleanup on cancel)', () => {
     Object.defineProperty(window, 'innerWidth', {
