@@ -66,12 +66,20 @@ export interface EcoDirectEqPCalculatorProps {
    * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
    * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
    * read of the already-memoized result; never changes what is computed or displayed here.
-   * Called with null when no valid preliminary standard is currently available, INCLUDING when
-   * the result is blocked (diagnostic-only per the design doc -- must not be quoted as a
-   * benchmark).
+   *
+   * Carries `state` (this calculator's own stage2State) alongside `value` so the parent can
+   * distinguish WHY there is no value -- Stage 1 BLOCKED (state 'waiting'), a Stage-2-only
+   * invalid or blocked result (state 'blocked'), or genuinely nothing entered yet (state
+   * 'pending') -- rather than collapsing all three into a bare null. `value`/`note` are only
+   * meaningful when `state === 'computed'`.
    */
   onPreliminaryStandardChange?: (
-    result: { value: number; unit: string; note?: string } | null,
+    result: {
+      value: number | null;
+      unit: string;
+      note?: string;
+      state: StageState;
+    },
   ) => void;
   /**
    * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
@@ -293,25 +301,30 @@ export default function EcoDirectEqPCalculator({
   // per the design doc, a blocked sedS is diagnostic-only and must not be quoted as a benchmark.
   useEffect(() => {
     if (!onPreliminaryStandardChange) return;
-    if (isResult && !(result as EcoDirectEqPResult).blocked) {
-      const ecoDirectResult = result as EcoDirectEqPResult;
-      onPreliminaryStandardChange({
-        value: ecoDirectResult.sedS,
-        unit: 'mg/kg dry',
-        note: ecoDirectResult.verdict ? `Verdict: ${ecoDirectResult.verdict}` : undefined,
-      });
-    } else {
-      onPreliminaryStandardChange(null);
-    }
+    const ecoDirectResult =
+      isResult && !(result as EcoDirectEqPResult).blocked
+        ? (result as EcoDirectEqPResult)
+        : null;
+    onPreliminaryStandardChange({
+      value: ecoDirectResult ? ecoDirectResult.sedS : null,
+      unit: 'mg/kg dry',
+      note:
+        ecoDirectResult && ecoDirectResult.verdict
+          ? `Verdict: ${ecoDirectResult.verdict}`
+          : undefined,
+      state: stage2State,
+    });
     // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
     // stale substance's standard can never paint under a new label. Category
     // calculators unmount on pathway switch; the parent otherwise retains the
     // last reported value indefinitely. onPreliminaryStandardChange is a bare
     // setState passthrough, so calling it here never re-triggers this effect.
     return () => {
-      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
     };
-  }, [result, isResult, onPreliminaryStandardChange]);
+  }, [result, isResult, stage2State, onPreliminaryStandardChange]);
 
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [

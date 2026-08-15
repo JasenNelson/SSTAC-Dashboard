@@ -40,6 +40,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import type { StageState } from './CalculatorStage';
 
 // Unsourced (screening-assumption) exposure-factor baselines. EF/ED/AT_cancer default
 // to the EPA/540/R-96/018 (1996 SSG) residential Table 1 defaults reproduced in the
@@ -90,15 +91,24 @@ export interface HHInhalationCalculatorProps {
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
   /**
-   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
-   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
-   * read of the already-memoized inhResult; never changes what is computed or displayed here.
-   * Called with null when no valid preliminary standard is currently available, INCLUDING when
-   * the pathway is blocked (fail-closed by design -- neither endpoint could be computed) or
-   * sedS itself is null.
+   * Reports the current preliminary standard upward so a parent (e.g. the Calculator tab's
+   * summary bar) can display it without recomputing anything. Purely a read of the
+   * already-memoized inhResult; never changes what is computed or displayed here.
+   *
+   * This calculator has no numbered Stage 1/Stage 2 split (unlike the four category
+   * calculators), so `state` here is a single derived value covering the whole pathway:
+   * 'blocked' when an input is invalid or the pathway itself is blocked (fail-closed --
+   * neither endpoint could be computed), 'pending' when inputs are still valid but no result
+   * exists yet, and 'computed' when a usable sedS is available. `value`/`driver` are only
+   * meaningful when `state === 'computed'`.
    */
   onPreliminaryStandardChange?: (
-    result: { value: number; unit: string; driver: string } | null,
+    result: {
+      value: number | null;
+      unit: string;
+      driver?: string;
+      state: StageState;
+    },
   ) => void;
 }
 
@@ -189,29 +199,44 @@ export default function HHInhalationCalculator({
 
   const inhResult = 'error' in result ? null : result;
 
+  // Presentation-layer state for the report below, mirroring the stage2State pattern used by
+  // the four category calculators (which do render numbered stages). This calculator has no
+  // Stage 1 to defer to, so there is no 'waiting' case here -- 'blocked' covers both an invalid
+  // input ('error' in result) and a fail-closed pathway (inhResult.blocked or a null sedS).
+  const inhalationState: StageState =
+    'error' in result
+      ? 'blocked'
+      : inhResult && !inhResult.blocked && inhResult.sedS !== null
+        ? 'computed'
+        : inhResult
+          ? 'blocked'
+          : 'pending';
+
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads
-  // inhResult only -- no new computation. Withheld (null) when the pathway is blocked or sedS is
-  // null: neither is a value that may be quoted as a benchmark.
+  // inhResult only -- no new computation. value/driver are withheld (null/undefined) whenever
+  // state !== 'computed' -- neither a blocked pathway nor a null sedS is a value that may be
+  // quoted as a benchmark, but the STATE that explains why is still reported explicitly.
   useEffect(() => {
     if (!onPreliminaryStandardChange) return;
-    if (inhResult && !inhResult.blocked && inhResult.sedS !== null) {
-      onPreliminaryStandardChange({
-        value: inhResult.sedS,
-        unit: 'mg/kg dry',
-        driver: inhResult.driver,
-      });
-    } else {
-      onPreliminaryStandardChange(null);
-    }
+    const computedResult =
+      inhResult && !inhResult.blocked && inhResult.sedS !== null ? inhResult : null;
+    onPreliminaryStandardChange({
+      value: computedResult ? computedResult.sedS : null,
+      unit: 'mg/kg dry',
+      driver: computedResult ? computedResult.driver : undefined,
+      state: inhalationState,
+    });
     // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
     // stale substance's standard can never paint under a new label. Category
     // calculators unmount on pathway switch; the parent otherwise retains the
     // last reported value indefinitely. onPreliminaryStandardChange is a bare
     // setState passthrough, so calling it here never re-triggers this effect.
     return () => {
-      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
     };
-  }, [inhResult, onPreliminaryStandardChange]);
+  }, [inhResult, inhalationState, onPreliminaryStandardChange]);
 
   // Exact-id provenance attribution (codex ship-gate P2, 2026-07-17): only attach the
   // catalog parameter_value_id while the input still equals the as-wired seed for a

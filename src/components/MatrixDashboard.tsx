@@ -38,6 +38,7 @@ import SharedGlobalInputs, {
 import CalculatorSummaryBar, {
   type SummaryBarSlot,
 } from './matrix-options/CalculatorSummaryBar';
+import type { StageState } from './matrix-options/CalculatorStage';
 import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import {
   createEvidenceLibraryFilters,
@@ -407,28 +408,39 @@ export default function MatrixDashboard({
   // this is the only preliminary-standard value the summary bar can show
   // today. Background UTL 95/95 and the adjusted standard stay PENDING
   // until step 4 wires BackgroundAdjustment into the stage sequence.
+  // Each of the five *Preliminary states below carries `state` (a StageState, per DESIGN.md's
+  // "Four states, not two": COMPUTED / PENDING / WAITING / BLOCKED) alongside `value`, mirroring
+  // each calculator's own onPreliminaryStandardChange contract. The outer `| null` here means
+  // only "this calculator has not mounted / reported yet" (the transient pre-effect state);
+  // once mounted, the calculator always reports a full object, including its own PENDING /
+  // WAITING / BLOCKED state -- never a bare null -- so the summary bar below can read
+  // `?.state ?? 'pending'` and get the real reason, not an inferred guess from value presence.
   const [hhDirectPreliminary, setHhDirectPreliminary] = useState<{
-    value: number;
+    value: number | null;
     unit: string;
-    driver: string;
+    driver?: string;
+    state: StageState;
   } | null>(null);
   // Step 3b: the same wiring extended to the four sibling calculators wrapped in stages.
   // eco-direct and eco-food have no MIN-selected "driver" concept (single-pathway result), so
   // their reported shape carries an optional `note` instead of a required `driver`.
   const [ecoDirectPreliminary, setEcoDirectPreliminary] = useState<{
-    value: number;
+    value: number | null;
     unit: string;
     note?: string;
+    state: StageState;
   } | null>(null);
   const [ecoFoodPreliminary, setEcoFoodPreliminary] = useState<{
-    value: number;
+    value: number | null;
     unit: string;
     note?: string;
+    state: StageState;
   } | null>(null);
   const [hhFoodPreliminary, setHhFoodPreliminary] = useState<{
-    value: number;
+    value: number | null;
     unit: string;
-    driver: string;
+    driver?: string;
+    state: StageState;
   } | null>(null);
   // Human Health Inhalation is orthogonal to the activeCategory CategorySelector (see the
   // "Human Health Inhalation" stacking comment near its render call below) -- it renders
@@ -440,9 +452,10 @@ export default function MatrixDashboard({
   // deliberately NOT read by preliminarySlot below. Only the setter is used today (no display
   // reads the captured value yet), so the value half is intentionally left undestructured.
   const [, setHhInhalationPreliminary] = useState<{
-    value: number;
+    value: number | null;
     unit: string;
-    driver: string;
+    driver?: string;
+    state: StageState;
   } | null>(null);
   // Step 4 of the redesign: BackgroundAdjustment now reports its Stage 3
   // (UTL) and Stage 4 (adjusted standard = max(preliminary, UTL)) results
@@ -731,21 +744,33 @@ export default function MatrixDashboard({
   // standard as "0.0000" the way the previous ad hoc toPrecision(4)/
   // toFixed(4) overrides risked when mixed across slots. See
   // src/lib/matrix-options/formatMagnitude.ts.
+  // Fix (state-machine defect, 2026-08-14 external review): state is read directly from each
+  // calculator's own report (`?.state`), NOT inferred from whether `value` is null. A calculator
+  // reports null value for THREE distinct reasons -- Stage 1 blocked upstream (state 'waiting'),
+  // a Stage-2-only invalid/blocked input (state 'blocked'), or genuinely nothing entered yet
+  // (state 'pending') -- and inferring "value present -> computed, else pending" (the prior code)
+  // collapsed all three into PENDING, telling a user with a real upstream error that nothing had
+  // been entered. `?? 'pending'` only covers the transient window before the calculator's first
+  // report effect has run (local state still null), which IS genuinely "nothing yet" -- not a
+  // loss of a real state the calculator already computed.
   const preliminarySlot: SummaryBarSlot =
     activeCategory === 'hh-direct'
       ? {
           label: 'Preliminary standard',
           value: hhDirectPreliminary?.value ?? null,
           unit: hhDirectPreliminary?.unit ?? 'mg/kg dry',
-          state: hhDirectPreliminary ? 'computed' : 'pending',
-          note: hhDirectPreliminary ? `Driver: ${hhDirectPreliminary.driver}.` : undefined,
+          state: hhDirectPreliminary?.state ?? 'pending',
+          note:
+            hhDirectPreliminary?.state === 'computed' && hhDirectPreliminary.driver
+              ? `Driver: ${hhDirectPreliminary.driver}.`
+              : undefined,
         }
       : activeCategory === 'eco-direct'
         ? {
             label: 'Preliminary standard',
             value: ecoDirectPreliminary?.value ?? null,
             unit: ecoDirectPreliminary?.unit ?? 'mg/kg dry',
-            state: ecoDirectPreliminary ? 'computed' : 'pending',
+            state: ecoDirectPreliminary?.state ?? 'pending',
             note: ecoDirectPreliminary?.note,
           }
         : activeCategory === 'eco-food'
@@ -753,7 +778,7 @@ export default function MatrixDashboard({
               label: 'Preliminary standard',
               value: ecoFoodPreliminary?.value ?? null,
               unit: ecoFoodPreliminary?.unit ?? 'mg/kg dry',
-              state: ecoFoodPreliminary ? 'computed' : 'pending',
+              state: ecoFoodPreliminary?.state ?? 'pending',
               note: ecoFoodPreliminary?.note,
             }
           : activeCategory === 'hh-food'
@@ -761,8 +786,11 @@ export default function MatrixDashboard({
                 label: 'Preliminary standard',
                 value: hhFoodPreliminary?.value ?? null,
                 unit: hhFoodPreliminary?.unit ?? 'mg/kg dry',
-                state: hhFoodPreliminary ? 'computed' : 'pending',
-                note: hhFoodPreliminary ? `Driver: ${hhFoodPreliminary.driver}.` : undefined,
+                state: hhFoodPreliminary?.state ?? 'pending',
+                note:
+                  hhFoodPreliminary?.state === 'computed' && hhFoodPreliminary.driver
+                    ? `Driver: ${hhFoodPreliminary.driver}.`
+                    : undefined,
               }
               : {
                   label: 'Preliminary standard',

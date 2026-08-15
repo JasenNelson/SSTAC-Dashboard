@@ -83,11 +83,22 @@ export interface HHDirectContactCalculatorProps {
    * Reports the current preliminary standard (Stage 2's own output) upward
    * so a parent (e.g. the Calculator tab's summary bar) can display it
    * without recomputing anything. Purely a read of the already-memoized
-   * hhResult; never changes what is computed or displayed here. Called
-   * with null when no valid preliminary standard is currently available.
+   * hhResult; never changes what is computed or displayed here.
+   *
+   * Carries `state` (this calculator's own stage2State) alongside `value` so
+   * the parent can distinguish WHY there is no value -- Stage 1 BLOCKED
+   * (state 'waiting' here, since Stage 2 itself is fine), a Stage-2-only
+   * invalid input (state 'blocked'), or genuinely nothing entered yet
+   * (state 'pending') -- rather than collapsing all three into a bare null.
+   * `value`/`driver` are only meaningful when `state === 'computed'`.
    */
   onPreliminaryStandardChange?: (
-    result: { value: number; unit: string; driver: string } | null,
+    result: {
+      value: number | null;
+      unit: string;
+      driver?: string;
+      state: StageState;
+    },
   ) => void;
   /**
    * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
@@ -425,24 +436,23 @@ export default function HHDirectContactCalculator({
   // summary bar). Reads hhResult only -- no new computation.
   useEffect(() => {
     if (!onPreliminaryStandardChange) return;
-    if (hhResult) {
-      onPreliminaryStandardChange({
-        value: hhResult.sedS,
-        unit: 'mg/kg dry',
-        driver: hhResult.driver,
-      });
-    } else {
-      onPreliminaryStandardChange(null);
-    }
+    onPreliminaryStandardChange({
+      value: hhResult ? hhResult.sedS : null,
+      unit: 'mg/kg dry',
+      driver: hhResult ? hhResult.driver : undefined,
+      state: stage2State,
+    });
     // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
     // stale substance's standard can never paint under a new label. Category
     // calculators unmount on pathway switch; the parent otherwise retains the
     // last reported value indefinitely. onPreliminaryStandardChange is a bare
     // setState passthrough, so calling it here never re-triggers this effect.
     return () => {
-      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
     };
-  }, [hhResult, onPreliminaryStandardChange]);
+  }, [hhResult, stage2State, onPreliminaryStandardChange]);
 
   // Row #23: the dl-PCB TEQ sub-value is now just a field on the SINGLE combined hhResult
   // (dlPcbTeqSedS) rather than a separately-computed/blocked parallel result. It is only

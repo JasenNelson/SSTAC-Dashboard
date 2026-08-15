@@ -1538,6 +1538,158 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
         screen.getByTestId('calculator-summary-bar-adjusted-value').textContent?.trim(),
       ).not.toBe(staleAdjustedValueText);
     });
+
+    // ------------------------------------------------------------------
+    // Regression coverage for the state-machine defect an external reviewer
+    // found after six prior review rounds missed it: onPreliminaryStandardChange
+    // carried a VALUE, not a STATE, so MatrixDashboard.tsx inferred the summary
+    // bar's preliminary-standard chip purely from "is value null" -- every null
+    // became PENDING regardless of cause. A Stage-2-only error and a
+    // Stage-1-blocked pathway both report null, so both used to be
+    // indistinguishable from "nothing entered yet". The fix threads each
+    // calculator's own stage2State through the report; these three tests drive
+    // the assembled page to each of the three non-COMPUTED states and assert
+    // the summary bar's chip names the RIGHT one, not just "not PENDING".
+    // ------------------------------------------------------------------
+
+    it('a Stage-2-only invalid input (target risk) blocks the preliminary standard without touching Stage 1, and the summary bar shows BLOCKED, not PENDING', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: both stages start healthy with the seeded defaults.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Target risk is valid for STAGE 1 -- HHDirectContactCalculator's
+      // stage1FieldError list is exactly the seven exposure-factor fields (body
+      // weight, exposure duration/frequency, cancer averaging time, sediment
+      // ingestion rate, skin area, adherence factor); target risk and hazard
+      // quotient are not among them. It feeds Stage 2's own calculation only.
+      // This is exactly the "Stage-2-only" case the external reviewer called
+      // for: an input that is fine for Stage 1 but breaks the calculation.
+      // Scoped to this calculator's own container -- HHInhalationCalculator
+      // (always stacked below, regardless of active category) renders its own
+      // "Target risk" field and would otherwise collide.
+      const hhDirect = screen.getByTestId('hh-direct-contact-calculator');
+      fireEvent.change(within(hhDirect).getByLabelText(/target risk/i), {
+        target: { value: '-1' },
+      });
+
+      // Stage 1 is UNAFFECTED -- the invalid field is not one of its seven.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      // Stage 2 is BLOCKED -- the error is here (DESIGN.md "Four states, not two").
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+
+      // Before the fix, this would have shown PENDING: onPreliminaryStandardChange
+      // reported null (no way to distinguish WHY), and the parent inferred
+      // "no value -> PENDING" regardless of cause.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /blocked/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-preliminary-chip'),
+      ).not.toHaveTextContent(/pending/i);
+    });
+
+    it('Stage 1 blocked sends the preliminary standard summary slot to WAITING, not PENDING', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Break Stage 1 with an invalid body weight.
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+      // Stage 2 defers to Stage 1: it is blocked by something upstream, not by
+      // itself, so it reports WAITING (not BLOCKED, not PENDING).
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'waiting',
+      );
+
+      // Before the fix, this also collapsed to PENDING -- indistinguishable
+      // from the BLOCKED case above and from "nothing entered yet".
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /waiting/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-preliminary-chip'),
+      ).not.toHaveTextContent(/pending/i);
+    });
+
+    it('a genuinely-nothing-entered input (fewer than 2 background reference samples) shows PENDING, completing the three-way distinction from BLOCKED and WAITING above', () => {
+      // The preliminary-standard slot itself cannot reach a genuine "nothing
+      // entered yet" PENDING on the assembled page: all five calculators seed
+      // their required inputs with a valid default, and blanking a required
+      // field turns it into an explicit error (positiveInput) rather than an
+      // idle blank -- so every reachable non-computed state for that slot is
+      // either BLOCKED or WAITING, both covered above. PENDING is real and
+      // reachable on Stage 3 (Background UTL): fewer than 2 reference samples
+      // is genuinely "not entered yet, no error" -- exactly PENDING's
+      // definition (DESIGN.md "Four states, not two") -- and it shares the
+      // same reporting contract (state carried explicitly via
+      // BackgroundUtlReport, not inferred from value presence) as the
+      // preliminary slot's own fix. This closes the three-way distinction the
+      // two tests above start: BLOCKED, WAITING, and PENDING are three
+      // different chip states, not one bare null collapsed into PENDING.
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // The preliminary standard is healthy throughout -- this isolates Stage
+      // 3/the UTL slot, proving the three states are tracked independently
+      // rather than conflated into one shared flag.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      setReferenceSamples('0.001');
+
+      expect(screen.getByTestId('bg-adjust-stage-3')).toHaveAttribute(
+        'data-stage-state',
+        'pending',
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /pending/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).not.toHaveTextContent(
+        /blocked/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).not.toHaveTextContent(
+        /waiting/i,
+      );
+
+      // The preliminary slot (a different state, tracked independently) is
+      // unaffected by the UTL slot going PENDING.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+    });
   });
 
   // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
