@@ -367,19 +367,25 @@ describe('BackgroundAdjustment', () => {
       expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
     });
 
-    // Fix 2 (P2-A, 2026-08-14): 'mg/kg' and 'mg/kg dry' are the same basis in
-    // this component (this component's own inputs used to print the bare
-    // 'mg/kg' spelling while asserting a 'mg/kg dry' UTL) -- an equivalent
-    // spelling must NOT be blocked as a unit mismatch.
-    it('is unaffected (still computes) when the preliminary standard unit is the equivalent bare "mg/kg" spelling', () => {
+    // Fix 2 (P2-A, REVERTED 2026-08-14 third adversarial round): 'mg/kg' is
+    // NOT a spelling variant of 'mg/kg dry' in this codebase -- it is the
+    // WET-WEIGHT TISSUE basis used elsewhere in this feature (see
+    // HHFoodWebCalculator.tsx tissueTarget_mg_per_kg, rendered as 'mg/kg').
+    // A caller reporting a preliminary standard in bare 'mg/kg' must be
+    // REFUSED as a unit mismatch, exactly like any other genuinely different
+    // unit -- silently accepting it risks max(tissue mg/kg wet,
+    // sediment mg/kg dry) being rendered as a valid adjusted sediment
+    // standard with no warning.
+    it('blocks a bare "mg/kg" preliminary standard as a unit mismatch (not an equivalent spelling of "mg/kg dry")', () => {
       render(
         <BackgroundAdjustment
           preliminaryStandard={{ value: 10, unit: 'mg/kg', state: 'computed' }}
         />,
       );
-      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
-      expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
-      expect(screen.queryByTestId('bg-adjust-result-blocked')).not.toBeInTheDocument();
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      const blocked = screen.getByTestId('bg-adjust-result-blocked');
+      expect(blocked).toHaveTextContent(/unit mismatch/i);
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
     });
 
     // A genuinely different unit must still be refused -- this is the

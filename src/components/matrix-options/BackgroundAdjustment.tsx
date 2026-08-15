@@ -114,19 +114,24 @@ const TOTAL_STAGES = 4;
 // summary bar (it used to be a bare 'mg/kg' here vs 'mg/kg dry' elsewhere).
 const UTL_UNIT = 'mg/kg dry';
 
-// Fix 2 (P2-A): 'mg/kg' and 'mg/kg dry' denote the same physical basis in
-// this component -- every reference sample / site concentration entered here
-// is a dry-weight soil/sediment concentration compared directly against the
-// UTL (itself 'mg/kg dry'), so the bare 'mg/kg' string this component's own
-// inputs used to print is an equivalent spelling, not a different unit. A
-// genuinely different unit (e.g. 'ug/kg dry') must still be rejected.
-const UNIT_ALIASES: Record<string, string> = {
-  'mg/kg': 'mg/kg dry',
-};
-
+// Fix 2 (P2-A, REVERTED 2026-08-14 third adversarial round): 'mg/kg' is NOT
+// an equivalent spelling of 'mg/kg dry' in this codebase -- it is the
+// WET-WEIGHT TISSUE basis used elsewhere in this feature (see
+// HHFoodWebCalculator.tsx tissueTarget_mg_per_kg, rendered as 'mg/kg').
+// The original justification for aliasing them here was that this
+// component's OWN inputs printed the bare 'mg/kg' string; that justification
+// no longer holds -- every one of those inputs was relabelled to
+// 'mg/kg dry' in the same commit that added this alias (see the UTL_UNIT
+// comment above and the preliminary/adjusted-standard unit strings below).
+// With the alias in place, a future caller that reports a tissue value in
+// 'mg/kg' (wet weight) would silently PASS this guard, and
+// max(tissue mg/kg wet, sediment mg/kg dry) would render as an adjusted
+// sediment standard with no warning -- exactly the error this guard exists
+// to catch. So only genuinely equal unit strings (after trim/case
+// normalization) pass; 'mg/kg' and 'mg/kg dry' are treated as different
+// units, as they are.
 function normalizeUnit(unit: string): string {
-  const trimmed = unit.trim().toLowerCase();
-  return UNIT_ALIASES[trimmed] ?? trimmed;
+  return unit.trim().toLowerCase();
 }
 
 // The preliminary standard from an earlier pathway calculator's own Stage 2
@@ -499,7 +504,26 @@ export default function BackgroundAdjustment({
         // is still waiting on. Stage 4 itself is never marked current below
         // for the same reason -- it is a pure derivation with no action a
         // user takes on it directly.
-        current={stage3State !== 'computed'}
+        //
+        // Fix 3 (P2, third adversarial round, 2026-08-14): the rule above was
+        // still incomplete -- it made no reference to Stage 2 (the pathway
+        // calculator's own preliminary standard), so Stage 3 could go
+        // current again (e.g. the reference-sample textarea is cleared to
+        // paste a new set, dropping n below 2) WHILE the active pathway
+        // calculator's Stage 2 is unconditionally current too
+        // (`!stage1Blocked`, with no knowledge of this component at all --
+        // the two are separate React components that do not share state).
+        // Two lit stages resulted. Fix: Stage 3 is current only once Stage 2
+        // has actually produced a preliminary standard (`preliminaryAvailable`)
+        // -- before that, Stage 2 is still the real next step, not Stage 3,
+        // even if Stage 3 also has not computed yet. The matching half of
+        // this fix lives in each pathway calculator: Stage 2's `current` now
+        // also checks `!backgroundReferenceNeedsAttention`, a boolean the
+        // assembling parent (MatrixDashboard) computes from this exact same
+        // pair of facts (preliminarySlot.state and utlSlot.state) and passes
+        // down -- explicit shared state, since neither component can see the
+        // other's internals directly.
+        current={preliminaryAvailable && stage3State !== 'computed'}
         testId="bg-adjust-stage-3"
       >
         <fieldset className="mb-4">

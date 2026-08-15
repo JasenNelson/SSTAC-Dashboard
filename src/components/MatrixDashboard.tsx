@@ -799,6 +799,25 @@ export default function MatrixDashboard({
       ? `${backgroundUtlReport.scope === 'provincial' ? 'Provincial' : 'Regional'} scope, n = ${backgroundUtlReport.n}. Screening-only K.`
       : 'Computed from reference samples only -- see Stage 3.',
   };
+  // Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+  // for the "exactly one current stage" invariant across the two components
+  // that make up the 4-stage chain (the active pathway calculator for
+  // Stages 1-2, BackgroundAdjustment for Stages 3-4). Neither component can
+  // see the other's internals, so this parent -- the only place that
+  // already reads BOTH preliminarySlot.state (Stage 2's output) and
+  // utlSlot.state (Stage 3's output, via backgroundUtlReport) -- is where
+  // the arbitration has to happen. True exactly when Stage 2 has already
+  // produced a preliminary standard AND Stage 3 has not yet computed the
+  // background UTL: at that point Stage 3, not Stage 2, is the single next
+  // actionable step, so the active pathway calculator's Stage 2 defers its
+  // own `current` flag to BackgroundAdjustment's Stage 3 (whose `current`
+  // now separately checks the mirror-image condition -- see
+  // BackgroundAdjustment.tsx). Passed to whichever of the 4 pathway
+  // calculators is active; HHInhalationCalculator and
+  // CumulativeEffectsCalculator are excluded because neither renders
+  // numbered stages (see the assembled-page test asserting exactly that).
+  const backgroundReferenceNeedsAttention =
+    preliminarySlot.state === 'computed' && utlSlot.state !== 'computed';
   // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
   // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
   // either operand is unavailable -- see BackgroundAdjustment.tsx Stage 4.
@@ -1232,6 +1251,7 @@ export default function MatrixDashboard({
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setEcoDirectPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'eco-food' && (
@@ -1240,6 +1260,7 @@ export default function MatrixDashboard({
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setEcoFoodPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'hh-direct' && (
@@ -1248,6 +1269,7 @@ export default function MatrixDashboard({
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setHhDirectPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'hh-food' && (
@@ -1256,6 +1278,7 @@ export default function MatrixDashboard({
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setHhFoodPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {/*

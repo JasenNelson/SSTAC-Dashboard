@@ -1147,6 +1147,116 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       ).toBe(heroValueText);
     });
 
+    // Fix 1 (P1, third adversarial round, 2026-08-14): the formatter-agreement
+    // test above only ever exercised hh-direct's preliminary-standard hero. It
+    // could not have caught (and did not catch) HHInhalationCalculator's
+    // sedS/nonCancerSedS/cancerSedS, which rendered with a raw .toPrecision(4)
+    // call instead of the shared formatMagnitude(). Generalized here to every
+    // OTHER component on the assembled Calculator tab that renders a derived
+    // standard, or a value directly compared against one: HHInhalationCalculator
+    // (a distinct pathway stacked unconditionally below the active category,
+    // per MatrixDashboard.tsx) and CumulativeEffectsCalculator (its "equivalent
+    // concentration" is compared to a screening standard via
+    // compareEquivalentToStandard() in cumulative.ts). Both are pushed to a
+    // magnitude >= 0.1 -- formatMagnitude's toFixed(4) branch, which is the
+    // ONLY regime where it disagrees with a raw toPrecision(4) call (below
+    // 0.1 the two happen to produce identical output; see
+    // formatMagnitude.ts's doc comment) -- and asserted to show exactly 4
+    // digits after the decimal point. A regression that reintroduces
+    // toPrecision(4) on either value would print FEWER than 4 decimal digits
+    // at this magnitude (e.g. "15.21" or "312.9" instead of "15.2076" /
+    // "312.8571") and fail this test.
+    function assertFourDecimalDigits(text: string, label: string): void {
+      const match = text.match(/(\d+)\.(\d+)/);
+      expect(
+        match,
+        `${label}: expected a decimal number with at least 4 fractional digits in "${text}", found none.`,
+      ).not.toBeNull();
+      const [, wholePart, fractionPart] = match as RegExpMatchArray;
+      const magnitude = Number(`${wholePart}.${fractionPart}`);
+      expect(
+        magnitude >= 0.1,
+        `${label}: test setup did not reach the >= 0.1 magnitude range needed to distinguish formatMagnitude's two branches (rendered "${text}").`,
+      ).toBe(true);
+      expect(
+        fractionPart.length,
+        `${label}: rendered "${text}" with ${fractionPart.length} fractional digit(s) at magnitude >= 0.1 -- formatMagnitude's toFixed(4) branch always emits exactly 4. A shorter count (e.g. 3, as in the historical "5.752" defect) means a raw .toPrecision(4) call (or similar) reappeared instead of the shared formatter.`,
+      ).toBe(4);
+    }
+
+    it('HHInhalationCalculator renders its preliminary standard through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      selectSubstance('benzene');
+
+      // Same VF/PEF pair used by HHInhalationCalculator.test.tsx's own
+      // "unblocks and shows a computed screening value" case; with benzene's
+      // catalog RfC (0.03 mg/m3) and IUR (0.016 per mg/m3), both the
+      // non-cancer and cancer derivations land well above the 0.1 threshold
+      // (cancer ~15.2, non-cancer ~312.9 mg/kg dry -- the lower, more
+      // protective cancer value governs).
+      fireEvent.change(screen.getByTestId('hh-inhalation-vf-input'), {
+        target: { value: '10000' },
+      });
+      fireEvent.change(screen.getByTestId('hh-inhalation-pef-input'), {
+        target: { value: '1.36e9' },
+      });
+
+      const standard = screen.getByTestId('hh-inhalation-preliminary-standard');
+      assertFourDecimalDigits(standard.textContent ?? '', 'HH Inhalation preliminary standard');
+    });
+
+    it('CumulativeEffectsCalculator renders its equivalent concentration through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      // Push the reference PAH (benzo_a_pyrene, RPF = 1 under the default
+      // ccme-2010 scheme) concentration up so the summed BaP-eq clears 0.1
+      // regardless of the other default rows' contributions.
+      fireEvent.change(screen.getByTestId('cum-bapeq-conc-0'), {
+        target: { value: '50' },
+      });
+
+      const value = screen.getByTestId('cum-bapeq-value');
+      assertFourDecimalDigits(value.textContent ?? '', 'Cumulative Effects BaP-eq equivalent');
+    });
+
+    // Fix 3 (P2, third adversarial round, 2026-08-14): the two "exactly one
+    // current" tests above only cover Stage 1 breaking. They cannot catch
+    // (and did not catch) two stages being current at once when Stage 1/2
+    // are both fine but the DOWNSTREAM Background Adjustment Stage 3 needs
+    // attention -- the sample set is seeded by default (n=10, valid), so
+    // Stage 3 computes immediately and this state is never reached by
+    // those tests. Reproduction: clear the reference-samples textarea so
+    // n drops below 2 -- Stage 3 flips back to pending/current while the
+    // active pathway calculator's Stage 2 (self-contained rule:
+    // `!stage1Blocked`, no awareness of BackgroundAdjustment) stays current
+    // too. A regression that drops either half of the Fix 3 shared-state
+    // wiring (BackgroundAdjustment.tsx's `preliminaryAvailable &&
+    // stage3State !== 'computed'`, or the active calculator's
+    // `!stage1Blocked && !backgroundReferenceNeedsAttention`) reintroduces
+    // two lit stages here.
+    it('shows exactly one "current" stage after the background reference samples are cleared (Stage 3 needs attention, not Stage 2)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      const samplesInput = screen.getByLabelText(/reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: '' } });
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage after clearing the background reference samples; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+      // The current stage must be the one that actually needs the user's
+      // attention now (Stage 3, background reference), not the pathway
+      // calculator's Stage 2, which has already produced its preliminary
+      // standard and has nothing further for the user to do.
+      expect(currentStages[0].testId).toBe('bg-adjust-stage-3');
+    });
+
     it('does not render any stage number inside Cumulative Effects, HH Inhalation, or the Background Adjustment Site Comparison block', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();

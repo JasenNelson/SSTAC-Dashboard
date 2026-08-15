@@ -23,6 +23,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import {
   deriveInhalationStandards,
   type HumanHealthInhalationInput,
@@ -532,7 +533,7 @@ export default function HHInhalationCalculator({
               Preliminary Human Health Screening Value (Inhalation)
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-              {inhResult.sedS !== null ? inhResult.sedS.toPrecision(4) : '--'}{' '}
+              {inhResult.sedS !== null ? formatMagnitude(inhResult.sedS) : '--'}{' '}
               <span className="text-lg text-slate-500 font-medium">mg/kg dry</span>
             </div>
             <div className="mt-3 inline-block px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
@@ -569,11 +570,11 @@ export default function HHInhalationCalculator({
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Non-cancer value</span>
-                <span>{inhResult.nonCancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(inhResult.nonCancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Cancer value</span>
-                <span>{inhResult.cancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(inhResult.cancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Combined VF/PEF transport factor</span>

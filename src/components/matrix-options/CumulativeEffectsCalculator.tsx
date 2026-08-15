@@ -33,6 +33,7 @@ import {
 } from '@/lib/matrix-options/cumulative';
 import { RPF_TABLE, RPF_SCHEMES, type RpfScheme } from '@/lib/matrix-options/rpfTable';
 import { TEF_TABLE, TEF_EDITIONS, type TefEdition } from '@/lib/matrix-options/tefTable';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import type { EvidenceLibraryFilterRequest } from '@/lib/matrix-options/provenance/types';
 import type { Jurisdiction } from './guide/content/jurisdictions';
 
@@ -215,7 +216,7 @@ function CumulativeResultView({
             className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tighter"
             data-testid={`${testIdPrefix}-value`}
           >
-            {result.equivalent.toPrecision(4)}{' '}
+            {formatMagnitude(result.equivalent)}{' '}
             <span className="text-base text-slate-500 font-medium">
               {result.equivalentUnit}
             </span>

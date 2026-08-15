@@ -81,6 +81,19 @@ export interface EcoFoodBSAFCalculatorProps {
   onPreliminaryStandardChange?: (
     result: { value: number; unit: string; note?: string } | null,
   ) => void;
+  /**
+   * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+   * from the assembling parent (MatrixDashboard), which is the only place
+   * that sees both this calculator's Stage 2 output AND BackgroundAdjustment's
+   * Stage 3 output -- the two components never talk to each other directly.
+   * True when Stage 2 has already produced a preliminary standard AND
+   * BackgroundAdjustment's Stage 3 has NOT yet computed the background UTL --
+   * i.e. Stage 3, not Stage 2, is the single next actionable step on the
+   * assembled page. Stage 2's `current` below defers to it. Omitted/undefined
+   * (e.g. this calculator rendered standalone, as in its own unit tests)
+   * falls back to the old self-contained rule (`!stage1Blocked`), unchanged.
+   */
+  backgroundReferenceNeedsAttention?: boolean;
 }
 
 // Eco-food TRVs are per-receptor (dose-based wildlife values). The receptor selector picks which
@@ -147,6 +160,7 @@ export default function EcoFoodBSAFCalculator({
   className,
   onOpenEvidenceLibrary,
   onPreliminaryStandardChange,
+  backgroundReferenceNeedsAttention = false,
 }: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -946,7 +960,7 @@ export default function EcoFoodBSAFCalculator({
         state={stage2State}
         stateDetail={stage2Detail}
         receivedFrom={stage1Blocked ? 'Stage 1 exposure inputs' : undefined}
-        current={!stage1Blocked}
+        current={!stage1Blocked && !backgroundReferenceNeedsAttention}
         testId="eco-food-stage-2"
       >
       {/* 2. ERROR box */}
