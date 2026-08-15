@@ -957,6 +957,1212 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(leftWrapper).toHaveStyle({ width: '280px' });
   });
 
+  // Regression suite: the ASSEMBLED Calculator tab. Both defects below shipped
+  // because every component numbered/formatted itself correctly IN ISOLATION;
+  // nothing tested the page as a whole. These tests read the whole rendered
+  // Calculator tab (CalculatorSummaryBar + the active pathway calculator +
+  // CumulativeEffectsCalculator + HHInhalationCalculator + BackgroundAdjustment,
+  // all stacked together exactly as MatrixDashboard.tsx composes them) and
+  // assert properties of the COMPOSITION, not of any one child.
+  describe('MatrixDashboard -- ASSEMBLED Calculator tab coherence', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    // Collects every CalculatorStage-wrapped section currently in the
+    // document. CalculatorStage (src/components/matrix-options/CalculatorStage.tsx)
+    // is the ONLY component that stamps data-stage-state, so this walks the
+    // whole assembled page, not any single calculator's subtree.
+    interface CollectedStage {
+      testId: string;
+      label: string;
+      number: number;
+      total: number;
+      current: boolean;
+    }
+
+    function collectStages(): CollectedStage[] {
+      const sections = Array.from(
+        document.querySelectorAll<HTMLElement>('[data-stage-state]'),
+      );
+      return sections.map((el) => {
+        const labelEl = within(el).getByText(/^Stage \d+ of \d+$/);
+        const label = labelEl.textContent ?? '';
+        const match = label.match(/^Stage (\d+) of (\d+)$/);
+        return {
+          testId: el.getAttribute('data-testid') ?? '(no testid)',
+          label,
+          number: match ? Number(match[1]) : NaN,
+          total: match ? Number(match[2]) : NaN,
+          current: el.getAttribute('data-stage-current') === 'true',
+        };
+      });
+    }
+
+    function describeStages(stages: CollectedStage[]): string {
+      if (stages.length === 0) return '(no stages found on the page)';
+      return stages
+        .map(
+          (s) =>
+            `  ${s.testId}: "${s.label}"${s.current ? ' [CURRENT]' : ''}`,
+        )
+        .join('\n');
+    }
+
+    it('renders the assembled stage sequence as exactly 1, 2, 3, 4 with no duplicates, no gaps, and one shared denominator', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      const stages = collectStages();
+      const failureContext = () =>
+        `Actual stages rendered on the assembled Calculator tab:\n${describeStages(stages)}`;
+
+      // Regression guard for defect 1: two competing "Stage 1 of 2" blocks
+      // followed by a "Stage 3 of 5" (contradictory denominators) is exactly
+      // what this assertion set catches. If a calculator or
+      // BackgroundAdjustment is ever wired with the wrong `number` or
+      // `totalStages` prop, or a duplicate stage 1 reappears, this fails here.
+      const numbers = stages.map((s) => s.number).sort((a, b) => a - b);
+      expect(numbers, failureContext()).toEqual([1, 2, 3, 4]);
+
+      const totals = new Set(stages.map((s) => s.total));
+      expect(
+        totals.size,
+        `Every stage must report the SAME total ("of N"), but found ${totals.size} distinct totals: ${[...totals].join(', ')}.\n${failureContext()}`,
+      ).toBe(1);
+
+      const sharedTotal = [...totals][0];
+      for (const s of stages) {
+        expect(
+          s.number <= sharedTotal,
+          `Stage "${s.testId}" claims to be stage ${s.number} of ${s.total}, which is beyond the shared total of ${sharedTotal}.\n${failureContext()}`,
+        ).toBe(true);
+      }
+    });
+
+    it('renders the assembled stage sequence in the same 1-4 coherent shape for a different active category (eco-food)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-eco-food'));
+
+      const stages = collectStages();
+      const numbers = stages.map((s) => s.number).sort((a, b) => a - b);
+      expect(
+        numbers,
+        `Actual stages rendered:\n${describeStages(stages)}`,
+      ).toEqual([1, 2, 3, 4]);
+      const totals = new Set(stages.map((s) => s.total));
+      expect(totals).toEqual(new Set([4]));
+    });
+
+    it('shows exactly one "current" stage when every upstream input is valid', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+    });
+
+    it('shows exactly one "current" stage when an upstream input is invalid (never zero, never more than one)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Break Stage 1 (exposure factors) with an invalid body weight. This
+      // flips hh-direct-stage-1 to blocked/current and hh-direct-stage-2 to
+      // waiting/not-current (see HHDirectContactCalculator.tsx stage1Blocked).
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage after an upstream input went invalid; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+      // The current stage must be the one that is actually broken (Stage 1),
+      // not the one waiting on it (Stage 2) -- a test that only counted
+      // "exactly one" without checking WHICH one would pass even if the
+      // current marker pointed at the wrong stage.
+      expect(currentStages[0].testId).toBe('hh-direct-stage-1');
+    });
+
+    // Regression guard for defect 2: the same preliminary standard rendered
+    // as "5.7516" in the summary bar and "5.752" in the calculator hero
+    // because the two components used different formatters
+    // (toFixed(4) vs toPrecision(4)). Both now default to the shared
+        // formatMagnitude() (src/lib/matrix-options/formatMagnitude.ts), but a
+    // regression could reintroduce a divergent formatter (e.g. a
+    // `formatValue` override on the summary-bar slot, or a hardcoded
+    // toPrecision/toFixed call in the calculator hero) without either
+    // component's own isolated test catching it, because each would still
+    // render internally consistently -- only comparing the two rendered
+    // STRINGS side by side catches this.
+    it('renders the SAME preliminary-standard string in the summary bar and the calculator hero', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Push body weight way up (the preliminary standard scales with BW in
+      // the numerator -- see humanHealthDirectContact) so the preliminary
+      // standard's magnitude lands comfortably at or above 0.1 --
+      // formatMagnitude's two branches (toFixed(4) vs toPrecision(4)) only
+      // actually diverge from each other at/above that threshold (see
+      // formatMagnitude.ts's doc comment: below 0.1, toPrecision(4) is used
+      // on both sides of any hypothetical divergence and would
+      // coincidentally agree). A value below 0.1 would pass under both the
+      // old broken formatting and the current fixed formatting, proving
+      // nothing.
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '100000000' },
+      });
+
+      const summaryValueEl = screen.getByTestId(
+        'calculator-summary-bar-preliminary-value',
+      );
+      const heroEl = screen.getByTestId('hh-direct-preliminary-standard');
+
+      const summaryText = summaryValueEl.textContent?.trim() ?? '';
+      // The hero renders "<value> mg/kg dry" inside one text node run;
+      // pull out just the numeric token for a like-for-like comparison
+      // with the summary bar's isolated value slot.
+      const heroMatch = heroEl.textContent?.match(/([\d.]+)\s*mg\/kg dry/);
+      const heroValueText = heroMatch ? heroMatch[1] : '(no numeric value found)';
+
+      const parsedMagnitude = Number(summaryText);
+      expect(
+        Number.isFinite(parsedMagnitude) && parsedMagnitude >= 0.1,
+        `Test setup did not reach the >= 0.1 magnitude range needed to distinguish the two formatMagnitude branches (summary bar showed "${summaryText}"). Adjust the hh-direct-ir-sed-input value above.`,
+      ).toBe(true);
+
+      expect(
+        summaryText,
+        `Summary bar preliminary value ("${summaryText}") and calculator hero preliminary value ("${heroValueText}") disagree. This is exactly the "5.7516 vs 5.752" defect: two different formatters were applied to the same number in two different components.`,
+      ).toBe(heroValueText);
+    });
+
+    // Fix 1 (P1, third adversarial round, 2026-08-14): the formatter-agreement
+    // test above only ever exercised hh-direct's preliminary-standard hero. It
+    // could not have caught (and did not catch) HHInhalationCalculator's
+    // sedS/nonCancerSedS/cancerSedS, which rendered with a raw .toPrecision(4)
+    // call instead of the shared formatMagnitude(). Generalized here to every
+    // OTHER component on the assembled Calculator tab that renders a derived
+    // standard, or a value directly compared against one: HHInhalationCalculator
+    // (a distinct pathway stacked unconditionally below the active category,
+    // per MatrixDashboard.tsx) and CumulativeEffectsCalculator (its "equivalent
+    // concentration" is compared to a screening standard via
+    // compareEquivalentToStandard() in cumulative.ts). Both are pushed to a
+    // magnitude >= 0.1 -- formatMagnitude's toFixed(4) branch, which is the
+    // ONLY regime where it disagrees with a raw toPrecision(4) call (below
+    // 0.1 the two happen to produce identical output; see
+    // formatMagnitude.ts's doc comment) -- and asserted to show exactly 4
+    // digits after the decimal point. A regression that reintroduces
+    // toPrecision(4) on either value would print FEWER than 4 decimal digits
+    // at this magnitude (e.g. "15.21" or "312.9" instead of "15.2076" /
+    // "312.8571") and fail this test.
+    function assertFourDecimalDigits(text: string, label: string): void {
+      const match = text.match(/(\d+)\.(\d+)/);
+      expect(
+        match,
+        `${label}: expected a decimal number with at least 4 fractional digits in "${text}", found none.`,
+      ).not.toBeNull();
+      const [, wholePart, fractionPart] = match as RegExpMatchArray;
+      const magnitude = Number(`${wholePart}.${fractionPart}`);
+      expect(
+        magnitude >= 0.1,
+        `${label}: test setup did not reach the >= 0.1 magnitude range needed to distinguish formatMagnitude's two branches (rendered "${text}").`,
+      ).toBe(true);
+      expect(
+        fractionPart.length,
+        `${label}: rendered "${text}" with ${fractionPart.length} fractional digit(s) at magnitude >= 0.1 -- formatMagnitude's toFixed(4) branch always emits exactly 4. A shorter count (e.g. 3, as in the historical "5.752" defect) means a raw .toPrecision(4) call (or similar) reappeared instead of the shared formatter.`,
+      ).toBe(4);
+    }
+
+    it('HHInhalationCalculator renders its preliminary standard through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      selectSubstance('benzene');
+
+      // Same VF/PEF pair used by HHInhalationCalculator.test.tsx's own
+      // "unblocks and shows a computed screening value" case; with benzene's
+      // catalog RfC (0.03 mg/m3) and IUR (0.016 per mg/m3), both the
+      // non-cancer and cancer derivations land well above the 0.1 threshold
+      // (cancer ~15.2, non-cancer ~312.9 mg/kg dry -- the lower, more
+      // protective cancer value governs).
+      fireEvent.change(screen.getByTestId('hh-inhalation-vf-input'), {
+        target: { value: '10000' },
+      });
+      fireEvent.change(screen.getByTestId('hh-inhalation-pef-input'), {
+        target: { value: '1.36e9' },
+      });
+
+      const standard = screen.getByTestId('hh-inhalation-preliminary-standard');
+      assertFourDecimalDigits(standard.textContent ?? '', 'HH Inhalation preliminary standard');
+    });
+
+    it('CumulativeEffectsCalculator renders its equivalent concentration through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      // Push the reference PAH (benzo_a_pyrene, RPF = 1 under the default
+      // ccme-2010 scheme) concentration up so the summed BaP-eq clears 0.1
+      // regardless of the other default rows' contributions.
+      fireEvent.change(screen.getByTestId('cum-bapeq-conc-0'), {
+        target: { value: '50' },
+      });
+
+      const value = screen.getByTestId('cum-bapeq-value');
+      assertFourDecimalDigits(value.textContent ?? '', 'Cumulative Effects BaP-eq equivalent');
+    });
+
+    // Fix 3 (P2, third adversarial round, 2026-08-14): the two "exactly one
+    // current" tests above only cover Stage 1 breaking. They cannot catch
+    // (and did not catch) two stages being current at once when Stage 1/2
+    // are both fine but the DOWNSTREAM Background Adjustment Stage 3 needs
+    // attention -- the sample set is seeded by default (n=10, valid), so
+    // Stage 3 computes immediately and this state is never reached by
+    // those tests. Reproduction: clear the reference-samples textarea so
+    // n drops below 2 -- Stage 3 flips back to pending/current while the
+    // active pathway calculator's Stage 2 (self-contained rule:
+    // `!stage1Blocked`, no awareness of BackgroundAdjustment) stays current
+    // too. A regression that drops either half of the Fix 3 shared-state
+    // wiring (BackgroundAdjustment.tsx's `preliminaryAvailable &&
+    // stage3State !== 'computed'`, or the active calculator's
+    // `!stage1Blocked && !backgroundReferenceNeedsAttention`) reintroduces
+    // two lit stages here.
+    it('shows exactly one "current" stage after the background reference samples are cleared (Stage 3 needs attention, not Stage 2)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      const samplesInput = screen.getByLabelText(/reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: '' } });
+
+      const stages = collectStages();
+      const currentStages = stages.filter((s) => s.current);
+      expect(
+        currentStages.length,
+        `Expected exactly one current stage after clearing the background reference samples; found ${currentStages.length}: ${currentStages.map((s) => s.testId).join(', ') || '(none)'}.\n${describeStages(stages)}`,
+      ).toBe(1);
+      // The current stage must be the one that actually needs the user's
+      // attention now (Stage 3, background reference), not the pathway
+      // calculator's Stage 2, which has already produced its preliminary
+      // standard and has nothing further for the user to do.
+      expect(currentStages[0].testId).toBe('bg-adjust-stage-3');
+    });
+
+    it('does not render any stage number inside Cumulative Effects, HH Inhalation, or the Background Adjustment Site Comparison block', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      // These three surfaces are tools, not steps in the derivation
+      // sequence (DESIGN.md: Cumulative Effects and HH Inhalation are
+      // orthogonal to the 4-stage pathway; the Background Adjustment
+      // "Site Comparison" block is explicitly NOT part of the derivation --
+      // see BackgroundAdjustment.tsx's file-header comment). None of the
+      // three should carry a data-stage-state marker or a "Stage N of M"
+      // label; if a future edit wraps one in CalculatorStage without an
+      // owner decision to make it a real derivation step, this fails.
+      const cumulativeEffects = screen.getByTestId('cumulative-effects-calculator');
+      expect(
+        cumulativeEffects.querySelector('[data-stage-state]'),
+      ).toBeNull();
+      expect(within(cumulativeEffects).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+
+      const hhInhalation = screen.getByTestId('hh-inhalation-calculator');
+      expect(hhInhalation.querySelector('[data-stage-state]')).toBeNull();
+      expect(within(hhInhalation).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+
+      const siteComparison = screen.getByTestId('bg-adjust-site-comparison');
+      expect(siteComparison.querySelector('[data-stage-state]')).toBeNull();
+      expect(within(siteComparison).queryByText(/^Stage \d+ of \d+$/)).not.toBeInTheDocument();
+    });
+  });
+
+  // The six ASSEMBLED-coherence tests above cover STRUCTURE (sequence
+  // numbering, one-current, formatter agreement, unnumbered tools). None of
+  // them drives a derivation to completion: BackgroundAdjustment.test.tsx
+  // exercises Stage 4's max() logic thoroughly, but every one of those
+  // cases passes preliminaryStandard directly as a prop -- the actual
+  // wiring (pathway calculator -> onPreliminaryStandardChange ->
+  // MatrixDashboard state -> preliminarySlot -> BackgroundAdjustment prop
+  // -> Stage 4 max(preliminary, UTL) -> onAdjustedStandardChange ->
+  // adjustedSlot -> summary bar) is never exercised. This describe block
+  // drives that full chain through the real, rendered UI -- no direct
+  // BackgroundAdjustment render, no stubbed callbacks.
+  describe('MatrixDashboard -- full derivation wiring (pathway -> Stage 4 -> summary bar)', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    // Reference-sample sets chosen so the UTL lands FAR outside any
+    // plausible preliminary-standard magnitude for hh-direct's default
+    // substance (Total PCBs (Aroclor 1254)) -- these tests do not need to
+    // know that baseline number, only its relative position to the UTL,
+    // because the BW/IR_sed levers below are pushed by ~13 orders of
+    // magnitude, far past any plausible baseline. Values carry a small
+    // spread (not identical) so utl9595's std-dev computation runs
+    // normally, not degenerate at sd = 0.
+    const HUGE_SAMPLES =
+      '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001';
+    const TINY_SAMPLES =
+      '0.0010, 0.0012, 0.0009, 0.0011, 0.0008, 0.0013, 0.0010, 0.0009, 0.0011, 0.0010';
+
+    function setReferenceSamples(value: string) {
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value },
+      });
+    }
+
+    // Pulls the numeric token out of bg-adjust-result's "<value> mg/kg dry"
+    // text run for a like-for-like comparison against the summary bar's
+    // isolated value slot (same extraction pattern as the formatter-
+    // agreement test above, generalized to Stage 4's own result block).
+    function stage4ResultValueText(): string {
+      const result = screen.getByTestId('bg-adjust-result');
+      const match = result.textContent?.match(/([\d.]+(?:e[+-]?\d+)?)\s*mg\/kg dry/i);
+      if (!match) {
+        throw new Error(
+          `bg-adjust-result did not contain a "<value> mg/kg dry" run: "${result.textContent}"`,
+        );
+      }
+      return match[1];
+    }
+
+    // Fix 4 (P3, 2026-08-14 UI QA audit): extracts the SAME numeric-token
+    // pattern from an operand row (bg-adjust-operand-preliminary /
+    // bg-adjust-operand-utl) so the governing-operand assertions below
+    // compare exact numeric tokens, not `toContain` substrings. Under the
+    // levers used in these tests the two operands differ by ~13 orders of
+    // magnitude so a substring collision cannot currently happen, but
+    // `toContain` would also pass if, say, the preliminary operand were
+    // "5.0000" and the UTL were "15.0000" (a false pass on a substring
+    // match). Exact-token comparison closes that gap regardless of lever
+    // values.
+    function operandValueText(testId: string): string {
+      const el = screen.getByTestId(testId);
+      const match = el.textContent?.match(/([\d.]+(?:e[+-]?\d+)?)\s*mg\/kg dry/i);
+      if (!match) {
+        throw new Error(
+          `${testId} did not contain a "<value> mg/kg dry" run: "${el.textContent}"`,
+        );
+      }
+      return match[1];
+    }
+
+    // CASE 1: BACKGROUND GOVERNS -- the case the adjustment exists for.
+    // Lever 1 (reference samples -> HUGE_SAMPLES) pushes the UTL to
+    // ~1,000,000 mg/kg dry. Lever 2 (IR_sed -> 1e13) pushes the preliminary
+    // standard toward zero: IR_sed sits in the DENOMINATOR of the Cs-solve
+    // (Dose = Cs * CF * EF * ED * (IR_sed * BA_o + SA * AF_sed * ABS_d) /
+    // (BW * AT)), so raising it LOWERS the resulting preliminary standard --
+    // the opposite of BW (a previous test author got this backwards; see
+    // the formatter-agreement test above, which raises BW instead).
+    // Fails if: BackgroundAdjustment's Stage 4 max() picks the wrong
+    // operand, or the preliminary/UTL wiring path drops a hop (e.g. Stage 4
+    // reads a stale preliminaryStandard prop, or the summary bar's adjusted
+    // slot is built from a different value than Stage 4's own result).
+    it('drives a background-governs derivation end to end: pathway -> Stage 4 max() -> summary bar all agree on the UTL', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(HUGE_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-ir-sed-input'), {
+        target: { value: '1e13' },
+      });
+
+      // The pathway calculator's own Stage 2 actually produced a
+      // preliminary standard (the wiring's first hop).
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+
+      // Stage 4 computed and names the background UTL as governing, in
+      // words, not just a number.
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const governingSentence =
+        screen.getByTestId('bg-adjust-governing-sentence').textContent ?? '';
+      expect(governingSentence).toMatch(/background UTL 95\/95/);
+      expect(governingSentence).toMatch(
+        /governs, because it exceeds the preliminary standard/,
+      );
+      expect(governingSentence).toMatch(/naturally occurring background/i);
+
+      // The adjusted value equals the UTL operand, not the preliminary
+      // operand -- read from Stage 4's own two operand rows, not
+      // recomputed here.
+      const preliminaryOperandValue = operandValueText('bg-adjust-operand-preliminary');
+      const utlOperandValue = operandValueText('bg-adjust-operand-utl');
+      const stage4ValueText = stage4ResultValueText();
+      expect(utlOperandValue).toBe(stage4ValueText);
+      expect(preliminaryOperandValue).not.toBe(stage4ValueText);
+
+      // The SAME adjusted-value STRING (not just the same number) appears
+      // in the summary bar's adjusted slot -- this is the formatter-
+      // divergence defect class the file header describes: two components
+      // agreeing on the number but disagreeing on the rendered string.
+      const summaryAdjustedValue = screen
+        .getByTestId('calculator-summary-bar-adjusted-value')
+        .textContent?.trim() ?? '';
+      expect(summaryAdjustedValue).toBe(stage4ValueText);
+      expect(screen.getByTestId('calculator-summary-bar-adjusted-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // The summary bar's governing indication agrees with Stage 4's: both
+      // name the background UTL, and the summary bar cites the same figure.
+      const summaryGoverning =
+        screen.getByTestId('calculator-summary-bar-governing').textContent ?? '';
+      expect(summaryGoverning).toMatch(/background UTL 95\/95/);
+      expect(summaryGoverning).toContain(stage4ValueText);
+    });
+
+    // CASE 2: PRELIMINARY GOVERNS -- the mirror-image case.
+    // Lever 1 (reference samples -> TINY_SAMPLES) pushes the UTL toward
+    // ~0.001 mg/kg dry. Lever 2 (BW -> 1e13) pushes the preliminary
+    // standard up: BW sits in the NUMERATOR of the Cs-solve, so raising it
+    // RAISES the resulting preliminary standard (same direction, same
+    // input, as the formatter-agreement test above).
+    // Fails if: Stage 4's max() ever prefers the smaller operand, or the
+    // governedBy label disagrees with which value was actually used.
+    it('drives a preliminary-governs derivation end to end: pathway -> Stage 4 max() -> summary bar all agree on the preliminary standard', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(TINY_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '1e13' },
+      });
+
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const governingSentence =
+        screen.getByTestId('bg-adjust-governing-sentence').textContent ?? '';
+      expect(governingSentence).toMatch(/preliminary standard \(/);
+      expect(governingSentence).toMatch(
+        /governs, because it is at or above the background UTL 95\/95/,
+      );
+
+      const preliminaryOperandValue = operandValueText('bg-adjust-operand-preliminary');
+      const utlOperandValue = operandValueText('bg-adjust-operand-utl');
+      const stage4ValueText = stage4ResultValueText();
+      expect(preliminaryOperandValue).toBe(stage4ValueText);
+      expect(utlOperandValue).not.toBe(stage4ValueText);
+
+      const summaryAdjustedValue = screen
+        .getByTestId('calculator-summary-bar-adjusted-value')
+        .textContent?.trim() ?? '';
+      expect(summaryAdjustedValue).toBe(stage4ValueText);
+
+      const summaryGoverning =
+        screen.getByTestId('calculator-summary-bar-governing').textContent ?? '';
+      expect(summaryGoverning).toMatch(/preliminary standard/);
+      expect(summaryGoverning).toContain(stage4ValueText);
+    });
+
+    // CASE 3: THE CHAIN BREAKS CORRECTLY. First drive a real successful
+    // derivation (same levers as case 2, so there IS a previously-computed
+    // adjusted value that could go stale), then make body weight invalid.
+    // Fails if: the summary bar's adjusted slot keeps showing the old
+    // computed value/chip after the upstream input breaks (a stale value
+    // surviving an upstream break -- the exact failure this test exists
+    // to catch), or if Stage 4 does not fall back to WAITING and name the
+    // missing preliminary standard.
+    it('breaks the chain correctly: an upstream input going invalid after a successful derivation blocks Stage 1, sends Stage 4 back to WAITING naming the missing preliminary standard, and the summary bar drops the stale adjusted value', async () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(TINY_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '1e13' },
+      });
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const staleAdjustedValueText = stage4ResultValueText();
+
+      // Break Stage 1 with an invalid body weight (same input used by the
+      // existing "exactly one current stage" invalid-input test above).
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      // Stage 1 (exposure factors, which feeds the preliminary standard)
+      // is BLOCKED.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+
+      // Stage 4 falls back to WAITING and names the missing operand.
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'waiting',
+      );
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /preliminary standard/i,
+      );
+
+      // The summary bar does not retain the previously computed adjusted
+      // value as though it were still current. The reporting chain runs
+      // through nested effects (BackgroundAdjustment's own effect ->
+      // MatrixDashboard's onAdjustedStandardChange state update ->
+      // CalculatorSummaryBar's props), so settle with waitFor rather than
+      // assuming a single synchronous flush.
+      await waitFor(() => {
+        expect(
+          screen.getByTestId('calculator-summary-bar-adjusted-value').textContent?.trim(),
+        ).toBe('--');
+      });
+      expect(screen.getByTestId('calculator-summary-bar-adjusted-chip')).toHaveTextContent(
+        /waiting/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-adjusted-value').textContent?.trim(),
+      ).not.toBe(staleAdjustedValueText);
+    });
+
+    // ------------------------------------------------------------------
+    // Regression coverage for the state-machine defect an external reviewer
+    // found after six prior review rounds missed it: onPreliminaryStandardChange
+    // carried a VALUE, not a STATE, so MatrixDashboard.tsx inferred the summary
+    // bar's preliminary-standard chip purely from "is value null" -- every null
+    // became PENDING regardless of cause. A Stage-2-only error and a
+    // Stage-1-blocked pathway both report null, so both used to be
+    // indistinguishable from "nothing entered yet". The fix threads each
+    // calculator's own stage2State through the report; these three tests drive
+    // the assembled page to each of the three non-COMPUTED states and assert
+    // the summary bar's chip names the RIGHT one, not just "not PENDING".
+    // ------------------------------------------------------------------
+
+    it('a Stage-2-only invalid input (target risk) blocks the preliminary standard without touching Stage 1, and the summary bar shows BLOCKED, not PENDING', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: both stages start healthy with the seeded defaults.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Target risk is valid for STAGE 1 -- HHDirectContactCalculator's
+      // stage1FieldError list is exactly the seven exposure-factor fields (body
+      // weight, exposure duration/frequency, cancer averaging time, sediment
+      // ingestion rate, skin area, adherence factor); target risk and hazard
+      // quotient are not among them. It feeds Stage 2's own calculation only.
+      // This is exactly the "Stage-2-only" case the external reviewer called
+      // for: an input that is fine for Stage 1 but breaks the calculation.
+      // Scoped to this calculator's own container -- HHInhalationCalculator
+      // (always stacked below, regardless of active category) renders its own
+      // "Target risk" field and would otherwise collide.
+      const hhDirect = screen.getByTestId('hh-direct-contact-calculator');
+      fireEvent.change(within(hhDirect).getByLabelText(/target risk/i), {
+        target: { value: '-1' },
+      });
+
+      // Stage 1 is UNAFFECTED -- the invalid field is not one of its seven.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      // Stage 2 is BLOCKED -- the error is here (DESIGN.md "Four states, not two").
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+
+      // Before the fix, this would have shown PENDING: onPreliminaryStandardChange
+      // reported null (no way to distinguish WHY), and the parent inferred
+      // "no value -> PENDING" regardless of cause.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /blocked/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-preliminary-chip'),
+      ).not.toHaveTextContent(/pending/i);
+    });
+
+    it('Stage 1 blocked sends the preliminary standard summary slot to WAITING, not PENDING', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Break Stage 1 with an invalid body weight.
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+      // Stage 2 defers to Stage 1: it is blocked by something upstream, not by
+      // itself, so it reports WAITING (not BLOCKED, not PENDING).
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'waiting',
+      );
+
+      // Before the fix, this also collapsed to PENDING -- indistinguishable
+      // from the BLOCKED case above and from "nothing entered yet".
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /waiting/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-preliminary-chip'),
+      ).not.toHaveTextContent(/pending/i);
+    });
+
+    it('a genuinely-nothing-entered input (fewer than 2 background reference samples) shows PENDING, completing the three-way distinction from BLOCKED and WAITING above', () => {
+      // The preliminary-standard slot itself cannot reach a genuine "nothing
+      // entered yet" PENDING on the assembled page: all five calculators seed
+      // their required inputs with a valid default, and blanking a required
+      // field turns it into an explicit error (positiveInput) rather than an
+      // idle blank -- so every reachable non-computed state for that slot is
+      // either BLOCKED or WAITING, both covered above. PENDING is real and
+      // reachable on Stage 3 (Background UTL): fewer than 2 reference samples
+      // is genuinely "not entered yet, no error" -- exactly PENDING's
+      // definition (DESIGN.md "Four states, not two") -- and it shares the
+      // same reporting contract (state carried explicitly via
+      // BackgroundUtlReport, not inferred from value presence) as the
+      // preliminary slot's own fix. This closes the three-way distinction the
+      // two tests above start: BLOCKED, WAITING, and PENDING are three
+      // different chip states, not one bare null collapsed into PENDING.
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // The preliminary standard is healthy throughout -- this isolates Stage
+      // 3/the UTL slot, proving the three states are tracked independently
+      // rather than conflated into one shared flag.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      setReferenceSamples('0.001');
+
+      expect(screen.getByTestId('bg-adjust-stage-3')).toHaveAttribute(
+        'data-stage-state',
+        'pending',
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /pending/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).not.toHaveTextContent(
+        /blocked/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).not.toHaveTextContent(
+        /waiting/i,
+      );
+
+      // The preliminary slot (a different state, tracked independently) is
+      // unaffected by the UTL slot going PENDING.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+    });
+  });
+
+  // Owner 2026-08-14: "reference only shown when working in stage 3" -- the
+  // right rail (data-testid calculator-reference-rail) now follows
+  // backgroundReferenceNeedsAttention instead of defaulting open. These
+  // three tests drive the same preliminary/UTL state machine the
+  // "genuinely-nothing-entered" test above already exercises, but assert
+  // the RAIL's open/closed state rather than the summary-bar chips. Two
+  // independent signals per assertion: the toggle button's aria-label
+  // (Hide/Show Value Search panel -- the F2 fix, 2026-08-14 adversarial
+  // review, made this label content-aware in Calculator mode instead of the
+  // old generic "right panel" term; unaffected by any OTHER styling
+  // refactor) and the rail wrapper's `inert` attribute (the actual a11y
+  // mechanism that keeps a collapsed rail out of the focus/tab order -- see
+  // the wrapper's own comment in MatrixDashboard.tsx).
+  describe('MatrixDashboard -- Calculator reference rail follows Stage 3 (2026-08-14)', () => {
+    function expectRailOpen() {
+      expect(
+        screen.getByRole('button', { name: /^Hide Value Search panel$/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('calculator-reference-rail')).not.toHaveAttribute('inert');
+    }
+
+    function expectRailClosed() {
+      expect(
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
+      ).toBeInTheDocument();
+      expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
+    }
+
+    it('is CLOSED when the preliminary standard is not yet computed', () => {
+      // P3-5 fix (2026-08-14 adversarial review): the original version of
+      // this test started from an already-closed baseline and never observed
+      // a transition, so it would pass against a rail that was hard-coded
+      // shut regardless of state. This version first forces the rail OPEN
+      // (the same reference-samples lever the "OPENS when..." test uses), so
+      // the closing assertion below actually discriminates "derives closed
+      // from a BLOCKED preliminary" from "always closed."
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Every seeded default computes immediately (both the preliminary
+      // standard and the UTL), so the rail starts closed.
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+
+      // Break only the UTL (reference-sample count below 2) -- Stage 3
+      // becomes actionable and the rail opens. This is the discriminating
+      // transition: a hard-coded-shut rail would fail HERE, before this test
+      // even reaches its real assertion.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Now break ONLY the preliminary standard too, using the same
+      // Stage-2-only lever ("a Stage-2-only invalid input" test above):
+      // target risk is not one of Stage 1's seven fields, so Stage 1 (and
+      // therefore the UTL, which does not depend on it) stay untouched while
+      // Stage 2 goes BLOCKED. backgroundReferenceNeedsAttention requires
+      // preliminarySlot.state === 'computed', so a BLOCKED preliminary closes
+      // the rail again even though the UTL is STILL not computed -- proving
+      // the closing behavior is driven by the preliminary standard's state,
+      // not merely by the UTL settling back to computed.
+      const hhDirect = screen.getByTestId('hh-direct-contact-calculator');
+      fireEvent.change(within(hhDirect).getByLabelText(/target risk/i), {
+        target: { value: '-1' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).not.toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+
+      expectRailClosed();
+    });
+
+    it('OPENS when the preliminary standard is computed but the UTL is not (Stage 3 actionable)', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // hh-direct's preliminary standard computes immediately from its seeded
+      // defaults (same baseline the "genuinely-nothing-entered" test above
+      // relies on).
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // Drop the reference-sample count below 2 -- the UTL slot falls back
+      // to 'pending' (same lever as the "genuinely-nothing-entered" test).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+
+      expectRailOpen();
+    });
+
+    it('CLOSES again once the UTL is computed', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Restore a valid reference-sample set (n = 10, same set used
+      // elsewhere in this file) -- Stage 3 recomputes the UTL and the rail
+      // follows it back shut.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      expectRailClosed();
+    });
+
+    // Defect fix 2026-08-14: the rail's open state is DERIVED
+    // (calcRailOverride ?? backgroundReferenceNeedsAttention), not written by
+    // an effect. These three tests cover the override mechanism itself.
+    it('manual close STICKS across an unrelated re-render while the stage is unchanged', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Reach Stage-3-actionable so the rail auto-opens (same lever as the
+      // "OPENS when..." test above).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+      expectRailOpen();
+
+      // Manual close.
+      fireEvent.click(screen.getByRole('button', { name: /^Hide Value Search panel$/ }));
+      expectRailClosed();
+
+      // An unrelated re-render: change a Stage 1 input that does not flip
+      // either chip's state (cancer averaging time stays a valid positive
+      // number, so the preliminary standard remains 'computed' and the UTL
+      // slot -- driven only by the reference-sample field -- is untouched).
+      fireEvent.change(screen.getByTestId('hh-direct-at-cancer-input'), {
+        target: { value: '80' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(/pending/i);
+
+      // The manual close must still hold -- neither chip's state changed, so
+      // nothing should have cleared the override.
+      expectRailClosed();
+    });
+
+    it('manual open is CLEARED by a pathway switch, even though Stage 3 stays non-actionable throughout', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: seeded defaults compute both the preliminary standard and
+      // the UTL immediately, so backgroundReferenceNeedsAttention is false
+      // and the rail starts closed (same baseline the "is CLOSED when..."
+      // test above starts from).
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+
+      // Manual open, while Stage 3 is NOT actionable -- this only exercises
+      // the override, not the derived value.
+      fireEvent.click(screen.getByRole('button', { name: /^Show Value Search panel$/ }));
+      expectRailOpen();
+
+      // Switch pathway. hh-direct unmounts (its preliminary report briefly
+      // clears to 'pending' during the transition) and eco-direct mounts
+      // with its own seeded defaults, which also compute both slots
+      // immediately -- so backgroundReferenceNeedsAttention is false both
+      // before AND after the switch, with no transient change of VALUE in
+      // between (pending && anything is already false, same as computed &&
+      // computed). A dependency-array fix keyed only on
+      // backgroundReferenceNeedsAttention would therefore NOT re-fire here;
+      // only a fix that also keys on activeCategory clears the override on
+      // this switch. Assert the manual OPEN is gone and the rail follows
+      // Stage 3 (closed) for the new pathway.
+      fireEvent.click(screen.getByTestId('category-selector-eco-direct'));
+      expect(screen.getByTestId('calculator-summary-bar-preliminary-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+    });
+
+    it('does not flash open-then-closed on Calculator entry when defaults are already fully computed', () => {
+      // A plain before/after DOM assertion cannot distinguish "closed from
+      // the first commit" (derived value) from "opened, then an effect
+      // corrected it to closed" (the flash) -- @testing-library/react's
+      // fireEvent flushes passive effects synchronously via act(), so both
+      // implementations read identically AFTER the click settles. A
+      // MutationObserver watching the toggle button's aria-label makes the
+      // extra corrective render visible: the derived fix inserts the button
+      // already reading "Show Value Search panel" (one childList insertion,
+      // zero attribute mutations); an effect-writer inserts it open, then
+      // mutates the SAME node's aria-label once the effect fires.
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+
+      // MutationObserver callbacks fire as a microtask; disconnect() alone
+      // discards any queued-but-undelivered records, so pull them
+      // synchronously with takeRecords() before disconnecting -- otherwise
+      // this assertion would silently pass regardless of the flash (the
+      // callback array would still be empty at assertion time even though a
+      // real mutation happened).
+      const observer = new MutationObserver(() => {});
+      observer.observe(document.body, {
+        attributes: true,
+        attributeFilter: ['aria-label'],
+        subtree: true,
+      });
+
+      clickCalculatorTab();
+
+      const mutations = observer.takeRecords();
+      observer.disconnect();
+
+      const toggleButton = screen.getByRole('button', { name: /^Show Value Search panel$/ });
+      const flashMutation = mutations.find(
+        (record) => record.type === 'attributes' && record.target === toggleButton,
+      );
+      expect(flashMutation).toBeUndefined();
+      expect(screen.getByTestId('calculator-reference-rail')).toHaveAttribute('inert');
+    });
+
+    // F1 (2026-08-14 adversarial review): the rail's own toggle button is the
+    // focus-rescue target when it closes -- auto or manual -- while focus was
+    // inside it.
+    it('F1: closing the rail while focus is inside moves focus to the toggle button', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Force the rail open (Stage 3 actionable) -- same lever as "OPENS
+      // when..." above.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something INSIDE the rail (the Value Search input).
+      const searchInput = screen.getByPlaceholderText(/search parameter or source/i);
+      searchInput.focus();
+      expect(document.activeElement).toBe(searchInput);
+
+      // Restore a valid reference-sample set -- Stage 3 recomputes the UTL
+      // and the rail auto-closes (same lever "CLOSES again once the UTL is
+      // computed" uses). This is the AUTOMATIC close the finding described;
+      // nothing here clicks the toggle.
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /computed/i,
+      );
+      expectRailClosed();
+
+      // Focus must have moved to the toggle button -- not dropped to <body>.
+      expect(document.activeElement).toBe(
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
+      );
+    });
+
+    // F1 negative case: the fix must NOT steal focus when the rail closes and
+    // focus was never inside it. Neutralizes the F1 test above in the other
+    // direction -- a naive "always focus the toggle on close" implementation
+    // would pass the positive test but fail this one.
+    it('F1 (negative): closing the rail does NOT move focus when focus was outside it', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something OUTSIDE the rail -- the substance combobox in the
+      // left OPTIONS rail.
+      const outsideEl = screen.getByTestId('substance-combobox-input');
+      outsideEl.focus();
+      expect(document.activeElement).toBe(outsideEl);
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expectRailClosed();
+
+      // Focus must NOT have been stolen.
+      expect(document.activeElement).toBe(outsideEl);
+    });
+
+    // D2 (2026-08-15 adversarial review): the case that actually discriminates
+    // the fix. Neither F1 above (focus never leaves the rail before it
+    // closes) nor F1 (negative) above (focus was never inside the rail to
+    // begin with) exercises the "focus WAS inside, then genuinely left,
+    // BEFORE the rail closed" transition -- and that transition is exactly
+    // where the old relatedTarget-null-means-stay inference broke: a tap on
+    // non-focusable content (a paragraph, or the iOS keyboard being
+    // dismissed) reports relatedTarget === null, identically to the
+    // browser's own inert-triggered close blur, so the old code left the
+    // "focus inside" ref wrongly set to true. This test reproduces that
+    // exact blur (fireEvent.blur with relatedTarget: null, fired while the
+    // rail is still open and therefore NOT yet inert) and asserts the
+    // later close does not then steal focus to the toggle -- which it would
+    // under the old inference, since the ref was never correctly cleared.
+    it('F1 (D2 case): a null-relatedTarget blur BEFORE the rail closes (e.g. tap on non-focusable content) does not leave focus stealable on close', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expectRailOpen();
+
+      // Focus something INSIDE the rail (same lever as F1 above).
+      const searchInput = screen.getByPlaceholderText(/search parameter or source/i);
+      searchInput.focus();
+      expect(document.activeElement).toBe(searchInput);
+
+      // Simulate a tap on non-focusable page content (a paragraph, or the
+      // soft keyboard being dismissed): relatedTarget is null, but this
+      // happens while the rail is still OPEN -- the wrapper is not yet
+      // `inert` -- unlike the browser's own close-triggered blur, which is
+      // also relatedTarget-null but happens exactly when the wrapper
+      // becomes inert. The D2 fix reads `event.currentTarget.inert` to tell
+      // these apart instead of inferring from relatedTarget alone.
+      fireEvent.blur(searchInput, { relatedTarget: null });
+
+      // Now close the rail (same lever as F1 above: restore a valid
+      // reference-sample set).
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: {
+          value:
+            '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001',
+        },
+      });
+      expectRailClosed();
+
+      // Focus must NOT have been moved to the toggle button -- the blur
+      // above was a genuine "user left" event, not the rail closing, so the
+      // rescue effect should see the ref already cleared.
+      expect(document.activeElement).not.toBe(
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
+      );
+    });
+
+    // F2 (2026-08-14 adversarial review): the toggle's aria-label is
+    // content-aware ("Value Search panel") in Calculator mode, using the same
+    // string as the rail's own on-screen heading, and stays generic
+    // ("right panel") on Jurisdictional Frameworks, which shares the wrapper
+    // but was not named in the finding.
+    it('F2: right panel toggle label is content-aware in Calculator, generic elsewhere', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      expect(
+        screen.getByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /^(Show|Hide) right panel$/ }),
+      ).not.toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
+      expect(
+        screen.getByRole('button', { name: /^(Show|Hide) right panel$/ }),
+      ).toBeInTheDocument();
+      expect(
+        screen.queryByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
+      ).not.toBeInTheDocument();
+    });
+
+    // F3 (2026-08-14 adversarial review): aria-expanded reflects the actual
+    // panel state on both header toggles.
+    it('F3: left panel toggle aria-expanded matches panel state', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      const leftToggle = screen.getByRole('button', { name: /left panel$/i });
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
+      fireEvent.click(leftToggle);
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'false');
+      fireEvent.click(leftToggle);
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('F3: right panel toggle aria-expanded matches the rail state', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Seeded defaults compute both slots immediately -> rail starts closed.
+      const rightToggle = () =>
+        screen.getByRole('button', { name: /Value Search panel$/ });
+      expect(rightToggle()).toHaveAttribute('aria-expanded', 'false');
+
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value: '0.001' },
+      });
+      expect(screen.getByTestId('calculator-summary-bar-utl-chip')).toHaveTextContent(
+        /pending/i,
+      );
+      expect(rightToggle()).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    // F5 (2026-08-14 adversarial review): calculator-reference-rail is the
+    // SHARED right-drawer wrapper for both Calculator and Jurisdictional
+    // Frameworks (both isToolMode), but the testid itself must only ever
+    // resolve on the Calculator tab.
+    it('F5: the calculator-reference-rail testid is scoped to Calculator mode only', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      expect(screen.getByTestId('calculator-reference-rail')).toBeInTheDocument();
+
+      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
+      expect(screen.queryByTestId('calculator-reference-rail')).not.toBeInTheDocument();
+    });
+
+    // P3-2 (2026-08-14 adversarial review): a manual override must not
+    // survive a round trip through another top tab -- re-entering Calculator
+    // is a context change, same as switching pathways already is.
+    it('P3-2: manual open is CLEARED by a tab round trip through The Guide', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      // Baseline: seeded defaults compute both slots immediately, rail
+      // starts closed.
+      expectRailClosed();
+
+      // Manual open while Stage 3 is NOT actionable.
+      fireEvent.click(screen.getByRole('button', { name: /^Show Value Search panel$/ }));
+      expectRailOpen();
+
+      // Leave the Calculator tab and come back, with Stage 3 still not
+      // actionable throughout (no state that would change
+      // backgroundReferenceNeedsAttention is touched).
+      fireEvent.click(screen.getByRole('tab', { name: /^The Guide$/ }));
+      clickCalculatorTab();
+
+      // The override must be gone; the rail follows Stage 3 (closed) again.
+      expectRailClosed();
+    });
+  });
+
   // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
   it('pointercancel restores body cursor and userSelect (drag cleanup on cancel)', () => {
     Object.defineProperty(window, 'innerWidth', {

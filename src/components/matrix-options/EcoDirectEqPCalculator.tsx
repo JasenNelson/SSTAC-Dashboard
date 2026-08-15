@@ -42,6 +42,8 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -60,6 +62,38 @@ export interface EcoDirectEqPCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
+   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
+   * read of the already-memoized result; never changes what is computed or displayed here.
+   *
+   * Carries `state` (this calculator's own stage2State) alongside `value` so the parent can
+   * distinguish WHY there is no value -- Stage 1 BLOCKED (state 'waiting'), a Stage-2-only
+   * invalid or blocked result (state 'blocked'), or genuinely nothing entered yet (state
+   * 'pending') -- rather than collapsing all three into a bare null. `value`/`note` are only
+   * meaningful when `state === 'computed'`.
+   */
+  onPreliminaryStandardChange?: (
+    result: {
+      value: number | null;
+      unit: string;
+      note?: string;
+      state: StageState;
+    },
+  ) => void;
+  /**
+   * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+   * from the assembling parent (MatrixDashboard), which is the only place
+   * that sees both this calculator's Stage 2 output AND BackgroundAdjustment's
+   * Stage 3 output -- the two components never talk to each other directly.
+   * True when Stage 2 has already produced a preliminary standard AND
+   * BackgroundAdjustment's Stage 3 has NOT yet computed the background UTL --
+   * i.e. Stage 3, not Stage 2, is the single next actionable step on the
+   * assembled page. Stage 2's `current` below defers to it. Omitted/undefined
+   * (e.g. this calculator rendered standalone, as in its own unit tests)
+   * falls back to the old self-contained rule (`!stage1Blocked`), unchanged.
+   */
+  backgroundReferenceNeedsAttention?: boolean;
 }
 
 interface FcvSeed {
@@ -113,6 +147,8 @@ export default function EcoDirectEqPCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
+  backgroundReferenceNeedsAttention = false,
 }: EcoDirectEqPCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -217,6 +253,79 @@ export default function EcoDirectEqPCalculator({
   }, [ecoDirectEqP, substance, focPercent, fcvInput, csInput]);
 
   const isResult = result !== null && !('error' in result);
+
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3b). Purely derived
+  // from EXISTING inputs/result for display -- reads fields already computed above, never adds
+  // a new calculation branch. Stage 1 (exposure inputs) re-runs the SAME parseDecimalInput
+  // checks already used inside the `result` useMemo above (FCV must be a positive decimal; Cs
+  // must be a decimal number or blank) so Stage 1 can report which local field is at fault even
+  // when the combined `result` error actually came from the substance's log K_ow (a global
+  // input selected elsewhere, not one of this component's own Stage-1 fields).
+  const fcvStageCheck = parseDecimalInput(fcvInput, { allowNegative: false });
+  const csStageCheck = parseDecimalInput(csInput, { allowNegative: false });
+  const stage1FieldError =
+    fcvStageCheck.state !== 'valid' || fcvStageCheck.value <= 0
+      ? 'FCV must be a positive decimal number (ug/L).'
+      : csStageCheck.state === 'invalid'
+        ? 'Cs must be a decimal number (e.g., 0.1) or blank.'
+        : csStageCheck.state === 'negative'
+          ? 'Cs must be greater than or equal to zero.'
+          : undefined;
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError
+    : 'Fraction organic carbon, FCV, and Cs inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : result && 'error' in result
+      ? 'blocked'
+      : isResult
+        ? (result as EcoDirectEqPResult).blocked
+          ? 'blocked'
+          : 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure input above.'
+    : result && 'error' in result
+      ? result.error
+      : isResult
+        ? (result as EcoDirectEqPResult).blocked
+          ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${(result as EcoDirectEqPResult).warnings.join(' ') || 'input validity constraint violated.'}`
+          : `Preliminary standard computed: ${formatMagnitude((result as EcoDirectEqPResult).sedS)} mg/kg dry.`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
+  // already-memoized result only -- no new computation. Withheld (null) when blocked === true:
+  // per the design doc, a blocked sedS is diagnostic-only and must not be quoted as a benchmark.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    const ecoDirectResult =
+      isResult && !(result as EcoDirectEqPResult).blocked
+        ? (result as EcoDirectEqPResult)
+        : null;
+    onPreliminaryStandardChange({
+      value: ecoDirectResult ? ecoDirectResult.sedS : null,
+      unit: 'mg/kg dry',
+      note:
+        ecoDirectResult && ecoDirectResult.verdict
+          ? `Verdict: ${ecoDirectResult.verdict}`
+          : undefined,
+      state: stage2State,
+    });
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
+    };
+  }, [result, isResult, stage2State, onPreliminaryStandardChange]);
+
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
       {
@@ -322,6 +431,15 @@ export default function EcoDirectEqPCalculator({
       */}
 
       {/* 1. INPUTS */}
+      <CalculatorStage
+        number={1}
+        totalStages={4}
+        title="Exposure Inputs"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={stage1Blocked}
+        testId="eco-direct-stage-1"
+      >
       <div
         className="space-y-4 mb-6"
         data-testid="eqp-inputs-section"
@@ -447,7 +565,18 @@ export default function EcoDirectEqPCalculator({
           </p>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={4}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure inputs' : undefined}
+        current={!stage1Blocked && !backgroundReferenceNeedsAttention}
+        testId="eco-direct-stage-2"
+      >
       {/* 2. ERROR box (input validation failures only) */}
       {result && 'error' in result && (
         <div
@@ -490,7 +619,7 @@ export default function EcoDirectEqPCalculator({
               when blocked -- the verdict is already suppressed and the warnings box explains why.
               Matches the HHFoodWeb/EcoFoodBSAF blocked-render contract. */}
           {isResult && !(result as EcoDirectEqPResult).blocked
-            ? (result as EcoDirectEqPResult).sedS.toPrecision(4)
+            ? formatMagnitude((result as EcoDirectEqPResult).sedS)
             : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">
             mg/kg dry
@@ -540,6 +669,15 @@ export default function EcoDirectEqPCalculator({
           />
 
           {isResult && (
+            // UI QA audit (2026-08-14, fix 3/P3): logKoc, Koc_L_per_kg_OC,
+            // and ESBoc_mg_per_kg_OC keep their own formatting deliberately.
+            // logKoc is a dimensionless log-partitioning coefficient.
+            // Koc_L_per_kg_OC is L/kg-OC (a partitioning coefficient), not a
+            // mass-per-mass concentration. ESBoc_mg_per_kg_OC is normalized
+            // to organic carbon (mg/kg-OC), a different basis than the
+            // mg/kg-dry sediment standards it feeds into via f_oc below --
+            // none of the three is ever displayed next to, or compared
+            // against, a mg/kg-dry standard.
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">log K_oc</span>
@@ -584,6 +722,7 @@ export default function EcoDirectEqPCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

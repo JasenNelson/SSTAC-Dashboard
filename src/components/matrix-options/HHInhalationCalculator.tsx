@@ -23,6 +23,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import MathRenderer from '@/components/MathRenderer';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import {
   deriveInhalationStandards,
   type HumanHealthInhalationInput,
@@ -39,6 +40,7 @@ import {
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
+import type { StageState } from './CalculatorStage';
 
 // Unsourced (screening-assumption) exposure-factor baselines. EF/ED/AT_cancer default
 // to the EPA/540/R-96/018 (1996 SSG) residential Table 1 defaults reproduced in the
@@ -88,6 +90,26 @@ export interface HHInhalationCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard upward so a parent (e.g. the Calculator tab's
+   * summary bar) can display it without recomputing anything. Purely a read of the
+   * already-memoized inhResult; never changes what is computed or displayed here.
+   *
+   * This calculator has no numbered Stage 1/Stage 2 split (unlike the four category
+   * calculators), so `state` here is a single derived value covering the whole pathway:
+   * 'blocked' when an input is invalid or the pathway itself is blocked (fail-closed --
+   * neither endpoint could be computed), 'pending' when inputs are still valid but no result
+   * exists yet, and 'computed' when a usable sedS is available. `value`/`driver` are only
+   * meaningful when `state === 'computed'`.
+   */
+  onPreliminaryStandardChange?: (
+    result: {
+      value: number | null;
+      unit: string;
+      driver?: string;
+      state: StageState;
+    },
+  ) => void;
 }
 
 export default function HHInhalationCalculator({
@@ -95,6 +117,7 @@ export default function HHInhalationCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
 }: HHInhalationCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -175,6 +198,45 @@ export default function HHInhalationCalculator({
   ]);
 
   const inhResult = 'error' in result ? null : result;
+
+  // Presentation-layer state for the report below, mirroring the stage2State pattern used by
+  // the four category calculators (which do render numbered stages). This calculator has no
+  // Stage 1 to defer to, so there is no 'waiting' case here -- 'blocked' covers both an invalid
+  // input ('error' in result) and a fail-closed pathway (inhResult.blocked or a null sedS).
+  const inhalationState: StageState =
+    'error' in result
+      ? 'blocked'
+      : inhResult && !inhResult.blocked && inhResult.sedS !== null
+        ? 'computed'
+        : inhResult
+          ? 'blocked'
+          : 'pending';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads
+  // inhResult only -- no new computation. value/driver are withheld (null/undefined) whenever
+  // state !== 'computed' -- neither a blocked pathway nor a null sedS is a value that may be
+  // quoted as a benchmark, but the STATE that explains why is still reported explicitly.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    const computedResult =
+      inhResult && !inhResult.blocked && inhResult.sedS !== null ? inhResult : null;
+    onPreliminaryStandardChange({
+      value: computedResult ? computedResult.sedS : null,
+      unit: 'mg/kg dry',
+      driver: computedResult ? computedResult.driver : undefined,
+      state: inhalationState,
+    });
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
+    };
+  }, [inhResult, inhalationState, onPreliminaryStandardChange]);
 
   // Exact-id provenance attribution (codex ship-gate P2, 2026-07-17): only attach the
   // catalog parameter_value_id while the input still equals the as-wired seed for a
@@ -496,7 +558,7 @@ export default function HHInhalationCalculator({
               Preliminary Human Health Screening Value (Inhalation)
             </div>
             <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-              {inhResult.sedS !== null ? inhResult.sedS.toPrecision(4) : '--'}{' '}
+              {inhResult.sedS !== null ? formatMagnitude(inhResult.sedS) : '--'}{' '}
               <span className="text-lg text-slate-500 font-medium">mg/kg dry</span>
             </div>
             <div className="mt-3 inline-block px-3 py-1 rounded-full text-sm font-semibold bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-200">
@@ -533,12 +595,21 @@ export default function HHInhalationCalculator({
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Non-cancer value</span>
-                <span>{inhResult.nonCancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(inhResult.nonCancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Cancer value</span>
-                <span>{inhResult.cancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(inhResult.cancerSedS, { placeholder: 'n/a' })}</span>
               </div>
+              {/*
+                UI QA audit (2026-08-14, fix 3/P3): vfPefCombined_m3_per_kg
+                and airConcentration_mg_per_m3 keep toPrecision(4)
+                deliberately despite sitting in the same card group as the
+                formatMagnitude'd mg/kg-dry values above. vfPefCombined is
+                m3/kg (a transport factor), and airConcentration is mg/m3 (an
+                air concentration) -- neither shares the mg/kg-dry sediment
+                basis, so neither is ever compared against those standards.
+              */}
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Combined VF/PEF transport factor</span>
                 <span>

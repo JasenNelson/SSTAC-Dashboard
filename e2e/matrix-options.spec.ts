@@ -1,59 +1,5 @@
-import { expect, type Locator, type Page, test } from '@playwright/test';
-
-async function clickUntilVisible(
-  page: Page,
-  triggerName: string,
-  visibleTarget: string | Locator,
-) {
-  const trigger = page.getByRole('tab', {
-    name: triggerName,
-    exact: true,
-  });
-  const target =
-    typeof visibleTarget === 'string'
-      ? page.getByTestId(visibleTarget)
-      : visibleTarget;
-
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    await expect(trigger).toBeVisible();
-    await trigger.click();
-    await page.waitForTimeout(500);
-    if (await target.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return;
-    }
-  }
-
-  await expect(target).toBeVisible();
-}
-
-// /matrix-options is auth-gated (middleware matcher) as of 2026-06-15. CI has no
-// shared auth storageState, so auth-dependent assertions are explicitly guarded and
-// skipped if we land on /login.
-async function gotoMatrixOptionsOrSkip(page: Page) {
-  await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-  if (page.url().includes('/login')) {
-    test.skip(true, 'Not authenticated; /matrix-options is gated. Skipping authenticated assertions.');
-  }
-  // Deterministic readiness (replaces a blind 3s settle): the authenticated page
-  // renders the MatrixDashboard h1 exactly "Matrix Options". Waiting on it resolves
-  // as soon as the dashboard is interactive instead of after a fixed timeout, and
-  // fails loudly if the authed page never renders. Runs only under auth (post-skip).
-  await expect(
-    page.getByRole('heading', { name: 'Matrix Options', exact: true }),
-  ).toBeVisible({ timeout: 15_000 });
-  // ...but that h1 is present in the SSR markup, so it resolves BEFORE React
-  // has client-rendered the dashboard. In that window every tab button exists
-  // with correct role/ARIA/tabindex yet carries NO event handlers, and the
-  // client render then REPLACES those nodes (dropping DOM focus to <body>).
-  // A keyboard test that focused a tab and pressed a key there was pressing
-  // against inert markup: focus() succeeded, the keydown reached a node with
-  // no handler, and nothing moved. Gate on the mount-only readiness marker
-  // that MatrixDashboard sets on the primary tablist, which by construction
-  // can only exist on the live, interactive render.
-  await expect(
-    page.locator('[role="tablist"][data-primary-tablist-ready="true"]'),
-  ).toBeAttached({ timeout: 15_000 });
-}
+import { expect, test } from '@playwright/test';
+import { clickUntilVisible, gotoMatrixOptionsOrSkip } from './fixtures/matrix-options-nav';
 
 test.describe('Matrix Options default-policy review shortcuts', () => {
   test('matrix-options route is either authenticated or redirects to /login', async ({ page }, testInfo) => {
@@ -79,6 +25,16 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
 
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
     await page.getByTestId('category-selector-hh-food').click();
+
+    // The right rail (Value Search panel, which hosts this shortcut) is
+    // deliberately gated to Stage 3 per owner instruction (2026-08-14): it is
+    // reference DATA, shown only while working in Stage 3, and is collapsed
+    // (and `inert`) by default otherwise. "Review candidate defaults" is an
+    // ACTION, not reference data, but it lives inside that same panel, so the
+    // real user flow to reach it is: open the panel via the header toggle
+    // first. Its accessible name in Calculator mode is "Show Value Search
+    // panel" (content-aware per the F2 fix, 2026-08-14 adversarial review).
+    await page.getByRole('button', { name: 'Show Value Search panel', exact: true }).click();
 
     const reviewButton = page.getByRole('button', {
       name: 'Review candidate defaults',

@@ -17,6 +17,7 @@ vi.mock('@/components/MathRenderer', () => ({
 }));
 
 import BackgroundAdjustment from '../BackgroundAdjustment';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 
 describe('BackgroundAdjustment', () => {
   it('renders with the Background Adjustment heading + Provincial scope default + the UTL hero', () => {
@@ -158,8 +159,13 @@ describe('BackgroundAdjustment', () => {
       target: { value: '4.8, -0.5, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4' },
     });
 
-    expect(screen.getByText(/rejected non-numeric tokens.*-0\.5/i))
-      .toBeInTheDocument();
+    // getAllByText, not getByText: the token list now appears TWICE -- in the
+    // n-count line under the textarea (which always showed it) and in the
+    // Stage 3 detail (which shows it now that rejected tokens block the stage).
+    // Two matches is the fix working, so assert on both plus the stage state.
+    expect(screen.getAllByText(/rejected non-numeric tokens.*-0\.5/i).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
   });
 
   it('rejects hex-like tokens (e.g., 0x10) rather than silently parsing as 16', () => {
@@ -170,8 +176,10 @@ describe('BackgroundAdjustment', () => {
       target: { value: '4.8, 0x10, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4' },
     });
 
-    expect(screen.getByText(/rejected non-numeric tokens.*0x10/i))
-      .toBeInTheDocument();
+    // Two matches expected -- see the note on the negative-sample test above.
+    expect(screen.getAllByText(/rejected non-numeric tokens.*0x10/i).length)
+      .toBeGreaterThanOrEqual(1);
+    expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
   });
 
   it('shows the K-factor clamp warning for n < 5', () => {
@@ -203,5 +211,341 @@ describe('BackgroundAdjustment', () => {
     expect(panel.textContent?.match(/not cataloged/g)?.length).toBe(4);
     expect(screen.queryByTestId('provenance-equation-records')).not.toBeInTheDocument();
     expect(screen.queryByTestId('provenance-source-records')).not.toBeInTheDocument();
+  });
+
+  // Step 4 of the redesign: Stage 4 (Adjusted Standard) = max(preliminary,
+  // UTL). The default Provincial reference set (n = 10) computes to
+  // UTL = 5.7516 (5.0000 + 2.8393 x 0.2582), unchanged from before this
+  // step -- these tests only cover the NEW max() presentation layered on
+  // top of that pre-existing, unchanged UTL.
+  describe('Stage 4 -- Adjusted Standard (max(preliminary, UTL))', () => {
+    it('is WAITING when no preliminaryStandard prop is supplied (operand unavailable)', () => {
+      render(<BackgroundAdjustment />);
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toBeInTheDocument();
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+    });
+
+    it('is WAITING when preliminaryStandard is present but not yet computed (blocked upstream)', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: null, unit: 'mg/kg dry', state: 'blocked' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /preliminary standard \(currently BLOCKED\)/i,
+      );
+    });
+
+    it('is WAITING when the background UTL is not yet computable (fewer than 2 samples), even with a valid preliminary standard', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 1.5, unit: 'mg/kg dry', state: 'computed' }}
+        />,
+      );
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: '4.8' } });
+
+      expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('PENDING');
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /background UTL 95\/95 from Stage 3/i,
+      );
+    });
+
+    // Regression: rejected tokens must BLOCK Stage 3 even when enough valid
+    // samples remain to compute a UTL from the accepted subset.
+    //
+    // The pre-fix ordering tested utlResult BEFORE the rejected-token flag, so
+    // 'blocked' was unreachable whenever >= 2 valid samples arrived alongside
+    // garbage: Stage 3 reported COMPUTED from a PARTIAL reference set and that
+    // UTL became the adjusted standard. The existing rejection tests above did
+    // not catch it because they assert only the n-count line under the
+    // textarea, which renders independently of the stage state.
+    //
+    // This test therefore asserts the STAGE STATE and the ABSENCE of a computed
+    // adjusted standard, not the token message -- assert the thing that was
+    // wrong, not the thing that already worked.
+    it('BLOCKS Stage 3 (and holds Stage 4 at WAITING) when tokens are rejected but >= 2 valid samples remain', () => {
+      const onAdjustedStandardChange = vi.fn();
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 1.5, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      // Nine parseable samples plus one bad token: utl9595() would happily
+      // compute from the nine.
+      fireEvent.change(samplesInput, {
+        target: { value: '4.8, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4, NOT_A_NUMBER' },
+      });
+
+      expect(screen.getByTestId('bg-adjust-stage-3-chip')).toHaveTextContent('BLOCKED');
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('WAITING');
+      // No adjusted standard may be rendered from a partial reference set.
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toBeInTheDocument();
+      // ...and the CURRENT report upward must not be computed. Deliberately the
+      // last call, not all calls: the initial mount legitimately computes from
+      // the all-valid default samples, so a filter across the whole call history
+      // would fail on correct behaviour. What must hold is that the state after
+      // the bad token arrives is no longer computed.
+      const lastReport =
+        onAdjustedStandardChange.mock.calls[
+          onAdjustedStandardChange.mock.calls.length - 1
+        ]?.[0];
+      expect(lastReport).toBeDefined();
+      expect(lastReport.state).not.toBe('computed');
+      expect(lastReport.value).toBeNull();
+    });
+
+    it('governs on the BACKGROUND UTL when it exceeds the preliminary standard, and reports it to onAdjustedStandardChange', () => {
+      const onAdjustedStandardChange = vi.fn();
+      // Default Provincial UTL = 5.7516; a tiny risk-based preliminary
+      // standard (0.0001136, matching the mockup's HH Food Web example)
+      // sits well below it, so background governs.
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 0.0001136, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      const result = screen.getByTestId('bg-adjust-result');
+      // Fix 1 (P1-1) displayed via the shared formatMagnitude formatter;
+      // Fix 1b (P1-1b, 2026-08-14) corrected a precision regression the
+      // first fix introduced -- formatMagnitude now reproduces the
+      // toFixed(4) string exactly for "normal magnitude" values like this
+      // one (>= 0.1), so the display is 5.7516, not the truncated 5.752.
+      // The underlying computed value (~5.7516) is unchanged either way.
+      expect(result).toHaveTextContent('5.7516');
+      const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
+      expect(governingSentence).toHaveTextContent(/background UTL 95\/95.*governs/i);
+      expect(governingSentence).toHaveTextContent(/naturally/i);
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          value: expect.closeTo(5.7516, 4),
+          unit: 'mg/kg dry',
+          state: 'computed',
+          governedBy: 'background',
+        }),
+      );
+    });
+
+    it('governs on the PRELIMINARY standard when it is at or above the background UTL, and reports it to onAdjustedStandardChange', () => {
+      const onAdjustedStandardChange = vi.fn();
+      // Preliminary standard (10) is above the default Provincial UTL
+      // (5.7516), so the preliminary standard governs.
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'mg/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      const result = screen.getByTestId('bg-adjust-result');
+      // Fix 1b (P1-1b, 2026-08-14): formatMagnitude(10) === '10.0000',
+      // reproducing the original toFixed(4) display exactly (10 is well
+      // above the 0.1 fixed-vs-significant-figure threshold). Computed
+      // value unchanged.
+      expect(result).toHaveTextContent('10.0000');
+      const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
+      expect(governingSentence).toHaveTextContent(/preliminary standard.*governs/i);
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith({
+        value: 10,
+        unit: 'mg/kg dry',
+        state: 'computed',
+        governedBy: 'preliminary',
+      });
+    });
+
+    it('reports the background UTL to onUtlChange independently of the preliminary standard prop', () => {
+      const onUtlChange = vi.fn();
+      render(<BackgroundAdjustment onUtlChange={onUtlChange} />);
+      expect(onUtlChange).toHaveBeenLastCalledWith({
+        value: expect.closeTo(5.7516, 4),
+        // Fix 2 (P2-1): 'mg/kg dry' now, reconciled with the preliminary/
+        // adjusted slots' unit so the same physical quantity is not shown
+        // with two different unit strings across the summary bar.
+        unit: 'mg/kg dry',
+        state: 'computed',
+        scope: 'provincial',
+        n: 10,
+      });
+    });
+  });
+
+  // Fix 2 (P2-1): guard against Stage 4 taking max() across mismatched
+  // units. Every real caller today passes 'mg/kg dry' for both operands
+  // (see the other Stage 4 tests above), so this only exercises the
+  // future-mismatch REFUSAL path.
+  describe('Stage 4 -- unit mismatch guard (P2-1)', () => {
+    it('blocks Stage 4 and refuses to compute an adjusted standard when the preliminary standard unit does not match the UTL unit', () => {
+      const onAdjustedStandardChange = vi.fn();
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'ug/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      const blocked = screen.getByTestId('bg-adjust-result-blocked');
+      expect(blocked).toHaveTextContent(/unit mismatch/i);
+      expect(blocked).toHaveTextContent(/ug\/kg dry/);
+      expect(blocked).toHaveTextContent(/mg\/kg dry/);
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('bg-adjust-result-waiting')).not.toBeInTheDocument();
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          value: null,
+          state: 'blocked',
+          governedBy: null,
+        }),
+      );
+    });
+
+    it('is unaffected (still computes) when the preliminary standard unit matches the UTL unit, case- and whitespace-insensitively', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: ' MG/KG DRY ', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
+    });
+
+    // Fix 2 (P2-A, REVERTED 2026-08-14 third adversarial round): 'mg/kg' is
+    // NOT a spelling variant of 'mg/kg dry' in this codebase -- it is the
+    // WET-WEIGHT TISSUE basis used elsewhere in this feature (see
+    // HHFoodWebCalculator.tsx tissueTarget_mg_per_kg, rendered as 'mg/kg').
+    // A caller reporting a preliminary standard in bare 'mg/kg' must be
+    // REFUSED as a unit mismatch, exactly like any other genuinely different
+    // unit -- silently accepting it risks max(tissue mg/kg wet,
+    // sediment mg/kg dry) being rendered as a valid adjusted sediment
+    // standard with no warning.
+    it('blocks a bare "mg/kg" preliminary standard as a unit mismatch (not an equivalent spelling of "mg/kg dry")', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'mg/kg', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      const blocked = screen.getByTestId('bg-adjust-result-blocked');
+      expect(blocked).toHaveTextContent(/unit mismatch/i);
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+    });
+
+    // A genuinely different unit must still be refused -- this is the
+    // pre-existing 'ug/kg dry' test above; this second case confirms a
+    // different magnitude prefix on the bare spelling is caught too.
+    it('still blocks a genuinely different unit ("ug/kg", not just "ug/kg dry")', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'ug/kg', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      expect(screen.getByTestId('bg-adjust-result-blocked')).toBeInTheDocument();
+    });
+  });
+
+  // Fix 1 (P1, 2026-08-14 UI QA audit): Mean and Std Dev were the OPERANDS
+  // of the UTL rendered directly beneath them (utl = mean + K * sd), still
+  // on .toFixed(4) while the UTL itself already used formatMagnitude. A
+  // dioxin-scale reference set (sub-0.1 mg/kg dry, legitimately real per
+  // the file header -- these values are NOT an out-of-range edge case)
+  // rendered a real, non-zero Mean and Std Dev as "0.0000", i.e. a UTL
+  // visibly derived from two displayed zeros -- the exact defect
+  // formatMagnitude exists to eliminate, reproduced in the one place it
+  // should have been protected first.
+  describe('Fix 1 -- Mean and Std Dev at dioxin scale (P1)', () => {
+    const DIOXIN_SCALE_SAMPLES =
+      '0.000030, 0.000034, 0.000028, 0.000031, 0.000029, 0.000033, 0.000032, 0.000030, 0.000031, 0.000029';
+
+    it('does not render Mean or Std Dev as "0.0000" for a sub-0.1 mg/kg dry reference set', () => {
+      render(<BackgroundAdjustment />);
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: DIOXIN_SCALE_SAMPLES } });
+
+      const meanText = screen.getByTestId('bg-adjust-mean-value').textContent ?? '';
+      const sdText = screen.getByTestId('bg-adjust-sd-value').textContent ?? '';
+
+      // The regression this test guards against: real, non-zero Mean/SD
+      // collapsing to the all-zero display.
+      expect(meanText).not.toBe('0.0000');
+      expect(sdText).not.toBe('0.0000');
+      expect(meanText).not.toMatch(/^0\.0*$/);
+      expect(sdText).not.toMatch(/^0\.0*$/);
+
+      // Positive proof, not just absence of zero: formatMagnitude renders
+      // this magnitude (~3e-5) via its small-value toPrecision branch,
+      // which for values below 1e-6's neighborhood surfaces exponential
+      // notation -- here it stays in the toPrecision decimal form since
+      // 3e-5 is within the branch that does not yet fall to scientific
+      // notation. Assert the actual computed mean/sd via formatMagnitude
+      // directly, so this test tracks the real formatter contract rather
+      // than a hand-picked string.
+      const meanValue = (0.00003 + 0.000034 + 0.000028 + 0.000031 + 0.000029 +
+        0.000033 + 0.000032 + 0.00003 + 0.000031 + 0.000029) / 10;
+      expect(meanText).toBe(formatMagnitude(meanValue));
+
+      // The UTL hero, derived from these same operands, must likewise be a
+      // real non-zero value, not a zero-derived artefact.
+      const hero = screen.getByTestId('bg-adjust-utl-hero');
+      expect(hero.textContent).not.toMatch(/0\.0000\s*mg\/kg dry/);
+    });
+
+    it('keeps K on toFixed(4) at dioxin scale (dimensionless table constant, unaffected by concentration magnitude)', () => {
+      render(<BackgroundAdjustment />);
+      const samplesInput = screen.getByLabelText(/Provincial reference samples/i);
+      fireEvent.change(samplesInput, { target: { value: DIOXIN_SCALE_SAMPLES } });
+
+      const kText = screen.getByTestId('bg-adjust-k-value').textContent ?? '';
+      // n = 10 dioxin-scale samples uses the same K-table lookup as any
+      // other n = 10 reference set -- K is independent of the samples'
+      // magnitude, only their count (and, in the exact table, their
+      // dispersion tier). It stays a small toFixed(4) decimal, not
+      // scientific notation.
+      expect(kText).toMatch(/^\d+\.\d{4}$/);
+    });
+  });
+
+  // Fix 2 (P1, 2026-08-14 UI QA audit): csParsed (a parsed number, not an
+  // echo of the user's keystrokes) went through default String() coercion
+  // in the one sentence whose purpose is comparing it against the UTL,
+  // which is rendered with formatMagnitude directly above. A small,
+  // sub-0.1 measured concentration exposes the mismatch: formatMagnitude
+  // would render it in scientific/toPrecision form while the raw String()
+  // path rendered a plain decimal -- same number, two different strings
+  // forty pixels apart.
+  describe('Fix 2 -- Cs comparison sentence agrees with formatMagnitude (P1)', () => {
+    it('renders the measured Cs inside the comparison sentence with the same formatter as the UTL hero', () => {
+      render(<BackgroundAdjustment />);
+
+      // A small measured concentration below the fixed-decimal threshold
+      // (0.1) so formatMagnitude's small-value branch actually engages --
+      // this is the regime where String(csParsed) and
+      // formatMagnitude(csParsed) can diverge.
+      const csInput = screen.getByLabelText(/Measured site concentration/i);
+      fireEvent.change(csInput, { target: { value: '0.000009' } });
+
+      const comparison = screen.getByTestId('bg-adjust-cs-comparison');
+      const expectedText = formatMagnitude(0.000009);
+
+      // The old defect: String(0.000009) === "0.000009", which does NOT
+      // match formatMagnitude's toPrecision(4) rendering of the same
+      // number. Assert the sentence uses the SAME string formatMagnitude
+      // would produce.
+      expect(comparison.textContent).toContain(`Measured Cs (${expectedText})`);
+    });
   });
 });

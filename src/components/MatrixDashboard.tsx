@@ -1,6 +1,12 @@
 'use client';
 
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
 import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
@@ -16,7 +22,11 @@ import {
 import MathRenderer from './MathRenderer';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
-import BackgroundAdjustment from './matrix-options/BackgroundAdjustment';
+import BackgroundAdjustment, {
+  type AdjustedStandardReport,
+  type BackgroundAdjustmentPreliminaryStandard,
+  type BackgroundUtlReport,
+} from './matrix-options/BackgroundAdjustment';
 import EcoDirectEqPCalculator from './matrix-options/EcoDirectEqPCalculator';
 import EcoFoodBSAFCalculator from './matrix-options/EcoFoodBSAFCalculator';
 import HHDirectContactCalculator from './matrix-options/HHDirectContactCalculator';
@@ -31,6 +41,11 @@ import CategorySelector from './matrix-options/CategorySelector';
 import SharedGlobalInputs, {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
+import CalculatorSummaryBar, {
+  type SummaryBarSlot,
+} from './matrix-options/CalculatorSummaryBar';
+import type { StageState } from './matrix-options/CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
@@ -316,6 +331,75 @@ export default function MatrixDashboard({
   // panel independently via the chrome buttons in the header.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  // Calculator's reference rail is DERIVED from backgroundReferenceNeedsAttention
+  // (see that flag's declaration below), never written by an effect -- an
+  // effect-writer painted the rail open on the first Calculator frame and then
+  // closed it, producing a visible flash on every entry. `null` = follow
+  // Stage 3; a boolean = the user's explicit manual toggle. See the
+  // override-clearing effect near backgroundReferenceNeedsAttention.
+  const [calcRailOverride, setCalcRailOverride] = useState<boolean | null>(
+    null,
+  );
+  // A11y fix (F1, 2026-08-14 adversarial review): the right rail wrapper
+  // (calculator-reference-rail, shared by Calculator + Jurisdictional
+  // Frameworks) goes `inert` whenever it closes, including the AUTOMATIC
+  // close driven by backgroundReferenceNeedsAttention flipping to false. If
+  // the user's focus was inside the rail when that happens (e.g. a Value
+  // Search input), the browser drops focus to <body> with no announcement.
+  // rightPanelFocusInsideRef is kept current by onFocus/onBlur handlers on
+  // the wrapper div (see its JSX below), NOT by a render-driven effect --
+  // ordinary focus changes (a plain `.focus()` call, or a user Tab/click)
+  // never touch React state, so an effect keyed on re-renders would miss
+  // them entirely.
+  //
+  // D2 fix (2026-08-15 adversarial review): the ref used to be cleared
+  // "only when relatedTarget is a real element outside the wrapper", on the
+  // theory that a null relatedTarget only ever happens from the browser's
+  // own inert-triggered blur. That theory is false -- EVERY blur to a
+  // non-focusable target (a tap on a paragraph, or the iOS soft keyboard
+  // being dismissed) also reports relatedTarget === null, and those are
+  // ordinary "user left the rail" events, not the closing blur. Inferring
+  // cause from relatedTarget alone cannot tell the two apart, so a user who
+  // taps blank space to dismiss the keyboard kept the flag set, and a later
+  // unrelated auto-close then yanked focus to the toggle button and scrolled
+  // the page back to the header -- away from whatever field the user had
+  // moved on to.
+  //
+  // The explicit signal that actually distinguishes them: the wrapper's own
+  // `inert` DOM property. E3 fix (third adversarial round, 2026-08-15): the
+  // prior version of this comment claimed the browser applies `inert` and
+  // unfocuses the wrapper "synchronously, as part of the same commit" that
+  // closes the rail. MEASURED across chromium, firefox and webkit: that is
+  // false -- the inert-triggered focusout fires ASYNCHRONOUSLY, in a later
+  // task, in every engine tested; nothing about it is synchronous. The
+  // conclusion this relies on is still correct, and was verified in all
+  // three engines: whenever that focusout does eventually arrive,
+  // `event.currentTarget.inert` already reads true, because `inert` was set
+  // on the wrapper before the focusout task ran. So checking `inert` still
+  // needs no relatedTarget inference: only clear the ref when the wrapper is
+  // NOT inert (a genuine "user left" event); when it IS inert, leave the ref
+  // untouched so the closing effect below still knows focus was inside right
+  // up to the close.
+  //
+  // See E1 below (the rescue effect) for a second, independent gap this
+  // onBlur/onFocus tracking cannot close on its own: on firefox and webkit,
+  // removing the focused element from the DOM (rather than blurring it)
+  // fires no focusout at all, so this handler never runs and the ref can go
+  // stale. The rescue effect reconciles against document.activeElement to
+  // cover that case; this handler is unchanged.
+  //
+  // (A queueMicrotask-based document.activeElement re-check was considered
+  // and rejected: by the time a queued microtask runs, the rescue effect
+  // below has not yet fired -- passive effects are scheduled on a later
+  // macrotask -- but the microtask itself would ALSO observe focus already
+  // moved off the wrapper for the legitimate inert-close case, clearing the
+  // ref before the rescue effect ever reads it and silently defeating F1.
+  // The `inert` property check has no such race in the SYNCHRONOUS-handler
+  // sense: whichever task the focusout runs in, `inert` already reads true
+  // by the time that handler runs, so it never needs to race a microtask.)
+  const rightPanelWrapperRef = useRef<HTMLDivElement | null>(null);
+  const rightPanelToggleRef = useRef<HTMLButtonElement | null>(null);
+  const rightPanelFocusInsideRef = useRef(false);
   const [matrixMapLeftPanelWidth, setMatrixMapLeftPanelWidth] = useState(
     MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH,
   );
@@ -394,6 +478,69 @@ export default function MatrixDashboard({
   const [evidenceLibraryFilters, setEvidenceLibraryFilters] =
     useState<EvidenceLibraryFilters>(() => createEvidenceLibraryFilters());
   const [calculatorReceipt, setCalculatorReceipt] = useState<CalculatorReceipt | null>(null);
+  // Calculator summary bar (step 3 of the redesign): the HH Direct Contact
+  // calculator is the only pathway currently wrapped in numbered stages, so
+  // this is the only preliminary-standard value the summary bar can show
+  // today. Background UTL 95/95 and the adjusted standard stay PENDING
+  // until step 4 wires BackgroundAdjustment into the stage sequence.
+  // Each of the five *Preliminary states below carries `state` (a StageState, per DESIGN.md's
+  // "Four states, not two": COMPUTED / PENDING / WAITING / BLOCKED) alongside `value`, mirroring
+  // each calculator's own onPreliminaryStandardChange contract. The outer `| null` here means
+  // only "this calculator has not mounted / reported yet" (the transient pre-effect state);
+  // once mounted, the calculator always reports a full object, including its own PENDING /
+  // WAITING / BLOCKED state -- never a bare null -- so the summary bar below can read
+  // `?.state ?? 'pending'` and get the real reason, not an inferred guess from value presence.
+  const [hhDirectPreliminary, setHhDirectPreliminary] = useState<{
+    value: number | null;
+    unit: string;
+    driver?: string;
+    state: StageState;
+  } | null>(null);
+  // Step 3b: the same wiring extended to the four sibling calculators wrapped in stages.
+  // eco-direct and eco-food have no MIN-selected "driver" concept (single-pathway result), so
+  // their reported shape carries an optional `note` instead of a required `driver`.
+  const [ecoDirectPreliminary, setEcoDirectPreliminary] = useState<{
+    value: number | null;
+    unit: string;
+    note?: string;
+    state: StageState;
+  } | null>(null);
+  const [ecoFoodPreliminary, setEcoFoodPreliminary] = useState<{
+    value: number | null;
+    unit: string;
+    note?: string;
+    state: StageState;
+  } | null>(null);
+  const [hhFoodPreliminary, setHhFoodPreliminary] = useState<{
+    value: number | null;
+    unit: string;
+    driver?: string;
+    state: StageState;
+  } | null>(null);
+  // Human Health Inhalation is orthogonal to the activeCategory CategorySelector (see the
+  // "Human Health Inhalation" stacking comment near its render call below) -- it renders
+  // unconditionally regardless of which of the four eco/hh categories is active. The summary
+  // bar's single "preliminary standard" slot is scoped to calculatorCategoryLabel (the ACTIVE
+  // category), so merging inhalation's value into that slot would misrepresent it as belonging
+  // to whichever category happens to be selected. Its preliminary value is still captured here
+  // (same reporting contract as the other four) for a future inhalation-specific display; it is
+  // deliberately NOT read by preliminarySlot below. Only the setter is used today (no display
+  // reads the captured value yet), so the value half is intentionally left undestructured.
+  const [, setHhInhalationPreliminary] = useState<{
+    value: number | null;
+    unit: string;
+    driver?: string;
+    state: StageState;
+  } | null>(null);
+  // Step 4 of the redesign: BackgroundAdjustment now reports its Stage 3
+  // (UTL) and Stage 4 (adjusted standard = max(preliminary, UTL)) results
+  // upward via callback, same pattern as onPreliminaryStandardChange above.
+  // Neither state here recomputes anything -- both are plain reads of
+  // BackgroundAdjustment's own already-memoized values.
+  const [backgroundUtlReport, setBackgroundUtlReport] =
+    useState<BackgroundUtlReport | null>(null);
+  const [adjustedStandardReport, setAdjustedStandardReport] =
+    useState<AdjustedStandardReport | null>(null);
 
   // Hydrate from localStorage on mount (client-only). Each restore* helper
   // validates the stored value against the current allowlist and clears
@@ -441,6 +588,12 @@ export default function MatrixDashboard({
   // dashboard-level left-sidebar / right-drawer until PR-MAP-4 + PR-MAP-5
   // populate Selection Stats + MeasurementWorkbench.
   const isMapMode = activeTopTab === 'Interactive Map';
+  // Step-2 shell restructure: gates the new top-of-tab pathway-switch band
+  // and the Bathymetric --db-* token styling on the shared left-sidebar /
+  // main-content / right-drawer wrapper elements. Scoped tightly to the
+  // Calculator tab only (isToolMode also covers Jurisdictional Frameworks,
+  // which must render exactly as before).
+  const isCalculatorMode = activeTopTab === 'Calculator';
   // print:hidden on the entire left sidebar column when the Calculator tab
   // is active, per plan v3 section 4.2 + section 10. The sidebar stays
   // visible on print for the Jurisdictional Frameworks tab (where the
@@ -467,12 +620,6 @@ export default function MatrixDashboard({
   );
   const handleDismissReceipt = useCallback(() => {
     setCalculatorReceipt(null);
-  }, []);
-  const toggleRightPanel = useCallback(() => {
-    setShowRightPanel((current) => {
-      if (current) setMatrixMapWorkbenchFocused(false);
-      return !current;
-    });
   }, []);
   // Left separator is on the panel's RIGHT edge. Dragging right widens the
   // left panel; dragging left narrows it.
@@ -655,6 +802,245 @@ export default function MatrixDashboard({
   );
   const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
   const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
+  // Summary bar slots (step 3 of the redesign, DESIGN.md "sticky summary
+  // bar ... carries the preliminary, the UTL, and the adjusted standard").
+  // Step 3b: all four activeCategory pathways (hh-direct, eco-direct, eco-food, hh-food) are
+  // now wired to a real stage sequence. The UTL / adjusted slots for every pathway correctly
+  // read PENDING until the corresponding wiring step lands -- PENDING is the honest "not
+  // entered yet, no error" state here, not an error.
+  // P1-1 fix: no explicit formatValue here -- CalculatorSummaryBar's default
+  // (formatMagnitude) is magnitude-aware and never renders a real sub-5e-5
+  // standard as "0.0000" the way the previous ad hoc toPrecision(4)/
+  // toFixed(4) overrides risked when mixed across slots. See
+  // src/lib/matrix-options/formatMagnitude.ts.
+  // Fix (state-machine defect, 2026-08-14 external review): state is read directly from each
+  // calculator's own report (`?.state`), NOT inferred from whether `value` is null. A calculator
+  // reports null value for THREE distinct reasons -- Stage 1 blocked upstream (state 'waiting'),
+  // a Stage-2-only invalid/blocked input (state 'blocked'), or genuinely nothing entered yet
+  // (state 'pending') -- and inferring "value present -> computed, else pending" (the prior code)
+  // collapsed all three into PENDING, telling a user with a real upstream error that nothing had
+  // been entered. `?? 'pending'` only covers the transient window before the calculator's first
+  // report effect has run (local state still null), which IS genuinely "nothing yet" -- not a
+  // loss of a real state the calculator already computed.
+  const preliminarySlot: SummaryBarSlot =
+    activeCategory === 'hh-direct'
+      ? {
+          label: 'Preliminary standard',
+          value: hhDirectPreliminary?.value ?? null,
+          unit: hhDirectPreliminary?.unit ?? 'mg/kg dry',
+          state: hhDirectPreliminary?.state ?? 'pending',
+          note:
+            hhDirectPreliminary?.state === 'computed' && hhDirectPreliminary.driver
+              ? `Driver: ${hhDirectPreliminary.driver}.`
+              : undefined,
+        }
+      : activeCategory === 'eco-direct'
+        ? {
+            label: 'Preliminary standard',
+            value: ecoDirectPreliminary?.value ?? null,
+            unit: ecoDirectPreliminary?.unit ?? 'mg/kg dry',
+            state: ecoDirectPreliminary?.state ?? 'pending',
+            note: ecoDirectPreliminary?.note,
+          }
+        : activeCategory === 'eco-food'
+          ? {
+              label: 'Preliminary standard',
+              value: ecoFoodPreliminary?.value ?? null,
+              unit: ecoFoodPreliminary?.unit ?? 'mg/kg dry',
+              state: ecoFoodPreliminary?.state ?? 'pending',
+              note: ecoFoodPreliminary?.note,
+            }
+          : activeCategory === 'hh-food'
+            ? {
+                label: 'Preliminary standard',
+                value: hhFoodPreliminary?.value ?? null,
+                unit: hhFoodPreliminary?.unit ?? 'mg/kg dry',
+                state: hhFoodPreliminary?.state ?? 'pending',
+                note:
+                  hhFoodPreliminary?.state === 'computed' && hhFoodPreliminary.driver
+                    ? `Driver: ${hhFoodPreliminary.driver}.`
+                    : undefined,
+              }
+              : {
+                  label: 'Preliminary standard',
+                  value: null,
+                  unit: 'mg/kg dry',
+                  state: 'pending',
+                  note: 'Not yet wired into the staged summary for this pathway.',
+                };
+  // Step 4: the preliminary standard for whichever pathway is active is the
+  // OTHER operand BackgroundAdjustment's Stage 4 needs for max(preliminary,
+  // UTL). Built from the same preliminarySlot computed above -- no new value,
+  // just relabeled for BackgroundAdjustment's prop shape.
+  const preliminaryStandardForBackground: BackgroundAdjustmentPreliminaryStandard = {
+    value: preliminarySlot.value,
+    unit: preliminarySlot.unit,
+    state: preliminarySlot.state,
+    label: `Preliminary standard (${calculatorCategoryLabel})`,
+  };
+  // Background UTL 95/95 (Stage 3) is mathematically independent of the
+  // preliminary standard (DESIGN.md), so its state/value come straight from
+  // BackgroundAdjustment's own onUtlChange report, never gated on
+  // preliminarySlot.
+  // Unit string reconciled with the preliminary/adjusted slots (P2-1): the
+  // UTL slot used to show a bare "mg/kg" default while the other two slots
+  // default to "mg/kg dry" for the same physical quantity. BackgroundAdjustment
+  // itself now reports 'mg/kg dry' via onUtlChange; this fallback (used only
+  // before that report arrives) matches it.
+  const utlSlot: SummaryBarSlot = {
+    label: 'Background UTL 95/95',
+    value: backgroundUtlReport?.value ?? null,
+    unit: backgroundUtlReport?.unit ?? 'mg/kg dry',
+    state: backgroundUtlReport?.state ?? 'pending',
+    note: backgroundUtlReport
+      ? `${backgroundUtlReport.scope === 'provincial' ? 'Provincial' : 'Regional'} scope, n = ${backgroundUtlReport.n}. Screening-only K.`
+      : 'Computed from reference samples only -- see Stage 3.',
+  };
+  // Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+  // for the "exactly one current stage" invariant across the two components
+  // that make up the 4-stage chain (the active pathway calculator for
+  // Stages 1-2, BackgroundAdjustment for Stages 3-4). Neither component can
+  // see the other's internals, so this parent -- the only place that
+  // already reads BOTH preliminarySlot.state (Stage 2's output) and
+  // utlSlot.state (Stage 3's output, via backgroundUtlReport) -- is where
+  // the arbitration has to happen. True exactly when Stage 2 has already
+  // produced a preliminary standard AND Stage 3 has not yet computed the
+  // background UTL: at that point Stage 3, not Stage 2, is the single next
+  // actionable step, so the active pathway calculator's Stage 2 defers its
+  // own `current` flag to BackgroundAdjustment's Stage 3 (whose `current`
+  // now separately checks the mirror-image condition -- see
+  // BackgroundAdjustment.tsx). Passed to whichever of the 4 pathway
+  // calculators is active; HHInhalationCalculator and
+  // CumulativeEffectsCalculator are excluded because neither renders
+  // numbered stages (see the assembled-page test asserting exactly that).
+  const backgroundReferenceNeedsAttention =
+    preliminarySlot.state === 'computed' && utlSlot.state !== 'computed';
+  // P3-1 fix (2026-08-14 adversarial review): toggleRightPanel used to live
+  // above this declaration and read a ref (backgroundReferenceRef) synced
+  // in-render on every pass purely to dodge a hook-reorder. Defining the
+  // callback HERE instead -- after backgroundReferenceNeedsAttention already
+  // exists -- lets it close over the value directly; no ref, no in-render
+  // side-write. Hook order stays stable across renders (this useCallback call
+  // itself is unconditional, same as it was above), so this move does not
+  // violate the rules of hooks.
+  const toggleRightPanel = useCallback(() => {
+    if (isCalculatorMode) {
+      setCalcRailOverride(
+        (current) => !(current ?? backgroundReferenceNeedsAttention),
+      );
+      return;
+    }
+    setShowRightPanel((current) => {
+      if (current) setMatrixMapWorkbenchFocused(false);
+      return !current;
+    });
+  }, [isCalculatorMode, backgroundReferenceNeedsAttention]);
+  // Owner 2026-08-14: "reference only shown when working in stage 3". The flag
+  // above already means exactly "Stage 3 is the actionable step", so the
+  // Calculator reference rail follows it -- as a DERIVED value, not an
+  // effect-driven write. See calculatorRailOpen / effectiveShowRightPanel
+  // below: deriving means the first Calculator frame already paints the
+  // correct state, instead of painting open and then closing on the next
+  // effect pass (the flash the prior effect-writer produced).
+  //
+  // Deliberately NOT a hard lock: calcRailOverride lets the header toggle
+  // still work, and a manual choice survives until the stage genuinely
+  // changes OR the pathway is switched (a pathway switch is a CONTEXT change,
+  // not a parameter change -- the new pathway's rail is a fresh derivation).
+  // A user who opens the rail early to read the K-factor table is not fought
+  // by an effect on every render.
+  //
+  // P3-2 fix (2026-08-14 adversarial review): isCalculatorMode is now also a
+  // dep. Without it, a manual override set while ON the Calculator tab
+  // survived a round trip through another top tab and back -- leaving the
+  // rail's derivation frozen from before the visit, even though re-entering
+  // the Calculator tab is exactly the kind of "context change" this effect
+  // already treats a pathway switch as. Keying on isCalculatorMode clears the
+  // override on EVERY tab transition into or out of Calculator, so
+  // re-entering always restores stage-following.
+  useEffect(() => {
+    setCalcRailOverride(null);
+  }, [backgroundReferenceNeedsAttention, activeCategory, isCalculatorMode]);
+  const calculatorRailOpen = calcRailOverride ?? backgroundReferenceNeedsAttention;
+  const effectiveShowRightPanel = isCalculatorMode
+    ? calculatorRailOpen
+    : showRightPanel;
+  // F1 fix, part 2: on the transition from open -> closed, if focus was
+  // inside the rail, move it to the rail's own toggle button -- the control
+  // that can bring the rail back, and an announced, sensible landing spot.
+  // Never fires when focus was NOT inside the rail (manual toggle by a user
+  // whose focus is elsewhere, or an auto-close nobody was reading).
+  const prevEffectiveShowRightPanelRef = useRef(effectiveShowRightPanel);
+  useEffect(() => {
+    const wasOpen = prevEffectiveShowRightPanelRef.current;
+    prevEffectiveShowRightPanelRef.current = effectiveShowRightPanel;
+    // E1 fix (third adversarial round, 2026-08-15): the flag alone is not
+    // trustworthy. It is maintained only by onFocus/onBlur on the wrapper,
+    // and a focusout is not guaranteed to fire when the focused element is
+    // removed from the DOM out from under it -- MEASURED across engines:
+    // chromium fires focusout on element removal (activeElement -> body);
+    // firefox and webkit do NOT fire it (activeElement also ends up at
+    // body, but silently, with no onBlur call to clear the ref). That is
+    // reachable here: CalculatorValueSearchPanel's "Clear value search" X
+    // button unmounts itself on click while holding focus. On
+    // firefox/webkit the ref then stays stuck true, and a later, unrelated
+    // auto-close would wrongly steal focus from whatever the user moved on
+    // to next.
+    //
+    // Reconcile the flag against document.activeElement at the point of
+    // use rather than trusting it blindly: only rescue when the flag says
+    // focus was inside AND activeElement is either genuinely orphaned
+    // (reset to body, the state left behind by both the tracked-blur path
+    // and the untracked DOM-removal path) or still physically inside the
+    // wrapper (defensive; covers a focus that never blurred at all). A
+    // pure activeElement check without the flag was rejected: whether the
+    // passive effect below runs before or after the browser's own
+    // deferred focus fixup after an inert-close is not established, so the
+    // flag remains the primary signal and activeElement is the
+    // reconciliation, not a replacement.
+    if (
+      wasOpen &&
+      !effectiveShowRightPanel &&
+      rightPanelFocusInsideRef.current &&
+      (document.activeElement === document.body ||
+        rightPanelWrapperRef.current?.contains(document.activeElement))
+    ) {
+      rightPanelFocusInsideRef.current = false;
+      // preventScroll: true is deliberate. The toggle lives in the header
+      // chrome, so there is nothing to gain by scrolling to it, and this
+      // rescue can fire while the page is scrolled far down a stacked phone
+      // layout (~11,000px tall on some routes). Without preventScroll,
+      // WebKit's focus() call scrolls the whole page back up to the header
+      // -- a jarring jump, not a correctness defect (nothing is stolen and
+      // no value is hidden; focus was genuinely orphaned), but avoidable.
+      rightPanelToggleRef.current?.focus({ preventScroll: true });
+    }
+  }, [effectiveShowRightPanel]);
+  // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
+  // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
+  // either operand is unavailable -- see BackgroundAdjustment.tsx Stage 4.
+  const adjustedSlot: SummaryBarSlot = {
+    label: 'Adjusted standard',
+    value: adjustedStandardReport?.value ?? null,
+    unit: adjustedStandardReport?.unit ?? preliminarySlot.unit,
+    state: adjustedStandardReport?.state ?? 'waiting',
+    note:
+      adjustedStandardReport?.state === 'computed'
+        ? `${adjustedStandardReport.governedBy === 'background' ? 'Background UTL' : 'Preliminary standard'} governs -- see Stage 4.`
+        : 'Depends on the preliminary standard and the background UTL.',
+  };
+  const governingLabel =
+    adjustedStandardReport?.state === 'computed' && adjustedStandardReport.value != null
+      ? adjustedStandardReport.governedBy === 'background'
+        ? `background UTL 95/95 (${formatMagnitude(adjustedStandardReport.value)} ${adjustedStandardReport.unit})`
+        : `preliminary standard (${formatMagnitude(adjustedStandardReport.value)} ${adjustedStandardReport.unit})`
+      : undefined;
+  const governingNote =
+    adjustedStandardReport?.state === 'computed'
+      ? adjustedStandardReport.governedBy === 'background'
+        ? 'It exceeds the preliminary standard, so it sets the adjusted standard.'
+        : 'It is at or above the background UTL, so it sets the adjusted standard.'
+      : undefined;
   // Derivation equations shown in the Jurisdictional Frameworks Quick Reference,
   // filtered to the active side-tab's pathway(s). The cross-cutting
   // 'background-adjustment' equation is intentionally excluded (see
@@ -668,10 +1054,27 @@ export default function MatrixDashboard({
   );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
+  // A11y fix (F2, 2026-08-14 adversarial review): the toggle's aria-label
+  // used to read the generic "Show/Hide right panel" in every mode, telling
+  // a screen-reader user a layout term instead of what the panel holds. In
+  // Calculator mode the rail's own on-screen heading already reads
+  // "Value Search" (rightPanelTitle above), so reuse that exact, verified
+  // string rather than inventing new copy. Scoped to Calculator only, per
+  // the finding: Jurisdictional Frameworks shares the same wrapper but was
+  // not named in the finding, so it keeps the generic label.
+  const rightPanelToggleLabel = isCalculatorMode
+    ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} ${rightPanelTitle} panel`
+    : `${effectiveShowRightPanel ? 'Hide' : 'Show'} right panel`;
+  // Both are lg-scoped so the rail is full-width when the shell is stacked and
+  // fixed-width only once it sits beside the content. The INNER width matters
+  // most: a bare w-[384px] is wider than a 375 px viewport, so the old value
+  // overflowed the page horizontally on a phone no matter what the outer
+  // wrapper did. Scoping (rather than replacing) keeps the desktop widths
+  // exactly as they were.
   const rightPanelOpenWidth =
-    activeTopTab === 'Calculator' ? 'w-96' : 'w-80';
+    activeTopTab === 'Calculator' ? 'lg:w-96' : 'lg:w-80';
   const rightPanelInnerWidth =
-    activeTopTab === 'Calculator' ? 'w-[384px]' : 'w-[320px]';
+    activeTopTab === 'Calculator' ? 'w-full lg:w-[384px]' : 'w-full lg:w-[320px]';
 
   // A11y (A2/P3-1): roving-tabindex arrow-key navigation for the primary
   // 8-tab top nav, using MANUAL activation per the ARIA Authoring
@@ -794,43 +1197,70 @@ export default function MatrixDashboard({
             className="space-y-5"
             data-testid="calculator-guide-sidebar"
           >
-            <div
-              className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
-              aria-label="Calculator guide audience"
-            >
-              {ALL_AUDIENCE_TIERS.map((tier) => (
-                <button
-                  key={tier}
-                  type="button"
-                  aria-pressed={activeTier === tier}
-                  onClick={() => setActiveTier(tier)}
-                  className={cn(
-                    'rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors',
-                    activeTier === tier
-                      ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
-                      : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
-                  )}
-                >
-                  {GUIDE_TIER_LABELS[tier]}
-                </button>
-              ))}
-            </div>
-            <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                {tierContent.title}
-              </h4>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {tierContent.summary}
-              </p>
-              <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                {tierContent.bullets.map((bullet) => (
-                  <li key={bullet}>{bullet}</li>
+            {/*
+              Left rail = OPTIONS (DESIGN.md "Layout: stages inside rails").
+              SharedGlobalInputs (substance + regulatory frame) moved here
+              from the centre column in the step-2 shell restructure -- it
+              is a shared input, not a per-pathway calculation, so it
+              belongs with the other options rather than stacked above the
+              active calculator. Component internals are untouched.
+            */}
+            <SharedGlobalInputs
+              substanceKey={substanceKey}
+              jurisdiction={jurisdiction}
+              onSubstanceKeyChange={setSubstanceKey}
+              onJurisdictionChange={setJurisdiction}
+            />
+            {/*
+              Fix 1 (owner decision, 2026-08-14 UI QA audit): the inert
+              ExposureScenarioControl (single "Custom" option) that used to
+              render here has been removed. It duplicated the ALREADY-WORKING
+              receptor-scenario selector inside the pathway calculators
+              (HHDirectContactCalculator's hh-direct-receptor-scenario-select,
+              HHFoodWebCalculator's hh-food-receptor-scenario-select), which
+              actually switches real exposure-factor defaults. Later Protocol
+              28 preset work extends THAT control rather than adding a
+              parallel one here.
+            */}
+            <div className="border-t border-[var(--db-border)] pt-5">
+              <div
+                className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
+                aria-label="Calculator guide audience"
+              >
+                {ALL_AUDIENCE_TIERS.map((tier) => (
+                  <button
+                    key={tier}
+                    type="button"
+                    aria-pressed={activeTier === tier}
+                    onClick={() => setActiveTier(tier)}
+                    className={cn(
+                      'rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors',
+                      activeTier === tier
+                        ? 'bg-sky-600 text-white shadow-sm dark:bg-sky-500'
+                        : 'text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-700',
+                    )}
+                  >
+                    {GUIDE_TIER_LABELS[tier]}
+                  </button>
                 ))}
-              </ul>
-            </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-              Screening-only outputs still require professional judgment before
-              regulator-facing use.
+              </div>
+              <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
+                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
+                  {tierContent.title}
+                </h4>
+                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {tierContent.summary}
+                </p>
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                  {tierContent.bullets.map((bullet) => (
+                    <li key={bullet}>{bullet}</li>
+                  ))}
+                </ul>
+              </div>
+              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+                Screening-only outputs still require professional judgment
+                before regulator-facing use.
+              </div>
             </div>
           </div>
         );
@@ -854,7 +1284,7 @@ export default function MatrixDashboard({
 
   const leftSidebarHeading =
     activeTopTab === 'Calculator'
-      ? 'CALCULATOR GUIDE'
+      ? 'OPTIONS'
       : activeTopTab === 'Jurisdictional Frameworks'
         ? 'PATHWAY / APPROACH'
         : 'CONTEXT';
@@ -1010,27 +1440,33 @@ export default function MatrixDashboard({
         return (
           <div className="w-full space-y-6" data-testid="calculator-tab-content">
             {/*
-              Calculator-tab vertical flow:
-                1. CategorySelector (1x4 row at top)
-                2. SharedGlobalInputs (substance + jurisdiction selectors)
-                3. Active category calculator (switches on activeCategory)
-                4. BackgroundAdjustment (post-derivation panel)
+              Calculator-tab vertical flow (step-2 shell restructure):
+                1. Active category calculator (switches on activeCategory).
+                   CategorySelector (the pathway switch) now renders in the
+                   top chrome band, above the 3-column shell, at primary
+                   navigation weight -- see the isCalculatorMode block in
+                   the component return below. SharedGlobalInputs (substance
+                   + regulatory frame) now renders in the left OPTIONS rail
+                   -- see renderSidebar()'s 'Calculator' case. Both moved
+                   out of this centre column without any change to their
+                   own internals, props, or behaviour.
+                2. BackgroundAdjustment (post-derivation panel)
             */}
-            <CategorySelector
-              activeCategory={activeCategory}
-              onChange={setActiveCategory}
-            />
-            <SharedGlobalInputs
-              substanceKey={substanceKey}
-              jurisdiction={jurisdiction}
-              onSubstanceKeyChange={setSubstanceKey}
-              onJurisdictionChange={setJurisdiction}
+            <CalculatorSummaryBar
+              pathwayLabel={calculatorCategoryLabel}
+              preliminary={preliminarySlot}
+              utl={utlSlot}
+              adjusted={adjustedSlot}
+              governingLabel={governingLabel}
+              governingNote={governingNote}
             />
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setEcoDirectPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'eco-food' && (
@@ -1038,6 +1474,8 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setEcoFoodPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'hh-direct' && (
@@ -1045,6 +1483,8 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setHhDirectPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {activeCategory === 'hh-food' && (
@@ -1052,6 +1492,8 @@ export default function MatrixDashboard({
                 substanceKey={substanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                onPreliminaryStandardChange={setHhFoodPreliminary}
+                backgroundReferenceNeedsAttention={backgroundReferenceNeedsAttention}
               />
             )}
             {/*
@@ -1086,6 +1528,7 @@ export default function MatrixDashboard({
               substanceKey={substanceKey}
               jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+              onPreliminaryStandardChange={setHhInhalationPreliminary}
             />
             <div className="flex items-center gap-3 py-2" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
@@ -1097,6 +1540,9 @@ export default function MatrixDashboard({
             <BackgroundAdjustment
               jurisdiction={jurisdiction}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+              preliminaryStandard={preliminaryStandardForBackground}
+              onUtlChange={setBackgroundUtlReport}
+              onAdjustedStandardChange={setAdjustedStandardReport}
             />
           </div>
         );
@@ -1367,26 +1813,153 @@ export default function MatrixDashboard({
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
            {(isToolMode || isReviewMode || (isEvidenceLibraryMode && !isMobile) || (isMapMode && !isMobile)) && (
              <>
-               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'}>
+               {/*
+                 F3 fix (2026-08-14 adversarial review): aria-expanded reflects
+                 the actual panel state (not a static role). aria-controls is
+                 deliberately omitted -- this single toggle drives a DIFFERENT
+                 underlying wrapper depending on the active tab (left-sidebar-
+                 wrapper / matrix-map-left-panel-wrapper), none of which carry a
+                 stable id, and inventing one solely for this attribute was out
+                 of scope per the finding's own caveat.
+               */}
+               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-expanded={showLeftPanel}>
                  {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
                </button>
-               <button onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showRightPanel ? 'Hide right panel' : 'Show right panel'} aria-label={showRightPanel ? 'Hide right panel' : 'Show right panel'}>
-                 {showRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
+               {/*
+                 F1 fix: rightPanelToggleRef is the focus-rescue target when
+                 the rail closes (auto or manual) while focus was inside it --
+                 see the onFocus/onBlur handlers on the rail wrapper and the
+                 closing effect near effectiveShowRightPanel's declaration.
+                 F2/F3 fix: rightPanelToggleLabel is content-aware
+                 in Calculator mode (reuses the rail's own on-screen heading,
+                 rightPanelTitle) instead of the generic "right panel" term;
+                 aria-expanded reflects effectiveShowRightPanel (same
+                 aria-controls caveat as the left toggle above).
+               */}
+               <button ref={rightPanelToggleRef} onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', effectiveShowRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={rightPanelToggleLabel} aria-label={rightPanelToggleLabel} aria-expanded={effectiveShowRightPanel}>
+                 {effectiveShowRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
                </button>
              </>
            )}
         </div>
       </div>
 
-      <div className="flex flex-1 overflow-hidden print:block print:overflow-visible print:h-auto">
+      {/*
+        Pathway switch (DESIGN.md "Layout: stages inside rails" +
+        "The four pathways are four independent derivations"): a primary-
+        navigation-weight control directly beneath the app tab bar,
+        Calculator-tab only. Promotes CategorySelector's four options out
+        of the centre column without touching its internals -- its roving
+        tabindex, arrow-key handling, and radiogroup ARIA semantics are
+        unchanged; only the calling location moved.
+      */}
+      {isCalculatorMode && (
+        <div
+          data-testid="calculator-pathway-switch"
+          className="shrink-0 border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-4 print:hidden md:px-8"
+        >
+          <div className="mx-auto max-w-5xl">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--db-text-secondary)]">
+              Pathway
+            </h2>
+            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--db-text-primary)]">
+              Each pathway below is an independent derivation. Switching
+              pathways produces a separate concentration -- not a different
+              view of the same number.
+            </p>
+            <CategorySelector
+              activeCategory={activeCategory}
+              onChange={setActiveCategory}
+              className="mt-3"
+            />
+          </div>
+        </div>
+      )}
+
+      {/*
+        Option A responsive shell (owner-selected 2026-08-14). Below `lg` the
+        three zones stack into one column: DOM order puts the left rail ABOVE
+        the main content and the right rail BELOW it (no `order-first` or
+        other order utility is applied anywhere in this shell, so plain DOM
+        order decides stacked position -- see the right rail's own P2-2
+        comment below). At `lg` and up the original three-column layout is
+        byte-for-byte what it was. The breakpoint work is pure CSS rather than a
+        JS `isMobile` branch on purpose: this subtree is server-rendered before
+        React attaches, and a JS breakpoint would render the desktop shell on
+        the server and the phone shell on the client -- the same
+        SSR-before-hydration mismatch that the e2e readiness gate exists to
+        absorb. CSS reflows identically in both renders.
+
+        Stacked, the column must scroll as a whole (each zone is auto-height),
+        so overflow-hidden is deferred to `lg` where the inner panes scroll
+        themselves. P1 fix (2026-08-14 adversarial review): "each zone is
+        auto-height" was the INTENT here, but the Main Content zone below did
+        not actually implement it -- see the comment on that div for the
+        mechanism and the fix.
+      */}
+      <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
             {/* Left Sidebar */}
             <div
               data-testid="left-sidebar-wrapper"
               className={cn(
-                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
-                showLeftPanel ? 'w-80 p-6' : 'w-0',
+                // F4 fix (2026-08-14 adversarial review): motion-reduce:transition-none
+                // honours prefers-reduced-motion -- this wrapper's own width/height
+                // collapse animation is exactly the kind of non-essential motion that
+                // preference asks to skip.
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 motion-reduce:transition-none',
+                // Stacked below lg, the divider belongs on the bottom edge;
+                // side-by-side at lg and up, on the right edge as before.
+                'border-b lg:border-b-0 lg:border-r',
+                // Bathymetric shell chrome (DESIGN.md), Calculator tab only.
+                // Jurisdictional Frameworks (the other isToolMode tab) keeps
+                // its original slate styling unchanged.
+                isCalculatorMode
+                  ? 'bg-[var(--db-depth-1)] border-[var(--db-border)]'
+                  : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800',
+                // Collapse axis differs by layout. Side-by-side it is WIDTH
+                // (w-0), which is what the transition has always animated.
+                // Stacked, w-0 would collapse the rail to a zero-width strip
+                // that still occupies full column height, so the collapse must
+                // be HEIGHT instead -- full width, max-h-0, no padding.
+                //
+                // D1 fix (2026-08-15 adversarial review): a P3-4 fix
+                // (2026-08-14) previously gave the OPEN branch an explicit
+                // `max-h-[2400px]` here, paired with `max-h-0` on the CLOSED
+                // branch, so `transition-all` had two interpolable px values
+                // to animate between below `lg`. That cap was ITSELF a
+                // silent-hiding defect and has been reverted:
+                //   - Below `lg` this wrapper's height is `auto` (only
+                //     max-height is constrained), so per CSS 2.1 10.5 the
+                //     inner `h-full` pane resolves to auto too -- the
+                //     `flex-1 overflow-y-auto` body pane inside never gets a
+                //     bounded box to scroll within. Content past 2400px was
+                //     CLIPPED with no scrollbar and no indicator, not
+                //     scrolled.
+                //   - This is reachable in normal use: the value-search list
+                //     is capped at 3 rows only while its query is empty; one
+                //     tap on a suggestion chip makes it unbounded, and at
+                //     ~180-230px/row on a 375px viewport the cap was exceeded
+                //     at roughly 8-10 rows of regulatory values with units
+                //     and source attribution.
+                //   - Print is worse: Tailwind `lg:` is a min-width query, so
+                //     `lg:max-h-none` does not apply to the print page box
+                //     (~624-816 CSS px), and this rail has no `print:hidden`
+                //     -- printing the Calculator truncated the rail at
+                //     2400px in the PDF, a path that was uncapped before the
+                //     P3-4 fix.
+                // A cosmetic snap-instead-of-animate collapse is preferable
+                // to a silent-hiding path on regulatory values. If the
+                // animation is wanted later, the safe technique is an
+                // interpolable `grid-template-rows: 0fr <-> 1fr` pair, which
+                // needs no max-height cap at all.
+                showLeftPanel
+                  ? cn(
+                      'w-full p-6',
+                      isCalculatorMode ? 'lg:w-96' : 'lg:w-80',
+                    )
+                  : 'max-h-0 w-full border-b-0 p-0 lg:max-h-none lg:w-0',
                 // Plan v3 section 4.2 + section 10: hide the entire left
                 // sidebar when printing the Calculator tab so window.print()
                 // produces a chrome-free PDF anchored on the calculator
@@ -1404,15 +1977,57 @@ export default function MatrixDashboard({
               // transition classes that drive the collapse animation.
               inert={showLeftPanel ? undefined : true}
             >
-              <div className="w-full min-w-[270px]">
-                <h2 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider mb-4">{leftSidebarHeading}</h2>
+              {/* min-w-[270px] is a desktop guard against the rail being
+                  squeezed narrower than its controls read at. Stacked, the rail
+                  is already full viewport width and the floor instead becomes an
+                  overflow source on a 320 px phone (320 - 48 px padding = 272),
+                  so it applies only from lg up. */}
+              <div className="w-full min-w-0 lg:min-w-[270px]">
+                <h2
+                  className={cn(
+                    'text-xs font-bold uppercase tracking-wider mb-4',
+                    isCalculatorMode
+                      ? 'text-[var(--db-text-secondary)]'
+                      : 'text-slate-400 dark:text-slate-500',
+                  )}
+                >
+                  {leftSidebarHeading}
+                </h2>
                 {renderSidebar()}
               </div>
             </div>
 
             {/* Main Content */}
             <div
-              className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 p-8"
+              className={cn(
+                // p-8 (32 px each side) costs 64 px of a 375 px viewport before
+                // any content renders; halved below lg, unchanged at desktop.
+                //
+                // P1 fix (2026-08-14 adversarial review): this div is a flex
+                // item (flex-1) inside a flex-col container below `lg`. Per
+                // CSS Flexbox 4.5 (automatic minimum size), a flex item's
+                // default min-height along the main axis is its CONTENT size --
+                // UNLESS the item's own overflow is something other than
+                // `visible`, in which case the automatic minimum resolves to 0
+                // instead. This div used to carry an unscoped `overflow-y-auto`,
+                // so below `lg` its minimum size was 0: with the left/right
+                // rails both flex-shrink-0 (refusing to shrink) and the shell
+                // height definite (page.tsx's h-[calc(100vh-4rem)]), free space
+                // went negative and this flex-1 item was squeezed to 0px --
+                // silently clipping the entire calculator body on a phone,
+                // values and all. Scoping overflow-y-auto to `lg:` restores
+                // `min-height: auto` (content-based) below `lg`, so this zone
+                // takes its natural content height and the SHELL wrapper's own
+                // overflow-y-auto (see the comment above this three-zone
+                // container) does the scrolling instead -- which is what that
+                // comment already claimed happened. At `lg` and up the layout
+                // is unchanged: this pane scrolls itself again, byte-for-byte
+                // the prior desktop behavior.
+                'flex-1 relative p-4 lg:overflow-y-auto lg:p-8',
+                isCalculatorMode
+                  ? 'bg-[var(--db-surface)]'
+                  : 'bg-white dark:bg-slate-950',
+              )}
               role="tabpanel"
               id={PRIMARY_TABPANEL_ID}
               aria-labelledby={primaryTabId(activeTopTab)}
@@ -1423,7 +2038,66 @@ export default function MatrixDashboard({
 
             {/* Right Drawer */}
             <div
-              className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl', showRightPanel ? rightPanelOpenWidth : 'w-0')}
+              // F5 fix (2026-08-14 adversarial review): this testid used to be
+              // unconditional, so it was also present when isToolMode covers
+              // Jurisdictional Frameworks -- a test selecting by this testid
+              // could silently pass against the wrong tab's drawer. No existing
+              // test relies on it being present outside Calculator mode (the
+              // only describe block that reads it is scoped to Calculator, per
+              // MatrixDashboard.test.tsx), so restricting it is safe.
+              data-testid={isCalculatorMode ? 'calculator-reference-rail' : undefined}
+              ref={rightPanelWrapperRef}
+              // F1 fix: React's onFocus/onBlur use the focusin/focusout event
+              // model, so they fire for ANY descendant gaining/losing focus,
+              // not just this element itself -- see the ref declaration's
+              // comment above for why this is event-driven rather than
+              // render-driven.
+              onFocus={() => {
+                rightPanelFocusInsideRef.current = true;
+              }}
+              onBlur={(event) => {
+                // D2 fix: see the rightPanelFocusInsideRef declaration above
+                // for why this reads `inert` instead of inferring cause from
+                // relatedTarget. `inert` true means the browser is
+                // unfocusing this element as a synchronous consequence of
+                // the rail closing -- leave the ref alone. `inert` false
+                // means the rail is still open and focus genuinely left on
+                // its own (a real element, or null from a tap on
+                // non-focusable content / keyboard dismissal) -- clear it.
+                if (!event.currentTarget.inert) {
+                  rightPanelFocusInsideRef.current = false;
+                }
+              }}
+              className={cn(
+                // F4 fix: see the matching motion-reduce comment on the left
+                // sidebar wrapper above -- same rationale, same fix.
+                'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 shadow-2xl motion-reduce:transition-none',
+                // P2-2 fix (2026-08-14 adversarial review): this rail has no
+                // `order-first` (or any order utility) anywhere in its class
+                // list, so DOM order alone decides stacked position -- and DOM
+                // order puts it AFTER Main Content, i.e. it renders BELOW the
+                // main content when stacked, not above. The old comment and
+                // border-b/lg:border-l pairing both assumed an ordering trick
+                // that is not present in this code; border-t is the correct
+                // divider edge for a zone that sits below its neighbor.
+                'border-t lg:border-t-0 lg:border-l',
+                isCalculatorMode
+                  ? 'bg-[var(--db-surface)] border-[var(--db-border)]'
+                  : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800',
+                // Height-collapse when stacked, width-collapse when side by
+                // side -- same reasoning as the left rail. D1 fix
+                // (2026-08-15 adversarial review): this rail carried the same
+                // `max-h-[2400px]` cap the left sidebar did, and the same
+                // fix applies -- see the D1 comment on the left sidebar
+                // wrapper above for the full reasoning (no inner scroller
+                // below `lg`, so the cap clips value-search results instead
+                // of scrolling them; `lg:` does not apply in print, so the
+                // cap truncated printed output). Reverted; the collapse
+                // snaps instead of animating below `lg`.
+                effectiveShowRightPanel
+                  ? cn('w-full', rightPanelOpenWidth)
+                  : 'max-h-0 w-full border-t-0 lg:max-h-none lg:w-0',
+              )}
               // NEW-P3-3 (a11y audit round 3): same collapse pattern as the
               // left-sidebar-wrapper and the two matrix-map panel wrappers
               // above -- w-0 + overflow-hidden alone leaves this drawer's
@@ -1432,13 +2106,34 @@ export default function MatrixDashboard({
               // visually clipped to zero width. inert removes it from the
               // focus/tab order (and AT) without touching the width
               // transition.
-              inert={showRightPanel ? undefined : true}
+              inert={effectiveShowRightPanel ? undefined : true}
             >
               <div className={cn(rightPanelInnerWidth, 'h-full flex flex-col')}>
-                <div className="p-5 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-900/50">
-                  <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                <div
+                  className={cn(
+                    'p-5 border-b flex justify-between items-center',
+                    isCalculatorMode
+                      ? 'border-[var(--db-border)] bg-[var(--db-depth-1)]'
+                      : 'border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900/50',
+                  )}
+                >
+                  <h3
+                    className={cn(
+                      'font-bold flex items-center space-x-2',
+                      isCalculatorMode
+                        ? 'text-[var(--db-text-primary)]'
+                        : 'text-slate-900 dark:text-white',
+                    )}
+                  >
                     {activeTopTab === 'Calculator' ? (
-                      <Database className="w-5 h-5 text-sky-500" />
+                      <Database
+                        className={cn(
+                          'w-5 h-5',
+                          isCalculatorMode
+                            ? 'text-[var(--db-accent)]'
+                            : 'text-sky-500',
+                        )}
+                      />
                     ) : (
                       <FileText className="w-5 h-5 text-sky-500" />
                     )}

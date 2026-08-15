@@ -46,6 +46,8 @@ import type {
 } from '@/lib/matrix-options/provenance/types';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -68,6 +70,38 @@ export interface EcoFoodBSAFCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward so a parent (e.g.
+   * the Calculator tab's summary bar) can display it without recomputing anything. Purely a
+   * read of the already-memoized result; never changes what is computed or displayed here.
+   *
+   * Carries `state` (this calculator's own stage2State) alongside `value` so the parent can
+   * distinguish WHY there is no value -- Stage 1 BLOCKED (state 'waiting'), a Stage-2-only
+   * invalid or blocked result (state 'blocked'), or genuinely nothing entered yet (state
+   * 'pending') -- rather than collapsing all three into a bare null. `value`/`note` are only
+   * meaningful when `state === 'computed'`.
+   */
+  onPreliminaryStandardChange?: (
+    result: {
+      value: number | null;
+      unit: string;
+      note?: string;
+      state: StageState;
+    },
+  ) => void;
+  /**
+   * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+   * from the assembling parent (MatrixDashboard), which is the only place
+   * that sees both this calculator's Stage 2 output AND BackgroundAdjustment's
+   * Stage 3 output -- the two components never talk to each other directly.
+   * True when Stage 2 has already produced a preliminary standard AND
+   * BackgroundAdjustment's Stage 3 has NOT yet computed the background UTL --
+   * i.e. Stage 3, not Stage 2, is the single next actionable step on the
+   * assembled page. Stage 2's `current` below defers to it. Omitted/undefined
+   * (e.g. this calculator rendered standalone, as in its own unit tests)
+   * falls back to the old self-contained rule (`!stage1Blocked`), unchanged.
+   */
+  backgroundReferenceNeedsAttention?: boolean;
 }
 
 // Eco-food TRVs are per-receptor (dose-based wildlife values). The receptor selector picks which
@@ -133,6 +167,8 @@ export default function EcoFoodBSAFCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
+  backgroundReferenceNeedsAttention = false,
 }: EcoFoodBSAFCalculatorProps) {
   const substance = findSubstance(substanceKey);
 
@@ -383,6 +419,80 @@ export default function EcoFoodBSAFCalculator({
 
   const isResult = result !== null && !('error' in result);
   const ecoResult = isResult ? (result as EcoFoodBSAFResult) : null;
+
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3b). Purely derived
+  // from EXISTING inputs for display -- re-runs the SAME parseDecimalInput checks already used
+  // inside the `result` useMemo above, in the same order and with the same messages, so Stage 1
+  // can report which local field is at fault even when the combined `result` error actually
+  // came from the substance-level BSAF/TRV gate (a global-input concern, not one of this
+  // component's own Stage-1 fields).
+  const trvStageCheck = parseDecimalInput(trvInput, { allowNegative: false });
+  const bwStageCheck = parseDecimalInput(bwInput, { allowNegative: false });
+  const irStageCheck = parseDecimalInput(irInput, { allowNegative: false });
+  const bsafStageCheck = parseDecimalInput(bsafInput, { allowNegative: false });
+  const fsiteStageCheck = parseDecimalInput(fsiteInput, { allowNegative: false });
+  const stage1FieldError =
+    trvStageCheck.state !== 'valid' || trvStageCheck.value <= 0
+      ? 'TRV_eco must be a positive decimal number (mg/kg-bw/day).'
+      : bwStageCheck.state !== 'valid' || bwStageCheck.value <= 0
+        ? 'Body weight must be a positive decimal number (kg).'
+        : irStageCheck.state !== 'valid' || irStageCheck.value <= 0
+          ? 'Ingestion rate must be a positive decimal number (kg-wet/day).'
+          : bsafStageCheck.state !== 'valid' || bsafStageCheck.value <= 0
+            ? (substance?.bsaf_loc_freshwater === null
+                ? 'Enter a site-specific BSAF_loc to compute (this substance has no library BSAF).'
+                : 'BSAF_loc must be a positive decimal number.')
+            : fsiteStageCheck.state !== 'valid' || fsiteStageCheck.value <= 0
+              ? 'F_site must be a positive decimal number.'
+              : undefined;
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError
+    : 'Receptor, TRV, BSAF, and site-use inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : result && 'error' in result
+      ? 'blocked'
+      : isResult
+        ? ecoResult?.blocked
+          ? 'blocked'
+          : 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure input above.'
+    : result && 'error' in result
+      ? result.error
+      : ecoResult
+        ? ecoResult.blocked
+          ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${ecoResult.warnings.join(' ') || 'input validity constraint violated.'}`
+          : `Preliminary standard computed: ${formatMagnitude(ecoResult.sedS)} mg/kg dry.`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
+  // already-memoized result only -- no new computation. Withheld (null) when blocked === true:
+  // per the design doc, a blocked sedS is diagnostic-only and must not be quoted as a benchmark.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    const computedResult = ecoResult && !ecoResult.blocked ? ecoResult : null;
+    onPreliminaryStandardChange({
+      value: computedResult ? computedResult.sedS : null,
+      unit: 'mg/kg dry',
+      state: stage2State,
+    });
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
+    };
+  }, [ecoResult, stage2State, onPreliminaryStandardChange]);
+
   const provenanceValues: CalculatorUsedValue[] = useMemo(
     () => [
       {
@@ -523,6 +633,15 @@ export default function EcoFoodBSAFCalculator({
       */}
 
       {/* 1. INPUTS section */}
+      <CalculatorStage
+        number={1}
+        totalStages={4}
+        title="Exposure Inputs"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={stage1Blocked}
+        testId="eco-food-stage-1"
+      >
       <div
         className="space-y-4 mb-6"
         data-testid="ecofood-inputs-section"
@@ -633,6 +752,13 @@ export default function EcoFoodBSAFCalculator({
           </div>
         </div>
 
+        {/*
+          UI QA audit (2026-08-14, fix 3/P3): fLipidPercent and focPercent
+          keep toFixed(2) deliberately. Both are PERCENTAGES (0-100 slider
+          readouts of their own live input state), not mass-per-mass
+          concentrations, and neither is ever displayed next to or compared
+          against a standard.
+        */}
         <div>
           <div className="flex justify-between items-center mb-2">
             <label
@@ -843,7 +969,18 @@ export default function EcoFoodBSAFCalculator({
           </div>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={4}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure inputs' : undefined}
+        current={!stage1Blocked && !backgroundReferenceNeedsAttention}
+        testId="eco-food-stage-2"
+      >
       {/* 2. ERROR box */}
       {result && 'error' in result && (
         <div
@@ -897,7 +1034,7 @@ export default function EcoFoodBSAFCalculator({
         </div>
         <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
           {ecoResult && !ecoResult.blocked
-            ? ecoResult.sedS.toPrecision(4)
+            ? formatMagnitude(ecoResult.sedS)
             : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">
             mg/kg dry
@@ -942,6 +1079,11 @@ export default function EcoFoodBSAFCalculator({
           />
 
           {ecoResult && (
+            // UI QA audit (2026-08-14, fix 3/P3): BSAF_effective keeps
+            // toPrecision(4) deliberately -- it is a dimensionless
+            // partitioning ratio (table/regression lookup), not a
+            // mass-per-mass concentration, and is never compared against a
+            // standard.
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">M_eco</span>
@@ -986,6 +1128,7 @@ export default function EcoFoodBSAFCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

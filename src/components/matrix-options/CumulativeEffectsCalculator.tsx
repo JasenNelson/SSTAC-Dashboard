@@ -33,6 +33,7 @@ import {
 } from '@/lib/matrix-options/cumulative';
 import { RPF_TABLE, RPF_SCHEMES, type RpfScheme } from '@/lib/matrix-options/rpfTable';
 import { TEF_TABLE, TEF_EDITIONS, type TefEdition } from '@/lib/matrix-options/tefTable';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import type { EvidenceLibraryFilterRequest } from '@/lib/matrix-options/provenance/types';
 import type { Jurisdiction } from './guide/content/jurisdictions';
 
@@ -215,7 +216,7 @@ function CumulativeResultView({
             className="text-2xl font-black text-slate-900 dark:text-white font-mono tracking-tighter"
             data-testid={`${testIdPrefix}-value`}
           >
-            {result.equivalent.toPrecision(4)}{' '}
+            {formatMagnitude(result.equivalent)}{' '}
             <span className="text-base text-slate-500 font-medium">
               {result.equivalentUnit}
             </span>
@@ -255,14 +256,33 @@ function CumulativeResultView({
                   className="border-b border-slate-100 dark:border-slate-800"
                 >
                   <td className="py-1 pr-2 font-mono">{c.componentId}</td>
+                  {/*
+                    factor (TEF/RPF) stays as a raw display deliberately: it is a fixed,
+                    dimensionless weighting COEFFICIENT looked up from a reference table
+                    (tefTable.ts / rpfTable.ts), not a mass/mass concentration value on the
+                    same magnitude scale as concentrationNorm/contribution/equivalent -- it
+                    is never itself compared against a screening standard, so formatMagnitude's
+                    threshold behaviour (tuned for mg/kg concentration-like values) does not
+                    apply here. See the analogous mean/sd/K exemption in
+                    BackgroundAdjustment.tsx.
+                  */}
                   <td className="py-1 pr-2 font-mono">
                     {c.factor === null ? 'n/a' : c.factor}
                   </td>
+                  {/*
+                    concentrationNorm and contribution are both operands/components that sum
+                    to `equivalent` (contribution = concentrationNorm * factor; equivalent =
+                    sum(contribution)), in the same mg/kg unit rendered a few lines above via
+                    formatMagnitude. They must use the same formatter -- a reviewer comparing
+                    the hero total against its table rows needs directly comparable digit
+                    counts (P2 UI QA audit 2026-08-14: this recurred four times because prior
+                    fixes patched the specific site instead of the property).
+                  */}
                   <td className="py-1 pr-2 font-mono">
-                    {c.concentrationNorm === null ? 'n/a' : c.concentrationNorm.toPrecision(3)}
+                    {c.concentrationNorm === null ? 'n/a' : formatMagnitude(c.concentrationNorm)}
                   </td>
                   <td className="py-1 pr-2 font-mono">
-                    {c.contribution === null ? 'not scored' : c.contribution.toPrecision(3)}
+                    {c.contribution === null ? 'not scored' : formatMagnitude(c.contribution)}
                   </td>
                 </tr>
               ))}
@@ -390,9 +410,20 @@ export default function CumulativeEffectsCalculator({
 
         <div className="space-y-2 mb-3" data-testid="cum-bapeq-rows">
           {pahRows.map((row, idx) => (
-            <div key={row.id} className="grid grid-cols-12 gap-2 items-center">
+            // F6 fix (2026-08-14 adversarial review): an unscoped grid-cols-12
+            // gives each cell no fixed width, so the PAH <select>'s intrinsic
+            // min-content width (a long chemical name) forces the grid track
+            // past a 375px viewport -- the exact overflow mechanism already
+            // documented and fixed for the ageBinFractions grid above (see
+            // that comment). sm:grid-cols-12 defers the 12-column layout to
+            // >=640px and stacks single-column below it, matching that fix.
+            <div key={row.id} className="grid grid-cols-1 gap-2 items-center sm:grid-cols-12">
               <select
-                className="col-span-5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
+                // sm:col-span-5 (not a bare col-span-5): below sm the grid is
+                // single-column, so an unscoped span-5 would still request 5
+                // implicit tracks and reopen the same overflow this fix
+                // exists to close.
+                className="sm:col-span-5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
                 value={row.pahKey}
                 aria-label={`PAH ${idx + 1}`}
                 onChange={(e) => updateRowById(setPahRows, row.id, { pahKey: e.target.value })}
@@ -407,7 +438,7 @@ export default function CumulativeEffectsCalculator({
                 type="number"
                 inputMode="decimal"
                 step="0.001"
-                className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs font-mono"
+                className="sm:col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs font-mono"
                 value={row.concentrationInput}
                 aria-label={`PAH ${idx + 1} concentration`}
                 data-testid={`cum-bapeq-conc-${idx}`}
@@ -416,7 +447,7 @@ export default function CumulativeEffectsCalculator({
                 }
               />
               <select
-                className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
+                className="sm:col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
                 value={row.unit}
                 aria-label={`PAH ${idx + 1} unit`}
                 onChange={(e) => updateRowById(setPahRows, row.id, { unit: e.target.value })}
@@ -429,7 +460,7 @@ export default function CumulativeEffectsCalculator({
               </select>
               <button
                 type="button"
-                className="col-span-1 text-slate-400 hover:text-rose-600 text-xs font-bold"
+                className="sm:col-span-1 text-slate-400 hover:text-rose-600 text-xs font-bold"
                 aria-label={`Remove PAH row ${idx + 1}`}
                 onClick={() => removePahRow(row.id)}
               >
@@ -477,7 +508,11 @@ export default function CumulativeEffectsCalculator({
 
         {lifetimeAdaf && (
           <div
-            className="grid grid-cols-3 gap-2 mb-3"
+            // grid-cols-1 below sm: 3 unscoped columns of number inputs have no
+            // fixed width, so a native <input>'s intrinsic min-content width
+            // (wider than a 320px/3 share) forces the grid track past the
+            // viewport rather than shrinking.
+            className="grid grid-cols-1 gap-2 mb-3 sm:grid-cols-3"
             data-testid="cum-bapeq-agebins"
           >
             {(Object.keys(ageBinFractions) as AdafBin[]).map((bin) => (
@@ -514,9 +549,16 @@ export default function CumulativeEffectsCalculator({
         <div className="space-y-2 mb-3" data-testid="cum-teq-rows">
           {congenerRows.map((row, idx) => (
             <div key={row.id} className="space-y-1">
-              <div className="grid grid-cols-12 gap-2 items-center">
+              {/*
+                F6 fix (2026-08-14 adversarial review): same overflow fix as
+                the pahRows grid above -- grid-cols-1/sm:grid-cols-12 on the
+                container, sm:col-span-N (not bare col-span-N) on every child,
+                so a long congener name cannot force the grid past a 375px
+                viewport. See the pahRows comment for the full mechanism.
+              */}
+              <div className="grid grid-cols-1 gap-2 items-center sm:grid-cols-12">
                 <select
-                  className="col-span-5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
+                  className="sm:col-span-5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
                   value={row.congenerId}
                   aria-label={`Congener ${idx + 1}`}
                   onChange={(e) =>
@@ -533,7 +575,7 @@ export default function CumulativeEffectsCalculator({
                   type="number"
                   inputMode="decimal"
                   step="0.001"
-                  className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs font-mono"
+                  className="sm:col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs font-mono"
                   value={row.concentrationInput}
                   aria-label={`Congener ${idx + 1} concentration`}
                   data-testid={`cum-teq-conc-${idx}`}
@@ -544,7 +586,7 @@ export default function CumulativeEffectsCalculator({
                   }
                 />
                 <select
-                  className="col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
+                  className="sm:col-span-3 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs"
                   value={row.unit}
                   aria-label={`Congener ${idx + 1} unit`}
                   onChange={(e) =>
@@ -559,7 +601,7 @@ export default function CumulativeEffectsCalculator({
                 </select>
                 <button
                   type="button"
-                  className="col-span-1 text-slate-400 hover:text-rose-600 text-xs font-bold"
+                  className="sm:col-span-1 text-slate-400 hover:text-rose-600 text-xs font-bold"
                   aria-label={`Remove congener row ${idx + 1}`}
                   onClick={() => removeCongenerRow(row.id)}
                 >

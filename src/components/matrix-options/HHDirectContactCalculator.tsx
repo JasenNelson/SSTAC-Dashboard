@@ -30,6 +30,8 @@ import {
 } from './guide/content/jurisdictions';
 import CalculatorProvenancePanel from './CalculatorProvenancePanel';
 import FrameImpactCard from './FrameImpactCard';
+import CalculatorStage, { type StageState } from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 
 // Unsourced calculator baselines for the seven HC PQRA exposure-factor inputs, used
 // when the selected frame has no active human-health-direct frame default. Each value
@@ -77,6 +79,41 @@ export interface HHDirectContactCalculatorProps {
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
+  /**
+   * Reports the current preliminary standard (Stage 2's own output) upward
+   * so a parent (e.g. the Calculator tab's summary bar) can display it
+   * without recomputing anything. Purely a read of the already-memoized
+   * hhResult; never changes what is computed or displayed here.
+   *
+   * Carries `state` (this calculator's own stage2State) alongside `value` so
+   * the parent can distinguish WHY there is no value -- Stage 1 BLOCKED
+   * (state 'waiting' here, since Stage 2 itself is fine), a Stage-2-only
+   * invalid input (state 'blocked'), or genuinely nothing entered yet
+   * (state 'pending') -- rather than collapsing all three into a bare null.
+   * `value`/`driver` are only meaningful when `state === 'computed'`.
+   */
+  onPreliminaryStandardChange?: (
+    result: {
+      value: number | null;
+      unit: string;
+      driver?: string;
+      state: StageState;
+    },
+  ) => void;
+  /**
+   * Fix 3 (P2, third adversarial round, 2026-08-14): explicit shared state
+   * from the assembling parent (MatrixDashboard), which is the only place
+   * that sees both this calculator's Stage 2 output AND BackgroundAdjustment's
+   * Stage 3 output -- the two components never talk to each other directly.
+   * True when Stage 2 has already produced a preliminary standard (so this
+   * calculator has nothing further for the user to do) AND
+   * BackgroundAdjustment's Stage 3 has NOT yet computed the background UTL --
+   * i.e. Stage 3, not Stage 2, is the single next actionable step on the
+   * assembled page. Stage 2's `current` below defers to it. Omitted/undefined
+   * (e.g. this calculator rendered standalone, as in its own unit tests)
+   * falls back to the old self-contained rule (`!stage1Blocked`), unchanged.
+   */
+  backgroundReferenceNeedsAttention?: boolean;
 }
 
 export default function HHDirectContactCalculator({
@@ -84,6 +121,8 @@ export default function HHDirectContactCalculator({
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
+  onPreliminaryStandardChange,
+  backgroundReferenceNeedsAttention = false,
 }: HHDirectContactCalculatorProps) {
   const substance = findSubstance(substanceKey);
   // The frame that PROVIDES the receptor scenarios + their seeds. The receptor (age / land-use)
@@ -351,6 +390,70 @@ export default function HHDirectContactCalculator({
 
   const hhResult = 'error' in result ? null : result;
 
+  // Stage 1 / Stage 2 presentation-layer state (calculator-redesign step 3).
+  // Purely derived from EXISTING inputs/result for display -- it reads
+  // fields already computed above, never adds a new calculation branch.
+  // Stage 1 (exposure factors) is BLOCKED only when one of the seven
+  // exposure-factor fields itself is invalid; re-running positiveInput on
+  // those seven fields (the same pure validator already used in `fields`
+  // above) lets Stage 1 report which field is at fault even when the
+  // combined `result` error actually came from a Stage-2-only field
+  // (toxicity/target-risk/HQ/absorption).
+  const stage1FieldError = [
+    positiveInput(bwInput, 'Body weight'),
+    positiveInput(edInput, 'Exposure duration'),
+    positiveInput(efInput, 'Exposure frequency'),
+    positiveInput(atCancerInput, 'Cancer averaging time'),
+    positiveInput(irSedInput, 'Sediment ingestion rate'),
+    positiveInput(skinAreaInput, 'Skin surface area'),
+    positiveInput(adherenceInput, 'Sediment adherence factor'),
+  ].find(
+    (value): value is { error: string } =>
+      typeof value === 'object' && value !== null && 'error' in value,
+  );
+  const stage1Blocked = stage1FieldError !== undefined;
+  const stage1State: StageState = stage1Blocked ? 'blocked' : 'computed';
+  const stage1Detail = stage1Blocked
+    ? stage1FieldError.error
+    : 'All seven exposure-factor inputs are valid.';
+
+  const stage2State: StageState = stage1Blocked
+    ? 'waiting'
+    : 'error' in result
+      ? 'blocked'
+      : hhResult
+        ? 'computed'
+        : 'pending';
+  const stage2Detail = stage1Blocked
+    ? 'Blocked by Stage 1: fix the exposure-factor input above.'
+    : 'error' in result
+      ? result.error
+      : hhResult
+        ? `Preliminary standard computed: ${formatMagnitude(hhResult.sedS)} mg/kg dry (driver: ${hhResult.driver}).`
+        : 'Preliminary standard not yet available.';
+
+  // Report the preliminary standard upward (e.g. to the Calculator tab
+  // summary bar). Reads hhResult only -- no new computation.
+  useEffect(() => {
+    if (!onPreliminaryStandardChange) return;
+    onPreliminaryStandardChange({
+      value: hhResult ? hhResult.sedS : null,
+      unit: 'mg/kg dry',
+      driver: hhResult ? hhResult.driver : undefined,
+      state: stage2State,
+    });
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) {
+        onPreliminaryStandardChange({ value: null, unit: 'mg/kg dry', state: 'pending' });
+      }
+    };
+  }, [hhResult, stage2State, onPreliminaryStandardChange]);
+
   // Row #23: the dl-PCB TEQ sub-value is now just a field on the SINGLE combined hhResult
   // (dlPcbTeqSedS) rather than a separately-computed/blocked parallel result. It is only
   // BLOCKED when the catalog TDI itself failed to resolve, or when the combined calculation
@@ -595,6 +698,15 @@ export default function HHDirectContactCalculator({
         )}
       </header>
 
+      <CalculatorStage
+        number={1}
+        totalStages={4}
+        title="Exposure Factors"
+        state={stage1State}
+        stateDetail={stage1Detail}
+        current={stage1Blocked}
+        testId="hh-direct-stage-1"
+      >
       <FrameImpactCard
         frameId={jurisdiction}
         pathway="human-health-direct"
@@ -766,7 +878,18 @@ export default function HHDirectContactCalculator({
           </label>
         </div>
       </div>
+      </CalculatorStage>
 
+      <CalculatorStage
+        number={2}
+        totalStages={4}
+        title="Preliminary Standard"
+        state={stage2State}
+        stateDetail={stage2Detail}
+        receivedFrom={stage1Blocked ? 'Stage 1 exposure factors' : undefined}
+        current={!stage1Blocked && !backgroundReferenceNeedsAttention}
+        testId="hh-direct-stage-2"
+      >
       {'error' in result && (
         <div
           className="bg-rose-50 dark:bg-rose-900/30 border border-rose-200 dark:border-rose-800 rounded-xl p-4 text-sm text-rose-800 dark:text-rose-200 mb-6"
@@ -787,7 +910,7 @@ export default function HHDirectContactCalculator({
           Preliminary Human Health Screening Value (Direct Contact)
         </div>
         <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-          {hhResult ? hhResult.sedS.toPrecision(4) : '--'}{' '}
+          {hhResult ? formatMagnitude(hhResult.sedS) : '--'}{' '}
           <span className="text-lg text-slate-500 font-medium">mg/kg dry</span>
         </div>
         {hhResult && (
@@ -835,7 +958,7 @@ export default function HHDirectContactCalculator({
           {dlPcbTeqSedS !== null ? (
             <>
               <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-                {dlPcbTeqSedS.toPrecision(4)}{' '}
+                {formatMagnitude(dlPcbTeqSedS)}{' '}
                 <span className="text-lg text-slate-500 font-medium">mg TEQ/kg dry</span>
               </div>
               {hhResult?.driver === 'dl-pcb-teq' && (
@@ -901,18 +1024,25 @@ export default function HHDirectContactCalculator({
             <div className="bg-white dark:bg-slate-900/60 border border-slate-100 dark:border-slate-800/80 rounded-lg p-4 space-y-2 text-sm">
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Non-cancer value</span>
-                <span>{hhResult.nonCancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(hhResult.nonCancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Cancer value</span>
-                <span>{hhResult.cancerSedS?.toPrecision(4) ?? 'n/a'}</span>
+                <span>{formatMagnitude(hhResult.cancerSedS, { placeholder: 'n/a' })}</span>
               </div>
               {isDlPcbSubstance && (
                 <div className="flex justify-between font-mono">
                   <span className="text-slate-500">dl-PCB TEQ value</span>
-                  <span>{hhResult.dlPcbTeqSedS?.toPrecision(4) ?? 'n/a'}</span>
+                  <span>{formatMagnitude(hhResult.dlPcbTeqSedS, { placeholder: 'n/a' })}</span>
                 </div>
               )}
+              {/*
+                UI QA audit (2026-08-14, fix 3/P3): contactRate_mg_per_day
+                keeps toPrecision(4) deliberately despite sitting in the same
+                card group as the formatMagnitude'd mg/kg-dry values above --
+                its unit is mg/day (an exposure rate), not mg/kg dry, so it
+                is never comparable to, or compared against, those standards.
+              */}
               <div className="flex justify-between font-mono">
                 <span className="text-slate-500">Adjusted contact rate</span>
                 <span>{hhResult.contactRate_mg_per_day.toPrecision(4)} mg/day</span>
@@ -937,6 +1067,7 @@ export default function HHDirectContactCalculator({
         regulatoryFrameId={jurisdiction}
         onOpenEvidenceLibrary={onOpenEvidenceLibrary}
       />
+      </CalculatorStage>
     </section>
   );
 }

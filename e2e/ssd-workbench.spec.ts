@@ -1,38 +1,5 @@
-import { expect, type Page, test } from '@playwright/test';
-
-async function clickUntilVisible(
-  page: Page,
-  triggerName: string,
-  visibleTestId: string,
-) {
-  const trigger = page.getByRole('tab', {
-    name: triggerName,
-    exact: true,
-  });
-  const target = page.getByTestId(visibleTestId);
-
-  for (let attempt = 0; attempt < 5; attempt += 1) {
-    await expect(trigger).toBeVisible();
-    await trigger.click();
-    await page.waitForTimeout(500);
-    if (await target.isVisible({ timeout: 1000 }).catch(() => false)) {
-      return;
-    }
-  }
-
-  await expect(target).toBeVisible();
-}
-
-// /matrix-options is auth-gated (middleware matcher) as of 2026-06-15. CI has no
-// shared auth storageState, so navigate and skip the authenticated assertions when
-// the dev server bounces us to /login (same convention as admin-agentic-os.spec.ts).
-async function gotoMatrixOptionsOrSkip(page: Page) {
-  await page.goto('/matrix-options', { waitUntil: 'domcontentloaded' });
-  if (page.url().includes('/login')) {
-    test.skip(true, 'Not authenticated; /matrix-options is gated. Skipping authenticated assertions.');
-  }
-  await page.waitForTimeout(3000);
-}
+import { expect, test } from '@playwright/test';
+import { clickUntilVisible, gotoMatrixOptionsOrSkip } from './fixtures/matrix-options-nav';
 
 test.describe('SSD Workbench', () => {
   test('renders SSD Workbench with default validation fixture', async ({

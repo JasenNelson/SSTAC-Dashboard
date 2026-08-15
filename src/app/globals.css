@@ -278,6 +278,124 @@ html.dark select {
    ======================================== */
 
 /* ========================================
+   DIRECTION B DESIGN TOKENS - "BATHYMETRIC"
+   Locked visual direction recorded in DESIGN.md (2026-08-14). Layered
+   depth drawn from sediment settling under water; cool blue-green
+   estuary teal accent, mineral ochre secondary. Reference values are the
+   --db-* declarations in the Direction B mockup produced the same day.
+
+   This is a token layer only - it does not style any component. Values
+   are consumed by future Matrix Options Calculator work (step 2+ of the
+   redesign). Purely additive: does not touch any existing custom
+   property, class, or rule above this block.
+
+   Both themes are mandatory (DESIGN.md "Themes are not optional"). Dark
+   is not an inversion - relationships are rebuilt so the accent still
+   signals. Wired into the EXISTING theme mechanism: this app toggles
+   themes via a `.light` / `.dark` class applied to both <html> and
+   <body> by ThemeContext.tsx (see the .light / .dark blocks above and
+   `@custom-variant dark (&:where(.dark, .dark *));` at the top of this
+   file) - there is no `data-theme` attribute and no third "system"
+   theme state (ThemeContext's Theme type is only 'light' | 'dark', and
+   it defaults to 'light' rather than reading OS preference). The dark
+   token values below are therefore scoped to `.dark`, matching that
+   mechanism exactly, not `[data-theme="dark"]` as used in the standalone
+   mockup file.
+   ======================================== */
+
+:root {
+  /* ---- LIGHT THEME (default): shallow water, pale mineral grounds ---- */
+  --db-depth-0: #f4f1e8;
+  --db-depth-1: #e7ecea;
+  --db-depth-2: #d7e2df;
+  --db-depth-3: #c3d6d1;
+  --db-surface: #ffffff;
+  --db-surface-raised: #ffffff;
+
+  --db-text-primary: #12292a;
+  --db-text-secondary: #33524f;
+  --db-text-muted: #4c6a67;
+  --db-text-on-accent: #f4f9f7;
+
+  --db-border: #b7cbc6;
+  --db-border-strong: #8fada6;
+  --db-contour: rgba(18, 60, 56, 0.10);
+  --db-contour-strong: rgba(18, 60, 56, 0.16);
+
+  --db-accent: #0e6e63;
+  --db-accent-strong: #0a4f47;
+  --db-accent-tint: #d9ede8;
+  --db-accent-tint-border: #a9d2c8;
+
+  --db-sediment: #96703f;
+  --db-sediment-tint: #f1e6d3;
+  --db-sediment-tint-border: #d9c39a;
+
+  --db-pass: #146b3a;
+  --db-pass-tint: #dcefdf;
+  --db-pass-tint-border: #a9d4b3;
+  --db-fail: #9a3324;
+  --db-fail-tint: #f6e0da;
+  --db-fail-tint-border: #e0aa98;
+  --db-review: #8a6414;
+  --db-review-tint: #f3e8cd;
+  --db-review-tint-border: #dcc282;
+
+  --db-focus-ring: #0a4f47;
+
+  --db-shadow-1: 0 1px 2px rgba(13, 40, 38, 0.08);
+  --db-shadow-2: 0 2px 8px rgba(13, 40, 38, 0.10);
+
+  --db-font-body: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Charter", serif;
+  --db-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", "Helvetica Neue", Arial, sans-serif;
+  --db-font-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+.dark {
+  /* ---- DARK THEME: deep water, layering still legible ---- */
+  --db-depth-0: #071619;
+  --db-depth-1: #0c1f22;
+  --db-depth-2: #11282c;
+  --db-depth-3: #163338;
+  --db-surface: #0e2226;
+  --db-surface-raised: #123033;
+
+  --db-text-primary: #e7f2ef;
+  --db-text-secondary: #a9c7c2;
+  --db-text-muted: #82a29d;
+  --db-text-on-accent: #06201d;
+
+  --db-border: #1e4247;
+  --db-border-strong: #2c5a5b;
+  --db-contour: rgba(163, 214, 205, 0.08);
+  --db-contour-strong: rgba(163, 214, 205, 0.14);
+
+  --db-accent: #5fd1bc;
+  --db-accent-strong: #8fe4d3;
+  --db-accent-tint: #123a37;
+  --db-accent-tint-border: #1f5650;
+
+  --db-sediment: #d4a862;
+  --db-sediment-tint: #2e2415;
+  --db-sediment-tint-border: #4a3a22;
+
+  --db-pass: #6fd18e;
+  --db-pass-tint: #12301f;
+  --db-pass-tint-border: #235a37;
+  --db-fail: #e28f7c;
+  --db-fail-tint: #331d17;
+  --db-fail-tint-border: #5c3327;
+  --db-review: #e0c169;
+  --db-review-tint: #332a12;
+  --db-review-tint-border: #55461f;
+
+  --db-focus-ring: #8fe4d3;
+
+  --db-shadow-1: 0 1px 2px rgba(0, 0, 0, 0.35);
+  --db-shadow-2: 0 4px 14px rgba(0, 0, 0, 0.45);
+}
+
+/* ========================================
    BASE STYLES
    ======================================== */
 
