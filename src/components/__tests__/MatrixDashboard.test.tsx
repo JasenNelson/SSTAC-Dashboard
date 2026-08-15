@@ -1285,6 +1285,242 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     });
   });
 
+  // The six ASSEMBLED-coherence tests above cover STRUCTURE (sequence
+  // numbering, one-current, formatter agreement, unnumbered tools). None of
+  // them drives a derivation to completion: BackgroundAdjustment.test.tsx
+  // exercises Stage 4's max() logic thoroughly, but every one of those
+  // cases passes preliminaryStandard directly as a prop -- the actual
+  // wiring (pathway calculator -> onPreliminaryStandardChange ->
+  // MatrixDashboard state -> preliminarySlot -> BackgroundAdjustment prop
+  // -> Stage 4 max(preliminary, UTL) -> onAdjustedStandardChange ->
+  // adjustedSlot -> summary bar) is never exercised. This describe block
+  // drives that full chain through the real, rendered UI -- no direct
+  // BackgroundAdjustment render, no stubbed callbacks.
+  describe('MatrixDashboard -- full derivation wiring (pathway -> Stage 4 -> summary bar)', () => {
+    beforeEach(() => {
+      window.localStorage.clear();
+    });
+
+    // Reference-sample sets chosen so the UTL lands FAR outside any
+    // plausible preliminary-standard magnitude for hh-direct's default
+    // substance (Total PCBs (Aroclor 1254)) -- these tests do not need to
+    // know that baseline number, only its relative position to the UTL,
+    // because the BW/IR_sed levers below are pushed by ~13 orders of
+    // magnitude, far past any plausible baseline. Values carry a small
+    // spread (not identical) so utl9595's std-dev computation runs
+    // normally, not degenerate at sd = 0.
+    const HUGE_SAMPLES =
+      '1000000, 999998, 1000002, 999999, 1000001, 1000000, 999997, 1000003, 999999, 1000001';
+    const TINY_SAMPLES =
+      '0.0010, 0.0012, 0.0009, 0.0011, 0.0008, 0.0013, 0.0010, 0.0009, 0.0011, 0.0010';
+
+    function setReferenceSamples(value: string) {
+      fireEvent.change(screen.getByLabelText(/reference samples/i), {
+        target: { value },
+      });
+    }
+
+    // Pulls the numeric token out of bg-adjust-result's "<value> mg/kg dry"
+    // text run for a like-for-like comparison against the summary bar's
+    // isolated value slot (same extraction pattern as the formatter-
+    // agreement test above, generalized to Stage 4's own result block).
+    function stage4ResultValueText(): string {
+      const result = screen.getByTestId('bg-adjust-result');
+      const match = result.textContent?.match(/([\d.]+(?:e[+-]?\d+)?)\s*mg\/kg dry/i);
+      if (!match) {
+        throw new Error(
+          `bg-adjust-result did not contain a "<value> mg/kg dry" run: "${result.textContent}"`,
+        );
+      }
+      return match[1];
+    }
+
+    // CASE 1: BACKGROUND GOVERNS -- the case the adjustment exists for.
+    // Lever 1 (reference samples -> HUGE_SAMPLES) pushes the UTL to
+    // ~1,000,000 mg/kg dry. Lever 2 (IR_sed -> 1e13) pushes the preliminary
+    // standard toward zero: IR_sed sits in the DENOMINATOR of the Cs-solve
+    // (Dose = Cs * CF * EF * ED * (IR_sed * BA_o + SA * AF_sed * ABS_d) /
+    // (BW * AT)), so raising it LOWERS the resulting preliminary standard --
+    // the opposite of BW (a previous test author got this backwards; see
+    // the formatter-agreement test above, which raises BW instead).
+    // Fails if: BackgroundAdjustment's Stage 4 max() picks the wrong
+    // operand, or the preliminary/UTL wiring path drops a hop (e.g. Stage 4
+    // reads a stale preliminaryStandard prop, or the summary bar's adjusted
+    // slot is built from a different value than Stage 4's own result).
+    it('drives a background-governs derivation end to end: pathway -> Stage 4 max() -> summary bar all agree on the UTL', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(HUGE_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-ir-sed-input'), {
+        target: { value: '1e13' },
+      });
+
+      // The pathway calculator's own Stage 2 actually produced a
+      // preliminary standard (the wiring's first hop).
+      expect(screen.getByTestId('hh-direct-stage-2')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+
+      // Stage 4 computed and names the background UTL as governing, in
+      // words, not just a number.
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const governingSentence =
+        screen.getByTestId('bg-adjust-governing-sentence').textContent ?? '';
+      expect(governingSentence).toMatch(/background UTL 95\/95/);
+      expect(governingSentence).toMatch(
+        /governs, because it exceeds the preliminary standard/,
+      );
+      expect(governingSentence).toMatch(/naturally occurring background/i);
+
+      // The adjusted value equals the UTL operand, not the preliminary
+      // operand -- read from Stage 4's own two operand rows, not
+      // recomputed here.
+      const preliminaryOperand =
+        screen.getByTestId('bg-adjust-operand-preliminary').textContent ?? '';
+      const utlOperand = screen.getByTestId('bg-adjust-operand-utl').textContent ?? '';
+      const stage4ValueText = stage4ResultValueText();
+      expect(utlOperand).toContain(stage4ValueText);
+      expect(preliminaryOperand).not.toContain(stage4ValueText);
+
+      // The SAME adjusted-value STRING (not just the same number) appears
+      // in the summary bar's adjusted slot -- this is the formatter-
+      // divergence defect class the file header describes: two components
+      // agreeing on the number but disagreeing on the rendered string.
+      const summaryAdjustedValue = screen
+        .getByTestId('calculator-summary-bar-adjusted-value')
+        .textContent?.trim() ?? '';
+      expect(summaryAdjustedValue).toBe(stage4ValueText);
+      expect(screen.getByTestId('calculator-summary-bar-adjusted-chip')).toHaveTextContent(
+        /computed/i,
+      );
+
+      // The summary bar's governing indication agrees with Stage 4's: both
+      // name the background UTL, and the summary bar cites the same figure.
+      const summaryGoverning =
+        screen.getByTestId('calculator-summary-bar-governing').textContent ?? '';
+      expect(summaryGoverning).toMatch(/background UTL 95\/95/);
+      expect(summaryGoverning).toContain(stage4ValueText);
+    });
+
+    // CASE 2: PRELIMINARY GOVERNS -- the mirror-image case.
+    // Lever 1 (reference samples -> TINY_SAMPLES) pushes the UTL toward
+    // ~0.001 mg/kg dry. Lever 2 (BW -> 1e13) pushes the preliminary
+    // standard up: BW sits in the NUMERATOR of the Cs-solve, so raising it
+    // RAISES the resulting preliminary standard (same direction, same
+    // input, as the formatter-agreement test above).
+    // Fails if: Stage 4's max() ever prefers the smaller operand, or the
+    // governedBy label disagrees with which value was actually used.
+    it('drives a preliminary-governs derivation end to end: pathway -> Stage 4 max() -> summary bar all agree on the preliminary standard', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(TINY_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '1e13' },
+      });
+
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const governingSentence =
+        screen.getByTestId('bg-adjust-governing-sentence').textContent ?? '';
+      expect(governingSentence).toMatch(/preliminary standard \(/);
+      expect(governingSentence).toMatch(
+        /governs, because it is at or above the background UTL 95\/95/,
+      );
+
+      const preliminaryOperand =
+        screen.getByTestId('bg-adjust-operand-preliminary').textContent ?? '';
+      const utlOperand = screen.getByTestId('bg-adjust-operand-utl').textContent ?? '';
+      const stage4ValueText = stage4ResultValueText();
+      expect(preliminaryOperand).toContain(stage4ValueText);
+      expect(utlOperand).not.toContain(stage4ValueText);
+
+      const summaryAdjustedValue = screen
+        .getByTestId('calculator-summary-bar-adjusted-value')
+        .textContent?.trim() ?? '';
+      expect(summaryAdjustedValue).toBe(stage4ValueText);
+
+      const summaryGoverning =
+        screen.getByTestId('calculator-summary-bar-governing').textContent ?? '';
+      expect(summaryGoverning).toMatch(/preliminary standard/);
+      expect(summaryGoverning).toContain(stage4ValueText);
+    });
+
+    // CASE 3: THE CHAIN BREAKS CORRECTLY. First drive a real successful
+    // derivation (same levers as case 2, so there IS a previously-computed
+    // adjusted value that could go stale), then make body weight invalid.
+    // Fails if: the summary bar's adjusted slot keeps showing the old
+    // computed value/chip after the upstream input breaks (a stale value
+    // surviving an upstream break -- the exact failure this test exists
+    // to catch), or if Stage 4 does not fall back to WAITING and name the
+    // missing preliminary standard.
+    it('breaks the chain correctly: an upstream input going invalid after a successful derivation blocks Stage 1, sends Stage 4 back to WAITING naming the missing preliminary standard, and the summary bar drops the stale adjusted value', async () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
+
+      setReferenceSamples(TINY_SAMPLES);
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '1e13' },
+      });
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'computed',
+      );
+      const staleAdjustedValueText = stage4ResultValueText();
+
+      // Break Stage 1 with an invalid body weight (same input used by the
+      // existing "exactly one current stage" invalid-input test above).
+      fireEvent.change(screen.getByTestId('hh-direct-bw-input'), {
+        target: { value: '-1' },
+      });
+
+      // Stage 1 (exposure factors, which feeds the preliminary standard)
+      // is BLOCKED.
+      expect(screen.getByTestId('hh-direct-stage-1')).toHaveAttribute(
+        'data-stage-state',
+        'blocked',
+      );
+
+      // Stage 4 falls back to WAITING and names the missing operand.
+      expect(screen.getByTestId('bg-adjust-stage-4')).toHaveAttribute(
+        'data-stage-state',
+        'waiting',
+      );
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.getByTestId('bg-adjust-result-waiting')).toHaveTextContent(
+        /preliminary standard/i,
+      );
+
+      // The summary bar does not retain the previously computed adjusted
+      // value as though it were still current. The reporting chain runs
+      // through nested effects (BackgroundAdjustment's own effect ->
+      // MatrixDashboard's onAdjustedStandardChange state update ->
+      // CalculatorSummaryBar's props), so settle with waitFor rather than
+      // assuming a single synchronous flush.
+      await waitFor(() => {
+        expect(
+          screen.getByTestId('calculator-summary-bar-adjusted-value').textContent?.trim(),
+        ).toBe('--');
+      });
+      expect(screen.getByTestId('calculator-summary-bar-adjusted-chip')).toHaveTextContent(
+        /waiting/i,
+      );
+      expect(
+        screen.getByTestId('calculator-summary-bar-adjusted-value').textContent?.trim(),
+      ).not.toBe(staleAdjustedValueText);
+    });
+  });
+
   // FIX 1: pointercancel must restore cursor/userSelect the same as pointerup.
   it('pointercancel restores body cursor and userSelect (drag cleanup on cancel)', () => {
     Object.defineProperty(window, 'innerWidth', {

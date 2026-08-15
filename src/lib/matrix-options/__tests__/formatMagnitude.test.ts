@@ -84,6 +84,27 @@ describe('formatMagnitude', () => {
     expect(formatMagnitude(-0.0000001)).toBe('-1.000e-7');
   });
 
+  it('a large but plausible magnitude (1e6) still uses toFixed(4), not exponential', () => {
+    // Well below UPPER_EXPONENTIAL_THRESHOLD (1e9) -- this is the "normal magnitude" large
+    // case (P3 UI QA audit 2026-08-14 fix 3): a large equivalent/standard still renders as a
+    // plain decimal, matching the historical toFixed(4) display exactly.
+    expect(formatMagnitude(1000000)).toBe((1000000).toFixed(4));
+    expect(formatMagnitude(1000000)).toBe('1000000.0000');
+  });
+
+  it('boundary: switches to exponential notation at UPPER_EXPONENTIAL_THRESHOLD (1e9)', () => {
+    // Just below the threshold: still the toFixed(4) branch (a very long decimal string).
+    expect(formatMagnitude(999999999)).toBe('999999999.0000');
+    // At and above the threshold: exponential notation, bounding display width.
+    expect(formatMagnitude(1e9)).toBe('1.000e+9');
+    expect(formatMagnitude(-1e9)).toBe('-1.000e+9');
+  });
+
+  it('a pathologically large magnitude (1e15) renders as bounded exponential notation, not a 20+ character decimal string', () => {
+    expect(formatMagnitude(1e15)).toBe('1.000e+15');
+    expect(formatMagnitude(1e15).length).toBeLessThan(12);
+  });
+
   it('boundary: is continuous across the 0.1 fixed-vs-significant-figure threshold, no digit-count jump', () => {
     // At and above 0.1: the toFixed(4) branch.
     expect(formatMagnitude(0.1)).toBe('0.1000');

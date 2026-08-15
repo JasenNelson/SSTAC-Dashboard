@@ -256,14 +256,33 @@ function CumulativeResultView({
                   className="border-b border-slate-100 dark:border-slate-800"
                 >
                   <td className="py-1 pr-2 font-mono">{c.componentId}</td>
+                  {/*
+                    factor (TEF/RPF) stays as a raw display deliberately: it is a fixed,
+                    dimensionless weighting COEFFICIENT looked up from a reference table
+                    (tefTable.ts / rpfTable.ts), not a mass/mass concentration value on the
+                    same magnitude scale as concentrationNorm/contribution/equivalent -- it
+                    is never itself compared against a screening standard, so formatMagnitude's
+                    threshold behaviour (tuned for mg/kg concentration-like values) does not
+                    apply here. See the analogous mean/sd/K exemption in
+                    BackgroundAdjustment.tsx.
+                  */}
                   <td className="py-1 pr-2 font-mono">
                     {c.factor === null ? 'n/a' : c.factor}
                   </td>
+                  {/*
+                    concentrationNorm and contribution are both operands/components that sum
+                    to `equivalent` (contribution = concentrationNorm * factor; equivalent =
+                    sum(contribution)), in the same mg/kg unit rendered a few lines above via
+                    formatMagnitude. They must use the same formatter -- a reviewer comparing
+                    the hero total against its table rows needs directly comparable digit
+                    counts (P2 UI QA audit 2026-08-14: this recurred four times because prior
+                    fixes patched the specific site instead of the property).
+                  */}
                   <td className="py-1 pr-2 font-mono">
-                    {c.concentrationNorm === null ? 'n/a' : c.concentrationNorm.toPrecision(3)}
+                    {c.concentrationNorm === null ? 'n/a' : formatMagnitude(c.concentrationNorm)}
                   </td>
                   <td className="py-1 pr-2 font-mono">
-                    {c.contribution === null ? 'not scored' : c.contribution.toPrecision(3)}
+                    {c.contribution === null ? 'not scored' : formatMagnitude(c.contribution)}
                   </td>
                 </tr>
               ))}

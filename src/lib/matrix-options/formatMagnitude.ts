@@ -44,9 +44,26 @@
 //     down, collapsing to "0.0000" entirely. toPrecision is magnitude-
 //     aware by construction: its digit budget always attaches to the
 //     first significant digit, wherever it falls, so a nonzero input can
-//     never round to "0" or "0.0000" through this path, and very small or
-//     very large magnitudes fall back to exponential notation
-//     automatically ("1.000e-7") instead of a long run of leading zeros.
+//     never round to "0" or "0.0000" through this path. For VERY SMALL
+//     magnitudes this branch does fall back to exponential notation on its
+//     own (ECMA-262 defines toPrecision that way once the exponent drops
+//     below -6, e.g. 0.0000001 -> "1.000e-7", while 0.000001 still prints
+//     as "0.000001000") -- but this is a property of the small-value
+//     branch only. It does NOT extend to large magnitudes: values at or
+//     above fixedDecimalThreshold take the .toFixed(4) branch above, and
+//     toFixed never produces exponential notation below 1e21 -- see the
+//     UPPER_EXPONENTIAL_THRESHOLD note below for how very large magnitudes
+//     are handled instead.
+//
+//   - A THIRD branch, above UPPER_EXPONENTIAL_THRESHOLD (1e9), returns
+//     .toExponential(significantFigures - 1). Real screening standards,
+//     UTLs, and cumulative-effects equivalents in this codebase are
+//     mg/kg-scale values well under 1e6 (see the derivation tests and
+//     cumulative.ts); 1e9 is chosen to sit far above any plausible real
+//     value so this branch never fires for genuine regulatory numbers --
+//     it exists only to keep a pathological/mistyped input (e.g. a stray
+//     extra digit in a concentration field) from rendering as a
+//     20+-character run of digits in a fixed-width UI cell.
 //
 // Boundary check (both directions of the threshold, so there is no visible
 // jump in digit count at the seam): at exactly the threshold (0.1),
@@ -69,6 +86,14 @@ export const DEFAULT_SIGNIFICANT_FIGURES = 4;
  * caller-configurable -- it defines what "matches the old display"
  * means, independent of the caller's chosen significant-figure count. */
 const LEGACY_DECIMAL_PLACES = 4;
+
+/** Above this magnitude, switch to exponential notation instead of a long
+ * toFixed(4) decimal string. Chosen far above any real mg/kg screening
+ * standard, UTL, or cumulative-effects equivalent in this codebase (see
+ * the module doc comment); it exists only to bound display width for a
+ * pathological/mistyped input, never to affect a genuine regulatory
+ * value. */
+const UPPER_EXPONENTIAL_THRESHOLD = 1e9;
 
 export interface FormatMagnitudeOptions {
   /** Returned as-is for null/undefined/non-finite input. Default "--". */
@@ -93,16 +118,26 @@ export interface FormatMagnitudeOptions {
  *   displayed values of 0.1 and up): four decimal places always carries
  *   at least `significantFigures` significant digits here, so nothing is
  *   lost relative to the historical .toFixed(4) behaviour.
- * - |value| below that threshold -> value.toPrecision(significantFigures).
- *   This is the regime where .toFixed(4) used to either lose significant
- *   digits or collapse a real value to "0.0000"; toPrecision keeps the
- *   requested number of significant digits no matter how small the value
- *   is, falling back to exponential notation for very small/large
- *   magnitudes.
+ * - |value| below that threshold (and below UPPER_EXPONENTIAL_THRESHOLD,
+ *   see next bullet) -> value.toPrecision(significantFigures). This is the
+ *   regime where .toFixed(4) used to either lose significant digits or
+ *   collapse a real value to "0.0000"; toPrecision keeps the requested
+ *   number of significant digits no matter how small the value is, and
+ *   for very small magnitudes (below roughly 1e-6) falls back to
+ *   exponential notation on its own (ECMA-262 toPrecision behaviour).
+ * - |value| >= UPPER_EXPONENTIAL_THRESHOLD (1e9) -> exponential notation
+ *   via value.toExponential(significantFigures - 1), REGARDLESS of the
+ *   fixed-decimal threshold above. This branch is checked first: without
+ *   it, a large magnitude would take the toFixed(4) branch and never
+ *   produce exponential notation below 1e21, rendering as a very long
+ *   decimal string instead. No real value in this codebase's screening
+ *   standards, UTLs, or cumulative-effects equivalents approaches 1e9
+ *   (see module doc comment), so this branch is a display-width guard
+ *   for pathological input, not a case regulatory numbers hit.
  *
- * Deterministic and locale-independent: toFixed/toPrecision are pure
- * numeric operations, unlike toLocaleString (which is locale- and
- * Intl-data-dependent and can vary by machine/runtime).
+ * Deterministic and locale-independent: toFixed/toPrecision/toExponential
+ * are pure numeric operations, unlike toLocaleString (which is locale-
+ * and Intl-data-dependent and can vary by machine/runtime).
  */
 export function formatMagnitude(
   value: number | null | undefined,
@@ -115,6 +150,10 @@ export function formatMagnitude(
   }
   if (value === 0) {
     return '0';
+  }
+
+  if (Math.abs(value) >= UPPER_EXPONENTIAL_THRESHOLD) {
+    return value.toExponential(significantFigures - 1);
   }
 
   const fixedDecimalThreshold = 10 ** -(LEGACY_DECIMAL_PLACES - significantFigures + 1);
