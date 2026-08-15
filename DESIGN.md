@@ -73,10 +73,22 @@ Consequences:
 The user works through stages to compute a PRELIMINARY value; the last step compares it to
 BACKGROUND levels and adjusts. Three numbers matter and their relationship is the point:
 
-1. the preliminary Tier 1 generic standard, from the exposure derivation
+1. the preliminary TOXICITY-BASED standard, from the exposure derivation
 2. the background UTL 95/95, `mean + K * sd`, from Provincial or Regional reference samples, with
    Regional taking precedence over Provincial
 3. the final adjusted standard, `max(preliminary, UTL)`
+
+Terminology correction 2026-08-14: an earlier draft of this file called item 1 the "preliminary
+Tier 1 generic standard". That was wrong and potentially dangerous. In BC CSR, "Tier 1 generic
+standard" conventionally means the PUBLISHED Schedule 3.x number, not a freshly derived candidate.
+Welding the two terms together implied the UTL adjusts the published standard, which would have made
+Stage 4 operate on the wrong operand.
+
+Owner statement of what the adjustment actually does: the preliminary toxicity-based calculated
+standard is adjusted UP to equal the provincial background concentration when the toxicity-based
+value is LOWER than background. So the final standard is the toxicity-based value where that sits
+above background, and the background value where background exceeds it. `max(preliminary, UTL)` is
+therefore correct as implemented, with the preliminary being the value the user just derived.
 
 The `max` exists so that naturally-elevated background concentrations are not forced into
 remediation. A measured site concentration is then compared against the adjusted standard. The

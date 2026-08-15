@@ -14,7 +14,13 @@
 
 import React, { useEffect, useRef, useState } from 'react';
 import { cn } from '@/utils/cn';
-import { STAGE_STATE_LABELS, StageStateChip, type StageState } from './CalculatorStage';
+import {
+  ANNOUNCEMENT_DEBOUNCE_MS,
+  STAGE_STATE_LABELS,
+  StageStateChip,
+  type StageState,
+} from './CalculatorStage';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 
 export interface SummaryBarSlot {
   label: string;
@@ -23,7 +29,14 @@ export interface SummaryBarSlot {
   state: StageState;
   /** Short note shown under the value, e.g. which stage produced it or why it is pending. */
   note?: string;
-  /** Custom formatter for the numeric value. Defaults to String(value). */
+  /**
+   * Custom formatter for the numeric value. Defaults to formatMagnitude
+   * (magnitude-aware significant figures) -- see
+   * src/lib/matrix-options/formatMagnitude.ts. Prefer the default unless a
+   * slot genuinely needs different precision or notation; do not reach for
+   * toFixed/toPrecision ad hoc here, that inconsistency is exactly what
+   * P1-1 fixed.
+   */
   formatValue?: (value: number) => string;
 }
 
@@ -58,22 +71,42 @@ export default function CalculatorSummaryBar({
   // The three numbers fill in as stages resolve; a value that changes
   // silently is a defect (DESIGN.md non-negotiable), so announce the
   // combined state through one live region whenever any slot changes.
+  //
+  // Same two refinements as CalculatorStage (P2-6): skip the announcement
+  // that would otherwise fire on mount (only real changes are announced),
+  // and debounce so a burst of rapid slot changes -- e.g. every keystroke
+  // in an upstream input flowing through to this bar's preliminary/UTL/
+  // adjusted values -- collapses into one announcement of the settled
+  // state instead of one per keystroke, reusing the same
+  // ANNOUNCEMENT_DEBOUNCE_MS as CalculatorStage so the two live regions
+  // feel like part of one coherent announcement rhythm.
   const previousMessageRef = useRef<string | null>(null);
+  const hasMountedRef = useRef(false);
   const [announcement, setAnnouncement] = useState('');
   useEffect(() => {
     const message = slots
       .map((slot) => {
         const valueText =
           slot.value != null
-            ? `${slot.formatValue ? slot.formatValue(slot.value) : slot.value} ${slot.unit}`
+            ? `${slot.formatValue ? slot.formatValue(slot.value) : formatMagnitude(slot.value)} ${slot.unit}`
             : 'no value yet';
         return `${slot.label}: ${STAGE_STATE_LABELS[slot.state]}, ${valueText}`;
       })
       .join('. ');
-    if (previousMessageRef.current !== message) {
-      previousMessageRef.current = message;
-      setAnnouncement(message);
+    if (previousMessageRef.current === message) {
+      return;
     }
+    previousMessageRef.current = message;
+
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setAnnouncement(message);
+    }, ANNOUNCEMENT_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
     // slots is rebuilt every render from the three slot props; depend on
     // the primitive fields that actually determine the announcement text.
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -143,7 +176,7 @@ export default function CalculatorSummaryBar({
                 {slot.value != null
                   ? slot.formatValue
                     ? slot.formatValue(slot.value)
-                    : slot.value
+                    : formatMagnitude(slot.value)
                   : '--'}
               </span>
               {slot.value != null && (
@@ -172,6 +205,18 @@ export default function CalculatorSummaryBar({
           {governingNote ? ` - ${governingNote}` : ''}
         </div>
       )}
+      {/*
+        aria-atomic="true" is kept deliberately (P2-6): the announcement
+        text built above is always ONE already-combined sentence covering
+        all three slots, not three independently-updating child nodes, so
+        atomic does not cause the "re-read everything for a one-slot
+        change" verbosity the audit flagged -- there is nothing partial to
+        diff against. That flooding came from firing this full sentence on
+        every keystroke; the debounce above fixes the actual cause. Keeping
+        atomic here means a screen-reader user always gets the complete,
+        coherent three-slot state rather than a fragment that would not
+        make sense standing alone.
+      */}
       <div
         className="sr-only"
         role="status"

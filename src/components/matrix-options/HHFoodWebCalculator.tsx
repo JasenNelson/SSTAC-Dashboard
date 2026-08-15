@@ -386,14 +386,18 @@ export default function HHFoodWebCalculator({
     : 'error' in result
       ? 'blocked'
       : hhResult
-        ? 'computed'
+        ? hhResult.blocked
+          ? 'blocked'
+          : 'computed'
         : 'pending';
   const stage2Detail = stage1Blocked
     ? 'Blocked by Stage 1: fix the exposure-factor input above.'
     : 'error' in result
       ? result.error
       : hhResult
-        ? `Preliminary standard computed: ${hhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${hhResult.driver}).`
+        ? hhResult.blocked
+          ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${hhResult.warnings.join(' ') || 'input validity constraint violated.'}`
+          : `Preliminary standard computed: ${hhResult.sedS.toPrecision(4)} mg/kg dry (driver: ${hhResult.driver}).`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads
@@ -410,6 +414,14 @@ export default function HHFoodWebCalculator({
     } else {
       onPreliminaryStandardChange(null);
     }
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+    };
   }, [hhResult, onPreliminaryStandardChange]);
 
   const provenanceValues: CalculatorUsedValue[] = useMemo(
@@ -562,11 +574,11 @@ export default function HHFoodWebCalculator({
 
       <CalculatorStage
         number={1}
-        totalStages={2}
+        totalStages={4}
         title="Exposure Factors"
         state={stage1State}
         stateDetail={stage1Detail}
-        current={!stage1Blocked}
+        current={stage1Blocked}
         testId="hh-food-stage-1"
       >
       <FrameImpactCard
@@ -739,7 +751,7 @@ export default function HHFoodWebCalculator({
 
       <CalculatorStage
         number={2}
-        totalStages={2}
+        totalStages={4}
         title="Preliminary Standard"
         state={stage2State}
         stateDetail={stage2Detail}

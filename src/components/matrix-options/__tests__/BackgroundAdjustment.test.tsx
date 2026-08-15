@@ -260,6 +260,12 @@ describe('BackgroundAdjustment', () => {
 
       expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
       const result = screen.getByTestId('bg-adjust-result');
+      // Fix 1 (P1-1) displayed via the shared formatMagnitude formatter;
+      // Fix 1b (P1-1b, 2026-08-14) corrected a precision regression the
+      // first fix introduced -- formatMagnitude now reproduces the
+      // toFixed(4) string exactly for "normal magnitude" values like this
+      // one (>= 0.1), so the display is 5.7516, not the truncated 5.752.
+      // The underlying computed value (~5.7516) is unchanged either way.
       expect(result).toHaveTextContent('5.7516');
       const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
       expect(governingSentence).toHaveTextContent(/background UTL 95\/95.*governs/i);
@@ -288,6 +294,10 @@ describe('BackgroundAdjustment', () => {
 
       expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
       const result = screen.getByTestId('bg-adjust-result');
+      // Fix 1b (P1-1b, 2026-08-14): formatMagnitude(10) === '10.0000',
+      // reproducing the original toFixed(4) display exactly (10 is well
+      // above the 0.1 fixed-vs-significant-figure threshold). Computed
+      // value unchanged.
       expect(result).toHaveTextContent('10.0000');
       const governingSentence = screen.getByTestId('bg-adjust-governing-sentence');
       expect(governingSentence).toHaveTextContent(/preliminary standard.*governs/i);
@@ -305,11 +315,56 @@ describe('BackgroundAdjustment', () => {
       render(<BackgroundAdjustment onUtlChange={onUtlChange} />);
       expect(onUtlChange).toHaveBeenLastCalledWith({
         value: expect.closeTo(5.7516, 4),
-        unit: 'mg/kg',
+        // Fix 2 (P2-1): 'mg/kg dry' now, reconciled with the preliminary/
+        // adjusted slots' unit so the same physical quantity is not shown
+        // with two different unit strings across the summary bar.
+        unit: 'mg/kg dry',
         state: 'computed',
         scope: 'provincial',
         n: 10,
       });
+    });
+  });
+
+  // Fix 2 (P2-1): guard against Stage 4 taking max() across mismatched
+  // units. Every real caller today passes 'mg/kg dry' for both operands
+  // (see the other Stage 4 tests above), so this only exercises the
+  // future-mismatch REFUSAL path.
+  describe('Stage 4 -- unit mismatch guard (P2-1)', () => {
+    it('blocks Stage 4 and refuses to compute an adjusted standard when the preliminary standard unit does not match the UTL unit', () => {
+      const onAdjustedStandardChange = vi.fn();
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: 'ug/kg dry', state: 'computed' }}
+          onAdjustedStandardChange={onAdjustedStandardChange}
+        />,
+      );
+
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('BLOCKED');
+      const blocked = screen.getByTestId('bg-adjust-result-blocked');
+      expect(blocked).toHaveTextContent(/unit mismatch/i);
+      expect(blocked).toHaveTextContent(/ug\/kg dry/);
+      expect(blocked).toHaveTextContent(/mg\/kg dry/);
+      expect(screen.queryByTestId('bg-adjust-result')).not.toBeInTheDocument();
+      expect(screen.queryByTestId('bg-adjust-result-waiting')).not.toBeInTheDocument();
+
+      expect(onAdjustedStandardChange).toHaveBeenLastCalledWith(
+        expect.objectContaining({
+          value: null,
+          state: 'blocked',
+          governedBy: null,
+        }),
+      );
+    });
+
+    it('is unaffected (still computes) when the preliminary standard unit matches the UTL unit, case- and whitespace-insensitively', () => {
+      render(
+        <BackgroundAdjustment
+          preliminaryStandard={{ value: 10, unit: ' MG/KG DRY ', state: 'computed' }}
+        />,
+      );
+      expect(screen.getByTestId('bg-adjust-stage-4-chip')).toHaveTextContent('COMPUTED');
+      expect(screen.getByTestId('bg-adjust-result')).toBeInTheDocument();
     });
   });
 });

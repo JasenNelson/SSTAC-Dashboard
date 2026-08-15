@@ -418,6 +418,14 @@ export default function HHDirectContactCalculator({
     } else {
       onPreliminaryStandardChange(null);
     }
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+    };
   }, [hhResult, onPreliminaryStandardChange]);
 
   // Row #23: the dl-PCB TEQ sub-value is now just a field on the SINGLE combined hhResult
@@ -666,11 +674,11 @@ export default function HHDirectContactCalculator({
 
       <CalculatorStage
         number={1}
-        totalStages={2}
+        totalStages={4}
         title="Exposure Factors"
         state={stage1State}
         stateDetail={stage1Detail}
-        current={!stage1Blocked}
+        current={stage1Blocked}
         testId="hh-direct-stage-1"
       >
       <FrameImpactCard
@@ -848,7 +856,7 @@ export default function HHDirectContactCalculator({
 
       <CalculatorStage
         number={2}
-        totalStages={2}
+        totalStages={4}
         title="Preliminary Standard"
         state={stage2State}
         stateDetail={stage2Detail}

@@ -10,28 +10,34 @@
 // Math (utl9595 + lookupK9595) is unchanged from the prior Tier 0 component.
 //
 // Step 4 of the Calculator redesign (DESIGN.md "The calculator produces an
-// adjusted standard, not a verdict"): this component now renders Stages 3-5
-// of the five-stage derivation sequence -- Background Reference (3),
-// Adjusted Standard (4), and Site Comparison (5) -- wrapped in
-// CalculatorStage. Stage 3 is mathematically independent of Stages 1-2 (the
-// UTL depends only on the reference samples), so it computes even when the
-// caller's preliminary standard is invalid or not yet available; only Stage
-// 4's max() and Stage 5's presentation wait on it. No calculation,
-// coefficient, rounding rule, or displayed numeric value from the prior
-// single-panel version has changed -- this is a presentation wrap plus the
-// new Stage 4 max() comparison, which uses only the two operands already
-// computed elsewhere (the caller-supplied preliminary standard and this
-// component's own utl9595 result).
+// adjusted standard, not a verdict"): this component renders Stages 3 and 4
+// of the FOUR-stage derivation sequence -- Background Reference (3) and
+// Adjusted Standard (4) -- wrapped in CalculatorStage. (Corrected 2026-08-14,
+// adversarial UI QA audit fix 3/P2-4/P2-7: the derivation is Stages 1-2 in
+// the active pathway calculator plus Stages 3-4 here, FOUR stages total, not
+// five -- "Site Comparison" below is NOT part of the derivation; see its own
+// comment near its render.) Stage 3 is mathematically independent of Stages
+// 1-2 (the UTL depends only on the reference samples), so it computes even
+// when the caller's preliminary standard is invalid or not yet available;
+// only Stage 4's max() waits on it. No calculation, coefficient, rounding
+// rule, or displayed numeric value from the prior single-panel version has
+// changed -- this is a presentation wrap plus the Stage 4 max() comparison,
+// which uses only the two operands already computed elsewhere (the
+// caller-supplied preliminary standard and this component's own utl9595
+// result).
 //
-// Stage 5 caution (see report): the Cs comparison below is UNCHANGED -- it
-// still compares the measured site concentration against the background UTL
-// only, exactly as the prior version did. DESIGN.md describes the eventual
-// comparison as against the ADJUSTED standard, but rewiring it would change
-// the displayed outcome whenever the preliminary standard governs (Cs values
-// between the UTL and the higher preliminary standard would flip from
-// "exceeds" to "within standard"). That is a behavioural change to a
-// regulatory comparison, so it is intentionally NOT made here; it is
-// reported for owner sign-off instead of applied silently.
+// Site Comparison caution (see report): the Cs comparison below is
+// UNCHANGED -- it still compares the measured site concentration against the
+// background UTL only, exactly as the prior version did. DESIGN.md describes
+// the eventual comparison as against the ADJUSTED standard, but rewiring it
+// would change the displayed outcome whenever the preliminary standard
+// governs (Cs values between the UTL and the higher preliminary standard
+// would flip from "exceeds" to "within standard"). That is a behavioural
+// change to a regulatory comparison, so it is intentionally NOT made here;
+// it is reported for owner sign-off instead of applied silently. It is also
+// no longer numbered as "Stage 5" -- the owner has stated a measured site
+// concentration does not belong in this standards-derivation tool at all, so
+// it is kept, pending that decision, as an unnumbered block.
 //
 // Plain ASCII only.
 
@@ -42,6 +48,7 @@ import {
   DECIMAL_NUMBER_RE,
   parseDecimalInput,
 } from '@/lib/matrix-options/parseDecimal';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import type {
   CalculatorUsedValue,
   EvidenceLibraryFilterRequest,
@@ -91,7 +98,25 @@ const PROVINCIAL_DEFAULT_SAMPLES =
   '4.8, 5.1, 4.9, 5.3, 4.7, 5.0, 5.2, 4.6, 5.4, 5.0';
 const REGIONAL_DEFAULT_SAMPLES = '5.7, 5.9, 5.5, 5.8, 6.0, 5.6, 5.9, 5.7';
 
-const TOTAL_STAGES = 5;
+const TOTAL_STAGES = 4;
+
+// Fix 3 (P2-4/P2-7): the derivation is Stage 1 (exposure factors) + Stage 2
+// (preliminary standard), both inside the active pathway calculator, then
+// Stage 3 (background reference) + Stage 4 (adjusted standard) here. The
+// former Stage 5 "Site Comparison" is NOT a stage of the derivation -- the
+// owner has stated a measured site concentration does not belong in this
+// tool at all -- so it is kept (pending an owner decision) as an unnumbered
+// block below, not wrapped in CalculatorStage.
+
+// Fix 2 (P2-1): the unit BackgroundAdjustment reports for the UTL. Matches
+// the preliminary/adjusted standard's 'mg/kg dry' default so the same
+// physical quantity is not shown with two different unit strings across the
+// summary bar (it used to be a bare 'mg/kg' here vs 'mg/kg dry' elsewhere).
+const UTL_UNIT = 'mg/kg dry';
+
+function normalizeUnit(unit: string): string {
+  return unit.trim().toLowerCase();
+}
 
 // The preliminary standard from an earlier pathway calculator's own Stage 2
 // (or equivalent), as reported via that calculator's onPreliminaryStandardChange
@@ -224,11 +249,26 @@ export default function BackgroundAdjustment({
   const utlAvailable = stage3State === 'computed' && utlResult != null;
   const adjustedUnit = preliminaryStandard?.unit ?? 'mg/kg dry';
 
-  const stage4State: StageState =
-    preliminaryAvailable && utlAvailable ? 'computed' : 'waiting';
+  // Fix 2 (P2-1) guard: the UTL's unit (UTL_UNIT) and the preliminary
+  // standard's caller-supplied unit must agree before max() is taken.
+  // Every current caller passes 'mg/kg dry' for both, so this never trips
+  // today -- it exists to REFUSE (not silently mis-max) a future caller
+  // that reports a different unit, since adjustedUnit is otherwise taken
+  // unconditionally from the preliminary side and would make a wrong
+  // comparison look correct.
+  const unitsMismatched =
+    preliminaryAvailable &&
+    utlAvailable &&
+    normalizeUnit(preliminaryStandard!.unit) !== normalizeUnit(UTL_UNIT);
+
+  const stage4State: StageState = unitsMismatched
+    ? 'blocked'
+    : preliminaryAvailable && utlAvailable
+      ? 'computed'
+      : 'waiting';
 
   const adjustedValue: number | null =
-    preliminaryAvailable && utlAvailable
+    !unitsMismatched && preliminaryAvailable && utlAvailable
       ? Math.max(preliminaryValue as number, (utlResult as NonNullable<typeof utlResult>).utl)
       : null;
 
@@ -250,29 +290,38 @@ export default function BackgroundAdjustment({
   if (!utlAvailable) {
     stage4MissingReasons.push('the background UTL 95/95 from Stage 3 above');
   }
-  const stage4Detail =
-    stage4State === 'computed'
-      ? `Adjusted standard = max(preliminary, UTL) = ${(adjustedValue as number).toFixed(4)} ${adjustedUnit}.`
+  const stage4UnitMismatchDetail = unitsMismatched
+    ? `Blocked: the preliminary standard's unit (${preliminaryStandard!.unit}) does not match ` +
+      `the background UTL's unit (${UTL_UNIT}). max() cannot be taken across mismatched units -- ` +
+      `fix the unit before an adjusted standard can be computed.`
+    : null;
+  const stage4Detail = stage4UnitMismatchDetail
+    ? stage4UnitMismatchDetail
+    : stage4State === 'computed'
+      ? `Adjusted standard = max(preliminary, UTL) = ${formatMagnitude(adjustedValue as number)} ${adjustedUnit}.`
       : `Waiting on ${stage4MissingReasons.join(' and ')}.`;
 
   const governingSentence: string =
     adjustedValue === null || governedBy === null || !utlResult
       ? ''
       : governedBy === 'background'
-        ? `Which one governed: the background UTL 95/95 (${utlResult.utl.toFixed(4)} mg/kg) governs, ` +
-          `because it exceeds the preliminary standard (${(preliminaryValue as number).toPrecision(4)} ${adjustedUnit}). ` +
-          `Adjusted standard = max(${(preliminaryValue as number).toPrecision(4)}, ${utlResult.utl.toFixed(4)}) = ` +
-          `${adjustedValue.toFixed(4)} ${adjustedUnit}. In plain terms, the risk-based preliminary standard sits ` +
+        ? `Which one governed: the background UTL 95/95 (${formatMagnitude(utlResult.utl)} ${UTL_UNIT}) governs, ` +
+          `because it exceeds the preliminary standard (${formatMagnitude(preliminaryValue as number)} ${adjustedUnit}). ` +
+          `Adjusted standard = max(${formatMagnitude(preliminaryValue as number)}, ${formatMagnitude(utlResult.utl)}) = ` +
+          `${formatMagnitude(adjustedValue)} ${adjustedUnit}. In plain terms, the risk-based preliminary standard sits ` +
           `below what already occurs naturally in this ${scopeLabel.toLowerCase()} reference set, so the adjusted ` +
           `standard uses background instead of forcing remediation of naturally occurring background.`
-        : `Which one governed: the preliminary standard (${(preliminaryValue as number).toPrecision(4)} ${adjustedUnit}) governs, ` +
-          `because it is at or above the background UTL 95/95 (${utlResult.utl.toFixed(4)} mg/kg). ` +
-          `Adjusted standard = max(${(preliminaryValue as number).toPrecision(4)}, ${utlResult.utl.toFixed(4)}) = ` +
-          `${adjustedValue.toFixed(4)} ${adjustedUnit}.`;
+        : `Which one governed: the preliminary standard (${formatMagnitude(preliminaryValue as number)} ${adjustedUnit}) governs, ` +
+          `because it is at or above the background UTL 95/95 (${formatMagnitude(utlResult.utl)} ${UTL_UNIT}). ` +
+          `Adjusted standard = max(${formatMagnitude(preliminaryValue as number)}, ${formatMagnitude(utlResult.utl)}) = ` +
+          `${formatMagnitude(adjustedValue)} ${adjustedUnit}.`;
 
   // ---------------------------------------------------------------------
-  // Stage 5 -- Site Comparison. Presentation-only wrap of the EXISTING
-  // Cs-vs-UTL comparison (see the Stage 5 caution in the file header).
+  // Site Comparison -- NOT a derivation stage (fix 3/P2-4/P2-7; see the
+  // file header comment). Presentation-only wrap of the EXISTING Cs-vs-UTL
+  // comparison (see the Site Comparison caution in the file header). The
+  // stage5* variable names are kept for git-diff minimality -- the "5" no
+  // longer denotes a stage number anywhere in the rendered UI.
   // ---------------------------------------------------------------------
   const stage5State: StageState = csIsInvalid || csIsNegative
     ? 'blocked'
@@ -303,6 +352,10 @@ export default function BackgroundAdjustment({
         note: 'Reference-set data entered or seeded in the UI. Source data set provenance is tracked outside this v1 panel.',
       },
       {
+        // K is a statistics-table lookup value (typically O(1-3)), not a
+        // standard-like magnitude compared against other stages -- decimal-
+        // place precision stays appropriate here (see the mean/sd/K stat
+        // card decision in the file's Stage 3 render below).
         input_key: 'K_95_95',
         label: 'K factor',
         value: utlResult ? utlResult.K.toFixed(4) : null,
@@ -312,8 +365,8 @@ export default function BackgroundAdjustment({
       {
         input_key: 'utl_mg_per_kg',
         label: 'UTL 95/95',
-        value: utlResult ? utlResult.utl.toFixed(4) : null,
-        unit: 'mg/kg',
+        value: utlResult ? formatMagnitude(utlResult.utl) : null,
+        unit: UTL_UNIT,
         role: 'derived value',
       },
       {
@@ -335,7 +388,7 @@ export default function BackgroundAdjustment({
     if (!onUtlChange) return;
     onUtlChange({
       value: utlResult ? utlResult.utl : null,
-      unit: 'mg/kg',
+      unit: UTL_UNIT,
       state: stage3State,
       scope,
       n: parsed.samples.length,
@@ -469,6 +522,15 @@ export default function BackgroundAdjustment({
           </p>
         </div>
 
+        {/*
+          Mean / Std Dev / K stay on toFixed(4) deliberately (P1-1 audit
+          decision): they are reference-sample STATISTICS, not standard-like
+          magnitudes maxed or compared across stages the way the UTL,
+          preliminary, and adjusted-standard values are. This reference
+          sample set is always O(1-10) mg/kg, so decimal-place precision is
+          the more legible choice here; formatMagnitude is reserved for the
+          values that can legitimately be sub-1e-4 screening standards.
+        */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
             <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
@@ -504,11 +566,11 @@ export default function BackgroundAdjustment({
             {scopeLabel} UTL 95/95
           </div>
           <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
-            {utlResult ? utlResult.utl.toFixed(4) : '--'}{' '}
-            <span className="text-lg text-slate-500 font-medium">mg/kg</span>
+            {utlResult ? formatMagnitude(utlResult.utl) : '--'}{' '}
+            <span className="text-lg text-slate-500 font-medium">{UTL_UNIT}</span>
           </div>
           <p className="text-xs text-sky-800 dark:text-sky-300 mt-3 font-medium">
-            Apply as adjustment: max(Tier 1 generic, {utlResult ? utlResult.utl.toFixed(4) : 'UTL'})
+            Apply as adjustment: max(Tier 1 generic, {utlResult ? formatMagnitude(utlResult.utl) : 'UTL'})
           </p>
         </div>
 
@@ -542,6 +604,19 @@ export default function BackgroundAdjustment({
             Provide at least 2 numeric samples to compute the UTL.
           </p>
         )}
+
+        {/*
+          Fix 4 (P2-7 continued): the provenance panel belongs with Stage 3,
+          where the UTL is actually derived -- it previously sat inside the
+          (unnumbered, post-derivation) Site Comparison block below, which is
+          not where the UTL's provenance is produced.
+        */}
+        <CalculatorProvenancePanel
+          pathway="background-adjustment"
+          usedValues={provenanceValues}
+          regulatoryFrameId={jurisdiction}
+          onOpenEvidenceLibrary={onOpenEvidenceLibrary}
+        />
       </CalculatorStage>
 
       {/* ================= STAGE 4: ADJUSTED STANDARD ================= */}
@@ -564,7 +639,7 @@ export default function BackgroundAdjustment({
             </span>
             <span className="flex items-center gap-2 font-mono text-sm font-bold text-slate-900 dark:text-white">
               {preliminaryAvailable
-                ? `${(preliminaryValue as number).toPrecision(4)} ${adjustedUnit}`
+                ? `${formatMagnitude(preliminaryValue as number)} ${adjustedUnit}`
                 : '--'}
               <StageStateChip state={preliminaryState} />
             </span>
@@ -577,7 +652,7 @@ export default function BackgroundAdjustment({
               Background UTL 95/95 (Stage 3, {scopeLabel})
             </span>
             <span className="flex items-center gap-2 font-mono text-sm font-bold text-slate-900 dark:text-white">
-              {utlAvailable ? `${utlResult!.utl.toFixed(4)} mg/kg` : '--'}
+              {utlAvailable ? `${formatMagnitude(utlResult!.utl)} ${UTL_UNIT}` : '--'}
               <StageStateChip state={stage3State} />
             </span>
           </div>
@@ -595,7 +670,7 @@ export default function BackgroundAdjustment({
               <StageStateChip state="computed" />
             </div>
             <p className="text-2xl font-black font-mono text-slate-900 dark:text-white">
-              {(adjustedValue as number).toFixed(4)}{' '}
+              {formatMagnitude(adjustedValue as number)}{' '}
               <span className="text-sm font-medium text-slate-500">{adjustedUnit}</span>
             </p>
             <p
@@ -603,6 +678,19 @@ export default function BackgroundAdjustment({
               data-testid="bg-adjust-governing-sentence"
             >
               {governingSentence}
+            </p>
+          </div>
+        ) : unitsMismatched ? (
+          <div
+            className="rounded-xl border border-rose-200 dark:border-rose-800 bg-rose-50 dark:bg-rose-900/20 p-4"
+            data-testid="bg-adjust-result-blocked"
+            role="alert"
+          >
+            <p className="text-sm font-semibold text-rose-800 dark:text-rose-200">
+              Adjusted standard blocked: unit mismatch.
+            </p>
+            <p className="mt-1 text-xs text-rose-700 dark:text-rose-300">
+              {stage4UnitMismatchDetail}
             </p>
           </div>
         ) : (
@@ -621,16 +709,40 @@ export default function BackgroundAdjustment({
         )}
       </CalculatorStage>
 
-      {/* ================= STAGE 5: SITE COMPARISON ================= */}
-      <CalculatorStage
-        number={5}
-        totalStages={TOTAL_STAGES}
-        title="Site Comparison"
-        state={stage5State}
-        stateDetail={stage5Detail}
-        receivedFrom={!utlResult ? 'Stage 3 background UTL 95/95' : undefined}
-        testId="bg-adjust-stage-5"
+      {/*
+        =========== SITE COMPARISON (NOT A DERIVATION STAGE) ===========
+        Fix 3 (P2-4/P2-7): the derivation is Stages 1-4 only (exposure
+        factors, preliminary standard, background reference, adjusted
+        standard). This comparison of a measured site concentration against
+        the background UTL is kept for now, but the owner has stated that a
+        measured site concentration does not belong in this standards-
+        derivation tool at all -- so it is rendered here as an unnumbered,
+        clearly separated block, not as "Stage 5" of the derivation, pending
+        an owner decision on whether to keep it. Its comparison LOGIC is
+        unchanged (see the file-header Stage 5 caution above the component
+        function) -- only its presentation (unwrapped from CalculatorStage,
+        no stage number) changed.
+      */}
+      <section
+        className="border-t-2 border-dashed border-[var(--db-border)] pt-6"
+        data-testid="bg-adjust-stage-5"
+        aria-labelledby="bg-adjust-site-comparison-title"
       >
+        <div className="mb-3 flex flex-wrap items-center gap-2">
+          <h4
+            id="bg-adjust-site-comparison-title"
+            className="m-0 text-base font-semibold text-[var(--db-text-primary)]"
+          >
+            Site Comparison
+          </h4>
+          <StageStateChip state={stage5State} testId="bg-adjust-stage-5-chip" />
+        </div>
+        <p className="mb-4 text-xs text-[var(--db-text-muted)]" data-testid="bg-adjust-stage-5-state-detail">
+          Not part of the standards derivation above (Stages 1-4). Optional,
+          diagnostic-only comparison of a measured site concentration against
+          the background UTL; its role in this tool is under review.
+          {stage5Detail ? ` ${stage5Detail}` : ''}
+        </p>
         <div>
           <label
             htmlFor="bg-adjust-cs"
@@ -680,14 +792,7 @@ export default function BackgroundAdjustment({
               : `Measured Cs (${csParsed}) exceeds the ${scopeLabel.toLowerCase()} background UTL. The background adjustment will not relax your Tier 1 standard; compare Cs against your Tier 1 generic standard directly.`}
           </div>
         )}
-
-        <CalculatorProvenancePanel
-          pathway="background-adjustment"
-          usedValues={provenanceValues}
-          regulatoryFrameId={jurisdiction}
-          onOpenEvidenceLibrary={onOpenEvidenceLibrary}
-        />
-      </CalculatorStage>
+      </section>
     </section>
   );
 }

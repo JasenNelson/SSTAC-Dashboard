@@ -259,14 +259,18 @@ export default function EcoDirectEqPCalculator({
     : result && 'error' in result
       ? 'blocked'
       : isResult
-        ? 'computed'
+        ? (result as EcoDirectEqPResult).blocked
+          ? 'blocked'
+          : 'computed'
         : 'pending';
   const stage2Detail = stage1Blocked
     ? 'Blocked by Stage 1: fix the exposure input above.'
     : result && 'error' in result
       ? result.error
       : isResult
-        ? `Preliminary standard computed: ${(result as EcoDirectEqPResult).sedS.toPrecision(4)} mg/kg dry.`
+        ? (result as EcoDirectEqPResult).blocked
+          ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${(result as EcoDirectEqPResult).warnings.join(' ') || 'input validity constraint violated.'}`
+          : `Preliminary standard computed: ${(result as EcoDirectEqPResult).sedS.toPrecision(4)} mg/kg dry.`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
@@ -284,6 +288,14 @@ export default function EcoDirectEqPCalculator({
     } else {
       onPreliminaryStandardChange(null);
     }
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+    };
   }, [result, isResult, onPreliminaryStandardChange]);
 
   const provenanceValues: CalculatorUsedValue[] = useMemo(
@@ -393,11 +405,11 @@ export default function EcoDirectEqPCalculator({
       {/* 1. INPUTS */}
       <CalculatorStage
         number={1}
-        totalStages={2}
+        totalStages={4}
         title="Exposure Inputs"
         state={stage1State}
         stateDetail={stage1Detail}
-        current={!stage1Blocked}
+        current={stage1Blocked}
         testId="eco-direct-stage-1"
       >
       <div
@@ -529,7 +541,7 @@ export default function EcoDirectEqPCalculator({
 
       <CalculatorStage
         number={2}
-        totalStages={2}
+        totalStages={4}
         title="Preliminary Standard"
         state={stage2State}
         stateDetail={stage2Detail}

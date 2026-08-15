@@ -433,14 +433,18 @@ export default function EcoFoodBSAFCalculator({
     : result && 'error' in result
       ? 'blocked'
       : isResult
-        ? 'computed'
+        ? ecoResult?.blocked
+          ? 'blocked'
+          : 'computed'
         : 'pending';
   const stage2Detail = stage1Blocked
     ? 'Blocked by Stage 1: fix the exposure input above.'
     : result && 'error' in result
       ? result.error
       : ecoResult
-        ? `Preliminary standard computed: ${ecoResult.sedS.toPrecision(4)} mg/kg dry.`
+        ? ecoResult.blocked
+          ? `Preliminary standard blocked (diagnostic only, not a benchmark): ${ecoResult.warnings.join(' ') || 'input validity constraint violated.'}`
+          : `Preliminary standard computed: ${ecoResult.sedS.toPrecision(4)} mg/kg dry.`
         : 'Preliminary standard not yet available.';
 
   // Report the preliminary standard upward (e.g. to the Calculator tab summary bar). Reads the
@@ -453,6 +457,14 @@ export default function EcoFoodBSAFCalculator({
     } else {
       onPreliminaryStandardChange(null);
     }
+    // Cleanup: clear the reported value on unmount (e.g. a pathway switch) so a
+    // stale substance's standard can never paint under a new label. Category
+    // calculators unmount on pathway switch; the parent otherwise retains the
+    // last reported value indefinitely. onPreliminaryStandardChange is a bare
+    // setState passthrough, so calling it here never re-triggers this effect.
+    return () => {
+      if (onPreliminaryStandardChange) onPreliminaryStandardChange(null);
+    };
   }, [ecoResult, onPreliminaryStandardChange]);
 
   const provenanceValues: CalculatorUsedValue[] = useMemo(
@@ -597,11 +609,11 @@ export default function EcoFoodBSAFCalculator({
       {/* 1. INPUTS section */}
       <CalculatorStage
         number={1}
-        totalStages={2}
+        totalStages={4}
         title="Exposure Inputs"
         state={stage1State}
         stateDetail={stage1Detail}
-        current={!stage1Blocked}
+        current={stage1Blocked}
         testId="eco-food-stage-1"
       >
       <div
@@ -928,7 +940,7 @@ export default function EcoFoodBSAFCalculator({
 
       <CalculatorStage
         number={2}
-        totalStages={2}
+        totalStages={4}
         title="Preliminary Standard"
         state={stage2State}
         stateDetail={stage2Detail}

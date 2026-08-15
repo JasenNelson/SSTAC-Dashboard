@@ -39,6 +39,7 @@ import ExposureScenarioControl from './matrix-options/ExposureScenarioControl';
 import CalculatorSummaryBar, {
   type SummaryBarSlot,
 } from './matrix-options/CalculatorSummaryBar';
+import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
@@ -726,6 +727,11 @@ export default function MatrixDashboard({
   // now wired to a real stage sequence. The UTL / adjusted slots for every pathway correctly
   // read PENDING until the corresponding wiring step lands -- PENDING is the honest "not
   // entered yet, no error" state here, not an error.
+  // P1-1 fix: no explicit formatValue here -- CalculatorSummaryBar's default
+  // (formatMagnitude) is magnitude-aware and never renders a real sub-5e-5
+  // standard as "0.0000" the way the previous ad hoc toPrecision(4)/
+  // toFixed(4) overrides risked when mixed across slots. See
+  // src/lib/matrix-options/formatMagnitude.ts.
   const preliminarySlot: SummaryBarSlot =
     activeCategory === 'hh-direct'
       ? {
@@ -734,7 +740,6 @@ export default function MatrixDashboard({
           unit: hhDirectPreliminary?.unit ?? 'mg/kg dry',
           state: hhDirectPreliminary ? 'computed' : 'pending',
           note: hhDirectPreliminary ? `Driver: ${hhDirectPreliminary.driver}.` : undefined,
-          formatValue: (value) => value.toPrecision(4),
         }
       : activeCategory === 'eco-direct'
         ? {
@@ -743,7 +748,6 @@ export default function MatrixDashboard({
             unit: ecoDirectPreliminary?.unit ?? 'mg/kg dry',
             state: ecoDirectPreliminary ? 'computed' : 'pending',
             note: ecoDirectPreliminary?.note,
-            formatValue: (value) => value.toPrecision(4),
           }
         : activeCategory === 'eco-food'
           ? {
@@ -752,7 +756,6 @@ export default function MatrixDashboard({
               unit: ecoFoodPreliminary?.unit ?? 'mg/kg dry',
               state: ecoFoodPreliminary ? 'computed' : 'pending',
               note: ecoFoodPreliminary?.note,
-              formatValue: (value) => value.toPrecision(4),
             }
           : activeCategory === 'hh-food'
             ? {
@@ -761,7 +764,6 @@ export default function MatrixDashboard({
                 unit: hhFoodPreliminary?.unit ?? 'mg/kg dry',
                 state: hhFoodPreliminary ? 'computed' : 'pending',
                 note: hhFoodPreliminary ? `Driver: ${hhFoodPreliminary.driver}.` : undefined,
-                formatValue: (value) => value.toPrecision(4),
               }
               : {
                   label: 'Preliminary standard',
@@ -784,15 +786,19 @@ export default function MatrixDashboard({
   // preliminary standard (DESIGN.md), so its state/value come straight from
   // BackgroundAdjustment's own onUtlChange report, never gated on
   // preliminarySlot.
+  // Unit string reconciled with the preliminary/adjusted slots (P2-1): the
+  // UTL slot used to show a bare "mg/kg" default while the other two slots
+  // default to "mg/kg dry" for the same physical quantity. BackgroundAdjustment
+  // itself now reports 'mg/kg dry' via onUtlChange; this fallback (used only
+  // before that report arrives) matches it.
   const utlSlot: SummaryBarSlot = {
     label: 'Background UTL 95/95',
     value: backgroundUtlReport?.value ?? null,
-    unit: backgroundUtlReport?.unit ?? 'mg/kg',
+    unit: backgroundUtlReport?.unit ?? 'mg/kg dry',
     state: backgroundUtlReport?.state ?? 'pending',
     note: backgroundUtlReport
       ? `${backgroundUtlReport.scope === 'provincial' ? 'Provincial' : 'Regional'} scope, n = ${backgroundUtlReport.n}. Screening-only K.`
       : 'Computed from reference samples only -- see Stage 3.',
-    formatValue: (value) => value.toFixed(4),
   };
   // Adjusted standard (Stage 4) = max(preliminary, UTL), reported by
   // BackgroundAdjustment via onAdjustedStandardChange. WAITING whenever
@@ -806,13 +812,12 @@ export default function MatrixDashboard({
       adjustedStandardReport?.state === 'computed'
         ? `${adjustedStandardReport.governedBy === 'background' ? 'Background UTL' : 'Preliminary standard'} governs -- see Stage 4.`
         : 'Depends on the preliminary standard and the background UTL.',
-    formatValue: (value) => value.toFixed(4),
   };
   const governingLabel =
     adjustedStandardReport?.state === 'computed' && adjustedStandardReport.value != null
       ? adjustedStandardReport.governedBy === 'background'
-        ? `background UTL 95/95 (${adjustedStandardReport.value.toFixed(4)} ${adjustedStandardReport.unit})`
-        : `preliminary standard (${adjustedStandardReport.value.toFixed(4)} ${adjustedStandardReport.unit})`
+        ? `background UTL 95/95 (${formatMagnitude(adjustedStandardReport.value)} ${adjustedStandardReport.unit})`
+        : `preliminary standard (${formatMagnitude(adjustedStandardReport.value)} ${adjustedStandardReport.unit})`
       : undefined;
   const governingNote =
     adjustedStandardReport?.state === 'computed'

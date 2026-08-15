@@ -64,12 +64,40 @@ export function StageStateChip({ state, className, testId }: StageStateChipProps
   );
 }
 
+// Heading levels a stage title may render as. A calculator titles itself
+// with h3 (DESIGN.md), so a stage rendered inside it must be h4 or deeper
+// to stay a genuine child in the document heading outline -- otherwise a
+// screen-reader user navigating by heading gets a flat list of ~14
+// same-level h3s with no signal which stage belongs to which calculator
+// (P2-5, adversarial UI QA audit 2026-08-14).
+export type StageHeadingLevel = 'h2' | 'h3' | 'h4' | 'h5' | 'h6';
+
+// How long to wait, after the last announcement-relevant prop change,
+// before actually replacing the live-region text (P2-6, same audit).
+// Typing a value is a burst of rapid changes (each keystroke can flip
+// state/stateDetail); without debouncing, every keystroke queues its own
+// screen-reader announcement. 400ms sits comfortably above typical
+// keystroke cadence (~100-300ms between characters) so a still-typing
+// user does not trigger intermediate announcements, while staying short
+// enough that the announcement still reads as an immediate reaction once
+// the user pauses. useEffect's cleanup (clearing the previous timer
+// whenever the deps change again before it fires) is what makes a rapid
+// sequence collapse to only the FINAL settled state being announced.
+export const ANNOUNCEMENT_DEBOUNCE_MS = 400;
+
 export interface CalculatorStageProps {
   /** 1-based position of this stage in the derivation. */
   number: number;
   /** Total stage count for the "Stage N of M" label. */
   totalStages: number;
   title: string;
+  /**
+   * Heading tag for the stage title. Defaults to "h4" because the
+   * calculator that contains a stage titles itself with h3 -- a stage
+   * heading must sit one level below that to be a real child in the
+   * outline, not a sibling.
+   */
+  headingLevel?: StageHeadingLevel;
   state: StageState;
   /**
    * Short, specific explanation of why the stage is in its current state
@@ -93,6 +121,7 @@ export default function CalculatorStage({
   number,
   totalStages,
   title,
+  headingLevel = 'h4',
   state,
   stateDetail,
   receivedFrom,
@@ -102,19 +131,39 @@ export default function CalculatorStage({
 }: CalculatorStageProps) {
   const headingId = testId ? `${testId}-title` : `calc-stage-${number}-title`;
   const locked = state === 'waiting' || state === 'blocked';
+  const Heading = headingLevel as React.ElementType;
 
   // Stage state changes must be announced (DESIGN.md non-negotiable): a
   // visually-hidden live region whose TEXT is replaced (not merely present)
   // whenever state/stateDetail changes, so a screen-reader user gets the
   // same "what changed and why" signal a sighted user gets from the chip.
+  //
+  // Two refinements over a naive "announce on every change" effect
+  // (P2-6): (1) the mount-guard below skips the very first message so
+  // page load does not announce every stage's initial state at once --
+  // only real transitions are announced; (2) the change is debounced by
+  // ANNOUNCEMENT_DEBOUNCE_MS so a burst of rapid changes (e.g. one per
+  // keystroke in an upstream field) collapses into a single announcement
+  // of the settled state, not one queued announcement per keystroke.
   const previousMessageRef = useRef<string | null>(null);
+  const hasMountedRef = useRef(false);
   const [announcement, setAnnouncement] = useState('');
   useEffect(() => {
     const message = `${title}: ${STAGE_STATE_LABELS[state]}${stateDetail ? `. ${stateDetail}` : ''}`;
-    if (previousMessageRef.current !== message) {
-      previousMessageRef.current = message;
-      setAnnouncement(message);
+    if (previousMessageRef.current === message) {
+      return;
     }
+    previousMessageRef.current = message;
+
+    if (!hasMountedRef.current) {
+      hasMountedRef.current = true;
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setAnnouncement(message);
+    }, ANNOUNCEMENT_DEBOUNCE_MS);
+    return () => clearTimeout(timer);
   }, [title, state, stateDetail]);
 
   return (
@@ -144,12 +193,12 @@ export default function CalculatorStage({
             Stage {number} of {totalStages}
           </p>
           <div className="mt-0.5 flex flex-wrap items-center gap-2">
-            <h3
+            <Heading
               id={headingId}
               className="m-0 text-lg font-semibold text-[var(--db-text-primary)]"
             >
               {title}
-            </h3>
+            </Heading>
             <StageStateChip
               state={state}
               testId={testId ? `${testId}-chip` : undefined}
