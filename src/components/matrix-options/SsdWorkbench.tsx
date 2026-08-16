@@ -131,6 +131,13 @@ const UNCHECKED_MIRROR_HEALTH: MirrorHealthState = {
   },
 };
 
+// Decision D8: the reference-check block deliberately renders HCp at 6 significant figures
+// while the headline summary renders the SAME quantity at 3 (formatNumber's default). Without
+// a label a reader sees two different-looking numbers and reasonably concludes they are two
+// different values. This id ties a single visible precision note to every "Current" value in
+// the block via aria-describedby, so the higher resolution is announced, not just displayed.
+const REFERENCE_PRECISION_NOTE_ID = 'ssd-reference-precision-note';
+
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
   return value.toLocaleString(undefined, {
@@ -1630,6 +1637,13 @@ export default function SsdWorkbench({
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Reference checks
                     </div>
+                    <p
+                      id={REFERENCE_PRECISION_NOTE_ID}
+                      className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                    >
+                      Shown at full precision (6 significant figures). The HCp
+                      summary above is the same value rounded to 3.
+                    </p>
                     <div className="mt-3 space-y-3">
                       {runFixtureDataset.validationReferences?.map((reference) => {
                         const status = referenceStatus(reference, result);
@@ -1676,7 +1690,10 @@ export default function SsdWorkbench({
                                 <dt className="text-slate-500 dark:text-slate-400">
                                   Current
                                 </dt>
-                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                <dd
+                                  aria-describedby={REFERENCE_PRECISION_NOTE_ID}
+                                  className="font-semibold text-slate-900 dark:text-white"
+                                >
                                   {status.comparable
                                     ? `${formatNumber(result.hcp, 6)} ${result.unit}`
                                     : 'Not comparable'}

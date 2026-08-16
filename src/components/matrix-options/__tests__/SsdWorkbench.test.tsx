@@ -242,6 +242,37 @@ describe('SsdWorkbench', () => {
     expect(screen.getAllByText(/ng\/L/i).length).toBeGreaterThan(0);
   });
 
+  // Decision D8: the reference-check block shows HCp at 6 significant figures while the
+  // headline shows 3. Both are kept, so the block must SAY it is the same quantity at higher
+  // resolution -- otherwise a reader compares two differently-rounded renderings of one number
+  // and concludes they are two different values. This asserts the note's words and the
+  // aria-describedby wiring, not a class name, so removing either side fails it.
+  it('labels the reference-check HCp as full precision and links it to the current value', () => {
+    render(<SsdWorkbench />);
+
+    fireEvent.change(
+      screen.getByRole('combobox', { name: /Validation dataset/i }),
+      { target: { value: 'ccme_boron_validation' } },
+    );
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
+
+    // The block is present, so the label is required.
+    expect(screen.getByText(/Reference checks/i)).toBeInTheDocument();
+
+    const note = screen.getByText(
+      /Shown at full precision \(6 significant figures\)\. The HCp summary above is the same value rounded to 3\./i,
+    );
+    expect(note).toBeInTheDocument();
+    expect(note.id).not.toBe('');
+
+    // The 6-significant-figure "Current" value must be described BY that note, so a screen
+    // reader hears the precision caveat with the number rather than only seeing it nearby.
+    const currentTerm = screen.getAllByText(/^Current$/)[0];
+    const currentValue = currentTerm.parentElement?.querySelector('dd');
+    expect(currentValue).not.toBeNull();
+    expect(currentValue).toHaveAttribute('aria-describedby', note.id);
+  });
+
   it('shows an insufficient-data state instead of calculating an HCp value', () => {
     render(<SsdWorkbench />);
 
