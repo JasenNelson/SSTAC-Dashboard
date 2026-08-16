@@ -7,13 +7,22 @@ import { test, expect } from '@playwright/test';
  * asserts "ThemeProvider ends up dark" passes just as happily when the dark class is
  * applied three frames after a white first paint. So the real proof lives here.
  *
- * The discriminating move is BLOCKING every JavaScript chunk. With the bundle blocked React
+ * The discriminating move is BLOCKING the JavaScript chunks. With the bundle blocked React
  * never hydrates and ThemeProvider's effects never run, so the only thing that can put
- * `dark` on <html> is the synchronous inline bootstrap in <head>. Delete that script and
- * these tests fail; they cannot pass vacuously.
+ * `dark` on <html> is the synchronous inline bootstrap in <head>.
+ *
+ * Scope of that claim, stated precisely because the first draft of this comment overclaimed:
+ * tests 1, 2 and 3 fail if the bootstrap script is deleted (measured: 3 failed, 1 passed).
+ * Test 4 does NOT block anything and is NOT a flash test -- it is the guard that
+ * ThemeProvider agrees with the bootstrap and does not flip the theme back after hydration.
+ * It passes with or without the script, by design.
+ *
+ * The glob carries a trailing `*` so it also matches Next's dev-mode cache-busted chunks
+ * (`main-app.js?v=1786856270857`). Playwright anchors glob matches against the FULL url
+ * including the query string, so `**\/_next\/**\/*.js` alone silently let those through.
  */
 
-const CHUNK_GLOB = '**/_next/**/*.js';
+const CHUNK_GLOB = '**/_next/**/*.js*';
 
 test.describe('B11 theme bootstrap (no flash of light theme)', () => {
   test('serves the bootstrap inline in <head>, before any body content', async ({ page }) => {

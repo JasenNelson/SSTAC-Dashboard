@@ -23,7 +23,6 @@ import { THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY } from './themeBootstrap';
  */
 
 function runBootstrap() {
-  // eslint-disable-next-line @typescript-eslint/no-implied-eval
   new Function(THEME_BOOTSTRAP_SCRIPT)();
 }
 
