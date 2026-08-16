@@ -1,8 +1,10 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { render, screen, within } from '@testing-library/react';
+import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ThemeProvider, useTheme } from './ThemeContext';
+import ThemeToggle from '@/components/ThemeToggle';
 
 /**
  * Regression guard for the adversarial-review finding of 2026-08-16 (audit B11 follow-up).
@@ -90,166 +92,132 @@ describe('ThemeProvider stored-value handling', () => {
 });
 
 /**
- * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack).
+ * Audit item D2 -- the provider used to hand every consumer the literal 'light' until its
+ * post-mount effect ran, so a returning dark-mode user saw a moon glyph and the label
+ * "Switch to dark mode" on a page the pre-paint bootstrap had already painted dark.
  *
- * The read in readStoredTheme() was wrapped in try/catch; the write in the
- * theme-persistence effect (`localStorage.setItem(THEME_STORAGE_KEY, theme)`) was not.
- * localStorage.setItem throws outright -- not just returns null -- in Safari private
- * browsing, in a sandboxed iframe without allow-same-origin, and when cookies/site-data are
- * blocked. An uncaught throw inside a React effect propagates to the App Router error
- * boundary, so an affected user got the global error page instead of the dashboard, rather
- * than merely losing their persisted preference.
+ * WHY THESE TESTS RECORD EVERY RENDER INSTEAD OF ASSERTING AFTER render().
+ * React Testing Library runs `render` inside `act()`, which flushes effects before it
+ * returns. Asserting on the DOM afterwards therefore CANNOT distinguish "correct on the
+ * first render" from "wrong on the first render and corrected by an effect" -- which is
+ * precisely the defect. The probe below appends the theme it was given on every render, so
+ * `renders[0]` is the value from the initial render, before any effect has run. That index
+ * is the whole point of the test; an assertion on the last value would be vacuous.
  *
- * Falsification: removing the try/catch around the setItem call in ThemeContext.tsx makes
- * this test FAIL with the mocked SecurityError escaping render().
+ * WHAT THESE TESTS CANNOT PROVE. jsdom has no paint pipeline and no layout engine. Nothing
+ * here shows that the user does not SEE the wrong glyph for a frame -- only that React was
+ * given the right value at render 0. Frame-level proof requires a real browser and lives in
+ * e2e/theme-flash.spec.ts, which blocks the JS bundle so only the inline bootstrap can act.
  */
-describe('ThemeProvider localStorage write failure handling', () => {
+describe('ThemeProvider first-render seed (audit D2)', () => {
+  let renders: string[] = [];
+
+  function RecordingProbe() {
+    const { theme } = useTheme();
+    renders.push(theme);
+    return <span data-testid="theme-probe">{theme}</span>;
+  }
+
   beforeEach(() => {
+    renders = [];
     window.localStorage.clear();
     document.documentElement.classList.remove('light', 'dark');
     document.body.classList.remove('light', 'dark');
   });
 
   afterEach(() => {
-    vi.restoreAllMocks();
     window.localStorage.clear();
     document.documentElement.classList.remove('light', 'dark');
     document.body.classList.remove('light', 'dark');
   });
 
-  it('does not throw/crash when localStorage.setItem throws (Safari private mode, blocked cookies)', () => {
-    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
-      throw new Error('SecurityError: localStorage is not available');
-    });
-
-    function ToggleProbe() {
-      const { theme, toggleTheme } = useTheme();
-      return (
-        <div>
-          <span data-testid="theme-probe">{theme}</span>
-          <button onClick={toggleTheme}>toggle</button>
-        </div>
-      );
-    }
-
-    expect(() => {
-      render(
-        <ThemeProvider>
-          <ToggleProbe />
-        </ThemeProvider>,
-      );
-    }).not.toThrow();
-
-    // Triggers the persistence effect's setItem call (the write path under test), not just
-    // the initial mount-time read.
-    expect(() => {
-      fireEvent.click(screen.getByRole('button', { name: 'toggle' }));
-    }).not.toThrow();
-
-    // The theme still updates in memory/UI even though persistence silently failed --
-    // matching the guarded read's degrade-gracefully intent.
-    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
-
-    setItemSpy.mockRestore();
-  });
-});
-
-/**
- * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack).
- *
- * The claim that themeBootstrap.ts and ThemeContext.tsx "cannot disagree" was asserted in
- * PROSE only, while the default theme and the valid-value set were each HARDCODED
- * SEPARATELY in both files. Nothing would catch one side drifting (a new theme value, a
- * different default) while the other stayed the same -- exactly the flash-of-wrong-theme
- * this feature exists to prevent.
- *
- * These tests prove ThemeContext.tsx actually CONSUMES themeBootstrap's exported
- * DEFAULT_THEME / VALID_THEMES at runtime, rather than merely importing-and-ignoring them
- * (or re-typing its own copies). Each test mocks '@/lib/themeBootstrap' to a DIFFERENT value
- * than the real one and asserts the provider's observable behavior follows the mock -- which
- * is only possible if ThemeContext.tsx is reading these values through the import, not a
- * hardcoded literal.
- *
- * Falsification (both verified by actually reverting and re-running): reverting
- * readStoredTheme()'s fallback from `: DEFAULT_THEME` back to a hardcoded `: 'light'` makes
- * the FIRST test below FAIL, because the mocked 'dark' default never surfaces -- the probe
- * still shows 'light' even though nothing is stored. (Reverting only the unrelated
- * `useState<Theme>(DEFAULT_THEME)` initializer does NOT fail this test, because the
- * mount-effect's readStoredTheme() call overwrites that initial state synchronously before
- * the assertion runs -- so this test specifically exercises the readStoredTheme() fallback,
- * not the useState initializer.) Reverting readStoredTheme()'s validation to a hardcoded
- * `stored === 'dark' || stored === 'light'` check instead of
- * `VALID_THEMES.includes(stored)` makes the SECOND test FAIL, because the stored 'light'
- * value gets accepted even though the mocked VALID_THEMES no longer contains it.
- */
-describe('ThemeProvider contract with themeBootstrap (structural, not prose)', () => {
-  beforeEach(() => {
-    window.localStorage.clear();
-    document.documentElement.classList.remove('light', 'dark');
-    document.body.classList.remove('light', 'dark');
-    vi.resetModules();
-  });
-
-  afterEach(() => {
-    vi.doUnmock('@/lib/themeBootstrap');
-    vi.resetModules();
-    window.localStorage.clear();
-    document.documentElement.classList.remove('light', 'dark');
-    document.body.classList.remove('light', 'dark');
-  });
-
-  it('uses themeBootstrap DEFAULT_THEME, not a hardcoded literal', async () => {
-    vi.doMock('@/lib/themeBootstrap', async () => {
-      const actual =
-        await vi.importActual<typeof import('@/lib/themeBootstrap')>('@/lib/themeBootstrap');
-      return { ...actual, DEFAULT_THEME: 'dark' };
-    });
-
-    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
-      await import('./ThemeContext');
-
-    function Probe() {
-      const { theme } = mockedUseTheme();
-      return <span data-testid="probe">{theme}</span>;
-    }
+  it('hands consumers dark on the FIRST render when the bootstrap already darkened <html>', () => {
+    // Exactly the returning-dark-user state at the moment React starts: the <head> script has
+    // run, the class is on <html>, React has not rendered yet.
+    document.documentElement.classList.add('dark');
+    window.localStorage.setItem('theme', 'dark');
 
     render(
-      <MockedThemeProvider>
-        <Probe />
-      </MockedThemeProvider>,
+      <ThemeProvider>
+        <RecordingProbe />
+      </ThemeProvider>,
     );
 
-    // Nothing is stored, so the provider must fall back to whatever DEFAULT_THEME it
-    // imports. The mock says 'dark'; a hardcoded 'light' literal would show 'light' instead.
-    expect(screen.getByTestId('probe')).toHaveTextContent('dark');
+    expect(renders[0]).toBe('dark');
   });
 
-  it('uses themeBootstrap VALID_THEMES, not a hardcoded accepted-value set', async () => {
-    window.localStorage.setItem('theme', 'light');
-
-    vi.doMock('@/lib/themeBootstrap', async () => {
-      const actual =
-        await vi.importActual<typeof import('@/lib/themeBootstrap')>('@/lib/themeBootstrap');
-      return { ...actual, VALID_THEMES: ['dark'], DEFAULT_THEME: 'dark' };
-    });
-
-    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
-      await import('./ThemeContext');
-
-    function Probe() {
-      const { theme } = mockedUseTheme();
-      return <span data-testid="probe">{theme}</span>;
-    }
+  it('prefers an explicit initialTheme over the DOM class, because the server rendered it', () => {
+    // The server has no `document`; whatever it resolved is what the HTML on the wire says,
+    // so it must win over anything inferred client-side or hydration mismatches.
+    document.documentElement.classList.add('light');
 
     render(
-      <MockedThemeProvider>
-        <Probe />
-      </MockedThemeProvider>,
+      <ThemeProvider initialTheme="dark">
+        <RecordingProbe />
+      </ThemeProvider>,
     );
 
-    // 'light' is stored, but the mocked VALID_THEMES no longer contains it. A provider that
-    // actually validates against the IMPORTED set must reject it and fall back to the
-    // (also mocked) default. A hardcoded ['light','dark'] check would accept 'light' anyway.
-    expect(screen.getByTestId('probe')).toHaveTextContent('dark');
+    expect(renders[0]).toBe('dark');
+  });
+
+  it('does not let an absent stored value clobber a correctly seeded dark theme', () => {
+    // The seed is only useful if the post-mount effect leaves it alone. If the effect wrote
+    // 'light' whenever localStorage was empty, a cookie-seeded dark user would flip to light
+    // one tick after hydration -- the same visible defect, just later.
+    render(
+      <ThemeProvider initialTheme="dark">
+        <RecordingProbe />
+      </ThemeProvider>,
+    );
+
+    expect(renders[renders.length - 1]).toBe('dark');
+    expect(document.documentElement.classList.contains('dark')).toBe(true);
+  });
+
+  it('ignores a bogus initialTheme rather than putting it on <html> as a class', () => {
+    // initialTheme arrives from a client-writable cookie via the server. Validate, never cast.
+    render(
+      <ThemeProvider initialTheme={'chartreuse' as unknown as 'dark'}>
+        <RecordingProbe />
+      </ThemeProvider>,
+    );
+
+    expect(renders[0]).toBe('light');
+    expect(document.documentElement.classList.contains('chartreuse')).toBe(false);
+  });
+
+  it('gives ThemeToggle a correct accessible name and glyph on its first render', () => {
+    // The behaviour D2 is actually about, asserted through the real component and the real
+    // provider (the ThemeToggle unit suite mocks useTheme, so it cannot see this at all).
+    //
+    // This uses renderToStaticMarkup, NOT RTL's render, and the reason is load-bearing:
+    // `render` flushes effects inside act(), so the first draft of this test PASSED against a
+    // deliberately broken seed -- the effect had already corrected the label by the time the
+    // assertion ran. renderToStaticMarkup performs exactly one render and never runs an
+    // effect, so what it produces IS the first render, which is the only thing under test.
+    document.documentElement.classList.add('dark');
+    window.localStorage.setItem('theme', 'dark');
+
+    const markup = renderToStaticMarkup(
+      <ThemeProvider>
+        <ThemeToggle />
+      </ThemeProvider>,
+    );
+
+    const container = document.createElement('div');
+    container.innerHTML = markup;
+    document.body.appendChild(container);
+
+    // Accessible NAME, computed by the a11y tree, not a raw attribute string: the name is what
+    // a screen-reader user is told, and it was the half that actively lied.
+    const button = within(container).getByRole('button', { name: /switch to light mode/i });
+
+    // And the glyph, so a correct label paired with the wrong icon still fails. The sun path
+    // is the light-mode-destination icon; the moon path is what the defect drew.
+    const path = button.querySelector('path')?.getAttribute('d') ?? '';
+    expect(path).toContain('M12 3v1m0 16v1');
+    expect(path).not.toContain('M20.354 15.354');
+
+    container.remove();
   });
 });
