@@ -196,15 +196,42 @@ describe('Home (logged-out landing page)', () => {
       expect(text).toMatch(/BN-RRM\s+\(Bayesian\s+Network\s+Relative\s+Risk\s+Model\)/);
     });
 
-    it('B7a: the footer year is current and the rights boilerplate is gone', () => {
+    // Owner decision D7 = option C: no year at all, for anyone. A copyright year carries no
+    // legal weight, and every alternative had a real cost -- a render-time year bakes in the
+    // BUILD's clock on a statically prerendered page, and a mount-resolved year leaves no-JS
+    // readers and crawlers with nothing anyway. Omitting it is the honest and simplest answer.
+    //
+    // Falsified: restoring any hard-coded year, or a getFullYear() call, fails the
+    // no-four-digit-year assertion below.
+    it('B7a: the footer carries no year at all and no rights boilerplate', () => {
       const { container } = renderHome();
 
       const footer = container.querySelector('footer');
       expect(footer).not.toBeNull();
-      expect(footer?.textContent).toContain(String(new Date().getFullYear()));
-      expect(footer?.textContent).not.toMatch(/all rights reserved/i);
-      // Guards the actual defect: a hard-coded year that silently ages.
-      expect(footer?.textContent).not.toMatch(/2025/);
+      const text = footer?.textContent ?? '';
+
+      // No four-digit year, not merely "not 2025" -- that weaker form would pass the moment
+      // someone hard-coded 2026 instead, which is the exact defect this replaces.
+      expect(text).not.toMatch(/[0-9]{4}/);
+      expect(text).not.toMatch(/all rights reserved/i);
+
+      // Pair the absence checks with an existence check, or this certifies an empty footer.
+      expect(text).toMatch(/SSTAC/);
+      expect(text).toMatch(/TWG Dashboard/);
+    });
+
+    // page.tsx must stay hook-free. The earlier mount-resolved year introduced useState and
+    // useEffect here, which would have blocked audit item B10 (dropping 'use client' from this
+    // file, which requires zero hooks). Option C removes them again; this guard stops them
+    // returning by accident.
+    it('B7a: the landing page needs no client hooks to render its footer', () => {
+      const source = fs.readFileSync(
+        path.join(process.cwd(), 'src', 'app', 'page.tsx'),
+        'utf8',
+      );
+
+      expect(source.includes('useState')).toBe(false);
+      expect(source.includes('useEffect')).toBe(false);
     });
 
     // Review correction: the first version of this test counted anchors with root-relative

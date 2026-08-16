@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProjectPhases from "@/components/dashboard/ProjectPhases";
@@ -10,17 +9,6 @@ import ProjectPhases from "@/components/dashboard/ProjectPhases";
 const MAIN_CONTENT_ID = 'main-content';
 
 export default function Home() {
-  // Audit B7a, corrected after review. Resolved AFTER mount rather than during render: the
-  // page is statically prerendered, so a render-time new Date() is the build's clock, not the
-  // reader's. Rendering nothing on the server and filling it in on the client keeps the
-  // server and client markup identical (no hydration mismatch) and keeps the year true for
-  // every visitor. The trade-off, stated rather than hidden: a no-JS reader and a crawler see
-  // the notice without a year, which is preferable to seeing a confidently wrong one.
-  const [footerYear, setFooterYear] = useState<number | null>(null);
-  useEffect(() => {
-    setFooterYear(new Date().getFullYear());
-  }, []);
-
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
       {/* Audit B2: skip link. First focusable element on the page, visually hidden until
@@ -223,10 +211,14 @@ export default function Home() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-slate-500 dark:text-slate-400">
             <p>
-              {/* Audit B7a: the year was hard-coded to 2025 and would have silently aged.
-                  "All rights reserved" has had no legal effect in any Berne Convention
-                  country for decades and was dropped as noise. */}
-              &copy; {footerYear ? `${footerYear} ` : ''}SSTAC &amp; TWG Dashboard
+              {/* Audit B7a, owner decision D7 = option C: no year at all. The year was
+                  hard-coded to 2025 and would have silently aged. Resolving it at render time
+                  does not fix that on a statically prerendered page -- it bakes in the BUILD's
+                  clock -- and resolving it after mount left no-JS readers and crawlers with no
+                  year anyway. A copyright year carries no legal weight, so the honest and
+                  simplest answer is to omit it for everyone. "All rights reserved" has had no
+                  legal effect in any Berne Convention country for decades and went with it. */}
+              &copy; SSTAC &amp; TWG Dashboard
             </p>
           </div>
         </div>

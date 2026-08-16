@@ -121,14 +121,10 @@ const LoginForm: React.FC = () => {
 
         <div className="text-center mt-8">
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            {/* Audit B7a, second surface. The landing page's footer was fixed first, but
-                /login is exactly where the three new "Sign-in required" cards send people,
-                so leaving it stale meant two different footers with two different years one
-                click apart. Gated on the existing `hydrated` flag for the same reason as the
-                landing page: this is a client component with no dynamic API, so it is
-                statically prerendered and a render-time new Date() would be the BUILD's
-                clock baked into the HTML, not the reader's. */}
-            &copy; {hydrated ? `${new Date().getFullYear()} ` : ''}SSTAC &amp; TWG Dashboard
+            {/* Audit B7a, owner decision D7 = option C. Same treatment as the landing
+                page: no year at all. /login is where the new "Sign-in required" cards send
+                people, so the two footers must agree. */}
+            &copy; SSTAC &amp; TWG Dashboard
           </p>
         </div>
       </div>
