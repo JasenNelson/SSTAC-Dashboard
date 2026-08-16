@@ -149,6 +149,49 @@ test.describe('SSD Workbench', () => {
  * makes this fail with scrollHeight exceeding clientHeight.
  */
 test.describe('SSD Workbench print fidelity', () => {
+  /**
+   * Generalised sweep, added after an external reviewer objected that guarding ONE table leaves
+   * the other capped result regions unguarded -- `max-h-64` diagnostics, `max-h-44` exclusions,
+   * and the same pattern anywhere it appears later.
+   *
+   * Rather than one test per container, this asserts the INVARIANT: under the print medium, no
+   * height-capped container that holds a data table may clip. Any future capped table is covered
+   * automatically, which is the point -- the per-container approach is what let three of these
+   * ship un-de-clipped in the first place.
+   *
+   * Scoped to containers holding a <table> deliberately: chrome and layout wrappers may
+   * legitimately stay capped on paper; a table is the regulatory-evidence surface.
+   */
+  test('no height-capped data table clips under the print medium', async ({ page }) => {
+    await gotoMatrixOptionsOrSkip(page);
+    await clickUntilVisible(page, 'SSD Workbench', 'ssd-workbench');
+
+    await page.emulateMedia({ media: 'print' });
+
+    const clipped = await page.evaluate(() => {
+      const offenders: { cls: string; scrollH: number; clientH: number }[] = [];
+      document.querySelectorAll('[class*="max-h-"]').forEach((el) => {
+        const node = el as HTMLElement;
+        if (!node.querySelector('table')) return;
+        if (node.scrollHeight > node.clientHeight) {
+          offenders.push({
+            cls: node.className,
+            scrollH: node.scrollHeight,
+            clientH: node.clientHeight,
+          });
+        }
+      });
+      return offenders;
+    });
+
+    expect(
+      clipped,
+      'these height-capped containers hold data tables and still clip under print, so rows ' +
+        'would be silently missing from the printed page',
+    ).toEqual([]);
+  });
+
+
   test('species-aggregate table is not height-clipped when printed', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
     await clickUntilVisible(page, 'SSD Workbench', 'ssd-workbench');
@@ -165,6 +208,18 @@ test.describe('SSD Workbench print fidelity', () => {
         : { found: false, scrollH: 0, clientH: 0 };
     });
     expect(screenState.found, 'expected a max-h-* scroll container around the aggregate table').toBe(true);
+
+    // THE PRECONDITION, without which this whole test is vacuous. An external reviewer caught
+    // that the original version only checked a container was FOUND -- so with a short fixture
+    // both measurements would be equal and the print assertion would pass even if the
+    // de-clipping regressed. Assert the container genuinely overflows ON SCREEN first; if this
+    // fails, the dataset is too small to exercise clipping and the test must be given a taller
+    // one rather than left to pass for the wrong reason.
+    expect(
+      screenState.scrollH,
+      'the aggregate table does not overflow its cap on screen, so this fixture cannot ' +
+        'demonstrate print de-clipping -- the print assertion below would pass vacuously',
+    ).toBeGreaterThan(screenState.clientH);
 
     await page.emulateMedia({ media: 'print' });
 
