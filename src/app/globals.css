@@ -645,6 +645,40 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
     max-width: none !important;
     margin: 0 !important;
   }
+  /* KaTeX display-math equations render inside a ScrollFadeRegion
+     (overflow-x-auto) with no print reset of their own, so on print a long
+     equation was silently clipped at the container edge.
+
+     Round-2 P2-1: the first attempt set `white-space: normal !important` on
+     `.katex-display` ALONE. That could never work -- the nowrap declarations
+     live on DESCENDANT elements, not on `.katex-display` itself
+     (`.katex-display > .katex { white-space: nowrap }` at katex.css:1215-1219
+     and `.katex .base { white-space: nowrap; width: min-content }` at
+     katex.css:176-183), and a value set directly on a child always beats a
+     value inherited from its parent. It was an element-targeting miss, not a
+     specificity miss -- `!important` already outranks katex's plain
+     declarations at any specificity, so naming the right elements is enough.
+
+     Two things are therefore required and both are done below:
+     1. neutralise the nowrap + min-content width on the descendants that
+        actually carry them, so a long equation can break; and
+     2. neutralise `.katex-display { text-align: center }` (and the same
+        declaration on `.katex-display > .katex`). Left-anchoring matters:
+        with centring left in place, anything still too wide to break
+        overflows BOTH ends and the printed page loses the START of the
+        derivation as well as the end. Overflow now runs one direction only. */
+  .katex-display,
+  .katex-display > .katex,
+  .katex-display > .katex > .katex-html {
+    overflow: visible !important;
+    max-width: none !important;
+    white-space: normal !important;
+    text-align: left !important;
+  }
+  .katex-display .base {
+    white-space: normal !important;
+    width: auto !important;
+  }
   table {
     width: 100% !important;
     max-width: 100% !important;
@@ -670,8 +704,11 @@ html.dark .bn-rrm-wrapper ::-webkit-scrollbar-thumb:hover {
     text-decoration: underline !important;
   }
 
-  /* KaTeX math text should also revert to dark on light. */
-  .katex, .math-display, .math-inline {
+  /* KaTeX math text should also revert to dark on light.
+     NOTE: no `.math-display` selector here (P3, docs/BATCH_FIXES_ROUND1.md) -- rehype-katex
+     7.0.1 splices out remark-math's `math-display` element and emits `.katex-display`
+     instead (reset above), so `.math-display` could never match. */
+  .katex, .math-inline {
     color: #1f2937 !important;
   }
 }

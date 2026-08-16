@@ -2,7 +2,7 @@ import React from 'react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import * as savedViewsSync from '@/lib/matrix-options/provenance/saved-views-sync';
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
-import EvidenceLibrary from '../EvidenceLibrary';
+import EvidenceLibrary, { ValuesPagination } from '../EvidenceLibrary';
 import {
   createEvidenceLibraryFilters,
 } from '@/lib/matrix-options/provenance/library';
@@ -791,6 +791,276 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
+  });
+});
+
+// ---------------------------------------------------------------------------
+// UI batch Group B, 2026-08-15: decisions #2, #5, #6, #1b
+// (docs/UI_DECISIONS_2026_08_15.md / docs/UI_BATCH_PLAN_2026_08_15.md)
+// ---------------------------------------------------------------------------
+describe('EvidenceLibrary -- UI batch Group B (references-and-values)', () => {
+  it('#5: sticky-lefts the Parameter column header and cells, and the table can actually overflow', () => {
+    renderControlled();
+
+    const headerCell = screen.getByRole('columnheader', { name: 'Parameter' });
+    expect(headerCell.className).toMatch(/\bsticky\b/);
+    expect(headerCell.className).toMatch(/\bleft-0\b/);
+
+    const row = screen.getByRole('button', {
+      name: /Inspect Benzo\[a\]pyrene oral slope factor - Health Canada/,
+    });
+    const parameterCell = within(row).getByText(
+      'Benzo[a]pyrene oral slope factor - Health Canada',
+    ).closest('td');
+    expect(parameterCell?.className).toMatch(/\bsticky\b/);
+    expect(parameterCell?.className).toMatch(/\bleft-0\b/);
+
+    // jsdom cannot measure layout (scrollWidth/clientWidth are always 0), so a passing
+    // assertion on those values would be meaningless. Instead assert the STRUCTURAL
+    // precondition for overflow: the table carries a min-width floor. Under
+    // `table-layout: fixed; width: 100%` alone (no min-width), the table can never exceed
+    // its container -- scrollWidth === clientWidth always, and the sticky column plus the
+    // ScrollFadeRegion fade would be permanently inert on narrow (phone) viewports. This
+    // fails if that min-width regresses back out.
+    const table = headerCell.closest('table');
+    expect(table?.className).toMatch(/\bmin-w-\[/);
+  });
+
+  it('#6: promotes evidence_support_status to the one visible pill, demotes the other three to plain text', () => {
+    renderControlled();
+
+    const row = screen.getByRole('button', {
+      name: /Inspect Benzo\[a\]pyrene oral slope factor - Health Canada/,
+    });
+    const cell = within(row).getByTestId('evidence-default-evidence-cell');
+
+    // Exactly one colored StatusBadge pill in the cell (evidence_support_status).
+    const pills = within(cell).getAllByText(/approved source-backed/i);
+    expect(pills).toHaveLength(1);
+    expect(pills[0].className).toMatch(/rounded-full/);
+
+    // The other three statuses fold into one muted plain-text line, not pills.
+    expect(cell).toHaveTextContent(
+      'available option . approved . extracted from source',
+    );
+    expect(within(cell).queryByText(/^available option$/i)).not.toBeInTheDocument();
+    expect(within(cell).queryByText(/^extracted from source$/i)).not.toBeInTheDocument();
+  });
+
+  it('#6: folds a superseded row (qa_status=superseded, approved_source_backed) into plain text too', () => {
+    // Two-sided falsification: this fixture row exercises the qa_status=superseded case that
+    // the earlier assertion (approved-only fixture) never touched. Positive: "superseded" must
+    // appear as plain muted text in the folded line. Negative: it must NOT render as a second
+    // colored StatusBadge pill (only evidence_support_status gets a pill per decision #6).
+    //
+    // P2-1 RESOLVED (owner-decided 2026-08-15) -- this SUPERSEDES the round-2 P3-4
+    // "PROVISIONAL ASSERTION" note that previously stood here. The open question was whether a
+    // qa_status=superseded row should still show the green "Approved source-backed" pill at all.
+    // Decision: YES, the pill stays -- it reports evidence PROVENANCE, which for these 41 rows
+    // genuinely is source-backed -- but the qa_status text stops rendering as neutral grey.
+    // It now carries the same tone statusTone() gives the pill form of that status (rose for
+    // superseded, amber for needs-review), so a superseded row can no longer present two
+    // reassuring signals with the warning demoted to 12px grey. This is now an AGREED contract
+    // and may be cited as such.
+    //
+    // Round-2 P3-3: the fixture row is deliberately a SYNTHETIC substance/source; it replaced
+    // a fabricated "Zinc oral slope factor - Health Canada" value attributed to a real source.
+    renderControlled();
+
+    const row = screen.getByRole('button', {
+      name: /Inspect Fixture Substance Alpha oral slope factor \(synthetic, superseded\)/,
+    });
+    const cell = within(row).getByTestId('evidence-default-evidence-cell');
+
+    const pills = within(cell).getAllByText(/approved source-backed/i);
+    expect(pills).toHaveLength(1);
+    expect(pills[0].className).toMatch(/rounded-full/);
+
+    expect(cell).toHaveTextContent('not default . superseded . extracted from source');
+    // The superseded qa_status text itself must not be a separate pill.
+    const supersededMatches = within(cell).getAllByText(/superseded/i);
+    supersededMatches.forEach((el) => {
+      expect(el.className).not.toMatch(/rounded-full/);
+    });
+
+    // P2-1 tone contract. Two-sided falsification:
+    //  - Positive: "superseded" is its OWN element carrying the rose text tone. Note this
+    //    query is itself discriminating -- before P2-1 the status was a bare text node whose
+    //    parent's full text is "not default . superseded . extracted from source", so an
+    //    exact getByText('superseded') could not have matched anything. Reverting the fix
+    //    fails this line with "unable to find an element", not a silent pass.
+    //  - Negative: it must NOT be a pill (decision #6 keeps one pill per cell) and must NOT
+    //    carry the amber needs-review tone -- if qaStatusTextTone fell through to the wrong
+    //    branch, or lost its 'superseded' case and inherited grey, both halves fail.
+    const supersededText = within(cell).getByText('superseded');
+    expect(supersededText.className).toMatch(/text-rose-700/);
+    expect(supersededText.className).toMatch(/dark:text-rose-300/);
+    expect(supersededText.className).not.toMatch(/rounded-full/);
+    expect(supersededText.className).not.toMatch(/text-amber-/);
+    expect(supersededText.className).not.toMatch(/text-slate-/);
+  });
+
+  it('round-4 Leg1a P2-1: every sticky-column background is fully opaque', () => {
+    // A sticky cell occludes the columns scrolling beneath it. `z-10` sets paint
+    // ORDER, not opacity, so any alpha-suffixed background lets the scrolled cells
+    // show through and the parameter name renders superimposed on the Pathway and
+    // Current-value text -- two strings drawn on top of each other, neither legible.
+    // That is the same failure round-2 P2-5 removed from this table, reintroduced by
+    // the sticky column two rounds later.
+    //
+    // jsdom composites nothing, so the CLASS CONTRACT is the only assertable form.
+    //
+    // Two-sided falsification:
+    //  - Positive: the sticky cell carries opaque backgrounds for base and dark.
+    //  - Negative: NO background utility on this cell may carry a Tailwind alpha
+    //    suffix (`bg-...-NNN/NN`). Restoring any of the three translucent variants
+    //    (`bg-sky-50/60`, `dark:bg-sky-950/30`, `dark:bg-sky-950/40`) fails by name.
+    //    Asserting only "has bg-white" would pass against the broken version, since
+    //    the opaque base was always present alongside the translucent hover states.
+    renderControlled();
+
+    const row = screen.getByRole('button', {
+      name: /Inspect Benzo\[a\]pyrene oral slope factor - Health Canada/,
+    });
+    const stickyCell = within(row)
+      .getAllByRole('cell')
+      .find((c) => c.className.includes('sticky'));
+    expect(stickyCell).toBeDefined();
+
+    const cls = stickyCell!.className;
+    expect(cls).toMatch(/\bsticky\b/);
+    expect(cls).toMatch(/\bbg-white\b/);
+    expect(cls).toMatch(/\bdark:bg-slate-950\b/);
+
+    // Negative half: no alpha-suffixed background anywhere on the sticky cell.
+    const alphaBackgrounds = cls.match(/(?:^|\s|:)bg-[a-z]+-\d{2,3}\/\d{1,3}\b/g) ?? [];
+    expect(alphaBackgrounds).toEqual([]);
+  });
+
+  it('P2-1: tones needs-review qa_status amber and leaves settled statuses untoned', () => {
+    // The other two branches of qaStatusTextTone, so the rule is pinned as a CLASS rather
+    // than only at the superseded instance that prompted it.
+    //
+    // Two-sided falsification:
+    //  - Positive: a needs_review row's folded qa_status text is its own element carrying
+    //    the amber tone. Deleting the 'needs' branch drops the wrapper element entirely and
+    //    this getByText fails to find anything.
+    //  - Negative: an 'approved' qa_status must have NO toned wrapper at all -- it stays a
+    //    bare text node inheriting the muted line colour. If qaStatusTextTone ever returned
+    //    a tone for every status (the obvious over-correction), the queryByText below starts
+    //    matching an element and this half fails.
+    renderControlled();
+
+    const needsReview = screen.getAllByText('needs review');
+    expect(needsReview.length).toBeGreaterThan(0);
+    needsReview.forEach((el) => {
+      expect(el.className).toMatch(/text-amber-700/);
+      expect(el.className).toMatch(/dark:text-amber-300/);
+      expect(el.className).not.toMatch(/text-rose-/);
+    });
+
+    // 'approved' as a folded qa_status is deliberately NOT wrapped, so no element inside the
+    // cell has it as its own exact text. Scoped to the cell rather than the whole screen: a
+    // global query would start failing spuriously the day someone adds an "approved" filter
+    // chip elsewhere in the view, which would be a false alarm, not a regression. (The green
+    // pill reads 'approved source-backed', a different exact string, so it cannot satisfy
+    // this query and mask the assertion.)
+    const approvedRow = screen.getByRole('button', {
+      name: /Inspect Benzo\[a\]pyrene oral slope factor - Health Canada/,
+    });
+    const approvedCell = within(approvedRow).getByTestId('evidence-default-evidence-cell');
+    expect(approvedCell).toHaveTextContent('available option . approved . extracted from source');
+    expect(within(approvedCell).queryByText('approved')).not.toBeInTheDocument();
+  });
+
+  it('round-2 P2-5: the Current value cell wraps instead of overflowing its fixed column', () => {
+    // Under `table-layout: fixed` a `whitespace-nowrap` cell overflows VISIBLY rather than
+    // widening its column, so a value like "6.0E-05 mg/kg-bw/day" painted over the adjacent
+    // evidence-status badge. Horizontal scroll does not fix an overlap.
+    //
+    // Two-sided falsification:
+    //  - Positive: the cell must carry the wrapping classes AND the full value as `title`.
+    //  - Negative: restoring `whitespace-nowrap` on the cell fails the second expectation,
+    //    and narrowing the column back to w-[9%] fails the third. jsdom has no layout
+    //    engine, so the overlap itself cannot be measured here -- these assert the two
+    //    mechanisms that prevent it.
+    renderControlled();
+
+    const cells = screen.getAllByTestId('evidence-current-value-cell');
+    expect(cells.length).toBeGreaterThan(0);
+    for (const cell of cells) {
+      expect(cell.className).toMatch(/break-words/);
+      expect(cell.className).not.toMatch(/whitespace-nowrap/);
+      expect(cell).toHaveAttribute('title', cell.textContent ?? '');
+    }
+
+    const valueCol = document.querySelectorAll('colgroup col')[2];
+    expect(valueCol?.className).not.toMatch(/w-\[9%\]/);
+  });
+
+  it('#1b: gives the row-expand Details summary a 44px-tall tap target', () => {
+    renderControlled();
+
+    const summaries = screen.getAllByText('Details', { selector: 'summary' });
+    expect(summaries.length).toBeGreaterThan(0);
+    summaries.forEach((summary) => {
+      expect(summary.className).toMatch(/min-h-\[44px\]/);
+    });
+  });
+
+  it('#2: wraps the Parameter Values table in the ScrollFadeRegion affordance, with a table that can overflow it', () => {
+    renderControlled();
+
+    const valuesSection = screen.getByTestId('evidence-library-values');
+    const region = within(valuesSection).getByTestId('scroll-fade-region');
+    expect(region).toBeInTheDocument();
+
+    // A ScrollFadeRegion wrapping a table that can never exceed its own width is a no-op
+    // affordance (see #5 above). Assert the table inside the region carries the min-width
+    // floor rather than only checking the wrapper exists, so a regression that drops the
+    // min-width (making the region permanently inert) fails this test.
+    const table = within(region).getByRole('table');
+    expect(table.className).toMatch(/\bmin-w-\[/);
+  });
+});
+
+describe('EvidenceLibrary -- ValuesPagination (decision #1b)', () => {
+  it('raises Prev/Next to a 44px-tall floor', () => {
+    render(
+      <ValuesPagination
+        page={1}
+        pageCount={3}
+        pageSize={50}
+        totalRows={120}
+        onPrev={() => {}}
+        onNext={() => {}}
+      />,
+    );
+
+    const prev = screen.getByRole('button', { name: /^Prev$/ });
+    const next = screen.getByRole('button', { name: /^Next$/ });
+    expect(prev.className).toMatch(/min-h-\[44px\]/);
+    expect(next.className).toMatch(/min-h-\[44px\]/);
+  });
+
+  it('still wires Prev/Next click handlers correctly at the new size', () => {
+    const onPrev = vi.fn();
+    const onNext = vi.fn();
+    render(
+      <ValuesPagination
+        page={1}
+        pageCount={3}
+        pageSize={50}
+        totalRows={120}
+        onPrev={onPrev}
+        onNext={onNext}
+      />,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: /^Prev$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Next$/ }));
+    expect(onPrev).toHaveBeenCalledTimes(1);
+    expect(onNext).toHaveBeenCalledTimes(1);
   });
 });
 

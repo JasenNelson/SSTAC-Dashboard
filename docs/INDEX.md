@@ -6,6 +6,14 @@ This file is the **single canonical entrypoint** for project documentation.
   -- the repository-wide ROUTING anchor for a fresh session. Registered as
   `continuity.current_handoff`. It routes; it deliberately holds no volatile metrics and is not a
   status dashboard.
+  - **If you are resuming ACTIVE WORK, do not stop here.** This routing anchor is intentionally
+    stateless. The CURRENT LANE anchor -- which carries in-flight branch state, uncommitted work,
+    gate evidence and open owner decisions -- is named further down this file under "Session
+    continuity". As of 2026-08-15 that is
+    `FRESH_SESSION_HANDOFF_2026_08_15b_UI_BATCH_IN_FLIGHT.md` (UI/UX audit lane: 40 uncommitted
+    files on `feat/mo-design-batch-20260815`, six gates green, adversarial review round 3 in
+    flight). Read the routing anchor for WHERE things live; read the lane anchor for WHAT is
+    currently happening.
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
 - **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
@@ -158,11 +166,14 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   refresh, publish, and unpublish are each still separately owner-gated, and the
   schema apply grants none of them. Do not describe publication as authorized.
 - Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
-- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_15_UI_QA_AUDIT.md`
-  (UI/UX audit lane; PR #778 merged, PR #779 open awaiting owner approval; carries the
-  gate-hygiene traps that made several green runs meaningless -- read section 5 before
-  quoting any e2e pass count as evidence). Immediate predecessor:
-  `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
+- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_15b_UI_BATCH_IN_FLIGHT.md`
+  (UI/UX design batch 1 lane; PRs #778 and #779 both merged; branch
+  `feat/mo-design-batch-20260815` has 40 files uncommitted pending the commit-time adversarial
+  review loop, with six gates already green on that exact tree -- read section 2 before touching
+  the working tree and section 4 before quoting any gate result as final evidence). Immediate
+  predecessor: `FRESH_SESSION_HANDOFF_2026_08_15_UI_QA_AUDIT.md` (carries the gate-hygiene traps
+  that made several earlier green runs meaningless; still substantively relevant, not archived).
+  Earlier predecessor: `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
   (`continuity.current_handoff`). Archived predecessor, byte-identical historical import:
   `docs/archive/2026-08-09_wiki-recovery/` (see that folder's `README.md` for source path, hash,
   and replacement pointer).

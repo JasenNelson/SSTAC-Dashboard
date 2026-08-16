@@ -1,6 +1,7 @@
 import React from 'react';
 import { cn } from '@/utils/cn';
 import { phase2Tasks } from './phase2Tasks';
+import ScrollFadeRegion from '../ScrollFadeRegion';
 
 const MONTHS = [
   "May '26", "Jun '26", "Jul '26", "Aug '26", "Sep '26", "Oct '26", "Nov '26",
@@ -94,11 +95,11 @@ export const GANTT_DATA = phase2Tasks.map(task => {
 
 export default function Phase2GanttChart() {
   return (
-    <figure className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm overflow-x-auto mb-6">
+    <figure className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-6 shadow-sm mb-6">
       <figcaption className="sr-only">
         Gantt chart showing the timeline for Phase 2 tasks from May 2026 to June 2027.
       </figcaption>
-      
+
       {/* Screen Reader Only Table for Accessibility */}
       <table className="sr-only">
         <thead>
@@ -123,8 +124,20 @@ export default function Phase2GanttChart() {
         </tbody>
       </table>
 
-      {/* Visual Gantt Chart (Hidden from AT) */}
-      <div className="min-w-[1000px]" aria-hidden="true">
+      {/* Visual Gantt Chart (Hidden from AT).
+          Round-3 P3-1 fix: Round-2's approach (an outer `aria-hidden="true"` div
+          wrapping the whole ScrollFadeRegion) hid the caption and gradient from AT
+          as intended, but it also put the scroll container -- an `overflow-x-auto`
+          div with no focusable children -- inside a hidden subtree. Chrome 127+
+          makes such scroll containers implicitly keyboard-tabbable, so a keyboard
+          user could Tab onto an element assistive tech reports nothing for (axe
+          `aria-hidden-focus`). ScrollFadeRegion's `ariaHidden` prop applies
+          aria-hidden AND tabIndex={-1} directly on the scroll container itself
+          (and on the caption), achieving the same "hidden from AT, sr-only table
+          above is the equivalent" outcome without an outer wrapper or a focusable
+          element left inside a hidden subtree. */}
+      <ScrollFadeRegion ariaHidden>
+      <div className="min-w-[1000px]">
         {/* Header */}
         <div className="flex items-end mb-4">
           <div className="w-80 font-semibold text-slate-800 dark:text-slate-200 shrink-0">Project Tasks</div>
@@ -176,6 +189,7 @@ export default function Phase2GanttChart() {
           <div className="flex items-center gap-2"><div className="w-3 h-3 rounded-full bg-slate-300 dark:bg-slate-600" /> Project Management</div>
         </div>
       </div>
+      </ScrollFadeRegion>
     </figure>
   );
 }

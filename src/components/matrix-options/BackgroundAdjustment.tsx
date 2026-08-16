@@ -492,6 +492,7 @@ export default function BackgroundAdjustment({
 
       <div className="-mt-2">
         <MathRenderer
+          fadeFrom="from-white dark:from-slate-900"
           content={
             'Formula: $UTL_{95/95} = \\bar{x} + K \\cdot s$ where $K$ is the ' +
             'one-sided 95 percent coverage, 95 percent confidence ' +

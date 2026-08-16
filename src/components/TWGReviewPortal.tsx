@@ -279,7 +279,8 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             </button>
           </div>
           <div ref={contentRef}>
-            <MathRenderer content={finalDraftContent || ''} />
+            {/* Round-2 P2-2: document column is bg-white dark:bg-slate-950. */}
+            <MathRenderer content={finalDraftContent || ''} fadeFrom="from-white dark:from-slate-950" />
           </div>
         </div>
       </div>

@@ -3,7 +3,7 @@
     "equation_id": "eq-eco-direct-eqp-di-toro",
     "pathway": "eco-direct-eqp",
     "display_name": "Eco-Direct EqP sediment benchmark",
-    "equation_latex": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
+    "equation_latex": "\\log K_{oc} = 0.00028 + 0.983 \\log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
     "plain_language": "Estimate organic-carbon partitioning from log Kow, convert a water chronic value to an organic-carbon-normalized sediment benchmark, then scale by sediment organic carbon.",
     "input_keys": [
       "logKow",
@@ -28,7 +28,7 @@
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
+        "value_text": "\\log K_{oc} = 0.00028 + 0.983 \\log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
@@ -133,7 +133,7 @@
     "equation_id": "eq-human-health-direct-contact",
     "pathway": "human-health-direct",
     "display_name": "Human Health Direct Contact sediment screen",
-    "equation_latex": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+    "equation_latex": "Dose = C_s CF EF ED (IR_{sed} BA_o + SA AF_{sed} ABS_d) / (BW AT)",
     "plain_language": "Solve the direct-contact exposure equation for sediment concentration using the available non-cancer and cancer endpoints, then use the lower screening value.",
     "input_keys": [
       "rfd_oral_mg_per_kg_bw_day",
@@ -179,7 +179,7 @@
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+        "value_text": "Dose = C_s CF EF ED (IR_{sed} BA_o + SA AF_{sed} ABS_d) / (BW AT)",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
@@ -197,7 +197,7 @@
     "equation_id": "eq-human-health-food-web",
     "pathway": "human-health-food",
     "display_name": "Human Health Food Web sediment screen",
-    "equation_latex": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+    "equation_latex": "C_{tissue} = targetDose BW / (IR_{food} BA_o); SedS = C_{tissue} / BSAF_{effective}",
     "plain_language": "Derive a protective tissue concentration from the selected dose endpoint and food ingestion rate, then back-calculate a sediment value through the effective BSAF.",
     "input_keys": [
       "rfd_oral_mg_per_kg_bw_day",
@@ -243,7 +243,7 @@
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+        "value_text": "C_{tissue} = targetDose BW / (IR_{food} BA_o); SedS = C_{tissue} / BSAF_{effective}",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",

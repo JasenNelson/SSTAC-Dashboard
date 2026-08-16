@@ -22,6 +22,24 @@
         "rule": "gray-on-color",
         "value": "text-slate-200 on bg-sky-50",
         "createdAt": "2026-08-14T18:56:33.293Z"
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/app/(dashboard)/matrix-map/MatrixMap.tsx"
+        ],
+        "createdAt": "2026-08-15T23:00:29.982Z",
+        "reason": "Claude verified: L2019-2020 are a 0x0-box CSS triangle legend marker (borderLeft/Right transparent + borderBottom colored), the standard triangle-drawing idiom, not a side-tab accent border. Not introduced by this batch."
+      },
+      {
+        "rule": "side-tab",
+        "value": "*",
+        "files": [
+          "src/components/MathRenderer.tsx"
+        ],
+        "createdAt": "2026-08-16T00:41:09.298Z",
+        "reason": "Claude verified: L113 is the BLOCKQUOTE rule ([&>blockquote]:border-l-4 + pl-4 + italic), the conventional typographic treatment for quotations in a markdown renderer, not a side-tab accent on a card. Confirmed pre-existing on origin/main and NOT part of this batch's diff. MathRenderer has no cards, so a file-scoped ignore cannot mask a genuine card side-tab here."
       }
     ]
   }

@@ -20,6 +20,29 @@ vi.mock('recharts', () => ({
 
 import SsdWorkbench from '../SsdWorkbench';
 
+// Round-2 P3-2: decision #15 added an `sr-only` span that duplicates the mirror-health
+// string, which made every plain `getByText(/.../)` throw "found multiple elements". Round 1
+// blanket-weakened those assertions to `getAllByText(...)[0]`, which can no longer tell
+// "the VISIBLE status is present" from "only the sr-only copy is present" -- if the visible
+// icon/label regressed away, index [0] would still match the sr-only span and the test would
+// pass. This helper restores that distinction by excluding sr-only nodes, so the assertions
+// below are once again falsifiable from both sides.
+// Round-5 (codex ship gate): the `closest('.sr-only')` filter alone was NOT enough. It
+// excludes nodes INSIDE an sr-only subtree, but `getAllByText` also matches ANCESTORS whose
+// combined `textContent` includes the hidden copy -- the wrapping button, its container, and
+// so on. So if the VISIBLE status regressed away while the sr-only span survived, those
+// ancestors still matched and `[0]` still resolved: the exact false-pass this helper exists
+// to prevent, one level up.
+//
+// Both filters are required: drop sr-only nodes AND drop any element that merely CONTAINS
+// one. What survives is an element whose own visible text is the match.
+function getVisibleTexts(matcher: RegExp): HTMLElement[] {
+  return screen
+    .getAllByText(matcher)
+    .filter((el) => el.closest('.sr-only') === null)
+    .filter((el) => el.querySelector('.sr-only') === null);
+}
+
 function mockFetchJson(payload: unknown, status = 200) {
   const fetchMock = vi.fn(async () => ({
     ok: status >= 200 && status < 300,
@@ -121,7 +144,7 @@ describe('SsdWorkbench', () => {
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/Mirror not configured/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Mirror not configured/i)[0]).toBeInTheDocument(),
     );
     const healthPanel = screen.getByTestId('ssd-ecotox-health-panel');
     expect(
@@ -156,7 +179,7 @@ describe('SsdWorkbench', () => {
 
     await waitFor(() =>
       expect(
-        screen.getByText(/Read-only mirror connected/i),
+        getVisibleTexts(/Read-only mirror connected/i)[0],
       ).toBeInTheDocument(),
     );
     const healthPanel = screen.getByTestId('ssd-ecotox-health-panel');
@@ -266,12 +289,51 @@ describe('SsdWorkbench', () => {
   it('updates endpoint filters and reports excluded rows', () => {
     render(<SsdWorkbench />);
 
-    fireEvent.click(screen.getByRole('button', { name: /^Growth$/ }));
+    fireEvent.click(screen.getByText('All endpoints'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /^Growth$/ }));
     fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
 
     expect(screen.getAllByText(/^4$/).length).toBeGreaterThan(0);
     const exclusions = screen.getByTestId('ssd-exclusions-table');
     expect(within(exclusions).getAllByText(/endpoint mismatch/i).length).toBeGreaterThan(0);
+  });
+
+  it('collapses the endpoint filter group into a disclosure with a 44px summary trigger', () => {
+    render(<SsdWorkbench />);
+
+    const details = screen.getByTestId('ssd-endpoint-filters');
+    expect(details.tagName).toBe('DETAILS');
+    expect(details).not.toHaveAttribute('open');
+
+    const summary = within(details).getByText('All endpoints').closest('summary');
+    expect(summary).not.toBeNull();
+    expect(summary).toHaveClass('min-h-[44px]');
+
+    fireEvent.click(summary as HTMLElement);
+    expect(details).toHaveAttribute('open');
+    expect(screen.getByRole('checkbox', { name: /^Mortality$/ })).toBeInTheDocument();
+  });
+
+  it('keeps endpoint filters multi-select via checkboxes with a 44px row and accessible group name', () => {
+    render(<SsdWorkbench />);
+
+    fireEvent.click(screen.getByText('All endpoints'));
+
+    const mortality = screen.getByRole('checkbox', { name: /^Mortality$/ });
+    const growth = screen.getByRole('checkbox', { name: /^Growth$/ });
+    const row = growth.closest('label');
+    expect(row).toHaveClass('min-h-[44px]');
+
+    expect(mortality).not.toBeChecked();
+    fireEvent.click(mortality);
+    fireEvent.click(growth);
+    expect(mortality).toBeChecked();
+    expect(growth).toBeChecked();
+
+    expect(screen.getByText('Mortality, Growth')).toBeInTheDocument();
+
+    const fieldset = screen.getByRole('group', { name: /Endpoint filters/i });
+    expect(fieldset).toBeInTheDocument();
   });
 
   it('clicking a chemical suggestion toggles it into the selected chip bar', async () => {
@@ -288,7 +350,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
 
     const searchFetch = vi.fn(async (url: string) => {
@@ -335,7 +397,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
 
     const searchFetch = vi.fn(async (url: string) => {
@@ -377,7 +439,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
 
     fireEvent.click(screen.getByRole('button', { name: /Load records/i }));
@@ -404,7 +466,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
 
     const searchFetch = vi.fn(async (url: string) => {
@@ -446,7 +508,7 @@ describe('SsdWorkbench', () => {
     render(<SsdWorkbench />);
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
 
     const searchFetch = vi.fn(async (url: string) => {
@@ -519,7 +581,7 @@ describe('SsdWorkbench', () => {
     fireEvent.click(screen.getByRole('button', { name: /ECOTOX mirror/i }));
 
     await waitFor(() =>
-      expect(screen.getByText(/Read-only mirror connected/i)).toBeInTheDocument(),
+      expect(getVisibleTexts(/Read-only mirror connected/i)[0]).toBeInTheDocument(),
     );
     expect(
       screen.queryByTestId('ssd-ecotox-onboarding-callout'),
@@ -548,9 +610,13 @@ describe('SsdWorkbench', () => {
       expect(screen.getByTestId('ssd-ecotox-onboarding-callout')).toBeInTheDocument(),
     );
 
-    const dot = screen.getByTestId('ssd-ecotox-status-dot');
-    expect(dot).toBeInTheDocument();
-    expect(dot).toHaveClass('bg-amber-500');
+    const icon = screen.getByTestId('ssd-ecotox-status-icon');
+    expect(icon).toBeInTheDocument();
+    expect(icon).toHaveClass('text-amber-500');
+    expect(icon).toHaveAttribute('aria-hidden', 'true');
+    expect(
+      screen.getByText(/Mirror not configured/i, { selector: '.sr-only' }),
+    ).toBeInTheDocument();
   });
 
   it('loads uploaded CSV data into the workbench source mode', async () => {

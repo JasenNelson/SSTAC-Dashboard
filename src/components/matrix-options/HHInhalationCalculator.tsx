@@ -583,6 +583,7 @@ export default function HHInhalationCalculator({
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer
+            fadeFrom="from-slate-50 dark:from-slate-800/50"
             content={
               '$C_{air} = C_s \\cdot (1/VF + 1/PEF)$, $EC = C_{air} \\cdot EF \\cdot ED / (AT \\cdot 365)$. ' +
               'Non-cancer: $C_s = THQ \\cdot RfC \\cdot 365 / [(1/VF + 1/PEF) \\cdot EF]$ (AT = ED cancels). ' +
