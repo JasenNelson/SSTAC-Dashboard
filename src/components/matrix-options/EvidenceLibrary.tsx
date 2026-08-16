@@ -3259,7 +3259,7 @@ function CatalogInventory({
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           References ({references.length}) -- click to inspect
         </div>
-        <ul className="max-h-80 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+        <ul className="max-h-80 space-y-0.5 overflow-y-auto print:max-h-none print:overflow-visible rounded-lg border border-slate-200 p-1 dark:border-slate-800">
           {references.map((row) => (
             <li key={row.record.source_id}>
               <button

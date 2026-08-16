@@ -130,3 +130,57 @@ test.describe('SSD Workbench', () => {
     );
   });
 });
+
+/**
+ * Audit round 2 triage, P0-3 -- REAL print-render check.
+ *
+ * The print de-clipping fix (print:max-h-none on the SSD result containers and on
+ * ScrollFadeRegion) was previously verified only by unit tests asserting the utility classes are
+ * present. An external holistic review correctly objected that this proves the class is applied,
+ * not that the printed page is un-clipped -- jsdom implements no `@media print` at all, so the
+ * "no clipping on paper" claim had no rendering evidence behind it.
+ *
+ * This measures the real thing: under emulateMedia({ media: 'print' }), a container that clips
+ * vertically has scrollHeight > clientHeight. The species-aggregate table is capped at max-h-72
+ * (288px) on screen and holds the per-species toxicity rows the HCp regulatory output is derived
+ * from, so a clipped print is a silently truncated evidence table.
+ *
+ * Falsification record: removing `print:max-h-none` from the container at SsdWorkbench.tsx:2089
+ * makes this fail with scrollHeight exceeding clientHeight.
+ */
+test.describe('SSD Workbench print fidelity', () => {
+  test('species-aggregate table is not height-clipped when printed', async ({ page }) => {
+    await gotoMatrixOptionsOrSkip(page);
+    await clickUntilVisible(page, 'SSD Workbench', 'ssd-workbench');
+
+    const table = page.getByTestId('ssd-species-aggregate-table');
+    await expect(table).toBeVisible();
+
+    // Screen: the cap is expected to be in force. This is the control -- if the element never
+    // overflows on screen either, the print assertion below would pass vacuously.
+    const screenState = await table.evaluate((el) => {
+      const scroller = el.closest('[class*="max-h-"]') as HTMLElement | null;
+      return scroller
+        ? { found: true, scrollH: scroller.scrollHeight, clientH: scroller.clientHeight }
+        : { found: false, scrollH: 0, clientH: 0 };
+    });
+    expect(screenState.found, 'expected a max-h-* scroll container around the aggregate table').toBe(true);
+
+    await page.emulateMedia({ media: 'print' });
+
+    const printState = await table.evaluate((el) => {
+      const scroller = el.closest('[class*="max-h-"]') as HTMLElement | null;
+      return scroller
+        ? { scrollH: scroller.scrollHeight, clientH: scroller.clientHeight }
+        : { scrollH: 0, clientH: 0 };
+    });
+
+    // Under print the cap must be lifted: the container shows its full content height, so no row
+    // is silently dropped off the bottom of the page.
+    expect(
+      printState.clientH,
+      'printed species-aggregate container clips vertically -- rows of per-species toxicity ' +
+        'data would be silently missing from the printed page',
+    ).toBeGreaterThanOrEqual(printState.scrollH);
+  });
+});
