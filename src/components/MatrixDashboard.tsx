@@ -290,6 +290,11 @@ function slugifyTabId(label: string): string {
 }
 
 const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
+
+// Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
+// demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
+// printed. Kept beside the call sites it mirrors so the two cannot drift apart silently.
+const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
 const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
 
 function primaryTabId(tab: string): string {
@@ -1976,6 +1981,38 @@ export default function MatrixDashboard({
         not actually implement it -- see the comment on that div for the
         mechanism and the fix.
       */}
+      {/* Audit #16, PRINT correction. Demoting each document's leading `# ` to `##` is right
+          ON SCREEN, because the shell supplies the page <h1> in the toolbar above. It is WRONG
+          IN PRINT: that toolbar carries `print:hidden`, so on paper the shell heading vanishes
+          and the demoted document heading is an h2 -- leaving the four regulatory documents
+          printing with NO level-1 heading at all, where before the demotion they printed with
+          one.
+          Placed HERE, above the isToolMode branch, deliberately: renderContent() has FIVE call
+          sites across the two layout branches, and an earlier version of this fix sat inside
+          only one of them, so the tool-mode tabs (Methodology by pathway, Calculator) still
+          printed with none. One heading above the split covers every tab.
+          `hidden` keeps it out of the screen accessibility tree (display:none), so it cannot
+          reintroduce the duplicate-H1 defect #16 exists to fix; `print:block` restores it for
+          the print medium only.
+          jsdom implements no print medium, so NO unit test can observe any of this. It is
+          covered by e2e/matrix-options-print.spec.ts under emulateMedia({ media: 'print' }),
+          which is the only check in this repo that can see it. */}
+      {/* Scoped to EXACTLY the tabs whose document heading was demoted. Rendering it on every
+          tab was wrong twice over: it reintroduced chrome on TWG Review, whose toolbar is
+          `print:hidden` specifically so window.print() yields a chrome-free PDF (see the comment
+          on that toolbar above), and TWG Review renders its paper RAW -- demoteLeadingH1 is not
+          applied there -- so its printed h1 count went 2 -> 3 rather than 0 -> 1.
+          The heading exists to replace an h1 that the demotion removed, so it belongs only where
+          the demotion happens: MatrixDashboard.tsx:1421 (Jurisdictional Frameworks) and :1445
+          (The Guide). */}
+      {DEMOTED_DOCUMENT_TABS.has(activeTopTab) && (
+        <h1
+          data-testid="matrix-print-title"
+          className="hidden print:block px-4 pt-4 text-2xl font-bold text-slate-900"
+        >
+          Matrix Options -- {TAB_LABELS[activeTopTab] ?? activeTopTab}
+        </h1>
+      )}
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
