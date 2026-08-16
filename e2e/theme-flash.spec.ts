@@ -98,9 +98,9 @@ test.describe('B11 theme bootstrap (no flash of light theme)', () => {
  * server can see, and no paint pipeline. A green Vitest run proves the resolver functions
  * agree with each other; only this file proves the server actually used them.
  *
- * NOT RUN in the session that wrote them (2026-08-16): two other suites held the dev ports,
- * so these were authored against the existing blocked-bundle pattern above but never
- * executed. Treat them as unverified until a real run.
+ * Run status: the session that wrote them could not execute them (two other suites held the
+ * dev ports), but a subsequent full gate run on this branch did, and they passed. The
+ * migration test below was rewritten afterwards -- see its own comment.
  */
 test.describe('D2 cookie-resolved theme (server render)', () => {
   test('serves class="dark" on <html> from the cookie alone, with no script involved', async ({
@@ -157,27 +157,39 @@ test.describe('D2 cookie-resolved theme (server render)', () => {
     expect(htmlTag).toContain('light');
   });
 
-  test('migrates a localStorage-only user: writes the cookie and keeps the page dark', async ({
+  test('migrates a localStorage-only user BEFORE hydration: the inline script writes the cookie', async ({
     page,
     context,
   }) => {
     // The section-5 migration. An existing user has localStorage and no cookie, so the SERVER
     // resolves light on this one request; the bootstrap must correct the class before paint
     // AND write the cookie so the next request is server-correct.
+    //
+    // THE BUNDLE IS BLOCKED ON PURPOSE, and this test is worthless without it. The first
+    // version waited for networkidle, by which point ThemeProvider had mounted; deleting the
+    // bootstrap's cookie write -- the only thing that makes the migration happen pre-paint --
+    // left both assertions passing, because the provider's own write covered for it. With the
+    // chunks aborted React never hydrates, so the inline <head> script is the only code that
+    // can produce either the class or the cookie. (The provider no longer writes the cookie on
+    // mount at all, but blocking is what makes that structurally impossible rather than a
+    // property of today's ThemeContext.)
     await context.clearCookies();
+    await page.route(CHUNK_GLOB, (route) => route.abort());
     await page.addInitScript(() => {
       window.localStorage.setItem('theme', 'dark');
     });
 
-    await page.goto('/');
-    await page.waitForLoadState('networkidle');
+    await page.goto('/', { waitUntil: 'commit' });
 
     await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+    await expect(page.locator('html')).not.toHaveClass(/\blight\b/);
 
-    const cookies = await context.cookies();
-    const themeCookie = cookies.find((c) => c.name === 'theme');
-    expect(themeCookie, 'migration did not write the theme cookie').toBeTruthy();
-    expect(themeCookie!.value).toBe('dark');
+    await expect
+      .poll(
+        async () => (await context.cookies()).find((c) => c.name === 'theme')?.value ?? null,
+        { message: 'the pre-paint bootstrap did not write the migration cookie' },
+      )
+      .toBe('dark');
   });
 
   test('toggling writes a cookie, so a full reload stays dark with no localStorage', async ({

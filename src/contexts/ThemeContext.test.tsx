@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ThemeProvider, useTheme } from './ThemeContext';
@@ -21,10 +21,9 @@ import ThemeToggle from '@/components/ThemeToggle';
  */
 
 /**
- * Cookie hygiene is required in EVERY block, not just the cookie one: since D2 the provider's
- * persistence effect writes the theme cookie on every render, so a leaked cookie from an
- * earlier test would silently drive a later one's resolution. jsdom shares document.cookie
- * across tests in a file.
+ * Cookie hygiene is required in EVERY block, not just the cookie one: the provider READS the
+ * cookie first when resolving, so a cookie leaked by an earlier test would silently drive a
+ * later one's resolution. jsdom shares document.cookie across tests in a file.
  */
 function clearThemeCookie() {
   document.cookie = 'theme=; path=/; max-age=0';
@@ -33,6 +32,32 @@ function clearThemeCookie() {
 function ThemeProbe() {
   const { theme } = useTheme();
   return <span data-testid="theme-probe">{theme}</span>;
+}
+
+/** Exercises the programmatic setTheme path, i.e. an EXPRESSED preference. */
+function SetThemeProbe({ target }: { target: 'light' | 'dark' }) {
+  const { theme, setTheme } = useTheme();
+  return (
+    <>
+      <span data-testid="theme-probe">{theme}</span>
+      <button type="button" onClick={() => setTheme(target)}>
+        choose
+      </button>
+    </>
+  );
+}
+
+/** Exercises the toggle path, which must persist identically to setTheme. */
+function ToggleProbe() {
+  const { theme, toggleTheme } = useTheme();
+  return (
+    <>
+      <span data-testid="theme-probe">{theme}</span>
+      <button type="button" onClick={toggleTheme}>
+        toggle
+      </button>
+    </>
+  );
 }
 
 describe('ThemeProvider stored-value handling', () => {
@@ -145,9 +170,11 @@ describe('ThemeProvider first-render seed (audit D2)', () => {
     document.body.classList.remove('light', 'dark');
   });
 
-  it('hands consumers dark on the FIRST render when the bootstrap already darkened <html>', () => {
-    // Exactly the returning-dark-user state at the moment React starts: the <head> script has
-    // run, the class is on <html>, React has not rendered yet.
+  it('seeds from the <html> class when mounted WITHOUT initialTheme (defensive, non-production path)', () => {
+    // NOT a production path: src/app/layout.tsx is the only production render of
+    // ThemeProvider and it always passes a validated initialTheme, so this branch is only
+    // reachable from a harness like this one. It is covered because the branch exists, not
+    // because a user can get here.
     document.documentElement.classList.add('dark');
     window.localStorage.setItem('theme', 'dark');
 
@@ -258,17 +285,69 @@ describe('ThemeProvider cookie persistence (audit D2)', () => {
     document.body.classList.remove('light', 'dark');
   });
 
-  it('writes the theme cookie, not only localStorage, so the next request is server-correct', () => {
+  it('writes the theme cookie when the user CHOOSES a theme, so the next request is server-correct', () => {
     // Without this write the server resolves 'light' forever and the entire D2 change is
     // inert -- the most likely way for this feature to "work" in tests and do nothing live.
     render(
-      <ThemeProvider initialTheme="dark">
+      <ThemeProvider initialTheme="light">
+        <SetThemeProbe target="dark" />
+      </ThemeProvider>,
+    );
+
+    expect(document.cookie).not.toContain('theme=');
+
+    fireEvent.click(screen.getByRole('button', { name: 'choose' }));
+
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
+    expect(document.cookie).toContain('theme=dark');
+    expect(window.localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('writes the cookie on toggleTheme too, not only on setTheme', () => {
+    // The two entry points must not drift: a toggle is just as much an expressed preference.
+    render(
+      <ThemeProvider initialTheme="light">
+        <ToggleProbe />
+      </ThemeProvider>,
+    );
+
+    fireEvent.click(screen.getByRole('button', { name: 'toggle' }));
+
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
+    expect(document.cookie).toContain('theme=dark');
+  });
+
+  it('does NOT write a cookie for a visitor who expressed no preference', () => {
+    // The bootstrap deliberately declines to write one for a first-time visitor
+    // (themeBootstrap.test.ts asserts that). The provider used to write `theme=light`
+    // unconditionally from its mount effect one tick later, undoing that decision for every
+    // JS-enabled visitor. Mount, let every effect flush, and the cookie must still be absent.
+    render(
+      <ThemeProvider initialTheme="light">
         <ThemeProbe />
       </ThemeProvider>,
     );
 
-    expect(document.cookie).toContain('theme=dark');
-    expect(window.localStorage.getItem('theme')).toBe('dark');
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('light');
+    // The class work still has to happen -- this is about the cookie only.
+    expect(document.documentElement.classList.contains('light')).toBe(true);
+    expect(document.cookie).not.toContain('theme=');
+  });
+
+  it('does not write a cookie for a localStorage-only user either (the bootstrap owns migration)', () => {
+    // The migration cookie is written by the pre-paint bootstrap, which is the only place it
+    // can be written EARLY enough to matter. Duplicating it here would re-introduce an
+    // unconditional mount-time write by another name.
+    window.localStorage.setItem('theme', 'dark');
+
+    render(
+      <ThemeProvider initialTheme="light">
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
+    expect(document.cookie).not.toContain('theme=');
   });
 
   it('lets the cookie win over a disagreeing localStorage value', () => {

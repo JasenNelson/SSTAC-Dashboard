@@ -1,6 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY } from './themeBootstrap';
-import { themeCookieString } from './theme';
+import { readThemeCookie, resolveThemeFromCookieHeader, themeCookieString, type Theme } from './theme';
 
 /**
  * Audit B11. These tests EXECUTE the bootstrap string in jsdom rather than pattern-matching
@@ -212,4 +212,113 @@ describe('THEME_BOOTSTRAP_SCRIPT cookie handling (D2)', () => {
 
     expect(THEME_BOOTSTRAP_SCRIPT).toContain(attributes);
   });
+});
+
+/**
+ * PARITY CORPUS -- the drift guard src/lib/theme.ts has always claimed existed and did not.
+ *
+ * The server and the pre-paint bootstrap are two independent parsers of the same bytes. When
+ * they disagree, the served class contradicts what the browser concludes: a repaint plus a
+ * genuine ThemeToggle hydration mismatch, which suppressHydrationWarning on <html> does not
+ * cover. Adversarial review on 2026-08-16 found four such disagreements at once, all of them
+ * because the server went through Next's cookies() parser instead of readThemeCookie:
+ * percent-decoding, no trimming, LAST-duplicate-wins, and a valueless `theme` becoming "true".
+ * All four are in the corpus below and each one fails this test if it is reintroduced.
+ *
+ * HOW THE BOOTSTRAP'S VERDICT IS RECOVERED. readThemeCookie is tri-state (null = ABSENT), but
+ * the bootstrap only ever leaves a class behind, so 'light' alone cannot tell "the cookie said
+ * light" from "there was no cookie". Each header is therefore run TWICE, once with an empty
+ * localStorage and once with a 'dark' sentinel in it. Identical results mean the cookie
+ * decided; differing results mean the bootstrap fell through to localStorage, i.e. it judged
+ * the cookie ABSENT. That is the same distinction readThemeCookie encodes as null.
+ *
+ * The expected column is spelled out rather than derived, so this pins the SEMANTICS too and
+ * does not merely prove the two implementations are wrong in the same way.
+ */
+describe('cookie-parsing parity: server path vs pre-paint bootstrap', () => {
+  function runBootstrapWithCookieHeader(header: string, stored: string | null): string {
+    const original = Object.getOwnPropertyDescriptor(Document.prototype, 'cookie');
+    Object.defineProperty(document, 'cookie', {
+      configurable: true,
+      get: () => header,
+      // The migration write must not blow up, and must not mutate the header under test.
+      set: () => {},
+    });
+    try {
+      window.localStorage.clear();
+      if (stored !== null) window.localStorage.setItem(THEME_STORAGE_KEY, stored);
+      document.documentElement.classList.remove('light', 'dark');
+
+      runBootstrap();
+
+      const element = document.documentElement;
+      if (element.classList.contains('dark')) return 'dark';
+      if (element.classList.contains('light')) return 'light';
+      return 'none';
+    } finally {
+      delete (document as unknown as Record<string, unknown>).cookie;
+      if (original) Object.defineProperty(Document.prototype, 'cookie', original);
+      window.localStorage.clear();
+      document.documentElement.classList.remove('light', 'dark');
+    }
+  }
+
+  /** null means the bootstrap treated the cookie as ABSENT. */
+  function bootstrapVerdict(header: string): Theme | null {
+    const withoutStore = runBootstrapWithCookieHeader(header, null);
+    const withDarkStore = runBootstrapWithCookieHeader(header, 'dark');
+    if (withoutStore !== withDarkStore) return null;
+    expect(withoutStore, `bootstrap left no theme class for header: ${header}`).not.toBe('none');
+    return withoutStore as Theme;
+  }
+
+  const corpus: Array<{ header: string; expected: Theme | null; why: string }> = [
+    { header: 'theme=dark', expected: 'dark', why: 'the ordinary case' },
+    { header: 'theme=light', expected: 'light', why: 'the ordinary case' },
+    { header: '', expected: null, why: 'no cookies at all -> ABSENT, fall through to storage' },
+    { header: 'other=1', expected: null, why: 'other cookies only -> ABSENT' },
+    { header: 'theme=chartreuse', expected: 'light', why: 'PRESENT but corrupt -> light, no fall through' },
+    { header: 'theme=', expected: 'light', why: 'PRESENT and empty -> light' },
+    { header: 'theme=DARK', expected: 'light', why: 'case-sensitive: not a valid value' },
+    {
+      header: 'theme=%64ark',
+      expected: 'light',
+      why: 'divergence 1: Next percent-decoded this to dark; neither client reader does',
+    },
+    {
+      header: 'theme=dark ',
+      expected: 'dark',
+      why: 'divergence 2: the client trims the value, Next did not',
+    },
+    {
+      header: 'theme=light; theme=dark',
+      expected: 'light',
+      why: 'divergence 3: FIRST duplicate wins here, Next let the LAST one win',
+    },
+    {
+      header: 'theme=dark; theme=light',
+      expected: 'dark',
+      why: 'divergence 3, other order -- pins first-wins rather than a lucky value',
+    },
+    {
+      header: 'theme',
+      expected: null,
+      why: 'divergence 4: a valueless pair is ABSENT here; Next reported it as "true"',
+    },
+    { header: 'a=1; theme=dark; b=2', expected: 'dark', why: 'mixed with other cookies' },
+    { header: 'sb-access-token=abc.def; theme=light; other=1', expected: 'light', why: 'realistic header' },
+    { header: 'a=1;   theme=dark', expected: 'dark', why: 'extra separator whitespace' },
+    { header: 'themepark=dark; mytheme=dark', expected: null, why: 'name must match exactly' },
+    { header: 'theme=dark; theme', expected: 'dark', why: 'valueless duplicate after a real one' },
+    { header: 'theme; theme=dark', expected: 'dark', why: 'valueless entry is skipped, not matched' },
+  ];
+
+  for (const { header, expected, why } of corpus) {
+    it(`agrees on ${JSON.stringify(header)} (${why})`, () => {
+      expect(readThemeCookie(header), 'server-path verdict').toBe(expected);
+      expect(bootstrapVerdict(header), 'bootstrap verdict').toBe(expected);
+      // And the collapsed form the root layout actually renders.
+      expect(resolveThemeFromCookieHeader(header)).toBe(expected ?? 'light');
+    });
+  }
 });

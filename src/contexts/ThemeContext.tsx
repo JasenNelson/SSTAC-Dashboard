@@ -58,17 +58,25 @@ function readPersistedTheme(): Theme | null {
  *  1. `initialTheme` -- what the SERVER resolved (from the cookie). Authoritative when present,
  *     because it is what the server-rendered HTML actually says, and disagreeing with it would
  *     guarantee a hydration mismatch.
- *  2. The class the pre-paint bootstrap put on <html>. This is the cookie-less fallback path.
+ *  2. The class the pre-paint bootstrap put on <html>. Defensive only -- see below.
  *  3. 'light'.
  *
- * HONEST LIMITATION: on the SERVER `document` does not exist, so step 2 is unavailable there.
- * A cookie-less dark-mode user therefore gets server HTML that says 'light' and a first client
- * render that says 'dark' -- a real hydration mismatch on ThemeToggle's attributes, which
- * `suppressHydrationWarning` on <html> does NOT cover (it does not cascade to descendants).
- * React patches the attributes and logs. This is a once-per-browser event, because the
- * bootstrap writes the cookie on that same first visit, so the next request is server-correct.
- * It is strictly less wrong than the previous behaviour, which showed the contradiction to
- * EVERY dark-mode user on EVERY page load.
+ * STEP 2 IS UNREACHABLE IN PRODUCTION. src/app/layout.tsx is the only production render of
+ * ThemeProvider and it always passes an `initialTheme` that has already been validated, so
+ * step 1 always wins there. The branch is kept for non-layout consumers (tests, Storybook-style
+ * harnesses, any future provider mounted without a server-resolved value) and it costs one
+ * classList read; it is NOT load-bearing for any user-facing path. An earlier version of this
+ * comment claimed step 2's absence on the server caused a hydration mismatch for cookie-less
+ * dark users. That cannot happen: with no cookie the server resolves 'light' AND passes
+ * 'light' as initialTheme, so server and first client render agree exactly.
+ *
+ * THE ACTUAL RESIDUAL BEHAVIOUR for a cookie-less user whose localStorage says 'dark': the
+ * pre-paint bootstrap paints the page dark, but React's first render is seeded from the
+ * server's 'light', so for that one render ThemeToggle draws the moon glyph and the label
+ * "Switch to dark mode" on an already-dark page. The mount effect reads localStorage and
+ * corrects it one tick later. No hydration mismatch is involved -- server and client render 0
+ * are identical -- and it lasts one browser for one request, because the bootstrap writes the
+ * cookie on that same visit and every request after it is server-correct.
  */
 function seedTheme(initialTheme: Theme | undefined): Theme {
   const fromServer = parseTheme(initialTheme);
@@ -107,7 +115,7 @@ export function ThemeProvider({
     setMounted(true);
   }, []);
 
-  // Update document class and both persistence stores when theme changes
+  // Update the document classes and the localStorage mirror when theme changes.
   useEffect(() => {
     if (mounted) {
       // Apply theme class to both html and body elements
@@ -116,17 +124,12 @@ export function ThemeProvider({
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(theme);
 
-      // The cookie write lives HERE and not in ThemeToggle, so that the programmatic
-      // setTheme path persists too and cannot drift from the toggle path. It is what makes
-      // the NEXT request server-correct; without it the server would resolve 'light' forever
-      // and the whole D2 change would do nothing.
-      try {
-        document.cookie = themeCookieString(theme, window.location.protocol === 'https:');
-      } catch {
-        // Sandboxed iframes and hard cookie-blocking modes. Losing the cookie costs a
-        // wrong server-rendered class that the pre-paint bootstrap still corrects, so this
-        // degrades to the pre-D2 behaviour rather than breaking the page.
-      }
+      // NO COOKIE WRITE HERE. This effect runs on mount for EVERY visitor, so writing the
+      // cookie from it handed a `theme=light` to first-time visitors who had expressed no
+      // preference at all -- one tick after the bootstrap had deliberately declined to write
+      // one (themeBootstrap.test.ts asserts that decline). A preference cookie is written by
+      // exactly two things now: an explicit user choice (persistThemeChoice below) and the
+      // bootstrap's localStorage migration. Found by adversarial review, 2026-08-16.
       try {
         localStorage.setItem(THEME_STORAGE_KEY, theme);
       } catch {
@@ -135,12 +138,26 @@ export function ThemeProvider({
     }
   }, [theme, mounted]);
 
+  // The single write path for an EXPRESSED preference. Both the toggle and the programmatic
+  // setTheme go through it, so they cannot drift, and nothing else in the provider writes the
+  // cookie -- which is what keeps a visitor who never chose anything cookie-free.
+  const persistThemeChoice = (next: Theme) => {
+    setThemeState(next);
+    try {
+      document.cookie = themeCookieString(next, window.location.protocol === 'https:');
+    } catch {
+      // Sandboxed iframes and hard cookie-blocking modes. Losing the cookie costs a wrong
+      // server-rendered class that the pre-paint bootstrap still corrects, so this degrades
+      // to the pre-D2 behaviour rather than breaking the page.
+    }
+  };
+
   const toggleTheme = () => {
-    setThemeState(prev => prev === 'light' ? 'dark' : 'light');
+    persistThemeChoice(theme === 'light' ? 'dark' : 'light');
   };
 
   const setTheme = (newTheme: Theme) => {
-    setThemeState(newTheme);
+    persistThemeChoice(newTheme);
   };
 
   // Prevent hydration mismatch by not rendering until mounted.
