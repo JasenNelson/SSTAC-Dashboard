@@ -2,8 +2,9 @@
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { THEME_STORAGE_KEY } from '@/lib/themeBootstrap';
+import { parseTheme, readThemeCookie, themeCookieString, type Theme } from '@/lib/theme';
 
-export type Theme = 'light' | 'dark';
+export type { Theme };
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,18 +15,28 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * Accepts ONLY the two valid values. Anything else (absent, corrupt, or written by an
- * older/other build) is rejected. Returns null for "no usable value" so callers can tell
- * "absent" apart from "explicitly light" -- that distinction is what lets the seed below
- * keep an already-correct value instead of stamping 'light' over it.
+ * Resolves the persisted theme after mount, in the SAME precedence the pre-paint bootstrap
+ * and the server use: cookie first, then localStorage, then "no usable value" (null).
+ *
+ * The cookie wins because it is what the server actually rendered. Preferring localStorage
+ * would guarantee a post-hydration flip whenever the two disagree -- which happens routinely:
+ * a second tab, a page restored from bfcache, or a user who cleared one store and not the
+ * other. The loser gets rewritten by the persistence effect below, so they reconverge.
+ *
+ * A cookie that is PRESENT but corrupt resolves to 'light' and does NOT fall through to
+ * localStorage, because the server resolved that same corrupt cookie to 'light' too.
  */
-function parseStoredTheme(raw: string | null | undefined): Theme | null {
-  return raw === 'dark' || raw === 'light' ? raw : null;
-}
-
-function readStoredTheme(): Theme | null {
+function readPersistedTheme(): Theme | null {
+  let fromCookie: Theme | null = null;
   try {
-    return parseStoredTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
+    fromCookie = readThemeCookie(document.cookie);
+  } catch {
+    // document.cookie throws in sandboxed iframes without allow-same-origin.
+  }
+  if (fromCookie !== null) return fromCookie;
+
+  try {
+    return parseTheme(window.localStorage.getItem(THEME_STORAGE_KEY));
   } catch {
     // localStorage throws in Safari private mode and under some cookie-blocking settings.
     return null;
@@ -60,7 +71,7 @@ function readStoredTheme(): Theme | null {
  * EVERY dark-mode user on EVERY page load.
  */
 function seedTheme(initialTheme: Theme | undefined): Theme {
-  const fromServer = parseStoredTheme(initialTheme);
+  const fromServer = parseTheme(initialTheme);
   if (fromServer !== null) return fromServer;
   if (typeof document === 'undefined') return 'light';
   return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
@@ -89,14 +100,14 @@ export function ThemeProvider({
     // A MISSING stored value must not clobber the seed: an absent localStorage entry is not
     // evidence for 'light', and overwriting a correctly-seeded 'dark' with it would reintroduce
     // exactly the post-hydration flip the seed exists to prevent.
-    const savedTheme = readStoredTheme();
+    const savedTheme = readPersistedTheme();
     if (savedTheme !== null) {
       setThemeState(savedTheme);
     }
     setMounted(true);
   }, []);
 
-  // Update document class and localStorage when theme changes
+  // Update document class and both persistence stores when theme changes
   useEffect(() => {
     if (mounted) {
       // Apply theme class to both html and body elements
@@ -104,17 +115,22 @@ export function ThemeProvider({
       document.documentElement.classList.add(theme);
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(theme);
+
+      // The cookie write lives HERE and not in ThemeToggle, so that the programmatic
+      // setTheme path persists too and cannot drift from the toggle path. It is what makes
+      // the NEXT request server-correct; without it the server would resolve 'light' forever
+      // and the whole D2 change would do nothing.
+      try {
+        document.cookie = themeCookieString(theme, window.location.protocol === 'https:');
+      } catch {
+        // Sandboxed iframes and hard cookie-blocking modes. Losing the cookie costs a
+        // wrong server-rendered class that the pre-paint bootstrap still corrects, so this
+        // degrades to the pre-D2 behaviour rather than breaking the page.
+      }
       try {
         localStorage.setItem(THEME_STORAGE_KEY, theme);
       } catch {
-        // The read in readStoredTheme() above was already guarded; this write was not.
-        // localStorage.setItem throws outright (not just returns null) in Safari private
-        // browsing, in a sandboxed iframe without allow-same-origin, and when cookies/
-        // site-data are blocked. Left unguarded, that throw happens inside a React effect
-        // and propagates to the App Router error boundary -- an affected user got the
-        // global error page instead of the dashboard, rather than just a lost preference.
-        // Fail silently, matching the guarded read's degradation: the theme simply does
-        // not persist. Found by adversarial review, 2026-08-16.
+        // Safari private mode.
       }
     }
   }, [theme, mounted]);

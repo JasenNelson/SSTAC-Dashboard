@@ -17,6 +17,11 @@ import { test, expect } from '@playwright/test';
  * ThemeProvider agrees with the bootstrap and does not flip the theme back after hydration.
  * It passes with or without the script, by design.
  *
+ * Since D2 the server ALSO resolves the theme, from a cookie. That does not retire any test
+ * below: these four all run with no theme cookie set, which is exactly the population the
+ * bootstrap still serves (first-time visitors and anyone whose cookie was stripped). The
+ * cookie-path assertions are the second describe block in this file.
+ *
  * The glob carries a trailing `*` so it also matches Next's dev-mode cache-busted chunks
  * (`main-app.js?v=1786856270857`). Playwright anchors glob matches against the FULL url
  * including the query string, so `**\/_next\/**\/*.js` alone silently let those through.
@@ -82,5 +87,120 @@ test.describe('B11 theme bootstrap (no flash of light theme)', () => {
     // ThemeProvider's own effect must agree with the bootstrap, or the user sees a second
     // flash in the other direction after hydration.
     await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+  });
+});
+
+/**
+ * Owner decision D2, option C -- cookie-based theme resolution.
+ *
+ * These are the assertions that CANNOT exist at unit level, and the reason is not incidental:
+ * every one of them requires a real SERVER RENDER. jsdom has no server, no cookie jar the
+ * server can see, and no paint pipeline. A green Vitest run proves the resolver functions
+ * agree with each other; only this file proves the server actually used them.
+ *
+ * NOT RUN in the session that wrote them (2026-08-16): two other suites held the dev ports,
+ * so these were authored against the existing blocked-bundle pattern above but never
+ * executed. Treat them as unverified until a real run.
+ */
+test.describe('D2 cookie-resolved theme (server render)', () => {
+  test('serves class="dark" on <html> from the cookie alone, with no script involved', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    // No localStorage seeded and no reliance on the bootstrap: this must come off the wire.
+    await context.addCookies([
+      { name: 'theme', value: 'dark', url: baseURL! },
+    ]);
+
+    const response = await page.goto('/');
+    const html = await response!.text();
+
+    const htmlTag = html.slice(html.indexOf('<html'), html.indexOf('>', html.indexOf('<html')));
+    expect(htmlTag, 'server did not put the resolved theme on <html>').toContain('dark');
+  });
+
+  test('serves the CORRECT toggle label for a dark cookie, with the JS bundle blocked', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    // This is the D2 defect itself. With the bundle blocked React never hydrates, so the
+    // accessible name in the DOM is exactly what the SERVER rendered. Before D2 this said
+    // "Switch to dark mode" on a dark page.
+    await context.addCookies([
+      { name: 'theme', value: 'dark', url: baseURL! },
+    ]);
+    await page.route(CHUNK_GLOB, (route) => route.abort());
+
+    await page.goto('/', { waitUntil: 'commit' });
+
+    await expect(page.getByRole('button', { name: /switch to light mode/i }).first()).toBeVisible();
+  });
+
+  test('resolves a corrupt cookie to light rather than putting it on <html>', async ({
+    page,
+    context,
+    baseURL,
+  }) => {
+    // The cookie is client-writable by necessity (the bootstrap must read it), so the server
+    // must validate rather than interpolate.
+    await context.addCookies([
+      { name: 'theme', value: 'chartreuse', url: baseURL! },
+    ]);
+
+    const response = await page.goto('/');
+    const html = await response!.text();
+    const htmlTag = html.slice(html.indexOf('<html'), html.indexOf('>', html.indexOf('<html')));
+
+    expect(htmlTag).not.toContain('chartreuse');
+    expect(htmlTag).toContain('light');
+  });
+
+  test('migrates a localStorage-only user: writes the cookie and keeps the page dark', async ({
+    page,
+    context,
+  }) => {
+    // The section-5 migration. An existing user has localStorage and no cookie, so the SERVER
+    // resolves light on this one request; the bootstrap must correct the class before paint
+    // AND write the cookie so the next request is server-correct.
+    await context.clearCookies();
+    await page.addInitScript(() => {
+      window.localStorage.setItem('theme', 'dark');
+    });
+
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+
+    const cookies = await context.cookies();
+    const themeCookie = cookies.find((c) => c.name === 'theme');
+    expect(themeCookie, 'migration did not write the theme cookie').toBeTruthy();
+    expect(themeCookie!.value).toBe('dark');
+  });
+
+  test('toggling writes a cookie, so a full reload stays dark with no localStorage', async ({
+    page,
+    context,
+  }) => {
+    // End-to-end proof that the write path feeds the read path. Clearing localStorage before
+    // the reload is what makes this about the COOKIE and not about the old mechanism.
+    await page.goto('/');
+    await page.waitForLoadState('networkidle');
+
+    await page.getByRole('button', { name: /switch to dark mode/i }).first().click();
+    await expect(page.locator('html')).toHaveClass(/\bdark\b/);
+
+    await page.evaluate(() => window.localStorage.removeItem('theme'));
+    await page.route(CHUNK_GLOB, (route) => route.abort());
+    const response = await page.goto('/', { waitUntil: 'commit' });
+
+    const html = await response!.text();
+    const htmlTag = html.slice(html.indexOf('<html'), html.indexOf('>', html.indexOf('<html')));
+    expect(htmlTag).toContain('dark');
+
+    const cookies = await context.cookies();
+    expect(cookies.find((c) => c.name === 'theme')?.value).toBe('dark');
   });
 });

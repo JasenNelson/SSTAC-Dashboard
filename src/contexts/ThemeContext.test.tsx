@@ -20,6 +20,16 @@ import ThemeToggle from '@/components/ThemeToggle';
  * corrupt stored value" FAIL on both the class assertion and the exposed theme value.
  */
 
+/**
+ * Cookie hygiene is required in EVERY block, not just the cookie one: since D2 the provider's
+ * persistence effect writes the theme cookie on every render, so a leaked cookie from an
+ * earlier test would silently drive a later one's resolution. jsdom shares document.cookie
+ * across tests in a file.
+ */
+function clearThemeCookie() {
+  document.cookie = 'theme=; path=/; max-age=0';
+}
+
 function ThemeProbe() {
   const { theme } = useTheme();
   return <span data-testid="theme-probe">{theme}</span>;
@@ -28,12 +38,14 @@ function ThemeProbe() {
 describe('ThemeProvider stored-value handling', () => {
   beforeEach(() => {
     window.localStorage.clear();
+    clearThemeCookie();
     document.documentElement.classList.remove('light', 'dark', 'chartreuse');
     document.body.classList.remove('light', 'dark', 'chartreuse');
   });
 
   afterEach(() => {
     window.localStorage.clear();
+    clearThemeCookie();
     document.documentElement.classList.remove('light', 'dark', 'chartreuse');
     document.body.classList.remove('light', 'dark', 'chartreuse');
   });
@@ -121,12 +133,14 @@ describe('ThemeProvider first-render seed (audit D2)', () => {
   beforeEach(() => {
     renders = [];
     window.localStorage.clear();
+    clearThemeCookie();
     document.documentElement.classList.remove('light', 'dark');
     document.body.classList.remove('light', 'dark');
   });
 
   afterEach(() => {
     window.localStorage.clear();
+    clearThemeCookie();
     document.documentElement.classList.remove('light', 'dark');
     document.body.classList.remove('light', 'dark');
   });
@@ -219,5 +233,74 @@ describe('ThemeProvider first-render seed (audit D2)', () => {
     expect(path).not.toContain('M20.354 15.354');
 
     container.remove();
+  });
+});
+
+/**
+ * Owner decision D2, option C -- ThemeProvider's half of the cookie contract.
+ *
+ * WHAT THESE CANNOT PROVE: that the cookie's SameSite/Secure attributes behave, that the
+ * server read it, or that anything happened before paint. jsdom exposes only name=value on
+ * read-back and has no paint pipeline. The server round trip is e2e-only.
+ */
+describe('ThemeProvider cookie persistence (audit D2)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+  });
+
+  afterEach(() => {
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+  });
+
+  it('writes the theme cookie, not only localStorage, so the next request is server-correct', () => {
+    // Without this write the server resolves 'light' forever and the entire D2 change is
+    // inert -- the most likely way for this feature to "work" in tests and do nothing live.
+    render(
+      <ThemeProvider initialTheme="dark">
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(document.cookie).toContain('theme=dark');
+    expect(window.localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('lets the cookie win over a disagreeing localStorage value', () => {
+    // Two tabs, bfcache, or a partially cleared browser. The cookie is what the server
+    // rendered from, so preferring localStorage would flip the page after hydration.
+    document.cookie = 'theme=dark; path=/';
+    window.localStorage.setItem('theme', 'light');
+
+    render(
+      <ThemeProvider initialTheme="dark">
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
+    // ...and the loser is rewritten, so the two stores reconverge.
+    expect(window.localStorage.getItem('theme')).toBe('dark');
+  });
+
+  it('treats a corrupt cookie as light rather than falling through to a stored dark', () => {
+    // Matches what the server did with the same corrupt cookie. Falling through would put
+    // the client at odds with the HTML that was already served.
+    document.cookie = 'theme=chartreuse; path=/';
+    window.localStorage.setItem('theme', 'dark');
+
+    render(
+      <ThemeProvider>
+        <ThemeProbe />
+      </ThemeProvider>,
+    );
+
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('light');
+    expect(document.documentElement.classList.contains('chartreuse')).toBe(false);
   });
 });
