@@ -632,6 +632,58 @@ export const FIXTURE_PARAMETER_VALUE_RECORDS: ParameterValueRecord[] =
       "TRV"
     ],
     "candidate_group_id": "human-health-food__benzo_a_pyrene__rfd_oral_mg_per_kg_bw_day__US_federal"
+  },
+  // Round-2 P3-3: this row previously read "Zinc oral slope factor - Health
+  // Canada", value 1.0, attributed to the REAL source id
+  // `src-health-canada-trv-v4-2025`. That was a fabricated regulatory value --
+  // zinc is not a carcinogen and Health Canada publishes no oral slope factor
+  // for it -- and this repo's standing rule is that regulatory values are never
+  // invented, in fixtures included. Rewritten as an unmistakably synthetic
+  // substance ("fixture-substance-alpha") attributed to an equally synthetic
+  // source id, so nothing here can be mistaken for, or harvested as, a real
+  // toxicological value. The row's ONLY job is to exercise the
+  // qa_status=superseded + evidence_support_status=approved_source_backed
+  // rendering combination.
+  {
+    "parameter_value_id": "pv-fixture-alpha-hh-food-sf-superseded",
+    "substance_key": "fixture_substance_alpha",
+    "pathway": "human-health-food",
+    "input_key": "sf_oral_per_mg_per_kg_bw_per_day",
+    "display_name": "Fixture Substance Alpha oral slope factor (synthetic, superseded)",
+    "value": 1.0,
+    "unit": "per mg/kg-bw/day",
+    "value_type": "single_value",
+    "default_status": "not_default",
+    "evidence_support_status": "approved_source_backed",
+    "extraction_status": "extracted_from_source",
+    "qa_status": "superseded",
+    "source_ids": [
+      "src-fixture-synthetic-authority-0000"
+    ],
+    "equation_ids": [
+      "eq-human-health-food-web"
+    ],
+    "jurisdiction": "Canada_federal",
+    "applicability": "SYNTHETIC TEST FIXTURE - not a regulatory value and not derived from any real source. Retained only to exercise the qa_status=superseded + evidence_support_status=approved_source_backed combination: superseded rows still carry an approved-source pill with 'superseded' folded into the muted plain-text line.",
+    "uncertainty": null,
+    "evidence_items": [
+      {
+        "source_id": "src-fixture-synthetic-authority-0000",
+        "locator": "Synthetic fixture authority, table 0 (does not exist)",
+        "value_text": "1.0E+00 (mg/kgBW-day)-1",
+        "extraction_method": "manual_source_extraction",
+        "extracted_by": "fixture",
+        "extracted_at": "2026-05-23",
+        "qa_status": "superseded",
+        "reviewed_by": "fixture",
+        "reviewed_at": "2026-05-23",
+        "note": "Synthetic fixture evidence; superseded status retained for QA-status fixture coverage.",
+        "evidence_id": "ev-pv-fixture-alpha-hh-food-sf-superseded-1",
+        "locator_type": "source_table"
+      }
+    ],
+    "review_notes": "Synthetic superseded fixture row for EvidenceLibrary #6 test coverage.",
+    "candidate_group_id": "human-health-food__fixture_substance_alpha__sf_oral_per_mg_per_kg_bw_per_day__superseded"
   }
 ] as ParameterValueRecord[];
 
@@ -846,6 +898,32 @@ export const FIXTURE_SOURCE_RECORDS: SourceRecord[] =
     "checked_at": "2026-05-23",
     "conflict_rule": "BC legal requirements, protocols, and ministry guidance supersede federal guidance where conflicts exist.",
     "supersedes_source_ids": []
+  },
+  // Round-2 P3-3: synthetic source backing the synthetic superseded parameter
+  // value above. Deliberately not a real publisher, document, or URL, so no
+  // fabricated value is ever attributed to a real regulatory authority.
+  {
+    "source_id": "src-fixture-synthetic-authority-0000",
+    "short_citation": "Synthetic Fixture Authority (test-only, not real)",
+    "title": "Synthetic fixture source used only by EvidenceLibrary unit tests",
+    "year": 2026,
+    "publisher": "Synthetic Fixture Authority (does not exist)",
+    "doi": null,
+    "url": null,
+    "zotero_item_key": null,
+    "zotero_collection_path": null,
+    "zotero_attachment_keys": [],
+    "zotero_status": "not_linked",
+    "external_file_hint": null,
+    "file_storage": "none",
+    "notes": "TEST FIXTURE ONLY. Not a regulatory source. Exists so the synthetic superseded parameter value has a source id to resolve against without attributing an invented value to a real authority.",
+    "authority_scope": "test-fixture",
+    "currentness_status": "needs_currentness_check",
+    "version": null,
+    "page_last_modified": null,
+    "checked_at": null,
+    "conflict_rule": "Not applicable - synthetic test fixture.",
+    "supersedes_source_ids": []
   }
 ] as SourceRecord[];
 
@@ -855,7 +933,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
     "equation_id": "eq-eco-direct-eqp-di-toro",
     "pathway": "eco-direct-eqp",
     "display_name": "Eco-Direct EqP sediment benchmark",
-    "equation_latex": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
+    "equation_latex": "\\log K_{oc} = 0.00028 + 0.983 \\log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
     "plain_language": "Estimate organic-carbon partitioning from log Kow, convert a water chronic value to an organic-carbon-normalized sediment benchmark, then scale by sediment organic carbon.",
     "input_keys": [
       "logKow",
@@ -880,7 +958,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "log K_{oc} = 0.00028 + 0.983 log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
+        "value_text": "\\log K_{oc} = 0.00028 + 0.983 \\log K_{ow}; ESB_{oc} = FCV K_{oc} 10^{-3}; SedS = ESB_{oc} f_{oc}",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
@@ -898,7 +976,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
     "equation_id": "eq-human-health-food-web",
     "pathway": "human-health-food",
     "display_name": "Human Health Food Web sediment screen",
-    "equation_latex": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+    "equation_latex": "C_{tissue} = targetDose BW / (IR_{food} BA_o); SedS = C_{tissue} / BSAF_{effective}",
     "plain_language": "Derive a protective tissue concentration from the selected dose endpoint and food ingestion rate, then back-calculate a sediment value through the effective BSAF.",
     "input_keys": [
       "rfd_oral_mg_per_kg_bw_day",
@@ -944,7 +1022,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "C_tissue = targetDose BW / (IR_food BA_o); SedS = C_tissue / BSAF_effective",
+        "value_text": "C_{tissue} = targetDose BW / (IR_{food} BA_o); SedS = C_{tissue} / BSAF_{effective}",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",
@@ -962,7 +1040,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
     "equation_id": "eq-human-health-direct-contact",
     "pathway": "human-health-direct",
     "display_name": "Human Health Direct Contact sediment screen",
-    "equation_latex": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+    "equation_latex": "Dose = C_s CF EF ED (IR_{sed} BA_o + SA AF_{sed} ABS_d) / (BW AT)",
     "plain_language": "Solve the direct-contact exposure equation for sediment concentration using the available non-cancer and cancer endpoints, then use the lower screening value.",
     "input_keys": [
       "rfd_oral_mg_per_kg_bw_day",
@@ -1008,7 +1086,7 @@ export const FIXTURE_EQUATION_RECORDS: EquationRecord[] =
       {
         "source_id": "src-current-calculator-design-v1",
         "locator": "Current calculator implementation; source equation citation pending",
-        "value_text": "Dose = C_s CF EF ED (IR_sed BA_o + SA AF_sed ABS_d) / (BW AT)",
+        "value_text": "Dose = C_s CF EF ED (IR_{sed} BA_o + SA AF_{sed} ABS_d) / (BW AT)",
         "extraction_method": "current_calculator_scaffold",
         "extracted_by": "codex",
         "extracted_at": "2026-05-23",

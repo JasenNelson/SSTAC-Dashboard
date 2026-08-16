@@ -17,22 +17,28 @@ export default function Home() {
       </header>
 
       {/* Hero Section */}
-      <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-sky-900 text-white">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-          <div className="text-center">
-            <h1 className="text-5xl font-bold mb-6">
+          <div className="text-left max-w-4xl">
+            <h1 className="text-5xl font-bold mb-4 text-slate-900 dark:text-white">
               Sediment Standards Project
             </h1>
-            <p className="text-xl text-sky-200 max-w-4xl mx-auto leading-relaxed mb-8">
-              Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards
+            <p className="font-mono text-xs uppercase tracking-wide text-slate-500 dark:text-slate-400 mb-4">
+              Current Focus: Phase 2 -- Foundational Research and Framework Development (2026-2027)
             </p>
-            <div className="inline-flex items-center px-6 py-3 bg-white/10 backdrop-blur-md rounded-full border border-white/20 shadow-xl mb-4">
-              <span className="text-white text-sm font-bold tracking-wide uppercase">
-                🚀 Current Focus: Phase 2 - Foundational Research and Framework Development (2026-2027)
-              </span>
-            </div>
-            <p className="text-sky-100 max-w-2xl mx-auto">
-              Focused on the Matrix Sediment Standards Derivation Options and BN-RRM implementation.
+            <p className="text-xl text-slate-600 dark:text-slate-300 leading-relaxed">
+              Developing a modern, robust scientific framework for updating BC&apos;s Contaminated Sites Regulation sediment standards.
+            </p>
+            {/* Round-2 P1-1 restore: decision #10 authorised dropping the gradient and
+                keeping the description short -- it did NOT authorise deleting the only
+                public statement of the two active Phase 2 workstreams. Restored here in
+                tightened form (one line, muted, below the lead) so both the Matrix
+                Sediment Standards Derivation Options and BN-RRM stay identifiable. */}
+            <p
+              data-testid="landing-hero-workstreams"
+              className="mt-3 text-base text-slate-500 dark:text-slate-400 leading-relaxed"
+            >
+              Active workstreams: Matrix Sediment Standards Derivation Options and BN-RRM implementation.
             </p>
           </div>
         </div>
@@ -79,7 +85,7 @@ export default function Home() {
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <span className="text-2xl">📊</span>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Dashboard</h3>
@@ -94,7 +100,7 @@ export default function Home() {
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-green-100 dark:bg-green-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <span className="text-2xl">📈</span>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">Survey Results</h3>
@@ -109,7 +115,7 @@ export default function Home() {
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
+              <div className="w-12 h-12 bg-slate-100 dark:bg-slate-700 rounded-xl flex items-center justify-center group-hover:scale-110 transition-transform">
                 <span className="text-2xl">🎯</span>
               </div>
               <h3 className="text-xl font-semibold text-slate-900 dark:text-white">CEW 2025</h3>

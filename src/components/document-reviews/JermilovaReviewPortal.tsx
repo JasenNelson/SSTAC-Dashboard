@@ -815,7 +815,8 @@ export default function JermilovaReviewPortal({
           )}
 
           <div ref={contentRef}>
-            <MathRenderer content={methodologyContent || ''} />
+            {/* Round-2 P2-2: document column is bg-white dark:bg-slate-950. */}
+            <MathRenderer content={methodologyContent || ''} fadeFrom="from-white dark:from-slate-950" />
           </div>
         </div>
       </div>

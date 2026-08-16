@@ -94,6 +94,37 @@ function selectSubstance(key: string) {
   fireEvent.click(screen.getByTestId(`substance-option-${key}`));
 }
 
+describe('MatrixDashboard -- primary tabpanel focus contract (APG)', () => {
+  it('keeps the primary tabpanel out of the tab order now that the Vision tab has focusable content', () => {
+    // This guard exists because the change it pins had NO coverage when it was made.
+    //
+    // The panel previously carried tabIndex={0}, justified in a code comment by
+    // "ConceptualMatrix has no interactive elements at all" -- without it, a keyboard
+    // user could not focus the panel to scroll it. The Vision rebuild gives every
+    // receptor-pathway a <details>/<summary> disclosure, so that justification is dead.
+    // Per WAI-ARIA APG, a tabpanel that CONTAINS focusable children must not itself be
+    // in the tab order; leaving it at 0 inserts a redundant stop before the disclosures.
+    //
+    // Two-sided falsification:
+    //  - Positive: the panel is present and explicitly tabIndex=-1.
+    //  - Negative: it must NOT be 0. Restoring tabIndex={0} fails by name rather than
+    //    silently reintroducing the redundant stop, which no gate would otherwise catch
+    //    (jsdom renders it fine either way, and nothing else asserts on this attribute).
+    render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
+
+    // No `?? panels[0]` fallback on purpose: the first draft of this test had one, and
+    // it silently masked a wrong id (the panel is `matrix-dashboard-tabpanel`, not
+    // `matrix-primary-tabpanel`) by testing whichever panel happened to be first. A
+    // fallback here would make the test pass while asserting against the wrong element.
+    const primary = screen
+      .getAllByRole('tabpanel')
+      .find((p) => p.id === 'matrix-dashboard-tabpanel');
+    expect(primary).toBeDefined();
+    expect(primary?.getAttribute('tabindex')).toBe('-1');
+    expect(primary?.getAttribute('tabindex')).not.toBe('0');
+  });
+});
+
 describe('MatrixDashboard -- Matrix Options guide copy', () => {
   it('keeps the v1 guide focused on workflow instead of placeholder status copy', () => {
     expect(GUIDE_MARKDOWN).toMatch(/## 1\. How to Use This Workspace/);
@@ -608,6 +639,40 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     );
     expect(hhReference).not.toHaveTextContent(/Background UTL/i);
     expect(screen.queryByText(/Eco-Direct EqP sediment benchmark/i)).not.toBeInTheDocument();
+  });
+
+  // UI batch Group B, 2026-08-15, decision #8: render the drawer equation
+  // through MathRenderer instead of a raw <pre>{equation_latex}</pre>.
+  it('#8: renders the derivation equation through MathRenderer, not a raw <pre>', () => {
+    render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(
+      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
+    );
+
+    const eqpReference = screen.getByTestId('jurisdictional-equation-reference');
+    // MathRenderer is mocked (see top of file) to a div[data-testid="math-renderer-mock"]
+    // that renders its raw `content` prop -- assert the equation is routed through it,
+    // wrapped in $$...$$ display-math delimiters on their own lines (remark-math only
+    // treats $$...$$ as block/display math that way -- see MathRenderer.tsx comment).
+    const mathMock = within(eqpReference).getByTestId('math-renderer-mock');
+    expect(mathMock.textContent).toMatch(/^\$\$\n.+\n\$\$$/);
+    // The old raw-LaTeX <pre> is gone.
+    expect(eqpReference.querySelector('pre')).not.toBeInTheDocument();
+  });
+
+  // UI batch Group B, 2026-08-15, decision #21: delete the restated-tab
+  // banner; keep the tabpanel id/aria-labelledby wiring intact.
+  it('#21: does not render the restated-tab banner, but keeps tabpanel wiring', () => {
+    const { container } = render(<MatrixDashboard {...DEFAULT_PROPS} />);
+    fireEvent.click(
+      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
+    );
+
+    expect(screen.queryByText(/Currently reviewing the/i)).not.toBeInTheDocument();
+    const tabpanel = container.querySelector('#matrix-jurisdictional-side-tabpanel');
+    expect(tabpanel).not.toBeNull();
+    expect(tabpanel).toHaveAttribute('role', 'tabpanel');
+    expect(tabpanel).toHaveAttribute('aria-labelledby');
   });
 
   it('hydrates the Calculator sidebar audience guide tier from localStorage', () => {

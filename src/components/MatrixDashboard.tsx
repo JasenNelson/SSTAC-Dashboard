@@ -250,7 +250,10 @@ interface MatrixDashboardProps {
   siteAggregateFetchErrorMessage?: string | null;
 }
 
-const TABS = ['The Guide', 'Conceptual Model', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
+// 'Vision for Modernizing Schedule 3.4' (was 'Conceptual Model'): the view now
+// states the project's own three-part vision for Schedule 3.4, sourced from the
+// Phase 2 project plan, so the generic label no longer described it.
+const TABS = ['The Guide', 'Vision for Modernizing Schedule 3.4', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
 // Display labels for the top tabs. The internal tab IDENTIFIER strings in TABS
 // are load-bearing (compared against activeTopTab in control flow throughout
 // this file), so they MUST stay stable. Render the user-facing label via this
@@ -1086,7 +1089,7 @@ export default function MatrixDashboard({
   // Enter/Space handling is needed here.
   //
   // Manual activation was chosen for THIS tablist because its panels are
-  // expensive to mount/unmount: Conceptual Model, the Jurisdictional
+  // expensive to mount/unmount: the Vision page, the Jurisdictional
   // Frameworks document, TWG Review, the Leaflet-based Interactive Map,
   // the Calculator (5 stacked calculators + in-progress user input), and
   // the SSD Workbench. Automatic activation would mount-then-unmount each
@@ -1267,8 +1270,8 @@ export default function MatrixDashboard({
       }
       case 'The Guide':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Use the guide to understand the project phases, workspace tabs, and key terms.</p>;
-      case 'Conceptual Model':
-        return <p className="text-sm text-slate-500 dark:text-slate-400">Review how pathways, receptors, and site conditions fit together.</p>;
+      case 'Vision for Modernizing Schedule 3.4':
+        return <p className="text-sm text-slate-500 dark:text-slate-400">Review the three-part vision for Schedule 3.4 and the four Part 1 receptor-pathways.</p>;
       case 'Interactive Map':
         return <p className="text-sm text-slate-500 dark:text-slate-400">Inspect sediment samples, measurements, filters, and map-linked selections.</p>;
       case 'TWG Review':
@@ -1339,9 +1342,20 @@ export default function MatrixDashboard({
                     {eq.display_name}
                   </summary>
                   <div className="space-y-2 border-t border-slate-200 px-3 py-3 text-xs text-slate-700 dark:border-slate-800 dark:text-slate-200">
-                    <pre className="overflow-x-auto whitespace-pre-wrap font-mono text-xs text-slate-800 dark:text-slate-100">
-                      {eq.equation_latex}
-                    </pre>
+                    {/* remark-math only recognizes $$...$$ as BLOCK/display
+                        math (KaTeX displayMode) when the delimiters sit on
+                        their own lines; a same-line `$$...$$` parses as
+                        inline math instead. The surrounding newlines here
+                        are required, not stylistic. */}
+                    {/* Round-2 P2-2: this drawer's <details> surface is
+                        `bg-white dark:bg-slate-950` (see the className two
+                        elements up), NOT the ScrollFadeRegion default of
+                        dark:slate-900 -- pass the real surface or the fade
+                        paints a mismatched stripe in dark mode. */}
+                    <MathRenderer
+                      content={`$$\n${eq.equation_latex}\n$$`}
+                      fadeFrom="from-white dark:from-slate-950"
+                    />
                     <p className="leading-relaxed text-slate-600 dark:text-slate-300">
                       {eq.plain_language}
                     </p>
@@ -1378,12 +1392,9 @@ export default function MatrixDashboard({
             id={JURISDICTIONAL_SIDE_TABPANEL_ID}
             aria-labelledby={sideTabId(activeSideTab)}
           >
-            <div className="bg-sky-50 dark:bg-sky-900/20 border-l-4 border-sky-500 p-4 rounded-r-lg">
-              <p className="text-sm text-sky-800 dark:text-sky-200 font-medium">
-                Currently reviewing the <span className="font-bold">{activeSideTab}</span> methodology. Scroll to locate specific regulatory derivations within the document below.
-              </p>
-            </div>
-            <MathRenderer content={contentToRender} />
+            {/* Round-2 P2-2: this panel paints on the shell's main-content
+                surface (`bg-white dark:bg-slate-950`, non-calculator branch). */}
+            <MathRenderer content={contentToRender} fadeFrom="from-white dark:from-slate-950" />
           </div>
         );
       case 'The Guide': {
@@ -1393,20 +1404,24 @@ export default function MatrixDashboard({
         const section2Content = guideParts[2] || '';
 
         const cardClassName = "bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-700";
+        // Round-2 P2-2: Guide section cards are dark:bg-slate-800 -- a DIFFERENT
+        // surface from the Calculator drawer's dark:bg-slate-950 above, which is
+        // exactly why ScrollFadeRegion/MathRenderer cannot have one right default.
+        const guideFadeFrom = 'from-white dark:from-slate-800';
 
         return (
           <div className="space-y-6">
             <div className={cardClassName}>
-              <MathRenderer content={introContent} />
+              <MathRenderer content={introContent} fadeFrom={guideFadeFrom} />
             </div>
             {section1Content && (
               <div className={cardClassName}>
-                <MathRenderer content={section1Content} />
+                <MathRenderer content={section1Content} fadeFrom={guideFadeFrom} />
               </div>
             )}
             {section2Content && (
               <div className={cardClassName}>
-                <MathRenderer content={section2Content} />
+                <MathRenderer content={section2Content} fadeFrom={guideFadeFrom} />
               </div>
             )}
             <div className={cardClassName}>
@@ -1415,7 +1430,7 @@ export default function MatrixDashboard({
           </div>
         );
       }
-      case 'Conceptual Model':
+      case 'Vision for Modernizing Schedule 3.4':
         return (
           <div className="w-full">
             <ConceptualMatrix />
@@ -2225,13 +2240,21 @@ export default function MatrixDashboard({
             // Guide' always renders Phase2TasksSection's Expand-all /
             // Collapse-all / per-task toggle buttons, so it already has a
             // keyboard path in and tabIndex={-1} (per APG) is correct.
-            // 'Conceptual Model' renders ConceptualMatrix, which has no
-            // interactive elements at all (verified: no button/input/
-            // select/anchor in ConceptualMatrix.tsx) -- without tabIndex={0}
-            // a keyboard user cannot focus this panel to scroll it.
-            tabIndex={activeTopTab === 'Conceptual Model' ? 0 : -1}
+            // The Vision tab USED to need tabIndex={0}: ConceptualMatrix had no
+            // interactive elements, so without it a keyboard user could not focus
+            // the panel to scroll it. That is no longer true -- the rebuilt Vision
+            // page gives every receptor-pathway a <details>/<summary> disclosure,
+            // which is focusable. Per APG, a tabpanel that CONTAINS focusable
+            // children must not itself be in the tab order, so it now takes
+            // tabIndex={-1} like every other tab. Leaving it at 0 would insert a
+            // redundant stop before the four disclosures.
+            tabIndex={-1}
           >
-            <div className={`${activeTopTab === 'The Guide' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-8 py-12`}>
+            {/* The Vision tab joins The Guide at the wider measure. Its content is a
+                2x2 matrix of four content-bearing quadrants, which at max-w-4xl left
+                the quadrants cramped and the page mostly empty on a desktop display.
+                Prose-only tabs keep the narrower, more readable measure. */}
+            <div className={`${activeTopTab === 'The Guide' || activeTopTab === 'Vision for Modernizing Schedule 3.4' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-8 py-12`}>
               {renderContent()}
             </div>
           </div>

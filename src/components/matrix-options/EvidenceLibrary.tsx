@@ -2,6 +2,7 @@
 
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { VALUES_PAGE_SIZE, computeValuesPagination } from './evidenceLibraryPagination';
+import ScrollFadeRegion from '../ScrollFadeRegion';
 import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
@@ -407,6 +408,40 @@ function statusTone(status: string): string {
   return 'bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900 dark:text-slate-200 dark:border-slate-700';
 }
 
+/**
+ * P2-1 (owner-decided 2026-08-15). Where qa_status is folded into the muted
+ * plain-text line rather than given its own pill, it rendered in the same grey as
+ * the neutral statuses around it. 41 rows are simultaneously
+ * qa_status=superseded AND evidence_support_status=approved_source_backed, so the
+ * green "Approved source-backed" pill plus undifferentiated grey text read as two
+ * reassuring signals with the warning demoted to 12px grey.
+ *
+ * This tones the TEXT to the semantics `statusTone()` already encodes for the pill
+ * form -- amber for needs-review states, rose for superseded -- so the two
+ * renderings of the same status can never disagree. Statuses with no warning
+ * meaning inherit the surrounding muted colour unchanged.
+ */
+function qaStatusTextTone(status: string): string {
+  if (status.includes('needs')) {
+    return 'font-semibold text-amber-700 dark:text-amber-300';
+  }
+  if (status === 'superseded') {
+    return 'font-semibold text-rose-700 dark:text-rose-300';
+  }
+  return '';
+}
+
+/**
+ * Renders a qa_status as plain (non-pill) text, toned per `qaStatusTextTone`.
+ * Emits a bare string when the status carries no warning meaning, so no
+ * pointless wrapper element appears in the neutral case.
+ */
+function QaStatusText({ value }: { value: string }) {
+  const tone = qaStatusTextTone(value);
+  const label = humanizeCatalogLabel(value);
+  return tone ? <span className={tone}>{label}</span> : <>{label}</>;
+}
+
 function StatusBadge({ value }: { value: string }) {
   return (
     <span
@@ -489,7 +524,7 @@ function AllScaffoldsBanner() {
 
 // Accessible pager for the Values table. Real <button>s + a <nav> landmark; disabled at the ends.
 // VALUES_PAGE_SIZE + the page math live in ./evidenceLibraryPagination (pure + unit-tested).
-function ValuesPagination({
+export function ValuesPagination({
   page,
   pageCount,
   pageSize,
@@ -519,7 +554,7 @@ function ValuesPagination({
           type="button"
           onClick={onPrev}
           disabled={page <= 0}
-          className="rounded border border-slate-300 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+          className="min-h-[44px] rounded border border-slate-300 px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
         >
           Prev
         </button>
@@ -530,7 +565,7 @@ function ValuesPagination({
           type="button"
           onClick={onNext}
           disabled={page >= pageCount - 1}
-          className="rounded border border-slate-300 px-2 py-1 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
+          className="min-h-[44px] rounded border border-slate-300 px-4 py-3 font-semibold disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-700"
         >
           Next
         </button>
@@ -1630,7 +1665,7 @@ function SupabaseEvidenceItems({
           </div>
           <div className="mt-1">
             {humanizeCatalogLabel(item.locator_type)};{' '}
-            {humanizeCatalogLabel(item.qa_status)}
+            <QaStatusText value={item.qa_status} />
           </div>
           {item.value_text && (
             <div className="mt-1 font-mono text-slate-700 dark:text-slate-200">
@@ -1998,7 +2033,7 @@ function ValueDetailPanel({
                 </div>
                 <div className="mt-1">
                   {humanizeCatalogLabel(evidence.locator_type)};{' '}
-                  {humanizeCatalogLabel(evidence.qa_status)}
+                  <QaStatusText value={evidence.qa_status} />
                 </div>
                 <div className="mt-1">Extracted {evidence.extracted_at}</div>
               </div>
@@ -4364,23 +4399,46 @@ export default function EvidenceLibrary({
             visibleValues.every((row) => row.record.qa_status === 'needs_review' && row.record.evidence_support_status === 'current_calculator_scaffold') && (
               <AllScaffoldsBanner />
             )}
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
-            <table className="w-full table-fixed text-sm">
+          <ScrollFadeRegion
+            className="rounded-lg border border-slate-200 dark:border-slate-800"
+            fadeFrom="from-white dark:from-slate-950"
+          >
+            <table className="w-full min-w-[640px] table-fixed text-sm">
               {/* Fixed column proportions: the text-heavy columns (review status,
                   default/evidence, applicability, sources) get the room; the short
-                  numeric "Current value" no longer hogs width. */}
+                  numeric "Current value" no longer hogs width. min-w-[640px] keeps this
+                  layout at wide widths (where 100% already exceeds the floor) while
+                  forcing genuine horizontal overflow on phone-width containers so the
+                  sticky first column and ScrollFadeRegion's edge fade actually engage
+                  instead of being permanently inert (scrollWidth === clientWidth). */}
+              {/* Round-2 P2-5: "Current value" was w-[9%] with a
+                  `whitespace-nowrap` cell. Under `table-layout: fixed` an
+                  unwrappable cell overflows VISIBLY rather than widening its
+                  column, so at a 1000px container (~66px content box) a value
+                  like "6.0E-05 mg/kg-bw/day" (~144px) painted straight over the
+                  neighbouring evidence-status badge and both strings became
+                  unreadable. Horizontal scroll does not fix that -- panning does
+                  not un-overlap two strings drawn on top of each other, and a
+                  regulatory value must never render illegibly.
+                  Fix is both halves: widen the column to 16% AND let the cell
+                  wrap (see the `break-words` cell below), so an unusually long
+                  unit string costs a second line instead of an overlap.
+                  Arithmetic re-checked for every column at the 640px floor:
+                  no other cell sets `whitespace-nowrap`, so every other column
+                  already wraps and cannot overlap its neighbour. Widths still
+                  total exactly 100%. */}
               <colgroup>
                 <col className="w-[20%]" />
                 <col className="w-[8%]" />
-                <col className="w-[9%]" />
+                <col className="w-[16%]" />
                 <col className="w-[13%]" />
-                <col className="w-[20%]" />
-                <col className="w-[15%]" />
-                <col className="w-[15%]" />
+                <col className="w-[16%]" />
+                <col className="w-[13%]" />
+                <col className="w-[14%]" />
               </colgroup>
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
-                  <th className="px-3 py-2 font-semibold">Parameter</th>
+                  <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 font-semibold shadow-[2px_0_4px_rgba(0,0,0,0.08)] dark:bg-slate-900">Parameter</th>
                   <th className="px-3 py-2 font-semibold">Pathway</th>
                   <th className="px-3 py-2 font-semibold">Current value</th>
                   <th className="px-3 py-2 font-semibold">Default / evidence</th>
@@ -4428,12 +4486,31 @@ export default function EvidenceLibrary({
                           }
                         }}
                         className={cn(
-                          'cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
+                          'group cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
                           isSelectedRow &&
                             'bg-sky-50 dark:bg-sky-950/40',
                         )}
                       >
-                        <td className="px-3 py-2">
+                        <td
+                          className={cn(
+                            'sticky left-0 z-10 px-3 py-2 shadow-[2px_0_4px_rgba(0,0,0,0.08)] transition-colors',
+                            // Every background here MUST be fully opaque. A sticky cell
+                            // occludes the columns sliding beneath it, and `z-10` controls
+                            // PAINT ORDER, not opacity -- a translucent sticky background
+                            // lets the scrolled cells show through, so the parameter name
+                            // and the Pathway/Current-value text render superimposed and
+                            // neither is readable. That is the same "regulatory text drawn
+                            // on top of other text" failure round-2 P2-5 removed from this
+                            // table, and jsdom cannot see it.
+                            //
+                            // The ROW keeps its translucent tints (they composite over the
+                            // table background, which is fine); only this sticky cell is
+                            // forced opaque, at the cost of a slightly stronger tint than
+                            // the rest of the row.
+                            'bg-white group-hover:bg-sky-50 dark:bg-slate-950 dark:group-hover:bg-sky-950',
+                            isSelectedRow && 'bg-sky-50 dark:bg-sky-950',
+                          )}
+                        >
                           <div className="font-semibold text-slate-900 dark:text-white">
                             {row.record.display_name}
                           </div>
@@ -4454,15 +4531,26 @@ export default function EvidenceLibrary({
                             </span>
                           )}
                         </td>
-                        <td className="px-3 py-2 font-mono whitespace-nowrap">
+                        {/* Round-2 P2-5: wrap instead of nowrap. `break-words`
+                            only breaks a token that genuinely cannot fit (e.g.
+                            the unit "mg/kg-bw/day" at the 640px floor), so
+                            ordinary values stay on one line. `title` carries the
+                            unbroken string for hover/AT. */}
+                        <td
+                          className="px-3 py-2 font-mono whitespace-normal break-words"
+                          title={formatValue(row.record.value, row.record.unit)}
+                          data-testid="evidence-current-value-cell"
+                        >
                           {formatValue(row.record.value, row.record.unit)}
                         </td>
-                        <td className="px-3 py-2">
-                          <div className="flex flex-wrap gap-1">
-                            <StatusBadge value={row.record.default_status} />
-                            <StatusBadge value={row.record.evidence_support_status} />
-                            <StatusBadge value={row.record.qa_status} />
-                            <StatusBadge value={row.record.extraction_status} />
+                        <td className="px-3 py-2" data-testid="evidence-default-evidence-cell">
+                          <StatusBadge value={row.record.evidence_support_status} />
+                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                            {humanizeCatalogLabel(row.record.default_status)}
+                            {' . '}
+                            <QaStatusText value={row.record.qa_status} />
+                            {' . '}
+                            {humanizeCatalogLabel(row.record.extraction_status)}
                           </div>
                         </td>
                         <td className="px-3 py-2 max-w-xs">
@@ -4482,9 +4570,14 @@ export default function EvidenceLibrary({
                       </tr>
                       <tr>
                         <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
-                          <details>
-                            <summary className="cursor-pointer text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
+                          <details className="group">
+                            <summary className="flex min-h-[44px] w-fit cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
+                              {/* Round-2 P3-1: rotate on open. */}
+                              <ChevronDown
+                                className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-open:rotate-180"
+                                aria-hidden="true"
+                              />
                             </summary>
                             <div className="mt-2 grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2 xl:grid-cols-4">
                               <div>Units: {row.record.unit}</div>
@@ -4520,7 +4613,7 @@ export default function EvidenceLibrary({
                               {row.record.evidence_items.map((evidence) => (
                                 <div key={evidence.evidence_id}>
                                   Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
-                                  {humanizeCatalogLabel(evidence.qa_status)}
+                                  <QaStatusText value={evidence.qa_status} />
                                 </div>
                               ))}
                             </div>
@@ -4552,7 +4645,7 @@ export default function EvidenceLibrary({
                 )}
               </tbody>
             </table>
-          </div>
+          </ScrollFadeRegion>
           {isValuesPaged && (
             <ValuesPagination
               page={clampedValuesPage}
@@ -4582,7 +4675,10 @@ export default function EvidenceLibrary({
               label="sources"
             />
           </div>
-          <div className="overflow-x-auto rounded-lg border border-slate-200 dark:border-slate-800">
+          <ScrollFadeRegion
+            className="rounded-lg border border-slate-200 dark:border-slate-800"
+            fadeFrom="from-white dark:from-slate-950"
+          >
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
@@ -4715,7 +4811,7 @@ export default function EvidenceLibrary({
                 )}
               </tbody>
             </table>
-          </div>
+          </ScrollFadeRegion>
         </section>
       )}
 

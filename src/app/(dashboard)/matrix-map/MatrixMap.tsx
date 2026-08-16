@@ -302,6 +302,38 @@ export function MatrixMap({
   const overlayLayersRef = useRef<Map<string, Layer>>(new Map());
 
   const [sampleListExpanded, setSampleListExpanded] = useState(true);
+  // Decision #13: legend/provenance block collapses by default on mobile,
+  // stays open by default on desktop. No isMobile signal already existed in
+  // this component (the plan's citation of "line 1814" was speculative), so
+  // this reads the viewport once on mount via matchMedia -- SSR/jsdom-safe
+  // default is expanded (md:+ behaviour) until the effect runs.
+  const [legendExpanded, setLegendExpanded] = useState(true);
+  // Round-2 P2-4: the breakpoint listener and the user's own toggle are two writers to
+  // `legendExpanded`, and round 1 left them unarbitrated -- every 767px crossing forced
+  // the state unconditionally, so a desktop user who collapsed the legend and then
+  // maximised the window had it silently re-expanded back over the map. User intent wins:
+  // once the user has toggled the disclosure themselves, the breakpoint stops writing.
+  //
+  // This latch is set from the summary's onClick (a genuine user interaction), NOT from
+  // the <details> onToggle -- `toggle` also fires when React updates the `open` attribute
+  // programmatically, so latching there would mark the initial matchMedia-driven collapse
+  // as a "user choice" and disable the breakpoint default immediately.
+  const legendUserOverrideRef = useRef(false);
+  useEffect(() => {
+    if (typeof window === 'undefined' || typeof window.matchMedia !== 'function') return undefined;
+    const mql = window.matchMedia('(max-width: 767px)');
+    setLegendExpanded(!mql.matches);
+    // P3 fix (docs/BATCH_FIXES_ROUND1.md): the original read-once-on-mount never
+    // re-evaluated after a phone rotation (or any viewport width crossing 767px), so a
+    // landscape-opened legend stayed expanded after rotating back to portrait, and vice
+    // versa. Listen for the query's `change` event too.
+    const handleChange = (event: MediaQueryListEvent) => {
+      if (legendUserOverrideRef.current) return;
+      setLegendExpanded(!event.matches);
+    };
+    mql.addEventListener('change', handleChange);
+    return () => mql.removeEventListener('change', handleChange);
+  }, []);
   const [interactionMode, setInteractionMode] = useState<
     'pan' | 'select-individual' | 'select-area' | 'identify' | 'identify-area'
   >('pan');
@@ -1560,30 +1592,38 @@ export function MatrixMap({
         </div>
       )}
 
-      {fetchErrorMessage && (
-        <div className="absolute top-20 left-4 right-4 z-[1000] bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
-          {fetchErrorMessage}
-        </div>
-      )}
+      {/* Decision #12: one stacked notice column instead of three
+          independently-absolute-positioned banners with guessed pixel
+          offsets (top-20/top-44/top-32, which overlapped). Notices render
+          in priority order: fetch error, aggregate error, refetch error. */}
+      {(fetchErrorMessage || siteAggregateFetchErrorMessage || refetchError) && (
+        <div className="absolute top-20 left-4 right-4 z-[1000] flex flex-col gap-2">
+          {fetchErrorMessage && (
+            <div className="bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+              {fetchErrorMessage}
+            </div>
+          )}
 
-      {siteAggregateFetchErrorMessage && (
-        <div className="absolute top-44 left-4 right-4 z-[1000] flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
-          <span>{siteAggregateFetchErrorMessage}</span>
-        </div>
-      )}
-      {/* bbox-lane Stage 2: transient viewport-refetch error -- shown WITHOUT
-          discarding the last good markers; dismissable. */}
-      {refetchError && (
-        <div className="absolute top-32 left-4 right-4 z-[1000] flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
-          <span>{refetchError}</span>
-          <button
-            type="button"
-            aria-label="Dismiss map refresh error"
-            onClick={() => setRefetchError(null)}
-            className="font-semibold leading-none hover:text-amber-950"
-          >
-            x
-          </button>
+          {siteAggregateFetchErrorMessage && (
+            <div className="flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+              <span>{siteAggregateFetchErrorMessage}</span>
+            </div>
+          )}
+          {/* bbox-lane Stage 2: transient viewport-refetch error -- shown WITHOUT
+              discarding the last good markers; dismissable. */}
+          {refetchError && (
+            <div className="flex items-start justify-between gap-2 bg-amber-50 border border-amber-300 text-amber-800 text-xs px-3 py-2 rounded-lg shadow">
+              <span>{refetchError}</span>
+              <button
+                type="button"
+                aria-label="Dismiss map refresh error"
+                onClick={() => setRefetchError(null)}
+                className="font-semibold leading-none hover:text-amber-950"
+              >
+                x
+              </button>
+            </div>
+          )}
         </div>
       )}
 
@@ -1597,23 +1637,40 @@ export function MatrixMap({
         </div>
       )}
 
-      {/* Zoom Controls */}
-      <div className="absolute top-4 right-4 z-[1000] flex flex-col gap-2">
-        <button aria-label="Zoom in" onClick={handleZoomIn} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom in">
+      {/* Top-right toolbar column -- decision #1a: zoom stack + interaction-
+          mode toolbar share ONE flow-based flex-col wrapper so the mode
+          toolbar sits below the zoom stack without any guessed pixel
+          offset (the old top-4/top-[72px] pair is exactly the "guessed
+          pixel offset" antipattern #12 also fixed). */}
+      <div className="absolute top-4 right-4 z-[1000] flex flex-col items-end gap-2 max-w-[calc(100%-2rem)]">
+      {/* Zoom Controls -- decision #1a: 44px floor via padding, not icon size, AND a
+          VISIBLE short word on every icon-only control. Round-4 spec audit found the
+          44px half had shipped but the label half had not: these buttons carried only
+          `aria-label` + `title`. A `title` tooltip requires hover and therefore does
+          NOT exist on touch devices at all -- the exact devices this decision was
+          written for -- so on a phone these controls had no label by any means.
+          Label sits under the icon, inside the 44px box (per the decision text).
+          `aria-label` stays longer and more descriptive than the visible word so AT
+          still announces "Zoom in" rather than the bare "In". */}
+      <div className="flex flex-col gap-2">
+        <button aria-label="Zoom in" onClick={handleZoomIn} className="min-h-[44px] min-w-[44px] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom in">
           <ZoomIn className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <span className="text-[10px] font-medium leading-none text-slate-600 dark:text-slate-400">In</span>
         </button>
-        <button aria-label="Zoom out" onClick={handleZoomOut} className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom out">
+        <button aria-label="Zoom out" onClick={handleZoomOut} className="min-h-[44px] min-w-[44px] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700" title="Zoom out">
           <ZoomOut className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <span className="text-[10px] font-medium leading-none text-slate-600 dark:text-slate-400">Out</span>
         </button>
         <div className="h-px bg-slate-200 dark:bg-slate-600 my-1" />
         <button
           aria-label="Fit to samples"
           onClick={handleFitToSamples}
-          className={cn("p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", fitLocationCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
+          className={cn("min-h-[44px] min-w-[44px] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700", fitLocationCount > 0 ? "hover:bg-blue-50 dark:hover:bg-blue-900/30 hover:text-blue-600" : "opacity-50 cursor-not-allowed")}
           disabled={fitLocationCount === 0}
           title="Fit to samples"
         >
           <Target className="w-5 h-5" />
+          <span className="text-[10px] font-medium leading-none">Fit</span>
         </button>
 
         {/* Layer switcher */}
@@ -1622,10 +1679,11 @@ export function MatrixMap({
             aria-label="Change map layer"
             aria-expanded={showLayerMenu}
             onClick={() => setShowLayerMenu(!showLayerMenu)}
-            className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+            className="min-h-[44px] min-w-[44px] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
             title="Change map layer"
           >
             <Layers className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+            <span className="text-[10px] font-medium leading-none text-slate-600 dark:text-slate-400">Layers</span>
           </button>
 
           {showLayerMenu && (
@@ -1678,19 +1736,24 @@ export function MatrixMap({
         <button
           aria-label="Export map image"
           onClick={handleExportMap}
-          className="p-2.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
+          className="min-h-[44px] min-w-[44px] px-2 py-1.5 flex flex-col items-center justify-center gap-0.5 bg-white dark:bg-slate-800 rounded-lg shadow-lg hover:bg-slate-50 dark:hover:bg-slate-700 border border-slate-200 dark:border-slate-700"
           title="Export map image"
         >
           <Download className="w-5 h-5 text-slate-600 dark:text-slate-400" />
+          <span className="text-[10px] font-medium leading-none text-slate-600 dark:text-slate-400">Export</span>
         </button>
       </div>
 
-      {/* Interaction mode toggle */}
-      <div className="absolute top-4 right-[72px] z-[1000] flex bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
+      {/* Interaction mode toggle -- decision #1a: 44px floor, labels always
+          visible (no more `hidden sm:inline` gating). In the shared flow
+          wrapper this sits below the zoom stack automatically -- no pixel
+          offset needed. Wraps onto extra rows via flex-wrap so five
+          labelled buttons never overflow the viewport width. */}
+      <div className="flex flex-wrap justify-end gap-1 bg-white dark:bg-slate-800 rounded-lg shadow-lg border border-slate-200 dark:border-slate-700 p-1">
         <button
           onClick={() => setInteractionMode('pan')}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            'min-h-[44px] px-3 py-2 flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md',
             interactionMode === 'pan'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1698,12 +1761,12 @@ export function MatrixMap({
           title="Pan mode -- drag to move map"
         >
           <Hand className="w-4 h-4" />
-          <span className="hidden sm:inline">Pan</span>
+          <span>Pan</span>
         </button>
         <button
           onClick={() => setInteractionMode('select-individual')}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            'min-h-[44px] px-3 py-2 flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md',
             interactionMode === 'select-individual'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1711,12 +1774,12 @@ export function MatrixMap({
           title="Select mode - click replaces, Shift+click adds, Ctrl+click removes"
         >
           <MousePointer className="w-4 h-4" />
-          <span className="hidden sm:inline">Select</span>
+          <span>Select</span>
         </button>
         <button
           onClick={() => setInteractionMode('select-area')}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            'min-h-[44px] px-3 py-2 flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md',
             interactionMode === 'select-area'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1724,14 +1787,14 @@ export function MatrixMap({
           title="Area select - drag rectangle to select markers"
         >
           <BoxSelect className="w-4 h-4" />
-          <span className="hidden sm:inline">Area</span>
+          <span>Area</span>
         </button>
         <button
           onClick={() => setInteractionMode('identify')}
           aria-label="Identify mode"
           aria-pressed={interactionMode === 'identify'}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors border-r border-slate-200 dark:border-slate-700',
+            'min-h-[44px] px-3 py-2 flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md',
             interactionMode === 'identify'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1739,14 +1802,14 @@ export function MatrixMap({
           title="Identify - searches currently-enabled WMS overlays. Enable a layer from the layer menu first."
         >
           <Crosshair className="w-4 h-4" />
-          <span className="hidden sm:inline">Identify</span>
+          <span>Identify</span>
         </button>
         <button
           onClick={() => setInteractionMode('identify-area')}
           aria-label="Identify area mode"
           aria-pressed={interactionMode === 'identify-area'}
           className={cn(
-            'p-2 flex items-center gap-1.5 text-xs font-medium transition-colors',
+            'min-h-[44px] px-3 py-2 flex items-center gap-1.5 text-xs font-medium transition-colors rounded-md',
             interactionMode === 'identify-area'
               ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400'
               : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-700',
@@ -1754,14 +1817,41 @@ export function MatrixMap({
           title="Identify Area - drag a box to collect features from currently-enabled WMS overlays."
         >
           <BoxSelect className="w-4 h-4" />
-          <span className="hidden sm:inline">Identify Area</span>
+          <span>Identify Area</span>
         </button>
       </div>
+      </div>
 
-      {/* Legend - 9-state symbology per PLAN_V3_4_2 section 3.3 */}
-      <div className="absolute bottom-4 left-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700">
-        <p className="text-xs font-semibold text-slate-700 dark:text-slate-300 mb-2">Classification</p>
-        <div className="space-y-2">
+      {/* Legend - 9-state symbology per PLAN_V3_4_2 section 3.3.
+          Decision #13: the "Surveyed only" filter moved out to the
+          sample-count header (an always-visible filter surface) --
+          everything remaining here is provenance/reference material, so
+          it is now collapsible: collapsed by default on mobile, open by
+          default at md:+ (legendExpanded, set from a matchMedia read on
+          mount). */}
+      <details
+        className="group absolute bottom-4 left-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg p-3 border border-slate-200 dark:border-slate-700"
+        open={legendExpanded}
+        onToggle={(e) => setLegendExpanded(e.currentTarget.open)}
+      >
+        <summary
+          data-testid="matrix-map-legend-summary"
+          onClick={() => {
+            // Round-2 P2-4: latch user intent so the matchMedia listener stops
+            // overriding this disclosure on later breakpoint crossings.
+            legendUserOverrideRef.current = true;
+          }}
+          className="min-h-[44px] flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none list-none"
+        >
+          <span>Classification</span>
+          {/* Round-2 P3-1: rotate on open so the chevron is not a static
+              down-arrow that reads wrong half the time. */}
+          <ChevronDown
+            className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+            aria-hidden="true"
+          />
+        </summary>
+        <div className="space-y-2 mt-2">
           <LegendSymbol shape="circle" color="#10b981" filled label="Reference" />
           <LegendSymbol shape="triangle" color="#eab308" filled label="Impacted" />
           <LegendSymbol shape="circle" color="#94a3b8" filled={false} label="Unknown" />
@@ -1782,20 +1872,12 @@ export function MatrixMap({
               <span>Site aggregates</span>
             </div>
           )}
-          <label className="mt-2 flex items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
-            <input
-              type="checkbox"
-              checked={filterState.surveyed_only}
-              onChange={(e) => setFilterState({ surveyed_only: e.target.checked })}
-              className="h-3 w-3 rounded border-slate-300 dark:border-slate-600"
-              aria-label="Show surveyed locations only"
-            />
-            Surveyed only
-          </label>
         </div>
-      </div>
+      </details>
 
-      {/* Sample count header */}
+      {/* Sample count header -- decision #13: "Surveyed only" now lives
+          here, next to the counts/provenance it directly affects, as an
+          always-visible filter chip (not buried in the collapsible legend). */}
       <div className="absolute top-4 left-4 z-[1000] bg-white dark:bg-slate-800 rounded-lg shadow-lg px-4 py-3 border border-slate-200 dark:border-slate-700">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 bg-blue-100 dark:bg-blue-900/40 rounded-full flex items-center justify-center">
@@ -1808,6 +1890,16 @@ export function MatrixMap({
             </p>
           </div>
         </div>
+        <label className="mt-2 flex min-h-[44px] items-center gap-1.5 text-[11px] text-slate-600 dark:text-slate-300">
+          <input
+            type="checkbox"
+            checked={filterState.surveyed_only}
+            onChange={(e) => setFilterState({ surveyed_only: e.target.checked })}
+            className="h-4 w-4 rounded border-slate-300 dark:border-slate-600"
+            aria-label="Show surveyed locations only"
+          />
+          Surveyed only
+        </label>
         {/* Source: dashboard_data_truth_map_run_2026_07_11 (province-wide DRA/sample audit, 2026-07-11). */}
         {/* Static by design -- see T17 spec for why this is not computed from the loaded sample set. */}
         <p className="mt-1.5 max-w-[220px] text-[10px] leading-snug text-slate-400 dark:text-slate-500">

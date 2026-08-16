@@ -85,6 +85,12 @@ export default defineConfig({
       'leaflet/dist/leaflet.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
       'leaflet.markercluster/dist/MarkerCluster.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
       'leaflet.markercluster/dist/MarkerCluster.Default.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
+      // Same class of problem: katex's CSS-only import (in MathRenderer.tsx,
+      // a static top-level `import 'katex/dist/katex.min.css'`) hits vite's
+      // css plugin under vitest and fails there. Alias it away so any test
+      // that renders MathRenderer (added 2026-08-15, UI batch Group B) can
+      // import it without invoking the CSS plugin.
+      'katex/dist/katex.min.css': path.resolve(__dirname, './src/test/server-only-stub.ts'),
     },
   },
 });

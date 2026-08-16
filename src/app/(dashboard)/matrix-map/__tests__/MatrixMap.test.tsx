@@ -17,8 +17,8 @@
  * Plain ASCII only -- no em-dashes / smart quotes / Unicode arrows.
  */
 
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { act, render, screen, fireEvent } from '@testing-library/react';
 import React from 'react';
 import {
   MatrixMap,
@@ -412,6 +412,207 @@ describe('MatrixMap (Path-B fork)', () => {
     expect(screen.queryByText('Covered centroid sample')).not.toBeInTheDocument();
     expect(screen.getByText('Surveyed sample')).toBeInTheDocument();
   });
+  // Decision #12: one stacked notice column, priority order fetch -> aggregate
+  // -> refetch, instead of three independently-absolute-positioned banners.
+  describe('decision #12: consolidated notice column', () => {
+    it('stacks the prop-driven notices in one column, fetch error before aggregate error', () => {
+      // RENAMED AND STRENGTHENED (round-4 Leg 1a P2-3). The previous name claimed
+      // "all three notices in priority order" and asserted NEITHER: it rendered two
+      // notices (refetchError is internal state, not prop-drivable here) and only
+      // checked that the column's textContent CONTAINED each string. Swapping the two
+      // blocks in MatrixMap.tsx left every assertion passing while inverting the
+      // documented decision-#12 ordering.
+      //
+      // Two-sided falsification:
+      //  - Positive: both notices share ONE positioned wrapper (the decision's actual
+      //    structural claim -- no more independently-absolute banners).
+      //  - Negative: fetch error must precede aggregate error in DOM order. Reordering
+      //    the source blocks now fails this test by name rather than silently passing.
+      const { container } = render(
+        <MatrixMap
+          initialMapData={{ ...EMPTY_MATRIX_MAP_DATA, truncated: false }}
+          fetchErrorMessage="fetch failed"
+          siteAggregateFetchErrorMessage="aggregate failed"
+        />,
+      );
+
+      const column = container.querySelector('.absolute.top-20.left-4.right-4');
+      expect(column).not.toBeNull();
+
+      const fetchNode = screen.getByText('fetch failed');
+      const aggregateNode = screen.getByText('aggregate failed');
+
+      // Both notices live inside the same wrapper (one stacked column).
+      expect(column?.contains(fetchNode)).toBe(true);
+      expect(column?.contains(aggregateNode)).toBe(true);
+
+      // Priority order: fetch error is emitted BEFORE aggregate error.
+      const fetchPrecedes = Boolean(
+        fetchNode.compareDocumentPosition(aggregateNode) & Node.DOCUMENT_POSITION_FOLLOWING,
+      );
+      expect(fetchPrecedes).toBe(true);
+    });
+
+    it('renders no notice wrapper when no notices are active', () => {
+      const { container } = render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      expect(container.querySelector('.absolute.top-20.left-4.right-4')).toBeNull();
+    });
+  });
+
+  // Decision #1a: labels must always render (the `hidden sm:inline` gating
+  // is removed), regardless of viewport -- jsdom cannot verify visibility,
+  // but it can verify the text nodes are unconditionally present in markup.
+  describe('decision #1a: interaction-mode labels always present', () => {
+    it('renders all 5 mode-toolbar labels unconditionally', () => {
+      render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      for (const label of ['Pan', 'Select', 'Area', 'Identify', 'Identify Area']) {
+        expect(screen.getByText(label)).toBeInTheDocument();
+      }
+    });
+
+    it('does not gate mode-toolbar labels behind a hidden sm:inline class', () => {
+      const { container } = render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      const panLabel = screen.getByText('Pan');
+      expect(panLabel.className).not.toMatch(/hidden/);
+      expect(container.querySelectorAll('.hidden.sm\\:inline').length).toBe(0);
+    });
+
+    it('renders a VISIBLE word on every zoom/layer-stack control, not just a tooltip', () => {
+      // Round-4 spec audit: #1a requires the 44px floor AND a visible short word on
+      // EVERY icon-only control -- it names "the zoom/layer stack" explicitly. The
+      // mode toolbar above got its labels; this stack shipped with `aria-label` +
+      // `title` only. That is not equivalent: a `title` tooltip needs hover, so it
+      // does not exist on touch devices, which are the devices #1a targets.
+      //
+      // Two-sided falsification:
+      //  - Positive: each control exposes its short word as real TEXT.
+      //  - Negative: `getByText` is the discriminating choice. It reads text content
+      //    only, so it CANNOT be satisfied by `aria-label` or `title` -- reverting to
+      //    the icon-only buttons fails every line here. Using `getByRole(..., {name})`
+      //    instead would have passed against the broken version, because the
+      //    accessible name was already correct; that is exactly how this shipped.
+      render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+
+      for (const word of ['In', 'Out', 'Fit', 'Layers', 'Export']) {
+        expect(screen.getByText(word)).toBeInTheDocument();
+      }
+    });
+
+    it('keeps the descriptive accessible name on zoom controls despite the short visible word', () => {
+      // The visible word is deliberately terser than the accessible name ("In" vs
+      // "Zoom in"). Screen-reader users must still get the full description, so the
+      // fix must not have replaced aria-label with the short word.
+      render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+
+      expect(screen.getByRole('button', { name: 'Zoom in' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Zoom out' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Fit to samples' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Change map layer' })).toBeInTheDocument();
+      expect(screen.getByRole('button', { name: 'Export map image' })).toBeInTheDocument();
+    });
+  });
+
+  // Decision #13: the "Surveyed only" checkbox must stay always-visible
+  // (moved to the sample-count header) and NOT live inside the collapsible
+  // <details> legend element.
+  describe('decision #13: checkbox relocated outside the collapsible legend', () => {
+    it('renders the surveyed_only checkbox outside the <details> legend', () => {
+      const { container } = render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      const checkbox = screen.getByRole('checkbox', { name: /show surveyed locations only/i });
+      const details = container.querySelector('details');
+      expect(details).not.toBeNull();
+      expect(details?.contains(checkbox)).toBe(false);
+    });
+
+    it('renders the classification legend inside a collapsible <details> element', () => {
+      const { container } = render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      const details = container.querySelector('details');
+      expect(details).not.toBeNull();
+      expect(details?.textContent).toContain('Classification');
+      expect(details?.querySelector('summary')).not.toBeNull();
+    });
+  });
+
+  // Round-2 P2-4: the breakpoint handler and the user's own toggle both write
+  // `legendExpanded`. Round 1 left them unarbitrated, so every 767px crossing forced the
+  // state and a desktop user who collapsed the legend had it silently re-expanded over the
+  // map on the next window resize. User intent must win once the user has toggled.
+  describe('round-2 P2-4: legend breakpoint default vs user intent', () => {
+    const realMatchMedia = window.matchMedia;
+    let listeners: Array<(event: { matches: boolean }) => void> = [];
+
+    function installMatchMedia(initialMatches: boolean) {
+      listeners = [];
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: vi.fn().mockImplementation((query: string) => ({
+          matches: initialMatches,
+          media: query,
+          onchange: null,
+          addListener: vi.fn(),
+          removeListener: vi.fn(),
+          addEventListener: (_type: string, cb: (event: { matches: boolean }) => void) => {
+            listeners.push(cb);
+          },
+          removeEventListener: (_type: string, cb: (event: { matches: boolean }) => void) => {
+            listeners = listeners.filter((l) => l !== cb);
+          },
+          dispatchEvent: vi.fn(),
+        })),
+      });
+    }
+
+    function fireBreakpointChange(matches: boolean) {
+      act(() => {
+        listeners.forEach((cb) => cb({ matches }));
+      });
+    }
+
+    afterEach(() => {
+      Object.defineProperty(window, 'matchMedia', {
+        writable: true,
+        configurable: true,
+        value: realMatchMedia,
+      });
+    });
+
+    // Control / negative half: with NO user toggle the breakpoint listener must still drive
+    // the disclosure. Without this, the "user intent wins" test below could pass simply
+    // because the listener was deleted outright.
+    it('still applies the breakpoint default while the user has not toggled', () => {
+      installMatchMedia(false); // desktop on mount -> open
+      render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      const details = screen
+        .getByTestId('matrix-map-legend-summary')
+        .closest('details') as HTMLDetailsElement;
+      expect(details.hasAttribute('open')).toBe(true);
+
+      fireBreakpointChange(true); // crossed to mobile
+      expect(details.hasAttribute('open')).toBe(false);
+    });
+
+    // Positive half: after a manual toggle the breakpoint must stop writing. Asserted as
+    // "the state is UNCHANGED across the breakpoint crossing" rather than a fixed value,
+    // so the test does not depend on whether jsdom's summary-activation behaviour flipped
+    // the disclosure on click.
+    it('stops applying the breakpoint default once the user has toggled the legend', () => {
+      installMatchMedia(false); // desktop on mount -> open
+      render(<MatrixMap initialMapData={EMPTY_MATRIX_MAP_DATA} />);
+      const summary = screen.getByTestId('matrix-map-legend-summary');
+      const details = summary.closest('details') as HTMLDetailsElement;
+
+      fireEvent.click(summary);
+      const openAfterUserToggle = details.hasAttribute('open');
+
+      fireBreakpointChange(true); // crossed to mobile: must be ignored now
+      expect(details.hasAttribute('open')).toBe(openAfterUserToggle);
+
+      fireBreakpointChange(false); // and back to desktop: still ignored
+      expect(details.hasAttribute('open')).toBe(openAfterUserToggle);
+    });
+  });
+
   it('includes aggregate markers in fit-bound points', () => {
     const surveyed = matrixSample({
       id: 'surveyed',

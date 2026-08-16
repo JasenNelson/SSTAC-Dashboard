@@ -1013,6 +1013,7 @@ export default function HHDirectContactCalculator({
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer
+            fadeFrom="from-slate-50 dark:from-slate-800/50"
             content={
               'Dose = $C_s \\cdot CF \\cdot EF \\cdot ED \\cdot ' +
               '(IR_{sed} \\cdot BA_o + SA \\cdot AF_{sed} \\cdot ABS_d) / ' +

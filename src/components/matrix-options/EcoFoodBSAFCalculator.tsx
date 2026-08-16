@@ -1070,6 +1070,7 @@ export default function EcoFoodBSAFCalculator({
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer
+            fadeFrom="from-slate-50 dark:from-slate-800/50"
             content={
               'Formula: $SedS_{eco\\text{-}food} = \\dfrac{TRV_{eco} \\cdot ' +
               'BW_{eco}}{IR_{eco} \\cdot BSAF_{effective} \\cdot F_{site}}$, ' +

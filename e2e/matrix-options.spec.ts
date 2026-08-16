@@ -154,7 +154,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await gotoMatrixOptionsOrSkip(page);
 
     const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
-    const conceptualTab = page.getByRole('tab', { name: 'Conceptual Model', exact: true });
+    const conceptualTab = page.getByRole('tab', { name: 'Vision for Modernizing Schedule 3.4', exact: true });
 
     await guideTab.focus();
     await expect(guideTab).toBeFocused();
@@ -177,7 +177,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const calculatorTab = page.getByRole('tab', { name: 'Calculator', exact: true });
 
     await guideTab.focus();
-    // TABS order: The Guide(0), Conceptual Model(1), Methodology by pathway
+    // TABS order: The Guide(0), Vision for Modernizing Schedule 3.4(1), Methodology by pathway
     // aka Jurisdictional Frameworks(2), TWG Review(3), Interactive Map(4),
     // Calculator(5). 5 ArrowRight presses walks focus there without
     // activating any of the intermediate tabs.
@@ -202,7 +202,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const ssdTab = page.getByRole('tab', { name: 'SSD Workbench', exact: true });
 
     await guideTab.focus();
-    // Index 6: The Guide -> Conceptual Model -> Methodology by pathway ->
+    // Index 6: The Guide -> Vision for Modernizing Schedule 3.4 -> Methodology by pathway ->
     // TWG Review -> Interactive Map -> Calculator -> SSD Workbench.
     for (let i = 0; i < 6; i += 1) {
       await page.keyboard.press('ArrowRight');
@@ -220,7 +220,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await gotoMatrixOptionsOrSkip(page);
 
     const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
-    const conceptualTab = page.getByRole('tab', { name: 'Conceptual Model', exact: true });
+    const conceptualTab = page.getByRole('tab', { name: 'Vision for Modernizing Schedule 3.4', exact: true });
     const referencesTab = page.getByRole('tab', { name: 'References & Values', exact: true });
 
     await guideTab.focus();
@@ -362,3 +362,44 @@ test.describe('Jurisdictional Frameworks side tabs (automatic activation)', () =
   });
 });
 
+
+test.describe('Vision page -- axis colour encoding (decision #3)', () => {
+  test('renders DIFFERENT computed border colours per receptor axis', async ({ page }) => {
+    // THIS TEST EXISTS BECAUSE A CLASS-NAME ASSERTION CANNOT CATCH THIS BUG.
+    //
+    // The shipped defect was precisely a class-present / colour-absent mismatch: the
+    // quadrants carried `border-emerald-600`, and a unit test asserting that class
+    // string passed -- while every quadrant actually painted identical slate, because
+    // the all-sides colour utility lost to CARD's `border-slate-200` on stylesheet
+    // order. The unit test certified the exact defect it was written to prevent.
+    //
+    // jsdom computes no colour from an external stylesheet, so the only place this can
+    // be checked for real is a browser with the compiled CSS loaded. Asserting the two
+    // axes DIFFER (rather than pinning exact oklch values) keeps this robust against a
+    // deliberate palette change while still failing the moment the encoding collapses
+    // to one colour again.
+    await gotoMatrixOptionsOrSkip(page);
+
+    await clickUntilVisible(
+      page,
+      'Vision for Modernizing Schedule 3.4',
+      page.getByTestId('schedule-34-matrix'),
+    );
+
+    const eco = page.getByTestId('pathway-ecological-direct');
+    const hh = page.getByTestId('pathway-human-health-direct');
+    await expect(eco).toBeVisible();
+    await expect(hh).toBeVisible();
+
+    const ecoColour = await eco.evaluate((el) => getComputedStyle(el).borderTopColor);
+    const hhColour = await hh.evaluate((el) => getComputedStyle(el).borderTopColor);
+
+    // The encoding is only meaningful if the two axes are visually distinguishable.
+    expect(ecoColour).not.toBe(hhColour);
+
+    // And neither may collapse to the neutral card border, which is what the bug did.
+    const cardBorder = await eco.evaluate((el) => getComputedStyle(el).borderRightColor);
+    expect(ecoColour).not.toBe(cardBorder);
+    expect(hhColour).not.toBe(cardBorder);
+  });
+});

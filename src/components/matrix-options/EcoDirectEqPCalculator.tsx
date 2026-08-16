@@ -660,6 +660,7 @@ export default function EcoDirectEqPCalculator({
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer
+            fadeFrom="from-slate-50 dark:from-slate-800/50"
             content={
               'Formulas: $\\log K_{oc} = 0.00028 + 0.983 \\cdot \\log K_{ow}$, ' +
               '$ESB_{oc} = FCV \\cdot K_{oc} \\cdot 10^{-3}$ (mg/kg-OC), ' +

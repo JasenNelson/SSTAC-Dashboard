@@ -5,7 +5,6 @@ import {
   AlertTriangle,
   ChevronDown,
   CheckCircle2,
-  Database,
   Download,
   FlaskConical,
   Search,
@@ -450,7 +449,7 @@ function ToggleButton({
       aria-pressed={active}
       onClick={onClick}
       className={cn(
-        'rounded-md border px-3 py-2 text-sm font-semibold transition-colors',
+        'min-h-[44px] min-w-[44px] rounded-md border px-4 py-2.5 text-sm font-semibold transition-colors',
         active
           ? 'border-sky-600 bg-sky-600 text-white shadow-sm dark:border-sky-500 dark:bg-sky-500'
           : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
@@ -914,28 +913,37 @@ export default function SsdWorkbench({
                 active={dataSourceMode === 'ecotox_mirror'}
                 onClick={selectEcotoxMirrorMode}
               >
-                <span className="flex items-center gap-1.5">
+                <span
+                  className="flex items-center gap-1.5"
+                  title={mirrorHealthTitle(mirrorHealth)}
+                >
                   ECOTOX mirror
                   {mirrorHealth.status === 'ready' && (
-                    <span
-                      className="inline-block h-2 w-2 rounded-full bg-emerald-500"
-                      data-testid="ssd-ecotox-status-dot"
+                    <CheckCircle2
+                      className="h-3.5 w-3.5 text-emerald-500"
+                      aria-hidden="true"
+                      data-testid="ssd-ecotox-status-icon"
                     />
                   )}
                   {(mirrorHealth.status === 'not_configured' ||
                     mirrorHealth.status === 'invalid_config' ||
                     mirrorHealth.status === 'checking') && (
-                    <span
-                      className="inline-block h-2 w-2 rounded-full bg-amber-500"
-                      data-testid="ssd-ecotox-status-dot"
+                    <AlertTriangle
+                      className="h-3.5 w-3.5 text-amber-500"
+                      aria-hidden="true"
+                      data-testid="ssd-ecotox-status-icon"
                     />
                   )}
                   {mirrorHealth.status === 'unavailable' && (
-                    <span
-                      className="inline-block h-2 w-2 rounded-full bg-red-500"
-                      data-testid="ssd-ecotox-status-dot"
+                    <X
+                      className="h-3.5 w-3.5 text-red-500"
+                      aria-hidden="true"
+                      data-testid="ssd-ecotox-status-icon"
                     />
                   )}
+                  <span className="sr-only">
+                    {mirrorHealthTitle(mirrorHealth)}
+                  </span>
                 </span>
               </ToggleButton>
             </div>
@@ -1224,17 +1232,36 @@ export default function SsdWorkbench({
             <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
               Endpoint filters
             </div>
-            <div className="mt-2 grid grid-cols-2 gap-2">
-              {ENDPOINT_OPTIONS.map((endpoint) => (
-                <ToggleButton
-                  key={endpoint}
-                  active={endpointFilters.includes(endpoint)}
-                  onClick={() => toggleEndpoint(endpoint)}
-                >
-                  {endpoint}
-                </ToggleButton>
-              ))}
-            </div>
+            <details
+              data-testid="ssd-endpoint-filters"
+              className="group mt-2 rounded-md border border-slate-300 dark:border-slate-700"
+            >
+              <summary className="flex min-h-[44px] cursor-pointer select-none list-none items-center justify-between gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+                <span>{endpointLabel(endpointFilters)}</span>
+                {/* Round-2 P3-1: rotate on open. */}
+                <ChevronDown
+                  className="h-4 w-4 shrink-0 transition-transform duration-200 group-open:rotate-180"
+                  aria-hidden="true"
+                />
+              </summary>
+              <fieldset className="border-t border-slate-200 px-2 py-1 dark:border-slate-700">
+                <legend className="sr-only">Endpoint filters</legend>
+                {ENDPOINT_OPTIONS.map((endpoint) => (
+                  <label
+                    key={endpoint}
+                    className="flex min-h-[44px] cursor-pointer items-center gap-3 px-2 text-sm font-semibold text-slate-700 dark:text-slate-200"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={endpointFilters.includes(endpoint)}
+                      onChange={() => toggleEndpoint(endpoint)}
+                      className="h-4 w-4 rounded border-slate-300 text-sky-600 focus:ring-sky-500 dark:border-slate-700 dark:bg-slate-900"
+                    />
+                    {endpoint}
+                  </label>
+                ))}
+              </fieldset>
+            </details>
           </div>
 
           <label className="block text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
@@ -1517,6 +1544,23 @@ export default function SsdWorkbench({
                     <dt>Unit</dt>
                     <dd className="font-semibold text-slate-900 dark:text-white">
                       {displayUnit}
+                    </dd>
+                  </div>
+                </dl>
+                <dl className="mt-3 space-y-2 border-t border-slate-200 pt-3 dark:border-slate-700">
+                  <div className="flex justify-between gap-4">
+                    {/* P3 fix (docs/BATCH_FIXES_ROUND1.md): this is reference context about
+                        the full external ECOTOX mirror, NOT a property of the current run --
+                        showing it unconditionally after a Local upload / fixture run read as
+                        "Dataset: Local upload / Mirror corpus size: 582,125 rows", implying
+                        582,125 rows had something to do with THIS run. Relabeled so it reads
+                        as background reference regardless of which sourceMode produced the
+                        run above, rather than gating it away (gating would also break the
+                        default-render test, which asserts this reference figure is visible
+                        even in fixture mode). */}
+                    <dt>Full ECOTOX mirror (reference)</dt>
+                    <dd className="font-semibold text-slate-900 dark:text-white">
+                      approx. {OWNER_REPORTED_ECOTOX_ROWS.toLocaleString()} rows
                     </dd>
                   </div>
                 </dl>
@@ -1868,10 +1912,6 @@ export default function SsdWorkbench({
                   {activeEndpointLabel};{' '}
                   {result.settings.aggregationMethod.replace('_', ' ')}.
                 </p>
-              </div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-sky-200 bg-sky-50 px-3 py-1 text-xs font-semibold text-sky-800 dark:border-sky-800 dark:bg-sky-900/20 dark:text-sky-100">
-                <Database className="h-3.5 w-3.5" />
-                ECOTOX mirror approx {OWNER_REPORTED_ECOTOX_ROWS.toLocaleString()} rows
               </div>
             </div>
             {!hasHcpPreview && (

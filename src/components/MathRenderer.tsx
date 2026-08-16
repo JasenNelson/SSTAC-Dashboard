@@ -4,9 +4,23 @@ import remarkGfm from 'remark-gfm';
 import remarkMath from 'remark-math';
 import rehypeKatex from 'rehype-katex';
 import 'katex/dist/katex.min.css';
+import ScrollFadeRegion from './ScrollFadeRegion';
 
 interface MathRendererProps {
   content: string;
+  /**
+   * Tailwind `from-*`/`dark:from-*` classes forwarded to every ScrollFadeRegion this
+   * renderer creates (tables + display equations).
+   *
+   * Round-2 P2-2: there is no single correct default here, so this is a REQUIRED-in-practice
+   * prop for any caller not on the plain bg-white / dark:bg-slate-900 surface. MathRenderer is
+   * mounted on at least two different dark surfaces -- `dark:bg-slate-950` (the Calculator
+   * equation drawer) and `dark:bg-slate-800` (the Guide section cards) -- so a hardcoded
+   * default paints a visible mismatched stripe on one of them whichever value is picked.
+   * Callers pass their own surface; the default below only covers the bg-white /
+   * dark:bg-slate-900 case.
+   */
+  fadeFrom?: string;
 }
 
 // MathRenderer styles markdown via inline arbitrary-variant selectors
@@ -24,7 +38,47 @@ interface MathRendererProps {
 // remark-gfm enables GitHub-flavored markdown extensions (tables, strike,
 // task lists, autolink) which the methodology paper uses for the LOO
 // kappa tables + comparison-dimension status tables.
-export default function MathRenderer({ content }: MathRendererProps) {
+export default function MathRenderer({
+  content,
+  fadeFrom = 'from-white dark:from-slate-900',
+}: MathRendererProps) {
+  // Memoised on `fadeFrom` so the override functions keep a stable identity across
+  // renders. react-markdown resolves each element as `components[name] ?? name` and
+  // calls createElement with it, so a NEW function identity is a NEW component type,
+  // and React unmounts and remounts that subtree instead of reconciling it.
+  //
+  // This was harmless while only `table` was overridden. The `span` override added in
+  // this batch matches EVERY inline node -- including the hundreds of spans KaTeX emits
+  // per equation and every span in the 7000-line Jermilova methodology -- so an inline
+  // object literal here would tear down and rebuild the entire document on any parent
+  // state change, dropping the reader's text selection mid-document and forcing a full
+  // relayout.
+  const markdownComponents = React.useMemo(
+    () => ({
+      table: ({ node: _node, ...props }: { node?: unknown } & React.ComponentPropsWithoutRef<'table'>) => (
+        <ScrollFadeRegion className="math-renderer-table-wrapper max-w-full my-6" fadeFrom={fadeFrom}>
+          <table {...props} />
+        </ScrollFadeRegion>
+      ),
+      // rehype-katex replaces remark-math's `math-display` node with its
+      // own KaTeX output, whose real overflow-prone wrapper carries the
+      // `katex-display` class (block/display-mode equations only --
+      // inline `katex` spans are left alone since they don't overflow).
+      span: ({ node: _node, className, ...props }: { node?: unknown } & React.ComponentPropsWithoutRef<'span'>) => {
+        const classNameString = typeof className === 'string' ? className : '';
+        if (classNameString.split(/\s+/).includes('katex-display')) {
+          return (
+            <ScrollFadeRegion className={`${classNameString} py-2`} fadeFrom={fadeFrom}>
+              <span className={classNameString} {...props} />
+            </ScrollFadeRegion>
+          );
+        }
+        return <span className={className} {...props} />;
+      },
+    }),
+    [fadeFrom],
+  );
+
   return (
     <div
       className={[
@@ -61,20 +115,17 @@ export default function MathRenderer({ content }: MathRendererProps) {
         '[&>hr]:my-8 [&>hr]:border-t [&>hr]:border-slate-200 dark:[&>hr]:border-slate-700',
         // Links
         '[&_a]:text-sky-600 dark:[&_a]:text-sky-400 [&_a]:underline [&_a]:underline-offset-2 [&_a]:decoration-sky-400/60 hover:[&_a]:text-sky-700 dark:hover:[&_a]:text-sky-300',
-        // KaTeX display math
-        '[&_.math-display]:my-8 [&_.math-display]:py-2 [&_.math-display]:overflow-x-auto',
+        // NOTE: no `.math-display` utility here (P3, docs/BATCH_FIXES_ROUND1.md) --
+        // rehype-katex@7.0.1 splices out remark-math's `math-display` element entirely and
+        // replaces it with its own `katex-display` wrapper (handled below via the `span`
+        // component override + ScrollFadeRegion), so a `[&_.math-display]:*` selector here
+        // could never match anything.
       ].join(' ')}
     >
       <ReactMarkdown
         remarkPlugins={[remarkGfm, remarkMath]}
         rehypePlugins={[rehypeKatex]}
-        components={{
-          table: ({ node: _node, ...props }) => (
-            <div className="math-renderer-table-wrapper overflow-x-auto max-w-full my-6">
-              <table {...props} />
-            </div>
-          ),
-        }}
+        components={markdownComponents}
       >
         {content}
       </ReactMarkdown>

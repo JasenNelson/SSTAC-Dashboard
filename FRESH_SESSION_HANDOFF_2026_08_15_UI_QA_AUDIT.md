@@ -8,15 +8,24 @@ Branch: `feat/mo-calculator-tokens-20260814`, tip `666376b5`.
 
 ## 1. Where things stand
 
+**BOTH PRs ARE MERGED. `origin/main` is `65228472`.**
+
 **PR #778 MERGED** (merge commit `d87be2a1`, 2026-08-15 15:41 UTC). Keyboard access, write-failure
 handling, a stuck calculation, calculator a11y announcements, and the authenticated Playwright
-project. All 10 required CI checks passed before merge.
+project. All 10 required CI checks passed before merge. Merged as a MERGE COMMIT rather than a
+squash, deliberately: #779 stood on its six commits, and a squash would have replaced them with one
+new commit whose content matched but whose history did not, conflicting on retarget. Result: 18
+commits unique to #779, none duplicated.
 
-**PR #779 OPEN**, retargeted to `main`, tip `666376b5`. The Calculator redesign: staged derivation,
-shared number formatter, responsive shell, Stage-3-gated reference rail. CI is running for the first
-time (see section 5 for why it never ran before).
+**PR #779 MERGED** (squash, 2026-08-15 17:16 UTC). The Calculator redesign: staged derivation,
+shared number formatter, responsive shell, Stage-3-gated reference rail, and all nine defect fixes.
+All 11 required CI checks green. Squash was correct here because nothing was stacked on it once it
+had been retargeted to main.
 
-Merge of #779 is **NOT** authorised -- it awaits owner approval. Nothing is blocked behind it.
+**CURRENT WORK: branch `feat/mo-design-batch-20260815`**, cut fresh off `65228472`. Implementing the
+18 owner-decided UI items from `docs/UI_DECISIONS_2026_08_15.md` (15 DECIDED + 3 HYBRID). Decisions
+#16, #18 and #20 are SKIPPED -- they are OPEN and await owner input; each is briefed in the
+scratchpad `OPEN_QUESTIONS.md`.
 
 ---
 
@@ -40,6 +49,30 @@ Merge of #779 is **NOT** authorised -- it awaits owner approval. Nothing is bloc
 Confirmed independently by four reviewers, each re-deriving it rather than accepting the claim.
 
 ---
+
+## 2b. Owner decisions ANSWERED 2026-08-15 (see docs/UI_DECISIONS_2026_08_15.md)
+
+The owner reviewed all 21 batched design decisions and answered. 15 DECIDED, 3 HYBRID, 3 OPEN.
+
+Two were resolved AGAINST the owner's first instinct, with the owner's agreement ("recommend best
+options ... go with them for now"). Both are recorded in the decisions doc with rationale, because a
+future reader would otherwise see the record contradicting the owner's stated choice:
+
+- **#11 -> Option C.** The owner's "hamburger, too much content" reasoning describes a DIFFERENT
+  surface: the authenticated dashboard header (`src/components/Header.tsx`, 15 links across 5
+  categories), which already has a hamburger and is not part of this audit. Decision #11 is the
+  PUBLIC logged-out landing page (`src/app/page.tsx:85-129`), which has exactly 3 cards and no
+  volume problem at all.
+- **#17 -> Option A layout, WITHOUT the requested colour inversion.** The owner asked for
+  active=green / complete=blue. Rejected because `--db-pass` (green) already means "approved /
+  passed / done" app-wide (`EvidenceLibrary.tsx:387-408`), and there is NO blue semantic token in
+  the `--db-*` set at all -- the sky-blue currently marking "active" is a bare Tailwind default.
+  A green "Active" chip would sit near the green "Approved" pills of decision #6 and read as
+  finished. The owner's actual goal (active dominates, complete recedes) is met through WEIGHT and
+  SATURATION instead.
+
+SEPARATE, NOT DONE, needs its own scoping: the logged-out landing page has ZERO header navigation
+(`page.tsx:9-16` is logo + theme toggle only).
 
 ## 3. OWNER DECISIONS WAITING (nothing proceeds on these without an answer)
 

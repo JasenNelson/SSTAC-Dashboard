@@ -861,6 +861,7 @@ export default function HHFoodWebCalculator({
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer
+            fadeFrom="from-slate-50 dark:from-slate-800/50"
             content={
               'Tissue target = $targetDose \\cdot BW / (IR_{food} \\cdot BA_o)$. ' +
               'Sediment value = $C_{tissue} / BSAF_{effective}$.'
