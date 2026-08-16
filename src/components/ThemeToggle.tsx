@@ -5,10 +5,17 @@ import { useTheme } from '@/contexts/ThemeContext';
 export default function ThemeToggle() {
   const { theme, toggleTheme } = useTheme();
 
+  // Audit 2026-08-14 requirement B14: repeated controls meet the project's 44px touch
+  // floor. This button was h-10 w-10 (40px). The icon stays 20px -- the hit area grows
+  // via the box, not the glyph, matching how the 44px floor was applied elsewhere
+  // (MatrixDashboard, MatrixMap, EvidenceLibrary).
+  //
+  // This component is SHARED: the landing page's inline header and the app-wide
+  // Header.tsx both render it, so the change propagates to every surface at once.
   return (
     <button
       onClick={toggleTheme}
-      className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
+      className="relative inline-flex h-11 w-11 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
