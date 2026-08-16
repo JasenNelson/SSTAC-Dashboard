@@ -12,6 +12,29 @@ decision artifact covering everything that needed their judgment.
 
 ---
 
+## 0. EXISTING ASSETS -- READ BEFORE INVENTING ANYTHING
+
+This project has done long autonomous runs before, and has skills and reference docs for
+every mechanical part of this. **Reuse them. Do not re-derive.** An earlier draft of this
+contract hand-rolled process monitoring and artifact names that already existed.
+
+| Need | Existing asset -- use this |
+|---|---|
+| Multi-hour run plan format | `docs/AGY_MATRIX_OPTIONS_12H_EXECUTION_PLAN_2026_07_08.md` |
+| Run status / PR manifest / closeout formats | the three `MATRIX_OPTIONS_AUTONOMOUS_*_2026_07_08.md` docs |
+| Supervising any CLI over 5 min | `supervise-headless-ai-worker` skill (+ its `references/supervision-contract.md`) |
+| Breadcrumb JSON reference impl | `Regulatory-Review-worktrees/engine-v2/engine_v2/scripts/subagent_runner/` |
+| Choosing a CLI / model / flags | `choose-ai-cli-and-model` skill; `AI-CLI-Model-Registry/docs/AI_CLI_REFERENCE.md` |
+| Commit / push / merge gates | `ship-protocols` skill; `docs/GATE_MODE_SOP.md` |
+| Codex review loop | `codex-review` skill |
+| Delegating mechanical work | `AGY` skill + `docs/AGY_USAGE.md` |
+| Accumulated project lessons | `docs/LESSONS.md` |
+| Browser QA / measurement | `browse` skill |
+| Session close-out | `safe-exit`, `update-docs` skills |
+
+If you find yourself writing a procedure, stop and check whether one of the 39 user-level
+skills or the docs above already defines it.
+
 ## 1. WHAT ALREADY HAPPENED (do not redo)
 
 Read `FRESH_SESSION_HANDOFF_2026_08_15c_BATCH1_READY_TO_SHIP.md` fully before acting. Then:
@@ -66,6 +89,22 @@ checkout and a recursive delete empties the shared store. This has happened thre
 
 Work them in order. Each unit = its own branch, own worktree, own PR. Finish and push a
 unit before starting the next; a half-finished unit at timeout is worse than a missing one.
+
+**U0 -- Live state and safety inventory (15 min, MANDATORY FIRST).** Modelled on Unit 0 of
+`AGY_MATRIX_OPTIONS_12H_EXECUTION_PLAN_2026_07_08.md`. Do not skip; every assumption below
+may have changed while the owner slept.
+- `gh pr view 780` and `gh pr view 781` -- merged? closed? conflicted? If #781 MERGED, the
+  branching strategy in section 2 changes: branch off `main` instead and skip the stacked-PR
+  handling entirely.
+- `git -C <each worktree> status --short` for every worktree you will touch. A dirty tree you
+  did not create means a parallel session is active (L0 1.6) -- STOP and record it.
+- `Get-Process node, python` -- inventory, and join `Win32_Process.ParentProcessId` to live
+  PIDs before calling anything an orphan. Age is NOT parentage. Never kill a foreign process.
+- Confirm port 3000 is free and no `next dev` is running.
+- Confirm the tool chain: `codex --version`, and that `E2E_TEST_EMAIL`/`E2E_TEST_PASSWORD`
+  exist in `.env.local`. Verify a tool works before reporting it unavailable (L0 1.5).
+- Write the initial `docs/UI_UX_AUTONOMOUS_RUN_STATUS_2026_08_16.md` with base worktree,
+  branch, and HEAD before doing any work.
 
 **U1 -- Ship B14 (30 min).** Branch already exists with the commit. Run the full suite
 (ThemeToggle renders inside the app-wide Header, so e2e matters), `/codex-review` to GREEN,
@@ -202,18 +241,56 @@ assert the real effect in e2e or measure it in a browser.
 
 ---
 
-## 7. RESILIENCE ARTIFACTS (L0 1.21)
+## 7. RESILIENCE ARTIFACTS -- USE THE ESTABLISHED PATTERN, DO NOT INVENT ONE
 
-Maintain these in the ui-qa-audit worktree root, committed at each unit boundary:
+**This project has run a multi-hour autonomous session before and the artifacts survive.
+Read them and follow their shape rather than designing new ones.** An earlier draft of this
+contract invented `RUN_STATE.md` / `HEARTBEAT.log` names from scratch; that was the mistake.
 
-- **`RUN_STATE.md`** -- current unit, what is done, what is next, the decision-artifact URL.
-  Update at every unit boundary. This is what a crashed run resumes from.
-- **`PR_MANIFEST.md`** -- every PR opened: number, branch, base, gate numbers, review status,
-  and whether it needs RETARGETING to main after #781 merges.
-- **`HEARTBEAT.log`** -- append a timestamped line every ~30 min: current unit + status.
-- **`COMMAND_LOG.md`** -- every gate and review invocation with its real exit code.
-- **`RESUME_PROMPT.md`** -- a complete launch prompt to restart from the current state.
-  Rewrite it whenever `RUN_STATE.md` changes materially.
+Read first, as templates:
+- `docs/AGY_MATRIX_OPTIONS_12H_EXECUTION_PLAN_2026_07_08.md` -- the 12-hour plan format:
+  Hard Boundaries / Required Base / Stop Conditions / Artifacts To Read First / Unit 0
+  (live state and safety inventory) / Units 1..N / Suggested Priority Order.
+- `docs/MATRIX_OPTIONS_AUTONOMOUS_RUN_STATUS_2026_07_08.md` -- run-status format
+  (Run Status / Base State / worktree / branch / HEAD).
+- `docs/MATRIX_OPTIONS_AUTONOMOUS_DOCS_PR_MANIFEST_2026_07_08.md` -- PR manifest format.
+- `docs/MATRIX_OPTIONS_AUTONOMOUS_CLOSEOUT_2026_07_08.md` -- closeout format.
+
+**Produce, using the established `<LANE>_AUTONOMOUS_<ARTIFACT>_<DATE>.md` convention:**
+- `docs/UI_UX_AUTONOMOUS_RUN_STATUS_2026_08_16.md`
+- `docs/UI_UX_AUTONOMOUS_PR_MANIFEST_2026_08_16.md` -- include the RETARGET column
+  (stacked PRs must move to `main` after #781 merges, or they never get CI).
+- `docs/UI_UX_AUTONOMOUS_CLOSEOUT_2026_08_16.md`
+- `RESUME_PROMPT.md` at the worktree root -- rewrite whenever run status changes materially.
+
+## 7a. LONG-RUNNING SHELLS AND CLI SUPERVISION -- USE THE EXISTING SKILL
+
+**Do NOT hand-roll process monitoring.** L0 CLAUDE.md 1.13 mandates breadcrumb discipline
+and a reference implementation already exists.
+
+- **Invoke the `supervise-headless-ai-worker` skill** for any CLI invocation expected to
+  exceed five minutes -- gate suites, codex runs, any headless worker. It carries the
+  supervision contract, a working `supervise-headless-worker.ps1`, PID custody, stall
+  detection, bounded termination and retry limits.
+  (`C:\Users\jasen\.claude\skills\supervise-headless-ai-worker\`, with
+  `references/supervision-contract.md`.)
+- **Reference implementation** for the breadcrumb JSON itself:
+  `C:\Projects\Regulatory-Review-worktrees\engine-v2\engine_v2\scripts\subagent_runner\`
+  (`README.md`, `subagent_runner.ps1`, `subagent_runner.py`).
+- **The contract per L0 1.13:** every >5 min invocation emits
+  `{status, last_progress_at, output_artifacts}` where status is one of
+  `STARTED | IN_PROGRESS | COMPLETED_GREEN | COMPLETED_RED | STALLED | SILENT_BAIL`.
+  Poll via `ScheduleWakeup` -- 270s fail-fast while a run is young, 1200s+ once steady.
+  **NEVER assume "no notification means still running" past 10 minutes without a fresh
+  breadcrumb.** A codex review hung for ~2h in this project on exactly that assumption.
+- **Invocation hygiene (L0 1.13):** codex CLI via stdin pipe, never positional args;
+  cursor-agent via PowerShell `& 'agent.ps1'`; schtasks via a temp `.ps1`.
+- **L0 1.8:** harness background tasks are CHILD processes and die when the session exits.
+  Anything that must outlive the session needs explicit detach (`Win32_Process.Create` or
+  `schtasks`), NOT `run_in_background`. On resume, verify a "still running" claim with
+  `Get-Process`, lockfile state, and log freshness before believing it.
+- For choosing any CLI/model, consult `choose-ai-cli-and-model` and
+  `C:\Projects\AI-CLI-Model-Registry\docs\AI_CLI_REFERENCE.md` rather than guessing flags.
 
 ---
 
