@@ -89,7 +89,19 @@ distance by roughly 118px.
 
 ---
 
-## Section D -- needs owner decision: STILL OPEN
+## Section D -- needs owner decision: PARTLY DEBUNKED, NARROWER THAN STATED
+
+> **CORRECTION (2026-08-15).** The claim below that a negative body weight "flows straight
+> into a screening value" is **FALSE**. Every numeric field in all three human-health
+> calculators already routes through `positiveInput()` / `optionalPositiveInput()`
+> (`HHDirectContactCalculator.tsx:330-342`, `HHFoodWebCalculator.tsx:326-333`,
+> `HHInhalationCalculator.tsx:163-174`), and `parseDecimal.ts:59-65` rejects `<= 0` and
+> non-numeric input with a named error. The `1e9` half IS true -- there is no upper bound.
+> The audit was describing the MARKUP (no `type`/`min`/`max`) and this reconciliation
+> over-generalised it into a data-integrity claim. Genuinely missing: upper bounds
+> (owner-gated), `EF <= 365`, `ED <= AT`, the `<= 1` ceilings on fractions/probabilities,
+> and `type="number"`/`inputMode`. Field count is 30, not 14. See
+> `docs/EXPOSURE_FACTOR_BOUNDS_SPEC.md` (read its STOP banner first).
 
 Exposure-factor inputs accept any value at all -- unconstrained free text, no numeric type,
 min, max, or step, across `HHDirectContactCalculator.tsx` (14 fields) plus the food-web and

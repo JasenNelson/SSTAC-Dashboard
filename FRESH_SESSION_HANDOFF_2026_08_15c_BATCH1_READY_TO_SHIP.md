@@ -9,26 +9,33 @@ Branch: `feat/mo-design-batch-20260815`, cut from `origin/main` at `65228472`.
 
 ---
 
-## 1. STATE: what is where
-
-**Three branches in flight.**
+## 1. STATE: BATCH 1 IS SHIPPED
 
 | Branch / PR | State |
 |---|---|
-| `feat/mo-design-batch-20260815` (batch 1) | 50 files UNCOMMITTED. Gated, twice-reviewed. READY TO COMMIT. |
+| `feat/mo-design-batch-20260815` -> **PR #781** | **SHIPPED.** Commit `370d756a`, 51 files, pushed. Six review rounds, all gates green. |
 | `docs/guide-roadmap-20260815` -> **PR #780** | PUSHED. Owner's Guide roadmap edits + the stale-tab-reference fix. |
-| `feat/section-b-wave0-20260815` | B14 (ThemeToggle 40->44px) DONE, tested, falsified. UNCOMMITTED. |
+| `feat/section-b-wave0-20260815` | B14 (ThemeToggle 40->44px) done, tested, falsified. **UNCOMMITTED -- commit this early.** |
 
-**Do not `git stash`, `checkout --`, or `clean` any of these.**
+**MERGE ORDER MATTERS: #780 must merge before or alongside #781.** #781 renames the
+"Conceptual Model" tab; #780 carries the Guide content fix that stops the Guide pointing
+at a tab that no longer exists. Merging #781 alone leaves user-facing copy naming a
+nonexistent tab.
 
-## 2. IMMEDIATE NEXT STEPS (in order)
+**Do not `git stash`, `checkout --`, or `clean` any of these worktrees. Do NOT recursively
+delete a worktree** -- `node_modules` is a JUNCTION into the main checkout and a recursive
+delete follows it and empties the shared store (L0 1.15; it has happened three times in
+this project). Remove the junction first, verify, then delete.
 
-1. Confirm the gate suite in `.tmp/gate-logs/g4-exits.txt` is all-zero. **Read the exit
-   file, not a piped echo** -- see the false-green warning in section 5.
-2. Verify the tree hash still matches `.tmp/gate-logs/FROZEN_HASH.txt`.
-3. Run the codex grind tier, then the luna gate (see section 6 for the exact invocation).
-4. Commit path-scoped, push, open the PR. PR body content: section 7.
-5. Batch 1 is then done. Next work: section 8.
+## 2. IMMEDIATE NEXT STEPS
+
+1. Watch CI on **#781** and **#780**; merge #780 first (or together).
+2. Commit and push `feat/section-b-wave0-20260815` (B14) so it is not lost.
+3. Then pick up section 8. Nothing else is in flight.
+
+Gate evidence for #781 (already run, tree hash verified unchanged): lint 0 errors / 76
+warnings, tsc clean, unit **6782 passed** across 353 files, monitored build clean, e2e
+**160 passed / 0 failed** with `chromium-auth` confirmed present.
 
 ## 3. WHAT BATCH 1 CONTAINS
 
@@ -92,9 +99,18 @@ existing test covering it. The audit was describing the MARKUP (no `type`/`min`/
 I generalised it into a data-integrity claim without reading the code. The owner approved a
 batch that is ~70% already built. **Correct this before any exposure-factor work.**
 What is genuinely missing: upper bounds (`1e9` really does pass -- `positiveInput` has no
-ceiling), `EF <= 365`, `ED <= AT`, and `type="number"`/`inputMode` for mobile keyboards.
+ceiling), `EF <= 365`, `ED <= AT`, the fraction/probability ceilings (`abs_dermal <= 1`,
+`ba_oral <= 1`, `targetRisk <= 1`), and `type="number"`/`inputMode` for mobile keyboards.
 Note there are ZERO `<form>` elements in these calculators, so `min`/`max` attributes would
 never fire native validation at all.
+
+**TWO OTHER DOCS STILL CARRY THE DEBUNKED CLAIM -- fix or ignore accordingly:**
+`docs/UI_AUDIT_2026_08_14_RECONCILIATION.md` (Section D) states verbatim that a negative
+body weight "flows straight into a screening value". The `1e9` half is true; the negative
+half is FALSE. `docs/EXPOSURE_FACTOR_BOUNDS_SPEC.md` now carries a STOP banner at the top
+correcting itself, but its body below that banner still reflects the original premise --
+read the banner, not the body. Field count is **30**, not the 23 the spec enumerates (it
+lists only the testid'd ones).
 
 **Falsify BEFORE believing, not after.** Three tests written this session passed on first
 run and then FAILED falsification. Worst case: the decision-#3 colour test asserted
@@ -138,8 +154,9 @@ codex review - -c model="gpt-5.3-codex-spark" -c windows.sandbox="unelevated" < 
 codex review - -c model="gpt-5.6-luna" -c model_reasoning_effort=high -c windows.sandbox="unelevated" < input.txt
 ```
 
-Baselines: lint 0 errors / **76 warnings** (a 77th means you added one). Unit **6780
-passed** / 353 files. E2E **159 passed / 135 skipped**.
+Baselines (from `.tmp/gate-logs/g6-*`, the final run on the shipped tree): lint 0 errors /
+**76 warnings** (a 77th means you added one). Unit **6782 passed** / **353 files**. E2E
+**160 passed / 138 skipped**, `chromium-auth` ~25 refs.
 
 ## 7. FOR THE PR BODY -- state these plainly, do not overclaim
 
@@ -156,9 +173,16 @@ passed** / 353 files. E2E **159 passed / 135 skipped**.
 
 ## 8. NEXT WORK, PLANNED AND READY
 
-Full execution plans live in the session scratchpad (copy into `docs/` when picked up):
-`NEXT_BATCHES_PLAN_2026_08_15.md`, `DEFERRED_TRIAGE_2026_08_15.md`,
-`EXPOSURE_FACTOR_BOUNDS_SPEC.md` (**rescope per section 5**).
+Full execution plans are COMMITTED in `docs/` (they were in the session scratchpad and
+would not have survived migration):
+- `docs/NEXT_BATCHES_PLAN_2026_08_15.md` -- batch 2 (5 items) + Section B (14 items, 4
+  waves), with corrected line numbers and both owner decisions recorded.
+- `docs/DEFERRED_TRIAGE_2026_08_15.md` -- 6 fold-forward items, 3 needing scoping, and the
+  systemic recommendation to bake print-safety into `ScrollFadeRegion` itself.
+- `docs/EXPOSURE_FACTOR_BOUNDS_SPEC.md` -- **RESCOPE FIRST per section 5**; the premise it
+  was written against was wrong.
+- `docs/UI_AUDIT_2026_08_14_RECONCILIATION.md` -- which audit items are done vs never
+  scheduled.
 
 1. **Batch 2** -- #16 (both surfaces), #18, P1, P2, #20. ONE PR: four of five touch
    `MatrixDashboard.tsx`. Every line number in the old docs has DRIFTED; re-read first.
