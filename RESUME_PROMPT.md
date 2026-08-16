@@ -69,3 +69,53 @@ Full detail: `docs/UI_UX_AUTONOMOUS_PR_MANIFEST_2026_08_16.md`.
   decision artifact.
 - Never recursively delete a worktree: `node_modules` is a junction into the main checkout and
   a recursive delete empties the shared store. Verify `LinkType` per item first.
+
+---
+
+## PRIOR RUN, PRESERVED BELOW (do not delete)
+
+The Matrix-Options top-50 run's resume prompt follows, verbatim. An earlier version of this
+commit REPLACED it, deleting 32 lines that recorded an in-flight lane and a batched owner
+packet. Round-2 review caught the same destruction in COMMAND_LOG.md, RUN_STATE.md and
+PR_MANIFEST.md and those were fixed -- but the verification that followed was SCOPED to just
+those three files, so this one was missed and the fix was reported as "zero deletions" while the
+full diff still showed 32. Verify with an unscoped `git diff --shortstat origin/main...<branch>`,
+never a path-filtered one.
+
+Status note added 2026-08-16 for accuracy: the PCB HH-default lane described below DID complete
+-- PR #669 is MERGED -- and its branch `feat/pcb-hh-default-2026-07-16` is still on origin at
+df537ec9. The owner-packet items below have NOT been re-verified by the 2026-08-16 run and may
+be stale. They are preserved as a record, not as a live to-do list.
+
+# RESUME PROMPT -- Matrix-Options top-50 autonomous run
+
+Continue Autonomous Multi-Hour. origin/main = c21ab08 (verify live). Do NOT micro-gate; phase
+transitions are not stop points. If blocked by a true owner gate, move to the next independent safe
+top-50 task rather than idling. Only stop for: exact prod/Supabase writes not pre-approved,
+secrets/admin creds, owner-only UI publish flips, per-PR merge authorization, QP/site-data decisions
+un-inferable from evidence, destructive/junction hazards, repeated gate failure after bounded retry.
+
+## In-flight lane: PCB HH-default (HC 1.0e-5)
+Branch feat/pcb-hh-default-2026-07-16 (prep fc1eff4). Owner ran the --apply + applied the coupled
+patch. Working tree = 2 catalog JSON (human_health_trv_values, parameter_values) + 3 code files
+(substanceLibrary, catalog.test, library.test) + 2 test-ripple fixes (defaultSelectionPolicy.test,
+HHFoodWebCalculator.test). Finish: test:ci green -> monitored build -> e2e (or defer per rule) ->
+/codex-review to GREEN -> commit exact paths (no git add .) -> push -> open PR -> monitor CI once.
+Do NOT merge without explicit per-PR authorization.
+
+## Next safe top-50 units after PCB HH-default PR is opened (pick independent, non-owner-gated)
+- #22 cumulative TEQ/BaP-eq scoring UI (A3b): register computeTEQ/computeBaPeq in equationDispatch +
+  build component. Now that D1 done + this HH-default lands; verify current state first.
+- #23 dl-PCB TEQ full HHDirectContact integration -- GATED on D3 (#13) which is GATED on PCB #15
+  site data (owner). Do NOT start without D3.
+- Tier 8 HITL groups #32-36 (owner-gated values) / #37 T39 worked-example (owner provides) -- owner-gated.
+- #26 read-back pattern (found comprehensive), #44 Agents tab (done), #50 (done).
+- Hygiene: #45 worktree triage (owner+careful), #47 root-scratch cleanup (owner).
+Most remaining top-50 are owner-gated; if all safe autonomous units are exhausted, checkpoint + hand
+the owner packet.
+
+## Owner packet (batched)
+1. Merge PCB HH-default PR (after CI green).
+2. PCB #15 EqP/logKow site data (Site 3130 IOCO: EPA 8082 Aroclor mix 1248/1254/1260, no site logKow;
+   see .tmp/pcb15-evidence/PCB_15_SITE_EVIDENCE_PACKET_DRAFT.md) -> unblocks #13/#15/#23.
+3. IOCO publish flip #7; T40 secrets #29; RLS migration #27.
