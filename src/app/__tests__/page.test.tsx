@@ -1,6 +1,6 @@
 import React from 'react';
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/react';
+import { render, screen, within } from '@testing-library/react';
 import { ThemeProvider } from '@/contexts/ThemeContext';
 import Home from '../page';
 
@@ -78,5 +78,49 @@ describe('Home (logged-out landing page)', () => {
       const card = screen.getByRole('link', { name });
       expect(card.closest('nav')).toBeNull();
     }
+  });
+  // ---------------------------------------------------------------------------
+  // Audit #18 (2026-08-16): sign-in was reachable only from a "Get Involved" box
+  // below every content card, at the very bottom of the page. Moved into the
+  // header, which is the only part of this page visible without scrolling.
+  // ---------------------------------------------------------------------------
+  describe('#18 authentication links in the header', () => {
+    it('exposes Log In and Create Account inside the header account nav', () => {
+      renderHome();
+
+      const accountNav = screen.getByRole('navigation', { name: /Account/i });
+      const logIn = within(accountNav).getByRole('link', { name: 'Log In' });
+      const createAccount = within(accountNav).getByRole('link', { name: 'Create Account' });
+
+      expect(logIn).toHaveAttribute('href', '/login');
+      expect(createAccount).toHaveAttribute('href', '/signup');
+
+      // textContent, not just the accessible name: an icon-only control with a matching
+      // aria-label would satisfy getByRole and still show the user nothing readable.
+      expect(logIn.textContent).toBe('Log In');
+      expect(createAccount.textContent).toBe('Create Account');
+    });
+
+    it('places them in the header, not somewhere further down the page', () => {
+      const { container } = renderHome();
+
+      const header = container.querySelector('header');
+      expect(header).not.toBeNull();
+      expect(within(header as HTMLElement).getByRole('link', { name: 'Log In' })).toBeInTheDocument();
+      expect(
+        within(header as HTMLElement).getByRole('link', { name: 'Create Account' }),
+      ).toBeInTheDocument();
+    });
+
+    it('no longer renders the bottom-of-page Get Involved box', () => {
+      renderHome();
+
+      // The half that makes this a real guard: reinstating the box would put a SECOND
+      // pair of these links on the page, so the header queries above would become
+      // ambiguous -- and this heading assertion catches the box directly.
+      expect(screen.queryByRole('heading', { name: /Get Involved/i })).not.toBeInTheDocument();
+      expect(screen.getAllByRole('link', { name: 'Log In' })).toHaveLength(1);
+      expect(screen.getAllByRole('link', { name: 'Create Account' })).toHaveLength(1);
+    });
   });
 });

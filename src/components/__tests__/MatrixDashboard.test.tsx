@@ -2287,3 +2287,126 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
   });
 });
 
+
+// ---------------------------------------------------------------------------
+// Batch 2 (2026-08-16): audit items #16 (duplicate H1), #20 (padding layers),
+// P1 (candidate-defaults action reachable from the body), P2 (narrow-screen
+// Stage-3 rail hint).
+//
+// Every assertion below is two-sided on purpose. The realistic regressions here
+// are silent: a lazy #20 fix that ADDS responsive classes while keeping the bare
+// base would look identical and pass a one-sided check; a #16 fix applied inside
+// MathRenderer would pass a "no h1 here" check while deleting the Jermilova
+// portal's only title.
+// ---------------------------------------------------------------------------
+describe('MatrixDashboard -- batch 2 audit items', () => {
+  describe('#16 duplicate H1', () => {
+    it('demotes The Guide leading H1 so it does not compete with the page H1', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
+
+      const content = screen.getAllByTestId('math-renderer-mock')[0].textContent ?? '';
+
+      // The mock renders the RAW markdown string, so this asserts the prefix actually
+      // handed to the renderer -- not a parsed heading level, which the mock cannot
+      // produce and which would make this assertion vacuous.
+      expect(content.trimStart()).toMatch(/^## The Guide: Matrix Options Workspace/);
+      expect(content.trimStart()).not.toMatch(/^# The Guide/);
+    });
+
+    it('demotes the Jurisdictional Frameworks leading H1', () => {
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          eqpCaseStudyContent={'# Case Study: Ecological Direct Contact\n\nBody text.\n'}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('tab', { name: /Methodology by pathway/ }));
+
+      const content = screen.getAllByTestId('math-renderer-mock')[0].textContent ?? '';
+      expect(content.trimStart()).toMatch(/^## Case Study: Ecological Direct Contact/);
+      expect(content.trimStart()).not.toMatch(/^# Case Study/);
+    });
+
+    it('leaves a document that does not open with an H1 untouched', () => {
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          eqpCaseStudyContent={'Intro paragraph with no title.\n\n## Section\n'}
+        />,
+      );
+
+      fireEvent.click(screen.getByRole('tab', { name: /Methodology by pathway/ }));
+
+      const content = screen.getAllByTestId('math-renderer-mock')[0].textContent ?? '';
+      expect(content.trimStart()).toMatch(/^Intro paragraph with no title\./);
+    });
+  });
+
+  describe('#20 stacked padding layers', () => {
+    it('scales the content measure padding by viewport instead of a flat px-8 py-12', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
+
+      const measure = screen.getByTestId('matrix-content-measure');
+      const classes = measure.className.split(/\s+/);
+
+      expect(classes).toContain('px-4');
+      expect(classes).toContain('lg:px-8');
+      expect(classes).toContain('py-8');
+      expect(classes).toContain('lg:py-12');
+      // The half that matters: a fix that only ADDED the lg: variants while leaving the
+      // bare base classes would still cost 32px each side on a 375px viewport.
+      expect(classes).not.toContain('px-8');
+      expect(classes).not.toContain('py-12');
+    });
+
+    it('scales the Guide section-card padding as well, so the two layers do not stack', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} guideContent={GUIDE_MARKDOWN} />);
+
+      const cards = screen.getAllByTestId('guide-section-card');
+      expect(cards.length).toBeGreaterThan(0);
+
+      for (const card of cards) {
+        const classes = card.className.split(/\s+/);
+        expect(classes).toContain('p-4');
+        expect(classes).toContain('lg:p-8');
+        expect(classes).not.toContain('p-8');
+      }
+    });
+  });
+
+  describe('P1 candidate defaults reachable from the calculator body', () => {
+    it('renders the action in the body without opening the Stage-3 rail', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-food'));
+      selectSubstance('benzo_a_pyrene');
+
+      const bodyAction = screen.getByTestId('calculator-candidate-defaults-button-body');
+      // toBeVisible, not toBeInTheDocument: the whole point of the item is that the
+      // action was rendered but unreachable inside a collapsed, inert rail.
+      expect(bodyAction).toBeVisible();
+      expect(bodyAction.textContent).toMatch(/Review candidate defaults/);
+    });
+  });
+
+  describe('P2 narrow-screen Stage-3 rail hint', () => {
+    it('is absent while the rail is closed and present once it opens', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+
+      expect(screen.queryByTestId('calculator-stage3-rail-hint')).not.toBeInTheDocument();
+
+      fireEvent.click(
+        screen.getByRole('button', { name: /^Show .* panel$/ }),
+      );
+
+      const hint = screen.getByTestId('calculator-stage3-rail-hint');
+      expect(hint).toBeInTheDocument();
+      // jsdom has no layout engine and does not evaluate the `lg:` breakpoint, so this
+      // asserts the GATING CLASS only. That the hint actually disappears at >=1024px is
+      // NOT proven here -- it is checked in the browser pass recorded in the PR body.
+      expect(hint.className.split(/\s+/)).toContain('lg:hidden');
+    });
+  });
+});

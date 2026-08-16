@@ -1,5 +1,6 @@
 'use client';
 
+import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProjectPhases from "@/components/dashboard/ProjectPhases";
 
@@ -9,9 +10,32 @@ export default function Home() {
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="text-xl font-bold text-slate-900 dark:text-white">SSTAC & TWG Dashboard</div>
-            <ThemeToggle />
+          <div className="flex items-center justify-between gap-2 h-16">
+            {/* Audit #18: the title now shares a fixed h-16 row with two auth links and the
+                theme toggle. `truncate` + `min-w-0` keep it from pushing them off a 375px
+                viewport, and the type scale steps down below `sm` so the truncation is a
+                fallback rather than the normal state. */}
+            <div className="min-w-0 truncate text-base sm:text-xl font-bold text-slate-900 dark:text-white">
+              SSTAC &amp; TWG Dashboard
+            </div>
+            <nav aria-label="Account" className="flex shrink-0 items-center gap-2">
+              {/* Audit #18: sign-in was previously reachable only from a "Get Involved" box
+                  at the very bottom of the page. Same sky-700 filled/outlined treatment as
+                  that box, at header padding. */}
+              <Link
+                href="/login"
+                className="rounded-lg border border-sky-700 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:border-sky-400 dark:bg-slate-800 dark:text-sky-400 dark:hover:bg-slate-700"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-sky-800"
+              >
+                Create Account
+              </Link>
+              <ThemeToggle />
+            </nav>
           </div>
         </div>
       </header>
@@ -127,29 +151,9 @@ export default function Home() {
         </div>
 
 
-        {/* Authentication Section */}
-        <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl shadow-sm p-8 text-center">
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-            Get Involved
-          </h3>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
-            Join the conversation and contribute to modernizing BC&apos;s sediment standards
-          </p>
-          <div className="flex gap-4 justify-center">
-            <a
-              href="/signup"
-              className="px-6 py-3 bg-sky-700 text-white rounded-lg hover:bg-sky-800 transition-colors font-medium"
-            >
-              Create Account
-            </a>
-            <a
-              href="/login"
-              className="px-6 py-3 bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-400 border border-sky-700 dark:border-sky-400 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors font-medium"
-            >
-              Log In
-            </a>
-          </div>
-        </div>
+        {/* Audit #18: the "Get Involved" authentication box that used to sit here has moved
+            into the header. Sign-in was the only way into the authenticated app and it was
+            below the fold, after every content card. */}
       </div>
 
       {/* Footer */}

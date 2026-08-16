@@ -122,4 +122,24 @@ describe('MathRenderer', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Heading' })).toBeInTheDocument();
     expect(screen.getByText('bold')).toBeInTheDocument();
   });
+  // ---------------------------------------------------------------------------
+  // Audit #16 guard (2026-08-16). The duplicate-H1 fix demotes a document's leading
+  // `# ` heading, but it is applied at the MatrixDashboard CALL SITES, never here.
+  // MathRenderer is shared: JermilovaReviewPortal.tsx:819 renders its methodology
+  // document through it and the page has NO other <h1>, so "simplifying" the fix by
+  // moving demoteLeadingH1 into this component would delete that page's only title.
+  //
+  // Falsified: applying demoteLeadingH1 to `content` inside MathRenderer fails this
+  // test with "Unable to find an accessible element with the role heading and level 1".
+  // ---------------------------------------------------------------------------
+  it('still renders a leading H1 as level 1 -- the duplicate-H1 fix must NOT live here', () => {
+    render(<MathRenderer content={'# Jermilova BN-RRM Methodology\n\nBody.'} />);
+
+    expect(
+      screen.getByRole('heading', { level: 1, name: 'Jermilova BN-RRM Methodology' }),
+    ).toBeInTheDocument();
+    expect(
+      screen.queryByRole('heading', { level: 2, name: 'Jermilova BN-RRM Methodology' }),
+    ).not.toBeInTheDocument();
+  });
 });
