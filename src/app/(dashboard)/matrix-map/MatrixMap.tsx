@@ -1841,7 +1841,7 @@ export function MatrixMap({
             // overriding this disclosure on later breakpoint crossings.
             legendUserOverrideRef.current = true;
           }}
-          className="min-h-[44px] flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none list-none"
+          className="min-h-[44px] flex items-center justify-between gap-2 text-xs font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none list-none marker:content-none [&::-webkit-details-marker]:hidden"
         >
           <span>Classification</span>
           {/* Round-2 P3-1: rotate on open so the chevron is not a static

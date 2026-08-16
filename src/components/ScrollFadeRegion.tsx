@@ -144,6 +144,12 @@ export default function ScrollFadeRegion({
   const { hasOverflow, atStart, atEnd } = scrollState;
   const showRightFade = hasOverflow && !atEnd;
   const showLeftFade = hasOverflow && !atStart;
+  // Deferred-triage item 1: the caption used to be gated on `hasOverflow` alone, a strict
+  // `scrollWidth > clientWidth`, while both fades use a 1px tolerance via `atEnd`. At exactly
+  // 1px of overflow that left the region with no fade in either direction but still saying
+  // "Swipe to see more", promising content that does not exist. Tie the caption to the same
+  // signal the fades use: it appears only when there is somewhere to actually scroll to.
+  const showCaption = showLeftFade || showRightFade;
 
   return (
     <div className="relative" data-testid="scroll-fade-region">
@@ -156,7 +162,13 @@ export default function ScrollFadeRegion({
       <div className="relative">
         <div
           ref={scrollRef}
-          className={`overflow-x-auto ${className}`.trim()}
+          // Deferred-triage SYSTEMIC fix: print-safety belongs to this component, not to
+          // every caller. Three separate caller-side print gaps were found in a single day
+          // (the EvidenceLibrary tables, the double katex-display margin, and the tab bar),
+          // all because a scroll container that clips on screen also clips on paper unless
+          // someone remembers to reset it. Applying the reset here closes the class for every
+          // current and future caller instead of patching them one at a time.
+          className={`overflow-x-auto print:overflow-visible print:max-w-none ${className}`.trim()}
           aria-hidden={ariaHidden || undefined}
           tabIndex={ariaHidden ? -1 : undefined}
           onScroll={() => {
@@ -193,7 +205,7 @@ export default function ScrollFadeRegion({
           />
         )}
       </div>
-      {hasOverflow && (
+      {showCaption && (
         <p
           data-testid="scroll-fade-caption"
           aria-hidden={ariaHidden || undefined}

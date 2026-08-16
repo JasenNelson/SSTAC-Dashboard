@@ -4571,7 +4571,7 @@ export default function EvidenceLibrary({
                       <tr>
                         <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
                           <details className="group">
-                            <summary className="flex min-h-[44px] w-fit cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
+                            <summary className="flex min-h-[44px] w-fit cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
                               {/* Round-2 P3-1: rotate on open. */}
                               <ChevronDown

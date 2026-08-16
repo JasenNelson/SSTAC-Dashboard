@@ -1236,7 +1236,7 @@ export default function SsdWorkbench({
               data-testid="ssd-endpoint-filters"
               className="group mt-2 rounded-md border border-slate-300 dark:border-slate-700"
             >
-              <summary className="flex min-h-[44px] cursor-pointer select-none list-none items-center justify-between gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <summary className="flex min-h-[44px] cursor-pointer select-none list-none marker:content-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <span>{endpointLabel(endpointFilters)}</span>
                 {/* Round-2 P3-1: rotate on open. */}
                 <ChevronDown
@@ -1499,7 +1499,7 @@ export default function SsdWorkbench({
             className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950"
             data-testid="ssd-validation-panel"
           >
-            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+            <summary className="flex cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
                 Validation and verification
@@ -1812,7 +1812,7 @@ export default function SsdWorkbench({
           </details>
 
           <details className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+            <summary className="flex cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
                 Model diagnostics
