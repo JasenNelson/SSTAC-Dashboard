@@ -24,13 +24,13 @@ export default function Home() {
                   that box, at header padding. */}
               <Link
                 href="/login"
-                className="rounded-lg border border-sky-700 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:border-sky-400 dark:bg-slate-800 dark:text-sky-400 dark:hover:bg-slate-700"
+                className="inline-flex min-h-11 items-center rounded-lg border border-sky-700 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:border-sky-400 dark:bg-slate-800 dark:text-sky-400 dark:hover:bg-slate-700"
               >
                 Log In
               </Link>
               <Link
                 href="/signup"
-                className="rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-sky-800"
+                className="inline-flex min-h-11 items-center rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-sky-800"
               >
                 Create Account
               </Link>

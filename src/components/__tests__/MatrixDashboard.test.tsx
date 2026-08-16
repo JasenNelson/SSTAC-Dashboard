@@ -2390,6 +2390,38 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
     });
   });
 
+  describe('P1 receipt cannot outlive the context it describes', () => {
+    // Adversarial review 2026-08-16 found that lifting the timestamp to MatrixDashboard
+    // REMOVED an accidental reset: the state used to die with CalculatorValueSearchPanel's
+    // unmount. MatrixDashboard stays mounted for the whole page, so a bare timestamp would
+    // survive a substance change and then be rendered against the NEW substance's live
+    // candidate count -- "N candidates opened for review at 10:04" for a substance whose
+    // candidates were never opened.
+    //
+    // Falsified: reverting the receipt to a bare `string | null` timestamp fails this test,
+    // because the receipt stays on screen after the substance changes.
+    it('drops the receipt when the substance changes', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
+      clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-food'));
+      selectSubstance('benzo_a_pyrene');
+
+      // Clicking NAVIGATES to References & Values -- that is the whole point of the action.
+      // The receipt is a "what did I just do" trace seen on RETURN, so come back first.
+      fireEvent.click(screen.getByTestId('calculator-candidate-defaults-button-body'));
+      clickCalculatorTab();
+      expect(
+        screen.getByTestId('calculator-candidate-review-receipt-body'),
+      ).toHaveTextContent(/opened for review/);
+
+      selectSubstance('cyanide_free');
+
+      expect(
+        screen.queryByTestId('calculator-candidate-review-receipt-body'),
+      ).not.toBeInTheDocument();
+    });
+  });
+
   describe('P2 narrow-screen Stage-3 rail hint', () => {
     it('is absent while the rail is closed and present once it opens', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);

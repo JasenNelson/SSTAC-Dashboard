@@ -39,7 +39,9 @@ import {
   type DefaultSelectionPolicyDecision,
 } from '@/lib/matrix-options/defaultSelectionPolicy';
 import DefaultPolicyDispositionNote from './DefaultPolicyDispositionNote';
-import DefaultPolicyCandidatesAction from './DefaultPolicyCandidatesAction';
+import DefaultPolicyCandidatesAction, {
+  type CandidateReviewReceipt,
+} from './DefaultPolicyCandidatesAction';
 
 interface CalculatorValueSearchPanelProps {
   pathway: ProvenancePathway;
@@ -49,9 +51,10 @@ interface CalculatorValueSearchPanelProps {
   jurisdictionLabel: string;
   regulatoryFrameId: RegulatoryFrameId;
   onOpenEvidenceLibrary: (request: EvidenceLibraryFilterRequest, receipt?: CalculatorReceipt) => void;
-  /** Audit P1: owned by MatrixDashboard so the rail and body receipts cannot disagree. */
-  candidateReviewedAt: string | null;
-  onCandidateReviewedAtChange: (timestamp: string) => void;
+  /** Audit P1: owned by MatrixDashboard so the rail and body receipts cannot disagree, and
+   *  carrying its own context so it cannot outlive the substance it describes. */
+  candidateReview: CandidateReviewReceipt | null;
+  onCandidateReviewed: (receipt: CandidateReviewReceipt) => void;
   className?: string;
 }
 
@@ -415,8 +418,8 @@ export default function CalculatorValueSearchPanel({
   jurisdictionLabel,
   regulatoryFrameId,
   onOpenEvidenceLibrary,
-  candidateReviewedAt,
-  onCandidateReviewedAtChange,
+  candidateReview,
+  onCandidateReviewed,
   className,
 }: CalculatorValueSearchPanelProps) {
   const [query, setQuery] = useState('');
@@ -595,8 +598,8 @@ export default function CalculatorValueSearchPanel({
             substanceLabel={substanceLabel}
             regulatoryFrameId={regulatoryFrameId}
             candidateInputKeys={defaultPolicyCandidateInputKeys}
-            reviewedAt={candidateReviewedAt}
-            onReviewedAtChange={onCandidateReviewedAtChange}
+            receipt={candidateReview}
+            onReviewed={onCandidateReviewed}
             onOpenEvidenceLibrary={onOpenEvidenceLibrary}
             surface="rail"
           />

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import CalculatorValueSearchPanel from '../CalculatorValueSearchPanel';
+import type { CandidateReviewReceipt } from '../DefaultPolicyCandidatesAction';
 
 /**
  * Audit P1: `candidateReviewedAt` moved out of this component and is now owned by
@@ -15,7 +16,7 @@ function ControlledPanel({
 }: {
   onOpenEvidenceLibrary: (...args: unknown[]) => void;
 }) {
-  const [reviewedAt, setReviewedAt] = React.useState<string | null>(null);
+  const [review, setReview] = React.useState<CandidateReviewReceipt | null>(null);
   return (
     <CalculatorValueSearchPanel
       pathway="human-health-food"
@@ -25,8 +26,8 @@ function ControlledPanel({
       jurisdictionLabel="BC Protocol 1 v5 DRA"
       regulatoryFrameId="bc-protocol1-v5-dra"
       onOpenEvidenceLibrary={onOpenEvidenceLibrary}
-      candidateReviewedAt={reviewedAt}
-      onCandidateReviewedAtChange={setReviewedAt}
+      candidateReview={review}
+      onCandidateReviewed={setReview}
     />
   );
 }

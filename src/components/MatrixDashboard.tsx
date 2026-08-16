@@ -72,6 +72,7 @@ import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
 import { demoteLeadingH1 } from '@/lib/matrix-options/demoteLeadingH1';
 import DefaultPolicyCandidatesAction, {
   useDefaultPolicyCandidates,
+  type CandidateReviewReceipt,
 } from './matrix-options/DefaultPolicyCandidatesAction';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
 import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
@@ -812,11 +813,15 @@ export default function MatrixDashboard({
   // Audit P1: the "Review candidate defaults" receipt timestamp. It lives here, not in
   // CalculatorValueSearchPanel, because the action now renders in the calculator body AND in
   // the Stage-3 rail; one owner means the two receipts can never disagree.
-  const [candidateReviewedAt, setCandidateReviewedAt] = useState<string | null>(null);
+  const [candidateReview, setCandidateReview] = useState<CandidateReviewReceipt | null>(null);
   const calculatorCandidateInputKeys = useDefaultPolicyCandidates({
     pathway: calculatorPathway,
     substanceKey,
     regulatoryFrameId: jurisdiction,
+    // Only the Calculator branch reads this, and deriving it costs a full
+    // buildEvidenceLibraryView pass (~1783 records, ~40ms). Do not pay it on the
+    // Interactive Map, the Guide, or during SSR.
+    enabled: activeTopTab === 'Calculator',
   });
   // Summary bar slots (step 3 of the redesign, DESIGN.md "sticky summary
   // bar ... carries the preliminary, the UTL, and the adjusted standard").
@@ -1316,8 +1321,8 @@ export default function MatrixDashboard({
           jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
           regulatoryFrameId={jurisdiction}
           onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
-          candidateReviewedAt={candidateReviewedAt}
-          onCandidateReviewedAtChange={setCandidateReviewedAt}
+          candidateReview={candidateReview}
+          onCandidateReviewed={setCandidateReview}
         />
       );
     }
@@ -1512,8 +1517,8 @@ export default function MatrixDashboard({
                 className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 lg:hidden dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100"
                 data-testid="calculator-stage3-rail-hint"
               >
-                Stage 3 is ready. On this screen width the {rightPanelTitle} panel appears
-                below the calculator rather than beside it -- scroll down to reach it.
+                The {rightPanelTitle} panel is open. On this screen width it appears below
+                the calculator rather than beside it -- scroll down to reach it.
               </p>
             )}
             {/* Audit P1: "Review candidate defaults" is an ACTION, but it used to live only
@@ -1528,8 +1533,8 @@ export default function MatrixDashboard({
               substanceLabel={selectedSubstance?.displayName ?? substanceKey}
               regulatoryFrameId={jurisdiction}
               candidateInputKeys={calculatorCandidateInputKeys}
-              reviewedAt={candidateReviewedAt}
-              onReviewedAtChange={setCandidateReviewedAt}
+              receipt={candidateReview}
+              onReviewed={setCandidateReview}
               onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
               surface="body"
               className="mx-auto max-w-md"
