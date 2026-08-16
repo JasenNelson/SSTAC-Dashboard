@@ -1,4 +1,6 @@
 import React from 'react';
+import fs from 'node:fs';
+import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { render, screen, within } from '@testing-library/react';
 import { ThemeProvider } from '@/contexts/ThemeContext';
@@ -121,6 +123,121 @@ describe('Home (logged-out landing page)', () => {
       expect(screen.queryByRole('heading', { name: /Get Involved/i })).not.toBeInTheDocument();
       expect(screen.getAllByRole('link', { name: 'Log In' })).toHaveLength(1);
       expect(screen.getAllByRole('link', { name: 'Create Account' })).toHaveLength(1);
+    });
+  });
+  // ---------------------------------------------------------------------------
+  // Section B Wave A (2026-08-16): B1 sign-in labels, B2 main landmark + skip link,
+  // B3 heading hierarchy, B6 acronym expansions, B7a footer, B9 next/link.
+  // ---------------------------------------------------------------------------
+  describe('Wave A landing-page accessibility and copy', () => {
+    it('B2: the skip link href resolves to the main landmark', () => {
+      const { container } = renderHome();
+
+      const skipLink = screen.getByRole('link', { name: /Skip to main content/i });
+      const href = skipLink.getAttribute('href') ?? '';
+      expect(href.startsWith('#')).toBe(true);
+
+      // The assertion that matters. Checking only that an anchor exists would pass for a
+      // skip link pointing at a target that is not on the page, which does nothing at all.
+      const target = container.querySelector(href);
+      expect(target).not.toBeNull();
+      expect(target?.tagName.toLowerCase()).toBe('main');
+    });
+
+    it('B2: the skip link is the first focusable element on the page', () => {
+      const { container } = renderHome();
+
+      const focusable = container.querySelectorAll('a[href], button, input, [tabindex]');
+      expect(focusable.length).toBeGreaterThan(0);
+      expect(focusable[0].textContent).toMatch(/Skip to main content/i);
+    });
+
+    // Review correction: the first version of this test walked every heading asserting no
+    // level stepped down by more than one. That was VACUOUS -- ProjectPhases renders h3s
+    // before the card grid, so deleting the new h2 left the sequence [1,2,3,3,3,3,3,3],
+    // every delta still <= 1, and the test passed with the defect present. It now asserts
+    // the actual defect: each CARD h3 must be owned by the new h2.
+    it('B3: each nav-card h3 is owned by a preceding level-2 heading', () => {
+      const { container } = renderHome();
+
+      const headings = Array.from(
+        container.querySelectorAll('h1, h2, h3, h4, h5, h6'),
+      ) as HTMLElement[];
+
+      for (const name of ['Dashboard', 'Survey Results', 'CEW 2025']) {
+        const index = headings.findIndex(
+          (h) => h.tagName === 'H3' && h.textContent?.trim() === name,
+        );
+        expect(index).toBeGreaterThan(-1);
+
+        const owner = headings
+          .slice(0, index)
+          .reverse()
+          .find((h) => Number(h.tagName.slice(1)) <= 2);
+
+        expect(owner?.textContent?.trim()).toBe('Explore the Project');
+      }
+    });
+
+    it('B1: each auth-gated card says sign-in is required', () => {
+      renderHome();
+
+      for (const name of [/Dashboard/i, /Survey Results/i, /CEW 2025/i]) {
+        const card = screen.getByRole('link', { name });
+        expect(card.textContent).toMatch(/Sign-in required/i);
+      }
+    });
+
+    it('B6: TWG and BN-RRM are expanded on first use', () => {
+      const { container } = renderHome();
+      const text = container.textContent ?? '';
+
+      expect(text).toMatch(/Technical\s+Working\s+Group\s+\(TWG\)/);
+      expect(text).toMatch(/BN-RRM\s+\(Bayesian\s+Network\s+Relative\s+Risk\s+Model\)/);
+    });
+
+    it('B7a: the footer year is current and the rights boilerplate is gone', () => {
+      const { container } = renderHome();
+
+      const footer = container.querySelector('footer');
+      expect(footer).not.toBeNull();
+      expect(footer?.textContent).toContain(String(new Date().getFullYear()));
+      expect(footer?.textContent).not.toMatch(/all rights reserved/i);
+      // Guards the actual defect: a hard-coded year that silently ages.
+      expect(footer?.textContent).not.toMatch(/2025/);
+    });
+
+    // Review correction: the first version of this test counted anchors with root-relative
+    // hrefs. That was VACUOUS for B9 -- next/link renders a bare <a href> in jsdom, so
+    // reverting all three Links to raw anchors left the DOM byte-identical and the test
+    // green. It also asserted an exact count, which would break on any unrelated future
+    // link. B9 is a SOURCE-level property, so it is asserted at source level.
+    it('B9: no route link on this page is a raw anchor', () => {
+      const source = fs.readFileSync(
+        path.join(process.cwd(), 'src', 'app', 'page.tsx'),
+        'utf8',
+      );
+
+      const rawRouteAnchors = source.match(/<a\s[^>]*href="\/[^"#]/g) ?? [];
+      expect(rawRouteAnchors).toEqual([]);
+
+      // Pair the absence check with an existence check, or it certifies an empty file.
+      expect(source.includes('<Link')).toBe(true);
+      expect(source.split('<Link').length - 1).toBeGreaterThanOrEqual(5);
+      // The one raw anchor that SHOULD remain is the in-page skip link.
+      expect(source.includes('MAIN_CONTENT_ID}`}')).toBe(true);
+    });
+
+    it('B9: the three gated cards do not prefetch routes that only redirect', () => {
+      const source = fs.readFileSync(
+        path.join(process.cwd(), 'src', 'app', 'page.tsx'),
+        'utf8',
+      );
+
+      // App Router prefetches on viewport entry in production; all three destinations sit
+      // behind the auth middleware, so for a logged-out visitor every prefetch is guaranteed
+      // to produce nothing but a redirect.
+      expect((source.match(/prefetch=\{false\}/g) ?? []).length).toBe(3);
     });
   });
 });
