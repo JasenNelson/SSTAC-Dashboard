@@ -11,11 +11,11 @@ Use it to test options, compare pathways, and record review feedback. Calculator
 Use the top tabs to move between the main review surfaces:
 
 *   **The Guide** gives the project context, workflow, and key terms. (2026 scope)
-*   **Conceptual Model** explains how exposure pathways, receptors, and site conditions fit together. (2026 scope)
+*   **Vision for Modernizing Schedule 3.4** sets out the three-part structure of the modernized Schedule 3.4 and the four receptor-pathways of the Part 1 Matrix standards. (2026 scope)
 *   **Methodology by pathway** compares examples from other regulatory programs. (2026 scope)
 *   **TWG Review** records Technical Working Group feedback on the options under review. (2026 scope)
 
-A typical 2026 review flow is: read the Guide, check the conceptual model, compare regulatory approaches, review the draft Matrix Options Paper and record feedback in TWG Review.
+A typical 2026 review flow is: read the Guide, review the vision for modernizing Schedule 3.4, compare regulatory approaches, review the draft Matrix Options Paper and record feedback in TWG Review.
 
 <!-- SECTION_BOUNDARY -->
 
