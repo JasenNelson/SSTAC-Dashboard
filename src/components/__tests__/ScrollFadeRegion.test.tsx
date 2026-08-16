@@ -381,3 +381,46 @@ describe('ScrollFadeRegion -- deferred triage', () => {
     expect(classes).toContain('border');
   });
 });
+
+// ---------------------------------------------------------------------------
+// Audit round 2, triage P0-3. The systemic print fix reset `overflow` and `max-width` but NOT
+// `max-height`, and three SSD result tables clip vertically (max-h-72 = 288px, roughly 7 rows
+// of a 20-40 species SSD). On paper there is no scrollbar, no fade and no ellipsis: the table
+// ends mid-list and reads as complete. The rows dropped are the per-species toxicity values the
+// HCp is derived from, so this is the "correct value rendered invisible" class this project has
+// shipped four times.
+//
+// jsdom implements no @media print, so this is a CLASS-CONTRACT assertion only -- it proves the
+// utility is applied, not that the printed page is un-clipped. Real proof needs a print preview
+// or Playwright emulateMedia({ media: 'print' }); that is recorded as owed.
+//
+// Falsified: removing print:max-h-none from the scroll container fails this.
+// ---------------------------------------------------------------------------
+describe('ScrollFadeRegion -- vertical print clipping', () => {
+  afterEach(() => {
+    cleanup();
+    restoreScrollMetrics();
+  });
+
+  it('resets max-height for print, not only overflow and max-width', () => {
+    stubScrollMetrics(400, 100);
+    const { container } = render(
+      <ScrollFadeRegion className="max-h-72">
+        <div>content</div>
+      </ScrollFadeRegion>,
+    );
+
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller).not.toBeNull();
+    const classes = (scroller as HTMLElement).className.split(/\s+/);
+
+    // All three axes of clipping must be reset, or a caller that caps height still truncates
+    // on paper while the component claims to own print-safety.
+    expect(classes).toContain('print:overflow-visible');
+    expect(classes).toContain('print:max-w-none');
+    expect(classes).toContain('print:max-h-none');
+
+    // The caller's own height cap must survive on screen -- this is a print-only reset.
+    expect(classes).toContain('max-h-72');
+  });
+});

@@ -168,7 +168,7 @@ export default function ScrollFadeRegion({
           // all because a scroll container that clips on screen also clips on paper unless
           // someone remembers to reset it. Applying the reset here closes the class for every
           // current and future caller instead of patching them one at a time.
-          className={`overflow-x-auto print:overflow-visible print:max-w-none ${className}`.trim()}
+          className={`overflow-x-auto print:overflow-visible print:max-w-none print:max-h-none ${className}`.trim()}
           aria-hidden={ariaHidden || undefined}
           tabIndex={ariaHidden ? -1 : undefined}
           onScroll={() => {

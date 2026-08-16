@@ -1844,7 +1844,7 @@ export default function SsdWorkbench({
               ssdtools-style AICc model average before treating the result as a
               candidate.
             </p>
-            <div className="mt-4 max-h-64 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+            <div className="mt-4 max-h-64 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
               <table
                 className="min-w-full text-left text-xs"
                 data-testid="ssd-model-diagnostics-table"
@@ -2086,7 +2086,7 @@ export default function SsdWorkbench({
                 </button>
               </div>
             </div>
-            <div className="mt-4 max-h-72 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+            <div className="mt-4 max-h-72 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
               <table
                 className="min-w-full text-left text-xs"
                 data-testid="ssd-species-aggregate-table"
@@ -2229,7 +2229,7 @@ export default function SsdWorkbench({
                   <li>No warnings for the current validation filters.</li>
                 )}
               </ul>
-              <div className="mt-4 max-h-44 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+              <div className="mt-4 max-h-44 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
                 <table
                   className="min-w-full text-left text-xs"
                   data-testid="ssd-exclusions-table"
