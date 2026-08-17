@@ -329,8 +329,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         setSubmitCancelledNote(
           `Submission was not sent: ${droppedTotal.toLocaleString()} character` +
             `${droppedTotal === 1 ? '' : 's'} ${droppedTotal === 1 ? 'is' : 'are'} still missing ` +
-            `from ${fields} comment ${fields === 1 ? 'field' : 'fields'}. Edit your comments to ` +
-            `remove the gap, or press Submit again to proceed anyway.`
+            `from ${fields} comment ${fields === 1 ? 'field' : 'fields'}. Editing the field will ` +
+            `NOT remove this warning -- the dropped-character count carries forward across edits. ` +
+            `If you still have the missing text, paste it back in (a shorter draft may fit under ` +
+            `the limit). Otherwise, use the Dismiss control next to the notice to acknowledge the ` +
+            `loss, then press Submit again to proceed.`
         );
         return;
       }
@@ -503,9 +506,16 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               // tail of a paste before onChange fires, so a reviewer pasting a long comment
               // loses it with no scrollbar, no message and no way to tell. The limit is
               // enforced in handleCommentChange instead, which can report what it dropped.
+              //
+              // disabled while isSubmitting: an edit that lands during the in-flight submit's
+              // awaits would be clipped and recorded by handleCommentChange, but the submission
+              // was already built from the pre-edit render and unconditionally clears ALL
+              // truncation provenance on success -- orphaning the new loss with no record and no
+              // confirmation. Disabling the field for the duration removes that race entirely.
+              disabled={isSubmitting}
               aria-describedby={`${GENERAL_KEY}-charcount`}
               placeholder="Overall thoughts on the methodology..."
-              className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+              className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y disabled:opacity-60 disabled:cursor-not-allowed"
               rows={4}
             />
             <div id={`${GENERAL_KEY}-charcount`} className={cn("text-right text-xs mt-1 transition-colors", (comments[GENERAL_KEY]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
@@ -525,8 +535,12 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                 <button
                   type="button"
                   onClick={() => handleDismissTruncation(GENERAL_KEY)}
+                  // disabled while isSubmitting -- see the textarea's disabled comment above:
+                  // dismissing during an in-flight submit would clear provenance the submission
+                  // never carried, the same race the disabled textarea prevents for edits.
+                  disabled={isSubmitting}
                   aria-label="Dismiss truncation notice for General Comments"
-                  className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded"
+                  className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
                 >
                   Dismiss
                 </button>
@@ -541,9 +555,13 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                 value={comments[h.storageKey] || ''}
                 onChange={(e) => handleCommentChange(h.storageKey, e.target.value)}
                 // No maxLength -- see the General Comments textarea above for why.
+                // disabled while isSubmitting -- see the General Comments textarea above: an
+                // in-flight submit's payload is fixed at submit-start, so an edit landing during
+                // its awaits would be clipped/recorded but never carried, orphaning provenance.
+                disabled={isSubmitting}
                 aria-describedby={`${h.storageKey}-charcount`}
                 placeholder={`Specific feedback for ${h.displayLabel}...`}
-                className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
+                className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y disabled:opacity-60 disabled:cursor-not-allowed"
                 rows={3}
               />
               <div id={`${h.storageKey}-charcount`} className={cn("text-right text-xs mt-1 transition-colors", (comments[h.storageKey]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
@@ -563,8 +581,10 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                   <button
                     type="button"
                     onClick={() => handleDismissTruncation(h.storageKey)}
+                    // disabled while isSubmitting -- see the General Comments Dismiss button above.
+                    disabled={isSubmitting}
                     aria-label={`Dismiss truncation notice for ${h.displayLabel}`}
-                    className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded"
+                    className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
                   >
                     Dismiss
                   </button>
@@ -587,7 +607,13 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           <div className="flex gap-3">
             <button
               onClick={handleSave}
-              className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+              // disabled while isSubmitting: Save Draft writes the CURRENT `comments` state to
+              // localStorage. If it ran mid-submit it could persist a state the in-flight
+              // submission never saw, or race the submit's own success-path localStorage
+              // clears (see handleSubmit) -- see the textarea comments above for the underlying
+              // in-flight-submit race this guards against.
+              disabled={isSubmitting}
+              className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Save Draft
             </button>

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
 import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import TWGReviewPortal from '../TWGReviewPortal'
 import { createClient } from '@/lib/supabase/client'
 
@@ -828,5 +829,104 @@ second body
     expect(
       screen.getByRole('button', { name: /Dismiss truncation notice for Section A/i })
     ).toBeInTheDocument()
+  })
+
+  // Regression set for the in-flight submit race (P1). The submit payload is built from a
+  // pre-edit render, and a successful submit unconditionally clears ALL truncation provenance.
+  // If an edit landed while the submission's awaits were pending, it would be clipped/recorded
+  // by handleCommentChange but never carried by the in-flight payload, and the submit's success
+  // path would then wipe the record for a comment that was never actually submitted -- orphaning
+  // provenance with no confirmation. The fix disables the fields the submission depends on for
+  // the duration of the submit.
+  it('disables comment textareas, dismiss buttons and Save Draft while a submission is in flight', async () => {
+    let resolveGetUser!: (v: { data: { user: { id: string } | null }; error: null }) => void
+    mockGetUser.mockImplementation(
+      () => new Promise((resolve) => { resolveGetUser = resolve })
+    )
+    mockFrom.mockReturnValue({ select: vi.fn(), insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const generalTextarea = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+    const sectionTextarea = screen.getByPlaceholderText(/Specific feedback for Section A\.\.\./i)
+    fireEvent.change(generalTextarea, { target: { value: 'x'.repeat(5010) } })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    // getUser() is hung, so handleSubmit is stuck between setIsSubmitting(true) and its first
+    // await settling -- exactly the window the race exploited.
+    await waitFor(() => expect(generalTextarea).toBeDisabled())
+    expect(sectionTextarea).toBeDisabled()
+    expect(
+      screen.getByRole('button', { name: /Dismiss truncation notice for General Comments/i })
+    ).toBeDisabled()
+    expect(screen.getByRole('button', { name: /Save Draft/i })).toBeDisabled()
+
+    // Let the hung submission resolve so it does not leak into other tests as a dangling promise.
+    resolveGetUser({ data: { user: null }, error: null })
+    await waitFor(() => expect(generalTextarea).not.toBeDisabled())
+
+    confirmSpy.mockRestore()
+  })
+
+  it('rejects an edit attempted on a disabled textarea during an in-flight submit, so no provenance can be orphaned', async () => {
+    let resolveGetUser!: (v: { data: { user: { id: string } | null }; error: null }) => void
+    mockGetUser.mockImplementation(
+      () => new Promise((resolve) => { resolveGetUser = resolve })
+    )
+    mockFrom.mockReturnValue({ select: vi.fn(), insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    const user = userEvent.setup()
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    ) as HTMLTextAreaElement
+    fireEvent.change(generalTextarea, { target: { value: 'x'.repeat(5010) } })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(generalTextarea).toBeDisabled())
+
+    // userEvent respects the disabled attribute the way a real browser does (a disabled control
+    // cannot be focused or typed into), unlike a raw fireEvent.change which would bypass it. If
+    // the disabled attribute were ever dropped, this "paste" would land in the field and clip it
+    // mid-submission.
+    await user.type(generalTextarea, 'DANGER: typed while disabled')
+
+    expect(generalTextarea.value).toHaveLength(5000)
+    expect(generalTextarea.value).not.toContain('DANGER')
+
+    resolveGetUser({ data: { user: null }, error: null })
+    await waitFor(() => expect(generalTextarea).not.toBeDisabled())
+
+    confirmSpy.mockRestore()
+  })
+
+  // Regression for the P2 cancellation-note defect: "Edit your comments to remove the gap" was
+  // advice that could not work, because an edit deliberately carries the truncation count forward
+  // (see handleCommentChange) rather than clearing it -- following that instruction reproduces
+  // the exact same confirmation dialog. The Dismiss control is the only non-submit way to clear a
+  // record.
+  it('tells the reviewer to restore the text or use Dismiss, not to edit the comment', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    const status = await screen.findByRole('status')
+    expect(status.textContent).toMatch(/Dismiss/)
+    expect(status.textContent).not.toMatch(/Edit your comments to remove the gap/i)
+    expect(status.textContent).not.toMatch(/editing (the field|your comments?) will remove/i)
+
+    confirmSpy.mockRestore()
   })
 })
