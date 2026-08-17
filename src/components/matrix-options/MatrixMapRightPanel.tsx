@@ -805,6 +805,16 @@ function MeasurementTable({
       data-testid="matrix-map-measurement-table-scroll"
       className={cn(
         'min-h-[260px] flex-1 overflow-auto rounded-lg border border-slate-200 dark:border-slate-700',
+        // NO print: reset here, deliberately. This cap looks like a print-clipping defect and is
+        // listed as one in docs/PRINT_CLIPPING_BACKLOG_2026_08_16.md, but adding
+        // `print:max-h-none print:overflow-visible` here is a NO-OP: this panel renders only
+        // under `case 'Interactive Map'` in MatrixDashboard.tsx, and that branch's tabpanel
+        // (MatrixDashboard.tsx, the isMapMode arm) carries `print:hidden` with no print reset of
+        // its own. The whole tab is removed from paper, so nothing inside it can clip on paper.
+        // A reset was added here and then removed once that was verified; it passed a unit test
+        // asserting the class string, which is exactly why a class-level assertion is not
+        // evidence about print. Making this table printable requires deciding whether the map
+        // tab should print at all -- a design question, not a defect fix.
         isFocused ? 'max-h-[68vh]' : 'max-h-[42vh]',
       )}
       style={{ scrollbarGutter: 'stable both-edges' }}
@@ -852,7 +862,21 @@ function MeasurementTable({
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{formatCell(row.value)}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.unit ?? ''}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.qualifier ?? ''}</td>
-                <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.censored ? 'Censored' : 'Detected'}</td>
+                <td className="px-2 py-2 text-slate-600 dark:text-slate-300">
+                  {/* censored is boolean | null. A two-state ternary would render an UNKNOWN
+                      detect/non-detect status as a confirmed detection, which is an assertion
+                      the data does not support. Degrade honestly, the way filter-measurements.ts
+                      already does with its explicit === comparisons. */}
+                  {row.censored === null ? (
+                    <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-slate-500 dark:bg-slate-800 dark:text-slate-400">
+                      unknown
+                    </span>
+                  ) : row.censored ? (
+                    'Censored'
+                  ) : (
+                    'Detected'
+                  )}
+                </td>
                 <td className="px-2 py-2 capitalize text-slate-600 dark:text-slate-300">{COORD_TIER_LABEL[row.coordinate_quality_tier]}</td>
                 <td className="px-2 py-2 text-slate-600 dark:text-slate-300">{row.source_dra_title ?? row.source_dra_id ?? ''}</td>
               </tr>

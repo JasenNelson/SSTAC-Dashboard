@@ -329,6 +329,45 @@ describe('SsdWorkbench', () => {
     expect(within(exclusions).getAllByText(/endpoint mismatch/i).length).toBeGreaterThan(0);
   });
 
+  // Regression guard: the exclusions table used to `.slice(0, 8)`, silently dropping
+  // records past the eighth while the "Excluded" tile above reported the true total.
+  // Drives 12 uploaded records through a real exclusion path (endpoint filter mismatch)
+  // and asserts every one of them -- including the 9th through 12th -- is rendered.
+  it('renders every excluded record, not just the first 8', async () => {
+    render(<SsdWorkbench />);
+
+    const uploadRows = Array.from({ length: 12 }, (_, i) => i + 1).map(
+      (n) => `Zinc,Species ${n},0.1${n},FW,Feeding-${n},Fish`,
+    );
+    const csv = ['chemical,species,value,media,endpoint,group', ...uploadRows].join('\n');
+    const file = new File([csv], 'ssd-exclusions.csv', { type: 'text/csv' });
+    Object.defineProperty(file, 'text', {
+      value: () => Promise.resolve(csv),
+    });
+
+    fireEvent.change(screen.getByLabelText(/Upload CSV or JSON/i), {
+      target: { files: [file] },
+    });
+
+    await waitFor(() =>
+      expect(screen.getByText(/12 uploaded records loaded/i)).toBeInTheDocument(),
+    );
+
+    // Filter to an endpoint ("Mortality") that none of the 12 uploaded rows match
+    // (each row's endpoint is "Feeding-N"), so all 12 become endpoint_mismatch exclusions.
+    fireEvent.click(screen.getByText('All endpoints'));
+    fireEvent.click(screen.getByRole('checkbox', { name: /^Mortality$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /Run SSD/i }));
+
+    const exclusions = screen.getByTestId('ssd-exclusions-table');
+    const bodyRows = exclusions.querySelectorAll('tbody tr');
+    expect(bodyRows.length).toBe(uploadRows.length);
+    // A record beyond the eighth (the 12th) must be present -- the truncation guard.
+    expect(within(exclusions).getByText(/Feeding-12/i)).toBeInTheDocument();
+    // And the first, to prove nothing at the front was dropped either.
+    expect(within(exclusions).getByText(/Feeding-1(?!\d)/)).toBeInTheDocument();
+  });
+
   it('collapses the endpoint filter group into a disclosure with a 44px summary trigger', () => {
     render(<SsdWorkbench />);
 

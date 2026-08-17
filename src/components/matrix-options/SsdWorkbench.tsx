@@ -2241,7 +2241,16 @@ export default function SsdWorkbench({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {result.excludedRecords.slice(0, 8).map((record, index) => (
+                    {/* Renders EVERY excluded record. This was `.slice(0, 8)`, which silently
+                        dropped the rest while the "Excluded" tile above reported the true
+                        count (result.excludedRecordCount === result.excludedRecords.length,
+                        see src/lib/matrix-options/ssd/hcp.ts) -- so the two disagreed and only
+                        the honest one was legible. Nothing is hidden now: the container is
+                        scroll-capped on screen (max-h-44 overflow-auto) and de-clipped on
+                        paper (print:max-h-none print:overflow-visible), so a long list costs
+                        scrolling, not data. Do not reintroduce a cap here without also
+                        rendering a visible "showing N of M" disclosure. */}
+                    {result.excludedRecords.map((record, index) => (
                       <tr key={`${record.reason}-${index}`}>
                         <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
                           {record.reason.replace(/_/g, ' ')}

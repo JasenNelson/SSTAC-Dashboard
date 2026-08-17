@@ -1,8 +1,13 @@
 # Print-clipping backlog -- repo-wide scan, 2026-08-16
 
-Status: OPEN. TWO containers are fixed in the branch that carries this document; a third is fixed
-in a STACKED PR that has not merged, so it is still listed as open below. Everything else here is
-recorded and NOT fixed. Owner decision needed on scope and priority.
+Status: OPEN. TWO containers are fixed in the branch that carries this document. A third was
+previously described here as "fixed in a stacked PR that has not merged"; that is WITHDRAWN --
+`MatrixMapRightPanel.tsx:808` was never a print defect, because its host tab is `print:hidden`.
+See "Correction: this scan never checked host printability" and the "Withdrawn" section. Nothing
+is pending merge FOR THAT ROW specifically -- the two containers listed under "Fixed" are fixed on
+this lane's branches and are unmerged like the rest of the lane. Everything else here is recorded
+and NOT fixed, and the severity ranking of the remaining candidates is PROVISIONAL until each
+one's ancestor chain is re-checked. Owner decision needed on scope and priority.
 Raised by: adversarial review of the deferred-triage print-safety work (PR for
 `feat/deferred-triage-20260816`).
 
@@ -18,8 +23,11 @@ of divs.
 That prompted a repo-wide scan. The scan says the problem is materially larger than this lane,
 and the honest thing is to say so in writing rather than let two green PRs imply the class is
 closed. This document is that statement. Nothing here is fixed except the containers named under
-"Fixed" below, and that section distinguishes what is fixed IN THIS BRANCH from what depends on a
-stacked PR merging.
+"Fixed" below.
+
+The scan has since been shown to have a METHOD GAP of its own -- it never checked whether a
+capped container reaches paper at all -- which turned its highest-ranked entry into a
+non-defect. That correction is below and it applies to how every remaining entry should be read.
 
 ## The failure class, restated
 
@@ -78,7 +86,9 @@ Earlier drafts of this section reported 52 vertical lines and 91 horizontal line
 came from the weaker rules above and should not be reconciled against these -- the method
 changed, not the tree.
 
-Counts on tip `3d03c869` plus this lane's uncommitted work:
+Counts measured on tip `3d03c869` plus this lane's then-uncommitted work. Part of that work has
+since been committed as `87b8d2c8`, so the tip label is historical; the NUMBERS were re-derived
+against the current tree and are unchanged:
 
 | Axis | Lines |
 |---|---:|
@@ -94,14 +104,49 @@ it.
 ## Verified high-severity candidates
 
 Each of these was opened and read. They hold measured values, units, substance identities, or
-model outputs -- content a professional would rely on. All of them are OPEN as of this branch.
-A container stays in this table until the fix is MERGED, even if a fix exists on an unmerged
-branch -- an earlier draft moved one out on the strength of a stacked PR, and the effect was that
-the highest-severity finding in the whole scan appeared nowhere as open.
+model outputs -- content a professional would rely on.
+
+Two rules govern this table, and they are different rules:
+
+1. A container stays here until its fix is MERGED, even if a fix exists on an unmerged branch. An
+   earlier draft moved one out on the strength of a stacked PR, and the effect was that the
+   highest-severity finding in the whole scan appeared nowhere as open.
+2. A container is REMOVED outright, not held pending merge, if it turns out never to have been a
+   defect. That is not the same as being fixed, and rule 1 does not apply to it.
+
+One row -- `MatrixMapRightPanel.tsx:808` -- is in case 2. It is retained in the table below only
+so the reclassification is visible to anyone who read an earlier revision; it is NOT open and
+nothing about it is pending merge. Every OTHER row here is open, and their severities are
+PROVISIONAL for the reason given in the correction immediately below.
+
+### Correction: this scan never checked host printability (added 2026-08-16)
+
+The scan method below finds a container carrying a `max-h-*` with no `print:max-h-none`. It never
+asks a prior question: **does the container reach paper at all?** A `print:hidden` anywhere in the
+ancestor chain removes the whole subtree from print, and then no cap inside it can clip on paper,
+because nothing inside it prints.
+
+That gap produced a wrong entry, and not a marginal one -- the container this table used to call
+"the highest-value surface in the scan" is inside a `print:hidden` tabpanel and cannot clip on
+paper at all. It was caught by an adversarial code reviewer, not by this scan and not by a unit
+test, because the unit test asserted a CLASS STRING and a class string cannot see an ancestor.
+
+Consequences for the rest of this document, stated rather than quietly fixed:
+
+- **The severity ranking of the remaining high-severity candidates is UNVERIFIED against this
+  question.** Any of them may sit under a `print:hidden` host and be equally inert. Re-verifying
+  all of them is filed as follow-up work; until that is done, treat every severity in the table
+  below as provisional.
+- The reproducible counts (49 vertical, 84 horizontal) are unaffected. They are honest counts of
+  what the regex matches, and they were always described as raw counts rather than defect counts.
+  What changes is the interpretation: an un-reset cap is a print defect only if its host prints.
+- A future scan should resolve each hit's ancestor chain for `print:hidden` before ranking it, and
+  should verify a print fix at RUNTIME (as `e2e/ssd-workbench.spec.ts` does by measuring layout),
+  never by asserting classes.
 
 | Location | Cap | Content at risk |
 |---|---|---|
-| `src/components/matrix-options/MatrixMapRightPanel.tsx:808` | `max-h-[68vh]` / `max-h-[42vh]` via `cn()`, `overflow-auto` | The PRIMARY matrix-map measurement table (`matrix-map-measurement-table-scroll`) -- sample, date, medium, substance, value, unit, censoring. The highest-value surface in the scan. **A fix exists on the stacked `feat/audit-p0-20260816` branch; this file is UNTOUCHED on the branch carrying this document, so it stays open here until that PR merges.** |
+| `src/components/matrix-options/MatrixMapRightPanel.tsx:808` | `max-h-[68vh]` / `max-h-[42vh]` via `cn()`, `overflow-auto` | **RECLASSIFIED 2026-08-16 -- NOT a print defect. See "Correction: this scan never checked host printability" ABOVE this table, and the "Withdrawn" section further down.** The PRIMARY matrix-map measurement table (`matrix-map-measurement-table-scroll`). This panel renders ONLY under `case 'Interactive Map'` in `MatrixDashboard.tsx`, and that branch's tabpanel carries `print:hidden` with no reset of its own, so the container never reaches paper and cannot clip there. A `print:` reset was written on the stacked `feat/audit-p0-20260816` branch, verified to be a no-op, and REMOVED. It is not a fix awaiting merge; there is nothing to fix here unless the map tab is made printable, which is a design decision, not a defect. |
 | `src/components/engine-v2/PolicySearchPanel.tsx:162` | `max-h-40 overflow-y-auto`, `whitespace-pre-wrap` | Full `policy.originalText` -- regulatory text containing numeric thresholds. |
 | `src/components/engine-v2/PolicySearchPanel.tsx:407` | `max-h-64 overflow-y-auto` | Policy search results list. |
 | `src/components/engine-v2/TelemetrySidebar.tsx:242` | `max-h-[calc(100vh-2rem)]` | Run ids, config hash, coverage counts. A `vh` cap behaves especially unpredictably in print media. |
@@ -144,12 +189,17 @@ exception in `printCapSweep.test.ts`).
   how MANY rows print while still clipping WHICH substance each row is about. A reviewer made
   the point that "it is in another file" was not available as a defence here.
 
-### In the stacked `feat/audit-p0-20260816` PR -- NOT in this branch
+### Withdrawn -- `MatrixMapRightPanel.tsx:808` was never a print defect
 
-- `MatrixMapRightPanel.tsx:808` measurement-table scroll container. Verify with
-  `git log origin/main..feat/deferred-triage-20260816 -- src/components/matrix-options/MatrixMapRightPanel.tsx`,
-  which is EMPTY: no commit on this branch touches that file, and it contains no `print:` variant.
-  It remains listed as an open candidate above, and must stay there until the stacked PR merges.
+An earlier revision of this section listed this container as "fixed in the stacked
+`feat/audit-p0-20260816` PR". That is WITHDRAWN. The stacked branch did add
+`print:max-h-none print:overflow-visible` here, and it was then established that the container
+sits inside a `print:hidden` tabpanel (the `case 'Interactive Map'` branch in
+`MatrixDashboard.tsx`) and therefore never reaches paper. The reset was a no-op and was removed
+from that branch; the entry is reclassified in the candidates table above.
+
+Nothing about this file is pending merge. See "Correction: this scan never checked host
+printability" for what this implies about the other candidates.
 
 Everything else in this document is OPEN.
 
@@ -176,14 +226,24 @@ Everything else in this document is OPEN.
   blind to caps composed through `cn()` or template literals, and does not look at the horizontal
   axis at all. It is a cheap net under the e2e sweep, not a substitute for it.
 
-Note the `cn()` blindness is not hypothetical: the highest-severity container the scan turned up
-(`MatrixMapRightPanel.tsx:808`) is `cn()`-composed, so a source-text sweep would not have found it
-even with that file in scope. It was found by an external reviewer reading the code. A regex is
-the wrong tool for the general case.
+Note the `cn()` blindness is not hypothetical: `MatrixMapRightPanel.tsx:808` -- which this document
+previously ranked as the highest-severity container in the scan -- is `cn()`-composed, so a
+source-text sweep would not have found it even with that file in scope. It was found by an external
+reviewer reading the code. A regex is the wrong tool for the general case.
+
+That example now carries a second, sharper lesson. The container turned out not to be a print
+defect at all (its host tab is `print:hidden`), and the way that was MISSED is instructive: a unit
+test asserted the print classes on the rendered element, was falsified two-sided, and passed --
+while certifying nothing, because a class-string assertion cannot see an ancestor that removes the
+element from print. Regex blindness and assertion blindness are different failures. Neither is
+fixed by the other, and only a runtime measurement addresses the second.
 
 ## Recommended next step (owner decision)
 
-1. Triage the 9 vertical and 5 horizontal candidates above into fix / accept / not-a-defect.
+1. Triage the remaining 8 vertical and 5 horizontal candidates above into fix / accept /
+   not-a-defect. (Was 9 vertical; `MatrixMapRightPanel.tsx:808` has since been triaged to
+   not-a-defect and is excluded from that count.) Before ranking any of them, resolve each one's
+   ancestor chain for `print:hidden` -- that is the check whose absence produced the wrong entry.
 2. For the ones that are fixed, extend the RUNTIME e2e sweep to the views that hold them, rather
    than growing the source-text sweep. Real layout measurement is the only thing that has caught
    this class reliably.
