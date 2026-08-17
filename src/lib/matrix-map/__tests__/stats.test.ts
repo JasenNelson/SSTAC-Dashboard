@@ -604,6 +604,29 @@ describe('computeSelectionStats -- censored===null treated as detected', () => {
   });
 });
 
+describe('computeSelectionStats -- unresolvedCensoring counter', () => {
+  it('is 0 for a fully-resolved (all censored:true/false) dataset', () => {
+    const rows = [
+      makeRow({ value: 1.0, censored: false, sample_id: 'a' }),
+      makeRow({ value: null, censored: true, detection_limit: 2.0, sample_id: 'b' }),
+      makeRow({ value: 3.0, censored: false, sample_id: 'c' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    expect(result.buckets[0].descriptive.unresolvedCensoring).toBe(0);
+  });
+
+  it('equals the number of rows with a null or undefined censored value', () => {
+    const rows = [
+      makeRow({ value: 1.0, censored: false, sample_id: 'a' }),
+      makeRow({ value: 2.0, censored: null, sample_id: 'b' }),
+      makeRow({ value: 3.0, censored: undefined as unknown as boolean, sample_id: 'c' }),
+      makeRow({ value: null, censored: true, detection_limit: 4.0, sample_id: 'd' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    expect(result.buckets[0].descriptive.unresolvedCensoring).toBe(2);
+  });
+});
+
 describe('computeSelectionStats -- DL_SUBSTITUTION_FACTOR constant', () => {
   it('DL_SUBSTITUTION_FACTOR = 0.5', () => {
     expect(DL_SUBSTITUTION_FACTOR).toBe(0.5);

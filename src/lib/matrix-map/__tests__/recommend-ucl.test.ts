@@ -145,3 +145,29 @@ describe('UCL Recommendation Ladder (recommend-ucl)', () => {
     expect(recCensoredCheb99.recommendedMethod).toBe('kmChebyshev99');
   });
 });
+
+describe('UCL Recommendation Ladder -- unresolvedCensoring fail-closed guard', () => {
+  it('fails closed when censoring status is unresolved: no ProUCL citation, no censored/uncensored basis claim', () => {
+    // Otherwise-Normal, uncensored, n=15 dataset that would normally recommend studentT95
+    // with a ProUCL 5.2 Section 2.5 citation (see the "handles Normal distribution" test
+    // above) -- but with unresolvedCensoring > 0 supplied, the guard must intercept it
+    // before any pathway branching runs.
+    const rec = recommendUcl('Normal', 15, 0.4, null, false, undefined, undefined, undefined, 3);
+    expect(rec.recommendedMethod).toBe('none');
+    expect(rec.basisString).not.toContain('ProUCL');
+    expect(rec.basisString).not.toContain('Section');
+    expect(rec.basisString.toLowerCase()).toContain('unresolved');
+    expect(rec.basisString).toContain('3');
+    expect(rec.warning).toBeDefined();
+    expect(rec.warning).toContain('3');
+  });
+
+  it('regression: the same otherwise-Normal dataset with fully resolved censoring (default unresolvedCensoring=0) is unchanged', () => {
+    // Identical inputs to the guard test above, minus the unresolved-censoring count.
+    // Must reproduce exactly the pre-existing, unguarded recommendation.
+    const rec = recommendUcl('Normal', 15, 0.4, null, false);
+    expect(rec.recommendedMethod).toBe('studentT95');
+    expect(rec.basisString).toContain('ProUCL 5.2 Section 2.5');
+    expect(rec.basisString).toContain("Student's-t UCL");
+  });
+});

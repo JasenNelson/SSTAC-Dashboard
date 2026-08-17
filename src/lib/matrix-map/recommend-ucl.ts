@@ -19,13 +19,29 @@ export function recommendUcl(
   hasCensored: boolean,
   detects?: number,
   censoredMethod?: 'KM' | 'ROS' | 'DL2',
-  logN?: number
+  logN?: number,
+  unresolvedCensoring: number = 0
 ): Recommendation {
   // If sample size is insufficient (n < 2), UCL is not possible
   if (n < 2) {
     return {
       recommendedMethod: 'none',
       basisString: 'Sample size n < 2: UCL is not computable.'
+    };
+  }
+
+  // Fail-closed provenance guard: if any row's censoring status could not be
+  // resolved to true/false, no ProUCL basis (censored OR uncensored) may be
+  // claimed for this bucket -- claiming one either way would be a false
+  // provenance citation. Unreachable with today's data: the DB column backing
+  // `censored` is NOT NULL, so `unresolvedCensoring` is always 0 on the live
+  // RPC path (see stats.ts). This guard exists so that invariant is enforced
+  // in code, not merely assumed.
+  if (unresolvedCensoring > 0) {
+    return {
+      recommendedMethod: 'none',
+      basisString: `Censoring status is unresolved for ${unresolvedCensoring} of ${n} row(s): no UCL basis (censored or uncensored) can be claimed.`,
+      warning: `${unresolvedCensoring} row(s) have an unresolved censoring status; UCL recommendation withheld until censoring status is resolved.`
     };
   }
 
