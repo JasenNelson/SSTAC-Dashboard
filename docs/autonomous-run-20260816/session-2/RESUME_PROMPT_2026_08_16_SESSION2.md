@@ -30,11 +30,13 @@ invocation line from any doc.
 | `feat/mo-batch2-20260816` | f0f56330 | 6612fe6b STALE | no | green (g3-batch2, prior session) |
 | `feat/section-b-wavea-20260816` | c41f1463 | f73a357b STALE | no | **GREEN this session** (g5-wavea-tip) |
 | `feat/deferred-triage-20260816` | 3d03c869 + **6 dirty** | 8a0627f7 STALE | no | lint/tsc/unit green; e2e has 2 PRE-EXISTING failures |
-| `feat/theme-cookie-20260816` | **3a5eb26f** | 0117e8e0 STALE | **YES** | **FULLY GREEN** (g7-theme-committed) |
+| `feat/theme-cookie-20260816` | **3a5eb26f** | **3a5eb26f PUSHED** | **YES** | **FULLY GREEN** (g7-theme-committed) |
 | `feat/audit-p0-20260816` (NEW) | 3d03c869 + **6 dirty** | none | no | **FULLY GREEN** (g5-p0-pre) |
 | `docs/ui-ux-autonomous-run-20260816` | aebe40b4 | in sync | no | docs only |
 
-**NOTHING IS PUSHED.** One commit exists: `3a5eb26f` on theme-cookie.
+**PUSHED: `feat/theme-cookie-20260816` only** (fast-forward 0117e8e0..3a5eb26f, no force). PR #787's
+body was replaced with `BODY_theme_cookie_787.md` and is live. The other three feature branches
+are still local-only with stale remotes.
 
 Verify any of this with `git rev-parse <branch>` vs `git rev-parse origin/<branch>` before
 trusting it.
@@ -56,7 +58,13 @@ Scratchpad root:
 
 ### theme pair (#782 wave0 + #787 theme-cookie)
 - **Leg 1a: GREEN at round 8.** Rounds 1-7 each found a real defect.
-- **Leg 1b: RED (pre-push).** Its blocker is FIXED -- see item 4 below.
+- **Leg 1b: GREEN.** Its P1 (the missing PR body that the holistic GREEN was conditioned on) is
+  CLOSED. It re-verified every figure in the body against the raw logs -- gate table, the
+  48-tests/48-passed claim, and the route table (136 dynamic lines minus legend minus Middleware
+  = 134 rows) -- and found no overclaim. It confirmed the "measured on next dev, not production"
+  caveat survived rather than being quietly dropped.
+- **This pair is COMPLETE and PUSHED.** Remaining caveats it recorded: `#782` still has no Leg 2
+  this session, and production-build cache headers remain unmeasured.
 - **Leg 2 luna gate tier: targeted GREEN, strategic GREEN, holistic GREEN.**
   Stated honestly: targeted and holistic verdicts came from explicit VERDICT-CLOSURE rounds after
   luna omitted the mandatory verdict line (documented quirk). The holistic GREEN is CONDITIONAL on
@@ -130,6 +138,10 @@ The three remaining audit P0s plus one of the same class:
 - 7 regression tests, each falsified two-sided. Commit message at `<scratchpad>/commit-msgs/p0.txt`.
 
 **REBASE NOTE:** this branch is based on triage@3d03c869. Once triage commits, rebase it.
+MEASURED: the rebase should be CLEAN. The P0 branch's six changed files and the triage delta's six
+changed files INTERSECT IN NOTHING. The apparent overlap on `SsdWorkbench.tsx` /
+`SsdWorkbench.test.tsx` is against triage's COMMITTED history, which the P0 branch already
+contains (`f06a3ad7` is an ancestor of it) -- not against the new delta.
 
 ## 4. WHAT I FIXED FROM THE LAST REVIEW ROUNDS (do not redo)
 
@@ -157,8 +169,8 @@ The three remaining audit P0s plus one of the same class:
    **Do not record the triage tip as e2e-green; say 2 pre-existing failures.**
 4. Rebase `feat/audit-p0-20260816` onto the new triage tip, then run the FULL pipeline on it
    (Leg 1a + 1b + Leg 2 x3) -- it has had none.
-5. Push all four feature branches. **No force-with-lease is needed** -- all are fast-forwards
-   (verified: `0117e8e0` is an ancestor of `3a5eb26f`; wave0 is already in sync and needs no push).
+5. Push the remaining branches. theme-cookie is DONE. **No force-with-lease is needed** anywhere --
+   all are fast-forwards, and wave0 is already in sync and needs no push.
 6. Update PR bodies from `<scratchpad>/pr-bodies-20260816/` (5 files, all ASCII-checked) and open
    the P0 PR.
 7. Owner-gated: merge approval per PR, on the exact reviewed SHA.
