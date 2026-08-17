@@ -1,21 +1,61 @@
 'use client';
 
+import Link from "next/link";
 import ThemeToggle from "@/components/ThemeToggle";
 import ProjectPhases from "@/components/dashboard/ProjectPhases";
+
+// Audit B2: single source of truth for the skip-link target. Both the anchor href and the
+// <main> id derive from this, so they cannot drift apart.
+const MAIN_CONTENT_ID = 'main-content';
 
 export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-sky-50 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+      {/* Audit B2: skip link. First focusable element on the page, visually hidden until
+          focused. Its href MUST stay in sync with the id on <main> below -- a skip link
+          pointing at a missing target is worse than none, because it silently does nothing.
+          A test resolves the href against the DOM and asserts it lands on the landmark. */}
+      <a
+        href={`#${MAIN_CONTENT_ID}`}
+        className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-lg focus:bg-sky-700 focus:px-4 focus:py-2 focus:text-white focus:outline-none focus:ring-2 focus:ring-sky-400"
+      >
+        Skip to main content
+      </a>
+
       {/* Header */}
       <header className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
-            <div className="text-xl font-bold text-slate-900 dark:text-white">SSTAC & TWG Dashboard</div>
-            <ThemeToggle />
+          <div className="flex items-center justify-between gap-2 h-16">
+            {/* Audit #18: the title now shares a fixed h-16 row with two auth links and the
+                theme toggle. `truncate` + `min-w-0` keep it from pushing them off a 375px
+                viewport, and the type scale steps down below `sm` so the truncation is a
+                fallback rather than the normal state. */}
+            <div className="min-w-0 truncate text-base sm:text-xl font-bold text-slate-900 dark:text-white">
+              SSTAC &amp; TWG Dashboard
+            </div>
+            <nav aria-label="Account" className="flex shrink-0 items-center gap-2">
+              {/* Audit #18: sign-in was previously reachable only from a "Get Involved" box
+                  at the very bottom of the page. Same sky-700 filled/outlined treatment as
+                  that box, at header padding. */}
+              <Link
+                href="/login"
+                className="inline-flex min-h-11 items-center rounded-lg border border-sky-700 bg-white px-3 py-1.5 text-sm font-medium text-sky-700 transition-colors hover:bg-sky-50 dark:border-sky-400 dark:bg-slate-800 dark:text-sky-400 dark:hover:bg-slate-700"
+              >
+                Log In
+              </Link>
+              <Link
+                href="/signup"
+                className="inline-flex min-h-11 items-center rounded-lg bg-sky-700 px-3 py-1.5 text-sm font-medium text-white transition-colors hover:bg-sky-800"
+              >
+                Create Account
+              </Link>
+              <ThemeToggle />
+            </nav>
           </div>
         </div>
       </header>
 
+      <main id={MAIN_CONTENT_ID} tabIndex={-1} className="focus:outline-none">
       {/* Hero Section */}
       <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
@@ -38,7 +78,8 @@ export default function Home() {
               data-testid="landing-hero-workstreams"
               className="mt-3 text-base text-slate-500 dark:text-slate-400 leading-relaxed"
             >
-              Active workstreams: Matrix Sediment Standards Derivation Options and BN-RRM implementation.
+              Active workstreams: Matrix Sediment Standards Derivation Options, and implementation of the
+              BN-RRM (Bayesian Network Relative Risk Model).
             </p>
           </div>
         </div>
@@ -66,7 +107,9 @@ export default function Home() {
                       The Science Advisory Board for Contaminated Sites (SABCS) has partnered with the BC Ministry of Environment & Parks to collaboratively develop a scientific framework for modernizing the CSR standards.
                     </p>
                     <p className="text-slate-600 dark:text-slate-300 leading-relaxed">
-                      The Science & Standards Technical Advisory Committee (SSTAC) is leading the Sediment Standards Project, which integrates best-available science to protect aquatic ecosystems and the communities that depend on them.
+                      The Science & Standards Technical Advisory Committee (SSTAC), working with the Technical
+                      Working Group (TWG), is leading the Sediment Standards Project, which integrates
+                      best-available science to protect aquatic ecosystems and the communities that depend on them.
                     </p>
                   </div>
                 </div>
@@ -79,9 +122,15 @@ export default function Home() {
         </div>
 
         {/* Navigation Cards */}
+        {/* Audit B3: the three card <h3>s had no owning <h2> anywhere above them, so the
+            document outline jumped from the page <h1> straight to level 3. */}
+        <h2 className="text-3xl font-bold text-slate-900 dark:text-white mb-8 text-center">
+          Explore the Project
+        </h2>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-          <a
+          <Link
             href="/dashboard"
+            prefetch={false}
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
@@ -93,10 +142,18 @@ export default function Home() {
             <p className="text-slate-600 dark:text-slate-300">
               Access project overview, documents, and key metrics
             </p>
-          </a>
+            {/* Audit B1: every one of these three destinations is behind the auth
+                middleware (matcher lists /dashboard, /survey-results and /cew-2025), so a
+                logged-out visitor clicking them was bounced to /login with no warning.
+                Saying so up front is the whole fix. */}
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Sign-in required
+            </p>
+          </Link>
 
-          <a
+          <Link
             href="/survey-results"
+            prefetch={false}
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
@@ -108,10 +165,18 @@ export default function Home() {
             <p className="text-slate-600 dark:text-slate-300">
               Explore stakeholder feedback and survey findings
             </p>
-          </a>
+            {/* Audit B1: every one of these three destinations is behind the auth
+                middleware (matcher lists /dashboard, /survey-results and /cew-2025), so a
+                logged-out visitor clicking them was bounced to /login with no warning.
+                Saying so up front is the whole fix. */}
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Sign-in required
+            </p>
+          </Link>
 
-          <a
+          <Link
             href="/cew-2025"
+            prefetch={false}
             className="group bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-sm hover:shadow-xl transition-all duration-300 border border-slate-200 dark:border-slate-700 hover:-translate-y-2"
           >
             <div className="flex items-center space-x-4 mb-4">
@@ -123,40 +188,38 @@ export default function Home() {
             <p className="text-slate-600 dark:text-slate-300">
               Canadian Ecotoxicity Workshop session details
             </p>
-          </a>
+            {/* Audit B1: every one of these three destinations is behind the auth
+                middleware (matcher lists /dashboard, /survey-results and /cew-2025), so a
+                logged-out visitor clicking them was bounced to /login with no warning.
+                Saying so up front is the whole fix. */}
+            <p className="mt-3 text-xs font-medium uppercase tracking-wide text-slate-500 dark:text-slate-400">
+              Sign-in required
+            </p>
+          </Link>
         </div>
 
 
-        {/* Authentication Section */}
-        <div className="bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800 rounded-2xl shadow-sm p-8 text-center">
-          <h3 className="text-2xl font-bold text-slate-900 dark:text-white mb-4">
-            Get Involved
-          </h3>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
-            Join the conversation and contribute to modernizing BC&apos;s sediment standards
-          </p>
-          <div className="flex gap-4 justify-center">
-            <a
-              href="/signup"
-              className="px-6 py-3 bg-sky-700 text-white rounded-lg hover:bg-sky-800 transition-colors font-medium"
-            >
-              Create Account
-            </a>
-            <a
-              href="/login"
-              className="px-6 py-3 bg-white dark:bg-slate-800 text-sky-700 dark:text-sky-400 border border-sky-700 dark:border-sky-400 rounded-lg hover:bg-sky-50 dark:hover:bg-slate-700 transition-colors font-medium"
-            >
-              Log In
-            </a>
-          </div>
-        </div>
+        {/* Audit #18: the "Get Involved" authentication box that used to sit here has moved
+            into the header. Sign-in was the only way into the authenticated app and it was
+            below the fold, after every content card. */}
       </div>
+
+      </main>
 
       {/* Footer */}
       <footer className="bg-white dark:bg-slate-800 border-t border-slate-200 dark:border-slate-700 py-8 mt-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center text-slate-500 dark:text-slate-400">
-            <p>&copy; 2025 SSTAC & TWG Dashboard. All rights reserved.</p>
+            <p>
+              {/* Audit B7a, owner decision D7 = option C: no year at all. The year was
+                  hard-coded to 2025 and would have silently aged. Resolving it at render time
+                  does not fix that on a statically prerendered page -- it bakes in the BUILD's
+                  clock -- and resolving it after mount left no-JS readers and crawlers with no
+                  year anyway. A copyright year carries no legal weight, so the honest and
+                  simplest answer is to omit it for everyone. "All rights reserved" has had no
+                  legal effect in any Berne Convention country for decades and went with it. */}
+              &copy; SSTAC &amp; TWG Dashboard
+            </p>
           </div>
         </div>
       </footer>

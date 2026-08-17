@@ -69,6 +69,11 @@ import {
   type RegulatoryFrame,
 } from './matrix-options/guide/content/jurisdictions';
 import { findSubstance } from '@/lib/matrix-options/substanceLibrary';
+import { demoteLeadingH1 } from '@/lib/matrix-options/demoteLeadingH1';
+import DefaultPolicyCandidatesAction, {
+  useDefaultPolicyCandidates,
+  type CandidateReviewReceipt,
+} from './matrix-options/DefaultPolicyCandidatesAction';
 import { MatrixMapLeftPanel } from './matrix-options/MatrixMapLeftPanel';
 import { MatrixMapRightPanel } from './matrix-options/MatrixMapRightPanel';
 import { MatrixMapMobileFallback } from './matrix-options/MatrixMapMobileFallback';
@@ -285,6 +290,19 @@ function slugifyTabId(label: string): string {
 }
 
 const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
+
+// Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
+// demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
+// printed.
+//
+// EDITING THIS SET? The demoteLeadingH1 call sites are ~1,100 lines below, so nothing about
+// where this declaration sits keeps the two in step. An earlier version of this comment claimed
+// it was "kept beside the call sites it mirrors so the two cannot drift apart silently" --
+// proximity was never doing any work, and that sentence was a safety claim with no mechanism
+// behind it. The actual guard is
+// src/components/__tests__/demotedDocumentTabsDrift.test.ts, which asserts one member per call
+// site plus exact membership. Change this set and that test tells you what else to change.
+const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
 const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
 
 function primaryTabId(tab: string): string {
@@ -805,6 +823,19 @@ export default function MatrixDashboard({
   );
   const calculatorPathway = CALCULATOR_PROVENANCE_PATHWAYS[activeCategory];
   const calculatorCategoryLabel = CALCULATOR_CATEGORY_LABELS[activeCategory];
+  // Audit P1: the "Review candidate defaults" receipt timestamp. It lives here, not in
+  // CalculatorValueSearchPanel, because the action now renders in the calculator body AND in
+  // the Stage-3 rail; one owner means the two receipts can never disagree.
+  const [candidateReview, setCandidateReview] = useState<CandidateReviewReceipt | null>(null);
+  const calculatorCandidateInputKeys = useDefaultPolicyCandidates({
+    pathway: calculatorPathway,
+    substanceKey,
+    regulatoryFrameId: jurisdiction,
+    // Only the Calculator branch reads this, and deriving it costs a full
+    // buildEvidenceLibraryView pass (~1783 records, ~40ms). Do not pay it on the
+    // Interactive Map, the Guide, or during SSR.
+    enabled: activeTopTab === 'Calculator',
+  });
   // Summary bar slots (step 3 of the redesign, DESIGN.md "sticky summary
   // bar ... carries the preliminary, the UTL, and the adjusted standard").
   // Step 3b: all four activeCategory pathways (hh-direct, eco-direct, eco-food, hh-food) are
@@ -1303,6 +1334,8 @@ export default function MatrixDashboard({
           jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
           regulatoryFrameId={jurisdiction}
           onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+          candidateReview={candidateReview}
+          onCandidateReviewed={setCandidateReview}
         />
       );
     }
@@ -1394,7 +1427,14 @@ export default function MatrixDashboard({
           >
             {/* Round-2 P2-2: this panel paints on the shell's main-content
                 surface (`bg-white dark:bg-slate-950`, non-calculator branch). */}
-            <MathRenderer content={contentToRender} fadeFrom="from-white dark:from-slate-950" />
+            {/* Audit #16: these source documents each open with their own `# ` title, which
+                would render a SECOND <h1> under the shell's `<h1>Matrix Options</h1>` in the
+                toolbar. (That citation used to point at a line number which, at the commit that
+                wrote it, was a bare `);` -- and which has meant something different in every
+                revision since. Another number nobody checked. The heading is findable by
+                searching for its text; a line number is not worth the maintenance.) Demoted at the
+                call site, never inside MathRenderer -- see demoteLeadingH1's module comment. */}
+            <MathRenderer content={demoteLeadingH1(contentToRender)} fadeFrom="from-white dark:from-slate-950" />
           </div>
         );
       case 'The Guide': {
@@ -1403,7 +1443,10 @@ export default function MatrixDashboard({
         const section1Content = guideParts[1] || '';
         const section2Content = guideParts[2] || '';
 
-        const cardClassName = "bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-8 border border-slate-200 dark:border-slate-700";
+        // Audit #20 (layer 2 of 2): the bare `p-8` stacked with the shell's `px-8` at :2264
+        // for 64px of horizontal chrome on a 375px viewport -- 17% of the screen. Responsive
+        // now, matching this file's own precedent at :2048 (`p-4 lg:p-8`).
+        const cardClassName = "bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-4 lg:p-8 border border-slate-200 dark:border-slate-700";
         // Round-2 P2-2: Guide section cards are dark:bg-slate-800 -- a DIFFERENT
         // surface from the Calculator drawer's dark:bg-slate-950 above, which is
         // exactly why ScrollFadeRegion/MathRenderer cannot have one right default.
@@ -1411,20 +1454,23 @@ export default function MatrixDashboard({
 
         return (
           <div className="space-y-6">
-            <div className={cardClassName}>
-              <MathRenderer content={introContent} fadeFrom={guideFadeFrom} />
+            <div className={cardClassName} data-testid="guide-section-card">
+              {/* Audit #16: The_Guide.md opens with `# The Guide: Matrix Options Workspace`.
+                  Only part 0 of the SECTION_BOUNDARY split can carry a leading title, so the
+                  helper is applied here alone; on parts 1 and 2 it would be a no-op. */}
+              <MathRenderer content={demoteLeadingH1(introContent)} fadeFrom={guideFadeFrom} />
             </div>
             {section1Content && (
-              <div className={cardClassName}>
+              <div className={cardClassName} data-testid="guide-section-card">
                 <MathRenderer content={section1Content} fadeFrom={guideFadeFrom} />
               </div>
             )}
             {section2Content && (
-              <div className={cardClassName}>
+              <div className={cardClassName} data-testid="guide-section-card">
                 <MathRenderer content={section2Content} fadeFrom={guideFadeFrom} />
               </div>
             )}
-            <div className={cardClassName}>
+            <div className={cardClassName} data-testid="guide-section-card">
               <Phase2TasksSection />
             </div>
           </div>
@@ -1474,6 +1520,40 @@ export default function MatrixDashboard({
               adjusted={adjustedSlot}
               governingLabel={governingLabel}
               governingNote={governingNote}
+            />
+            {/* Audit P2: below `lg` the Value Search rail does not sit beside the calculator
+                -- it stacks BELOW the main content (no order utility on its wrapper, so DOM
+                order decides). When Stage 3 opens the rail, a narrow-screen user gets no
+                indication that anything appeared, because it is off the bottom of the view.
+                Gated with the CSS `lg:hidden` rather than `useIsMobile()`: that hook's
+                breakpoint is 768px while this layout stacks at 1024px, so it would leave
+                768-1023px uncovered. */}
+            {calculatorRailOpen && (
+              <p
+                className="rounded-md border border-sky-200 bg-sky-50 px-3 py-2 text-xs text-sky-900 lg:hidden dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-100"
+                data-testid="calculator-stage3-rail-hint"
+              >
+                The {rightPanelTitle} panel is open. On this screen width it appears below
+                the calculator rather than beside it -- scroll down to reach it.
+              </p>
+            )}
+            {/* Audit P1: "Review candidate defaults" is an ACTION, but it used to live only
+                inside the Stage-3-gated right rail, which is collapsed (and inert) until
+                Stage 3. It now also renders here, in the body, so it is reachable throughout
+                the calculator. The rail instance is unchanged and the gating of reference
+                DATA is untouched -- only this action is duplicated, sharing one timestamp. */}
+            <DefaultPolicyCandidatesAction
+              pathway={calculatorPathway}
+              pathwayLabel={calculatorCategoryLabel}
+              substanceKey={substanceKey}
+              substanceLabel={selectedSubstance?.displayName ?? substanceKey}
+              regulatoryFrameId={jurisdiction}
+              candidateInputKeys={calculatorCandidateInputKeys}
+              receipt={candidateReview}
+              onReviewed={setCandidateReview}
+              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+              surface="body"
+              className="mx-auto max-w-md"
             />
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
@@ -1912,6 +1992,45 @@ export default function MatrixDashboard({
         not actually implement it -- see the comment on that div for the
         mechanism and the fix.
       */}
+      {/* Audit #16, PRINT correction. Demoting each document's leading `# ` to `##` is right
+          ON SCREEN, because the shell supplies the page <h1> in the toolbar above. It is WRONG
+          IN PRINT: that toolbar carries `print:hidden`, so on paper the shell heading vanishes
+          and the demoted document heading is an h2 -- leaving the four regulatory documents
+          printing with NO level-1 heading at all, where before the demotion they printed with
+          one.
+          Placed HERE, above the isToolMode branch, deliberately: renderContent() has FIVE call
+          sites across the two layout branches, and an earlier version of this fix sat inside
+          only one of them, so the tool-mode tabs (Methodology by pathway, Calculator) still
+          printed with none. One heading above the split covers every tab.
+          `hidden` keeps it out of the screen accessibility tree (display:none), so it cannot
+          reintroduce the duplicate-H1 defect #16 exists to fix; `print:block` restores it for
+          the print medium only.
+          jsdom implements no print medium, so NO unit test can observe any of this. It is
+          covered by e2e/matrix-options-print.spec.ts under emulateMedia({ media: 'print' }),
+          which is the only check in this repo that can see it. */}
+      {/* Scoped to EXACTLY the tabs whose document heading was demoted. Rendering it on every
+          tab was wrong twice over: it reintroduced chrome on TWG Review, whose toolbar is
+          `print:hidden` specifically so window.print() yields a chrome-free PDF (see the comment
+          on that toolbar above), and TWG Review renders its paper RAW -- demoteLeadingH1 is not
+          applied there -- so its printed h1 count went 2 -> 3 rather than 0 -> 1.
+          The heading exists to replace an h1 that the demotion removed, so it belongs only where
+          the demotion happens: the two `demoteLeadingH1(...)` call sites in this file, which
+          render the Jurisdictional Frameworks and The Guide documents. Named rather than cited by
+          line, and the reason is worth recording because it is not the obvious one. An earlier
+          version of this comment cited :1421 and :1445. Those numbers did not go stale over time
+          -- `git show f0f56330:src/components/MatrixDashboard.tsx` puts the call sites at 1426 and
+          1450 on the very commit that wrote the citation. They were wrong when typed, and nothing
+          checked them. The lesson is not "line numbers move", it is "a number nobody verifies is
+          decoration". The membership is now pinned mechanically by
+          src/components/__tests__/demotedDocumentTabsDrift.test.ts. */}
+      {DEMOTED_DOCUMENT_TABS.has(activeTopTab) && (
+        <h1
+          data-testid="matrix-print-title"
+          className="hidden print:block px-4 pt-4 text-2xl font-bold text-slate-900"
+        >
+          Matrix Options -- {TAB_LABELS[activeTopTab] ?? activeTopTab}
+        </h1>
+      )}
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
         {isToolMode ? (
           <>
@@ -2254,7 +2373,13 @@ export default function MatrixDashboard({
                 2x2 matrix of four content-bearing quadrants, which at max-w-4xl left
                 the quadrants cramped and the page mostly empty on a desktop display.
                 Prose-only tabs keep the narrower, more readable measure. */}
-            <div className={`${activeTopTab === 'The Guide' || activeTopTab === 'Vision for Modernizing Schedule 3.4' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-8 py-12`}>
+            {/* Audit #20 (layer 1 of 2): `px-8 py-12` was unconditional, and on The Guide it
+                stacked with the section cards' own `p-8` (:1409). The max-width switch above
+                is unaffected -- only the padding scale is now viewport-dependent. */}
+            <div
+              data-testid="matrix-content-measure"
+              className={`${activeTopTab === 'The Guide' || activeTopTab === 'Vision for Modernizing Schedule 3.4' ? 'max-w-7xl' : 'max-w-4xl'} mx-auto px-4 py-8 lg:px-8 lg:py-12`}
+            >
               {renderContent()}
             </div>
           </div>

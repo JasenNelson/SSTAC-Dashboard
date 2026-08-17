@@ -449,6 +449,71 @@ describe('MatrixMapRightPanel', () => {
     expect(screen.queryByText(/Loading measurements/)).not.toBeInTheDocument();
   });
 
+  // Regression set for censoring status: row.censored is boolean | null. A two-state
+  // ternary rendered a null (unknown) status as the confident word "Detected", which is
+  // an assertion the data does not support. These three tests are a set: the third is
+  // the regression guard, the first two prove the fix did not break the known cases.
+  it('renders "Censored" when censored is true', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ ...measurementRows()[0], censored: true }],
+      error: null,
+    });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
+
+    const table = screen.getByTestId('matrix-map-measurement-table-scroll');
+    expect(within(table).getByText('Censored')).toBeInTheDocument();
+    expect(within(table).queryByText('Detected')).not.toBeInTheDocument();
+  });
+
+  it('renders "Detected" when censored is false', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ ...measurementRows()[0], censored: false }],
+      error: null,
+    });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
+
+    const table = screen.getByTestId('matrix-map-measurement-table-scroll');
+    expect(within(table).getByText('Detected')).toBeInTheDocument();
+    expect(within(table).queryByText('Censored')).not.toBeInTheDocument();
+  });
+
+  it('renders an "unknown" badge, not "Detected", when censored is null', async () => {
+    rpcMock.mockResolvedValue({
+      data: [{ ...measurementRows()[0], censored: null }],
+      error: null,
+    });
+    useMatrixMapSelectionStore.setState({
+      selectedSampleIds: ['sample-a'],
+      selectedSampleId: null,
+    });
+
+    renderPanel();
+
+    await screen.findByText('Copper');
+    fireEvent.click(screen.getByRole('button', { name: /Map & Data Filters/i }));
+
+    const table = screen.getByTestId('matrix-map-measurement-table-scroll');
+    expect(within(table).getByText('unknown')).toBeInTheDocument();
+    expect(within(table).queryByText('Detected')).not.toBeInTheDocument();
+    expect(within(table).queryByText('Censored')).not.toBeInTheDocument();
+  });
+
   it('row click requests map pan through the selection store', async () => {
     rpcMock.mockResolvedValue({ data: [measurementRows()[0]], error: null });
     useMatrixMapSelectionStore.setState({
@@ -466,4 +531,18 @@ describe('MatrixMapRightPanel', () => {
     expect(useMatrixMapSelectionStore.getState().panRequestedSampleId).toBe('sample-a');
     expect(useMatrixMapSelectionStore.getState().selectedSampleIds).toEqual(['sample-a']);
   });
+
+  // DELIBERATELY NO print-reset test here. An earlier revision of this branch added
+  // `print:max-h-none print:overflow-visible` to the measurement-table scroll container and
+  // guarded it with a test asserting those classes on the rendered element. The test was
+  // falsified two-sided and passed -- and it was still worthless, because this panel renders
+  // only under `case 'Interactive Map'`, whose tabpanel in MatrixDashboard.tsx carries
+  // `print:hidden`. The container never reaches paper, so the classes changed nothing and the
+  // test certified a no-op.
+  //
+  // The lesson is about the ASSERTION, not this component: a class-string assertion proves a
+  // class is written down. It cannot see an ancestor that removes the element from print, and
+  // jsdom has no layout engine to reveal that. Print behaviour is only demonstrable at runtime
+  // (see the sweep in e2e/ssd-workbench.spec.ts, which measures real layout). Do not re-add a
+  // class-level print assertion here believing it guards printing.
 });

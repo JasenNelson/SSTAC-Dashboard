@@ -39,6 +39,9 @@ import {
   type DefaultSelectionPolicyDecision,
 } from '@/lib/matrix-options/defaultSelectionPolicy';
 import DefaultPolicyDispositionNote from './DefaultPolicyDispositionNote';
+import DefaultPolicyCandidatesAction, {
+  type CandidateReviewReceipt,
+} from './DefaultPolicyCandidatesAction';
 
 interface CalculatorValueSearchPanelProps {
   pathway: ProvenancePathway;
@@ -48,6 +51,10 @@ interface CalculatorValueSearchPanelProps {
   jurisdictionLabel: string;
   regulatoryFrameId: RegulatoryFrameId;
   onOpenEvidenceLibrary: (request: EvidenceLibraryFilterRequest, receipt?: CalculatorReceipt) => void;
+  /** Audit P1: owned by MatrixDashboard so the rail and body receipts cannot disagree, and
+   *  carrying its own context so it cannot outlive the substance it describes. */
+  candidateReview: CandidateReviewReceipt | null;
+  onCandidateReviewed: (receipt: CandidateReviewReceipt) => void;
   className?: string;
 }
 
@@ -411,6 +418,8 @@ export default function CalculatorValueSearchPanel({
   jurisdictionLabel,
   regulatoryFrameId,
   onOpenEvidenceLibrary,
+  candidateReview,
+  onCandidateReviewed,
   className,
 }: CalculatorValueSearchPanelProps) {
   const [query, setQuery] = useState('');
@@ -524,27 +533,9 @@ export default function CalculatorValueSearchPanel({
     });
   };
 
-  const [candidateReviewedAt, setCandidateReviewedAt] = useState<string | null>(
-    null,
-  );
-  const openDefaultPolicyCandidates = () => {
-    setCandidateReviewedAt(new Date().toLocaleTimeString());
-    onOpenEvidenceLibrary(
-      {
-        pathways: [pathway],
-        substanceKeys: [substanceKey],
-        inputKeys: defaultPolicyCandidateInputKeys,
-        ...regulatoryFrameFilters,
-      },
-      {
-        pathwayLabel,
-        substanceLabel,
-        inputKeys: defaultPolicyCandidateInputKeys,
-        frameLabel: regulatoryFrame.shortLabel,
-      },
-    );
-  };
-
+  // Audit P1: the reviewed-at timestamp used to be local `useState` here. It is now owned by
+  // MatrixDashboard and passed in, because the same action renders in the calculator body as
+  // well as in this rail -- two copies of the state would let the two receipts disagree.
   const openValueDetails = (row: EvidenceLibraryValueRow) => {
     onOpenEvidenceLibrary({
       pathways: [row.record.pathway],
@@ -600,30 +591,18 @@ export default function CalculatorValueSearchPanel({
               {defaultPolicyAudit}
             </span>
           </div>
-          {defaultPolicyCandidateInputKeys.length > 0 && (
-            <>
-              <button
-                type="button"
-                onClick={openDefaultPolicyCandidates}
-                className="flex min-h-8 w-full items-center justify-center gap-2 rounded-md border border-sky-200 bg-sky-50 px-2 text-xs font-semibold text-sky-800 hover:border-sky-300 hover:bg-white dark:border-sky-800 dark:bg-sky-950/40 dark:text-sky-200 dark:hover:border-sky-600"
-              >
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden="true" />
-                {candidateReviewedAt
-                  ? 'Re-review candidate defaults'
-                  : 'Review candidate defaults'}
-              </button>
-              {candidateReviewedAt && (
-                <p
-                  className="mt-1 text-[10px] text-slate-500 dark:text-slate-400"
-                  data-testid="calculator-candidate-review-receipt"
-                >
-                  <CheckCircle2 className="mr-1 inline-block h-3 w-3 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-                  {defaultPolicyCandidateInputKeys.length} candidate{defaultPolicyCandidateInputKeys.length === 1 ? '' : 's'} opened
-                  for review at {candidateReviewedAt}. No defaults changed.
-                </p>
-              )}
-            </>
-          )}
+          <DefaultPolicyCandidatesAction
+            pathway={pathway}
+            pathwayLabel={pathwayLabel}
+            substanceKey={substanceKey}
+            substanceLabel={substanceLabel}
+            regulatoryFrameId={regulatoryFrameId}
+            candidateInputKeys={defaultPolicyCandidateInputKeys}
+            receipt={candidateReview}
+            onReviewed={onCandidateReviewed}
+            onOpenEvidenceLibrary={onOpenEvidenceLibrary}
+            surface="rail"
+          />
         </div>
         <p
           className="mt-2 text-xs leading-relaxed text-slate-500 dark:text-slate-400"

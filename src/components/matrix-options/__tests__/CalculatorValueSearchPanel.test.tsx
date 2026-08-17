@@ -3,22 +3,40 @@ import { describe, expect, it, vi } from 'vitest';
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import CalculatorValueSearchPanel from '../CalculatorValueSearchPanel';
+import type { CandidateReviewReceipt } from '../DefaultPolicyCandidatesAction';
+
+/**
+ * Audit P1: `candidateReviewedAt` moved out of this component and is now owned by
+ * MatrixDashboard, so the panel is controlled. This harness supplies the lifted state, which
+ * keeps the original behavioural assertions (button label flips to "Re-review", receipt
+ * appears) meaningful instead of silently becoming untestable.
+ */
+function ControlledPanel({
+  onOpenEvidenceLibrary,
+}: {
+  onOpenEvidenceLibrary: (...args: unknown[]) => void;
+}) {
+  const [review, setReview] = React.useState<CandidateReviewReceipt | null>(null);
+  return (
+    <CalculatorValueSearchPanel
+      pathway="human-health-food"
+      pathwayLabel="Human Health: Food Web"
+      substanceKey="benzo_a_pyrene"
+      substanceLabel="Benzo[a]pyrene"
+      jurisdictionLabel="BC Protocol 1 v5 DRA"
+      regulatoryFrameId="bc-protocol1-v5-dra"
+      onOpenEvidenceLibrary={onOpenEvidenceLibrary}
+      candidateReview={review}
+      onCandidateReviewed={setReview}
+    />
+  );
+}
 
 describe('CalculatorValueSearchPanel default policy projection', () => {
   it('shows read-only default-selection policy decisions without promoting candidates', () => {
     const onOpenEvidenceLibrary = vi.fn();
 
-    render(
-      <CalculatorValueSearchPanel
-        pathway="human-health-food"
-        pathwayLabel="Human Health: Food Web"
-        substanceKey="benzo_a_pyrene"
-        substanceLabel="Benzo[a]pyrene"
-        jurisdictionLabel="BC Protocol 1 v5 DRA"
-        regulatoryFrameId="bc-protocol1-v5-dra"
-        onOpenEvidenceLibrary={onOpenEvidenceLibrary}
-      />,
-    );
+    render(<ControlledPanel onOpenEvidenceLibrary={onOpenEvidenceLibrary} />);
 
     expect(screen.getByTestId('calculator-default-policy-audit')).toHaveTextContent(
       /Default policy/,
@@ -84,10 +102,10 @@ describe('CalculatorValueSearchPanel default policy projection', () => {
       screen.getByRole('button', { name: /Re-review candidate defaults/i }),
     ).toBeInTheDocument();
     expect(
-      screen.getByTestId('calculator-candidate-review-receipt'),
+      screen.getByTestId('calculator-candidate-review-receipt-rail'),
     ).toHaveTextContent(/opened for review/);
     expect(
-      screen.getByTestId('calculator-candidate-review-receipt'),
+      screen.getByTestId('calculator-candidate-review-receipt-rail'),
     ).toHaveTextContent(/No defaults changed/);
   });
 });

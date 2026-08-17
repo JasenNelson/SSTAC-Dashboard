@@ -108,7 +108,13 @@ export default defineConfig({
             // (unauth chromium/firefox/webkit projects hit the /login bounce and test.skip).
             // matrix-options-phone-layout added (D3, 2026-08-15): the phone-viewport
             // Calculator regression guard also needs auth, same as matrix-options itself.
-            testMatch: /(matrix-options(-phone-layout)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
+            // matrix-options-print added (audit #16 print correction, 2026-08-16): the printed
+            // heading outline is only assertable behind auth, and a spec that does not match
+            // this pattern is silently NOT RUN -- it reports "No tests found" against this
+            // project while a full-suite run still goes green. That silent-skip shape is the
+            // same one E2E_AUTH_ENABLED already has, so any new authenticated spec must be
+            // added here deliberately.
+            testMatch: /(matrix-options(-phone-layout|-print)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
           },
         ]
       : []),

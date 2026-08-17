@@ -121,7 +121,10 @@ const LoginForm: React.FC = () => {
 
         <div className="text-center mt-8">
           <p className="text-slate-500 dark:text-slate-400 text-sm">
-            © 2025 SSTAC & TWG Dashboard. All rights reserved.
+            {/* Audit B7a, owner decision D7 = option C. Same treatment as the landing
+                page: no year at all. /login is where the new "Sign-in required" cards send
+                people, so the two footers must agree. */}
+            &copy; SSTAC &amp; TWG Dashboard
           </p>
         </div>
       </div>

@@ -1268,7 +1268,17 @@ function CrossPathwayAuditRowCard({
     <div className={cn('rounded border p-2 text-xs', severityColor)}>
       <div className="flex items-start justify-between gap-1">
         <div className="min-w-0">
-          <div className="font-semibold text-slate-900 dark:text-white truncate">
+          {/* print: undo `truncate`. Be precise about what this does and does not fix. On PAPER
+              the ellipsis is now gone, so a flagged regulatory value prints with its full
+              substance identity. On SCREEN the name is still ellipsised and is NOT recoverable:
+              `truncate` puts overflow-hidden on this div itself, and the enclosing panel scrolls
+              only VERTICALLY, so nothing here reveals the clipped tail. An earlier version of
+              this comment claimed the screen case was recoverable "because the panel scrolls" --
+              it is not, and that claim was wrong. The screen-side truncation is recorded as OPEN
+              in docs/PRINT_CLIPPING_BACKLOG_2026_08_16.md. This element sits INSIDE the list
+              de-clipped vertically below, so fixing only that would have corrected how MANY rows
+              print while still clipping WHICH substance each row is about. */}
+          <div className="font-semibold text-slate-900 dark:text-white truncate print:overflow-visible print:whitespace-normal print:text-clip">
             {row.substance_label}
           </div>
           <div className="text-slate-600 dark:text-slate-300">{row.input_label}</div>
@@ -1304,6 +1314,13 @@ function CrossPathwayAuditRowCard({
     </div>
   );
 }
+
+// How many flagged rows the cross-pathway audit list renders. Named rather than inlined so its
+// TWO consumers -- the slice and the "showing first N of M" notice -- read from one number and
+// cannot drift into disagreeing about how much is on screen. The toggle label above the list is
+// deliberately NOT a consumer: it reports inconsistentRows.length, the true total, which is the
+// figure the notice exists to reconcile against.
+const MAX_AUDIT_ROWS_SHOWN = 50;
 
 function CrossPathwayAuditPanel({
   compact = false,
@@ -1368,18 +1385,30 @@ function CrossPathwayAuditPanel({
         {showDetails ? 'Hide' : 'Show'} {inconsistentRows.length} flagged {inconsistentRows.length === 1 ? 'parameter' : 'parameters'}
       </button>
 
+      {/* print:max-h-none print:overflow-visible on the list below: these rows render
+          entry.value and entry.unit -- regulatory values -- and a capped container on paper
+          has no scrollbar, no fade and no ellipsis, so the list simply ends and reads as
+          complete. The references list further down this file already carried the reset; this
+          one was missed for TWO independent reasons, and either alone would have been enough:
+          the runtime print sweep in e2e/ssd-workbench.spec.ts is scoped to elements containing
+          a <table> and this is a div list, AND that spec only ever drives the SSD workbench, so
+          it never reaches this panel to expand it in the first place. */}
       {showDetails && (
-        <div className="mt-2 space-y-1 max-h-64 overflow-y-auto" data-testid="cross-pathway-audit-details">
-          {inconsistentRows.slice(0, 50).map(row => (
+        <div className="mt-2 space-y-1 max-h-64 overflow-y-auto print:max-h-none print:overflow-visible" data-testid="cross-pathway-audit-details">
+          {inconsistentRows.slice(0, MAX_AUDIT_ROWS_SHOWN).map(row => (
             <CrossPathwayAuditRowCard
               key={`${row.substance_key}__${row.input_key}`}
               row={row}
               onSelect={onSelectRow ? () => onSelectRow(row) : undefined}
             />
           ))}
-          {inconsistentRows.length > 50 && (
+          {/* Both this notice and the slice above read MAX_AUDIT_ROWS_SHOWN. This notice used
+              to hard-code 50 instead; two independent copies of the same number is how a notice
+              ends up claiming a cap the list no longer applies. */}
+          {inconsistentRows.length > MAX_AUDIT_ROWS_SHOWN && (
             <p className="text-[11px] text-slate-500 dark:text-slate-400 px-1 py-1">
-              Showing first 50 of {inconsistentRows.length}. Use filters to narrow the scope.
+              Showing first {MAX_AUDIT_ROWS_SHOWN} of {inconsistentRows.length}. Use filters to
+              narrow the scope.
             </p>
           )}
         </div>
@@ -3259,7 +3288,7 @@ function CatalogInventory({
         <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
           References ({references.length}) -- click to inspect
         </div>
-        <ul className="max-h-80 space-y-0.5 overflow-y-auto rounded-lg border border-slate-200 p-1 dark:border-slate-800">
+        <ul className="max-h-80 space-y-0.5 overflow-y-auto print:max-h-none print:overflow-visible rounded-lg border border-slate-200 p-1 dark:border-slate-800">
           {references.map((row) => (
             <li key={row.record.source_id}>
               <button
@@ -4571,7 +4600,7 @@ export default function EvidenceLibrary({
                       <tr>
                         <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
                           <details className="group">
-                            <summary className="flex min-h-[44px] w-fit cursor-pointer list-none items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
+                            <summary className="flex min-h-[44px] w-fit cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
                               {/* Round-2 P3-1: rotate on open. */}
                               <ChevronDown
