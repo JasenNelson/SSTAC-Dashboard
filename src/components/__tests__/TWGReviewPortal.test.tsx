@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach, type Mock } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, cleanup } from '@testing-library/react'
 import TWGReviewPortal from '../TWGReviewPortal'
 import { createClient } from '@/lib/supabase/client'
 
@@ -266,6 +266,88 @@ second body
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
     expect(generalTextarea.value).toHaveLength(5000)
+  })
+
+  it('blocks submission when the reviewer declines the truncation confirmation', async () => {
+    // The inline alert fires when the clip happens, which can be long before Submit and may be
+    // scrolled past. Submitting is the irreversible moment, so the loss is restated and the
+    // reviewer chooses. Declining must abort BEFORE any Supabase call.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    )
+    fireEvent.change(generalTextarea, { target: { value: 'x'.repeat(5010) } })
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    expect(confirmSpy.mock.calls[0][0]).toMatch(/10 characters were removed/)
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('does not ask for confirmation when nothing was truncated', async () => {
+    // The other side: an ordinary submission must not be interrupted by a dialog.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'a short comment' } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    expect(confirmSpy).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('keeps the truncation count cumulative instead of overwriting it', async () => {
+    // The count used to hold only the LAST edit's loss, so "1,000 removed" became "1 removed"
+    // on the next keystroke and vanished on the one after. The loss is permanent; the notice
+    // must not be more transient than the damage.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    fireEvent.change(ta, { target: { value: 'y'.repeat(5001) } })   // drops 1 more
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
+
+    fireEvent.change(ta, { target: { value: 'z'.repeat(10) } })     // fits; must NOT clear
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
+  })
+
+  it('persists truncation provenance across save and restore', async () => {
+    // A saved comment is exactly MAX_CHARS whether it was clipped or written that long on
+    // purpose, so the string alone cannot carry this evidence. Without a companion record the
+    // reviewer resumes and submits short with no warning.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+    alertSpy.mockRestore()
+
+    const stored = window.localStorage.getItem('twg-matrix-review-truncation-v1')
+    expect(stored).toBeTruthy()
+    expect(JSON.parse(stored as string).general).toBe(10)
+
+    // Remount: the warning must come back, from the record rather than from the string.
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect((await screen.findByRole('alert')).textContent).toMatch(/10 characters were removed/)
   })
 
   it('announces truncation when a restored draft exceeds the limit', async () => {

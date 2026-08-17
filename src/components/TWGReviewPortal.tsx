@@ -28,6 +28,12 @@ interface TWGReviewPortalProps {
 // v2 bumped storage key because internal state keys changed from heading-text
 // to idx-stable form (v1 drafts are intentionally discarded on first mount).
 const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';
+// Truncation provenance lives under its OWN key rather than being folded into the draft payload.
+// Reason: the draft key's value shape is a flat {sectionKey: string} map that older builds wrote
+// and still read. Changing that shape would mean bumping to v7 and discarding every draft written
+// by the current build -- destroying user text in order to record that user text was destroyed.
+// A separate key is additive: a v6 draft with no companion record simply reports no known loss.
+const TRUNCATION_STORAGE_KEY = 'twg-matrix-review-truncation-v1';
 const MAX_CHARS = 5000;
 const GENERAL_KEY = 'general';
 
@@ -82,7 +88,36 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         if (overBy > 0) restoredTruncation[k] = overBy;
       }
       setComments(sanitized);
-      if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
+
+      // Merge two sources of truncation knowledge:
+      //  (1) loss recorded when this draft was SAVED, read back from its own key. Without this a
+      //      reviewer who saves, closes the tab and resumes cannot tell a genuinely-truncated
+      //      comment from an intentional 5000-character one -- the stored string is exactly
+      //      MAX_CHARS in both cases, so the value alone carries no evidence either way.
+      //  (2) loss detected right now, if the stored string is somehow OVER the limit (a legacy
+      //      draft, or storage edited outside this component).
+      // Take the larger per key: a stored count is authoritative about what was already lost,
+      // and a fresh overflow is authoritative about this restore.
+      const merged = makeBareRecord<number>();
+      try {
+        const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
+        if (rawT) {
+          const parsedT = JSON.parse(rawT);
+          if (parsedT && typeof parsedT === 'object' && !Array.isArray(parsedT)) {
+            for (const [k, v] of Object.entries(parsedT)) {
+              if (RESERVED_KEYS.has(k)) continue;
+              if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) continue;
+              merged[k] = v;
+            }
+          }
+        }
+      } catch {
+        /* corrupt truncation record - ignore, the draft itself is still usable */
+      }
+      for (const [k, v] of Object.entries(restoredTruncation)) {
+        merged[k] = Math.max(merged[k] ?? 0, v);
+      }
+      if (Object.keys(merged).length > 0) setTruncatedBy(merged);
     } catch {
       /* corrupt draft - ignore */
     }
@@ -131,13 +166,18 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // test reaches this branch under either design and cannot tell the two apart. What the
     // unit tests DO prove is the clipping arithmetic and that the alert reports the right
     // count. The browser premise is taken from the HTML spec, not verified in this repo.
+    // CUMULATIVE, and never silently cleared. An earlier version stored only the LAST edit's
+    // loss and dropped the key when an edit fit, so "1,000 characters were removed" was replaced
+    // by "1 character was removed" on the very next keystroke, and vanished entirely on the one
+    // after. The loss is permanent; the notice must not be more transient than the damage.
+    // Two independent reviewers rated that P1.
     setTruncatedBy(prev => {
-      if (overBy === 0 && !(key in prev)) return prev;
+      if (overBy === 0) return prev;
       const next = makeBareRecord<number>();
       for (const [k, v] of Object.entries(prev)) {
-        if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+        if (!RESERVED_KEYS.has(k)) next[k] = v;
       }
-      if (overBy > 0) next[key] = overBy;
+      next[key] = (prev[key] ?? 0) + overBy;
       return next;
     });
     setComments(prev => {
@@ -155,6 +195,10 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     try {
       // JSON.stringify on a null-prototype object still serializes own keys.
       window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));
+      // Persist the truncation record alongside the draft. The saved comment string is exactly
+      // MAX_CHARS whether it was clipped or written that long deliberately, so the string cannot
+      // carry this evidence -- it has to be stored separately or the knowledge is lost on resume.
+      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
       alert('Progress saved to local storage.');
     } catch {
       alert('Unable to save draft locally (storage quota or access denied).');
@@ -183,6 +227,25 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+
+    // Submit-time truncation confirmation. The inline role="alert" fires when the clip happens,
+    // which may be many minutes and one page-resume before the reviewer presses Submit -- and a
+    // notice they have scrolled past is not consent. Submitting is the irreversible moment (the
+    // payload goes to matrix_reviews), so the loss is restated here and the reviewer chooses.
+    // Reported independently by two reviewers as the gap that made the announcement ineffective.
+    const droppedTotal = Object.values(truncatedBy).reduce((sum, n) => sum + n, 0);
+    if (droppedTotal > 0) {
+      const fields = Object.keys(truncatedBy).length;
+      const proceed = window.confirm(
+        `${droppedTotal.toLocaleString()} character${droppedTotal === 1 ? '' : 's'} ` +
+          `${droppedTotal === 1 ? 'was' : 'were'} removed from ${fields} comment ` +
+          `${fields === 1 ? 'field' : 'fields'} because the ${MAX_CHARS.toLocaleString()}-character ` +
+          `limit was exceeded. That text is not recoverable and will NOT be included in your ` +
+          `submission.\n\nSubmit anyway?`
+      );
+      if (!proceed) return;
+    }
+
     setIsSubmitting(true);
     try {
       const supabase = createClient();
