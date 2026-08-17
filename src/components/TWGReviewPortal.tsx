@@ -253,23 +253,35 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // though the draft itself had already been written -- misinforming the reviewer about
     // whether their text is safe, AND leaving a persisted draft with stale/absent provenance,
     // silently reintroducing the exact silent-loss defect this component exists to prevent.
+    // ORDER MATTERS, and it is the opposite of the obvious one. Provenance is written FIRST.
+    //
+    // An earlier revision wrote the draft first and the provenance second, on the reasoning that
+    // the draft is the important artifact. That created a silent-loss path: if the draft write
+    // succeeded and the provenance write then hit quota, the clipped draft was left RESUMABLE
+    // with no record of what it had lost. On reload the stored value is exactly MAX_CHARS, which
+    // produces no restored overflow and has no provenance to merge, so the submit gate sees zero
+    // loss and writes the truncated comment with no confirmation -- exactly the defect this
+    // component exists to prevent, reached through the save path.
+    //
+    // Writing provenance first inverts the failure: if provenance cannot be stored, NO resumable
+    // draft is created, so there is no draft that could later be submitted unwarned. The reverse
+    // orphan -- provenance stored with no draft -- is inert, because the restore effect reads the
+    // draft first and returns early when there is none.
+    try {
+      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
+    } catch {
+      alert(
+        'Unable to save the truncation record (storage quota or access denied), so the draft was ' +
+          'NOT saved either. Saving it without that record could let you resume and submit ' +
+          'shortened text without being warned.'
+      );
+      return;
+    }
     try {
       // JSON.stringify on a null-prototype object still serializes own keys.
       window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));
     } catch {
       alert('Unable to save draft locally (storage quota or access denied).');
-      return;
-    }
-    try {
-      // Persist the truncation record alongside the draft. The saved comment string is exactly
-      // MAX_CHARS whether it was clipped or written that long deliberately, so the string cannot
-      // carry this evidence -- it has to be stored separately or the knowledge is lost on resume.
-      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
-    } catch {
-      alert(
-        'Draft saved, but the truncation record could not be saved (storage quota or access ' +
-          'denied). A resume may not warn you about earlier dropped text.'
-      );
       return;
     }
     alert('Progress saved to local storage.');

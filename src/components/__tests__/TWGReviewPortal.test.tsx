@@ -254,6 +254,14 @@ second body
     // standalone "10", not a "10" embedded in a longer number.
     expect(alert.textContent).toMatch(/\bso 10 characters were removed from the end\b/)
     expect(generalTextarea.value).toHaveLength(5000)
+    // jsdom does not enforce maxLength on programmatic fireEvent.change input, so the assertions
+    // above would stay green even if maxLength={5000} were reintroduced on the textarea in a real
+    // browser -- which is the production regression this test exists to catch (a real maxLength
+    // would silently drop the paste tail before onChange ever fires, so handleCommentChange, and
+    // therefore this alert, would never run). Pin the precondition where the claim is made: the
+    // element under test must not carry the attribute. (A dedicated test near line 497 already
+    // asserts this across every comment textarea; this pins it at the point this test relies on it.)
+    expect(generalTextarea).not.toHaveAttribute('maxLength')
   })
 
   it('shows no alert when a comment is at or under MAX_CHARS', () => {
@@ -592,11 +600,41 @@ second body
     confirmSpy.mockRestore()
   })
 
-  it('reports draft-saved-but-provenance-failed distinctly, without losing the saved draft (FIX 5)', () => {
-    // A single shared try around both localStorage writes would report the generic "Unable to
-    // save draft locally" message even when the draft write itself succeeded and only the
-    // truncation-provenance write failed -- misinforming the reviewer AND leaving a persisted
-    // draft with stale/absent provenance.
+  it('reports the draft as NOT saved when the truncation-provenance write fails, and does not write the draft at all (FIX 5)', () => {
+    // Provenance is now written FIRST. The old "draft succeeded, provenance failed" scenario this
+    // test used to cover no longer exists: if provenance cannot be stored, handleSave returns
+    // before ever attempting the draft write. Writing the draft anyway would leave a RESUMABLE
+    // clipped draft with no record of what it lost -- exactly the silent-loss defect the reorder
+    // exists to close.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'hello there' } }
+    )
+
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string) => {
+        if (key === 'twg-matrix-review-draft-v6-truncation') {
+          throw new Error('quota exceeded')
+        }
+      })
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/draft was.*not saved/i))
+    // The draft write must never have been attempted.
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6')).toBeNull()
+
+    setItemSpy.mockRestore()
+    alertSpy.mockRestore()
+  })
+
+  it('shows "Unable to save draft locally" when provenance succeeds but the draft write then fails (FIX 5)', () => {
+    // The second half of the new contract: provenance is written first and succeeds, so the code
+    // proceeds to the draft write; only that second write fails, and the pre-existing generic
+    // alert is what fires for it.
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     fireEvent.change(
       screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
@@ -607,7 +645,7 @@ second body
     const setItemSpy = vi
       .spyOn(window.localStorage, 'setItem')
       .mockImplementation((key: string, value: string) => {
-        if (key === 'twg-matrix-review-draft-v6-truncation') {
+        if (key === 'twg-matrix-review-draft-v6') {
           throw new Error('quota exceeded')
         }
         originalSetItem(key, value)
@@ -616,12 +654,40 @@ second body
 
     fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
 
-    // The draft write must have actually happened before the second write threw.
-    expect(window.localStorage.getItem('twg-matrix-review-draft-v6')).toContain('hello there')
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/draft.*saved/i))
-    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/truncation|provenance/i))
-    // The generic single-try message must NOT be the one shown here.
-    expect(alertSpy).not.toHaveBeenCalledWith(expect.stringMatching(/^unable to save draft/i))
+    // Provenance write went through first.
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeTruthy()
+    expect(alertSpy).toHaveBeenCalledWith(
+      'Unable to save draft locally (storage quota or access denied).'
+    )
+
+    setItemSpy.mockRestore()
+    alertSpy.mockRestore()
+  })
+
+  it('writes provenance BEFORE the draft: a provenance-write failure must leave DRAFT_STORAGE_KEY absent (order regression guard)', () => {
+    // This is a narrow pin on the ORDER itself, independent of the two FIX 5 cases above. If a
+    // future change reverted handleSave to the old draft-first, provenance-second order, the
+    // draft write would already have succeeded by the time the mocked provenance write below
+    // threw, and DRAFT_STORAGE_KEY would be present here -- this test would fail, which is the
+    // point: it must fail if the order is swapped back.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'order-sensitive draft text' } }
+    )
+
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string) => {
+        if (key === 'twg-matrix-review-draft-v6-truncation') {
+          throw new Error('quota exceeded')
+        }
+      })
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6')).toBeNull()
 
     setItemSpy.mockRestore()
     alertSpy.mockRestore()
