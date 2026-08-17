@@ -81,8 +81,8 @@ function readPersistedTheme(): Theme | null {
 function seedTheme(initialTheme: Theme | undefined): Theme {
   const fromServer = parseTheme(initialTheme);
   if (fromServer !== null) return fromServer;
-  if (typeof document === 'undefined') return 'light';
-  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
+  if (typeof document === 'undefined') return DEFAULT_THEME;
+  return document.documentElement.classList.contains('dark') ? 'dark' : DEFAULT_THEME;
 }
 
 export function ThemeProvider({

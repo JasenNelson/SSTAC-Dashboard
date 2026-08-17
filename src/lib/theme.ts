@@ -49,6 +49,19 @@ export const THEME_COOKIE_NAME = 'theme';
 export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
 
 /**
+ * Type predicate, not a bare cast. `VALID_THEMES.includes(x)` cannot be called directly with
+ * an arbitrary string -- `ReadonlyArray<Theme>.includes` requires its argument to already be
+ * of type `Theme`, so checking whether an arbitrary string is a member requires widening the
+ * tuple to `readonly string[]` first. Returning `value is Theme` is what lets parseTheme keep
+ * narrowing to `Theme | null` without a second, unchecked cast at its own return site -- if
+ * this predicate's body ever stopped checking VALID_THEMES, tsc would not catch it, but a
+ * genuinely-invalid value could also never get past it silently.
+ */
+function isValidTheme(value: string): value is Theme {
+  return (VALID_THEMES as readonly string[]).includes(value);
+}
+
+/**
  * Returns the value only if it is EXACTLY one of the two valid themes, else null.
  *
  * null means "no usable value", which callers need to tell apart from "explicitly light" --
@@ -57,12 +70,12 @@ export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
  * and falling through would make the client disagree with the served HTML.
  */
 export function parseTheme(raw: string | null | undefined): Theme | null {
-  return raw === 'dark' || raw === 'light' ? raw : null;
+  return typeof raw === 'string' && isValidTheme(raw) ? raw : null;
 }
 
-/** Total function: anything unrecognised resolves to 'light'. Never throws, never casts. */
+/** Total function: anything unrecognised resolves to DEFAULT_THEME. Never throws, never casts. */
 export function resolveTheme(raw: string | null | undefined): Theme {
-  return parseTheme(raw) ?? 'light';
+  return parseTheme(raw) ?? DEFAULT_THEME;
 }
 
 /**
@@ -108,7 +121,7 @@ export function readThemeCookie(cookieString: string | null | undefined): Theme 
  * src/lib/themeBootstrap.ts.
  */
 export function resolveThemeFromCookieHeader(cookieHeader: string | null | undefined): Theme {
-  return readThemeCookie(cookieHeader) ?? 'light';
+  return readThemeCookie(cookieHeader) ?? DEFAULT_THEME;
 }
 
 /**

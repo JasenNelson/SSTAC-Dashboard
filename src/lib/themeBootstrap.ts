@@ -88,5 +88,13 @@ const THEME_STORAGE_KEY_JSON = JSON.stringify(THEME_STORAGE_KEY);
  * localStorage read get SEPARATE try/catch blocks, and the classList work sits outside both:
  * a throw in either store must not stop the class from being applied, which is what the
  * original single outer try/catch would have done.
+ *
+ * The final cleanup is `e.classList.remove.apply(e.classList,VALID)`, not
+ * `e.classList.remove(VALID[0],VALID[1])`. DOMTokenList.remove takes its arguments
+ * positionally, so a two-argument form silently stops covering VALID_THEMES the moment a
+ * third theme is added -- the new value would never be stripped before the correct one is
+ * applied, leaving both classes on <html> at once. `.apply` spreads the whole array
+ * regardless of its length, so this line does not need to change again when VALID_THEMES
+ * does.
  */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove(VALID[0],VALID[1]);e.classList.add(t);})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove.apply(e.classList,VALID);e.classList.add(t);})();`;

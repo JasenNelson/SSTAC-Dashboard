@@ -1,10 +1,13 @@
 import { describe, it, expect } from 'vitest';
 import {
   THEME_COOKIE_NAME,
+  VALID_THEMES,
   parseTheme,
   readThemeCookie,
   resolveTheme,
+  resolveThemeFromCookieHeader,
   themeCookieString,
+  type Theme,
 } from './theme';
 
 /**
@@ -108,6 +111,47 @@ describe('themeCookieString', () => {
     for (const theme of ['dark', 'light'] as const) {
       const nameValue = themeCookieString(theme, true).split(';')[0];
       expect(readThemeCookie(nameValue)).toBe(theme);
+    }
+  });
+});
+
+describe('server-side resolvers honor a widened VALID_THEMES set', () => {
+  /**
+   * Two independent reviews (2026-08-17) named the same gap: nothing anywhere proved that
+   * parseTheme / readThemeCookie / resolveThemeFromCookieHeader actually CONSULT VALID_THEMES
+   * at call time, as opposed to a value set baked in earlier -- which is literally what
+   * parseTheme did before this test existed (`raw === 'dark' || raw === 'light'`, a value set
+   * that widening VALID_THEMES would never reach).
+   *
+   * `as const` on VALID_THEMES pins the TYPE only; the array is a plain, mutable object at
+   * runtime, and it is the actual production singleton every one of these functions closes
+   * over. Widening it here -- rather than mocking a copy -- is what makes this a proof about
+   * the real resolvers instead of a proof about a test double. Restored in `finally` so no
+   * other test in this file, or a sibling suite sharing the module cache, observes the
+   * widened set.
+   *
+   * Falsification: reverting parseTheme's body to
+   * `raw === 'dark' || raw === 'light' ? raw : null` makes every assertion below fail --
+   * the third value is never accepted no matter what VALID_THEMES contains, and each resolver
+   * silently falls back to DEFAULT_THEME instead.
+   */
+  it('accepts a third theme value once VALID_THEMES includes it, instead of silently falling back to DEFAULT_THEME', () => {
+    // Cast through `unknown`, not a direct assertion: 'sepia' shares no members with the
+    // Theme union, so `as Theme` alone is rejected by tsc ("may be a mistake"). That is
+    // exactly the point -- this is a value the TYPE SYSTEM does not know about, which is why
+    // acceptance has to come from a runtime VALID_THEMES membership check, not from tsc.
+    const THIRD_THEME = 'sepia' as unknown as Theme;
+    const mutableValidThemes = VALID_THEMES as unknown as string[];
+    mutableValidThemes.push(THIRD_THEME);
+    try {
+      expect(parseTheme(THIRD_THEME)).toBe(THIRD_THEME);
+      expect(resolveTheme(THIRD_THEME)).toBe(THIRD_THEME);
+      expect(readThemeCookie(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
+      expect(resolveThemeFromCookieHeader(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
+    } finally {
+      // A bare pop is correct (not a splice-by-value) because this test is the only place in
+      // the suite that mutates VALID_THEMES, and it only ever pushes one entry at the end.
+      mutableValidThemes.pop();
     }
   });
 });

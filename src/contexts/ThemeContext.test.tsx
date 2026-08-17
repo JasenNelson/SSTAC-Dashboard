@@ -1,10 +1,11 @@
 import React from 'react';
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { renderToStaticMarkup } from 'react-dom/server';
 
 import { ThemeProvider, useTheme } from './ThemeContext';
 import ThemeToggle from '@/components/ThemeToggle';
+import type { Theme } from '@/lib/theme';
 
 /**
  * Regression guard for the adversarial-review finding of 2026-08-16 (audit B11 follow-up).
@@ -381,5 +382,189 @@ describe('ThemeProvider cookie persistence (audit D2)', () => {
 
     expect(screen.getByTestId('theme-probe')).toHaveTextContent('light');
     expect(document.documentElement.classList.contains('chartreuse')).toBe(false);
+  });
+});
+
+/**
+ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17:
+ * this branch's rebase onto feat/section-b-wave0-20260815 won every conflict and silently
+ * dropped this describe block along with the two below it, even though the try/catch it
+ * proves exists is still in ThemeContext.tsx's persistence effect (see the "Safari private
+ * mode" comment on that effect) -- the production code the test guards was never removed,
+ * only the test.
+ *
+ * The write in the theme-persistence effect (`localStorage.setItem(THEME_STORAGE_KEY,
+ * theme)`) is wrapped in try/catch; localStorage.setItem throws outright -- not just returns
+ * null -- in Safari private browsing, in a sandboxed iframe without allow-same-origin, and
+ * when cookies/site-data are blocked. An uncaught throw inside a React effect propagates to
+ * the App Router error boundary, so an affected user got the global error page instead of
+ * the dashboard, rather than merely losing their persisted preference.
+ *
+ * Falsification: removing the try/catch around the setItem call in ThemeContext.tsx makes
+ * this test FAIL with the mocked SecurityError escaping render()/fireEvent().
+ */
+describe('ThemeProvider localStorage write failure handling', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+  });
+
+  afterEach(() => {
+    vi.restoreAllMocks();
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+  });
+
+  it('does not throw/crash when localStorage.setItem throws (Safari private mode, blocked cookies)', () => {
+    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
+      throw new Error('SecurityError: localStorage is not available');
+    });
+
+    // Reuses the top-level ToggleProbe (declared above, alongside SetThemeProbe) rather than
+    // a locally-defined one -- this file already has a shared probe for exercising
+    // toggleTheme, and duplicating it here would be exactly the kind of drift this file's own
+    // header comment about cookie hygiene warns against.
+    expect(() => {
+      render(
+        <ThemeProvider>
+          <ToggleProbe />
+        </ThemeProvider>,
+      );
+    }).not.toThrow();
+
+    // Triggers the persistence effect's setItem call (the write path under test), not just
+    // the initial mount-time read.
+    expect(() => {
+      fireEvent.click(screen.getByRole('button', { name: 'toggle' }));
+    }).not.toThrow();
+
+    // The theme still updates in memory/UI even though persistence silently failed --
+    // matching the guarded read's degrade-gracefully intent.
+    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
+
+    setItemSpy.mockRestore();
+  });
+});
+
+/**
+ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17,
+ * ADAPTED to the current module layout.
+ *
+ * At the time this pair of tests was written, VALID_THEMES/DEFAULT_THEME lived only in
+ * themeBootstrap.ts and ThemeContext.tsx validated stored values with its OWN inline check.
+ * Since then src/lib/theme.ts became the single owner of both constants AND of the
+ * validation logic (parseTheme); themeBootstrap.ts now just re-exports the constants, and
+ * ThemeContext.tsx delegates validation entirely to the imported parseTheme instead of
+ * reimplementing it. The two tests below are adapted to that split:
+ *
+ *  - DEFAULT_THEME is still consumed directly by ThemeContext.tsx (seedTheme's two
+ *    fallbacks), and still arrives via the `@/lib/themeBootstrap` re-export, so mocking that
+ *    specifier still proves the same thing the original test proved.
+ *  - The valid-value-set claim moved: it is no longer "does ThemeContext.tsx's OWN check
+ *    consult VALID_THEMES", because ThemeContext.tsx no longer has its own check. It is now
+ *    "does ThemeContext.tsx actually CALL the imported parseTheme for the stored-value
+ *    validation, rather than reimplementing one inline" -- proven by mocking parseTheme
+ *    itself (a genuine cross-module import from ThemeContext.tsx's point of view) to accept
+ *    a value ('sepia') the real VALID_THEMES set does not contain, and asserting that value
+ *    surfaces. A hardcoded `stored === 'dark' || stored === 'light'` reintroduced into
+ *    ThemeContext.tsx would never consult the mock, and 'sepia' would never appear -- that is
+ *    the false-green this test still exists to catch, just one module over from where it used
+ *    to live.
+ *
+ * Falsification (both verified by actually reverting and re-running):
+ *  - Reverting seedTheme's `DEFAULT_THEME` fallbacks back to a hardcoded `'light'` makes the
+ *    FIRST test below FAIL: the mocked 'dark' default never surfaces, the probe shows
+ *    'light' even though nothing is stored and the seed's document-class branch is reached.
+ *  - Reverting readPersistedTheme's localStorage branch from `parseTheme(...)` to a
+ *    hardcoded `stored === 'dark' || stored === 'light' ? stored : null` check makes the
+ *    SECOND test below FAIL: the mocked parseTheme override is never called, so the stored
+ *    'sepia' is rejected by the hardcoded check and the probe shows 'light' (the seed),
+ *    never 'sepia'.
+ */
+describe('ThemeProvider contract with theme.ts / themeBootstrap (structural, not prose)', () => {
+  beforeEach(() => {
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+    vi.resetModules();
+  });
+
+  afterEach(() => {
+    vi.doUnmock('@/lib/themeBootstrap');
+    vi.doUnmock('@/lib/theme');
+    vi.resetModules();
+    window.localStorage.clear();
+    clearThemeCookie();
+    document.documentElement.classList.remove('light', 'dark');
+    document.body.classList.remove('light', 'dark');
+  });
+
+  it('uses themeBootstrap DEFAULT_THEME, not a hardcoded literal', async () => {
+    vi.doMock('@/lib/themeBootstrap', async () => {
+      const actual =
+        await vi.importActual<typeof import('@/lib/themeBootstrap')>('@/lib/themeBootstrap');
+      return { ...actual, DEFAULT_THEME: 'dark' };
+    });
+
+    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
+      await import('./ThemeContext');
+
+    function Probe() {
+      const { theme } = mockedUseTheme();
+      return <span data-testid="probe">{theme}</span>;
+    }
+
+    render(
+      <MockedThemeProvider>
+        <Probe />
+      </MockedThemeProvider>,
+    );
+
+    // Nothing is stored and no cookie is set, so the provider must fall back to whatever
+    // DEFAULT_THEME it imports. The mock says 'dark'; a hardcoded 'light' literal would show
+    // 'light' instead.
+    expect(screen.getByTestId('probe')).toHaveTextContent('dark');
+  });
+
+  it('uses themeBootstrap VALID_THEMES, not a hardcoded accepted-value set', async () => {
+    window.localStorage.setItem('theme', 'sepia');
+
+    vi.doMock('@/lib/theme', async () => {
+      const actual = await vi.importActual<typeof import('@/lib/theme')>('@/lib/theme');
+      return {
+        ...actual,
+        // Accepts 'sepia', a value the REAL VALID_THEMES set does not contain. This stands in
+        // for "VALID_THEMES has been widened to a third value": if ThemeContext.tsx validated
+        // the stored value with its own hardcoded `stored === 'dark' || stored === 'light'`
+        // check instead of calling the imported parseTheme, this override would never be
+        // consulted and 'sepia' would still be rejected.
+        parseTheme: (raw: string | null | undefined) =>
+          raw === 'sepia' ? ('sepia' as unknown as Theme) : actual.parseTheme(raw),
+      };
+    });
+
+    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
+      await import('./ThemeContext');
+
+    function Probe() {
+      const { theme } = mockedUseTheme();
+      return <span data-testid="probe">{theme}</span>;
+    }
+
+    render(
+      <MockedThemeProvider>
+        <Probe />
+      </MockedThemeProvider>,
+    );
+
+    // 'sepia' is stored and no cookie overrides it. It surfaces here only because
+    // ThemeContext's post-mount effect delegates validation to the (mocked) imported
+    // parseTheme rather than reimplementing its own literal check.
+    expect(screen.getByTestId('probe')).toHaveTextContent('sepia');
   });
 });
