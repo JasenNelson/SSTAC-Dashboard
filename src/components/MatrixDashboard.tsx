@@ -293,7 +293,15 @@ const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 
 // Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
 // demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
-// printed. Kept beside the call sites it mirrors so the two cannot drift apart silently.
+// printed.
+//
+// EDITING THIS SET? The demoteLeadingH1 call sites are ~1,100 lines below, so nothing about
+// where this declaration sits keeps the two in step. An earlier version of this comment claimed
+// it was "kept beside the call sites it mirrors so the two cannot drift apart silently" --
+// proximity was never doing any work, and that sentence was a safety claim with no mechanism
+// behind it. The actual guard is
+// src/components/__tests__/demotedDocumentTabsDrift.test.ts, which asserts one member per call
+// site plus exact membership. Change this set and that test tells you what else to change.
 const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
 const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
 
@@ -1420,9 +1428,12 @@ export default function MatrixDashboard({
             {/* Round-2 P2-2: this panel paints on the shell's main-content
                 surface (`bg-white dark:bg-slate-950`, non-calculator branch). */}
             {/* Audit #16: these source documents each open with their own `# ` title, which
-                would render a SECOND <h1> under the shell's `<h1>Matrix Options</h1>`
-                (:1783). Demoted at the call site, never inside MathRenderer -- see
-                demoteLeadingH1's module comment for why. */}
+                would render a SECOND <h1> under the shell's `<h1>Matrix Options</h1>` in the
+                toolbar. (That citation used to point at a line number which, at the commit that
+                wrote it, was a bare `);` -- and which has meant something different in every
+                revision since. Another number nobody checked. The heading is findable by
+                searching for its text; a line number is not worth the maintenance.) Demoted at the
+                call site, never inside MathRenderer -- see demoteLeadingH1's module comment. */}
             <MathRenderer content={demoteLeadingH1(contentToRender)} fadeFrom="from-white dark:from-slate-950" />
           </div>
         );
@@ -2003,8 +2014,15 @@ export default function MatrixDashboard({
           on that toolbar above), and TWG Review renders its paper RAW -- demoteLeadingH1 is not
           applied there -- so its printed h1 count went 2 -> 3 rather than 0 -> 1.
           The heading exists to replace an h1 that the demotion removed, so it belongs only where
-          the demotion happens: MatrixDashboard.tsx:1421 (Jurisdictional Frameworks) and :1445
-          (The Guide). */}
+          the demotion happens: the two `demoteLeadingH1(...)` call sites in this file, which
+          render the Jurisdictional Frameworks and The Guide documents. Named rather than cited by
+          line, and the reason is worth recording because it is not the obvious one. An earlier
+          version of this comment cited :1421 and :1445. Those numbers did not go stale over time
+          -- `git show f0f56330:src/components/MatrixDashboard.tsx` puts the call sites at 1426 and
+          1450 on the very commit that wrote the citation. They were wrong when typed, and nothing
+          checked them. The lesson is not "line numbers move", it is "a number nobody verifies is
+          decoration". The membership is now pinned mechanically by
+          src/components/__tests__/demotedDocumentTabsDrift.test.ts. */}
       {DEMOTED_DOCUMENT_TABS.has(activeTopTab) && (
         <h1
           data-testid="matrix-print-title"

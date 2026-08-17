@@ -168,11 +168,22 @@ test.describe('SSD Workbench print fidelity', () => {
 
     await page.emulateMedia({ media: 'print' });
 
-    const clipped = await page.evaluate(() => {
+    const swept = await page.evaluate(() => {
       const offenders: { cls: string; scrollH: number; clientH: number }[] = [];
+      let examined = 0;
       document.querySelectorAll('[class*="max-h-"]').forEach((el) => {
         const node = el as HTMLElement;
         if (!node.querySelector('table')) return;
+        // `examined` counts only containers that are actually LAID OUT. A container inside a
+        // closed <details> is in the DOM but its children are not laid out, so scrollHeight and
+        // clientHeight are both 0: it can never be an offender, and counting it would pad the
+        // existence assertion below with something incapable of failing.
+        //
+        // But this ONLY gates the count. An earlier version returned early here, which also
+        // skipped the offender check -- and a container collapsed to zero height by an ANCESTOR
+        // has clientHeight 0 with scrollHeight > 0, i.e. it is maximally clipped. Skipping it
+        // would have hidden the worst case while claiming to sharpen the guard.
+        if (node.clientHeight > 0) examined += 1;
         if (node.scrollHeight > node.clientHeight) {
           offenders.push({
             cls: node.className,
@@ -181,11 +192,31 @@ test.describe('SSD Workbench print fidelity', () => {
           });
         }
       });
-      return offenders;
+      return { offenders, examined };
     });
 
+    // EXISTENCE HALF -- assert the sweep actually found something it could have failed on.
+    // Without it this test is offenders-only: on a view where no laid-out height-capped table
+    // container is present it returns an empty array and reports green having measured NOTHING.
+    // An absence check unpaired with an existence check certifies the very drift it was written
+    // to prevent, which is a defect this project has shipped before. It matters doubly because
+    // the print-clipping backlog recommends EXTENDING this sweep to other views; extended
+    // without this line it would silently pass on any view whose capped table it never reached.
+    //
+    // Scope, stated precisely: THIS test does NOT open any disclosure. Its whole preamble is
+    // goto + click the SSD Workbench tab + emulate print. Another test in this file clicks the
+    // "Model diagnostics" summary, but each test gets a fresh page fixture and there is no
+    // serial mode, so that <details> is CLOSED here and the diagnostics container it holds is
+    // not laid out. That is exactly why `examined` skips zero-height nodes above -- otherwise
+    // this container would inflate the count while being incapable of ever failing.
     expect(
-      clipped,
+      swept.examined,
+      'the print sweep found zero height-capped table containers on this view, so it proved ' +
+        'nothing -- check the view actually rendered before trusting a green result here',
+    ).toBeGreaterThan(0);
+
+    expect(
+      swept.offenders,
       'these height-capped containers hold data tables and still clip under print, so rows ' +
         'would be silently missing from the printed page',
     ).toEqual([]);
