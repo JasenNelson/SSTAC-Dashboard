@@ -225,4 +225,128 @@ second body
     const innerWrapper = container.querySelector('.print\\:max-w-none')
     expect(innerWrapper).toBeInTheDocument()
   })
+
+  // Regression set for silent comment truncation. Comments were clipped at MAX_CHARS =
+  // 5000 with no notice. `maxLength` used to be on the textarea, which made the BROWSER
+  // truncate a paste before onChange ever fired -- so handleCommentChange's overBy logic
+  // could never run. maxLength is now removed and truncation is announced via role="alert".
+  it('announces truncation and stores exactly 5000 chars when a comment exceeds MAX_CHARS', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({
+      select: lookup.select,
+      insert: mockInsert,
+      update: mockUpdate,
+    })
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    ) as HTMLTextAreaElement
+    const tooLong = 'a'.repeat(5010)
+    fireEvent.change(generalTextarea, { target: { value: tooLong } })
+
+    const alert = await screen.findByRole('alert')
+    // Pin the exact dropped-character count (5010 - MAX_CHARS 5000 = 10). A bare
+    // `.toContain('10')` also passes on '5,010' or '100', so it does not actually
+    // prove the count is right. The word-boundary regex below only matches a
+    // standalone "10", not a "10" embedded in a longer number.
+    expect(alert.textContent).toMatch(/\bso 10 characters were removed from the end\b/)
+    expect(generalTextarea.value).toHaveLength(5000)
+  })
+
+  it('shows no alert when a comment is at or under MAX_CHARS', () => {
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    ) as HTMLTextAreaElement
+    const atLimit = 'b'.repeat(5000)
+    fireEvent.change(generalTextarea, { target: { value: atLimit } })
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    expect(generalTextarea.value).toHaveLength(5000)
+  })
+
+  it('announces truncation when a restored draft exceeds the limit', async () => {
+    // Codex round 1: the restore path clipped `v.slice(0, MAX_CHARS)` without recording it, so a
+    // legacy or externally-edited draft came back short, handleSave wrote the short value back,
+    // and the submission went out truncated with no notice -- the same silent-loss defect this
+    // component's change removes on the live-edit path, one path over.
+    //
+    // Falsified two-sided: with the restore path's truncation tracking removed, this test fails
+    // on the missing alert; with it present, it passes. The under-limit case below is the other
+    // side -- it fails if the restore path ever announces a truncation that did not happen.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5010) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/\bso 10 characters were removed from the end\b/)
+
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    ) as HTMLTextAreaElement
+    expect(generalTextarea.value).toHaveLength(5000)
+  })
+
+  it('uses the singular form when exactly one character is dropped', async () => {
+    // The alert branches on overBy === 1. Untested, that branch is where "1 characters were
+    // removed" ships. Restoring 5001 chars exercises it end to end.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5001) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/\bso 1 character was removed from the end\b/)
+    expect(alert.textContent).not.toMatch(/1 characters were removed/)
+  })
+
+  it('does not announce truncation when a restored draft is within the limit', () => {
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    const generalTextarea = screen.getByPlaceholderText(
+      /Overall thoughts on the methodology\.\.\./i
+    ) as HTMLTextAreaElement
+    expect(generalTextarea.value).toHaveLength(5000)
+  })
+
+  it('does not carry a maxLength attribute on ANY comment textarea', () => {
+    // Two headings, so the per-heading textareas are rendered alongside the General one. An
+    // earlier version of this test asserted only on the General textarea while being named for
+    // all of them, so re-adding maxLength to the per-heading textareas passed it. Assert over
+    // EVERY textarea instead: the property under test is "no comment textarea carries this
+    // attribute", and a fix scoped to one element is how the property gets half-enforced.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody\n\n## Section B\nbody'} />)
+
+    const textareas = screen.getAllByRole('textbox')
+
+    // Guard the guard: if the query ever stops finding the per-heading textareas this test would
+    // silently shrink to the General-only case it was written to replace.
+    // Pin the exact count and BOTH headings. A `>= 3` floor with only two placeholders pinned
+    // would still pass if Section B's textarea stopped rendering, which is the shrink this floor
+    // exists to prevent.
+    expect(textareas).toHaveLength(3)
+    expect(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+    ).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Specific feedback for Section A\.\.\./i)).toBeInTheDocument()
+    expect(screen.getByPlaceholderText(/Specific feedback for Section B\.\.\./i)).toBeInTheDocument()
+
+    for (const textarea of textareas) {
+      expect(textarea).not.toHaveAttribute('maxLength')
+    }
+  })
 })

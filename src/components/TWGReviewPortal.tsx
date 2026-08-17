@@ -50,6 +50,9 @@ function makeBareRecord<T>(): Record<string, T> {
 
 export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = true, showRightPanel = true }: TWGReviewPortalProps) {
   const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());
+  // How many characters the last edit to each field had to drop. 0 / absent means none.
+  // This exists so truncation is ANNOUNCED rather than silent -- see handleCommentChange.
+  const [truncatedBy, setTruncatedBy] = useState<Record<string, number>>(() => makeBareRecord<number>());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const contentRef = useRef<HTMLDivElement | null>(null);
@@ -62,12 +65,24 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
       const sanitized = makeBareRecord<string>();
+      // Truncation on the RESTORE path is announced too, not just on the live edit path.
+      // This reads a value written to localStorage on a prior save, so an over-length value here
+      // is legacy data from before this limit, or storage edited outside this component. Either
+      // way the user is about to work on -- and submit -- a draft that is shorter than the one
+      // they saved. Clipping it silently here would reproduce the exact defect this component's
+      // change is meant to remove, one path over: `handleSave` writes the clipped value back and
+      // the submission goes out short with no notice. So the restore path records what it dropped
+      // and lets the same role="alert" report it.
+      const restoredTruncation = makeBareRecord<number>();
       for (const [k, v] of Object.entries(parsed)) {
         if (RESERVED_KEYS.has(k)) continue;
         if (typeof v !== 'string') continue;
-        sanitized[k] = v.slice(0, MAX_CHARS);
+        const overBy = Math.max(0, v.length - MAX_CHARS);
+        sanitized[k] = overBy > 0 ? v.slice(0, MAX_CHARS) : v;
+        if (overBy > 0) restoredTruncation[k] = overBy;
       }
       setComments(sanitized);
+      if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
     } catch {
       /* corrupt draft - ignore */
     }
@@ -104,7 +119,27 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   const handleCommentChange = (key: string, value: string) => {
     if (RESERVED_KEYS.has(key)) return;
-    const clipped = value.length > MAX_CHARS ? value.slice(0, MAX_CHARS) : value;
+    const overBy = Math.max(0, value.length - MAX_CHARS);
+    const clipped = overBy > 0 ? value.slice(0, MAX_CHARS) : value;
+    // Record the loss so the UI can announce it. This branch is reachable only because the
+    // textareas no longer carry maxLength: in a real browser maxLength truncates a paste
+    // before onChange fires, so with it set this branch would not run for a paste, and a
+    // warning built on it would be dead code that looks like a safeguard.
+    //
+    // SCOPE OF THAT CLAIM: it describes real browser behaviour, which the unit tests here do
+    // NOT demonstrate -- jsdom does not enforce maxLength on programmatic input, so a unit
+    // test reaches this branch under either design and cannot tell the two apart. What the
+    // unit tests DO prove is the clipping arithmetic and that the alert reports the right
+    // count. The browser premise is taken from the HTML spec, not verified in this repo.
+    setTruncatedBy(prev => {
+      if (overBy === 0 && !(key in prev)) return prev;
+      const next = makeBareRecord<number>();
+      for (const [k, v] of Object.entries(prev)) {
+        if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+      }
+      if (overBy > 0) next[key] = overBy;
+      return next;
+    });
     setComments(prev => {
       const next = makeBareRecord<string>();
       for (const [k, v] of Object.entries(prev)) {
@@ -306,14 +341,26 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             <textarea
               value={comments[GENERAL_KEY] || ''}
               onChange={(e) => handleCommentChange(GENERAL_KEY, e.target.value)}
-              maxLength={MAX_CHARS}
+              // Deliberately NO maxLength: the browser applies it by silently discarding the
+              // tail of a paste before onChange fires, so a reviewer pasting a long comment
+              // loses it with no scrollbar, no message and no way to tell. The limit is
+              // enforced in handleCommentChange instead, which can report what it dropped.
+              aria-describedby={`${GENERAL_KEY}-charcount`}
               placeholder="Overall thoughts on the methodology..."
               className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
               rows={4}
             />
-            <div className={cn("text-right text-xs mt-1 transition-colors", (comments[GENERAL_KEY]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+            <div id={`${GENERAL_KEY}-charcount`} className={cn("text-right text-xs mt-1 transition-colors", (comments[GENERAL_KEY]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
               {comments[GENERAL_KEY]?.length || 0} / {MAX_CHARS}
             </div>
+            {(truncatedBy[GENERAL_KEY] ?? 0) > 0 && (
+              <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
+                {(truncatedBy[GENERAL_KEY] ?? 0).toLocaleString()}{' '}
+                {(truncatedBy[GENERAL_KEY] ?? 0) === 1 ? 'character was' : 'characters were'} removed
+                from the end. Nothing past the limit has been kept.
+              </p>
+            )}
           </div>
 
           {headings.map((h) => (
@@ -322,14 +369,23 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               <textarea
                 value={comments[h.storageKey] || ''}
                 onChange={(e) => handleCommentChange(h.storageKey, e.target.value)}
-                maxLength={MAX_CHARS}
+                // No maxLength -- see the General Comments textarea above for why.
+                aria-describedby={`${h.storageKey}-charcount`}
                 placeholder={`Specific feedback for ${h.displayLabel}...`}
                 className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"
                 rows={3}
               />
-              <div className={cn("text-right text-xs mt-1 transition-colors", (comments[h.storageKey]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
+              <div id={`${h.storageKey}-charcount`} className={cn("text-right text-xs mt-1 transition-colors", (comments[h.storageKey]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>
                 {comments[h.storageKey]?.length || 0} / {MAX_CHARS}
               </div>
+              {(truncatedBy[h.storageKey] ?? 0) > 0 && (
+                <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-400">
+                  Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
+                  {(truncatedBy[h.storageKey] ?? 0).toLocaleString()}{' '}
+                  {(truncatedBy[h.storageKey] ?? 0) === 1 ? 'character was' : 'characters were'} removed
+                  from the end. Nothing past the limit has been kept.
+                </p>
+              )}
             </div>
           ))}
         </div>
