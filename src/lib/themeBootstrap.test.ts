@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY } from './themeBootstrap';
+import { THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY, VALID_THEMES, DEFAULT_THEME } from './themeBootstrap';
 
 /**
  * Audit B11. These tests EXECUTE the bootstrap string in jsdom rather than pattern-matching
@@ -90,9 +90,15 @@ describe('THEME_BOOTSTRAP_SCRIPT', () => {
     expect(() => runBootstrap()).not.toThrow();
   });
 
-  it('uses the same storage key ThemeContext writes, so the two cannot disagree', () => {
-    // ThemeContext.tsx persists with localStorage.setItem('theme', theme).
-    expect(THEME_STORAGE_KEY).toBe('theme');
-    expect(THEME_BOOTSTRAP_SCRIPT).toContain("getItem('theme')");
+  it('generates its storage key, valid-value guard, and default from the exported constants, not retyped literals', () => {
+    // Non-tautological: this does not compare an export to itself. It proves the script
+    // TEXT was actually built from VALID_THEMES / DEFAULT_THEME / THEME_STORAGE_KEY (as
+    // themeBootstrap.ts's THEME_BOOTSTRAP_SCRIPT construction does), so a future edit that
+    // hand-writes a diverging literal directly into the template string -- instead of
+    // changing the shared constants -- makes this fail. ThemeContext.test.tsx separately
+    // proves ThemeContext.tsx itself consumes these same exports rather than its own copies.
+    expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(THEME_STORAGE_KEY));
+    expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(VALID_THEMES));
+    expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(DEFAULT_THEME));
   });
 });

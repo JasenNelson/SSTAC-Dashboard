@@ -1,9 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { THEME_STORAGE_KEY } from '@/lib/themeBootstrap';
-
-type Theme = 'light' | 'dark';
+import { THEME_STORAGE_KEY, VALID_THEMES, DEFAULT_THEME, type Theme } from '@/lib/themeBootstrap';
 
 interface ThemeContextType {
   theme: Theme;
@@ -14,22 +12,26 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 /**
- * Reads the persisted theme, accepting ONLY the two valid values. Anything else (absent,
- * corrupt, or written by an older/other build) falls back to 'light' -- the same default and
- * the same validation the pre-paint bootstrap applies, so the two can never disagree.
+ * Reads the persisted theme, accepting ONLY the values in VALID_THEMES. Anything else
+ * (absent, corrupt, or written by an older/other build) falls back to DEFAULT_THEME.
+ * VALID_THEMES and DEFAULT_THEME are imported from themeBootstrap.ts, not re-typed here, so
+ * this validation cannot silently diverge from the pre-paint bootstrap's -- see
+ * themeBootstrap.ts for why that matters.
  */
 function readStoredTheme(): Theme {
   try {
     const stored = window.localStorage.getItem(THEME_STORAGE_KEY);
-    return stored === 'dark' || stored === 'light' ? stored : 'light';
+    return stored !== null && (VALID_THEMES as readonly string[]).includes(stored)
+      ? (stored as Theme)
+      : DEFAULT_THEME;
   } catch {
     // localStorage throws in Safari private mode and under some cookie-blocking settings.
-    return 'light';
+    return DEFAULT_THEME;
   }
 }
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('light');
+  const [theme, setThemeState] = useState<Theme>(DEFAULT_THEME);
   const [mounted, setMounted] = useState(false);
 
   // Initialize theme from localStorage; default to 'light' (not OS preference)
@@ -55,7 +57,18 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
       document.documentElement.classList.add(theme);
       document.body.classList.remove('light', 'dark');
       document.body.classList.add(theme);
-      localStorage.setItem(THEME_STORAGE_KEY, theme);
+      try {
+        localStorage.setItem(THEME_STORAGE_KEY, theme);
+      } catch {
+        // The read in readStoredTheme() above was already guarded; this write was not.
+        // localStorage.setItem throws outright (not just returns null) in Safari private
+        // browsing, in a sandboxed iframe without allow-same-origin, and when cookies/
+        // site-data are blocked. Left unguarded, that throw happens inside a React effect
+        // and propagates to the App Router error boundary -- an affected user got the
+        // global error page instead of the dashboard, rather than just a lost preference.
+        // Fail silently, matching the guarded read's degradation: the theme simply does
+        // not persist. Found by adversarial review, 2026-08-16.
+      }
     }
   }, [theme, mounted]);
 
@@ -70,7 +83,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   // Prevent hydration mismatch by not rendering until mounted
   if (!mounted) {
     return (
-      <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {}, setTheme: () => {} }}>
+      <ThemeContext.Provider value={{ theme: DEFAULT_THEME, toggleTheme: () => {}, setTheme: () => {} }}>
         <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white">
           {children}
         </div>
@@ -90,7 +103,7 @@ export function useTheme() {
   if (context === undefined) {
     // During SSR, return a default theme to prevent hydration mismatches
     if (typeof window === 'undefined') {
-      return { theme: 'light', toggleTheme: () => {}, setTheme: () => {} };
+      return { theme: DEFAULT_THEME, toggleTheme: () => {}, setTheme: () => {} };
     }
     throw new Error('useTheme must be used within a ThemeProvider');
   }
