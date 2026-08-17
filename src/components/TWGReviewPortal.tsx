@@ -67,6 +67,13 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   // How many characters the last edit to each field had to drop. 0 / absent means none.
   // This exists so truncation is ANNOUNCED rather than silent -- see handleCommentChange.
   const [truncatedBy, setTruncatedBy] = useState<Record<string, number>>(() => makeBareRecord<number>());
+  // Fields restored from a draft saved by a PRE-PROVENANCE build: the value is exactly MAX_CHARS
+  // long (consistent with having been silently clipped) and the truncation key is absent
+  // entirely (that build never wrote one), so whether anything was lost -- and how much -- is
+  // genuinely unknown. Kept separate from truncatedBy rather than encoded as a fake count,
+  // because the amount is not known and must never be presented as if it were. See the restore
+  // effect below and handleSubmit's confirmation gate.
+  const [unknownProvenanceKeys, setUnknownProvenanceKeys] = useState<Record<string, true>>(() => makeBareRecord<true>());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   // Set when the reviewer DECLINES the truncation confirmation, so Submit does not appear to
@@ -92,14 +99,44 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       // the submission goes out short with no notice. So the restore path records what it dropped
       // and lets the same role="alert" report it.
       const restoredTruncation = makeBareRecord<number>();
+      // Keys whose restored value is EXACTLY MAX_CHARS long, with no overflow of its own (a
+      // shorter value cannot have been clipped, and a longer one already lands in
+      // restoredTruncation above). This is the candidate set for the legacy-draft,
+      // no-provenance case handled below via the TRUNCATION_STORAGE_KEY presence check.
+      const atLimitKeys: string[] = [];
       for (const [k, v] of Object.entries(parsed)) {
         if (RESERVED_KEYS.has(k)) continue;
         if (typeof v !== 'string') continue;
         const overBy = Math.max(0, v.length - MAX_CHARS);
         sanitized[k] = overBy > 0 ? v.slice(0, MAX_CHARS) : v;
-        if (overBy > 0) restoredTruncation[k] = overBy;
+        if (overBy > 0) {
+          restoredTruncation[k] = overBy;
+        } else if (v.length === MAX_CHARS) {
+          atLimitKeys.push(k);
+        }
       }
       setComments(sanitized);
+
+      // rawT === null means the truncation key is ABSENT ENTIRELY: this draft was saved by a
+      // build that never wrote a companion truncation record at all (the pre-provenance build
+      // that shipped before this defence existed). That is NOT the same as a present-but-empty
+      // record: an empty {} written by the CURRENT build is a positive statement that nothing
+      // was lost, and must keep meaning exactly that. Only in the absent case are the at-limit
+      // keys above flagged as unknown-provenance -- a value sitting exactly on the cap with no
+      // record either way could be an untouched full-length comment, or it could be the residue
+      // of the pre-provenance clip this component exists to catch. There is no way to tell
+      // which, so it is reported as unknown, never folded into a count and never reported as
+      // zero.
+      const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
+      if (rawT === null) {
+        if (atLimitKeys.length > 0) {
+          const unknown = makeBareRecord<true>();
+          for (const k of atLimitKeys) unknown[k] = true;
+          setUnknownProvenanceKeys(unknown);
+        }
+        if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
+        return;
+      }
 
       // Merge two sources of truncation knowledge:
       //  (1) loss recorded when this draft was SAVED, read back from its own key. Without this a
@@ -112,19 +149,16 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       // and a fresh overflow is authoritative about this restore.
       const merged = makeBareRecord<number>();
       try {
-        const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
-        if (rawT) {
-          const parsedT = JSON.parse(rawT);
-          if (parsedT && typeof parsedT === 'object' && !Array.isArray(parsedT)) {
-            for (const [k, v] of Object.entries(parsedT)) {
-              if (RESERVED_KEYS.has(k)) continue;
-              // Require a positive safe integer. Number.isFinite alone admits 0.5 (a
-              // fractional character count) and 1e308 (a value that would blow up the
-              // confirmation-dialog text) -- Number.isSafeInteger rejects both, plus
-              // NaN and Infinity, in one check.
-              if (typeof v !== 'number' || !Number.isSafeInteger(v) || v <= 0) continue;
-              merged[k] = v;
-            }
+        const parsedT = JSON.parse(rawT);
+        if (parsedT && typeof parsedT === 'object' && !Array.isArray(parsedT)) {
+          for (const [k, v] of Object.entries(parsedT)) {
+            if (RESERVED_KEYS.has(k)) continue;
+            // Require a positive safe integer. Number.isFinite alone admits 0.5 (a
+            // fractional character count) and 1e308 (a value that would blow up the
+            // confirmation-dialog text) -- Number.isSafeInteger rejects both, plus
+            // NaN and Infinity, in one check.
+            if (typeof v !== 'number' || !Number.isSafeInteger(v) || v <= 0) continue;
+            merged[k] = v;
           }
         }
       } catch {
@@ -246,6 +280,21 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     });
   };
 
+  // Same explicit-dismissal invariant as handleDismissTruncation, for the unknown-provenance
+  // notice (see unknownProvenanceKeys above). Kept as its own handler/state rather than reusing
+  // handleDismissTruncation because the two can be true for the same field at once (a legacy
+  // at-limit draft that the reviewer then edits into fresh overflow), and dismissing one must
+  // not silently dismiss the other.
+  const handleDismissUnknownProvenance = (key: string) => {
+    setUnknownProvenanceKeys(prev => {
+      const next = makeBareRecord<true>();
+      for (const [k, v] of Object.entries(prev)) {
+        if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+      }
+      return next;
+    });
+  };
+
   const handleSave = () => {
     if (typeof window === 'undefined') return;
     // Two INDEPENDENT writes, not one shared try. A single try around both meant a failure on
@@ -325,27 +374,64 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       ([k]) => k === GENERAL_KEY || headingKeys.has(k)
     );
     const droppedTotal = relevantEntries.reduce((sum, [, n]) => sum + n, 0);
-    if (droppedTotal > 0) {
-      const fields = relevantEntries.length;
-      const proceed = window.confirm(
-        `${droppedTotal.toLocaleString()} character${droppedTotal === 1 ? '' : 's'} ` +
-          `${droppedTotal === 1 ? 'was' : 'were'} removed from ${fields} comment ` +
-          `${fields === 1 ? 'field' : 'fields'} because the ${MAX_CHARS.toLocaleString()}-character ` +
-          `limit was exceeded. That text is not recoverable and will NOT be included in your ` +
-          `submission.\n\nSubmit anyway?`
-      );
+    const knownFields = relevantEntries.length;
+
+    // Same currently-rendered-field scoping as relevantEntries above, applied to the
+    // unknown-provenance set (see unknownProvenanceKeys).
+    const relevantUnknownKeys = Object.keys(unknownProvenanceKeys).filter(
+      k => k === GENERAL_KEY || headingKeys.has(k)
+    );
+    const unknownFields = relevantUnknownKeys.length;
+
+    if (droppedTotal > 0 || unknownFields > 0) {
+      // Known-count loss and unknown-provenance loss are DIFFERENT KINDS OF FACT -- one is a
+      // measured number, the other is a genuine unknown -- so they get separate sentences
+      // rather than being merged into one count that would either fabricate a total or hide the
+      // unknown case's uncertainty.
+      const messageParts: string[] = [];
+      if (droppedTotal > 0) {
+        messageParts.push(
+          `${droppedTotal.toLocaleString()} character${droppedTotal === 1 ? '' : 's'} ` +
+            `${droppedTotal === 1 ? 'was' : 'were'} removed from ${knownFields} comment ` +
+            `${knownFields === 1 ? 'field' : 'fields'} because the ${MAX_CHARS.toLocaleString()}-` +
+            `character limit was exceeded. That text is not recoverable and will NOT be included ` +
+            `in your submission.`
+        );
+      }
+      if (unknownFields > 0) {
+        messageParts.push(
+          `${unknownFields} comment ${unknownFields === 1 ? 'field was' : 'fields were'} saved at ` +
+            `the ${MAX_CHARS.toLocaleString()}-character limit by an earlier version of this form, ` +
+            `which did not keep a record of how much text was cut. An UNKNOWN amount of text may ` +
+            `be missing from ${unknownFields === 1 ? 'that field' : 'those fields'} and it cannot ` +
+            `be recovered.`
+        );
+      }
+      const proceed = window.confirm(messageParts.join('\n\n') + '\n\nSubmit anyway?');
       if (!proceed) {
         // window.confirm also returns false when a browser suppresses dialogs, and a
         // deliberate decline gives no other feedback -- without this, Submit appears to do
-        // nothing. Name the count and tell the reviewer what to do next.
+        // nothing. Name the loss and tell the reviewer what to do next.
+        const noteParts: string[] = [];
+        if (droppedTotal > 0) {
+          noteParts.push(
+            `${droppedTotal.toLocaleString()} character` +
+              `${droppedTotal === 1 ? '' : 's'} ${droppedTotal === 1 ? 'is' : 'are'} still missing ` +
+              `from ${knownFields} comment ${knownFields === 1 ? 'field' : 'fields'}`
+          );
+        }
+        if (unknownFields > 0) {
+          noteParts.push(
+            `${unknownFields} comment ${unknownFields === 1 ? 'field has' : 'fields have'} an ` +
+              `unknown amount of text missing from an earlier version of this form`
+          );
+        }
         setSubmitCancelledNote(
-          `Submission was not sent: ${droppedTotal.toLocaleString()} character` +
-            `${droppedTotal === 1 ? '' : 's'} ${droppedTotal === 1 ? 'is' : 'are'} still missing ` +
-            `from ${fields} comment ${fields === 1 ? 'field' : 'fields'}. Editing the field will ` +
-            `NOT remove this warning -- the dropped-character count carries forward across edits. ` +
-            `If you still have the missing text, paste it back in (a shorter draft may fit under ` +
-            `the limit). Otherwise, use the Dismiss control next to the notice to acknowledge the ` +
-            `loss, then press Submit again to proceed.`
+          `Submission was not sent: ${noteParts.join('; and ')}. Editing a field will NOT remove ` +
+            `these warnings -- they carry forward across edits. If you still have the missing ` +
+            `text, paste it back in (a shorter draft may fit under the limit). Otherwise, use the ` +
+            `Dismiss control next to each notice to acknowledge the loss, then press Submit again ` +
+            `to proceed.`
         );
         return;
       }
@@ -409,6 +495,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         /* non-fatal */
       }
       setTruncatedBy(makeBareRecord<number>());
+      setUnknownProvenanceKeys(makeBareRecord<true>());
       setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
@@ -558,6 +645,27 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                 </button>
               </p>
             )}
+            {unknownProvenanceKeys[GENERAL_KEY] && (
+              <p
+                role="alert"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-start justify-between gap-2"
+              >
+                <span>
+                  This comment was saved at the {MAX_CHARS.toLocaleString()} character limit by an
+                  earlier version of this form, which did not record whether anything was cut. An
+                  unknown amount of text may be missing, and it cannot be recovered.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleDismissUnknownProvenance(GENERAL_KEY)}
+                  disabled={isSubmitting}
+                  aria-label="Dismiss unknown-provenance notice for General Comments"
+                  className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
+                >
+                  Dismiss
+                </button>
+              </p>
+            )}
           </div>
 
           {headings.map((h) => (
@@ -596,6 +704,27 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                     // disabled while isSubmitting -- see the General Comments Dismiss button above.
                     disabled={isSubmitting}
                     aria-label={`Dismiss truncation notice for ${h.displayLabel}`}
+                    className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
+                  >
+                    Dismiss
+                  </button>
+                </p>
+              )}
+              {unknownProvenanceKeys[h.storageKey] && (
+                <p
+                  role="alert"
+                  className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-start justify-between gap-2"
+                >
+                  <span>
+                    This comment was saved at the {MAX_CHARS.toLocaleString()} character limit by
+                    an earlier version of this form, which did not record whether anything was
+                    cut. An unknown amount of text may be missing, and it cannot be recovered.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDismissUnknownProvenance(h.storageKey)}
+                    disabled={isSubmitting}
+                    aria-label={`Dismiss unknown-provenance notice for ${h.displayLabel}`}
                     className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded disabled:opacity-60 disabled:cursor-not-allowed disabled:no-underline"
                   >
                     Dismiss

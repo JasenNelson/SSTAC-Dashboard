@@ -488,9 +488,12 @@ second body
   })
 
   it('does not announce truncation when a restored draft is within the limit', () => {
+    // Deliberately ONE character short of MAX_CHARS, not AT it: a value exactly at MAX_CHARS with
+    // no truncation key present is now the unknown-provenance case covered separately below
+    // ("flags a legacy draft..."), so it can no longer stand in for "clearly under the limit".
     window.localStorage.setItem(
       'twg-matrix-review-draft-v6',
-      JSON.stringify({ general: 'x'.repeat(5000) })
+      JSON.stringify({ general: 'x'.repeat(4999) })
     )
 
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
@@ -499,7 +502,7 @@ second body
     const generalTextarea = screen.getByPlaceholderText(
       /Overall thoughts on the methodology\.\.\./i
     ) as HTMLTextAreaElement
-    expect(generalTextarea.value).toHaveLength(5000)
+    expect(generalTextarea.value).toHaveLength(4999)
   })
 
   it('does not carry a maxLength attribute on ANY comment textarea', () => {
@@ -676,12 +679,19 @@ second body
       { target: { value: 'order-sensitive draft text' } }
     )
 
+    // Delegate every OTHER write to the real implementation. A mock that only ever throws (and
+    // otherwise does nothing) would swallow the draft write silently even if handleSave were
+    // reverted to draft-first -- the assertion below would then pass whether or not the fix is
+    // in place, because the draft key would never actually be populated by EITHER order. Capture
+    // the real setItem BEFORE spying so non-provenance keys are genuinely written.
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
     const setItemSpy = vi
       .spyOn(window.localStorage, 'setItem')
-      .mockImplementation((key: string) => {
+      .mockImplementation((key: string, value: string) => {
         if (key === 'twg-matrix-review-draft-v6-truncation') {
           throw new Error('quota exceeded')
         }
+        originalSetItem(key, value)
       })
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
 
@@ -992,6 +1002,101 @@ second body
     expect(status.textContent).toMatch(/Dismiss/)
     expect(status.textContent).not.toMatch(/Edit your comments to remove the gap/i)
     expect(status.textContent).not.toMatch(/editing (the field|your comments?) will remove/i)
+
+    confirmSpy.mockRestore()
+  })
+
+  // Regression set for the legacy-draft / unknown-provenance defect (P1). A draft saved by the
+  // pre-provenance build has NO companion truncation key at all -- that build never wrote one --
+  // so a restored value that lands exactly on MAX_CHARS is indistinguishable, by string shape
+  // alone, from an untouched full-length comment. Treating a missing companion as "no known
+  // loss" lets a silently-clipped comment through the submit gate unwarned.
+  it('flags a legacy draft (at MAX_CHARS, no truncation key at all) as unknown provenance and gates submit', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    // Pre-provenance build: draft key present, truncation key ABSENT ENTIRELY (never written).
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/unknown/i)
+    expect(alert.textContent).toMatch(/earlier version/i)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    expect(confirmSpy.mock.calls[0][0]).toMatch(/unknown/i)
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('does NOT flag unknown provenance when an empty truncation record ({}) is present -- that is a positive "nothing lost" statement from the current build', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+    // The CURRENT build wrote an empty record: it looked and found nothing to report. This must
+    // not be conflated with the key being absent entirely.
+    window.localStorage.setItem('twg-matrix-review-draft-v6-truncation', JSON.stringify({}))
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    expect(confirmSpy).not.toHaveBeenCalled()
+
+    confirmSpy.mockRestore()
+  })
+
+  it('does not flag unknown provenance for a legacy draft whose values are all under MAX_CHARS', () => {
+    // Nothing about a short restored value suggests clipping, even with no truncation key.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'a short comment, well under the cap' })
+    )
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('Dismiss clears an unknown-provenance notice and removes it from the submit confirmation', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dismiss unknown-provenance notice for General Comments/i })
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    // If the dismissed unknown-provenance record were still counted, confirm would have fired.
+    expect(confirmSpy).not.toHaveBeenCalled()
 
     confirmSpy.mockRestore()
   })
