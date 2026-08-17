@@ -131,6 +131,13 @@ const UNCHECKED_MIRROR_HEALTH: MirrorHealthState = {
   },
 };
 
+// Decision D8: the reference-check block deliberately renders HCp at 6 significant figures
+// while the headline summary renders the SAME quantity at 3 (formatNumber's default). Without
+// a label a reader sees two different-looking numbers and reasonably concludes they are two
+// different values. This id ties a single visible precision note to every "Current" value in
+// the block via aria-describedby, so the higher resolution is announced, not just displayed.
+const REFERENCE_PRECISION_NOTE_ID = 'ssd-reference-precision-note';
+
 function formatNumber(value: number, digits = 3): string {
   if (!Number.isFinite(value)) return 'n/a';
   return value.toLocaleString(undefined, {
@@ -1236,7 +1243,7 @@ export default function SsdWorkbench({
               data-testid="ssd-endpoint-filters"
               className="group mt-2 rounded-md border border-slate-300 dark:border-slate-700"
             >
-              <summary className="flex min-h-[44px] cursor-pointer select-none list-none items-center justify-between gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
+              <summary className="flex min-h-[44px] cursor-pointer select-none list-none marker:content-none [&::-webkit-details-marker]:hidden items-center justify-between gap-2 rounded-md px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-200">
                 <span>{endpointLabel(endpointFilters)}</span>
                 {/* Round-2 P3-1: rotate on open. */}
                 <ChevronDown
@@ -1499,7 +1506,7 @@ export default function SsdWorkbench({
             className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950"
             data-testid="ssd-validation-panel"
           >
-            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+            <summary className="flex cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
                 Validation and verification
@@ -1630,6 +1637,13 @@ export default function SsdWorkbench({
                     <div className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                       Reference checks
                     </div>
+                    <p
+                      id={REFERENCE_PRECISION_NOTE_ID}
+                      className="mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400"
+                    >
+                      Shown at full precision (6 significant figures). The HCp
+                      summary above is the same value rounded to 3.
+                    </p>
                     <div className="mt-3 space-y-3">
                       {runFixtureDataset.validationReferences?.map((reference) => {
                         const status = referenceStatus(reference, result);
@@ -1676,7 +1690,10 @@ export default function SsdWorkbench({
                                 <dt className="text-slate-500 dark:text-slate-400">
                                   Current
                                 </dt>
-                                <dd className="font-semibold text-slate-900 dark:text-white">
+                                <dd
+                                  aria-describedby={REFERENCE_PRECISION_NOTE_ID}
+                                  className="font-semibold text-slate-900 dark:text-white"
+                                >
                                   {status.comparable
                                     ? `${formatNumber(result.hcp, 6)} ${result.unit}`
                                     : 'Not comparable'}
@@ -1812,7 +1829,7 @@ export default function SsdWorkbench({
           </details>
 
           <details className="group rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-950">
-            <summary className="flex cursor-pointer list-none flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
+            <summary className="flex cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden flex-col gap-2 text-sm font-bold text-slate-950 dark:text-white sm:flex-row sm:items-center sm:justify-between">
               <span className="flex items-center gap-2">
                 <ChevronDown className="h-4 w-4 text-slate-400 transition-transform group-open:rotate-180" />
                 Model diagnostics
@@ -1827,7 +1844,7 @@ export default function SsdWorkbench({
               ssdtools-style AICc model average before treating the result as a
               candidate.
             </p>
-            <div className="mt-4 max-h-64 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+            <div className="mt-4 max-h-64 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
               <table
                 className="min-w-full text-left text-xs"
                 data-testid="ssd-model-diagnostics-table"
@@ -2069,7 +2086,7 @@ export default function SsdWorkbench({
                 </button>
               </div>
             </div>
-            <div className="mt-4 max-h-72 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+            <div className="mt-4 max-h-72 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
               <table
                 className="min-w-full text-left text-xs"
                 data-testid="ssd-species-aggregate-table"
@@ -2212,7 +2229,7 @@ export default function SsdWorkbench({
                   <li>No warnings for the current validation filters.</li>
                 )}
               </ul>
-              <div className="mt-4 max-h-44 overflow-auto rounded-md border border-slate-200 dark:border-slate-800">
+              <div className="mt-4 max-h-44 overflow-auto print:max-h-none print:overflow-visible rounded-md border border-slate-200 dark:border-slate-800">
                 <table
                   className="min-w-full text-left text-xs"
                   data-testid="ssd-exclusions-table"
@@ -2224,7 +2241,16 @@ export default function SsdWorkbench({
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                    {result.excludedRecords.slice(0, 8).map((record, index) => (
+                    {/* Renders EVERY excluded record. This was `.slice(0, 8)`, which silently
+                        dropped the rest while the "Excluded" tile above reported the true
+                        count (result.excludedRecordCount === result.excludedRecords.length,
+                        see src/lib/matrix-options/ssd/hcp.ts) -- so the two disagreed and only
+                        the honest one was legible. Nothing is hidden now: the container is
+                        scroll-capped on screen (max-h-44 overflow-auto) and de-clipped on
+                        paper (print:max-h-none print:overflow-visible), so a long list costs
+                        scrolling, not data. Do not reintroduce a cap here without also
+                        rendering a visible "showing N of M" disclosure. */}
+                    {result.excludedRecords.map((record, index) => (
                       <tr key={`${record.reason}-${index}`}>
                         <td className="px-3 py-2 font-semibold text-slate-700 dark:text-slate-200">
                           {record.reason.replace(/_/g, ' ')}

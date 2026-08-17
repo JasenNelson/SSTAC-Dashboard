@@ -79,6 +79,15 @@ export interface DescriptiveStats {
   p95: number;                        // linear interpolation, type-7
   // Recalculated for lognormal sigmaHat (SD of ln(detects), ddof=1)
   sigmaHat: number | null;            // sample SD of ln(detects > 0), ddof=1; null when < 2 positives
+  // Count of rows whose censoring status is UNRESOLVED (row.censored is neither
+  // true nor false -- i.e. null or undefined). The DB column
+  // (supabase/migrations/20260519000001_matrix_map_schema.sql) is `censored
+  // boolean NOT NULL DEFAULT false`, so this is always 0 for data read from the
+  // live RPC path today. The counter exists purely as an observational guard so
+  // the fail-closed provenance check in recommend-ucl.ts cannot silently degrade
+  // (i.e. mis-cite an UNCENSORED ProUCL basis) if a null/undefined ever reaches
+  // this loop, e.g. via a future data source or a test fixture.
+  unresolvedCensoring: number;
 }
 
 export interface ChebyshevUclEntry {
@@ -320,9 +329,15 @@ function computeBucket(
   const detectOriginalIndices: number[] = [];
   let excludedCount = 0;
   let nonDetects = 0;
+  let unresolvedCensoring = 0;
 
   for (let idx = 0; idx < rows.length; idx++) {
     const { row, originalIndex } = rows[idx];
+    // Observational only: does not alter how the row is handled below (the DB
+    // column is NOT NULL, so this branch is unreachable with live data today).
+    if (row.censored !== true && row.censored !== false) {
+      unresolvedCensoring++;
+    }
     if (row.censored === true) {
       const dlParsed = parseValue(row.detection_limit);
       if (!dlParsed.ok) {
@@ -552,6 +567,7 @@ function computeBucket(
     p90: isKmEmptyFit ? Number.NaN : p90,
     p95: isKmEmptyFit ? Number.NaN : p95,
     sigmaHat,
+    unresolvedCensoring,
   };
 
   // 7. Shape parameter bias-correction k*
@@ -608,7 +624,8 @@ function computeBucket(
     hasCensored,
     detects,
     censoredMethod,
-    logN
+    logN,
+    unresolvedCensoring
   );
 
   if (recommendation.warning) {
