@@ -61,6 +61,10 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   const [truncatedBy, setTruncatedBy] = useState<Record<string, number>>(() => makeBareRecord<number>());
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Set when the reviewer DECLINES the truncation confirmation, so Submit does not appear to
+  // silently do nothing (window.confirm also returns false when a browser suppresses dialogs).
+  // Cleared once a later submit attempt is confirmed.
+  const [submitCancelledNote, setSubmitCancelledNote] = useState<string | null>(null);
   const contentRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -106,7 +110,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           if (parsedT && typeof parsedT === 'object' && !Array.isArray(parsedT)) {
             for (const [k, v] of Object.entries(parsedT)) {
               if (RESERVED_KEYS.has(k)) continue;
-              if (typeof v !== 'number' || !Number.isFinite(v) || v <= 0) continue;
+              // Require a positive safe integer. Number.isFinite alone admits 0.5 (a
+              // fractional character count) and 1e308 (a value that would blow up the
+              // confirmation-dialog text) -- Number.isSafeInteger rejects both, plus
+              // NaN and Infinity, in one check.
+              if (typeof v !== 'number' || !Number.isSafeInteger(v) || v <= 0) continue;
               merged[k] = v;
             }
           }
@@ -166,18 +174,35 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // test reaches this branch under either design and cannot tell the two apart. What the
     // unit tests DO prove is the clipping arithmetic and that the alert reports the right
     // count. The browser premise is taken from the HTML spec, not verified in this repo.
-    // CUMULATIVE, and never silently cleared. An earlier version stored only the LAST edit's
-    // loss and dropped the key when an edit fit, so "1,000 characters were removed" was replaced
-    // by "1 character was removed" on the very next keystroke, and vanished entirely on the one
-    // after. The loss is permanent; the notice must not be more transient than the damage.
+    // CUMULATIVE for a CONTINUATION of the same content, and never silently cleared while
+    // still overflowing. An earlier version stored only the LAST edit's loss and dropped the
+    // key when an edit fit, so "1,000 characters were removed" was replaced by "1 character
+    // was removed" on the very next keystroke, and vanished entirely on the one after. The
+    // loss is permanent; the notice must not be more transient than the damage.
     // Two independent reviewers rated that P1.
+    //
+    // BUT accumulation only makes sense across an EDIT/APPEND of the same content. A
+    // REPLACEMENT (select-all + paste a different draft) is a different piece of text -- the
+    // characters dropped from the discarded content no longer exist to be "still missing", so
+    // adding this edit's overflow to the running total over-reports. Distinguish the two by
+    // whether the incoming value still starts with what was previously stored (clipped) for
+    // this key: read that from the `comments` state already in scope here, NOT from inside the
+    // setTruncatedBy updater below -- setComments and setTruncatedBy are separate updates, and
+    // comparing against a value read inside one updater's own stale prev would not reliably see
+    // the OTHER state's most recent value.
+    const prevValue = comments[key] ?? '';
+    const isContinuation = prevValue.length > 0 && value.startsWith(prevValue);
     setTruncatedBy(prev => {
-      if (overBy === 0) return prev;
       const next = makeBareRecord<number>();
       for (const [k, v] of Object.entries(prev)) {
-        if (!RESERVED_KEYS.has(k)) next[k] = v;
+        if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
       }
-      next[key] = (prev[key] ?? 0) + overBy;
+      // overBy === 0 clears the key entirely rather than storing 0 or leaving a stale prior
+      // count: a reviewer who deletes an overflowing field and rewrites it short must not keep
+      // seeing a warning for text that is no longer there.
+      if (overBy > 0) {
+        next[key] = isContinuation ? (prev[key] ?? 0) + overBy : overBy;
+      }
       return next;
     });
     setComments(prev => {
@@ -192,17 +217,31 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   const handleSave = () => {
     if (typeof window === 'undefined') return;
+    // Two INDEPENDENT writes, not one shared try. A single try around both meant a failure on
+    // the second write (truncation provenance) reported "Unable to save draft locally" even
+    // though the draft itself had already been written -- misinforming the reviewer about
+    // whether their text is safe, AND leaving a persisted draft with stale/absent provenance,
+    // silently reintroducing the exact silent-loss defect this component exists to prevent.
     try {
       // JSON.stringify on a null-prototype object still serializes own keys.
       window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));
+    } catch {
+      alert('Unable to save draft locally (storage quota or access denied).');
+      return;
+    }
+    try {
       // Persist the truncation record alongside the draft. The saved comment string is exactly
       // MAX_CHARS whether it was clipped or written that long deliberately, so the string cannot
       // carry this evidence -- it has to be stored separately or the knowledge is lost on resume.
       window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
-      alert('Progress saved to local storage.');
     } catch {
-      alert('Unable to save draft locally (storage quota or access denied).');
+      alert(
+        'Draft saved, but the truncation record could not be saved (storage quota or access ' +
+          'denied). A resume may not warn you about earlier dropped text.'
+      );
+      return;
     }
+    alert('Progress saved to local storage.');
   };
 
   // Map internal storage keys to user-readable labels for the DB payload.
@@ -233,9 +272,18 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // notice they have scrolled past is not consent. Submitting is the irreversible moment (the
     // payload goes to matrix_reviews), so the loss is restated here and the reviewer chooses.
     // Reported independently by two reviewers as the gap that made the announcement ineffective.
-    const droppedTotal = Object.values(truncatedBy).reduce((sum, n) => sum + n, 0);
+    // Only count keys that correspond to a CURRENTLY RENDERED field. A heading can be removed
+    // (document replaced, section renamed) while its stale h::<idx> entry lingers in
+    // truncatedBy -- that key renders no inline alert and is absent from
+    // buildCommentsPayload, so counting it here would have the dialog cite loss the reviewer
+    // cannot find or act on.
+    const headingKeys = new Set(headings.map(h => h.storageKey));
+    const relevantEntries = Object.entries(truncatedBy).filter(
+      ([k]) => k === GENERAL_KEY || headingKeys.has(k)
+    );
+    const droppedTotal = relevantEntries.reduce((sum, [, n]) => sum + n, 0);
     if (droppedTotal > 0) {
-      const fields = Object.keys(truncatedBy).length;
+      const fields = relevantEntries.length;
       const proceed = window.confirm(
         `${droppedTotal.toLocaleString()} character${droppedTotal === 1 ? '' : 's'} ` +
           `${droppedTotal === 1 ? 'was' : 'were'} removed from ${fields} comment ` +
@@ -243,8 +291,22 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           `limit was exceeded. That text is not recoverable and will NOT be included in your ` +
           `submission.\n\nSubmit anyway?`
       );
-      if (!proceed) return;
+      if (!proceed) {
+        // window.confirm also returns false when a browser suppresses dialogs, and a
+        // deliberate decline gives no other feedback -- without this, Submit appears to do
+        // nothing. Name the count and tell the reviewer what to do next.
+        setSubmitCancelledNote(
+          `Submission was not sent: ${droppedTotal.toLocaleString()} character` +
+            `${droppedTotal === 1 ? '' : 's'} ${droppedTotal === 1 ? 'is' : 'are'} still missing ` +
+            `from ${fields} comment ${fields === 1 ? 'field' : 'fields'}. Edit your comments to ` +
+            `remove the gap, or press Submit again to proceed anyway.`
+        );
+        return;
+      }
     }
+    // A new attempt is proceeding past the confirmation gate (or none was needed) -- clear any
+    // note left by an earlier decline.
+    setSubmitCancelledNote(null);
 
     setIsSubmitting(true);
     try {
@@ -296,9 +358,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
       try {
         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+        window.localStorage.removeItem(TRUNCATION_STORAGE_KEY);
       } catch {
         /* non-fatal */
       }
+      setTruncatedBy(makeBareRecord<number>());
       setIsSubmitted(true);
     } finally {
       setIsSubmitting(false);
@@ -454,20 +518,30 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         </div>
 
         {/* Sticky Bottom Bar */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-3 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
-          <button
-            onClick={handleSave}
-            className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
-          >
-            Save Draft
-          </button>
-          <button
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
-          >
-            {isSubmitting ? 'Submitting...' : 'Submit Review'}
-          </button>
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+          {submitCancelledNote && (
+            <p
+              role="status"
+              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3"
+            >
+              {submitCancelledNote}
+            </p>
+          )}
+          <div className="flex gap-3">
+            <button
+              onClick={handleSave}
+              className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+            >
+              Save Draft
+            </button>
+            <button
+              onClick={handleSubmit}
+              disabled={isSubmitting}
+              className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+            >
+              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+            </button>
+          </div>
         </div>
       </div>
     </>

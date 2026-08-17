@@ -310,21 +310,53 @@ second body
     confirmSpy.mockRestore()
   })
 
-  it('keeps the truncation count cumulative instead of overwriting it', async () => {
+  it('keeps the truncation count cumulative across a CONTINUATION of the same content', async () => {
     // The count used to hold only the LAST edit's loss, so "1,000 removed" became "1 removed"
     // on the next keystroke and vanished on the one after. The loss is permanent; the notice
-    // must not be more transient than the damage.
+    // must not be more transient than the damage -- as long as the edit is still building on
+    // the same (already-clipped) content, not replacing it outright (see the replacement test
+    // below for that other case).
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000; stored = x*5000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    // Continuation: this value STARTS WITH the previously stored clipped value (x*5000), so it
+    // is one more character typed onto the same content, not a replacement.
+    fireEvent.change(ta, { target: { value: 'x'.repeat(5001) } })   // drops 1 more of the SAME text
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
+  })
+
+  it('resets the truncation count on a REPLACEMENT instead of adding to stale content that no longer exists', async () => {
+    // FIX 1: pasting 6100 chars (drops 1100) then SELECT-ALL and pasting a revised 6000 chars
+    // (drops 1000) must report 1000, not 2100 -- the first 1100 belonged to content that was
+    // entirely discarded, not to characters still missing from the CURRENT text.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'a'.repeat(6100) } })   // drops 1100; stored = a*5000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,100 characters were removed/)
+
+    // Replacement: 'b'.repeat(6000) does NOT start with the stored 'a'.repeat(5000) -- this is a
+    // different piece of text, not a continuation.
+    fireEvent.change(ta, { target: { value: 'b'.repeat(6000) } })   // drops 1000 of the NEW text
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/1,000 characters were removed/)
+    expect(alert.textContent).not.toMatch(/2,100 characters were removed/)
+  })
+
+  it('clears the truncation warning when a replacement fits under the limit (FIX 2)', async () => {
+    // A reviewer who deletes an overflowing field and rewrites it short must not keep seeing a
+    // stale warning for text that no longer exists.
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
 
     fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
 
-    fireEvent.change(ta, { target: { value: 'y'.repeat(5001) } })   // drops 1 more
-    expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
-
-    fireEvent.change(ta, { target: { value: 'z'.repeat(10) } })     // fits; must NOT clear
-    expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
+    fireEvent.change(ta, { target: { value: 'short rewrite' } })    // unrelated, fits comfortably
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
   it('persists truncation provenance across save and restore', async () => {
@@ -430,5 +462,152 @@ second body
     for (const textarea of textareas) {
       expect(textarea).not.toHaveAttribute('maxLength')
     }
+  })
+
+  it('does not surface a stale heading key in the submit confirmation dialog (FIX 3)', async () => {
+    // A truncatedBy entry for a heading storageKey (h::<idx>) that no longer exists in the
+    // current document renders no inline alert and is absent from buildCommentsPayload -- it
+    // must not inflate droppedTotal or trigger the confirm dialog either.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    const { rerender } = render(
+      <TWGReviewPortal finalDraftContent={'## Section A\nbody\n\n## Section B\nbody'} />
+    )
+
+    const sectionBTextarea = screen.getByPlaceholderText(/Specific feedback for Section B\.\.\./i)
+    fireEvent.change(sectionBTextarea, { target: { value: 'x'.repeat(5010) } })
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    // Document is replaced and Section B no longer exists, but the truncatedBy record for its
+    // storageKey (h::1) is still sitting in state from before this rerender.
+    rerender(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    // If the stale key were still counted, droppedTotal would be > 0 and confirm would fire.
+    expect(confirmSpy).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('shows a status note naming the dropped count when the reviewer declines the confirmation (FIX 4)', async () => {
+    // window.confirm returning false (a deliberate decline, or a browser suppressing dialogs)
+    // must not make Submit appear to silently do nothing.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    const status = await screen.findByRole('status')
+    expect(status.textContent).toMatch(/\b10\b/)
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('clears the cancelled-submit note once a later submit attempt is confirmed (FIX 4)', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await screen.findByRole('status')
+
+    confirmSpy.mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    confirmSpy.mockRestore()
+  })
+
+  it('reports draft-saved-but-provenance-failed distinctly, without losing the saved draft (FIX 5)', () => {
+    // A single shared try around both localStorage writes would report the generic "Unable to
+    // save draft locally" message even when the draft write itself succeeded and only the
+    // truncation-provenance write failed -- misinforming the reviewer AND leaving a persisted
+    // draft with stale/absent provenance.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'hello there' } }
+    )
+
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string, value: string) => {
+        if (key === 'twg-matrix-review-truncation-v1') {
+          throw new Error('quota exceeded')
+        }
+        originalSetItem(key, value)
+      })
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+
+    // The draft write must have actually happened before the second write threw.
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6')).toContain('hello there')
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/draft.*saved/i))
+    expect(alertSpy).toHaveBeenCalledWith(expect.stringMatching(/truncation|provenance/i))
+    // The generic single-try message must NOT be the one shown here.
+    expect(alertSpy).not.toHaveBeenCalledWith(expect.stringMatching(/^unable to save draft/i))
+
+    setItemSpy.mockRestore()
+    alertSpy.mockRestore()
+  })
+
+  it('clears TRUNCATION_STORAGE_KEY and resets in-memory truncatedBy on a successful submit (FIX 6)', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+    alertSpy.mockRestore()
+    expect(window.localStorage.getItem('twg-matrix-review-truncation-v1')).toBeTruthy()
+
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    await screen.findByText('Review Submitted')
+
+    expect(window.localStorage.getItem('twg-matrix-review-truncation-v1')).toBeNull()
+    confirmSpy.mockRestore()
+  })
+
+  it('requires a positive safe integer to restore a truncation count; a fractional value is ignored (FIX 6)', async () => {
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'short' })
+    )
+    window.localStorage.setItem(
+      'twg-matrix-review-truncation-v1',
+      JSON.stringify({ general: 0.5 })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 })
