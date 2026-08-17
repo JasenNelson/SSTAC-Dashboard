@@ -309,3 +309,118 @@ describe('ScrollFadeRegion', () => {
     expect(screen.getByText('row content')).toBeInTheDocument();
   });
 });
+
+// ---------------------------------------------------------------------------
+// Deferred-findings triage, 2026-08-16.
+// ---------------------------------------------------------------------------
+describe('ScrollFadeRegion -- deferred triage', () => {
+  afterEach(() => {
+    cleanup();
+    restoreScrollMetrics();
+  });
+
+  // Item 1. The caption was gated on `hasOverflow` alone -- a strict
+  // scrollWidth > clientWidth -- while both fades use the 1px tolerance in `atEnd`.
+  // At exactly 1px of overflow the region showed NO fade in either direction and still
+  // said "Swipe to see more", promising content that cannot be revealed.
+  //
+  // Falsified: restoring `{hasOverflow && (` fails this test with the caption present.
+  it('does not promise "Swipe to see more" at exactly 1px of overflow', () => {
+    stubScrollMetrics(101, 100);
+    render(
+      <ScrollFadeRegion>
+        <div>content</div>
+      </ScrollFadeRegion>,
+    );
+
+    // At 1px overflow with scrollLeft 0: atStart is true, and atEnd is also true because
+    // 0 + 100 >= 101 - 1. So neither fade renders -- and neither should the caption.
+    expect(screen.queryByTestId('scroll-fade-gradient')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('scroll-fade-gradient-left')).not.toBeInTheDocument();
+    expect(screen.queryByTestId('scroll-fade-caption')).not.toBeInTheDocument();
+  });
+
+  it('still shows the caption when there is genuinely somewhere to scroll', () => {
+    stubScrollMetrics(400, 100);
+    render(
+      <ScrollFadeRegion>
+        <div>content</div>
+      </ScrollFadeRegion>,
+    );
+
+    // The other side of the same assertion: this must NOT become a test that simply
+    // deletes the caption feature.
+    expect(screen.getByTestId('scroll-fade-caption')).toBeInTheDocument();
+    expect(screen.getByTestId('scroll-fade-gradient')).toBeInTheDocument();
+  });
+
+  // Systemic item. Print-safety now belongs to the component rather than to each caller.
+  // Three caller-side print gaps were found in a single day because a scroll container that
+  // clips on screen also clips on paper unless someone remembers to reset it.
+  //
+  // Falsified: removing the two print utilities from the scroll container fails this.
+  //
+  // WHAT THIS CANNOT SEE: jsdom does not implement @media print at all, so this asserts the
+  // class contract only. That the printed output is actually unclipped needs a real
+  // print-preview or a Playwright emulateMedia({ media: 'print' }) check.
+  it('owns its own print-safety instead of relying on every caller to remember', () => {
+    stubScrollMetrics(400, 100);
+    const { container } = render(
+      <ScrollFadeRegion className="rounded-lg border">
+        <div>content</div>
+      </ScrollFadeRegion>,
+    );
+
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller).not.toBeNull();
+    const classes = (scroller as HTMLElement).className.split(/\s+/);
+    expect(classes).toContain('print:overflow-visible');
+    expect(classes).toContain('print:max-w-none');
+    // The caller's own classes must survive the change.
+    expect(classes).toContain('rounded-lg');
+    expect(classes).toContain('border');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Audit round 2, triage P0-3. The systemic print fix reset `overflow` and `max-width` but NOT
+// `max-height`, and three SSD result tables clip vertically (max-h-72 = 288px, roughly 7 rows
+// of a 20-40 species SSD). On paper there is no scrollbar, no fade and no ellipsis: the table
+// ends mid-list and reads as complete. The rows dropped are the per-species toxicity values the
+// HCp is derived from, so this is the "correct value rendered invisible" class this project has
+// shipped four times.
+//
+// jsdom implements no @media print, so this is a CLASS-CONTRACT assertion only -- it proves the
+// utility is applied, not that the printed page is un-clipped. Real proof needs a print preview
+// or Playwright emulateMedia({ media: 'print' }); that is recorded as owed.
+//
+// Falsified: removing print:max-h-none from the scroll container fails this.
+// ---------------------------------------------------------------------------
+describe('ScrollFadeRegion -- vertical print clipping', () => {
+  afterEach(() => {
+    cleanup();
+    restoreScrollMetrics();
+  });
+
+  it('resets max-height for print, not only overflow and max-width', () => {
+    stubScrollMetrics(400, 100);
+    const { container } = render(
+      <ScrollFadeRegion className="max-h-72">
+        <div>content</div>
+      </ScrollFadeRegion>,
+    );
+
+    const scroller = container.querySelector('.overflow-x-auto');
+    expect(scroller).not.toBeNull();
+    const classes = (scroller as HTMLElement).className.split(/\s+/);
+
+    // All three axes of clipping must be reset, or a caller that caps height still truncates
+    // on paper while the component claims to own print-safety.
+    expect(classes).toContain('print:overflow-visible');
+    expect(classes).toContain('print:max-w-none');
+    expect(classes).toContain('print:max-h-none');
+
+    // The caller's own height cap must survive on screen -- this is a print-only reset.
+    expect(classes).toContain('max-h-72');
+  });
+});

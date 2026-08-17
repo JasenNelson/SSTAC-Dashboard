@@ -479,7 +479,7 @@ export default function AgenticOsClient({
                         })()}
                         <details className="relative">
                           <summary
-                            className="list-none cursor-pointer text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 rounded px-2 py-0.5 hover:bg-violet-200 dark:hover:bg-violet-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
+                            className="list-none marker:content-none [&::-webkit-details-marker]:hidden cursor-pointer text-xs bg-violet-100 dark:bg-violet-900/30 text-violet-700 dark:text-violet-300 border border-violet-200 dark:border-violet-700/30 rounded px-2 py-0.5 hover:bg-violet-200 dark:hover:bg-violet-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-violet-500"
                             title="Launch a Pattern A headless skill (claude -p '/<skill>')"
                           >
                             Skill v
@@ -595,7 +595,7 @@ export default function AgenticOsClient({
                         </details>
                         <details className="relative">
                           <summary
-                            className="list-none cursor-pointer text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 hover:bg-sky-200 dark:hover:bg-sky-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
+                            className="list-none marker:content-none [&::-webkit-details-marker]:hidden cursor-pointer text-xs bg-sky-100 dark:bg-sky-900/30 text-sky-700 dark:text-sky-300 border border-sky-200 dark:border-sky-700/30 rounded px-2 py-0.5 hover:bg-sky-200 dark:hover:bg-sky-900/50 focus:outline-none focus-visible:ring-1 focus-visible:ring-sky-500"
                             title="Launch a Pattern D agent (claude --agent <slug> --bg)"
                           >
                             Agent v

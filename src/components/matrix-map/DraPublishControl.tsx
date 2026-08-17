@@ -401,7 +401,7 @@ export function DraPublishControl({ initialDras, isAdmin }: DraPublishControlPro
                       }
                     }}
                   >
-                    <summary className="cursor-pointer list-none rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400">
+                    <summary className="cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden rounded-md px-1 py-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-400">
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <h3 className="text-sm font-bold text-slate-800 dark:text-slate-100">
