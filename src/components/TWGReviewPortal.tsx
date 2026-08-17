@@ -42,6 +42,21 @@ const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';
 // of the NEW document that happens to share the same positional index. Deriving from the draft key
 // means any future draft-key bump automatically retires the matching truncation record too.
 const TRUNCATION_STORAGE_KEY = DRAFT_STORAGE_KEY + '-truncation';
+// Unknown-provenance keys (see unknownProvenanceKeys below) live under their OWN key, for the
+// same additive reason TRUNCATION_STORAGE_KEY does not share the draft key's shape, and derived
+// from DRAFT_STORAGE_KEY for the same reason: so a future document-version bump retires this
+// record too, instead of leaving it to be read back against a different document.
+//
+// This key is SEPARATE from TRUNCATION_STORAGE_KEY, not folded into it, because the two records
+// mean different things and must not be able to erase one another. TRUNCATION_STORAGE_KEY's
+// present-but-empty `{}` is a positive statement, from the CURRENT build, that nothing was lost
+// -- see the comment above the restore effect's `rawT === null` check. If unknown-provenance
+// keys were stored inside that same object, the very first Save Draft after mount would write
+// `{}` for truncatedBy (nothing NEWLY clipped) and silently overwrite -- and permanently lose --
+// the unknown-provenance flag for a legacy field that was never re-derived from string shape
+// again once a truncation record exists. A separate key means writing an empty truncatedBy
+// record can never erase a nonempty unknown-provenance one.
+const UNKNOWN_PROVENANCE_STORAGE_KEY = DRAFT_STORAGE_KEY + '-unknown-provenance';
 const MAX_CHARS = 5000;
 const GENERAL_KEY = 'general';
 
@@ -127,13 +142,42 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       // of the pre-provenance clip this component exists to catch. There is no way to tell
       // which, so it is reported as unknown, never folded into a count and never reported as
       // zero.
+      // Unknown-provenance keys recorded on a PRIOR save (see UNKNOWN_PROVENANCE_STORAGE_KEY
+      // above). Read unconditionally, before the rawT branch below, because it applies on BOTH
+      // branches: a {} truncation record only means "the CURRENT build found nothing NEW to
+      // report right now" -- it says nothing about a legacy unknown-provenance flag a PRIOR save
+      // already recorded for a field this mount is not re-deriving from string shape. Validated
+      // with the same defensive shape as the truncation record: own keys only (guaranteed by
+      // JSON.parse into a plain object), string keys, reserved keys rejected. A member's value
+      // must be exactly `true`; anything else in the stored record is dropped rather than
+      // trusted.
+      const persistedUnknown = makeBareRecord<true>();
+      try {
+        const rawU = window.localStorage.getItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
+        if (rawU !== null) {
+          const parsedU = JSON.parse(rawU);
+          if (parsedU && typeof parsedU === 'object' && !Array.isArray(parsedU)) {
+            for (const [k, v] of Object.entries(parsedU)) {
+              if (RESERVED_KEYS.has(k)) continue;
+              if (v !== true) continue;
+              persistedUnknown[k] = true;
+            }
+          }
+        }
+      } catch {
+        /* corrupt unknown-provenance record - ignore, the draft itself is still usable */
+      }
+
       const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
       if (rawT === null) {
-        if (atLimitKeys.length > 0) {
-          const unknown = makeBareRecord<true>();
-          for (const k of atLimitKeys) unknown[k] = true;
-          setUnknownProvenanceKeys(unknown);
-        }
+        // Do NOT gate this branch's unknown set on atLimitKeys alone -- a persisted
+        // unknown-provenance record must surface even if this particular restore does not
+        // itself land any field exactly at MAX_CHARS (e.g. the reviewer has since shortened
+        // it), because the loss it is unknown, not proven absent.
+        const unknown = makeBareRecord<true>();
+        for (const k of atLimitKeys) unknown[k] = true;
+        for (const k of Object.keys(persistedUnknown)) unknown[k] = true;
+        if (Object.keys(unknown).length > 0) setUnknownProvenanceKeys(unknown);
         if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
         return;
       }
@@ -168,6 +212,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         merged[k] = Math.max(merged[k] ?? 0, v);
       }
       if (Object.keys(merged).length > 0) setTruncatedBy(merged);
+      // The persisted unknown-provenance set applies here too (see the comment above where
+      // persistedUnknown is read). The at-limit re-derivation stays gated on rawT === null,
+      // exactly as before -- this does not weaken that; it only surfaces what a PRIOR save
+      // already recorded under its own key, independent of whatever the truncation record says.
+      if (Object.keys(persistedUnknown).length > 0) setUnknownProvenanceKeys(persistedUnknown);
     } catch {
       /* corrupt draft - ignore */
     }
@@ -285,11 +334,27 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   // handleDismissTruncation because the two can be true for the same field at once (a legacy
   // at-limit draft that the reviewer then edits into fresh overflow), and dismissing one must
   // not silently dismiss the other.
+  //
+  // Unlike truncatedBy, this ALSO writes UNKNOWN_PROVENANCE_STORAGE_KEY immediately, rather than
+  // waiting for the next Save Draft. Reason: a legacy at-limit field is re-derived as
+  // unknown-provenance on every mount for which the truncation key is still absent (see the
+  // restore effect's rawT === null branch) -- that re-derivation does not depend on whether a
+  // Save has ever happened. If dismissal only updated in-memory state, a reviewer who dismisses
+  // without an intervening Save would see the notice reappear on the very next remount, which is
+  // not a dismissal at all. Best-effort: a write failure here does not block the dismissal from
+  // applying for the rest of this session (there is no draft at stake, unlike handleSave).
   const handleDismissUnknownProvenance = (key: string) => {
     setUnknownProvenanceKeys(prev => {
       const next = makeBareRecord<true>();
       for (const [k, v] of Object.entries(prev)) {
         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+      }
+      if (typeof window !== 'undefined') {
+        try {
+          window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          /* best-effort persistence; the in-memory dismissal above still applies */
+        }
       }
       return next;
     });
@@ -297,12 +362,13 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   const handleSave = () => {
     if (typeof window === 'undefined') return;
-    // Two INDEPENDENT writes, not one shared try. A single try around both meant a failure on
-    // the second write (truncation provenance) reported "Unable to save draft locally" even
-    // though the draft itself had already been written -- misinforming the reviewer about
-    // whether their text is safe, AND leaving a persisted draft with stale/absent provenance,
-    // silently reintroducing the exact silent-loss defect this component exists to prevent.
-    // ORDER MATTERS, and it is the opposite of the obvious one. Provenance is written FIRST.
+    // Three INDEPENDENT writes, not one shared try. A single try around all of them meant a
+    // failure on a later write (truncation or unknown-provenance) reported "Unable to save draft
+    // locally" even though the draft itself had already been written -- misinforming the
+    // reviewer about whether their text is safe, AND leaving a persisted draft with
+    // stale/absent provenance, silently reintroducing the exact silent-loss defect this
+    // component exists to prevent. ORDER MATTERS, and it is the opposite of the obvious one:
+    // BOTH provenance records are written FIRST, before the draft.
     //
     // An earlier revision wrote the draft first and the provenance second, on the reasoning that
     // the draft is the important artifact. That created a silent-loss path: if the draft write
@@ -312,10 +378,17 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // loss and writes the truncated comment with no confirmation -- exactly the defect this
     // component exists to prevent, reached through the save path.
     //
-    // Writing provenance first inverts the failure: if provenance cannot be stored, NO resumable
-    // draft is created, so there is no draft that could later be submitted unwarned. The reverse
-    // orphan -- provenance stored with no draft -- is inert, because the restore effect reads the
-    // draft first and returns early when there is none.
+    // Writing both provenance records first inverts the failure: if either cannot be stored, NO
+    // resumable draft is created, so there is no draft that could later be submitted unwarned.
+    // The reverse orphan -- provenance stored with no draft -- is inert ONLY when no draft
+    // already existed before this save: the restore effect reads the draft first and returns
+    // early when there is none. That claim does NOT extend to a save that fails while a PRIOR
+    // (e.g. legacy, pre-provenance-build) draft is already sitting in storage: the draft write
+    // below failing leaves that old draft untouched and very much present, so the restore effect
+    // proceeds past it on the next mount. Before UNKNOWN_PROVENANCE_STORAGE_KEY existed, that
+    // path silently discarded any unknown-provenance flag the reviewer had already been shown
+    // for that old draft, because nothing durable recorded it. Persisting it here is what closes
+    // that gap; see UNKNOWN_PROVENANCE_STORAGE_KEY's own comment above.
     try {
       window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
     } catch {
@@ -323,6 +396,16 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         'Unable to save the truncation record (storage quota or access denied), so the draft was ' +
           'NOT saved either. Saving it without that record could let you resume and submit ' +
           'shortened text without being warned.'
+      );
+      return;
+    }
+    try {
+      window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(unknownProvenanceKeys));
+    } catch {
+      alert(
+        'Unable to save the unknown-provenance record (storage quota or access denied), so the ' +
+          'draft was NOT saved either. Saving it without that record could let a legacy ' +
+          'truncation warning be lost the next time you resume this draft.'
       );
       return;
     }
@@ -491,6 +574,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       try {
         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
         window.localStorage.removeItem(TRUNCATION_STORAGE_KEY);
+        window.localStorage.removeItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
       } catch {
         /* non-fatal */
       }
@@ -595,7 +679,26 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           </p>
         </div>
 
-        <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">
+        {/*
+          The bottom reservation must clear the ABSOLUTE bottom bar's worst-case height, or the
+          bar covers the tail of this scroll area -- which is exactly where the per-field
+          role="alert" notices and their "Dismiss ... notice for <label>" buttons live (the
+          cancelled-submit note below instructs the reviewer to use those Dismiss controls, and
+          handleCommentChange deliberately never clears the record any other way, so a covered
+          Dismiss button is a dead end, not just a visual glitch).
+
+          Arithmetic (static Tailwind classes chosen by whether the note is present, not measured
+          at runtime -- see the note's own comment below for why no ref-measurement effect):
+            Bar chrome without the note: p-4 (16px top + 16px bottom = 32px) + border-t (1px) +
+            the Save Draft/Submit button row (py-2 = 16px vertical padding + ~20px text-sm line
+            height =~ 36-40px content) =~ 82px total.
+            pb-32 (8rem = 128px) already clears that 82px baseline with margin -- unchanged.
+            With the note present: it is bounded to max-h-24 (6rem = 96px) plus its own mb-3
+            (12px) margin, so its worst-case contribution is 96 + 12 = 108px. Bar worst case
+            becomes 82 + 108 = 190px, so the reservation grows to pb-52 (13rem = 208px), leaving
+            an 18px buffer over the computed worst case for cross-browser box-sizing variance.
+        */}
+        <div className={cn('p-6 overflow-y-auto flex-1 space-y-6', submitCancelledNote ? 'pb-52' : 'pb-32')}>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
             <textarea
@@ -738,9 +841,18 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         {/* Sticky Bottom Bar */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
           {submitCancelledNote && (
+            // Bounded height + its own scroll, rather than growing unbounded: this note's
+            // shortest realistic text is long enough to run several lines in this narrow
+            // sidebar, and the ABSOLUTE bottom bar it lives in has no height of its own to give
+            // -- an unbounded note pushes the bar taller than the scroll container above
+            // reserves for it, covering the per-field alert/Dismiss controls the note itself
+            // tells the reviewer to use. max-h-24 (96px) caps that growth; overflow-y-auto keeps
+            // the rest reachable by scrolling THIS element instead of pushing the bar. See the
+            // arithmetic comment above the scroll container's pb-32/pb-52 toggle for why 96px is
+            // the number the reservation is sized against.
             <p
               role="status"
-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3"
+              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 max-h-24 overflow-y-auto"
             >
               {submitCancelledNote}
             </p>

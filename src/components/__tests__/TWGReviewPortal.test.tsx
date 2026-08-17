@@ -1100,4 +1100,162 @@ second body
 
     confirmSpy.mockRestore()
   })
+
+  // Regression set for the erasure defect: unknownProvenanceKeys used to be derived at mount
+  // ONLY when the truncation key was absent, and was never itself persisted. Save Draft then
+  // wrote an empty `{}` truncation record (truncatedBy has nothing NEW to report), and on the
+  // next mount rawT !== null so the at-limit re-derivation never ran again -- the notice was
+  // gone for good even though nothing about the legacy comment's provenance had actually become
+  // known. UNKNOWN_PROVENANCE_STORAGE_KEY closes this by persisting the set under its own key,
+  // independent of what the truncation record says.
+  it('keeps the unknown-provenance notice after Save Draft and a remount (legacy at-limit draft, no truncation key)', async () => {
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+    alertSpy.mockRestore()
+
+    // The empty truncation record is the CURRENT build's positive "nothing NEW lost" statement,
+    // and must still be written exactly as before -- this test does not weaken that invariant.
+    expect(JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation') as string)).toEqual({})
+    // The unknown-provenance set is now ALSO persisted, under its own key.
+    expect(
+      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
+    ).toEqual({ general: true })
+
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/unknown/i)
+    expect(alert.textContent).toMatch(/earlier version/i)
+  })
+
+  it('keeps the unknown-provenance notice when the DRAFT write fails but the provenance writes succeed, and a remount follows (legacy at-limit draft)', async () => {
+    // Same failure mode as FIX 5's "provenance succeeds, draft write then fails" case, but for
+    // a PRE-EXISTING legacy draft rather than a fresh one. The old comment above handleSave
+    // claimed the reverse-orphan case (provenance stored, no draft) is inert because the restore
+    // effect returns early when there is no draft -- that claim does not hold here, because the
+    // legacy draft already exists and is left untouched by the failed write, so the restore
+    // effect proceeds past it on the next mount.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string, value: string) => {
+        if (key === 'twg-matrix-review-draft-v6') {
+          throw new Error('quota exceeded')
+        }
+        originalSetItem(key, value)
+      })
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+
+    // Both provenance writes went through; only the draft write failed, so the legacy draft in
+    // storage is unchanged (still the pre-provenance-build shape with no draft-level marker).
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeTruthy()
+    expect(
+      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
+    ).toEqual({ general: true })
+
+    setItemSpy.mockRestore()
+    alertSpy.mockRestore()
+
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/unknown/i)
+    expect(alert.textContent).toMatch(/earlier version/i)
+  })
+
+  it('Dismiss of the unknown-provenance notice is durable across a remount, after a Save Draft already persisted it (paired with the existence case above)', async () => {
+    // Pairs an existence check (the notice survives a remount after Save, exactly like the test
+    // above) with an absence check (after Dismiss, a FURTHER remount does not bring it back).
+    // A test that only ever asserts absence cannot tell "Dismiss worked" from "the notice was
+    // never wired up to persist in the first place" -- the existence half proves the persisted
+    // record was really there before Dismiss removed it.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+    alertSpy.mockRestore()
+
+    // Existence: a remount right now still shows the notice (same as the dedicated test above).
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dismiss unknown-provenance notice for General Comments/i })
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    // Dismiss persists immediately (not deferred to the next Save Draft).
+    expect(
+      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
+    ).toEqual({})
+
+    // Absence: a FURTHER remount does not resurrect the dismissed notice.
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  // DEFECT 3: the cancelled-submit note lives inside the ABSOLUTE bottom bar with no height
+  // bound, while the scroll container above it reserves a FIXED pb-32. A note taller than the
+  // margin that reservation leaves permanently covers the tail of the scroll area -- exactly
+  // where the per-field role="alert" notices and their Dismiss buttons live, and the note's own
+  // text tells the reviewer to use those Dismiss controls. jsdom has no layout engine and cannot
+  // see ancestor occlusion (per the task's own falsifiability requirement), so this only pins the
+  // class-level contract: the note is height-bounded and independently scrollable, and the
+  // scroll container's bottom reservation class grows when the note is present. Whether pb-52 is
+  // geometrically sufficient in a real browser is left to the orchestrator's rendered check.
+  it('bounds the cancelled-submit note height and grows the scroll container reservation when the note is present', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
+
+    const { container } = render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+
+    // Baseline: no note yet, so the container reserves pb-32 and not the enlarged pb-52.
+    expect(container.querySelector('.pb-32')).toBeInTheDocument()
+    expect(container.querySelector('.pb-52')).not.toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    const status = await screen.findByRole('status')
+    expect(status).toHaveClass('max-h-24')
+    expect(status).toHaveClass('overflow-y-auto')
+
+    expect(container.querySelector('.pb-52')).toBeInTheDocument()
+    expect(container.querySelector('.pb-32')).not.toBeInTheDocument()
+
+    confirmSpy.mockRestore()
+  })
 })

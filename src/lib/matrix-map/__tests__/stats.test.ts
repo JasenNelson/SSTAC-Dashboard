@@ -627,6 +627,38 @@ describe('computeSelectionStats -- unresolvedCensoring counter', () => {
   });
 });
 
+describe('computeSelectionStats -- fail-closed recommendation when censoring is unresolved (recommend-ucl.ts call-site pin)', () => {
+  // This goes through the REAL production entry point (computeSelectionStats -> computeBucket ->
+  // recommendUcl), not recommendUcl directly. recommendUcl's `unresolvedCensoring` parameter
+  // DEFAULTS TO 0, and the call site in stats.ts is the only thing that actually passes the
+  // computed count -- deleting that trailing argument at the call site would silently restore the
+  // fail-open path (a real ProUCL-cited recommendation for a bucket whose censoring status is not
+  // actually known) with every test that calls recommendUcl() directly still green, because those
+  // tests supply the argument explicitly. Only a call-site test like this one can see that class
+  // of regression.
+  //
+  // n is pinned at 3 (>= 2) so the n < 2 guard in recommendUcl is not what produces 'none' here --
+  // if it were, this test could not tell the fail-closed unresolved-censoring guard apart from the
+  // unrelated insufficient-sample-size guard, and would stay green even if the fail-closed check
+  // were removed entirely.
+  it('recommends "none" with no ProUCL citation when every row has an unresolved censoring status', () => {
+    const rows = [
+      makeRow({ value: 1.0, censored: null, sample_id: 'a' }),
+      makeRow({ value: 2.0, censored: null, sample_id: 'b' }),
+      makeRow({ value: 3.0, censored: null, sample_id: 'c' }),
+    ];
+    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
+    const bucket = result.buckets[0];
+    // Parse precondition: all 3 rows must actually reach the recommendation ladder as detected,
+    // unresolved-censoring rows, or this test cannot see the defect it exists to catch.
+    expect(bucket.descriptive.n).toBe(3);
+    expect(bucket.descriptive.unresolvedCensoring).toBe(3);
+    expect(bucket.recommendation.recommendedMethod).toBe('none');
+    expect(bucket.recommendation.basisString).not.toMatch(/ProUCL/);
+    expect(bucket.recommendation.basisString).toMatch(/unresolved/i);
+  });
+});
+
 describe('computeSelectionStats -- DL_SUBSTITUTION_FACTOR constant', () => {
   it('DL_SUBSTITUTION_FACTOR = 0.5', () => {
     expect(DL_SUBSTITUTION_FACTOR).toBe(0.5);
