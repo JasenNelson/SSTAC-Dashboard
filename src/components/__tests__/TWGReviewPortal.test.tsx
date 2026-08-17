@@ -372,7 +372,7 @@ second body
     fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
     alertSpy.mockRestore()
 
-    const stored = window.localStorage.getItem('twg-matrix-review-truncation-v1')
+    const stored = window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')
     expect(stored).toBeTruthy()
     expect(JSON.parse(stored as string).general).toBe(10)
 
@@ -550,7 +550,7 @@ second body
     const setItemSpy = vi
       .spyOn(window.localStorage, 'setItem')
       .mockImplementation((key: string, value: string) => {
-        if (key === 'twg-matrix-review-truncation-v1') {
+        if (key === 'twg-matrix-review-draft-v6-truncation') {
           throw new Error('quota exceeded')
         }
         originalSetItem(key, value)
@@ -584,7 +584,7 @@ second body
     const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
     fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
     alertSpy.mockRestore()
-    expect(window.localStorage.getItem('twg-matrix-review-truncation-v1')).toBeTruthy()
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeTruthy()
 
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
     fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
@@ -592,7 +592,7 @@ second body
     await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
     await screen.findByText('Review Submitted')
 
-    expect(window.localStorage.getItem('twg-matrix-review-truncation-v1')).toBeNull()
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
     confirmSpy.mockRestore()
   })
 
@@ -602,12 +602,79 @@ second body
       JSON.stringify({ general: 'short' })
     )
     window.localStorage.setItem(
-      'twg-matrix-review-truncation-v1',
+      'twg-matrix-review-draft-v6-truncation',
       JSON.stringify({ general: 0.5 })
     )
 
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
 
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('keeps the truncation warning and submit confirmation gate after a single backspace trims clipped content', async () => {
+    // Backspacing a clipped value produces a NEW value that is a PREFIX of the OLD stored value
+    // (shorter than it, not longer), so the old `value.startsWith(prevValue)` check was false on
+    // this edit -- isContinuation was false, overBy for this single-character trim is 0, and the
+    // key was dropped entirely. The 1,000-character loss recorded from the earlier clip vanished,
+    // the inline alert disappeared, and the Submit confirmation gate never fired. This must hold
+    // end to end through handleSubmit, not just in the inline alert.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000; stored = x*5000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    // Reviewer presses backspace once: new value is the stored clipped value minus one character
+    // -- a PREFIX of what was stored, not an extension of it. This edit's own overBy is 0.
+    fireEvent.change(ta, { target: { value: 'x'.repeat(4999) } })
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    expect(confirmSpy.mock.calls[0][0]).toMatch(/1,000 characters were removed/)
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    confirmSpy.mockRestore()
+  })
+
+  it('still clears the truncation warning when a clip is followed by a select-all replacement with short unrelated text', async () => {
+    // The other side of the prefix-in-either-direction fix: neither string is a prefix of the
+    // other here, so this must remain a REPLACEMENT, not same-lineage, and the stale count must
+    // not survive it.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000; stored = x*5000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    fireEvent.change(ta, { target: { value: 'short unrelated text' } })
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
+  it('derives TRUNCATION_STORAGE_KEY from DRAFT_STORAGE_KEY so the two are invalidated together', async () => {
+    // The old literal 'twg-matrix-review-truncation-v1' was versioned independently of the draft
+    // key, so a document-version bump (which discards stale drafts) would NOT retire a stale
+    // truncation record, letting it later be read back against a different section of a new
+    // document that happens to share the same positional h::<idx> key. Deriving the key from
+    // DRAFT_STORAGE_KEY ties the two together automatically.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+    alertSpy.mockRestore()
+
+    // The old, independently-versioned literal must NOT be the key written.
+    expect(window.localStorage.getItem('twg-matrix-review-truncation-v1')).toBeNull()
+
+    const stored = window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')
+    expect(stored).toBeTruthy()
+    expect(JSON.parse(stored as string).general).toBe(10)
   })
 })

@@ -33,7 +33,15 @@ const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';
 // and still read. Changing that shape would mean bumping to v7 and discarding every draft written
 // by the current build -- destroying user text in order to record that user text was destroyed.
 // A separate key is additive: a v6 draft with no companion record simply reports no known loss.
-const TRUNCATION_STORAGE_KEY = 'twg-matrix-review-truncation-v1';
+//
+// The key is DERIVED from DRAFT_STORAGE_KEY, not given its own independent version number, so the
+// two are invalidated together. The truncation record is keyed by positional `h::<idx>` section
+// keys, which only mean anything relative to one specific document version -- if the draft key
+// bumps (the document was replaced) but this key did not move in lockstep, a leftover truncation
+// record could survive under the old literal and later be read back against a DIFFERENT section
+// of the NEW document that happens to share the same positional index. Deriving from the draft key
+// means any future draft-key bump automatically retires the matching truncation record too.
+const TRUNCATION_STORAGE_KEY = DRAFT_STORAGE_KEY + '-truncation';
 const MAX_CHARS = 5000;
 const GENERAL_KEY = 'general';
 
@@ -181,27 +189,43 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // loss is permanent; the notice must not be more transient than the damage.
     // Two independent reviewers rated that P1.
     //
-    // BUT accumulation only makes sense across an EDIT/APPEND of the same content. A
-    // REPLACEMENT (select-all + paste a different draft) is a different piece of text -- the
-    // characters dropped from the discarded content no longer exist to be "still missing", so
-    // adding this edit's overflow to the running total over-reports. Distinguish the two by
-    // whether the incoming value still starts with what was previously stored (clipped) for
-    // this key: read that from the `comments` state already in scope here, NOT from inside the
-    // setTruncatedBy updater below -- setComments and setTruncatedBy are separate updates, and
-    // comparing against a value read inside one updater's own stale prev would not reliably see
-    // the OTHER state's most recent value.
+    // BUT accumulation only makes sense across an EDIT of the same content -- which includes
+    // BOTH an append/extension (typing more, or pasting more, onto what was there) AND a
+    // deletion/trim (backspacing) of it. A REPLACEMENT (select-all + paste a different draft) is
+    // a different piece of text -- the characters dropped from the discarded content no longer
+    // exist to be "still missing", so adding this edit's overflow to the running total
+    // over-reports. Distinguish the two by a PREFIX relationship in EITHER direction: same
+    // lineage if the incoming value still starts with what was previously stored (an
+    // append/continuation) OR the previously stored value starts with the incoming value (a
+    // trim/backspace of it). Read that from the `comments` state already in scope here, NOT from
+    // inside the setTruncatedBy updater below -- setComments and setTruncatedBy are separate
+    // updates, and comparing against a value read inside one updater's own stale prev would not
+    // reliably see the OTHER state's most recent value.
+    //
+    // Same-lineage handling MUST NOT drop the accumulated count just because this particular edit
+    // has overBy === 0. A reviewer who clips a paste (say 1,000 characters lost) and then presses
+    // BACKSPACE once produces a value that is a PREFIX of the stored one -- same lineage, this
+    // edit's own overBy is 0 -- but the 1,000 already-lost characters are still gone. Clearing the
+    // record here would silently drop the warning and let handleSubmit's confirmation gate never
+    // fire, reproducing the exact silent-truncation defect this component exists to prevent. So
+    // for same-lineage edits, carry the prior count forward (adding this edit's overBy only when
+    // it is itself positive) and only omit the key if that carried total is 0. A genuine
+    // REPLACEMENT still clears the key when its own overBy is 0 -- that is a different piece of
+    // text and the prior loss no longer describes it.
     const prevValue = comments[key] ?? '';
-    const isContinuation = prevValue.length > 0 && value.startsWith(prevValue);
+    const isSameLineage =
+      prevValue.length > 0 && (value.startsWith(prevValue) || prevValue.startsWith(value));
     setTruncatedBy(prev => {
       const next = makeBareRecord<number>();
       for (const [k, v] of Object.entries(prev)) {
         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
       }
-      // overBy === 0 clears the key entirely rather than storing 0 or leaving a stale prior
-      // count: a reviewer who deletes an overflowing field and rewrites it short must not keep
-      // seeing a warning for text that is no longer there.
-      if (overBy > 0) {
-        next[key] = isContinuation ? (prev[key] ?? 0) + overBy : overBy;
+      if (isSameLineage) {
+        const carried = prev[key] ?? 0;
+        const updated = overBy > 0 ? carried + overBy : carried;
+        if (updated > 0) next[key] = updated;
+      } else if (overBy > 0) {
+        next[key] = overBy;
       }
       return next;
     });
