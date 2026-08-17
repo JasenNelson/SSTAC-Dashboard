@@ -52,9 +52,36 @@
  * If a CSP is ever tightened to a nonce/hash policy, or extended to cover the public routes,
  * this script must be given the nonce or it will be blocked and the flash returns silently.
  */
-import { THEME_COOKIE_MAX_AGE_SECONDS, THEME_COOKIE_NAME } from '@/lib/theme';
+import {
+  DEFAULT_THEME,
+  THEME_COOKIE_MAX_AGE_SECONDS,
+  THEME_COOKIE_NAME,
+  VALID_THEMES,
+  type Theme,
+} from '@/lib/theme';
+
+/*
+ * Re-exported rather than retyped. src/lib/theme.ts is the single source of truth for the
+ * theme value set and default; themeBootstrap.ts and src/contexts/ThemeContext.tsx both
+ * consume these re-exports so a future edit that hand-writes a diverging literal in either
+ * file has nothing to point at except this same pair of constants.
+ */
+export { DEFAULT_THEME, VALID_THEMES };
+export type { Theme };
 
 export const THEME_STORAGE_KEY = 'theme';
+
+/*
+ * Embedded as JS source via JSON.stringify so the inline script's own literals -- the valid
+ * value set and the default -- are generated from the shared constants above rather than
+ * retyped. JSON.stringify emits double-quoted strings; that is why the script below mixes
+ * double quotes (VALID/DEF) with single quotes (everything else) -- both are valid JS, and
+ * e2e/theme-flash.spec.ts matches this script with a quote-agnostic regex for exactly this
+ * reason. Do not "fix" that test back to an exact single-quoted substring.
+ */
+const VALID_THEMES_JSON = JSON.stringify(VALID_THEMES);
+const DEFAULT_THEME_JSON = JSON.stringify(DEFAULT_THEME);
+const THEME_STORAGE_KEY_JSON = JSON.stringify(THEME_STORAGE_KEY);
 
 /*
  * Written as one line because it is inlined into <head> verbatim. The cookie read and the
@@ -62,4 +89,4 @@ export const THEME_STORAGE_KEY = 'theme';
  * a throw in either store must not stop the class from being applied, which is what the
  * original single outer try/catch would have done.
  */
-export const THEME_BOOTSTRAP_SCRIPT = `(function(){var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(v==='dark'||v==='light')?v:'light';break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem('${THEME_STORAGE_KEY}');if(s==='dark'||s==='light'){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t='light';}var e=d.documentElement;e.classList.remove('light','dark');e.classList.add(t);})();`;
+export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove(VALID[0],VALID[1]);e.classList.add(t);})();`;

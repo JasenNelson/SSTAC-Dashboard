@@ -1,7 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { THEME_STORAGE_KEY } from '@/lib/themeBootstrap';
+import { DEFAULT_THEME, THEME_STORAGE_KEY } from '@/lib/themeBootstrap';
 import { parseTheme, readThemeCookie, themeCookieString, type Theme } from '@/lib/theme';
 
 export type { Theme };

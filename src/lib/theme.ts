@@ -29,7 +29,19 @@
  * A cookie holding one of two public enum values is not a secret, so non-HttpOnly is fine.
  */
 
-export type Theme = 'light' | 'dark';
+/**
+ * The single source of truth for the theme value set. Every consumer that needs to know
+ * "what are the valid theme values" or "what do we default to" imports these two constants
+ * (or re-exports of them) instead of retyping the literals -- that retyping is exactly what
+ * let src/lib/themeBootstrap.ts's inline script and src/contexts/ThemeContext.tsx drift from
+ * this module in the past.
+ */
+export const VALID_THEMES = ['light', 'dark'] as const;
+
+export type Theme = (typeof VALID_THEMES)[number];
+
+/** Matches the documented product decision: default is 'light', NOT OS prefers-color-scheme. */
+export const DEFAULT_THEME: Theme = VALID_THEMES[0];
 
 export const THEME_COOKIE_NAME = 'theme';
 

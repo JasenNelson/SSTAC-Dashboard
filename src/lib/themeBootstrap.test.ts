@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
-import { THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY } from './themeBootstrap';
+import { DEFAULT_THEME, THEME_BOOTSTRAP_SCRIPT, THEME_STORAGE_KEY, VALID_THEMES } from './themeBootstrap';
 import { readThemeCookie, resolveThemeFromCookieHeader, themeCookieString, type Theme } from './theme';
 
 /**
@@ -104,9 +104,18 @@ describe('THEME_BOOTSTRAP_SCRIPT', () => {
     // hand-writes a diverging literal directly into the template string -- instead of
     // changing the shared constants -- makes this fail. ThemeContext.test.tsx separately
     // proves ThemeContext.tsx itself consumes these same exports rather than its own copies.
+    //
+    // The DEFAULT_THEME check is anchored to its `DEF=` assignment, not a bare
+    // `toContain(JSON.stringify(DEFAULT_THEME))`: DEFAULT_THEME is one of VALID_THEMES, and
+    // VALID_THEMES' own JSON array text already contains that same quoted substring (e.g.
+    // `["light","dark"]` contains `"light"`), so an unanchored check would stay green even
+    // if `DEF=` were hand-reverted to a hardcoded literal. Falsified: reverting the script's
+    // `DEF=...` segment to a hardcoded `DEF='light'` (still spelled correctly, just not
+    // derived) left the unanchored assertion passing and only the anchored one below caught
+    // it.
     expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(THEME_STORAGE_KEY));
     expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(VALID_THEMES));
-    expect(THEME_BOOTSTRAP_SCRIPT).toContain(JSON.stringify(DEFAULT_THEME));
+    expect(THEME_BOOTSTRAP_SCRIPT).toContain(`DEF=${JSON.stringify(DEFAULT_THEME)}`);
   });
 });
 
