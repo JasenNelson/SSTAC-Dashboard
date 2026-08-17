@@ -328,34 +328,58 @@ second body
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,001 characters were removed/)
   })
 
-  it('resets the truncation count on a REPLACEMENT instead of adding to stale content that no longer exists', async () => {
-    // FIX 1: pasting 6100 chars (drops 1100) then SELECT-ALL and pasting a revised 6000 chars
-    // (drops 1000) must report 1000, not 2100 -- the first 1100 belonged to content that was
-    // entirely discarded, not to characters still missing from the CURRENT text.
+  // CHANGED (redesign): the old "resets on REPLACEMENT" test asserted the removed prefix
+  // heuristic's behaviour -- that an edit whose text was not a prefix of the prior stored value
+  // reset the count instead of accumulating. That heuristic is gone (see the comment in
+  // handleCommentChange for why: it produced a fresh defect in each of three review rounds).
+  // Under the new design, loss is a fact of the session that persists across ANY edit except
+  // clearing the field to empty, so the SAME two edits that used to reset to 1,000 now
+  // correctly accumulate to 2,100 -- this test is updated to assert the new, intended behaviour
+  // rather than removed, since the underlying scenario (two successive over-limit edits) is
+  // still worth covering.
+  it('accumulates the truncation count across successive over-limit edits regardless of string shape', async () => {
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
 
     fireEvent.change(ta, { target: { value: 'a'.repeat(6100) } })   // drops 1100; stored = a*5000
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,100 characters were removed/)
 
-    // Replacement: 'b'.repeat(6000) does NOT start with the stored 'a'.repeat(5000) -- this is a
-    // different piece of text, not a continuation.
-    fireEvent.change(ta, { target: { value: 'b'.repeat(6000) } })   // drops 1000 of the NEW text
+    // 'b'.repeat(6000) does NOT start with the stored 'a'.repeat(5000) and is not a prefix of it
+    // either -- under the old heuristic this would have been read as a "replacement" and reset
+    // the count. There is no such inference any more: the prior loss is a fact and persists,
+    // so this edit's own 1,000-character loss is ADDED on top.
+    fireEvent.change(ta, { target: { value: 'b'.repeat(6000) } })   // drops 1000 more
     const alert = await screen.findByRole('alert')
-    expect(alert.textContent).toMatch(/1,000 characters were removed/)
-    expect(alert.textContent).not.toMatch(/2,100 characters were removed/)
+    expect(alert.textContent).toMatch(/2,100 characters were removed/)
   })
 
-  it('clears the truncation warning when a replacement fits under the limit (FIX 2)', async () => {
-    // A reviewer who deletes an overflowing field and rewrites it short must not keep seeing a
-    // stale warning for text that no longer exists.
+  // CHANGED (redesign): the old "clears on replacement fits under limit (FIX 2)" test asserted
+  // that rewriting the field short (still non-empty) cleared the warning. Under the new design
+  // that inference is gone -- only an EMPTY field clears the record (see the dedicated empty-
+  // field test below), or an explicit Dismiss click. This test is updated to assert the new
+  // behaviour: a short, unrelated, non-empty rewrite KEEPS the warning, because the component
+  // cannot tell "different text" from "the same text, edited" by shape alone.
+  it('keeps the truncation warning when a non-empty rewrite fits under the limit (loss is a fact, not inferred from string shape)', async () => {
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
 
     fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
 
-    fireEvent.change(ta, { target: { value: 'short rewrite' } })    // unrelated, fits comfortably
+    fireEvent.change(ta, { target: { value: 'short rewrite' } })    // unrelated, fits comfortably, non-empty
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+  })
+
+  it('removes the truncation warning when the field is cleared to empty', async () => {
+    // The one explicit exception in the new design: an empty field has no text left for the
+    // warning to be about.
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    fireEvent.change(ta, { target: { value: '' } })
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
@@ -641,18 +665,36 @@ second body
     confirmSpy.mockRestore()
   })
 
-  it('still clears the truncation warning when a clip is followed by a select-all replacement with short unrelated text', async () => {
-    // The other side of the prefix-in-either-direction fix: neither string is a prefix of the
-    // other here, so this must remain a REPLACEMENT, not same-lineage, and the stale count must
-    // not survive it.
+  // CHANGED (redesign): this used to be "still clears... short unrelated text", asserting the
+  // removed prefix heuristic's REPLACEMENT branch. Repurposed as the required "middle edit"
+  // regression test: an ordinary edit that fixes a typo INSIDE the clipped text makes neither
+  // string a prefix of the other (same defect class as a full replacement, under the old
+  // heuristic), so this is the case that most directly proves the string-shape inference is
+  // gone. Extended past the inline alert through to handleSubmit's confirmation gate, per the
+  // task's requirement that this hold end to end, not just in the alert.
+  it('keeps the truncation warning and submit gate after a middle-of-the-text edit (fixing a typo inside the clipped content)', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
 
     fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000; stored = x*5000
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
 
-    fireEvent.change(ta, { target: { value: 'short unrelated text' } })
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    // A middle edit: swap one character in the middle of the stored text. Neither
+    // 'x'*2500 + 'y' + 'x'*2499 (5000 chars) starts-with, nor is started-with-by, 'x'*5000.
+    const middleEdited = 'x'.repeat(2500) + 'y' + 'x'.repeat(2499)
+    expect(middleEdited).toHaveLength(5000)
+    fireEvent.change(ta, { target: { value: middleEdited } })
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    expect(confirmSpy.mock.calls[0][0]).toMatch(/1,000 characters were removed/)
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    confirmSpy.mockRestore()
   })
 
   it('derives TRUNCATION_STORAGE_KEY from DRAFT_STORAGE_KEY so the two are invalidated together', async () => {
@@ -676,5 +718,65 @@ second body
     const stored = window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')
     expect(stored).toBeTruthy()
     expect(JSON.parse(stored as string).general).toBe(10)
+  })
+
+  it('clears a field\'s warning via the Dismiss button and stops the submit confirmation from firing for it', async () => {
+    // The reviewer's explicit way to say "this record no longer applies", now that the
+    // component does not infer it from string shape. Also proves the confirmation gate reads
+    // truncatedBy AFTER dismissal, not a snapshot from before it.
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(true)
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dismiss truncation notice for General Comments/i })
+    )
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(1))
+    // If the dismissed record were still counted, confirm would have fired first.
+    expect(confirmSpy).not.toHaveBeenCalled()
+    confirmSpy.mockRestore()
+  })
+
+  it('dismissing one field\'s warning does not clear another field\'s warning', async () => {
+    render(
+      <TWGReviewPortal finalDraftContent={'## Section A\nbody\n\n## Section B\nbody'} />
+    )
+
+    fireEvent.change(
+      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
+      { target: { value: 'x'.repeat(5010) } }
+    )
+    fireEvent.change(
+      screen.getByPlaceholderText(/Specific feedback for Section A\.\.\./i),
+      { target: { value: 'y'.repeat(5020) } }
+    )
+
+    const alerts = await screen.findAllByRole('alert')
+    expect(alerts).toHaveLength(2)
+
+    fireEvent.click(
+      screen.getByRole('button', { name: /Dismiss truncation notice for General Comments/i })
+    )
+
+    // General's alert is gone; Section A's alert (a different field) survives untouched.
+    const remaining = await screen.findAllByRole('alert')
+    expect(remaining).toHaveLength(1)
+    expect(remaining[0].textContent).toMatch(/20 characters were removed/)
+    expect(
+      screen.queryByRole('button', { name: /Dismiss truncation notice for General Comments/i })
+    ).not.toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /Dismiss truncation notice for Section A/i })
+    ).toBeInTheDocument()
   })
 })

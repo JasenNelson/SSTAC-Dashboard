@@ -182,51 +182,40 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // test reaches this branch under either design and cannot tell the two apart. What the
     // unit tests DO prove is the clipping arithmetic and that the alert reports the right
     // count. The browser premise is taken from the HTML spec, not verified in this repo.
-    // CUMULATIVE for a CONTINUATION of the same content, and never silently cleared while
-    // still overflowing. An earlier version stored only the LAST edit's loss and dropped the
-    // key when an edit fit, so "1,000 characters were removed" was replaced by "1 character
-    // was removed" on the very next keystroke, and vanished entirely on the one after. The
-    // loss is permanent; the notice must not be more transient than the damage.
-    // Two independent reviewers rated that P1.
     //
-    // BUT accumulation only makes sense across an EDIT of the same content -- which includes
-    // BOTH an append/extension (typing more, or pasting more, onto what was there) AND a
-    // deletion/trim (backspacing) of it. A REPLACEMENT (select-all + paste a different draft) is
-    // a different piece of text -- the characters dropped from the discarded content no longer
-    // exist to be "still missing", so adding this edit's overflow to the running total
-    // over-reports. Distinguish the two by a PREFIX relationship in EITHER direction: same
-    // lineage if the incoming value still starts with what was previously stored (an
-    // append/continuation) OR the previously stored value starts with the incoming value (a
-    // trim/backspace of it). Read that from the `comments` state already in scope here, NOT from
-    // inside the setTruncatedBy updater below -- setComments and setTruncatedBy are separate
-    // updates, and comparing against a value read inside one updater's own stale prev would not
-    // reliably see the OTHER state's most recent value.
-    //
-    // Same-lineage handling MUST NOT drop the accumulated count just because this particular edit
-    // has overBy === 0. A reviewer who clips a paste (say 1,000 characters lost) and then presses
-    // BACKSPACE once produces a value that is a PREFIX of the stored one -- same lineage, this
-    // edit's own overBy is 0 -- but the 1,000 already-lost characters are still gone. Clearing the
-    // record here would silently drop the warning and let handleSubmit's confirmation gate never
-    // fire, reproducing the exact silent-truncation defect this component exists to prevent. So
-    // for same-lineage edits, carry the prior count forward (adding this edit's overBy only when
-    // it is itself positive) and only omit the key if that carried total is 0. A genuine
-    // REPLACEMENT still clears the key when its own overBy is 0 -- that is a different piece of
-    // text and the prior loss no longer describes it.
-    const prevValue = comments[key] ?? '';
-    const isSameLineage =
-      prevValue.length > 0 && (value.startsWith(prevValue) || prevValue.startsWith(value));
+    // TRUNCATION IS A FACT ABOUT THE DRAFTING SESSION, NOT A GUESS FROM STRING SHAPE. Text was
+    // lost from this field; editing the field afterwards does not make that untrue. Three
+    // successive review rounds each found a new defect in a "same lineage vs replacement"
+    // string-prefix heuristic that used to live here (a single backspace discarded the record;
+    // an ordinary middle-of-the-text edit -- fixing a typo -- made neither string a prefix of
+    // the other and discarded it the same way; and clearing the field to '' IS a prefix of the
+    // old value, so the warning was wrongly RETAINED for a now-empty field). Refining the
+    // heuristic again just changes which edit shape breaks it next. So there is no inference
+    // from string shape at all:
+    //   1. The accumulated count PERSISTS across edits by default -- carry the prior count
+    //      forward and add this edit's own overBy on top when it drops MORE.
+    //   2. The ONE exception is a fact, not a guess: if the new value is EMPTY, there is no
+    //      text left for the warning to be about, so that field's record is cleared.
+    //   3. Any other case -- continuation, backspace, a middle-of-the-text edit, or a
+    //      wholesale replacement with unrelated text that still fits under the limit -- keeps
+    //      the accumulated count. The component cannot tell "different text" from "the same
+    //      text, edited" by shape alone, and guessing wrong in either direction either loses a
+    //      real warning or keeps reporting a stale one.
+    // The reviewer has an explicit way to say the record no longer applies: the Dismiss button
+    // next to each alert (see handleDismissTruncation below), rather than the component
+    // guessing from what was typed.
     setTruncatedBy(prev => {
       const next = makeBareRecord<number>();
       for (const [k, v] of Object.entries(prev)) {
         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
       }
-      if (isSameLineage) {
-        const carried = prev[key] ?? 0;
-        const updated = overBy > 0 ? carried + overBy : carried;
-        if (updated > 0) next[key] = updated;
-      } else if (overBy > 0) {
-        next[key] = overBy;
+      if (value.length === 0) {
+        // Exception: nothing left in the field for the warning to describe.
+        return next;
       }
+      const carried = prev[key] ?? 0;
+      const updated = overBy > 0 ? carried + overBy : carried;
+      if (updated > 0) next[key] = updated;
       return next;
     });
     setComments(prev => {
@@ -235,6 +224,19 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         if (!RESERVED_KEYS.has(k)) next[k] = v;
       }
       next[key] = clipped;
+      return next;
+    });
+  };
+
+  // Explicit reviewer dismissal: the component no longer infers "this record no longer
+  // applies" from string shape (see handleCommentChange), so it needs a positive action from
+  // the reviewer instead. Clears only the named field's entry.
+  const handleDismissTruncation = (key: string) => {
+    setTruncatedBy(prev => {
+      const next = makeBareRecord<number>();
+      for (const [k, v] of Object.entries(prev)) {
+        if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+      }
       return next;
     });
   };
@@ -505,11 +507,24 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               {comments[GENERAL_KEY]?.length || 0} / {MAX_CHARS}
             </div>
             {(truncatedBy[GENERAL_KEY] ?? 0) > 0 && (
-              <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
-                {(truncatedBy[GENERAL_KEY] ?? 0).toLocaleString()}{' '}
-                {(truncatedBy[GENERAL_KEY] ?? 0) === 1 ? 'character was' : 'characters were'} removed
-                from the end. Nothing past the limit has been kept.
+              <p
+                role="alert"
+                className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-start justify-between gap-2"
+              >
+                <span>
+                  Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
+                  {(truncatedBy[GENERAL_KEY] ?? 0).toLocaleString()}{' '}
+                  {(truncatedBy[GENERAL_KEY] ?? 0) === 1 ? 'character was' : 'characters were'} removed
+                  from the end. Nothing past the limit has been kept.
+                </span>
+                <button
+                  type="button"
+                  onClick={() => handleDismissTruncation(GENERAL_KEY)}
+                  aria-label="Dismiss truncation notice for General Comments"
+                  className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded"
+                >
+                  Dismiss
+                </button>
               </p>
             )}
           </div>
@@ -530,11 +545,24 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
                 {comments[h.storageKey]?.length || 0} / {MAX_CHARS}
               </div>
               {(truncatedBy[h.storageKey] ?? 0) > 0 && (
-                <p role="alert" className="text-xs font-semibold text-rose-600 dark:text-rose-400">
-                  Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
-                  {(truncatedBy[h.storageKey] ?? 0).toLocaleString()}{' '}
-                  {(truncatedBy[h.storageKey] ?? 0) === 1 ? 'character was' : 'characters were'} removed
-                  from the end. Nothing past the limit has been kept.
+                <p
+                  role="alert"
+                  className="text-xs font-semibold text-rose-600 dark:text-rose-400 flex items-start justify-between gap-2"
+                >
+                  <span>
+                    Your text was longer than the {MAX_CHARS.toLocaleString()} character limit, so{' '}
+                    {(truncatedBy[h.storageKey] ?? 0).toLocaleString()}{' '}
+                    {(truncatedBy[h.storageKey] ?? 0) === 1 ? 'character was' : 'characters were'} removed
+                    from the end. Nothing past the limit has been kept.
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => handleDismissTruncation(h.storageKey)}
+                    aria-label={`Dismiss truncation notice for ${h.displayLabel}`}
+                    className="shrink-0 underline hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-rose-500 rounded"
+                  >
+                    Dismiss
+                  </button>
                 </p>
               )}
             </div>
