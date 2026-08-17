@@ -1,0 +1,103 @@
+{
+  "checkpoint_utc": "2026-08-17T20:05:00Z",
+  "lane": "impeccable-frontend",
+  "lane_status": "COMPLETE",
+  "scope_boundary": "frontend PRs 782-788 only; no authority over L3 Wiki-KB, Graphify, census, autolearning",
+  "origin_main_before": "120c6f9a04de7e689c54579919f60144466e7f79",
+  "origin_main_after": "0ef90f48b663dbab3af7e1527995ff1747896b33",
+  "merged_this_unit": true,
+  "pushed_this_unit": true,
+  "prs": [
+    {
+      "number": 782,
+      "merged": true,
+      "merge_commit": "22ef453272c5bf47a925c83ccca7a9ef17de885c",
+      "note": "landed atomically with 787"
+    },
+    {
+      "number": 787,
+      "merged": true,
+      "landed_via": "feat/section-b-wave0-20260815",
+      "final_tip": "887d9265d2949cd49dfde5428ad24ce97526e6b2",
+      "note": "force-with-lease published from lease 3a5eb26f"
+    },
+    {
+      "number": 783,
+      "merged": true,
+      "merge_commit": "0ef90f48b663dbab3af7e1527995ff1747896b33"
+    },
+    {
+      "number": 784,
+      "merged": true,
+      "landed_via": "feat/mo-batch2-20260816",
+      "final_tip": "c41f1463c8bb91ef2a3687e5d82040cef1b14f8d"
+    },
+    {
+      "number": 785,
+      "merged": true,
+      "landed_via": "feat/section-b-wavea-20260816",
+      "final_tip": "87b8d2c82d0ade1f3208d01115a32f3eaccb20b8"
+    },
+    {
+      "number": 788,
+      "merged": true,
+      "landed_via": "feat/deferred-triage-20260816",
+      "final_tip": "ae678fdf16dc7b5f3477e19ee25be8b9ef8e8306"
+    },
+    {
+      "number": 786,
+      "merged": false,
+      "note": "docs-only; deliberately left open and out of scope"
+    }
+  ],
+  "landed_tree_gates": {
+    "head": "0ef90f48b663dbab3af7e1527995ff1747896b33",
+    "lint": 0,
+    "tsc": "clean",
+    "unit_passed": 6935,
+    "test_files": 364,
+    "build": "exit 0, BUILD_CORROBORATION=OK",
+    "e2e_passed": 215,
+    "e2e_failed": 0,
+    "chromium_auth_refs": 32,
+    "docs_gate": "PASS",
+    "all_six_gates_ran": true,
+    "tree_unchanged": true,
+    "note": "first gate ever run on the union of both stacks"
+  },
+  "browser_verification": {
+    "dark_cookie": "html=dark, body rgb(15,23,42), name 'Switch to light mode', sun glyph, toggle 44x44px",
+    "light_cookie": "html=light, name 'Switch to dark mode', moon glyph",
+    "javascript_absent": true,
+    "print": "playwright print-media specs passed on landed tree incl. the two clipping guards"
+  },
+  "corrections_made_this_unit": [
+    "P1 TWG unknown-provenance disclosure erased by Save Draft -- persisted under its own storage key",
+    "P1 same disclosure erased by a FAILED save -- write order is now antidote/poison/draft, abort on any failure",
+    "P1 cancelled-submit note occluded the Dismiss controls -- max-h-40 + overflow-y-auto + tabIndex=0, reservation pb-72",
+    "P2 recommendUcl unresolvedCensoring argument pinned at the stats.ts call site",
+    "P2 three regression tests deleted by 787's rebase restored; theme.ts made a true single source of truth"
+  ],
+  "rollback_tags": [
+    "p787-prerebase-3a5eb26f",
+    "p0-precommit-87b8d2c8"
+  ],
+  "evidence_worktree": "C:/Projects/SSTAC-Dashboard-worktrees/trial-refreeze-20260817",
+  "evidence_worktree_hazard": "node_modules is a JUNCTION to the shared store (721 entries at creation); remove the junction and verify the store before any recursive delete",
+  "session_owned_background_jobs": "NONE -- production server and browse server stopped, port 3544 closed",
+  "open_followups": [
+    "theme cookie-less migration window: wrong toggle accessible name for one request per browser, self-heals",
+    "TWG: dismissal before any save is not durable (over-warns only)",
+    "TWG: unpaired truncation marker (not reachable from deployed main)"
+  ],
+  "next_action": "none required; lane closed",
+  "continuity": {
+    "root_handoff": "FRESH_SESSION_HANDOFF_2026_08_17_IMPECCABLE_FRONTEND.md",
+    "branch": "docs/continuity-impeccable-frontend-20260817",
+    "branch_base": "0ef90f48b663dbab3af7e1527995ff1747896b33",
+    "committed_tree": "docs/continuity/impeccable-frontend-20260817/",
+    "pull_request": "DRAFT, documentation only, NOT authorized to merge",
+    "touches_product_main": false
+  },
+  "rollback_tags_scope": "LOCAL ONLY -- neither tag was pushed; the commits they label are ancestors of main so history is safe remotely, but the named labels are not"
+}

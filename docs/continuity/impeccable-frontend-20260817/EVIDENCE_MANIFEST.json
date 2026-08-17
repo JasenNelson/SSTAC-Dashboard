@@ -1,0 +1,319 @@
+{
+  "lane": "impeccable-frontend",
+  "generated_utc": "2026-08-17T21:40:00Z",
+  "lane_status": "COMPLETE",
+  "main_before": "120c6f9a04de7e689c54579919f60144466e7f79",
+  "main_after": "0ef90f48b663dbab3af7e1527995ff1747896b33",
+  "checkpoint_root": "C:/Projects/SSTAC-Dashboard-worktrees/triage-20260816/.tmp/mission-control/impeccable-frontend-20260817",
+  "committed_mirror": "docs/continuity/impeccable-frontend-20260817/ on branch docs/continuity-impeccable-frontend-20260817",
+  "hash_algorithm": "SHA-256",
+  "file_count": 49,
+  "total_bytes": 1949427,
+  "ascii_sanitization": "Five verbatim third-party transcripts contained ANSI escape sequences and Unicode punctuation. ASCII-sanitized copies (.ascii infix) were produced for the committed mirror; the raw originals remain in this checkpoint and BOTH are hashed below. No finding, verdict, severity, file reference or line number was altered. See evidence/README.md.",
+  "committed_mirror_gap": "landed-print.pdf plus the five raw pre-sanitization originals are the only entries with no counterpart in the committed mirror; the five are represented there by their .ascii copies.",
+  "deliberate_exclusions": [
+    "node_modules (junction to shared store; never copied)",
+    "browser profiles and caches",
+    "build caches and .next output",
+    "package caches",
+    "credentials and .env / .env.local files (never read, never copied)",
+    "raw per-gate e2e/unit/build/lint/tsc logs -- each six-gate run has a complete bounded RESULT.txt receipt, and the two failure blocks that mattered are extracted into evidence/gates/flake-evidence.md",
+    "cursor_review_impeccable.md and codex_inline_diffs.txt -- large prompt bodies whose payload is git diffs fully reconstructible from the recorded SHAs"
+  ],
+  "files": [
+    {
+      "path": "AUTHORIZATION_PACKET_2026_08_17.md",
+      "bytes": 12899,
+      "sha256": "b4fcfe363d8ce7363603764225e4e5aae746ea8e34abb9aa4c2373a049b6f27b",
+      "description": "The pre-merge batched owner decision packet"
+    },
+    {
+      "path": "CLOSEOUT_2026_08_17.md",
+      "bytes": 13065,
+      "sha256": "4649359dd2d17c3857e2a9c9c4627e6d6bfa91d012f8f11824948f3f2a378b84",
+      "description": "The lane closeout: outcome, defects fixed, evidence, non-claims, deferrals, reopening conditions"
+    },
+    {
+      "path": "evidence/corrections/correction-787-report.ascii.md",
+      "bytes": 11492,
+      "sha256": "0e3ccdadb893956217528786b4bda2a9586a1fe94e936fba5ec2976327dff10e",
+      "description": "ASCII-sanitized copy of the PR#787 correction report for the committed mirror"
+    },
+    {
+      "path": "evidence/corrections/correction-787-report.md",
+      "bytes": 11492,
+      "sha256": "eb339ff752e1b0c0762fdb6783bbe57baf6386fbca781e0067649cd9eb1eac5c",
+      "description": "PR#787 correction: source-of-truth fix + three deleted regression tests restored, with falsification messages"
+    },
+    {
+      "path": "evidence/corrections/correction-788-round1-report.md",
+      "bytes": 9369,
+      "sha256": "45e80b57c98a50ccfff481a04c9cf3a19c1b9f395ffb2e8a3b8112f3d0cd6db8",
+      "description": "PR#788 correction round 1: P1-1/P1-2/P1-3 fixes + UCL call-site pin, with falsification messages"
+    },
+    {
+      "path": "evidence/corrections/correction-788-round2-report.md",
+      "bytes": 6215,
+      "sha256": "90a337dc685d838b74181213e80892935ab5575c4ccb974e9b727ee5c065e057",
+      "description": "PR#788 correction round 2: write-order and note-clipping residuals, with falsification messages"
+    },
+    {
+      "path": "evidence/gates/combined-stackA2-attempt1-RED.txt",
+      "bytes": 1055,
+      "sha256": "8e5f1161b7710f6fcfb1f1f8759af3dc7a848638b949fb2b5bd5ada4f9428bef",
+      "description": "Stack A2 six-gate attempt 1: RED on e2e (2 Firefox teardown flakes); retained deliberately"
+    },
+    {
+      "path": "evidence/gates/combined-stackA2-retry-GREEN.txt",
+      "bytes": 1048,
+      "sha256": "957edfd5a44e5aec92a4d0b88f5c68424fda8012ed7c7b6ad0f1b4f7b9dc5fda",
+      "description": "Stack A2 six-gate retry: GREEN, unit 6870, e2e 167/0"
+    },
+    {
+      "path": "evidence/gates/combined-stackA3-GREEN.txt",
+      "bytes": 1048,
+      "sha256": "9c359c8e32bcc90e946fb8949d55f97d83daeb789818d113be87bfb703e95209",
+      "description": "Stack A3 (final Stack A tip ae678fdf) six gates GREEN, unit 6871, e2e 167/0"
+    },
+    {
+      "path": "evidence/gates/combined-stackB2-attempt1-RED.txt",
+      "bytes": 1055,
+      "sha256": "41ecc0bc72145cbb5e0b49fac2532146731865b233d9864c103e843e146e3ce5",
+      "description": "Stack B2 six-gate attempt 1: RED on e2e (1 matrix-options 15s tablist flake); retained deliberately"
+    },
+    {
+      "path": "evidence/gates/combined-stackB2-retry-GREEN.txt",
+      "bytes": 1048,
+      "sha256": "8a5b67aa78518d0f4097a677b1f0e1f759ef647c6b3958510ace725e2b984435",
+      "description": "Stack B2 (final Stack B tip 887d9265) six gates GREEN, unit 6847, e2e 208/0"
+    },
+    {
+      "path": "evidence/gates/flake-evidence.md",
+      "bytes": 1528,
+      "sha256": "8b9ec06174872afe2b07b4299f71220dd7bc60baa4575420b85ac52a60ffb058",
+      "description": "Extracted failure blocks for both e2e flakes plus the causal-isolation reasoning"
+    },
+    {
+      "path": "evidence/gates/gates.sh",
+      "bytes": 10198,
+      "sha256": "0865e55eeb3819e8300492511b0b6df45a17dfeecf7785acb144d5f5c8dbaa65",
+      "description": "The six-gate runner used throughout (content-digest TREE_UNCHANGED, fail-fast halt, port preflight, E2E_AUTH_ENABLED + chromium-auth presence assertion)"
+    },
+    {
+      "path": "evidence/gates/landed-main-GREEN.txt",
+      "bytes": 1048,
+      "sha256": "42f6232ed93e8f15aad2e61fb273c1ebd1d6527ece3ee0982aa5582e685cc45a",
+      "description": "LANDED main 0ef90f48 six gates GREEN, unit 6935, e2e 215/0 -- first gate on the union of both stacks"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/787-prerebase-sha.txt",
+      "bytes": 41,
+      "sha256": "283fc32512b6bfcac9036a4e6dda1075a3f25d20c93d6e67bead14e4058fa2db",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/batch2-RESULT.txt",
+      "bytes": 1040,
+      "sha256": "2e8a6f947cc62e4cdbf266d25e05a42ba285f8c0b6a1bc266191a827c52ff2aa",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/frozen-inputs.txt",
+      "bytes": 448,
+      "sha256": "67212c5b1563d3c916fb5bd24adfd213bdb6219ddf03b2fbe0bc675f0a2c1346",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/p0-FINAL2-RESULT.txt",
+      "bytes": 1042,
+      "sha256": "ba8d6d550866da26682ae2f8beaa5020a52b1ea6114b125f4b9b0c3662330fe8",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/p0-worktree-restore-point.txt",
+      "bytes": 53,
+      "sha256": "febd2bfc5a557b007f18403cf783a2e576c0eec2c17870cd06fc4a185355e2bc",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/theme-note.txt",
+      "bytes": 98,
+      "sha256": "82a09e0a188f9d6688fad58ee3ebbcadee2a643f8a3ea95632ef3855f1eb1b9e",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/triage-RESULT.txt",
+      "bytes": 1040,
+      "sha256": "d99ad9fcadc927b1d6ebd7a23dbf94fa50fdec40d813b662e1cf089a3016522d",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/trial-stackA-RESULT.txt",
+      "bytes": 1042,
+      "sha256": "d545fd15be983ab02f5892ac88c1edc18fc2826494294edd3868ee4a291b247a",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/trial-stackB-RESULT.txt",
+      "bytes": 1042,
+      "sha256": "0905989e5c8ba083bebe6cc0e8a7202e9678b43b53fbfe264893a4969549290f",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/wave0-RESULT.txt",
+      "bytes": 1049,
+      "sha256": "95dc9b02ec5c97cbec293352573f2847a3238afbdd1158402aa0c19a9d320428",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/gates/prior-session-freeze/wavea-RESULT.txt",
+      "bytes": 1039,
+      "sha256": "93429f68922115441a328dd5722e0800add19275b39be400f62239b4a3ac6ac9",
+      "description": "Prior-session freeze receipt (pre-correction per-branch and combined gates, rollback SHAs)"
+    },
+    {
+      "path": "evidence/prompts/codex_gate_sol_xhigh.txt",
+      "bytes": 65861,
+      "sha256": "c207b36545adc0f4c6a167aa07853aca63d96d5472f8da6d532d84f62191c9ad",
+      "description": "Exact reviewer prompt used, retained for reproducibility"
+    },
+    {
+      "path": "evidence/prompts/codex_gate_v1_blocked.txt",
+      "bytes": 9393,
+      "sha256": "486f1a6c0267151c0534fe911f88599e57e873cedde04be6237ec454d320f3c8",
+      "description": "Exact reviewer prompt used, retained for reproducibility"
+    },
+    {
+      "path": "evidence/prompts/codex_gate_v2_luna.txt",
+      "bytes": 62580,
+      "sha256": "0a569247d49bc0e47881d1627b8a3994f8e91b86768a30ff05a51eebcb65af7e",
+      "description": "Exact reviewer prompt used, retained for reproducibility"
+    },
+    {
+      "path": "evidence/prompts/cursor_brief_header.md",
+      "bytes": 6277,
+      "sha256": "2dcdad4d0a74f962fe0c41e97daeec6f6699977fcfee4f959681aafc4c0cf32b",
+      "description": "Exact reviewer prompt used, retained for reproducibility"
+    },
+    {
+      "path": "evidence/README.md",
+      "bytes": 4854,
+      "sha256": "c656f033d4ce831c63427275154fccff510ed6a0ceae547606639519f70aa23b",
+      "description": "Explains the committed mirror, the ASCII sanitization and its raw hashes, and every deliberate exclusion"
+    },
+    {
+      "path": "evidence/reviews/codex-findings-and-adjudication.md",
+      "bytes": 6692,
+      "sha256": "4cc261dcde893014d4f9cfebf831ee47878b5d4861d19d9a1bbd21af229cfc5e",
+      "description": "Bounded receipt of both codex rounds plus the mutual-agreement adjudication of every finding"
+    },
+    {
+      "path": "evidence/reviews/codex-luna-round1-SANDBOX-BLOCKED.ascii.txt",
+      "bytes": 83143,
+      "sha256": "54fabe30ad7447af81d813d06f5eb2964e8d6659c5745c896321cdcbda521630",
+      "description": "ASCII-sanitized copy of the sandbox-blocked codex round for the committed mirror"
+    },
+    {
+      "path": "evidence/reviews/codex-luna-round1-SANDBOX-BLOCKED.txt",
+      "bytes": 83143,
+      "sha256": "316669ec18a0b3157d72f39c5e8e3a36a074bdd8775f8329bab7f16ca8029458",
+      "description": "codex gpt-5.6-luna round 1 raw: SILENT BAIL, tool router rejected all git/pwsh; no review produced"
+    },
+    {
+      "path": "evidence/reviews/codex-luna-round2.ascii.txt",
+      "bytes": 147701,
+      "sha256": "982af09c690fae938c74f1ce8a45906de63734ca5f9792d594fcd3c65917481e",
+      "description": "ASCII-sanitized copy of the codex luna round-2 transcript for the committed mirror"
+    },
+    {
+      "path": "evidence/reviews/codex-luna-round2.txt",
+      "bytes": 176691,
+      "sha256": "15d4d9645b6bc2f9ab8969d4d0ddc07950b874946f41de17b84b27244c1c6071",
+      "description": "codex gpt-5.6-luna high raw transcript, diffs inline (2 P1 + 1 P2)"
+    },
+    {
+      "path": "evidence/reviews/codex-sol-xhigh-shipgate.ascii.txt",
+      "bytes": 201549,
+      "sha256": "7d05e39a995416cf0c97b3326faf6d01ce967584ea509c3cb9d083eb24d97456",
+      "description": "ASCII-sanitized copy of the codex sol xhigh ship-gate transcript for the committed mirror"
+    },
+    {
+      "path": "evidence/reviews/codex-sol-xhigh-shipgate.txt",
+      "bytes": 201731,
+      "sha256": "5faea218808e9b8c2a85ec760041f3b7d14f6c6edd6e0f4a5414f2962273b57c",
+      "description": "codex gpt-5.6-sol xhigh raw transcript -- THE SHIP GATE (1 P1 + 2 P2)"
+    },
+    {
+      "path": "evidence/reviews/leg1a-opus-round1.md",
+      "bytes": 34845,
+      "sha256": "0d7ad62d31505670af02a1ee0b40b489bfa2e72ea17e6d4e9cf35a7da87da62a",
+      "description": "Leg 1a Opus subagent round 1 (RED; found P1-1 and P1-2)"
+    },
+    {
+      "path": "evidence/reviews/leg1a-opus-round2.md",
+      "bytes": 19936,
+      "sha256": "1ba602d9598f7bcc41f655a6afe26b68136adc1ba625c9ec93cc3079f38add63",
+      "description": "Leg 1a Opus subagent round 2, fresh (GREEN; all P1 closed, no vacuous tests)"
+    },
+    {
+      "path": "evidence/reviews/leg1b-opus-fork.md",
+      "bytes": 11420,
+      "sha256": "91278e48af4d8a2d0dd38612f7a274577ae5d8152d9871ae15adc79c652da05d",
+      "description": "Leg 1b context-inheriting fork (RED on plan; found P1-3; overturned two orchestrator claims)"
+    },
+    {
+      "path": "evidence/reviews/tier0-cursor-auto.ascii.md",
+      "bytes": 36708,
+      "sha256": "271d111929a0e684311f69cefefa214b6404100dc31bdaa5a2809099d38f3c94",
+      "description": "ASCII-sanitized copy of the tier-0 cursor review (ANSI escapes stripped, Unicode punctuation transliterated) for the committed mirror"
+    },
+    {
+      "path": "evidence/reviews/tier0-cursor-auto.md",
+      "bytes": 36728,
+      "sha256": "c8e3483ac605432a0468a505e61deca57c56fcb8286dfb56d22760cf14168ef2",
+      "description": "Tier-0 cursor-agent --model auto breadth review (GREEN; missed all three P1s)"
+    },
+    {
+      "path": "evidence/verification/browser-verification.md",
+      "bytes": 5526,
+      "sha256": "973b94549a0683b6bc9f8470a1c52bc74d1799ccdf31b1ad8f7d943e79e9dea3",
+      "description": "Rendered-browser verification of landed main, incl. JS-absent accessible name and measured 44x44 target"
+    },
+    {
+      "path": "evidence/verification/landed-print.pdf",
+      "bytes": 636769,
+      "sha256": "53f838fe53607c1570cf3f5f77247fa5623743c27f79f19b7f754eeafd8b91cc",
+      "description": "PDF rendered from the landed production build (print path evidence)"
+    },
+    {
+      "path": "evidence/verification/pr-commit-mapping-and-merge-evidence.md",
+      "bytes": 5850,
+      "sha256": "57a272c37c1f56517a648455e3ac8e49fb4e5bb84187344fc7f8e4180f71ec31",
+      "description": "Exact PR/commit mapping, merge commits and timestamps, branch protection, publication evidence"
+    },
+    {
+      "path": "MERGE_READINESS_PACKET_2026_08_17.md",
+      "bytes": 10456,
+      "sha256": "e53f7dffa2e469ad8aabcea69bf275f9c471389b94122b885a839ec268849f2e",
+      "description": "The inherited checkpoint this session started from"
+    },
+    {
+      "path": "RESUME.md",
+      "bytes": 6528,
+      "sha256": "31e8d165a6b3aa2ff255276b89bd9261d614d4e0ab2ad82940d9e3896b4b7c93",
+      "description": "Fresh-session entry point; lane status COMPLETE"
+    },
+    {
+      "path": "SHA256SUMS.txt",
+      "bytes": 256,
+      "sha256": "e75b0cf8f4e9f69db6446727f0680a1447d329eb92e267a79e4a4c8c5e02217e",
+      "description": "HISTORICAL/INHERITED: the hash file that arrived with the checkpoint this session started from. Its RESUME.md and STATE.json hashes are intentionally STALE -- both files were rewritten by this session. EVIDENCE_SHA256.txt is the current authority; this file is retained only as provenance for the inherited state."
+    },
+    {
+      "path": "STATE.json",
+      "bytes": 4296,
+      "sha256": "7490c3c8d2ec89b439b71fba6e7c5a96073643003bcf85758f5cd2e37789e586",
+      "description": "Machine-readable lane state"
+    }
+  ]
+}

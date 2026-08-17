@@ -1,0 +1,2199 @@
+OpenAI Codex v0.147.0
+--------
+workdir: C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+model: gpt-5.6-luna
+provider: openai
+approval: on-request
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 01a010e5-8532-7561-a482-f2ce312910a9
+--------
+user
+FINAL SHIP-GATE REVIEW of a frozen, fully-gated merge candidate for SSTAC-Dashboard
+(Next.js 15 / React 19 / TypeScript regulatory-science dashboard).
+
+Do NOT review the working tree -- it is clean and there is nothing uncommitted. Use your tools to
+read the exact commits named below. Every SHA is reachable from this repository. Read the real code;
+a verdict formed only from this prompt is worthless to me and I will discard it.
+
+    git diff 120c6f9a..ae678fdf        STACK A, everything it lands on main
+    git diff 120c6f9a..887d9265        STACK B, everything it lands on main
+    git diff 04c9cc10..ae678fdf        the two correction commits on stack A (the newest bytes)
+    git diff 45293f1a..887d9265        the correction commit on stack B (the newest bytes)
+
+THE CANDIDATE
+
+    origin/main   120c6f9a   (verified unmoved)
+    STACK A       ae678fdf   = main + PR#783 f0f56330 + PR#784 c41f1463 + PR#785 87b8d2c8 + PR#788
+    STACK B       887d9265   = main + PR#782 6caaa34e + PR#787
+
+Both stacks fast-forward from current origin/main. They share ZERO changed files (35 vs 11). Their
+union merges clean (merge-tree 597a380f, exit 0). #787 and #788 are LOCAL ONLY and not yet pushed;
+#787's history was rebased and needs --force-with-lease against remote lease 3a5eb26f.
+
+GATE EVIDENCE (six gates each: lint, tsc, unit, build, e2e, docs gate)
+
+    ae678fdf  lint 0 | tsc clean | unit 6871 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 167 passed / 0 failed, 32 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+    887d9265  lint 0 | tsc clean | unit 6847 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 208 passed / 0 failed, 25 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+
+Do NOT run the test suite, the build, or playwright yourself -- on this Windows box that derails a
+review for environment reasons. Review by READING. The gate transcripts above are the runtime
+evidence. Use your tools freely to read source, tests, git history and config.
+
+WHAT I NEED ADJUDICATED. Be adversarial and specific; cite file:line.
+
+1. THE CORRECTIONS. Three P1 defects were found in PR#788 and fixed across commits 16281814 and
+   ae678fdf. Verify each is genuinely closed on EVERY path, and that the fixes introduced nothing:
+   (a) `unknownProvenanceKeys` in src/components/TWGReviewPortal.tsx was derived at mount only when
+       the truncation key was ABSENT, and was never persisted. A legacy draft (exactly MAX_CHARS
+       long with no truncation key -- the deployed build has maxLength={5000}, so this population is
+       real) raised an "unknown amount of text may be missing" notice; the user pressed Save Draft;
+       an empty {} truncation record was written; the next mount took the rawT !== null branch,
+       discarded the at-limit keys, and the disclosure was gone forever -- after which the submit
+       gate passed and possibly-clipped regulatory review text could be submitted with no
+       disclosure at all. The component's own comment declares that a present-but-empty {} record is
+       a POSITIVE statement that nothing was lost and must keep meaning exactly that.
+       Fix: a third localStorage key persisting the unknown-provenance set independently.
+   (b) The same disclosure was also erased by a FAILED save (records written before the draft, so a
+       throwing draft write left the poison behind), and the code's own comment justifying that
+       ordering was factually wrong for this population.
+   (c) The cancelled-submit note rendered inside an absolute-positioned bottom bar with no height
+       bound, against a fixed pb-32 (128px) reservation, occluding the very Dismiss controls the
+       note instructs the reviewer to use -- and nothing else clears the record.
+   Specifically check the WRITE ORDER at TWGReviewPortal.tsx around lines 400-430: the intent is
+   antidote (unknown-provenance) BEFORE poison (truncation) BEFORE draft, with any failure aborting
+   the save so no resumable-but-undisclosed draft can exist. Is that ordering actually correct and
+   actually sufficient? Is there any remaining sequence -- save, failed save, dismiss, submit
+   success, submit failure, corrupt or malformed stored value, a second tab -- that still ends with
+   a legacy at-limit draft resumable with its disclosure erased?
+
+2. TEST HONESTY. This lane has a recorded history of green suites coexisting with defects that HID a
+   correct regulatory value rather than corrupting it. For each new or restored test in the four
+   ranges above, ask what single production line you would have to change to make it fail. Name any
+   test that cannot fail the bug it claims to guard. Note that jsdom has no layout engine, so the
+   geometry fix in (c) can only be asserted as a class-level contract -- judge whether that contract
+   is at least the right one and whether the arithmetic in the comment above the scroll container is
+   correct against the real Tailwind class values.
+
+3. A DISAGREEMENT I NEED SETTLED. An earlier strong review concluded PR#782 was "self-consistent and
+   safe to merge now". Two later reviewers concluded that is WRONG: #782 ships a synchronous
+   pre-paint bootstrap that can set <html class="dark"> from localStorage, while ThemeContext still
+   hands consumers DEFAULT_THEME ('light') until its mount effect runs, so ThemeToggle announces
+   "Switch to dark mode" and draws a moon on an already-dark page -- a WCAG 4.1.2 accessible-name
+   defect that main does not currently have. #787's seedTheme is what closes it. Read the code and
+   tell me which reading it supports, and therefore whether #782 and #787 MUST land as one coupled
+   unit rather than separately.
+
+4. THE MERGE PLAN -- this is the part I most want attacked. `.github/workflows/ci.yml` declares
+   `on: pull_request: branches: [main, develop]` with NO `types:` key, so it uses the defaults
+   opened/synchronize/reopened. Consequences I believe follow, please confirm or refute each:
+   - #782 and #783 (base main) have the four required contexts green: Lint & TypeScript Check,
+     Unit Tests, Production Build, E2E Tests.
+   - #784, #785, #787, #788 have base = another feature branch, so ci.yml has NEVER run on them;
+     they carry only GitGuardian plus two docs gates.
+   - Retargeting a stacked PR to main emits `edited`, which is NOT a default type, so the required
+     contexts would never fire and the PR would sit permanently blocked. There is no
+     workflow_dispatch on ci.yml.
+   Branch protection on main (read live): strict=false (no up-to-date requirement), required
+   contexts exactly the four above, no required approving reviews, enforce_admins=false,
+   required_linear_history=false, allow_force_pushes=false. Feature branches are UNPROTECTED and
+   there are no rulesets.
+   Given all that, I intend to land each stack by merging bottom-up INTO THE PARENT BRANCH, so that
+   only the two base-main PRs ever merge into main:
+     STACK B:  merge #787 into feat/section-b-wave0-20260815 -> that push fires `synchronize` on
+               #782 whose base IS main, so the four required contexts run on the exact combined
+               content -> then merge #782 into main. #782 and #787 therefore land ATOMICALLY, which
+               eliminates any window where main carries the WCAG defect from item 3.
+     STACK A:  merge #788 into feat/deferred-triage-20260816, then #785 into
+               feat/section-b-wavea-20260816, then #784 into feat/mo-batch2-20260816 -> that fires
+               `synchronize` on #783 (base main) so the required contexts run on the full stack ->
+               then merge #783 into main.
+   The alternative is to retarget each child to main and close+reopen it to fire `reopened`.
+   Attack both. Which is safer, which preserves the stacked history and the meaning of CI, what
+   breaks in each, and is there a failure mode where main ends up half-landed? Is merging a PR into
+   an unprotected parent branch to make a protected-branch check run on the combined content a
+   legitimate practice here or a gate bypass in disguise? I care about that question specifically.
+
+5. FORCE-PUSH SAFETY. #787 must be published with
+   --force-with-lease=feat/theme-cookie-20260816:3a5eb26f. The pre-rebase commit 3a5eb26f is
+   preserved locally under tag p787-prerebase-3a5eb26f, and 3a5eb26f is NOT an ancestor of the new
+   tip so an ordinary push genuinely cannot work. main is never force-pushed. Is anything unsafe or
+   recoverable-only-with-difficulty here?
+
+6. SHIP READINESS. Is there anything in either stack that should block landing today? Deliberately
+   OUT of scope, already owner-deferred, do not re-report: the statistical TREATMENT choice for a
+   row whose censoring status is unresolved; cross-tab concurrent save pairing a clipped draft with
+   an empty truncation record; four named BN-RRM findings; 26 remaining audit findings.
+
+OUTPUT CONTRACT. For every finding give severity (P0 blocks landing / P1 fix before landing /
+P2 follow-up / P3 note), exact file:line, the concrete failure scenario with inputs and the wrong
+output, and what would falsify your own claim. Then answer items 1-6 in order. Then end with exactly
+one line: VERDICT: GREEN or VERDICT: RED. RED means something must change before this lands.
+
+=======================================================================
+IMPORTANT -- HOW TO WORK IN THIS SANDBOX (read before using any tool)
+=======================================================================
+Your tool router in this environment REJECTS git commands ("The executor may not
+inspect or mutate Git") and REJECTS compound/pipelined PowerShell wrappers
+("Explicit interpreter and shell wrappers can bypass..."). A previous attempt at
+this exact review burned its entire turn retrying blocked commands and produced
+no review. Do NOT run git. Do NOT chain commands with ';' or '|'.
+
+Everything you need is INLINE BELOW. If you want to read one additional whole
+file for context, a single plain read of one path works. The authoritative
+current contents of the two changed source files are on disk at:
+  src/components/TWGReviewPortal.tsx      (PR#788, at tip ae678fdf)
+  src/lib/theme.ts                        (PR#787, at tip 887d9265 -- NOTE: this
+                                           worktree is checked out at PR#785, so
+                                           theme.ts here may NOT match; rely on
+                                           the inline diff for #787, not the file)
+Read those only if the inline diffs leave a question open.
+
+The .github/workflows/ci.yml trigger block, verbatim, is:
+
+    on:
+      push:
+        branches: [main, develop]
+      pull_request:
+        branches: [main, develop]
+
+There is no `types:` key anywhere in that file and no workflow_dispatch.
+
+### INLINE DIFF 1 -- PR#788 corrections: git diff 04c9cc10..ae678fdf
+```diff
+diff --git a/src/components/TWGReviewPortal.tsx b/src/components/TWGReviewPortal.tsx
+index 0ceb0a15..19932693 100644
+--- a/src/components/TWGReviewPortal.tsx
++++ b/src/components/TWGReviewPortal.tsx
+@@ -42,6 +42,21 @@ const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';
+ // of the NEW document that happens to share the same positional index. Deriving from the draft key
+ // means any future draft-key bump automatically retires the matching truncation record too.
+ const TRUNCATION_STORAGE_KEY = DRAFT_STORAGE_KEY + '-truncation';
++// Unknown-provenance keys (see unknownProvenanceKeys below) live under their OWN key, for the
++// same additive reason TRUNCATION_STORAGE_KEY does not share the draft key's shape, and derived
++// from DRAFT_STORAGE_KEY for the same reason: so a future document-version bump retires this
++// record too, instead of leaving it to be read back against a different document.
++//
++// This key is SEPARATE from TRUNCATION_STORAGE_KEY, not folded into it, because the two records
++// mean different things and must not be able to erase one another. TRUNCATION_STORAGE_KEY's
++// present-but-empty `{}` is a positive statement, from the CURRENT build, that nothing was lost
++// -- see the comment above the restore effect's `rawT === null` check. If unknown-provenance
++// keys were stored inside that same object, the very first Save Draft after mount would write
++// `{}` for truncatedBy (nothing NEWLY clipped) and silently overwrite -- and permanently lose --
++// the unknown-provenance flag for a legacy field that was never re-derived from string shape
++// again once a truncation record exists. A separate key means writing an empty truncatedBy
++// record can never erase a nonempty unknown-provenance one.
++const UNKNOWN_PROVENANCE_STORAGE_KEY = DRAFT_STORAGE_KEY + '-unknown-provenance';
+ const MAX_CHARS = 5000;
+ const GENERAL_KEY = 'general';
+ 
+@@ -127,13 +142,42 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+       // of the pre-provenance clip this component exists to catch. There is no way to tell
+       // which, so it is reported as unknown, never folded into a count and never reported as
+       // zero.
++      // Unknown-provenance keys recorded on a PRIOR save (see UNKNOWN_PROVENANCE_STORAGE_KEY
++      // above). Read unconditionally, before the rawT branch below, because it applies on BOTH
++      // branches: a {} truncation record only means "the CURRENT build found nothing NEW to
++      // report right now" -- it says nothing about a legacy unknown-provenance flag a PRIOR save
++      // already recorded for a field this mount is not re-deriving from string shape. Validated
++      // with the same defensive shape as the truncation record: own keys only (guaranteed by
++      // JSON.parse into a plain object), string keys, reserved keys rejected. A member's value
++      // must be exactly `true`; anything else in the stored record is dropped rather than
++      // trusted.
++      const persistedUnknown = makeBareRecord<true>();
++      try {
++        const rawU = window.localStorage.getItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
++        if (rawU !== null) {
++          const parsedU = JSON.parse(rawU);
++          if (parsedU && typeof parsedU === 'object' && !Array.isArray(parsedU)) {
++            for (const [k, v] of Object.entries(parsedU)) {
++              if (RESERVED_KEYS.has(k)) continue;
++              if (v !== true) continue;
++              persistedUnknown[k] = true;
++            }
++          }
++        }
++      } catch {
++        /* corrupt unknown-provenance record - ignore, the draft itself is still usable */
++      }
++
+       const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
+       if (rawT === null) {
+-        if (atLimitKeys.length > 0) {
+-          const unknown = makeBareRecord<true>();
+-          for (const k of atLimitKeys) unknown[k] = true;
+-          setUnknownProvenanceKeys(unknown);
+-        }
++        // Do NOT gate this branch's unknown set on atLimitKeys alone -- a persisted
++        // unknown-provenance record must surface even if this particular restore does not
++        // itself land any field exactly at MAX_CHARS (e.g. the reviewer has since shortened
++        // it), because the loss it is unknown, not proven absent.
++        const unknown = makeBareRecord<true>();
++        for (const k of atLimitKeys) unknown[k] = true;
++        for (const k of Object.keys(persistedUnknown)) unknown[k] = true;
++        if (Object.keys(unknown).length > 0) setUnknownProvenanceKeys(unknown);
+         if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
+         return;
+       }
+@@ -168,6 +212,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+         merged[k] = Math.max(merged[k] ?? 0, v);
+       }
+       if (Object.keys(merged).length > 0) setTruncatedBy(merged);
++      // The persisted unknown-provenance set applies here too (see the comment above where
++      // persistedUnknown is read). The at-limit re-derivation stays gated on rawT === null,
++      // exactly as before -- this does not weaken that; it only surfaces what a PRIOR save
++      // already recorded under its own key, independent of whatever the truncation record says.
++      if (Object.keys(persistedUnknown).length > 0) setUnknownProvenanceKeys(persistedUnknown);
+     } catch {
+       /* corrupt draft - ignore */
+     }
+@@ -285,24 +334,41 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+   // handleDismissTruncation because the two can be true for the same field at once (a legacy
+   // at-limit draft that the reviewer then edits into fresh overflow), and dismissing one must
+   // not silently dismiss the other.
++  //
++  // Unlike truncatedBy, this ALSO writes UNKNOWN_PROVENANCE_STORAGE_KEY immediately, rather than
++  // waiting for the next Save Draft. Reason: a legacy at-limit field is re-derived as
++  // unknown-provenance on every mount for which the truncation key is still absent (see the
++  // restore effect's rawT === null branch) -- that re-derivation does not depend on whether a
++  // Save has ever happened. If dismissal only updated in-memory state, a reviewer who dismisses
++  // without an intervening Save would see the notice reappear on the very next remount, which is
++  // not a dismissal at all. Best-effort: a write failure here does not block the dismissal from
++  // applying for the rest of this session (there is no draft at stake, unlike handleSave).
+   const handleDismissUnknownProvenance = (key: string) => {
+     setUnknownProvenanceKeys(prev => {
+       const next = makeBareRecord<true>();
+       for (const [k, v] of Object.entries(prev)) {
+         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+       }
++      if (typeof window !== 'undefined') {
++        try {
++          window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(next));
++        } catch {
++          /* best-effort persistence; the in-memory dismissal above still applies */
++        }
++      }
+       return next;
+     });
+   };
+ 
+   const handleSave = () => {
+     if (typeof window === 'undefined') return;
+-    // Two INDEPENDENT writes, not one shared try. A single try around both meant a failure on
+-    // the second write (truncation provenance) reported "Unable to save draft locally" even
+-    // though the draft itself had already been written -- misinforming the reviewer about
+-    // whether their text is safe, AND leaving a persisted draft with stale/absent provenance,
+-    // silently reintroducing the exact silent-loss defect this component exists to prevent.
+-    // ORDER MATTERS, and it is the opposite of the obvious one. Provenance is written FIRST.
++    // Three INDEPENDENT writes, not one shared try. A single try around all of them meant a
++    // failure on a later write (truncation or unknown-provenance) reported "Unable to save draft
++    // locally" even though the draft itself had already been written -- misinforming the
++    // reviewer about whether their text is safe, AND leaving a persisted draft with
++    // stale/absent provenance, silently reintroducing the exact silent-loss defect this
++    // component exists to prevent. ORDER MATTERS, and it is the opposite of the obvious one:
++    // BOTH provenance records are written FIRST, before the draft.
+     //
+     // An earlier revision wrote the draft first and the provenance second, on the reasoning that
+     // the draft is the important artifact. That created a silent-loss path: if the draft write
+@@ -312,10 +378,40 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+     // loss and writes the truncated comment with no confirmation -- exactly the defect this
+     // component exists to prevent, reached through the save path.
+     //
+-    // Writing provenance first inverts the failure: if provenance cannot be stored, NO resumable
+-    // draft is created, so there is no draft that could later be submitted unwarned. The reverse
+-    // orphan -- provenance stored with no draft -- is inert, because the restore effect reads the
+-    // draft first and returns early when there is none.
++    // Writing both provenance records first inverts the failure: if either cannot be stored, NO
++    // resumable draft is created, so there is no draft that could later be submitted unwarned.
++    // The reverse orphan -- provenance stored with no draft -- is inert ONLY when no draft
++    // already existed before this save: the restore effect reads the draft first and returns
++    // early when there is none. That claim does NOT extend to a save that fails while a PRIOR
++    // (e.g. legacy, pre-provenance-build) draft is already sitting in storage: the draft write
++    // below failing leaves that old draft untouched and very much present, so the restore effect
++    // proceeds past it on the next mount. Before UNKNOWN_PROVENANCE_STORAGE_KEY existed, that
++    // path silently discarded any unknown-provenance flag the reviewer had already been shown
++    // for that old draft, because nothing durable recorded it. Persisting it here is what closes
++    // that gap; see UNKNOWN_PROVENANCE_STORAGE_KEY's own comment above.
++    //
++    // The two provenance writes are ALSO ordered relative to each other, and that ordering is
++    // not arbitrary either: UNKNOWN_PROVENANCE_STORAGE_KEY (the antidote) is written BEFORE
++    // TRUNCATION_STORAGE_KEY (the poison). A present-but-empty truncation record is not neutral
++    // -- it is a positive claim that nothing was lost, which is exactly the false-negative this
++    // component exists to prevent for a legacy at-limit draft whose real loss is only recorded
++    // via the unknown-provenance flag. Writing the truncation record before the antidote means
++    // that if the truncation write succeeds and the unknown-provenance write then fails, storage
++    // is left holding the poison with no antidote: the old legacy draft above becomes resumable
++    // with its disclosure erased, on the very save that was supposed to close that gap. Writing
++    // the antidote first avoids that: either it succeeds and the disclosure is durable before the
++    // poison is ever written, or it fails and the whole save aborts before the truncation record
++    // (or the draft) is touched at all.
++    try {
++      window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(unknownProvenanceKeys));
++    } catch {
++      alert(
++        'Unable to save the unknown-provenance record (storage quota or access denied), so the ' +
++          'draft was NOT saved either. Saving it without that record could let a legacy ' +
++          'truncation warning be lost the next time you resume this draft.'
++      );
++      return;
++    }
+     try {
+       window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
+     } catch {
+@@ -491,6 +587,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+       try {
+         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+         window.localStorage.removeItem(TRUNCATION_STORAGE_KEY);
++        window.localStorage.removeItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
+       } catch {
+         /* non-fatal */
+       }
+@@ -595,7 +692,34 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+           </p>
+         </div>
+ 
+-        <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">
++        {/*
++          The bottom reservation must clear the ABSOLUTE bottom bar's worst-case height, or the
++          bar covers the tail of this scroll area -- which is exactly where the per-field
++          role="alert" notices and their "Dismiss ... notice for <label>" buttons live (the
++          cancelled-submit note below instructs the reviewer to use those Dismiss controls, and
++          handleCommentChange deliberately never clears the record any other way, so a covered
++          Dismiss button is a dead end, not just a visual glitch).
++
++          Arithmetic (static Tailwind classes chosen by whether the note is present, not measured
++          at runtime -- see the note's own comment below for why no ref-measurement effect):
++            Bar chrome without the note: p-4 (16px top + 16px bottom = 32px) + border-t (1px) +
++            the Save Draft/Submit button row (py-2 = 16px vertical padding + ~20px text-sm line
++            height =~ 36-40px content) =~ 82px total.
++            pb-32 (8rem = 128px) already clears that 82px baseline with margin -- unchanged.
++            With the note present: the panel is w-96 (384px) with p-4 bar padding (32px), leaving
++            about 352px of text width; at text-xs (12px font / 16px line-height) that wraps to
++            roughly 58 characters per line. The note's realistic worst case (both the truncation
++            and unknown-provenance sentences, largest plausible field counts) runs to about 480
++            characters, i.e. ceil(480 / 58) = 9 lines = 144px of text -- max-h-24 (96px) clipped
++            that down to about 6 lines, cutting the tail sentence that tells the reviewer to use
++            the Dismiss controls. max-h-40 (10rem = 160px) covers the 144px worst case with a
++            16px/one-line buffer for wrapping variance, plus its own mb-3 (12px) margin, so the
++            note's worst-case contribution is 160 + 12 = 172px. Bar worst case becomes
++            p-4 top (16) + note max-height (160) + mb-3 (12) + button row (~40) + p-4 bottom (16)
++            = 244px, so the reservation grows to pb-72 (18rem = 288px), leaving a 44px buffer over
++            the computed worst case for cross-browser box-sizing variance.
++        */}
++        <div className={cn('p-6 overflow-y-auto flex-1 space-y-6', submitCancelledNote ? 'pb-72' : 'pb-32')}>
+           <div className="space-y-2">
+             <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
+             <textarea
+@@ -738,9 +862,24 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+         {/* Sticky Bottom Bar */}
+         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+           {submitCancelledNote && (
++            // Bounded height + its own scroll, rather than growing unbounded: this note's
++            // shortest realistic text is long enough to run several lines in this narrow
++            // sidebar, and the ABSOLUTE bottom bar it lives in has no height of its own to give
++            // -- an unbounded note pushes the bar taller than the scroll container above
++            // reserves for it, covering the per-field alert/Dismiss controls the note itself
++            // tells the reviewer to use. max-h-40 (160px) covers the realistic worst case (about
++            // 480 characters, ~9 wrapped lines) with a one-line buffer -- a smaller cap clips the
++            // tail sentence that tells the reviewer to use the Dismiss controls, which is the
++            // exact failure this height is sized to avoid. overflow-y-auto is the backstop for a
++            // pathologically long note beyond that estimate, not the primary defense; tabIndex={0}
++            // makes this bounded region focusable so a keyboard-only reviewer can scroll to
++            // whatever overflow-y-auto is backstopping without a mouse. See the arithmetic
++            // comment above the scroll container's pb-32/pb-72 toggle for why 160px is the
++            // number the reservation is sized against.
+             <p
+               role="status"
+-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3"
++              tabIndex={0}
++              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 max-h-40 overflow-y-auto"
+             >
+               {submitCancelledNote}
+             </p>
+diff --git a/src/components/__tests__/TWGReviewPortal.test.tsx b/src/components/__tests__/TWGReviewPortal.test.tsx
+index 1e9da013..8c8f30c2 100644
+--- a/src/components/__tests__/TWGReviewPortal.test.tsx
++++ b/src/components/__tests__/TWGReviewPortal.test.tsx
+@@ -1100,4 +1100,235 @@ second body
+ 
+     confirmSpy.mockRestore()
+   })
++
++  // Regression set for the erasure defect: unknownProvenanceKeys used to be derived at mount
++  // ONLY when the truncation key was absent, and was never itself persisted. Save Draft then
++  // wrote an empty `{}` truncation record (truncatedBy has nothing NEW to report), and on the
++  // next mount rawT !== null so the at-limit re-derivation never ran again -- the notice was
++  // gone for good even though nothing about the legacy comment's provenance had actually become
++  // known. UNKNOWN_PROVENANCE_STORAGE_KEY closes this by persisting the set under its own key,
++  // independent of what the truncation record says.
++  it('keeps the unknown-provenance notice after Save Draft and a remount (legacy at-limit draft, no truncation key)', async () => {
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++    alertSpy.mockRestore()
++
++    // The empty truncation record is the CURRENT build's positive "nothing NEW lost" statement,
++    // and must still be written exactly as before -- this test does not weaken that invariant.
++    expect(JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation') as string)).toEqual({})
++    // The unknown-provenance set is now ALSO persisted, under its own key.
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({ general: true })
++
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  // DEFECT 1 (round 2): the antidote (UNKNOWN_PROVENANCE_STORAGE_KEY) must be written BEFORE
++  // the poison (TRUNCATION_STORAGE_KEY), not after. A present-but-empty truncation record is a
++  // positive "nothing lost" claim; writing it before the antidote means a subsequent antidote
++  // failure leaves that positive claim durably stored with no antidote alongside it, erasing a
++  // legacy draft's disclosure. This test mocks storage to throw ONLY on the antidote write (the
++  // truncation write, if it is even attempted, is allowed to go through for real) -- so it can
++  // tell the two orderings apart: with the antidote written first (the fix), the throw happens
++  // before the truncation write is ever attempted, so NEITHER provenance key nor the draft key
++  // gets written, and the still-present legacy draft is re-derived as unknown-provenance again on
++  // the next mount. With the poison written first (the bug), the truncation write would already
++  // have succeeded (durably storing "{}") by the time the antidote write throws, so the next
++  // mount would see a present truncation record, skip re-derivation, and find no persisted
++  // antidote -- the alert would not come back and disclosure would be lost.
++  it('writes the antidote before the poison: an antidote-write failure must leave no truncation record and no resumable draft, and disclosure must survive the next mount (order regression guard)', async () => {
++    // Legacy at-limit draft: no truncation key, no unknown-provenance key -- the genuine
++    // pre-provenance-build case this component exists to protect.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance')).toBeNull()
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    // Delegate every OTHER write to the real implementation, exactly like the order-regression
++    // guard above -- a mock that only ever throws would make the "no draft key written" assertion
++    // pass under EITHER order, which would not actually test anything.
++    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
++    const setItemSpy = vi
++      .spyOn(window.localStorage, 'setItem')
++      .mockImplementation((key: string, value: string) => {
++        if (key === 'twg-matrix-review-draft-v6-unknown-provenance') {
++          throw new Error('quota exceeded')
++        }
++        originalSetItem(key, value)
++      })
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++
++    // The antidote write is the one that threw, so the save must have aborted BEFORE the poison
++    // (truncation) write was ever attempted -- proven by the key still being absent, not merely
++    // by a spy call count, since a call that itself no-ops on failure would look the same either
++    // way.
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++    // And no resumable NEW draft write happened either -- the draft key was never even attempted.
++    expect(
++      setItemSpy.mock.calls.some(([key]) => key === 'twg-matrix-review-draft-v6')
++    ).toBe(false)
++
++    setItemSpy.mockRestore()
++    alertSpy.mockRestore()
++
++    // Disclosure must still be recoverable: the legacy draft is untouched and the truncation key
++    // was never durably written, so the next mount re-derives unknown-provenance from the still
++    // at-limit value, exactly as it did on first mount.
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  it('keeps the unknown-provenance notice when the DRAFT write fails but the provenance writes succeed, and a remount follows (legacy at-limit draft)', async () => {
++    // Same failure mode as FIX 5's "provenance succeeds, draft write then fails" case, but for
++    // a PRE-EXISTING legacy draft rather than a fresh one. The old comment above handleSave
++    // claimed the reverse-orphan case (provenance stored, no draft) is inert because the restore
++    // effect returns early when there is no draft -- that claim does not hold here, because the
++    // legacy draft already exists and is left untouched by the failed write, so the restore
++    // effect proceeds past it on the next mount.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
++    const setItemSpy = vi
++      .spyOn(window.localStorage, 'setItem')
++      .mockImplementation((key: string, value: string) => {
++        if (key === 'twg-matrix-review-draft-v6') {
++          throw new Error('quota exceeded')
++        }
++        originalSetItem(key, value)
++      })
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++
++    // Both provenance writes went through; only the draft write failed, so the legacy draft in
++    // storage is unchanged (still the pre-provenance-build shape with no draft-level marker).
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeTruthy()
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({ general: true })
++
++    setItemSpy.mockRestore()
++    alertSpy.mockRestore()
++
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  it('Dismiss of the unknown-provenance notice is durable across a remount, after a Save Draft already persisted it (paired with the existence case above)', async () => {
++    // Pairs an existence check (the notice survives a remount after Save, exactly like the test
++    // above) with an absence check (after Dismiss, a FURTHER remount does not bring it back).
++    // A test that only ever asserts absence cannot tell "Dismiss worked" from "the notice was
++    // never wired up to persist in the first place" -- the existence half proves the persisted
++    // record was really there before Dismiss removed it.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++    alertSpy.mockRestore()
++
++    // Existence: a remount right now still shows the notice (same as the dedicated test above).
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    fireEvent.click(
++      screen.getByRole('button', { name: /Dismiss unknown-provenance notice for General Comments/i })
++    )
++    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
++    // Dismiss persists immediately (not deferred to the next Save Draft).
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({})
++
++    // Absence: a FURTHER remount does not resurrect the dismissed notice.
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
++  })
++
++  // DEFECT 2 (round 2, was DEFECT 3): the cancelled-submit note lives inside the ABSOLUTE bottom
++  // bar with a height bound, while the scroll container above it reserves space sized against
++  // that bound. The PRIOR fix under-sized both numbers: max-h-24 (96px) clipped the note's
++  // realistic worst case (~480 characters, ~9 wrapped lines at ~58 chars/line in this w-96 panel
++  // at text-xs) down to about 6 lines -- cutting exactly the tail sentence that tells the
++  // reviewer to use the Dismiss controls -- and the bounded region had no tabIndex, so a
++  // keyboard-only reviewer could not scroll to the hidden tail at all. jsdom has no layout engine
++  // and cannot see ancestor occlusion (per the task's own falsifiability requirement), so this
++  // only pins the class-level contract: the note carries the new, larger max-height class, is
++  // independently scrollable, is keyboard-focusable, and the scroll container's bottom
++  // reservation class grows to the new, larger value when the note is present. Whether pb-72 is
++  // geometrically sufficient in a real browser is left to the orchestrator's rendered check.
++  it('bounds the cancelled-submit note height, makes it keyboard-focusable, and grows the scroll container reservation when the note is present', async () => {
++    const lookup = buildLookup({ data: null, error: null })
++    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
++    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
++
++    const { container } = render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    // Baseline: no note yet, so the container reserves pb-32 and not the enlarged pb-72.
++    expect(container.querySelector('.pb-32')).toBeInTheDocument()
++    expect(container.querySelector('.pb-72')).not.toBeInTheDocument()
++    expect(screen.queryByRole('status')).not.toBeInTheDocument()
++
++    fireEvent.change(
++      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
++      { target: { value: 'x'.repeat(5010) } }
++    )
++    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
++
++    const status = await screen.findByRole('status')
++    expect(status).toHaveClass('max-h-40')
++    expect(status).not.toHaveClass('max-h-24')
++    expect(status).toHaveClass('overflow-y-auto')
++    // Keyboard-reachable: a bounded scroll region with no tabIndex cannot be focused (and
++    // therefore cannot be scrolled) without a mouse.
++    expect(status).toHaveAttribute('tabIndex', '0')
++
++    expect(container.querySelector('.pb-72')).toBeInTheDocument()
++    expect(container.querySelector('.pb-52')).not.toBeInTheDocument()
++    expect(container.querySelector('.pb-32')).not.toBeInTheDocument()
++
++    confirmSpy.mockRestore()
++  })
+ })
+diff --git a/src/lib/matrix-map/__tests__/stats.test.ts b/src/lib/matrix-map/__tests__/stats.test.ts
+index 45031576..ac5aca98 100644
+--- a/src/lib/matrix-map/__tests__/stats.test.ts
++++ b/src/lib/matrix-map/__tests__/stats.test.ts
+@@ -627,6 +627,38 @@ describe('computeSelectionStats -- unresolvedCensoring counter', () => {
+   });
+ });
+ 
++describe('computeSelectionStats -- fail-closed recommendation when censoring is unresolved (recommend-ucl.ts call-site pin)', () => {
++  // This goes through the REAL production entry point (computeSelectionStats -> computeBucket ->
++  // recommendUcl), not recommendUcl directly. recommendUcl's `unresolvedCensoring` parameter
++  // DEFAULTS TO 0, and the call site in stats.ts is the only thing that actually passes the
++  // computed count -- deleting that trailing argument at the call site would silently restore the
++  // fail-open path (a real ProUCL-cited recommendation for a bucket whose censoring status is not
++  // actually known) with every test that calls recommendUcl() directly still green, because those
++  // tests supply the argument explicitly. Only a call-site test like this one can see that class
++  // of regression.
++  //
++  // n is pinned at 3 (>= 2) so the n < 2 guard in recommendUcl is not what produces 'none' here --
++  // if it were, this test could not tell the fail-closed unresolved-censoring guard apart from the
++  // unrelated insufficient-sample-size guard, and would stay green even if the fail-closed check
++  // were removed entirely.
++  it('recommends "none" with no ProUCL citation when every row has an unresolved censoring status', () => {
++    const rows = [
++      makeRow({ value: 1.0, censored: null, sample_id: 'a' }),
++      makeRow({ value: 2.0, censored: null, sample_id: 'b' }),
++      makeRow({ value: 3.0, censored: null, sample_id: 'c' }),
++    ];
++    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
++    const bucket = result.buckets[0];
++    // Parse precondition: all 3 rows must actually reach the recommendation ladder as detected,
++    // unresolved-censoring rows, or this test cannot see the defect it exists to catch.
++    expect(bucket.descriptive.n).toBe(3);
++    expect(bucket.descriptive.unresolvedCensoring).toBe(3);
++    expect(bucket.recommendation.recommendedMethod).toBe('none');
++    expect(bucket.recommendation.basisString).not.toMatch(/ProUCL/);
++    expect(bucket.recommendation.basisString).toMatch(/unresolved/i);
++  });
++});
++
+ describe('computeSelectionStats -- DL_SUBSTITUTION_FACTOR constant', () => {
+   it('DL_SUBSTITUTION_FACTOR = 0.5', () => {
+     expect(DL_SUBSTITUTION_FACTOR).toBe(0.5);
+```
+
+### INLINE DIFF 2 -- PR#787 correction: git diff 45293f1a..887d9265
+```diff
+diff --git a/src/contexts/ThemeContext.test.tsx b/src/contexts/ThemeContext.test.tsx
+index afd1d56e..3564a93b 100644
+--- a/src/contexts/ThemeContext.test.tsx
++++ b/src/contexts/ThemeContext.test.tsx
+@@ -1,10 +1,11 @@
+ import React from 'react';
+-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
++import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+ import { fireEvent, render, screen, within } from '@testing-library/react';
+ import { renderToStaticMarkup } from 'react-dom/server';
+ 
+ import { ThemeProvider, useTheme } from './ThemeContext';
+ import ThemeToggle from '@/components/ThemeToggle';
++import type { Theme } from '@/lib/theme';
+ 
+ /**
+  * Regression guard for the adversarial-review finding of 2026-08-16 (audit B11 follow-up).
+@@ -383,3 +384,187 @@ describe('ThemeProvider cookie persistence (audit D2)', () => {
+     expect(document.documentElement.classList.contains('chartreuse')).toBe(false);
+   });
+ });
++
++/**
++ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17:
++ * this branch's rebase onto feat/section-b-wave0-20260815 won every conflict and silently
++ * dropped this describe block along with the two below it, even though the try/catch it
++ * proves exists is still in ThemeContext.tsx's persistence effect (see the "Safari private
++ * mode" comment on that effect) -- the production code the test guards was never removed,
++ * only the test.
++ *
++ * The write in the theme-persistence effect (`localStorage.setItem(THEME_STORAGE_KEY,
++ * theme)`) is wrapped in try/catch; localStorage.setItem throws outright -- not just returns
++ * null -- in Safari private browsing, in a sandboxed iframe without allow-same-origin, and
++ * when cookies/site-data are blocked. An uncaught throw inside a React effect propagates to
++ * the App Router error boundary, so an affected user got the global error page instead of
++ * the dashboard, rather than merely losing their persisted preference.
++ *
++ * Falsification: removing the try/catch around the setItem call in ThemeContext.tsx makes
++ * this test FAIL with the mocked SecurityError escaping render()/fireEvent().
++ */
++describe('ThemeProvider localStorage write failure handling', () => {
++  beforeEach(() => {
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  it('does not throw/crash when localStorage.setItem throws (Safari private mode, blocked cookies)', () => {
++    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
++      throw new Error('SecurityError: localStorage is not available');
++    });
++
++    // Reuses the top-level ToggleProbe (declared above, alongside SetThemeProbe) rather than
++    // a locally-defined one -- this file already has a shared probe for exercising
++    // toggleTheme, and duplicating it here would be exactly the kind of drift this file's own
++    // header comment about cookie hygiene warns against.
++    expect(() => {
++      render(
++        <ThemeProvider>
++          <ToggleProbe />
++        </ThemeProvider>,
++      );
++    }).not.toThrow();
++
++    // Triggers the persistence effect's setItem call (the write path under test), not just
++    // the initial mount-time read.
++    expect(() => {
++      fireEvent.click(screen.getByRole('button', { name: 'toggle' }));
++    }).not.toThrow();
++
++    // The theme still updates in memory/UI even though persistence silently failed --
++    // matching the guarded read's degrade-gracefully intent.
++    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
++
++    setItemSpy.mockRestore();
++  });
++});
++
++/**
++ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17,
++ * ADAPTED to the current module layout.
++ *
++ * At the time this pair of tests was written, VALID_THEMES/DEFAULT_THEME lived only in
++ * themeBootstrap.ts and ThemeContext.tsx validated stored values with its OWN inline check.
++ * Since then src/lib/theme.ts became the single owner of both constants AND of the
++ * validation logic (parseTheme); themeBootstrap.ts now just re-exports the constants, and
++ * ThemeContext.tsx delegates validation entirely to the imported parseTheme instead of
++ * reimplementing it. The two tests below are adapted to that split:
++ *
++ *  - DEFAULT_THEME is still consumed directly by ThemeContext.tsx (seedTheme's two
++ *    fallbacks), and still arrives via the `@/lib/themeBootstrap` re-export, so mocking that
++ *    specifier still proves the same thing the original test proved.
++ *  - The valid-value-set claim moved: it is no longer "does ThemeContext.tsx's OWN check
++ *    consult VALID_THEMES", because ThemeContext.tsx no longer has its own check. It is now
++ *    "does ThemeContext.tsx actually CALL the imported parseTheme for the stored-value
++ *    validation, rather than reimplementing one inline" -- proven by mocking parseTheme
++ *    itself (a genuine cross-module import from ThemeContext.tsx's point of view) to accept
++ *    a value ('sepia') the real VALID_THEMES set does not contain, and asserting that value
++ *    surfaces. A hardcoded `stored === 'dark' || stored === 'light'` reintroduced into
++ *    ThemeContext.tsx would never consult the mock, and 'sepia' would never appear -- that is
++ *    the false-green this test still exists to catch, just one module over from where it used
++ *    to live.
++ *
++ * Falsification (both verified by actually reverting and re-running):
++ *  - Reverting seedTheme's `DEFAULT_THEME` fallbacks back to a hardcoded `'light'` makes the
++ *    FIRST test below FAIL: the mocked 'dark' default never surfaces, the probe shows
++ *    'light' even though nothing is stored and the seed's document-class branch is reached.
++ *  - Reverting readPersistedTheme's localStorage branch from `parseTheme(...)` to a
++ *    hardcoded `stored === 'dark' || stored === 'light' ? stored : null` check makes the
++ *    SECOND test below FAIL: the mocked parseTheme override is never called, so the stored
++ *    'sepia' is rejected by the hardcoded check and the probe shows 'light' (the seed),
++ *    never 'sepia'.
++ */
++describe('ThemeProvider contract with theme.ts / themeBootstrap (structural, not prose)', () => {
++  beforeEach(() => {
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++    vi.resetModules();
++  });
++
++  afterEach(() => {
++    vi.doUnmock('@/lib/themeBootstrap');
++    vi.doUnmock('@/lib/theme');
++    vi.resetModules();
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  it('uses themeBootstrap DEFAULT_THEME, not a hardcoded literal', async () => {
++    vi.doMock('@/lib/themeBootstrap', async () => {
++      const actual =
++        await vi.importActual<typeof import('@/lib/themeBootstrap')>('@/lib/themeBootstrap');
++      return { ...actual, DEFAULT_THEME: 'dark' };
++    });
++
++    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
++      await import('./ThemeContext');
++
++    function Probe() {
++      const { theme } = mockedUseTheme();
++      return <span data-testid="probe">{theme}</span>;
++    }
++
++    render(
++      <MockedThemeProvider>
++        <Probe />
++      </MockedThemeProvider>,
++    );
++
++    // Nothing is stored and no cookie is set, so the provider must fall back to whatever
++    // DEFAULT_THEME it imports. The mock says 'dark'; a hardcoded 'light' literal would show
++    // 'light' instead.
++    expect(screen.getByTestId('probe')).toHaveTextContent('dark');
++  });
++
++  it('uses themeBootstrap VALID_THEMES, not a hardcoded accepted-value set', async () => {
++    window.localStorage.setItem('theme', 'sepia');
++
++    vi.doMock('@/lib/theme', async () => {
++      const actual = await vi.importActual<typeof import('@/lib/theme')>('@/lib/theme');
++      return {
++        ...actual,
++        // Accepts 'sepia', a value the REAL VALID_THEMES set does not contain. This stands in
++        // for "VALID_THEMES has been widened to a third value": if ThemeContext.tsx validated
++        // the stored value with its own hardcoded `stored === 'dark' || stored === 'light'`
++        // check instead of calling the imported parseTheme, this override would never be
++        // consulted and 'sepia' would still be rejected.
++        parseTheme: (raw: string | null | undefined) =>
++          raw === 'sepia' ? ('sepia' as unknown as Theme) : actual.parseTheme(raw),
++      };
++    });
++
++    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
++      await import('./ThemeContext');
++
++    function Probe() {
++      const { theme } = mockedUseTheme();
++      return <span data-testid="probe">{theme}</span>;
++    }
++
++    render(
++      <MockedThemeProvider>
++        <Probe />
++      </MockedThemeProvider>,
++    );
++
++    // 'sepia' is stored and no cookie overrides it. It surfaces here only because
++    // ThemeContext's post-mount effect delegates validation to the (mocked) imported
++    // parseTheme rather than reimplementing its own literal check.
++    expect(screen.getByTestId('probe')).toHaveTextContent('sepia');
++  });
++});
+diff --git a/src/contexts/ThemeContext.tsx b/src/contexts/ThemeContext.tsx
+index d00b1061..6d2f9b13 100644
+--- a/src/contexts/ThemeContext.tsx
++++ b/src/contexts/ThemeContext.tsx
+@@ -81,8 +81,8 @@ function readPersistedTheme(): Theme | null {
+ function seedTheme(initialTheme: Theme | undefined): Theme {
+   const fromServer = parseTheme(initialTheme);
+   if (fromServer !== null) return fromServer;
+-  if (typeof document === 'undefined') return 'light';
+-  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
++  if (typeof document === 'undefined') return DEFAULT_THEME;
++  return document.documentElement.classList.contains('dark') ? 'dark' : DEFAULT_THEME;
+ }
+ 
+ export function ThemeProvider({
+diff --git a/src/lib/theme.test.ts b/src/lib/theme.test.ts
+index 018e08d1..77ce21c5 100644
+--- a/src/lib/theme.test.ts
++++ b/src/lib/theme.test.ts
+@@ -1,10 +1,13 @@
+ import { describe, it, expect } from 'vitest';
+ import {
+   THEME_COOKIE_NAME,
++  VALID_THEMES,
+   parseTheme,
+   readThemeCookie,
+   resolveTheme,
++  resolveThemeFromCookieHeader,
+   themeCookieString,
++  type Theme,
+ } from './theme';
+ 
+ /**
+@@ -111,3 +114,44 @@ describe('themeCookieString', () => {
+     }
+   });
+ });
++
++describe('server-side resolvers honor a widened VALID_THEMES set', () => {
++  /**
++   * Two independent reviews (2026-08-17) named the same gap: nothing anywhere proved that
++   * parseTheme / readThemeCookie / resolveThemeFromCookieHeader actually CONSULT VALID_THEMES
++   * at call time, as opposed to a value set baked in earlier -- which is literally what
++   * parseTheme did before this test existed (`raw === 'dark' || raw === 'light'`, a value set
++   * that widening VALID_THEMES would never reach).
++   *
++   * `as const` on VALID_THEMES pins the TYPE only; the array is a plain, mutable object at
++   * runtime, and it is the actual production singleton every one of these functions closes
++   * over. Widening it here -- rather than mocking a copy -- is what makes this a proof about
++   * the real resolvers instead of a proof about a test double. Restored in `finally` so no
++   * other test in this file, or a sibling suite sharing the module cache, observes the
++   * widened set.
++   *
++   * Falsification: reverting parseTheme's body to
++   * `raw === 'dark' || raw === 'light' ? raw : null` makes every assertion below fail --
++   * the third value is never accepted no matter what VALID_THEMES contains, and each resolver
++   * silently falls back to DEFAULT_THEME instead.
++   */
++  it('accepts a third theme value once VALID_THEMES includes it, instead of silently falling back to DEFAULT_THEME', () => {
++    // Cast through `unknown`, not a direct assertion: 'sepia' shares no members with the
++    // Theme union, so `as Theme` alone is rejected by tsc ("may be a mistake"). That is
++    // exactly the point -- this is a value the TYPE SYSTEM does not know about, which is why
++    // acceptance has to come from a runtime VALID_THEMES membership check, not from tsc.
++    const THIRD_THEME = 'sepia' as unknown as Theme;
++    const mutableValidThemes = VALID_THEMES as unknown as string[];
++    mutableValidThemes.push(THIRD_THEME);
++    try {
++      expect(parseTheme(THIRD_THEME)).toBe(THIRD_THEME);
++      expect(resolveTheme(THIRD_THEME)).toBe(THIRD_THEME);
++      expect(readThemeCookie(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
++      expect(resolveThemeFromCookieHeader(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
++    } finally {
++      // A bare pop is correct (not a splice-by-value) because this test is the only place in
++      // the suite that mutates VALID_THEMES, and it only ever pushes one entry at the end.
++      mutableValidThemes.pop();
++    }
++  });
++});
+diff --git a/src/lib/theme.ts b/src/lib/theme.ts
+index fd08eb54..8866089b 100644
+--- a/src/lib/theme.ts
++++ b/src/lib/theme.ts
+@@ -48,6 +48,19 @@ export const THEME_COOKIE_NAME = 'theme';
+ /** One year. Matches the intent of localStorage: a preference, not a session. */
+ export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
+ 
++/**
++ * Type predicate, not a bare cast. `VALID_THEMES.includes(x)` cannot be called directly with
++ * an arbitrary string -- `ReadonlyArray<Theme>.includes` requires its argument to already be
++ * of type `Theme`, so checking whether an arbitrary string is a member requires widening the
++ * tuple to `readonly string[]` first. Returning `value is Theme` is what lets parseTheme keep
++ * narrowing to `Theme | null` without a second, unchecked cast at its own return site -- if
++ * this predicate's body ever stopped checking VALID_THEMES, tsc would not catch it, but a
++ * genuinely-invalid value could also never get past it silently.
++ */
++function isValidTheme(value: string): value is Theme {
++  return (VALID_THEMES as readonly string[]).includes(value);
++}
++
+ /**
+  * Returns the value only if it is EXACTLY one of the two valid themes, else null.
+  *
+@@ -57,12 +70,12 @@ export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
+  * and falling through would make the client disagree with the served HTML.
+  */
+ export function parseTheme(raw: string | null | undefined): Theme | null {
+-  return raw === 'dark' || raw === 'light' ? raw : null;
++  return typeof raw === 'string' && isValidTheme(raw) ? raw : null;
+ }
+ 
+-/** Total function: anything unrecognised resolves to 'light'. Never throws, never casts. */
++/** Total function: anything unrecognised resolves to DEFAULT_THEME. Never throws, never casts. */
+ export function resolveTheme(raw: string | null | undefined): Theme {
+-  return parseTheme(raw) ?? 'light';
++  return parseTheme(raw) ?? DEFAULT_THEME;
+ }
+ 
+ /**
+@@ -108,7 +121,7 @@ export function readThemeCookie(cookieString: string | null | undefined): Theme
+  * src/lib/themeBootstrap.ts.
+  */
+ export function resolveThemeFromCookieHeader(cookieHeader: string | null | undefined): Theme {
+-  return readThemeCookie(cookieHeader) ?? 'light';
++  return readThemeCookie(cookieHeader) ?? DEFAULT_THEME;
+ }
+ 
+ /**
+diff --git a/src/lib/themeBootstrap.ts b/src/lib/themeBootstrap.ts
+index 235f0e38..eb1389ef 100644
+--- a/src/lib/themeBootstrap.ts
++++ b/src/lib/themeBootstrap.ts
+@@ -88,5 +88,13 @@ const THEME_STORAGE_KEY_JSON = JSON.stringify(THEME_STORAGE_KEY);
+  * localStorage read get SEPARATE try/catch blocks, and the classList work sits outside both:
+  * a throw in either store must not stop the class from being applied, which is what the
+  * original single outer try/catch would have done.
++ *
++ * The final cleanup is `e.classList.remove.apply(e.classList,VALID)`, not
++ * `e.classList.remove(VALID[0],VALID[1])`. DOMTokenList.remove takes its arguments
++ * positionally, so a two-argument form silently stops covering VALID_THEMES the moment a
++ * third theme is added -- the new value would never be stripped before the correct one is
++ * applied, leaving both classes on <html> at once. `.apply` spreads the whole array
++ * regardless of its length, so this line does not need to change again when VALID_THEMES
++ * does.
+  */
+-export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove(VALID[0],VALID[1]);e.classList.add(t);})();`;
++export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove.apply(e.classList,VALID);e.classList.add(t);})();`;
+```
+2026-08-17T18:04:43.294564Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+2026-08-17T18:04:44.851801Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+2026-08-17T18:04:46.395540Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path 'C:\\Users\\jasen\\.codex\\memories\\MEMORY.md' -Pattern 'SSTAC-Dashboard|Theme|TWG|ship'" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 244ms:
+?
+C:\Users\jasen\.codex\memories\MEMORY.md:134:# Task Group: SSTAC-Dashboard Wiki-KB deterministic runtime, ?
+Graphify/MCP, and semantic readiness?
+C:\Users\jasen\.codex\memories\MEMORY.md:136:applies_to: cwd=C:\Projects\SSTAC-Dashboard and detached Wiki runtime ?
+worktrees; reuse_rule=runtime-, receipt-, and candidate-specific; resolve the canonical served runtime from operations ?
+docs and receipts before relying on a checkout.?
+C:\Users\jasen\.codex\memories\MEMORY.md:142:- ?
+rollout_summaries/2026-08-08T21-15-17-VoVS-sstac_wiki_graphify_l3_review_and_pause.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\08\08\rollout-2026-08-08T14-15-1?
+7-019fe33a-eb1a-7ad0-a2aa-4ecebc69a4ec.jsonl, updated_at=2026-08-15T05:43:25+00:00, ?
+thread_id=019fe33a-eb1a-7ad0-a2aa-4ecebc69a4ec, REPINNED runtime verified; V8 reviewed; L3 safely paused)?
+C:\Users\jasen\.codex\memories\MEMORY.md:152:- ?
+rollout_summaries/2026-08-11T06-04-33-qQhn-wiki_graphify_mcp_r9_source_correction_partial.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\wiki-mcp-harness-20260809, rollout_path=C:\Users\jasen\.codex\sessions\2?
+026\08\10\rollout-2026-08-10T23-04-33-019fef6c-347d-7c60-90fc-cdcdb0876ab5.jsonl, ?
+updated_at=2026-08-12T05:41:02+00:00, thread_id=019fef6c-347d-7c60-90fc-cdcdb0876ab5, R8 frozen source-only; ?
+compatibility UNKNOWN)?
+C:\Users\jasen\.codex\memories\MEMORY.md:162:- ?
+rollout_summaries/2026-08-11T06-04-33-qQhn-wiki_graphify_mcp_r9_source_correction_partial.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\wiki-mcp-harness-20260809, rollout_path=C:\Users\jasen\.codex\sessions\2?
+026\08\10\rollout-2026-08-10T23-04-33-019fef6c-347d-7c60-90fc-cdcdb0876ab5.jsonl, ?
+updated_at=2026-08-12T05:41:02+00:00, thread_id=019fef6c-347d-7c60-90fc-cdcdb0876ab5, R9 incomplete after truncation ?
+and stopped Format-Hex loop)?
+C:\Users\jasen\.codex\memories\MEMORY.md:172:- ?
+rollout_summaries/2026-08-08T21-15-17-VoVS-sstac_wiki_graphify_l3_review_and_pause.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\08\08\rollout-2026-08-08T14-15-1?
+7-019fe33a-eb1a-7ad0-a2aa-4ecebc69a4ec.jsonl, updated_at=2026-08-15T05:43:25+00:00, ?
+thread_id=019fe33a-eb1a-7ad0-a2aa-4ecebc69a4ec, pause handoff created; no Stage A or AGY execution)?
+C:\Users\jasen\.codex\memories\MEMORY.md:295:# Task Group: SSTAC-Dashboard Wiki/Graphify bounded recovery and ?
+external-Mission-Control handoff?
+C:\Users\jasen\.codex\memories\MEMORY.md:297:applies_to: ?
+cwd=C:\Projects\SSTAC-Dashboard-worktrees\wiki-codex-recovery-20260808; reuse_rule=worktree- and candidate-specific; ?
+reverify Git, interpreter/AST, runtime, and MCP evidence before acceptance.?
+C:\Users\jasen\.codex\memories\MEMORY.md:303:- ?
+rollout_summaries/2026-08-09T01-20-54-8CsV-sstac_wiki_graphify_recovery_round3.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\wiki-codex-recovery-20260808, rollout_path=C:\Users\jasen\.codex\session?
+s\2026\08\08\rollout-2026-08-08T18-20-54-019fe41b-ca1d-7783-aed9-0f1c8c28eb49.jsonl, ?
+updated_at=2026-08-09T04:54:50+00:00, thread_id=019fe41b-ca1d-7783-aed9-0f1c8c28eb49, READY_FOR_EXTERNAL_MC; no GREEN)?
+C:\Users\jasen\.codex\memories\MEMORY.md:322:- Keep `CANDIDATE_UNVERIFIED / NOT_READY_FOR_SEMANTIC_OR_GRADUATION` ?
+until disposable MCP checks, all-EXTRACTED seed prerequisites, owner gates, and attended evidence succeed. Do not ?
+terminate processes when enumeration/ownership is denied. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:324:# Task Group: SSTAC-Dashboard Matrix Options stale-test repair and ?
+six-gate validation?
+C:\Users\jasen\.codex\memories\MEMORY.md:326:applies_to: ?
+cwd=C:\Projects\SSTAC-Dashboard-worktrees\matrix-gate-repair-20260808 and ?
+C:\Projects\SSTAC-Dashboard-worktrees\wiki-codex-recovery-20260808; reuse_rule=worktree- and ?
+current-contract-specific; inspect current production rendering before changing tests and do not infer publication ?
+authority.?
+C:\Users\jasen\.codex\memories\MEMORY.md:332:- ?
+rollout_summaries/2026-08-09T05-59-03-fYYC-sstac_matrix_options_test_repair_and_wiki_gate_correction.md ?
+(cwd=C:\Projects\SSTAC-Dashboard-worktrees\matrix-gate-repair-20260808, rollout_path=C:\Users\jasen\.codex\sessions\202?
+6\08\08\rollout-2026-08-08T22-59-03-019fe51a-737c-70b3-97f8-b56c38982426.jsonl, updated_at=2026-08-09T17:33:03+00:00, ?
+thread_id=019fe51a-737c-70b3-97f8-b56c38982426, exact three-test-file repair)?
+C:\Users\jasen\.codex\memories\MEMORY.md:342:- ?
+rollout_summaries/2026-08-09T05-59-03-fYYC-sstac_matrix_options_test_repair_and_wiki_gate_correction.md ?
+(cwd=C:\Projects\SSTAC-Dashboard-worktrees\matrix-gate-repair-20260808, rollout_path=C:\Users\jasen\.codex\sessions\202?
+6\08\08\rollout-2026-08-08T22-59-03-019fe51a-737c-70b3-97f8-b56c38982426.jsonl, updated_at=2026-08-09T17:33:03+00:00, ?
+thread_id=019fe51a-737c-70b3-97f8-b56c38982426, six gates passed on externally reviewed tip)?
+C:\Users\jasen\.codex\memories\MEMORY.md:352:- ?
+rollout_summaries/2026-08-09T05-59-03-fYYC-sstac_matrix_options_test_repair_and_wiki_gate_correction.md ?
+(cwd=C:\Projects\SSTAC-Dashboard-worktrees\wiki-codex-recovery-20260808, rollout_path=C:\Users\jasen\.codex\sessions\20?
+26\08\08\rollout-2026-08-08T22-59-03-019fe51a-737c-70b3-97f8-b56c38982426.jsonl, updated_at=2026-08-09T17:33:03+00:00, ?
+thread_id=019fe51a-737c-70b3-97f8-b56c38982426, publication blocked; one docs-gate test correction passed)?
+C:\Users\jasen\.codex\memories\MEMORY.md:550:- A failed `Get-CimInstance` query (`Access denied`) does not establish ?
+process absence. Use a bounded elevated read-only query if authorized; if process ownership cannot be proven, leave it ?
+alone. [Task 4]?
+C:\Users\jasen\.codex\memories\MEMORY.md:614:- The incomplete Wiki-KB review preserved a read-only Mission Control ?
+role and verified a heavily dirty Regulatory-Review checkout; do not clean, mutate, or terminate processes without ?
+ownership proof. Mission Control must classify live claims rather than trust launch contracts or handoffs. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:632:# Task Group: AI-CLI-Model-Registry PR #2 merge resolution and ?
+ownership-scoped process cleanup?
+C:\Users\jasen\.codex\memories\MEMORY.md:634:applies_to: ?
+cwd=C:\Projects\AI-CLI-Model-Registry-worktrees\mc-packet-hardening-20260805; reuse_rule=branch-, commit-, and ?
+process-provenance-specific; revalidate current PR/head and exact ownership before any action.?
+C:\Users\jasen\.codex\memories\MEMORY.md:654:- Ollama, PID ownership, process-custody, check_reference_freshness.ps1 ?
+-CheckOllamaDrift, timed out waiting for server to start, partial ancestry, leave Ollama stopped?
+C:\Users\jasen\.codex\memories\MEMORY.md:658:- when the user asked to clean only processes attributable to this ?
+execution and said they were "almost certain" Ollama was not launched by the session -> leave ambiguous shared Ollama ?
+and other services untouched unless end-to-end provenance proves ownership. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:668:- Symptom: a timed-out probe starts an Ollama launcher/server chain. ?
+Cause: timing and partial parentage were treated as conclusive ownership. Fix: kill only unquestionably owned ?
+wrappers; never kill Ollama app/server without complete end-to-end ancestry and explicit ownership. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:673:applies_to: ?
+cwd=C:\Projects\AI-CLI-Model-Registry-worktrees\mission-control-recovery-20260729T154532970Z; ?
+reuse_rule=checkout-specific prior-art assessment; recheck current ownership and implementation authority before reuse.?
+C:\Users\jasen\.codex\memories\MEMORY.md:698:scope: Replacement rollout evidence from August 2026 across ?
+Regulatory-Review, SSTAC-Dashboard, OpenHarness, and Process Custody. Use to avoid scope drift, wrong-lane recovery, ?
+and unbounded activation.?
+C:\Users\jasen\.codex\memories\MEMORY.md:716:- ?
+rollout_summaries/2026-08-04T18-42-12-JVUW-sstac_matrix_options_parking_recovery_and_commit.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\08\04\rollout-2026-08-04T11-42-1?
+2-019fce15-53f4-7d53-8a20-9d6e2a0c1636.jsonl, updated_at=2026-08-05T12:23:33+00:00, ?
+thread_id=019fce15-53f4-7d53-8a20-9d6e2a0c1636, parking docs committed locally)?
+C:\Users\jasen\.codex\memories\MEMORY.md:717:- ?
+rollout_summaries/2026-08-03T22-16-10-5zij-sstac_pr_readiness_push_gates_r16_evidence.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\08\03\rollout-2026-08-03T15-16-1?
+0-019fc9d7-37ef-79bc-a145-fb359495a14a.jsonl, updated_at=2026-08-05T01:06:37+00:00, ?
+thread_id=019fc9d7-37ef-79bc-a145-fb359495a14a, PR #770 created; merge remained owner-gated)?
+C:\Users\jasen\.codex\memories\MEMORY.md:718:- ?
+rollout_summaries/2026-07-31T01-44-54-m6nZ-sstac_matrix_options_solo_mission_control_agy_recovery.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=\\?\C:\Users\jasen\.codex\sessions\2026\07\30\rollout-2026-07-30T18-?
+44-54-019fb5d8-87f7-7120-8c76-ec7a6e680107.jsonl, updated_at=2026-08-05T04:41:20+00:00, ?
+thread_id=019fb5d8-87f7-7120-8c76-ec7a6e680107, correct solo-Mission-Control/AGY lane recovered)?
+C:\Users\jasen\.codex\memories\MEMORY.md:728:- ?
+rollout_summaries/2026-08-01T18-52-27-erIe-sstac_wiki_r10_custody_and_natural_night_gate.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\wiki-runtime-admission-isolation-r10-20260802, rollout_path=C:\Users\jas?
+en\.codex\sessions\2026\08\01\rollout-2026-08-01T11-52-27-019fbeab-a53e-7811-9674-e9ba665ef0f2.jsonl, ?
+updated_at=2026-08-05T04:46:07+00:00, thread_id=019fbeab-a53e-7811-9674-e9ba665ef0f2, starting-byte custody and ?
+NOT_YET_DUE stop)?
+C:\Users\jasen\.codex\memories\MEMORY.md:776:- Shipping protocol: exact commit/base/path identity; sequential gates; ?
+stop on first failure; non-force push; one CI observation; no merge without fresh owner approval for the exact ?
+PR/head/base. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:968:# Task Group: SSTAC-Dashboard Option C D2 Supabase execution and ?
+production-read-only verification?
+C:\Users\jasen\.codex\memories\MEMORY.md:971:applies_to: cwd=C:\Projects\SSTAC-Dashboard; reuse_rule=run- and ?
+authority-specific: recheck current hashes, project ref, owner directive, receipt path, environment, and publication ?
+authority; never repeat a spent one-shot apply or infer publication approval.?
+C:\Users\jasen\.codex\memories\MEMORY.md:977:- ?
+rollout_summaries/2026-08-01T18-12-30-7sN4-option_c_d2_execution_postapply_confirmation_r7_recovery.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\08\01\rollout-2026-08-01T11-12-3?
+0-019fbe87-0f52-7f60-ba3b-e40f7e0d360a.jsonl, updated_at=2026-08-02T23:03:50+00:00, ?
+thread_id=019fbe87-0f52-7f60-ba3b-e40f7e0d360a, D2 apply/confirmation and R7 offline recovery completed under ?
+fail-closed controls)?
+C:\Users\jasen\.codex\memories\MEMORY.md:990:- Use `C:\Projects\SSTAC-Dashboard\.venv\Scripts\python.exe`; bare ?
+`python` resolves to the wrong Hermes runtime. The controller's offline default returned ?
+`LOCAL_IDENTITY_GREEN_NO_DATABASE_CONTACT` and 24 controller unit tests passed. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1002:# Task Group: SSTAC Wiki R9/R10 review, N0 runtime auto-follow, and ?
+ownership-safe Mission Control cleanup?
+C:\Users\jasen\.codex\memories\MEMORY.md:1005:applies_to: cwd=C:\Projects\SSTAC-Dashboard; ?
+reuse_rule=revision-specific: never modify the dirty primary checkout; reverify PR/worktree/runtime hashes and ?
+explicit source-edit authority before action.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1011:- ?
+rollout_summaries/2026-08-01T04-49-42-PffJ-sstac_wiki_mission_control_r9_r10_migration_process_cleanup.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\31\rollout-2026-07-31T21-49-4?
+2-019fbba8-1479-7c60-bfea-7b0523f51ef3.jsonl, updated_at=2026-08-02T01:24:23+00:00, ?
+thread_id=019fbba8-1479-7c60-bfea-7b0523f51ef3, PR preparation/review partial; no process target)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1021:- ?
+rollout_summaries/2026-08-01T18-52-27-erIe-sstac_wiki_r10_custody_and_natural_night_gate.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\wiki-runtime-admission-isolation-r10-20260802, rollout_path=C:\Users\jas?
+en\.codex\sessions\2026\08\01\rollout-2026-08-01T11-52-27-019fbeab-a53e-7811-9674-e9ba665ef0f2.jsonl, ?
+updated_at=2026-08-05T04:46:07+00:00, thread_id=019fbeab-a53e-7811-9674-e9ba665ef0f2, R10 custody/natural-night gate)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1031:- ?
+rollout_summaries/2026-08-01T18-52-14-gdlv-sstac_wiki_autofollow_review_pr771.md (cwd=\\?\C:\Projects\SSTAC-Dashboard, ?
+rollout_path=C:\Users\jasen\.codex\sessions\2026\08\01\rollout-2026-08-01T11-52-14-019fbeab-707f-7f41-b235-0659d47cfef9?
+.jsonl, updated_at=2026-08-06T20:15:27+00:00, thread_id=019fbeab-707f-7f41-b235-0659d47cfef9, focused GREEN after ?
+adversarial correction rounds; no activation)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1041:- ?
+rollout_summaries/2026-08-01T18-52-14-gdlv-sstac_wiki_autofollow_review_pr771.md (cwd=\\?\C:\Projects\SSTAC-Dashboard, ?
+rollout_path=C:\Users\jasen\.codex\sessions\2026\08\01\rollout-2026-08-01T11-52-14-019fbeab-707f-7f41-b235-0659d47cfef9?
+.jsonl, updated_at=2026-08-06T20:15:27+00:00, thread_id=019fbeab-707f-7f41-b235-0659d47cfef9, PR merge-ready but ?
+owner-gated; exact owned-PID cleanup verified)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1049:- when the user asked to "assume SSTAC Wiki Mission Control ownership" ?
+without waiting for CI -> perform bounded read-only pre-merge preparation, not idle polling. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1061:- R10 verified starting bytes in ?
+`C:\Projects\SSTAC-Dashboard-worktrees\wiki-guardrail-pid-identity-20260801`; self-evidence before ?
+candidate/runtime/browser/Supabase work is a fail-closed gate. Do not claim Reviewer GREEN, commit, runtime admission, ?
+scheduler enablement, or AutoCommit authority from the packet. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1175:- when the user asked to "close out this session, clean up pids you are ?
+responsible for" -> establish exact PID/parent/command/session ownership before termination; shared or ambiguous ?
+processes stay untouched. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1184:- In Process Explorer, add `Parent PID` and `Command Line` using `Select ?
+Columns`; use paused/sorted CPU or Private Bytes to triage, then restore the process-tree view to trace ownership. ?
+`System Idle Process` is available CPU, not CPU consumed. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1187:- In the Regulatory-Review closeout, all subagents had completed and ?
+`OWNED_EXTERNAL_WORKERS=0`; `safe-cleanup-orphans.ps1` dry-run reported zero orphaned and zero suspicious candidates. ?
+An absent `OLLAMA_ACTIVE.lock` did not prove ownership of shared Ollama, which was left untouched. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1194:- Symptom: `Get-CimInstance Win32_Process` returns Access Denied or ?
+cleanup-report writing is denied. Fix: do not infer process absence/ownership from the failure; use bounded ?
+`Get-Process` plus dry-run evidence and preserve ambiguity. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1224:- when the user asked "clean up pids that you are responsible for" -> ?
+prove current-session ownership and liveness with exact markers/tree evidence; terminate nothing when task processes ?
+already exited. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1238:# Task Group: SSTAC-Dashboard Wiki-KB Mission Control recovery, Contract ?
+A merge, and activation handoff?
+C:\Users\jasen\.codex\memories\MEMORY.md:1241:applies_to: cwd=C:\Projects\SSTAC-Dashboard and ?
+C:\Projects\SSTAC-Dashboard-worktrees\wiki-contract-a-registration-20260731; reuse_rule=lane- and revision-specific: ?
+confirm the exact Wiki worktree, remote `main`, and owner gates before runtime or scheduler actions.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1247:- ?
+rollout_summaries/2026-07-31T01-45-57-7EYU-sstac_wiki_mission_control_recovery_post_merge_handoff.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\30\rollout-2026-07-30T18-45-5?
+7-019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08.jsonl, updated_at=2026-08-01T05:31:30+00:00, ?
+thread_id=019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08, correct lane recovered; Mission Control boundary preserved)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1257:- ?
+rollout_summaries/2026-07-31T01-45-57-7EYU-sstac_wiki_mission_control_recovery_post_merge_handoff.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\30\rollout-2026-07-30T18-45-5?
+7-019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08.jsonl, updated_at=2026-08-01T05:31:30+00:00, ?
+thread_id=019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08, PR #763 merged; repository-local successor handoff created)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1267:- ?
+rollout_summaries/2026-07-31T01-45-57-7EYU-sstac_wiki_mission_control_recovery_post_merge_handoff.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\30\rollout-2026-07-30T18-45-5?
+7-019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08.jsonl, updated_at=2026-08-01T05:31:30+00:00, ?
+thread_id=019fb5d9-7e1f-7380-b36f-1fb1c3a1fa08, no session-owned process remained; full review depth restored)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1282:- `docs/WIKI_KB_OPERATIONS_2026_07.md` is the operational authority. The ?
+dedicated Wiki worktrees/evidence are separate from Matrix Options; do not inspect or mutate another active lane ?
+without ownership confirmation. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1324:# Task Group: SSTAC-Dashboard Matrix Options PR #760 AGY governance, ?
+one-paste handoffs, and independent acceptance?
+C:\Users\jasen\.codex\memories\MEMORY.md:1327:applies_to: cwd=C:\Projects\SSTAC-Dashboard and ?
+C:\Projects\SSTAC-Dashboard-worktrees\agy-autonomy-bootstrap-20260730; reuse_rule=branch- and evidence-specific: ?
+recheck PR head/checks, worktree, mailbox, and actual changed tests before approval or merge.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1333:- ?
+rollout_summaries/2026-07-29T05-40-01-Ybr6-sstac_f2_plan_review_agy_controller_pr760_ci_blocked.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T22-40-0?
+1-019fac63-12e4-7641-ada9-8b4c9bdd68dc.jsonl, updated_at=2026-07-30T23:48:26+00:00, ?
+thread_id=019fac63-12e4-7641-ada9-8b4c9bdd68dc, PR #760 local GREEN but remote CI unresolved)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1343:- ?
+rollout_summaries/2026-07-31T01-44-54-m6nZ-sstac_matrix_options_solo_mission_control_agy_recovery.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=\\?\C:\Users\jasen\.codex\sessions\2026\07\30\rollout-2026-07-30T18-?
+44-54-019fb5d8-87f7-7120-8c76-ec7a6e680107.jsonl, updated_at=2026-08-05T04:41:20+00:00, ?
+thread_id=019fb5d8-87f7-7120-8c76-ec7a6e680107, correct Matrix Options AGY recovery)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1365:# Task Group: SSTAC-Dashboard Phase B restack, Wiki R8 recovery, and ?
+port-isolated six-gate verification?
+C:\Users\jasen\.codex\memories\MEMORY.md:1368:applies_to: cwd=C:\Projects\SSTAC-Dashboard and dedicated SSTAC ?
+worktrees; reuse_rule=checkout- and run-specific: verify explicit origin/main, exact patch, current environment, port ?
+ownership, receipts, and branch tip first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1374:- ?
+rollout_summaries/2026-07-29T05-59-41-Lzy6-sstac_phaseb_restack_port_isolated_gates_ready_for_push_revi.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T22-59-4?
+1-019fac75-11ba-71d0-9694-449951b42716.jsonl, updated_at=2026-07-30T23:40:13+00:00, ?
+thread_id=019fac75-11ba-71d0-9694-449951b42716, exact restack and six gates passed; no push/PR)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1384:- ?
+rollout_summaries/2026-07-29T15-43-27-Qyk2-sstac_mission_control_r8_process_safety_e2e_recovery.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\29\rollout-2026-07-29T08-43-2?
+7-019fae8b-86e9-7dd3-a52c-62a866e98502.jsonl, updated_at=2026-07-30T23:43:15+00:00, ?
+thread_id=019fae8b-86e9-7dd3-a52c-62a866e98502, R8 push/PR review readiness)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1406:# Task Group: SSTAC-Dashboard Phase B autonomous-executor adapter, ?
+gates, and owner-gated restack?
+C:\Users\jasen\.codex\memories\MEMORY.md:1409:applies_to: cwd=C:\Projects\SSTAC-Dashboard and ?
+C:\Projects\SSTAC-Dashboard-worktrees\codex-path-target-audit-phaseb-20260729T035746611Z; reuse_rule=run- and ?
+checkout-specific: recheck the actual launching shell, origin/main, exact patch/hash, worktree/junction state, and ?
+controller receipts before resuming.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1415:- ?
+rollout_summaries/2026-07-28T22-11-02-6bno-sstac_codex_adapter_phase1_parked_ready_for_review.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T15-11-0?
+3-019faac8-0495-73c0-a86d-1412639c7bb6.jsonl, updated_at=2026-07-29T05:56:27+00:00, ?
+thread_id=019faac8-0495-73c0-a86d-1412639c7bb6, adapter implementation and preserved Phase B evidence)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1425:- ?
+rollout_summaries/2026-07-29T05-30-39-ihh3-sstac_phaseb_gates_recovered_restack_pending.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\codex-path-target-audit-phaseb-20260729T035746611Z, rollout_path=C:\User?
+s\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T22-30-39-019fac5a-7cbd-7a43-942b-637c530c8eb5.jsonl, ?
+updated_at=2026-07-29T05:53:34+00:00, thread_id=019fac5a-7cbd-7a43-942b-637c530c8eb5, all six gates passed but ?
+restack/live canaries pending)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1435:- ?
+rollout_summaries/2026-07-29T05-49-37-45YQ-sstac_phaseb_restack_blocked_missing_build_environment.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T22-49-3?
+7-019fac6b-d9f4-7c82-b74e-f155a05a4110.jsonl, updated_at=2026-07-29T06:07:57+00:00, ?
+thread_id=019fac6b-d9f4-7c82-b74e-f155a05a4110, blocked before mutation because variables were absent in this ?
+launching session)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1450:- The canonical worktree is ?
+`C:\Projects\SSTAC-Dashboard-worktrees\codex-path-target-audit-phaseb-20260729T035746611Z`; the controller root is ?
+`C:\tmp\sstac-codex-phaseb-controller-20260729T035746611Z`. The Phase B patch is exactly three target files under ?
+`tools/codex/`; the preserved worktree's `node_modules` is a junction to the primary checkout, so recursive deletion ?
+is unsafe. [Task 1][Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1466:applies_to: cwd=C:\Projects\OpenHarness-dev; reuse_rule=lane- and ?
+authority-specific: recheck packet hashes, worktree/index, role environment, process ownership, and the current owner ?
+instruction; no repair or continuation of a terminal/parked packet without new authority.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1493:- when the user requested cleanup only for PIDs "that belong to this ?
+session" -> bind ownership to exact command/worktree and start time; leave similarly named pre-existing processes ?
+untouched. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1512:applies_to: ?
+cwd=C:\Projects\AI-CLI-Model-Registry-worktrees\process-custody-report-only-20260730; ?
+reuse_rule=branch/worktree-specific: revalidate baseline, 43-path manifest, review lanes, broker availability, and Git ?
+index ownership before any staging or commit.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1614:- ?
+rollout_summaries/2026-07-28T15-18-52-LpOx-openharness_mission_control_epa_route_validation_closeout.md ?
+(cwd=\\?\C:\Projects\OpenHarness-dev, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\28\rollout-2026-07-28T08-18-5?
+3-019fa94e-ab32-71a3-95e5-0aa7787437a9.jsonl, updated_at=2026-07-28T23:41:29+00:00, ?
+thread_id=019fa94e-ab32-71a3-95e5-0aa7787437a9, `LAUNCH_CUSTODY_RED` classification and ownership-scoped closeout)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1618:- yielded cell, native foreground, exit 124, LAUNCH_CUSTODY_RED, Access ?
+is denied, LAST_MESSAGE.txt, POST_LAUNCH_CUSTODY_MANIFEST.sha256, process ownership, docker inspect?
+C:\Users\jasen\.codex\memories\MEMORY.md:1624:- when the user approved PID cleanup -> attribute ownership ?
+conservatively and leave unrelated sessions and preserved evidence containers alone. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1631:- Process cleanup is ownership-scoped: never terminate by image ?
+name/broad process class, and preserve stopped evidence containers. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1667:- when the user says "you are mission control, not executor" -> Mission ?
+Control reviews, adjudicates, supervises, and ships; a separate bounded process executes implementation. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1781:# Task Group: SSTAC-Dashboard F2 cluster-identity plan review and ?
+fresh-session Mission Control migration?
+C:\Users\jasen\.codex\memories\MEMORY.md:1784:applies_to: cwd=C:\Projects\SSTAC-Dashboard and ?
+C:\Projects\SSTAC-Dashboard-worktrees\option-c-candidate-restack-20260727; reuse_rule=plan- and checkout-specific: ?
+recheck project guidance, worktree ownership, current source/SQL, CLI versions, branch pins, and owner authority ?
+before reuse.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1790:- ?
+rollout_summaries/2026-07-26T19-06-45-N0CI-sstac_mission_control_f2_plan_review_fresh_session_migration.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\26\rollout-2026-07-26T12-06-4?
+5-019f9fd2-91cb-7a81-94a5-5d033f3a8748.jsonl, updated_at=2026-07-29T06:02:26+00:00, ?
+thread_id=019f9fd2-91cb-7a81-94a5-5d033f3a8748, read-only context reconstruction and F2 handoff)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1800:- ?
+rollout_summaries/2026-07-26T19-06-45-N0CI-sstac_mission_control_f2_plan_review_fresh_session_migration.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\26\rollout-2026-07-26T12-06-4?
+5-019f9fd2-91cb-7a81-94a5-5d033f3a8748.jsonl, updated_at=2026-07-29T06:02:26+00:00, ?
+thread_id=019f9fd2-91cb-7a81-94a5-5d033f3a8748, architectural review and plan-correction requirements)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1810:- ?
+rollout_summaries/2026-07-26T19-06-45-N0CI-sstac_mission_control_f2_plan_review_fresh_session_migration.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\26\rollout-2026-07-26T12-06-4?
+5-019f9fd2-91cb-7a81-94a5-5d033f3a8748.jsonl, updated_at=2026-07-29T06:02:26+00:00, ?
+thread_id=019f9fd2-91cb-7a81-94a5-5d033f3a8748, fresh-session handoff and ownership-scoped cleanup)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1814:- CODEX_MISSION_CONTROL_HANDOFF_2026_07_29.md, ?
+CODEX_FRESH_MISSION_CONTROL_PROMPT_2026_07_29.md, FBB8BEA4, 2DE493C2, PID 38420, process ownership, no owned orphans?
+C:\Users\jasen\.codex\memories\MEMORY.md:1823:- Resolve a missing wiki through ?
+`SSTAC_WIKI_RUNTIME_ROOT=C:\Projects\SSTAC-Dashboard-worktrees\kb-runtime-6bb43b-2026-07-23`; use clean Option C ?
+worktree source inspection when the primary is dirty/stale. SSTAC startup stays read-only with object-pinned Git ?
+reads, monitored builds, six push gates, owner-only merge, and exact Supabase-write approval. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1827:- For process closeout, establish exact PID, parent, command-line, and ?
+session-path ownership first; infrastructure supporting a still-live session is not an orphan, and no worker ?
+descendant means no termination. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:1835:# Task Group: SSTAC-Dashboard primary recovery, selective owner-guidance ?
+recovery, and controlled application?
+C:\Users\jasen\.codex\memories\MEMORY.md:1838:applies_to: cwd=C:\Projects\SSTAC-Dashboard; ?
+reuse_rule=incident-specific: recheck refs, stash identity, manifests, hashes, and dirty state; apply only the ?
+explicitly authorized path-scoped bundle.?
+C:\Users\jasen\.codex\memories\MEMORY.md:1844:- ?
+rollout_summaries/2026-07-25T20-09-11-sWsn-sstac_primary_recovery_review_packet.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\25\rollout-2026-07-25T13-09-1?
+1-019f9ae5-6124-74c1-8628-295da43a7c87.jsonl, updated_at=2026-07-25T20:46:36+00:00, ?
+thread_id=019f9ae5-6124-74c1-8628-295da43a7c87, completed read-only packet)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1854:- ?
+rollout_summaries/2026-07-25T21-01-05-NzqI-sstac_selective_owner_guidance_recovery_and_apply.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\25\rollout-2026-07-25T14-01-0?
+5-019f9b14-e502-7e43-a0a9-bcc7366de14c.jsonl, updated_at=2026-07-25T22:16:58+00:00, ?
+thread_id=019f9b14-e502-7e43-a0a9-bcc7366de14c, four-file candidate bundle reviewed GREEN)?
+C:\Users\jasen\.codex\memories\MEMORY.md:1864:- ?
+rollout_summaries/2026-07-25T21-01-05-NzqI-sstac_selective_owner_guidance_recovery_and_apply.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\25\rollout-2026-07-25T14-01-0?
+5-019f9b14-e502-7e43-a0a9-bcc7366de14c.jsonl, updated_at=2026-07-25T22:16:58+00:00, ?
+thread_id=019f9b14-e502-7e43-a0a9-bcc7366de14c, hash-bound application passed after bounded LF/whitespace correction)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2126:- permission picker, codex.ps1, sandbox_workspace_write, ?
+workspace-write, on-request, Microsoft.PowerShell_profile.ps1, Get-CodexProjectPolicy, Regulatory-Review, ?
+SSTAC-Dashboard, writable_roots, network_access=true, mid-run steering?
+C:\Users\jasen\.codex\memories\MEMORY.md:2150:- when the user says "I don't want codex to have full autonomous ?
+workflow in all my projects, just specific ones, such as the regulatory review project, and not the sstac-dashboard ?
+project", keep autonomy and permission defaults project-specific instead of applying one policy across all ?
+`C:\Projects`. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2161:- Fresh Windows PowerShell 5.1 sessions load the wrapper and can call ?
+`Get-CodexProjectPolicy`; the verified split is `C:\Projects\Regulatory-Review` -> recommended `automation`, ?
+`C:\Projects\SSTAC-Dashboard` -> recommended `ask`. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2262:# Task Group: SSTAC-Dashboard CSRF production-origin hardening and ?
+verified closeout state?
+C:\Users\jasen\.codex\memories\MEMORY.md:2264:scope: Use for `C:\Projects\SSTAC-Dashboard` or nearby CSRF/security ?
+worktrees when the task is to fix production-origin allowlist behavior, validate a small but security-sensitive diff ?
+through the full local gate stack, or close out a branch without overstating remote CI state.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2265:applies_to: ?
+cwd=C:\Projects\SSTAC-Dashboard-worktrees\csrf-prod-origin-2026-07-14 and similar SSTAC-Dashboard security worktrees; ?
+reuse_rule=safe for similar CSRF/security fixes if the live canonical site URL behavior, local gate contract, and ?
+GitHub PR state are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2271:- ?
+rollout_summaries/2026-07-13T05-17-26-VZRi-sstac_csrf_production_origin_fix_and_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\12\rollout-2026-07-12T22-17-2?
+6-019f59e8-a2c8-7c00-aa1c-874bd3520104.jsonl, updated_at=2026-07-15T04:31:02+00:00, ?
+thread_id=019f59e8-a2c8-7c00-aa1c-874bd3520104, strongest source for the production-origin allowlist fix, Codex P2 ?
+finding, and full local-gate validation)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2281:- ?
+rollout_summaries/2026-07-13T05-17-26-VZRi-sstac_csrf_production_origin_fix_and_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\12\rollout-2026-07-12T22-17-2?
+6-019f59e8-a2c8-7c00-aa1c-874bd3520104.jsonl, updated_at=2026-07-15T04:31:02+00:00, ?
+thread_id=019f59e8-a2c8-7c00-aa1c-874bd3520104, strongest source for the closeout wording, `gh pr checks` fallback, ?
+and CI-pending boundary)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2291:- when the user says the work is theirs to leave untouched and asks for ?
+closeout, keep ownership boundaries explicit and do not touch unrelated open work while reporting status. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2310:# Task Group: SSTAC-Dashboard KB activation readiness, read-only ?
+preflight, and linked-worktree staging boundary?
+C:\Users\jasen\.codex\memories\MEMORY.md:2312:scope: Use for `C:\Projects\SSTAC-Dashboard` and related worktrees when ?
+the task is to verify KB runtime readiness, design or validate the read-only activation preflight, triage the ?
+KB/Top-50 queue by evidence, or diagnose linked-worktree staging failures without broadening scope.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2313:applies_to: cwd=C:\Projects\SSTAC-Dashboard plus ?
+`C:\Projects\SSTAC-Dashboard-worktrees\kb-runtime-af8db-2026-07-23`, ?
+`C:\Projects\SSTAC-Dashboard-worktrees\kb-activation-readiness-2026-07-23`, and ?
+`C:\tmp\sstac-option-c-phase2-2026-07-24`; reuse_rule=safe for similar KB activation-readiness, aggregate-publication ?
+draft, and worktree-staging work if the live baseline, expected changed paths, no-live-action boundary, and git-admin ?
+write permissions are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2319:- ?
+rollout_summaries/2026-07-23T04-31-43-Tik7-sstac_kb_activation_readiness_preflight_and_top50_triage.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\22\rollout-2026-07-22T21-31-4?
+3-019f8d3e-61df-7f93-afe0-366de94ce6ef.jsonl, updated_at=2026-07-23T15:32:19+00:00, ?
+thread_id=019f8d3e-61df-7f93-afe0-366de94ce6ef, strongest source for the detached exact-ref runtime audit, preflight ?
+design direction, and evidence-only Top-50 census)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2329:- ?
+rollout_summaries/2026-07-23T15-30-29-r4aQ-kb_activation_readiness_linked_worktree_staging_blocked.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\23\rollout-2026-07-23T08-30-2?
+9-019f8f99-811f-7f42-90a1-108fd11e95a8.jsonl, updated_at=2026-07-23T17:04:54+00:00, ?
+thread_id=019f8f99-811f-7f42-90a1-108fd11e95a8, strongest source for verification-first execution, the final preflight ?
+hardening loop, and canonical-runtime wording)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2339:- ?
+rollout_summaries/2026-07-23T15-30-29-r4aQ-kb_activation_readiness_linked_worktree_staging_blocked.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\23\rollout-2026-07-23T08-30-2?
+9-019f8f99-811f-7f42-90a1-108fd11e95a8.jsonl, updated_at=2026-07-23T17:04:54+00:00, ?
+thread_id=019f8f99-811f-7f42-90a1-108fd11e95a8, strongest source for the exact-path staging boundary, `index.lock` ?
+failure signature, and stand-down rule)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2343:- git add --, exact-path staging only, index.lock, ?
+C:\Projects\SSTAC-Dashboard\.git\worktrees\kb-activation-readiness-2026-07-23\index.lock, Permission denied, git admin ?
+write permission still missing, preserve the worktree exactly as-is?
+C:\Users\jasen\.codex\memories\MEMORY.md:2345:## Task 4: Commit, gate, and ship KB activation preflight as PR #750, ?
+outcome success?
+C:\Users\jasen\.codex\memories\MEMORY.md:2349:- ?
+rollout_summaries/2026-07-23T17-05-49-1wBu-sstac_kb_activation_pr750_option_c_phase2_checkpoint.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\kb-activation-readiness-2026-07-23, rollout_path=C:\Users\jasen\.codex\s?
+essions\2026\07\23\rollout-2026-07-23T10-05-49-019f8ff0-c608-7ac0-8a38-5ceffccb267c.jsonl, ?
+updated_at=2026-07-24T15:50:29+00:00, thread_id=019f8ff0-c608-7ac0-8a38-5ceffccb267c, confirmed shipped PR #750 and ?
+full local/remote gate outcome)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2359:- ?
+rollout_summaries/2026-07-23T17-05-49-1wBu-sstac_kb_activation_pr750_option_c_phase2_checkpoint.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard-worktrees\kb-activation-readiness-2026-07-23, rollout_path=C:\Users\jasen\.codex\s?
+essions\2026\07\23\rollout-2026-07-23T10-05-49-019f8ff0-c608-7ac0-8a38-5ceffccb267c.jsonl, ?
+updated_at=2026-07-24T15:50:29+00:00, thread_id=019f8ff0-c608-7ac0-8a38-5ceffccb267c, fallback draft worktree, ?
+focused-test result, and stop checkpoint)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2380:- The verified runtime baseline was `origin/main = ?
+af8db44051a807a5309b87f6265849c16d3f5484`, with detached runtime worktree ?
+`C:\Projects\SSTAC-Dashboard-worktrees\kb-runtime-af8db-2026-07-23`. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2389:- The reliable blocker signature is `fatal: Unable to create ?
+'C:/Projects/SSTAC-Dashboard/.git/worktrees/kb-activation-readiness-2026-07-23/index.lock': Permission denied`; when ?
+it appears, the issue is environment/permission, not code. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2390:- Commit `086c040d fix(kb): add activation readiness preflight` shipped ?
+as PR #750; the local gate sequence was `npm run lint`, `npx tsc --noEmit`, `npm run test:ci`, `npm run ?
+build:monitored:clean -- -TimeoutSeconds 360 -PollSeconds 10`, `npm run test:e2e`, and `npm run docs:gate`, with ?
+timestamped logs in `.tmp/gate-logs/`; GitHub CI reached terminal PASS. [Task 4]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2391:- Fresh SSTAC worktrees may need a junction to ?
+`C:\Projects\SSTAC-Dashboard\node_modules` and a copied ignored `.env.local` before build/e2e; this is environment ?
+repair only, with no tracked edits and no env-content inspection. [Task 4]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2405:- Symptom: Option C staging cannot create ?
+`C:/Projects/SSTAC-Dashboard/.git/worktrees/sstac-option-c-phase2-2026-07-24/index.lock`. Cause: linked-worktree git ?
+metadata needs primary-repo admin write access. Fix: stop and hand off rather than repeatedly retrying or broadening ?
+permissions; the requested worktree may contain partial untracked drafts and was intentionally not cleaned up. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2407:# Task Group: SSTAC-Dashboard executor continuity, Claude plan review, ?
+and ownership-scoped closeout cleanup?
+C:\Users\jasen\.codex\memories\MEMORY.md:2409:scope: Use for `C:\Projects\SSTAC-Dashboard` when an overnight executor ?
+is suffering approval churn, a Claude plan needs live-state review, or session closeout needs ownership-scoped cleanup.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2410:applies_to: cwd=C:\Projects\SSTAC-Dashboard and related worktrees; ?
+reuse_rule=permission settings are machine/session-specific; reuse plan-review and cleanup guidance only after ?
+rechecking live repo policy, `origin/main`, and ownership evidence.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2416:- ?
+rollout_summaries/2026-07-20T04-41-10-CIky-sstac_mission_control_live_pr_verification_and_supervised_ex.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\19\rollout-2026-07-19T21-41-1?
+0-019f7dd3-f2b6-71d0-a732-a4d6ee596b5a.jsonl, updated_at=2026-07-25T04:07:26+00:00, ?
+thread_id=019f7dd3-f2b6-71d0-a732-a4d6ee596b5a, live PR #703/#704 verification, standalone mission-control transfer, ?
+and supervised-worker boundary)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2420:- SSTAC-Dashboard, Matrix Options, origin/main, git ls-remote, gh api, ?
+proxyconnect tcp: dial tcp 127.0.0.1:9, PR #703, PR #704, PR #752, mission control, AGY, OpenCode, RUN_STATE.md, ?
+HEARTBEAT.log?
+C:\Users\jasen\.codex\memories\MEMORY.md:2426:- ?
+rollout_summaries/2026-07-15T15-18-49-4THl-sstac_dashboard_fresh_session_plan_review_and_nondestructive.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\15\rollout-2026-07-15T08-18-4?
+9-019f665b-f1bf-76d2-9ac1-c77bcaa3ae9b.jsonl, updated_at=2026-07-20T05:03:27+00:00, ?
+thread_id=019f665b-f1bf-76d2-9ac1-c77bcaa3ae9b, strongest source for fresh-session planning, active-session conflict ?
+mapping, owner-gate parking, and non-destructive closeout)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2430:- SSTAC-Dashboard, Matrix Options, fresh session, active-session ?
+conflict map, Plan Mode, gh api, proxyconnect tcp: dial tcp 127.0.0.1:9, owner-unblock packet, PR #703, PR #704, PR ?
+#705, non-destructive closeout, resume prompt?
+C:\Users\jasen\.codex\memories\MEMORY.md:2436:- ?
+rollout_summaries/2026-07-17T16-06-34-xCtp-sstac_plan_review_v1_19_green_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\17\rollout-2026-07-17T09-06-3?
+4-019f70d4-5f93-72f2-a596-e3a386598d2f.jsonl, updated_at=2026-07-17T16:51:58+00:00, ?
+thread_id=019f70d4-5f93-72f2-a596-e3a386598d2f, strongest source for the off-repo plan review, live gate-authority ?
+check, and narrow Phase 0-3.5 GREEN boundary)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2440:- jolly-marinating-piglet.md, adversarial-plan-review, ship-protocols, ?
+stop-here, phase-3.5, off-repo Claude plan, worktree inventory, behind 296, 6-gate push suite, live gate authority?
+C:\Users\jasen\.codex\memories\MEMORY.md:2446:- ?
+rollout_summaries/2026-07-07T16-32-38-zrR0-sstac_dashboard_claude_plan_review_and_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\07\rollout-2026-07-07T09-32-3?
+8-019f3d6c-a4f1-76e1-9b46-13921aecfc0a.jsonl, updated_at=2026-07-13T05:24:53+00:00, ?
+thread_id=019f3d6c-a4f1-76e1-9b46-13921aecfc0a, strongest source for the PR #620 live-state correction, DRA baseline ?
+update, and production-write guard)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2456:- ?
+rollout_summaries/2026-07-17T16-06-34-xCtp-sstac_plan_review_v1_19_green_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\17\rollout-2026-07-17T09-06-3?
+4-019f70d4-5f93-72f2-a596-e3a386598d2f.jsonl, updated_at=2026-07-17T16:51:58+00:00, ?
+thread_id=019f70d4-5f93-72f2-a596-e3a386598d2f, strongest source for the read-only closeout hygiene pass, `Get-Job` ?
+check, and leave-foreign-processes-alone boundary)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2457:- ?
+rollout_summaries/2026-07-07T16-32-38-zrR0-sstac_dashboard_claude_plan_review_and_closeout.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\07\rollout-2026-07-07T09-32-3?
+8-019f3d6c-a4f1-76e1-9b46-13921aecfc0a.jsonl, updated_at=2026-07-13T05:24:53+00:00, ?
+thread_id=019f3d6c-a4f1-76e1-9b46-13921aecfc0a, strongest source for the read-only cleanup sweep, `Access denied` WMI ?
+limit, and leave-foreign-processes-alone boundary)?
+C:\Users\jasen\.codex\memories\MEMORY.md:2461:- Get-CimInstance Win32_Process, Access denied, Get-Process node python, ?
+Get-Job, temp cleanup, ownership-scoped cleanup, no owned process, no owned temp file, leave foreign processes alone?
+C:\Users\jasen\.codex\memories\MEMORY.md:2475:- when the user says the fresh session is "mission control and leading ?
+its own way" and "don't box it in with micro-prompts," transfer standalone ownership rather than making it report ?
+small deliverables back to the retiring session. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2483:- when the user asks `time to close this session, any processes or temp ?
+files to clean up - that you are responsible for`, do a bounded ownership-scoped cleanup sweep and leave foreign ?
+processes alone. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2499:- In this SSTAC lane, ?
+`C:\Users\jasen\.claude\skills\ship-protocols\SKILL.md` is the live authority for the 6-gate push suite. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2504:- `Get-CimInstance Win32_Process` can return `Access denied`; use ?
+read-only `Get-Process node, python` and leave foreign processes untouched if ownership is unproven. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2510:- Symptom: a fresh mission-control session receives micro-prompts from ?
+the retiring session. Cause: handoff was treated as task courier rather than ownership transfer. Fix: provide one ?
+standalone handoff/launch contract and let the new mission control lead. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2514:- Symptom: closeout cleanup becomes speculative process termination. ?
+Cause: WMI ownership inspection failed with `Access denied`, or process names alone were treated as proof of ?
+ownership. Fix: use a read-only inventory and do not kill or delete anything whose ownership is not proven. [Task 5]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2520:applies_to: cwd=C:\Projects\Regulatory-Review; reuse_rule=safe for ?
+similar RR KB wiki plan-review and closeout-cleanup work if the current plan text, live repo docs/worktree state, ?
+OpenHarness graphify/tooling files, and process ownership evidence are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2559:- Symptom: a plan sounds safe to approve broadly, but code-only and ?
+docs/semantic scope are actually split. Cause: the review treated the phase list as one package instead of checking ?
+where tracked docs machinery still lives. Fix: inspect the tracked scope and phase ownership directly, then preserve a ?
+narrow `Phase 0-3.5 only` verdict until the docs machinery truly moves. [Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2561:- Symptom: cleanup drifts into blanket repo or process actions after a ?
+review. Cause: the checkout is extremely dirty and process names alone look suggestive. Fix: run preflight/orphan ?
+scans first, identify attributable processes/paths, and avoid delete/move/kill actions unless ownership is proven or ?
+the user scopes the cleanup target. [Task 2]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2623:- Closeout hygiene for this lane meant one lock/process inventory pass, ?
+no termination without explicit ownership proof, and preservation of all artifacts and scratch files. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2752:scope: Use for `C:\Projects\Regulatory-Review` when the task is to ?
+orient Codex to the repo workflow, adversarially review a multi-hour Claude plan against live state, investigate Codex ?
+process ownership safely, or recover and close out a disrupted engine-v2 session.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2753:applies_to: cwd=C:\Projects\Regulatory-Review; reuse_rule=safe for ?
+similar autonomy/review/recovery work if the current `AGENTS.md`, `CLAUDE.md`, live `origin/master`, PR state, and ?
+process ownership evidence are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:2783:- codex.exe, Win32_Process, Access denied, PID 31068, PID 11064, PID ?
+105020, Windows Terminal, orphan detection, process ownership, do not kill live session?
+C:\Users\jasen\.codex\memories\MEMORY.md:2812:- when the user asks whether a PID is from the current session or ?
+reports "that killed my other codex session", treat process ownership as sensitive and do not kill Codex/Claude/AGY ?
+processes unless orphan evidence is strong or the owner explicitly names the PID. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:2964:- ?
+rollout_summaries/2026-07-07T16-19-41-4PYJ-openharness_dev_claude_autonomy_plan_implementation_and_prom.md ?
+(cwd=\\?\C:\Projects\OpenHarness-dev, rollout_path=C:\Users\jasen\.codex\sessions\2026\07\07\rollout-2026-07-07T09-19-4?
+1-019f3d60-ca70-7532-bcac-3e15e42e1091.jsonl, updated_at=2026-07-12T21:31:57+00:00, ?
+thread_id=019f3d60-ca70-7532-bcac-3e15e42e1091, strongest source for the outer/private vs inner/public split, live ?
+repo orientation, and current remote relationships)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3054:- when working in OpenHarness-dev, do not infer Hermes is authorized ?
+because bare `python` resolves to its venv; pin the reviewed Python 3.11 interpreter and establish process ownership ?
+before termination. [ad-hoc note]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3065:- H1 was already complete in SSTAC-Dashboard and Regulatory-Review, so ?
+the correct outcome after the workstream-conflict check was to do nothing and move on to the next bounded batch. [Task ?
+4]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3094:- Symptom: a Python process is assumed to be Hermes-related or safe to ?
+terminate because `python` came first on PATH. Cause: interpreter resolution was treated as process ownership. Fix: ?
+bind any process to exact PID, start time, executable path, command/run evidence, and progress before terminating it; ?
+never use bare `python` in autonomous OpenHarness commands, prompts, launchers, or tests. [ad-hoc note]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3156:applies_to: cwd=C:\Projects\Regulatory-Review and adjacent ?
+`C:\Projects\Regulatory-Review-worktrees\engine-v2*` WARP runs; reuse_rule=safe for similar WARP runtime/closure ?
+triage if the live output directory, stage-specific logs, roadmap or resume docs, and process ownership are rechecked ?
+first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:3178:## Task 3: Cleanup boundary and process ownership during closeout, ?
+outcome success?
+C:\Users\jasen\.codex\memories\MEMORY.md:3186:- process ownership, subagents, leave others alone, unrelated processes, ?
+read-only closeout, OLLAMA_ACTIVE.lock, cleanup boundary?
+C:\Users\jasen\.codex\memories\MEMORY.md:3203:- In this environment, many long-lived Python/cmd/Ollama processes may ?
+belong to other concurrent sessions; ownership must be verified before any termination. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3210:- Symptom: a closeout cleanup request gets interpreted as permission to ?
+trim unrelated background work. Cause: process ownership was not proven. Fix: identify session/subagent provenance ?
+first and clean only confidently owned PIDs or child trees. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3214:scope: Use for `C:\Projects\SSTAC-Dashboard` or nearby SSTAC/engine-v2 ?
+collaboration lanes when the task is to split work across Claude/AGY/Codex/OpenCode, preserve a live BN-RRM run, or ?
+decide what OpenCode can safely do from this environment.?
+C:\Users\jasen\.codex\memories\MEMORY.md:3215:applies_to: cwd=C:\Projects\SSTAC-Dashboard plus adjacent engine-v2 ?
+handoff lanes; reuse_rule=safe for similar multi-tool orchestration and live-run monitoring if the current ?
+repo-visible runbooks, OpenCode runtime behavior, and heartbeat/log state are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:3221:- ?
+rollout_summaries/2026-06-28T13-18-58-Mikp-sstac_opencode_delegation_and_bnrrm_monitoring.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\28\rollout-2026-06-28T06-18-5?
+8-019f0e62-1ce9-7803-92fe-3db8cc22f829.jsonl, updated_at=2026-06-30T19:25:54+00:00, ?
+thread_id=019f0e62-1ce9-7803-92fe-3db8cc22f829, strongest source for the SSTAC/engine-v2 role split and runbook ?
+boundaries)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3231:- ?
+rollout_summaries/2026-06-28T13-18-58-Mikp-sstac_opencode_delegation_and_bnrrm_monitoring.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\28\rollout-2026-06-28T06-18-5?
+8-019f0e62-1ce9-7803-92fe-3db8cc22f829.jsonl, updated_at=2026-06-30T19:25:54+00:00, ?
+thread_id=019f0e62-1ce9-7803-92fe-3db8cc22f829, strongest source for `delegate-bundle`, PS 5.1 wrapper compatibility, ?
+and headless OpenCode failure boundaries)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3241:- ?
+rollout_summaries/2026-06-28T13-18-58-Mikp-sstac_opencode_delegation_and_bnrrm_monitoring.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\28\rollout-2026-06-28T06-18-5?
+8-019f0e62-1ce9-7803-92fe-3db8cc22f829.jsonl, updated_at=2026-06-30T19:25:54+00:00, ?
+thread_id=019f0e62-1ce9-7803-92fe-3db8cc22f829, strongest source for worklist-aware BN-RRM monitoring and live-run ?
+handoff discipline)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3251:- ?
+rollout_summaries/2026-06-28T13-18-58-Mikp-sstac_opencode_delegation_and_bnrrm_monitoring.md ?
+(cwd=\\?\C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\28\rollout-2026-06-28T06-18-5?
+8-019f0e62-1ce9-7803-92fe-3db8cc22f829.jsonl, updated_at=2026-06-30T19:25:54+00:00, ?
+thread_id=019f0e62-1ce9-7803-92fe-3db8cc22f829, strongest source for the practical `interactive OpenCode only` rule ?
+from this Codex sandbox)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3267:- `SSTAC_AI_PIPELINE.md` now captures the working split for ?
+`SSTAC-Dashboard`: Claude as orchestrator, AGY as workhorse, Codex as reviewer, and OpenCode as scout/review-prep. ?
+[Task 1]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3286:# Task Group: SSTAC-Dashboard Matrix Options gate recovery, ?
+merged-catalog validation, and surface-only audits?
+C:\Users\jasen\.codex\memories\MEMORY.md:3288:scope: Use for `C:\Projects\SSTAC-Dashboard` Matrix Options lanes where ?
+the task is to recover from Windows gate friction, audit the merged catalog pool without editing files, or validate ?
+the merged post-merge state in a dirty shared checkout.?
+C:\Users\jasen\.codex\memories\MEMORY.md:3289:applies_to: cwd=C:\Projects\SSTAC-Dashboard and related SSTAC worktrees; ?
+reuse_rule=safe for similar review, gate, and handoff work if the live checkout/worktree, current handoff docs, and ?
+current build/test state are rechecked first.?
+C:\Users\jasen\.codex\memories\MEMORY.md:3295:- ?
+rollout_summaries/2026-05-26T17-09-52-nEqu-sstac_matrix_options_gate_mode_and_claude_handoff_recovery.md ?
+(cwd=C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\05\26\rollout-2026-05-26T10-09-52-01?
+9e6543-a43c-74f0-9b9f-081b0caa9432.jsonl, updated_at=2026-05-26T18:50:09+00:00, ?
+thread_id=019e6543-a43c-74f0-9b9f-081b0caa9432, strongest source for Gate Mode, one-check CI policy, and Claude Code ?
+delegation)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3305:- ?
+rollout_summaries/2026-05-31T19-01-58-hwX3-sstac_matrix_options_value_integrity_audit.md ?
+(cwd=C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\05\31\rollout-2026-05-31T12-02-06-01?
+9e7f6a-12f7-7671-89bf-1c82d7263085.jsonl, updated_at=2026-05-31T19:10:08+00:00, ?
+thread_id=019e7f6a-12f7-7671-89bf-1c82d7263085, surface-only merged-pool audit of `parameter_values.json` + ?
+`human_health_trv_values.json`)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3315:- ?
+rollout_summaries/2026-06-01T12-14-06-9SRs-sstac_dashboard_matrix_options_post_merge_holistic_review.md ?
+(cwd=C:\Projects\SSTAC-Dashboard, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\01\rollout-2026-06-01T05-14-13-01?
+9e831b-052e-78f1-afd6-687ab4b11752.jsonl, updated_at=2026-06-01T12:22:14+00:00, ?
+thread_id=019e831b-052e-78f1-afd6-687ab4b11752, GREEN post-merge validation of shared candidate grouping, read-only ?
+default selection, and IRIS snapshot coverage)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3517:- ?
+rollout_summaries/2026-06-27T21-46-33-GWtD-engine_v2_warp_run_verification_and_cleanup_boundary.md ?
+(cwd=\\?\C:\Projects\Regulatory-Review, rollout_path=C:\Users\jasen\.codex\sessions\2026\06\27\rollout-2026-06-27T14-46?
+-33-019f0b0c-741f-75e1-a45a-d06b98fa4d95.jsonl, updated_at=2026-07-01T04:45:37+00:00, ?
+thread_id=019f0b0c-741f-75e1-a45a-d06b98fa4d95, strongest source for process-ownership cleanup boundaries and ?
+leave-others-alone wording)?
+C:\Users\jasen\.codex\memories\MEMORY.md:3521:- process ownership, subagents, leave others alone, unrelated processes, ?
+cleanup boundary, provenance-based cleanup, read-only closeout?
+C:\Users\jasen\.codex\memories\MEMORY.md:3589:- during process triage, default to a read-only inventory first and ?
+avoid any kill action until the live-session ownership boundary is clear. [Task 3]?
+C:\Users\jasen\.codex\memories\MEMORY.md:3610:- For conservative process triage, many long-lived Python/cmd/Ollama ?
+processes may belong to other concurrent sessions; verify ownership first and clean only processes attributable to the ?
+current session or its subagents. [Task 3]?
+?
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content 'src/components/TWGReviewPortal.tsx'" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 192ms:
+'use client';?
+?
+import React, { useState, useMemo, useEffect, useRef } from 'react';?
+import MathRenderer from './MathRenderer';?
+import { cn } from '@/utils/cn';?
+import { createClient } from '@/lib/supabase/client';?
+?
+interface TWGReviewPortalProps {?
+  finalDraftContent: string;?
+  showLeftPanel?: boolean;?
+  showRightPanel?: boolean;?
+}?
+?
+// v6 bumped storage key because the underlying document was completely replaced again (Section 7 and Appendices).?
+//?
+// v5 bumped storage key because the underlying document was completely replaced again.?
+//?
+// v4 bumped storage key because the underlying document structure was?
+// completely replaced with the revised Conceptual Rough Draft content,?
+// changing from 14 sections down to 15 new ones.?
+//?
+// v3 bumped storage key because the rendered Phase 2 Options Paper expanded?
+// from 7 H2 sections (1.0-7.0) to 11 (adds Appendices A-D) and Section 7.0?
+// was rewritten with the Smart Stagger phasing -- any stale v2 draft for?
+// Section 7 would critique content that no longer exists. v2 drafts are?
+// intentionally discarded on first mount, matching the v1->v2 pattern.?
+//?
+// v2 bumped storage key because internal state keys changed from heading-text?
+// to idx-stable form (v1 drafts are intentionally discarded on first mount).?
+const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';?
+const MAX_CHARS = 5000;?
+const GENERAL_KEY = 'general';?
+?
+// Reserved JS prototype-pollution keys. Never accepted as user-controlled map?
+// keys, even though all maps are created with Object.create(null) below.?
+const RESERVED_KEYS = new Set(['__proto__', 'constructor', 'prototype']);?
+?
+type HeadingEntry = {?
+  idx: number;?
+  text: string;?
+  storageKey: string;   // stable internal key, safe to use as object index?
+  displayLabel: string; // user-visible label, disambiguated on duplicates?
+};?
+?
+// Build a plain object whose prototype chain is null, so user-controlled keys?
+// cannot mutate Object.prototype and lookups never walk up to it.?
+function makeBareRecord<T>(): Record<string, T> {?
+  return Object.create(null) as Record<string, T>;?
+}?
+?
+export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = true, showRightPanel = true }: TWGReviewPortalProps) {?
+  const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());?
+  const [isSubmitted, setIsSubmitted] = useState(false);?
+  const [isSubmitting, setIsSubmitting] = useState(false);?
+  const contentRef = useRef<HTMLDivElement | null>(null);?
+?
+  useEffect(() => {?
+    if (typeof window === 'undefined') return;?
+    try {?
+      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);?
+      if (!raw) return;?
+      const parsed = JSON.parse(raw);?
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;?
+      const sanitized = makeBareRecord<string>();?
+      for (const [k, v] of Object.entries(parsed)) {?
+        if (RESERVED_KEYS.has(k)) continue;?
+        if (typeof v !== 'string') continue;?
+        sanitized[k] = v.slice(0, MAX_CHARS);?
+      }?
+      setComments(sanitized);?
+    } catch {?
+      /* corrupt draft - ignore */?
+    }?
+  }, []);?
+?
+  const headings = useMemo<HeadingEntry[]>(() => {?
+    if (!finalDraftContent) return [];?
+    const regex = /^##\s+(.*)$/gm;?
+    const texts: string[] = [];?
+    let match;?
+    while ((match = regex.exec(finalDraftContent)) !== null) {?
+      texts.push(match[1].trim());?
+    }?
+    // Disambiguate duplicate heading text. Use Object.create(null) so a heading?
+    // literally named "__proto__" cannot poison the counts map.?
+    const counts = makeBareRecord<number>();?
+    for (const t of texts) counts[t] = (counts[t] ?? 0) + 1;?
+    const seen = makeBareRecord<number>();?
+    return texts.map((text, idx) => {?
+      const n = (seen[text] = (seen[text] ?? 0) + 1);?
+      const displayLabel = counts[text] > 1 ? `${text} (#${n})` : text;?
+      return { idx, text, storageKey: `h::${idx}`, displayLabel };?
+    });?
+  }, [finalDraftContent]);?
+?
+  const scrollToHeading = (idx: number) => {?
+    // Scope to the rendered draft container so unrelated H2s in the page?
+    // chrome (e.g., "Final Master Draft") don't shift indices.?
+    const root = contentRef.current;?
+    if (!root) return;?
+    const target = root.querySelectorAll('h2')[idx];?
+    target?.scrollIntoView({ behavior: 'smooth', block: 'start' });?
+  };?
+?
+  const handleCommentChange = (key: string, value: string) => {?
+    if (RESERVED_KEYS.has(key)) return;?
+    const clipped = value.length > MAX_CHARS ? value.slice(0, MAX_CHARS) : value;?
+    setComments(prev => {?
+      const next = makeBareRecord<string>();?
+      for (const [k, v] of Object.entries(prev)) {?
+        if (!RESERVED_KEYS.has(k)) next[k] = v;?
+      }?
+      next[key] = clipped;?
+      return next;?
+    });?
+  };?
+?
+  const handleSave = () => {?
+    if (typeof window === 'undefined') return;?
+    try {?
+      // JSON.stringify on a null-prototype object still serializes own keys.?
+      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));?
+      alert('Progress saved to local storage.');?
+    } catch {?
+      alert('Unable to save draft locally (storage quota or access denied).');?
+    }?
+  };?
+?
+  // Map internal storage keys to user-readable labels for the DB payload.?
+  // The admin view renders payload keys as section headers, so we keep them?
+  // human-readable and disambiguate duplicate H2s with "(#n)" suffixes.?
+  // Returns a normal {}-prototype object (not null-prototype) so the JSONB?
+  // serializer and downstream consumers see a vanilla shape.?
+  const buildCommentsPayload = (): Record<string, string> => {?
+    const out: Record<string, string> = {};?
+    const general = comments[GENERAL_KEY];?
+    if (typeof general === 'string' && general.length > 0) {?
+      out['General'] = general;?
+    }?
+    for (const h of headings) {?
+      const v = comments[h.storageKey];?
+      if (typeof v === 'string' && v.length > 0 && !RESERVED_KEYS.has(h.displayLabel)) {?
+        out[h.displayLabel] = v;?
+      }?
+    }?
+    return out;?
+  };?
+?
+  const handleSubmit = async () => {?
+    if (isSubmitting) return;?
+    setIsSubmitting(true);?
+    try {?
+      const supabase = createClient();?
+?
+      // Verified user check: getUser() round-trips to the auth server,?
+      // unlike getSession() which trusts local cookie state.?
+      const { data: { user }, error: authError } = await supabase.auth.getUser();?
+      if (authError || !user) {?
+        alert('You must be logged in to submit a review.');?
+        return;?
+      }?
+?
+      // matrix_reviews has no UNIQUE(user_id) constraint, so onConflict can't be?
+      // used. The RLS INSERT WITH CHECK (auth.uid() = user_id) and UPDATE USING?
+      // (auth.uid() = user_id) policies are the authoritative gates. Look up the?
+      // user's existing row and UPDATE in place, otherwise INSERT a new one, so?
+      // re-submits don't accumulate duplicate rows. The isSubmitting guard above?
+      // prevents the same client from racing itself between SELECT and INSERT.?
+      const { data: existing, error: lookupError } = await supabase?
+        .from('matrix_reviews')?
+        .select('id')?
+        .eq('user_id', user.id)?
+        .order('created_at', { ascending: false })?
+        .limit(1)?
+        .maybeSingle();?
+?
+      if (lookupError) {?
+        console.error('Error looking up existing review:', lookupError);?
+        alert('There was an error submitting your review.');?
+        return;?
+      }?
+?
+      const payload = buildCommentsPayload();?
+      const writeResult = existing?
+        ? await supabase?
+            .from('matrix_reviews')?
+            .update({ status: 'SUBMITTED', poll_data: {}, comments_data: payload })?
+            .eq('id', existing.id)?
+        : await supabase?
+            .from('matrix_reviews')?
+            .insert({ user_id: user.id, status: 'SUBMITTED', poll_data: {}, comments_data: payload });?
+?
+      if (writeResult.error) {?
+        console.error('Error submitting review:', writeResult.error);?
+        alert('There was an error submitting your review.');?
+        return;?
+      }?
+?
+      try {?
+        window.localStorage.removeItem(DRAFT_STORAGE_KEY);?
+      } catch {?
+        /* non-fatal */?
+      }?
+      setIsSubmitted(true);?
+    } finally {?
+      setIsSubmitting(false);?
+    }?
+  };?
+?
+  if (isSubmitted) {?
+    return (?
+      <div className="flex flex-col items-center justify-center p-12 bg-emerald-50 dark:bg-emerald-900/20 border border-emerald-200 dark:border-emerald-800 rounded-2xl animate-in fade-in zoom-in duration-300 w-full h-full">?
+        <svg className="w-16 h-16 text-emerald-500 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">?
+          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />?
+        </svg>?
+        <h2 className="text-2xl font-bold text-emerald-900 dark:text-emerald-300 mb-2">Review Submitted</h2>?
+        <p className="text-emerald-700 dark:text-emerald-400 text-center max-w-lg mb-6">?
+          Your comprehensive review has been logged and flagged for author consideration. Thank you!?
+        </p>?
+        <button?
+          onClick={() => setIsSubmitted(false)}?
+          className="px-4 py-2 bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"?
+        >?
+          Return to Draft?
+        </button>?
+      </div>?
+    );?
+  }?
+?
+  return (?
+    <>?
+      {/* Left Sidebar (TOC). Hidden in print so window.print() produces a?
+          chrome-free PDF of just the paper body. */}?
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800 flex flex-col print:hidden', showLeftPanel ? 'w-80' : 'w-0')}>?
+        <div className="p-6 border-b border-slate-200 dark:border-slate-800 shrink-0">?
+          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">TABLE OF CONTENTS</h3>?
+        </div>?
+        <div className="p-6 overflow-y-auto flex-1">?
+          <ul className="space-y-3">?
+            {headings.map((h) => (?
+              <li key={h.storageKey}>?
+                <button?
+                  type="button"?
+                  onClick={() => scrollToHeading(h.idx)}?
+                  className="w-full text-left text-sm font-medium text-slate-600 dark:text-slate-400 hover:text-sky-600 dark:hover:text-sky-400 cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 rounded"?
+                >?
+                  {h.displayLabel}?
+                </button>?
+              </li>?
+            ))}?
+          </ul>?
+        </div>?
+      </div>?
+?
+      {/* Center Content (Document). In print, override the scroll?
+          container so the full paper expands instead of clipping to the?
+          visible scrollport. */}?
+      <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:flex-none print:overflow-visible print:h-auto print:p-0">?
+        <div className="max-w-4xl mx-auto space-y-8 print:max-w-none">?
+          {/* Header card with title + Download (PDF) action. The whole card?
+              is hidden in print so the PDF starts at the paper body. */}?
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">?
+            <div>?
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Final Master Draft</h2>?
+              <p className="text-sm text-slate-500 dark:text-slate-400">Review the concatenated policy options below.</p>?
+            </div>?
+            <button?
+              type="button"?
+              onClick={() => {?
+                if (typeof window !== 'undefined') window.print();?
+              }}?
+              aria-label="Download Final Master Draft as PDF (opens browser print dialog)"?
+              className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"?
+            >?
+              <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">?
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />?
+              </svg>?
+              Download Draft (PDF)?
+            </button>?
+          </div>?
+          <div ref={contentRef}>?
+            {/* Round-2 P2-2: document column is bg-white dark:bg-slate-950. */}?
+            <MathRenderer content={finalDraftContent || ''} fadeFrom="from-white dark:from-slate-950" />?
+          </div>?
+        </div>?
+      </div>?
+?
+      {/* Right Drawer (Comments). Hidden in print -- reviewer drafts are?
+          working notes, not part of the published PDF. */}?
+      <div className={cn('transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-white dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col relative print:hidden', showRightPanel ? 'w-96' : 'w-0')}>?
+        <div className="p-5 border-b border-slate-200 dark:border-slate-800 shrink-0 bg-slate-50 dark:bg-slate-900/50">?
+          <h3 className="font-bold text-slate-900 dark:text-white flex items-center space-x-2 mb-3">?
+            <svg className="w-5 h-5 text-sky-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">?
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />?
+            </svg>?
+            <span>Section Comments</span>?
+          </h3>?
+          <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">?
+            Reviews can be saved and updated at any time. Submitting simply flags your review as ready for author consideration.?
+          </p>?
+        </div>?
+?
+        <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">?
+          <div className="space-y-2">?
+            <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>?
+            <textarea?
+              value={comments[GENERAL_KEY] || ''}?
+              onChange={(e) => handleCommentChange(GENERAL_KEY, e.target.value)}?
+              maxLength={MAX_CHARS}?
+              placeholder="Overall thoughts on the methodology..."?
+              className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"?
+              rows={4}?
+            />?
+            <div className={cn("text-right text-xs mt-1 transition-colors", (comments[GENERAL_KEY]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>?
+              {comments[GENERAL_KEY]?.length || 0} / {MAX_CHARS}?
+            </div>?
+          </div>?
+?
+          {headings.map((h) => (?
+            <div key={h.storageKey} className="space-y-2">?
+              <label className="text-sm font-bold text-slate-900 dark:text-slate-100">Comments on {h.displayLabel}</label>?
+              <textarea?
+                value={comments[h.storageKey] || ''}?
+                onChange={(e) => handleCommentChange(h.storageKey, e.target.value)}?
+                maxLength={MAX_CHARS}?
+                placeholder={`Specific feedback for ${h.displayLabel}...`}?
+                className="w-full p-3 text-sm bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-700 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-sky-500 resize-y"?
+                rows={3}?
+              />?
+              <div className={cn("text-right text-xs mt-1 transition-colors", (comments[h.storageKey]?.length || 0) >= MAX_CHARS ? "text-rose-500 font-bold" : "text-slate-500")}>?
+                {comments[h.storageKey]?.length || 0} / {MAX_CHARS}?
+              </div>?
+            </div>?
+          ))}?
+        </div>?
+?
+        {/* Sticky Bottom Bar */}?
+        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 flex gap-3 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">?
+          <button?
+            onClick={handleSave}?
+            className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"?
+          >?
+            Save Draft?
+          </button>?
+          <button?
+            onClick={handleSubmit}?
+            disabled={isSubmitting}?
+            className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"?
+          >?
+            {isSubmitting ? 'Submitting...' : 'Submit Review'}?
+          </button>?
+        </div>?
+      </div>?
+    </>?
+  );?
+}?
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content 'src/contexts/ThemeContext.tsx'" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 181ms:
+'use client';?
+?
+import React, { createContext, useContext, useEffect, useState } from 'react';?
+?
+type Theme = 'light' | 'dark';?
+?
+interface ThemeContextType {?
+  theme: Theme;?
+  toggleTheme: () => void;?
+  setTheme: (theme: Theme) => void;?
+}?
+?
+const ThemeContext = createContext<ThemeContextType | undefined>(undefined);?
+?
+export function ThemeProvider({ children }: { children: React.ReactNode }) {?
+  const [theme, setThemeState] = useState<Theme>('light');?
+  const [mounted, setMounted] = useState(false);?
+?
+  // Initialize theme from localStorage; default to 'light' (not OS preference)?
+  useEffect(() => {?
+    const savedTheme = localStorage.getItem('theme') as Theme;?
+    const initialTheme = savedTheme || 'light';?
+?
+    setThemeState(initialTheme);?
+    setMounted(true);?
+  }, []);?
+?
+  // Update document class and localStorage when theme changes?
+  useEffect(() => {?
+    if (mounted) {?
+      // Apply theme class to both html and body elements?
+      document.documentElement.classList.remove('light', 'dark');?
+      document.documentElement.classList.add(theme);?
+      document.body.classList.remove('light', 'dark');?
+      document.body.classList.add(theme);?
+      localStorage.setItem('theme', theme);?
+    }?
+  }, [theme, mounted]);?
+?
+  const toggleTheme = () => {?
+    setThemeState(prev => prev === 'light' ? 'dark' : 'light');?
+  };?
+?
+  const setTheme = (newTheme: Theme) => {?
+    setThemeState(newTheme);?
+  };?
+?
+  // Prevent hydration mismatch by not rendering until mounted?
+  if (!mounted) {?
+    return (?
+      <ThemeContext.Provider value={{ theme: 'light', toggleTheme: () => {}, setTheme: () => {} }}>?
+        <div className="min-h-screen bg-white dark:bg-slate-900 text-slate-900 dark:text-white">?
+          {children}?
+        </div>?
+      </ThemeContext.Provider>?
+    );?
+  }?
+?
+  return (?
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>?
+      {children}?
+    </ThemeContext.Provider>?
+  );?
+}?
+?
+export function useTheme() {?
+  const context = useContext(ThemeContext);?
+  if (context === undefined) {?
+    // During SSR, return a default theme to prevent hydration mismatches?
+    if (typeof window === 'undefined') {?
+      return { theme: 'light', toggleTheme: () => {}, setTheme: () => {} };?
+    }?
+    throw new Error('useTheme must be used within a ThemeProvider');?
+  }?
+  return context;?
+}?
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content 'src/components/ThemeToggle.tsx'" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 178ms:
+'use client';?
+?
+import { useTheme } from '@/contexts/ThemeContext';?
+?
+export default function ThemeToggle() {?
+  const { theme, toggleTheme } = useTheme();?
+?
+  return (?
+    <button?
+      onClick={toggleTheme}?
+      className="relative inline-flex h-10 w-10 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-800 text-slate-900 dark:text-slate-100 hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 focus:ring-offset-2 dark:focus:ring-offset-slate-900"?
+      aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}?
+      title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}?
+    >?
+      {theme === 'light' ? (?
+        // Moon icon for dark mode?
+        <svg?
+          className="h-5 w-5"?
+          fill="none"?
+          stroke="currentColor"?
+          viewBox="0 0 24 24"?
+          xmlns="http://www.w3.org/2000/svg"?
+        >?
+          <path?
+            strokeLinecap="round"?
+            strokeLinejoin="round"?
+            strokeWidth={2}?
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"?
+          />?
+        </svg>?
+      ) : (?
+        // Sun icon for light mode?
+        <svg?
+          className="h-5 w-5"?
+          fill="none"?
+          stroke="currentColor"?
+          viewBox="0 0 24 24"?
+          xmlns="http://www.w3.org/2000/svg"?
+        >?
+          <path?
+            strokeLinecap="round"?
+            strokeLinejoin="round"?
+            strokeWidth={2}?
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"?
+          />?
+        </svg>?
+      )}?
+    </button>?
+  );?
+}?
+
+codex
+The save write order is correct for clean current metadata, and the bottom-up parent-branch merge plan is a legitimate exact-tip CI strategy rather than a gate bypass; the force-with-lease is also recoverable and appropriately scoped. However, stale or malformed provenance can still erase the disclosure, dismissal before saving is not durable, and the theme correction does not close the pre-mount accessibility defect, so the candidate should not land unchanged.
+
+Full review comments:
+
+- [P1] Do not trust an unpaired truncation marker -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\components\TWGReviewPortal.tsx:212-217
+  If a legacy 5000-character draft already has `twg-matrix-review-draft-v6-truncation = {}` from the pre-correction build, or either provenance record is malformed, this path treats the non-null truncation key as authoritative and does not re-derive the at-limit field. The unknown notice then disappears and the submit gate can pass clipped regulatory text. This is falsified only if all deployed `{}` records are guaranteed to have a valid paired unknown-provenance record or a migration repairs older storage before this code runs.
+
+- [P2] Persist dismissal independently of at-limit re-derivation -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\components\TWGReviewPortal.tsx:357-365
+  When a legacy at-limit draft has no truncation key, dismissing the unknown-provenance notice writes `{}` to the new key but leaves the truncation key absent; the next mount enters the `rawT === null` branch and unconditionally adds `atLimitKeys`, so the dismissed alert reappears. The regression test only dismisses after Save Draft has created the truncation record, so it misses the no-save path. This is falsified by a no-save dismiss followed by remount remaining undisclosed.
+
+- [P1] Seed the pre-mount theme context from the bootstrap result -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\contexts\ThemeContext.tsx:81-82
+  With no cookie and `localStorage.theme = 'dark'`, the bootstrap sets `<html class="dark">` before React renders, but the provider still exposes `DEFAULT_THEME` until its mount effect; `ThemeToggle` therefore announces `Switch to dark mode` and renders the moon on an already-dark page. This change only replaces two `light` fallback literals inside `seedTheme`, so it does not change that pre-mount value; the restored RTL test also observes after effects have flushed and cannot catch the accessibility defect. This is falsified only if the provider's initial context value is shown to use the seeded theme before the effect runs.
+The save write order is correct for clean current metadata, and the bottom-up parent-branch merge plan is a legitimate exact-tip CI strategy rather than a gate bypass; the force-with-lease is also recoverable and appropriately scoped. However, stale or malformed provenance can still erase the disclosure, dismissal before saving is not durable, and the theme correction does not close the pre-mount accessibility defect, so the candidate should not land unchanged.
+
+Full review comments:
+
+- [P1] Do not trust an unpaired truncation marker -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\components\TWGReviewPortal.tsx:212-217
+  If a legacy 5000-character draft already has `twg-matrix-review-draft-v6-truncation = {}` from the pre-correction build, or either provenance record is malformed, this path treats the non-null truncation key as authoritative and does not re-derive the at-limit field. The unknown notice then disappears and the submit gate can pass clipped regulatory text. This is falsified only if all deployed `{}` records are guaranteed to have a valid paired unknown-provenance record or a migration repairs older storage before this code runs.
+
+- [P2] Persist dismissal independently of at-limit re-derivation -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\components\TWGReviewPortal.tsx:357-365
+  When a legacy at-limit draft has no truncation key, dismissing the unknown-provenance notice writes `{}` to the new key but leaves the truncation key absent; the next mount enters the `rawT === null` branch and unconditionally adds `atLimitKeys`, so the dismissed alert reappears. The regression test only dismisses after Save Draft has created the truncation record, so it misses the no-save path. This is falsified by a no-save dismiss followed by remount remaining undisclosed.
+
+- [P1] Seed the pre-mount theme context from the bootstrap result -- C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816\src\contexts\ThemeContext.tsx:81-82
+  With no cookie and `localStorage.theme = 'dark'`, the bootstrap sets `<html class="dark">` before React renders, but the provider still exposes `DEFAULT_THEME` until its mount effect; `ThemeToggle` therefore announces `Switch to dark mode` and renders the moon on an already-dark page. This change only replaces two `light` fallback literals inside `seedTheme`, so it does not change that pre-mount value; the restored RTL test also observes after effects have flushed and cannot catch the accessibility defect. This is falsified only if the provider's initial context value is shown to use the seeded theme before the effect runs.

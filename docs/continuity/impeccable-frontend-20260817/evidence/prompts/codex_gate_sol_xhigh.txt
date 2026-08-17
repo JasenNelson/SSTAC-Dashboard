@@ -1,0 +1,1089 @@
+FINAL SHIP-GATE REVIEW of a frozen, fully-gated merge candidate for SSTAC-Dashboard
+(Next.js 15 / React 19 / TypeScript regulatory-science dashboard).
+
+Do NOT review the working tree -- it is clean and there is nothing uncommitted. Use your tools to
+read the exact commits named below. Every SHA is reachable from this repository. Read the real code;
+a verdict formed only from this prompt is worthless to me and I will discard it.
+
+    git diff 120c6f9a..ae678fdf        STACK A, everything it lands on main
+    git diff 120c6f9a..887d9265        STACK B, everything it lands on main
+    git diff 04c9cc10..ae678fdf        the two correction commits on stack A (the newest bytes)
+    git diff 45293f1a..887d9265        the correction commit on stack B (the newest bytes)
+
+THE CANDIDATE
+
+    origin/main   120c6f9a   (verified unmoved)
+    STACK A       ae678fdf   = main + PR#783 f0f56330 + PR#784 c41f1463 + PR#785 87b8d2c8 + PR#788
+    STACK B       887d9265   = main + PR#782 6caaa34e + PR#787
+
+Both stacks fast-forward from current origin/main. They share ZERO changed files (35 vs 11). Their
+union merges clean (merge-tree 597a380f, exit 0). #787 and #788 are LOCAL ONLY and not yet pushed;
+#787's history was rebased and needs --force-with-lease against remote lease 3a5eb26f.
+
+GATE EVIDENCE (six gates each: lint, tsc, unit, build, e2e, docs gate)
+
+    ae678fdf  lint 0 | tsc clean | unit 6871 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 167 passed / 0 failed, 32 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+    887d9265  lint 0 | tsc clean | unit 6847 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 208 passed / 0 failed, 25 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+
+Do NOT run the test suite, the build, or playwright yourself -- on this Windows box that derails a
+review for environment reasons. Review by READING. The gate transcripts above are the runtime
+evidence. Use your tools freely to read source, tests, git history and config.
+
+WHAT I NEED ADJUDICATED. Be adversarial and specific; cite file:line.
+
+1. THE CORRECTIONS. Three P1 defects were found in PR#788 and fixed across commits 16281814 and
+   ae678fdf. Verify each is genuinely closed on EVERY path, and that the fixes introduced nothing:
+   (a) `unknownProvenanceKeys` in src/components/TWGReviewPortal.tsx was derived at mount only when
+       the truncation key was ABSENT, and was never persisted. A legacy draft (exactly MAX_CHARS
+       long with no truncation key -- the deployed build has maxLength={5000}, so this population is
+       real) raised an "unknown amount of text may be missing" notice; the user pressed Save Draft;
+       an empty {} truncation record was written; the next mount took the rawT !== null branch,
+       discarded the at-limit keys, and the disclosure was gone forever -- after which the submit
+       gate passed and possibly-clipped regulatory review text could be submitted with no
+       disclosure at all. The component's own comment declares that a present-but-empty {} record is
+       a POSITIVE statement that nothing was lost and must keep meaning exactly that.
+       Fix: a third localStorage key persisting the unknown-provenance set independently.
+   (b) The same disclosure was also erased by a FAILED save (records written before the draft, so a
+       throwing draft write left the poison behind), and the code's own comment justifying that
+       ordering was factually wrong for this population.
+   (c) The cancelled-submit note rendered inside an absolute-positioned bottom bar with no height
+       bound, against a fixed pb-32 (128px) reservation, occluding the very Dismiss controls the
+       note instructs the reviewer to use -- and nothing else clears the record.
+   Specifically check the WRITE ORDER at TWGReviewPortal.tsx around lines 400-430: the intent is
+   antidote (unknown-provenance) BEFORE poison (truncation) BEFORE draft, with any failure aborting
+   the save so no resumable-but-undisclosed draft can exist. Is that ordering actually correct and
+   actually sufficient? Is there any remaining sequence -- save, failed save, dismiss, submit
+   success, submit failure, corrupt or malformed stored value, a second tab -- that still ends with
+   a legacy at-limit draft resumable with its disclosure erased?
+
+2. TEST HONESTY. This lane has a recorded history of green suites coexisting with defects that HID a
+   correct regulatory value rather than corrupting it. For each new or restored test in the four
+   ranges above, ask what single production line you would have to change to make it fail. Name any
+   test that cannot fail the bug it claims to guard. Note that jsdom has no layout engine, so the
+   geometry fix in (c) can only be asserted as a class-level contract -- judge whether that contract
+   is at least the right one and whether the arithmetic in the comment above the scroll container is
+   correct against the real Tailwind class values.
+
+3. A DISAGREEMENT I NEED SETTLED. An earlier strong review concluded PR#782 was "self-consistent and
+   safe to merge now". Two later reviewers concluded that is WRONG: #782 ships a synchronous
+   pre-paint bootstrap that can set <html class="dark"> from localStorage, while ThemeContext still
+   hands consumers DEFAULT_THEME ('light') until its mount effect runs, so ThemeToggle announces
+   "Switch to dark mode" and draws a moon on an already-dark page -- a WCAG 4.1.2 accessible-name
+   defect that main does not currently have. #787's seedTheme is what closes it. Read the code and
+   tell me which reading it supports, and therefore whether #782 and #787 MUST land as one coupled
+   unit rather than separately.
+
+4. THE MERGE PLAN -- this is the part I most want attacked. `.github/workflows/ci.yml` declares
+   `on: pull_request: branches: [main, develop]` with NO `types:` key, so it uses the defaults
+   opened/synchronize/reopened. Consequences I believe follow, please confirm or refute each:
+   - #782 and #783 (base main) have the four required contexts green: Lint & TypeScript Check,
+     Unit Tests, Production Build, E2E Tests.
+   - #784, #785, #787, #788 have base = another feature branch, so ci.yml has NEVER run on them;
+     they carry only GitGuardian plus two docs gates.
+   - Retargeting a stacked PR to main emits `edited`, which is NOT a default type, so the required
+     contexts would never fire and the PR would sit permanently blocked. There is no
+     workflow_dispatch on ci.yml.
+   Branch protection on main (read live): strict=false (no up-to-date requirement), required
+   contexts exactly the four above, no required approving reviews, enforce_admins=false,
+   required_linear_history=false, allow_force_pushes=false. Feature branches are UNPROTECTED and
+   there are no rulesets.
+   Given all that, I intend to land each stack by merging bottom-up INTO THE PARENT BRANCH, so that
+   only the two base-main PRs ever merge into main:
+     STACK B:  merge #787 into feat/section-b-wave0-20260815 -> that push fires `synchronize` on
+               #782 whose base IS main, so the four required contexts run on the exact combined
+               content -> then merge #782 into main. #782 and #787 therefore land ATOMICALLY, which
+               eliminates any window where main carries the WCAG defect from item 3.
+     STACK A:  merge #788 into feat/deferred-triage-20260816, then #785 into
+               feat/section-b-wavea-20260816, then #784 into feat/mo-batch2-20260816 -> that fires
+               `synchronize` on #783 (base main) so the required contexts run on the full stack ->
+               then merge #783 into main.
+   The alternative is to retarget each child to main and close+reopen it to fire `reopened`.
+   Attack both. Which is safer, which preserves the stacked history and the meaning of CI, what
+   breaks in each, and is there a failure mode where main ends up half-landed? Is merging a PR into
+   an unprotected parent branch to make a protected-branch check run on the combined content a
+   legitimate practice here or a gate bypass in disguise? I care about that question specifically.
+
+5. FORCE-PUSH SAFETY. #787 must be published with
+   --force-with-lease=feat/theme-cookie-20260816:3a5eb26f. The pre-rebase commit 3a5eb26f is
+   preserved locally under tag p787-prerebase-3a5eb26f, and 3a5eb26f is NOT an ancestor of the new
+   tip so an ordinary push genuinely cannot work. main is never force-pushed. Is anything unsafe or
+   recoverable-only-with-difficulty here?
+
+6. SHIP READINESS. Is there anything in either stack that should block landing today? Deliberately
+   OUT of scope, already owner-deferred, do not re-report: the statistical TREATMENT choice for a
+   row whose censoring status is unresolved; cross-tab concurrent save pairing a clipped draft with
+   an empty truncation record; four named BN-RRM findings; 26 remaining audit findings.
+
+OUTPUT CONTRACT. For every finding give severity (P0 blocks landing / P1 fix before landing /
+P2 follow-up / P3 note), exact file:line, the concrete failure scenario with inputs and the wrong
+output, and what would falsify your own claim. Then answer items 1-6 in order. Then end with exactly
+one line: VERDICT: GREEN or VERDICT: RED. RED means something must change before this lands.
+
+=======================================================================
+IMPORTANT -- HOW TO WORK IN THIS SANDBOX (read before using any tool)
+=======================================================================
+Your tool router in this environment REJECTS git commands ("The executor may not
+inspect or mutate Git") and REJECTS compound/pipelined PowerShell wrappers
+("Explicit interpreter and shell wrappers can bypass..."). A previous attempt at
+this exact review burned its entire turn retrying blocked commands and produced
+no review. Do NOT run git. Do NOT chain commands with ';' or '|'.
+
+Everything you need is INLINE BELOW. If you want to read one additional whole
+file for context, a single plain read of one path works. The authoritative
+current contents of the two changed source files are on disk at:
+  src/components/TWGReviewPortal.tsx      (PR#788, at tip ae678fdf)
+  src/lib/theme.ts                        (PR#787, at tip 887d9265 -- NOTE: this
+                                           worktree is checked out at PR#785, so
+                                           theme.ts here may NOT match; rely on
+                                           the inline diff for #787, not the file)
+Read those only if the inline diffs leave a question open.
+
+The .github/workflows/ci.yml trigger block, verbatim, is:
+
+    on:
+      push:
+        branches: [main, develop]
+      pull_request:
+        branches: [main, develop]
+
+There is no `types:` key anywhere in that file and no workflow_dispatch.
+
+### INLINE DIFF 1 -- PR#788 corrections: git diff 04c9cc10..ae678fdf
+```diff
+diff --git a/src/components/TWGReviewPortal.tsx b/src/components/TWGReviewPortal.tsx
+index 0ceb0a15..19932693 100644
+--- a/src/components/TWGReviewPortal.tsx
++++ b/src/components/TWGReviewPortal.tsx
+@@ -42,6 +42,21 @@ const DRAFT_STORAGE_KEY = 'twg-matrix-review-draft-v6';
+ // of the NEW document that happens to share the same positional index. Deriving from the draft key
+ // means any future draft-key bump automatically retires the matching truncation record too.
+ const TRUNCATION_STORAGE_KEY = DRAFT_STORAGE_KEY + '-truncation';
++// Unknown-provenance keys (see unknownProvenanceKeys below) live under their OWN key, for the
++// same additive reason TRUNCATION_STORAGE_KEY does not share the draft key's shape, and derived
++// from DRAFT_STORAGE_KEY for the same reason: so a future document-version bump retires this
++// record too, instead of leaving it to be read back against a different document.
++//
++// This key is SEPARATE from TRUNCATION_STORAGE_KEY, not folded into it, because the two records
++// mean different things and must not be able to erase one another. TRUNCATION_STORAGE_KEY's
++// present-but-empty `{}` is a positive statement, from the CURRENT build, that nothing was lost
++// -- see the comment above the restore effect's `rawT === null` check. If unknown-provenance
++// keys were stored inside that same object, the very first Save Draft after mount would write
++// `{}` for truncatedBy (nothing NEWLY clipped) and silently overwrite -- and permanently lose --
++// the unknown-provenance flag for a legacy field that was never re-derived from string shape
++// again once a truncation record exists. A separate key means writing an empty truncatedBy
++// record can never erase a nonempty unknown-provenance one.
++const UNKNOWN_PROVENANCE_STORAGE_KEY = DRAFT_STORAGE_KEY + '-unknown-provenance';
+ const MAX_CHARS = 5000;
+ const GENERAL_KEY = 'general';
+ 
+@@ -127,13 +142,42 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+       // of the pre-provenance clip this component exists to catch. There is no way to tell
+       // which, so it is reported as unknown, never folded into a count and never reported as
+       // zero.
++      // Unknown-provenance keys recorded on a PRIOR save (see UNKNOWN_PROVENANCE_STORAGE_KEY
++      // above). Read unconditionally, before the rawT branch below, because it applies on BOTH
++      // branches: a {} truncation record only means "the CURRENT build found nothing NEW to
++      // report right now" -- it says nothing about a legacy unknown-provenance flag a PRIOR save
++      // already recorded for a field this mount is not re-deriving from string shape. Validated
++      // with the same defensive shape as the truncation record: own keys only (guaranteed by
++      // JSON.parse into a plain object), string keys, reserved keys rejected. A member's value
++      // must be exactly `true`; anything else in the stored record is dropped rather than
++      // trusted.
++      const persistedUnknown = makeBareRecord<true>();
++      try {
++        const rawU = window.localStorage.getItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
++        if (rawU !== null) {
++          const parsedU = JSON.parse(rawU);
++          if (parsedU && typeof parsedU === 'object' && !Array.isArray(parsedU)) {
++            for (const [k, v] of Object.entries(parsedU)) {
++              if (RESERVED_KEYS.has(k)) continue;
++              if (v !== true) continue;
++              persistedUnknown[k] = true;
++            }
++          }
++        }
++      } catch {
++        /* corrupt unknown-provenance record - ignore, the draft itself is still usable */
++      }
++
+       const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
+       if (rawT === null) {
+-        if (atLimitKeys.length > 0) {
+-          const unknown = makeBareRecord<true>();
+-          for (const k of atLimitKeys) unknown[k] = true;
+-          setUnknownProvenanceKeys(unknown);
+-        }
++        // Do NOT gate this branch's unknown set on atLimitKeys alone -- a persisted
++        // unknown-provenance record must surface even if this particular restore does not
++        // itself land any field exactly at MAX_CHARS (e.g. the reviewer has since shortened
++        // it), because the loss it is unknown, not proven absent.
++        const unknown = makeBareRecord<true>();
++        for (const k of atLimitKeys) unknown[k] = true;
++        for (const k of Object.keys(persistedUnknown)) unknown[k] = true;
++        if (Object.keys(unknown).length > 0) setUnknownProvenanceKeys(unknown);
+         if (Object.keys(restoredTruncation).length > 0) setTruncatedBy(restoredTruncation);
+         return;
+       }
+@@ -168,6 +212,11 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+         merged[k] = Math.max(merged[k] ?? 0, v);
+       }
+       if (Object.keys(merged).length > 0) setTruncatedBy(merged);
++      // The persisted unknown-provenance set applies here too (see the comment above where
++      // persistedUnknown is read). The at-limit re-derivation stays gated on rawT === null,
++      // exactly as before -- this does not weaken that; it only surfaces what a PRIOR save
++      // already recorded under its own key, independent of whatever the truncation record says.
++      if (Object.keys(persistedUnknown).length > 0) setUnknownProvenanceKeys(persistedUnknown);
+     } catch {
+       /* corrupt draft - ignore */
+     }
+@@ -285,24 +334,41 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+   // handleDismissTruncation because the two can be true for the same field at once (a legacy
+   // at-limit draft that the reviewer then edits into fresh overflow), and dismissing one must
+   // not silently dismiss the other.
++  //
++  // Unlike truncatedBy, this ALSO writes UNKNOWN_PROVENANCE_STORAGE_KEY immediately, rather than
++  // waiting for the next Save Draft. Reason: a legacy at-limit field is re-derived as
++  // unknown-provenance on every mount for which the truncation key is still absent (see the
++  // restore effect's rawT === null branch) -- that re-derivation does not depend on whether a
++  // Save has ever happened. If dismissal only updated in-memory state, a reviewer who dismisses
++  // without an intervening Save would see the notice reappear on the very next remount, which is
++  // not a dismissal at all. Best-effort: a write failure here does not block the dismissal from
++  // applying for the rest of this session (there is no draft at stake, unlike handleSave).
+   const handleDismissUnknownProvenance = (key: string) => {
+     setUnknownProvenanceKeys(prev => {
+       const next = makeBareRecord<true>();
+       for (const [k, v] of Object.entries(prev)) {
+         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
+       }
++      if (typeof window !== 'undefined') {
++        try {
++          window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(next));
++        } catch {
++          /* best-effort persistence; the in-memory dismissal above still applies */
++        }
++      }
+       return next;
+     });
+   };
+ 
+   const handleSave = () => {
+     if (typeof window === 'undefined') return;
+-    // Two INDEPENDENT writes, not one shared try. A single try around both meant a failure on
+-    // the second write (truncation provenance) reported "Unable to save draft locally" even
+-    // though the draft itself had already been written -- misinforming the reviewer about
+-    // whether their text is safe, AND leaving a persisted draft with stale/absent provenance,
+-    // silently reintroducing the exact silent-loss defect this component exists to prevent.
+-    // ORDER MATTERS, and it is the opposite of the obvious one. Provenance is written FIRST.
++    // Three INDEPENDENT writes, not one shared try. A single try around all of them meant a
++    // failure on a later write (truncation or unknown-provenance) reported "Unable to save draft
++    // locally" even though the draft itself had already been written -- misinforming the
++    // reviewer about whether their text is safe, AND leaving a persisted draft with
++    // stale/absent provenance, silently reintroducing the exact silent-loss defect this
++    // component exists to prevent. ORDER MATTERS, and it is the opposite of the obvious one:
++    // BOTH provenance records are written FIRST, before the draft.
+     //
+     // An earlier revision wrote the draft first and the provenance second, on the reasoning that
+     // the draft is the important artifact. That created a silent-loss path: if the draft write
+@@ -312,10 +378,40 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+     // loss and writes the truncated comment with no confirmation -- exactly the defect this
+     // component exists to prevent, reached through the save path.
+     //
+-    // Writing provenance first inverts the failure: if provenance cannot be stored, NO resumable
+-    // draft is created, so there is no draft that could later be submitted unwarned. The reverse
+-    // orphan -- provenance stored with no draft -- is inert, because the restore effect reads the
+-    // draft first and returns early when there is none.
++    // Writing both provenance records first inverts the failure: if either cannot be stored, NO
++    // resumable draft is created, so there is no draft that could later be submitted unwarned.
++    // The reverse orphan -- provenance stored with no draft -- is inert ONLY when no draft
++    // already existed before this save: the restore effect reads the draft first and returns
++    // early when there is none. That claim does NOT extend to a save that fails while a PRIOR
++    // (e.g. legacy, pre-provenance-build) draft is already sitting in storage: the draft write
++    // below failing leaves that old draft untouched and very much present, so the restore effect
++    // proceeds past it on the next mount. Before UNKNOWN_PROVENANCE_STORAGE_KEY existed, that
++    // path silently discarded any unknown-provenance flag the reviewer had already been shown
++    // for that old draft, because nothing durable recorded it. Persisting it here is what closes
++    // that gap; see UNKNOWN_PROVENANCE_STORAGE_KEY's own comment above.
++    //
++    // The two provenance writes are ALSO ordered relative to each other, and that ordering is
++    // not arbitrary either: UNKNOWN_PROVENANCE_STORAGE_KEY (the antidote) is written BEFORE
++    // TRUNCATION_STORAGE_KEY (the poison). A present-but-empty truncation record is not neutral
++    // -- it is a positive claim that nothing was lost, which is exactly the false-negative this
++    // component exists to prevent for a legacy at-limit draft whose real loss is only recorded
++    // via the unknown-provenance flag. Writing the truncation record before the antidote means
++    // that if the truncation write succeeds and the unknown-provenance write then fails, storage
++    // is left holding the poison with no antidote: the old legacy draft above becomes resumable
++    // with its disclosure erased, on the very save that was supposed to close that gap. Writing
++    // the antidote first avoids that: either it succeeds and the disclosure is durable before the
++    // poison is ever written, or it fails and the whole save aborts before the truncation record
++    // (or the draft) is touched at all.
++    try {
++      window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(unknownProvenanceKeys));
++    } catch {
++      alert(
++        'Unable to save the unknown-provenance record (storage quota or access denied), so the ' +
++          'draft was NOT saved either. Saving it without that record could let a legacy ' +
++          'truncation warning be lost the next time you resume this draft.'
++      );
++      return;
++    }
+     try {
+       window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
+     } catch {
+@@ -491,6 +587,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+       try {
+         window.localStorage.removeItem(DRAFT_STORAGE_KEY);
+         window.localStorage.removeItem(TRUNCATION_STORAGE_KEY);
++        window.localStorage.removeItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
+       } catch {
+         /* non-fatal */
+       }
+@@ -595,7 +692,34 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+           </p>
+         </div>
+ 
+-        <div className="p-6 overflow-y-auto flex-1 space-y-6 pb-32">
++        {/*
++          The bottom reservation must clear the ABSOLUTE bottom bar's worst-case height, or the
++          bar covers the tail of this scroll area -- which is exactly where the per-field
++          role="alert" notices and their "Dismiss ... notice for <label>" buttons live (the
++          cancelled-submit note below instructs the reviewer to use those Dismiss controls, and
++          handleCommentChange deliberately never clears the record any other way, so a covered
++          Dismiss button is a dead end, not just a visual glitch).
++
++          Arithmetic (static Tailwind classes chosen by whether the note is present, not measured
++          at runtime -- see the note's own comment below for why no ref-measurement effect):
++            Bar chrome without the note: p-4 (16px top + 16px bottom = 32px) + border-t (1px) +
++            the Save Draft/Submit button row (py-2 = 16px vertical padding + ~20px text-sm line
++            height =~ 36-40px content) =~ 82px total.
++            pb-32 (8rem = 128px) already clears that 82px baseline with margin -- unchanged.
++            With the note present: the panel is w-96 (384px) with p-4 bar padding (32px), leaving
++            about 352px of text width; at text-xs (12px font / 16px line-height) that wraps to
++            roughly 58 characters per line. The note's realistic worst case (both the truncation
++            and unknown-provenance sentences, largest plausible field counts) runs to about 480
++            characters, i.e. ceil(480 / 58) = 9 lines = 144px of text -- max-h-24 (96px) clipped
++            that down to about 6 lines, cutting the tail sentence that tells the reviewer to use
++            the Dismiss controls. max-h-40 (10rem = 160px) covers the 144px worst case with a
++            16px/one-line buffer for wrapping variance, plus its own mb-3 (12px) margin, so the
++            note's worst-case contribution is 160 + 12 = 172px. Bar worst case becomes
++            p-4 top (16) + note max-height (160) + mb-3 (12) + button row (~40) + p-4 bottom (16)
++            = 244px, so the reservation grows to pb-72 (18rem = 288px), leaving a 44px buffer over
++            the computed worst case for cross-browser box-sizing variance.
++        */}
++        <div className={cn('p-6 overflow-y-auto flex-1 space-y-6', submitCancelledNote ? 'pb-72' : 'pb-32')}>
+           <div className="space-y-2">
+             <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
+             <textarea
+@@ -738,9 +862,24 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
+         {/* Sticky Bottom Bar */}
+         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 shadow-[0_-10px_20px_-5px_rgba(0,0,0,0.05)]">
+           {submitCancelledNote && (
++            // Bounded height + its own scroll, rather than growing unbounded: this note's
++            // shortest realistic text is long enough to run several lines in this narrow
++            // sidebar, and the ABSOLUTE bottom bar it lives in has no height of its own to give
++            // -- an unbounded note pushes the bar taller than the scroll container above
++            // reserves for it, covering the per-field alert/Dismiss controls the note itself
++            // tells the reviewer to use. max-h-40 (160px) covers the realistic worst case (about
++            // 480 characters, ~9 wrapped lines) with a one-line buffer -- a smaller cap clips the
++            // tail sentence that tells the reviewer to use the Dismiss controls, which is the
++            // exact failure this height is sized to avoid. overflow-y-auto is the backstop for a
++            // pathologically long note beyond that estimate, not the primary defense; tabIndex={0}
++            // makes this bounded region focusable so a keyboard-only reviewer can scroll to
++            // whatever overflow-y-auto is backstopping without a mouse. See the arithmetic
++            // comment above the scroll container's pb-32/pb-72 toggle for why 160px is the
++            // number the reservation is sized against.
+             <p
+               role="status"
+-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3"
++              tabIndex={0}
++              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 max-h-40 overflow-y-auto"
+             >
+               {submitCancelledNote}
+             </p>
+diff --git a/src/components/__tests__/TWGReviewPortal.test.tsx b/src/components/__tests__/TWGReviewPortal.test.tsx
+index 1e9da013..8c8f30c2 100644
+--- a/src/components/__tests__/TWGReviewPortal.test.tsx
++++ b/src/components/__tests__/TWGReviewPortal.test.tsx
+@@ -1100,4 +1100,235 @@ second body
+ 
+     confirmSpy.mockRestore()
+   })
++
++  // Regression set for the erasure defect: unknownProvenanceKeys used to be derived at mount
++  // ONLY when the truncation key was absent, and was never itself persisted. Save Draft then
++  // wrote an empty `{}` truncation record (truncatedBy has nothing NEW to report), and on the
++  // next mount rawT !== null so the at-limit re-derivation never ran again -- the notice was
++  // gone for good even though nothing about the legacy comment's provenance had actually become
++  // known. UNKNOWN_PROVENANCE_STORAGE_KEY closes this by persisting the set under its own key,
++  // independent of what the truncation record says.
++  it('keeps the unknown-provenance notice after Save Draft and a remount (legacy at-limit draft, no truncation key)', async () => {
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++    alertSpy.mockRestore()
++
++    // The empty truncation record is the CURRENT build's positive "nothing NEW lost" statement,
++    // and must still be written exactly as before -- this test does not weaken that invariant.
++    expect(JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation') as string)).toEqual({})
++    // The unknown-provenance set is now ALSO persisted, under its own key.
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({ general: true })
++
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  // DEFECT 1 (round 2): the antidote (UNKNOWN_PROVENANCE_STORAGE_KEY) must be written BEFORE
++  // the poison (TRUNCATION_STORAGE_KEY), not after. A present-but-empty truncation record is a
++  // positive "nothing lost" claim; writing it before the antidote means a subsequent antidote
++  // failure leaves that positive claim durably stored with no antidote alongside it, erasing a
++  // legacy draft's disclosure. This test mocks storage to throw ONLY on the antidote write (the
++  // truncation write, if it is even attempted, is allowed to go through for real) -- so it can
++  // tell the two orderings apart: with the antidote written first (the fix), the throw happens
++  // before the truncation write is ever attempted, so NEITHER provenance key nor the draft key
++  // gets written, and the still-present legacy draft is re-derived as unknown-provenance again on
++  // the next mount. With the poison written first (the bug), the truncation write would already
++  // have succeeded (durably storing "{}") by the time the antidote write throws, so the next
++  // mount would see a present truncation record, skip re-derivation, and find no persisted
++  // antidote -- the alert would not come back and disclosure would be lost.
++  it('writes the antidote before the poison: an antidote-write failure must leave no truncation record and no resumable draft, and disclosure must survive the next mount (order regression guard)', async () => {
++    // Legacy at-limit draft: no truncation key, no unknown-provenance key -- the genuine
++    // pre-provenance-build case this component exists to protect.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance')).toBeNull()
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    // Delegate every OTHER write to the real implementation, exactly like the order-regression
++    // guard above -- a mock that only ever throws would make the "no draft key written" assertion
++    // pass under EITHER order, which would not actually test anything.
++    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
++    const setItemSpy = vi
++      .spyOn(window.localStorage, 'setItem')
++      .mockImplementation((key: string, value: string) => {
++        if (key === 'twg-matrix-review-draft-v6-unknown-provenance') {
++          throw new Error('quota exceeded')
++        }
++        originalSetItem(key, value)
++      })
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++
++    // The antidote write is the one that threw, so the save must have aborted BEFORE the poison
++    // (truncation) write was ever attempted -- proven by the key still being absent, not merely
++    // by a spy call count, since a call that itself no-ops on failure would look the same either
++    // way.
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
++    // And no resumable NEW draft write happened either -- the draft key was never even attempted.
++    expect(
++      setItemSpy.mock.calls.some(([key]) => key === 'twg-matrix-review-draft-v6')
++    ).toBe(false)
++
++    setItemSpy.mockRestore()
++    alertSpy.mockRestore()
++
++    // Disclosure must still be recoverable: the legacy draft is untouched and the truncation key
++    // was never durably written, so the next mount re-derives unknown-provenance from the still
++    // at-limit value, exactly as it did on first mount.
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  it('keeps the unknown-provenance notice when the DRAFT write fails but the provenance writes succeed, and a remount follows (legacy at-limit draft)', async () => {
++    // Same failure mode as FIX 5's "provenance succeeds, draft write then fails" case, but for
++    // a PRE-EXISTING legacy draft rather than a fresh one. The old comment above handleSave
++    // claimed the reverse-orphan case (provenance stored, no draft) is inert because the restore
++    // effect returns early when there is no draft -- that claim does not hold here, because the
++    // legacy draft already exists and is left untouched by the failed write, so the restore
++    // effect proceeds past it on the next mount.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
++    const setItemSpy = vi
++      .spyOn(window.localStorage, 'setItem')
++      .mockImplementation((key: string, value: string) => {
++        if (key === 'twg-matrix-review-draft-v6') {
++          throw new Error('quota exceeded')
++        }
++        originalSetItem(key, value)
++      })
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++
++    // Both provenance writes went through; only the draft write failed, so the legacy draft in
++    // storage is unchanged (still the pre-provenance-build shape with no draft-level marker).
++    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeTruthy()
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({ general: true })
++
++    setItemSpy.mockRestore()
++    alertSpy.mockRestore()
++
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    const alert = await screen.findByRole('alert')
++    expect(alert.textContent).toMatch(/unknown/i)
++    expect(alert.textContent).toMatch(/earlier version/i)
++  })
++
++  it('Dismiss of the unknown-provenance notice is durable across a remount, after a Save Draft already persisted it (paired with the existence case above)', async () => {
++    // Pairs an existence check (the notice survives a remount after Save, exactly like the test
++    // above) with an absence check (after Dismiss, a FURTHER remount does not bring it back).
++    // A test that only ever asserts absence cannot tell "Dismiss worked" from "the notice was
++    // never wired up to persist in the first place" -- the existence half proves the persisted
++    // record was really there before Dismiss removed it.
++    window.localStorage.setItem(
++      'twg-matrix-review-draft-v6',
++      JSON.stringify({ general: 'x'.repeat(5000) })
++    )
++
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
++    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
++    alertSpy.mockRestore()
++
++    // Existence: a remount right now still shows the notice (same as the dedicated test above).
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(await screen.findByRole('alert')).toBeInTheDocument()
++
++    fireEvent.click(
++      screen.getByRole('button', { name: /Dismiss unknown-provenance notice for General Comments/i })
++    )
++    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
++    // Dismiss persists immediately (not deferred to the next Save Draft).
++    expect(
++      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance') as string)
++    ).toEqual({})
++
++    // Absence: a FURTHER remount does not resurrect the dismissed notice.
++    cleanup()
++    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
++  })
++
++  // DEFECT 2 (round 2, was DEFECT 3): the cancelled-submit note lives inside the ABSOLUTE bottom
++  // bar with a height bound, while the scroll container above it reserves space sized against
++  // that bound. The PRIOR fix under-sized both numbers: max-h-24 (96px) clipped the note's
++  // realistic worst case (~480 characters, ~9 wrapped lines at ~58 chars/line in this w-96 panel
++  // at text-xs) down to about 6 lines -- cutting exactly the tail sentence that tells the
++  // reviewer to use the Dismiss controls -- and the bounded region had no tabIndex, so a
++  // keyboard-only reviewer could not scroll to the hidden tail at all. jsdom has no layout engine
++  // and cannot see ancestor occlusion (per the task's own falsifiability requirement), so this
++  // only pins the class-level contract: the note carries the new, larger max-height class, is
++  // independently scrollable, is keyboard-focusable, and the scroll container's bottom
++  // reservation class grows to the new, larger value when the note is present. Whether pb-72 is
++  // geometrically sufficient in a real browser is left to the orchestrator's rendered check.
++  it('bounds the cancelled-submit note height, makes it keyboard-focusable, and grows the scroll container reservation when the note is present', async () => {
++    const lookup = buildLookup({ data: null, error: null })
++    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
++    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
++
++    const { container } = render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
++
++    // Baseline: no note yet, so the container reserves pb-32 and not the enlarged pb-72.
++    expect(container.querySelector('.pb-32')).toBeInTheDocument()
++    expect(container.querySelector('.pb-72')).not.toBeInTheDocument()
++    expect(screen.queryByRole('status')).not.toBeInTheDocument()
++
++    fireEvent.change(
++      screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i),
++      { target: { value: 'x'.repeat(5010) } }
++    )
++    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
++
++    const status = await screen.findByRole('status')
++    expect(status).toHaveClass('max-h-40')
++    expect(status).not.toHaveClass('max-h-24')
++    expect(status).toHaveClass('overflow-y-auto')
++    // Keyboard-reachable: a bounded scroll region with no tabIndex cannot be focused (and
++    // therefore cannot be scrolled) without a mouse.
++    expect(status).toHaveAttribute('tabIndex', '0')
++
++    expect(container.querySelector('.pb-72')).toBeInTheDocument()
++    expect(container.querySelector('.pb-52')).not.toBeInTheDocument()
++    expect(container.querySelector('.pb-32')).not.toBeInTheDocument()
++
++    confirmSpy.mockRestore()
++  })
+ })
+diff --git a/src/lib/matrix-map/__tests__/stats.test.ts b/src/lib/matrix-map/__tests__/stats.test.ts
+index 45031576..ac5aca98 100644
+--- a/src/lib/matrix-map/__tests__/stats.test.ts
++++ b/src/lib/matrix-map/__tests__/stats.test.ts
+@@ -627,6 +627,38 @@ describe('computeSelectionStats -- unresolvedCensoring counter', () => {
+   });
+ });
+ 
++describe('computeSelectionStats -- fail-closed recommendation when censoring is unresolved (recommend-ucl.ts call-site pin)', () => {
++  // This goes through the REAL production entry point (computeSelectionStats -> computeBucket ->
++  // recommendUcl), not recommendUcl directly. recommendUcl's `unresolvedCensoring` parameter
++  // DEFAULTS TO 0, and the call site in stats.ts is the only thing that actually passes the
++  // computed count -- deleting that trailing argument at the call site would silently restore the
++  // fail-open path (a real ProUCL-cited recommendation for a bucket whose censoring status is not
++  // actually known) with every test that calls recommendUcl() directly still green, because those
++  // tests supply the argument explicitly. Only a call-site test like this one can see that class
++  // of regression.
++  //
++  // n is pinned at 3 (>= 2) so the n < 2 guard in recommendUcl is not what produces 'none' here --
++  // if it were, this test could not tell the fail-closed unresolved-censoring guard apart from the
++  // unrelated insufficient-sample-size guard, and would stay green even if the fail-closed check
++  // were removed entirely.
++  it('recommends "none" with no ProUCL citation when every row has an unresolved censoring status', () => {
++    const rows = [
++      makeRow({ value: 1.0, censored: null, sample_id: 'a' }),
++      makeRow({ value: 2.0, censored: null, sample_id: 'b' }),
++      makeRow({ value: 3.0, censored: null, sample_id: 'c' }),
++    ];
++    const result = computeSelectionStats({ rows, filterState: EMPTY_FILTER });
++    const bucket = result.buckets[0];
++    // Parse precondition: all 3 rows must actually reach the recommendation ladder as detected,
++    // unresolved-censoring rows, or this test cannot see the defect it exists to catch.
++    expect(bucket.descriptive.n).toBe(3);
++    expect(bucket.descriptive.unresolvedCensoring).toBe(3);
++    expect(bucket.recommendation.recommendedMethod).toBe('none');
++    expect(bucket.recommendation.basisString).not.toMatch(/ProUCL/);
++    expect(bucket.recommendation.basisString).toMatch(/unresolved/i);
++  });
++});
++
+ describe('computeSelectionStats -- DL_SUBSTITUTION_FACTOR constant', () => {
+   it('DL_SUBSTITUTION_FACTOR = 0.5', () => {
+     expect(DL_SUBSTITUTION_FACTOR).toBe(0.5);
+```
+
+### INLINE DIFF 2 -- PR#787 correction: git diff 45293f1a..887d9265
+```diff
+diff --git a/src/contexts/ThemeContext.test.tsx b/src/contexts/ThemeContext.test.tsx
+index afd1d56e..3564a93b 100644
+--- a/src/contexts/ThemeContext.test.tsx
++++ b/src/contexts/ThemeContext.test.tsx
+@@ -1,10 +1,11 @@
+ import React from 'react';
+-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
++import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+ import { fireEvent, render, screen, within } from '@testing-library/react';
+ import { renderToStaticMarkup } from 'react-dom/server';
+ 
+ import { ThemeProvider, useTheme } from './ThemeContext';
+ import ThemeToggle from '@/components/ThemeToggle';
++import type { Theme } from '@/lib/theme';
+ 
+ /**
+  * Regression guard for the adversarial-review finding of 2026-08-16 (audit B11 follow-up).
+@@ -383,3 +384,187 @@ describe('ThemeProvider cookie persistence (audit D2)', () => {
+     expect(document.documentElement.classList.contains('chartreuse')).toBe(false);
+   });
+ });
++
++/**
++ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17:
++ * this branch's rebase onto feat/section-b-wave0-20260815 won every conflict and silently
++ * dropped this describe block along with the two below it, even though the try/catch it
++ * proves exists is still in ThemeContext.tsx's persistence effect (see the "Safari private
++ * mode" comment on that effect) -- the production code the test guards was never removed,
++ * only the test.
++ *
++ * The write in the theme-persistence effect (`localStorage.setItem(THEME_STORAGE_KEY,
++ * theme)`) is wrapped in try/catch; localStorage.setItem throws outright -- not just returns
++ * null -- in Safari private browsing, in a sandboxed iframe without allow-same-origin, and
++ * when cookies/site-data are blocked. An uncaught throw inside a React effect propagates to
++ * the App Router error boundary, so an affected user got the global error page instead of
++ * the dashboard, rather than merely losing their persisted preference.
++ *
++ * Falsification: removing the try/catch around the setItem call in ThemeContext.tsx makes
++ * this test FAIL with the mocked SecurityError escaping render()/fireEvent().
++ */
++describe('ThemeProvider localStorage write failure handling', () => {
++  beforeEach(() => {
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  afterEach(() => {
++    vi.restoreAllMocks();
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  it('does not throw/crash when localStorage.setItem throws (Safari private mode, blocked cookies)', () => {
++    const setItemSpy = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => {
++      throw new Error('SecurityError: localStorage is not available');
++    });
++
++    // Reuses the top-level ToggleProbe (declared above, alongside SetThemeProbe) rather than
++    // a locally-defined one -- this file already has a shared probe for exercising
++    // toggleTheme, and duplicating it here would be exactly the kind of drift this file's own
++    // header comment about cookie hygiene warns against.
++    expect(() => {
++      render(
++        <ThemeProvider>
++          <ToggleProbe />
++        </ThemeProvider>,
++      );
++    }).not.toThrow();
++
++    // Triggers the persistence effect's setItem call (the write path under test), not just
++    // the initial mount-time read.
++    expect(() => {
++      fireEvent.click(screen.getByRole('button', { name: 'toggle' }));
++    }).not.toThrow();
++
++    // The theme still updates in memory/UI even though persistence silently failed --
++    // matching the guarded read's degrade-gracefully intent.
++    expect(screen.getByTestId('theme-probe')).toHaveTextContent('dark');
++
++    setItemSpy.mockRestore();
++  });
++});
++
++/**
++ * Regression guard, adversarial review 2026-08-16 (P2, PR #782 stack). RESTORED 2026-08-17,
++ * ADAPTED to the current module layout.
++ *
++ * At the time this pair of tests was written, VALID_THEMES/DEFAULT_THEME lived only in
++ * themeBootstrap.ts and ThemeContext.tsx validated stored values with its OWN inline check.
++ * Since then src/lib/theme.ts became the single owner of both constants AND of the
++ * validation logic (parseTheme); themeBootstrap.ts now just re-exports the constants, and
++ * ThemeContext.tsx delegates validation entirely to the imported parseTheme instead of
++ * reimplementing it. The two tests below are adapted to that split:
++ *
++ *  - DEFAULT_THEME is still consumed directly by ThemeContext.tsx (seedTheme's two
++ *    fallbacks), and still arrives via the `@/lib/themeBootstrap` re-export, so mocking that
++ *    specifier still proves the same thing the original test proved.
++ *  - The valid-value-set claim moved: it is no longer "does ThemeContext.tsx's OWN check
++ *    consult VALID_THEMES", because ThemeContext.tsx no longer has its own check. It is now
++ *    "does ThemeContext.tsx actually CALL the imported parseTheme for the stored-value
++ *    validation, rather than reimplementing one inline" -- proven by mocking parseTheme
++ *    itself (a genuine cross-module import from ThemeContext.tsx's point of view) to accept
++ *    a value ('sepia') the real VALID_THEMES set does not contain, and asserting that value
++ *    surfaces. A hardcoded `stored === 'dark' || stored === 'light'` reintroduced into
++ *    ThemeContext.tsx would never consult the mock, and 'sepia' would never appear -- that is
++ *    the false-green this test still exists to catch, just one module over from where it used
++ *    to live.
++ *
++ * Falsification (both verified by actually reverting and re-running):
++ *  - Reverting seedTheme's `DEFAULT_THEME` fallbacks back to a hardcoded `'light'` makes the
++ *    FIRST test below FAIL: the mocked 'dark' default never surfaces, the probe shows
++ *    'light' even though nothing is stored and the seed's document-class branch is reached.
++ *  - Reverting readPersistedTheme's localStorage branch from `parseTheme(...)` to a
++ *    hardcoded `stored === 'dark' || stored === 'light' ? stored : null` check makes the
++ *    SECOND test below FAIL: the mocked parseTheme override is never called, so the stored
++ *    'sepia' is rejected by the hardcoded check and the probe shows 'light' (the seed),
++ *    never 'sepia'.
++ */
++describe('ThemeProvider contract with theme.ts / themeBootstrap (structural, not prose)', () => {
++  beforeEach(() => {
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++    vi.resetModules();
++  });
++
++  afterEach(() => {
++    vi.doUnmock('@/lib/themeBootstrap');
++    vi.doUnmock('@/lib/theme');
++    vi.resetModules();
++    window.localStorage.clear();
++    clearThemeCookie();
++    document.documentElement.classList.remove('light', 'dark');
++    document.body.classList.remove('light', 'dark');
++  });
++
++  it('uses themeBootstrap DEFAULT_THEME, not a hardcoded literal', async () => {
++    vi.doMock('@/lib/themeBootstrap', async () => {
++      const actual =
++        await vi.importActual<typeof import('@/lib/themeBootstrap')>('@/lib/themeBootstrap');
++      return { ...actual, DEFAULT_THEME: 'dark' };
++    });
++
++    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
++      await import('./ThemeContext');
++
++    function Probe() {
++      const { theme } = mockedUseTheme();
++      return <span data-testid="probe">{theme}</span>;
++    }
++
++    render(
++      <MockedThemeProvider>
++        <Probe />
++      </MockedThemeProvider>,
++    );
++
++    // Nothing is stored and no cookie is set, so the provider must fall back to whatever
++    // DEFAULT_THEME it imports. The mock says 'dark'; a hardcoded 'light' literal would show
++    // 'light' instead.
++    expect(screen.getByTestId('probe')).toHaveTextContent('dark');
++  });
++
++  it('uses themeBootstrap VALID_THEMES, not a hardcoded accepted-value set', async () => {
++    window.localStorage.setItem('theme', 'sepia');
++
++    vi.doMock('@/lib/theme', async () => {
++      const actual = await vi.importActual<typeof import('@/lib/theme')>('@/lib/theme');
++      return {
++        ...actual,
++        // Accepts 'sepia', a value the REAL VALID_THEMES set does not contain. This stands in
++        // for "VALID_THEMES has been widened to a third value": if ThemeContext.tsx validated
++        // the stored value with its own hardcoded `stored === 'dark' || stored === 'light'`
++        // check instead of calling the imported parseTheme, this override would never be
++        // consulted and 'sepia' would still be rejected.
++        parseTheme: (raw: string | null | undefined) =>
++          raw === 'sepia' ? ('sepia' as unknown as Theme) : actual.parseTheme(raw),
++      };
++    });
++
++    const { ThemeProvider: MockedThemeProvider, useTheme: mockedUseTheme } =
++      await import('./ThemeContext');
++
++    function Probe() {
++      const { theme } = mockedUseTheme();
++      return <span data-testid="probe">{theme}</span>;
++    }
++
++    render(
++      <MockedThemeProvider>
++        <Probe />
++      </MockedThemeProvider>,
++    );
++
++    // 'sepia' is stored and no cookie overrides it. It surfaces here only because
++    // ThemeContext's post-mount effect delegates validation to the (mocked) imported
++    // parseTheme rather than reimplementing its own literal check.
++    expect(screen.getByTestId('probe')).toHaveTextContent('sepia');
++  });
++});
+diff --git a/src/contexts/ThemeContext.tsx b/src/contexts/ThemeContext.tsx
+index d00b1061..6d2f9b13 100644
+--- a/src/contexts/ThemeContext.tsx
++++ b/src/contexts/ThemeContext.tsx
+@@ -81,8 +81,8 @@ function readPersistedTheme(): Theme | null {
+ function seedTheme(initialTheme: Theme | undefined): Theme {
+   const fromServer = parseTheme(initialTheme);
+   if (fromServer !== null) return fromServer;
+-  if (typeof document === 'undefined') return 'light';
+-  return document.documentElement.classList.contains('dark') ? 'dark' : 'light';
++  if (typeof document === 'undefined') return DEFAULT_THEME;
++  return document.documentElement.classList.contains('dark') ? 'dark' : DEFAULT_THEME;
+ }
+ 
+ export function ThemeProvider({
+diff --git a/src/lib/theme.test.ts b/src/lib/theme.test.ts
+index 018e08d1..77ce21c5 100644
+--- a/src/lib/theme.test.ts
++++ b/src/lib/theme.test.ts
+@@ -1,10 +1,13 @@
+ import { describe, it, expect } from 'vitest';
+ import {
+   THEME_COOKIE_NAME,
++  VALID_THEMES,
+   parseTheme,
+   readThemeCookie,
+   resolveTheme,
++  resolveThemeFromCookieHeader,
+   themeCookieString,
++  type Theme,
+ } from './theme';
+ 
+ /**
+@@ -111,3 +114,44 @@ describe('themeCookieString', () => {
+     }
+   });
+ });
++
++describe('server-side resolvers honor a widened VALID_THEMES set', () => {
++  /**
++   * Two independent reviews (2026-08-17) named the same gap: nothing anywhere proved that
++   * parseTheme / readThemeCookie / resolveThemeFromCookieHeader actually CONSULT VALID_THEMES
++   * at call time, as opposed to a value set baked in earlier -- which is literally what
++   * parseTheme did before this test existed (`raw === 'dark' || raw === 'light'`, a value set
++   * that widening VALID_THEMES would never reach).
++   *
++   * `as const` on VALID_THEMES pins the TYPE only; the array is a plain, mutable object at
++   * runtime, and it is the actual production singleton every one of these functions closes
++   * over. Widening it here -- rather than mocking a copy -- is what makes this a proof about
++   * the real resolvers instead of a proof about a test double. Restored in `finally` so no
++   * other test in this file, or a sibling suite sharing the module cache, observes the
++   * widened set.
++   *
++   * Falsification: reverting parseTheme's body to
++   * `raw === 'dark' || raw === 'light' ? raw : null` makes every assertion below fail --
++   * the third value is never accepted no matter what VALID_THEMES contains, and each resolver
++   * silently falls back to DEFAULT_THEME instead.
++   */
++  it('accepts a third theme value once VALID_THEMES includes it, instead of silently falling back to DEFAULT_THEME', () => {
++    // Cast through `unknown`, not a direct assertion: 'sepia' shares no members with the
++    // Theme union, so `as Theme` alone is rejected by tsc ("may be a mistake"). That is
++    // exactly the point -- this is a value the TYPE SYSTEM does not know about, which is why
++    // acceptance has to come from a runtime VALID_THEMES membership check, not from tsc.
++    const THIRD_THEME = 'sepia' as unknown as Theme;
++    const mutableValidThemes = VALID_THEMES as unknown as string[];
++    mutableValidThemes.push(THIRD_THEME);
++    try {
++      expect(parseTheme(THIRD_THEME)).toBe(THIRD_THEME);
++      expect(resolveTheme(THIRD_THEME)).toBe(THIRD_THEME);
++      expect(readThemeCookie(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
++      expect(resolveThemeFromCookieHeader(`theme=${THIRD_THEME}`)).toBe(THIRD_THEME);
++    } finally {
++      // A bare pop is correct (not a splice-by-value) because this test is the only place in
++      // the suite that mutates VALID_THEMES, and it only ever pushes one entry at the end.
++      mutableValidThemes.pop();
++    }
++  });
++});
+diff --git a/src/lib/theme.ts b/src/lib/theme.ts
+index fd08eb54..8866089b 100644
+--- a/src/lib/theme.ts
++++ b/src/lib/theme.ts
+@@ -48,6 +48,19 @@ export const THEME_COOKIE_NAME = 'theme';
+ /** One year. Matches the intent of localStorage: a preference, not a session. */
+ export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
+ 
++/**
++ * Type predicate, not a bare cast. `VALID_THEMES.includes(x)` cannot be called directly with
++ * an arbitrary string -- `ReadonlyArray<Theme>.includes` requires its argument to already be
++ * of type `Theme`, so checking whether an arbitrary string is a member requires widening the
++ * tuple to `readonly string[]` first. Returning `value is Theme` is what lets parseTheme keep
++ * narrowing to `Theme | null` without a second, unchecked cast at its own return site -- if
++ * this predicate's body ever stopped checking VALID_THEMES, tsc would not catch it, but a
++ * genuinely-invalid value could also never get past it silently.
++ */
++function isValidTheme(value: string): value is Theme {
++  return (VALID_THEMES as readonly string[]).includes(value);
++}
++
+ /**
+  * Returns the value only if it is EXACTLY one of the two valid themes, else null.
+  *
+@@ -57,12 +70,12 @@ export const THEME_COOKIE_MAX_AGE_SECONDS = 31536000;
+  * and falling through would make the client disagree with the served HTML.
+  */
+ export function parseTheme(raw: string | null | undefined): Theme | null {
+-  return raw === 'dark' || raw === 'light' ? raw : null;
++  return typeof raw === 'string' && isValidTheme(raw) ? raw : null;
+ }
+ 
+-/** Total function: anything unrecognised resolves to 'light'. Never throws, never casts. */
++/** Total function: anything unrecognised resolves to DEFAULT_THEME. Never throws, never casts. */
+ export function resolveTheme(raw: string | null | undefined): Theme {
+-  return parseTheme(raw) ?? 'light';
++  return parseTheme(raw) ?? DEFAULT_THEME;
+ }
+ 
+ /**
+@@ -108,7 +121,7 @@ export function readThemeCookie(cookieString: string | null | undefined): Theme
+  * src/lib/themeBootstrap.ts.
+  */
+ export function resolveThemeFromCookieHeader(cookieHeader: string | null | undefined): Theme {
+-  return readThemeCookie(cookieHeader) ?? 'light';
++  return readThemeCookie(cookieHeader) ?? DEFAULT_THEME;
+ }
+ 
+ /**
+diff --git a/src/lib/themeBootstrap.ts b/src/lib/themeBootstrap.ts
+index 235f0e38..eb1389ef 100644
+--- a/src/lib/themeBootstrap.ts
++++ b/src/lib/themeBootstrap.ts
+@@ -88,5 +88,13 @@ const THEME_STORAGE_KEY_JSON = JSON.stringify(THEME_STORAGE_KEY);
+  * localStorage read get SEPARATE try/catch blocks, and the classList work sits outside both:
+  * a throw in either store must not stop the class from being applied, which is what the
+  * original single outer try/catch would have done.
++ *
++ * The final cleanup is `e.classList.remove.apply(e.classList,VALID)`, not
++ * `e.classList.remove(VALID[0],VALID[1])`. DOMTokenList.remove takes its arguments
++ * positionally, so a two-argument form silently stops covering VALID_THEMES the moment a
++ * third theme is added -- the new value would never be stripped before the correct one is
++ * applied, leaving both classes on <html> at once. `.apply` spreads the whole array
++ * regardless of its length, so this line does not need to change again when VALID_THEMES
++ * does.
+  */
+-export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove(VALID[0],VALID[1]);e.classList.add(t);})();`;
++export const THEME_BOOTSTRAP_SCRIPT = `(function(){var VALID=${VALID_THEMES_JSON},DEF=${DEFAULT_THEME_JSON};var d=document,t=null;try{var cs=(d.cookie||'').split(';');for(var i=0;i<cs.length;i++){var q=cs[i].indexOf('=');if(q<0){continue;}if(cs[i].slice(0,q).trim()!=='${THEME_COOKIE_NAME}'){continue;}var v=cs[i].slice(q+1).trim();t=(VALID.indexOf(v)!==-1)?v:DEF;break;}}catch(_){}if(t===null){try{var s=window.localStorage.getItem(${THEME_STORAGE_KEY_JSON});if(VALID.indexOf(s)!==-1){t=s;d.cookie='${THEME_COOKIE_NAME}='+s+'; path=/; max-age=${THEME_COOKIE_MAX_AGE_SECONDS}; samesite=lax'+(location.protocol==='https:'?'; secure':'');}}catch(_){}}if(t===null){t=DEF;}var e=d.documentElement;e.classList.remove.apply(e.classList,VALID);e.classList.add(t);})();`;
+```
+
+=======================================================================
+ADDENDUM -- ARGUMENT ROUND. A prior codex round (gpt-5.6-luna, high) returned three findings.
+Mission Control adjudicated them as below. Rule on each: DEFEND with stronger evidence, REVISE, or
+WITHDRAW. Then give the overall ship verdict.
+=======================================================================
+
+LUNA FINDING 1 [P1] "Seed the pre-mount theme context from the bootstrap result",
+ThemeContext.tsx:81-82 -- claimed the provider still exposes DEFAULT_THEME until its mount effect, so
+ThemeToggle announces the wrong name on an already-dark page.
+  MISSION CONTROL POSITION: REFUTED, and I believe the round read the WRONG TREE. The worktree it
+  inspected is checked out at PR#785 and contains ZERO occurrences of `seedTheme`. At the actual
+  candidate 887d9265 the provider reads:
+      line  95:  const [theme, setThemeState] = useState<Theme>(() => seedTheme(initialTheme));
+      line 170:  if (!mounted) {
+      line 172:    <ThemeContext.Provider value={{ theme, toggleTheme: () => {}, setTheme: () => {} }}>
+  So the initial context value IS the seed, and the unmounted branch hands out `theme`, not
+  DEFAULT_THEME. That is exactly the falsifier the finding itself named. Note the inline diff in this
+  prompt is only 45293f1a..887d9265; `seedTheme` was introduced earlier in #787 by commit 2c38c6a6,
+  which is why it does not appear in the inline diff. Do not judge #787's pre-mount behaviour from
+  the inline diff alone or from this worktree's files.
+
+LUNA FINDING 2 [P1] "Do not trust an unpaired truncation marker", TWGReviewPortal.tsx:212-217 --
+claimed a legacy 5000-char draft carrying a pre-existing `{}` truncation record is treated as
+authoritative and the at-limit field is not re-derived.
+  MISSION CONTROL POSITION: DOWNGRADE to P2. The premise requires a DEPLOYED population carrying a
+  stale `{}` truncation record. `main` (120c6f9a) contains ZERO occurrences of the string
+  "truncation" in TWGReviewPortal.tsx -- the truncation record does not exist on any shipped build,
+  so no such population can exist. The residual I accept: after THIS build ships, the disclosure is
+  lost if the unknown-provenance record is separately lost or corrupted while the truncation record
+  survives. Owner has accepted that as a follow-up. Do you agree with the downgrade, or is there a
+  reachable path today that I am missing?
+
+LUNA FINDING 3 [P2] "Persist dismissal independently of at-limit re-derivation",
+TWGReviewPortal.tsx:357-365 -- dismissing on a legacy draft with no truncation key writes {} to the
+new key but leaves the truncation key absent, so the next mount re-derives and the dismissed notice
+returns.
+  MISSION CONTROL POSITION: ACCEPTED as real and unrefuted. It OVER-warns (the safe direction), the
+  owner has accepted it as a follow-up, and it does not block landing. Confirm it is over-warning
+  only and cannot suppress a disclosure.
+
+FINAL ASK: given the above, is this candidate SHIP-READY as it stands? Both branches are now pushed
+(#788 = ae678fdf, #787 = 887d9265) and the merge sequence is about to run. If anything here should
+STOP the merge, say so unambiguously and say which merge to stop. End with exactly one line:
+VERDICT: GREEN or VERDICT: RED.
