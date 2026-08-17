@@ -1,0 +1,124 @@
+FINAL SHIP-GATE REVIEW of a frozen, fully-gated merge candidate for SSTAC-Dashboard
+(Next.js 15 / React 19 / TypeScript regulatory-science dashboard).
+
+Do NOT review the working tree -- it is clean and there is nothing uncommitted. Use your tools to
+read the exact commits named below. Every SHA is reachable from this repository. Read the real code;
+a verdict formed only from this prompt is worthless to me and I will discard it.
+
+    git diff 120c6f9a..ae678fdf        STACK A, everything it lands on main
+    git diff 120c6f9a..887d9265        STACK B, everything it lands on main
+    git diff 04c9cc10..ae678fdf        the two correction commits on stack A (the newest bytes)
+    git diff 45293f1a..887d9265        the correction commit on stack B (the newest bytes)
+
+THE CANDIDATE
+
+    origin/main   120c6f9a   (verified unmoved)
+    STACK A       ae678fdf   = main + PR#783 f0f56330 + PR#784 c41f1463 + PR#785 87b8d2c8 + PR#788
+    STACK B       887d9265   = main + PR#782 6caaa34e + PR#787
+
+Both stacks fast-forward from current origin/main. They share ZERO changed files (35 vs 11). Their
+union merges clean (merge-tree 597a380f, exit 0). #787 and #788 are LOCAL ONLY and not yet pushed;
+#787's history was rebased and needs --force-with-lease against remote lease 3a5eb26f.
+
+GATE EVIDENCE (six gates each: lint, tsc, unit, build, e2e, docs gate)
+
+    ae678fdf  lint 0 | tsc clean | unit 6871 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 167 passed / 0 failed, 32 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+    887d9265  lint 0 | tsc clean | unit 6847 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 208 passed / 0 failed, 25 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+
+Do NOT run the test suite, the build, or playwright yourself -- on this Windows box that derails a
+review for environment reasons. Review by READING. The gate transcripts above are the runtime
+evidence. Use your tools freely to read source, tests, git history and config.
+
+WHAT I NEED ADJUDICATED. Be adversarial and specific; cite file:line.
+
+1. THE CORRECTIONS. Three P1 defects were found in PR#788 and fixed across commits 16281814 and
+   ae678fdf. Verify each is genuinely closed on EVERY path, and that the fixes introduced nothing:
+   (a) `unknownProvenanceKeys` in src/components/TWGReviewPortal.tsx was derived at mount only when
+       the truncation key was ABSENT, and was never persisted. A legacy draft (exactly MAX_CHARS
+       long with no truncation key -- the deployed build has maxLength={5000}, so this population is
+       real) raised an "unknown amount of text may be missing" notice; the user pressed Save Draft;
+       an empty {} truncation record was written; the next mount took the rawT !== null branch,
+       discarded the at-limit keys, and the disclosure was gone forever -- after which the submit
+       gate passed and possibly-clipped regulatory review text could be submitted with no
+       disclosure at all. The component's own comment declares that a present-but-empty {} record is
+       a POSITIVE statement that nothing was lost and must keep meaning exactly that.
+       Fix: a third localStorage key persisting the unknown-provenance set independently.
+   (b) The same disclosure was also erased by a FAILED save (records written before the draft, so a
+       throwing draft write left the poison behind), and the code's own comment justifying that
+       ordering was factually wrong for this population.
+   (c) The cancelled-submit note rendered inside an absolute-positioned bottom bar with no height
+       bound, against a fixed pb-32 (128px) reservation, occluding the very Dismiss controls the
+       note instructs the reviewer to use -- and nothing else clears the record.
+   Specifically check the WRITE ORDER at TWGReviewPortal.tsx around lines 400-430: the intent is
+   antidote (unknown-provenance) BEFORE poison (truncation) BEFORE draft, with any failure aborting
+   the save so no resumable-but-undisclosed draft can exist. Is that ordering actually correct and
+   actually sufficient? Is there any remaining sequence -- save, failed save, dismiss, submit
+   success, submit failure, corrupt or malformed stored value, a second tab -- that still ends with
+   a legacy at-limit draft resumable with its disclosure erased?
+
+2. TEST HONESTY. This lane has a recorded history of green suites coexisting with defects that HID a
+   correct regulatory value rather than corrupting it. For each new or restored test in the four
+   ranges above, ask what single production line you would have to change to make it fail. Name any
+   test that cannot fail the bug it claims to guard. Note that jsdom has no layout engine, so the
+   geometry fix in (c) can only be asserted as a class-level contract -- judge whether that contract
+   is at least the right one and whether the arithmetic in the comment above the scroll container is
+   correct against the real Tailwind class values.
+
+3. A DISAGREEMENT I NEED SETTLED. An earlier strong review concluded PR#782 was "self-consistent and
+   safe to merge now". Two later reviewers concluded that is WRONG: #782 ships a synchronous
+   pre-paint bootstrap that can set <html class="dark"> from localStorage, while ThemeContext still
+   hands consumers DEFAULT_THEME ('light') until its mount effect runs, so ThemeToggle announces
+   "Switch to dark mode" and draws a moon on an already-dark page -- a WCAG 4.1.2 accessible-name
+   defect that main does not currently have. #787's seedTheme is what closes it. Read the code and
+   tell me which reading it supports, and therefore whether #782 and #787 MUST land as one coupled
+   unit rather than separately.
+
+4. THE MERGE PLAN -- this is the part I most want attacked. `.github/workflows/ci.yml` declares
+   `on: pull_request: branches: [main, develop]` with NO `types:` key, so it uses the defaults
+   opened/synchronize/reopened. Consequences I believe follow, please confirm or refute each:
+   - #782 and #783 (base main) have the four required contexts green: Lint & TypeScript Check,
+     Unit Tests, Production Build, E2E Tests.
+   - #784, #785, #787, #788 have base = another feature branch, so ci.yml has NEVER run on them;
+     they carry only GitGuardian plus two docs gates.
+   - Retargeting a stacked PR to main emits `edited`, which is NOT a default type, so the required
+     contexts would never fire and the PR would sit permanently blocked. There is no
+     workflow_dispatch on ci.yml.
+   Branch protection on main (read live): strict=false (no up-to-date requirement), required
+   contexts exactly the four above, no required approving reviews, enforce_admins=false,
+   required_linear_history=false, allow_force_pushes=false. Feature branches are UNPROTECTED and
+   there are no rulesets.
+   Given all that, I intend to land each stack by merging bottom-up INTO THE PARENT BRANCH, so that
+   only the two base-main PRs ever merge into main:
+     STACK B:  merge #787 into feat/section-b-wave0-20260815 -> that push fires `synchronize` on
+               #782 whose base IS main, so the four required contexts run on the exact combined
+               content -> then merge #782 into main. #782 and #787 therefore land ATOMICALLY, which
+               eliminates any window where main carries the WCAG defect from item 3.
+     STACK A:  merge #788 into feat/deferred-triage-20260816, then #785 into
+               feat/section-b-wavea-20260816, then #784 into feat/mo-batch2-20260816 -> that fires
+               `synchronize` on #783 (base main) so the required contexts run on the full stack ->
+               then merge #783 into main.
+   The alternative is to retarget each child to main and close+reopen it to fire `reopened`.
+   Attack both. Which is safer, which preserves the stacked history and the meaning of CI, what
+   breaks in each, and is there a failure mode where main ends up half-landed? Is merging a PR into
+   an unprotected parent branch to make a protected-branch check run on the combined content a
+   legitimate practice here or a gate bypass in disguise? I care about that question specifically.
+
+5. FORCE-PUSH SAFETY. #787 must be published with
+   --force-with-lease=feat/theme-cookie-20260816:3a5eb26f. The pre-rebase commit 3a5eb26f is
+   preserved locally under tag p787-prerebase-3a5eb26f, and 3a5eb26f is NOT an ancestor of the new
+   tip so an ordinary push genuinely cannot work. main is never force-pushed. Is anything unsafe or
+   recoverable-only-with-difficulty here?
+
+6. SHIP READINESS. Is there anything in either stack that should block landing today? Deliberately
+   OUT of scope, already owner-deferred, do not re-report: the statistical TREATMENT choice for a
+   row whose censoring status is unresolved; cross-tab concurrent save pairing a clipped draft with
+   an empty truncation record; four named BN-RRM findings; 26 remaining audit findings.
+
+OUTPUT CONTRACT. For every finding give severity (P0 blocks landing / P1 fix before landing /
+P2 follow-up / P3 note), exact file:line, the concrete failure scenario with inputs and the wrong
+output, and what would falsify your own claim. Then answer items 1-6 in order. Then end with exactly
+one line: VERDICT: GREEN or VERDICT: RED. RED means something must change before this lands.

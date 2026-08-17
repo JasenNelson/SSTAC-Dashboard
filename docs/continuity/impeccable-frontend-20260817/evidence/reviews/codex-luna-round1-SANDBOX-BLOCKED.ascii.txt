@@ -1,0 +1,983 @@
+OpenAI Codex v0.147.0
+--------
+workdir: C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+model: gpt-5.6-luna
+provider: openai
+approval: on-request
+sandbox: workspace-write [workdir, /tmp, $TMPDIR]
+reasoning effort: high
+reasoning summaries: none
+session id: 01a010d6-9434-7642-95ab-90d82f940637
+--------
+user
+FINAL SHIP-GATE REVIEW of a frozen, fully-gated merge candidate for SSTAC-Dashboard
+(Next.js 15 / React 19 / TypeScript regulatory-science dashboard).
+
+Do NOT review the working tree -- it is clean and there is nothing uncommitted. Use your tools to
+read the exact commits named below. Every SHA is reachable from this repository. Read the real code;
+a verdict formed only from this prompt is worthless to me and I will discard it.
+
+    git diff 120c6f9a..ae678fdf        STACK A, everything it lands on main
+    git diff 120c6f9a..887d9265        STACK B, everything it lands on main
+    git diff 04c9cc10..ae678fdf        the two correction commits on stack A (the newest bytes)
+    git diff 45293f1a..887d9265        the correction commit on stack B (the newest bytes)
+
+THE CANDIDATE
+
+    origin/main   120c6f9a   (verified unmoved)
+    STACK A       ae678fdf   = main + PR#783 f0f56330 + PR#784 c41f1463 + PR#785 87b8d2c8 + PR#788
+    STACK B       887d9265   = main + PR#782 6caaa34e + PR#787
+
+Both stacks fast-forward from current origin/main. They share ZERO changed files (35 vs 11). Their
+union merges clean (merge-tree 597a380f, exit 0). #787 and #788 are LOCAL ONLY and not yet pushed;
+#787's history was rebased and needs --force-with-lease against remote lease 3a5eb26f.
+
+GATE EVIDENCE (six gates each: lint, tsc, unit, build, e2e, docs gate)
+
+    ae678fdf  lint 0 | tsc clean | unit 6871 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 167 passed / 0 failed, 32 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+    887d9265  lint 0 | tsc clean | unit 6847 passed/19 skipped (360 files) | build exit 0
+              BUILD_CORROBORATION=OK | e2e 208 passed / 0 failed, 25 chromium-auth refs
+              docs PASS | ALL_SIX_GATES_RAN=YES | TREE_UNCHANGED=YES
+
+Do NOT run the test suite, the build, or playwright yourself -- on this Windows box that derails a
+review for environment reasons. Review by READING. The gate transcripts above are the runtime
+evidence. Use your tools freely to read source, tests, git history and config.
+
+WHAT I NEED ADJUDICATED. Be adversarial and specific; cite file:line.
+
+1. THE CORRECTIONS. Three P1 defects were found in PR#788 and fixed across commits 16281814 and
+   ae678fdf. Verify each is genuinely closed on EVERY path, and that the fixes introduced nothing:
+   (a) `unknownProvenanceKeys` in src/components/TWGReviewPortal.tsx was derived at mount only when
+       the truncation key was ABSENT, and was never persisted. A legacy draft (exactly MAX_CHARS
+       long with no truncation key -- the deployed build has maxLength={5000}, so this population is
+       real) raised an "unknown amount of text may be missing" notice; the user pressed Save Draft;
+       an empty {} truncation record was written; the next mount took the rawT !== null branch,
+       discarded the at-limit keys, and the disclosure was gone forever -- after which the submit
+       gate passed and possibly-clipped regulatory review text could be submitted with no
+       disclosure at all. The component's own comment declares that a present-but-empty {} record is
+       a POSITIVE statement that nothing was lost and must keep meaning exactly that.
+       Fix: a third localStorage key persisting the unknown-provenance set independently.
+   (b) The same disclosure was also erased by a FAILED save (records written before the draft, so a
+       throwing draft write left the poison behind), and the code's own comment justifying that
+       ordering was factually wrong for this population.
+   (c) The cancelled-submit note rendered inside an absolute-positioned bottom bar with no height
+       bound, against a fixed pb-32 (128px) reservation, occluding the very Dismiss controls the
+       note instructs the reviewer to use -- and nothing else clears the record.
+   Specifically check the WRITE ORDER at TWGReviewPortal.tsx around lines 400-430: the intent is
+   antidote (unknown-provenance) BEFORE poison (truncation) BEFORE draft, with any failure aborting
+   the save so no resumable-but-undisclosed draft can exist. Is that ordering actually correct and
+   actually sufficient? Is there any remaining sequence -- save, failed save, dismiss, submit
+   success, submit failure, corrupt or malformed stored value, a second tab -- that still ends with
+   a legacy at-limit draft resumable with its disclosure erased?
+
+2. TEST HONESTY. This lane has a recorded history of green suites coexisting with defects that HID a
+   correct regulatory value rather than corrupting it. For each new or restored test in the four
+   ranges above, ask what single production line you would have to change to make it fail. Name any
+   test that cannot fail the bug it claims to guard. Note that jsdom has no layout engine, so the
+   geometry fix in (c) can only be asserted as a class-level contract -- judge whether that contract
+   is at least the right one and whether the arithmetic in the comment above the scroll container is
+   correct against the real Tailwind class values.
+
+3. A DISAGREEMENT I NEED SETTLED. An earlier strong review concluded PR#782 was "self-consistent and
+   safe to merge now". Two later reviewers concluded that is WRONG: #782 ships a synchronous
+   pre-paint bootstrap that can set <html class="dark"> from localStorage, while ThemeContext still
+   hands consumers DEFAULT_THEME ('light') until its mount effect runs, so ThemeToggle announces
+   "Switch to dark mode" and draws a moon on an already-dark page -- a WCAG 4.1.2 accessible-name
+   defect that main does not currently have. #787's seedTheme is what closes it. Read the code and
+   tell me which reading it supports, and therefore whether #782 and #787 MUST land as one coupled
+   unit rather than separately.
+
+4. THE MERGE PLAN -- this is the part I most want attacked. `.github/workflows/ci.yml` declares
+   `on: pull_request: branches: [main, develop]` with NO `types:` key, so it uses the defaults
+   opened/synchronize/reopened. Consequences I believe follow, please confirm or refute each:
+   - #782 and #783 (base main) have the four required contexts green: Lint & TypeScript Check,
+     Unit Tests, Production Build, E2E Tests.
+   - #784, #785, #787, #788 have base = another feature branch, so ci.yml has NEVER run on them;
+     they carry only GitGuardian plus two docs gates.
+   - Retargeting a stacked PR to main emits `edited`, which is NOT a default type, so the required
+     contexts would never fire and the PR would sit permanently blocked. There is no
+     workflow_dispatch on ci.yml.
+   Branch protection on main (read live): strict=false (no up-to-date requirement), required
+   contexts exactly the four above, no required approving reviews, enforce_admins=false,
+   required_linear_history=false, allow_force_pushes=false. Feature branches are UNPROTECTED and
+   there are no rulesets.
+   Given all that, I intend to land each stack by merging bottom-up INTO THE PARENT BRANCH, so that
+   only the two base-main PRs ever merge into main:
+     STACK B:  merge #787 into feat/section-b-wave0-20260815 -> that push fires `synchronize` on
+               #782 whose base IS main, so the four required contexts run on the exact combined
+               content -> then merge #782 into main. #782 and #787 therefore land ATOMICALLY, which
+               eliminates any window where main carries the WCAG defect from item 3.
+     STACK A:  merge #788 into feat/deferred-triage-20260816, then #785 into
+               feat/section-b-wavea-20260816, then #784 into feat/mo-batch2-20260816 -> that fires
+               `synchronize` on #783 (base main) so the required contexts run on the full stack ->
+               then merge #783 into main.
+   The alternative is to retarget each child to main and close+reopen it to fire `reopened`.
+   Attack both. Which is safer, which preserves the stacked history and the meaning of CI, what
+   breaks in each, and is there a failure mode where main ends up half-landed? Is merging a PR into
+   an unprotected parent branch to make a protected-branch check run on the combined content a
+   legitimate practice here or a gate bypass in disguise? I care about that question specifically.
+
+5. FORCE-PUSH SAFETY. #787 must be published with
+   --force-with-lease=feat/theme-cookie-20260816:3a5eb26f. The pre-rebase commit 3a5eb26f is
+   preserved locally under tag p787-prerebase-3a5eb26f, and 3a5eb26f is NOT an ancestor of the new
+   tip so an ordinary push genuinely cannot work. main is never force-pushed. Is anything unsafe or
+   recoverable-only-with-difficulty here?
+
+6. SHIP READINESS. Is there anything in either stack that should block landing today? Deliberately
+   OUT of scope, already owner-deferred, do not re-report: the statistical TREATMENT choice for a
+   row whose censoring status is unresolved; cross-tab concurrent save pairing a clipped draft with
+   an empty truncation record; four named BN-RRM findings; 26 remaining audit findings.
+
+OUTPUT CONTRACT. For every finding give severity (P0 blocks landing / P1 fix before landing /
+P2 follow-up / P3 note), exact file:line, the concrete failure scenario with inputs and the wrong
+output, and what would falsify your own claim. Then answer items 1-6 in order. Then end with exactly
+one line: VERDICT: GREEN or VERDICT: RED. RED means something must change before this lands.
+2026-08-17T17:48:24.003470Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+2026-08-17T17:48:25.562009Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+2026-08-17T17:48:27.098447Z ERROR codex_rmcp_client::oauth::refresh_transaction: error=failed to refresh OAuth tokens for server sstac-supabase-advisors
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\INDEX.md; \""'`n---SOP---`n"; Get-Content -Raw docs'"\\GATE_MODE_SOP.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Modules.md; \""'`n---CONCEPTS---`n"; Get-Content -Raw wiki'"\\03_Indexes\\000-Concepts.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch; git rev-parse --show-toplevel; git log -1 --oneline' in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2 | Select-Object -First 80" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Projects\\CLAUDE.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Users\\jasen\\.codex\\skills\\codex-review\\SKILL.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+2026-08-17T17:48:36.219149Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\INDEX.md; \""'`n---SOP---`n"; Get-Content -Raw docs'"\\GATE_MODE_SOP.md"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\INDEX.md; \""'`n---SOP---`n"; Get-Content -Raw docs'"\\GATE_MODE_SOP.md"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Modules.md; \""'`n---CONCEPTS---`n"; Get-Content -Raw wiki'"\\03_Indexes\\000-Concepts.md"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch; git rev-parse --show-toplevel; git log -1 --oneline'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+2026-08-17T17:48:36.219273Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Modules.md; \""'`n---CONCEPTS---`n"; Get-Content -Raw wiki'"\\03_Indexes\\000-Concepts.md"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2 | Select-Object -First 80"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+2026-08-17T17:48:36.219381Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch; git rev-parse --show-toplevel; git log -1 --oneline'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+2026-08-17T17:48:36.219431Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2 | Select-Object -First 80"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch' in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git rev-parse --show-toplevel' in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Projects\\CLAUDE.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\INDEX.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\GATE_MODE_SOP.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Modules.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Concepts.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Users\\jasen\\.codex\\skills\\codex-review\\SKILL.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+2026-08-17T17:48:46.432530Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+2026-08-17T17:48:46.432642Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git rev-parse --show-toplevel'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+2026-08-17T17:48:46.433907Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git status --short --branch'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command 'git rev-parse --show-toplevel'` rejected: The executor may not inspect or mutate Git. Mission Control captures status, diff, and ref evidence.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Projects\\CLAUDE.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\INDEX.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw docs\\GATE_MODE_SOP.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Modules.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw wiki\\03_Indexes\\000-Concepts.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Users\\jasen\\.codex\\skills\\codex-review\\SKILL.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+2026-08-17T17:49:11.836585Z ERROR codex_core::tools::router: error=`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+ declined in 0ms:
+`"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Select-String -Path C:\\Users\\jasen\\.codex\\memories\\MEMORY.md -Pattern 'SSTAC|TWGReviewPortal|#782|#787|theme|ship-gate' -Context 1,2"` rejected: Explicit interpreter and shell wrappers can bypass direct Git, secret, cloud, and cleanup rules. Use the exact npm/npx gates.
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Projects\\CLAUDE.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 177ms:
+# C:\Projects\ -- Cross-Project Claude Code Instructions (L0)
+
+**Status:** DRAFT v1, pending codex HOLISTIC review (milestone 2 of consolidation work plan at `C:\Projects\CLAUDE_MD_CONSOLIDATION_HANDOFF_2026_05_18.md`) and owner sign-off.
+**Companion:** `C:\Projects\DOCLING_CONSISTENCY_SOP.md`, `C:\Projects\PROJECT_FOLDER_AUDIT_2026_05_18.md`, `C:\Projects\MEMORY_CONSOLIDATION_RECOMMENDATIONS_2026_05_18.md`.
+**Last updated:** 2026-07-09 (sections 1.20 and 1.21 added, owner-issued autonomy-mode enforcement for AGY and Claude workplans).
+
+---
+
+## 0. What this file is
+
+Claude Code reads `CLAUDE.md` from the current working directory **and every parent directory** at session start. This file at `C:\Projects\CLAUDE.md` is therefore inherited by every session launched anywhere under `C:\Projects\` -- it is the **L0 cross-project anti-drift anchor**.
+
+**L0 (this file):** Cross-project rules + project-folder routing + DRA-KB family pattern declaration + pointer to Docling SOP. Read first.
+**L1 (per-project):** Each project's own `CLAUDE.md` + `.cursorrules`. Read after L0 when targeting that project.
+**L2 (per-workstream):** Workstream-specific design docs (per-project, deeper).
+**L3 (per-task):** Task-specific handoffs (per-project, deepest).
+
+This file does NOT replace per-project `CLAUDE.md` files. It sits above them. When a session targets a specific project (e.g., `C:\Projects\Regulatory-Review\`), the relevant project's L1 `CLAUDE.md` is the substantive anchor; this file is the routing layer.
+
+---
+
+## 1. Cross-project rules (apply to all work under `C:\Projects\`)
+
+These rules are LOAD-BEARING and supersede any per-project rule that conflicts (unless the per-project file explicitly opts out with cited owner authorization).
+
+### 1.1 Plain ASCII only
+
+No emoji, no Unicode arrows, no smart quotes, no em-dashes, no fancy bullets, no non-breaking spaces, in any documentation file, comment, or markdown produced by any session under `C:\Projects\`. Use plain ASCII: `->` not the arrow glyph; `-` not the em-dash; straight quotes only. Code-point ceiling: 127.
+
+History: drift incidents documented in `feedback_no_em_dashes.md` and Regulatory-Review's `.cursorrules` PLAIN ASCII section. Cursor and Claude both have re-introduced Unicode characters during refactors; the rule is non-negotiable.
+
+### 1.2 Archive-before-edit for handoff documents
+
+Any file matching `*_HANDOFF.md`, `*_HANDOFF_*.md`, `DEV_PLAN*.md`, `EMA_MANAGER_HANDOFF.md`, `SESSION_HANDOFF.md`, and any project-specific equivalent (Site3250-KB's `NEXT_SESSION_HANDOFF_*.md`; BN-RRM's `BNRRM_HANDOFF.md`) MUST be archived before edit. Use the per-project archive folder (`docs/archive/` or `_archive/`).
+
+Regulatory-Review enforces this via the `/handoff-update` skill. Other projects that lack the skill must follow the pattern manually.
+
+### 1.3 codex iterate-to-GREEN before commit + 4 gates before push
+
+Standing memory `feedback_codex_iterate_to_green_before_commit_plus_4_gates_before_push.md` (HIGH AUTHORITY).
+
+- **Before commit:** run `/codex-review` (or codex CLI directly) with iterative loop until mutual-agreement GREEN. Mutual-agreement methodology lives in `codex_review_mutual_agreement_methodology_2026_05_16.md`: when you disagree with a codex finding, argue back with quoted evidence; don't silently accept; don't stubbornly reject.
+- **Two-tier model strategy (owner 2026-06-05; grind id amended 2026-06-07; GATE TIER AMENDED 2026-07-26):** iterative codex grind rounds run the cheap finder until GREEN, THEN switch to **gpt-5.6-sol xhigh** until ITS GREEN (the ship gate; no dropping back). One-shot confirmation stamps go straight to gpt-5.6-sol xhigh. Grind tier is UNCHANGED = `-c model="gpt-5.3-codex-spark"` when its buckets have budget, else `-c model="gpt-5.4-mini"` (Spark has its OWN buckets; mini + the gate tier draw the healthy general pool). **PIN the gate model explicitly (`-c model="gpt-5.6-sol" -c model_reasoning_effort=xhigh`) rather than relying on it being "the default"** -- `~/.codex/config.toml` does currently default to gpt-5.6-sol, but the prose here and in the skill said "gpt-5.5" and a 2026-07-26 session consequently reported a run as 5.5 when it was really 5.6-sol. Verify any grind id on first use; `-c model=` form, never `-m`. Detail: `feedback_codex_two_tier_model_strategy_spark_then_55xhigh.md` (filename keeps the historical `55xhigh`; body carries the amendment) + the /codex-review skill.
+- **Before push:** full 4-gate suite (lint + unit tests + build + e2e chromium where applicable). Even on a 1-line fix-up commit on top of a branch where gates ran earlier, re-run the gates on the new tip.
+
+**Codex-fallback ladder** (per `feedback_codex_fallback_with_rereview_queue.md`): (1) Codex CLI
+(default; xhigh + tool-use; via `codex review -` stdin, NOT `codex exec`). (2) Owner-run codex
+DESKTOP when the CLI backend is down (write a self-contained object-name prompt -- `git show <sha>`,
+no branch switch -- and hand it to the owner to run + paste the verdict back). (3) Opus adversarial
+iterative loop (mutual-agreement). (4) Cursor CLI `agent` (paid; sparingly; often out-of-usage):
+PowerShell `agent --print --mode ask --model gpt-5.3-codex-xhigh "<prompt>"` (binary
+`C:\Users\jasen\AppData\Local\cursor-agent\agent.ps1`; not `--model gpt-5`). After ANY non-CLI
+fallback, append artifact + verdict + disposition to the re-review queue
+(`C:\Users\jasen\.claude\projects\C--Projects-Regulatory-Review\memory\codex_rereview_queue_2026_05_17.md`).
+
+### 1.4 No mass deletions; no auto-deletion of project artifacts
+
+When the situation looks like a cleanup, the right action is RECOMMEND, not DELETE. Specifically:
+
+- Never `git add .` / `-A` / `-u`. Use path-scoped staging (`feedback_path_scope_at_commit.md`).
+- Never `git reset --hard` / `git checkout .` / `git restore .` / `git clean -f` against shared working trees (`feedback_reset_hard_working_tree.md` documents a 2026-04-16 incident).
+- Never delete a folder or file because it "looks outdated"; ask the user. Use `/doc-cleanup` (Regulatory-Review skill) or surface a recommendation; do not auto-delete.
+- Never modify or move files in any `archive/` or `_archive/` folder (Tier 2 Protected Paths in Regulatory-Review CLAUDE.md; same rule applies cross-project).
+
+### 1.5 Verify tool-unavailable claims
+
+Standing memory `feedback_subagent_tool_unavailable_claims_need_verification.md`. When a subagent returns "tool X unavailable, falling back to Y", the orchestrator MUST test X before accepting the fallback. Subagents apply standing fallback rules from stale memory; the current-session reality may differ. Triggering incident 2026-05-16: subagent claimed codex CLI unavailable; orchestrator verified codex was on PATH, ran codex, caught 2 real P2 findings the subagent's Opus self-review missed.
+
+Practical: `command -v codex`, `codex --version`, or the equivalent for whatever tool the subagent claims missing.
+
+### 1.6 Workstream-conflict check before pivot
+
+Standing memory `feedback_workstream_conflict_check_before_pivot.md`. Before pivoting to another repo / worktree / branch based on a "next strategic milestone" memory anchor, check `git status --short` + recent `.tmp_*` scratch-file mtimes + `git log --oneline -5` for evidence a parallel claude session is actively working there. Owner runs multiple parallel sessions; memory anchors do not auto-update when a parallel session starts the named lane.
+
+Triggering incident 2026-05-16: orchestrator pivoted to engine_v2 in `Regulatory-Review-worktrees/engine-v2/` based on memory; a parallel session was actively iterating ontology v0.20 with uncommitted edits. Owner caught the conflict.
+
+### 1.7 Monitoring as baseline for all wrappers
+
+Standing memory `feedback_monitoring_as_baseline_for_all_wrappers.md` (HIGH AUTHORITY). Every new wrapper / long-running tool MUST include diagnostic monitoring as baseline:
+
+- Heartbeat events at intervals proportional to expected phase duration.
+- Stall watchdog (terminate or alert if heartbeat stops).
+- Dependency health polling (e.g., Ollama version, Docling model availability).
+- Smoke tests before bulk runs.
+- AI proactive checks during long runs (do not wait for HITL to notice a stall).
+
+The 2026-05-15/16 Site3250-KB ingest produced unkillable Python processes requiring reboot because 50-min silent phases hid hung-vs-working states. The fix is detect-and-recover at the wrapper level, not after-the-fact triage.
+
+### 1.8 Harness background processes die on session exit
+
+Standing memory `feedback_harness_background_processes_die_on_exit.md` (HIGH AUTHORITY). Claude Code's `Bash` tool with `run_in_background: true` spawns harness-CHILD processes, not detached processes. They die when the session exits. Long-running ingests (over 30 min) need explicit detach via `Win32_Process.Create` (WMI) or `schtasks`, NOT plain `run_in_background`.
+
+Fresh sessions inheriting "background task running" handoffs MUST verify the task is actually still running: `Get-Process python -ErrorAction SilentlyContinue`, lockfile state, journal/log freshness with `grep` for ALL events (not just success paths).
+
+Active POC at `project_site3250_kb_ingest_detach_poc_plan_2026_05_17.md`.
+
+### 1.9 Process safety (Windows 11 stability)
+
+Orphaned processes from Claude Code sessions have caused Windows 11 crashes. Rules:
+
+- Never spawn more than 3 background subagents simultaneously.
+- Before multi-agent operations, run `detect-orphans.ps1` (in `C:\Projects\Regulatory-Review\.claude\scripts\`).
+- Subprocess cleanup in Python scripts: try / finally with terminate -> wait timeout -> kill.
+- Session-end check: `Get-Process python -ErrorAction SilentlyContinue`. If any, run `cleanup-orphans.ps1 -Force` after owner confirmation.
+
+Thresholds: 0 orphans HEALTHY -> 1-3 WARNING (clean before spawn) -> >3 or >500MB CRITICAL (mandatory cleanup) -> >3 background agents BLOCKED.
+
+### 1.10 Quality first; no speed-over-quality shortcuts
+
+Standing memory `feedback_quality_first_no_speed_shortcuts.md`. If a clean fix takes 2x as long as a band-aid, propose the clean fix. Document the trade-off; do not silently apply shortcuts.
+
+### 1.11 Smoke-test before splitting branches
+
+Standing memory `feedback_smoke_test_before_splitting_branches.md`. When a prior PR is in draft, smoke-test it FIRST before branching a new feature off the same shared base. The "feature is independent" claim in a PR body is not a substitute for owner verification.
+
+### 1.12 Ollama schedule negotiation protocol (cross-project; HIGH AUTHORITY)
+
+**Canonical specification:** `C:\Projects\OLLAMA_SCHEDULE_PROTOCOL.md` v0.5 (owner-signed 2026-05-21). **Read the canonical at session start when your work may touch the shared GPU** -- that means
+calling ollama locally OR running PyTorch/CUDA work such as a Docling/MinerU ingest, which
+never calls the Ollama API but takes the same VRAM. Full architecture (6 lifecycle phases, 4-layer Policy+Soft+Hard+Recovery, session-start protocol, recovery paths) lives in that file -- not duplicated here.
+
+**Reference implementation:** `C:\Projects\Regulatory-Review-worktrees\engine-v2\engine_v2\scripts\ollama_coordination\` -- `ollama_lock.py` + `schedule_edit_lock.py` (test suites under `tests/`; counts drift -- run them rather than quoting a number. 2026-08-17: 35 and 9 test defs respectively). Reuse from any session under `C:\Projects\`.
+
+**Three load-bearing rules (non-negotiable):**
+1. Sessions REFUSE to run local-GPU work -- ollama OR PyTorch/CUDA -- outside reserved blocks AND without holding `C:\Projects\OLLAMA_ACTIVE.lock`.
+2. Declare-BEFORE-call: write `actual_start` to the per-day Drift Log BEFORE launching any subprocess that calls ollama or takes VRAM. Release lock + write `actual_end` IMMEDIATELY when done.
+3. Two active lanes max (engine-v2 + DRA-KB). Third lane writes `HITL_OLLAMA_THIRD_LANE_REQUEST_<ts>.md` for owner mediation.
+
+**Scope -- CORRECTED 2026-08-17. This line previously read "any ollama-bound work holding model
+RAM >5 minutes. Non-ollama work always parallelizable", which contradicted its own canonical
+source in three ways and licensed exactly the collision the lock exists to prevent.**
+
+**The purpose of the lock is to stop a session adding resource pressure on top of another
+session's in-flight use of the shared GPU.** Everything below follows from that.
+
+- **The HARD LOCK applies to ALL local GPU/VRAM work, regardless of duration.** A two-minute
+  job piled onto a running ingest is the collision, not an exception to it. The >5 min figure
+  governs only whether a *scheduled block* is ALSO required -- never whether the lock is.
+  (`OLLAMA_SCHEDULE_PROTOCOL.md` s.1: short ad-hoc queries skip the schedule-handshake, but
+  "the hard lock still applies". Owner directives do not exempt either.)
+- **IN SCOPE: local ollama models AND heavy PyTorch/CUDA work** -- Docling OCR, Layout Parser,
+  Whisper, MinerU, RAG-Anything ingests. They do not touch the Ollama API but fight for the
+  same physical VRAM pool, and the canonical doc requires them to participate to prevent
+  catastrophic OOM/CUDA crashes.
+- **OUT OF SCOPE: `:cloud`-tagged models** (e.g. `glm-5.2:cloud`). Inference runs remotely and
+  consumes no local VRAM; exempt from the lock and the whole protocol per the Cloud Models
+  Exception granted 2026-08-06. Also out of scope: genuinely non-GPU work (python tests, codex
+  review, doc authoring, git) -- always parallelizable.
+
+**Do not read "non-ollama" as "unrestricted".** Docling is non-ollama and is fully in scope.
+Enforced at point-of-use by `.claude\scripts\cli-read-gate.js`, which blocks CUDA/Docling
+commands when the lock is absent; that gate is deliberately slightly STRICTER than this rule,
+since it cannot measure VRAM consumption before execution.
+
+### 1.13 External CLI subagent monitoring (breadcrumb discipline)
+
+Long CLI subagents zombie / silently-bail unnoticed (codex stdin-wait zombies, schtasks silent
+completions, silent bails). Every CLI invocation >5 min MUST emit `{status, last_progress_at,
+output_artifacts}` JSON (status: STARTED|IN_PROGRESS|COMPLETED_GREEN|COMPLETED_RED|STALLED|SILENT_BAIL);
+poll via ScheduleWakeup (270s fail-fast / 1200s+ steady). Invocation hygiene: codex CLI via stdin pipe
+(not positional args); cursor-agent via PowerShell `& 'agent.ps1'`; schtasks via temp `.ps1`. NEVER
+assume "no notification = still running" past 10 min without a fresh breadcrumb. Ref:
+`engine_v2/scripts/subagent_runner/`.
+
+### 1.14 Zotero local API and linked reference-file base
+
+For local Zotero desktop integration, use the Zotero local API when Zotero is running and Settings -> Advanced -> "Allow other applications on this computer to communicate with Zotero" is enabled.
+
+Local endpoint: `http://localhost:23119/api/`
+
+This local endpoint is preferred for local metadata inspection and local Zotero coordination. Do not ask for, print, store, or commit Zotero API keys. If the local API is unavailable, report that Zotero desktop/local API access is blocked and continue from repo-local catalogs or owner-approved exports.
+
+Preferred linked attachment base directory for SABCS / Sediment reference files:
+
+`G:\My Drive\SABCS - Sediment Project\References`
+
+Use the user-owned Google Drive SABCS reference folder as the canonical external source-file root for linked Zotero attachments. Do not use Government of BC OneDrive as the default base unless the owner explicitly requests a government-controlled corpus. Do not copy source PDFs, spreadsheets, or reference files into repos under `C:\Projects\`; repos store structured metadata, source locators, Zotero keys, and inventories only unless the owner explicitly approves otherwise.
+
+### 1.15 Worktree-not-checkout-b for parallel sessions (HIGH AUTHORITY)
+
+`git checkout -b feat/X` in a SHARED checkout switches BOTH parallel sessions' branch and orphans the
+parent's in-flight working tree (blanked The_Guide.md edits 2026-05-27). RULE: any session creating a
+feature branch parallel to another MUST `git worktree add <path> -b feat/<lane>-<date> origin/<base>`,
+NOT `git checkout -b` (convention `<repo>-worktree-<lane>` or `<repo>-worktrees\<lane>-<date>`). New
+worktree setup: junction node_modules `cmd /c mklink /J node_modules <shared>\node_modules` + `cp
+.env.local` (avoids full npm ci).
+
+**Cleanup is DESTRUCTIVE -- junction trap (HIGH AUTHORITY):** a recursive delete (`rm -rf`,
+`Remove-Item -Recurse`, or `git worktree remove`) that hits a node_modules JUNCTION FOLLOWS it and
+EMPTIES the shared store (happened 2026-05-30 + twice 2026-06-01). Remove the junction FIRST
+(`fsutil reparsepoint delete "<wt>\node_modules"`, or `cmd /c rmdir` -- but if it errors "not empty"
+the junction PERSISTS, do not proceed), VERIFY it is gone AND the shared target count is unchanged,
+THEN delete the dir + `git worktree prune`. Recovery if emptied: `npm ci`/`npm install` in the primary
+checkout. Anchors: `[[cross-project-worktree-not-checkoutb-for-parallel-sessions]]`,
+`[[feedback-never-remove-item-recurse-on-junction]]`.
+
+### 1.16 Tool-call batching discipline (anti-cascade) (2026-05-31, owner-requested)
+
+**Problem (recurring across sessions):** one failed call in a PARALLEL tool batch CANCELS all its
+siblings. A single bad command in a 20-call fan-out reads back as 19 "Cancelled: parallel tool call"
+errors -- wasted tokens and a misleading transcript. Triggering incident 2026-05-31: a probe fleet
+plus an inline ESM `import ... assert { type: 'json' }` (removed in Node 24) threw once and cancelled
+the whole batch.
+
+**Rules:**
+- Batch in parallel ONLY independent calls you are confident will succeed (e.g. reading known
+  files, git status). NEVER batch exploratory/probe calls whose failure modes are unknown -- run
+  those ONE AT A TIME so a single failure does not waste the whole batch.
+- Do NOT send "is the shell alive?" probe fleets. Empty output is usually SUCCESS, not a hang; do
+  not re-run a command because it "returned no output." Do not sleep-and-retry to check liveness.
+- Verify runtime/syntax BEFORE fanning out. Node JSON loading uses `fs.readFileSync` + `JSON.parse`
+  (or `with { type: 'json' }` on Node 22+), NEVER the removed `assert { type: 'json' }`. Prefer a
+  tiny `.cjs` helper over inline `-e` ESM with import attributes.
+- When a command fails, diagnose the ONE failure and fix it before retrying; never re-issue the same
+  batch verbatim. Look at the input (e.g. `head` the file) before writing a parser for an unknown
+  encoding, rather than guessing a regex and burning calls on parse errors.
+- Avoid unbounded/greedy `grep` regexes against large files (they can dump every line number);
+  prefer the Grep tool with an anchored pattern.
+
+**Memory anchor:** `[[cross-project-tool-call-batching-anti-cascade]]`.
+
+### 1.17 Checkpoint hygiene discipline (2026-06-22, owner-requested)
+
+Standing memory anchor `cross_project_checkpoint_hygiene_discipline_2026_06_22`
+(wikilink form `[[cross_project_checkpoint_hygiene_discipline_2026_06_22]]`).
+Every checkpoint (run via `/checkpoint save` or any manual session checkpoint)
+performs a TIERED hygiene sweep so a fresh or post-compaction session inherits a
+clean, accurately-inventoried process and task state. Drift incidents: orphaned
+python/node processes from dead sessions have caused Windows 11 instability
+(section 1.9) and "background task still running" handoffs that were actually dead
+(section 1.8).
+
+EVERY checkpoint (lightweight + strategic) MUST do all four of:
+
+1. SAVE context + files (the normal `/checkpoint save` snapshot).
+2. ORPHAN SWEEP via `C:\Projects\.claude\scripts\safe-cleanup-orphans.ps1`.
+   Invariants (do NOT weaken): spare-active allowlist (hard command-line
+   allowlist for MCP servers / Claude + Codex desktop / cursor-agent, plus
+   `-SparePids` for the harness's live tasks); kill ONLY provably-parent-dead
+   orphans (a live, older parent is active work -- report as SUSPICIOUS, never
+   kill); kill by explicit PID, never by image name; DRY-RUN is the default
+   (report-only) -- `-Apply` is required to kill, and only after reviewing the
+   dry-run report. An indeterminate parent lookup (WMI error / access denied)
+   fails SAFE (reported, never killed).
+3. BACKGROUND-TASK INVENTORY via the TaskList tool (agent-driven -- a script
+   cannot read the harness task table). TaskStop any task whose purpose is
+   complete; for long-runners, confirm they are genuinely still alive and
+   resumable (per section 1.8: verify with `Get-Process`, lockfile state, and
+   log/journal freshness -- do NOT trust a stale "running" handoff).
+4. TOKEN-BUDGET check: note remaining context headroom; if low, checkpoint and
+   plan a fresh-session handoff before continuing.
+
+STRATEGIC checkpoints (milestone boundaries, end of session, before risky
+re-ingest) ADD:
+
+5. DOC REFRESH: update the active plan/handoff docs (archive-before-edit per
+   section 1.2; use the per-project `/update-docs` or `/handoff-update` skill
+   where available).
+6. HANDOFF: write or refresh the fresh-session resume handoff.
+7. MEMORY-ANCHOR + STATUS: update the relevant memory anchor and record open-PR
+   and gate (lint/test/build/e2e) status so the next session knows what is
+   in-flight and whether it is GREEN.
+
+The orphan-sweep step is automatable as a SessionStart(resume) hook that runs the
+script DRY-RUN and surfaces the bounded report as additionalContext (so a fresh /
+post-compaction session sees the inventory); see
+`C:\Projects\.claude\scripts\safe-cleanup-orphans.ps1`. The background-task
+inventory and token-budget steps are agent-driven and cannot be scripted.
+
+**Memory anchor:** `[[cross_project_checkpoint_hygiene_discipline_2026_06_22]]`.
+
+### 1.18 AGY workhorse: budget-survival rule + READ-the-AGY-doc-first gate (2026-06-25, owner-requested)
+
+Standing memory anchor `agy_engine_v2_orchestration_validated_2026_06_23` (HIGH AUTHORITY). AGY
+(Google Antigravity CLI; Gemini, plus GPT + Claude tiers; effectively UNLIMITED weekly tokens) is the
+mechanical WORKHORSE. The Claude Code weekly token budget is the scarce, hard constraint -- a session
+that does mechanical work INLINE burns the week in ~3 days (incident 2026-06-24/25). So:
+
+- **DEFAULT: every mechanical, fully-specified, non-ollama authoring task** (scripts, tests, probes,
+  config files, doc / SOK / handoff drafting from artifacts) **goes to AGY first.** Claude does ONLY
+  orchestration, codex gating, ollama-under-lock, and architecture/scope/judgment. "It's small" is the
+  exact drift that burns the budget -- small inline tasks add up.
+- **READ-FIRST GATE (load-bearing):** before using AGY in ANY project, READ that project's AGY doc --
+  usage VARIES per project. Prioritize the per-project doc; if none exists, adapt the closest one and
+  note the adaptation. Known docs: engine-v2/Regulatory-Review =
+  `C:\Projects\Regulatory-Review\AGY_ORCHESTRATION_ENGINE_V2.md` (+ `AGY_USAGE_FOR_PARALLEL_SESSION_2026_06_23.md`);
+  SSTAC-Dashboard = the SSTAC AGY guide. The `/AGY` skill is the canonical how-to (model menu +
+  invocation + brief protocol + monitoring + config + log-diagnosis).
+- **THE #1 USAGE RULE (the failure that cost a session 2026-06-25):** AGY print mode does ONE planning
+  turn -- it reliably WRITES/EDITS files but does NOT reliably EXECUTE a run-code-then-report task. So
+  for any analysis/probe/eval: AGY WRITES the script; the ORCHESTRATOR RUNS it (cheap Bash). Decompose
+  GPU/eval work the same way (AGY writes; orchestrator runs ollama under the lock).
+- **Config + monitoring:** AGY needs (a) a live Antigravity login and (b) a `write_file(<project root>)`
+  entry in `~/.gemini/antigravity-cli/settings.json` allow-list for the project it edits, else headless
+  writes are silently suppressed. Monitor by polling the deliverable file (not a long timeout); diagnose
+  failures from `~/.gemini/antigravity-cli/log/cli-*.log`, never by re-guessing the model. NEVER trust
+  AGY's closeout -- verify with git diff + re-run the acceptance checks; codex still gates.
+
+**CONCRETE TRIGGERS -- when to reach for the above** (merged in from former 1.19, 2026-07-07,
+owner-issued; the rule above was correct but under-applied -- a session ran a full multi-gate
+workflow inline at ~60% of the weekly budget by day 2 of 7, despite every task qualifying under
+this section's own test):
+
+1. **Role split:** Claude owns strategy, gate decisions, final verification, owner-facing judgment.
+   AGY owns bounded mechanical production whenever target files, allowed actions, and acceptance
+   checks can be specified.
+2. **Concrete AGY-eligible list:** test harnesses, diagnostic scripts, candidate fixes, fixture
+   generation, report drafting, grep/inventory scripts, repetitive verification scaffolds. These
+   DEFAULT to AGY -- the burden is on Claude to justify doing them inline, not the reverse.
+3. **Turn-budget trigger:** before any debugging/fix-review loop expected to exceed 2 Claude turns,
+   either write a tight AGY brief for the mechanical portion, or explicitly state why AGY is
+   inappropriate for this specific task.
+4. **Build the harness once, upfront**, instead of iterative live shell probing -- define the
+   invariant, have AGY draft the checking script, then run it.
+5. **Read codex/reviewer output surgically:** verdict, blockers, top findings, named files/lines
+   only. Do not tail or paste large reviewer transcripts into context unless a specific follow-up
+   genuinely requires the full text.
+6. **Track cumulative side-quest cost:** if a task is off the flagship path, state before continuing
+   -- why it matters, what it has already cost, the next bounded step, and whether AGY can do that
+   step. Owner approval to start a thread is not a blank check to keep extending it unjustified.
+7. **"One more pass" is not free.** If cumulative work drifts from the current project goal (repeated
+   codex round-trips on the same artifact, a growing side investigation), STOP and surface a re-scope
+   checkpoint.
+8. **Every closeout states:** "Claude-token spend risk for next step: low/medium/high" and "AGY
+   delegation opportunity: yes/no" as mandatory fields.
+
+Enforcement (defense-in-depth): a SessionStart opt-in (folded into the `/codex-review` start-gate)
+asks whether AGY will be used this session and, on yes, the session reads the project AGY doc + `/AGY`
+skill before any `agy` invocation; a PreToolUse hook injects an AGY usage-card + config pre-check at
+point-of-use. See the `/AGY` skill.
+
+**Memory anchors:** `[[agy_engine_v2_orchestration_validated_2026_06_23]]` +
+`[[feedback_agy_broadened_mechanical_scope_and_turn_budget_2026_07_07]]`.
+
+### 1.19 MERGED INTO 1.18 (number retained -- do not reuse)
+
+**Consolidated 2026-08-17.** 1.19's eight concrete triggers (role split, AGY-eligible list,
+turn-budget trigger, build-the-harness-upfront, surgical reviewer reading, side-quest cost,
+"one more pass is not free", closeout fields) now live in **section 1.18** alongside the AGY
+mechanics they were always meant to trigger. Nothing was dropped; the two sections covered one
+topic twice and both loaded into every session.
+
+**The number is retained deliberately** -- live hook text and per-project `CLAUDE.md` files cite
+"L0 section 1.19 item 2/item 3" by number, and renumbering would silently break those references.
+Citations to 1.19 remain valid; read 1.18.
+
+**Memory anchor:** `[[feedback_agy_broadened_mechanical_scope_and_turn_budget_2026_07_07]]`.
+
+### 1.20 Workplans: autonomy-mode gate + no prompt-courier rule -- AGY *and* Claude (2026-07-09, owner-issued; merged 2026-08-17)
+
+Section 1.18 requires AGY for mechanical work, but an SSTAC Matrix Options run exposed a second failure mode: the orchestrator kept handing the owner small prompts to paste, causing repeated interruptions and destroying the intended autonomous workflow. **The identical rule applies whichever executor is being driven -- AGY, or Claude/Claude Code.** Cross-project, every project under `C:\Projects`.
+
+Before drafting, revising, reviewing, or relaying any prompt / workplan / delegation brief / fresh-session handoff / autonomous run contract, the session MUST choose an operating mode up front:
+
+1. **Rapid Interactive:** short, high-uncertainty, owner-feedback-heavy work.
+2. **Bounded Batch:** 30-120 minute scoped work with clear files/checks and one or more PRs.
+3. **Autonomous Multi-Hour:** 4-12 hour non-stop run where the executor executes, runs `/codex-review`, gates, commits, pushes, opens PRs, monitors CI, and resumes after stalls.
+4. **Correction/Recovery:** focused cleanup of an existing PR, worktree, or stalled process.
+
+When the owner asks for overnight, 8h, autonomous, workhorse, non-stop, multi-hour, fewer interruptions, fewer paste cycles, batched HITL, or fresh-session work, DEFAULT to **Autonomous Multi-Hour**. Do not downshift to rapid back-and-forth unless a true owner-gated decision blocks execution.
+
+Autonomous Multi-Hour plans must include: mission objective, timebox, allowed/forbidden scope, ranked execution units, `/codex-review` cadence (targeted/strategic/holistic), gate protocol, resilience artifacts (`RUN_STATE.md`, `PR_MANIFEST.md`, `HEARTBEAT.log`, `COMMAND_LOG.md`, `RESUME_PROMPT.md`), stall detection/time gates, stop conditions, and final report contract.
+
+The executor should not ask for routine approvals for allowed worktree creation, file edits, tests/build/e2e/docs gates, `/codex-review`, commits, pushes, PR creation, CI polling, or moving to the next planned unit. Stop only for destructive cleanup, merges unless pre-authorized, forbidden paths, catalog/data/status mutation outside the launch contract, credentials/secrets, repeated gate failure after bounded retry, or suspected data loss/worktree-junction hazard.
+
+**Executor-specific deltas -- the only differences between the two:**
+
+| | AGY as executor | Claude as executor |
+|---|---|---|
+| Codex-side skill to read first | `agy-workplans` (`C:\Users\jasen\.codex\skills\agy-workplans\SKILL.md`) | `claude-workplans` (`...\claude-workplans\SKILL.md`) |
+| Mode 3 additionally covers | -- | delegating mechanical work to AGY where appropriate; checkpointing |
+| Mode 4 additionally covers | -- | an existing session, CI failure, or scope drift |
+| Plan must additionally include | -- | AGY delegation plan; HITL batching |
+| No-approval list adds | -- | AGY delegation; checkpointing |
+| Stop conditions add | Supabase/Gate2B overlap when out of scope | Supabase/production writes not covered by exact owner approval; token/context exhaustion without checkpoint |
+
+Claude-side sessions apply this workflow even when they cannot load Codex skills directly.
+
+**The owner is not a prompt courier.** If the orchestrator can operate the executor directly, do so. If not, provide ONE complete launch prompt or ONE complete correction prompt -- never a sequence of micro-prompts.
+
+**Memory anchors:** `[[feedback_agy_workplans_autonomy_modes_no_prompt_courier_2026_07_09]]` +
+`[[feedback_claude_workplans_autonomy_modes_no_prompt_courier_2026_07_09]]`.
+
+### 1.21 MERGED INTO 1.20 (number retained -- do not reuse)
+
+**Consolidated 2026-08-17.** 1.20 and 1.21 were near-identical: the same four autonomy modes, the same Autonomous Multi-Hour default, the same required plan contents, the same no-routine-approvals list, and the same no-prompt-courier rule, differing only in whether the executor was AGY or Claude. Both loaded into every session. 1.20 now covers both, with the genuine executor-specific differences in a delta table -- **nothing was dropped**.
+
+**The number is retained deliberately:** per-project `CLAUDE.md` files and memory anchors cite these rules by number, and renumbering would silently break those references. Citations to 1.21 remain valid; read 1.20.
+
+**Memory anchor:** `[[feedback_claude_workplans_autonomy_modes_no_prompt_courier_2026_07_09]]`.
+---
+
+## 2. Project-folder routing table
+
+Read this BEFORE substantive work to route to the correct L1 / L2 anchors. When a request is ambiguous about which project tree it targets, ask the user; do not guess.
+
+| Project tree | Domain | Canonical anchors to read |
+|---|---|---|
+| `C:\Projects\Regulatory-Review\` | RRAA engine v1 (legacy operational) + BN-RRM extraction + general RRAA | `Regulatory-Review\CLAUDE.md` (the comprehensive RRAA L1: engine v1/v2 split, HITL tiers, AI scope, architecture locks, protected paths, skill triggers) + `engine\docs\_INDEX.md`. BN-RRM lane: `2026_Database_Development\data_acquisition\bnrrm_extraction\BNRRM_HANDOFF.md` + `BNRRM_DEV_PLAN.md`. |
+| `C:\Projects\Regulatory-Review-worktrees\engine-v2\` | RRAA engine v2 (active) -- LightRAG/RAG-Anything; M1 Docling landed; M2 retrieval shim planned | Substantive: `engine_v2\docs\CANARY_LOG.md` + `PLAN_V0_10_LANE_COMPREHENSIVE.md`; lane memory `engine_v2_post_signoff_comprehensive_handoff_2026_05_17.md`. WARNING: `engine-v2\CLAUDE.md` is STALE -- do NOT inherit AI scope; canonical = main `Regulatory-Review\CLAUDE.md` (`feedback_no_tier_judgment_for_ai.md`). |
+| `C:\Projects\Sediment-DRA-Pipeline\` | DRA-KB family PARENT (velvet-narwhal; LOCKED Path Y: RAG-Anything + MinerU + LightRAG + Neo4j + nomic-embed-text 768 + gemma3:12b text+vision) | READ FIRST `docs\design\dra_kb_family_goal_LOCKED_2026_05_18.md` (LOCKED v3 authority) + `Sediment-DRA-Pipeline\CLAUDE.md` + `docs/design/dra_kb_family_pattern.md` + `Sediment-DRA-Pipeline\system_architecture.md`. RETIRED pointer: `~/.claude/plans/act-as-a-lead-velvet-narwhal.md` (the codex-GREEN-after-6-rounds plan) NO LONGER EXISTS -- `~/.claude/plans` prunes on a ~30-day rolling window (absence confirmed 2026-08-02); its operative content survives in the LOCKED v3 doc + `system_architecture.md` + `dra_kb_family_pattern.md` + `src/common/runtime_checks.py` + memory anchor `cross_project_loader_allowlist_strategy_a.md`. Do NOT try to read the plan path. |
+| `C:\Projects\Site3250-KB\` | DRA-KB daughter (tier-2 simple-stack; Path Y sunset trigger): LightRAG only, snowflake-arctic-embed2 1024, qwen2.5:14b | `Site3250-KB\CLAUDE.md` (tier-2 conformance) + `docs/RESUME.md`. Memory: `site3250_kb_phase_5a_closed_2026_05_18_eos.md`. |
+| `C:\Projects\TechMemo-KB.pilots\site3250-rag-nonconf\` and `C:\Projects\TechMemo-KB\_rag_pilots\site3250_nonconf\` | DRA-KB pilot lane (Method-B Docling->LightRAG; H1-H5 query-QA prior art). NOTE both paths hold duplicate files -- surface the authoritative one to owner | `G1_INGEST_DESIGN.md` + `H1_QUERY_QA_RESULTS.md`..`H5_*`. No CLAUDE.md. |
+| `C:\Projects\TechMemo-KB\` | Tech-memo authoring for Site 3250; consumes Site3250-KB graph output | `WORKING_PLAN.md` (the main planning artifact). No CLAUDE.md (deferred). |
+| `C:\Projects\SSTAC-Dashboard\` | Next.js Agentic OS dashboard. Reads RRAA engine v1 DB; renders Agentic OS admin from `Knowledge-Base\PROJECTS_MAP.md` + `AI_SUBSCRIPTIONS.md` | `SSTAC-Dashboard\CLAUDE.md` (L1) + `docs/GATE_MODE_SOP.md` (gate authority). |
+| `C:\Projects\Knowledge-Base\` | Personal Obsidian vault (LLM-compiled-wiki). Hosts `PROJECTS_MAP.md` (canonical project inventory) + `AI_SUBSCRIPTIONS.md` | `.claude/CLAUDE.md` + `PROJECTS_MAP.md` (READ before duplicating any cross-project routing). |
+| `C:\Projects\OpenHarness-dev\` (outer private dev workspace) + `Open-Harness\` (inner public product repo, `JasenNelson/Open-Harness`) | Multi-provider safe-agentic-workflow harness (Open-Harness product; fork of SAW). Nested independent repos: outer gitignores inner | `OpenHarness-dev\CLAUDE.md` (read first) + `Open-Harness\CLAUDE.md` + `Open-Harness\docs\CROSS_PROVIDER_OPS.md`. Old `C:\Projects\openharness\` was archived 2026-07-03 to `_archive\openharness-premigration-backup\` (retained, read-only audit trail). |
+| `C:\Projects\Workstation-Observability\` | Workstation health knowledge for `dingapc`: memory-compression / Terminal-render diagnosis, the `nvlddmkm` GPU driver incident record, healthy baselines, owner-invoked measurement + remediation scripts. Created 2026-08-12 | `Workstation-Observability\CLAUDE.md` (L1; carries watch thresholds + the Project HQ boundary) + `docs\INCIDENT_GPU_NVLDDMKM.md` + `docs\DIAGNOSIS_2026_08_11.md`. NOT a monitoring daemon and NOT an authority over any lane; it pushes a status block, it is never polled. Consumes but does not extend the process-custody lane in `.tmp_mission_control\`. Lane assignment with Project HQ is an OPEN OWNER DECISION. |
+
+**Worktrees of `Regulatory-Review-worktrees\`** (tload-*, engine-v2-phase1b-*, ra-registry-*, bnrrm-fixes): each is its own L1 context. Read the worktree's branch + recent commits before substantive work in any of them.
+
+**Worktrees of SSTAC-Dashboard (pr120, pr2):** each is an L1 context tied to a specific PR; coordinate with main SSTAC-Dashboard checkout state per `feedback_smoke_test_before_splitting_branches.md`.
+
+**Out-of-scope / paused folders** (do not invent work for these unless explicitly asked):
+- `EnquiryMgt\`, `Graph-Applicability-Lab\`, `Personal-Vault\` -- standalone projects; rules above still apply if work is requested.
+- `Sediment-Standards-Project\` -- pause-state; not archived (empty `Matrix-Options-Analysis\` stub removed 2026-05-19 per OWNER_ACTION_BACKLOG_2026_05_19.md F5).
+- `_archive\Sediment_Protocol_Guidance\` -- archived 2026-05-19 (was `C:\Projects\Sediment_Protocol_Guidance\`; superseded by Sediment-DRA-Pipeline velvet-narwhal + Regulatory-Review skills system per OWNER_ACTION_BACKLOG_2026_05_19.md F4). Read-only audit trail.
+- `_archive\White Paper Editing - Dec 6\` -- archived 2026-05-19 (was `C:\Projects\White Paper Editing - Dec 6\`; 5+ months idle per F3). Read-only audit trail.
+- `_archive\regulatory-review-autoresearch\` -- archived 2026-05-19 (was `C:\Projects\regulatory-review-autoresearch\`; "campaign complete" 4 weeks idle per F2). Stale-stub CLAUDE.md within is from D2 fix; both archived together. Read-only audit trail.
+- `_archive\regulatory-review-autoresearch-preclone-backup-20260401_2233\` -- archived 2026-05-19 (was `C:\Projects\regulatory-review-autoresearch-preclone-backup-20260401_2233\`; pre-clone backup per F1). Read-only audit trail.
+- `_misc\` -- loose root files moved 2026-05-19 per F10: `analyze_inventory.py`, `inventory_results.json`, `inventory_summary.json`, `pdf_inventory.py`, `check_candidates.py`, `claude_code_config.json`, `desktop_config.json`. May be re-homed to source projects later.
+- `claude-plugins-official\`, `notebooklm-mcp\`, `models\`, `sdra-test-Sediment-DRA-Pipeline\` -- asset / utility folders; no active dev expected.
+
+---
+
+## 3. DRA-KB family pattern (declaration)
+
+The "DRA Knowledge-Base" family is a cluster of related Detailed Risk Assessment knowledge-base projects sharing an architectural pattern. The parent (`Sediment-DRA-Pipeline\`) holds the codex-GREEN reference architecture; daughters either conform fully (tier-1) or declare a tier-2 deviation explicitly.
+
+### 3.1 Family roster (authoritative)
+
+- **Parent:** `Sediment-DRA-Pipeline\` -- velvet-narwhal architecture (see `Sediment-DRA-Pipeline\system_architecture.md` -- the canonical architecture file -- and the newly-landed `Sediment-DRA-Pipeline\CLAUDE.md` 2026-05-18 ~10:27 UTC + `Sediment-DRA-Pipeline\docs\design\dra_kb_family_pattern.md` 2026-05-18 ~10:30 UTC -- parent-session-authored after this consolidation session started). **RETIRED SOURCE (history, do not delete):** the original velvet-narwhal architecture plan lived at `~/.claude/plans/act-as-a-lead-velvet-narwhal.md` and was driven to codex-GREEN over 6 rounds; that file NO LONGER EXISTS (`~/.claude/plans` prunes on a ~30-day rolling window; absence confirmed 2026-08-02). Its operative content was extracted BEFORE loss and survives in: `Sediment-DRA-Pipeline\docs\design\dra_kb_family_goal_LOCKED_2026_05_18.md` (LOCKED v3, Path Y -- supersedes the plan's architecture deliberation), `Sediment-DRA-Pipeline\system_architecture.md` (canonical architecture), `Sediment-DRA-Pipeline\docs\design\dra_kb_family_pattern.md` (daughter conformance rules), `src/common/runtime_checks.py` (`validate_raw_json_dir`, `validate_ollama_endpoint` -- the plan's runtime invariants, now executable), and memory anchor `cross_project_loader_allowlist_strategy_a.md` (the plan's "Critical Non-Negotiables" item 8). Cite those, never the dead plan path.
+- **Tier-2 daughter (simple-stack; sunset on content-type trigger):** `Site3250-KB\` -- LightRAG only, no RAG-Anything, no Neo4j; snowflake-arctic-embed2 1024-dim; qwen2.5:14b. Current 5 docs ingested in v2_sandbox. Now has its own `Site3250-KB\CLAUDE.md` (parent-session-authored 2026-05-18 ~13:03 UTC).
+- **Pilot daughter (RAG-Anything prior art -- parallel pilot trees):** `TechMemo-KB.pilots\site3250-rag-nonconf\` AND `TechMemo-KB\_rag_pilots\site3250_nonconf\`. Both paths exist with the same `G1_INGEST_DESIGN.md` + `H1`..`H5_QUERY_QA_RESULTS.md` files. Canonical relationship between the two not yet documented; surface to owner. Method-B chosen at G1; substantive query-QA prior art -- but NOTE per LOCKED Path Y (section 3.2 below), Method-B is now reserved for tier-2 daughters only; tier-1 daughters use RAG-Anything end-to-end per the parent's velvet-narwhal pattern.
+- **Extraction daughter (lives inside Regulatory-Review):** `C:\Projects\Regulatory-Review\2026_Database_Development\data_acquisition\bnrrm_extraction\` -- Docling-based PDF -> structured data; produces `_VERBATIM_COMPLETE.json` artifacts; TLOAD repair lane pending. Note OCR is conditional (`MAX_PAGES_FOR_OCR=200`) per `extract_tables_docling.py`, NOT force-full-page-OCR.
+- **Sibling-consumer:** `TechMemo-KB\` -- tech memo authoring workspace; consumes daughter graph output.
+
+**Architecturally related but NOT formally a DRA-KB family member:** RRAA engine v2 (`Regulatory-Review-worktrees\engine-v2\`). Engine v2 uses the same stack pattern (LightRAG + RAG-Anything + Docling + Neo4j substrate planned via M2/M3) but the project domain is BC contaminated-sites regulatory review, not DRA knowledge base. Engine v2 appears in `DOCLING_CONSISTENCY_SOP.md` section 9 as a Docling consumer for informational completeness; it is NOT subject to DRA-KB family tier-1/tier-2 conformance rules. The two share architecture but not project identity.
+
+### 3.2 Standing rule (HIGH AUTHORITY) -- LOCKED Path Y v3
+
+Authority docs: `Sediment-DRA-Pipeline\docs\design\dra_kb_family_goal_LOCKED_2026_05_18.md` (LOCKED v3 2026-05-18 ~10:30 UTC; Path Y) + memory anchor `feedback_dra_kb_family_pattern_adoption_required.md` + `Sediment-DRA-Pipeline\system_architecture.md` (canonical architecture; the parent's velvet-narwhal codex-GREEN plan at `~/.claude/plans/act-as-a-lead-velvet-narwhal.md` is RETIRED / no longer exists -- see section 3.1 Parent bullet for where its content went).
+
+Owner J. Nelson accepted Path Y on 2026-05-18 ~10:00 UTC (verbatim quote from LOCKED doc): "I want full RAG-Anything set up, tested, refined and fully functional ... I want full multi-modal capability set up immediately." This **SUPERSEDES the earlier Option 3.A / 3.B / 3.C deliberation** in `dra_kb_family_alignment_work_plan_2026_05_18.md` section 3 (that work plan is now banner-flagged "SUPERSEDED IN PART BY LOCKED v3").
+
+Any new DRA-KB family project MUST evaluate the parent's stack pattern upfront:
+
+- **Tier-1 (full conformance; LOCKED canonical):**
+  - LightRAG + **RAG-Anything (raganything package) + MinerU VL parser** (NOT direct-Docling-first; RAG-Anything calls Docling+MinerU internally via `process_document_complete()` end-to-end)
+  - Neo4j Community Edition (`bolt://localhost:7687`, per-daughter workspace label e.g. `dra_kb_warp` / `dra_kb_hhra`)
+  - LightRAG NanoVectorDBStorage (file-backed JSON via `nano-vectordb`) for vectors
+  - nomic-embed-text 768-dim via Ollama `/api/embed`
+  - gemma3:12b text reasoning (default; gemma3:4b fast iteration; gemma3:27b offload opt-in)
+  - gemma3:12b for vision (multimodal LLM); MinerU VL bundled separately for parser-side VL
+  - Ollama local-only, version >= 0.6
+  - Extraction entry-point: RAG-Anything's `process_document_complete()` end-to-end; **NOT** a custom port of engine-v2 M1.5 or direct-Docling-first
+- **Tier-2 (simple-stack pilot; sunset on content-type trigger):**
+  - LightRAG + NanoVectorDB only; no RAG-Anything; no Neo4j
+  - snowflake-arctic-embed2 1024-dim + qwen2.5:14b (Site3250-KB current operational state)
+  - Acceptable ONLY for text-only content
+  - **Sunset trigger:** content-type-based -- if a tier-2 daughter ever ingests table / figure / photo / map-heavy content, migrate to tier-1
+
+**Drift was diagnosed 2026-05-18 in Site3250-KB:** table-heavy WARP/HHRA ingest is the near-term need; tier-2 stack cannot handle companion Excel sheets, figure captioning, photos, or maps. Owner accepted **Option 3.C Path Y** (hybrid two-tier: Site3250-KB stays tier-2 with documented deviations; WARP/HHRA + all multimodal content routes to tier-1 parent stack). Future content-type router that auto-directs simpler files to tier-2 or a leaner pipeline is explicit-scope-deferred optimization, NOT built-in.
+
+**WARP-first execution scope:** per LOCKED v3, owner directed WARP ingestion first (canonical: `20250627_697792_RPT_WARP.pdf` 25 MB + `20250627_655246_697792_TAB_SO.xlsx` 1.4 MB with 7 land-use sheets), HHRA second, broader scaling later.
+
+### 3.3 What to do when adopting the pattern
+
+Any new daughter MUST:
+
+1. Author its own `CLAUDE.md` (or `.cursorrules`) declaring conformance tier (tier-1 / tier-2 / partial-with-documented-deviation).
+2. Cross-reference the parent's velvet-narwhal architecture at `Sediment-DRA-Pipeline\system_architecture.md` (the retired `~/.claude/plans/act-as-a-lead-velvet-narwhal.md` plan is gone; see section 3.1) + `Sediment-DRA-Pipeline\docs\design\dra_kb_family_pattern.md` (EXISTS; parent-session-authored 2026-05-18 ~10:30 UTC) + the LOCKED Path Y authority at `Sediment-DRA-Pipeline\docs\design\dra_kb_family_goal_LOCKED_2026_05_18.md`.
+3. Document any deviation in `docs/design/deviations/<deviation>.md` with rationale + revisit-trigger.
+4. Use parent's tooling where available: `safe_commit.ps1` path-scoped staging, `safe_run_python.ps1` RSS-guarded launcher, the precommit-guard pattern.
+
+---
+
+## 4. Docling consistency (pointer to SOP)
+
+`C:\Projects\DOCLING_CONSISTENCY_SOP.md` is the canonical Docling-usage SOP across all projects under `C:\Projects\`. It covers floor-constraint version policy, OCR defaults, table-extraction defaults, image-asset handling, output schema, loader-allowlist invariants, and per-project Docling usage map.
+
+**Important framing per LOCKED Path Y v3 (section 3.2):** Docling is a **sub-component** of the tier-1 extraction stack, not the canonical entry-point. Tier-1 daughters use **RAG-Anything's `process_document_complete()` end-to-end** as the canonical path; RAG-Anything internally calls Docling + MinerU VL parser. Direct-Docling-first ingest with `_DOCLING.json` schema as the canonical entry-point is a CROSS-PROJECT Docling-usage pattern (used by Site3250-KB Method B, BN-RRM extraction lane, engine v2 M1.5 multimodal capture, and tier-2 daughters generally) but NOT the canonical tier-1 entry-point for the DRA-KB family.
+
+**Three load-bearing invariants** (cross-referenced from the SOP, restated here for impact):
+
+1. **OCR is always on for regulatory documents using Docling-first paths.** `feedback_docling_ocr_required.md` (BN-RRM-scoped body; principle extends to other regulatory-doc Docling lanes) + `feedback_pdf_vision_first.md`. Memory pressure is handled by chunking + RSS-guarded launchers, NEVER by turning OCR off as a workaround. Note: the BN-RRM extraction lane has a `MAX_PAGES_FOR_OCR=200` documented exception in `extract_tables_docling.py` that turns OCR off for very large docs to save memory -- this is a LEGACY documented deviation, not the canonical pattern; new tier-1 daughters route through RAG-Anything and the OCR decision is in RAG-Anything's hands.
+2. **Schema policy.** Tier-1 daughters via RAG-Anything: native RAG-Anything `content_list` shape. Tier-2 / Docling-first daughters: `_DOCLING.json` (`sdra-pipeline-v1` schema). BN-RRM legacy: `_VERBATIM_COMPLETE.json` (read-only audit trail; ~766 artifacts with documented loader bugs; no new project may emit this schema). Loader allowlist rejecting `VERBATIM` + `G:\` paths declared as HIGH AUTHORITY standing memory `cross_project_loader_allowlist_strategy_a.md` (landed 2026-05-19 ~01:00 UTC; codifies the now-RETIRED velvet-narwhal plan's section "Critical Non-Negotiables" item 8 -- the plan file `~/.claude/plans/act-as-a-lead-velvet-narwhal.md` no longer exists, so cite the memory anchor directly; see section 3.1 -- with the operationally-correct generalization to any `G:\` prefix).
+3. **Drift-detector pattern.** When a project copies tuning constants from another (e.g., BN-RRM TableFormer settings into `Sediment-DRA-Pipeline\src\ingest\ingest_pdf.py`), include attribution header + drift-detection test that compares against upstream periodically.
+
+---
+
+## 5. Per-project CLAUDE.md status
+
+Each project's L1 CLAUDE.md (or `.cursorrules`) is its authoritative anchor; this L0 routes to them
+(section 2).
+
+STALE -- do NOT inherit AI scope from these (they carry the pre-2026-05-12 "Three-Tier Discretion
+Model" + retracted Indigenous-TIER_3 framing; canonical AI scope is the main `Regulatory-Review\CLAUDE.md`
+per `feedback_no_tier_judgment_for_ai.md`): `Regulatory-Review-worktrees\engine-v2\CLAUDE.md` and
+`regulatory-review-autoresearch\CLAUDE.md`.
+
+NONE (deferred, no CLAUDE.md): the TechMemo pilot lanes + `TechMemo-KB\` authoring workspace.
+
+---
+
+## 6. Load-bearing memory anchors (cross-project)
+
+Standing memory anchors that apply across projects (not just to the project where they were written). Loaded automatically into every session via the user's `MEMORY.md` index at `C:\Users\jasen\.claude\projects\C--Projects-Regulatory-Review\memory\MEMORY.md`.
+
+**The index truncates at 200 lines on load. MEASURE it, do not quote a frozen number** -- an earlier revision of this line claimed "currently 694 lines", which was wrong by roughly 7x and had sessions chasing a memory-loss problem that does not exist. Counting convention matters: `(Get-Content $p).Count` gives PHYSICAL lines (the figure truncation acts on); `(Get-Content $p | Measure-Object -Line).Lines` EXCLUDES blank lines and reads lower. Measured 2026-08-17: **92 physical / 83 non-blank -- well inside the limit, nothing truncating**, and no index on this machine exceeds 200 (closest: Sediment-DRA-Pipeline at exactly 200, worth watching). Re-measure rather than trusting this figure. See `C:\Projects\MEMORY_CONSOLIDATION_RECOMMENDATIONS_2026_05_18.md` for cross-project scope-tagging recommendations.
+
+The anchors themselves are enumerated in that always-loaded `MEMORY.md` index (its "HIGH AUTHORITY
+(read first)" block) -- read them there rather than from a second copy here. Full list with
+consolidation recommendations: `C:\Projects\MEMORY_CONSOLIDATION_RECOMMENDATIONS_2026_05_18.md`.
+
+Two that carry standing operational obligations beyond "read me": `codex_rereview_queue_2026_05_17.md`
+is an ACTIVE queue -- check it before assuming codex was run, and append to it after any Opus-fallback
+or Cursor-agent fallback; `feedback_no_tier_judgment_for_ai.md` is RRAA-specific but its underlying
+principle (AI surfaces evidence; HITL judges) applies across projects.
+
+---
+
+## 7. Anti-spiral guards
+
+When working under any tree in `C:\Projects\`, these self-checks reduce drift:
+
+- **Folder audit / cleanup work** is time-boxed (per the consolidation work plan). If you find yourself authoring more than 5 design docs without owner sign-off, stop and ask whether scope is right.
+- **Memory consolidation** is RECOMMENDATION ONLY. Never rename / move / delete memories without owner approval; surface recommendations as a doc.
+- **Cross-project routing table updates** belong in this file. Do not duplicate routing into per-project CLAUDE.md files; route from this file.
+- **DRA-KB family conformance** is the family's job; if a daughter declares conformance, that declaration belongs in the daughter's CLAUDE.md, not buried in a workstream doc.
+
+---
+
+## 8. Document lifecycle
+
+- This file is owned by the cross-project consolidation work lane. Updates require owner sign-off when they touch the routing table, the family pattern declaration, or the load-bearing rules in section 1.
+- Minor updates (typo fixes, anchor renames, new project added to the routing table when a new project is created) can be applied per the normal codex iterate-to-GREEN cadence without owner sign-off, but should be surfaced in session-end summaries.
+- Sessions that find this file outdated should propose updates as a Step-2-design-style note + run codex review before committing.
+
+---
+
+*Drafted 2026-05-18 ~17:00 UTC; updated through 2026-05-19 ~00:30 UTC after 22 adversarial rounds (3 Opus + 5+8+5+1 codex CLI prompts) + 3 narrow-fix passes. Pending owner sign-off.*
+*Change history is in git; see section 8 for the update / sign-off rules.*
+
+<!-- BEGIN SHARED_AI_REFERENCE_POINTER -->
+# Shared AI Reference Trigger
+
+Canonical repository: `C:\Projects\AI-CLI-Model-Registry`
+
+Read the CLI reference or invoke `choose-ai-cli-and-model` when a session:
+
+- chooses or invokes an AI CLI;
+- delegates non-interactive/headless work;
+- launches an autonomous worker;
+- chooses an Ollama/local model;
+- makes a dense-versus-MoE claim;
+- interprets model-quality findings; or
+- plans a model-bound experiment.
+
+- CLI operation: `C:\Projects\AI-CLI-Model-Registry\docs\AI_CLI_REFERENCE.md`
+- Model inventory/evidence: `C:\Projects\AI-CLI-Model-Registry\docs\AI_MODEL_EVIDENCE_REGISTRY.md`
+- Work over five minutes: invoke `supervise-headless-ai-worker`
+
+Load only the reference needed for the task. Check last-verified dates and
+drift-prone facts. Apply the target project's permissions, protected paths,
+active-session boundaries, and Ollama scheduling rules.
+
+A project-local AGY runbook overrides generic invocation examples. Before a
+long run, smoke the exact model/flag/root combination in the actual launch
+environment and use `supervise-headless-ai-worker`. Supervision detects bad runs
+but does not make a granted root read-only. Do not grant a dirty primary checkout
+to an autonomous writer, and do not copy another repo's permission roots,
+worktree behavior, gates, or owner-write boundaries.
+<!-- END SHARED_AI_REFERENCE_POINTER -->
+?
+
+exec
+"C:\\Program Files\\PowerShell\\7\\pwsh.exe" -Command "Get-Content -Raw C:\\Users\\jasen\\.codex\\skills\\codex-review\\SKILL.md" in C:\Projects\SSTAC-Dashboard-worktrees\triage-20260816
+ succeeded in 175ms:
+---
+name: codex-review
+description: Run checkpoint-bound, adversarial review for important owner decisions, architecture and governance choices, key milestones, plans and specifications, pre-implementation gates, phase or lane completion, contract/schema/API/security changes, pre-commit review, PR or merge readiness, promotion, activation, deployment, and release. Use when the user asks for codex-review, review, feedback, a second opinion, targeted, strategic, holistic, comprehensive/adversarial, commit protocol, reviewer challenge, re-review, or mutual agreement. Ask once at important decisions and milestones; run automatically when a mandatory pre-commit or project gate applies.
+---
+
+# Codex Review
+
+Policy revision: `2026-08-03-owner-review-activation-v1`.
+
+Use `/codex-review` as a workflow, not as a synonym for a nested Codex CLI
+command. Bind the review to an exact checkpoint, use independent evidence,
+challenge disputed findings, and converge honestly before the guarded action.
+
+## Activation
+
+Classify each trigger exactly once.
+
+### Ask once at an important decision or key milestone
+
+Before crossing an important owner, architecture, governance, safety, scope,
+sequencing, or release decision, or a key milestone, ask:
+
+`This is a <trigger>. I recommend <mode>. Run /codex-review now: targeted, strategic, holistic, comprehensive/adversarial, or skip?`
+
+Recommend the proportionate mode. Do not re-ask when `checkpoint_id`, mode,
+and target hash are unchanged and the owner's answer is already recorded.
+
+Key milestones include:
+
+- before substantial or multi-hour implementation;
+- a decision-ready plan, design, specification, or migration proposal;
+- contract, schema, API, invariant, security, auth, data, or migration changes;
+- phase or lane completion;
+- PR or merge readiness;
+- promotion, activation, deployment, or release gates; and
+- material scope expansion or change to an approved plan.
+
+### Run automatically
+
+Run the effective project's prescribed review before commit. Do not ask the
+owner to remember the gate. Also run without re-asking when the owner already
+selected a review for the current checkpoint.
+
+An owner opt-out is valid only when it is explicit, candidate-scoped, recorded,
+and permitted by the effective project or workstream protocol. A stricter
+project, protected-path, or system rule wins. If no opt-out path exists, cite
+the controlling rule and stop. Never label an opt-out as GREEN.
+
+### Skip the milestone prompt
+
+Do not prompt strategically for ordinary status updates, routine test reruns,
+mechanical evidence collection, or typo/comment/format-only work. At commit,
+still follow the active project's review rule and never invent a trivial-change
+exemption.
+
+## Review modes
+
+- `targeted`: Check one exact diff, artifact, finding, or fix for correctness,
+  regressions, security, edge cases, tests, and acceptance criteria.
+- `strategic`: Check intent, alternatives, sequencing, dependencies, owner
+  gates, proportionality, and whether the proposal solves the right problem.
+- `holistic`: Give free rein across architecture, project alignment, callers,
+  consumers, operational reality, maintainability, drift, and unknown-unknowns.
+- `comprehensive/adversarial`: Run targeted, strategic, and holistic lenses in
+  one coordinated initial review. Do not turn the four mode names into four
+  repetitive mandatory invocations.
+
+Use comprehensive/adversarial for cross-cutting architecture, governance,
+safety, contract, scope, migration, or release decisions. Use a narrower mode
+when it is sufficient.
+
+## Role and checkpoint ownership
+
+Create or reuse one checkpoint receipt containing:
+
+- `checkpoint_id` and `review_id`;
+- role and `review_coordinator`;
+- repository and worktree identity;
+- exact target identity and `target_hash`: immutable commit SHA or base/head
+  pair; otherwise repository HEAD plus staged-index identity, unstaged diff
+  hash, and hashes of reviewed untracked files as applicable; use artifact
+  hashes for standalone files;
+- review mode and trigger;
+- status, open findings, eligible paths, and owner disposition.
+
+Material target changes invalidate the prior verdict. Do not run the same mode
+concurrently for the same checkpoint and target hash.
+
+### Executor
+
+The executor owns implementation, remediation, targeted pre-commit preparation,
+and exact-path eligibility. When separate Mission Control owns an owner gate,
+freeze the candidate, provide the evidence packet, and wait. Do not self-grant
+the strategic or holistic gate.
+
+### Mission Control
+
+Mission Control remains read-only. It verifies evidence, coordinates or runs
+the independent owner-gate review, adjudicates findings, and returns a bounded
+correction packet. It does not apply fixes, stage, commit, or duplicate an
+executor-owned review for the same `(checkpoint_id, mode, target_hash)`.
+
+### Solo session
+
+A solo session may coordinate review and implementation when its mission grants
+both authorities. Keep review receipts and guarded actions distinct.
+
+## Adversarial review loop
+
+1. Ground the checkpoint.
+   - Read applicable global, project, and workstream rules.
+   - Verify live branch, HEAD, target paths, dirty state, and active-session
+     boundaries when repository-backed.
+   - Treat plans, handoffs, summaries, and prior verdicts as claims.
+
+2. Run the selected review.
+   - Use an independent reviewer when available and allowed.
+   - Give a self-contained prompt with target paths/hashes, intent, constraints,
+     role boundaries, and requested verdict.
+   - Require findings first, severity, exact evidence, and a concrete fix or
+     decision request.
+   - In an active Codex app/API session, do not invoke nested `codex review` by
+     default. Use local review, Codex subagents, Claude, Cursor, or another
+     project-approved reviewer. Nested CLI review requires explicit authority
+     and a proven safe invocation surface.
+
+3. Triage every finding.
+   - `agree-fix`: valid and in scope.
+   - `agree-defer`: valid and outside scope, with destination and gating point.
+   - `disagree`: counter with exact evidence.
+   - `needs-owner`: policy, product, authority, or risk decision.
+   - `withdrawn`: reviewer accepts that the finding does not hold.
+
+   BLOCKER or IMPORTANT findings cannot be unilaterally deferred or relabeled.
+
+4. Resolve under the owning role.
+   - Executor fixes agreed findings.
+   - Mission Control returns correction instructions and remains read-only.
+   - Preserve unrelated user work and exact path scope.
+
+5. Perform a ripple sweep after contract-level changes.
+   - Search all callers, consumers, docs, fixtures, schemas, examples, tests,
+     diagrams, and historical descriptions affected by the changed contract.
+   - Update live references or mark historical text as superseded.
+   - Re-review unresolved findings, the fix delta, and ripple-affected surfaces.
+
+6. Reach mutual agreement.
+   - Quote disputed findings and counter-evidence.
+   - Ask the reviewer to `DEFEND`, `REVISE`, `SPLIT`, or `WITHDRAW`.
+   - Accept a defense when the evidence changes the conclusion.
+   - After two substantive defend/revise rounds on the same unresolved dispute,
+     present both positions, severity, evidence, and a recommendation to the
+     owner. Do not loop indefinitely.
+
+7. Close honestly.
+   - `GREEN`: all findings are fixed, withdrawn, or mutually accepted as
+     non-blocking under the applicable protocol.
+   - `YELLOW_OWNER_ACCEPTED`: the owner explicitly accepts named residual risk
+     and the applicable protocol permits that disposition.
+   - `BLOCKED_UNRESOLVED`: required review is unavailable, a material dispute
+     remains, or a controlling gate is not satisfied.
+
+Never call a missing reviewer, an owner skip, or an unresolved material finding
+GREEN.
+
+## Reviewer and evidence discipline
+
+- Prefer direct file, diff, test, receipt, and live-state evidence.
+- Verify claims that a reviewer or tool is unavailable before falling back.
+- Use each reviewer as an adversarial partner, not an oracle.
+- Do not silently accept, reject, fix, or ignore a finding.
+- Do not expose secrets or send private code to an external reviewer without
+  applicable authority.
+- Follow project-specific reviewer, model, disclosure, and gate requirements.
+- A review workflow may use a subagent without launching a nested Codex CLI.
+
+## Commit and milestone closeout
+
+Report:
+
+- checkpoint and target identity;
+- targeted, strategic, holistic, or comprehensive verdict;
+- independent reviewer status;
+- mutual-agreement status;
+- findings fixed, withdrawn, deferred, or owner-accepted;
+- residual risks and controlling project rule;
+- verification performed;
+- exact paths eligible for staging or the next guarded action.
+
+Do not stage, commit, push, merge, promote, activate, deploy, or release unless
+the effective project protocol and the checkpoint verdict permit it.
+?
+
+mcp: codex/codex started
