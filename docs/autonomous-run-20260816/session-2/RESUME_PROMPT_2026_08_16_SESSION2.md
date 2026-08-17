@@ -89,10 +89,30 @@ Scratchpad root:
   3. The backlog's method clause said "three // lines mention max-h-" (it is four) and never
      stated that a line whose only token is `max-h-none` is discarded -- so a literal reproducer
      lands on 53, not the documented 52. Both stated now.
-- **Leg 2 luna: targeted RED (round 2, 3 P2s -- ALL FIXED, see below), strategic GREEN,
-  holistic NOT RUN.**
-- **The holistic on this stack is the single biggest outstanding review item.** Prompt is staged at
-  `<scratchpad>/luna-holistic.txt`.
+- **Leg 2 luna: targeted GREEN (after round 2's 3 P2s were fixed), strategic GREEN, holistic
+  INCONCLUSIVE -- see the warning below.**
+
+### WARNING: broad holistic prompts on this stack DEGRADE codex, and it looks like a GREEN
+
+This has now happened TWICE and the first time it produced a false coverage claim.
+
+- Prior session: a strategic run that read this stack DIED with
+  `Codex ran out of room in the model's context window`. Its only `VERDICT:` lines were the
+  echoed prompt. The handoff nevertheless implied the stack had strategic coverage.
+- This session: the holistic run hit a literal `context compacted` system marker at line 9650 of
+  its output, IMMEDIATELY before its final answer. That answer was short, generically worded, had
+  ZERO file:line citations despite the prompt demanding them for every claim, and carried NO
+  verdict token. Read carelessly it sounds like a pass -- it says "no introduced defect was
+  found". It is a DEGRADED run, not a considered GREEN.
+
+**Do not accept a citation-free, verdict-free codex answer as sign-off.** Grep the output for
+`context compacted` and `ran out of room` before reading the body.
+
+**The fix that was applied:** re-run with a HARD READING BUDGET in the prompt -- "open AT MOST 8
+files", "do NOT diff the whole branch", "do NOT read the committed history", "start with exactly
+`git show --stat <tip>`", and "if you want a ninth file, stop and write the review". That prompt
+is staged at `<scratchpad>/luna-holistic2.txt` and was launched at checkpoint. **Check for its
+result; if it also degraded, tighten further rather than accepting silence.**
 
 ### P0 branch (`feat/audit-p0-20260816`)
 - **No Leg 1 and no Leg 2 at all.** Gates are green. Needs the full pipeline before commit.
