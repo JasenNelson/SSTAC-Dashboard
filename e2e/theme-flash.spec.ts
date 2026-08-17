@@ -31,7 +31,16 @@ test.describe('B11 theme bootstrap (no flash of light theme)', () => {
 
     const headEnd = html.indexOf('</head>');
     const bodyStart = html.indexOf('<body');
-    const scriptAt = html.indexOf("localStorage.getItem('theme')");
+
+    // Quote-AGNOSTIC signature, deliberately. This assertion used to search for the exact
+    // substring "localStorage.getItem('theme')" with single quotes. When the script began
+    // deriving its literals from the shared constants via JSON.stringify -- which emits DOUBLE
+    // quotes -- the script was still served and still working, but this test reported
+    // "absent from the served HTML" and three browsers failed. The property under test is that
+    // the bootstrap ships INSIDE <head> before any body content; the quote style the generator
+    // happens to emit is not part of that property and must not be able to fail it.
+    const scriptMatch = /localStorage\.getItem\(\s*['"]theme['"]\s*\)/.exec(html);
+    const scriptAt = scriptMatch ? scriptMatch.index : -1;
 
     expect(scriptAt, 'theme bootstrap script is absent from the served HTML').toBeGreaterThan(-1);
     expect(headEnd, 'served document has no </head>').toBeGreaterThan(-1);
