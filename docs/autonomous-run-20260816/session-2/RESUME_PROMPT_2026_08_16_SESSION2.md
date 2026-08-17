@@ -65,9 +65,22 @@ Scratchpad root:
   inherited, not re-run.** Decide whether that is acceptable before merging it.
 
 ### batch-2 stack (batch2 -> waveA -> triage)
-- **Leg 1a: rounds 1-9 ALL RED**, each finding something real, several introduced by the previous
-  round's repair. Round 9's fixes are applied. **Round 10 was IN FLIGHT at checkpoint** -- check
-  for its result before committing.
+- **Leg 1a: rounds 1-10 ALL RED**, each finding something real, several introduced by the
+  previous round's repair. **Round 10's findings are APPLIED** (see below). **Round 11 is OWED**
+  before committing this delta -- do not commit on the assumption the streak broke.
+
+  Round 10's three findings, all in one class -- numbers asserted in comments that nothing checks:
+  1. The drift test's docstring cited the declaration and both call sites by line (~297/~1426/
+     ~1450); THIS DIFF shifted them to 305/1436/1460. Self-invalidated in the same commit, while
+     five hundred lines away the same diff DELETED a line citation on the grounds that "a number
+     nobody verifies is decoration". Fixed by removing the numbers and saying "roughly eleven
+     hundred lines apart" instead.
+  2. A MatrixDashboard comment said ":1783 IS an aria-valuemin" in the present tense -- true at
+     HEAD, false in the working tree the comment ships in, and at the commit that WROTE the
+     citation line 1783 was a bare `);`. Fixed by naming the element, not the line.
+  3. The backlog's method clause said "three // lines mention max-h-" (it is four) and never
+     stated that a line whose only token is `max-h-none` is discarded -- so a literal reproducer
+     lands on 53, not the documented 52. Both stated now.
 - **Leg 2 luna: targeted RED (round 2, 3 P2s -- ALL FIXED, see below), strategic GREEN,
   holistic NOT RUN.**
 - **The holistic on this stack is the single biggest outstanding review item.** Prompt is staged at
@@ -134,7 +147,9 @@ The three remaining audit P0s plus one of the same class:
 
 ## 5. IMMEDIATE NEXT STEPS, in order
 
-1. Check Leg 1a round 10's verdict on the triage delta (agent was in flight).
+1. Run Leg 1a round 11 on the triage delta. Rounds 1-10 each found something real; round 10's
+   fixes are in the tree, tsc is clean, the two guard specs pass, and the scan still reproduces
+   49 / 84 / 52.
 2. If GREEN: commit triage (path-scoped, message staged), then run the luna **holistic** on the
    batch-2 stack -- the last un-run Leg 2 mode there.
 3. Re-gate the triage tip SOLO (see trap 1 below). Its 2 e2e failures are PRE-EXISTING -- proven by
