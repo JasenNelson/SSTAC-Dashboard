@@ -38,9 +38,19 @@
  *    cookie-blocking settings. A throw there would abort the script tag and could leave the
  *    document unstyled, which is worse than the flash it is fixing.
  *
- * CSP: `script-src` includes 'unsafe-inline' (src/middleware.ts:11), so this unhashed
- * inline script is permitted. If that ever tightens to a nonce/hash policy, this script
- * must be given the nonce or it will be blocked and the flash returns silently.
+ * CSP: this script is permitted everywhere it runs, but for two DIFFERENT reasons, and the
+ * distinction matters to anyone tightening the policy later.
+ *  - On the routes middleware covers (`config.matcher` in src/middleware.ts: /dashboard,
+ *    /twg, /survey-results, /cew-2025, /regulatory-review, /bn-rrm, /demo-matrix-graph,
+ *    /matrix-options), `script-src` carries 'unsafe-inline', so the unhashed inline script
+ *    is explicitly allowed.
+ *  - On every OTHER route -- including `/`, `/login`, `/signup` and `/cew-polls/*`, which is
+ *    where a first-time visitor with no cookie actually meets this script -- the matcher does
+ *    not run, so NO Content-Security-Policy header is emitted at all and nothing constrains
+ *    it. Do not read the middleware policy as the governing policy on the landing page;
+ *    there is none.
+ * If a CSP is ever tightened to a nonce/hash policy, or extended to cover the public routes,
+ * this script must be given the nonce or it will be blocked and the flash returns silently.
  */
 import { THEME_COOKIE_MAX_AGE_SECONDS, THEME_COOKIE_NAME } from '@/lib/theme';
 
