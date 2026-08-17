@@ -192,26 +192,31 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // old value, so the warning was wrongly RETAINED for a now-empty field). Refining the
     // heuristic again just changes which edit shape breaks it next. So there is no inference
     // from string shape at all:
-    //   1. The accumulated count PERSISTS across edits by default -- carry the prior count
-    //      forward and add this edit's own overBy on top when it drops MORE.
-    //   2. The ONE exception is a fact, not a guess: if the new value is EMPTY, there is no
-    //      text left for the warning to be about, so that field's record is cleared.
+    //   1. The accumulated count PERSISTS across edits, with NO exceptions -- carry the prior
+    //      count forward and add this edit's own overBy on top when it drops MORE.
+    //   2. This includes clearing the field to empty. An earlier version of this code cleared
+    //      the record when the new value was empty, reasoning that an empty field has no text
+    //      left for the warning to be about. That is exploitable: (a) paste an over-limit value
+    //      -- it is clipped and the loss is recorded; (b) select-all and delete -- the record
+    //      was wrongly cleared here; (c) press Undo, or otherwise retype the exact clipped
+    //      text -- that edit has no overflow of its own, so nothing recreates the record. The
+    //      submit gate then sees no loss and silently writes the clipped comment. Clearing a
+    //      field does not mean the earlier loss stopped happening, so it must not clear the
+    //      record.
     //   3. Any other case -- continuation, backspace, a middle-of-the-text edit, or a
     //      wholesale replacement with unrelated text that still fits under the limit -- keeps
     //      the accumulated count. The component cannot tell "different text" from "the same
     //      text, edited" by shape alone, and guessing wrong in either direction either loses a
     //      real warning or keeps reporting a stale one.
-    // The reviewer has an explicit way to say the record no longer applies: the Dismiss button
-    // next to each alert (see handleDismissTruncation below), rather than the component
-    // guessing from what was typed.
+    // INVARIANT: truncation provenance for a field persists until the reviewer dismisses it
+    // (the Dismiss button next to each alert, see handleDismissTruncation below) or a
+    // submission successfully completes (see handleSubmit, which resets it). There is no
+    // other automatic clearing path. Do not reintroduce an empty-field exception: it looks
+    // like an obvious simplification but recreates the clear-and-restore exploit above.
     setTruncatedBy(prev => {
       const next = makeBareRecord<number>();
       for (const [k, v] of Object.entries(prev)) {
         if (!RESERVED_KEYS.has(k) && k !== key) next[k] = v;
-      }
-      if (value.length === 0) {
-        // Exception: nothing left in the field for the warning to describe.
-        return next;
       }
       const carried = prev[key] ?? 0;
       const updated = overBy > 0 ? carried + overBy : carried;

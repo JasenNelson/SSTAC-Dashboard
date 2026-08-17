@@ -354,11 +354,13 @@ second body
   })
 
   // CHANGED (redesign): the old "clears on replacement fits under limit (FIX 2)" test asserted
-  // that rewriting the field short (still non-empty) cleared the warning. Under the new design
-  // that inference is gone -- only an EMPTY field clears the record (see the dedicated empty-
-  // field test below), or an explicit Dismiss click. This test is updated to assert the new
-  // behaviour: a short, unrelated, non-empty rewrite KEEPS the warning, because the component
-  // cannot tell "different text" from "the same text, edited" by shape alone.
+  // that rewriting the field short (still non-empty) cleared the warning. Under the current
+  // design there is no automatic clearing at all -- not for a non-empty rewrite, and not for
+  // an empty field either (see the clear-then-restore exploit test below for why the empty-
+  // field case was removed too). The record is cleared only by an explicit Dismiss click or a
+  // successful submit. This test is updated to assert the new behaviour: a short, unrelated,
+  // non-empty rewrite KEEPS the warning, because the component cannot tell "different text"
+  // from "the same text, edited" by shape alone.
   it('keeps the truncation warning when a non-empty rewrite fits under the limit (loss is a fact, not inferred from string shape)', async () => {
     render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
     const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
@@ -370,17 +372,47 @@ second body
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
   })
 
-  it('removes the truncation warning when the field is cleared to empty', async () => {
-    // The one explicit exception in the new design: an empty field has no text left for the
-    // warning to be about.
-    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
-    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i)
+  // CHANGED (redesign): the empty-field exception described above was removed entirely. It was
+  // exploitable: paste an over-limit value (clipped, loss recorded) -> select-all and delete
+  // (record wrongly cleared) -> press Undo, or otherwise retype the exact clipped text (no
+  // overflow of its own, so nothing recreates the record) -> the submit gate sees no loss and
+  // silently writes the clipped text. This test used to assert that clearing the field removed
+  // the warning; that behaviour is deliberately gone, so the test is replaced with one that
+  // reproduces the exploit end to end and proves it is now blocked: it must FAIL if the
+  // empty-field exception is ever reinstated.
+  it('keeps the truncation warning (and the submit confirmation) through a clear-then-restore of clipped content', async () => {
+    const lookup = buildLookup({ data: null, error: null })
+    mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
+    const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
 
-    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const ta = screen.getByPlaceholderText(/Overall thoughts on the methodology\.\.\./i) as HTMLTextAreaElement
+
+    // 1. Paste an over-limit value -- it is clipped and the loss is recorded.
+    fireEvent.change(ta, { target: { value: 'x'.repeat(6000) } })   // drops 1000; stored = x*5000
+    expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
+    expect(ta.value).toHaveLength(5000)
+
+    // 2. Reviewer clears the field (select-all + Delete / Ctrl+A Backspace).
+    fireEvent.change(ta, { target: { value: '' } })
+
+    // 3. Reviewer presses Undo (or otherwise restores the clipped text). This edit has NO
+    // overflow of its own -- if the old empty-field exception still existed, nothing would
+    // recreate the record and this restore would look like a clean, un-truncated 5000-char
+    // comment.
+    fireEvent.change(ta, { target: { value: 'x'.repeat(5000) } })
+
+    // The record must still be present: the warning is still shown,
     expect((await screen.findByRole('alert')).textContent).toMatch(/1,000 characters were removed/)
 
-    fireEvent.change(ta, { target: { value: '' } })
-    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    // and the submit gate must still fire the confirmation dialog naming the loss.
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(confirmSpy).toHaveBeenCalledTimes(1))
+    expect(confirmSpy.mock.calls[0][0]).toMatch(/1,000 characters were removed/)
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockInsert).not.toHaveBeenCalled()
+
+    confirmSpy.mockRestore()
   })
 
   it('persists truncation provenance across save and restore', async () => {
@@ -617,6 +649,24 @@ second body
     await screen.findByText('Review Submitted')
 
     expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+
+    // The storage-key check above only proves the persisted record was cleared. It does NOT
+    // prove the in-memory truncatedBy state was reset -- deleting the setTruncatedBy() call at
+    // the end of handleSubmit would leave this assertion green (localStorage.removeItem still
+    // ran) while the component still held the stale in-memory record. Return to the draft (the
+    // success screen's "Return to Draft" button calls setIsSubmitted(false)) and prove the
+    // in-memory record is actually gone: no leftover alert, and a further submit does not
+    // re-trigger the confirmation dialog.
+    fireEvent.click(screen.getByRole('button', { name: /Return to Draft/i }))
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+
+    // confirmSpy already recorded the FIRST submit's confirmation call above -- clear that
+    // history so this check is only about whether the SECOND submit re-triggers it.
+    confirmSpy.mockClear()
+    fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
+    await waitFor(() => expect(mockInsert).toHaveBeenCalledTimes(2))
+    expect(confirmSpy).not.toHaveBeenCalled()
+
     confirmSpy.mockRestore()
   })
 
