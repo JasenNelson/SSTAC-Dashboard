@@ -1,4 +1,51 @@
-# RESUME PROMPT -- autonomous UI/UX run, session 2 checkpoint, 2026-08-16 ~18:00
+# RESUME PROMPT -- autonomous UI/UX run, session 2 CLOSE-OUT, 2026-08-16 ~18:35
+
+## STATUS AT CLOSE -- READ THIS FIRST, IT SUPERSEDES SECTIONS 1 AND 3b BELOW
+
+Everything in flight COMPLETED before the session ended. Both pending results came back GREEN and
+have been acted on. The state below is now:
+
+- **ALL FIVE feature branches are PUSHED and IN SYNC with their remotes.** Every PR shows its real
+  tip. The "nothing is pushed / every PR is stale" problem this run inherited is CLOSED.
+  wave0 d6d4fa0f | batch2 f0f56330 | waveA c41f1463 | triage 87b8d2c8 | theme 3a5eb26f
+  waveA and triage needed `--force-with-lease` (prior-session rebase); verified first that every
+  remote-only commit was the same logical commit pre-rebase, same author, nothing unique lost.
+- **All five PR bodies updated**: #782, #783, #784, #785, #787.
+- **Triage tip 87b8d2c8 gate: FULLY GREEN.** lint 0 err, tsc clean, unit 6824 passed, build
+  corroborated (route table + First Load JS), **e2e exit 0 with 167 passed and ZERO failures**,
+  32 chromium-auth refs, TREE_UNCHANGED=YES.
+  NOTE: the 2 `admin-agentic-os` failures seen earlier did NOT recur. Treat them as environmental
+  flake, not a standing expectation. Section 1's warning about them is now stale.
+- **Batch-2 stack Leg 2 is COMPLETE: targeted GREEN, strategic GREEN, holistic GREEN.**
+  The holistic re-run (hard reading budget) was clean and well-cited, raised 3 findings, and on
+  argument-back REVISED all three -- agreeing they are documented open items in
+  PRINT_CLIPPING_BACKLOG, not defects in the commit that documents them.
+- **Its systemic finding is ACCEPTED and is now an owner decision:** per-container `print:` is
+  architecture debt; the page lacks a semantic repo-wide print rule, and that absence is what
+  permits the remaining clipping. This independently confirms the architecture option already put
+  to the owner.
+
+### What is left, in priority order
+
+1. **`feat/audit-p0-20260816` -- the only unfinished lane.** 6 dirty files, gates FULLY GREEN
+   (unit 6827 = +7 for its new tests, e2e 167/0), but **NO Leg 1 and NO Leg 2 at all**. Run the
+   full pipeline, commit (message staged), rebase onto 87b8d2c8 (MEASURED clean -- zero file
+   overlap), push, open the PR (body drafted at `pr-bodies/BODY_theme_cookie_787.md`'s sibling
+   `<scratchpad>/pr-body-p0.md`, or rewrite).
+2. **Audit remainder**: 7 P1 + 19 P3. Read `PRODUCT_CONTEXT_AND_DIRECTION.md` FIRST -- it changes
+   what these mean.
+3. **Then** the surface-contract plan (owner's option 1).
+
+### Merge
+
+Owner APPROVES the exact reviewed SHA, then an authorized executor merges. Never self-approve.
+Merge order: within each stack strictly bottom-up. The two stacks share ZERO files (re-measured at
+final tips), so they may merge in either order relative to each other.
+Retarget #787 to main once #782 merges; retarget #784/#785 as their bases merge.
+
+---
+
+# ORIGINAL CHECKPOINT NOTES (some superseded by the block above)
 
 Paste into a fresh session. This is self-contained; you do not need the previous conversation.
 
