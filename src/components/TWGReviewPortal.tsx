@@ -389,16 +389,19 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // path silently discarded any unknown-provenance flag the reviewer had already been shown
     // for that old draft, because nothing durable recorded it. Persisting it here is what closes
     // that gap; see UNKNOWN_PROVENANCE_STORAGE_KEY's own comment above.
-    try {
-      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
-    } catch {
-      alert(
-        'Unable to save the truncation record (storage quota or access denied), so the draft was ' +
-          'NOT saved either. Saving it without that record could let you resume and submit ' +
-          'shortened text without being warned.'
-      );
-      return;
-    }
+    //
+    // The two provenance writes are ALSO ordered relative to each other, and that ordering is
+    // not arbitrary either: UNKNOWN_PROVENANCE_STORAGE_KEY (the antidote) is written BEFORE
+    // TRUNCATION_STORAGE_KEY (the poison). A present-but-empty truncation record is not neutral
+    // -- it is a positive claim that nothing was lost, which is exactly the false-negative this
+    // component exists to prevent for a legacy at-limit draft whose real loss is only recorded
+    // via the unknown-provenance flag. Writing the truncation record before the antidote means
+    // that if the truncation write succeeds and the unknown-provenance write then fails, storage
+    // is left holding the poison with no antidote: the old legacy draft above becomes resumable
+    // with its disclosure erased, on the very save that was supposed to close that gap. Writing
+    // the antidote first avoids that: either it succeeds and the disclosure is durable before the
+    // poison is ever written, or it fails and the whole save aborts before the truncation record
+    // (or the draft) is touched at all.
     try {
       window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(unknownProvenanceKeys));
     } catch {
@@ -406,6 +409,16 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         'Unable to save the unknown-provenance record (storage quota or access denied), so the ' +
           'draft was NOT saved either. Saving it without that record could let a legacy ' +
           'truncation warning be lost the next time you resume this draft.'
+      );
+      return;
+    }
+    try {
+      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
+    } catch {
+      alert(
+        'Unable to save the truncation record (storage quota or access denied), so the draft was ' +
+          'NOT saved either. Saving it without that record could let you resume and submit ' +
+          'shortened text without being warned.'
       );
       return;
     }
@@ -693,12 +706,20 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             the Save Draft/Submit button row (py-2 = 16px vertical padding + ~20px text-sm line
             height =~ 36-40px content) =~ 82px total.
             pb-32 (8rem = 128px) already clears that 82px baseline with margin -- unchanged.
-            With the note present: it is bounded to max-h-24 (6rem = 96px) plus its own mb-3
-            (12px) margin, so its worst-case contribution is 96 + 12 = 108px. Bar worst case
-            becomes 82 + 108 = 190px, so the reservation grows to pb-52 (13rem = 208px), leaving
-            an 18px buffer over the computed worst case for cross-browser box-sizing variance.
+            With the note present: the panel is w-96 (384px) with p-4 bar padding (32px), leaving
+            about 352px of text width; at text-xs (12px font / 16px line-height) that wraps to
+            roughly 58 characters per line. The note's realistic worst case (both the truncation
+            and unknown-provenance sentences, largest plausible field counts) runs to about 480
+            characters, i.e. ceil(480 / 58) = 9 lines = 144px of text -- max-h-24 (96px) clipped
+            that down to about 6 lines, cutting the tail sentence that tells the reviewer to use
+            the Dismiss controls. max-h-40 (10rem = 160px) covers the 144px worst case with a
+            16px/one-line buffer for wrapping variance, plus its own mb-3 (12px) margin, so the
+            note's worst-case contribution is 160 + 12 = 172px. Bar worst case becomes
+            p-4 top (16) + note max-height (160) + mb-3 (12) + button row (~40) + p-4 bottom (16)
+            = 244px, so the reservation grows to pb-72 (18rem = 288px), leaving a 44px buffer over
+            the computed worst case for cross-browser box-sizing variance.
         */}
-        <div className={cn('p-6 overflow-y-auto flex-1 space-y-6', submitCancelledNote ? 'pb-52' : 'pb-32')}>
+        <div className={cn('p-6 overflow-y-auto flex-1 space-y-6', submitCancelledNote ? 'pb-72' : 'pb-32')}>
           <div className="space-y-2">
             <label className="text-sm font-bold text-slate-900 dark:text-slate-100">General Comments</label>
             <textarea
@@ -846,13 +867,19 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             // sidebar, and the ABSOLUTE bottom bar it lives in has no height of its own to give
             // -- an unbounded note pushes the bar taller than the scroll container above
             // reserves for it, covering the per-field alert/Dismiss controls the note itself
-            // tells the reviewer to use. max-h-24 (96px) caps that growth; overflow-y-auto keeps
-            // the rest reachable by scrolling THIS element instead of pushing the bar. See the
-            // arithmetic comment above the scroll container's pb-32/pb-52 toggle for why 96px is
-            // the number the reservation is sized against.
+            // tells the reviewer to use. max-h-40 (160px) covers the realistic worst case (about
+            // 480 characters, ~9 wrapped lines) with a one-line buffer -- a smaller cap clips the
+            // tail sentence that tells the reviewer to use the Dismiss controls, which is the
+            // exact failure this height is sized to avoid. overflow-y-auto is the backstop for a
+            // pathologically long note beyond that estimate, not the primary defense; tabIndex={0}
+            // makes this bounded region focusable so a keyboard-only reviewer can scroll to
+            // whatever overflow-y-auto is backstopping without a mouse. See the arithmetic
+            // comment above the scroll container's pb-32/pb-72 toggle for why 160px is the
+            // number the reservation is sized against.
             <p
               role="status"
-              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 max-h-24 overflow-y-auto"
+              tabIndex={0}
+              className="text-xs font-semibold text-amber-700 dark:text-amber-400 mb-3 max-h-40 overflow-y-auto"
             >
               {submitCancelledNote}
             </p>

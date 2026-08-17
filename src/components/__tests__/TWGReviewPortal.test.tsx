@@ -1138,6 +1138,71 @@ second body
     expect(alert.textContent).toMatch(/earlier version/i)
   })
 
+  // DEFECT 1 (round 2): the antidote (UNKNOWN_PROVENANCE_STORAGE_KEY) must be written BEFORE
+  // the poison (TRUNCATION_STORAGE_KEY), not after. A present-but-empty truncation record is a
+  // positive "nothing lost" claim; writing it before the antidote means a subsequent antidote
+  // failure leaves that positive claim durably stored with no antidote alongside it, erasing a
+  // legacy draft's disclosure. This test mocks storage to throw ONLY on the antidote write (the
+  // truncation write, if it is even attempted, is allowed to go through for real) -- so it can
+  // tell the two orderings apart: with the antidote written first (the fix), the throw happens
+  // before the truncation write is ever attempted, so NEITHER provenance key nor the draft key
+  // gets written, and the still-present legacy draft is re-derived as unknown-provenance again on
+  // the next mount. With the poison written first (the bug), the truncation write would already
+  // have succeeded (durably storing "{}") by the time the antidote write throws, so the next
+  // mount would see a present truncation record, skip re-derivation, and find no persisted
+  // antidote -- the alert would not come back and disclosure would be lost.
+  it('writes the antidote before the poison: an antidote-write failure must leave no truncation record and no resumable draft, and disclosure must survive the next mount (order regression guard)', async () => {
+    // Legacy at-limit draft: no truncation key, no unknown-provenance key -- the genuine
+    // pre-provenance-build case this component exists to protect.
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'x'.repeat(5000) })
+    )
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-unknown-provenance')).toBeNull()
+
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    expect(await screen.findByRole('alert')).toBeInTheDocument()
+
+    // Delegate every OTHER write to the real implementation, exactly like the order-regression
+    // guard above -- a mock that only ever throws would make the "no draft key written" assertion
+    // pass under EITHER order, which would not actually test anything.
+    const originalSetItem = window.localStorage.setItem.bind(window.localStorage)
+    const setItemSpy = vi
+      .spyOn(window.localStorage, 'setItem')
+      .mockImplementation((key: string, value: string) => {
+        if (key === 'twg-matrix-review-draft-v6-unknown-provenance') {
+          throw new Error('quota exceeded')
+        }
+        originalSetItem(key, value)
+      })
+    const alertSpy = vi.spyOn(window, 'alert').mockImplementation(() => {})
+
+    fireEvent.click(screen.getByRole('button', { name: /Save Draft/i }))
+
+    // The antidote write is the one that threw, so the save must have aborted BEFORE the poison
+    // (truncation) write was ever attempted -- proven by the key still being absent, not merely
+    // by a spy call count, since a call that itself no-ops on failure would look the same either
+    // way.
+    expect(window.localStorage.getItem('twg-matrix-review-draft-v6-truncation')).toBeNull()
+    // And no resumable NEW draft write happened either -- the draft key was never even attempted.
+    expect(
+      setItemSpy.mock.calls.some(([key]) => key === 'twg-matrix-review-draft-v6')
+    ).toBe(false)
+
+    setItemSpy.mockRestore()
+    alertSpy.mockRestore()
+
+    // Disclosure must still be recoverable: the legacy draft is untouched and the truncation key
+    // was never durably written, so the next mount re-derives unknown-provenance from the still
+    // at-limit value, exactly as it did on first mount.
+    cleanup()
+    render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
+    const alert = await screen.findByRole('alert')
+    expect(alert.textContent).toMatch(/unknown/i)
+    expect(alert.textContent).toMatch(/earlier version/i)
+  })
+
   it('keeps the unknown-provenance notice when the DRAFT write fails but the provenance writes succeed, and a remount follows (legacy at-limit draft)', async () => {
     // Same failure mode as FIX 5's "provenance succeeds, draft write then fails" case, but for
     // a PRE-EXISTING legacy draft rather than a fresh one. The old comment above handleSave
@@ -1222,25 +1287,28 @@ second body
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
   })
 
-  // DEFECT 3: the cancelled-submit note lives inside the ABSOLUTE bottom bar with no height
-  // bound, while the scroll container above it reserves a FIXED pb-32. A note taller than the
-  // margin that reservation leaves permanently covers the tail of the scroll area -- exactly
-  // where the per-field role="alert" notices and their Dismiss buttons live, and the note's own
-  // text tells the reviewer to use those Dismiss controls. jsdom has no layout engine and cannot
-  // see ancestor occlusion (per the task's own falsifiability requirement), so this only pins the
-  // class-level contract: the note is height-bounded and independently scrollable, and the
-  // scroll container's bottom reservation class grows when the note is present. Whether pb-52 is
+  // DEFECT 2 (round 2, was DEFECT 3): the cancelled-submit note lives inside the ABSOLUTE bottom
+  // bar with a height bound, while the scroll container above it reserves space sized against
+  // that bound. The PRIOR fix under-sized both numbers: max-h-24 (96px) clipped the note's
+  // realistic worst case (~480 characters, ~9 wrapped lines at ~58 chars/line in this w-96 panel
+  // at text-xs) down to about 6 lines -- cutting exactly the tail sentence that tells the
+  // reviewer to use the Dismiss controls -- and the bounded region had no tabIndex, so a
+  // keyboard-only reviewer could not scroll to the hidden tail at all. jsdom has no layout engine
+  // and cannot see ancestor occlusion (per the task's own falsifiability requirement), so this
+  // only pins the class-level contract: the note carries the new, larger max-height class, is
+  // independently scrollable, is keyboard-focusable, and the scroll container's bottom
+  // reservation class grows to the new, larger value when the note is present. Whether pb-72 is
   // geometrically sufficient in a real browser is left to the orchestrator's rendered check.
-  it('bounds the cancelled-submit note height and grows the scroll container reservation when the note is present', async () => {
+  it('bounds the cancelled-submit note height, makes it keyboard-focusable, and grows the scroll container reservation when the note is present', async () => {
     const lookup = buildLookup({ data: null, error: null })
     mockFrom.mockReturnValue({ select: lookup.select, insert: mockInsert, update: mockUpdate })
     const confirmSpy = vi.spyOn(window, 'confirm').mockReturnValue(false)
 
     const { container } = render(<TWGReviewPortal finalDraftContent={'## Section A\nbody'} />)
 
-    // Baseline: no note yet, so the container reserves pb-32 and not the enlarged pb-52.
+    // Baseline: no note yet, so the container reserves pb-32 and not the enlarged pb-72.
     expect(container.querySelector('.pb-32')).toBeInTheDocument()
-    expect(container.querySelector('.pb-52')).not.toBeInTheDocument()
+    expect(container.querySelector('.pb-72')).not.toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
 
     fireEvent.change(
@@ -1250,10 +1318,15 @@ second body
     fireEvent.click(screen.getByRole('button', { name: /Submit Review/i }))
 
     const status = await screen.findByRole('status')
-    expect(status).toHaveClass('max-h-24')
+    expect(status).toHaveClass('max-h-40')
+    expect(status).not.toHaveClass('max-h-24')
     expect(status).toHaveClass('overflow-y-auto')
+    // Keyboard-reachable: a bounded scroll region with no tabIndex cannot be focused (and
+    // therefore cannot be scrolled) without a mouse.
+    expect(status).toHaveAttribute('tabIndex', '0')
 
-    expect(container.querySelector('.pb-52')).toBeInTheDocument()
+    expect(container.querySelector('.pb-72')).toBeInTheDocument()
+    expect(container.querySelector('.pb-52')).not.toBeInTheDocument()
     expect(container.querySelector('.pb-32')).not.toBeInTheDocument()
 
     confirmSpy.mockRestore()
