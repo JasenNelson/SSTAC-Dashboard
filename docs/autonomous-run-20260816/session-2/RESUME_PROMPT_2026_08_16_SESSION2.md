@@ -157,11 +157,38 @@ The three remaining audit P0s plus one of the same class:
   with no print reset.
 - 7 regression tests, each falsified two-sided. Commit message at `<scratchpad>/commit-msgs/p0.txt`.
 
-**REBASE NOTE:** this branch is based on triage@3d03c869. Once triage commits, rebase it.
-MEASURED: the rebase should be CLEAN. The P0 branch's six changed files and the triage delta's six
-changed files INTERSECT IN NOTHING. The apparent overlap on `SsdWorkbench.tsx` /
-`SsdWorkbench.test.tsx` is against triage's COMMITTED history, which the P0 branch already
-contains (`f06a3ad7` is an ancestor of it) -- not against the new delta.
+**REBASE NOTE:** this branch is based on triage@3d03c869. Triage HAS now committed (`87b8d2c8`),
+so rebase it onto that.
+MEASURED AGAINST THE REAL COMMIT, not a hypothetical: the rebase is CLEAN. The six files changed
+by `87b8d2c8` and the six files the P0 worktree has modified INTERSECT IN NOTHING. The apparent
+overlap on `SsdWorkbench.tsx` / `SsdWorkbench.test.tsx` is against triage's COMMITTED history,
+which the P0 branch already contains (`f06a3ad7` is an ancestor of it) -- not against the delta.
+
+## 3b. TWO RESULTS WERE STILL LANDING WHEN SESSION 2 ENDED -- COLLECT THESE FIRST
+
+Both were launched deliberately at close-out. Neither result was seen by session 2.
+
+**(a) Gate suite on the COMMITTED triage tip `87b8d2c8`.**
+Result: `<scratchpad>/g8-triage-committed/RESULT.txt`
+Last seen: lint 0 errors, tsc clean, unit **6824 passed / 19 skipped** across 357 files -- exactly
++4 on the 6820 baseline, which is the two new guard files' four tests. BUILD was still running;
+E2E had not started.
+Expect the SAME 2 pre-existing `admin-agentic-os` e2e failures described in section 1. They are
+NOT caused by this lane -- proven by control runs on wave0 and under webkit. Do not record the
+triage tip as e2e-green; say "2 pre-existing failures" and cite the controls.
+
+**(b) Holistic re-run on the batch-2 stack, with a hard reading budget.**
+Result: `<scratchpad>/luna-holistic2-out.txt`
+BEFORE reading its body, grep it for the strings "context compacted" and "ran out of room", and
+grep for a VERDICT token AFTER the prompt echo. If a degradation marker is present, or no verdict
+token follows the echo, the run DEGRADED and must be re-run with a tighter budget. Do NOT accept a
+citation-free positive body -- attempt 1 said "no introduced defect was found" and was worthless.
+When last seen this re-run had ZERO degradation markers, already better than attempt 1.
+If it returns GREEN, the batch-2 stack has full Leg 2 coverage and can be pushed.
+
+The scratchpad is session-scoped and may be cleaned. The gate RESULT.txt files that mattered are
+already copied into `gate-evidence/` on this branch. If the scratchpad is gone, RE-RUN rather
+than guess.
 
 ## 4. WHAT I FIXED FROM THE LAST REVIEW ROUNDS (do not redo)
 
