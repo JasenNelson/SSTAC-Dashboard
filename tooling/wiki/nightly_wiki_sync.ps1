@@ -38,6 +38,19 @@ function Get-NightlyFileSha256([string]$Path) {
     finally { $sha.Dispose() }
 }
 
+function Test-NightlyReadableFile([string]$Path) {
+    if (-not (Test-Path -LiteralPath $Path -PathType Leaf)) { return $false }
+    $stream = $null
+    try {
+        $stream = [IO.File]::Open($Path, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]::ReadWrite)
+        return $true
+    } catch {
+        return $false
+    } finally {
+        if ($null -ne $stream) { $stream.Dispose() }
+    }
+}
+
 function Get-NightlyExactNonnegativeInteger([object]$Object, [string]$PropertyName, [int]$Maximum) {
     if ($null -eq $Object) { throw "missing object for $PropertyName" }
     $property = $Object.PSObject.Properties[$PropertyName]
@@ -458,7 +471,6 @@ if ($custodyBaselineSha256 -cnotmatch '^[0-9a-f]{64}$') {
 }
 
 . (Join-Path $RepoRoot "tooling\wiki\graphify_guardrail.ps1")
-. (Join-Path $RepoRoot "tooling\wiki\ollama_lock.ps1")
 
 # Config
 $configFile = Join-Path $RepoRoot "tooling\wiki\wiki_nightly_config.json"
@@ -502,7 +514,7 @@ $graphOrphanRisk = $false
 $gpuOrphanRisk = $false
 $secretHit = $false
 $serveGateSummary = "not evaluated"
-$serveGateRequiredRef = "refs/remotes/origin/main"
+$serveGateRequiredRef = "INSTALLED_RUNTIME"
 $n0OrphanStatus = "OK"
 $autofollowStartingHead = ""
 $autofollowFetchedOid = $null
@@ -577,19 +589,30 @@ function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {
 
     try {
         $finalHead = $null
-        $requiredRefOid = $null
-        try { $finalHead = (git -C $RepoRoot rev-parse HEAD).Trim() } catch {}
-        try { $requiredRefOid = (git -C $RepoRoot rev-parse --verify "$serveGateRequiredRef^{commit}").Trim() } catch {}
-        $buildStampOid = $null
-        try {
-            $stampText = Get-Content -LiteralPath (Join-Path $RepoRoot 'wiki\.build-stamp') -Raw
-            $stampMatches = [regex]::Matches($stampText, '(?m)^HEAD:\s*([0-9a-f]{40})\s*$')
-            if ($stampMatches.Count -eq 1) { $buildStampOid = $stampMatches[0].Groups[1].Value }
-        } catch {}
-        $serveGateResult = if ($serveGateSummary -match '^allowed=True;' -and $finalHead -and $requiredRefOid -and $finalHead -eq $requiredRefOid) { 'PASS' } else { 'FAIL' }
-        $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
+        $requiredRefOid = $autofollowStartingHead
         $finalState = $TerminalState
         $finalExit = $NativeExitCode
+        try { $finalHead = (git -C $RepoRoot rev-parse HEAD).Trim() } catch {}
+        if ($finalHead -cmatch '^[0-9a-f]{40}$') { $autofollowFinalHead = $finalHead }
+        $buildStampOid = $null
+        $buildStampError = $null
+        try {
+            $stampText = Get-Content -LiteralPath (Join-Path $RepoRoot 'wiki\.build-stamp') -Raw -ErrorAction Stop
+            $stampMatches = [regex]::Matches($stampText, '(?m)^HEAD:\s*([0-9a-f]{40})\s*$')
+            if ($stampMatches.Count -ne 1) { throw 'build stamp must contain exactly one canonical HEAD line' }
+            $buildStampOid = $stampMatches[0].Groups[1].Value
+        } catch {
+            $buildStampError = $_.Exception.Message
+            Write-Host "FAIL: build stamp: $buildStampError"
+            $finalState = 'FAILED'
+            $finalExit = 1
+        }
+        $serveGateResult = if ($serveGateSummary -match '^allowed=True;' -and
+            $finalHead -cmatch '^[0-9a-f]{40}$' -and
+            $requiredRefOid -cmatch '^[0-9a-f]{40}$' -and
+            $finalHead -ceq $requiredRefOid -and
+            $buildStampOid -ceq $requiredRefOid) { 'PASS' } else { 'FAIL' }
+        $n6Publication = if ($wikiServedStatus -eq 'SERVED_WIKI_SWAPPED') { 'SERVED_WIKI_SWAPPED' } else { [string]$wikiServedStatus }
         if ($finalState -eq 'SUCCESS' -and ($finalExit -ne 0 -or $n0OrphanStatus -ne 'OK' -or $step1Status -ne 'OK' -or $step2Status -ne 'OK' -or $step5Status -eq 'FAIL' -or $step6Status -ne 'OK' -or $n6Publication -ne 'SERVED_WIKI_SWAPPED' -or $serveGateResult -ne 'PASS' -or $finalCanonicalizationEvidence.status -ne 'PASS' -or $finalGraphSmokeEvidence.status -ne 'PASS' -or $servedGraphHashStatus -ne 'PASS' -or ($semanticExecutionAttempted -and -not (Test-NightlySemanticEvidenceSuccess -Evidence $semanticEvidence -ExpectedRunId $runId)) -or (-not (Test-NightlyN5DecisionEvidence -Plan $n5Plan -ExpectedSkipLabeling ([bool]$SkipLabeling) -ExpectedSkipSemantic ([bool]$SkipSemantic) -MutationAttempted $n5MutationAttempted -SemanticExecutionAttempted $semanticExecutionAttempted -ReleaseRequired $n5ReleaseRequired -ExpectedReleaseGraphOrphanRisk $n5ReleaseExpectedGraphOrphanRisk -SemanticStatus $step5Status -PostMutationScan $n5PostMutationScan -ReleaseEvidence $n5ReleaseEvidence)))) {
             $finalState = 'FAILED'
             $finalExit = 1
@@ -692,316 +715,70 @@ if ($hookDrift) {
 
 $normalizedRepoRoot = [IO.Path]::GetFullPath($RepoRoot).TrimEnd('\', '/')
 
-try {
-    Write-Host "--- N0 AUTOFOLLOW EVALUATION ---"
-    $serveGateRunId = [guid]::NewGuid().ToString('N')
-    $serveGateFetchReceipt = Join-Path $logDir "serve-gate-fetch-$stamp-$serveGateRunId.json"
-    $promotionCandidate = Join-Path $logDir "promotion-candidate-$stamp-$serveGateRunId.json"
-    $serveGateFetchRaw = (& $pythonExe (Join-Path $normalizedRepoRoot "tooling\wiki\serve_gate.py") --repo-root $normalizedRepoRoot --config $configFile fetch --receipt $serveGateFetchReceipt) -join "`n"
-    $fetchOk = ($LASTEXITCODE -eq 0)
-    $serveGateFetchResult = $null
-    try {
-        $serveGateFetchResult = $serveGateFetchRaw | ConvertFrom-Json
-        if ($null -ne $serveGateFetchResult -and $null -ne $serveGateFetchResult.PSObject.Properties['required_ref'] -and $serveGateFetchResult.required_ref) {
-            $serveGateRequiredRef = $serveGateFetchResult.required_ref
-        }
-    } catch {
-        $fetchOk = $false
-    }
-
-    if ($null -ne $serveGateFetchResult -and $null -ne $serveGateFetchResult.PSObject.Properties['fetched_oid'] -and $null -ne $serveGateFetchResult.fetched_oid) {
-        $autofollowFetchedOid = $serveGateFetchResult.fetched_oid
-    }
-
-    $autofollowStartingHeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse HEAD)
-    $autofollowStartingHeadExit = $LASTEXITCODE
-    if ($autofollowStartingHeadExit -ne 0 -or $autofollowStartingHeadRaw.Count -eq 0 -or $autofollowStartingHeadRaw[0].Trim() -cnotmatch '^[0-9a-f]{40}$') {
-        $autofollowDecision = "REFUSED_UNEXPECTED"
-        $autofollowRejectionReason = "rev-parse HEAD failed with exit $autofollowStartingHeadExit"
-        $autofollowResult = "SKIP"
-    } else {
-        $autofollowStartingHead = $autofollowStartingHeadRaw[0].Trim()
-
-        $null = git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot symbolic-ref -q HEAD
-    $symbolicRefExit = $LASTEXITCODE
-    if ($symbolicRefExit -eq 0) {
-        $autofollowDecision = "REFUSED_ATTACHED"
-        $autofollowRejectionReason = "HEAD is attached to a branch"
-        $autofollowResult = "SKIP"
-    } elseif ($symbolicRefExit -ne 1) {
-        $autofollowDecision = "REFUSED_UNEXPECTED"
-        $autofollowRejectionReason = "symbolic-ref failed with exit $symbolicRefExit"
-        $autofollowResult = "SKIP"
-    } else {
-        $gitDirRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse --git-dir)
-        $gitDirExit = $LASTEXITCODE
-        if ($gitDirExit -ne 0) {
-            $autofollowDecision = "REFUSED_UNEXPECTED"
-            $autofollowRejectionReason = "rev-parse --git-dir failed with exit $gitDirExit"
-            $autofollowResult = "SKIP"
-        } elseif ($gitDirRaw.Count -eq 0) {
-            $autofollowDecision = "REFUSED_UNEXPECTED"
-            $autofollowRejectionReason = "rev-parse --git-dir returned empty stdout"
-            $autofollowResult = "SKIP"
-        } else {
-            $gitDir = $gitDirRaw[0].Trim()
-            if (-not [System.IO.Path]::IsPathRooted($gitDir)) {
-                $gitDir = Join-Path $normalizedRepoRoot $gitDir
-            }
-            $gitStatusPorcelain = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot status --porcelain --untracked-files=no)
-            $gitStatusExit = $LASTEXITCODE
-            if ($gitStatusExit -ne 0) {
-                $autofollowDecision = "REFUSED_UNEXPECTED"
-                $autofollowRejectionReason = "status failed with exit $gitStatusExit"
-                $autofollowResult = "SKIP"
-            } elseif ($gitStatusPorcelain.Count -gt 0) {
-                $autofollowDecision = "REFUSED_DIRTY"
-                $autofollowRejectionReason = "working tree dirty"
-                $autofollowResult = "SKIP"
-            } elseif ((Test-Path -LiteralPath (Join-Path $gitDir "MERGE_HEAD")) -or (Test-Path -LiteralPath (Join-Path $gitDir "rebase-merge")) -or (Test-Path -LiteralPath (Join-Path $gitDir "rebase-apply")) -or (Test-Path -LiteralPath (Join-Path $gitDir "CHERRY_PICK_HEAD")) -or (Test-Path -LiteralPath (Join-Path $gitDir "BISECT_LOG"))) {
-                $autofollowDecision = "REFUSED_DIRTY"
-                $autofollowRejectionReason = "merge/rebase/cherry-pick/bisect in progress"
-                $autofollowResult = "SKIP"
-            } else {
-                if (-not $fetchOk -or $null -eq $autofollowFetchedOid -or $autofollowFetchedOid -cnotmatch '^[0-9a-f]{40}$') {
-                    $autofollowDecision = "REFUSED_FETCH_FAIL"
-                    $autofollowRejectionReason = "fetch failed or invalid target_oid"
-                    $autofollowResult = "SKIP"
-                } else {
-                    $targetOid = $autofollowFetchedOid
-                    $null = git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot merge-base --is-ancestor HEAD $targetOid
-                    $isAncestorExit = $LASTEXITCODE
-                    if ($isAncestorExit -ne 0 -and $isAncestorExit -ne 1) {
-                        $autofollowDecision = "REFUSED_UNEXPECTED"
-                        $autofollowRejectionReason = "merge-base failed with exit $isAncestorExit"
-                        $autofollowResult = "SKIP"
-                    } elseif ($autofollowStartingHead -ceq $targetOid) {
-                        $autofollowDecision = "ALREADY_CURRENT"
-                        $autofollowResult = "PASS"
-                    } elseif ($isAncestorExit -eq 1) {
-                        $autofollowDecision = "REFUSED_DIVERGENT"
-                        $autofollowRejectionReason = "target_oid is not a fast-forward descendant of HEAD"
-                        $autofollowResult = "SKIP"
-                    } else {
-                        $diffNameOnly = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot diff --name-only HEAD $targetOid -- wiki tooling/wiki .gitignore .graphifyignore AGENTS.md .gitattributes tooling/.gitattributes)
-                        $diffExit = $LASTEXITCODE
-                        if ($diffExit -ne 0) {
-                            $autofollowDecision = "REFUSED_UNEXPECTED"
-                            $autofollowRejectionReason = "diff failed with exit $diffExit"
-                            $autofollowResult = "SKIP"
-                        } elseif ($diffNameOnly.Count -gt 0) {
-                            $autofollowDecision = "REFUSED_TOOLING_CHANGE"
-                            $autofollowRejectionReason = "diff touches protected pathspec"
-                            $autofollowResult = "SKIP"
-                        } else {
-                            $protectedPaths = @("wiki", "tooling/wiki", ".gitignore", ".graphifyignore", "AGENTS.md", ".gitattributes", "tooling/.gitattributes")
-                            $preCheckoutManifest = @{}
-                            $trackedProtected = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot ls-tree -r HEAD --name-only -- $protectedPaths)
-                            $lsTreeExit = $LASTEXITCODE
-                            if ($lsTreeExit -ne 0 -or $trackedProtected.Count -eq 0) {
-                                $autofollowDecision = "REFUSED_UNEXPECTED"
-                                $autofollowRejectionReason = "ls-tree failed or empty"
-                                $autofollowResult = "SKIP"
-                            } else {
-                                foreach ($f in $trackedProtected) {
-                                    $absPath = Join-Path $normalizedRepoRoot $f
-                                    if (Test-Path -LiteralPath $absPath -PathType Leaf) {
-                                        $preCheckoutManifest[$f] = Get-NightlyFileSha256 $absPath
-                                    }
-                                }
-
-                                $emptyHooksPath = Join-Path $logDir "wiki_autofollow_hooks_$([guid]::NewGuid().ToString('N'))"
-                                $hookSetupFailed = $false
-                                try {
-                                    $null = New-Item -ItemType Directory -Path $emptyHooksPath -ErrorAction Stop
-                                    $hookContents = @(Get-ChildItem -Path $emptyHooksPath -Force -ErrorAction Stop)
-                                    if ($hookContents.Count -gt 0) {
-                                        $hookSetupFailed = $true
-                                    }
-                                } catch {
-                                    $hookSetupFailed = $true
-                                }
-
-                                if ($hookSetupFailed) {
-                                    $autofollowDecision = "REFUSED_HOOK_SETUP_FAILED"
-                                    $autofollowRejectionReason = "failed to setup empty hooks directory"
-                                    $autofollowResult = "SKIP"
-                                    try { Remove-Item -LiteralPath $emptyHooksPath -Force -Recurse -ErrorAction SilentlyContinue } catch {}
-                                } else {
-                                    $reverifyFailed = $false
-                                    try {
-                                         if (-not (Test-Path -LiteralPath $emptyHooksPath -PathType Container)) {
-                                             $reverifyFailed = $true
-                                         } else {
-                                             $item = Get-Item -LiteralPath $emptyHooksPath -ErrorAction Stop
-                                             if (($item.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
-                                                 $reverifyFailed = $true
-                                             } else {
-                                                 $hookContents = @(Get-ChildItem -Path $emptyHooksPath -Force -ErrorAction Stop)
-                                                 if ($hookContents.Count -gt 0) {
-                                                     $reverifyFailed = $true
-                                                 }
-                                             }
-                                         }
-                                    } catch {
-                                         $reverifyFailed = $true
-                                    }
-
-                                    if ($reverifyFailed) {
-                                         $autofollowDecision = "REFUSED_HOOK_SETUP_FAILED"
-                                         $autofollowRejectionReason = "failed to setup empty hooks directory"
-                                         $autofollowResult = "SKIP"
-                                         try { Remove-Item -LiteralPath $emptyHooksPath -Force -Recurse -ErrorAction SilentlyContinue } catch {}
-                                    } else {
-                                         $autofollowAttempted = $true
-
-                                    $null = git -c gc.auto=0 -c maintenance.auto=false -c "core.hooksPath=$emptyHooksPath" -C $normalizedRepoRoot checkout --detach $targetOid
-                                    $checkoutExit = $LASTEXITCODE
-
-                                    try { Remove-Item -LiteralPath $emptyHooksPath -Force -Recurse -ErrorAction SilentlyContinue } catch {}
-
-                                    $postCheckoutHeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse HEAD)
-                                    $postCheckoutHeadExit = $LASTEXITCODE
-                                    $postCheckoutHead = if ($postCheckoutHeadRaw.Count -gt 0) { $postCheckoutHeadRaw[0].Trim() } else { "" }
-
-                                    $postStatusPorcelain = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot status --porcelain --untracked-files=no)
-                                    $postStatusExit = $LASTEXITCODE
-
-                                    $postGitDirRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse --git-dir)
-                                    $postGitDirExit = $LASTEXITCODE
-
-                                    $manifestMatch = $true
-                                    $trackedProtectedPost = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot ls-tree -r HEAD --name-only -- $protectedPaths)
-                                    $postLsTreeExit = $LASTEXITCODE
-                                    $postCheckoutManifest = @{}
-                                    foreach ($f in $trackedProtectedPost) {
-                                        $absPath = Join-Path $normalizedRepoRoot $f
-                                        if (Test-Path -LiteralPath $absPath -PathType Leaf) {
-                                            $postCheckoutManifest[$f] = Get-NightlyFileSha256 $absPath
-                                        }
-                                    }
-                                    if ($preCheckoutManifest.Count -ne $postCheckoutManifest.Count) {
-                                        $manifestMatch = $false
-                                    } else {
-                                        foreach ($k in $preCheckoutManifest.Keys) {
-                                            if ($preCheckoutManifest[$k] -cne $postCheckoutManifest[$k]) {
-                                                $manifestMatch = $false
-                                                break
-                                            }
-                                        }
-                                    }
-
-                                    if ($checkoutExit -ne 0 -or $postCheckoutHeadExit -ne 0 -or $postCheckoutHead -cne $targetOid -or $postStatusExit -ne 0 -or $postStatusPorcelain.Count -gt 0 -or $postGitDirExit -ne 0 -or $postGitDirRaw.Count -eq 0 -or $postLsTreeExit -ne 0 -or $trackedProtectedPost.Count -eq 0 -or -not $manifestMatch) {
-                                        $autofollowDecision = "REFUSED_REPIN_VERIFY_FAILED"
-                                        $autofollowRejectionReason = "post-checkout verification failed"
-                                        $autofollowResult = "FAIL"
-                                    } else {
-                                        $postGitDir = $postGitDirRaw[0].Trim()
-                                        if (-not [System.IO.Path]::IsPathRooted($postGitDir)) {
-                                            $postGitDir = Join-Path $normalizedRepoRoot $postGitDir
-                                        }
-                                        if ((Test-Path -LiteralPath (Join-Path $postGitDir "MERGE_HEAD")) -or (Test-Path -LiteralPath (Join-Path $postGitDir "rebase-merge")) -or (Test-Path -LiteralPath (Join-Path $postGitDir "rebase-apply")) -or (Test-Path -LiteralPath (Join-Path $postGitDir "CHERRY_PICK_HEAD")) -or (Test-Path -LiteralPath (Join-Path $postGitDir "BISECT_LOG"))) {
-                                            $autofollowDecision = "REFUSED_REPIN_VERIFY_FAILED"
-                                            $autofollowRejectionReason = "merge/rebase in progress after checkout"
-                                            $autofollowResult = "FAIL"
-                                        } else {
-                                            $autofollowDecision = "REPINNED"
-                                            $autofollowResult = "PASS"
-                                        }
-                                    }
-                                }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-        }
-    }
-    }
-} catch {
+Write-Host "--- N0 INSTALLED RUNTIME PREFLIGHT ---"
+$serveGateRunId = [guid]::NewGuid().ToString('N')
+$promotionCandidate = Join-Path $logDir "promotion-candidate-$stamp-$serveGateRunId.json"
+$requiredInstalledTooling = @(
+    $windowsPowerShell51
+    $checkOrphansPath
+    $terminalizerPath
+    $graphifyExe
+    $pythonExe
+    $configFile
+    (Join-Path $normalizedRepoRoot "tooling\wiki\graphify_guardrail.ps1")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\gen_docs_scope.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\canonicalize_graph.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\scan_secrets.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\graph_smoke.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\publish_wiki.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\wiki_compile.py")
+    (Join-Path $normalizedRepoRoot "tooling\wiki\wiki_lint.py")
+)
+if (-not ($SkipLabeling -and $SkipSemantic)) {
+    $requiredInstalledTooling += (Join-Path $normalizedRepoRoot "tooling\wiki\ollama_lock.ps1")
+}
+if (-not $SkipSemantic) {
+    $requiredInstalledTooling += (Join-Path $normalizedRepoRoot "tooling\wiki\semantic_extract.ps1")
+    $requiredInstalledTooling += (Join-Path $normalizedRepoRoot "tooling\wiki\promotion.py")
+}
+$unreadableInstalledTooling = @(
+    $requiredInstalledTooling | Where-Object { -not (Test-NightlyReadableFile $_) }
+)
+if ($unreadableInstalledTooling.Count -gt 0) {
     $autofollowDecision = "REFUSED_UNEXPECTED"
-    $autofollowRejectionReason = "Exception: $($_.Exception.Message)"
-    $autofollowResult = "SKIP"
-}
-
-$autofollowFinalHeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse HEAD)
-$autofollowFinalHeadExit = $LASTEXITCODE
-$autofollowFinalHead = ""
-if ($autofollowFinalHeadExit -eq 0 -and $autofollowFinalHeadRaw.Count -gt 0) {
-    $autofollowFinalHead = $autofollowFinalHeadRaw[0].Trim()
-}
-if ($autofollowFinalHead -cnotmatch '^[0-9a-f]{40}$') {
-    # Preserve an EXISTING REFUSAL only -- a refusal is one that already set SKIP or FAIL, and its
-    # decision plus reason are the true cause. A SUCCESS decision (REPINNED / ALREADY_CURRENT) must
-    # NOT survive a final-HEAD failure: keeping it would leave the receipt claiming success with an
-    # empty reason while the run fails closed, misstating the cause.
-    $autofollowHadRefusal = ($autofollowResult -eq "SKIP" -or $autofollowResult -eq "FAIL")
-    if (-not $autofollowHadRefusal) {
-        if ($autofollowAttempted) {
-            # final HEAD unreadable after a completed repin
-            $autofollowDecision = "REFUSED_REPIN_VERIFY_FAILED"
-            $autofollowRejectionReason = "final HEAD rev-parse failed or invalid OID"
-            $autofollowResult = "FAIL"
-        } else {
-            # final HEAD unreadable with no repin attempted (e.g. after ALREADY_CURRENT)
-            $autofollowDecision = "REFUSED_UNEXPECTED"
-            $autofollowRejectionReason = "final HEAD rev-parse failed or invalid OID"
-            $autofollowResult = "SKIP"
-        }
-    } elseif ($autofollowAttempted) {
-        $autofollowDecision = "REFUSED_REPIN_VERIFY_FAILED"
-        $autofollowResult = "FAIL"
-    } else {
-        $autofollowResult = "SKIP"
-    }
-}
-
-if ($autofollowDecision -eq "REFUSED_DIRTY") {
-    Write-Host "FAIL: Autofollow failed: $autofollowDecision - $autofollowRejectionReason"
+    $autofollowResult = "FAIL"
+    $autofollowRejectionReason = "required installed tooling absent or unreadable: $($unreadableInstalledTooling -join ', ')"
+    Write-Host "FAIL: Installed runtime preflight: $autofollowRejectionReason"
     Complete-NightlyRun 1 'FAILED'
-} elseif ($autofollowResult -eq "SKIP") {
-    Write-Host "SKIP: Autofollow skipped: $autofollowDecision - $autofollowRejectionReason"
-    Complete-NightlyRun 1 'FAILED'
-} elseif ($autofollowResult -eq "FAIL") {
-    # NOTE: this branch is the POST-CHECKOUT FAILURE path only. It must NOT test
-    # $autofollowAttempted, which is $true for a SUCCESSFUL repin as well -- including it here
-    # routed every successful REPINNED run into terminal failure, so the nightly would never
-    # publish on the exact nights auto-follow worked.
-    $orphansKey = "tooling/wiki/check_orphans.ps1"
-    $terminalizerKey = "tooling/wiki/nightly_terminalizer.ps1"
-    $terminalizationTrusted = $false
-    if ($null -ne $preCheckoutManifest -and $null -ne $postCheckoutManifest -and
-        $preCheckoutManifest.ContainsKey($orphansKey) -and $preCheckoutManifest.ContainsKey($terminalizerKey) -and
-        $postCheckoutManifest.ContainsKey($orphansKey) -and $postCheckoutManifest.ContainsKey($terminalizerKey) -and
-        $preCheckoutManifest[$orphansKey] -ceq $postCheckoutManifest[$orphansKey] -and
-        $preCheckoutManifest[$terminalizerKey] -ceq $postCheckoutManifest[$terminalizerKey]) {
-        $terminalizationTrusted = $true
-    }
-    if ($terminalizationTrusted) {
-        Write-Host "FAIL: Autofollow failed: $autofollowDecision - $autofollowRejectionReason"
-        Complete-NightlyRun 1 'FAILED'
-    } else {
-        Exit-NightlyTerminalFailure "Autofollow failed: $autofollowDecision - $autofollowRejectionReason (untrusted closure)"
-    }
-} else {
-    Write-Host "PASS: Autofollow decision: $autofollowDecision"
 }
 
-# DELIBERATE asymmetry: $n0PorcelainLines intentionally omits --untracked-files=no because it is human-readable receipt text (consumed at 1431), never a gate -- unlike line 757.
+$autofollowStartingHeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse HEAD)
+$autofollowStartingHeadExit = $LASTEXITCODE
+if ($autofollowStartingHeadExit -ne 0 -or
+    $autofollowStartingHeadRaw.Count -ne 1 -or
+    $autofollowStartingHeadRaw[0].Trim() -cnotmatch '^[0-9a-f]{40}$') {
+    $autofollowDecision = "REFUSED_UNEXPECTED"
+    $autofollowResult = "FAIL"
+    $autofollowRejectionReason = "installed HEAD rev-parse failed or returned an invalid OID"
+    Write-Host "FAIL: Installed runtime preflight: $autofollowRejectionReason"
+    Complete-NightlyRun 1 'FAILED'
+}
+
+$autofollowStartingHead = $autofollowStartingHeadRaw[0].Trim()
+$autofollowFinalHead = $autofollowStartingHead
+$autofollowFetchedOid = $null
+$autofollowDecision = "PINNED_INSTALLED_RUNTIME"
+$autofollowAttempted = $false
+$autofollowResult = "PASS"
+$autofollowRejectionReason = ""
+$n0Head = $autofollowStartingHead
+$serveGateRequiredRef = "INSTALLED_RUNTIME"
+Write-Host "PASS: Installed runtime decision: $autofollowDecision ($autofollowStartingHead)"
+
+# This count is human-readable receipt text only; publication uses the tracked-clean gate below.
 $n0PorcelainLines = @(git -C $RepoRoot status --porcelain).Count
-$n0HeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $normalizedRepoRoot rev-parse HEAD)
-$n0HeadExit = $LASTEXITCODE
-$n0Head = ""
-if ($n0HeadExit -eq 0 -and $n0HeadRaw.Count -gt 0) {
-    $n0Head = $n0HeadRaw[0].Trim()
-}
-if ($n0Head -cnotmatch '^[0-9a-f]{40}$') {
-    Write-Host "FAIL: N1 HEAD capture failed with exit $n0HeadExit"
-    Complete-NightlyRun 1 'FAILED'
-}
 
-Write-Host "--- N1 FETCH+SCOPE+HASH ---"
+Write-Host "--- N1 SCOPE+HASH ---"
 
 # --emit-overlay is REQUIRED here (codex P2): without regenerating the docs-trust
 # negation overlay the root *.md blanket excludes every registered doc from N1 build.
@@ -1129,6 +906,28 @@ if ($graphOrphanRisk) {
 if ($semanticSkippedReason) {
     $step5Status = "SEMANTIC_SKIPPED_$semanticSkippedReason"
 } else {
+    $ollamaLockPath = Join-Path $RepoRoot "tooling\wiki\ollama_lock.ps1"
+    if (-not (Test-NightlyReadableFile $ollamaLockPath)) {
+        Write-Host "FAIL: N5 lock tooling is absent or unreadable"
+        Complete-NightlyRun 1 'FAILED'
+    }
+    try { . $ollamaLockPath }
+    catch {
+        Write-Host "FAIL: N5 lock tooling load failed: $($_.Exception.Message)"
+        Complete-NightlyRun 1 'FAILED'
+    }
+    if ($n5Plan.RunSemantic) {
+        $semanticExtractPath = Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"
+        $promotionPath = Join-Path $RepoRoot "tooling\wiki\promotion.py"
+        $missingSemanticTooling = @(
+            $semanticExtractPath
+            $promotionPath
+        ) | Where-Object { -not (Test-NightlyReadableFile $_) }
+        if ($missingSemanticTooling.Count -gt 0) {
+            Write-Host "FAIL: semantic tooling is absent or unreadable: $($missingSemanticTooling -join ', ')"
+            Complete-NightlyRun 1 'FAILED'
+        }
+    }
     $lockMins = $n5Plan.LockExpiryMinutes
     $h = Invoke-OllamaLockAcquire -BlockId 'SSTAC-NIGHTLY' -Purpose 'nightly label+semantic' -ExpiryMinutes $lockMins -Model $cfgModel
     if ($null -eq $h) {
@@ -1159,7 +958,7 @@ if ($semanticSkippedReason) {
             if ($n5Plan.RunSemantic -and -not $gpuOrphanRisk -and -not $step5Fail) {
                 $semanticExecutionAttempted = $true
                 $semanticEvidence.receipt_name = Split-Path -Leaf $semanticEvidencePath
-                $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', (Join-Path $RepoRoot "tooling\wiki\semantic_extract.ps1"), '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner, '-EvidencePath', $semanticEvidencePath, '-EvidenceRunId', $runId)
+                $semArgs = @('-NoProfile','-ExecutionPolicy','Bypass','-File', $semanticExtractPath, '-SkipLock', '-TimeoutSec', $cfgTimeoutSemInner, '-EvidencePath', $semanticEvidencePath, '-EvidenceRunId', $runId)
                 $n5MutationAttempted = $true
                 $sr = Invoke-GraphifyGuarded -GraphifyExe $windowsPowerShell51 -GraphifyArgs $semArgs -TimeoutSec $cfgTimeoutSemOuter
                 try {
@@ -1230,7 +1029,7 @@ if ($semanticSkippedReason) {
                             if (Test-Path -LiteralPath $servedPromotion) {
                                 Copy-Item -LiteralPath $servedPromotion -Destination $promotionCandidate -Force -ErrorAction Stop
                             }
-                            $promArgs = @((Join-Path $RepoRoot "tooling\wiki\promotion.py"), '--graph', (Join-Path $RepoRoot "graphify-out\graph.json"), '--state', $promotionCandidate, '--commit', (git -C $RepoRoot rev-parse --short HEAD).Trim(), '--report')
+                            $promArgs = @($promotionPath, '--graph', (Join-Path $RepoRoot "graphify-out\graph.json"), '--state', $promotionCandidate, '--commit', (git -C $RepoRoot rev-parse --short HEAD).Trim(), '--report')
                             & $pythonExe @promArgs
                             if ($LASTEXITCODE -ne 0) {
                                 $promStatus = "PROMOTION_FAILED"
@@ -1388,22 +1187,22 @@ if ($graphOrphanRisk -or -not $n1BuildOk -or $step2Status -ne "OK" -or $step5Sta
         }
     }
     
-    $trackedClean = (@(git -C $RepoRoot status --porcelain --untracked-files=no).Count -eq 0)
-    $headUnchanged = ((git -C $RepoRoot rev-parse HEAD).Trim() -eq $n0Head)
+    $trackedStatus = @(git -c gc.auto=0 -c maintenance.auto=false -C $RepoRoot status --porcelain --untracked-files=no)
+    $trackedStatusExit = $LASTEXITCODE
+    $trackedClean = ($trackedStatusExit -eq 0 -and $trackedStatus.Count -eq 0)
+    $currentHeadRaw = @(git -c gc.auto=0 -c maintenance.auto=false -C $RepoRoot rev-parse HEAD)
+    $currentHeadExit = $LASTEXITCODE
+    $currentHead = if ($currentHeadExit -eq 0 -and $currentHeadRaw.Count -eq 1) { $currentHeadRaw[0].Trim() } else { "" }
+    $headUnchanged = ($currentHead -cmatch '^[0-9a-f]{40}$' -and $currentHead -ceq $autofollowStartingHead)
+    if ($currentHead -cmatch '^[0-9a-f]{40}$') { $autofollowFinalHead = $currentHead }
 
-    $serveGateRaw = (& $pythonExe (Join-Path $RepoRoot "tooling\wiki\serve_gate.py") --repo-root $RepoRoot --config $configFile verify --receipt $serveGateFetchReceipt) -join "`n"
-    $serveGateExit = $LASTEXITCODE
-    $serveGateOk = $false
+    $serveGateOk = ($trackedClean -and $headUnchanged)
     $serveGateReasons = @()
-    try {
-        $serveGateResult = $serveGateRaw | ConvertFrom-Json
-        $serveGateOk = ($serveGateExit -eq 0 -and $serveGateResult.allowed)
-        $serveGateReasons = @($serveGateResult.reasons)
-        $serveGateSummary = "allowed=$serveGateOk; required_ref=$($serveGateResult.required_ref); fetched_oid=$($serveGateResult.fetched_oid); head=$($serveGateResult.head); ref_head=$($serveGateResult.required_ref_head)"
-    } catch {
-        $serveGateReasons = @("Serve gate returned invalid output")
-        $serveGateSummary = "allowed=False; invalid evaluator output"
-    }
+    if ($trackedStatusExit -ne 0) { $serveGateReasons += "Tracked status failed" }
+    elseif (-not $trackedClean) { $serveGateReasons += "Tracked files dirty" }
+    if ($currentHead -cnotmatch '^[0-9a-f]{40}$') { $serveGateReasons += "Installed HEAD unreadable" }
+    elseif (-not $headUnchanged) { $serveGateReasons += "HEAD changed" }
+    $serveGateSummary = "allowed=$serveGateOk; required_ref=$serveGateRequiredRef; required_ref_oid=$autofollowStartingHead; fetched_oid=; head=$currentHead"
     
     # Freshness of receipt lineage OK
     $freshnessOk = $true
@@ -1485,21 +1284,7 @@ if (Test-Path $gj) {
 
 $commitsBehind = 0
 $ageDays = 0
-$freshnessStr = "freshness_unknown"
-if ($fetchOk) {
-    try {
-        $commitsBehind = [int](git -C $RepoRoot rev-list --count "HEAD..$serveGateRequiredRef")
-        $headTime = [int](git -C $RepoRoot log -1 --format=%ct HEAD)
-        $mainTime = [int](git -C $RepoRoot log -1 --format=%ct $serveGateRequiredRef)
-        if ($mainTime -gt $headTime) {
-            $ageDays = [math]::Round(($mainTime - $headTime) / 86400, 1)
-        }
-        $freshnessStr = "commits behind: $commitsBehind, days old: $ageDays"
-        if ($commitsBehind -gt 50 -or $ageDays -gt 7) {
-            $freshnessStr += " [FLAGGED]"
-        }
-    } catch {}
-}
+$freshnessStr = "installed runtime: $autofollowStartingHead"
 
 $receiptBody = @(
     "Date: $stamp"

@@ -304,17 +304,12 @@ class TestWrapperContracts(unittest.TestCase):
         self.assertIn("$terminalReceipt = [pscustomobject][ordered]@{", self.wrapper)
         self.assertNotIn("$terminalReceipt = [ordered]@{", self.wrapper)
 
-    def test_serve_gate_fetch_invocation_is_exactly_one(self):
-        matches = list(re.finditer(r"serve_gate\.py", self.wrapper))
-        subcommands = []
-        for m in matches:
-            start_idx = m.end()
-            window = self.wrapper[start_idx:start_idx + 250]
-            sub_match = re.search(r"\b(fetch|verify)\b", window)
-            self.assertIsNotNone(sub_match, f"Could not determine subcommand after serve_gate.py at index {m.start()}")
-            subcommands.append(sub_match.group(1))
-        fetch_count = subcommands.count("fetch")
-        self.assertEqual(fetch_count, 1, f"Expected exactly ONE serve-gate fetch invocation, found {fetch_count}")
+    def test_installed_runtime_has_no_remote_advancement_invocation(self):
+        self.assertNotIn("serve_gate.py", self.wrapper)
+        forbidden = re.compile(r"(?im)^\s*(?:&\s*)?git(?:\.exe)?\b[^\r\n]*\b(fetch|pull|checkout|switch|reset|merge)\b")
+        self.assertIsNone(forbidden.search(self.wrapper))
+        self.assertIn('Write-Host "--- N0 INSTALLED RUNTIME PREFLIGHT ---"', self.wrapper)
+        self.assertIn('$autofollowDecision = "PINNED_INSTALLED_RUNTIME"', self.wrapper)
 
     def test_autofollow_fields_appear_last(self):
         receipt_match = re.search(r"\$terminalReceipt\s*=\s*\[pscustomobject\]\[ordered\]@\{(.*?)\}", self.wrapper, re.DOTALL)
@@ -341,17 +336,15 @@ class TestWrapperContracts(unittest.TestCase):
         expected_order = re.findall(r"['\"]([a-z0-9_]+)['\"]", expected_top_match.group(1))
         self.assertEqual(fields, expected_order, "Wrapper receipt fields names and order must match $expectedTop in activation_preflight.ps1 exactly")
 
-    def test_git_invocations_carry_auto_flags_in_autofollow(self):
-        """Assert that git invocations inside the N0 autofollow evaluation block carry the required auto-disable flags."""
-        autofollow_block = self.wrapper.split('Write-Host "--- N0 AUTOFOLLOW EVALUATION ---"', 1)[1].split('Write-Host "--- N1 FETCH+SCOPE+HASH ---"', 1)[0]
-        git_invocations = re.findall(r"git\s+-c[^)]*", autofollow_block)
+    def test_git_invocations_carry_auto_flags_in_installed_runtime_preflight(self):
+        """Assert local Git reads in the installed-runtime block disable auto-maintenance."""
+        preflight_block = self.wrapper.split('Write-Host "--- N0 INSTALLED RUNTIME PREFLIGHT ---"', 1)[1].split('Write-Host "--- N1 SCOPE+HASH ---"', 1)[0]
+        git_invocations = re.findall(r"git\s+-c[^)]*", preflight_block)
+        self.assertEqual(len(git_invocations), 1)
         for inv in git_invocations:
             self.assertIn("-c gc.auto=0", inv)
             self.assertIn("-c maintenance.auto=false", inv)
             self.assertIn("-C $normalizedRepoRoot", inv)
-        git_all = re.findall(r"\bgit\s+(?!-C\s+\$RepoRoot\s+rev-parse\s+HEAD\b)(?!-C\s+\$RepoRoot\s+status\s+--porcelain\b)(?!-C\s+\$RepoRoot\s+rev-parse\s+--git-common-dir\b)(?!-C\s+\$RepoRoot\s+rev-parse\s+--verify\b)(.*)", autofollow_block)
-        for arg in git_all:
-            self.assertTrue(arg.startswith("-c gc.auto=0 -c maintenance.auto=false"), f"Git invocation without required flags: git {arg}")
 
 
     def test_every_exit_flows_through_single_terminalizer(self):
@@ -415,6 +408,58 @@ class TestWrapperContracts(unittest.TestCase):
             with self.subTest(child_token=child_token):
                 self.assertNotIn(child_token, post_evaluate)
         self.assertNotIn("Complete-NightlyRun", complete)
+
+    def test_missing_build_stamp_is_caught_as_one_terminal_failure(self):
+        complete = self.wrapper.split("function Complete-NightlyRun", 1)[1].split("trap {", 1)[0]
+        self.assertIn("Get-Content -LiteralPath (Join-Path $RepoRoot 'wiki\\.build-stamp') -Raw -ErrorAction Stop", complete)
+        self.assertIn("$finalState = 'FAILED'", complete)
+        self.assertIn('Write-Host "FAIL: build stamp:', complete)
+
+    def test_optional_n5_tooling_is_checked_only_in_enabled_paths(self):
+        before_n5 = self.wrapper.split('Write-Host "--- N5 SEMANTIC ---"', 1)[0]
+        self.assertNotIn('. (Join-Path $RepoRoot "tooling\\wiki\\ollama_lock.ps1")', before_n5)
+        n0 = self.wrapper.split('Write-Host "--- N0 INSTALLED RUNTIME PREFLIGHT ---"', 1)[1].split(
+            'Write-Host "--- N1 SCOPE+HASH ---"', 1
+        )[0]
+        self.assertIn("if (-not ($SkipLabeling -and $SkipSemantic))", n0)
+        self.assertIn("if (-not $SkipSemantic)", n0)
+        n5 = self.wrapper.split('Write-Host "--- N5 SEMANTIC ---"', 1)[1].split(
+            'Write-Host "--- N5b PRE-PUBLICATION GRAPH INTEGRITY ---"', 1
+        )[0]
+        semantic_gate = n5.split("if ($semanticSkippedReason)", 1)[1]
+        skip_branch, enabled_branch = semantic_gate.split("} else {", 1)
+        for optional in ("ollama_lock.ps1", "semantic_extract.ps1", "promotion.py"):
+            self.assertNotIn(optional, skip_branch)
+        self.assertIn("Test-NightlyReadableFile $ollamaLockPath", enabled_branch)
+        self.assertIn("if ($n5Plan.RunSemantic)", enabled_branch)
+        self.assertIn("$semanticExtractPath", enabled_branch)
+        self.assertIn("$promotionPath", enabled_branch)
+
+    def test_affected_powershell_files_parse_under_windows_powershell_51(self):
+        if not POWERSHELL:
+            self.skipTest("Windows PowerShell unavailable")
+        paths = [WIKI_DIR / "nightly_wiki_sync.ps1", WIKI_DIR / "activation_preflight.ps1"]
+        command = (
+            "$errors=$null;$tokens=$null;"
+            + ";".join(
+                "[System.Management.Automation.Language.Parser]::ParseFile('"
+                + str(path).replace("'", "''")
+                + "',[ref]$tokens,[ref]$errors)|Out-Null;"
+                "$path='"
+                + str(path).replace("'", "''")
+                + "';if($errors.Count -gt 0){throw($path+': '+($errors -join '; '))}"
+                for path in paths
+            )
+            + ";Write-Output 'PS51_PARSE_OK'"
+        )
+        result = subprocess.run(
+            [POWERSHELL, "-NoProfile", "-NonInteractive", "-Command", command],
+            capture_output=True,
+            text=True,
+            check=False,
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertIn("PS51_PARSE_OK", result.stdout)
 
     def test_early_paths_cannot_manufacture_success(self):
         self.assertNotIn("SKIPPED_ORPHANS", self.wrapper)
@@ -515,10 +560,14 @@ class TestWrapperContracts(unittest.TestCase):
         )
 
         cluster = self.wrapper.index("'cluster-only'")
-        first_smoke = self.wrapper.index("graph_smoke.py")
-        final_canonical = self.wrapper.rindex("canonicalize_graph.py")
-        final_smoke = self.wrapper.rindex("graph_smoke.py")
-        finalize = self.wrapper.index(" finalize ")
+        first_smoke = self.wrapper.index("graph_smoke.py", cluster)
+        final_canonical = self.wrapper.index(
+            "canonicalization-prepublish-$runId.json"
+        )
+        final_smoke = self.wrapper.index(
+            "smoke-prepublish-$runId.json", final_canonical
+        )
+        finalize = self.wrapper.index(" finalize ", final_smoke)
         self.assertLess(cluster, first_smoke)
         self.assertLess(first_smoke, final_canonical)
         self.assertLess(final_canonical, final_smoke)
@@ -531,7 +580,7 @@ class TestWrapperContracts(unittest.TestCase):
     def test_each_identity_mutation_is_canonicalized_before_promotion(self):
         label = self.wrapper.index("@('label'")
         post_label = self.wrapper.index("canonicalization-postlabel-$runId.json")
-        semantic = self.wrapper.index("semantic_extract.ps1")
+        semantic = self.wrapper.index("$semanticExtractPath", post_label)
         post_semantic = self.wrapper.index(
             "canonicalization-postsemantic-$runId.json"
         )
@@ -707,605 +756,9 @@ class TestWrapperContracts(unittest.TestCase):
         )
         self.assertNotIn("json.load(open(sys.argv[1]))", self.wrapper)
 
-class TestN0AutofollowGates(unittest.TestCase):
-    def setUp(self):
-        if not POWERSHELL:
-            self.skipTest("PowerShell unavailable")
-        FOCUSED_TEST_TMP.mkdir(exist_ok=True)
-        self.wrapper = (WIKI_DIR / "nightly_wiki_sync.ps1").read_text(encoding="ascii")
-        start_marker = 'Write-Host "--- N0 AUTOFOLLOW EVALUATION ---"'
-        end_marker = 'Write-Host "--- N1 FETCH+SCOPE+HASH ---"'
-        if start_marker not in self.wrapper or end_marker not in self.wrapper:
-            self.skipTest("N0 autofollow block not found")
-        self.n0_block = "try {\n" + start_marker + "\n" + self.wrapper.split(start_marker, 1)[1].split(end_marker, 1)[0]
-        # Clean helper for sha256 to avoid missing deps in N0 test execution
-        self.sha256_helper = self.wrapper.split("function Get-NightlyFileSha256", 1)[1].split("function Get-NightlyExactNonnegativeInteger", 1)[0]
-        self.sha256_helper = "function Get-NightlyFileSha256" + self.sha256_helper
-
-    def create_git_repo(self, d):
-        subprocess.run(["git", "init"], cwd=d, capture_output=True, check=True)
-        subprocess.run(["git", "config", "user.name", "test"], cwd=d, capture_output=True, check=True)
-        subprocess.run(["git", "config", "user.email", "test@example.com"], cwd=d, capture_output=True, check=True)
-        (Path(d) / "tooling" / "wiki").mkdir(parents=True)
-        (Path(d) / "tooling" / "wiki" / "serve_gate.py").write_text("import json; print(json.dumps({'required_ref': 'refs/remotes/origin/main', 'fetched_oid': 'TARGET_OID'}))", encoding="ascii")
-        subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-        subprocess.run(["git", "commit", "-m", "init"], cwd=d, capture_output=True, check=True)
-        head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-        subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-        return head_oid
-
-    def actual_head(self, repo_dir):
-        """Read HEAD directly from git, outside any shim, to assert the on-disk safety property."""
-        return subprocess.run(
-            ["git", "rev-parse", "HEAD"], cwd=repo_dir, capture_output=True, text=True, check=True
-        ).stdout.strip()
-
-    def run_n0(self, repo_dir, target_oid, shim=None):
-        gate_py = Path(repo_dir) / "tooling" / "wiki" / "serve_gate.py"
-        gate_py.write_text(f"import json; print(json.dumps({{'required_ref': 'refs/remotes/origin/main', 'fetched_oid': '{target_oid}'}}))", encoding="ascii")
-        subprocess.run(["git", "update-index", "--assume-unchanged", "tooling/wiki/serve_gate.py"], cwd=repo_dir, capture_output=True, check=True)
-        script = [
-            f"Set-StrictMode -Version 2.0",
-            f"$normalizedRepoRoot = '{repo_dir}'",
-            f"$RepoRoot = '{repo_dir}'",
-            f"$pythonExe = '{sys.executable}'",
-            f"$configFile = ''",
-            f"$stamp = '2026-08-05'",
-            f"$logDir = '{repo_dir}'",
-            # The harness executes only the extracted N0 block, but production initializes
-            # these before it (nightly_wiki_sync.ps1:505-513). Under StrictMode 2.0 an
-            # unassigned variable throws, so the preamble must mirror production exactly --
-            # StrictMode without production's initialization tests a state that never occurs.
-            "$serveGateRequiredRef = 'refs/remotes/origin/main'",
-            "$autofollowStartingHead = ''",
-            "$autofollowFetchedOid = $null",
-            "$autofollowDecision = 'NOT_EVALUATED'",
-            "$autofollowAttempted = $false",
-            "$autofollowResult = 'NOT_RUN'",
-            "$autofollowFinalHead = ''",
-            "$autofollowRejectionReason = ''",
-            "$preCheckoutManifest = $null",
-            "$postCheckoutManifest = $null",
-            "function Complete-NightlyRun([int]$NativeExitCode, [string]$TerminalState) {",
-            "    'mock receipt' | Set-Content (Join-Path $logDir 'mock-receipt.json')",
-            "    [pscustomobject]@{",
-            "        autofollow_decision = $autofollowDecision",
-            "        autofollow_result = $autofollowResult",
-            "        autofollow_attempted = $autofollowAttempted",
-            "        autofollow_starting_head = $autofollowStartingHead",
-            "        autofollow_final_head = $autofollowFinalHead",
-            "        autofollow_rejection_reason = $autofollowRejectionReason",
-            "        terminal_state = $TerminalState",
-            "        native_exit_code = $NativeExitCode",
-            "    } | ConvertTo-Json -Depth 5 -Compress | Write-Output",
-            "    exit $NativeExitCode",
-            "}",
-            "function Exit-NightlyTerminalFailure([string]$Message) {",
-            "    [pscustomobject]@{",
-            "        autofollow_decision = $autofollowDecision",
-            "        autofollow_result = 'FAIL'",
-            "        autofollow_attempted = $autofollowAttempted",
-            "        autofollow_starting_head = $autofollowStartingHead",
-            "        autofollow_final_head = $autofollowFinalHead",
-            "        autofollow_rejection_reason = $autofollowRejectionReason",
-            "        terminal_state = 'FAILED'",
-            "        native_exit_code = 1",
-            "    } | ConvertTo-Json -Depth 5 -Compress | Write-Output",
-            "    exit 1",
-            "}",
-            self.sha256_helper
-        ]
-        if shim:
-            script.append(shim)
-        script.append(self.n0_block)
-        script.append("""
-        [pscustomobject]@{
-            autofollow_decision = $autofollowDecision
-            autofollow_result = $autofollowResult
-            autofollow_attempted = $autofollowAttempted
-            autofollow_starting_head = $autofollowStartingHead
-            autofollow_final_head = $autofollowFinalHead
-            autofollow_rejection_reason = $autofollowRejectionReason
-            terminal_state = 'SUCCESS'
-            native_exit_code = 0
-        } | ConvertTo-Json -Depth 5 -Compress | Write-Output
-        """)
-        ps_script = "\n".join(script)
-        script_path = Path(repo_dir) / "run_n0.ps1"
-        script_path.write_text(ps_script, encoding="utf-8")
-        (Path(repo_dir) / ".git" / "info" / "exclude").write_text("run_n0.ps1\n", encoding="ascii")
-        result = subprocess.run([POWERSHELL, "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(script_path)], capture_output=True, text=True, cwd=repo_dir)
-        try:
-            return json.loads(result.stdout.strip().splitlines()[-1]), result.returncode
-        except Exception:
-            return {"error": "failed to parse output", "stdout": result.stdout, "stderr": result.stderr}, result.returncode
-
-    def test_git_unexpected_exit_shim(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            expected_reasons = {
-                "symbolic-ref": "symbolic-ref failed with exit 2",
-                "rev-parse": "rev-parse HEAD failed with exit 2",
-                "merge-base": "merge-base failed with exit 2",
-                "checkout": "post-checkout verification failed"
-            }
-
-            for cmd in ["symbolic-ref", "rev-parse", "merge-base", "checkout"]:
-                with self.subTest(cmd=cmd):
-                    subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-                    shim = f"function git {{ if ($args -contains '{cmd}') {{ $global:LASTEXITCODE = 2; return }} else {{ $a=@(); $hasDash=$false; foreach($x in $args){{ if($x -eq '--'){{ $hasDash=$true }} }}; if($hasDash){{ foreach($x in $args){{ $a+=$x; if($x -eq '--'){{ $a+='--' }} }} }} else {{ $ins=$false; foreach($x in $args){{ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){{ $a+='--'; $a+='--'; $ins=$true }}; $a+=$x }} }}; & git.exe @a }} }}"
-                    data, rc = self.run_n0(d, target_oid, shim)
-                    self.assertEqual(rc, 1, f"Expected fail-closed for {cmd}")
-                    if cmd != "checkout":
-                        self.assertFalse(data.get("autofollow_attempted", True), "Should not attempt repin on early failure")
-                    else:
-                        self.assertTrue(data.get("autofollow_attempted"), "Should attempt repin for checkout failure")
-                    # The safety property is that the tree is unchanged on disk. When the
-                    # shimmed command is rev-parse, the block cannot READ a head to report,
-                    # so the receipt field is legitimately absent -- assert the real HEAD
-                    # directly instead of a reporting artifact the failure mode destroys.
-                    self.assertEqual(self.actual_head(d), head_oid, "HEAD must remain unchanged on disk")
-                    if cmd != "rev-parse":
-                        self.assertEqual(data.get("autofollow_final_head"), head_oid, "HEAD must remain unchanged")
-                    self.assertEqual(data.get("autofollow_rejection_reason"), expected_reasons[cmd])
-
-    def test_git_empty_stdout_shim(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            expected_reasons = {
-                "--git-dir": "rev-parse --git-dir returned empty stdout",
-                "ls-tree": "ls-tree failed or empty"
-            }
-
-            for cmd in ["--git-dir", "ls-tree"]:
-                with self.subTest(cmd=cmd):
-                    subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-                    shim = f"function git {{ if ($args -contains '{cmd}') {{ $global:LASTEXITCODE = 0; return }} else {{ $a=@(); $hasDash=$false; foreach($x in $args){{ if($x -eq '--'){{ $hasDash=$true }} }}; if($hasDash){{ foreach($x in $args){{ $a+=$x; if($x -eq '--'){{ $a+='--' }} }} }} else {{ $ins=$false; foreach($x in $args){{ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){{ $a+='--'; $a+='--'; $ins=$true }}; $a+=$x }} }}; & git.exe @a }} }}"
-                    data, rc = self.run_n0(d, target_oid, shim)
-                    self.assertEqual(rc, 1, f"Expected fail-closed for {cmd}")
-                    self.assertFalse(data.get("autofollow_attempted", True))
-                    self.assertEqual(self.actual_head(d), head_oid, "HEAD must remain unchanged on disk")
-                    self.assertEqual(data.get("autofollow_final_head"), head_oid)
-                    self.assertEqual(data.get("autofollow_rejection_reason"), expected_reasons[cmd])
-
-    def test_protected_pathspec_change_refusal(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-            head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "wiki").mkdir(exist_ok=True)
-            (Path(d) / "wiki" / "new.md").write_text("evil", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add wiki"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            data, rc = self.run_n0(d, target_oid)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_TOOLING_CHANGE")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "diff touches protected pathspec")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(data.get("autofollow_final_head"), head_oid)
-
-    def test_hook_suppression_success(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-            head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            hook_dir = Path(d) / ".git" / "hooks"
-            hook_dir.mkdir(exist_ok=True)
-            hook = hook_dir / "post-checkout"
-            hook.write_text("#!/bin/sh\ntouch " + (Path(d) / "hook_ran.txt").as_posix() + "\n", encoding="ascii")
-            hook.chmod(0o755)
-
-            subprocess.run(["git", "checkout", "--detach", target_oid], cwd=d, capture_output=True, check=True)
-            self.assertTrue((Path(d) / "hook_ran.txt").exists(), "Hook control case failed")
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-            # Clear the sentinel AFTER the return-checkout: that checkout also fires the hook
-            # (it is still installed), so unlinking earlier leaves a stale sentinel that would
-            # make the suppression assertion below fail for the wrong reason.
-            if (Path(d) / "hook_ran.txt").exists():
-                (Path(d) / "hook_ran.txt").unlink()
-
-            data, rc = self.run_n0(d, target_oid)
-            self.assertEqual(rc, 0)
-            self.assertEqual(data.get("autofollow_decision"), "REPINNED")
-            self.assertTrue(data.get("autofollow_attempted"))
-            self.assertFalse((Path(d) / "hook_ran.txt").exists(), "Hook should be suppressed")
-            self.assertEqual(data.get("autofollow_final_head"), target_oid)
-
-    def test_ls_tree_refusal(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-            head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = "function git { if ($args -contains 'ls-tree') { $global:LASTEXITCODE = 1; return } else { $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } }; if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } } else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } }; & git.exe @a } }"
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_UNEXPECTED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "ls-tree failed or empty")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_hook_setup_failure(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-            head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = "function New-Item { param($ItemType, $Path, $ErrorAction) if ($Path -match 'wiki_autofollow_hooks') { return } else { Microsoft.PowerShell.Management\\New-Item -ItemType $ItemType -Path $Path -ErrorAction $ErrorAction } }"
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_HOOK_SETUP_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "failed to setup empty hooks directory")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(data.get("autofollow_final_head"), head_oid)
-
-    def test_refused_dirty_tracked_file(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            tracked_file = Path(d) / "tracked_file.txt"
-            tracked_file.write_text("initial\n", encoding="ascii")
-            subprocess.run(["git", "add", "tracked_file.txt"], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add tracked file"], cwd=d, capture_output=True, check=True)
-            head_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-            tracked_file.write_text("modified\n", encoding="ascii")
-
-            data, rc = self.run_n0(d, target_oid)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_DIRTY")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "working tree dirty")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_refused_divergent(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "target.md").write_text("target", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "target commit"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "head.md").write_text("head", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "divergent head commit"], cwd=d, capture_output=True, check=True)
-            new_head_oid = self.actual_head(d)
-
-            data, rc = self.run_n0(d, target_oid)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_DIVERGENT")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "target_oid is not a fast-forward descendant of HEAD")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), new_head_oid)
-
-    def test_refused_divergent_rewind(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "descendant"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "descendant.md").write_text("descendant", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "descendant commit"], cwd=d, capture_output=True, check=True)
-            new_head_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", new_head_oid], cwd=d, capture_output=True, check=True)
-
-            data, rc = self.run_n0(d, head_oid)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_DIVERGENT")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "target_oid is not a fast-forward descendant of HEAD")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), new_head_oid)
-
-    def test_refused_attached(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "test-branch"], cwd=d, capture_output=True, check=True)
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "test-branch"], cwd=d, capture_output=True, check=True)
-            attached_head_oid = self.actual_head(d)
-
-            data, rc = self.run_n0(d, target_oid)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_ATTACHED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "HEAD is attached to a branch")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), attached_head_oid)
-
-    def test_already_current(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            data, rc = self.run_n0(d, head_oid)
-            self.assertEqual(rc, 0)
-            self.assertEqual(data.get("terminal_state"), "SUCCESS")
-            self.assertEqual(data.get("autofollow_decision"), "ALREADY_CURRENT")
-            self.assertEqual(data.get("autofollow_result"), "PASS")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_refused_fetch_fail(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            data, rc = self.run_n0(d, "invalid-oid-value")
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_FETCH_FAIL")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "fetch failed or invalid target_oid")
-            self.assertFalse(data.get("autofollow_attempted", True))
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_manifest_mismatch_refusal(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", "HEAD"], cwd=d, capture_output=True, check=True)
-            head_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = subprocess.run(["git", "rev-parse", "HEAD"], cwd=d, capture_output=True, text=True, check=True).stdout.strip()
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = "$global:lsTreeCount = 0; function git { if ($args -contains 'ls-tree') { $global:lsTreeCount++; if ($global:lsTreeCount -eq 2) { return @('nonexistent-file.txt') } }; $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } }; if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } } else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } }; & git.exe @a }"
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_REPIN_VERIFY_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "post-checkout verification failed")
-            self.assertTrue(data.get("autofollow_attempted"))
-            self.assertEqual(self.actual_head(d), target_oid)
-            self.assertEqual(data.get("autofollow_final_head"), target_oid)
-
-    def test_neg11_unprovable_closure(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            (Path(d) / "tooling" / "wiki" / "check_orphans.ps1").write_text("initial orphans\n", encoding="ascii")
-            (Path(d) / "tooling" / "wiki" / "nightly_terminalizer.ps1").write_text("initial terminalizer\n", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add terminalization deps"], cwd=d, capture_output=True, check=True)
-            head_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            # Shim git to modify check_orphans.ps1 when checkout is called, simulating post-checkout manifest mismatch
-            shim = "function git { if ($args -contains 'checkout') { 'modified orphans' | Set-Content (Join-Path $normalizedRepoRoot 'tooling/wiki/check_orphans.ps1') }; $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } }; if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } } else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } }; & git.exe @a }"
-
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_REPIN_VERIFY_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "post-checkout verification failed")
-            self.assertTrue(data.get("autofollow_attempted"))
-
-            receipt_path = Path(d) / "mock-receipt.json"
-            self.assertFalse(receipt_path.exists(), "No terminal receipt should be produced for unprovable closure")
-
-    def test_trusted_closure_failure(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            (Path(d) / "tooling" / "wiki" / "check_orphans.ps1").write_text("initial orphans\n", encoding="ascii")
-            (Path(d) / "tooling" / "wiki" / "nightly_terminalizer.ps1").write_text("initial terminalizer\n", encoding="ascii")
-            (Path(d) / "AGENTS.md").write_text("initial agents\n", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add terminalization deps and agents"], cwd=d, capture_output=True, check=True)
-            head_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            # Shim git to modify AGENTS.md when checkout is called, which causes manifest mismatch but leaves check_orphans and terminalizer matching
-            shim = "function git { if ($args -contains 'checkout') { 'modified agents' | Set-Content (Join-Path $normalizedRepoRoot 'AGENTS.md') }; $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } }; if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } } else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } }; & git.exe @a }"
-
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_REPIN_VERIFY_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "post-checkout verification failed")
-            self.assertTrue(data.get("autofollow_attempted"))
-
-            receipt_path = Path(d) / "mock-receipt.json"
-            self.assertTrue(receipt_path.exists(), "Terminal receipt should be produced for trusted closure")
-
-    def test_merge_base_failure_already_current(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = "function git { if ($args -contains 'merge-base') { $global:LASTEXITCODE = 128; return } else { $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } }; if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } } else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } }; & git.exe @a } }"
-            data, rc = self.run_n0(d, head_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_UNEXPECTED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "merge-base failed with exit 128")
-            self.assertFalse(data.get("autofollow_attempted", True))
-
-    def test_hook_setup_reverify_failure(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = "function Get-Item { param($Path, $ErrorAction) if ($Path -match 'wiki_autofollow_hooks') { $fake = New-Object PSCustomObject; Add-Member -InputObject $fake -NotePropertyName Attributes -NotePropertyValue ([System.IO.FileAttributes]::ReparsePoint); return $fake } else { Microsoft.PowerShell.Management\\Get-Item -Path $Path -ErrorAction $ErrorAction } }"
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_HOOK_SETUP_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "failed to setup empty hooks directory")
-            self.assertFalse(data.get("autofollow_attempted", True))
-
-    def test_merge_rebase_state_regression(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            git_dir = subprocess.run(
-                ["git", "rev-parse", "--git-dir"], cwd=d, capture_output=True, text=True, check=True
-            ).stdout.strip()
-            git_dir_path = Path(d) / git_dir
-            (git_dir_path / "MERGE_HEAD").write_text("somehash\n", encoding="ascii")
-
-            data, rc = self.run_n0(d, head_oid)
-
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_DIRTY")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "merge/rebase/cherry-pick/bisect in progress")
-            self.assertEqual(rc, 1)
-            self.assertEqual(data.get("terminal_state"), "FAILED")
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_final_head_fails_after_already_current(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = (
-                "$script:rpCount = 0;"
-                "function git {"
-                "  $isRevParseHead = ($args -contains 'rev-parse') -and ($args -contains 'HEAD');"
-                "  if ($isRevParseHead) {"
-                "    $script:rpCount++;"
-                "    if ($script:rpCount -ge 2) { $global:LASTEXITCODE = 2; return }"
-                "  };"
-                "  $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } };"
-                "  if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } }"
-                "  else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } };"
-                "  & git.exe @a"
-                "}"
-            )
-            data, rc = self.run_n0(d, head_oid, shim)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_UNEXPECTED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "final HEAD rev-parse failed or invalid OID")
-            self.assertEqual(data.get("autofollow_result"), "SKIP")
-            self.assertEqual(rc, 1)
-            self.assertEqual(self.actual_head(d), head_oid)
-
-    def test_final_head_fails_after_repinned(self):
-        with tempfile.TemporaryDirectory(dir=FOCUSED_TEST_TMP) as d:
-            head_oid = self.create_git_repo(d)
-            subprocess.run(["git", "checkout", "-b", "target"], cwd=d, capture_output=True, check=True)
-            (Path(d) / "docs").mkdir(exist_ok=True)
-            (Path(d) / "docs" / "new.md").write_text("good", encoding="ascii")
-            subprocess.run(["git", "add", "."], cwd=d, capture_output=True, check=True)
-            subprocess.run(["git", "commit", "-m", "add docs"], cwd=d, capture_output=True, check=True)
-            target_oid = self.actual_head(d)
-            subprocess.run(["git", "checkout", "--detach", head_oid], cwd=d, capture_output=True, check=True)
-
-            shim = (
-                "$script:rpCount = 0;"
-                "function git {"
-                "  $isRevParseHead = ($args -contains 'rev-parse') -and ($args -contains 'HEAD');"
-                "  if ($isRevParseHead) {"
-                "    $script:rpCount++;"
-                "    if ($script:rpCount -ge 3) { $global:LASTEXITCODE = 2; return }"
-                "  };"
-                "  $a=@(); $hasDash=$false; foreach($x in $args){ if($x -eq '--'){ $hasDash=$true } };"
-                "  if($hasDash){ foreach($x in $args){ $a+=$x; if($x -eq '--'){ $a+='--' } } }"
-                "  else { $ins=$false; foreach($x in $args){ if(-not $ins -and ($x -eq 'wiki' -or $x -eq 'wiki/' -or $x -eq 'tooling/wiki' -or $x -eq '.gitignore' -or $x -eq '.graphifyignore' -or $x -eq 'AGENTS.md' -or $x -eq '.gitattributes' -or $x -eq 'tooling/.gitattributes')){ $a+='--'; $a+='--'; $ins=$true }; $a+=$x } };"
-                "  & git.exe @a"
-                "}"
-            )
-            data, rc = self.run_n0(d, target_oid, shim)
-            self.assertEqual(data.get("autofollow_decision"), "REFUSED_REPIN_VERIFY_FAILED")
-            self.assertEqual(data.get("autofollow_rejection_reason"), "final HEAD rev-parse failed or invalid OID")
-            self.assertEqual(data.get("autofollow_result"), "FAIL")
-            self.assertEqual(rc, 1)
-            self.assertEqual(self.actual_head(d), target_oid)
-
-
-
-
+# Remote-autofollow tests were removed because they required in-run fetch,
+# comparison, checkout, and repin behavior. Installed-runtime replacement
+# coverage lives in test_l3_m0_state_index_contract.py.
 
 class TestGraphifyGuardrailRootOnly(unittest.TestCase):
     def setUp(self):

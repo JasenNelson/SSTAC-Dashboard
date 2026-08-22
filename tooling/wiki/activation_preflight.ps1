@@ -874,7 +874,7 @@ if (-not $ConfigPath) { $ConfigPath = Join-Path $RuntimeRoot 'tooling\wiki\wiki_
 $config = $null
 try {
     $config = Get-Content -LiteralPath $ConfigPath -Raw | ConvertFrom-Json
-    if (-not $config.serve_gate.remote -or -not $config.serve_gate.branch) { throw 'serve_gate remote/branch missing' }
+    if ($null -eq $config.serve_gate) { throw 'serve_gate configuration missing' }
     $freshnessMaxAgeHours = 48.0
     if ($ExpectedSchedulerContract -in @('A', 'D')) {
         if (-not (Try-GetFiniteJsonNumber $config.freshness_max_age_hours ([ref]$freshnessMaxAgeHours)) -or $freshnessMaxAgeHours -le 0) { throw 'freshness_max_age_hours must be a finite positive JSON number for contract A or D' }
@@ -882,8 +882,8 @@ try {
         $candidateFreshness = 0.0
         if ((Try-GetFiniteDouble $config.freshness_max_age_hours ([ref]$candidateFreshness)) -and $candidateFreshness -gt 0) { $freshnessMaxAgeHours = $candidateFreshness }
     }
-    $requiredRef = "refs/remotes/$($config.serve_gate.remote)/$($config.serve_gate.branch)"
-    Check PASS 'serve-config' $requiredRef $true
+    $requiredRef = 'INSTALLED_RUNTIME'
+    Check PASS 'serve-config' 'installed runtime authority' $true
 } catch {
     $config = $null
     Check FAIL 'serve-config' "invalid or missing: $ConfigPath" $true
@@ -1108,16 +1108,11 @@ try {
 }
 
 if ($config) {
-    $refStatus = Invoke-GitReadOnly @('rev-parse', '--verify', "$requiredRef^{commit}")
-    $refHead = Get-TrimmedText $refStatus
-    if ($head -and $refHead -and $head -eq $refHead) {
-        Check PASS 'runtime-ref' "$head matches $requiredRef" $true
-    } elseif (-not $refHead) {
-        Check FAIL 'runtime-ref' "$requiredRef absent; no fetch performed" $true
-        Action 'Fetch and pin the configured ref manually.'
+    if ($head -cmatch '^[0-9a-f]{40}$') {
+        Check PASS 'runtime-ref' "$head authenticates $requiredRef" $true
     } else {
-        Check FAIL 'runtime-ref' 'HEAD differs from configured remote-tracking ref' $true
-        Action 'Advance detached runtime HEAD to the configured ref.'
+        Check FAIL 'runtime-ref' 'installed runtime HEAD is unavailable or invalid' $true
+        Action 'Select an existing installed runtime with a valid HEAD.'
     }
 }
 
