@@ -63,6 +63,115 @@ function rowToReview(row: ParameterValueReviewRow): ParameterValueReview {
   };
 }
 
+const CANONICAL_QA_STATUSES = new Set<string>([
+  'needs_review',
+  'approved',
+  'superseded',
+]);
+
+const CANONICAL_EVIDENCE_STATUSES = new Set<string>([
+  'approved_source_backed',
+  'pending_source_locator',
+  'current_calculator_scaffold',
+  'reference_mining_lead',
+  'user_entered_or_derived',
+]);
+
+const MAX_STORED_NOTE_LENGTH = 1000;
+const VALID_ID_PATTERN = /^[a-zA-Z0-9_\-.:]+$/;
+
+export interface NormalizedReviewPayload {
+  parameterValueId: string;
+  oldQaStatus: string;
+  newQaStatus: string;
+  reviewerNote: string;
+  oldEvidenceStatus: string | null;
+  newEvidenceStatus: string | null;
+}
+
+function validateAndNormalizeReviewPayload(
+  parameterValueId: string,
+  oldQaStatus: string,
+  newQaStatus: string,
+  reviewerNote: string,
+  oldEvidenceStatus?: string | null,
+  newEvidenceStatus?: string | null,
+): { valid: true; normalized: NormalizedReviewPayload } | { valid: false; error: string } {
+  if (typeof parameterValueId !== 'string') {
+    return { valid: false, error: 'parameter_value_id must be a string' };
+  }
+  const normId = parameterValueId.trim();
+  if (!normId || normId.length > 100 || !VALID_ID_PATTERN.test(normId)) {
+    return {
+      valid: false,
+      error: 'Invalid parameter_value_id: must be non-empty string <= 100 chars matching identifier format',
+    };
+  }
+
+  if (typeof oldQaStatus !== 'string') {
+    return { valid: false, error: 'old_qa_status must be a string' };
+  }
+  const normOldQa = oldQaStatus.trim();
+  if (!CANONICAL_QA_STATUSES.has(normOldQa)) {
+    return { valid: false, error: `Invalid old_qa_status: ${oldQaStatus}` };
+  }
+
+  if (typeof newQaStatus !== 'string') {
+    return { valid: false, error: 'new_qa_status must be a string' };
+  }
+  const normNewQa = newQaStatus.trim();
+  if (!CANONICAL_QA_STATUSES.has(normNewQa)) {
+    return { valid: false, error: `Invalid new_qa_status: ${newQaStatus}` };
+  }
+
+  if (typeof reviewerNote !== 'string') {
+    return { valid: false, error: 'reviewer_note must be a string' };
+  }
+  const normNote = reviewerNote.trim();
+  if (normNote.length > MAX_STORED_NOTE_LENGTH) {
+    return {
+      valid: false,
+      error: `Invalid reviewer_note: must be string <= ${MAX_STORED_NOTE_LENGTH} chars (got ${normNote.length})`,
+    };
+  }
+
+  let normOldEvidence: string | null = null;
+  if (oldEvidenceStatus !== undefined && oldEvidenceStatus !== null) {
+    if (typeof oldEvidenceStatus !== 'string') {
+      return { valid: false, error: 'old_evidence_status must be a string, null, or undefined' };
+    }
+    const trimmed = oldEvidenceStatus.trim();
+    if (!CANONICAL_EVIDENCE_STATUSES.has(trimmed)) {
+      return { valid: false, error: `Invalid old_evidence_status: ${oldEvidenceStatus}` };
+    }
+    normOldEvidence = trimmed;
+  }
+
+  let normNewEvidence: string | null = null;
+  if (newEvidenceStatus !== undefined && newEvidenceStatus !== null) {
+    if (typeof newEvidenceStatus !== 'string') {
+      return { valid: false, error: 'new_evidence_status must be a string, null, or undefined' };
+    }
+    const trimmed = newEvidenceStatus.trim();
+    if (!CANONICAL_EVIDENCE_STATUSES.has(trimmed)) {
+      return { valid: false, error: `Invalid new_evidence_status: ${newEvidenceStatus}` };
+    }
+    normNewEvidence = trimmed;
+  }
+
+  return {
+    valid: true,
+    normalized: {
+      parameterValueId: normId,
+      oldQaStatus: normOldQa,
+      newQaStatus: normNewQa,
+      reviewerNote: normNote,
+      oldEvidenceStatus: normOldEvidence,
+      newEvidenceStatus: normNewEvidence,
+    },
+  };
+}
+
 // ---------------------------------------------------------------------------
 // submitReview
 // ---------------------------------------------------------------------------
@@ -77,10 +186,23 @@ export async function submitReview(
   oldQaStatus: string,
   newQaStatus: string,
   reviewerNote: string,
-  oldEvidenceStatus?: string,
-  newEvidenceStatus?: string,
+  oldEvidenceStatus?: string | null,
+  newEvidenceStatus?: string | null,
 ): Promise<boolean> {
   try {
+    const validation = validateAndNormalizeReviewPayload(
+      parameterValueId,
+      oldQaStatus,
+      newQaStatus,
+      reviewerNote,
+      oldEvidenceStatus,
+      newEvidenceStatus,
+    );
+    if (!validation.valid) {
+      console.warn('[qa-review-sync] submitReview validation failed:', validation.error);
+      return false;
+    }
+
     const supabase = await createAuthenticatedClient();
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -100,13 +222,14 @@ export async function submitReview(
       return false;
     }
 
+    const { normalized } = validation;
     const payload = {
-      parameter_value_id: parameterValueId,
-      old_qa_status: oldQaStatus,
-      new_qa_status: newQaStatus,
-      old_evidence_support_status: oldEvidenceStatus ?? null,
-      new_evidence_support_status: newEvidenceStatus ?? null,
-      reviewer_note: reviewerNote,
+      parameter_value_id: normalized.parameterValueId,
+      old_qa_status: normalized.oldQaStatus,
+      new_qa_status: normalized.newQaStatus,
+      old_evidence_support_status: normalized.oldEvidenceStatus,
+      new_evidence_support_status: normalized.newEvidenceStatus,
+      reviewer_note: normalized.reviewerNote,
       reviewed_by: user.id,
       reviewed_at: new Date().toISOString(),
     };
@@ -141,6 +264,21 @@ export async function fetchReviewHistory(
 ): Promise<ParameterValueReview[]> {
   try {
     const supabase = await createAuthenticatedClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return [];
+    }
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'matrix_admin']);
+
+    if (!roles || roles.length === 0) {
+      return [];
+    }
+
     const { data, error } = await supabase
       .from('parameter_value_reviews')
       .select('*')
@@ -161,4 +299,64 @@ export async function fetchReviewHistory(
     console.error('[qa-review-sync] fetchReviewHistory unexpected error:', err);
     return [];
   }
+}
+
+// ---------------------------------------------------------------------------
+export interface FetchAllReviewsResult {
+  success: boolean;
+  reviews: ParameterValueReview[];
+  error: string | null;
+}
+
+/**
+ * Fetches all review records with structured result shape.
+ */
+export async function fetchAllReviewsResult(): Promise<FetchAllReviewsResult> {
+  try {
+    const supabase = await createAuthenticatedClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      return { success: false, reviews: [], error: 'unauthenticated' };
+    }
+
+    const { data: roles } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', user.id)
+      .in('role', ['admin', 'matrix_admin']);
+
+    if (!roles || roles.length === 0) {
+      return { success: false, reviews: [], error: 'unauthorized' };
+    }
+
+    const { data, error } = await supabase
+      .from('parameter_value_reviews')
+      .select('*')
+      .order('reviewed_at', { ascending: false });
+
+    if (error) {
+      console.error('[qa-review-sync] fetchAllReviewsResult error:', error.message);
+      return { success: false, reviews: [], error: error.message };
+    }
+
+    if (!data) {
+      return { success: true, reviews: [], error: null };
+    }
+
+    const reviews = (data as ParameterValueReviewRow[]).map(rowToReview);
+    return { success: true, reviews, error: null };
+  } catch (err) {
+    console.error('[qa-review-sync] fetchAllReviewsResult unexpected error:', err);
+    return { success: false, reviews: [], error: String(err) };
+  }
+}
+
+/**
+ * Fetches all review records across parameter values, newest first.
+ *
+ * Returns an empty array on any error (including table-not-found).
+ */
+export async function fetchAllReviews(): Promise<ParameterValueReview[]> {
+  const res = await fetchAllReviewsResult();
+  return res.reviews;
 }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Heart, Users } from 'lucide-react';
-import { createClient } from '../supabase-client';
+import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
 
 interface LikeButtonProps {
@@ -24,12 +24,12 @@ interface Like {
   created_at: string;
 }
 
-export default function LikeButton({ 
-  discussionId, 
-  replyId, 
+export default function LikeButton({
+  discussionId,
+  replyId,
   targetId,
   targetType,
-  initialLikes = 0, 
+  initialLikes = 0,
   isLiked = false,
   className = '',
   onLikeChange
@@ -52,22 +52,22 @@ export default function LikeButton({
     const fetchLikeStatus = async () => {
       try {
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 LikeButton: Fetching like status for:', { actualDiscussionId, actualReplyId });
+          console.log('[LikeButton] Fetching like status for:', { actualDiscussionId, actualReplyId });
         }
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 LikeButton: No user found');
+            console.log('[LikeButton] No user found');
           }
           return;
         }
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 LikeButton: User found:', user.id);
+          console.log('[LikeButton] User found:', user.id);
         }
 
         // Check if current user has liked this
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 LikeButton: Checking if user liked this item');
+          console.log('[LikeButton] Checking if user liked this item');
         }
         const { data: userLike, error: userLikeError } = await supabase
           .from('likes')
@@ -78,11 +78,11 @@ export default function LikeButton({
 
         if (userLikeError) {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 LikeButton: User like check error (this is normal if no like exists):', userLikeError);
+            console.log('[LikeButton] User like check error (this is normal if no like exists):', userLikeError);
           }
         } else {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 LikeButton: User like found:', userLike);
+            console.log('[LikeButton] User like found:', userLike);
           }
         }
 
@@ -90,7 +90,7 @@ export default function LikeButton({
 
         // Fetch all likes for this discussion/reply
         if (process.env.NODE_ENV === 'development') {
-          console.log('🔍 LikeButton: Fetching all likes for this item');
+          console.log('[LikeButton] Fetching all likes for this item');
         }
         const { data: allLikes, error: allLikesError } = await supabase
           .from('likes')
@@ -103,29 +103,29 @@ export default function LikeButton({
           .order('created_at', { ascending: false });
 
         if (allLikesError) {
-          console.error('🔍 LikeButton: Error fetching all likes:', allLikesError);
+          console.error('[LikeButton] Error fetching all likes:', allLikesError);
         } else {
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 LikeButton: All likes found:', allLikes?.length || 0);
+            console.log('[LikeButton] All likes found:', allLikes?.length || 0);
           }
         }
 
         if (allLikes) {
           setLikes(allLikes.length);
-          
+
           // Fetch user emails for all likes
           const userIds = allLikes.map(like => like.user_id);
           if (process.env.NODE_ENV === 'development') {
-            console.log('🔍 LikeButton: Fetching user emails for user IDs:', userIds);
+            console.log('[LikeButton] Fetching user emails for user IDs:', userIds);
           }
-          
+
           // Since we can't access auth.users directly, we'll use a simple approach
           // For now, just show "User" for all likes, or use current user's email if it matches
           const userEmailMap = new Map();
-          
+
           // Get current user to see if we can identify them
           const { data: { user: currentUser } } = await supabase.auth.getUser();
-          
+
           // Map user IDs to display names
           userIds.forEach(userId => {
             if (currentUser && userId === currentUser.id) {
@@ -134,7 +134,7 @@ export default function LikeButton({
               userEmailMap.set(userId, 'User');
             }
           });
-          
+
           // Transform the data to match our interface
           const transformedLikes = allLikes.map(like => ({
             id: like.id,
@@ -161,20 +161,20 @@ export default function LikeButton({
       setTimeout(() => {
         const button = document.querySelector(`[data-like-button="${actualDiscussionId || actualReplyId}"]`);
         const popup = document.getElementById('like-popup');
-        
+
         if (button && popup) {
           const buttonRect = button.getBoundingClientRect();
           const viewportHeight = window.innerHeight;
           const spaceAbove = buttonRect.top;
           const spaceBelow = viewportHeight - buttonRect.bottom;
-          
+
           // Position popup above or below based on available space
           if (spaceBelow > 200 && spaceAbove < 200) {
             popup.style.top = `${buttonRect.bottom + 10}px`;
           } else {
             popup.style.top = `${buttonRect.top - 10}px`;
           }
-          
+
           // Center horizontally on the button
           popup.style.left = `${buttonRect.left + buttonRect.width / 2 - 128}px`; // 128 = half of 256px width
         }
@@ -186,7 +186,7 @@ export default function LikeButton({
     try {
       setIsLoading(true);
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         showToast({
           type: 'warning',
@@ -210,12 +210,12 @@ export default function LikeButton({
         const newLikeCount = Math.max(0, likes - 1);
         setLikes(newLikeCount);
         setLikeDetails(prev => prev.filter(like => like.user_id !== user.id));
-        
+
         // Call callback if provided
         if (onLikeChange) {
           onLikeChange(newLikeCount, false);
         }
-        
+
         showToast({
           type: 'info',
           title: 'Like Removed',
@@ -236,7 +236,7 @@ export default function LikeButton({
         setLiked(true);
         const newLikeCount = likes + 1;
         setLikes(newLikeCount);
-        
+
         // Add current user to like details
         const newLike: Like = {
           id: Date.now(), // Temporary ID for UI
@@ -279,7 +279,7 @@ export default function LikeButton({
     const date = new Date(dateString);
     const now = new Date();
     const diffInSeconds = Math.floor((now.getTime() - date.getTime()) / 1000);
-    
+
     if (diffInSeconds < 60) return 'just now';
     if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
@@ -306,7 +306,7 @@ export default function LikeButton({
           aria-label={liked ? 'Unlike this post' : 'Like this post'}
           aria-pressed={liked}
           className={`
-            flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
+            min-h-[44px] flex items-center space-x-2 px-3 py-2 rounded-lg transition-all duration-200
             ${liked
               ? 'hover:bg-green-200 dark:hover:bg-green-900/30'
               : 'hover:bg-slate-200 dark:hover:bg-slate-600'
@@ -329,7 +329,7 @@ export default function LikeButton({
             }}
             aria-label={showDetails ? 'Hide who liked this' : 'Show who liked this'}
             aria-expanded={showDetails}
-            className="ml-1 p-1 hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+            className="ml-1 p-2.5 min-h-[44px] min-w-[44px] flex items-center justify-center hover:bg-slate-200 dark:hover:bg-slate-600 rounded transition-colors cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
           >
             <Users className="w-3 h-3" />
           </button>
@@ -338,7 +338,7 @@ export default function LikeButton({
 
       {/* Like Details Popup */}
       {showDetails && likes > 0 && (
-        <div 
+        <div
           id="like-popup"
           className="fixed w-64 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg shadow-lg z-[9999]"
           style={{
@@ -369,8 +369,8 @@ export default function LikeButton({
 
       {/* Click outside to close */}
       {showDetails && (
-        <div 
-          className="fixed inset-0 z-0" 
+        <div
+          className="fixed inset-0 z-0"
           onClick={() => setShowDetails(false)}
         />
       )}

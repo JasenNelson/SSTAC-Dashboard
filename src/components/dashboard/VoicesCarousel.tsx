@@ -2,6 +2,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { MessageSquare } from 'lucide-react';
 
 type Quote = {
   id: number;
@@ -69,7 +70,7 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
 
   useEffect(() => {
     if (!autoRotate || quotesToUse.length === 0) return;
-    
+
     const interval = setInterval(() => {
       setCurrentQuoteIndex((prevIndex) => (prevIndex + 1) % quotesToUse.length);
     }, rotationInterval);
@@ -82,14 +83,14 @@ export default function VoicesCarousel({ quotes: providedQuotes, autoRotate = tr
   if (!currentQuote) return null;
 
   return (
-    <div className="bg-gradient-to-br from-sky-50 to-indigo-50 rounded-xl p-6 border border-sky-200">
-      <h3 className="text-xl font-semibold text-sky-800 mb-4 flex items-center justify-center">
-        <span className="text-2xl mr-3">💬</span>
-        Voices from the Field
+    <div className="bg-gradient-to-br from-sky-50 to-indigo-50 dark:from-slate-850 dark:to-slate-900 rounded-2xl p-6 sm:p-8 border border-sky-200 dark:border-slate-800">
+      <h3 className="text-xl font-bold text-sky-900 dark:text-sky-200 mb-4 flex items-center justify-center gap-2">
+        <MessageSquare className="w-5 h-5 text-sky-700 dark:text-sky-400" />
+        <span>Voices from the Field</span>
       </h3>
-      
+
       <div className="text-center">
-        <blockquote className="text-sky-700 italic text-lg leading-relaxed mb-4 border-l-4 border-sky-300 pl-6 text-center max-w-4xl mx-auto">
+        <blockquote className="text-sky-900 italic text-lg leading-relaxed mb-4 text-center max-w-4xl mx-auto px-4">
           &quot;{currentQuote.text}&quot;
         </blockquote>
         <p className="text-sky-600 text-sm font-medium">- {currentQuote.author}</p>

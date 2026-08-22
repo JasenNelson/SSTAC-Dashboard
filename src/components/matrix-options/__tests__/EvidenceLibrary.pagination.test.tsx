@@ -28,6 +28,7 @@ vi.mock('@/lib/matrix-options/provenance/triage-sync', () => ({
 vi.mock('@/lib/matrix-options/provenance/qa-review-sync', () => ({
   submitReview: vi.fn().mockResolvedValue(false),
   fetchReviewHistory: vi.fn().mockResolvedValue([]),
+  fetchAllReviews: vi.fn().mockResolvedValue([]),
 }));
 vi.mock('@/lib/matrix-options/provenance/promotion', async (importOriginal) => {
   const actual =

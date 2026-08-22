@@ -186,11 +186,11 @@ describe('HHDirectContactCalculator DL-PCB TEQ parallel screening card', () => {
     );
     const card = screen.getByTestId('hh-direct-dlpcb-teq-standard');
     expect(card).toHaveTextContent(/DL-PCB TEQ parallel screening standard/i);
-    
+
     const badge = screen.getByTestId('hh-direct-dlpcb-teq-provisional-badge');
     expect(badge).toHaveTextContent(/^Provisional$/);
     expect(badge).not.toHaveTextContent(/needs review/i);
-    
+
     const title = badge.getAttribute('title') || '';
     expect(title).toMatch(/approved/i);
     expect(title).not.toMatch(/needs_review/i);
@@ -503,5 +503,47 @@ describe('HHDirectContactCalculator recent Matrix Options additions', () => {
     expect(screen.getByTestId('hh-direct-preliminary-standard')).toBeInTheDocument();
     const rfd = screen.getByTestId('hh-direct-rfd-input') as HTMLInputElement;
     expect(rfd.value).toBe('0.00008'); // Verifies the RfD resolves correctly
+  });
+
+  it('rejects exposure frequency over 365 days/year', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="phenylmercuric_acetate"
+        jurisdiction="bc-protocol1-v5-dra"
+      />
+    );
+    fireEvent.change(screen.getByTestId('hh-direct-ef-input'), { target: { value: '400' } });
+    expect(screen.getByTestId('hh-direct-error')).toHaveTextContent(
+      /Exposure frequency must be a decimal number between 0 and 365 days\/year/i,
+    );
+  });
+
+  it('rejects exposure duration exceeding cancer averaging time', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="phenylmercuric_acetate"
+        jurisdiction="bc-protocol1-v5-dra"
+      />
+    );
+    fireEvent.change(screen.getByTestId('hh-direct-ed-input'), { target: { value: '80' } });
+    fireEvent.change(screen.getByTestId('hh-direct-at-cancer-input'), { target: { value: '70' } });
+    expect(screen.getByTestId('hh-direct-error')).toHaveTextContent(
+      /Exposure duration cannot exceed cancer averaging time/i,
+    );
+  });
+
+  it('rejects oral bioavailability equal to 0 with a friendly validation error', () => {
+    render(
+      <HHDirectContactCalculator
+        substanceKey="arsenic_inorganic"
+        jurisdiction="bc-protocol1-v5-dra"
+      />
+    );
+    fireEvent.change(screen.getByTestId('hh-direct-ba-input'), { target: { value: '0' } });
+    expect(screen.getByTestId('hh-direct-error')).toHaveTextContent(
+      /Oral bioavailability must be a decimal fraction greater than 0 and at most 1/i,
+    );
+    const standard = screen.getByTestId('hh-direct-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
   });
 });

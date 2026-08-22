@@ -7,6 +7,8 @@ import {
   parseDecimalInput,
   positiveInput,
   optionalPositiveInput,
+  boundedInput,
+  optionalBoundedInput,
 } from '../parseDecimal';
 
 describe('DECIMAL_NUMBER_RE', () => {
@@ -184,6 +186,58 @@ describe('optionalPositiveInput', () => {
     const label = 'Absorption Factor (unitless)';
     expect(optionalPositiveInput('bad', label)).toEqual({
       error: `${label} must be blank or a positive decimal number.`,
+    });
+  });
+});
+
+describe('boundedInput', () => {
+  it('accepts numbers within inclusive bounds', () => {
+    expect(boundedInput('0', 'Fraction', 0, 1)).toBe(0);
+    expect(boundedInput('0.5', 'Fraction', 0, 1)).toBe(0.5);
+    expect(boundedInput('1', 'Fraction', 0, 1)).toBe(1);
+    expect(boundedInput('365', 'EF', 0, 365, false, true)).toBe(365);
+  });
+
+  it('rejects numbers outside bounds with appropriate error messages', () => {
+    expect(boundedInput('1.5', 'Absorption', 0, 1)).toEqual({
+      error: 'Absorption must be a decimal fraction between 0 and 1.',
+    });
+    expect(boundedInput('-0.1', 'Absorption', 0, 1)).toEqual({
+      error: 'Absorption must be a decimal fraction between 0 and 1.',
+    });
+    expect(boundedInput('400', 'Exposure frequency', 0, 365, false, true)).toEqual({
+      error: 'Exposure frequency must be a decimal number between 0 and 365 days/year.',
+    });
+    expect(boundedInput('0', 'Exposure frequency', 0, 365, false, true)).toEqual({
+      error: 'Exposure frequency must be a decimal number between 0 and 365 days/year.',
+    });
+    expect(boundedInput('0', 'Oral bioavailability', 0, 1, false, true)).toEqual({
+      error: 'Oral bioavailability must be a decimal fraction greater than 0 and at most 1.',
+    });
+    expect(boundedInput('1', 'Oral bioavailability', 0, 1, false, true)).toBe(1);
+    expect(boundedInput('0.5', 'Oral bioavailability', 0, 1, false, true)).toBe(0.5);
+  });
+
+  it('rejects invalid or blank text input', () => {
+    expect(boundedInput('', 'Risk', 0, 1)).toEqual({
+      error: 'Risk must be a decimal fraction between 0 and 1.',
+    });
+    expect(boundedInput('abc', 'Risk', 0, 1)).toEqual({
+      error: 'Risk must be a decimal fraction between 0 and 1.',
+    });
+  });
+});
+
+describe('optionalBoundedInput', () => {
+  it('returns null for blank input', () => {
+    expect(optionalBoundedInput('', 'Factor', 0, 1)).toBeNull();
+    expect(optionalBoundedInput('   ', 'Factor', 0, 1)).toBeNull();
+  });
+
+  it('validates number when present', () => {
+    expect(optionalBoundedInput('0.25', 'Factor', 0, 1)).toBe(0.25);
+    expect(optionalBoundedInput('1.25', 'Factor', 0, 1)).toEqual({
+      error: 'Factor must be blank or a decimal fraction between 0 and 1.',
     });
   });
 });

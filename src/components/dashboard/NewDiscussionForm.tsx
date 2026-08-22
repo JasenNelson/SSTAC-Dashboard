@@ -2,7 +2,7 @@
 'use client';
 
 import { useState } from 'react';
-import { createClient } from '../supabase-client';
+import { createClient } from '@/lib/supabase/client';
 import { useToast } from '@/components/Toast';
 
 interface NewDiscussionFormProps {
@@ -19,7 +19,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim() || !content.trim()) {
       showToast({
         type: 'warning',
@@ -34,7 +34,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
 
     try {
       const { data: { user } } = await supabase.auth.getUser();
-      
+
       if (!user) {
         showToast({
           type: 'error',
@@ -55,7 +55,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
         });
 
       if (error) {
-        console.error('❌ Database error:', error);
+        console.error('[NewDiscussionForm] Database error:', error);
         showToast({
           type: 'error',
           title: 'Creation Failed',
@@ -74,7 +74,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
         onDiscussionCreated();
       }
     } catch (error) {
-      console.error('❌ Exception creating discussion:', error);
+      console.error('[NewDiscussionForm] Exception creating discussion:', error);
       showToast({
         type: 'error',
         title: 'Creation Failed',
@@ -87,12 +87,12 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
   };
 
   return (
-    <div className="bg-white dark:bg-slate-900 rounded-lg shadow-md p-6">
-      <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">Start New Discussion</h3>
+    <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 p-6 sm:p-8">
+      <h3 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white mb-4">Start New Discussion</h3>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-5">
         <div>
-          <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          <label htmlFor="title" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
             Discussion Title
           </label>
           <input
@@ -100,14 +100,14 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
             id="title"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
+            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm min-h-[44px]"
             placeholder="Enter a descriptive title for your discussion"
             required
           />
         </div>
 
         <div>
-          <label htmlFor="content" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
+          <label htmlFor="content" className="block text-xs font-bold uppercase tracking-wider text-slate-600 dark:text-slate-300 mb-2">
             Discussion Content
           </label>
           <textarea
@@ -115,17 +115,17 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
             value={content}
             onChange={(e) => setContent(e.target.value)}
             rows={6}
-            className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white"
-            placeholder="Share your thoughts, questions, or ideas..."
+            className="w-full px-4 py-3 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-800 text-slate-900 dark:text-white text-sm"
+            placeholder="Share your thoughts, technical questions, or modeling ideas..."
             required
           />
         </div>
 
-        <div className="flex justify-end space-x-3">
+        <div className="flex justify-end gap-3 pt-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-4 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-slate-100 dark:bg-slate-700 rounded-md hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+            className="min-h-[44px] px-5 py-2.5 text-xs font-bold text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 rounded-xl hover:bg-slate-200 dark:hover:bg-slate-700 transition-colors"
             disabled={isSubmitting}
           >
             Cancel
@@ -133,7 +133,7 @@ export default function NewDiscussionForm({ onDiscussionCreated, onCancel }: New
           <button
             type="submit"
             disabled={isSubmitting}
-            className="px-4 py-2 text-sm font-medium text-white bg-sky-700 rounded-md hover:bg-sky-800 transition-colors disabled:opacity-50"
+            className="min-h-[44px] px-6 py-2.5 text-xs font-bold text-white bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 rounded-xl transition-all disabled:opacity-50 shadow-sm"
           >
             {isSubmitting ? 'Creating...' : 'Create Discussion'}
           </button>

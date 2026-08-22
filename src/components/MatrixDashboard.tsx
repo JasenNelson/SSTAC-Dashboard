@@ -9,7 +9,7 @@ import React, {
 } from 'react';
 import { useRouter } from 'next/navigation';
 import { cn } from '@/utils/cn';
-import { Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Database, FileText, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import MatrixMapLoader from '@/app/(dashboard)/matrix-map/MatrixMapLoader';
 import PartialVisibilityBanner from '@/app/(dashboard)/matrix-map/PartialVisibilityBanner';
 import {
@@ -20,6 +20,7 @@ import {
   type MatrixSiteAggregateData,
 } from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
+import ScrollFadeRegion from './ScrollFadeRegion';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
 import BackgroundAdjustment, {
@@ -38,7 +39,7 @@ import SsdWorkbench from './matrix-options/SsdWorkbench';
 import Phase2TasksSection from './matrix-options/Phase2TasksSection';
 import CalculatorValueSearchPanel from './matrix-options/CalculatorValueSearchPanel';
 import CategorySelector from './matrix-options/CategorySelector';
-import SharedGlobalInputs, {
+import {
   DEFAULT_SUBSTANCE_KEY,
 } from './matrix-options/SharedGlobalInputs';
 import CalculatorSummaryBar, {
@@ -99,7 +100,7 @@ const ALL_AUDIENCE_TIERS: ReadonlyArray<AudienceTier> = [
 const DEFAULT_AUDIENCE_TIER: AudienceTier = 'general';
 const GUIDE_TIER_LABELS: Record<AudienceTier, string> = {
   general: 'General',
-  practitioner: 'Practitioner',
+  practitioner: 'Workflow',
   technical: 'Technical',
 };
 const GUIDE_TIER_CONTENT: Record<
@@ -258,14 +259,17 @@ interface MatrixDashboardProps {
 // 'Vision for Modernizing Schedule 3.4' (was 'Conceptual Model'): the view now
 // states the project's own three-part vision for Schedule 3.4, sourced from the
 // Phase 2 project plan, so the generic label no longer described it.
-const TABS = ['The Guide', 'Vision for Modernizing Schedule 3.4', 'Jurisdictional Frameworks', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
+const TABS = ['The Guide', 'Vision for Modernizing Schedule 3.4', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
 // Display labels for the top tabs. The internal tab IDENTIFIER strings in TABS
 // are load-bearing (compared against activeTopTab in control flow throughout
 // this file), so they MUST stay stable. Render the user-facing label via this
 // lookup instead of renaming the identifier. Only entries that differ from the
 // identifier need listing; unlisted tabs render their identifier verbatim.
 const TAB_LABELS: Record<string, string> = {
-  'Jurisdictional Frameworks': 'Methodology by pathway',
+  'The Guide': 'Guide',
+  'Vision for Modernizing Schedule 3.4': 'Modernizing Schedule 3.4',
+  'Interactive Map': 'Database',
+  'References & Values': 'Catalogue',
 };
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 // Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
@@ -278,8 +282,7 @@ const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
 };
 
 // A11y (A1/A2 fixes, 2026-08-14): id helpers for the two tab/tabpanel pairs
-// in this file -- the primary 8-tab top nav and the Jurisdictional
-// Frameworks side-tab list. Same roving-tabindex pattern as
+// in this file -- the primary top nav and side-tab lists. Same roving-tabindex pattern as
 // matrix-options/CategorySelector.tsx (the in-repo reference
 // implementation); forked here rather than re-invented.
 function slugifyTabId(label: string): string {
@@ -294,15 +297,7 @@ const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 // Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
 // demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
 // printed.
-//
-// EDITING THIS SET? The demoteLeadingH1 call sites are ~1,100 lines below, so nothing about
-// where this declaration sits keeps the two in step. An earlier version of this comment claimed
-// it was "kept beside the call sites it mirrors so the two cannot drift apart silently" --
-// proximity was never doing any work, and that sentence was a safety claim with no mechanism
-// behind it. The actual guard is
-// src/components/__tests__/demotedDocumentTabsDrift.test.ts, which asserts one member per call
-// site plus exact membership. Change this set and that test tells you what else to change.
-const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
+const DEMOTED_DOCUMENT_TABS = new Set(['The Guide']);
 const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
 
 function primaryTabId(tab: string): string {
@@ -347,11 +342,16 @@ export default function MatrixDashboard({
   }, []);
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
   const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
-  // Both side panels open by default per owner UX preference 2026-05-19
-  // (was: right panel hidden by default). Users can still toggle each
-  // panel independently via the chrome buttons in the header.
+  // Side panels open by default in Map/TWG modes. In Calculator mode, the panels
+  // start collapsed per user preference.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
   const [showRightPanel, setShowRightPanel] = useState(true);
+  const [calcLeftRailOverride, setCalcLeftRailOverride] = useState<boolean | null>(
+    null,
+  );
+  const [catalogLeftRailOverride, setCatalogLeftRailOverride] = useState<boolean | null>(
+    null,
+  );
   // Calculator's reference rail is DERIVED from backgroundReferenceNeedsAttention
   // (see that flag's declaration below), never written by an effect -- an
   // effect-writer painted the rail open on the first Calculator frame and then
@@ -598,29 +598,13 @@ export default function MatrixDashboard({
     }
   }, [jurisdiction]);
 
-  const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
+  const isToolMode = activeTopTab === 'Calculator';
   const isReviewMode = activeTopTab === 'TWG Review';
   const isEvidenceLibraryMode = activeTopTab === 'References & Values';
   const isSsdWorkbenchMode = activeTopTab === 'SSD Workbench';
-  // 2026-05-20 embed refactor: the Interactive Map tab renders the live
-  // matrix-map full-bleed (mirrors BN-RRM MapView tab pattern). Distinct
-  // from isToolMode because the matrix-map has its own internal floating
-  // chrome (legend / tool palette / count card) and does NOT use the
-  // dashboard-level left-sidebar / right-drawer until PR-MAP-4 + PR-MAP-5
-  // populate Selection Stats + MeasurementWorkbench.
   const isMapMode = activeTopTab === 'Interactive Map';
-  // Step-2 shell restructure: gates the new top-of-tab pathway-switch band
-  // and the Bathymetric --db-* token styling on the shared left-sidebar /
-  // main-content / right-drawer wrapper elements. Scoped tightly to the
-  // Calculator tab only (isToolMode also covers Jurisdictional Frameworks,
-  // which must render exactly as before).
   const isCalculatorMode = activeTopTab === 'Calculator';
-  // print:hidden on the entire left sidebar column when the Calculator tab
-  // is active, per plan v3 section 4.2 + section 10. The sidebar stays
-  // visible on print for the Jurisdictional Frameworks tab (where the
-  // jurisdiction selector is the user's anchor) and for non-tool modes.
-  const hideSidebarOnPrint =
-    isToolMode && activeTopTab === 'Calculator';
+  const hideSidebarOnPrint = isToolMode;
   const handleRefreshMapData = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -994,11 +978,27 @@ export default function MatrixDashboard({
   // re-entering always restores stage-following.
   useEffect(() => {
     setCalcRailOverride(null);
+    setCalcLeftRailOverride(null);
   }, [backgroundReferenceNeedsAttention, activeCategory, isCalculatorMode]);
   const calculatorRailOpen = calcRailOverride ?? backgroundReferenceNeedsAttention;
   const effectiveShowRightPanel = isCalculatorMode
     ? calculatorRailOpen
     : showRightPanel;
+  const effectiveShowLeftPanel = isCalculatorMode
+    ? (calcLeftRailOverride ?? false)
+    : isEvidenceLibraryMode
+      ? (catalogLeftRailOverride ?? false)
+      : showLeftPanel;
+
+  const toggleLeftPanel = useCallback(() => {
+    if (isCalculatorMode) {
+      setCalcLeftRailOverride((prev) => !(prev ?? false));
+    } else if (isEvidenceLibraryMode) {
+      setCatalogLeftRailOverride((prev) => !(prev ?? false));
+    } else {
+      setShowLeftPanel((prev) => !prev);
+    }
+  }, [isCalculatorMode, isEvidenceLibraryMode]);
   // F1 fix, part 2: on the transition from open -> closed, if focus was
   // inside the rail, move it to the rail's own toggle button -- the control
   // that can bring the rail back, and an announced, sensible landing spot.
@@ -1088,17 +1088,34 @@ export default function MatrixDashboard({
   );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
-  // A11y fix (F2, 2026-08-14 adversarial review): the toggle's aria-label
-  // used to read the generic "Show/Hide right panel" in every mode, telling
-  // a screen-reader user a layout term instead of what the panel holds. In
-  // Calculator mode the rail's own on-screen heading already reads
-  // "Value Search" (rightPanelTitle above), so reuse that exact, verified
-  // string rather than inventing new copy. Scoped to Calculator only, per
-  // the finding: Jurisdictional Frameworks shares the same wrapper but was
-  // not named in the finding, so it keeps the generic label.
+  // A11y fix (F2, 2026-08-14 adversarial review): content-aware aria-label
   const rightPanelToggleLabel = isCalculatorMode
     ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} ${rightPanelTitle} panel`
-    : `${effectiveShowRightPanel ? 'Hide' : 'Show'} right panel`;
+    : isMapMode
+      ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} Workbench panel`
+      : isEvidenceLibraryMode
+        ? `${effectiveShowRightPanel ? 'Hide' : 'Show'} Details panel`
+        : `${effectiveShowRightPanel ? 'Hide' : 'Show'} right panel`;
+
+  const leftPanelToggleLabel = isCalculatorMode
+    ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Guide panel`
+    : isMapMode
+      ? `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Filters & Stats panel`
+      : `${effectiveShowLeftPanel ? 'Hide' : 'Show'} Filters panel`;
+
+  const leftPanelToggleText = isCalculatorMode
+    ? 'Guide'
+    : isMapMode
+      ? 'Filters & Stats'
+      : 'Filters';
+
+  const rightPanelToggleText = isCalculatorMode
+    ? 'Input Parameter Search'
+    : isMapMode
+      ? 'Workbench'
+      : isEvidenceLibraryMode
+        ? 'Details'
+        : 'Reference';
   // Both are lg-scoped so the rail is full-width when the shell is stacked and
   // fixed-width only once it sits beside the content. The INNER width matters
   // most: a bare w-[384px] is wider than a 375 px viewport, so the old value
@@ -1188,75 +1205,14 @@ export default function MatrixDashboard({
 
   const renderSidebar = () => {
     switch (activeTopTab) {
-      case 'Jurisdictional Frameworks':
-        return (
-          <div
-            role="tablist"
-            aria-orientation="vertical"
-            aria-label="Pathway sections"
-            className="space-y-2"
-          >
-            {JURISDICTIONAL_SIDE_TABS.map((tab) => {
-              const selected = activeSideTab === tab;
-              return (
-                <button
-                  key={tab}
-                  ref={(el) => {
-                    sideTabRefs.current[tab] = el;
-                  }}
-                  type="button"
-                  role="tab"
-                  id={sideTabId(tab)}
-                  aria-selected={selected}
-                  aria-controls={JURISDICTIONAL_SIDE_TABPANEL_ID}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setActiveSideTab(tab)}
-                  onKeyDown={(e) => handleSideTabKeyDown(e, tab)}
-                  className={`w-full text-left p-3 rounded-lg cursor-pointer font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                    selected
-                      ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-semibold text-sky-700 dark:text-sky-400'
-                      : 'hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
-        );
       case 'Calculator': {
         const tierContent = GUIDE_TIER_CONTENT[activeTier];
         return (
           <div
-            className="space-y-5"
+            className="space-y-4"
             data-testid="calculator-guide-sidebar"
           >
-            {/*
-              Left rail = OPTIONS (DESIGN.md "Layout: stages inside rails").
-              SharedGlobalInputs (substance + regulatory frame) moved here
-              from the centre column in the step-2 shell restructure -- it
-              is a shared input, not a per-pathway calculation, so it
-              belongs with the other options rather than stacked above the
-              active calculator. Component internals are untouched.
-            */}
-            <SharedGlobalInputs
-              substanceKey={substanceKey}
-              jurisdiction={jurisdiction}
-              onSubstanceKeyChange={setSubstanceKey}
-              onJurisdictionChange={setJurisdiction}
-            />
-            {/*
-              Fix 1 (owner decision, 2026-08-14 UI QA audit): the inert
-              ExposureScenarioControl (single "Custom" option) that used to
-              render here has been removed. It duplicated the ALREADY-WORKING
-              receptor-scenario selector inside the pathway calculators
-              (HHDirectContactCalculator's hh-direct-receptor-scenario-select,
-              HHFoodWebCalculator's hh-food-receptor-scenario-select), which
-              actually switches real exposure-factor defaults. Later Protocol
-              28 preset work extends THAT control rather than adding a
-              parallel one here.
-            */}
-            <div className="border-t border-[var(--db-border)] pt-5">
+            <div>
               <div
                 className="grid grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800"
                 aria-label="Calculator guide audience"
@@ -1278,22 +1234,24 @@ export default function MatrixDashboard({
                   </button>
                 ))}
               </div>
-              <div className="mt-5 rounded-lg border border-slate-200 bg-white p-4 shadow-sm dark:border-slate-700 dark:bg-slate-800">
-                <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">
-                  {tierContent.title}
-                </h4>
-                <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                  {tierContent.summary}
-                </p>
-                <ul className="mt-3 list-disc space-y-2 pl-5 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
-                  {tierContent.bullets.map((bullet) => (
-                    <li key={bullet}>{bullet}</li>
-                  ))}
-                </ul>
-              </div>
-              <div className="mt-5 rounded-lg border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
-                Screening-only outputs still require professional judgment
-                before regulator-facing use.
+              <details className="mt-3 rounded-lg border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800" open>
+                <summary className="flex items-center justify-between p-3 text-xs font-bold text-slate-900 dark:text-slate-100 cursor-pointer select-none">
+                  <span>{tierContent.title}</span>
+                  <span className="text-slate-400 text-xs">[i]</span>
+                </summary>
+                <div className="border-t border-slate-100 dark:border-slate-700 p-3 pt-2">
+                  <p className="text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+                    {tierContent.summary}
+                  </p>
+                  <ul className="mt-2 list-disc space-y-1.5 pl-4 text-[11px] leading-relaxed text-slate-600 dark:text-slate-300">
+                    {tierContent.bullets.map((bullet) => (
+                      <li key={bullet}>{bullet}</li>
+                    ))}
+                  </ul>
+                </div>
+              </details>
+              <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-2.5 text-[11px] leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-100">
+                Screening-only outputs require professional judgment before regulator-facing use.
               </div>
             </div>
           </div>
@@ -1318,7 +1276,7 @@ export default function MatrixDashboard({
 
   const leftSidebarHeading =
     activeTopTab === 'Calculator'
-      ? 'OPTIONS'
+      ? 'GUIDE'
       : activeTopTab === 'Jurisdictional Frameworks'
         ? 'PATHWAY / APPROACH'
         : 'CONTEXT';
@@ -1412,31 +1370,6 @@ export default function MatrixDashboard({
 
   const renderContent = () => {
     switch (activeTopTab) {
-      case 'Jurisdictional Frameworks':
-        let contentToRender = '';
-        if (activeSideTab === 'Ecological: EqP & AVS') contentToRender = eqpCaseStudyContent;
-        else if (activeSideTab === 'Ecological: Food Web (BSAF)') contentToRender = bsafCaseStudyContent;
-        else if (activeSideTab === 'Human Health Pathways') contentToRender = humanHealthContent;
-
-        return (
-          <div
-            className="space-y-6"
-            role="tabpanel"
-            id={JURISDICTIONAL_SIDE_TABPANEL_ID}
-            aria-labelledby={sideTabId(activeSideTab)}
-          >
-            {/* Round-2 P2-2: this panel paints on the shell's main-content
-                surface (`bg-white dark:bg-slate-950`, non-calculator branch). */}
-            {/* Audit #16: these source documents each open with their own `# ` title, which
-                would render a SECOND <h1> under the shell's `<h1>Matrix Options</h1>` in the
-                toolbar. (That citation used to point at a line number which, at the commit that
-                wrote it, was a bare `);` -- and which has meant something different in every
-                revision since. Another number nobody checked. The heading is findable by
-                searching for its text; a line number is not worth the maintenance.) Demoted at the
-                call site, never inside MathRenderer -- see demoteLeadingH1's module comment. */}
-            <MathRenderer content={demoteLeadingH1(contentToRender)} fadeFrom="from-white dark:from-slate-950" />
-          </div>
-        );
       case 'The Guide': {
         const guideParts = guideContent.split('<!-- SECTION_BOUNDARY -->');
         const introContent = guideParts[0] || '';
@@ -1558,6 +1491,7 @@ export default function MatrixDashboard({
             {activeCategory === 'eco-direct' && (
               <EcoDirectEqPCalculator
                 substanceKey={substanceKey}
+                onSubstanceKeyChange={setSubstanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setEcoDirectPreliminary}
@@ -1567,6 +1501,7 @@ export default function MatrixDashboard({
             {activeCategory === 'eco-food' && (
               <EcoFoodBSAFCalculator
                 substanceKey={substanceKey}
+                onSubstanceKeyChange={setSubstanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setEcoFoodPreliminary}
@@ -1576,6 +1511,7 @@ export default function MatrixDashboard({
             {activeCategory === 'hh-direct' && (
               <HHDirectContactCalculator
                 substanceKey={substanceKey}
+                onSubstanceKeyChange={setSubstanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setHhDirectPreliminary}
@@ -1585,6 +1521,7 @@ export default function MatrixDashboard({
             {activeCategory === 'hh-food' && (
               <HHFoodWebCalculator
                 substanceKey={substanceKey}
+                onSubstanceKeyChange={setSubstanceKey}
                 jurisdiction={jurisdiction}
                 onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
                 onPreliminaryStandardChange={setHhFoodPreliminary}
@@ -1592,43 +1529,50 @@ export default function MatrixDashboard({
               />
             )}
             {/*
-              Cumulative Effects (TEQ + BaP-eq) is orthogonal to the eco/hh CategorySelector -- it
-              works over its own list of PAH/congener entries rather than a single substanceKey, so
-              it is stacked unconditionally below the active category calculator (same pattern as
-              BackgroundAdjustment below), not gated by activeCategory.
+              Cumulative Effects (TEQ + BaP-eq) and Inhalation are Human Health Direct Contact
+              screening pathways. They render inside Human Health Direct Contact only.
             */}
-            <CumulativeEffectsCalculator
-              substanceKey={substanceKey}
-              jurisdiction={jurisdiction}
-              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
-            />
-            {/*
-              Human Health Inhalation (Matrix Options row #31) is orthogonal to the
-              eco/hh CategorySelector for the same reason CumulativeEffectsCalculator is
-              (see comment above): it is a distinct pathway with a fail-closed,
-              user-supplied-VF/PEF contract (owner ruling 2026-07-17), not one of the
-              4 eco/hh-direct/food quadrant calculators the 1x4 CategorySelector's
-              exhaustiveness-checked MatrixCategory type is locked to. Stacking it here
-              (rather than adding a 5th CategorySelector category) keeps that tightly
-              scoped component's layout and accessibility contract unchanged.
-            */}
-            <div className="flex items-center gap-3 py-2" aria-hidden="true">
+            {activeCategory === 'hh-direct' && (
+              <details
+                className="group rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 shadow-sm overflow-hidden"
+                data-testid="additional-screening-pathways"
+              >
+                <summary className="flex items-center justify-between px-6 py-4 cursor-pointer select-none bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
+                    <span className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-200">
+                      Additional Human Health Direct Pathways * Cumulative Effects &amp; Inhalation
+                    </span>
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">
+                      (BaP-eq / TEQ, Inhalation)
+                    </span>
+                  </div>
+                  <span className="text-xs font-semibold text-sky-600 dark:text-sky-400">
+                    <span className="group-open:hidden">Expand v</span>
+                    <span className="hidden group-open:inline">Collapse ^</span>
+                  </span>
+                </summary>
+                <div className="p-6 space-y-6 border-t border-slate-200 dark:border-slate-800">
+                  <CumulativeEffectsCalculator
+                    substanceKey={substanceKey}
+                    jurisdiction={jurisdiction}
+                    onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                  />
+                  <div className="border-t border-slate-100 dark:border-slate-800 pt-6">
+                    <HHInhalationCalculator
+                      substanceKey={substanceKey}
+                      jurisdiction={jurisdiction}
+                      onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+                      onPreliminaryStandardChange={setHhInhalationPreliminary}
+                    />
+                  </div>
+                </div>
+              </details>
+            )}
+
+            <div className="flex items-center gap-3 py-1" aria-hidden="true">
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Human Health Inhalation
-              </span>
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-            </div>
-            <HHInhalationCalculator
-              substanceKey={substanceKey}
-              jurisdiction={jurisdiction}
-              onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
-              onPreliminaryStandardChange={setHhInhalationPreliminary}
-            />
-            <div className="flex items-center gap-3 py-2" aria-hidden="true">
-              <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
-              <span className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">
-                Background Adjustment (post-derivation)
+              <span className="text-xs font-semibold uppercase tracking-wider text-slate-400 dark:text-slate-500">
+                Background Adjustment
               </span>
               <div className="flex-1 h-px bg-slate-200 dark:bg-slate-800" />
             </div>
@@ -1749,6 +1693,34 @@ export default function MatrixDashboard({
 
               {/* Center: map */}
               <div className="flex-1 relative">
+                {!showLeftPanel && (
+                  <button
+                    type="button"
+                    aria-label="Expand site filters and stats panel"
+                    data-testid="matrix-map-expand-left-panel"
+                    onClick={() => setShowLeftPanel(true)}
+                    className="absolute left-0 top-1/2 -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-800/95 border border-l-0 border-slate-200 dark:border-slate-700 shadow-md rounded-r-lg py-3 px-1.5 flex flex-col items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                    <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-bold tracking-wider uppercase">
+                      Filters &amp; Stats
+                    </span>
+                  </button>
+                )}
+                {!showRightPanel && !matrixMapWorkbenchFocused && (
+                  <button
+                    type="button"
+                    aria-label="Expand measurement workbench panel"
+                    data-testid="matrix-map-expand-right-panel"
+                    onClick={() => setShowRightPanel(true)}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-[1000] bg-white/95 dark:bg-slate-800/95 border border-r-0 border-slate-200 dark:border-slate-700 shadow-md rounded-l-lg py-3 px-1.5 flex flex-col items-center gap-1.5 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span className="[writing-mode:vertical-rl] rotate-180 text-[10px] font-bold tracking-wider uppercase">
+                      Workbench
+                    </span>
+                  </button>
+                )}
                 <MatrixMapLoader
                   initialMapData={initialMapData}
                   fetchErrorMessage={fetchErrorMessage}
@@ -1856,54 +1828,62 @@ export default function MatrixDashboard({
     <div className="flex flex-col flex-1 w-full h-full bg-slate-100 dark:bg-slate-900 relative print:block print:h-auto print:overflow-visible">
       {/* Sub-header / Toolbar -- hidden in print so window.print() from the
           TWG Review tab produces a chrome-free PDF of the paper body. */}
-      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm overflow-x-auto print:hidden">
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 px-4 py-2 flex items-center justify-between shrink-0 shadow-sm print:hidden">
+        <div className="flex items-center gap-4 min-w-0 flex-1 mr-2">
+          <div className="flex items-center gap-3 pr-4 border-r border-slate-200 dark:border-slate-700 shrink-0">
              <div className="w-9 h-9 bg-gradient-to-br from-sky-500 to-blue-600 rounded-xl flex items-center justify-center shadow-lg"><FileText className="w-5 h-5 text-white" /></div>
              <div><h1 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Matrix Options</h1><p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Policy Review</p></div>
           </div>
-          <nav aria-label="Matrix Options primary">
-            <div
-              role="tablist"
-              aria-label="Matrix Options"
-              data-primary-tablist-ready={primaryTablistReady ? 'true' : undefined}
-              className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1"
+          <div className="min-w-0 flex-1">
+            <ScrollFadeRegion
+              fadeFrom="from-white dark:from-slate-800"
+              captionText=""
+              className="py-0.5"
             >
-            {TABS.map((tab) => {
-              const selected = activeTopTab === tab;
-              return (
-                <button
-                  key={tab}
-                  ref={(el) => {
-                    primaryTabRefs.current[tab] = el;
-                  }}
-                  type="button"
-                  role="tab"
-                  id={primaryTabId(tab)}
-                  aria-selected={selected}
-                  aria-controls={PRIMARY_TABPANEL_ID}
-                  tabIndex={focusedPrimaryTab === tab ? 0 : -1}
-                  onClick={() => {
-                    // NEW-P3-2 (a11y audit round 3): set focusedPrimaryTab
-                    // directly here instead of relying solely on the
-                    // activeTopTab-sync effect above. Clicking the already-
-                    // active tab (e.g. after an arrow key moved DOM focus to
-                    // a different, not-yet-activated tab) makes
-                    // setActiveTopTab(tab) a same-value no-op, so that effect
-                    // never re-fires and tabIndex=0 would otherwise stay on
-                    // the previously-arrowed-to tab while focus is here.
-                    setFocusedPrimaryTab(tab);
-                    setActiveTopTab(tab);
-                  }}
-                  onKeyDown={(e) => handlePrimaryTabKeyDown(e, tab)}
-                  className={cn('relative flex min-h-[44px] items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900', selected ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
+              <nav aria-label="Matrix Options primary">
+                <div
+                  role="tablist"
+                  aria-label="Matrix Options"
+                  data-primary-tablist-ready={primaryTablistReady ? 'true' : undefined}
+                  className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1 w-max"
                 >
-                  <span>{TAB_LABELS[tab] ?? tab}</span>
-                </button>
-              );
-            })}
-            </div>
-          </nav>
+                {TABS.map((tab) => {
+                  const selected = activeTopTab === tab;
+                  return (
+                    <button
+                      key={tab}
+                      ref={(el) => {
+                        primaryTabRefs.current[tab] = el;
+                      }}
+                      type="button"
+                      role="tab"
+                      id={primaryTabId(tab)}
+                      aria-selected={selected}
+                      aria-controls={PRIMARY_TABPANEL_ID}
+                      tabIndex={focusedPrimaryTab === tab ? 0 : -1}
+                      onClick={() => {
+                        // NEW-P3-2 (a11y audit round 3): set focusedPrimaryTab
+                        // directly here instead of relying solely on the
+                        // activeTopTab-sync effect above. Clicking the already-
+                        // active tab (e.g. after an arrow key moved DOM focus to
+                        // a different, not-yet-activated tab) makes
+                        // setActiveTopTab(tab) a same-value no-op, so that effect
+                        // never re-fires and tabIndex=0 would otherwise stay on
+                        // the previously-arrowed-to tab while focus is here.
+                        setFocusedPrimaryTab(tab);
+                        setActiveTopTab(tab);
+                      }}
+                      onKeyDown={(e) => handlePrimaryTabKeyDown(e, tab)}
+                      className={cn('relative flex min-h-[44px] items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900', selected ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
+                    >
+                      <span>{TAB_LABELS[tab] ?? tab}</span>
+                    </button>
+                  );
+                })}
+                </div>
+              </nav>
+            </ScrollFadeRegion>
+          </div>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
            {(isToolMode || isReviewMode || (isEvidenceLibraryMode && !isMobile) || (isMapMode && !isMobile)) && (
@@ -1916,24 +1896,51 @@ export default function MatrixDashboard({
                  wrapper / matrix-map-left-panel-wrapper), none of which carry a
                  stable id, and inventing one solely for this attribute was out
                  of scope per the finding's own caveat.
-               */}
-               <button onClick={() => setShowLeftPanel(!showLeftPanel)} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', showLeftPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-label={showLeftPanel ? 'Hide left panel' : 'Show left panel'} aria-expanded={showLeftPanel}>
-                 {showLeftPanel ? <PanelLeftClose className="w-5 h-5" /> : <PanelLeftOpen className="w-5 h-5" />}
-               </button>
-               {/*
-                 F1 fix: rightPanelToggleRef is the focus-rescue target when
-                 the rail closes (auto or manual) while focus was inside it --
-                 see the onFocus/onBlur handlers on the rail wrapper and the
-                 closing effect near effectiveShowRightPanel's declaration.
-                 F2/F3 fix: rightPanelToggleLabel is content-aware
-                 in Calculator mode (reuses the rail's own on-screen heading,
-                 rightPanelTitle) instead of the generic "right panel" term;
-                 aria-expanded reflects effectiveShowRightPanel (same
-                 aria-controls caveat as the left toggle above).
-               */}
-               <button ref={rightPanelToggleRef} onClick={toggleRightPanel} className={cn('flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg p-2 transition-colors', effectiveShowRightPanel ? 'text-sky-600 dark:text-sky-400 bg-sky-50 dark:bg-sky-900/30' : 'text-slate-500 dark:text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700')} title={rightPanelToggleLabel} aria-label={rightPanelToggleLabel} aria-expanded={effectiveShowRightPanel}>
-                 {effectiveShowRightPanel ? <PanelRightClose className="w-5 h-5" /> : <PanelRightOpen className="w-5 h-5" />}
-               </button>
+                */}
+                <button
+                  type="button"
+                  onClick={toggleLeftPanel}
+                  className={cn(
+                    'flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500',
+                    effectiveShowLeftPanel
+                      ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-xs',
+                  )}
+                  title={leftPanelToggleLabel}
+                  aria-label={leftPanelToggleLabel}
+                  aria-expanded={effectiveShowLeftPanel}
+                >
+                  {effectiveShowLeftPanel ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeftOpen className="w-4 h-4" />}
+                  <span>{leftPanelToggleText}</span>
+                </button>
+                {/*
+                  F1 fix: rightPanelToggleRef is the focus-rescue target when
+                  the rail closes (auto or manual) while focus was inside it --
+                  see the onFocus/onBlur handlers on the rail wrapper and the
+                  closing effect near effectiveShowRightPanel's declaration.
+                  F2/F3 fix: rightPanelToggleLabel is content-aware
+                  in Calculator mode (reuses the rail's own on-screen heading,
+                  rightPanelTitle) instead of the generic "right panel" term;
+                  aria-expanded reflects effectiveShowRightPanel (same
+                  aria-controls caveat as the left toggle above).
+                */}
+                <button
+                  ref={rightPanelToggleRef}
+                  type="button"
+                  onClick={toggleRightPanel}
+                  className={cn(
+                    'flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500',
+                    effectiveShowRightPanel
+                      ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60'
+                      : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700 shadow-xs',
+                  )}
+                  title={rightPanelToggleLabel}
+                  aria-label={rightPanelToggleLabel}
+                  aria-expanded={effectiveShowRightPanel}
+                >
+                  {effectiveShowRightPanel ? <PanelRightClose className="w-4 h-4" /> : <PanelRightOpen className="w-4 h-4" />}
+                  <span>{rightPanelToggleText}</span>
+                </button>
              </>
            )}
         </div>
@@ -1951,21 +1958,16 @@ export default function MatrixDashboard({
       {isCalculatorMode && (
         <div
           data-testid="calculator-pathway-switch"
-          className="shrink-0 border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-4 print:hidden md:px-8"
+          className="shrink-0 border-b border-[var(--db-border)] bg-[var(--db-depth-1)] px-4 py-3 print:hidden md:px-8"
         >
-          <div className="mx-auto max-w-5xl">
-            <h2 className="text-xs font-bold uppercase tracking-wider text-[var(--db-text-secondary)]">
+          <div className="mx-auto max-w-5xl flex flex-col md:flex-row md:items-center gap-3">
+            <span className="text-xs font-bold uppercase tracking-wider text-[var(--db-text-secondary)] shrink-0">
               Pathway
-            </h2>
-            <p className="mt-1 max-w-3xl text-sm leading-relaxed text-[var(--db-text-primary)]">
-              Each pathway below is an independent derivation. Switching
-              pathways produces a separate concentration -- not a different
-              view of the same number.
-            </p>
+            </span>
             <CategorySelector
               activeCategory={activeCategory}
               onChange={setActiveCategory}
-              className="mt-3"
+              className="flex-1"
             />
           </div>
         </div>
@@ -2088,7 +2090,7 @@ export default function MatrixDashboard({
                 // animation is wanted later, the safe technique is an
                 // interpolable `grid-template-rows: 0fr <-> 1fr` pair, which
                 // needs no max-height cap at all.
-                showLeftPanel
+                effectiveShowLeftPanel
                   ? cn(
                       'w-full p-6',
                       isCalculatorMode ? 'lg:w-96' : 'lg:w-80',
@@ -2109,7 +2111,7 @@ export default function MatrixDashboard({
               // zero width. `inert` removes them from focus/tab order (and
               // hides them from AT) without touching the width/opacity
               // transition classes that drive the collapse animation.
-              inert={showLeftPanel ? undefined : true}
+              inert={effectiveShowLeftPanel ? undefined : true}
             >
               {/* min-w-[270px] is a desktop guard against the rail being
                   squeezed narrower than its controls read at. Stacked, the rail
@@ -2330,7 +2332,7 @@ export default function MatrixDashboard({
               regulatoryFrameId={jurisdiction}
               calculatorReceipt={calculatorReceipt}
               onDismissReceipt={handleDismissReceipt}
-              showLeftPanel={!isMobile && showLeftPanel}
+              showLeftPanel={!isMobile && effectiveShowLeftPanel}
               showRightPanel={!isMobile && showRightPanel}
               onRequestOpenRightPanel={isMobile ? undefined : () => setShowRightPanel(true)}
               className="flex-1 w-full"

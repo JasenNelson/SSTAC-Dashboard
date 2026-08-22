@@ -18,6 +18,9 @@ import {
   Boxes,
   Inbox,
   Map,
+  MapPin,
+  ShieldCheck,
+  Check,
 } from 'lucide-react';
 import { isAgenticOsEnabled } from '@/lib/agentic-os/feature-flag';
 
@@ -83,10 +86,10 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Discussion Threads</p>
-                <p className="text-3xl font-bold text-purple-600">{metrics.totalDiscussionThreads}</p>
+                <p className="text-3xl font-bold text-sky-700 dark:text-sky-300">{metrics.totalDiscussionThreads}</p>
               </div>
-              <div className="w-12 h-12 bg-purple-100 dark:bg-purple-900/40 rounded-xl flex items-center justify-center">
-                <MessageSquare className="w-6 h-6 text-purple-600 dark:text-purple-400" />
+              <div className="w-12 h-12 bg-sky-100 dark:bg-sky-900/40 rounded-xl flex items-center justify-center">
+                <MessageSquare className="w-6 h-6 text-sky-700 dark:text-sky-300" />
               </div>
             </div>
           </div>
@@ -197,11 +200,11 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
 
             {/* Manage Milestones */}
             <Link href="/admin/milestones" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300">
-                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
-                  <Calendar className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors">
+                  <Calendar className="w-8 h-8 text-slate-700 dark:text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors mb-2">
                   Milestones
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -227,15 +230,60 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
 
             {/* TWG White Paper Synthesis */}
             <Link href="/admin/twg-synthesis" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300">
-                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
-                  <FileSearch className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors">
+                  <FileSearch className="w-8 h-8 text-slate-700 dark:text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-400 transition-colors mb-2">
                   TWG Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
                   Analyze and synthesize TWG review feedback
+                </p>
+              </div>
+            </Link>
+
+            {/* TWG Matrix Review Portal */}
+            <Link href="/admin/matrix-review" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
+                  <Grid3x3 className="w-8 h-8 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
+                  Matrix Review
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Review submitted TWG matrix reviews and ratings
+                </p>
+              </div>
+            </Link>
+
+            {/* Jermilova Synthesis Review */}
+            <Link href="/admin/jermilova-review" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-purple-300">
+                <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-purple-200 dark:group-hover:bg-purple-800 transition-colors">
+                  <Boxes className="w-8 h-8 text-purple-600 dark:text-purple-400" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-purple-600 transition-colors mb-2">
+                  Jermilova Synthesis Review
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Review external Jermilova synthesis comments and section breakdowns
+                </p>
+              </div>
+            </Link>
+
+            {/* Catalog QA/QC & Verification Review Ledger */}
+            <Link href="/admin/qaqc-review" className="group">
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
+                  <ShieldCheck className="w-8 h-8 text-sky-700 dark:text-sky-300" />
+                </div>
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
+                  QA/QC Verification Review
+                </h3>
+                <p className="text-slate-500 dark:text-slate-400 text-sm">
+                  Review compiled Stage 2 verifications, discrepancy notes, and issue flags
                 </p>
               </div>
             </Link>
@@ -250,63 +298,33 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                   Catalog Staging Review
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Review AI-proposed catalog rows in the staging queue; approve to promote or reject
+                  Stage and approve pending catalog candidates
                 </p>
               </div>
             </Link>
 
-            {/* Matrix Options Review */}
-            <Link href="/admin/matrix-review" className="group">
+            {/* Matrix Map Administration */}
+            <Link href="/admin/matrix-map/health" className="group">
               <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-emerald-300">
                 <div className="w-16 h-16 bg-emerald-100 dark:bg-emerald-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-emerald-200 dark:group-hover:bg-emerald-800 transition-colors">
-                  <Grid3x3 className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
+                  <MapPin className="w-8 h-8 text-emerald-600 dark:text-emerald-400" />
                 </div>
                 <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-emerald-600 transition-colors mb-2">
-                  Matrix Review
+                  Matrix Map Tables
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Analyze and synthesize Matrix Options phase feedback
-                </p>
-              </div>
-            </Link>
-
-            {/* Jermilova Review */}
-            <Link href="/admin/jermilova-review" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-teal-300">
-                <div className="w-16 h-16 bg-teal-100 dark:bg-teal-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-teal-200 dark:group-hover:bg-teal-800 transition-colors">
-                  <FileSearch className="w-8 h-8 text-teal-600 dark:text-teal-400" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-teal-600 transition-colors mb-2">
-                  Jermilova Review
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Review detailed comparison and uncertainty analysis inputs
-                </p>
-              </div>
-            </Link>
-
-            {/* Matrix Map Health */}
-            <Link href="/admin/matrix-map/health" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
-                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
-                  <BarChart3 className="w-8 h-8 text-sky-700 dark:text-sky-300" />
-                </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
-                  Matrix Map Health
-                </h3>
-                <p className="text-slate-500 dark:text-slate-400 text-sm">
-                  Inspect Matrix Map load, visibility, and publication readiness
+                  Manage DRA publications and review the source catalog
                 </p>
               </div>
             </Link>
 
             {/* Matrix Map Site Aggregates (Option C preview, read-only) */}
             <Link href="/admin/matrix-map/site-aggregates" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-indigo-300">
-                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800 transition-colors">
-                  <BarChart3 className="w-8 h-8 text-indigo-700 dark:text-indigo-300" />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors">
+                  <BarChart3 className="w-8 h-8 text-slate-700 dark:text-slate-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-700 dark:group-hover:text-indigo-300 transition-colors mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors mb-2">
                   Matrix Map Site Aggregates
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -349,11 +367,11 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
 
             {/* Engine v2 */}
             <Link href="/dashboard/engine-v2" className="group">
-              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-indigo-300">
-                <div className="w-16 h-16 bg-indigo-100 dark:bg-indigo-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-indigo-200 dark:group-hover:bg-indigo-800 transition-colors">
-                  <Cpu className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />
+              <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                <div className="w-16 h-16 bg-sky-100 dark:bg-sky-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-sky-200 dark:group-hover:bg-sky-800 transition-colors">
+                  <Cpu className="w-8 h-8 text-sky-700 dark:text-sky-300" />
                 </div>
-                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-indigo-600 transition-colors mb-2">
+                <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 transition-colors mb-2">
                   Engine v2
                 </h3>
                 <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -369,11 +387,11 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
                 the filesystem. */}
             {isAgenticOsEnabled() && (
               <Link href="/admin/agentic-os" className="group">
-                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-violet-300">
-                  <div className="w-16 h-16 bg-violet-100 dark:bg-violet-900/40 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-violet-200 dark:group-hover:bg-violet-800 transition-colors">
-                    <Boxes className="w-8 h-8 text-violet-600 dark:text-violet-400" />
+                <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 transform hover:-translate-y-2 border border-slate-200 dark:border-slate-700 hover:border-sky-300">
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-slate-700 rounded-2xl flex items-center justify-center mb-4 group-hover:bg-slate-200 dark:group-hover:bg-slate-600 transition-colors">
+                    <Boxes className="w-8 h-8 text-slate-700 dark:text-slate-300" />
                   </div>
-                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-violet-600 transition-colors mb-2">
+                  <h3 className="text-lg font-semibold text-slate-900 dark:text-white group-hover:text-sky-700 transition-colors mb-2">
                     Agentic OS
                   </h3>
                   <p className="text-slate-500 dark:text-slate-400 text-sm">
@@ -399,15 +417,21 @@ export default function AdminDashboardClient({ metrics }: { metrics: Metrics }) 
               <div className="space-y-3 text-sm text-slate-500 dark:text-slate-400">
                 <div className="flex items-center justify-between">
                   <span>Database Connection</span>
-                  <span className="text-green-600 font-medium">✓ Connected</span>
+                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Connected
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>Authentication Service</span>
-                  <span className="text-green-600 font-medium">✓ Active</span>
+                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Active
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span>File Storage</span>
-                  <span className="text-green-600 font-medium">✓ Available</span>
+                  <span className="text-green-600 font-medium inline-flex items-center gap-1">
+                    <Check className="w-3.5 h-3.5" /> Available
+                  </span>
                 </div>
               </div>
             </div>

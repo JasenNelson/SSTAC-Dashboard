@@ -143,7 +143,40 @@ describe('HHInhalationCalculator', () => {
       target: { value: 'not-a-number' },
     });
     expect(screen.getByTestId('hh-inhalation-error')).toHaveTextContent(
-      /Exposure frequency must be a positive decimal number/i,
+      /Exposure frequency must be a decimal number between 0 and 365 days\/year/i,
+    );
+  });
+
+  it('rejects exposure frequency over 365 days per year', () => {
+    render(
+      <HHInhalationCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('hh-inhalation-ef-input'), {
+      target: { value: '400' },
+    });
+    expect(screen.getByTestId('hh-inhalation-error')).toHaveTextContent(
+      /Exposure frequency must be a decimal number between 0 and 365 days\/year/i,
+    );
+  });
+
+  it('rejects exposure duration exceeding cancer averaging time', () => {
+    render(
+      <HHInhalationCalculator
+        substanceKey="benzene"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    fireEvent.change(screen.getByTestId('hh-inhalation-ed-input'), {
+      target: { value: '80' },
+    });
+    fireEvent.change(screen.getByTestId('hh-inhalation-at-cancer-input'), {
+      target: { value: '70' },
+    });
+    expect(screen.getByTestId('hh-inhalation-error')).toHaveTextContent(
+      /Exposure duration cannot exceed cancer averaging time/i,
     );
   });
 

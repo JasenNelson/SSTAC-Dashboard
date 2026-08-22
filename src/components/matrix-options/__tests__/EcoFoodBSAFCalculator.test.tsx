@@ -340,18 +340,9 @@ describe('EcoFoodBSAFCalculator (PR-A2 commit 5, prop-driven)', () => {
     }
   });
 
-  it('does NOT render the embedded substance dropdown (substance lifted in PR-A2)', () => {
+  it('renders the embedded substance selector in Stage 1', () => {
     render(<EcoFoodBSAFCalculator {...DEFAULT_PROPS} />);
-    expect(screen.queryByLabelText(/^Substance$/i)).not.toBeInTheDocument();
-    SUBSTANCE_LIBRARY.forEach((s) => {
-      expect(
-        // Escape regex metacharacters in displayName (e.g. "Benzo[a]anthracene",
-        // "DDT (p,p-)") so the match is literal and never throws SyntaxError.
-        screen.queryByRole('option', {
-          name: new RegExp(s.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
-        }),
-      ).not.toBeInTheDocument();
-    });
+    expect(screen.getByLabelText(/^Substance$/i)).toBeInTheDocument();
   });
 
   // Plan v3 section 1 vertical layout regression coverage.

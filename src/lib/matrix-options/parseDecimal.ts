@@ -72,3 +72,54 @@ export function optionalPositiveInput(value: string, label: string): number | nu
   }
   return parsed.value;
 }
+
+export function boundedInput(
+  value: string,
+  label: string,
+  min: number,
+  max: number,
+  inclusiveMin = true,
+  inclusiveMax = true,
+): number | { error: string } {
+  const parsed = parseDecimalInput(value, { allowNegative: min < 0 });
+  const passesMin = inclusiveMin ? parsed.value >= min : parsed.value > min;
+  const passesMax = inclusiveMax ? parsed.value <= max : parsed.value < max;
+  if (parsed.state !== 'valid' || !passesMin || !passesMax) {
+    if (min === 0 && max === 1 && inclusiveMin && inclusiveMax) {
+      return { error: `${label} must be a decimal fraction between 0 and 1.` };
+    }
+    if (min === 0 && max === 1 && !inclusiveMin && inclusiveMax) {
+      return { error: `${label} must be a decimal fraction greater than 0 and at most 1.` };
+    }
+    if (min === 0 && max === 365 && !inclusiveMin && inclusiveMax) {
+      return { error: `${label} must be a decimal number between 0 and 365 days/year.` };
+    }
+    const minOp = inclusiveMin ? '>=' : '>';
+    const maxOp = inclusiveMax ? '<=' : '<';
+    return { error: `${label} must be a decimal number with ${minOp} ${min} and ${maxOp} ${max}.` };
+  }
+  return parsed.value;
+}
+
+export function optionalBoundedInput(
+  value: string,
+  label: string,
+  min: number,
+  max: number,
+  inclusiveMin = true,
+  inclusiveMax = true,
+): number | null | { error: string } {
+  const parsed = parseDecimalInput(value, { allowNegative: min < 0 });
+  if (parsed.state === 'blank') return null;
+  const passesMin = inclusiveMin ? parsed.value >= min : parsed.value > min;
+  const passesMax = inclusiveMax ? parsed.value <= max : parsed.value < max;
+  if (parsed.state !== 'valid' || !passesMin || !passesMax) {
+    if (min === 0 && max === 1 && inclusiveMin && inclusiveMax) {
+      return { error: `${label} must be blank or a decimal fraction between 0 and 1.` };
+    }
+    const minOp = inclusiveMin ? '>=' : '>';
+    const maxOp = inclusiveMax ? '<=' : '<';
+    return { error: `${label} must be blank or a decimal number with ${minOp} ${min} and ${maxOp} ${max}.` };
+  }
+  return parsed.value;
+}
