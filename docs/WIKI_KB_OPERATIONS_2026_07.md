@@ -56,7 +56,8 @@ manifest remain authoritative.
   preserving legitimate non-materialized declared isolates. A prior synthetic
   endpoint community is preserved only when genuine-node community population is
   already complete; deterministic graphs remain wholly unpopulated until clustering.
-- Full nightly pipeline manually: `powershell -File tooling\wiki\nightly_wiki_sync.ps1`
+- Full nightly pipeline manually (attended, with explicit identity):
+  `$runtimeRoot = 'C:\Projects\SSTAC-Dashboard'; $taskDefinitionId = '11111111-2222-4333-8444-555555555555'; powershell.exe -NoProfile -NonInteractive -ExecutionPolicy Bypass -File "$runtimeRoot\tooling\wiki\nightly_wiki_sync.ps1" -RepoRoot $runtimeRoot -TaskDefinitionId $taskDefinitionId`
   (steps N0-N7; receipt at `.tmp_wiki_nightly\receipt-<date>.md`; transcript alongside).
 - Freshness: `powershell -File tooling\wiki\check_nightly_freshness.ps1` (exit 1 = stale >48h).
 - Legacy orphan report: `powershell -File tooling\wiki\check_orphans.ps1` (report-only;
@@ -66,7 +67,7 @@ manifest remain authoritative.
   `wiki\.build-stamp`. `graphify-out\` is the pipeline-internal working copy -- never read it
   from session-facing tools.
 - Config: `tooling\wiki\wiki_nightly_config.json` (model, timeouts, expiries, freshness
-  threshold, and exact serve-gate remote/branch). Edit via gated PR only.
+  threshold, and installed-runtime serve-gate policy). Edit via gated PR only.
 
 ### Owner activation preflight (no activation)
 
@@ -85,9 +86,10 @@ alter standing blocks, or delete locks. Structural graph checks apply in every
   population is invalid, and accepted manual or natural nightly proof requires
   complete non-negative integral JSON numeric community population with at least
   one distinct label. Numeric strings, floats, booleans, and negative values fail
-  closed. `RESULT READY` requires a clean tracked runtime, Graphify 0.9.17, a served
+closed. `RESULT READY` requires a clean tracked runtime, Graphify 0.9.17, a served
   graph with nodes and links, a build stamp matching `HEAD`, and `HEAD`
-matching the configured remote-tracking ref. If scheduler or MCP entries already exist, they must
+authenticating the installed runtime identity recorded by the wrapper. It does not fetch, repin,
+or compare against a remote-tracking ref. If scheduler or MCP entries already exist, they must
 match the expected command shape for the selected runtime. Resolve FAIL before activation and
 resolve material UNKNOWN checks manually.
 
@@ -132,51 +134,17 @@ native exit 1. Fixture evidence never grants READY status or activation eligibil
   set user environment variable `SSTAC_WIKI_RUNTIME_ROOT` to its absolute root before starting
   consuming sessions. Session bootstrap and graphify nudge hooks then read that runtime instead of
   a stale main-checkout wiki.
-- A dedicated runtime may be detached. Branch name is not trusted: N1 fetches exactly the
-  configured remote/branch from `wiki_nightly_config.json` and records its OID; N6 serves only
-  when `HEAD`, the remote-tracking ref, and that same-run fetched OID still match.
-- The N0 autofollow evaluation checks and repins the runtime `HEAD` to match the configured
-  remote-tracking ref. It operates in sequentially gated phases:
-  1. Hook-drift and dirty-tree gates run first.
-  2. `rev-parse HEAD` validity check (`REFUSED_UNEXPECTED`). Failure or empty stdout -> FAILED / exit 1.
-  3. HEAD branch-attachment check (`REFUSED_ATTACHED`). HEAD attached -> FAILED / exit 1.
-  4. Git-dir and working tree checks:
-     - 4a. Git-dir resolution. Failure or empty stdout -> `REFUSED_UNEXPECTED`, FAILED / exit 1.
-     - 4b. Working-tree cleanliness and merge/rebase/cherry-pick/bisect state -> `REFUSED_DIRTY`,
-       FAILED / exit 1. All refusals (listed below) terminalize as FAILED / exit 1.
-  5. Fetch validity check (`REFUSED_FETCH_FAIL`).
-  6. Fast-forward ancestry check (`REFUSED_DIVERGENT`).
-  7. The `diff --name-only` protected-pathspec check (`REFUSED_TOOLING_CHANGE`),
-     which is the operationally dominant gate.
-  8. `ls-tree` enumerates protected paths to build a pre-checkout SHA-256 baseline
-     (`REFUSED_UNEXPECTED` / `ls-tree failed or empty`).
-  9. Hook suppression setup (`REFUSED_HOOK_SETUP_FAILED`).
-  10. Checkout and post-checkout manifest comparison (`REFUSED_REPIN_VERIFY_FAILED`).
-
-  | Decision Value | Autorepin Result | Terminal State | Exit Code | Description |
-  | :--- | :--- | :--- | :--- | :--- |
-  | `NOT_EVALUATED` | `NOT_RUN` | `FAILED` | 1 | Sentinel value, default state before evaluation. |
-  | `REFUSED_UNEXPECTED` | `SKIP` | `FAILED` | 1 | Unexpected Git error, missing configuration, or parsing failure. |
-  | `REFUSED_ATTACHED` | `SKIP` | `FAILED` | 1 | HEAD is attached to a branch (must be detached). |
-  | `REFUSED_DIRTY` | `SKIP` | `FAILED` | 1 | Working tree dirty or merge/rebase/cherry-pick/bisect in progress. |
-  | `REFUSED_FETCH_FAIL` | `SKIP` | `FAILED` | 1 | Fetch failed or returned an invalid OID format. |
-  | `REFUSED_DIVERGENT` | `SKIP` | `FAILED` | 1 | Target is not a fast-forward descendant of HEAD (or is a rewind/ancestor). |
-  | `REFUSED_TOOLING_CHANGE` | `SKIP` | `FAILED` | 1 | Diff touches protected pathspec (requires manual operator repin). |
-  | `REFUSED_HOOK_SETUP_FAILED` | `SKIP` | `FAILED` | 1 | Failed to set up the empty/suppressed hooks directory. |
-  | `REFUSED_REPIN_VERIFY_FAILED` | `FAIL` | `FAILED` | 1 | Post-checkout validation checks failed or post-checkout state was dirty. |
-  | `ALREADY_CURRENT` | `PASS` | `SUCCESS` / `FAILED` | 0 / 1 | HEAD is already at target_oid. Run continues to N1-N6. |
-  | `REPINNED` | `PASS` | `SUCCESS` / `FAILED` | 0 / 1 | Successfully checked out target_oid. Run continues to N1-N6. |
-
-  CRITICAL: `REFUSED_TOOLING_CHANGE` and `REFUSED_DIVERGENT` both terminalize as FAILED
-  (exit 1). So every merge to `main` touching `wiki`, `tooling/wiki`, `.gitignore`,
-  `.graphifyignore`, `AGENTS.md`, `.gitattributes`, or `tooling/.gitattributes` hard-fails the nightly run, every
-  night, until manual repin. (Do NOT read this as a severity increase over pre-#771: a stale pin
-  ALSO hard-failed the night then -- receipt `f7db140f` shows `serve_gate=FAIL`, exit 1,
-  `terminal_state=FAILED` AND `SERVED_WIKI_KEPT_LAST_GOOD`. Both regimes fail the night and leave
-  the last-good package served; the only change is that the run now stops at N0 instead of the N6
-  serve gate. See section 12, known issue 2.) To
-  remediate a tooling-change failure, the operator must manually repin: fetch, then run
-  `git -C <runtime> checkout --detach <reviewed oid>`, and then rebuild the wiki.
+- The installed runtime is authoritative. The wrapper records
+  `required_ref=INSTALLED_RUNTIME`, authenticates `HEAD`, and carries the installed `HEAD` OID
+  through the build stamp, terminal receipt, publication gate, and activation preflight. N0 does
+  not fetch, repin, checkout, or require equality with a remote-tracking ref. A dirty tracked tree,
+  invalid `HEAD`, changed `HEAD`, missing build stamp, or inconsistent terminal identity fails
+  closed and leaves the last-good served package in place.
+- The activation preflight accepts only the wrapper's installed-runtime identity: terminal
+  `required_ref` must be `INSTALLED_RUNTIME`, and `head_oid`, `required_ref_oid`, and
+  `build_stamp_oid` must authenticate the same installed `HEAD`. Remote and branch settings may
+  remain historical configuration metadata, but they are not an authority for execution or
+  activation.
 - The registration script records the wrapper path from the checkout where it is invoked. Inspect
   its dry-run output. Task registration remains an owner action; this runbook does not authorize
   `-Apply`.
@@ -560,8 +528,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File "$runtimeRoot\tooling\wiki\r
   -OutputXmlPath "C:\tmp\contract_d_staged.xml"
 ```
 
-Contract D remains network-capable only because the existing N1 serve gate fetches the configured
-remote. N5 is exactly `SKIP_ALL`: no label, semantic extraction, Ollama lock, Ollama call, GPU,
+Contract D uses the installed runtime authority and does not fetch or repin a remote. N5 is
+exactly `SKIP_ALL`: no label, semantic extraction, Ollama lock, Ollama call, GPU,
 promotion mutation, or N5 post-mutation scan occurs. The terminal JSON adds these ordered typed
 decision fields:
 
@@ -616,6 +584,12 @@ state changes nightly while this prose does not. Current accepted facts live in
 `facts.wiki_runtime.first_repinned` for this lane); `facts_history` is frozen history and is never
 current authority. Reverify against the canonical runtime before any operational use.
 
+### Historical snapshot (superseded operational records through 2026-08-09)
+
+The remaining streak rows, runtime-state narrative, and known issues below are retained only as
+historical evidence. They are not current authority and must not be used to justify fetch,
+repin, activation, registration, scheduler, or production actions.
+
 The 2026-08-09 night HAS been adjudicated against its terminal receipt and IS counted -- see the
 streak table below and `facts.wiki_runtime.counted_window`. Accepted evidence therefore runs
 THROUGH 2026-08-09.
@@ -627,12 +601,11 @@ external owner gate rather than on receipt evidence. It is accepted here on the 
 2026-08-07, 2026-08-08, and 2026-08-09 nights. Every OTHER counting criterion in those rows is
 carried by the terminal receipts themselves.
 
-### Runtime state
+### Historical runtime state
 
-The runtime now runs the auto-follow wrapper (section 2, "Canonical runtime and detached worktrees").
-Merges to `main` that do NOT touch the protected pathspec no longer cost a night. Merges that DO
-touch it still hard-fail the night (`REFUSED_TOOLING_CHANGE`, terminal FAILED / exit 1) until an
-operator manually repins -- see section 2 and known issue 2 below. Landed by PR #771, squash-merged as
+The historical runtime-state record described an auto-follow wrapper and remote repinning. That
+design is superseded by the installed-runtime authority in section 2. The record was landed by
+PR #771, squash-merged as
 `a821e51968982c0b3dfe2b40e910e9aac1c112c6` (8 files, +1395/-28), which added the guarded in-wrapper
 N0 auto-follow. The frozen design and test spec are
 `docs/design/wiki/WIKI_RUNTIME_AUTOFOLLOW_BOOTSTRAP_DESIGN_2026_08_05.md`

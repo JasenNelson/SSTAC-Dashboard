@@ -690,7 +690,7 @@ class ActivationPreflightTests(unittest.TestCase):
                 "GraphOrphanRisk": False,
             },
             "served_graph_sha256": graph_sha256,
-            "required_ref": "refs/remotes/origin/main",
+            "required_ref": "INSTALLED_RUNTIME",
             "head_oid": self.head,
             "required_ref_oid": self.head,
             "build_stamp_oid": self.head,
@@ -1107,6 +1107,39 @@ class ActivationPreflightTests(unittest.TestCase):
                 self.write_terminal_receipt(replacements={field: value})
                 self.assert_not_ready(self.run_preflight(contract="A", phase="StagedManualProven"), "execution-proof")
                 shutil.rmtree(self.root / ".tmp_wiki_nightly", ignore_errors=True)
+
+    def test_actual_wrapper_shaped_terminal_receipt_authenticates_installed_runtime(self):
+        remote_only_head = subprocess.run(
+            [
+                "git",
+                "-C",
+                str(self.root),
+                "commit-tree",
+                f"{self.head}^{{tree}}",
+                "-p",
+                self.head,
+                "-m",
+                "remote-only",
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+        subprocess.run(
+            ["git", "-C", str(self.root), "update-ref", "refs/remotes/origin/main", remote_only_head],
+            check=True,
+            capture_output=True,
+        )
+        self.write_contract("StagedManualProven")
+        receipt_path = self.write_terminal_receipt()
+        receipt = json.loads(receipt_path.read_text(encoding="ascii"))
+        self.assertEqual(receipt["required_ref"], "INSTALLED_RUNTIME")
+        self.assertEqual(receipt["required_ref_oid"], receipt["head_oid"])
+        self.assertEqual(receipt["build_stamp_oid"], receipt["head_oid"])
+        result = self.run_preflight(contract="A", phase="StagedManualProven")
+        self.assert_fixture_non_activation(result)
+        self.assertIn("PASS    runtime-ref:", result.stdout)
+        self.assertIn("PASS    execution-proof:", result.stdout)
 
     def test_receipt_schema_and_native_exit_presence_fail_closed(self):
         for field in ("schema_version", "native_exit_code"):
