@@ -997,7 +997,7 @@ export default function MatrixDashboard({
   const effectiveShowLeftPanel = isCalculatorMode
     ? (calcLeftRailOverride ?? false)
     : isEvidenceLibraryMode
-      ? (catalogLeftRailOverride ?? false)
+      ? (catalogLeftRailOverride ?? showLeftPanel)
       : showLeftPanel;
 
   const toggleLeftPanel = useCallback(() => {

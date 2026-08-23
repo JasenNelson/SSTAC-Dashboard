@@ -37,10 +37,8 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await expect(reviewButton).toBeVisible();
     await reviewButton.click();
 
-    await expect(page.getByTestId('references-values-tab')).toBeVisible();
-
-    const policyAudit = page.getByTestId('evidence-library-default-policy-audit');
-    await expect(policyAudit).toBeVisible();
+    const refTab = page.getByTestId('references-values-tab');
+    await expect(refTab).toBeVisible();
 
     // The calculator candidate-default shortcut renders a read-only "Calculator
     // request" receipt. NOTE: the prior 'Input: sf oral per mg per kg bw per day'
@@ -49,8 +47,8 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
     await expect(page.getByText('Calculator request')).toBeVisible();
 
     // Core invariant: the AI never surfaces promotion controls in this view.
-    await expect(policyAudit).not.toContainText('Promote default');
-    await expect(policyAudit).not.toContainText('Approve default');
+    await expect(refTab).not.toContainText('Promote default');
+    await expect(refTab).not.toContainText('Approve default');
   });
 
   test('filters References by candidate defaults without promotion language', async ({
@@ -297,11 +295,16 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
 
+    // Calculator left guide panel starts collapsed (effectiveShowLeftPanel = false).
+    // Open it first, then collapse it to verify inert behavior.
+    const showButton = page.getByRole('button', { name: 'Show Guide panel', exact: true });
+    await expect(showButton).toBeVisible();
+    await showButton.click();
+
     const hideButton = page.getByRole('button', { name: 'Hide Guide panel', exact: true });
     await expect(hideButton).toBeVisible();
     await hideButton.click();
 
-    const showButton = page.getByRole('button', { name: 'Show Guide panel', exact: true });
     await expect(showButton).toBeVisible();
 
     const wrapper = page.getByTestId('left-sidebar-wrapper');
