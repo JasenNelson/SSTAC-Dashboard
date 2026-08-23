@@ -22,8 +22,8 @@ test.describe('Matrix Map member visibility (T40)', () => {
       // Authenticated MEMBER: not bounced; the Matrix Options dashboard renders.
       await expect(page).not.toHaveURL(/\/login/);
 
-      // Open the embedded Interactive Map tab.
-      await clickUntilVisible(page, 'Interactive Map', 'matrix-options-interactive-map-embed');
+      // Open the embedded Interactive Map tab (public label "Database").
+      await clickUntilVisible(page, 'Database', 'matrix-options-interactive-map-embed');
 
       // Member-only differentiator: the partial-visibility banner surfaces samples hidden behind
       // private DRAs. Members see it whenever any DRA is private (the normal/pilot state -- 571 private

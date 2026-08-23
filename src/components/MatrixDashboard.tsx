@@ -259,7 +259,16 @@ interface MatrixDashboardProps {
 // 'Vision for Modernizing Schedule 3.4' (was 'Conceptual Model'): the view now
 // states the project's own three-part vision for Schedule 3.4, sourced from the
 // Phase 2 project plan, so the generic label no longer described it.
-const TABS = ['The Guide', 'Vision for Modernizing Schedule 3.4', 'TWG Review', 'Interactive Map', 'Calculator', 'SSD Workbench', 'References & Values'];
+const TABS = [
+  'The Guide',
+  'Vision for Modernizing Schedule 3.4',
+  'Jurisdictional Frameworks',
+  'TWG Review',
+  'Interactive Map',
+  'Calculator',
+  'SSD Workbench',
+  'References & Values',
+];
 // Display labels for the top tabs. The internal tab IDENTIFIER strings in TABS
 // are load-bearing (compared against activeTopTab in control flow throughout
 // this file), so they MUST stay stable. Render the user-facing label via this
@@ -268,13 +277,14 @@ const TABS = ['The Guide', 'Vision for Modernizing Schedule 3.4', 'TWG Review', 
 const TAB_LABELS: Record<string, string> = {
   'The Guide': 'Guide',
   'Vision for Modernizing Schedule 3.4': 'Modernizing Schedule 3.4',
+  'Jurisdictional Frameworks': 'Methodology by pathway',
   'Interactive Map': 'Database',
   'References & Values': 'Catalogue',
 };
 const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
 // Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
 // in its Quick Reference drawer. The cross-cutting 'background-adjustment' equation is
-// intentionally omitted here (it stays in the calculator's Background Adjustment panel).
+// intentionally omitted here (see JURISDICTIONAL_SIDE_TAB_PATHWAYS) so it stays in the calculator only.
 const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
   'Ecological: EqP & AVS': ['eco-direct-eqp'],
   'Ecological: Food Web (BSAF)': ['eco-food-bsaf'],
@@ -297,7 +307,7 @@ const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 // Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
 // demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
 // printed.
-const DEMOTED_DOCUMENT_TABS = new Set(['The Guide']);
+const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
 const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
 
 function primaryTabId(tab: string): string {
@@ -598,13 +608,13 @@ export default function MatrixDashboard({
     }
   }, [jurisdiction]);
 
-  const isToolMode = activeTopTab === 'Calculator';
+  const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
   const isReviewMode = activeTopTab === 'TWG Review';
   const isEvidenceLibraryMode = activeTopTab === 'References & Values';
   const isSsdWorkbenchMode = activeTopTab === 'SSD Workbench';
   const isMapMode = activeTopTab === 'Interactive Map';
   const isCalculatorMode = activeTopTab === 'Calculator';
-  const hideSidebarOnPrint = isToolMode;
+  const hideSidebarOnPrint = isToolMode && activeTopTab === 'Calculator';
   const handleRefreshMapData = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -1205,6 +1215,42 @@ export default function MatrixDashboard({
 
   const renderSidebar = () => {
     switch (activeTopTab) {
+      case 'Jurisdictional Frameworks':
+        return (
+          <div
+            role="tablist"
+            aria-orientation="vertical"
+            aria-label="Pathway sections"
+            className="space-y-2"
+          >
+            {JURISDICTIONAL_SIDE_TABS.map((tab) => {
+              const selected = activeSideTab === tab;
+              return (
+                <button
+                  key={tab}
+                  ref={(el) => {
+                    sideTabRefs.current[tab] = el;
+                  }}
+                  type="button"
+                  role="tab"
+                  id={sideTabId(tab)}
+                  aria-selected={selected}
+                  aria-controls={JURISDICTIONAL_SIDE_TABPANEL_ID}
+                  tabIndex={selected ? 0 : -1}
+                  onClick={() => setActiveSideTab(tab)}
+                  onKeyDown={(e) => handleSideTabKeyDown(e, tab)}
+                  className={`w-full text-left p-3 rounded-lg cursor-pointer font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
+                    selected
+                      ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-semibold text-sky-700 dark:text-sky-400'
+                      : 'hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
+                  }`}
+                >
+                  {tab}
+                </button>
+              );
+            })}
+          </div>
+        );
       case 'Calculator': {
         const tierContent = GUIDE_TIER_CONTENT[activeTier];
         return (
@@ -1415,6 +1461,23 @@ export default function MatrixDashboard({
             <ConceptualMatrix />
           </div>
         );
+      case 'Jurisdictional Frameworks': {
+        let contentToRender = '';
+        if (activeSideTab === 'Ecological: EqP & AVS') contentToRender = eqpCaseStudyContent;
+        else if (activeSideTab === 'Ecological: Food Web (BSAF)') contentToRender = bsafCaseStudyContent;
+        else if (activeSideTab === 'Human Health Pathways') contentToRender = humanHealthContent;
+
+        return (
+          <div
+            className="space-y-6"
+            role="tabpanel"
+            id={JURISDICTIONAL_SIDE_TABPANEL_ID}
+            aria-labelledby={sideTabId(activeSideTab)}
+          >
+            <MathRenderer content={demoteLeadingH1(contentToRender)} fadeFrom="from-white dark:from-slate-950" />
+          </div>
+        );
+      }
       case 'TWG Review':
         return (
           <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />

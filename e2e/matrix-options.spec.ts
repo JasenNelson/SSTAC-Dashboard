@@ -58,7 +58,7 @@ test.describe('Matrix Options default-policy review shortcuts', () => {
   }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    await clickUntilVisible(page, 'References & Values', 'references-values-tab');
+    await clickUntilVisible(page, 'Catalogue', 'references-values-tab');
 
     const candidateDefaultsButton = page.getByRole('button', {
       name: /Candidate defaults/i,
@@ -147,8 +147,8 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('ArrowRight moves focus without changing the active tab', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
-    const conceptualTab = page.getByRole('tab', { name: 'Vision for Modernizing Schedule 3.4', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
+    const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
 
     await guideTab.focus();
     await expect(guideTab).toBeFocused();
@@ -167,7 +167,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('Enter activates the focused tab and swaps the panel content', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
     const calculatorTab = page.getByRole('tab', { name: 'Calculator', exact: true });
 
     await guideTab.focus();
@@ -192,7 +192,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('Space also activates the focused tab', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
     const ssdTab = page.getByRole('tab', { name: 'SSD Workbench', exact: true });
 
     await guideTab.focus();
@@ -213,9 +213,9 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('Home and End jump focus to the first and last tab', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
-    const conceptualTab = page.getByRole('tab', { name: 'Vision for Modernizing Schedule 3.4', exact: true });
-    const referencesTab = page.getByRole('tab', { name: 'References & Values', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
+    const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
+    const referencesTab = page.getByRole('tab', { name: 'Catalogue', exact: true });
 
     await guideTab.focus();
     await page.keyboard.press('ArrowRight');
@@ -234,8 +234,8 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('ArrowRight from the last tab wraps focus to the first tab', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
-    const referencesTab = page.getByRole('tab', { name: 'References & Values', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
+    const referencesTab = page.getByRole('tab', { name: 'Catalogue', exact: true });
 
     await guideTab.focus();
     await page.keyboard.press('End');
@@ -251,7 +251,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
   test('exactly one primary tab has tabindex=0 at any time, including after arrowing', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'The Guide', exact: true });
+    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
     await guideTab.focus();
     await page.keyboard.press('ArrowRight');
     await page.keyboard.press('ArrowRight');
@@ -282,9 +282,9 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     // tabpanel wrapper -- aria-controls pointed at nothing. That kind of
     // dangling IDREF is invisible without asserting the target actually
     // resolves in the DOM.
-    await clickUntilVisible(page, 'References & Values', 'references-values-tab');
+    await clickUntilVisible(page, 'Catalogue', 'references-values-tab');
 
-    const activeTab = page.getByRole('tab', { name: 'References & Values', exact: true });
+    const activeTab = page.getByRole('tab', { name: 'Catalogue', exact: true });
     await expect(activeTab).toHaveAttribute('aria-selected', 'true');
 
     const controlsId = await activeTab.getAttribute('aria-controls');
@@ -297,11 +297,11 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     await clickUntilVisible(page, 'Calculator', 'calculator-tab-content');
 
-    const hideButton = page.getByRole('button', { name: 'Hide left panel', exact: true });
+    const hideButton = page.getByRole('button', { name: 'Hide Guide panel', exact: true });
     await expect(hideButton).toBeVisible();
     await hideButton.click();
 
-    const showButton = page.getByRole('button', { name: 'Show left panel', exact: true });
+    const showButton = page.getByRole('button', { name: 'Show Guide panel', exact: true });
     await expect(showButton).toBeVisible();
 
     const wrapper = page.getByTestId('left-sidebar-wrapper');
@@ -376,7 +376,7 @@ test.describe('Vision page -- axis colour encoding (decision #3)', () => {
 
     await clickUntilVisible(
       page,
-      'Vision for Modernizing Schedule 3.4',
+      'Modernizing Schedule 3.4',
       page.getByTestId('schedule-34-matrix'),
     );
 

@@ -2309,4 +2309,61 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       expect(hint.className.split(/\s+/)).toContain('lg:hidden');
     });
   });
+
+  describe('Jurisdictional Frameworks (Methodology by pathway) tab and pathway side-tabs', () => {
+    it('activates Methodology by pathway and swaps case study sentinel content across side tabs', () => {
+      const eqpSentinel = '# EqP Case Study Sentinel Content\n\nEquilibrium partitioning details.';
+      const bsafSentinel = '# BSAF Case Study Sentinel Content\n\nBiota-sediment accumulation factor details.';
+      const hhSentinel = '# Human Health Case Study Sentinel Content\n\nDirect contact and fish ingestion details.';
+
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          eqpCaseStudyContent={eqpSentinel}
+          bsafCaseStudyContent={bsafSentinel}
+          humanHealthContent={hhSentinel}
+        />,
+      );
+
+      // 1. Activate "Methodology by pathway" primary tab
+      const methodologyTab = screen.getByRole('tab', { name: /^Methodology by pathway$/ });
+      expect(methodologyTab).toHaveAttribute('aria-selected', 'false');
+      fireEvent.click(methodologyTab);
+      expect(methodologyTab).toHaveAttribute('aria-selected', 'true');
+
+      // 2. Verify default side-tab is "Ecological: EqP & AVS" and shows EqP sentinel (with H1 demoted)
+      const eqpSideTab = screen.getByRole('tab', { name: /^Ecological: EqP & AVS$/ });
+      const bsafSideTab = screen.getByRole('tab', { name: /^Ecological: Food Web \(BSAF\)$/ });
+      const hhSideTab = screen.getByRole('tab', { name: /^Human Health Pathways$/ });
+
+      expect(eqpSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
+      expect(hhSideTab).toHaveAttribute('aria-selected', 'false');
+
+      const mainPanel = document.getElementById('matrix-jurisdictional-side-tabpanel')!;
+      expect(mainPanel).toBeInTheDocument();
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
+
+      // 3. Switch to BSAF side tab and verify BSAF sentinel replaces EqP
+      fireEvent.click(bsafSideTab);
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(eqpSideTab).toHaveAttribute('aria-selected', 'false');
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## BSAF Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
+
+      // 4. Switch to Human Health side tab and verify HH sentinel replaces BSAF
+      fireEvent.click(hhSideTab);
+      expect(hhSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## Human Health Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
+    });
+  });
 });

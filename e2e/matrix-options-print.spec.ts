@@ -23,7 +23,7 @@ import { gotoMatrixOptionsOrSkip, clickUntilVisible } from './fixtures/matrix-op
  *    FAILS with a screen count of 2.
  */
 
-const PROSE_TABS = ['The Guide', 'Methodology by pathway'] as const;
+const PROSE_TABS = ['Guide', 'Methodology by pathway'] as const;
 
 test.describe('Matrix Options print heading outline', () => {
   for (const tab of PROSE_TABS) {
