@@ -3496,13 +3496,14 @@
     {
       "id": "continuity.pr791_frontend_completion_2026_08_23",
       "path": "docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md",
-      "lifecycle": "REFERENCE",
+      "lifecycle": "HISTORICAL",
       "domain_tags": [
         "continuity",
         "matrix-options",
         "qaqc",
         "frontend",
-        "phase-2"
+        "phase-2",
+        "historical"
       ],
       "notes": "Detailed completion record for the PR #791 frontend enablement event supporting Phase 2/L2, including Git/PR evidence, UI/UX polish, QA/QC and accessibility improvements, explicit non-claims, and verification evidence."
     },
