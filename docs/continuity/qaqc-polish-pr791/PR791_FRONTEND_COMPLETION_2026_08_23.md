@@ -1,9 +1,10 @@
 # PR #791 Frontend Enablement Event Completion Record (2026-08-23)
 
-**Lifecycle:** HISTORICAL-IN-PLACE (dated snapshot; do not treat as current truth).
-**Capture date:** 2026-08-23.
-**For current status:** `docs/INDEX.md`, `docs/MATRIX_OPTIONS_STATUS.md`, and `docs/_meta/docs-manifest.json` -> `facts`.
-Claims below were true at capture and are not maintained afterward.
+> **Lifecycle:** HISTORICAL-IN-PLACE (dated snapshot; do not treat as current truth).
+> **Capture date:** 2026-08-23.
+> **For current status:** `docs/INDEX.md`, `docs/MATRIX_OPTIONS_STATUS.md`, and `docs/_meta/docs-manifest.json` -> `facts`.
+> Claims below were true at capture and are not maintained afterward.
+
 **Scope:** SSTAC-Dashboard PR #791 frontend enablement event supporting Phase 2/L2
 **Authority:** `docs/INDEX.md`, `docs/MATRIX_OPTIONS_STATUS.md`, `docs/GATE_MODE_SOP.md`
 
