@@ -3,12 +3,12 @@
 import { useState, useEffect, useMemo } from 'react';
 import SimpleToast from '@/components/SimpleToast';
 import { getUsers, toggleAdminRole, type UserWithRole } from '@/app/(dashboard)/admin/users/actions';
-import { Search, Filter, ChevronLeft, ChevronRight, Users, Shield, User } from 'lucide-react';
+import { Search, Filter, ChevronLeft, ChevronRight, Users, Shield, User, ArrowUp, ArrowDown } from 'lucide-react';
 import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
 
 /**
  * AdminUsersManager Component
- * 
+ *
  * Provides comprehensive user management interface for administrators.
  * Features:
  * - User listing with search, filtering, and pagination
@@ -16,7 +16,7 @@ import { refreshGlobalAdminStatus } from '@/lib/admin-utils';
  * - Role assignment
  * - Sorting by email, creation date, or role
  * - Pagination support
- * 
+ *
  * Security: All operations require admin authentication via server actions.
  */
 export default function AdminUsersManager() {
@@ -29,7 +29,7 @@ export default function AdminUsersManager() {
   const [newUserEmail, setNewUserEmail] = useState('');
   const [newUserRole, setNewUserRole] = useState<'user' | 'admin'>('user');
   const [isAddingUser, setIsAddingUser] = useState(false);
-  
+
   // Enhanced features: search, filter, pagination, sorting
   const [searchTerm, setSearchTerm] = useState('');
   const [roleFilter, setRoleFilter] = useState<'all' | 'admin' | 'user'>('all');
@@ -61,17 +61,17 @@ export default function AdminUsersManager() {
     const filtered = users.filter(user => {
       const matchesSearch = user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            user.id.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesRole = roleFilter === 'all' || 
+      const matchesRole = roleFilter === 'all' ||
                          (roleFilter === 'admin' && user.isAdmin) ||
                          (roleFilter === 'user' && !user.isAdmin);
-      
+
       return matchesSearch && matchesRole;
     });
 
     // Sort users
     filtered.sort((a, b) => {
       let aValue: unknown, bValue: unknown;
-      
+
       switch (sortBy) {
         case 'email':
           aValue = a.email.toLowerCase();
@@ -121,27 +121,27 @@ export default function AdminUsersManager() {
   const handleToggleAdminRole = async (userId: string, currentIsAdmin: boolean) => {
     try {
       setUpdatingUser(userId);
-      
+
       await toggleAdminRole(userId, currentIsAdmin);
-      
+
       showToast(
-        currentIsAdmin 
-          ? 'Admin role removed successfully' 
-          : 'Admin role granted successfully', 
+        currentIsAdmin
+          ? 'Admin role removed successfully'
+          : 'Admin role granted successfully',
         'success'
       );
-      
+
       // Refresh the users list
       await fetchUsers();
-      
+
       // Refresh admin status to ensure badge persists
       await refreshGlobalAdminStatus();
     } catch (error) {
       console.error('Error updating admin role:', error);
       showToast(
-        currentIsAdmin 
-          ? 'Failed to remove admin role' 
-          : 'Failed to grant admin role', 
+        currentIsAdmin
+          ? 'Failed to remove admin role'
+          : 'Failed to grant admin role',
         'error'
       );
     } finally {
@@ -153,7 +153,7 @@ export default function AdminUsersManager() {
 
   const handleAddUser = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!newUserEmail.trim()) {
       showToast('Please enter an email address', 'error');
       return;
@@ -161,20 +161,20 @@ export default function AdminUsersManager() {
 
     try {
       setIsAddingUser(true);
-      
+
       // First, we need to find the user ID from the email
       // Since we can't directly query auth.users, we'll need to use a different approach
       // For now, we'll show instructions on how to add the user manually
-      
+
       showToast(
-        `To add a user role for '${newUserEmail}', you need to:\n\n1. Make sure the user has signed up through the signup page\n2. Run this SQL in your Supabase SQL editor:\n\nINSERT INTO user_roles (user_id, role) \nSELECT id, '${newUserRole}' \nFROM auth.users \nWHERE email = '${newUserEmail}' \nON CONFLICT (user_id, role) DO NOTHING;\n\n3. Refresh this page to see the new user`, 
+        `To add a user role for '${newUserEmail}', you need to:\n\n1. Make sure the user has signed up through the signup page\n2. Run this SQL in your Supabase SQL editor:\n\nINSERT INTO user_roles (user_id, role) \nSELECT id, '${newUserRole}' \nFROM auth.users \nWHERE email = '${newUserEmail}' \nON CONFLICT (user_id, role) DO NOTHING;\n\n3. Refresh this page to see the new user`,
         'info'
       );
-      
+
       // Clear form
       setNewUserEmail('');
       setNewUserRole('user');
-      
+
     } catch (error) {
       console.error('Error adding user:', error);
       showToast('Failed to add user role', 'error');
@@ -187,7 +187,7 @@ export default function AdminUsersManager() {
     setToastMessage(message);
     setToastType(type);
     setShowToastState(true);
-    
+
     // Auto-hide toast after 3 seconds
     setTimeout(() => {
       setShowToastState(false);
@@ -223,7 +223,7 @@ export default function AdminUsersManager() {
   if (isLoading) {
     return (
       <div className="flex justify-center items-center py-12">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-sky-700 border-t-transparent"></div>
       </div>
     );
   }
@@ -328,7 +328,7 @@ export default function AdminUsersManager() {
           </div>
         </div>
       </div>
-      
+
       {/* Add New User Form */}
       <div className="px-6 py-4 border-b border-slate-200 dark:border-slate-700 bg-sky-50 dark:bg-sky-900/20">
         <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-3 flex items-center">
@@ -376,46 +376,70 @@ export default function AdminUsersManager() {
           Note: This form is for demonstration. In production, users must sign up first before roles can be assigned.
         </p>
       </div>
-      
+
       {/* Users Table */}
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-700">
           <thead className="bg-slate-50 dark:bg-slate-800">
             <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('email')}>
-                <div className="flex items-center space-x-1">
+              <th
+                scope="col"
+                className="p-0 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                aria-sort={sortBy === 'email' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('email')}
+                  className="flex min-h-[44px] w-full items-center gap-1.5 px-6 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 transition-colors"
+                >
                   <span>User</span>
                   {sortBy === 'email' && (
-                    <span className="text-sky-700">
-                      {sortOrder === 'asc' ? '↑' : '↓'}
+                    <span className="text-sky-700 dark:text-sky-400">
+                      {sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
                     </span>
                   )}
-                </div>
+                </button>
               </th>
-                             <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('role')}>
-                 <div className="flex items-center space-x-1">
-                   <span>Role</span>
-                   {sortBy === 'role' && (
-                     <span className="text-sky-700">
-                       {sortOrder === 'asc' ? '↑' : '↓'}
-                     </span>
-                   )}
-                 </div>
-               </th>
+              <th
+                scope="col"
+                className="p-0 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                aria-sort={sortBy === 'role' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('role')}
+                  className="flex min-h-[44px] w-full items-center gap-1.5 px-6 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 transition-colors"
+                >
+                  <span>Role</span>
+                  {sortBy === 'role' && (
+                    <span className="text-sky-700 dark:text-sky-400">
+                      {sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+                    </span>
+                  )}
+                </button>
+              </th>
 
-               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 dark:hover:bg-slate-700" onClick={() => handleSort('created_at')}>
-                 <div className="flex items-center space-x-1">
-                   <span>Joined</span>
-                   {sortBy === 'created_at' && (
-                     <span className="text-sky-700">
-                       {sortOrder === 'asc' ? '↑' : '↓'}
-                     </span>
-                   )}
-                 </div>
-               </th>
-               <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
-                 Actions
-               </th>
+              <th
+                scope="col"
+                className="p-0 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider"
+                aria-sort={sortBy === 'created_at' ? (sortOrder === 'asc' ? 'ascending' : 'descending') : 'none'}
+              >
+                <button
+                  type="button"
+                  onClick={() => handleSort('created_at')}
+                  className="flex min-h-[44px] w-full items-center gap-1.5 px-6 py-3 text-left hover:bg-slate-100 dark:hover:bg-slate-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 transition-colors"
+                >
+                  <span>Joined</span>
+                  {sortBy === 'created_at' && (
+                    <span className="text-sky-700 dark:text-sky-400">
+                      {sortOrder === 'asc' ? <ArrowUp className="w-3.5 h-3.5" /> : <ArrowDown className="w-3.5 h-3.5" />}
+                    </span>
+                  )}
+                </button>
+              </th>
+              <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                Actions
+              </th>
             </tr>
           </thead>
           <tbody className="bg-white dark:bg-slate-900 divide-y divide-slate-200 dark:divide-slate-700">
@@ -444,53 +468,54 @@ export default function AdminUsersManager() {
                     </div>
                   </div>
                 </td>
-                                 <td className="px-6 py-4 whitespace-nowrap">
-                   <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${
-                     user.isAdmin
-                       ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
-                       : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
-                   }`}>
-                     {user.isAdmin ? (
-                       <>
-                         <Shield className="w-3 h-3 mr-1" />
-                         Admin
-                       </>
-                     ) : (
-                       <>
-                         <User className="w-3 h-3 mr-1" />
-                         Member
-                       </>
-                     )}
-                   </span>
-                 </td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex items-center px-2.5 py-1 text-xs font-semibold rounded-full ${
+                    user.isAdmin
+                      ? 'bg-green-100 dark:bg-green-900/20 text-green-800 dark:text-green-300'
+                      : 'bg-slate-100 dark:bg-slate-700 text-slate-800 dark:text-slate-200'
+                  }`}>
+                    {user.isAdmin ? (
+                      <>
+                        <Shield className="w-3 h-3 mr-1" />
+                        Admin
+                      </>
+                    ) : (
+                      <>
+                        <User className="w-3 h-3 mr-1" />
+                        Member
+                      </>
+                    )}
+                  </span>
+                </td>
 
-                 <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                   {formatDate(user.created_at)}
-                 </td>
-                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                   <div className="flex space-x-2">
-                     <button
-                       onClick={() => handleToggleAdminRole(user.id, user.isAdmin)}
-                       disabled={updatingUser === user.id}
-                       className={`inline-flex items-center px-3 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
-                         user.isAdmin
-                           ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
-                           : 'bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400'
-                       } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:cursor-not-allowed transition-colors`}
-                     >
-                       {updatingUser === user.id ? (
-                         <>
-                           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
-                           Updating...
-                         </>
-                       ) : (
-                         <>
-                           {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
-                         </>
-                       )}
-                     </button>
-                   </div>
-                 </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
+                  {formatDate(user.created_at)}
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <div className="flex space-x-2">
+                    <button
+                      type="button"
+                      onClick={() => handleToggleAdminRole(user.id, user.isAdmin)}
+                      disabled={updatingUser === user.id}
+                      className={`inline-flex min-h-[44px] items-center px-3.5 py-2 border border-transparent text-sm leading-4 font-medium rounded-md text-white ${
+                        user.isAdmin
+                          ? 'bg-red-600 hover:bg-red-700 disabled:bg-red-400'
+                          : 'bg-sky-700 hover:bg-sky-800 disabled:bg-sky-400'
+                      } focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 disabled:cursor-not-allowed transition-colors`}
+                    >
+                      {updatingUser === user.id ? (
+                        <>
+                          <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent mr-2"></div>
+                          Updating...
+                        </>
+                      ) : (
+                        <>
+                          {user.isAdmin ? 'Remove Admin' : 'Make Admin'}
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
           </tbody>
@@ -506,31 +531,37 @@ export default function AdminUsersManager() {
             </div>
             <div className="flex items-center space-x-2">
               <button
+                type="button"
                 onClick={() => setCurrentPage(currentPage - 1)}
                 disabled={currentPage === 1}
-                className="px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Previous page"
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              
+
               {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                 <button
                   key={page}
+                  type="button"
                   onClick={() => setCurrentPage(page)}
-                  className={`px-3 py-2 text-sm font-medium rounded-md ${
+                  className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-sm font-medium rounded-md ${
                     currentPage === page
                       ? 'bg-sky-700 text-white'
-                      : 'text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
+                      : 'text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 hover:bg-slate-50 dark:hover:bg-slate-700'
                   }`}
+                  aria-current={currentPage === page ? 'page' : undefined}
                 >
                   {page}
                 </button>
               ))}
-              
+
               <button
+                type="button"
                 onClick={() => setCurrentPage(currentPage + 1)}
                 disabled={currentPage === totalPages}
-                className="px-3 py-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-sm font-medium text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded-md hover:bg-slate-50 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                aria-label="Next page"
               >
                 <ChevronRight className="w-4 h-4" />
               </button>
@@ -538,19 +569,19 @@ export default function AdminUsersManager() {
           </div>
         </div>
       )}
-      
+
       {currentUsers.length === 0 && (
         <div className="text-center py-12">
           <p className="text-lg font-medium mb-2 text-slate-900 dark:text-white">No users found</p>
           <p className="text-sm text-slate-500 dark:text-slate-400">
-            {searchTerm || roleFilter !== 'all' 
+            {searchTerm || roleFilter !== 'all'
               ? 'Try adjusting your search or filter criteria'
               : 'No users have been added yet'
             }
           </p>
         </div>
       )}
-      
+
       {showToastState && (
         <SimpleToast
           message={toastMessage}

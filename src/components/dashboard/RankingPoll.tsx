@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Check, RotateCcw } from 'lucide-react';
 import PollResultsChart from './PollResultsChart';
 
 interface RankingOption {
@@ -19,14 +20,14 @@ interface RankingPollProps {
   onVote?: (pollIndex: number, rankings: number[]) => void;
 }
 
-export default function RankingPoll({ 
-  pollIndex, 
-  question, 
-  options, 
-  pagePath, 
+export default function RankingPoll({
+  pollIndex,
+  question,
+  options,
+  pagePath,
   questionNumber,
   authCode,
-  onVote 
+  onVote
 }: RankingPollProps) {
   const [rankingOptions, setRankingOptions] = useState<RankingOption[]>([]);
   const [hasVoted, setHasVoted] = useState(false);
@@ -50,7 +51,7 @@ export default function RankingPoll({
       // Determine API endpoint based on page path
       // Use unified API endpoint for all pages
       const apiEndpoint = '/api/ranking-polls/results';
-      
+
       let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
       if (authCode) {
         url += `&authCode=${encodeURIComponent(authCode)}`;
@@ -59,11 +60,11 @@ export default function RankingPoll({
       if (response.ok) {
         const data = await response.json();
         setResults(data.results);
-        
+
         // Check if user has already voted
         if (data.userRankings && data.userRankings.length > 0) {
           setUserRankings(data.userRankings);
-          
+
           // For CEW pages, show previous rankings but don't disable submit button
           // This allows users to see their previous choice while still being able to vote again
           if (pagePath.startsWith('/cew-polls/')) {
@@ -105,10 +106,10 @@ export default function RankingPoll({
       rank: null
     }));
     setRankingOptions(initialOptions);
-    
+
     // Check for existing vote
     fetchResults();
-    
+
     // Check for CEW ranking in sessionStorage
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWRankingStatus();
@@ -124,25 +125,25 @@ export default function RankingPoll({
   const handleRankChange = (optionId: string, newRank: number) => {
     setRankingOptions(prev => {
       const updated = [...prev];
-      
+
       // Clear any existing rank for this option
       const optionIndex = updated.findIndex(opt => opt.id === optionId);
       if (optionIndex !== -1) {
         updated[optionIndex].rank = null;
       }
-      
+
       // Clear the rank from any other option that had this rank
       updated.forEach(opt => {
         if (opt.rank === newRank && opt.id !== optionId) {
           opt.rank = null;
         }
       });
-      
+
       // Set the new rank
       if (optionIndex !== -1) {
         updated[optionIndex].rank = newRank;
       }
-      
+
       return updated;
     });
   };
@@ -154,7 +155,7 @@ export default function RankingPoll({
 
     // Check if all options are ranked
     const allRanked = rankingOptions.every(opt => opt.rank !== null);
-    
+
     if (!allRanked) {
       alert('Please rank all options before submitting.');
       return;
@@ -181,7 +182,7 @@ export default function RankingPoll({
       // Determine API endpoint based on page path
       // Use unified API endpoint for all pages
       const apiEndpoint = '/api/ranking-polls/submit';
-      
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
@@ -202,13 +203,13 @@ export default function RankingPoll({
         setShowResults(true);
         setUserRankings(rankings);
         setShowChangeOption(false);
-        
+
         // Save ranking to sessionStorage for CEW pages
         // For CEW pages, don't save rankings locally for privacy
-        
+
         // Fetch updated results
         await fetchResults();
-        
+
         // Call parent callback if provided
         if (onVote) {
           onVote(pollIndex, rankings);
@@ -228,7 +229,7 @@ export default function RankingPoll({
     setHasVoted(false);
     // Don't reset rankings immediately - let user see their previous rankings and change them
     // setRankingOptions(prev => prev.map(opt => ({ ...opt, rank: null })));
-    
+
     // No device tracking for CEW pages - allow re-voting
   };
 
@@ -262,21 +263,21 @@ export default function RankingPoll({
       <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8 text-center">
         {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
-      
+
       {/* User's previous ranking indicator - always show when user has voted */}
       {hasVoted && userRankings && (
         <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
-              <span className="text-green-800 dark:text-green-200">
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-green-800 dark:text-green-200 text-sm font-medium">
                 You have already ranked these options
               </span>
             </div>
             {!showChangeOption && (
               <button
                 onClick={handleChangeRanking}
-                className="px-3 py-1 text-sm bg-sky-700 hover:bg-sky-800 text-white rounded-md transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold bg-sky-700 hover:bg-sky-800 text-white rounded-lg transition-colors min-h-[36px]"
               >
                 Change Ranking
               </button>
@@ -284,36 +285,36 @@ export default function RankingPoll({
           </div>
         </div>
       )}
-      
+
       {/* Change ranking mode indicator */}
       {showChangeOption && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-yellow-600 dark:text-yellow-400 font-semibold">🔄</span>
-              <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+              <RotateCcw className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+              <span className="text-yellow-800 dark:text-yellow-200 font-medium text-sm">
                 Re-rank all options to change your ranking
               </span>
             </div>
             <button
               onClick={handleCancelChange}
-              className="px-3 py-1 text-sm bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
+              className="px-3 py-1.5 text-xs font-semibold bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors min-h-[36px]"
             >
               Cancel
             </button>
           </div>
         </div>
       )}
-      
+
       <div className="space-y-4">
         {rankingOptions.map((option, index) => {
           const averageRank = getAverageRanking(index);
           const isRanked = option.rank !== null;
-          
+
           return (
             <div key={option.id} className="relative">
               <div className={`w-full p-4 rounded-xl border-2 transition-all duration-300 ${
-                hasVoted 
+                hasVoted
                   ? 'bg-slate-100 dark:bg-slate-600 border-slate-300 dark:border-slate-500'
                   : 'bg-white dark:bg-slate-700 border-sky-300 dark:border-slate-600 hover:border-sky-500 dark:hover:border-sky-400 hover:shadow-md'
               }`}>
@@ -326,7 +327,7 @@ export default function RankingPoll({
                     </span>
                     {option.text}
                   </span>
-                  
+
                   {hasVoted && averageRank && (
                     <div className="flex items-center space-x-2">
                       <span className="text-sky-700 dark:text-sky-300 font-semibold">
@@ -334,14 +335,14 @@ export default function RankingPoll({
                       </span>
                     </div>
                   )}
-                  
+
                   {isRanked && !hasVoted && (
                     <span className="text-sky-700 dark:text-sky-300 font-semibold">
                       {getRankingText(option.rank!)}
                     </span>
                   )}
                 </div>
-                
+
                 {(!hasVoted || showChangeOption) && (
                   <div className="flex flex-wrap gap-2">
                     {options.map((_, rankNum) => (
@@ -351,7 +352,7 @@ export default function RankingPoll({
                         className={`px-3 py-1 rounded-full text-sm font-medium transition-colors ${
                           option.rank === rankNum + 1
                             ? 'bg-sky-600 text-white'
-                            : 'bg-slate-100 dark:bg-slate-600 text-slate-600 dark:text-slate-200 hover:bg-sky-200 dark:hover:bg-sky-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-500'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-slate-900 dark:hover:text-slate-100 border border-slate-300 dark:border-slate-600'
                         }`}
                       >
                         {getRankingText(rankNum + 1)}
@@ -381,7 +382,7 @@ export default function RankingPoll({
           >
             {isLoading ? (
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                 <span>Submitting...</span>
               </div>
             ) : (

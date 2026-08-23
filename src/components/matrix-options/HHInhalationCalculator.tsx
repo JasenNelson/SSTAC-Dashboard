@@ -33,7 +33,11 @@ import type {
   CalculatorUsedValue,
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
-import { positiveInput, optionalPositiveInput } from '@/lib/matrix-options/parseDecimal';
+import {
+  positiveInput,
+  optionalPositiveInput,
+  boundedInput,
+} from '@/lib/matrix-options/parseDecimal';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -167,10 +171,10 @@ export default function HHInhalationCalculator({
       ),
       rfc_inhalation_mg_per_m3: optionalPositiveInput(rfcInput, 'RfC'),
       iur_inhalation_per_mg_per_m3: optionalPositiveInput(iurInput, 'IUR'),
-      EF_days_per_year: positiveInput(efInput, 'Exposure frequency'),
+      EF_days_per_year: boundedInput(efInput, 'Exposure frequency', 0, 365, false, true),
       ED_years: positiveInput(edInput, 'Exposure duration'),
       AT_cancer_years: positiveInput(atCancerInput, 'Cancer averaging time'),
-      targetRisk: positiveInput(targetRiskInput, 'Target risk'),
+      targetRisk: boundedInput(targetRiskInput, 'Target risk', 0, 1, false, true),
       hazardQuotient: positiveInput(hazardQuotientInput, 'Hazard quotient'),
     };
 
@@ -178,6 +182,14 @@ export default function HHInhalationCalculator({
       if (typeof value === 'object' && value !== null && 'error' in value) {
         return value;
       }
+    }
+
+    if (
+      typeof fields.ED_years === 'number' &&
+      typeof fields.AT_cancer_years === 'number' &&
+      fields.ED_years > fields.AT_cancer_years
+    ) {
+      return { error: 'Exposure duration cannot exceed cancer averaging time.' };
     }
 
     try {
@@ -430,6 +442,10 @@ export default function HHInhalationCalculator({
             Volatilization factor VF (m3/kg) -- user-supplied
             <input
               data-testid="hh-inhalation-vf-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
               value={vfInput}
               onChange={(e) => setVfInput(e.target.value)}
               placeholder="Not supplied"
@@ -440,6 +456,10 @@ export default function HHInhalationCalculator({
             Particulate emission factor PEF (m3/kg) -- user-supplied
             <input
               data-testid="hh-inhalation-pef-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
               value={pefInput}
               onChange={(e) => setPefInput(e.target.value)}
               placeholder="Not supplied"
@@ -453,6 +473,10 @@ export default function HHInhalationCalculator({
             RfC (mg/m3, non-cancer)
             <input
               data-testid="hh-inhalation-rfc-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
               value={rfcInput}
               onChange={(e) => setRfcInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -462,6 +486,10 @@ export default function HHInhalationCalculator({
             IUR (per mg/m3, cancer)
             <input
               data-testid="hh-inhalation-iur-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
               value={iurInput}
               onChange={(e) => setIurInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -474,6 +502,11 @@ export default function HHInhalationCalculator({
             Exposure frequency (days/yr)
             <input
               data-testid="hh-inhalation-ef-input"
+              type="number"
+              inputMode="decimal"
+              min="1"
+              max="365"
+              step="any"
               value={efInput}
               onChange={(e) => setEfInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -483,6 +516,10 @@ export default function HHInhalationCalculator({
             Exposure duration (yr)
             <input
               data-testid="hh-inhalation-ed-input"
+              type="number"
+              inputMode="decimal"
+              min="0.1"
+              step="any"
               value={edInput}
               onChange={(e) => setEdInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -492,6 +529,10 @@ export default function HHInhalationCalculator({
             Cancer averaging time (yr)
             <input
               data-testid="hh-inhalation-at-cancer-input"
+              type="number"
+              inputMode="decimal"
+              min="1"
+              step="any"
               value={atCancerInput}
               onChange={(e) => setAtCancerInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -504,6 +545,11 @@ export default function HHInhalationCalculator({
             Target risk (unitless probability)
             <input
               data-testid="hh-inhalation-target-risk-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              max="1"
+              step="any"
               value={targetRiskInput}
               onChange={(e) => setTargetRiskInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -513,6 +559,10 @@ export default function HHInhalationCalculator({
             Hazard quotient (unitless)
             <input
               data-testid="hh-inhalation-hazard-quotient-input"
+              type="number"
+              inputMode="decimal"
+              min="0"
+              step="any"
               value={hazardQuotientInput}
               onChange={(e) => setHazardQuotientInput(e.target.value)}
               className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none"
@@ -573,13 +623,18 @@ export default function HHInhalationCalculator({
       )}
 
       <details
-        className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+        className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden shadow-xs"
         data-testid="hh-inhalation-technical-details"
       >
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none flex items-center justify-between">
-          <span>Technical details (formula + endpoint comparison)</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 group-open:hidden">show</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden group-open:inline">hide</span>
+        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">Technical details</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(formula + endpoint comparison)</span>
+          </div>
+          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+            <span className="group-open:hidden">show [+]</span>
+            <span className="hidden group-open:inline">hide [-]</span>
+          </span>
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer

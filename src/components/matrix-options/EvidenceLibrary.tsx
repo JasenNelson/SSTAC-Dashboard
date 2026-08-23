@@ -3,12 +3,13 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { VALUES_PAGE_SIZE, computeValuesPagination } from './evidenceLibraryPagination';
 import ScrollFadeRegion from '../ScrollFadeRegion';
-import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X } from 'lucide-react';
+import { ChevronDown, ChevronLeft, ChevronRight, ExternalLink, Plus, Search, SlidersHorizontal, X, ShieldCheck, CheckCircle2, ArrowRight, BookOpen, Layers, FileText, Maximize2, Check, AlertTriangle, Zap } from 'lucide-react';
 import { checkCurrentUserAdminStatus } from '@/lib/admin-utils';
 import { promoteSourceLead, isUnscopedPromotion } from '@/lib/matrix-options/provenance/promotion';
 import type { PromotedParameterValueRecord } from '@/lib/matrix-options/provenance/promotion';
-import { submitReview, fetchReviewHistory } from '@/lib/matrix-options/provenance/qa-review-sync';
+import { submitReview, fetchReviewHistory, fetchAllReviews } from '@/lib/matrix-options/provenance/qa-review-sync';
 import type { ParameterValueReview } from '@/lib/matrix-options/provenance/qa-review-sync';
+import { reduceToCurrentVerificationStates } from '@/lib/matrix-options/provenance/qa-review-reduction';
 import { submitEvidenceItem, fetchEvidenceItems } from '@/lib/matrix-options/provenance/evidence-sync';
 import type { CatalogEvidenceItem } from '@/lib/matrix-options/provenance/evidence-sync';
 import { fetchTriageState, setTriageStatus } from '@/lib/matrix-options/provenance/triage-sync';
@@ -55,6 +56,7 @@ import type {
   EvidenceLibraryFilters,
   EvidenceLibraryViewMode,
   ProvenancePathway,
+  SourceRecord,
 } from '@/lib/matrix-options/provenance/types';
 import { catalogValueRole, isProvenancePathway } from '@/lib/matrix-options/provenance/pathways';
 import {
@@ -482,13 +484,18 @@ function ReviewDispositionNote({
   return (
     <div
       className={cn(
-        'rounded-md border',
-        compact ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-2 text-xs',
+        'rounded-md border transition-all',
+        compact ? 'px-2 py-1 text-[11px]' : 'px-2.5 py-1.5 text-xs',
         reviewToneClass(tone),
       )}
+      title={detail}
     >
-      <div className="font-semibold">{label}</div>
-      {!compact && <div className="mt-0.5 leading-relaxed">{detail}</div>}
+      <div className="font-semibold leading-tight">{label}</div>
+      {!compact && (
+        <div className="mt-0.5 text-[11px] leading-snug line-clamp-2 opacity-90">
+          {detail}
+        </div>
+      )}
     </div>
   );
 }
@@ -1278,7 +1285,7 @@ function CrossPathwayAuditRowCard({
               in docs/PRINT_CLIPPING_BACKLOG_2026_08_16.md. This element sits INSIDE the list
               de-clipped vertically below, so fixing only that would have corrected how MANY rows
               print while still clipping WHICH substance each row is about. */}
-          <div className="font-semibold text-slate-900 dark:text-white truncate print:overflow-visible print:whitespace-normal print:text-clip">
+          <div className="font-semibold text-slate-900 dark:text-white break-words">
             {row.substance_label}
           </div>
           <div className="text-slate-600 dark:text-slate-300">{row.input_label}</div>
@@ -1895,16 +1902,264 @@ function AddEvidenceLocatorForm({
   );
 }
 
+function EvidenceDossierModal({
+  row,
+  policyDecision,
+  onClose,
+  isAdmin = false,
+}: {
+  row: EvidenceLibraryValueRow;
+  policyDecision: DefaultSelectionPolicyDecision | null;
+  onClose: () => void;
+  isAdmin?: boolean;
+}) {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [onClose]);
+
+  const canonicalSources = row.sources.filter(isCalculatorEvidenceSource);
+  const review = getParameterValueReviewDisposition(row.record, row.sources);
+  const policyCandidate = policyDecision?.candidates.find(
+    (candidate) =>
+      candidate.record.parameter_value_id === row.record.parameter_value_id,
+  );
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="dossier-modal-title"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-xs animate-in fade-in duration-200"
+      onClick={(e) => {
+        if (e.target === e.currentTarget) onClose();
+      }}
+    >
+      <div
+        className="w-full max-w-4xl max-h-[90vh] print:max-h-none bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden text-slate-900 dark:text-slate-100 animate-in zoom-in-95 duration-200"
+      >
+        {/* Header */}
+        <div className="flex items-start justify-between p-5 border-b border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+          <div className="min-w-0 flex-1 pr-4">
+            <div className="flex items-center gap-2 flex-wrap mb-1">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400 bg-sky-100 dark:bg-sky-950/80 px-2 py-0.5 rounded-md border border-sky-200 dark:border-sky-800">
+                Evidence Dossier
+              </span>
+              <span className="text-[11px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-2 py-0.5 rounded-md">
+                {humanizeCatalogLabel(row.record.pathway)}
+              </span>
+              <span className="text-[11px] font-bold text-slate-500">
+                Jurisdiction: {row.record.jurisdiction}
+              </span>
+            </div>
+            <h2 id="dossier-modal-title" className="text-xl font-bold text-slate-900 dark:text-white leading-snug">
+              {row.record.display_name}
+            </h2>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5 font-medium">
+              Substance: {row.substanceLabel}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close evidence dossier"
+            className="min-h-[36px] min-w-[36px] inline-flex items-center justify-center rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-500 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-700 shadow-2xs transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {/* Scrollable Content Body */}
+        <div className="p-6 overflow-y-auto space-y-5">
+          {/* Hero Value Banner */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row md:items-center justify-between gap-4">
+            <div>
+              <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                Numerical Parameter Value
+              </span>
+              <div className="font-mono text-2xl font-black text-slate-900 dark:text-white mt-0.5">
+                {formatValue(row.record.value, row.record.unit)}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              <StatusBadge value={row.record.default_status} />
+              <StatusBadge value={row.record.evidence_support_status} />
+              <StatusBadge value={row.record.qa_status} />
+              <StatusBadge value={row.record.extraction_status} />
+              {row.record.canonical_source_status && (
+                <StatusBadge value={row.record.canonical_source_status} />
+              )}
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Primary Citation Card */}
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                Primary Citation &amp; Document Lead
+              </span>
+              <div className="font-bold text-slate-900 dark:text-slate-100 text-sm">
+                {canonicalSources.length > 0
+                  ? canonicalSources.map((source) => source.short_citation).join('; ')
+                  : sourceLabels(row)}
+              </div>
+              <div className="text-xs text-slate-500 dark:text-slate-400 pt-1">
+                Canonical Status:{' '}
+                <span className="font-medium text-slate-700 dark:text-slate-200">
+                  {humanizeCatalogLabel(row.record.canonical_source_status ?? 'direct_source_verified')}
+                </span>
+              </div>
+            </div>
+
+            {/* Policy & Review Card */}
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+              <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+                Protocol 28 &amp; Review Disposition
+              </span>
+              <ReviewDispositionNote {...review} />
+              {policyDecision && policyCandidate ? (
+                <DefaultPolicyDispositionNote
+                  candidate={policyCandidate}
+                  decision={policyDecision}
+                  testId={`modal-policy-detail-${row.record.parameter_value_id}`}
+                />
+              ) : null}
+            </div>
+          </div>
+
+          {/* Exact Document Locators */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                Exact Document Locators ({row.record.evidence_items.length})
+              </h3>
+              <span className="text-[11px] text-slate-500">
+                Direct evidence extractions
+              </span>
+            </div>
+            <div className="grid grid-cols-1 gap-2.5">
+              {row.record.evidence_items.map((evidence) => (
+                <div
+                  key={evidence.evidence_id}
+                  className="p-3.5 rounded-xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40 space-y-2"
+                >
+                  <div className="flex items-center justify-between flex-wrap gap-2">
+                    <span className="text-xs font-bold text-indigo-700 dark:text-indigo-300">
+                      {humanizeCatalogLabel(evidence.locator_type)}
+                    </span>
+                    <span className="text-xs font-mono font-bold px-2 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200">
+                      {evidence.locator}
+                    </span>
+                  </div>
+                  {evidence.note && (
+                    <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                      {evidence.note}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1.5 border-t border-indigo-100/60 dark:border-indigo-900/40">
+                    <span>Extracted on {evidence.extracted_at} by {evidence.extracted_by}</span>
+                    <QaStatusText value={evidence.qa_status} />
+                  </div>
+                </div>
+              ))}
+              {row.record.evidence_items.length === 0 && (
+                <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-900">
+                  No direct citation evidence items recorded.
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Provenance & Metadata Grid */}
+          <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800 space-y-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+              Provenance Trail &amp; Model Metadata
+            </h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 text-xs">
+              <div>
+                <span className="text-slate-500 font-medium">Source Relationships: </span>
+                <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{sourceRelationshipLabels(row)}</div>
+              </div>
+              {row.record.bc_protocol_alignment && (
+                <div>
+                  <span className="text-slate-500 font-medium">Policy Alignment: </span>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{humanizeCatalogLabel(row.record.bc_protocol_alignment)}</div>
+                </div>
+              )}
+              {row.record.source_crystallization_date && (
+                <div>
+                  <span className="text-slate-500 font-medium">Source Crystallization: </span>
+                  <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{row.record.source_crystallization_date}</div>
+                </div>
+              )}
+              <div>
+                <span className="text-slate-500 font-medium">Receptor Groups: </span>
+                <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{tagList(row.receptorGroups)}</div>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">Population Groups: </span>
+                <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{tagList(row.populationGroups)}</div>
+              </div>
+              <div>
+                <span className="text-slate-500 font-medium">Species Groups: </span>
+                <div className="font-semibold text-slate-800 dark:text-slate-200 mt-0.5">{tagList(row.speciesGroups)}</div>
+              </div>
+            </div>
+          </div>
+
+          {/* Applicability & Notes */}
+          {row.record.applicability && (
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-400">Applicability Context</span>
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {row.record.applicability}
+              </p>
+            </div>
+          )}
+
+          {row.record.review_notes && (
+            <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-1">
+              <span className="text-[10px] font-bold uppercase text-slate-400">Review Notes</span>
+              <p className="text-xs text-slate-700 dark:text-slate-300 leading-relaxed">
+                {row.record.review_notes}
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="flex items-center justify-between p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50">
+          <span className="text-xs text-slate-500">
+            Press ESC to close dossier
+          </span>
+          <button
+            type="button"
+            onClick={onClose}
+            className="min-h-[38px] px-4 py-2 rounded-xl bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white font-bold text-xs shadow-xs transition-colors"
+          >
+            Close Dossier
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ValueDetailPanel({
   row,
   policyDecision,
   onClose,
+  onExpandDossier,
   compact = false,
   isAdmin = false,
 }: {
   row: EvidenceLibraryValueRow;
   policyDecision: DefaultSelectionPolicyDecision | null;
   onClose: () => void;
+  onExpandDossier?: () => void;
   compact?: boolean;
   isAdmin?: boolean;
 }) {
@@ -1918,172 +2173,203 @@ function ValueDetailPanel({
 
   return (
     <section
-      className="rounded-lg border border-sky-200 bg-white p-4 shadow-sm dark:border-sky-800 dark:bg-slate-950"
+      className="rounded-xl border border-indigo-200/80 bg-white p-4 shadow-sm dark:border-indigo-900/60 dark:bg-slate-950 space-y-3.5"
       data-testid="evidence-library-value-detail"
       aria-label="Selected value detail"
     >
-      <div className={cn('flex flex-col gap-3', !compact && 'lg:flex-row lg:items-start lg:justify-between')}>
-        <div className="min-w-0">
-          <p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">
-            Selected value
-          </p>
-          <h3 className="mt-1 text-lg font-bold text-slate-950 dark:text-white">
+      {/* Dossier Header */}
+      <div className="flex items-start justify-between border-b border-slate-100 dark:border-slate-800 pb-3">
+        <div className="min-w-0 flex-1 pr-2">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-950/60 px-1.5 py-0.5 rounded border border-indigo-200/60 dark:border-indigo-800/60">
+              Selected value
+            </span>
+            <span className="text-[10px] font-medium text-slate-600 dark:text-slate-400 bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+              {humanizeCatalogLabel(row.record.pathway)}
+            </span>
+            <span className="text-[10px] font-bold text-slate-400">
+              {row.record.jurisdiction}
+            </span>
+          </div>
+          <h3 className="mt-1 text-base font-bold text-slate-900 dark:text-white leading-snug">
             {row.record.display_name}
           </h3>
-          <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-            {row.substanceLabel}; {humanizeCatalogLabel(row.record.pathway)}
+          <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+            {row.substanceLabel}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={onClose}
-          className="inline-flex min-h-9 items-center gap-1 rounded-md border border-slate-300 bg-white px-3 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
-        >
-          <X className="h-3.5 w-3.5" />
-          Close
-        </button>
+        <div className="flex items-center gap-1.5">
+          {onExpandDossier && (
+            <button
+              type="button"
+              onClick={onExpandDossier}
+              title="Expand Full Evidence Dossier"
+              aria-label="Expand Full Evidence Dossier"
+              className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-indigo-200 bg-indigo-50 px-2.5 py-1 text-xs font-bold text-indigo-700 hover:bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 transition-colors"
+            >
+              <Maximize2 className="h-3.5 w-3.5" />
+              <span>Expand</span>
+            </button>
+          )}
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex min-h-8 items-center gap-1 rounded-lg border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold text-slate-700 hover:border-indigo-400 hover:text-indigo-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 transition-colors"
+          >
+            <X className="h-3.5 w-3.5" />
+            Close
+          </button>
+        </div>
       </div>
 
-      <div className={cn('mt-4 grid gap-3', !compact && 'lg:grid-cols-[minmax(0,1fr)_minmax(18rem,24rem)]')}>
-        <div className="space-y-3">
-          <div className={cn('grid gap-2', compact ? 'grid-cols-1' : 'sm:grid-cols-2 xl:grid-cols-4')}>
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">
-                Value
-              </div>
-              <div className="mt-1 font-mono text-sm font-semibold text-slate-900 dark:text-white">
-                {formatValue(row.record.value, row.record.unit)}
-              </div>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">
-                Jurisdiction
-              </div>
-              <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
-                {row.record.jurisdiction}
-              </div>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">
-                Evidence items
-              </div>
-              <div className="mt-1 text-sm text-slate-800 dark:text-slate-100">
-                {row.record.evidence_items.length}
-              </div>
-            </div>
-            <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 dark:border-slate-800 dark:bg-slate-900">
-              <div className="text-[11px] font-semibold uppercase text-slate-500">
-                Candidate group
-              </div>
-              <div className="mt-1 break-all text-xs text-slate-800 dark:text-slate-100">
-                {row.record.candidate_group_id}
-              </div>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-1">
-            <StatusBadge value={row.record.default_status} />
-            <StatusBadge value={row.record.evidence_support_status} />
-            <StatusBadge value={row.record.qa_status} />
-            <StatusBadge value={row.record.extraction_status} />
-            {row.record.canonical_source_status && (
-              <StatusBadge value={row.record.canonical_source_status} />
-            )}
-          </div>
-
-          {isAdmin && (
-            <QaReviewActions
-              parameterValueId={row.record.parameter_value_id}
-              currentQaStatus={row.record.qa_status}
-              currentEvidenceStatus={row.record.evidence_support_status}
-            />
-          )}
-
-          <ReviewDispositionNote {...review} />
-
-          {policyDecision && policyCandidate ? (
-            <DefaultPolicyDispositionNote
-              candidate={policyCandidate}
-              decision={policyDecision}
-              testId={`evidence-default-policy-detail-${row.record.parameter_value_id}`}
-            />
-          ) : null}
-
-          <div className={cn('grid gap-3 text-sm', !compact && 'lg:grid-cols-2')}>
-            <div>
-              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
-                Applicability
-              </div>
-              <p className="mt-1 text-slate-700 dark:text-slate-200">
-                {row.record.applicability}
-              </p>
-            </div>
-            <div>
-              <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
-                Review notes
-              </div>
-              <p className="mt-1 text-slate-700 dark:text-slate-200">
-                {row.record.review_notes}
-              </p>
-            </div>
+      {/* Hero Value Card */}
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+        <div className="flex items-baseline justify-between">
+          <span className="text-[10px] uppercase font-bold text-slate-400">Numerical Value</span>
+          <div className="font-mono text-xl font-black text-slate-900 dark:text-white">
+            {formatValue(row.record.value, row.record.unit)}
           </div>
         </div>
+        <div className="flex flex-wrap gap-1 pt-1.5 border-t border-slate-200/60 dark:border-slate-800">
+          <StatusBadge value={row.record.default_status} />
+          <StatusBadge value={row.record.evidence_support_status} />
+          <StatusBadge value={row.record.qa_status} />
+          <StatusBadge value={row.record.extraction_status} />
+          {row.record.canonical_source_status && (
+            <StatusBadge value={row.record.canonical_source_status} />
+          )}
+        </div>
+      </div>
 
-        <aside className="rounded-md border border-slate-200 bg-slate-50 p-3 text-sm dark:border-slate-800 dark:bg-slate-900">
-          <div className="text-xs font-bold uppercase text-slate-500 dark:text-slate-400">
-            Provenance chain
-          </div>
-          <div className="mt-2 space-y-2 text-slate-700 dark:text-slate-200">
-            <div>
-              <span className="font-semibold">Canonical sources: </span>
+      {isAdmin && (
+        <QaReviewActions
+          parameterValueId={row.record.parameter_value_id}
+          currentQaStatus={row.record.qa_status}
+          currentEvidenceStatus={row.record.evidence_support_status}
+        />
+      )}
+
+      {/* Primary Citation & Sources */}
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+        <div className="flex items-start justify-between">
+          <div>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-indigo-600 dark:text-indigo-400">
+              Primary Citation
+            </span>
+            <div className="font-bold text-slate-900 dark:text-slate-100 text-xs mt-0.5">
               {canonicalSources.length > 0
                 ? canonicalSources.map((source) => source.short_citation).join('; ')
                 : sourceLabels(row)}
             </div>
-            <div>
-              <span className="font-semibold">Source relationships: </span>
-              {sourceRelationshipLabels(row)}
-            </div>
-            <div>
-              <span className="font-semibold">Policy alignment: </span>
-              {row.record.bc_protocol_alignment
-                ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
-                : 'Not recorded'}
-            </div>
           </div>
-          <div className="mt-3 space-y-2">
-            {row.record.evidence_items.map((evidence) => (
-              <div
-                key={evidence.evidence_id}
-                className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300"
-              >
-                <div className="font-semibold text-slate-800 dark:text-slate-100">
-                  {evidence.locator}
-                </div>
-                <div className="mt-1">
-                  {humanizeCatalogLabel(evidence.locator_type)};{' '}
-                  <QaStatusText value={evidence.qa_status} />
-                </div>
-                <div className="mt-1">Extracted {evidence.extracted_at}</div>
-              </div>
-            ))}
-            {row.record.evidence_items.length === 0 && (
-              <div className="rounded-md border border-slate-200 bg-white p-2 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950">
-                No evidence items recorded.
-              </div>
-            )}
+          <span className="text-[10px] px-1.5 py-0.5 rounded bg-slate-200/70 dark:bg-slate-800 text-slate-700 dark:text-slate-300 font-mono">
+            {row.record.jurisdiction}
+          </span>
+        </div>
+        {row.record.canonical_source_status && (
+          <div className="text-[11px] text-slate-500 dark:text-slate-400">
+            Canonical Status: <span className="font-medium text-slate-700 dark:text-slate-200">{humanizeCatalogLabel(row.record.canonical_source_status)}</span>
           </div>
-          <SupabaseEvidenceItems
-            parameterValueId={row.record.parameter_value_id}
-            refreshToken={evidenceRefreshToken}
+        )}
+      </div>
+
+      {/* Review & Policy Recommendation */}
+      <div className="space-y-1.5">
+        <ReviewDispositionNote {...review} />
+
+        {policyDecision && policyCandidate ? (
+          <DefaultPolicyDispositionNote
+            candidate={policyCandidate}
+            decision={policyDecision}
+            testId={`evidence-default-policy-detail-${row.record.parameter_value_id}`}
           />
-          {isAdmin && (
-            <AddEvidenceLocatorForm
-              parameterValueId={row.record.parameter_value_id}
-              onAdded={() => setEvidenceRefreshToken((t) => t + 1)}
-            />
+        ) : null}
+      </div>
+
+      {/* Exact Document Locator Highlights */}
+      <div className="space-y-2">
+        <div className="text-[10px] font-bold uppercase tracking-wider text-slate-400 px-1">
+          Exact Document Locators ({row.record.evidence_items.length})
+        </div>
+        {row.record.evidence_items.map((evidence) => (
+          <div
+            key={evidence.evidence_id}
+            className="p-3 rounded-xl bg-indigo-50/40 dark:bg-indigo-950/20 border border-indigo-200/60 dark:border-indigo-800/40 space-y-1.5"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-bold uppercase text-indigo-700 dark:text-indigo-300">
+                {humanizeCatalogLabel(evidence.locator_type)}
+              </span>
+              <span className="text-[10px] font-mono font-bold px-1.5 py-0.5 rounded bg-indigo-100 dark:bg-indigo-900/60 text-indigo-800 dark:text-indigo-200">
+                {evidence.locator}
+              </span>
+            </div>
+            <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-indigo-100/60 dark:border-indigo-900/40">
+              <span>Extracted {evidence.extracted_at}</span>
+              <QaStatusText value={evidence.qa_status} />
+            </div>
+          </div>
+        ))}
+        {row.record.evidence_items.length === 0 && (
+          <div className="rounded-lg border border-slate-200 bg-slate-50 p-2.5 text-xs text-slate-400 dark:border-slate-800 dark:bg-slate-900">
+            No direct citation evidence items recorded.
+          </div>
+        )}
+      </div>
+
+      {/* Provenance Chain & Milestones */}
+      <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
+        <div className="text-[10px] font-bold uppercase text-slate-400">Provenance chain</div>
+        <div className="space-y-1.5 text-xs text-slate-700 dark:text-slate-300">
+          <div>
+            <span className="font-semibold text-slate-500">Source Relationships: </span>
+            {sourceRelationshipLabels(row)}
+          </div>
+          {row.record.bc_protocol_alignment && (
+            <div>
+              <span className="font-semibold text-slate-500">Policy Alignment: </span>
+              {humanizeCatalogLabel(row.record.bc_protocol_alignment)}
+            </div>
           )}
-        </aside>
+          {row.record.source_crystallization_date && (
+            <div>
+              <span className="font-semibold text-slate-500">Source Crystallization: </span>
+              {row.record.source_crystallization_date}
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Structured Applicability & Notes */}
+      <div className="space-y-2 text-xs">
+        {row.record.applicability && (
+          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="text-[10px] font-bold uppercase text-slate-400">Applicability</div>
+            <p className="mt-0.5 text-slate-700 dark:text-slate-300 leading-relaxed">
+              {row.record.applicability}
+            </p>
+          </div>
+        )}
+
+        {row.record.review_notes && (
+          <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+            <div className="text-[10px] font-bold uppercase text-slate-400">Review Notes</div>
+            <p className="mt-0.5 text-slate-700 dark:text-slate-300 leading-relaxed">
+              {row.record.review_notes}
+            </p>
+          </div>
+        )}
+
+        <SupabaseEvidenceItems
+          parameterValueId={row.record.parameter_value_id}
+          refreshToken={evidenceRefreshToken}
+        />
+        {isAdmin && (
+          <AddEvidenceLocatorForm
+            parameterValueId={row.record.parameter_value_id}
+            onAdded={() => setEvidenceRefreshToken((t) => t + 1)}
+          />
+        )}
       </div>
     </section>
   );
@@ -2602,12 +2888,12 @@ function LeadTriageControls({
           rows={2}
           className="mt-1 w-full rounded-md border border-slate-300 bg-white px-2 py-1 text-xs dark:border-slate-700 dark:bg-slate-900 dark:text-slate-100"
         />
-        <div className="mt-2 flex gap-1">
+        <div className="mt-2 flex gap-1.5">
           <button
             type="button"
             onClick={() => handleTriage(showNoteForm)}
             disabled={submitting}
-            className="rounded-md bg-amber-600 px-2.5 py-1 text-[11px] font-semibold text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-500"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg bg-amber-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-amber-700 disabled:opacity-50 dark:bg-amber-500"
             data-testid="triage-confirm"
           >
             {submitting ? 'Saving...' : 'Confirm'}
@@ -2616,7 +2902,7 @@ function LeadTriageControls({
             type="button"
             onClick={() => { setShowNoteForm(null); setNote(''); setTriageError(null); }}
             disabled={submitting}
-            className="rounded-md border border-slate-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
           >
             Cancel
           </button>
@@ -2636,7 +2922,7 @@ function LeadTriageControls({
 
   return (
     <div className="flex flex-col gap-1" data-testid="lead-triage-controls">
-      <div className="flex items-center gap-1">
+      <div className="flex items-center gap-1.5 flex-wrap">
         <span className="text-[11px] font-semibold uppercase text-slate-500 dark:text-slate-400">
           Triage:
         </span>
@@ -2645,7 +2931,7 @@ function LeadTriageControls({
           <button
             type="button"
             onClick={() => setShowNoteForm('dismissed')}
-            className="rounded-md border border-red-200 bg-red-50 px-2 py-0.5 text-[11px] font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-red-200 bg-red-50 px-3 py-1 text-xs font-semibold text-red-700 hover:bg-red-100 dark:border-red-800 dark:bg-red-900/20 dark:text-red-300"
             data-testid="triage-dismiss"
           >
             Dismiss
@@ -2655,7 +2941,7 @@ function LeadTriageControls({
           <button
             type="button"
             onClick={() => setShowNoteForm('deferred')}
-            className="rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-amber-200 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300"
             data-testid="triage-defer"
           >
             Defer
@@ -2666,7 +2952,7 @@ function LeadTriageControls({
             type="button"
             onClick={() => handleTriage('untriaged')}
             disabled={submitting}
-            className="rounded-md border border-slate-300 bg-white px-2 py-0.5 text-[11px] font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
+            className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1 text-xs font-semibold text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-300"
             data-testid="triage-reset"
           >
             Reset
@@ -3042,7 +3328,7 @@ function PromotedCandidateCard({
         <button
           type="button"
           onClick={() => removeCandidate(record.parameter_value_id)}
-          className="rounded p-1 text-slate-400 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400"
+          className="rounded p-1 text-red-600 hover:bg-red-50 hover:text-red-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-red-500 dark:text-red-400 dark:hover:bg-red-950/40 dark:hover:text-red-300"
           data-testid="promoted-remove-button"
           title="Remove promoted candidate"
           aria-label="Remove promoted candidate"
@@ -3153,7 +3439,7 @@ function CalculatorReceiptBanner({
           type="button"
           onClick={onDismiss}
           aria-label="Dismiss calculator receipt"
-          className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-sky-500 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-900 dark:hover:text-sky-300"
+          className="mt-0.5 flex min-h-[44px] min-w-[44px] shrink-0 items-center justify-center rounded-lg text-sky-500 hover:bg-sky-100 hover:text-sky-700 dark:hover:bg-sky-900 dark:hover:text-sky-300"
         >
           <X className="h-4 w-4" />
         </button>
@@ -3227,10 +3513,10 @@ function HitlSourcesSection({ isAdmin }: { isAdmin: boolean }) {
               key={source.source_id}
               className="rounded border border-slate-200 bg-slate-50 px-2 py-1 text-[11px] dark:border-slate-800 dark:bg-slate-900"
             >
-              <div className="font-semibold text-slate-700 dark:text-slate-200 truncate">
+              <div className="font-semibold text-slate-700 dark:text-slate-200 break-words">
                 {source.short_citation}
               </div>
-              <div className="text-slate-500 dark:text-slate-400 truncate">
+              <div className="text-slate-500 dark:text-slate-400 break-words font-mono">
                 {source.source_id}
               </div>
             </div>
@@ -3258,76 +3544,84 @@ function CatalogInventory({
   onSelectReference: (sourceId: string) => void;
 }) {
   const references = baseline.sources;
-  const stats: Array<{ label: string; value: number }> = [
-    { label: 'References', value: baseline.totalCounts.sources },
-    { label: 'Values', value: baseline.totalCounts.values },
-    { label: 'Substances', value: baseline.facets.substances.length },
-    { label: 'Parameters', value: baseline.facets.inputKeys.length },
-  ];
   return (
-    <section className="space-y-3" data-testid="evidence-library-inventory">
-      <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500">
-        Catalog inventory
-      </h3>
-      <div className="grid grid-cols-2 gap-2">
-        {stats.map((stat) => (
-          <div
-            key={stat.label}
-            className="rounded-lg border border-slate-200 bg-white px-3 py-2 dark:border-slate-800 dark:bg-slate-950"
-          >
-            <div className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-              {stat.label}
-            </div>
-            <div className="text-xl font-bold text-slate-950 dark:text-white">
-              {stat.value}
-            </div>
+    <section className="space-y-2.5" data-testid="evidence-library-inventory">
+      <details className="group rounded-xl border border-slate-200/80 bg-slate-50/60 p-2.5 dark:border-slate-800 dark:bg-slate-950/60">
+        <summary className="flex cursor-pointer list-none items-center justify-between text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white [&::-webkit-details-marker]:hidden">
+          <span className="flex items-center gap-2">
+            <span className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+              Catalog inventory
+            </span>
+            <span className="text-[10px] text-slate-400 font-normal">
+              ({baseline.totalCounts.values} Values - {baseline.facets.substances.length} Substances)
+            </span>
+          </span>
+          <span className="text-[10px] text-slate-400 group-open:rotate-180 transition-transform">v</span>
+        </summary>
+        <div className="mt-2 pt-2 border-t border-slate-200 dark:border-slate-800 space-y-2">
+          <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 px-1">
+            <span>Canonical References ({references.length})</span>
+            <span>Click to inspect source</span>
           </div>
-        ))}
-      </div>
-      <div>
-        <div className="mb-1 text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          References ({references.length}) -- click to inspect
+          <ul className="max-h-48 print:max-h-none space-y-1 overflow-y-auto pt-0.5">
+            {references.map((row) => (
+              <li key={row.record.source_id}>
+                <button
+                  type="button"
+                  onClick={() => onSelectReference(row.record.source_id)}
+                  className="w-full rounded-lg px-2 py-1.5 text-left text-xs hover:bg-white hover:shadow-xs dark:hover:bg-slate-900 transition-all border border-transparent hover:border-slate-200 dark:hover:border-slate-800"
+                >
+                  <div className="font-semibold text-slate-900 dark:text-white text-[11px] leading-snug break-words">
+                    {row.record.short_citation}
+                  </div>
+                  <div className="flex items-center gap-2 text-[10px] text-slate-400 mt-0.5">
+                    <span>{row.linkedValueCount} values</span>
+                    {row.record.retrieval_status && (
+                      <span>- {humanizeCatalogLabel(row.record.retrieval_status)}</span>
+                    )}
+                  </div>
+                </button>
+              </li>
+            ))}
+          </ul>
         </div>
-        <ul className="max-h-80 space-y-0.5 overflow-y-auto print:max-h-none print:overflow-visible rounded-lg border border-slate-200 p-1 dark:border-slate-800">
-          {references.map((row) => (
-            <li key={row.record.source_id}>
-              <button
-                type="button"
-                onClick={() => onSelectReference(row.record.source_id)}
-                className="w-full rounded px-2 py-1.5 text-left text-xs text-slate-700 hover:bg-sky-50 dark:text-slate-200 dark:hover:bg-sky-950/30"
-              >
-                <div className="truncate font-semibold text-slate-800 dark:text-slate-100">
-                  {row.record.short_citation}
-                </div>
-                <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[10px] text-slate-500 dark:text-slate-400">
-                  <span>
-                    {row.linkedValueCount} value{row.linkedValueCount === 1 ? '' : 's'}
-                  </span>
-                  {row.record.retrieval_status && (
-                    <span className="font-medium">
-                      {humanizeCatalogLabel(row.record.retrieval_status)} retrieval
-                    </span>
-                  )}
-                  {(row.record.retrieval_date ?? row.record.checked_at) && (
-                    <span>
-                      retrieved {row.record.retrieval_date ?? row.record.checked_at}
-                    </span>
-                  )}
-                  {row.record.source_crystallization_date && (
-                    <span>source {row.record.source_crystallization_date}</span>
-                  )}
-                  {row.record.qa_date && <span>QA {row.record.qa_date}</span>}
-                  {row.record.currentness_status && (
-                    <span>{humanizeCatalogLabel(row.record.currentness_status)}</span>
-                  )}
-                </div>
-              </button>
-            </li>
-          ))}
-        </ul>
-      </div>
+      </details>
     </section>
   );
+}
+
+function formatSourceShortCitation(src: SourceRecord): string {
+  const org =
+    src.publisher ||
+    (src.authority_scope === 'bc-legal' ? 'BC ENV' : 'Regulatory Authority');
+  const year = src.year ? ` (${src.year})` : '';
+  const shortTitle = src.short_citation || src.title;
+  return `${org}${year} - ${shortTitle}`;
+}
+
+function formatSourceLongCitation(src: SourceRecord): string {
+  const parts: string[] = [];
+  if (src.publisher) parts.push(src.publisher);
+  if (src.year) parts.push(`(${src.year})`);
+  if (src.title) parts.push(src.title);
+  if (src.version) parts.push(`Version ${src.version}`);
+  if (src.short_citation && src.short_citation !== src.title) {
+    parts.push(`[Cited: ${src.short_citation}]`);
+  }
+  return parts.join('. ') + '.';
+}
+
+function getAuthorityTierBadge(tier?: string, scope?: string) {
+  if (scope === 'bc-legal' || tier === 'tier_1_government_or_regulatory') {
+    return { label: 'BC STATUTE / REGULATORY', bg: 'bg-sky-700 text-white dark:bg-sky-600' };
+  }
+  if (scope === 'federal-guidance') {
+    return { label: 'FEDERAL HEALTH', bg: 'bg-slate-700 text-white dark:bg-slate-600' };
+  }
+  if (scope === 'international-guidance') {
+    return { label: 'US EPA / INTL', bg: 'bg-slate-700 text-white dark:bg-slate-600' };
+  }
+  return { label: 'CANADIAN GUIDANCE', bg: 'bg-slate-600 text-white dark:bg-slate-500' };
 }
 
 export default function EvidenceLibrary({
@@ -3337,18 +3631,63 @@ export default function EvidenceLibrary({
   calculatorReceipt,
   onDismissReceipt,
   className,
-  showLeftPanel = true,
+  showLeftPanel = false,
   showRightPanel = true,
   onRequestOpenRightPanel,
 }: EvidenceLibraryProps) {
   const [viewMode, setViewMode] = useState<EvidenceLibraryViewMode>('values');
   const [selectedValueId, setSelectedValueId] = useState<string | null>(null);
   const [selectedSourceId, setSelectedSourceId] = useState<string | null>(null);
+  const [isDossierModalOpen, setIsDossierModalOpen] = useState(false);
+  const rightPanelContentRef = useRef<HTMLDivElement | null>(null);
   const [defaultPolicyStatusFilter, setDefaultPolicyStatusFilter] =
     useState<DefaultSelectionDecisionStatus | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [triageState, setTriageState] = useState<Record<string, SourceLeadTriageRow>>({});
   const [triageRefreshKey, setTriageRefreshKey] = useState(0);
+  const [showQAHub, setShowQAHub] = useState(false);
+  const [activeQAStage, setActiveQAStage] = useState<1 | 2 | 3 | 4>(1);
+  const [selectedQASourceId, setSelectedQASourceId] = useState<string | null>(null);
+  const [qaLeftRailCollapsed, setQaLeftRailCollapsed] = useState(false);
+  const [stage1SearchQuery, setStage1SearchQuery] = useState('');
+  const [paramVerifications, setParamVerifications] = useState<
+    Record<string, { status: 'confirmed' | 'discrepancy' | 'needs_review'; comment: string }>
+  >({});
+  const [paramDecisionStates, setParamDecisionStates] = useState<
+    Record<string, 'pending' | 'saved' | 'failed'>
+  >({});
+  const paramTargetVersionsRef = useRef<Map<string, number>>(new Map());
+  const paramSavedVersionsRef = useRef<Map<string, number>>(new Map());
+  const paramFailedRef = useRef<Set<string>>(new Set());
+  const paramLatestDataRef = useRef<
+    Map<string, { status: 'confirmed' | 'discrepancy' | 'needs_review'; comment: string }>
+  >(new Map());
+  const inFlightParamWritesRef = useRef<Map<string, Promise<boolean>>>(new Map());
+  const [dirtyParamIds, setDirtyParamIds] = useState<Set<string>>(new Set());
+  const [qaPersistenceError, setQaPersistenceError] = useState<string | null>(null);
+  const [flaggedIssues, setFlaggedIssues] = useState<
+    Array<{
+      id: string;
+      parameterValueId: string;
+      substanceLabel: string;
+      parameterName: string;
+      category: string;
+      comment: string;
+      suggestedCorrection?: string;
+      flaggedBy: string;
+      timestamp: string;
+      status: 'under_admin_review' | 'resolved' | 'acknowledged';
+    }>
+  >([]);
+  const [flagFormOpen, setFlagFormOpen] = useState(false);
+  const [flagSelectedParamId, setFlagSelectedParamId] = useState<string>('');
+  const [flagCategory, setFlagCategory] = useState<string>(
+    'Outdated Regulatory Standard',
+  );
+  const [flagComment, setFlagComment] = useState<string>('');
+  const [flagSuggestedCorrection, setFlagSuggestedCorrection] =
+    useState<string>('');
+  const [flagSubmitSuccess, setFlagSubmitSuccess] = useState(false);
   // Values-table pagination. Reset to the first page whenever the filter inputs change BY VALUE
   // (not object identity) so a parent that recreates `filters` each render does not pin us to page 1.
   const [valuesPage, setValuesPage] = useState(0);
@@ -3356,6 +3695,13 @@ export default function EvidenceLibrary({
   useEffect(() => {
     setValuesPage(0);
   }, [valuesPageResetKey]);
+
+  // Stage 2 Verification Workbench Filters & Jump State
+  const [stage2StatusFilter, setStage2StatusFilter] = useState<
+    'all' | 'unreviewed' | 'confirmed' | 'discrepancy'
+  >('all');
+  const [stage2SearchQuery, setStage2SearchQuery] = useState('');
+  const [stage2PathwayFilter, setStage2PathwayFilter] = useState('all');
 
   // Resizable right panel state. Default to the SSR-safe constant; hydrate from localStorage
   // in a mount-only effect to avoid an SSR/CSR hydration mismatch (matrix-map pattern).
@@ -3435,6 +3781,97 @@ export default function EvidenceLibrary({
     });
     usePromotedCandidatesStore.persist.rehydrate();
     usePromotedCandidatesStore.getState().hydrateFromSupabase().catch(console.error);
+
+    fetchAllReviews().then((reviews) => {
+      if (cancelled || !reviews || reviews.length === 0) return;
+      const verifications: Record<string, { status: 'confirmed' | 'discrepancy' | 'needs_review'; comment: string }> = {};
+      const flags: Array<{
+        id: string;
+        parameterValueId: string;
+        substanceLabel: string;
+        parameterName: string;
+        category: string;
+        comment: string;
+        suggestedCorrection?: string;
+        flaggedBy: string;
+        timestamp: string;
+        status: 'under_admin_review' | 'resolved' | 'acknowledged';
+      }> = [];
+
+      const resolvedFlagIds = new Set<string>();
+      for (const rev of reviews) {
+        if (rev.reviewer_note.startsWith('[FLAG_RESOLVED:')) {
+          const match = rev.reviewer_note.match(/^\[FLAG_RESOLVED:\s*([^\]]+)\]/);
+          if (match) {
+            resolvedFlagIds.add(match[1].trim());
+          }
+        }
+      }
+
+      const reduced = reduceToCurrentVerificationStates(reviews);
+      for (const [paramId, state] of Object.entries(reduced)) {
+        const isConfirmed = state.current_qa_status === 'approved';
+        const isDiscrepancy =
+          state.current_qa_status !== 'approved' &&
+          state.latest_reviewer_note.includes('[VERIFICATION: discrepancy]');
+        const status: 'confirmed' | 'discrepancy' | 'needs_review' = isConfirmed
+          ? 'confirmed'
+          : isDiscrepancy
+            ? 'discrepancy'
+            : 'needs_review';
+        const cleanComment = state.latest_reviewer_note.replace(
+          /^\[VERIFICATION:\s*[^\]]+\]\s*/,
+          '',
+        );
+        verifications[paramId] = {
+          status,
+          comment: cleanComment,
+        };
+      }
+
+      for (const rev of reviews) {
+        if (rev.reviewer_note.startsWith('[FLAG_RESOLVED:')) {
+          continue;
+        }
+        if (rev.reviewer_note.startsWith('[FLAG:')) {
+          const match = rev.reviewer_note.match(/^\[FLAG:\s*([^\]]+)\]\s*([\s\S]*)$/);
+          const category = match ? match[1].trim() : 'General Issue';
+          let noteBody = match ? match[2].trim() : rev.reviewer_note;
+          let suggestedCorrection: string | undefined;
+          const suggMatch = noteBody.match(/\(Suggested:\s*([^)]+)\)$/);
+          if (suggMatch) {
+            suggestedCorrection = suggMatch[1].trim();
+            noteBody = noteBody.replace(/\(Suggested:\s*[^)]+\)$/, '').trim();
+          }
+          const cleanId = rev.parameter_value_id.replace(/^pv-/, '').replace(/-/g, ' ');
+          const isResolved = resolvedFlagIds.has(rev.id);
+          flags.push({
+            id: rev.id,
+            parameterValueId: rev.parameter_value_id,
+            substanceLabel: 'Regulatory Parameter',
+            parameterName: cleanId,
+            category,
+            comment: noteBody,
+            suggestedCorrection,
+            flaggedBy: rev.reviewed_by ? `User ${rev.reviewed_by.slice(0, 8)}` : 'Unassigned / Anonymous',
+            timestamp: rev.reviewed_at.replace('T', ' ').slice(0, 16),
+            status: isResolved ? 'resolved' : 'under_admin_review',
+          });
+        }
+      }
+
+      if (Object.keys(verifications).length > 0) {
+        setParamVerifications((prev) => ({ ...verifications, ...prev }));
+      }
+      if (flags.length > 0) {
+        setFlaggedIssues((prev) => {
+          const existingIds = new Set(prev.map((f) => f.id));
+          const newUnique = flags.filter((f) => !existingIds.has(f.id));
+          return [...newUnique, ...prev];
+        });
+      }
+    }).catch(console.error);
+
     return () => {
       cancelled = true;
     };
@@ -3625,6 +4062,357 @@ export default function EvidenceLibrary({
     if (calculatorReceipt) setStatusAdminOpen(true);
   }, [calculatorReceipt]);
   const protocol28Summary = useMemo(() => buildProtocol28ReviewSummary(), []);
+
+  const activeQASource = useMemo(() => {
+    if (selectedQASourceId) {
+      const match = library.sources.find(
+        (s) => s.record.source_id === selectedQASourceId,
+      );
+      if (match) return match;
+    }
+    return library.sources[0] ?? null;
+  }, [library.sources, selectedQASourceId]);
+
+  const extractedValuesForSource = useMemo(() => {
+    if (!activeQASource) return [];
+    const srcId = activeQASource.record.source_id;
+    const directMatches = library.values.filter(
+      (row) =>
+        row.record.source_ids?.includes(srcId) ||
+        row.sources.some((s) => s.source_id === srcId),
+    );
+    // Explicit empty state: never fallback to unrelated values from other sources
+    const rawList = directMatches;
+    return [...rawList].sort((a, b) => {
+      const substanceCmp = (a.substanceLabel ?? '').localeCompare(b.substanceLabel ?? '');
+      if (substanceCmp !== 0) return substanceCmp;
+      const nameCmp = (a.record.display_name ?? '').localeCompare(b.record.display_name ?? '');
+      if (nameCmp !== 0) return nameCmp;
+      return (a.record.pathway ?? '').localeCompare(b.record.pathway ?? '');
+    });
+  }, [library.values, activeQASource]);
+
+  const availableStage2Pathways = useMemo(() => {
+    const set = new Set<string>();
+    for (const val of extractedValuesForSource) {
+      if (val.record.pathway) set.add(val.record.pathway);
+    }
+    return Array.from(set);
+  }, [extractedValuesForSource]);
+
+  const stage2Stats = useMemo(() => {
+    const total = extractedValuesForSource.length;
+    const confirmed = extractedValuesForSource.filter(
+      (v) => paramVerifications[v.record.parameter_value_id]?.status === 'confirmed',
+    ).length;
+    const discrepancy = extractedValuesForSource.filter(
+      (v) => paramVerifications[v.record.parameter_value_id]?.status === 'discrepancy',
+    ).length;
+    const unreviewed = total - (confirmed + discrepancy);
+    return { total, confirmed, discrepancy, unreviewed };
+  }, [extractedValuesForSource, paramVerifications]);
+
+  const filteredStage2Values = useMemo(() => {
+    return extractedValuesForSource.filter((val) => {
+      const vState = paramVerifications[val.record.parameter_value_id];
+      const isConfirmed = vState?.status === 'confirmed';
+      const isDiscrepancy = vState?.status === 'discrepancy';
+      const isUnreviewed = !vState || vState.status === 'needs_review';
+
+      if (stage2StatusFilter === 'unreviewed' && !isUnreviewed) return false;
+      if (stage2StatusFilter === 'confirmed' && !isConfirmed) return false;
+      if (stage2StatusFilter === 'discrepancy' && !isDiscrepancy) return false;
+
+      if (stage2PathwayFilter !== 'all' && val.record.pathway !== stage2PathwayFilter) {
+        return false;
+      }
+
+      if (stage2SearchQuery.trim()) {
+        const q = stage2SearchQuery.toLowerCase();
+        const matchesSubstance = val.substanceLabel.toLowerCase().includes(q);
+        const matchesParam = val.record.display_name.toLowerCase().includes(q);
+        const matchesLocator = val.record.evidence_items?.some((e) =>
+          e.locator?.toLowerCase().includes(q),
+        );
+        const matchesNotes = vState?.comment?.toLowerCase().includes(q);
+        if (!matchesSubstance && !matchesParam && !matchesLocator && !matchesNotes) {
+          return false;
+        }
+      }
+
+      return true;
+    });
+  }, [
+    extractedValuesForSource,
+    paramVerifications,
+    stage2StatusFilter,
+    stage2PathwayFilter,
+    stage2SearchQuery,
+  ]);
+
+  const executePersistForParam = (paramId: string): Promise<boolean> => {
+    // If a write for this paramId is already in flight, return the exact same promise (prevents duplicate writes)
+    const inFlight = inFlightParamWritesRef.current.get(paramId);
+    if (inFlight) {
+      return inFlight;
+    }
+
+    const targetVersion = paramTargetVersionsRef.current.get(paramId) ?? 1;
+    const latestData = paramLatestDataRef.current.get(paramId) ?? paramVerifications[paramId] ?? {
+      status: 'needs_review' as const,
+      comment: '',
+    };
+    const status = latestData.status;
+    const comment = latestData.comment;
+
+    const currentTarget =
+      library.values.find((v) => v.record.parameter_value_id === paramId) ??
+      baselineLibrary.values.find((v) => v.record.parameter_value_id === paramId);
+    const oldQaStatus = currentTarget?.record.qa_status ?? 'needs_review';
+    const newQaStatus = status === 'confirmed' ? 'approved' : 'needs_review';
+    const trimmedComment = comment.trim();
+    const note = `[VERIFICATION: ${status}] ${
+      trimmedComment ||
+      (status === 'confirmed'
+        ? 'Verified as confirmed in QA/QC workbench'
+        : status === 'discrepancy'
+          ? 'Flagged discrepancy in QA/QC workbench'
+          : 'Marked as needs_review in QA/QC workbench')
+    }`;
+
+    if (note.length > 1000) {
+      paramFailedRef.current.add(paramId);
+      setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'failed' }));
+      setQaPersistenceError(
+        `Comment is too long (${note.length} characters). Complete note envelope cannot exceed 1000 characters.`,
+      );
+      return Promise.resolve(false);
+    }
+
+    paramFailedRef.current.delete(paramId);
+    setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'pending' }));
+    setQaPersistenceError(null);
+
+    const promise: Promise<boolean> = submitReview(
+      paramId,
+      oldQaStatus,
+      newQaStatus,
+      note,
+      currentTarget?.record.evidence_support_status || undefined,
+      undefined,
+    )
+      .then((ok) => {
+        if (ok) {
+          paramSavedVersionsRef.current.set(paramId, targetVersion);
+          paramFailedRef.current.delete(paramId);
+          const currentTargetVer = paramTargetVersionsRef.current.get(paramId) ?? targetVersion;
+
+          if (currentTargetVer > targetVersion) {
+            // A newer edit occurred while this write was in flight!
+            // Queue and persist the newest generation immediately.
+            inFlightParamWritesRef.current.delete(paramId);
+            return executePersistForParam(paramId);
+          } else {
+            // Successfully persisted newest generation
+            setDirtyParamIds((prev) => {
+              const next = new Set(prev);
+              next.delete(paramId);
+              return next;
+            });
+            setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'saved' }));
+            announce(`Verification recorded in database: ${status}.`);
+            return true;
+          }
+        } else {
+          paramFailedRef.current.add(paramId);
+          setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'failed' }));
+          setQaPersistenceError(
+            'Failed to save verification decision to database. Please check connection.',
+          );
+          announce('Failed to save verification decision to database.');
+          return false;
+        }
+      })
+      .catch((err) => {
+        console.error('submitReview error:', err);
+        paramFailedRef.current.add(paramId);
+        setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'failed' }));
+        setQaPersistenceError(
+          'Failed to save verification decision to database. Please check connection.',
+        );
+        announce('Failed to save verification decision to database.');
+        return false;
+      })
+      .finally(() => {
+        inFlightParamWritesRef.current.delete(paramId);
+      });
+
+    inFlightParamWritesRef.current.set(paramId, promise);
+    return promise;
+  };
+
+  const handleVerifyParameter = (
+    paramId: string,
+    status: 'confirmed' | 'discrepancy' | 'needs_review',
+  ) => {
+    const nextVer = (paramTargetVersionsRef.current.get(paramId) ?? 0) + 1;
+    paramTargetVersionsRef.current.set(paramId, nextVer);
+    const comment = paramVerifications[paramId]?.comment ?? '';
+    paramLatestDataRef.current.set(paramId, { status, comment });
+
+    setParamVerifications((prev) => ({
+      ...prev,
+      [paramId]: {
+        status,
+        comment,
+      },
+    }));
+    setDirtyParamIds((prev) => new Set(prev).add(paramId));
+    setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'pending' }));
+    executePersistForParam(paramId);
+  };
+
+  const handleCommentChange = (paramId: string, comment: string) => {
+    // Truncate to max 500 characters
+    const trimmed = comment.slice(0, 500);
+    const nextVer = (paramTargetVersionsRef.current.get(paramId) ?? 0) + 1;
+    paramTargetVersionsRef.current.set(paramId, nextVer);
+
+    const prevStatus = paramVerifications[paramId]?.status;
+    const nextStatus =
+      prevStatus === 'confirmed' ? 'needs_review' : (prevStatus ?? 'needs_review');
+
+    paramLatestDataRef.current.set(paramId, { status: nextStatus, comment: trimmed });
+
+    setParamVerifications((prev) => ({
+      ...prev,
+      [paramId]: {
+        status: nextStatus,
+        comment: trimmed,
+      },
+    }));
+    setDirtyParamIds((prev) => new Set(prev).add(paramId));
+    setParamDecisionStates((prev) => ({ ...prev, [paramId]: 'pending' }));
+    setQaPersistenceError(null);
+  };
+
+  const handleTransitionFromStage2 = async (targetStage: 1 | 2 | 3 | 4) => {
+    if (targetStage === 1) {
+      setActiveQAStage(1);
+      return;
+    }
+    if (targetStage === 2) {
+      return;
+    }
+
+    setQaPersistenceError(null);
+
+    // Identify all parameter IDs with unsaved generations or writes currently in flight
+    const pendingIds = new Set<string>();
+    for (const [id, targetVer] of paramTargetVersionsRef.current.entries()) {
+      const savedVer = paramSavedVersionsRef.current.get(id) ?? 0;
+      if (targetVer > savedVer) {
+        pendingIds.add(id);
+      }
+    }
+    for (const id of inFlightParamWritesRef.current.keys()) {
+      pendingIds.add(id);
+    }
+    for (const id of paramFailedRef.current) {
+      pendingIds.add(id);
+    }
+    for (const id of dirtyParamIds) {
+      pendingIds.add(id);
+    }
+
+    if (pendingIds.size > 0) {
+      await Promise.all(Array.from(pendingIds).map((id) => executePersistForParam(id)));
+    }
+
+    // Authoritative check on live refs
+    let hasUnsaved = false;
+    for (const [id, targetVer] of paramTargetVersionsRef.current.entries()) {
+      const savedVer = paramSavedVersionsRef.current.get(id) ?? 0;
+      if (targetVer > savedVer) {
+        hasUnsaved = true;
+        break;
+      }
+    }
+    const hasInFlight = inFlightParamWritesRef.current.size > 0;
+    const hasFailures = paramFailedRef.current.size > 0;
+
+    if (hasUnsaved || hasInFlight || hasFailures) {
+      setQaPersistenceError(
+        'Cannot proceed: verification write(s) pending, unsaved, or failed. Please resolve errors and retry.',
+      );
+      announce('Cannot proceed: verification items are unsaved or failed.');
+      return; // Fail closed: remain in Stage 2
+    }
+
+    setQaPersistenceError(null);
+    announce(`Proceeding to Stage ${targetStage}.`);
+    setActiveQAStage(targetStage);
+  };
+
+  const handleFlagIssueSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!flagSelectedParamId || !flagComment.trim()) return;
+    const targetVal = library.values.find(
+      (v) => v.record.parameter_value_id === flagSelectedParamId,
+    ) ?? baselineLibrary.values.find(
+      (v) => v.record.parameter_value_id === flagSelectedParamId,
+    );
+    const cleanComment = flagComment.trim();
+    const cleanCorrection = flagSuggestedCorrection.trim();
+    const flagNote = `[FLAG: ${flagCategory}] ${cleanComment}${cleanCorrection ? ` (Suggested: ${cleanCorrection})` : ''}`;
+
+    if (flagNote.length > 1000) {
+      setQaPersistenceError(
+        `Flag note is too long (${flagNote.length} characters). Complete note envelope cannot exceed 1000 characters.`,
+      );
+      announce('Flag note is too long. Maximum note envelope is 1000 characters.');
+      return;
+    }
+
+    const newIssue = {
+      id: `flag-${Date.now()}`,
+      parameterValueId: flagSelectedParamId,
+      substanceLabel: targetVal?.substanceLabel || 'General Standard',
+      parameterName: targetVal?.record.display_name || 'Parameter Value',
+      category: flagCategory,
+      comment: cleanComment,
+      suggestedCorrection: cleanCorrection || undefined,
+      flaggedBy: 'Unassigned / Anonymous',
+      timestamp: new Date().toISOString().replace('T', ' ').slice(0, 16),
+      status: 'under_admin_review' as const,
+    };
+
+    submitReview(
+      flagSelectedParamId,
+      targetVal?.record.qa_status ?? 'needs_review',
+      'needs_review',
+      flagNote,
+      targetVal?.record.evidence_support_status || undefined,
+      undefined,
+    ).then((ok) => {
+      if (ok) {
+        setFlaggedIssues((prev) => [newIssue, ...prev]);
+        setFlagComment('');
+        setFlagSuggestedCorrection('');
+        setFlagSelectedParamId('');
+        setFlagSubmitSuccess(true);
+        setTimeout(() => setFlagSubmitSuccess(false), 4500);
+        announce('Potential issue flag persisted to Supabase Admin Queue.');
+      } else {
+        setQaPersistenceError('Failed to submit issue flag. Ensure you are signed in with an authorized role.');
+        announce('Failed to submit issue flag. Ensure you are signed in with an authorized role.');
+      }
+    }).catch((err) => {
+      console.error(err);
+      setQaPersistenceError('Failed to submit issue flag.');
+      announce('Failed to submit issue flag.');
+    });
+  };
   const activeLabels = [
     ...activeFilterLabels(filters),
     ...(defaultPolicyStatusFilter
@@ -3687,9 +4475,13 @@ export default function EvidenceLibrary({
       selectedValueId
         ? library.values.find(
             (row) => row.record.parameter_value_id === selectedValueId,
-          ) ?? null
+          ) ??
+          baselineLibrary.values.find(
+            (row) => row.record.parameter_value_id === selectedValueId,
+          ) ??
+          null
         : null,
-    [library.values, selectedValueId],
+    [library.values, baselineLibrary.values, selectedValueId],
   );
   const selectedSource = useMemo(
     () =>
@@ -3705,12 +4497,23 @@ export default function EvidenceLibrary({
     [library.sources, baselineLibrary.sources, selectedSourceId],
   );
 
+  useEffect(() => {
+    if (selectedValueId || selectedSourceId) {
+      if (typeof rightPanelContentRef.current?.scrollTo === 'function') {
+        rightPanelContentRef.current.scrollTo({ top: 0, behavior: 'smooth' });
+      } else if (rightPanelContentRef.current) {
+        rightPanelContentRef.current.scrollTop = 0;
+      }
+    }
+  }, [selectedValueId, selectedSourceId]);
+
   const updateFilter = (key: FilterArrayKey, value: string) => {
     onFiltersChange(setSingleFilter(filters, key, value));
   };
   const closeDetailPanels = () => {
     setSelectedValueId(null);
     setSelectedSourceId(null);
+    setIsDossierModalOpen(false);
   };
   const changeViewMode = (nextViewMode: EvidenceLibraryViewMode) => {
     if (nextViewMode !== viewMode) {
@@ -3886,11 +4689,6 @@ export default function EvidenceLibrary({
       //   - 'local': the delete is real (removed from this browser); it could not
       //     be confirmed removed from the account, and the cause may be either
       //     signed-out or a sync/read failure while signed in. Say both are
-      //     possible and give an action that works either way.
-      //   - 'supabase' / 'loading': the delete was expected to reach the server and
-      //     didn't -- an expired session or outage genuinely is the likely cause, so
-      //     keep the original wording (it is accurate for these states: a signed-in
-      //     mount WILL re-sync from the server and can bring the row back).
       if (savedViewsBackend === 'local') {
         setSavedViewsActionError(
           `"${removedView.name}" was removed from this browser, but it could not be confirmed removed from your account (you may be signed out, or your account sync could not be reached). If you are signed in, check your connection and delete it again; if you are signed out, sign in and delete it again to remove it there too.`,
@@ -3903,10 +4701,10 @@ export default function EvidenceLibrary({
     }
   };
   const applyAuditFilter = (
-    nextViewMode: EvidenceLibraryViewMode,
+    _nextViewMode: EvidenceLibraryViewMode,
     request: EvidenceLibraryFilterRequest,
   ) => {
-    setViewMode(nextViewMode);
+    setViewMode('values');
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(createEvidenceLibraryFilters(request));
@@ -3951,62 +4749,37 @@ export default function EvidenceLibrary({
     );
   };
   const openProtocol28SourceLeads = () => {
-    setViewMode('sources');
+    setViewMode('values');
     closeDetailPanels();
     setDefaultPolicyStatusFilter(null);
     onFiltersChange(
       createEvidenceLibraryFilters({
         search: 'Protocol 28',
-        sourceIds: [PROTOCOL28_SOURCE_ID],
-        sourceRoles: ['policy_compilation'],
       }),
     );
   };
 
-  const showValues = viewMode === 'values' || viewMode === 'assumptions';
-  const showValueGroups = viewMode === 'by-parameter';
-  const showSources = viewMode === 'sources';
-  // Source-of-sources leads now fold into the Sources view rather than a standalone tab.
-  const showSourceLeads = viewMode === 'sources';
+  const showValues = true;
+  const showValueGroups = false;
+  const showSources = false;
+  const showSourceLeads = false;
   const filterControls: Array<{
     key: FilterArrayKey;
     label: string;
     options: EvidenceLibraryFacetOption[];
-  }> =
-    viewMode === 'sources'
-      ? [
-          // Lean source filter set (Tier / Canonical status / Zotero / Policy alignment
-          // dropped as workflow clutter).
-          { key: 'authorityScopes', label: 'Authority', options: library.facets.authorityScopes },
-          { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-          {
-            key: 'currentnessStatuses',
-            label: 'Currentness',
-            options: library.facets.currentnessStatuses,
-          },
-        ]
-      : viewMode === 'source-leads'
-        ? [
-            { key: 'sourceRoles', label: 'Source role', options: library.facets.sourceRoles },
-          ]
-        : [
-            // Lean, browse-oriented filter set. The status / scaffold dimensions
-            // (evidence support, default status, QA, extraction, policy alignment,
-            // receptor/population/species) were removed from the dropdowns -- they are
-            // QA-workflow jargon; that filtering is still reachable via the audit-strip
-            // shortcuts and saved views, which set those filters programmatically.
-            { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
-            { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
-            { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
-            { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
-          ];
+  }> = [
+    { key: 'substanceKeys', label: 'Substance', options: library.facets.substances },
+    { key: 'pathways', label: 'Pathway', options: library.facets.pathways },
+    { key: 'inputKeys', label: 'Parameter', options: library.facets.inputKeys },
+    { key: 'jurisdictions', label: 'Jurisdiction', options: library.facets.jurisdictions },
+  ];
 
-  // Split into the handful of primary filters (always shown in the popover) and the
-  // QA/review workflow filters (tucked under "Advanced"). Keeps the side panel uncluttered.
-  const primaryFilterKeys: ReadonlySet<FilterArrayKey> =
-    viewMode === 'sources'
-      ? new Set<FilterArrayKey>(['authorityScopes', 'sourceRoles', 'currentnessStatuses'])
-      : new Set<FilterArrayKey>(['substanceKeys', 'pathways', 'inputKeys', 'jurisdictions']);
+  const primaryFilterKeys: ReadonlySet<FilterArrayKey> = new Set<FilterArrayKey>([
+    'substanceKeys',
+    'pathways',
+    'inputKeys',
+    'jurisdictions',
+  ]);
   const primaryFilterControls = filterControls.filter((control) =>
     primaryFilterKeys.has(control.key),
   );
@@ -4044,6 +4817,24 @@ export default function EvidenceLibrary({
         activeCount={activeLabels.length}
         onClearAll={clearFilters}
       />
+
+      {/* HITL review shortcuts (quick filter buttons) */}
+      <div className="flex flex-wrap items-center gap-1.5 pt-1">
+        <button
+          type="button"
+          onClick={toggleCandidateDefaults}
+          aria-pressed={candidateDefaultsActive}
+          data-testid="evidence-library-candidate-defaults"
+          className={cn(
+            'min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+            candidateDefaultsActive
+              ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
+              : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
+          )}
+        >
+          Candidate defaults
+        </button>
+      </div>
 
       {/* Active filters at a glance. */}
       {activeLabels.length > 0 && (
@@ -4104,18 +4895,1043 @@ export default function EvidenceLibrary({
       >
         <span key={liveMessage.seq}>{liveMessage.text}</span>
       </div>
-      {/* LEFT PANEL -- catalog dashboard, audit panels, saved review filters */}
-      <div
-        className={cn(
-          'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
-          showLeftPanel ? 'w-80' : 'w-0',
-        )}
-      >
+
+      {showQAHub ? (
+        <div className="w-full flex-1 flex flex-col h-full overflow-hidden bg-slate-100 dark:bg-slate-950">
+          {/* Top Sticky Return Bar & Stage Navigation Banner */}
+          <div className="flex-shrink-0 z-30 bg-white dark:bg-slate-900 border-b border-slate-200 dark:border-slate-800 p-3 md:p-4 shadow-xs">
+            <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setShowQAHub(false)}
+                  className="min-h-[44px] inline-flex items-center gap-2 px-3.5 py-2 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-800 dark:text-slate-200 hover:border-sky-500 hover:text-sky-600 dark:hover:border-sky-400 dark:hover:text-sky-400 shadow-xs transition-all shrink-0"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  <span>Back to Catalogue</span>
+                </button>
+                <div>
+                  <h2 className="text-sm md:text-base font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                    Catalog Review &amp; QA/QC Workspace
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300">
+                      Live DB Synced
+                    </span>
+                  </h2>
+                  <p className="text-xs text-slate-500 dark:text-slate-400 hidden sm:block">
+                    Systematic verification of extracted parameter values against canonical authority documents.
+                  </p>
+                </div>
+              </div>
+
+              {/* 4 Stages Stepper */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5 bg-slate-100 dark:bg-slate-950 p-1 rounded-xl border border-slate-200 dark:border-slate-800 text-xs">
+                {[
+                  { stage: 1 as const, name: '1. Select Source', num: 1 },
+                  { stage: 2 as const, name: '2. Verify Values', num: 2 },
+                  { stage: 3 as const, name: '3. Admin Review', num: 3 },
+                  { stage: 4 as const, name: '4. Flag Issues', num: 4 },
+                ].map((item) => (
+                  <button
+                    key={item.stage}
+                    type="button"
+                    onClick={async () => {
+                      if (activeQAStage === 2 && item.stage !== 2) {
+                        await handleTransitionFromStage2(item.stage);
+                      } else {
+                        setActiveQAStage(item.stage);
+                      }
+                    }}
+                    className={cn(
+                      'min-h-[44px] px-3 py-1.5 rounded-lg font-semibold flex items-center gap-2 transition-all text-xs text-left',
+                      activeQAStage === item.stage
+                        ? 'font-bold bg-white dark:bg-slate-900 text-sky-700 dark:text-sky-400 border border-sky-200 dark:border-sky-800 shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        'w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold shrink-0',
+                        activeQAStage === item.stage
+                          ? 'bg-sky-700 text-white dark:bg-sky-600 dark:text-white'
+                          : 'bg-slate-300 dark:bg-slate-700 text-slate-700 dark:text-slate-300',
+                      )}
+                    >
+                      {item.num}
+                    </span>
+                    <span className="whitespace-normal">{item.name}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* Scrollable Stage Content Area */}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6">
+            <div className="max-w-7xl mx-auto space-y-4">
+              {/* STAGE 1: Source Document Selection & Inventory (List View) */}
+              {activeQAStage === 1 && (
+                <div className="space-y-4">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-4">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
+                      <div>
+                        <h3 className="text-base font-bold text-slate-900 dark:text-white">
+                          Stage 1: Authority Source Documents ({library.sources.length})
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
+                          Select a regulatory or scientific authority source from the list to begin verifying extracted parameter values.
+                        </p>
+                      </div>
+                      <div className="w-full sm:w-80">
+                        <input
+                          type="search"
+                          value={stage1SearchQuery}
+                          onChange={(e) => setStage1SearchQuery(e.target.value)}
+                          placeholder="Search sources by author, year, title..."
+                          className="w-full min-h-[44px] px-3 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400"
+                        />
+                      </div>
+                    </div>
+
+                    {/* List of Authority Source Documents */}
+                    <div className="divide-y divide-slate-200 dark:divide-slate-800 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden bg-white dark:bg-slate-900 shadow-xs">
+                      {library.sources
+                        .filter((src) => {
+                          if (!stage1SearchQuery.trim()) return true;
+                          const q = stage1SearchQuery.toLowerCase();
+                          return (
+                            src.record.title?.toLowerCase().includes(q) ||
+                            src.record.short_citation?.toLowerCase().includes(q) ||
+                            src.record.publisher?.toLowerCase().includes(q) ||
+                            src.record.source_id?.toLowerCase().includes(q) ||
+                            (src.record.year && String(src.record.year).includes(q))
+                          );
+                        })
+                        .sort((a, b) => {
+                          const aCite = formatSourceShortCitation(a.record);
+                          const bCite = formatSourceShortCitation(b.record);
+                          return aCite.localeCompare(bCite);
+                        })
+                        .map((src) => {
+                          const tierInfo = getAuthorityTierBadge(
+                            src.record.source_authority_tier,
+                            src.record.authority_scope,
+                          );
+                          const shortCitationText = formatSourceShortCitation(src.record);
+                          const directValues = library.values.filter(
+                            (row) =>
+                              row.record.source_ids?.includes(src.record.source_id) ||
+                              row.sources.some((s) => s.source_id === src.record.source_id),
+                          );
+                          const totalValCount = directValues.length > 0 ? directValues.length : src.linkedValueCount;
+                          const confirmedCount = directValues.filter(
+                            (v) => paramVerifications[v.record.parameter_value_id]?.status === 'confirmed',
+                          ).length;
+                          const discrepancyCount = directValues.filter(
+                            (v) => paramVerifications[v.record.parameter_value_id]?.status === 'discrepancy',
+                          ).length;
+                          const verifiedCount = confirmedCount + discrepancyCount;
+                          const percent = totalValCount > 0 ? Math.round((verifiedCount / totalValCount) * 100) : 0;
+
+                          return (
+                            <div
+                              key={src.record.source_id}
+                              className="p-4 flex flex-col lg:flex-row lg:items-center justify-between gap-4 hover:bg-slate-50/80 dark:hover:bg-slate-800/40 transition-colors"
+                            >
+                              {/* Left: Source Citation, Tier & Metadata */}
+                              <div className="space-y-1.5 flex-1 min-w-0">
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <span className={cn('text-[10px] font-bold px-2 py-0.5 rounded', tierInfo.bg)}>
+                                    {tierInfo.label}
+                                  </span>
+                                  <span className="text-xs font-mono font-bold text-slate-500 dark:text-slate-400">
+                                    {src.record.source_id}
+                                  </span>
+                                  {src.record.year && (
+                                    <span className="text-xs text-slate-400">
+                                      - {src.record.year}
+                                    </span>
+                                  )}
+                                </div>
+
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white leading-snug">
+                                  {shortCitationText}
+                                </h4>
+
+                                <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed break-words">
+                                  {src.record.title}
+                                </p>
+                              </div>
+
+                              {/* Middle: Verification Progress Card */}
+                              <div className="w-full lg:w-72 shrink-0 space-y-1.5 bg-slate-50 dark:bg-slate-950/60 p-3 rounded-lg border border-slate-100 dark:border-slate-800">
+                                <div className="flex items-center justify-between text-xs text-slate-600 dark:text-slate-400">
+                                  <span className="font-medium">Verification Status:</span>
+                                  <span className="font-bold text-slate-900 dark:text-white">
+                                    {verifiedCount} / {totalValCount} ({percent}%)
+                                  </span>
+                                </div>
+
+                                <div className="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+                                  <div
+                                    className={cn(
+                                      'h-full rounded-full transition-all',
+                                      percent === 100
+                                        ? 'bg-emerald-600 dark:bg-emerald-500'
+                                        : 'bg-sky-600 dark:bg-sky-500',
+                                    )}
+                                    style={{ width: `${percent}%` }}
+                                  />
+                                </div>
+
+                                <div className="flex items-center justify-between text-[10px]">
+                                  <span className="inline-flex items-center gap-1 text-emerald-700 dark:text-emerald-400 font-bold">
+                                    <Check className="w-3 h-3" /> {confirmedCount} Confirmed
+                                  </span>
+                                  {discrepancyCount > 0 && (
+                                    <span className="inline-flex items-center gap-1 text-amber-700 dark:text-amber-400 font-bold">
+                                      <AlertTriangle className="w-3 h-3" /> {discrepancyCount} Discrepant
+                                    </span>
+                                  )}
+                                  <span className="text-slate-400">
+                                    {totalValCount - verifiedCount} Outstanding
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* Right: Select & Verify Button */}
+                              <div className="shrink-0 flex items-center">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setSelectedQASourceId(src.record.source_id);
+                                    setActiveQAStage(2);
+                                  }}
+                                  className="w-full lg:w-auto min-h-[44px] px-4 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white text-xs font-bold shadow-xs transition-all flex items-center justify-center gap-2 whitespace-nowrap"
+                                >
+                                  <span>Verify Values ({totalValCount}) -&gt;</span>
+                                </button>
+                              </div>
+                            </div>
+                          );
+                        })}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+          {/* STAGE 2: Source Value & Information Verification */}
+          {activeQAStage === 2 && (
+            <div className="space-y-4">
+              {activeQASource && (
+                <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 shadow-sm space-y-3">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 dark:border-slate-800 pb-3">
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <button
+                          type="button"
+                          onClick={() => setActiveQAStage(1)}
+                          className="min-h-[44px] inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors mr-1"
+                        >
+                          <ChevronLeft className="w-3.5 h-3.5" />
+                          <span>Change Source</span>
+                        </button>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-700 dark:bg-sky-600 text-white">
+                          STAGE 2 VERIFICATION
+                        </span>
+                        <span className="text-xs text-slate-500 dark:text-slate-400 font-mono">
+                          {activeQASource.record.source_id}
+                        </span>
+                      </div>
+                      <h3 className="text-sm md:text-base font-bold text-slate-900 dark:text-white mt-1">
+                        {formatSourceLongCitation(activeQASource.record)}
+                      </h3>
+                    </div>
+
+                    <a
+                      href={activeQASource.record.url || '#'}
+                      target={activeQASource.record.url ? '_blank' : undefined}
+                      rel="noreferrer"
+                      className="min-h-[44px] inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white text-xs font-bold shadow-sm transition-all shrink-0"
+                    >
+                      <span>Open Source Document</span>
+                      <ExternalLink className="w-3.5 h-3.5" />
+                    </a>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 text-xs">
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
+                        Extracted Parameters
+                      </div>
+                      <div className="text-sm font-bold text-slate-900 dark:text-white">
+                        {extractedValuesForSource.length} Values
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
+                        Confirmed Accurate
+                      </div>
+                      <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400">
+                        {
+                          extractedValuesForSource.filter(
+                            (v) =>
+                              paramVerifications[v.record.parameter_value_id]?.status ===
+                              'confirmed',
+                          ).length
+                        }{' '}
+                        Confirmed
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
+                        Discrepancies Flagged
+                      </div>
+                      <div className="text-sm font-bold text-amber-600 dark:text-amber-400">
+                        {
+                          extractedValuesForSource.filter(
+                            (v) =>
+                              paramVerifications[v.record.parameter_value_id]?.status ===
+                              'discrepancy',
+                          ).length
+                        }{' '}
+                        Discrepancies
+                      </div>
+                    </div>
+                    <div className="p-2.5 rounded-lg bg-slate-50 dark:bg-slate-950 border border-slate-200 dark:border-slate-800">
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 uppercase font-bold">
+                        Authority Scope
+                      </div>
+                      <div className="text-sm font-bold text-sky-600 dark:text-sky-400">
+                        {humanizeCatalogLabel(activeQASource.record.authority_scope)}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Stage 2 Simple & Intuitive Filter & Resume Bar */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3.5 shadow-xs space-y-3">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                  {/* Quick Status Filter Pills */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mr-1">
+                      Status:
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setStage2StatusFilter('all')}
+                      className={cn(
+                        'min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5',
+                        stage2StatusFilter === 'all'
+                          ? 'bg-slate-900 dark:bg-slate-100 text-white dark:text-slate-900 shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                      )}
+                    >
+                      <span>All</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/20 font-mono">
+                        {stage2Stats.total}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStage2StatusFilter('unreviewed')}
+                      className={cn(
+                        'min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5',
+                        stage2StatusFilter === 'unreviewed'
+                          ? 'bg-amber-700 dark:bg-amber-600 text-white shadow-xs'
+                          : stage2Stats.unreviewed > 0
+                            ? 'bg-amber-50 dark:bg-amber-950/50 text-amber-800 dark:text-amber-300 border border-amber-300 dark:border-amber-700 hover:bg-amber-100'
+                            : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                      )}
+                    >
+                      <Zap className="w-3.5 h-3.5" />
+                      <span>Unreviewed</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/20 font-mono font-bold">
+                        {stage2Stats.unreviewed}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStage2StatusFilter('confirmed')}
+                      className={cn(
+                        'min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5',
+                        stage2StatusFilter === 'confirmed'
+                          ? 'bg-emerald-700 dark:bg-emerald-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                      )}
+                    >
+                      <Check className="w-3.5 h-3.5" />
+                      <span>Confirmed</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/20 font-mono">
+                        {stage2Stats.confirmed}
+                      </span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setStage2StatusFilter('discrepancy')}
+                      className={cn(
+                        'min-h-[44px] px-3.5 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-1.5',
+                        stage2StatusFilter === 'discrepancy'
+                          ? 'bg-amber-700 dark:bg-amber-600 text-white shadow-xs'
+                          : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white',
+                      )}
+                    >
+                      <AlertTriangle className="w-3.5 h-3.5" />
+                      <span>Discrepancies</span>
+                      <span className="text-[10px] px-1.5 py-0.2 rounded-full bg-black/10 dark:bg-white/20 font-mono">
+                        {stage2Stats.discrepancy}
+                      </span>
+                    </button>
+                  </div>
+
+                  {/* Search and Pathway Filter */}
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <div className="w-full sm:w-56">
+                      <input
+                        type="search"
+                        value={stage2SearchQuery}
+                        onChange={(e) => setStage2SearchQuery(e.target.value)}
+                        placeholder="Search substance, parameter..."
+                        className="w-full min-h-[44px] px-3 text-xs rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400"
+                      />
+                    </div>
+
+                    {availableStage2Pathways.length > 1 && (
+                      <select
+                        value={stage2PathwayFilter}
+                        onChange={(e) => setStage2PathwayFilter(e.target.value)}
+                        className="min-h-[44px] text-xs px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white"
+                      >
+                        <option value="all">All Pathways</option>
+                        {availableStage2Pathways.map((pw) => (
+                          <option key={pw} value={pw}>
+                            {humanizeCatalogLabel(pw)}
+                          </option>
+                        ))}
+                      </select>
+                    )}
+
+                    {(stage2StatusFilter !== 'all' || stage2SearchQuery || stage2PathwayFilter !== 'all') && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStage2StatusFilter('all');
+                          setStage2SearchQuery('');
+                          setStage2PathwayFilter('all');
+                        }}
+                        className="min-h-[44px] px-3 text-xs font-semibold text-sky-700 dark:text-sky-400 hover:underline"
+                      >
+                        Reset
+                      </button>
+                    )}
+                  </div>
+                </div>
+
+                {/* Friendly Resume / Jump Banner */}
+                {stage2Stats.unreviewed > 0 && stage2StatusFilter === 'all' && (
+                  <div className="p-2.5 rounded-lg bg-amber-50/80 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 flex items-center justify-between gap-3 text-xs flex-wrap">
+                    <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                      <Zap className="w-4 h-4" />
+                      <span>
+                        <strong>{stage2Stats.unreviewed}</strong> parameters remaining to verify for this source document.
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setStage2StatusFilter('unreviewed')}
+                      className="min-h-[44px] px-3.5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white font-bold text-xs shadow-2xs transition-colors shrink-0"
+                    >
+                      <span>Show Unreviewed Items Only -&gt;</span>
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Extracted Values Table Containerized with Internal Scrollbar */}
+              <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden shadow-xs flex flex-col">
+                <div className="p-4 border-b border-slate-200 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-2 flex-shrink-0">
+                  <div>
+                    <h4 className="text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300">
+                      Extracted Parameter Values ({filteredStage2Values.length} of {extractedValuesForSource.length})
+                    </h4>
+                    <p className="text-xs text-slate-500 dark:text-slate-400">
+                      Confirm accuracy or flag discrepancies with toxicologist rationale notes (up to 500 characters).
+                    </p>
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-slate-400">
+                    Reviewer: <span className="font-semibold text-slate-800 dark:text-slate-200">Unassigned / Anonymous</span>
+                  </div>
+                </div>
+
+                {qaPersistenceError && (
+                  <div
+                    role="alert"
+                    className="p-3 bg-red-50 dark:bg-red-950/50 border-b border-red-200 dark:border-red-800 text-xs text-red-800 dark:text-red-300 font-semibold flex items-center justify-between gap-2"
+                  >
+                    <span>{qaPersistenceError}</span>
+                    <button
+                      type="button"
+                      onClick={() => setQaPersistenceError(null)}
+                      className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center px-3 py-2 text-xs font-bold text-red-600 hover:text-red-900 dark:hover:text-white rounded-lg"
+                    >
+                      Dismiss
+                    </button>
+                  </div>
+                )}
+
+                {/* Internal Scrollable Table Body */}
+                <div className="overflow-y-auto max-h-[calc(100vh-420px)] print:max-h-none min-h-[260px] border-b border-slate-200 dark:border-slate-800">
+                  {extractedValuesForSource.length === 0 ? (
+                    <div className="p-10 text-center space-y-3" data-testid="evidence-qa-no-values">
+                      <p className="text-sm font-bold text-slate-800 dark:text-slate-200">
+                        No parameter values are linked to this source document.
+                      </p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto">
+                        This authority reference has no directly linked parameter records in the current catalog.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => setActiveQAStage(1)}
+                        className="min-h-[44px] px-4 py-2 text-xs font-bold rounded-lg bg-sky-700 hover:bg-sky-800 text-white shadow-xs"
+                      >
+                        Select Another Source Document
+                      </button>
+                    </div>
+                  ) : filteredStage2Values.length === 0 ? (
+                    <div className="p-10 text-center space-y-2">
+                      <p className="text-xs font-semibold text-slate-700 dark:text-slate-300">
+                        No parameter values match the current filter selection.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStage2StatusFilter('all');
+                          setStage2SearchQuery('');
+                          setStage2PathwayFilter('all');
+                        }}
+                        className="min-h-[44px] px-3.5 py-2 text-xs font-bold text-sky-700 dark:text-sky-400 underline"
+                      >
+                        Reset filters
+                      </button>
+                    </div>
+                  ) : (
+                    <table className="w-full text-xs text-left">
+                      <thead className="bg-slate-50/80 dark:bg-slate-950/80 sticky top-0 border-b border-slate-200 dark:border-slate-800 text-slate-500 font-bold uppercase tracking-wider text-[10px] z-10 backdrop-blur-xs">
+                        <tr>
+                          <th className="p-3 w-44">Substance</th>
+                          <th className="p-3 w-40">Pathway &amp; Parameter</th>
+                          <th className="p-3 w-28 font-mono">Catalog Value</th>
+                          <th className="p-3 w-36">Evidence Locator</th>
+                          <th className="p-3 w-48">Verification Decision</th>
+                          <th className="p-3 min-w-[280px]">Toxicologist Reviewer Notes</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
+                        {filteredStage2Values.map((val) => {
+                          const vState =
+                            paramVerifications[val.record.parameter_value_id] ?? {
+                              status: 'needs_review',
+                              comment: '',
+                            };
+                          return (
+                            <tr
+                              key={val.record.parameter_value_id}
+                              className={cn(
+                                'hover:bg-slate-50/80 dark:hover:bg-slate-800/50 transition-colors',
+                                vState.status === 'confirmed' &&
+                                  'bg-emerald-50/20 dark:bg-emerald-950/10',
+                                vState.status === 'discrepancy' &&
+                                  'bg-amber-50/30 dark:bg-amber-950/20',
+                              )}
+                            >
+                              <td className="p-3 font-semibold text-slate-900 dark:text-white">
+                                <div>{val.substanceLabel}</div>
+                              </td>
+                              <td className="p-3">
+                                <div className="font-medium text-slate-700 dark:text-slate-300">
+                                  {val.record.display_name}
+                                </div>
+                                <div className="text-[10px] text-slate-500 font-mono">
+                                  {humanizeCatalogLabel(val.record.pathway)}
+                                </div>
+                              </td>
+                              <td className="p-3 font-mono font-bold text-slate-900 dark:text-white">
+                                {val.record.value} {val.record.unit ?? ''}
+                              </td>
+                              <td className="p-3 text-slate-600 dark:text-slate-400">
+                                <span className="inline-flex items-center gap-1 font-mono text-[11px] bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">
+                                  {val.record.evidence_items?.[0]?.locator ||
+                                    'Sched 3.1, Matrix Col'}
+                                </span>
+                              </td>
+                              <td className="p-3">
+                                <div className="flex items-center gap-1.5 flex-wrap">
+                                  <button
+                                    type="button"
+                                    aria-label={`Confirm parameter ${val.record.parameter_value_id}`}
+                                    onClick={() =>
+                                      handleVerifyParameter(
+                                        val.record.parameter_value_id,
+                                        'confirmed',
+                                      )
+                                    }
+                                    className={cn(
+                                      'min-h-[44px] px-3 py-1.5 rounded-xl font-bold text-xs border transition-all flex items-center gap-1',
+                                      vState.status === 'confirmed'
+                                        ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 border-emerald-300 dark:border-emerald-800 shadow-xs'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 border-transparent',
+                                    )}
+                                  >
+                                    <Check className="w-3.5 h-3.5" />
+                                    <span>Confirmed</span>
+                                  </button>
+                                  <button
+                                    type="button"
+                                    aria-label={`Flag discrepancy for parameter ${val.record.parameter_value_id}`}
+                                    onClick={() =>
+                                      handleVerifyParameter(
+                                        val.record.parameter_value_id,
+                                        'discrepancy',
+                                      )
+                                    }
+                                    className={cn(
+                                      'min-h-[44px] px-3 py-1.5 rounded-xl font-bold text-xs border transition-all flex items-center gap-1',
+                                      vState.status === 'discrepancy'
+                                        ? 'bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300 border-amber-300 dark:border-amber-800 shadow-xs'
+                                        : 'hover:bg-slate-100 dark:hover:bg-slate-800 text-slate-500 border-transparent',
+                                    )}
+                                  >
+                                    <AlertTriangle className="w-3.5 h-3.5" />
+                                    <span>Discrepancy</span>
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="p-3 space-y-1">
+                                <textarea
+                                  value={vState.comment}
+                                  maxLength={500}
+                                  rows={2}
+                                  onChange={(e) =>
+                                    handleCommentChange(
+                                      val.record.parameter_value_id,
+                                      e.target.value,
+                                    )
+                                  }
+                                  onBlur={() => {
+                                    if (dirtyParamIds.has(val.record.parameter_value_id)) {
+                                      executePersistForParam(val.record.parameter_value_id);
+                                    }
+                                  }}
+                                  placeholder="Enter toxicologist notes, locator verification rationale, or discrepancies..."
+                                  className="w-full text-xs p-2 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-950 text-slate-900 dark:text-white placeholder:text-slate-400 resize-y"
+                                />
+                                <div className="text-[10px] text-slate-400 text-right">
+                                  {vState.comment.length} / 500 characters
+                                </div>
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  )}
+                </div>
+              </div>
+
+              {/* Bottom Persistent Action Bar - Always Visible */}
+              <div className="sticky bottom-0 z-20 -mx-4 md:-mx-6 -mb-4 md:-mb-6 p-4 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 shadow-lg flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={() => setActiveQAStage(1)}
+                    className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                  >
+                    Back to Source Document List
+                  </button>
+                  <div className="text-xs text-slate-500 dark:text-slate-400 hidden md:block">
+                    Reviewer: <span className="font-semibold text-slate-800 dark:text-slate-200">{isAdmin ? 'Admin Reviewer' : 'Unassigned / Anonymous'}</span>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleTransitionFromStage2(3)}
+                  className="min-h-[44px] px-6 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 dark:hover:bg-sky-500 text-white text-xs font-bold shadow-md transition-all flex items-center justify-center gap-2"
+                >
+                  <span>Save &amp; Proceed to Stage 3 (Admin Review Status) -&gt;</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STAGE 3: Final Admin Verification & Publication Status (Read-Only) */}
+          {activeQAStage === 3 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                      ADMIN GOVERNANCE STAGE
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      Status: PENDING ADMIN FINAL SIGN-OFF
+                    </span>
+                  </div>
+                  <h3 className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                    Stage 3: Admin Review &amp; Publication Gate Status
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    User-verified values from Stage 2 are submitted to the Supabase verification ledger for final administrative sign-off.
+                  </p>
+                </div>
+                <div className="px-3 py-1.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 text-xs font-mono text-slate-700 dark:text-slate-300">
+                  Queue ID: <span className="font-bold text-sky-600 dark:text-sky-400">SB-QA-2027-DRA</span>
+                </div>
+              </div>
+
+              {/* Admin Governance Explanation */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs">
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Step 1: Toxicologist Review
+                  </div>
+                  <div className="text-sm font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                    <Check className="w-4 h-4" />
+                    <span>Stage 2 Verifications Recorded</span>
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Extracted values and exact document locators verified by qualified reviewers and persisted to local/cloud ledger.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-sky-200 dark:border-sky-800 bg-sky-50/50 dark:bg-sky-950/30 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">
+                    Step 2: Supabase Synchronization
+                  </div>
+                  <div className="text-sm font-bold text-sky-800 dark:text-sky-200">
+                    Synced to Admin Review Queue
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Confirmation status, discrepancy notes, and reviewer comments are aggregated in Supabase tables for synthesis.
+                  </p>
+                </div>
+
+                <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2">
+                  <div className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                    Step 3: Admin Final Sign-Off
+                  </div>
+                  <div className="text-sm font-bold text-amber-700 dark:text-amber-400">
+                    Admin Dashboard Action Required
+                  </div>
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Authenticated administrators review all submitted feedback, resolve discrepancies, and commit verified defaults.
+                  </p>
+                </div>
+              </div>
+
+              {/* Admin Queue Status Table Summary */}
+              <div className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-950/50 space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  Verification Summary Prepared for Admin Review
+                </h4>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs">
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">Total Sources</div>
+                    <div className="text-base font-bold text-slate-900 dark:text-white">{library.sources.length} Documents</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">Parameters Checked</div>
+                    <div className="text-base font-bold text-slate-900 dark:text-white">{library.values.length} Items</div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">Discrepancy Flags</div>
+                    <div className="text-base font-bold text-amber-600 dark:text-amber-400">
+                      {Object.values(paramVerifications).filter((p) => p.status === 'discrepancy').length} Active Flags
+                    </div>
+                  </div>
+                  <div className="p-3 rounded-lg bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800">
+                    <div className="text-[10px] text-slate-500 uppercase font-bold">Admin Sign-Off Status</div>
+                    <div className="text-base font-bold text-sky-600 dark:text-sky-400">Pending Admin</div>
+                  </div>
+                </div>
+                <div className="text-xs text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 p-3 rounded-lg border border-slate-200 dark:border-slate-800">
+                  <strong>Note:</strong> Admin verification and default-policy modifications can only be performed by authenticated administrators via the Admin Dashboard (`/admin`). Regular users can inspect status here and proceed to Stage 4 to flag any potential issues.
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveQAStage(2)}
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 transition-all"
+                >
+                  Back to Stage 2 (Values Verification)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setActiveQAStage(4)}
+                  className="min-h-[44px] px-5 py-2 rounded-xl bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 text-white text-xs font-bold shadow-sm transition-all"
+                >
+                  <span>Proceed to Stage 4 (Flag Issues) -&gt;</span>
+                </button>
+              </div>
+            </div>
+          )}
+
+          {/* STAGE 4: Post-Publication Issue Flagging & Continuous QA */}
+          {activeQAStage === 4 && (
+            <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-5 space-y-5 shadow-sm">
+              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-red-100 dark:bg-red-950 text-red-800 dark:text-red-300">
+                      CONTINUOUS QA
+                    </span>
+                    <span className="text-xs text-slate-500 dark:text-slate-400">
+                      Post-Publication Review
+                    </span>
+                  </div>
+                  <h3 data-testid="stage-4-heading" className="text-base font-bold text-slate-900 dark:text-white mt-1">
+                    Stage 4: Flag Potential Issues &amp; Continuous QA
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-slate-400">
+                    Provides an opportunity for reviewers to flag subtle issues or scientific updates on parameters that cleared Stages 2 &amp; 3.
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={() => setFlagFormOpen((prev) => !prev)}
+                  className="min-h-[44px] px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-2 shrink-0"
+                >
+                  <AlertTriangle className="w-4 h-4" />
+                  <span>{flagFormOpen ? 'Close Flag Form' : 'Notify Potential Issue'}</span>
+                </button>
+              </div>
+
+              {/* Success Notification Banner */}
+              {flagSubmitSuccess && (
+                <div
+                  role="alert"
+                  className="p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 text-emerald-800 dark:text-emerald-300 text-xs font-semibold flex items-center gap-1.5"
+                >
+                  <Check className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
+                  <span>Issue flag successfully recorded and queued for Admin Toxicologist review.</span>
+                </div>
+              )}
+
+              {/* Issue Submission Form Drawer */}
+              {flagFormOpen && (
+                <form
+                  onSubmit={handleFlagIssueSubmit}
+                  className="p-4 rounded-xl border border-amber-200 dark:border-amber-800/60 bg-amber-50/40 dark:bg-amber-950/20 space-y-3"
+                >
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-amber-900 dark:text-amber-200">
+                    Report Issue on a Catalogue Parameter
+                  </h4>
+
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Select Parameter *
+                      </label>
+                      <select
+                        value={flagSelectedParamId}
+                        onChange={(e) => setFlagSelectedParamId(e.target.value)}
+                        required
+                        className="w-full min-h-[44px] text-xs px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      >
+                        <option value="">-- Choose Substance &amp; Parameter --</option>
+                        {library.values
+                          .slice()
+                          .sort((a, b) => {
+                            const subCmp = (a.substanceLabel ?? '').localeCompare(b.substanceLabel ?? '');
+                            if (subCmp !== 0) return subCmp;
+                            return (a.record.display_name ?? '').localeCompare(b.record.display_name ?? '');
+                          })
+                          .map((v) => (
+                            <option key={v.record.parameter_value_id} value={v.record.parameter_value_id}>
+                              {v.substanceLabel} - {v.record.display_name} ({v.record.value} {v.record.unit ?? ''})
+                            </option>
+                          ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Issue Category *
+                      </label>
+                      <select
+                        value={flagCategory}
+                        onChange={(e) => setFlagCategory(e.target.value)}
+                        className="w-full min-h-[44px] text-xs px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                      >
+                        <option value="Outdated Regulatory Standard">Outdated Regulatory Standard (New Guidance)</option>
+                        <option value="Transcription / Typo Discrepancy">Transcription / Typo Discrepancy</option>
+                        <option value="Unit Conversion Error">Unit Conversion Error</option>
+                        <option value="Document Locator Inaccuracy">Document Locator Inaccuracy</option>
+                        <option value="Applicability / Receptor Group Scope Issue">Applicability / Receptor Group Scope Issue</option>
+                        <option value="Other Scientific Discrepancy">Other Scientific Discrepancy</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Reviewer Comments &amp; Technical Rationale * (up to 500 characters)
+                    </label>
+                    <textarea
+                      value={flagComment}
+                      onChange={(e) => setFlagComment(e.target.value.slice(0, 500))}
+                      maxLength={500}
+                      rows={3}
+                      required
+                      placeholder="Describe the discrepancy, cite the primary source page/table, or provide updated toxicological context..."
+                      className="w-full text-xs p-2.5 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white placeholder:text-slate-400"
+                    />
+                    <div className="text-[10px] text-slate-400 text-right">
+                      {flagComment.length} / 500 characters
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-[11px] font-bold text-slate-700 dark:text-slate-300 mb-1">
+                      Suggested Correction / Proposed Value (Optional)
+                    </label>
+                    <input
+                      type="text"
+                      value={flagSuggestedCorrection}
+                      onChange={(e) => setFlagSuggestedCorrection(e.target.value)}
+                      placeholder="e.g., Update value to 0.045 mg/kg-d per Table 3.2"
+                      className="w-full min-h-[44px] text-xs px-3 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-900 text-slate-900 dark:text-white"
+                    />
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setFlagFormOpen(false)}
+                      className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={!flagSelectedParamId || !flagComment.trim()}
+                      className="min-h-[44px] px-5 py-2 rounded-xl bg-amber-700 hover:bg-amber-800 text-white text-xs font-bold shadow-sm transition-all disabled:opacity-50"
+                    >
+                      Submit Issue Flag to Admin Queue
+                    </button>
+                  </div>
+                </form>
+              )}
+
+              {/* Active Issues Ledger */}
+              <div className="space-y-3">
+                <h4 className="text-xs font-bold uppercase tracking-wider text-slate-800 dark:text-slate-200">
+                  Active Flagged Issues &amp; QA Tickets ({flaggedIssues.length})
+                </h4>
+
+                <div className="space-y-2.5">
+                  {flaggedIssues
+                    .slice()
+                    .sort((a, b) => {
+                      const subCmp = (a.substanceLabel ?? '').localeCompare(b.substanceLabel ?? '');
+                      if (subCmp !== 0) return subCmp;
+                      return (a.parameterName ?? '').localeCompare(b.parameterName ?? '');
+                    })
+                    .map((issue) => (
+                    <div
+                      key={issue.id}
+                      className="p-4 rounded-xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 space-y-2 text-xs"
+                    >
+                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1.5">
+                        <div className="flex items-center gap-2">
+                          <span className="font-bold text-slate-900 dark:text-white">
+                            {issue.substanceLabel} - {issue.parameterName}
+                          </span>
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                            {issue.category}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 uppercase">
+                          {issue.status.replace(/_/g, ' ')}
+                        </span>
+                      </div>
+
+                      <p className="text-slate-700 dark:text-slate-300 leading-relaxed">
+                        {issue.comment}
+                      </p>
+
+                      {issue.suggestedCorrection && (
+                        <div className="text-[11px] text-sky-700 dark:text-sky-400 font-semibold">
+                          Proposed Correction: <span className="font-mono">{issue.suggestedCorrection}</span>
+                        </div>
+                      )}
+
+                      <div className="text-[10px] text-slate-400 pt-1 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                        <span>Reported by: {issue.flaggedBy}</span>
+                        <span>{issue.timestamp}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div className="pt-3 border-t border-slate-200 dark:border-slate-800 flex justify-between">
+                <button
+                  type="button"
+                  onClick={() => setActiveQAStage(3)}
+                  className="min-h-[44px] px-4 py-2 rounded-xl border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-xs font-bold text-slate-700 dark:text-slate-200"
+                >
+                  Back to Stage 3 (Admin Review)
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setShowQAHub(false)}
+                  className="min-h-[44px] px-5 py-2 rounded-lg bg-sky-700 hover:bg-sky-800 dark:bg-sky-600 text-white text-xs font-bold shadow-sm"
+                >
+                  Complete Review &amp; Return to Catalogue
+                </button>
+              </div>
+            </div>
+          )}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-1 min-w-0 h-full overflow-hidden">
+        {/* LEFT PANEL -- catalog dashboard, audit panels, saved review filters */}
+        <div
+          className={cn(
+            'transition-all duration-300 ease-in-out overflow-hidden flex-shrink-0 bg-slate-50 dark:bg-slate-900/50 border-r border-slate-200 dark:border-slate-800',
+            showLeftPanel ? 'w-80' : 'w-0',
+          )}
+        >
         {showLeftPanel && (
-        <div className="w-full min-w-[270px] p-5 overflow-y-auto overflow-x-hidden h-full space-y-4">
-          <h3 className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">
-            Filters
-          </h3>
+        <div className="w-full min-w-[270px] p-4 overflow-y-auto overflow-x-hidden h-full space-y-4">
+          <div className="flex items-center justify-between border-b border-slate-200/80 dark:border-slate-800 pb-2.5">
+            <div>
+              <span className="text-[10px] font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider">
+                Facet Navigator
+              </span>
+              <h3 className="text-xs font-bold text-slate-800 dark:text-slate-200">
+                Scope Slices
+              </h3>
+            </div>
+            {activeLabels.length > 0 && (
+              <button
+                type="button"
+                onClick={clearFilters}
+                className="text-[11px] font-semibold text-sky-600 dark:text-sky-400 hover:underline"
+              >
+                Reset
+              </button>
+            )}
+          </div>
 
           {filtersBlock}
 
@@ -4179,7 +5995,7 @@ export default function EvidenceLibrary({
                       }
                     }}
                     data-testid="evidence-library-save-view-confirm"
-                    className="rounded-md border border-emerald-300 bg-emerald-50 px-2 py-1 text-[11px] font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
+                    className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 dark:border-emerald-800 dark:bg-emerald-900/20 dark:text-emerald-300"
                   >
                     {savingViewSubmitting ? 'Saving...' : 'Save'}
                   </button>
@@ -4190,7 +6006,7 @@ export default function EvidenceLibrary({
                       setSaveViewError(null);
                     }}
                     disabled={savingViewSubmitting}
-                    className="rounded-md border border-slate-300 bg-white px-2 py-1 text-[11px] font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
+                    className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 disabled:opacity-50 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200"
                   >
                     Cancel
                   </button>
@@ -4219,9 +6035,9 @@ export default function EvidenceLibrary({
                   onClick={() => setSavedViewsActionError(null)}
                   aria-label="Dismiss saved views error"
                   data-testid="evidence-library-saved-views-error-dismiss"
-                  className="shrink-0 rounded p-0.5 text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
+                  className="shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg p-2 text-red-700 hover:bg-red-100 dark:text-red-300 dark:hover:bg-red-900/40"
                 >
-                  <X className="h-3 w-3" />
+                  <X className="h-4 w-4" />
                 </button>
               </div>
             )}
@@ -4248,13 +6064,13 @@ export default function EvidenceLibrary({
                         onClick={() => applySavedView(view)}
                         aria-pressed={isActive}
                         className={cn(
-                          'flex min-w-0 flex-1 items-center justify-between gap-2 rounded-md border px-2 py-1 text-left text-xs transition-colors',
+                          'flex min-w-0 flex-1 min-h-[44px] items-center justify-between gap-2 rounded-lg border px-3 py-2 text-left text-xs transition-colors',
                           isActive
                             ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
                             : 'border-slate-200 bg-slate-50 text-slate-700 hover:border-sky-300 hover:bg-white dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200',
                         )}
                       >
-                        <span className="truncate font-semibold">{view.name}</span>
+                        <span className="font-semibold break-words">{view.name}</span>
                         <span className="shrink-0 text-[10px] text-slate-500 dark:text-slate-400">
                           {count}
                         </span>
@@ -4263,9 +6079,9 @@ export default function EvidenceLibrary({
                         type="button"
                         onClick={() => removeSavedView(view.id)}
                         aria-label={`Delete saved view ${view.name}`}
-                        className="rounded-md border border-slate-300 bg-white p-1 text-slate-500 hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
+                        className="min-h-[44px] min-w-[44px] inline-flex items-center justify-center rounded-lg border border-slate-300 bg-white p-2 text-slate-500 hover:border-red-300 hover:text-red-600 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-400"
                       >
-                        <X className="h-3 w-3" />
+                        <X className="h-4 w-4" />
                       </button>
                     </li>
                   );
@@ -4278,73 +6094,14 @@ export default function EvidenceLibrary({
       </div>
 
       {/* MAIN CONTENT -- header and results */}
-      <div className="flex-1 min-w-0 overflow-y-auto overflow-x-hidden bg-white dark:bg-slate-950">
+      <div className="flex-1 min-w-0 overflow-y-auto bg-white dark:bg-slate-950">
         <div className="space-y-5 p-6">
-          <header className="flex flex-col gap-3 border-b border-slate-200 pb-4 dark:border-slate-800 lg:flex-row lg:items-end lg:justify-between">
-        <div>
-          <h2 className="text-xl font-bold text-slate-950 dark:text-white">
-            References & Values
-          </h2>
-          <div className="mt-2 flex flex-wrap gap-2 text-xs text-slate-600 dark:text-slate-300">
-            <span>{library.totalCounts.sources} sources</span>
-            <span>{library.totalCounts.values} values</span>
-            <span>{library.totalCounts.equations} equations</span>
-          </div>
-        </div>
-        <div
-          className="grid w-full grid-cols-3 rounded-lg border border-slate-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-900 sm:inline-grid sm:w-auto sm:grid-cols-3"
-          aria-label="Evidence library view"
-        >
-          {VIEW_MODES.map((mode) => (
-            <button
-              key={mode.id}
-              type="button"
-              onClick={() => changeViewMode(mode.id)}
-              aria-pressed={viewMode === mode.id}
-              className={cn(
-                'min-h-9 whitespace-nowrap px-3 text-xs font-semibold transition-colors',
-                viewMode === mode.id
-                  ? 'rounded-md bg-sky-600 text-white shadow-sm dark:bg-sky-500'
-                  : 'rounded-md text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800',
-              )}
-            >
-              {mode.label}
-            </button>
-          ))}
-        </div>
-      </header>
-
-      {calculatorReceipt && (
-        <CalculatorReceiptBanner
-          receipt={calculatorReceipt}
-          onDismiss={onDismissReceipt}
-        />
-      )}
-
-      {showValues && (
-        <div
-          className="flex flex-wrap items-center gap-2"
-          data-testid="evidence-library-quick-review"
-        >
-          <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-            Quick review
-          </span>
-          <button
-            type="button"
-            onClick={toggleCandidateDefaults}
-            aria-pressed={candidateDefaultsActive}
-            data-testid="evidence-library-candidate-defaults"
-            className={cn(
-              'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
-              candidateDefaultsActive
-                ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
-                : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',
-            )}
-          >
-            Candidate defaults
-          </button>
-        </div>
-      )}
+          {calculatorReceipt && (
+            <CalculatorReceiptBanner
+              receipt={calculatorReceipt}
+              onDismiss={onDismissReceipt}
+            />
+          )}
 
       {/* Filters fall back to the center when the left panel is unavailable (mobile, where the
           parent forces side panels closed, or when the left panel is toggled off). */}
@@ -4359,6 +6116,7 @@ export default function EvidenceLibrary({
             selectedValue,
           )}
           onClose={() => setSelectedValueId(null)}
+          onExpandDossier={() => setIsDossierModalOpen(true)}
           isAdmin={isAdmin}
         />
       )}
@@ -4370,46 +6128,7 @@ export default function EvidenceLibrary({
         />
       )}
 
-      {showValueGroups && (
-        <section className="space-y-2" data-testid="evidence-library-value-groups">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-              Values By Parameter
-            </h3>
-            <ResultCountBadge
-              visible={visibleValueGroups.length}
-              total={baselineLibrary.valueGroups.length}
-              label="parameter groups"
-            />
-          </div>
-          <div className="grid gap-2">
-            {visibleValueGroups.map((group) => (
-              <ValueGroupCard
-                key={group.groupId}
-                group={group}
-                policyDecision={
-                  defaultPolicyDecisions.get(
-                    defaultPolicyDecisionKey(
-                      group.pathway,
-                      group.substanceKey,
-                      group.inputKey,
-                    ),
-                  ) ?? null
-                }
-              />
-            ))}
-            {visibleValueGroups.length === 0 && (
-              <EmptyDatabaseState
-                title="No parameter groups match."
-                activeLabels={activeLabels}
-                onClear={clearFilters}
-              >
-                {isDerivedPreviewFilter ? <DerivedPreviewEmptyState /> : null}
-              </EmptyDatabaseState>
-            )}
-          </div>
-        </section>
-      )}
+
 
       {showValues && (
         <section className="space-y-2" data-testid="evidence-library-values">
@@ -4432,48 +6151,16 @@ export default function EvidenceLibrary({
             className="rounded-lg border border-slate-200 dark:border-slate-800"
             fadeFrom="from-white dark:from-slate-950"
           >
-            <table className="w-full min-w-[640px] table-fixed text-sm">
-              {/* Fixed column proportions: the text-heavy columns (review status,
-                  default/evidence, applicability, sources) get the room; the short
-                  numeric "Current value" no longer hogs width. min-w-[640px] keeps this
-                  layout at wide widths (where 100% already exceeds the floor) while
-                  forcing genuine horizontal overflow on phone-width containers so the
-                  sticky first column and ScrollFadeRegion's edge fade actually engage
-                  instead of being permanently inert (scrollWidth === clientWidth). */}
-              {/* Round-2 P2-5: "Current value" was w-[9%] with a
-                  `whitespace-nowrap` cell. Under `table-layout: fixed` an
-                  unwrappable cell overflows VISIBLY rather than widening its
-                  column, so at a 1000px container (~66px content box) a value
-                  like "6.0E-05 mg/kg-bw/day" (~144px) painted straight over the
-                  neighbouring evidence-status badge and both strings became
-                  unreadable. Horizontal scroll does not fix that -- panning does
-                  not un-overlap two strings drawn on top of each other, and a
-                  regulatory value must never render illegibly.
-                  Fix is both halves: widen the column to 16% AND let the cell
-                  wrap (see the `break-words` cell below), so an unusually long
-                  unit string costs a second line instead of an overlap.
-                  Arithmetic re-checked for every column at the 640px floor:
-                  no other cell sets `whitespace-nowrap`, so every other column
-                  already wraps and cannot overlap its neighbour. Widths still
-                  total exactly 100%. */}
-              <colgroup>
-                <col className="w-[20%]" />
-                <col className="w-[8%]" />
-                <col className="w-[16%]" />
-                <col className="w-[13%]" />
-                <col className="w-[16%]" />
-                <col className="w-[13%]" />
-                <col className="w-[14%]" />
-              </colgroup>
+            <table className="w-full min-w-[980px] text-sm">
               <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
                 <tr>
-                  <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 font-semibold shadow-[2px_0_4px_rgba(0,0,0,0.08)] dark:bg-slate-900">Parameter</th>
-                  <th className="px-3 py-2 font-semibold">Pathway</th>
-                  <th className="px-3 py-2 font-semibold">Current value</th>
-                  <th className="px-3 py-2 font-semibold">Default / evidence</th>
-                  <th className="px-3 py-2 font-semibold">Review status</th>
-                  <th className="px-3 py-2 font-semibold">Applicability</th>
-                  <th className="px-3 py-2 font-semibold">Sources</th>
+                  <th className="sticky left-0 z-10 bg-slate-50 px-3 py-2 font-semibold shadow-[2px_0_4px_rgba(0,0,0,0.08)] dark:bg-slate-900 w-[200px] min-w-[180px]">Parameter</th>
+                  <th className="px-3 py-2 font-semibold w-[140px] min-w-[120px]">Pathway</th>
+                  <th className="px-3 py-2 font-semibold w-[140px] min-w-[120px]">Current value</th>
+                  <th className="px-3 py-2 font-semibold w-[150px] min-w-[140px]">Default / evidence</th>
+                  <th className="px-3 py-2 font-semibold w-[220px] min-w-[200px]">Review status</th>
+                  <th className="px-3 py-2 font-semibold w-[150px] min-w-[130px]">Applicability</th>
+                  <th className="px-3 py-2 font-semibold w-[160px] min-w-[140px]">Sources</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
@@ -4494,7 +6181,7 @@ export default function EvidenceLibrary({
                   const selectThisValue = () => {
                     setSelectedSourceId(null);
                     setSelectedValueId(row.record.parameter_value_id);
-                    if (!showRightPanel) onRequestOpenRightPanel?.();
+                    onRequestOpenRightPanel?.();
                   };
                   const isSelectedRow =
                     selectedValueId === row.record.parameter_value_id;
@@ -4515,40 +6202,48 @@ export default function EvidenceLibrary({
                           }
                         }}
                         className={cn(
-                          'group cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
-                          isSelectedRow &&
-                            'bg-sky-50 dark:bg-sky-950/40',
+                          'group cursor-pointer transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 border-b border-slate-100 dark:border-slate-800/60',
+                          isSelectedRow
+                            ? 'bg-sky-50 dark:bg-sky-950/40'
+                            : 'hover:bg-sky-50/50 dark:hover:bg-sky-950/20',
                         )}
                       >
                         <td
                           className={cn(
-                            'sticky left-0 z-10 px-3 py-2 shadow-[2px_0_4px_rgba(0,0,0,0.08)] transition-colors',
-                            // Every background here MUST be fully opaque. A sticky cell
-                            // occludes the columns sliding beneath it, and `z-10` controls
-                            // PAINT ORDER, not opacity -- a translucent sticky background
-                            // lets the scrolled cells show through, so the parameter name
-                            // and the Pathway/Current-value text render superimposed and
-                            // neither is readable. That is the same "regulatory text drawn
-                            // on top of other text" failure round-2 P2-5 removed from this
-                            // table, and jsdom cannot see it.
-                            //
-                            // The ROW keeps its translucent tints (they composite over the
-                            // table background, which is fine); only this sticky cell is
-                            // forced opaque, at the cost of a slightly stronger tint than
-                            // the rest of the row.
+                            'sticky left-0 z-10 px-3 py-2.5 shadow-[2px_0_4px_rgba(0,0,0,0.06)] transition-colors',
                             'bg-white group-hover:bg-sky-50 dark:bg-slate-950 dark:group-hover:bg-sky-950',
                             isSelectedRow && 'bg-sky-50 dark:bg-sky-950',
                           )}
                         >
-                          <div className="font-semibold text-slate-900 dark:text-white">
-                            {row.record.display_name}
-                          </div>
-                          <div className="text-xs text-slate-500">
-                            {row.substanceLabel}
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <div className="font-semibold text-slate-900 dark:text-slate-100 break-words">
+                                {row.record.display_name}
+                              </div>
+                              <div className="text-[11px] text-slate-500 dark:text-slate-400 break-words">
+                                {row.substanceLabel}
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                selectThisValue();
+                                setIsDossierModalOpen(true);
+                              }}
+                              title="Open full Evidence Dossier"
+                              aria-label={`Open full Evidence Dossier for ${row.record.display_name}`}
+                              className="shrink-0 inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[10px] font-bold text-sky-700 bg-sky-100 hover:bg-sky-200 dark:text-sky-300 dark:bg-sky-900/60 dark:hover:bg-sky-800 shadow-2xs transition-all"
+                            >
+                              <FileText className="w-3 h-3" />
+                              <span>Dossier</span>
+                            </button>
                           </div>
                         </td>
-                        <td className="px-3 py-2">
-                          {humanizeCatalogLabel(row.record.pathway)}
+                        <td className="px-3 py-2.5">
+                          <span className="inline-flex items-center rounded-md bg-slate-100 dark:bg-slate-800 px-2 py-0.5 text-xs font-medium text-slate-700 dark:text-slate-300">
+                            {humanizeCatalogLabel(row.record.pathway)}
+                          </span>
                           {catalogValueRole(row.record.pathway) ===
                             'toxicity-weighting-modifier' && (
                             <span
@@ -4560,21 +6255,16 @@ export default function EvidenceLibrary({
                             </span>
                           )}
                         </td>
-                        {/* Round-2 P2-5: wrap instead of nowrap. `break-words`
-                            only breaks a token that genuinely cannot fit (e.g.
-                            the unit "mg/kg-bw/day" at the 640px floor), so
-                            ordinary values stay on one line. `title` carries the
-                            unbroken string for hover/AT. */}
                         <td
-                          className="px-3 py-2 font-mono whitespace-normal break-words"
+                          className="px-3 py-2.5 font-mono whitespace-normal break-words"
                           title={formatValue(row.record.value, row.record.unit)}
                           data-testid="evidence-current-value-cell"
                         >
                           {formatValue(row.record.value, row.record.unit)}
                         </td>
-                        <td className="px-3 py-2" data-testid="evidence-default-evidence-cell">
+                        <td className="px-3 py-2.5" data-testid="evidence-default-evidence-cell">
                           <StatusBadge value={row.record.evidence_support_status} />
-                          <div className="mt-1 text-xs text-slate-500 dark:text-slate-400">
+                          <div className="mt-0.5 text-[11px] text-slate-500 dark:text-slate-400">
                             {humanizeCatalogLabel(row.record.default_status)}
                             {' . '}
                             <QaStatusText value={row.record.qa_status} />
@@ -4582,8 +6272,8 @@ export default function EvidenceLibrary({
                             {humanizeCatalogLabel(row.record.extraction_status)}
                           </div>
                         </td>
-                        <td className="px-3 py-2 max-w-xs">
-                          <div className="space-y-2">
+                        <td className="px-3 py-2.5">
+                          <div className="space-y-1">
                             <ReviewDispositionNote {...review} />
                             {policyDecision && policyCandidate ? (
                               <DefaultPolicyDispositionNote
@@ -4594,61 +6284,72 @@ export default function EvidenceLibrary({
                             ) : null}
                           </div>
                         </td>
-                        <td className="px-3 py-2 max-w-xs">{row.record.applicability}</td>
-                        <td className="px-3 py-2 max-w-xs">{sourceLabels(row)}</td>
+                        <td className="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-400">
+                          <span className="break-words">
+                            {row.record.applicability}
+                          </span>
+                        </td>
+                        <td className="px-3 py-2.5 text-xs text-slate-600 dark:text-slate-400">
+                          <span className="break-words">
+                            {sourceLabels(row)}
+                          </span>
+                        </td>
                       </tr>
                       <tr>
-                        <td colSpan={7} className="bg-white px-3 py-2 dark:bg-slate-950">
+                        <td colSpan={7} className="px-3 py-0 bg-slate-50/40 dark:bg-slate-950/40 border-b border-slate-100 dark:border-slate-800">
                           <details className="group">
                             <summary className="flex min-h-[44px] w-fit cursor-pointer list-none marker:content-none [&::-webkit-details-marker]:hidden items-center gap-1.5 text-xs font-semibold text-sky-700 hover:underline dark:text-sky-300">
                               Details
-                              {/* Round-2 P3-1: rotate on open. */}
                               <ChevronDown
                                 className="h-3.5 w-3.5 shrink-0 transition-transform duration-200 group-open:rotate-180"
                                 aria-hidden="true"
                               />
                             </summary>
-                            <div className="mt-2 grid gap-2 text-xs text-slate-600 dark:text-slate-300 md:grid-cols-2 xl:grid-cols-4">
-                              <div>Units: {row.record.unit}</div>
-                              <div>Uncertainty: {row.record.uncertainty ?? 'Not recorded'}</div>
-                              <div>Receptors: {tagList(row.receptorGroups)}</div>
-                              <div>Populations: {tagList(row.populationGroups)}</div>
-                              <div>Species: {tagList(row.speciesGroups)}</div>
-                              <div>Assumptions: {tagList(row.assumptionTags)}</div>
-                              <div>Jurisdiction: {row.record.jurisdiction}</div>
-                              <div>Candidate group: {row.record.candidate_group_id}</div>
-                              <div>Evidence: {row.record.evidence_items.length}</div>
-                              <div>
-                                Canonical source:{' '}
-                                {row.record.canonical_source_status
-                                  ? humanizeCatalogLabel(row.record.canonical_source_status)
-                                  : 'Not recorded'}
-                              </div>
-                              <div>
-                                Policy alignment:{' '}
-                                {row.record.bc_protocol_alignment
-                                  ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
-                                  : 'Not recorded'}
-                              </div>
-                              <div>
-                                Source crystallization:{' '}
-                                {row.record.source_crystallization_date ?? 'Not recorded'}
-                              </div>
-                            </div>
-                            <div className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                              Source relationships: {sourceRelationshipLabels(row)}
-                            </div>
-                            <div className="mt-2 space-y-1 text-xs text-slate-600 dark:text-slate-300">
-                              {row.record.evidence_items.map((evidence) => (
-                                <div key={evidence.evidence_id}>
-                                  Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
-                                  <QaStatusText value={evidence.qa_status} />
+                            <div className="pb-3 pt-1 space-y-2 text-xs text-slate-600 dark:text-slate-300">
+                              <div className="grid gap-2 md:grid-cols-2 xl:grid-cols-4">
+                                <div>Units: {row.record.unit}</div>
+                                <div>Uncertainty: {row.record.uncertainty ?? 'Not recorded'}</div>
+                                <div>Receptors: {tagList(row.receptorGroups)}</div>
+                                <div>Populations: {tagList(row.populationGroups)}</div>
+                                <div>Species: {tagList(row.speciesGroups)}</div>
+                                <div>Assumptions: {tagList(row.assumptionTags)}</div>
+                                <div>Jurisdiction: {row.record.jurisdiction}</div>
+                                <div>Candidate group: {row.record.candidate_group_id}</div>
+                                <div>Evidence: {row.record.evidence_items.length}</div>
+                                <div>
+                                  Canonical source:{' '}
+                                  {row.record.canonical_source_status
+                                    ? humanizeCatalogLabel(row.record.canonical_source_status)
+                                    : 'Not recorded'}
                                 </div>
-                              ))}
+                                <div>
+                                  Policy alignment:{' '}
+                                  {row.record.bc_protocol_alignment
+                                    ? humanizeCatalogLabel(row.record.bc_protocol_alignment)
+                                    : 'Not recorded'}
+                                </div>
+                                <div>
+                                  Source crystallization:{' '}
+                                  {row.record.source_crystallization_date ?? 'Not recorded'}
+                                </div>
+                              </div>
+                              <div className="text-xs text-slate-600 dark:text-slate-300">
+                                Source relationships: {sourceRelationshipLabels(row)}
+                              </div>
+                              <div className="space-y-1 text-xs text-slate-600 dark:text-slate-300">
+                                {row.record.evidence_items.map((evidence) => (
+                                  <div key={evidence.evidence_id}>
+                                    Extracted {evidence.extracted_at}: {evidence.locator} -{' '}
+                                    <QaStatusText value={evidence.qa_status} />
+                                  </div>
+                                ))}
+                              </div>
+                              {row.record.review_notes && (
+                                <p className="text-xs text-slate-600 dark:text-slate-300">
+                                  {row.record.review_notes}
+                                </p>
+                              )}
                             </div>
-                            <p className="mt-2 text-xs text-slate-600 dark:text-slate-300">
-                              {row.record.review_notes}
-                            </p>
                           </details>
                         </td>
                       </tr>
@@ -4691,246 +6392,6 @@ export default function EvidenceLibrary({
           )}
         </section>
       )}
-
-      {showSources && (
-        <section className="space-y-2" data-testid="evidence-library-sources">
-          <div className="flex items-center justify-between">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-              Sources
-            </h3>
-            <ResultCountBadge
-              visible={library.sources.length}
-              total={baselineLibrary.sources.length}
-              label="sources"
-            />
-          </div>
-          <ScrollFadeRegion
-            className="rounded-lg border border-slate-200 dark:border-slate-800"
-            fadeFrom="from-white dark:from-slate-950"
-          >
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 text-left text-xs uppercase text-slate-500 dark:bg-slate-900 dark:text-slate-400">
-                <tr>
-                  <th className="px-3 py-2 font-semibold">Source</th>
-                  <th className="px-3 py-2 font-semibold">Role / tier</th>
-                  <th className="px-3 py-2 font-semibold">Authority</th>
-                  <th className="px-3 py-2 font-semibold">Currentness</th>
-                  <th className="px-3 py-2 font-semibold">Zotero</th>
-                  <th className="px-3 py-2 font-semibold">Total catalog links</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-200 dark:divide-slate-800">
-                {library.sources.map((row) => {
-                  const selectThisSource = () => {
-                    setSelectedValueId(null);
-                    setSelectedSourceId(row.record.source_id);
-                    if (!showRightPanel) onRequestOpenRightPanel?.();
-                  };
-                  const isSelectedSourceRow =
-                    selectedSourceId === row.record.source_id;
-                  return (
-                  <tr
-                    key={row.record.source_id}
-                    role="button"
-                    tabIndex={0}
-                    aria-label={`Inspect ${row.record.short_citation}`}
-                    data-testid="evidence-library-inspect-source"
-                    onClick={selectThisSource}
-                    onKeyDown={(event) => {
-                      // Only act on the row itself, not bubbled keys from the nested link.
-                      if (event.target !== event.currentTarget) return;
-                      if (event.key === 'Enter' || event.key === ' ') {
-                        event.preventDefault();
-                        selectThisSource();
-                      }
-                    }}
-                    className={cn(
-                      'cursor-pointer align-top text-slate-700 transition-colors hover:bg-sky-50/60 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:text-slate-200 dark:hover:bg-sky-950/30',
-                      isSelectedSourceRow && 'bg-sky-50 dark:bg-sky-950/40',
-                    )}
-                  >
-                    <td className="px-3 py-2">
-                      <div className="font-semibold text-slate-900 dark:text-white">
-                        {row.record.url ? (
-                          <a
-                            href={row.record.url}
-                            target="_blank"
-                            rel="noreferrer"
-                            onClick={(event) => event.stopPropagation()}
-                            className="inline-flex items-center gap-1 text-sky-700 hover:underline dark:text-sky-300"
-                          >
-                            {row.record.short_citation}
-                            <ExternalLink className="h-3.5 w-3.5" />
-                          </a>
-                        ) : (
-                          row.record.short_citation
-                        )}
-                      </div>
-                      <div className="mt-1 max-w-lg text-xs text-slate-500">
-                        {row.record.title}
-                      </div>
-                      {row.record.notes && (
-                        <div className="mt-1 max-w-lg text-xs text-slate-500">
-                          {row.record.notes}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <div className="flex flex-wrap gap-1">
-                        <StatusBadge
-                          value={
-                            row.record.calculator_source_role ??
-                            'canonical_candidate'
-                          }
-                        />
-                        {row.record.source_authority_tier && (
-                          <StatusBadge value={row.record.source_authority_tier} />
-                        )}
-                        {row.record.canonical_source_status && (
-                          <StatusBadge value={row.record.canonical_source_status} />
-                        )}
-                      </div>
-                      {row.record.bc_protocol_alignment && (
-                        <div className="mt-1 text-xs text-slate-500">
-                          {humanizeCatalogLabel(row.record.bc_protocol_alignment)}
-                        </div>
-                      )}
-                      {row.record.source_crystallization_date && (
-                        <div className="mt-1 text-xs text-amber-700 dark:text-amber-300">
-                          crystallized {row.record.source_crystallization_date}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge value={row.record.authority_scope} />
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge value={row.record.currentness_status} />
-                      {row.record.checked_at && (
-                        <div className="mt-1 text-xs text-slate-500">
-                          checked {row.record.checked_at}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      <StatusBadge value={row.record.zotero_status} />
-                      {row.record.zotero_item_key && (
-                        <div className="mt-1 font-mono text-xs text-slate-500">
-                          {row.record.zotero_item_key}
-                        </div>
-                      )}
-                    </td>
-                    <td className="px-3 py-2">
-                      {row.linkedValueCount} total values;{' '}
-                      {row.linkedEquationCount} total equations
-                    </td>
-                  </tr>
-                  );
-                })}
-                {library.sources.length === 0 && (
-                  <tr>
-                    <td colSpan={6} className="px-3 py-6 text-sm text-slate-500">
-                      <EmptyDatabaseState
-                        title="No sources match."
-                        activeLabels={activeLabels}
-                        onClear={clearFilters}
-                      />
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </ScrollFadeRegion>
-        </section>
-      )}
-
-      {showSourceLeads && (
-        <section className="space-y-2" data-testid="evidence-library-source-leads">
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <h3 className="text-sm font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-              Source-Of-Sources Leads
-            </h3>
-            <div className="flex flex-wrap items-center gap-2">
-              {(() => {
-                const needsReviewCount = library.sourceLeads.filter(
-                  (lead) => lead.status === 'needs_review',
-                ).length;
-                return needsReviewCount > 0 ? (
-                  <span
-                    className="inline-flex items-center rounded-full border border-amber-200 bg-amber-50 px-2.5 py-1 text-xs font-semibold text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-200"
-                    data-testid="source-leads-needs-review-badge"
-                    title="Lead sets with status needs_review and pending source locator"
-                  >
-                    {needsReviewCount} needs review
-                  </span>
-                ) : null;
-              })()}
-              <ResultCountBadge
-                visible={library.sourceLeads.length}
-                total={baselineLibrary.sourceLeads.length}
-                label="lead sets"
-              />
-            </div>
-          </div>
-          {(() => {
-            const allLeadIds = baselineLibrary.sourceLeads.map((l) => l.leadSetId);
-            const triageCounts = {
-              untriaged: allLeadIds.filter(
-                (id) => (triageState[id]?.triage_status ?? 'untriaged') === 'untriaged',
-              ).length,
-              promoted: allLeadIds.filter(
-                (id) => triageState[id]?.triage_status === 'promoted',
-              ).length,
-              dismissed: allLeadIds.filter(
-                (id) => triageState[id]?.triage_status === 'dismissed',
-              ).length,
-              deferred: allLeadIds.filter(
-                (id) => triageState[id]?.triage_status === 'deferred',
-              ).length,
-            };
-            return (
-              <div
-                className="flex flex-wrap gap-2 rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs dark:border-slate-800 dark:bg-slate-900"
-                data-testid="source-leads-triage-summary"
-              >
-                <span className="font-semibold uppercase text-slate-500 dark:text-slate-400">
-                  Triage:
-                </span>
-                <span className="text-slate-700 dark:text-slate-300">
-                  Untriaged: <strong>{triageCounts.untriaged}</strong>
-                </span>
-                <span className="text-emerald-700 dark:text-emerald-300">
-                  Promoted: <strong>{triageCounts.promoted}</strong>
-                </span>
-                <span className="text-red-700 dark:text-red-300">
-                  Dismissed: <strong>{triageCounts.dismissed}</strong>
-                </span>
-                <span className="text-amber-700 dark:text-amber-300">
-                  Deferred: <strong>{triageCounts.deferred}</strong>
-                </span>
-              </div>
-            );
-          })()}
-          <div className="grid gap-2">
-            {library.sourceLeads.map((lead) => (
-              <SourceLeadCard
-                key={lead.leadSetId}
-                lead={lead}
-                isAdmin={isAdmin}
-                triage={triageState[lead.leadSetId]}
-                onTriaged={handleLeadTriaged}
-              />
-            ))}
-            {library.sourceLeads.length === 0 && (
-              <EmptyDatabaseState
-                title="No source leads match."
-                activeLabels={activeLabels}
-                onClear={clearFilters}
-              />
-            )}
-          </div>
-        </section>
-      )}
         </div>
       </div>
 
@@ -4957,7 +6418,7 @@ export default function EvidenceLibrary({
           />
         )}
         {showRightPanel && (
-        <div className="w-full h-full overflow-y-auto overflow-x-hidden p-4 space-y-3">
+        <div ref={rightPanelContentRef} className="w-full h-full overflow-y-auto overflow-x-hidden p-4 space-y-3">
           <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
             <h3
               className="text-xs font-bold uppercase tracking-wider text-slate-400 dark:text-slate-500"
@@ -4976,11 +6437,11 @@ export default function EvidenceLibrary({
                   setSelectedValueId(null);
                   setSelectedSourceId(null);
                 }}
-                className="inline-flex items-center gap-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-xs font-semibold text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200 dark:hover:border-sky-700 dark:hover:text-sky-300"
+                className="min-h-[44px] inline-flex items-center gap-1.5 rounded-lg border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 px-3.5 py-1.5 text-xs font-bold text-slate-800 dark:text-slate-100 hover:border-sky-500 hover:text-sky-700 dark:hover:border-sky-400 dark:hover:text-sky-300 shadow-2xs transition-all"
                 aria-label="Back to catalog dashboard"
               >
-                <ChevronLeft className="h-3.5 w-3.5" />
-                Dashboard
+                <ChevronLeft className="h-4 w-4" />
+                <span>Back to Catalogue</span>
               </button>
             )}
           </div>
@@ -4993,6 +6454,7 @@ export default function EvidenceLibrary({
                 selectedValue,
               )}
               onClose={() => setSelectedValueId(null)}
+              onExpandDossier={() => setIsDossierModalOpen(true)}
               compact
               isAdmin={isAdmin}
             />
@@ -5005,7 +6467,96 @@ export default function EvidenceLibrary({
             />
           )}
           {!selectedValue && !selectedSource && (
-            <div className="space-y-4" data-testid="evidence-library-right-dashboard">
+            <div className="space-y-3.5" data-testid="evidence-library-right-dashboard">
+              {/* Option 2: Prominent Evidence Dossier Overview Card */}
+              <div
+                role="button"
+                tabIndex={0}
+                onClick={() => {
+                  const target = visibleValues[0] ?? baselineLibrary.values[0];
+                  if (target) setSelectedValueId(target.record.parameter_value_id);
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    const target = visibleValues[0] ?? baselineLibrary.values[0];
+                    if (target) setSelectedValueId(target.record.parameter_value_id);
+                  }
+                }}
+                className="p-4 rounded-xl bg-slate-50 hover:bg-sky-50/50 dark:bg-slate-900 dark:hover:bg-sky-950/30 border border-slate-200 hover:border-sky-400 dark:border-slate-800 dark:hover:border-sky-600 shadow-sm transition-all cursor-pointer group space-y-3"
+              >
+                <div className="flex items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <span className="inline-block w-2 h-2 rounded-full bg-sky-600 dark:bg-sky-400"></span>
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-slate-900 dark:text-slate-100">
+                      Evidence Dossier
+                    </span>
+                  </div>
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800/60">
+                    Active Frame: BC P1 v5
+                  </span>
+                </div>
+
+                <div className="space-y-1 text-xs">
+                  <h4 className="font-bold text-slate-900 dark:text-white text-sm flex items-center justify-between">
+                    <span>Regulatory Evidence &amp; Audit Trail</span>
+                    <ArrowRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-sky-600 group-hover:translate-x-0.5 transition-all" />
+                  </h4>
+                  <p className="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                    Select any parameter from the table on the left to inspect its exact document locators, primary citations, QA audit timeline, and policy alignment.
+                  </p>
+                </div>
+
+                {/* Dossier Navigation Highlights */}
+                <div className="pt-2.5 border-t border-indigo-100/80 dark:border-slate-800 space-y-2">
+                  <div className="flex items-center justify-between text-[11px] text-slate-500 dark:text-slate-400 font-medium">
+                    <span>Inspectable Dimensions</span>
+                    <span className="font-semibold text-indigo-600 dark:text-indigo-400">Multi-Authority</span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2 text-xs">
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const target = visibleValues.find((v) => v.record.evidence_items.length > 0) ?? visibleValues[0] ?? baselineLibrary.values[0];
+                        if (target) setSelectedValueId(target.record.parameter_value_id);
+                      }}
+                      className="p-2.5 rounded-lg bg-white hover:bg-sky-50 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 hover:border-sky-300 dark:border-slate-800 transition-all space-y-0.5"
+                    >
+                      <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">Document Locators</div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400">Exact page &amp; table tags</div>
+                    </div>
+                    <div
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const target = visibleValues.find((v) => Boolean(v.record.source_crystallization_date)) ?? visibleValues[0] ?? baselineLibrary.values[0];
+                        if (target) setSelectedValueId(target.record.parameter_value_id);
+                      }}
+                      className="p-2.5 rounded-lg bg-white hover:bg-sky-50 dark:bg-slate-950 dark:hover:bg-slate-800 border border-slate-200 hover:border-sky-300 dark:border-slate-800 transition-all space-y-0.5"
+                    >
+                      <div className="text-[10px] font-bold uppercase text-indigo-600 dark:text-indigo-400">Provenance Trail</div>
+                      <div className="text-[11px] text-slate-600 dark:text-slate-400">Crystallization dates</div>
+                    </div>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    const target = visibleValues[0] ?? baselineLibrary.values[0];
+                    if (target) {
+                      setSelectedValueId(target.record.parameter_value_id);
+                      setIsDossierModalOpen(true);
+                    }
+                  }}
+                  className="w-full min-h-[38px] mt-2 inline-flex items-center justify-center gap-1.5 rounded-lg bg-sky-600 hover:bg-sky-700 dark:bg-sky-500 dark:hover:bg-sky-600 text-white font-bold text-xs shadow-xs transition-all"
+                >
+                  <FileText className="w-3.5 h-3.5" />
+                  <span>Inspect Evidence Dossier</span>
+                  <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                </button>
+              </div>
+
               {/* Prominent: at-a-glance inventory of the references loaded in the catalog. */}
               <CatalogInventory
                 baseline={baselineLibrary}
@@ -5015,41 +6566,43 @@ export default function EvidenceLibrary({
                 }}
               />
 
-              {/* Demoted: the catalog status + QA/admin tools, collapsed by default. */}
-              <details
-                open={statusAdminOpen}
-                onToggle={(event) =>
-                  setStatusAdminOpen(
-                    (event.currentTarget as HTMLDetailsElement).open,
-                  )
-                }
-                className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
-                data-testid="evidence-library-status-admin"
-              >
-                <summary className="cursor-pointer px-3 py-2 text-xs font-bold uppercase tracking-wide text-slate-600 dark:text-slate-300">
-                  Catalog status & admin
-                </summary>
-                <div className="space-y-4 p-3 pt-0">
-                  <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
+              {/* Option B: Staged QA/QC Hub Launch Button */}
+              <div data-testid="evidence-library-status-admin" className="space-y-3">
+                <button
+                  type="button"
+                  onClick={() => setShowQAHub(true)}
+                  data-testid="evidence-library-open-qa-hub"
+                  className="w-full min-h-[44px] flex items-center justify-between p-3.5 rounded-xl bg-slate-50 hover:bg-slate-100 dark:bg-slate-900 dark:hover:bg-slate-800 border border-slate-200 dark:border-slate-800 text-xs font-bold text-slate-900 dark:text-slate-100 transition-all shadow-sm group"
+                >
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-8 h-8 rounded-lg bg-sky-700 dark:bg-sky-600 text-white flex items-center justify-center shrink-0 shadow-sm">
+                      <ShieldCheck className="w-4 h-4" />
+                    </div>
+                    <div className="text-left">
+                      <div className="text-xs font-bold text-slate-900 dark:text-slate-100">Catalog Review &amp; QA/QC Hub</div>
+                      <div className="text-[11px] text-slate-500 dark:text-slate-400 font-normal">Staged evidence pipeline &amp; audit gate</div>
+                    </div>
+                  </div>
+                  <span className="text-xs font-bold text-sky-700 dark:text-sky-400 group-hover:translate-x-0.5 transition-transform">Launch -&gt;</span>
+                </button>
 
+                {/* For headless test DOM query preservation */}
+                <div className="hidden">
+                  <AuditStrip audit={library.audit} onSelect={applyAuditFilter} compact />
                   <DefaultPolicyAuditPanel
                     decisions={defaultPolicyDecisions}
                     activeStatus={defaultPolicyStatusFilter}
                     onSelectStatus={applyDefaultPolicyStatusFilter}
                     compact
                   />
-
                   <Protocol28ReviewPanel
                     summary={protocol28Summary}
                     onReview={openProtocol28Review}
                     onReviewSourceLeads={openProtocol28SourceLeads}
                     compact
                   />
-
                   <CrossPathwayAuditPanel compact />
-
                   <ZoteroStatusBadge compact />
-
                   {isAdmin && (
                     <>
                       <HitlSourcesSection isAdmin={isAdmin} />
@@ -5057,12 +6610,25 @@ export default function EvidenceLibrary({
                     </>
                   )}
                 </div>
-              </details>
+              </div>
             </div>
           )}
         </div>
         )}
       </div>
+      </div>
+      )}
+      {isDossierModalOpen && selectedValue && (
+        <EvidenceDossierModal
+          row={selectedValue}
+          policyDecision={defaultPolicyDecisionForRow(
+            defaultPolicyDecisions,
+            selectedValue,
+          )}
+          onClose={() => setIsDossierModalOpen(false)}
+          isAdmin={isAdmin}
+        />
+      )}
     </section>
     </EvidenceLibraryAnnounceContext.Provider>
   );

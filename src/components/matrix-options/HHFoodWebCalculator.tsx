@@ -21,7 +21,11 @@ import type {
   CalculatorUsedValue,
   EvidenceLibraryFilterRequest,
 } from '@/lib/matrix-options/provenance/types';
-import { positiveInput, optionalPositiveInput } from '@/lib/matrix-options/parseDecimal';
+import {
+  positiveInput,
+  optionalPositiveInput,
+  boundedInput,
+} from '@/lib/matrix-options/parseDecimal';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
 import {
   DEFAULT_JURISDICTION,
@@ -96,8 +100,11 @@ function seedBwFor(
     : BASELINE_BW_KG;
 }
 
+import { Stage1SubstanceSelector } from './Stage1SubstanceSelector';
+
 export interface HHFoodWebCalculatorProps {
   substanceKey?: string;
+  onSubstanceKeyChange?: (key: string) => void;
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
@@ -137,6 +144,7 @@ export interface HHFoodWebCalculatorProps {
 
 export default function HHFoodWebCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
+  onSubstanceKeyChange,
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
@@ -325,12 +333,12 @@ export default function HHFoodWebCalculator({
     const fields = {
       BW_kg: positiveInput(bwInput, 'Body weight'),
       IR_food_kg_per_day: positiveInput(foodIrInput, 'Food ingestion rate'),
-      targetRisk: positiveInput(targetRiskInput, 'Target risk'),
+      targetRisk: boundedInput(targetRiskInput, 'Target risk', 0, 1, false, true),
       hazardQuotient: positiveInput(hazardQuotientInput, 'Hazard quotient'),
       rfd_oral_mg_per_kg_bw_day: optionalPositiveInput(rfdInput, 'RfD'),
       sf_oral_per_mg_per_kg_bw_per_day: optionalPositiveInput(slopeInput, 'Oral slope factor'),
       BSAF_loc_freshwater: positiveInput(bsafInput, 'BSAF_loc'),
-      ba_oral: positiveInput(baOralInput, 'Oral bioavailability'),
+      ba_oral: boundedInput(baOralInput, 'Oral bioavailability', 0, 1, false, true),
     };
 
     for (const value of Object.values(fields)) {
@@ -605,6 +613,13 @@ export default function HHFoodWebCalculator({
         current={stage1Blocked}
         testId="hh-food-stage-1"
       >
+      <Stage1SubstanceSelector
+        substanceKey={substanceKey}
+        onSubstanceKeyChange={onSubstanceKeyChange}
+        jurisdiction={jurisdiction}
+        pathwayId="human-health-food"
+        idPrefix="hh-food"
+      />
       <FrameImpactCard
         frameId={jurisdiction}
         pathway="human-health-food"
@@ -629,10 +644,7 @@ export default function HHFoodWebCalculator({
               ))}
             </select>
             <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
-              Switches the fish-ingestion rate and body weight defaults across the available
-              receptor scenarios (recreational, subsistence, the ACFN Lower-Athabasca
-              community-specific receptor, and the TWN Burrard Inlet toddler subsistence
-              receptor). Each input stays adjustable.
+              Switches fish ingestion rate and body weight defaults across receptor scenarios.
             </p>
           </label>
         </div>
@@ -675,7 +687,7 @@ export default function HHFoodWebCalculator({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Body weight (kg)
-            <input data-testid="hh-food-bw-input" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input data-testid="hh-food-bw-input" type="number" inputMode="decimal" min="0.1" step="any" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeBwDefault && activeBwDefault.value != null && (
               <p data-testid="hh-food-bw-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeBwDefault.value} kg ({activeBwDefault.label}). Adjustable.
@@ -691,7 +703,7 @@ export default function HHFoodWebCalculator({
               nested inside the label (which would fold its text into the input's accessible name). */}
           <div className="text-sm font-medium text-slate-700 dark:text-slate-300">
             <label htmlFor="hh-food-ir-input">Food ingestion (kg/day)</label>
-            <input id="hh-food-ir-input" data-testid="hh-food-ir-input" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input id="hh-food-ir-input" data-testid="hh-food-ir-input" type="number" inputMode="decimal" min="0" step="any" value={foodIrInput} onChange={(e) => setFoodIrInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
             {activeIrDefault && activeIrDefault.value != null && (
               <p data-testid="hh-food-ir-frame-default-label" className="mt-1 text-xs font-normal text-sky-700 dark:text-sky-400">
                 Frame default {activeIrDefault.value} kg/day ({activeIrDefault.label}). Adjustable.
@@ -719,30 +731,30 @@ export default function HHFoodWebCalculator({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             RfD (mg/kg-bw/day)
-            <input data-testid="hh-food-rfd-input" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input data-testid="hh-food-rfd-input" type="number" inputMode="decimal" min="0" step="any" value={rfdInput} onChange={(e) => setRfdInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Oral slope factor
-            <input data-testid="hh-food-slope-input" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input data-testid="hh-food-slope-input" type="number" inputMode="decimal" min="0" step="any" value={slopeInput} onChange={(e) => setSlopeInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             BSAF_loc
-            <input data-testid="hh-food-bsaf-input" value={bsafInput} onChange={(e) => setBsafInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input data-testid="hh-food-bsaf-input" type="number" inputMode="decimal" min="0" step="any" value={bsafInput} onChange={(e) => setBsafInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Oral bioavailability (fraction, 0-1)
-            <input value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input type="number" inputMode="decimal" min="0" max="1" step="any" value={baOralInput} onChange={(e) => setBaOralInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Target risk (unitless probability)
-            <input value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input type="number" inputMode="decimal" min="0" max="1" step="any" value={targetRiskInput} onChange={(e) => setTargetRiskInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Hazard quotient (unitless)
-            <input value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
+            <input type="number" inputMode="decimal" min="0" step="any" value={hazardQuotientInput} onChange={(e) => setHazardQuotientInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
           </label>
         </div>
 
@@ -851,13 +863,18 @@ export default function HHFoodWebCalculator({
       </div>
 
       <details
-        className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+        className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden shadow-xs"
         data-testid="hh-food-technical-details"
       >
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none flex items-center justify-between">
-          <span>Technical details (tissue target + BSAF chain)</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 group-open:hidden">show</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden group-open:inline">hide</span>
+        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">Technical details</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(tissue target + BSAF chain)</span>
+          </div>
+          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+            <span className="group-open:hidden">show [+]</span>
+            <span className="hidden group-open:inline">hide [-]</span>
+          </span>
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">
           <MathRenderer

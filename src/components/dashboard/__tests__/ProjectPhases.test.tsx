@@ -91,4 +91,18 @@ describe('ProjectPhases', () => {
     fireEvent.click(toggle);
     expect(screen.getByText('Jurisdictional Scan')).toBeInTheDocument();
   });
+
+  it('renders Phase 2 items as links to /matrix-options and /bn-rrm', () => {
+    render(<ProjectPhases />);
+
+    const matrixOptionsLink = screen.getByRole('link', {
+      name: /Matrix Sediment Standards Foundational Research and Framework Development/i,
+    });
+    expect(matrixOptionsLink).toHaveAttribute('href', '/matrix-options');
+
+    const bnRrmLink = screen.getByRole('link', {
+      name: /Bioavailability Adjustment Model Development/i,
+    });
+    expect(bnRrmLink).toHaveAttribute('href', '/bn-rrm');
+  });
 });

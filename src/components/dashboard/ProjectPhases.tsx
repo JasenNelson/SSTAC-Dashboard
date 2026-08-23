@@ -1,6 +1,8 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
+import { ChevronDown } from 'lucide-react';
 
 export default function ProjectPhases() {
   const [expandedWhitePaper, setExpandedWhitePaper] = useState(false);
@@ -24,17 +26,29 @@ export default function ProjectPhases() {
             </span>
           </div>
           <p className="text-sm text-slate-600 dark:text-slate-300 mb-4">
-            Currently active phase focusing on the Matrix Sediment Standards Derivation Options and BN-RRM implementation.
+            Currently active phase focusing on the Matrix Sediment Standards Derivation Options and BN-RRM (Bayesian Network Relative Risk Model) implementation.
           </p>
           <div className="space-y-3">
-            <div className="flex items-start space-x-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-sky-700 shadow-sm">
-              <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-sky-500" aria-hidden="true"></span>
-              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium mt-0.5">Matrix Sediment Standards Derivation Options Paper</span>
-            </div>
-            <div className="flex items-start space-x-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-sky-700 shadow-sm">
-              <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-sky-500" aria-hidden="true"></span>
-              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium mt-0.5">BN-RRM Implementation</span>
-            </div>
+            <Link
+              href="/matrix-options"
+              prefetch={false}
+              className="group flex items-start space-x-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-sky-700 shadow-sm hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition-all block"
+            >
+              <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-sky-500 group-hover:scale-125 transition-transform" aria-hidden="true"></span>
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium mt-0.5 group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">
+                Matrix Sediment Standards Foundational Research and Framework Development
+              </span>
+            </Link>
+            <Link
+              href="/bn-rrm"
+              prefetch={false}
+              className="group flex items-start space-x-3 p-3 bg-white dark:bg-slate-800 rounded-lg border border-sky-200 dark:border-sky-700 shadow-sm hover:border-sky-400 dark:hover:border-sky-500 hover:shadow-md transition-all block"
+            >
+              <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-sky-500 group-hover:scale-125 transition-transform" aria-hidden="true"></span>
+              <span className="text-slate-700 dark:text-slate-200 text-sm font-medium mt-0.5 group-hover:text-sky-700 dark:group-hover:text-sky-300 transition-colors">
+                Bioavailability Adjustment Model Development
+              </span>
+            </Link>
           </div>
         </div>
       </div>
@@ -60,15 +74,14 @@ export default function ProjectPhases() {
                 <span className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-slate-400" aria-hidden="true"></span>
                 <div className="flex-1">
                   <button
+                    type="button"
                     onClick={() => setExpandedWhitePaper(!expandedWhitePaper)}
                     aria-expanded={expandedWhitePaper}
                     aria-controls="white-paper-details"
-                    className="flex items-center space-x-2 text-slate-500 dark:text-slate-400 text-sm hover:text-slate-700 dark:hover:text-slate-300 transition-colors"
+                    className="flex min-h-[44px] items-center space-x-2 text-slate-500 dark:text-slate-400 text-sm hover:text-slate-700 dark:hover:text-slate-300 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
                   >
                     <span>SABCS White Paper (&apos;High-Level Summary&apos;)</span>
-                    <span className={`transform transition-transform text-xs ${expandedWhitePaper ? 'rotate-180' : ''}`}>
-                      ▼
-                    </span>
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform ${expandedWhitePaper ? 'rotate-180' : ''}`} />
                   </button>
 
                   {/* Expandable Sub-bullets */}

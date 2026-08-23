@@ -1,3 +1,4 @@
+import { cn } from '@/utils/cn';
 import type {
   CalculatorUsedValue,
   EvidenceItem,
@@ -236,15 +237,24 @@ export default function CalculatorProvenancePanel({
   return (
     <details
       open={defaultOpen}
-      className={`mt-5 border border-slate-200 dark:border-slate-800 rounded-lg bg-slate-50 dark:bg-slate-950/30 overflow-hidden${className ? ` ${className}` : ''}`}
+      className={cn(
+        'group mt-4 rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden shadow-xs',
+        className,
+      )}
       data-testid="calculator-provenance-panel"
     >
-      <summary className="cursor-pointer select-none px-4 py-3 text-sm font-semibold text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-slate-900">
-        <span>{title}</span>
-        <span className="ml-2 text-xs font-normal text-slate-500 dark:text-slate-400">
-          {rows.length} used values, {equations.length} equation
-          {equations.length === 1 ? '' : 's'}, {sourceCount} source
-          {sourceCount === 1 ? '' : 's'}
+      <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors">
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="font-semibold text-slate-800 dark:text-slate-100">{title}</span>
+          <span className="text-xs font-normal text-slate-500 dark:text-slate-400">
+            ({rows.length} used values, {equations.length} equation
+            {equations.length === 1 ? '' : 's'}, {sourceCount} source
+            {sourceCount === 1 ? '' : 's'})
+          </span>
+        </div>
+        <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+          <span className="group-open:hidden">show [+]</span>
+          <span className="hidden group-open:inline">hide [-]</span>
         </span>
       </summary>
 

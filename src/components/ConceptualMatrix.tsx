@@ -10,12 +10,8 @@ import React from 'react';
 // the product's statement of the project's own vision, so it must not drift
 // from the plan it describes.
 //
-// Superseded design note: this view previously rendered a small decorative 2x2
-// legend of four numbered squares ABOVE four separate detail cards. The numbers
-// carried no meaning, the diagram held almost no content, and the split left a
-// large page mostly empty. The matrix and the detail cards are now ONE object:
-// the grid IS the content, each quadrant carries its own plain-language lead
-// with the technical detail behind a disclosure.
+// Containerized text blocks design: matches The Guide's cohesive card architecture
+// with clear section hierarchy, badge chips, elevated surfaces, and balanced padding.
 
 interface Pathway {
   axis: 'ecological' | 'human-health';
@@ -98,20 +94,6 @@ const EXPOSURE_COLUMNS: { exposure: Pathway['exposure']; label: string }[] = [
 // nothing else, carried as a thin top border on an otherwise neutral surface.
 // MUST use DIRECTIONAL `border-t-<colour>` utilities, never the all-sides
 // `border-<colour>` form.
-//
-// `PathwayCell` composes these with CARD via a plain template literal, not
-// `cn`/twMerge, so nothing de-duplicates conflicting utilities and raw stylesheet
-// order decides the winner. CARD carries all-sides `border-slate-200
-// dark:border-slate-700`, which is emitted AFTER `border-emerald-600` in the
-// compiled CSS -- so the earlier all-sides colour lost and every quadrant rendered
-// an identical slate border. Browser-verified: both axes computed
-// `oklch(0.929 0.013 255.508)` (slate-200), i.e. decision #3's axis encoding did not
-// render at all.
-//
-// `border-t-*` sits in a later cascade position than the all-sides `border-*`
-// colour, so the directional form wins regardless of composition order. This is the
-// same form `SCHEDULE_PARTS.accent` already uses, which is precisely why those three
-// overview cards rendered correctly while these four did not.
 const AXIS_STYLES: Record<Pathway['axis'], { border: string; icon: string; rowLabel: string }> = {
   ecological: {
     border: 'border-t-4 border-t-emerald-600 dark:border-t-emerald-400',
@@ -125,8 +107,11 @@ const AXIS_STYLES: Record<Pathway['axis'], { border: string; icon: string; rowLa
   },
 };
 
-const CARD =
-  'rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-800';
+const SECTION_CARD =
+  'bg-white dark:bg-slate-800 rounded-2xl shadow-lg p-5 lg:p-8 border border-slate-200 dark:border-slate-700 space-y-6';
+
+const INNER_CARD =
+  'rounded-xl border border-slate-200 bg-slate-50/70 p-5 dark:border-slate-700 dark:bg-slate-900/60 transition-all';
 
 // The three parts of Schedule 3.4 (project plan section 1.3). Rendered as a
 // peer set of three cards so the reader sees the whole structure before any one
@@ -144,9 +129,6 @@ const SCHEDULE_PARTS: {
     title: 'Matrix Numerical Sediment Standards',
     summary:
       'A refined approach for priority substances that require a high duty of care, spanning four receptor-pathways across human and ecological health.',
-    // Neutral accent on purpose: Part 1 covers BOTH receptor axes, so giving it
-    // either the ecological or the human-health hue would contradict decision
-    // #3's rule that colour encodes a real axis and nothing else.
     accent: 'border-t-slate-600 dark:border-t-slate-400',
     detailedBelow: true,
   },
@@ -167,17 +149,6 @@ const SCHEDULE_PARTS: {
 ];
 
 // Project plan section 1.4 (Project Objectives), COMPRESSED and de-duplicated.
-//
-// 1.4's first three objectives restate Parts 1, 2 and 3, which the three cards
-// above already carry -- including them here would make the page say the same
-// thing twice in two shapes. Only the four objectives that are NOT about
-// Schedule 3.4's structure appear below.
-//
-// `home` names the tab where that objective's work actually lives, so this page
-// doubles as a map of the workspace. It is deliberately plain text, not a
-// navigation control: wiring the Vision page into tab state would give it a new
-// failure mode for no real gain. Left undefined where no tab genuinely owns the
-// work -- naming a plausible-sounding one would be worse than saying nothing.
 const OBJECTIVES: { title: string; body: string; home?: string }[] = [
   {
     title: 'Substance prioritization framework',
@@ -212,7 +183,7 @@ function PathwayCell({ pathway, rowLabel, columnLabel }: {
   const style = AXIS_STYLES[pathway.axis];
   return (
     <div
-      className={`flex h-full flex-col ${CARD} ${style.border} p-4 sm:p-5`}
+      className={`flex h-full flex-col ${INNER_CARD} border-t-4 ${style.border} p-4 sm:p-5`}
       data-testid={`pathway-${pathway.axis}-${pathway.exposure}`}
     >
       {/* Below md the grid collapses to one column, so the row/column headers
@@ -224,24 +195,24 @@ function PathwayCell({ pathway, rowLabel, columnLabel }: {
         {rowLabel} <span aria-hidden="true">/</span> {columnLabel}
       </p>
 
-      <div className="flex items-start gap-2">
+      <div className="flex items-start gap-2.5">
         <span className={`mt-0.5 flex-shrink-0 ${style.icon}`}>{pathway.icon}</span>
         <p className="text-sm font-bold leading-snug text-slate-900 dark:text-white">
           {pathway.lead}
         </p>
       </div>
 
-      <p className="mt-2 text-xs font-medium text-slate-500 dark:text-slate-400">
+      <p className="mt-2.5 text-xs font-medium text-slate-500 dark:text-slate-400">
         {pathway.officialName}
       </p>
 
       {/* Collapsible technical detail. `mt-auto` pins the disclosure to the
           bottom so all four cells' controls line up even when their leads wrap
           to different heights. */}
-      <details className="group mt-auto pt-3">
-        <summary className="flex min-h-[44px] cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-700 marker:content-none dark:text-slate-200 [&::-webkit-details-marker]:hidden">
+      <details className="group mt-auto pt-3 border-t border-slate-200/60 dark:border-slate-700/60">
+        <summary className="flex min-h-[44px] cursor-pointer items-center gap-1.5 text-xs font-semibold text-slate-700 hover:text-slate-900 dark:text-slate-300 dark:hover:text-white marker:content-none [&::-webkit-details-marker]:hidden transition-colors">
           <svg
-            className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-open:rotate-90"
+            className="h-3.5 w-3.5 flex-shrink-0 transition-transform group-open:rotate-90 text-slate-400"
             fill="none"
             viewBox="0 0 24 24"
             stroke="currentColor"
@@ -249,9 +220,9 @@ function PathwayCell({ pathway, rowLabel, columnLabel }: {
           >
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
           </svg>
-          Receptor and methods
+          <span>Receptor and methods</span>
         </summary>
-        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300">
+        <p className="mt-1 text-xs leading-relaxed text-slate-600 dark:text-slate-300 pl-5">
           {pathway.detail}
         </p>
       </details>
@@ -266,23 +237,6 @@ function find(
   return PATHWAYS.find((p) => p.axis === axis && p.exposure === exposure) ?? null;
 }
 
-/**
- * Rendered when a receptor-pathway is missing from PATHWAYS.
- *
- * SUPERSEDES an earlier `throw` here (owner-decided 2026-08-15). The original
- * reasoning was "throwing beats rendering a silently empty quadrant" -- correct
- * that silence is the worse failure, but the consequence was disproportionate:
- * there is no error boundary between this component and the tabpanel, so a single
- * missing entry would white-screen the ENTIRE Vision tab rather than blank one
- * quadrant. A future edit adding a third exposure route without its matching
- * pathway would take down three healthy quadrants with it.
- *
- * A visible placeholder keeps the failure loud (it names the missing coordinate
- * on screen) while containing the blast radius to the one cell, and unlike a
- * thrown error it is directly assertable in a test.
- *
- * Unreachable against the current static 2x2 data; this is a guard, not a path.
- */
 export function MissingPathwayCell({ rowLabel, columnLabel }: {
   rowLabel: string;
   columnLabel: string;
@@ -291,7 +245,7 @@ export function MissingPathwayCell({ rowLabel, columnLabel }: {
     <div
       data-testid="pathway-missing"
       role="note"
-      className={`flex h-full flex-col justify-center ${CARD} border-t-4 border-t-rose-600 p-4 dark:border-t-rose-400 sm:p-5`}
+      className={`flex h-full flex-col justify-center ${INNER_CARD} border-t-4 border-t-rose-600 p-4 dark:border-t-rose-400 sm:p-5`}
     >
       <p className="text-sm font-bold text-rose-800 dark:text-rose-300">
         Missing content
@@ -305,36 +259,66 @@ export function MissingPathwayCell({ rowLabel, columnLabel }: {
 
 export default function ConceptualMatrix() {
   return (
-    <div className="space-y-10">
-      <header className="max-w-3xl">
-        <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-white">
-          Vision for Modernizing Schedule 3.4
-        </h2>
-        {/* Project plan section 1.2 (Project Purpose), stated as purpose so the
-            page opens with WHY before WHAT. */}
-        <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-300">
-          <span className="font-semibold text-slate-900 dark:text-white">Purpose.</span>{' '}
-          Phase 2 of the Sediment Standards Project develops a modern scientific
-          framework for updating British Columbia&apos;s CSR Schedule 3.4 numerical
-          sediment standards, integrating best-available science to protect aquatic
-          ecosystems and the communities that depend on them.
-        </p>
-        <p className="mt-3 leading-relaxed text-slate-600 dark:text-slate-300">
-          The vision is a fully integrated framework that protects ecological and
-          human health across all exposure routes, delivered as three parts.
-        </p>
-      </header>
+    <div className="space-y-8">
+      {/* Container 1: Hero & Vision Overview */}
+      <div className={SECTION_CARD}>
+        <header className="max-w-4xl space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-sky-100 dark:bg-sky-950 text-sky-800 dark:text-sky-300 text-xs font-bold uppercase tracking-wider border border-sky-200 dark:border-sky-800">
+            Scientific Framework &amp; Policy Scope
+          </div>
+          <h2 className="text-2xl sm:text-3xl font-bold tracking-tight text-slate-900 dark:text-white">
+            Modernizing Schedule 3.4
+          </h2>
+          {/* Project plan section 1.2 (Project Purpose), stated as purpose so the
+              page opens with WHY before WHAT. */}
+          <div className="space-y-3 pt-1">
+            <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm sm:text-base">
+              <span className="font-semibold text-slate-900 dark:text-white">Purpose.</span>{' '}
+              Phase 2 of the Sediment Standards Project develops a modern scientific
+              framework for updating British Columbia&apos;s CSR Schedule 3.4 numerical
+              sediment standards, integrating best-available science to protect aquatic
+              ecosystems and the communities that depend on them.
+            </p>
+            <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm sm:text-base">
+              The vision is a fully integrated framework that protects ecological and
+              human health across all exposure routes, delivered as three parts.
+            </p>
+          </div>
+        </header>
 
-      {/* ---- Section 1: the whole structure, before any one part expands ---- */}
-      <section aria-labelledby="three-parts-heading" className="space-y-4">
-        <div className="max-w-3xl">
+        {/* Highlight Stats / Meta Strip */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 border-t border-slate-200 dark:border-slate-700">
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-slate-500">Framework Scope</div>
+            <div className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Three-Part Structure</div>
+            <p className="text-xs text-slate-500 mt-0.5">Matrix + Generic standards</p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">Receptor Routes</div>
+            <div className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Four Pathways</div>
+            <p className="text-xs text-slate-500 mt-0.5">Direct + Food exposure</p>
+          </div>
+          <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/60 border border-slate-200 dark:border-slate-700/60">
+            <div className="text-[11px] font-bold uppercase tracking-wider text-sky-600 dark:text-sky-400">Policy Integration</div>
+            <div className="text-base font-extrabold text-slate-900 dark:text-white mt-0.5">Protocol 28 Precedent</div>
+            <p className="text-xs text-slate-500 mt-0.5">Cross-media consistency</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Container 2: The Three-Part Vision Architecture */}
+      <section aria-labelledby="three-parts-heading" className={SECTION_CARD}>
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>Structure</span>
+          </div>
           <h3
             id="three-parts-heading"
-            className="text-xl font-bold text-slate-900 dark:text-white"
+            className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white"
           >
             Schedule 3.4 will have three parts
           </h3>
-          <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm">
             Matrix standards are developed for priority substances that pose a threat to
             human and ecological health. It is not feasible to develop them for every
             substance, because the required information is not always available, so the
@@ -348,48 +332,51 @@ export default function ConceptualMatrix() {
             <div
               key={p.part}
               data-testid={`schedule-part-${p.part.replace(' ', '-').toLowerCase()}`}
-              className={`flex h-full flex-col ${CARD} border-t-4 ${p.accent} p-5`}
+              className={`flex h-full flex-col ${INNER_CARD} border-t-4 ${p.accent} p-5 shadow-xs`}
             >
-              <p className="text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-                {p.part}
-              </p>
-              <h4 className="mt-1 text-base font-bold text-slate-900 dark:text-white">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold uppercase tracking-wide text-slate-500 dark:text-slate-400">
+                  {p.part}
+                </span>
+                {p.detailedBelow && (
+                  <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300">
+                    Detailed Below
+                  </span>
+                )}
+              </div>
+              <h4 className="mt-2 text-base font-bold text-slate-900 dark:text-white leading-snug">
                 {p.title}
               </h4>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+              <p className="mt-2 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300 flex-1">
                 {p.summary}
               </p>
-              {p.detailedBelow && (
-                <p className="mt-auto pt-3 text-xs font-semibold text-slate-500 dark:text-slate-400">
-                  Detailed below
-                </p>
-              )}
             </div>
           ))}
         </div>
       </section>
 
-      {/* ---- Section 2: Part 1 in detail ---- */}
-      <section aria-labelledby="part-1-heading" className="space-y-4">
-        <div className="max-w-3xl">
+      {/* Container 3: Part 1 In Detail - The Matrix Framework 2x2 */}
+      <section aria-labelledby="part-1-heading" className={SECTION_CARD}>
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-sky-700 dark:text-sky-400">
+            <span>Part 1 Focus</span>
+          </div>
           <h3
             id="part-1-heading"
-            className="text-xl font-bold text-slate-900 dark:text-white"
+            className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white"
           >
             The Matrix framework
           </h3>
-          <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm">
             Priority substances are identified by considering biomagnification, toxicity,
             persistence, and local occurrence. Part 1 spans four receptor-pathways, each
             needing its own set of derivation equations.
           </p>
         </div>
 
-        {/* The matrix. At md+ this is a true 3-column grid: a row-label column
-            plus one column per exposure route, with a header row above. Below
-            md it collapses to a single stack and each cell self-labels. */}
+        {/* The matrix 2x2 grid */}
         <div
-          className="grid grid-cols-1 gap-3 md:grid-cols-[7.5rem_1fr_1fr] md:gap-4"
+          className="grid grid-cols-1 gap-3 md:grid-cols-[7.5rem_1fr_1fr] md:gap-4 pt-2"
           data-testid="schedule-34-matrix"
         >
           {/* Header row (md+ only) */}
@@ -397,7 +384,7 @@ export default function ConceptualMatrix() {
           {EXPOSURE_COLUMNS.map((col) => (
             <div
               key={`head-${col.exposure}`}
-              className="hidden text-center text-sm font-semibold uppercase tracking-wide text-slate-700 md:block dark:text-slate-300"
+              className="hidden text-center text-xs font-bold uppercase tracking-wider text-slate-700 dark:text-slate-300 md:block pb-1"
             >
               {col.label}
             </div>
@@ -406,14 +393,12 @@ export default function ConceptualMatrix() {
           {AXIS_ROWS.map((row) => (
             <React.Fragment key={row.axis}>
               <div
-                className={`hidden items-center justify-end pr-1 text-right text-sm font-semibold uppercase tracking-wide md:flex ${AXIS_STYLES[row.axis].rowLabel}`}
+                className={`hidden items-center justify-end pr-3 text-right text-xs font-bold uppercase tracking-wider md:flex ${AXIS_STYLES[row.axis].rowLabel}`}
               >
                 {row.label}
               </div>
               {EXPOSURE_COLUMNS.map((col) => {
                 const pathway = find(row.axis, col.exposure);
-                // A missing pathway degrades THIS cell only. See MissingPathwayCell
-                // for why this replaced a render-time throw.
                 return pathway ? (
                   <PathwayCell
                     key={`${row.axis}-${col.exposure}`}
@@ -434,32 +419,40 @@ export default function ConceptualMatrix() {
         </div>
       </section>
 
-      {/* ---- Section 3: how the generic parts get their values ---- */}
-      <section aria-labelledby="generic-heading" className="max-w-3xl space-y-2">
-        <h3
-          id="generic-heading"
-          className="text-xl font-bold text-slate-900 dark:text-white"
-        >
-          How Parts 2 and 3 get their values
-        </h3>
-        <p className="leading-relaxed text-slate-600 dark:text-slate-300">
-          Parts 2 and 3 adopt values from other jurisdictions, following a procedure that
-          accounts for their differing protection levels, species, and other factors
-          relative to Canadian jurisdictions. This work can leverage the
-          Director&apos;s Interim Standards.
-        </p>
+      {/* Container 4: How Parts 2 and 3 Get Their Values */}
+      <section aria-labelledby="generic-heading" className={SECTION_CARD}>
+        <div className="max-w-3xl space-y-3">
+          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            <span>Parts 2 &amp; 3 Procedure</span>
+          </div>
+          <h3
+            id="generic-heading"
+            className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white"
+          >
+            How Parts 2 and 3 get their values
+          </h3>
+          <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm sm:text-base">
+            Parts 2 and 3 adopt values from other jurisdictions, following a procedure that
+            accounts for their differing protection levels, species, and other factors
+            relative to Canadian jurisdictions. This work can leverage the
+            Director&apos;s Interim Standards.
+          </p>
+        </div>
       </section>
 
-      {/* ---- Section 4: the rest of what Phase 2 delivers (plan section 1.4) ---- */}
-      <section aria-labelledby="delivers-heading" className="space-y-4">
-        <div className="max-w-3xl">
+      {/* Container 5: What Else Phase 2 Delivers */}
+      <section aria-labelledby="delivers-heading" className={SECTION_CARD}>
+        <div className="max-w-3xl space-y-2">
+          <div className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+            <span>Phase 2 Deliverables</span>
+          </div>
           <h3
             id="delivers-heading"
-            className="text-xl font-bold text-slate-900 dark:text-white"
+            className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-white"
           >
             What else Phase 2 delivers
           </h3>
-          <p className="mt-2 leading-relaxed text-slate-600 dark:text-slate-300">
+          <p className="leading-relaxed text-slate-600 dark:text-slate-300 text-sm">
             Modernizing Schedule 3.4 depends on four further pieces of work, each
             supporting the standards above.
           </p>
@@ -469,32 +462,35 @@ export default function ConceptualMatrix() {
           {OBJECTIVES.map((o) => (
             <li
               key={o.title}
-              className={`${CARD} p-5`}
+              className={`${INNER_CARD} p-5 shadow-xs flex flex-col justify-between`}
               data-testid={`objective-${o.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
             >
-              <div className="flex flex-wrap items-baseline gap-x-2 gap-y-1">
-                <h4 className="text-base font-bold text-slate-900 dark:text-white">
-                  {o.title}
-                </h4>
-                {o.home && (
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:bg-slate-700 dark:text-slate-200">
-                    See {o.home}
-                  </span>
-                )}
+              <div>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h4 className="text-base font-bold text-slate-900 dark:text-white">
+                    {o.title}
+                  </h4>
+                  {o.home && (
+                    <span className="rounded-full bg-sky-100 dark:bg-sky-950 px-2.5 py-0.5 text-[11px] font-bold text-sky-800 dark:text-sky-300 border border-sky-200 dark:border-sky-800">
+                      See {o.home}
+                    </span>
+                  )}
+                </div>
+                <p className="mt-2.5 text-xs sm:text-sm leading-relaxed text-slate-600 dark:text-slate-300">
+                  {o.body}
+                </p>
               </div>
-              <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-                {o.body}
-              </p>
             </li>
           ))}
         </ul>
-      </section>
 
-      <p className="max-w-3xl border-l-2 border-slate-300 pl-4 text-sm leading-relaxed text-slate-600 dark:border-slate-600 dark:text-slate-300">
-        Together, this multi-part approach of matrix and generic standards creates a
-        defensible, scalable, and adaptable foundation for the contaminated sites
-        regulatory framework.
-      </p>
+        {/* Bottom Takeaway Banner */}
+        <div className="p-4 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-xs sm:text-sm leading-relaxed text-slate-700 dark:text-slate-300">
+          Together, this multi-part approach of matrix and generic standards creates a
+          defensible, scalable, and adaptable foundation for the contaminated sites
+          regulatory framework.
+        </div>
+      </section>
     </div>
   );
 }

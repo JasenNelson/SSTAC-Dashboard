@@ -349,23 +349,9 @@ describe('EcoDirectEqPCalculator (PR-A2 commit 4, prop-driven)', () => {
     expect(standardValue).not.toHaveTextContent(/[0-9]/);
   });
 
-  it('does not render the embedded substance dropdown (substance lifted in PR-A2)', () => {
-    // Regression: PR-A2 commit 2 removed the per-calculator substance
-    // dropdown. The substance is now controlled by SharedGlobalInputs at
-    // the parent level. The label "Substance" should NOT exist in this
-    // component anymore.
+  it('renders the embedded substance selector in Stage 1', () => {
     render(<EcoDirectEqPCalculator {...DEFAULT_PROPS} />);
-    expect(screen.queryByLabelText(/^Substance$/i)).not.toBeInTheDocument();
-    // SUBSTANCE_LIBRARY entries should not appear as <option> nodes here.
-    SUBSTANCE_LIBRARY.forEach((s) => {
-      expect(
-        // Escape regex metacharacters in displayName (e.g. "Benzo[a]anthracene",
-        // "DDT (p,p-)") so the match is literal and never throws SyntaxError.
-        screen.queryByRole('option', {
-          name: new RegExp(s.displayName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'),
-        }),
-      ).not.toBeInTheDocument();
-    });
+    expect(screen.getByLabelText(/^Substance$/i)).toBeInTheDocument();
   });
 
   // Plan v3 section 1 + section 2: vertical layout order. Inputs FIRST,

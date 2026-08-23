@@ -45,20 +45,15 @@ import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
 import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
+import { Stage1SubstanceSelector } from './Stage1SubstanceSelector';
 import {
   DEFAULT_JURISDICTION,
   type Jurisdiction,
 } from './guide/content/jurisdictions';
 
 export interface EcoDirectEqPCalculatorProps {
-  // Props are optional with the same defaults SharedGlobalInputs uses, so
-  // this calculator stays build-green at the prior call site
-  // (`<EcoDirectEqPCalculator />` in MatrixDashboard.tsx) between PR-A2
-  // commit 4 (this refactor) and commit 6 (MatrixDashboard wire-up).
-  // Once commit 6 lands, MatrixDashboard always passes explicit values
-  // from its lifted state; the defaults below remain as a safety net for
-  // any direct render in stories / debug pages.
   substanceKey?: string;
+  onSubstanceKeyChange?: (key: string) => void;
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
@@ -144,6 +139,7 @@ function computeFcvSeed(
 
 export default function EcoDirectEqPCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
+  onSubstanceKeyChange,
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
@@ -387,19 +383,12 @@ export default function EcoDirectEqPCalculator({
       className={`bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-6 rounded-2xl shadow-sm${className ? ` ${className}` : ''}`}
     >
       <header className="mb-4">
-        <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
+        <h3 className="text-base font-bold text-slate-900 dark:text-white tracking-tight">
           Eco-Direct (EqP) -- Non-Ionic Organics
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Equilibrium partitioning sediment benchmark via the Di Toro
-          K_oc regression (design doc section 2.1). v1 covers single
-          substances on the non-ionic organics path only; AVS/SEM
-          divalent-metals path and PAH IWTU mixture summation are out
-          of scope per design doc section 9.
-        </p>
         {substance && (
           <p
-            className="text-xs text-slate-500 dark:text-slate-400 mt-2"
+            className="text-xs text-slate-500 dark:text-slate-400 mt-1"
             data-testid="eqp-substance-summary"
           >
             Active substance: <span className="font-semibold">{substance.displayName}</span>{' '}
@@ -445,6 +434,13 @@ export default function EcoDirectEqPCalculator({
         data-testid="eqp-inputs-section"
         aria-label="Eco-Direct EqP inputs"
       >
+        <Stage1SubstanceSelector
+          substanceKey={substanceKey}
+          onSubstanceKeyChange={onSubstanceKeyChange}
+          jurisdiction={jurisdiction}
+          pathwayId="eco-direct-eqp"
+          idPrefix="eco-direct"
+        />
         <div>
           <div className="flex justify-between items-center mb-2">
             <label
@@ -646,16 +642,17 @@ export default function EcoDirectEqPCalculator({
 
       {/* 4. TECHNICAL DETAILS disclosure (collapsed by default) */}
       <details
-        className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+        className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden shadow-xs"
         data-testid="eqp-technical-details"
       >
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none flex items-center justify-between">
-          <span>Technical details (formula + intermediate quantities)</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 group-open:hidden">
-            show
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden group-open:inline">
-            hide
+        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">Technical details</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(formula + intermediate quantities)</span>
+          </div>
+          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+            <span className="group-open:hidden">show [+]</span>
+            <span className="hidden group-open:inline">hide [-]</span>
           </span>
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">

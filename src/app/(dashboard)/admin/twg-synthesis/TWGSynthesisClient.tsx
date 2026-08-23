@@ -7,7 +7,7 @@ import InteractiveBarChart from '@/components/dashboard/InteractiveBarChart'
 import InteractivePieChart from '@/components/dashboard/InteractivePieChart'
 import AdminFunctionsNav from '@/components/dashboard/AdminFunctionsNav'
 
- 
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type FormData = Record<string, any>
 
@@ -55,10 +55,12 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
   // Refresh admin status on mount
   useEffect(() => {
     const refreshAdmin = async () => {
-      console.log('🔄 TWG Synthesis page mounted - refreshing admin status')
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[TWGSynthesisClient] TWG Synthesis page mounted - refreshing admin status')
+      }
       await refreshGlobalAdminStatus()
     }
-    
+
     refreshAdmin()
   }, [])
 
@@ -73,14 +75,14 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
     // Filter by expertise
     if (expertiseFilter !== 'ALL') {
-      filtered = filtered.filter(sub => 
+      filtered = filtered.filter(sub =>
         sub.form_data?.part1?.expertise?.includes(expertiseFilter)
       )
     }
 
     // Filter by search term
     if (searchTerm) {
-      filtered = filtered.filter(sub => 
+      filtered = filtered.filter(sub =>
         sub.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         sub.form_data?.part1?.name?.toLowerCase().includes(searchTerm.toLowerCase())
       )
@@ -105,10 +107,10 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
     const ratings = ['Excellent', 'Good', 'Fair', 'Poor']
     const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444'] // Green, Blue, Yellow, Red
     const data = ratings.map((rating, index) => {
-      const count = submissions.filter(sub => 
+      const count = submissions.filter(sub =>
         sub.form_data?.[part]?.[field] === rating
       ).length
-      
+
       return {
         label: rating,
         value: isNaN(count) ? 0 : count,
@@ -120,7 +122,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
   const processRankingData = (part: string, field: string, options: string[]) => {
     const rankingData: { [key: string]: number[] } = {}
-    
+
     options.forEach(option => {
       rankingData[option] = []
     })
@@ -141,7 +143,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
     return options.map((option, index) => {
       const ranks = rankingData[option]
       let value = 0
-      
+
       if (ranks.length > 0) {
         const sum = ranks.reduce((sum, rank) => {
           const numericRank = parseInt(rank.toString())
@@ -151,7 +153,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         // Ensure value is a valid number
         value = isNaN(value) ? 0 : value
       }
-      
+
       return {
         label: option,
         value: value,
@@ -196,13 +198,13 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Created At': formatDate(sub.created_at),
         'Submitted At': formatDate(sub.updated_at),
         'File Count': sub.file_count,
-        
+
         // Part 2: High-Level Report Assessment
         'Part 2 - Clarity Rating': p2.clarity || '',
         'Part 2 - Completeness Rating': p2.completeness || '',
         'Part 2 - Defensibility Rating': p2.defensibility || '',
         'Part 2 - Comments': (p2.comments || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 3: Line-by-Line Comments
         'Part 3 - Section I (Introduction)': (p3.sectionI || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 3 - Section II (Preliminary Findings)': (p3.sectionII || '').replace(/"/g, '""').replace(/\n/g, ' '),
@@ -210,7 +212,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Part 3 - Section IV (Stakeholder Engagement)': (p3.sectionIV || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 3 - Section V (Proposed Framework)': (p3.sectionV || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 3 - Appendices C & D': (p3.appendicesCD || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 4: Matrix Framework
         'Part 4 - Contaminant Rankings': formatRanking(p4.ranking, [
           'Mercury and its compounds',
@@ -223,7 +225,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Part 4 - Other Contaminant': p4.otherContaminant || '',
         'Part 4 - Challenges': (p4.challenges || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 4 - Additional Comments': (p4.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 5: Tiered Approach
         'Part 5 - Bioavailability Method': p5.bioavailability || '',
         'Part 5 - Other Bioavailability': p5.otherBioavailability || '',
@@ -236,7 +238,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Part 5 - Evidence Other Text': p5.evidenceOtherText || '',
         'Part 5 - Technical Guidance': (p5.guidance || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 5 - Additional Comments': (p5.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 6: Indigenous Knowledge
         'Part 6 - Tier 0 Approaches': p6.tier0Approaches?.join('; ') || '',
         'Part 6 - Tier 0 Other': p6.tier0OtherText || '',
@@ -246,7 +248,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Part 6 - Study Other': p6.studyOtherText || '',
         'Part 6 - Challenges': (p6.challenges || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 6 - Additional Comments': (p6.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 7: Prioritization
         'Part 7 - Modernization Rankings': formatRanking(p7.modernization, [
           'Development of Scientific Framework for Bioavailability',
@@ -262,7 +264,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         ]),
         'Part 7 - Strategic Planning': (p7.strategicPlanning || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 7 - Additional Comments': (p7.additionalComments || '').replace(/"/g, '""').replace(/\n/g, ' '),
-        
+
         // Part 8: Final Recommendations
         'Part 8 - Critical Gaps': (p8.gaps || '').replace(/"/g, '""').replace(/\n/g, ' '),
         'Part 8 - Suggestions': (p8.suggestions || '').replace(/"/g, '""').replace(/\n/g, ' '),
@@ -295,7 +297,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         'Part 11 - Engagement Interests Other': p11.engagementInterestsOther || '',
         'Part 11 - Line by Line (Section IV)': (p11.lineByLine || '').replace(/"/g, '""').replace(/\n/g, ' '),
 
-        // Part 12: “What We Heard” Reports
+        // Part 12: "What We Heard" Reports
         'Part 12 - Appendix D Status': p12.appendixStatus?.appendixD || '',
         'Part 12 - Appendix G Status': p12.appendixStatus?.appendixG || '',
         'Part 12 - Appendix J Status': p12.appendixStatus?.appendixJ || '',
@@ -372,7 +374,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         </div>
         <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
           <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-2">Files Uploaded</h3>
-          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{totalFiles}</p>
+          <p className="text-3xl font-bold text-sky-700 dark:text-sky-400">{totalFiles}</p>
         </div>
       </div>
 
@@ -436,7 +438,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         {/* Quantitative Analysis */}
         <div className="space-y-8">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Quantitative Analysis</h2>
-          
+
           {/* Part 2 Ratings */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
@@ -490,7 +492,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                 const colors = ['#10B981', '#3B82F6', '#F59E0B', '#EF4444']
                 return {
                   label: method.length > 50 ? method.substring(0, 47) + '...' : method,
-                  value: submissions.filter(sub => 
+                  value: submissions.filter(sub =>
                     sub.form_data?.part5?.bioavailability === method
                   ).length,
                   color: colors[index % colors.length]
@@ -504,7 +506,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
         {/* Qualitative Analysis */}
         <div className="space-y-8">
           <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Qualitative Analysis</h2>
-          
+
           {/* Comprehensive Comments Viewer */}
           <div className="bg-white dark:bg-slate-800 rounded-lg shadow-lg p-6">
             <h3 className="text-lg font-medium text-slate-900 dark:text-white mb-4">
@@ -524,9 +526,9 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                 const p10 = submission.form_data?.part10 || {}
                 const p11 = submission.form_data?.part11 || {}
                 const p12 = submission.form_data?.part12 || {}
-                
-                const hasContent = p2.comments || p3.sectionI || p3.sectionII || p3.sectionIII || 
-                                  p3.sectionIV || p3.sectionV || p3.appendicesCD || p4.challenges || 
+
+                const hasContent = p2.comments || p3.sectionI || p3.sectionII || p3.sectionIII ||
+                                  p3.sectionIV || p3.sectionV || p3.appendicesCD || p4.challenges ||
                                   p4.additionalComments || p5.guidance || p5.additionalComments ||
                                   p6.challenges || p6.additionalComments || p7.strategicPlanning ||
                                   p7.additionalComments || p8.gaps || p8.suggestions ||
@@ -549,7 +551,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       </div>
                       <div className="text-right">
                         <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                          submission.status === 'SUBMITTED' 
+                          submission.status === 'SUBMITTED'
                             ? 'bg-green-100 text-black dark:bg-green-900 dark:text-green-200'
                             : 'bg-yellow-100 text-black dark:bg-yellow-900 dark:text-yellow-200'
                         }`}>
@@ -683,7 +685,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                       )}
 
                       {/* Part 6: Indigenous Knowledge */}
-                      {(p6.tier0Approaches || p6.frameworkElements || p6.studyComponents || p6.challenges || 
+                      {(p6.tier0Approaches || p6.frameworkElements || p6.studyComponents || p6.challenges ||
                         p6.additionalComments || p6.tier0OtherText || p6.frameworkOtherText || p6.studyOtherText) && (
                         <div className="bg-white dark:bg-slate-800 rounded p-3">
                           <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 6: WQCIU Approaches for Indigenous Uses</h5>
@@ -900,7 +902,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
 
                       {((p12.appendixStatus && Object.keys(p12.appendixStatus).length > 0) || p12.alignmentSummary || p12.followUpNeeds || p12.lineByLine) && (
                         <div className="bg-white dark:bg-slate-800 rounded p-3">
-                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 12: “What We Heard” Reports (Appendices D, G, J)</h5>
+                          <h5 className="font-medium text-slate-900 dark:text-white mb-2 text-sm">Part 12: &quot;What We Heard&quot; Reports (Appendices D, G, J)</h5>
                           {p12.appendixStatus && (
                             <div className="text-xs text-slate-600 dark:text-slate-400 mb-2 space-y-1">
                               {['appendixD', 'appendixG', 'appendixJ'].map((key) => (
@@ -991,7 +993,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                   <div>
                     <p className="text-sm font-medium text-slate-900 dark:text-white">{file.file_name}</p>
                     <p className="text-xs text-slate-500 dark:text-slate-400">
-                      {(file.file_size / 1024 / 1024).toFixed(2)} MB • {formatDate(file.created_at)}
+                      {(file.file_size / 1024 / 1024).toFixed(2)} MB | {formatDate(file.created_at)}
                     </p>
                   </div>
                   <button
@@ -1051,7 +1053,7 @@ export default function TWGSynthesisClient({ user: _user, submissions, files }: 
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                      submission.status === 'SUBMITTED' 
+                      submission.status === 'SUBMITTED'
                         ? 'bg-green-100 text-black dark:bg-green-900 dark:text-green-200'
                         : 'bg-yellow-100 text-black dark:bg-yellow-900 dark:text-yellow-200'
                     }`}>

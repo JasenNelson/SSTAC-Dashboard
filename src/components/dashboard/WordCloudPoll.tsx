@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { Cloud, AlertTriangle, Check, RotateCcw } from 'lucide-react';
 import CustomWordCloud from './CustomWordCloud';
 
 // Simple Error Boundary Component
@@ -35,7 +36,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
       return (
         <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
           <div className="text-center">
-            <div className="text-4xl mb-2">⚠️</div>
+            <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
             <p>Invalid data format</p>
           </div>
         </div>
@@ -50,7 +51,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
         word.text.trim().length > 0 &&
         typeof word.value === 'number' &&
         word.value > 0;
-      
+
       return isValid;
     });
 
@@ -58,7 +59,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
       return (
         <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
           <div className="text-center">
-            <div className="text-4xl mb-2">☁️</div>
+            <Cloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
             <p>No valid words to display</p>
           </div>
         </div>
@@ -81,7 +82,7 @@ const SafeWordCloud = ({ words, options }: { words: WordCloudData[]; options?: W
     return (
       <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
         <div className="text-center">
-          <div className="text-4xl mb-2">⚠️</div>
+          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
           <p>Error rendering wordcloud</p>
         </div>
       </div>
@@ -122,9 +123,9 @@ interface WordCloudPollProps {
   onVote?: (pollIndex: number, words: string[]) => void;
 }
 
-export default function WordCloudPoll({ 
-  pollIndex, 
-  question, 
+export default function WordCloudPoll({
+  pollIndex,
+  question,
   maxWords,
   wordLimit,
   pagePath,
@@ -210,7 +211,7 @@ export default function WordCloudPoll({
   // Handler to fetch and show aggregated results
   const handleViewResults = async () => {
     if (isFetchingAggregated) return;
-    
+
     setIsFetchingAggregated(true);
     try {
       const apiEndpoint = '/api/wordcloud-polls/results';
@@ -218,11 +219,11 @@ export default function WordCloudPoll({
       if (authCode) {
         url += `&authCode=${encodeURIComponent(authCode)}`;
       }
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
-        
+
         // Store aggregated results from ALL users
         setResults(data.results || { total_votes: 0, words: [], user_words: [] });
         setShowAggregatedResults(true);
@@ -241,7 +242,7 @@ export default function WordCloudPoll({
 
   const fetchResults = useCallback(async () => {
     if (isFetching) return; // Prevent multiple simultaneous calls
-    
+
     setIsFetching(true);
     try {
       // Only fetch results for survey-results pages (authenticated users)
@@ -250,20 +251,20 @@ export default function WordCloudPoll({
         setResults({ total_votes: 0, words: [], user_words: [] });
         return;
       }
-      
+
       // Use unified API endpoint for survey-results pages only
       const apiEndpoint = '/api/wordcloud-polls/results';
-      
+
       let url = `${apiEndpoint}?pagePath=${encodeURIComponent(pagePath)}&pollIndex=${pollIndex}`;
       if (authCode) {
         url += `&authCode=${encodeURIComponent(authCode)}`;
       }
-      
+
       const response = await fetch(url);
       if (response.ok) {
         const data = await response.json();
         setResults(data.results || { total_votes: 0, words: [], user_words: [] });
-        
+
         // Check if user has already submitted words (from results.user_words)
         const userWordsFromResponse = data.results?.user_words;
         if (userWordsFromResponse && Array.isArray(userWordsFromResponse) && userWordsFromResponse.length > 0) {
@@ -293,17 +294,17 @@ export default function WordCloudPoll({
   // Initialize and check for existing vote
   useEffect(() => {
     setWords([]);
-    
+
     // Add a small delay to prevent rapid successive calls
     const timeoutId = setTimeout(() => {
       fetchResults();
     }, 100);
-    
+
     // Check for CEW words in sessionStorage
     if (pagePath.startsWith('/cew-polls/')) {
       checkCEWWordStatus();
     }
-    
+
     return () => clearTimeout(timeoutId);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pagePath, pollIndex, authCode]); // fetchResults is stable and depends on the same deps
@@ -337,7 +338,7 @@ export default function WordCloudPoll({
 
     // Get all selected words (predefined + custom)
     const allWords = getAllSelectedWords();
-    
+
     if (allWords.length === 0) {
       alert('Please select at least one option or enter custom words.');
       return;
@@ -366,7 +367,7 @@ export default function WordCloudPoll({
 
     try {
       const apiEndpoint = '/api/wordcloud-polls/submit';
-      
+
       const response = await fetch(apiEndpoint, {
         method: 'POST',
         headers: {
@@ -396,7 +397,7 @@ export default function WordCloudPoll({
         }
         setUserWords(allWords);
         setShowChangeOption(false);
-        
+
         // For CEW pages, don't save words locally for privacy
         if (pagePath.startsWith('/cew-polls/')) {
           // No persistence for CEW polls
@@ -404,7 +405,7 @@ export default function WordCloudPoll({
           // For authenticated users, persist vote locally
           sessionStorage.setItem(`wordcloud_vote_${pagePath}_${pollIndex}`, JSON.stringify(allWords));
         }
-        
+
         // Call parent callback if provided
         if (onVote) {
           onVote(pollIndex, allWords);
@@ -459,21 +460,21 @@ export default function WordCloudPoll({
       <h3 className="text-2xl font-bold text-slate-800 dark:text-white mb-8 text-center">
         {questionNumber && `Question ${questionNumber}: `}{question}
       </h3>
-      
+
       {/* User's previous words indicator - always show when user has voted */}
       {hasVoted && userWords && userWords.length > 0 && (
         <div className="mb-6 p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-green-600 dark:text-green-400 font-semibold">✓</span>
-              <span className="text-green-800 dark:text-green-200">
+              <Check className="w-4 h-4 text-green-600 dark:text-green-400" />
+              <span className="text-green-800 dark:text-green-200 text-sm">
                 You submitted: <strong>{userWords.join(', ')}</strong>
               </span>
             </div>
             {!showChangeOption && !pagePath.startsWith('/cew-polls/') && (
               <button
                 onClick={handleChangeWords}
-                className="px-3 py-1 text-sm bg-sky-600 hover:bg-sky-700 text-white rounded-md transition-colors"
+                className="px-3 py-1.5 text-xs font-semibold bg-sky-600 hover:bg-sky-700 text-white rounded-lg transition-colors min-h-[36px]"
               >
                 Change Words
               </button>
@@ -496,7 +497,7 @@ export default function WordCloudPoll({
           >
             {isFetchingAggregated ? (
               <div className="flex items-center space-x-2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                 <span>Loading...</span>
               </div>
             ) : (
@@ -505,27 +506,27 @@ export default function WordCloudPoll({
           </button>
         </div>
       )}
-      
+
       {/* Change words mode indicator */}
       {showChangeOption && !pagePath.startsWith('/cew-polls/') && (
         <div className="mb-6 p-4 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
-              <span className="text-yellow-600 dark:text-yellow-400 font-semibold">🔄</span>
-              <span className="text-yellow-800 dark:text-yellow-200 font-medium">
+              <RotateCcw className="w-4 h-4 text-yellow-600 dark:text-yellow-400" />
+              <span className="text-yellow-800 dark:text-yellow-200 font-medium text-sm">
                 Enter new words to change your submission
               </span>
             </div>
             <button
               onClick={handleCancelChange}
-              className="px-3 py-1 text-sm bg-slate-600 hover:bg-slate-700 text-white rounded-md transition-colors"
+              className="px-3 py-1.5 text-xs font-semibold bg-slate-600 hover:bg-slate-700 text-white rounded-lg transition-colors min-h-[36px]"
             >
               Cancel
             </button>
           </div>
         </div>
       )}
-      
+
       {/* Word Input Section */}
       {(!hasVoted || showChangeOption) && (
         <div className="mb-8">
@@ -571,7 +572,7 @@ export default function WordCloudPoll({
                 onChange={(e) => handleCustomWordsChange(e.target.value)}
                 placeholder="Enter custom words separated by spaces"
                 className="w-full px-3 py-2 border border-slate-300 dark:border-slate-600 rounded-md focus:ring-2 focus:ring-sky-500 focus:border-sky-500 bg-white dark:bg-slate-700 text-slate-900 dark:text-white placeholder-slate-500 dark:placeholder-slate-400"
-                style={{ 
+                style={{
                   pointerEvents: 'auto',
                   position: 'relative',
                   zIndex: 10
@@ -583,7 +584,7 @@ export default function WordCloudPoll({
               {customWords.trim() ? `${customWords.trim().split(/\s+/).filter(w => w.length > 0).length} custom words` : 'No custom words entered'}
             </div>
           </div>
-          
+
           <div className="mt-6 text-center">
             <button
               onClick={handleSubmitWords}
@@ -596,7 +597,7 @@ export default function WordCloudPoll({
             >
               {isLoading ? (
                 <div className="flex items-center space-x-2">
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-white border-t-transparent"></div>
                   <span>Submitting...</span>
                 </div>
               ) : (
@@ -614,7 +615,7 @@ export default function WordCloudPoll({
             <h4 className="text-lg font-semibold text-slate-800 dark:text-white">
               Word Cloud Results ({results.total_votes || 0} response{(results.total_votes || 0) !== 1 ? 's' : ''})
             </h4>
-            
+
             {/* Color Scheme Selector */}
             <div className="flex items-center space-x-2">
               <span className="text-sm text-slate-600 dark:text-slate-400">Color:</span>
@@ -630,52 +631,52 @@ export default function WordCloudPoll({
               </select>
             </div>
           </div>
-          
+
             <div className="bg-white dark:bg-slate-800 rounded-lg p-6 shadow-inner">
               <div style={{ height: '400px', width: '100%' }}>
                 {(() => {
                   // Show aggregated words from ALL users
                   const wordsToShow = results.words || [];
-                  
+
                   if (!wordsToShow || !Array.isArray(wordsToShow) || wordsToShow.length === 0) {
                     return (
                       <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
-                          <div className="text-4xl mb-2">☁️</div>
+                          <Cloud className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                           <p>No words submitted yet</p>
                           <p className="text-sm">Be the first to submit words!</p>
                         </div>
                       </div>
                     );
                   }
-                  
-                  const validWords = wordsToShow.filter(word => 
-                    word && 
-                    typeof word === 'object' && 
-                    word.text && 
-                    typeof word.text === 'string' && 
-                    word.text.trim().length > 0 && 
-                    typeof word.value === 'number' && 
+
+                  const validWords = wordsToShow.filter(word =>
+                    word &&
+                    typeof word === 'object' &&
+                    word.text &&
+                    typeof word.text === 'string' &&
+                    word.text.trim().length > 0 &&
+                    typeof word.value === 'number' &&
                     word.value > 0
                   );
-                  
-                  
+
+
                   if (validWords.length === 0) {
                     return (
                       <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
-                          <div className="text-4xl mb-2">⚠️</div>
+                          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                           <p>No valid words to display</p>
                         </div>
                       </div>
                     );
                   }
-                  
+
                   return (
                     <ErrorBoundary fallback={
                       <div className="flex items-center justify-center h-full text-slate-500 dark:text-slate-400">
                         <div className="text-center">
-                          <div className="text-4xl mb-2">⚠️</div>
+                          <AlertTriangle className="w-8 h-8 text-amber-500 mx-auto mb-2" />
                           <p>Error displaying wordcloud</p>
                           <p className="text-sm">Please refresh the page</p>
                         </div>
@@ -690,7 +691,7 @@ export default function WordCloudPoll({
                 })()}
               </div>
             </div>
-          
+
           {/* Word Frequency Table */}
           {results.words && results.words.length > 0 && (
             <div className="mt-6">
@@ -702,18 +703,18 @@ export default function WordCloudPoll({
                   {(() => {
                     // Show aggregated words from ALL users
                     const wordsToShow = results.words || [];
-                    
+
                     const maxValue = Math.max(...wordsToShow.map(w => w.value));
-                    
+
                     return wordsToShow.map((word, index) => (
                       <div key={index} className="flex items-center justify-between px-4 py-2 border-b border-slate-200 dark:border-slate-700 last:border-b-0">
                         <span className="font-medium text-slate-900 dark:text-white">{word.text}</span>
                         <div className="flex items-center space-x-2">
                           <div className="w-24 bg-slate-200 dark:bg-slate-600 rounded-full h-2">
-                            <div 
+                            <div
                               className="bg-sky-500 h-2 rounded-full transition-all duration-500"
-                              style={{ 
-                                width: `${Math.min((word.value / maxValue) * 100, 100)}%` 
+                              style={{
+                                width: `${Math.min((word.value / maxValue) * 100, 100)}%`
                               }}
                             ></div>
                           </div>

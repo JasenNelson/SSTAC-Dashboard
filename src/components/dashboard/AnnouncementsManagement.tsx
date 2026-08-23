@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/Toast';
-import { createClient } from '../supabase-client';
+import { createClient } from '@/lib/supabase/client';
 
 import { Plus, Edit, Trash2, Eye, EyeOff, Calendar, User } from 'lucide-react';
 
@@ -47,25 +47,25 @@ export default function AnnouncementsManagement() {
         .from('announcements')
         .select('*')
         .order('created_at', { ascending: false });
-      
+
       if (error) {
         console.error('Error fetching announcements:', error);
-        showToast({ 
-          type: 'error', 
-          title: 'Error', 
-          message: 'Failed to load announcements', 
-          duration: 5000 
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load announcements',
+          duration: 5000
         });
       } else {
         setAnnouncements(data || []);
       }
     } catch (error) {
       console.error('Error fetching announcements:', error);
-      showToast({ 
-        type: 'error', 
-        title: 'Error', 
-        message: 'Failed to load announcements', 
-        duration: 5000 
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load announcements',
+        duration: 5000
       });
     } finally {
       setIsLoading(false);
@@ -78,9 +78,9 @@ export default function AnnouncementsManagement() {
         method: 'POST',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -116,9 +116,9 @@ export default function AnnouncementsManagement() {
         method: 'PUT',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -161,9 +161,9 @@ export default function AnnouncementsManagement() {
         method: 'DELETE',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -192,28 +192,23 @@ export default function AnnouncementsManagement() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-slate-100 text-slate-800';
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
+      case 'high':
+        return 'border border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300';
+      case 'medium':
+        return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300';
+      case 'low':
+        return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300';
+      default:
+        return 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
     }
   };
 
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-700 mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-sky-700 border-t-transparent mx-auto"></div>
         <p className="mt-4 text-slate-500">Loading announcements...</p>
       </div>
     );
@@ -244,7 +239,7 @@ export default function AnnouncementsManagement() {
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             {editingAnnouncement ? 'Edit Announcement' : 'Create New Announcement'}
           </h3>
-          
+
           <form onSubmit={async (e) => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
@@ -257,7 +252,7 @@ export default function AnnouncementsManagement() {
             {editingAnnouncement && (
               <input type="hidden" name="id" value={editingAnnouncement.id} />
             )}
-            
+
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Title *
@@ -347,7 +342,7 @@ export default function AnnouncementsManagement() {
             Current Announcements ({announcements.length})
           </h3>
         </div>
-        
+
         {announcements.length === 0 ? (
           <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
             <p className="text-lg font-medium mb-2">No announcements yet</p>
@@ -363,18 +358,18 @@ export default function AnnouncementsManagement() {
                       <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {announcement.title}
                       </h4>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(announcement.priority)}`}>
-                        {getPriorityIcon(announcement.priority)} {announcement.priority}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${getPriorityBadgeClass(announcement.priority)}`}>
+                        {announcement.priority}
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-                        announcement.is_active 
-                          ? 'bg-green-100 text-green-800' 
-                          : 'bg-slate-100 text-slate-800'
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                        announcement.is_active
+                          ? 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300'
+                          : 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300'
                       }`}>
                         {announcement.is_active ? 'Active' : 'Inactive'}
                       </span>
                     </div>
-                    
+
                     <div className="text-sm text-slate-500 dark:text-slate-400 mb-3">
                       <div className="flex items-center space-x-4">
                         <span className="flex items-center">
@@ -421,7 +416,7 @@ export default function AnnouncementsManagement() {
                     <button
                       onClick={() => setEditingAnnouncement(announcement)}
                       aria-label="Edit announcement"
-                      className="p-2 text-slate-500 hover:text-sky-700 hover:bg-sky-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-sky-700 dark:hover:text-sky-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Edit announcement"
                     >
                       <Edit className="w-4 h-4" />
@@ -429,7 +424,7 @@ export default function AnnouncementsManagement() {
                     <button
                       onClick={() => handleDeleteAnnouncement(announcement.id)}
                       aria-label="Delete announcement"
-                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Delete announcement"
                     >
                       <Trash2 className="w-4 h-4" />

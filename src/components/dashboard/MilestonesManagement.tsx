@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useToast } from '@/components/Toast';
-import { createClient } from '../supabase-client';
+import { createClient } from '@/lib/supabase/client';
 
 import { Plus, Edit, Trash2, Calendar, Target, CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
@@ -47,25 +47,25 @@ export default function MilestonesManagement() {
         .from('milestones')
         .select('*')
         .order('target_date', { ascending: false });
-      
+
       if (error) {
         console.error('Error fetching milestones:', error);
-        showToast({ 
-          type: 'error', 
-          title: 'Error', 
-          message: 'Failed to load milestones', 
-          duration: 5000 
+        showToast({
+          type: 'error',
+          title: 'Error',
+          message: 'Failed to load milestones',
+          duration: 5000
         });
       } else {
         setMilestones(data || []);
       }
     } catch (error) {
       console.error('Error fetching milestones:', error);
-      showToast({ 
-        type: 'error', 
-        title: 'Error', 
-        message: 'Failed to load milestones', 
-        duration: 5000 
+      showToast({
+        type: 'error',
+        title: 'Error',
+        message: 'Failed to load milestones',
+        duration: 5000
       });
     } finally {
       setIsLoading(false);
@@ -78,9 +78,9 @@ export default function MilestonesManagement() {
         method: 'POST',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -116,9 +116,9 @@ export default function MilestonesManagement() {
         method: 'PUT',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -161,9 +161,9 @@ export default function MilestonesManagement() {
         method: 'DELETE',
         body: formData,
       });
-      
+
       const result = await response.json();
-      
+
       if (result?.success) {
         showToast({
           type: 'success',
@@ -212,21 +212,16 @@ export default function MilestonesManagement() {
     }
   };
 
-  const getPriorityColor = (priority: string) => {
+  const getPriorityBadgeClass = (priority: string) => {
     switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-slate-100 text-slate-800';
-    }
-  };
-
-  const getPriorityIcon = (priority: string) => {
-    switch (priority) {
-      case 'high': return '🔴';
-      case 'medium': return '🟡';
-      case 'low': return '🟢';
-      default: return '⚪';
+      case 'high':
+        return 'border border-red-200 bg-red-50 text-red-700 dark:border-red-900/50 dark:bg-red-950/40 dark:text-red-300';
+      case 'medium':
+        return 'border border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/40 dark:text-amber-300';
+      case 'low':
+        return 'border border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/40 dark:text-emerald-300';
+      default:
+        return 'border border-slate-200 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300';
     }
   };
 
@@ -243,7 +238,7 @@ export default function MilestonesManagement() {
     const target = new Date(targetDate);
     const diffTime = target.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) {
       return `${Math.abs(diffDays)} days overdue`;
     } else if (diffDays === 0) {
@@ -258,7 +253,7 @@ export default function MilestonesManagement() {
   if (isLoading) {
     return (
       <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto"></div>
+        <div className="animate-spin rounded-full h-12 w-12 border-2 border-purple-600 border-t-transparent mx-auto"></div>
         <p className="mt-4 text-slate-500">Loading milestones...</p>
       </div>
     );
@@ -289,7 +284,7 @@ export default function MilestonesManagement() {
           <h3 className="text-lg font-semibold text-slate-900 dark:text-white mb-4">
             {editingMilestone ? 'Edit Milestone' : 'Create New Milestone'}
           </h3>
-          
+
           <form onSubmit={async (e) => {
             e.preventDefault();
             const formData = new FormData(e.currentTarget);
@@ -302,7 +297,7 @@ export default function MilestonesManagement() {
             {editingMilestone && (
               <input type="hidden" name="id" value={editingMilestone.id} />
             )}
-            
+
             <div>
               <label htmlFor="title" className="block text-sm font-medium text-slate-600 dark:text-slate-300 mb-1">
                 Title *
@@ -408,7 +403,7 @@ export default function MilestonesManagement() {
             Project Timeline ({milestones.length} milestones)
           </h3>
         </div>
-        
+
         {milestones.length === 0 ? (
           <div className="px-6 py-12 text-center text-slate-500 dark:text-slate-400">
             <p className="text-lg font-medium mb-2">No milestones yet</p>
@@ -424,14 +419,15 @@ export default function MilestonesManagement() {
                       <h4 className="text-lg font-semibold text-slate-900 dark:text-white">
                         {milestone.title}
                       </h4>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getStatusColor(milestone.status)}`}>
-                        {getStatusIcon(milestone.status)} {milestone.status.replace('_', ' ')}
+                      <span className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold ${getStatusColor(milestone.status)}`}>
+                        {getStatusIcon(milestone.status)}
+                        <span>{milestone.status.replace('_', ' ')}</span>
                       </span>
-                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getPriorityColor(milestone.priority)}`}>
-                        {getPriorityIcon(milestone.priority)} {milestone.priority}
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold uppercase tracking-wider ${getPriorityBadgeClass(milestone.priority)}`}>
+                        {milestone.priority}
                       </span>
                     </div>
-                    
+
                     <p className="text-slate-600 dark:text-slate-300 mb-3">{milestone.description}</p>
 
                     <div className="text-sm text-slate-500 dark:text-slate-400 mb-3">
@@ -460,7 +456,7 @@ export default function MilestonesManagement() {
                     <button
                       onClick={() => setEditingMilestone(milestone)}
                       aria-label="Edit milestone"
-                      className="p-2 text-slate-500 hover:text-purple-600 hover:bg-purple-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-purple-600 dark:hover:text-purple-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Edit milestone"
                     >
                       <Edit className="w-4 h-4" />
@@ -468,7 +464,7 @@ export default function MilestonesManagement() {
                     <button
                       onClick={() => handleDeleteMilestone(milestone.id)}
                       aria-label="Delete milestone"
-                      className="p-2 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
+                      className="p-2 text-slate-500 dark:text-slate-400 hover:text-red-600 dark:hover:text-red-400 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
                       title="Delete milestone"
                     >
                       <Trash2 className="w-4 h-4" />

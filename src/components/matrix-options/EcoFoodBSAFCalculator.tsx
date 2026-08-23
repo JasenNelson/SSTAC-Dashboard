@@ -49,6 +49,7 @@ import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
 import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 import { DEFAULT_SUBSTANCE_KEY } from './SharedGlobalInputs';
+import { Stage1SubstanceSelector } from './Stage1SubstanceSelector';
 import {
   DEFAULT_JURISDICTION,
   type Jurisdiction,
@@ -61,12 +62,8 @@ const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
 ];
 
 export interface EcoFoodBSAFCalculatorProps {
-  // Optional with defaults to keep the existing MatrixDashboard call site
-  // (`<EcoFoodBSAFCalculator />`) build-green between this commit and
-  // commit 6 (MatrixDashboard wire-up). Commit 6 always passes explicit
-  // values from lifted state; defaults remain a safety net for direct
-  // renders in stories / debug pages.
   substanceKey?: string;
+  onSubstanceKeyChange?: (key: string) => void;
   jurisdiction?: Jurisdiction;
   className?: string;
   onOpenEvidenceLibrary?: (request: EvidenceLibraryFilterRequest) => void;
@@ -164,6 +161,7 @@ function computeTrvSeed(
 
 export default function EcoFoodBSAFCalculator({
   substanceKey = DEFAULT_SUBSTANCE_KEY,
+  onSubstanceKeyChange,
   jurisdiction = DEFAULT_JURISDICTION,
   className,
   onOpenEvidenceLibrary,
@@ -647,6 +645,13 @@ export default function EcoFoodBSAFCalculator({
         data-testid="ecofood-inputs-section"
         aria-label="Eco-Food BSAF inputs"
       >
+        <Stage1SubstanceSelector
+          substanceKey={substanceKey}
+          onSubstanceKeyChange={onSubstanceKeyChange}
+          jurisdiction={jurisdiction}
+          pathwayId="eco-food-bsaf"
+          idPrefix="eco-food"
+        />
         <fieldset>
           <legend className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1">
             Ecosystem
@@ -1054,18 +1059,18 @@ export default function EcoFoodBSAFCalculator({
         </p>
       </div>
 
-      {/* 4. TECHNICAL DETAILS disclosure */}
       <details
-        className="group bg-slate-50 dark:bg-slate-800/50 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden"
+        className="group mt-4 rounded-xl border border-slate-200 bg-slate-50/70 dark:border-slate-800 dark:bg-slate-900/40 overflow-hidden shadow-xs"
         data-testid="ecofood-technical-details"
       >
-        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 select-none flex items-center justify-between">
-          <span>Technical details (formula + intermediate quantities)</span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 group-open:hidden">
-            show
-          </span>
-          <span className="text-xs text-slate-500 dark:text-slate-400 hidden group-open:inline">
-            hide
+        <summary className="flex items-center justify-between px-4 py-3 cursor-pointer select-none text-sm font-semibold text-slate-700 dark:text-slate-200 hover:bg-slate-100/80 dark:hover:bg-slate-800/80 transition-colors">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <span className="font-semibold text-slate-800 dark:text-slate-100">Technical details</span>
+            <span className="text-xs font-normal text-slate-500 dark:text-slate-400">(formula + intermediate quantities)</span>
+          </div>
+          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+            <span className="group-open:hidden">show [+]</span>
+            <span className="hidden group-open:inline">hide [-]</span>
           </span>
         </summary>
         <div className="px-4 py-4 space-y-4 border-t border-slate-200 dark:border-slate-800">

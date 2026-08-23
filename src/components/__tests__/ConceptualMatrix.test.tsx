@@ -25,7 +25,7 @@ describe('ConceptualMatrix -- Vision for Modernizing Schedule 3.4', () => {
     render(<ConceptualMatrix />);
 
     expect(
-      screen.getByRole('heading', { name: /Vision for Modernizing Schedule 3\.4/i }),
+      screen.getByRole('heading', { name: /Modernizing Schedule 3\.4/i }),
     ).toBeInTheDocument();
 
     const overview = screen.getByTestId('schedule-34-parts');

@@ -47,6 +47,8 @@ export default defineConfig({
       // test count (a recurring pollution source; CI on a clean checkout is unaffected).
       // Exclude the whole .claude tree so worktree dirs can never pollute test:ci again.
       '.claude/**',
+      '.tmp/**',
+      'ProjectsSSTAC-Dashboard-worktrees*/**',
       'e2e/**',
       '**/e2e/**',
       // Performance tests require a build - run separately with `npm run build && npm test`

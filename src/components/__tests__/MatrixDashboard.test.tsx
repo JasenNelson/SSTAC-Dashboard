@@ -161,7 +161,7 @@ describe('MatrixDashboard -- Matrix Options guide copy', () => {
     const renderers = screen.getAllByTestId('math-renderer-mock');
     expect(renderers).toHaveLength(3);
 
-    expect(renderers[0]).toHaveTextContent(/The Guide: Matrix Options Workspace/);
+    expect(renderers[0]).toHaveTextContent(/Guide: Matrix Options Workspace/);
     expect(renderers[1]).toHaveTextContent(/How to Use This Workspace/);
     expect(renderers[2]).toHaveTextContent(/Project Roadmap/);
 
@@ -188,7 +188,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     window.localStorage.clear();
   });
 
-  it('renders the Calculator branch with CategorySelector + SharedGlobalInputs + active calculator + BackgroundAdjustment', () => {
+  it('renders the Calculator branch with CategorySelector + active calculator + BackgroundAdjustment', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     // Wire-up elements present.
@@ -196,10 +196,9 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       screen.getByTestId('calculator-tab-content'),
     ).toBeInTheDocument();
     expect(screen.getByTestId('category-selector')).toBeInTheDocument();
-    expect(screen.getByTestId('shared-global-inputs')).toBeInTheDocument();
     expect(screen.getByTestId('calculator-guide-sidebar')).toBeInTheDocument();
     expect(
-      screen.getByRole('button', { name: /^General$/ }),
+      screen.getByRole('button', { name: /^General$/, hidden: true }),
     ).toHaveAttribute('aria-pressed', 'true');
     // Default activeCategory = 'eco-direct' -> Eco-Direct calculator renders.
     expect(
@@ -297,15 +296,10 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     ).toMatch(/Benzo\[a\]pyrene/);
   });
 
-  it('jurisdiction change in SharedGlobalInputs persists to localStorage', () => {
+  it('hydrates jurisdiction from localStorage into the active calculator', () => {
+    window.localStorage.setItem(LS_JURISDICTION, 'ccme-sediment-quality');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
-    fireEvent.change(screen.getByTestId('shared-jurisdiction-select'), {
-      target: { value: 'ccme-sediment-quality' },
-    });
-    expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
-      'ccme-sediment-quality',
-    );
     expect(
       screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
     ).toHaveTextContent(/CCME SQG/);
@@ -342,10 +336,6 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       (screen.getByTestId('substance-combobox-input') as HTMLInputElement)
         .value,
     ).toBe(findSubstance('total_pcbs_aroclor_1254')?.displayName);
-    expect(
-      (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
-        .value,
-    ).toBe('ccme-sediment-quality');
   });
 
   it('hydrates legacy jurisdiction ids by migrating them to regulatory frames', () => {
@@ -353,9 +343,8 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     expect(
-      (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
-        .value,
-    ).toBe('ccme-sediment-quality');
+      screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
+    ).toHaveTextContent(/CCME SQG/);
     expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
       'ccme-sediment-quality',
     );
@@ -397,9 +386,8 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     expect(
-      (screen.getByTestId('shared-jurisdiction-select') as HTMLSelectElement)
-        .value,
-    ).toBe('bc-protocol1-v5-dra');
+      screen.getByTestId('regulatory-frame-notice-eco-direct-eqp'),
+    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
     expect(window.localStorage.getItem(LS_JURISDICTION)).toBe(
       'bc-protocol1-v5-dra',
     );
@@ -410,7 +398,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
     expect(
-      screen.getByRole('button', { name: /^General$/ }),
+      screen.getByRole('button', { name: /^General$/, hidden: true }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(window.localStorage.getItem(LS_TIER)).toBe('general');
   });
@@ -452,8 +440,8 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(
       within(panel).getByRole('button', { name: /^Log Kow$/ }),
     ).toBeInTheDocument();
-    expect(panel).toHaveTextContent(/Needs original-source verification/i);
-    expect(panel).toHaveTextContent(/US EPA ESB Tier 2 values/i);
+    expect(panel).toHaveTextContent(/6\.13/);
+    expect(panel).toHaveTextContent(/US EPA ESB Tier 2/i);
     expect(panel).not.toHaveTextContent(/US EPA IRIS/i);
     expect(screen.queryByText(/Calculator Quick Reference/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
@@ -526,7 +514,6 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
     expect(screen.getByText(/Value: pv p28 arsenic hh food rfd/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Arsenic oral RfD - Protocol 28 lead/,
     );
@@ -534,7 +521,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
   it('renders the References & Values tab with the evidence library', () => {
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^References & Values$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Catalogue$/ }));
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
     // Defaults to the Values table (By Parameter / Equations tabs were retired).
@@ -562,7 +549,6 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
     expect(screen.getByTestId('references-values-tab')).toBeInTheDocument();
     expect(screen.getByText(/Value: pv pcb fcv/i)).toBeInTheDocument();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Aroclor 1254 FCV/,
     );
@@ -596,92 +582,13 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(/Protocol 28/);
   });
 
-  it('shows methodology quick-reference copy on Methodology by pathway', () => {
-    render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(
-      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
-    );
-
-    expect(screen.getByTestId('matrix-options-right-reference')).toHaveTextContent(
-      /Methodology Quick Reference/i,
-    );
-    expect(screen.getByText(/Start with the selected pathway group/i)).toHaveTextContent(
-      /Ecological: EqP & AVS/i,
-    );
-    expect(screen.queryByText(/Active Poll/i)).not.toBeInTheDocument();
-  });
-
-  // P2-2: retired Equations content now renders in the Methodology by pathway
-  // right-drawer Quick Reference, filtered to the active side-tab's pathway(s).
-  // The cross-cutting background-adjustment equation is intentionally omitted.
-  it('shows pathway-filtered derivation equations in the Methodology by pathway drawer', () => {
-    render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(
-      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
-    );
-
-    // Default side-tab (Ecological: EqP & AVS) -> one EqP equation.
-    const eqpReference = screen.getByTestId('jurisdictional-equation-reference');
-    expect(eqpReference).toHaveTextContent(/Eco-Direct EqP sediment benchmark/i);
-    expect(within(eqpReference).getAllByRole('group')).toHaveLength(1);
-    // Background UTL adjustment equation never appears in the drawer.
-    expect(eqpReference).not.toHaveTextContent(/Background UTL/i);
-
-    // Switch to Human Health Pathways -> two equations (direct + food).
-    fireEvent.click(screen.getByText('Human Health Pathways'));
-    const hhReference = screen.getByTestId('jurisdictional-equation-reference');
-    expect(within(hhReference).getAllByRole('group')).toHaveLength(2);
-    expect(hhReference).toHaveTextContent(
-      /Human Health Direct Contact sediment screen/i,
-    );
-    expect(hhReference).toHaveTextContent(
-      /Human Health Food Web sediment screen/i,
-    );
-    expect(hhReference).not.toHaveTextContent(/Background UTL/i);
-    expect(screen.queryByText(/Eco-Direct EqP sediment benchmark/i)).not.toBeInTheDocument();
-  });
-
-  // UI batch Group B, 2026-08-15, decision #8: render the drawer equation
-  // through MathRenderer instead of a raw <pre>{equation_latex}</pre>.
-  it('#8: renders the derivation equation through MathRenderer, not a raw <pre>', () => {
-    render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(
-      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
-    );
-
-    const eqpReference = screen.getByTestId('jurisdictional-equation-reference');
-    // MathRenderer is mocked (see top of file) to a div[data-testid="math-renderer-mock"]
-    // that renders its raw `content` prop -- assert the equation is routed through it,
-    // wrapped in $$...$$ display-math delimiters on their own lines (remark-math only
-    // treats $$...$$ as block/display math that way -- see MathRenderer.tsx comment).
-    const mathMock = within(eqpReference).getByTestId('math-renderer-mock');
-    expect(mathMock.textContent).toMatch(/^\$\$\n.+\n\$\$$/);
-    // The old raw-LaTeX <pre> is gone.
-    expect(eqpReference.querySelector('pre')).not.toBeInTheDocument();
-  });
-
-  // UI batch Group B, 2026-08-15, decision #21: delete the restated-tab
-  // banner; keep the tabpanel id/aria-labelledby wiring intact.
-  it('#21: does not render the restated-tab banner, but keeps tabpanel wiring', () => {
-    const { container } = render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(
-      screen.getByRole('tab', { name: /^Methodology by pathway$/ }),
-    );
-
-    expect(screen.queryByText(/Currently reviewing the/i)).not.toBeInTheDocument();
-    const tabpanel = container.querySelector('#matrix-jurisdictional-side-tabpanel');
-    expect(tabpanel).not.toBeNull();
-    expect(tabpanel).toHaveAttribute('role', 'tabpanel');
-    expect(tabpanel).toHaveAttribute('aria-labelledby');
-  });
-
   it('hydrates the Calculator sidebar audience guide tier from localStorage', () => {
     window.localStorage.setItem(LS_TIER, 'practitioner');
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
     clickCalculatorTab();
 
     expect(
-      screen.getByRole('button', { name: /^Practitioner$/ }),
+      screen.getByRole('button', { name: /^Workflow$/, hidden: true }),
     ).toHaveAttribute('aria-pressed', 'true');
     expect(screen.getByText(/Review workflow/i)).toBeInTheDocument();
   });
@@ -694,16 +601,6 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     clickCalculatorTab();
     const wrapper = screen.getByTestId('left-sidebar-wrapper');
     expect(wrapper.className).toMatch(/\bprint:hidden\b/);
-  });
-
-  it('does NOT apply print:hidden on the left sidebar when on Methodology by pathway tab', () => {
-    render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    const jurisTab = screen.getByRole('tab', {
-      name: /^Methodology by pathway$/,
-    });
-    fireEvent.click(jurisTab);
-    const wrapper = screen.getByTestId('left-sidebar-wrapper');
-    expect(wrapper.className).not.toMatch(/\bprint:hidden\b/);
   });
 
   // Codex holistic review 2026-05-19 P3: the test name and the assertion
@@ -739,7 +636,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     expect(wrapper).toHaveStyle({ width: '480px' });
@@ -753,7 +650,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     // Default left panel width = 320px (MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH).
@@ -779,7 +676,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     fireEvent.click(screen.getByRole('button', { name: /Focus measurement workbench/i }));
@@ -807,7 +704,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     // Both handles present before focusing.
     expect(
@@ -837,7 +734,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     // Initial width = 480px.
@@ -862,7 +759,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -883,7 +780,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -903,7 +800,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     // Initial width = 320px.
@@ -927,7 +824,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -948,7 +845,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -970,7 +867,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -988,7 +885,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const wrapper = screen.getByTestId('matrix-map-right-panel-wrapper');
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
@@ -1007,7 +904,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -1025,7 +922,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -1043,7 +940,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const leftWrapper = screen.getByTestId('matrix-map-left-panel-wrapper');
     const leftSep = screen.getByRole('separator', { name: /Resize selection stats panel/i });
@@ -1286,6 +1183,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     it('HHInhalationCalculator renders its preliminary standard through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
       selectSubstance('benzene');
 
       // Same VF/PEF pair used by HHInhalationCalculator.test.tsx's own
@@ -1308,6 +1206,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     it('CumulativeEffectsCalculator renders its equivalent concentration through the shared 4-decimal formatter, not a raw toPrecision(4)', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
 
       // Push the reference PAH (benzo_a_pyrene, RPF = 1 under the default
       // ccme-2010 scheme) concentration up so the summed BaP-eq clears 0.1
@@ -1359,6 +1258,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     it('does not render any stage number inside Cumulative Effects, HH Inhalation, or the Background Adjustment Site Comparison block', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
+      fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
 
       // These three surfaces are tools, not steps in the derivation
       // sequence (DESIGN.md: Cumulative Effects and HH Inhalation are
@@ -2171,23 +2071,12 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     // string as the rail's own on-screen heading, and stays generic
     // ("right panel") on Jurisdictional Frameworks, which shares the wrapper
     // but was not named in the finding.
-    it('F2: right panel toggle label is content-aware in Calculator, generic elsewhere', () => {
+    it('F2: right panel toggle label is content-aware in Calculator', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
       expect(
         screen.getByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
       ).toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: /^(Show|Hide) right panel$/ }),
-      ).not.toBeInTheDocument();
-
-      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
-      expect(
-        screen.getByRole('button', { name: /^(Show|Hide) right panel$/ }),
-      ).toBeInTheDocument();
-      expect(
-        screen.queryByRole('button', { name: /^(Show|Hide) Value Search panel$/ }),
-      ).not.toBeInTheDocument();
     });
 
     // F3 (2026-08-14 adversarial review): aria-expanded reflects the actual
@@ -2195,12 +2084,12 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
     it('F3: left panel toggle aria-expanded matches panel state', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
-      const leftToggle = screen.getByRole('button', { name: /left panel$/i });
-      expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
-      fireEvent.click(leftToggle);
+      const leftToggle = screen.getByRole('button', { name: /Guide panel$/i });
       expect(leftToggle).toHaveAttribute('aria-expanded', 'false');
       fireEvent.click(leftToggle);
       expect(leftToggle).toHaveAttribute('aria-expanded', 'true');
+      fireEvent.click(leftToggle);
+      expect(leftToggle).toHaveAttribute('aria-expanded', 'false');
     });
 
     it('F3: right panel toggle aria-expanded matches the rail state', () => {
@@ -2222,23 +2111,19 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       expect(rightToggle()).toHaveAttribute('aria-expanded', 'true');
     });
 
-    // F5 (2026-08-14 adversarial review): calculator-reference-rail is the
-    // SHARED right-drawer wrapper for both Calculator and Jurisdictional
-    // Frameworks (both isToolMode), but the testid itself must only ever
-    // resolve on the Calculator tab.
     it('F5: the calculator-reference-rail testid is scoped to Calculator mode only', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
       expect(screen.getByTestId('calculator-reference-rail')).toBeInTheDocument();
 
-      fireEvent.click(screen.getByRole('tab', { name: /^Methodology by pathway$/ }));
+      fireEvent.click(screen.getByRole('tab', { name: /^Guide$/ }));
       expect(screen.queryByTestId('calculator-reference-rail')).not.toBeInTheDocument();
     });
 
     // P3-2 (2026-08-14 adversarial review): a manual override must not
     // survive a round trip through another top tab -- re-entering Calculator
     // is a context change, same as switching pathways already is.
-    it('P3-2: manual open is CLEARED by a tab round trip through The Guide', () => {
+    it('P3-2: manual open is CLEARED by a tab round trip through Guide', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
       fireEvent.click(screen.getByTestId('category-selector-hh-direct'));
@@ -2254,7 +2139,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       // Leave the Calculator tab and come back, with Stage 3 still not
       // actionable throughout (no state that would change
       // backgroundReferenceNeedsAttention is touched).
-      fireEvent.click(screen.getByRole('tab', { name: /^The Guide$/ }));
+      fireEvent.click(screen.getByRole('tab', { name: /^Guide$/ }));
       clickCalculatorTab();
 
       // The override must be gone; the rail follows Stage 3 (closed) again.
@@ -2270,7 +2155,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
       value: 1280,
     });
     render(<MatrixDashboard {...DEFAULT_PROPS} />);
-    fireEvent.click(screen.getByRole('tab', { name: /^Interactive Map$/ }));
+    fireEvent.click(screen.getByRole('tab', { name: /^Database$/ }));
 
     const sep = screen.getByRole('separator', { name: /Resize measurement workbench/i });
     // Start a drag -- body cursor should be col-resize.
@@ -2313,30 +2198,13 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       expect(content.trimStart()).not.toMatch(/^# The Guide/);
     });
 
-    it('demotes the Jurisdictional Frameworks leading H1', () => {
+    it('leaves a guide document that does not open with an H1 untouched', () => {
       render(
         <MatrixDashboard
           {...DEFAULT_PROPS}
-          eqpCaseStudyContent={'# Case Study: Ecological Direct Contact\n\nBody text.\n'}
+          guideContent={'Intro paragraph with no title.\n\n## Section\n'}
         />,
       );
-
-      fireEvent.click(screen.getByRole('tab', { name: /Methodology by pathway/ }));
-
-      const content = screen.getAllByTestId('math-renderer-mock')[0].textContent ?? '';
-      expect(content.trimStart()).toMatch(/^## Case Study: Ecological Direct Contact/);
-      expect(content.trimStart()).not.toMatch(/^# Case Study/);
-    });
-
-    it('leaves a document that does not open with an H1 untouched', () => {
-      render(
-        <MatrixDashboard
-          {...DEFAULT_PROPS}
-          eqpCaseStudyContent={'Intro paragraph with no title.\n\n## Section\n'}
-        />,
-      );
-
-      fireEvent.click(screen.getByRole('tab', { name: /Methodology by pathway/ }));
 
       const content = screen.getAllByTestId('math-renderer-mock')[0].textContent ?? '';
       expect(content.trimStart()).toMatch(/^Intro paragraph with no title\./);
@@ -2430,7 +2298,7 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       expect(screen.queryByTestId('calculator-stage3-rail-hint')).not.toBeInTheDocument();
 
       fireEvent.click(
-        screen.getByRole('button', { name: /^Show .* panel$/ }),
+        screen.getByRole('button', { name: /^Show Value Search panel$/ }),
       );
 
       const hint = screen.getByTestId('calculator-stage3-rail-hint');
@@ -2439,6 +2307,63 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       // asserts the GATING CLASS only. That the hint actually disappears at >=1024px is
       // NOT proven here -- it is checked in the browser pass recorded in the PR body.
       expect(hint.className.split(/\s+/)).toContain('lg:hidden');
+    });
+  });
+
+  describe('Jurisdictional Frameworks (Methodology by pathway) tab and pathway side-tabs', () => {
+    it('activates Methodology by pathway and swaps case study sentinel content across side tabs', () => {
+      const eqpSentinel = '# EqP Case Study Sentinel Content\n\nEquilibrium partitioning details.';
+      const bsafSentinel = '# BSAF Case Study Sentinel Content\n\nBiota-sediment accumulation factor details.';
+      const hhSentinel = '# Human Health Case Study Sentinel Content\n\nDirect contact and fish ingestion details.';
+
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          eqpCaseStudyContent={eqpSentinel}
+          bsafCaseStudyContent={bsafSentinel}
+          humanHealthContent={hhSentinel}
+        />,
+      );
+
+      // 1. Activate "Methodology by pathway" primary tab
+      const methodologyTab = screen.getByRole('tab', { name: /^Methodology by pathway$/ });
+      expect(methodologyTab).toHaveAttribute('aria-selected', 'false');
+      fireEvent.click(methodologyTab);
+      expect(methodologyTab).toHaveAttribute('aria-selected', 'true');
+
+      // 2. Verify default side-tab is "Ecological: EqP & AVS" and shows EqP sentinel (with H1 demoted)
+      const eqpSideTab = screen.getByRole('tab', { name: /^Ecological: EqP & AVS$/ });
+      const bsafSideTab = screen.getByRole('tab', { name: /^Ecological: Food Web \(BSAF\)$/ });
+      const hhSideTab = screen.getByRole('tab', { name: /^Human Health Pathways$/ });
+
+      expect(eqpSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
+      expect(hhSideTab).toHaveAttribute('aria-selected', 'false');
+
+      const mainPanel = document.getElementById('matrix-jurisdictional-side-tabpanel')!;
+      expect(mainPanel).toBeInTheDocument();
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
+
+      // 3. Switch to BSAF side tab and verify BSAF sentinel replaces EqP
+      fireEvent.click(bsafSideTab);
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(eqpSideTab).toHaveAttribute('aria-selected', 'false');
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## BSAF Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
+
+      // 4. Switch to Human Health side tab and verify HH sentinel replaces BSAF
+      fireEvent.click(hhSideTab);
+      expect(hhSideTab).toHaveAttribute('aria-selected', 'true');
+      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
+
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## Human Health Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
+      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
     });
   });
 });

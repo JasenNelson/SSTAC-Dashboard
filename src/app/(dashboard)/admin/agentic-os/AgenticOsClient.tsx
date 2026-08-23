@@ -19,7 +19,7 @@
 //   - All the Projects-view-specific UI elements
 //
 // Visual reference: .tmp_presentation/design_mockups/style1_linear_terminals.html
-// Build plan: .tmp_presentation/master/AGENTIC_OS_HANDOFF.md §11 (steps 4-12)
+// Build plan: .tmp_presentation/master/AGENTIC_OS_HANDOFF.md Section 11 (steps 4-12)
 
 import { useState, useMemo, useEffect, useCallback } from 'react';
 import ActivitySparkline from '@/components/agentic-os/ActivitySparkline';
@@ -402,7 +402,7 @@ export default function AgenticOsClient({
                         <span>{compactName(p.name)}</span>
                         {isSelected && (
                           <span className="text-violet-600 dark:text-violet-400 text-[10px] font-mono">
-                            · selected
+                            | selected
                           </span>
                         )}
                       </div>
@@ -501,7 +501,7 @@ export default function AgenticOsClient({
                                     if (det) det.open = false;
                                     void launchAction(p.name, s.action);
                                   }}
-                                  className="block w-full text-left text-xs px-3 py-1.5 font-mono text-slate-800 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                  className="block w-full text-left text-xs px-3 py-1.5 font-mono text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                                 >
                                   {s.label}
                                   {busy && (
@@ -559,7 +559,7 @@ export default function AgenticOsClient({
                                             { skillSlug: sk.slug },
                                           );
                                         }}
-                                        className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-violet-50 dark:hover:bg-violet-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                        className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                                         title={`Run claude -p '/${sk.slug}' in ${p.name}`}
                                       >
                                         <div className="font-mono">
@@ -648,7 +648,7 @@ export default function AgenticOsClient({
                                               { agentSlug: ag.slug },
                                             );
                                           }}
-                                          className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                          className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                                           title={`Run claude --agent ${ag.slug} --bg in ${p.name}`}
                                         >
                                           <div className="font-mono">
@@ -710,7 +710,7 @@ export default function AgenticOsClient({
                                               { agentSlug: ag.slug },
                                             );
                                           }}
-                                          className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-sky-50 dark:hover:bg-sky-900/30 disabled:opacity-50 disabled:cursor-wait"
+                                          className="block w-full text-left text-xs px-3 py-1.5 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-700 disabled:opacity-50 disabled:cursor-wait"
                                           title={`Run claude --agent ${ag.slug} --bg in ${p.name}`}
                                         >
                                           <div className="font-mono">
@@ -765,9 +765,9 @@ export default function AgenticOsClient({
           <div className="text-[10px] uppercase tracking-wider text-slate-500 dark:text-slate-400 font-semibold mb-2">
             Convergence graph
             <span className="ml-2 font-mono normal-case text-slate-500 dark:text-slate-400">
-              ({projects.length} projects · {result.edges.length} edges
+              ({projects.length} projects, {result.edges.length} edges
               {result.edges.filter((e) => e.dashed).length > 0
-                ? ` · ${result.edges.filter((e) => e.dashed).length} dashed (future)`
+                ? ` | ${result.edges.filter((e) => e.dashed).length} dashed (future)`
                 : ''}
               )
             </span>

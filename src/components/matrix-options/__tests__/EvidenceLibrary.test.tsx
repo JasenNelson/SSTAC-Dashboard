@@ -8,6 +8,7 @@ import {
 } from '@/lib/matrix-options/provenance/library';
 import type { EvidenceLibraryFilters } from '@/lib/matrix-options/provenance/types';
 import type { RegulatoryFrameId } from '@/lib/matrix-options/regulatoryFrames';
+import { submitReview, fetchAllReviews } from '@/lib/matrix-options/provenance/qa-review-sync';
 
 // ---------------------------------------------------------------------------
 // Module mocks for admin-gated evidence locator tests
@@ -32,6 +33,7 @@ vi.mock('@/lib/matrix-options/provenance/triage-sync', () => ({
 vi.mock('@/lib/matrix-options/provenance/qa-review-sync', () => ({
   submitReview: vi.fn().mockResolvedValue(false),
   fetchReviewHistory: vi.fn().mockResolvedValue([]),
+  fetchAllReviews: vi.fn().mockResolvedValue([]),
 }));
 
 vi.mock('@/lib/matrix-options/provenance/promotion', async (importOriginal) => {
@@ -120,6 +122,7 @@ vi.mock('@/lib/matrix-options/provenance/catalog', async () => {
 function renderControlled(
   initialFilters = createEvidenceLibraryFilters(),
   regulatoryFrameId: RegulatoryFrameId = 'bc-protocol1-v5-dra',
+  showLeftPanel = true,
 ) {
   let currentFilters: EvidenceLibraryFilters = initialFilters;
   const handleChange = vi.fn((nextFilters: EvidenceLibraryFilters) => {
@@ -129,6 +132,7 @@ function renderControlled(
         filters={currentFilters}
         onFiltersChange={handleChange}
         regulatoryFrameId={regulatoryFrameId}
+        showLeftPanel={showLeftPanel}
       />,
     );
   });
@@ -137,6 +141,7 @@ function renderControlled(
       filters={currentFilters}
       onFiltersChange={handleChange}
       regulatoryFrameId={regulatoryFrameId}
+      showLeftPanel={showLeftPanel}
     />,
   );
   return { handleChange };
@@ -162,10 +167,7 @@ describe('EvidenceLibrary', () => {
     expect(
       screen.queryByRole('button', { name: /^All$/ }),
     ).not.toBeInTheDocument();
-    // Three tabs are exposed: References (sources), Values (default), and By Parameter (the
-    // value-groups view re-exposed in the #206 incommensurate-unit re-expose). The Equations,
-    // Source Leads, and Assumptions tabs remain retired.
-    expect(screen.getByRole('button', { name: /^By Parameter$/ })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /^By Parameter$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Equations$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Source Leads$/ })).not.toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /^Assumptions$/ })).not.toBeInTheDocument();
@@ -220,25 +222,6 @@ describe('EvidenceLibrary', () => {
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /original source pending/i,
     );
-  });
-
-  it('switches to the By Parameter view and renders the value-groups section', () => {
-    renderControlled();
-
-    // The value-groups section (which carries the #206 incommensurate-unit badge) is hidden
-    // in the default Values view and shown only under the re-exposed By Parameter tab.
-    expect(
-      screen.queryByTestId('evidence-library-value-groups'),
-    ).not.toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^By Parameter$/ }));
-
-    const valueGroups = screen.getByTestId('evidence-library-value-groups');
-    expect(valueGroups).toBeInTheDocument();
-    expect(valueGroups).toHaveTextContent(/Values By Parameter/);
-    expect(
-      screen.getByRole('button', { name: /^By Parameter$/ }),
-    ).toHaveAttribute('aria-pressed', 'true');
   });
 
   it('projects read-only default-selection policy decisions in value rows', () => {
@@ -332,8 +315,6 @@ describe('EvidenceLibrary', () => {
       'us-epa-usace-sediment',
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-
     expect(
       screen.getByTestId('evidence-default-policy-value-pv-iris-zinc-hh-food-rfd'),
     ).toHaveTextContent(/Recommended candidate: approval required/);
@@ -345,55 +326,25 @@ describe('EvidenceLibrary', () => {
     ).toHaveTextContent(/Blocked: policy compilation/);
   });
 
-  it('shows named result counts for the Values and Sources views', () => {
+  it('shows named result counts for the Values view', () => {
     renderControlled();
 
     // Defaults to Values.
     expect(screen.getByText(/Showing \d+ of \d+ values/)).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    expect(screen.getByText(/Showing \d+ of \d+ sources/)).toBeInTheDocument();
-    // Source leads now fold into the Sources view, so their lead-set count shows here too.
-    expect(screen.getByText(/Showing \d+ of \d+ lead sets/)).toBeInTheDocument();
   });
 
-  it('renders sources with folded-in source leads, without promoting scaffolds', () => {
+  it('renders values without promoting unreviewed scaffolds', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    expect(screen.getByTestId('evidence-library-sources')).not.toHaveTextContent(
-      /calculator scaffold/i,
-    );
-    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
-      /Zotero link pending/,
-    );
-    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
-      /policy compilation/i,
-    );
     expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
       /pending owner export/i,
     );
 
-    // Source-of-sources leads now fold into the Sources view (no standalone tab).
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Source-of-sources or policy-compilation context only/i,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Needs original-source verification/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /Read-only triage checklist/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /QA approval/,
-    );
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(screen.getAllByText(/Arsenic oral RfD/).length).toBeGreaterThan(0);
-    expect(screen.getAllByText(/current calculator scaffold/i).length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole('button', { name: /^Show Approved values$/ }));
+    expect(screen.getAllByText(/Benzo\[a\]pyrene oral slope factor/).length).toBeGreaterThan(0);
   });
 
-  it('opens the Protocol 28 review queue and source leads without promoting values', () => {
+  it('opens the Protocol 28 review queue without promoting values', () => {
     renderControlled();
 
     // The Protocol 28 review-queue buttons live in the demoted "Catalog status & admin"
@@ -410,12 +361,6 @@ describe('EvidenceLibrary', () => {
       screen.getByRole('button', { name: /^Review Protocol 28 source leads$/ }),
     );
     expect(screen.getAllByText(/search: Protocol 28/i).length).toBeGreaterThan(0);
-    const leads = screen.getByTestId('evidence-library-source-leads');
-    expect(leads).toHaveTextContent(/Showing 1 of \d+ lead sets/);
-    expect(leads).toHaveTextContent(/BC Protocol 28 v3\.0/);
-    expect(leads).toHaveTextContent(/Read-only triage checklist/);
-    expect(leads).toHaveTextContent(/Original source verification/);
-    expect(leads).toHaveTextContent(/Owner or delegated approval/);
   });
 
   it('saves the current filters as a named view, then deletes it', () => {
@@ -466,15 +411,10 @@ describe('EvidenceLibrary', () => {
     ).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole('button', { name: /Show Blocked sources/ }));
-    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
-      /policy compilation/i,
-    );
+    expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
     expect(
       screen.getByText(/Source role: policy compilation/i),
     ).toBeInTheDocument();
-    expect(screen.getByTestId('references-values-tab')).not.toHaveTextContent(
-      /calculation-driving/i,
-    );
   });
 
   it('filters to the human-health-food pathway', () => {
@@ -486,12 +426,11 @@ describe('EvidenceLibrary', () => {
     });
 
     expect(handleChange).toHaveBeenCalled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByText(/Aroclor 1254 freshwater BSAF for human food web/)).toBeInTheDocument();
     expect(screen.queryByText(/Benzo\[a\]pyrene log Kow/)).not.toBeInTheDocument();
   });
 
-  it('filters by jurisdiction, and keeps authority filters to evidence sources', () => {
+  it('filters by jurisdiction and substance', () => {
     renderControlled();
 
     ensureFiltersOpen();
@@ -499,22 +438,8 @@ describe('EvidenceLibrary', () => {
       target: { value: 'general' },
     });
     expect(screen.getAllByText(/Jurisdiction: general/).length).toBeGreaterThan(0);
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
       /Current calculator scaffold only/,
-    );
-
-    clearAllFilters();
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    // Switching to the References (sources) view keeps the popover open; its filter set is
-    // now the source filters, so the Authority dropdown is present.
-    ensureFiltersOpen();
-    fireEvent.change(screen.getByLabelText(/^Authority$/), {
-      target: { value: 'federal-guidance' },
-    });
-    expect(screen.getByText(/Authority: federal guidance/)).toBeInTheDocument();
-    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
-      /Health Canada|FCSAP|CCME/,
     );
   });
 
@@ -540,20 +465,6 @@ describe('EvidenceLibrary', () => {
     );
   });
 
-  it('shows a filter-aware empty state for source leads within the Sources view', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    fireEvent.change(screen.getByLabelText(/^Search$/), {
-      target: { value: 'zzzz-no-leads' },
-    });
-
-    const leads = screen.getByTestId('evidence-library-source-leads');
-    expect(leads).toHaveTextContent(/Showing 0 of \d+ lead sets/);
-    expect(leads).toHaveTextContent(/No source leads match/i);
-    expect(leads).toHaveTextContent(/search: zzzz-no-leads/i);
-  });
-
   it('shows extraction dates for source-backed Health Canada and IRIS TRVs', () => {
     renderControlled(
       createEvidenceLibraryFilters({
@@ -577,7 +488,6 @@ describe('EvidenceLibrary', () => {
   it('opens a selected value detail panel from the values database view', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     expect(screen.getByTestId('evidence-library-value-detail')).toHaveTextContent(
@@ -596,57 +506,9 @@ describe('EvidenceLibrary', () => {
     ).not.toBeInTheDocument();
   });
 
-  it('opens a selected source detail panel from the sources database view', () => {
+  it('closes selected detail panels when clearing filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
-
-    const panel = screen.getByTestId('evidence-library-source-detail');
-    expect(panel).toHaveTextContent(/Selected source/);
-    expect(panel).toHaveTextContent(/Locator and catalog links/);
-    expect(panel).toHaveTextContent(/calculator defaults/i);
-    expect(panel).toHaveTextContent(/File storage/);
-
-    fireEvent.click(screen.getByRole('button', { name: /^Close$/ }));
-    expect(
-      screen.queryByTestId('evidence-library-source-detail'),
-    ).not.toBeInTheDocument();
-  });
-
-  it('keeps Protocol 28 source detail blocked from calculator defaults', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    fireEvent.click(
-      screen.getByRole('button', {
-        name: /Inspect BC Protocol 28 v3\.0, 2024/,
-      }),
-    );
-
-    const panel = screen.getByTestId('evidence-library-source-detail');
-    expect(panel).toHaveTextContent(/BC Protocol 28 v3\.0, 2024/);
-    expect(panel).toHaveTextContent(/policy compilation/i);
-    expect(panel).toHaveTextContent(/Blocked from calculator defaults/);
-    expect(panel).toHaveTextContent(/Do not treat Protocol 28/i);
-  });
-
-  it('closes selected detail panels when switching views or clearing filters', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    fireEvent.click(screen.getAllByTestId('evidence-library-inspect-source')[0]);
-    expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    expect(screen.getByTestId('evidence-library-source-detail')).toBeInTheDocument();
-
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-    expect(
-      screen.queryByTestId('evidence-library-source-detail'),
-    ).not.toBeInTheDocument();
-
-    // Inspecting a value then clearing the filters should also close the detail panel.
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
     expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
 
@@ -659,41 +521,18 @@ describe('EvidenceLibrary', () => {
   it('searches and clears active filters', () => {
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
     fireEvent.change(screen.getByLabelText(/^Search$/), {
-      target: { value: 'NIST' },
+      target: { value: 'Aroclor' },
     });
 
-    expect(screen.getByTestId('evidence-library-sources')).toHaveTextContent(
-      /NIST\/SEMATECH e-Handbook/,
+    expect(screen.getByTestId('evidence-library-values')).toHaveTextContent(
+      /Aroclor 1254/,
     );
-    // The active "search: NIST" label can appear in more than one folded sub-section
-    // (sources + source-leads) under the Sources view.
-    expect(screen.getAllByText(/search: NIST/).length).toBeGreaterThan(0);
+    expect(screen.getAllByText(/search: Aroclor/).length).toBeGreaterThan(0);
 
     clearAllFilters();
-    expect(screen.queryAllByText(/search: NIST/)).toHaveLength(0);
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
+    expect(screen.queryAllByText(/search: Aroclor/)).toHaveLength(0);
     expect(screen.getByText(/Benzo\[a\]pyrene log Kow/)).toBeInTheDocument();
-  });
-
-  it('shows source leads as read-only context within the Sources view', () => {
-    renderControlled();
-
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /ACFN WQCIU report/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /BC Protocol 28 v3\.0/,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /policy compilation/i,
-    );
-    expect(screen.getByTestId('evidence-library-source-leads')).toHaveTextContent(
-      /underlying cited source as canonical/i,
-    );
   });
 
   it('shows and dismisses a calculator receipt banner', () => {
@@ -757,8 +596,6 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-
     expect(
       screen.getByTestId('evidence-library-all-scaffolds-banner'),
     ).toHaveTextContent(
@@ -773,8 +610,6 @@ describe('EvidenceLibrary', () => {
     // Default unfiltered view includes approved_source_backed values (qa_status: approved).
     renderControlled();
 
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
-
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
@@ -787,7 +622,7 @@ describe('EvidenceLibrary', () => {
       }),
     );
 
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
+    fireEvent.click(screen.getByRole('button', { name: /^Show Zotero linked$/ }));
     expect(
       screen.queryByTestId('evidence-library-all-scaffolds-banner'),
     ).not.toBeInTheDocument();
@@ -994,8 +829,8 @@ describe('EvidenceLibrary -- UI batch Group B (references-and-values)', () => {
       expect(cell).toHaveAttribute('title', cell.textContent ?? '');
     }
 
-    const valueCol = document.querySelectorAll('colgroup col')[2];
-    expect(valueCol?.className).not.toMatch(/w-\[9%\]/);
+    const table = screen.getByRole('table');
+    expect(table.className).toMatch(/min-w-\[980px\]/);
   });
 
   it('#1b: gives the row-expand Details summary a 44px-tall tap target', () => {
@@ -1075,7 +910,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(false);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1092,7 +926,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1108,7 +941,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1139,7 +971,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(checkCurrentUserAdminStatus).mockResolvedValue(true);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1181,7 +1012,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     vi.mocked(submitEvidenceItem).mockResolvedValue(true);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1240,7 +1070,6 @@ describe('EvidenceLibrary -- AddEvidenceLocatorForm', () => {
     ]);
 
     renderControlled();
-    fireEvent.click(screen.getByRole('button', { name: /^Values$/ }));
     fireEvent.click(screen.getAllByTestId('evidence-library-inspect-value')[0]);
 
     await waitFor(() => {
@@ -1364,6 +1193,7 @@ describe('EvidenceLibrary right-panel resize', () => {
         filters={createEvidenceLibraryFilters()}
         onFiltersChange={vi.fn()}
         regulatoryFrameId={'bc-protocol1-v5-dra'}
+        showLeftPanel={true}
         {...props}
       />,
     );
@@ -1594,10 +1424,6 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
       await screen.findByRole('button', { name: /^Legacy equations view/ }),
     ).toBeInTheDocument();
 
-    // Switch off the default Values view so the remap is observable, then apply the legacy
-    // view: it returns to the Values table (equations -> values), proving it is not stranded.
-    fireEvent.click(screen.getByRole('button', { name: /^References$/ }));
-    expect(screen.getByTestId('evidence-library-sources')).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /^Legacy equations view/ }));
     expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
   });
@@ -1623,13 +1449,10 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: /^Legacy leads view/ }),
     );
-    expect(screen.getByTestId('evidence-library-sources')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
   });
 
-  it('preserves a localStorage by-parameter saved view (re-exposed value-groups tab)', async () => {
-    // 'by-parameter' is a live, selectable tab again (the #206 value-groups re-expose), so a
-    // local saved view carrying it must be PRESERVED and land on the value-groups view -- not
-    // collapsed to Values. This must match the Supabase-side coerceViewMode (saved-views-sync).
+  it('coerces a localStorage by-parameter saved view to the values catalogue', async () => {
     window.localStorage.setItem(
       SAVED_VIEWS_KEY,
       JSON.stringify([
@@ -1647,7 +1470,7 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
     fireEvent.click(
       await screen.findByRole('button', { name: /^Legacy groups view/ }),
     );
-    expect(screen.getByTestId('evidence-library-value-groups')).toBeInTheDocument();
+    expect(screen.getByTestId('evidence-library-values')).toBeInTheDocument();
   });
 
   it('keeps the local mirror on a remote read ERROR (does not erase the fallback)', async () => {
@@ -1860,5 +1683,270 @@ describe('EvidenceLibrary -- aria-live outcome channel (A5 regression)', () => {
     );
 
     window.localStorage.clear();
+  });
+
+  it('renders explicit empty state in QA Hub Stage 2 when source document has no linked values and shows no unrelated rows', async () => {
+    renderControlled();
+
+    const openHubBtn = screen.getByTestId('evidence-library-open-qa-hub');
+    fireEvent.click(openHubBtn);
+
+    expect(screen.getByText(/Stage 1: Authority Source Documents/i)).toBeInTheDocument();
+
+    // Select the zero-value source fixture deterministically
+    const zeroValButtons = screen.getAllByRole('button', { name: /Verify Values \(0\)/i });
+    expect(zeroValButtons.length).toBeGreaterThan(0);
+    fireEvent.click(zeroValButtons[0]);
+
+    // Stage 2 must render the explicit empty state card with testid evidence-qa-no-values
+    expect(screen.getByTestId('evidence-qa-no-values')).toBeInTheDocument();
+    expect(
+      screen.getByText(/No parameter values are linked to this source document/i),
+    ).toBeInTheDocument();
+    // Must NOT render any parameter rows or textareas
+    expect(screen.queryByPlaceholderText(/Enter toxicologist notes/i)).toBeNull();
+  });
+
+  it('blur plus immediate Stage 3 performs one write and then enters Stage 3', async () => {
+    vi.mocked(submitReview).mockReset();
+    let resolvePromise!: (val: boolean) => void;
+    const deferred = new Promise<boolean>((resolve) => {
+      resolvePromise = resolve;
+    });
+    vi.mocked(submitReview).mockImplementation(() => deferred);
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    // Stage 2: require textareas with getAllBy... (will throw if absent)
+    const textareas = screen.getAllByPlaceholderText(/Enter toxicologist notes/i);
+    fireEvent.change(textareas[0], { target: { value: 'Verified precision value' } });
+
+    // Blur triggers write
+    fireEvent.blur(textareas[0]);
+    // Immediate proceed click while write is in flight
+    const proceedBtn = screen.getByRole('button', { name: /Proceed to Stage 3/i });
+    fireEvent.click(proceedBtn);
+
+    // Exactly 1 in-flight write triggered
+    expect(submitReview).toHaveBeenCalledTimes(1);
+
+    // Still in Stage 2 while promise is pending
+    expect(screen.queryByText(/Stage 3: Admin Review & Publication Gate Status/i)).not.toBeInTheDocument();
+
+    // Resolve write
+    resolvePromise(true);
+
+    // Enters Stage 3
+    await waitFor(() => {
+      expect(screen.getByText(/Stage 3: Admin Review & Publication Gate Status/i)).toBeInTheDocument();
+    });
+    // Exactly 1 write total
+    expect(submitReview).toHaveBeenCalledTimes(1);
+  });
+
+  it('edit during flight completes both generations, persists the newest payload, and then enters Stage 3', async () => {
+    vi.mocked(submitReview).mockReset();
+    let resolve1!: (val: boolean) => void;
+    let resolve2!: (val: boolean) => void;
+    const deferred1 = new Promise<boolean>((resolve) => {
+      resolve1 = resolve;
+    });
+    const deferred2 = new Promise<boolean>((resolve) => {
+      resolve2 = resolve;
+    });
+
+    let invocation = 0;
+    vi.mocked(submitReview).mockImplementation(() => {
+      invocation++;
+      return invocation === 1 ? deferred1 : deferred2;
+    });
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    const textareas = screen.getAllByPlaceholderText(/Enter toxicologist notes/i);
+    // Generation 1 edit
+    fireEvent.change(textareas[0], { target: { value: 'Gen 1 Note' } });
+    fireEvent.blur(textareas[0]);
+    expect(submitReview).toHaveBeenCalledTimes(1);
+
+    // Generation 2 edit while Gen 1 write is in flight
+    fireEvent.change(textareas[0], { target: { value: 'Gen 2 Note' } });
+    fireEvent.blur(textareas[0]);
+
+    // Click Proceed to Stage 3
+    const proceedBtn = screen.getByRole('button', { name: /Proceed to Stage 3/i });
+    fireEvent.click(proceedBtn);
+
+    // Complete Generation 1
+    resolve1(true);
+
+    // Generation 2 write automatically triggers
+    await waitFor(() => {
+      expect(submitReview).toHaveBeenCalledTimes(2);
+    });
+
+    expect(submitReview).toHaveBeenLastCalledWith(
+      expect.any(String),
+      expect.any(String),
+      expect.any(String),
+      expect.stringContaining('Gen 2 Note'),
+      expect.anything(),
+      undefined,
+    );
+
+    // Complete Generation 2
+    resolve2(true);
+
+    // Transition succeeds into Stage 3
+    await waitFor(() => {
+      expect(screen.getByText(/Stage 3: Admin Review & Publication Gate Status/i)).toBeInTheDocument();
+    });
+  });
+
+  it('direct Stage 2 to Stage 4 obeys the same gate and enters Stage 4 upon resolution', async () => {
+    vi.mocked(submitReview).mockReset();
+    let resolvePromise!: (val: boolean) => void;
+    const deferred = new Promise<boolean>((resolve) => {
+      resolvePromise = resolve;
+    });
+    vi.mocked(submitReview).mockImplementation(() => deferred);
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    const textareas = screen.getAllByPlaceholderText(/Enter toxicologist notes/i);
+    fireEvent.change(textareas[0], { target: { value: 'Pending Stage 4 note' } });
+    fireEvent.blur(textareas[0]);
+
+    // Click Stage 4 in stepper tab navigation
+    const stage4Tab = screen.getByRole('button', { name: /4\. Flag Issues/i });
+    fireEvent.click(stage4Tab);
+
+    // Blocked from Stage 4 while write is in flight
+    expect(screen.queryByTestId('stage-4-heading')).not.toBeInTheDocument();
+    expect(screen.queryByRole('heading', { name: /Stage 4: Flag Potential Issues/i })).not.toBeInTheDocument();
+
+    // Resolve write
+    resolvePromise(true);
+
+    // Enters Stage 4
+    await waitFor(() => {
+      expect(screen.getByTestId('stage-4-heading')).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /Stage 4: Flag Potential Issues/i })).toBeInTheDocument();
+    });
+  });
+
+  it('a decision with a blank user comment persists its generated default note and proceeds', async () => {
+    vi.mocked(submitReview).mockReset();
+    vi.mocked(submitReview).mockResolvedValue(true);
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    // Click Confirmed on the first parameter without entering any comment
+    const confirmButtons = screen.getAllByRole('button', { name: /^Confirm parameter /i });
+    fireEvent.click(confirmButtons[0]);
+
+    // Proceed to Stage 3
+    const proceedBtn = screen.getByRole('button', { name: /Proceed to Stage 3/i });
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      expect(submitReview).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.any(String),
+        'approved',
+        expect.stringContaining('Verified as confirmed in QA/QC workbench'),
+        expect.anything(),
+        undefined,
+      );
+      expect(screen.getByText(/Stage 3: Admin Review & Publication Gate Status/i)).toBeInTheDocument();
+    });
+  });
+
+  it('blocks Stage 3 transition and remains in Stage 2 when writes fail or reject', async () => {
+    vi.mocked(submitReview).mockReset();
+    vi.mocked(submitReview).mockResolvedValue(false); // Simulate server rejection
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    const textareas = screen.getAllByPlaceholderText(/Enter toxicologist notes/i);
+    fireEvent.change(textareas[0], { target: { value: 'Attempted note write' } });
+
+    const proceedBtn = screen.getByRole('button', { name: /Proceed to Stage 3/i });
+    fireEvent.click(proceedBtn);
+
+    await waitFor(() => {
+      // Fail closed: Stage 3 header is NOT rendered
+      expect(
+        screen.queryByText(/Stage 3: Admin Review & Publication Gate Status/i),
+      ).not.toBeInTheDocument();
+      // User remains in Stage 2 with explicit error
+      expect(
+        screen.getByRole('heading', { name: /Extracted Parameter Values/i }),
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Cannot proceed: verification write\(s\) pending, unsaved, or failed/i),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it('hydrates a needs_review record with historical [VERIFICATION: confirmed] note as needs_review, not confirmed', async () => {
+    vi.mocked(fetchAllReviews).mockResolvedValue([
+      {
+        id: 'rev-contra-hist',
+        parameter_value_id: 'pv-hc-bap-hh-food-sf',
+        old_qa_status: 'approved',
+        new_qa_status: 'needs_review',
+        old_evidence_support_status: null,
+        new_evidence_support_status: null,
+        reviewer_note: '[VERIFICATION: confirmed] Historical note that was later reverted to needs_review',
+        reviewed_by: 'user-1',
+        reviewed_at: '2026-08-21T10:00:00Z',
+      },
+    ]);
+
+    renderControlled();
+
+    fireEvent.click(screen.getByTestId('evidence-library-open-qa-hub'));
+
+    const verifyButtons = screen.getAllByRole('button', { name: /Verify Values \([1-9]\d*\)/i });
+    fireEvent.click(verifyButtons[0]);
+
+    await waitFor(() => {
+      const textareas = screen.getAllByPlaceholderText(/Enter toxicologist notes/i);
+      const values = textareas.map((t) => (t as HTMLTextAreaElement).value);
+      expect(values).toContain('Historical note that was later reverted to needs_review');
+    });
+
+    const confirmBtn = screen.getByRole('button', {
+      name: 'Confirm parameter pv-hc-bap-hh-food-sf',
+    });
+    const discrepancyBtn = screen.getByRole('button', {
+      name: 'Flag discrepancy for parameter pv-hc-bap-hh-food-sf',
+    });
+
+    expect(confirmBtn).toBeInTheDocument();
+    expect(discrepancyBtn).toBeInTheDocument();
+    expect(confirmBtn.className).not.toContain('bg-emerald-100');
+    expect(discrepancyBtn.className).not.toContain('bg-amber-100');
   });
 });

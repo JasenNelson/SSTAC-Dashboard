@@ -34,16 +34,15 @@ export default async function AdminDashboardPage() {
     redirect('/login');
   }
 
-  // Check if user has admin role
-  const { data: roleData } = await supabase
+  // Check if user has admin role (generic /admin root is admin-only)
+  const { data: roles } = await supabase
     .from('user_roles')
     .select('role')
     .eq('user_id', user.id)
-    .eq('role', 'admin')
-    .maybeSingle();
+    .eq('role', 'admin');
 
-  const isAdmin = !!roleData;
-  
+  const isAdmin = Array.isArray(roles) && roles.length > 0;
+
   if (!isAdmin) {
     redirect('/dashboard');
   }
@@ -61,29 +60,29 @@ export default async function AdminDashboardPage() {
     supabase
       .from('user_roles')
       .select('id', { count: 'exact' }),
-    
+
     // Documents this month
     supabase
       .from('documents')
       .select('id', { count: 'exact' })
       .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()),
-    
+
     // Total discussion threads
     supabase
       .from('discussions')
       .select('id', { count: 'exact' }),
-    
+
     // Active announcements
     supabase
       .from('announcements')
       .select('id', { count: 'exact' })
       .eq('is_active', true),
-    
+
     // Milestones
     supabase
       .from('milestones')
       .select('id, status', { count: 'exact' }),
-    
+
     // Total poll votes (from both poll_votes and ranking_votes tables)
     Promise.all([
       supabase

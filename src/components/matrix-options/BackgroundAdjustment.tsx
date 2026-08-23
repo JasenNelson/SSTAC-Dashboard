@@ -342,14 +342,10 @@ export default function BackgroundAdjustment({
       : governedBy === 'background'
         ? `Which one governed: the background UTL 95/95 (${formatMagnitude(utlResult.utl)} ${UTL_UNIT}) governs, ` +
           `because it exceeds the preliminary standard (${formatMagnitude(preliminaryValue as number)} ${adjustedUnit}). ` +
-          `Adjusted standard = max(${formatMagnitude(preliminaryValue as number)}, ${formatMagnitude(utlResult.utl)}) = ` +
-          `${formatMagnitude(adjustedValue)} ${adjustedUnit}. In plain terms, the risk-based preliminary standard sits ` +
-          `below what already occurs naturally in this ${scopeLabel.toLowerCase()} reference set, so the adjusted ` +
-          `standard uses background instead of forcing remediation of naturally occurring background.`
+          `Adjusted standard = ${formatMagnitude(adjustedValue)} ${adjustedUnit}. Uses background instead of forcing remediation of naturally occurring background.`
         : `Which one governed: the preliminary standard (${formatMagnitude(preliminaryValue as number)} ${adjustedUnit}) governs, ` +
           `because it is at or above the background UTL 95/95 (${formatMagnitude(utlResult.utl)} ${UTL_UNIT}). ` +
-          `Adjusted standard = max(${formatMagnitude(preliminaryValue as number)}, ${formatMagnitude(utlResult.utl)}) = ` +
-          `${formatMagnitude(adjustedValue)} ${adjustedUnit}.`;
+          `Adjusted standard = ${formatMagnitude(adjustedValue)} ${adjustedUnit}.`;
 
   // ---------------------------------------------------------------------
   // Site Comparison -- NOT a derivation stage (fix 3/P2-4/P2-7; see the
@@ -473,34 +469,37 @@ export default function BackgroundAdjustment({
     >
       <header className="mb-2">
         <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">
-          Background Adjustment -- UTL 95/95
+          Background Adjustment (UTL 95/95)
         </h3>
-        <p className="text-sm text-slate-500 dark:text-slate-400 mt-1">
-          Apply this UTL<sub>95/95</sub> as a post-derivation adjustment to
-          your Tier 1 generic standard so naturally-elevated background
-          concentrations are not forced into remediation: adjusted Tier 1
-          standard = max(Tier 1 generic, UTL). Regional UTL takes precedence
-          over Provincial where geochemical equivalence is met (Phase 2 Paper
-          App D.4).
+        <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+          Post-derivation adjustment using upper tolerance limits ($UTL_{95/95}$) so naturally elevated background is not forced into remediation: adjusted standard = max(preliminary standard, UTL).
         </p>
       </header>
 
-      <RegulatoryFrameNotice
-        frameId={jurisdiction}
-        pathway="background-adjustment"
-      />
-
-      <div className="-mt-2">
-        <MathRenderer
-          fadeFrom="from-white dark:from-slate-900"
-          content={
-            'Formula: $UTL_{95/95} = \\bar{x} + K \\cdot s$ where $K$ is the ' +
-            'one-sided 95 percent coverage, 95 percent confidence ' +
-            'tolerance factor for sample size $n$ (NIST/SEMATECH ' +
-            'e-Handbook 7.2.6.3).'
-          }
-        />
-      </div>
+      <details className="group rounded-xl border border-slate-200 bg-slate-50/70 p-3 text-xs dark:border-slate-800 dark:bg-slate-900/40">
+        <summary className="flex cursor-pointer select-none items-center justify-between font-semibold text-slate-700 dark:text-slate-200">
+          <span>Regulatory frame &amp; formula (BC Protocol 1 v5 DRA)</span>
+          <span className="text-xs font-medium text-sky-600 dark:text-sky-400">
+            <span className="group-open:hidden">show [+]</span>
+            <span className="hidden group-open:inline">hide [-]</span>
+          </span>
+        </summary>
+        <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-800 space-y-3">
+          <RegulatoryFrameNotice
+            frameId={jurisdiction}
+            pathway="background-adjustment"
+            className="mb-0"
+          />
+          <MathRenderer
+            fadeFrom="from-white dark:from-slate-900"
+            content={
+              'Formula: $UTL_{95/95} = \\bar{x} + K \\cdot s$ where $K$ is the ' +
+              'one-sided 95% coverage, 95% confidence tolerance factor for sample size $n$ ' +
+              '(NIST/SEMATECH e-Handbook 7.2.6.3).'
+            }
+          />
+        </div>
+      </details>
 
       {/* ================= STAGE 3: BACKGROUND REFERENCE ================= */}
       <CalculatorStage
@@ -509,47 +508,11 @@ export default function BackgroundAdjustment({
         title="Background Reference"
         state={stage3State}
         stateDetail={stage3Detail}
-        // Fix 5 (P2-C, this component's half): previously `stage4State !==
-        // 'computed'`, which kept Stage 3 lit as "current" for as long as
-        // Stage 4 was waiting -- including while Stage 4 was waiting SOLELY
-        // on the external preliminary standard from the active pathway
-        // calculator, i.e. after Stage 3 itself was already done. That let
-        // this component's Stage 3 and the calculator's own current stage
-        // both light up at once on the assembled page.
-        // Rule applied here (safe in isolation): a stage is "current" only
-        // while ITS OWN prerequisites are already met (true for Stage 3 --
-        // it is mathematically independent of Stages 1-2/4) AND it is
-        // genuinely the next actionable step for the user, i.e. it has not
-        // finished yet. Once Stage 3 computes, this component has nothing
-        // further for the user to do here, so it stops claiming "current"
-        // regardless of what Stage 4 (which has no user input of its own)
-        // is still waiting on. Stage 4 itself is never marked current below
-        // for the same reason -- it is a pure derivation with no action a
-        // user takes on it directly.
-        //
-        // Fix 3 (P2, third adversarial round, 2026-08-14): the rule above was
-        // still incomplete -- it made no reference to Stage 2 (the pathway
-        // calculator's own preliminary standard), so Stage 3 could go
-        // current again (e.g. the reference-sample textarea is cleared to
-        // paste a new set, dropping n below 2) WHILE the active pathway
-        // calculator's Stage 2 is unconditionally current too
-        // (`!stage1Blocked`, with no knowledge of this component at all --
-        // the two are separate React components that do not share state).
-        // Two lit stages resulted. Fix: Stage 3 is current only once Stage 2
-        // has actually produced a preliminary standard (`preliminaryAvailable`)
-        // -- before that, Stage 2 is still the real next step, not Stage 3,
-        // even if Stage 3 also has not computed yet. The matching half of
-        // this fix lives in each pathway calculator: Stage 2's `current` now
-        // also checks `!backgroundReferenceNeedsAttention`, a boolean the
-        // assembling parent (MatrixDashboard) computes from this exact same
-        // pair of facts (preliminarySlot.state and utlSlot.state) and passes
-        // down -- explicit shared state, since neither component can see the
-        // other's internals directly.
         current={preliminaryAvailable && stage3State !== 'computed'}
         testId="bg-adjust-stage-3"
       >
         <fieldset className="mb-4">
-          <legend className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">
+          <legend className="block text-xs font-semibold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">
             Reference scope
           </legend>
           <div
@@ -559,7 +522,7 @@ export default function BackgroundAdjustment({
             data-testid="bg-adjust-scope-radio"
           >
             <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors text-center ${
                 scope === 'provincial'
                   ? 'bg-sky-50 dark:bg-sky-900/30 border-sky-500 text-sky-700 dark:text-sky-300'
                   : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'
@@ -576,7 +539,7 @@ export default function BackgroundAdjustment({
               Provincial
             </label>
             <label
-              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
+              className={`flex-1 cursor-pointer rounded-lg border px-3 py-2 text-sm font-medium transition-colors text-center ${
                 scope === 'regional'
                   ? 'bg-sky-50 dark:bg-sky-900/30 border-sky-500 text-sky-700 dark:text-sky-300'
                   : 'bg-white dark:bg-slate-800 border-slate-300 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:border-sky-400'
@@ -593,9 +556,6 @@ export default function BackgroundAdjustment({
               Regional
             </label>
           </div>
-          <p className="text-xs text-slate-500 dark:text-slate-400 mt-2">
-            {scopeDescription}
-          </p>
         </fieldset>
 
         <div className="mb-4">
@@ -609,7 +569,7 @@ export default function BackgroundAdjustment({
             id="bg-adjust-samples"
             value={activeSamples}
             onChange={(e) => setActiveSamples(e.target.value)}
-            rows={4}
+            rows={3}
             className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500"
           />
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
@@ -620,55 +580,35 @@ export default function BackgroundAdjustment({
           </p>
         </div>
 
-        {/*
-          Fix 1 (P1, 2026-08-14 UI QA audit): Mean and Std Dev are OPERANDS
-          of the UTL rendered directly beneath them (utl = mean + K * sd,
-          same unit, same card group) -- they are exactly the kind of
-          standard-like, potentially-sub-1e-4 magnitude formatMagnitude
-          exists to protect. The prior toFixed(4) exemption was justified by
-          "this reference sample set is always O(1-10) mg/kg" -- an
-          ASSUMPTION ABOUT USER INPUT, not a property of the value. The
-          textarea above is free input, and sediment background for dioxins,
-          PCBs, and other organics is legitimately sub-0.1 mg/kg dry, so a
-          real, non-zero UTL could render as derived from two displayed
-          zeros. Both now use formatMagnitude.
-
-          K stays on toFixed(4): it is a dimensionless statistics-table
-          lookup/interpolation constant (the one-sided 95/95 tolerance
-          factor for sample size n), never itself a mass-per-mass
-          concentration and never compared against a standard -- unlike Mean
-          and Std Dev, no assumption about its expected magnitude is doing
-          any work here, so it is not the same exemption.
-        */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 text-center">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Mean
             </div>
             <div
-              className="text-xl font-mono text-slate-900 dark:text-white"
+              className="text-lg font-bold font-mono text-slate-900 dark:text-white"
               data-testid="bg-adjust-mean-value"
             >
               {utlResult ? formatMagnitude(utlResult.mean) : '--'}
             </div>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 text-center">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               Std Dev (n-1)
             </div>
             <div
-              className="text-xl font-mono text-slate-900 dark:text-white"
+              className="text-lg font-bold font-mono text-slate-900 dark:text-white"
               data-testid="bg-adjust-sd-value"
             >
               {utlResult ? formatMagnitude(utlResult.sd) : '--'}
             </div>
           </div>
-          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-4">
-            <div className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
+          <div className="bg-slate-50 dark:bg-slate-800/50 border border-slate-100 dark:border-slate-800/80 rounded-xl p-3 text-center">
+            <div className="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-1">
               K (n = {utlResult ? utlResult.n : '--'})
             </div>
             <div
-              className="text-xl font-mono text-slate-900 dark:text-white"
+              className="text-lg font-bold font-mono text-slate-900 dark:text-white"
               data-testid="bg-adjust-k-value"
             >
               {utlResult ? utlResult.K.toFixed(4) : '--'}
@@ -677,19 +617,16 @@ export default function BackgroundAdjustment({
         </div>
 
         <div
-          className="mt-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl p-6 text-center border border-sky-100 dark:border-sky-800 shadow-inner"
+          className="mt-4 bg-sky-50 dark:bg-sky-900/20 rounded-xl p-5 text-center border border-sky-100 dark:border-sky-800 shadow-xs"
           data-testid="bg-adjust-utl-hero"
         >
-          <div className="text-xs font-bold text-sky-800 dark:text-sky-300 uppercase tracking-widest mb-1">
+          <div className="text-xs font-semibold text-sky-800 dark:text-sky-300 uppercase tracking-wider mb-1">
             {scopeLabel} UTL 95/95
           </div>
-          <div className="text-3xl font-black text-slate-900 dark:text-white font-mono tracking-tighter">
+          <div className="text-2xl font-bold text-slate-900 dark:text-white font-mono">
             {utlResult ? formatMagnitude(utlResult.utl) : '--'}{' '}
-            <span className="text-lg text-slate-500 font-medium">{UTL_UNIT}</span>
+            <span className="text-sm text-slate-500 font-medium">{UTL_UNIT}</span>
           </div>
-          <p className="text-xs text-sky-800 dark:text-sky-300 mt-3 font-medium">
-            Apply as adjustment: max(Tier 1 generic, {utlResult ? formatMagnitude(utlResult.utl) : 'UTL'})
-          </p>
         </div>
 
         {/*
