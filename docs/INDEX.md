@@ -7,13 +7,10 @@ This file is the **single canonical entrypoint** for project documentation.
   `continuity.current_handoff`. It routes; it deliberately holds no volatile metrics and is not a
   status dashboard.
   - **If you are resuming ACTIVE WORK, do not stop here.** This routing anchor is intentionally
-    stateless. The CURRENT LANE anchor -- which carries in-flight branch state, uncommitted work,
-    gate evidence and open owner decisions -- is named further down this file under "Session
-    continuity". As of 2026-08-15 that is
-    `FRESH_SESSION_HANDOFF_2026_08_15b_UI_BATCH_IN_FLIGHT.md` (UI/UX audit lane: 40 uncommitted
-    files on `feat/mo-design-batch-20260815`, six gates green, adversarial review round 3 in
-    flight). Read the routing anchor for WHERE things live; read the lane anchor for WHAT is
-    currently happening.
+    stateless. For current lane status, see the domain entrypoints below:
+    - **Matrix Options / Matrix Map**: `docs/MATRIX_OPTIONS_STATUS.md` (authoritative current status).
+      The PR #791 frontend enablement event is complete (see `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`),
+      while `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` remains the authority for active Phase 2 Task 3 backend/data work.
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
 - **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
@@ -104,6 +101,10 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
   what is actually built and deployed; use the dated snapshots below only as historical claim lists.
   Lane-scoped only -- it does not claim global project status, which stays in this index and the
   manifest `facts`.
+- `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md` - completion record for
+  the PR #791 frontend enablement event supporting Phase 2/L2.
+- `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` - authoritative Phase 2 project plan for
+  active Phase 2 Task 3 backend/data work (BC Aquatic Database and policy-ready input parameters).
 
 ### Matrix Map and Option C (authoritative design + owner-amended v1 scope)
 Added 2026-07-26 during documentation recovery: this lane was the active flagship
@@ -166,17 +167,20 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   refresh, publish, and unpublish are each still separately owner-gated, and the
   schema apply grants none of them. Do not describe publication as authorized.
 - Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
-- The CURRENT continuity anchor is `FRESH_SESSION_HANDOFF_2026_08_15b_UI_BATCH_IN_FLIGHT.md`
-  (UI/UX design batch 1 lane; PRs #778 and #779 both merged; branch
-  `feat/mo-design-batch-20260815` has 40 files uncommitted pending the commit-time adversarial
-  review loop, with six gates already green on that exact tree -- read section 2 before touching
-  the working tree and section 4 before quoting any gate result as final evidence). Immediate
-  predecessor: `FRESH_SESSION_HANDOFF_2026_08_15_UI_QA_AUDIT.md` (carries the gate-hygiene traps
-  that made several earlier green runs meaningless; still substantively relevant, not archived).
-  Earlier predecessor: `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md`
-  (`continuity.current_handoff`). Archived predecessor, byte-identical historical import:
-  `docs/archive/2026-08-09_wiki-recovery/` (see that folder's `README.md` for source path, hash,
-  and replacement pointer).
+- **PR #791 Frontend Enablement Event (Merged 2026-08-23)**:
+  - PR #791 merged into `main` (`1602652be817ae78feeb37af380a2d4aa80f5e2f`), delivering full
+    8-tab navigation polish, Methodology by pathway restoration, Evidence Library QA/QC controls,
+    Candidate defaults touch target hardening (>=44px), and E2E synchronization.
+  - Detailed completion record: `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
+  - Authoritative current Matrix Options status: `docs/MATRIX_OPTIONS_STATUS.md`.
+  - Authoritative Phase 2 backend/data plan: `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md`.
+- Historical predecessor handoffs (reference):
+  - `FRESH_SESSION_HANDOFF_2026_08_15b_UI_BATCH_IN_FLIGHT.md` (historical in-flight handoff for the
+    UI batch superseded by the PR #791 merge).
+  - `FRESH_SESSION_HANDOFF_2026_08_15_UI_QA_AUDIT.md` (historical UI QA audit).
+  - `FRESH_SESSION_HANDOFF_2026_08_09_SSTAC_CURRENT.md` (`continuity.current_handoff`).
+  - Archived predecessor, byte-identical historical import: `docs/archive/2026-08-09_wiki-recovery/`
+    (see that folder's `README.md` for source path, hash, and replacement pointer).
 - `FRESH_SESSION_HANDOFF_2026_07_30_F2_MERGED_HOTFIX_MERGED_D2_BLOCKED.md` is a
   HISTORICAL 2026-07-30 handoff, not the current continuity anchor. Its
   "D2 BLOCKED" framing, including its filename, predates the 2026-08-01 apply.
