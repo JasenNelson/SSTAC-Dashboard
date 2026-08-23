@@ -4826,7 +4826,7 @@ export default function EvidenceLibrary({
           aria-pressed={candidateDefaultsActive}
           data-testid="evidence-library-candidate-defaults"
           className={cn(
-            'inline-flex items-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
+            'min-h-[44px] min-w-[44px] inline-flex items-center justify-center gap-1 rounded-md border px-2.5 py-1 text-xs font-semibold transition-colors',
             candidateDefaultsActive
               ? 'border-sky-400 bg-sky-50 text-sky-800 dark:border-sky-700 dark:bg-sky-950/50 dark:text-sky-200'
               : 'border-slate-300 bg-white text-slate-700 hover:border-sky-400 hover:text-sky-700 dark:border-slate-700 dark:bg-slate-900 dark:text-slate-200',

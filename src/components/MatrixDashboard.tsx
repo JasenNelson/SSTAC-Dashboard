@@ -1004,11 +1004,11 @@ export default function MatrixDashboard({
     if (isCalculatorMode) {
       setCalcLeftRailOverride((prev) => !(prev ?? false));
     } else if (isEvidenceLibraryMode) {
-      setCatalogLeftRailOverride((prev) => !(prev ?? false));
+      setCatalogLeftRailOverride((prev) => !(prev ?? showLeftPanel));
     } else {
       setShowLeftPanel((prev) => !prev);
     }
-  }, [isCalculatorMode, isEvidenceLibraryMode]);
+  }, [isCalculatorMode, isEvidenceLibraryMode, showLeftPanel]);
   // F1 fix, part 2: on the transition from open -> closed, if focus was
   // inside the rail, move it to the rail's own toggle button -- the control
   // that can bring the rail back, and an announced, sensible landing spot.
