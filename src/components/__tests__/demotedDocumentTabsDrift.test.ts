@@ -94,6 +94,6 @@ describe('DEMOTED_DOCUMENT_TABS drift guard', () => {
 
     // Membership half. Pins WHICH tabs, so swapping one demoted document for another
     // (count unchanged) still has to be a conscious edit here.
-    expect(new Set(members)).toEqual(new Set(['Jurisdictional Frameworks', 'The Guide']));
+    expect(new Set(members)).toEqual(new Set(['The Guide']));
   });
 });
