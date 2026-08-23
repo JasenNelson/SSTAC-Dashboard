@@ -128,7 +128,7 @@ describe('MatrixDashboard -- primary tabpanel focus contract (APG)', () => {
 describe('MatrixDashboard -- Matrix Options guide copy', () => {
   it('keeps the v1 guide focused on workflow instead of placeholder status copy', () => {
     expect(GUIDE_MARKDOWN).toMatch(/## 1\. How to Use This Workspace/);
-    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*Guide:\*\*/);
+    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*The Guide\*\*/);
     expect(GUIDE_MARKDOWN).toMatch(/## 2\. Project Roadmap/);
     expect(GUIDE_MARKDOWN).toMatch(/Scientific Literature Search/);
     expect(GUIDE_MARKDOWN).toMatch(/Jurisdictional Scan/);
@@ -2194,8 +2194,8 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       // The mock renders the RAW markdown string, so this asserts the prefix actually
       // handed to the renderer -- not a parsed heading level, which the mock cannot
       // produce and which would make this assertion vacuous.
-      expect(content.trimStart()).toMatch(/^## Guide: Matrix Options Workspace/);
-      expect(content.trimStart()).not.toMatch(/^# Guide/);
+      expect(content.trimStart()).toMatch(/^## The Guide: Matrix Options Workspace/);
+      expect(content.trimStart()).not.toMatch(/^# The Guide/);
     });
 
     it('leaves a guide document that does not open with an H1 untouched', () => {
