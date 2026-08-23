@@ -153,7 +153,7 @@ jobs:
     # final CI Status Check aggregator still requires both build and e2e-tests to pass.
     needs: unit-tests
     # Hard backstop so a stuck step can never hang for hours (default is 360 min).
-    timeout-minutes: 30
+    timeout-minutes: 60
     # Run inside the OFFICIAL Playwright container so browsers + system deps are PREBAKED and apt
     # never runs in this job. Root cause of the prior intermittent ~25-min CANCELLED runs (2026-06-18,
     # confirmed from step-level timing + codex consult): `npx playwright install --with-deps` hung in
@@ -363,10 +363,10 @@ jobs:
     steps:
       - name: Check build status
         run: |
-          if [ "${{ needs.lint-and-typecheck.result }}" = "failure" ] || \
-             [ "${{ needs.unit-tests.result }}" = "failure" ] || \
-             [ "${{ needs.build.result }}" = "failure" ] || \
-             [ "${{ needs.e2e-tests.result }}" = "failure" ]; then
+          if [ "${{ needs.lint-and-typecheck.result }}" != "success" ] || \
+             [ "${{ needs.unit-tests.result }}" != "success" ] || \
+             [ "${{ needs.build.result }}" != "success" ] || \
+             [ "${{ needs.e2e-tests.result }}" != "success" ]; then
             echo "❌ CI Pipeline Failed"
             exit 1
           else
