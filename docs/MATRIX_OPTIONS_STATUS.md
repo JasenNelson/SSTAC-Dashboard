@@ -19,8 +19,8 @@ verification date; and the co-update rule in item 4 below names every site that 
 If the owner prefers, the durable fix is a lane-scoped carve-out added to
 `current_status_claims_policy` itself -- that is a manifest policy change and was not made
 unilaterally here.
-**Verified against:** `origin/main` `9af819af01e30d097a3ea492a9354f9378be3f58`
-**Verification date:** 2026-08-04
+**Verified against:** `origin/main` `1602652be817ae78feeb37af380a2d4aa80f5e2f`
+**Verification date:** 2026-08-23
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -278,6 +278,29 @@ pinned SHA. The Matrix Options route is `src/app/(dashboard)/matrix-options/page
 | Background adjustment | Implemented, wired | `src/components/matrix-options/BackgroundAdjustment.tsx` |
 | Provenance / value search; References and Values | Implemented, wired | `CalculatorValueSearchPanel.tsx`, `EvidenceLibrary.tsx`, `CalculatorProvenancePanel.tsx` |
 | SSD Workbench | Implemented, wired (own top-level tab) | `src/components/matrix-options/SsdWorkbench.tsx` |
+
+### 3.0 PR #791 Frontend Enablement Event (COMPLETE, 2026-08-23)
+
+On 2026-08-23, PR #791 merged into `main` (`1602652be817ae78feeb37af380a2d4aa80f5e2f`, final reviewed
+head `af930c2ca6d4be4b9ccd8dc03f9c2a8d0abb3bd2`) delivering an accepted frontend enablement event
+supporting Phase 2 / L2 across 50 tracked paths.
+
+Delivered frontend features and polish:
+- **Restored full 8-tab top-level registry** in `MatrixDashboard.tsx`: Guide, Modernizing Schedule 3.4,
+  Methodology by pathway (`Jurisdictional Frameworks`), TWG Review, Database (`Interactive Map`),
+  Calculator, SSD Workbench, and Catalogue (`References & Values`).
+- **Restored Methodology by pathway vertical side tabs**: EqP & AVS, Food Web (BSAF), and Human
+  Health Pathways, with automatic keyboard activation and `demoteLeadingH1(...)` case-study rendering.
+- **Full-fidelity print stylesheets**: Unclipped printing across prose and calculator tabs.
+- **Evidence Library QA/QC & Candidate defaults control**: Restored the `Candidate defaults` quick
+  review button with explicit `>=44px` two-axis touch targets (`min-h-[44px] min-w-[44px] justify-center`),
+  and hardened QA/QC review persistence and deterministic state reduction.
+- **Catalogue left-panel toggle**: Corrected toggle logic to evaluate `catalogLeftRailOverride` against
+  `prev ?? showLeftPanel` with `showLeftPanel` in the dependency list.
+- **A11y and code quality**: Minimum 44px touch targets, verified contrast, pure ASCII character sets,
+  and complete six-gate verification suite.
+
+Full continuity record: `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
 
 ### 3.1 Human Health Inhalation is NOT scaffold-only and NOT parked
 
@@ -565,6 +588,22 @@ Numerals for all four items are in section 2 and, canonically, in manifest
    check, so registration prevents deletion but not staleness. Tracked in manifest
    `known_issues.matrix_options_paths_have_no_docs_gate` with a proposed fix. Widening gate triggers
    changes what future PRs must satisfy, so it is an owner decision, not a documentation change.
+
+### 7.6 Next L2 backend continuation
+
+The PR #791 frontend enablement event is complete, but the durable Phase 2 / L2 backend-data goal
+remains ACTIVE. A future L2 session resuming this workstream must:
+
+1. **Reauthenticate live state:** Read `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` and
+   this status file to verify the current standing of Phase 2 Task 3 Streams A and B.
+2. **Identify the first authorized incomplete backend/data unit:** Inspect Tasks 3.1-3.9 in the Phase 2
+   project plan to select the next authorized incomplete unit (e.g., Task 3.1 report identification,
+   Task 3.3 database structure review, or Task 3.7 input-parameter scope definition). Do not invent
+   which subtask is first if current live evidence does not establish it.
+3. **Continue backend/data compilation:** Execute the database schema, data compilation, or input-parameter
+   work from that defined starting point.
+4. **Preserve frontend deliverables:** Avoid reopening or rewriting PR #791 frontend components or
+   selectors unless an explicit, reproducible regression is verified.
 
 ---
 
