@@ -434,6 +434,87 @@ jobs:
           # top of the real one. Overwritten with the full identity once both runtimes authenticate.
           "step1_started=$((Get-Date).ToString('o'))" | Set-Content -Encoding ASCII (Join-Path $ev 'identity.txt')
 
+          # ---- Dedicated executor evidence root, bound BEFORE any Python starts ----
+          # ROOT CAUSE this addresses, stated as MEASURED rather than as first assumed.
+          #
+          # The defect is an ASYMMETRY between how PowerShell and Python canonicalise a Windows path
+          # that carries an 8.3 short component. Measured on .NET Framework 4.8 / CPython 3.11:
+          #     [IO.Path]::GetFullPath('...\LONGNA~1')  ->  '...\longnamedfolder12345'   (EXPANDS)
+          #     os.path.abspath(r'...\LONGNA~1')        ->  '...\LONGNA~1'               (does NOT)
+          # So the same physical directory reaches an ordinal comparison as two different strings.
+          # check_orphans.ps1 canonicalises its runtime root with GetFullPath and then ordinal-matches
+          # the result against a fixture command line that Python built from the UN-expanded form; the
+          # parent-role check throws, the helper exits 1, and the test's assertEqual(returncode, 0)
+          # records a FAILURE. That is why the hosted run reported failures=9 with errors=0, and why
+          # those were never eight product custody defects.
+          #
+          # An earlier revision of this comment claimed GetFullPath does NOT expand 8.3. That is
+          # false on .NET Framework, and the correction below never depended on it being true.
+          #
+          # The fix is to remove the ambiguity at the source: bind ONE canonical long root, so every
+          # Python-derived path descends lexically from it, GetFullPath is a no-op, and both
+          # languages agree. GetLongPathNameW is used because it expands 8.3 deterministically in
+          # BOTH directions of this comparison, which is the property actually required here.
+          # Single-line signature deliberately: a PowerShell here-string needs its delimiters at
+          # column 0, which would terminate this YAML block scalar.
+          if (-not ('Win32.LongPath' -as [type])) {
+            $sig = '[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern uint GetLongPathNameW(string lpszShortPath, System.Text.StringBuilder lpszLongPath, uint cchBuffer);'
+            Add-Type -MemberDefinition $sig -Name 'LongPath' -Namespace 'Win32' | Out-Null
+          }
+          function Resolve-LongPath([string]$p) {
+            $sb = New-Object System.Text.StringBuilder 32767
+            $n = [Win32.LongPath]::GetLongPathNameW($p, $sb, $sb.Capacity)
+            if ($n -eq 0 -or $n -gt $sb.Capacity) { return $null }
+            return $sb.ToString()
+          }
+
+          $rt = $env:RUNNER_TEMP
+          if ([string]::IsNullOrWhiteSpace($rt)) { Write-Host "FAIL: RUNNER_TEMP is not set"; exit 1 }
+          if (-not [System.IO.Path]::IsPathRooted($rt)) { Write-Host "FAIL: RUNNER_TEMP '$rt' is not absolute"; exit 1 }
+          if (-not (Test-Path -LiteralPath $rt -PathType Container)) { Write-Host "FAIL: RUNNER_TEMP '$rt' is not an existing directory"; exit 1 }
+          $rtLong = Resolve-LongPath ([System.IO.Path]::GetFullPath($rt))
+          if ([string]::IsNullOrWhiteSpace($rtLong)) { Write-Host "FAIL: could not resolve RUNNER_TEMP to a long path"; exit 1 }
+          $rtLong = $rtLong.TrimEnd('\')
+          if ($rtLong -match '~\d') { Write-Host "FAIL: RUNNER_TEMP still carries an 8.3 component after long-path resolution: '$rtLong'"; exit 1 }
+
+          # A DEDICATED SIBLING of gate-evidence. Kept separate so fixture residue never reaches the
+          # uploaded guardrail-windows-evidence artifact.
+          $execRoot = Join-Path $rtLong 'wiki-executor-evidence'
+
+          # Must be ABSENT. No -Force, no reuse, no fallback: a pre-existing directory here means
+          # something else owns it, and silently adopting it is how a run inherits foreign state.
+          if (Test-Path -LiteralPath $execRoot) { Write-Host "FAIL: executor evidence root already exists: '$execRoot'"; exit 1 }
+          try { New-Item -ItemType Directory -Path $execRoot -ErrorAction Stop | Out-Null }
+          catch { Write-Host "FAIL: could not create executor evidence root '$execRoot': $($_.Exception.Message)"; exit 1 }
+
+          # REOPEN and validate what actually landed, rather than trusting the create.
+          $created = Get-Item -LiteralPath $execRoot -Force -ErrorAction SilentlyContinue
+          if ($null -eq $created) { Write-Host "FAIL: executor evidence root vanished after creation"; exit 1 }
+          if (-not ($created -is [System.IO.DirectoryInfo])) { Write-Host "FAIL: executor evidence root is not a directory"; exit 1 }
+          if (($created.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+            Write-Host "FAIL: executor evidence root is a reparse point"; exit 1
+          }
+          if ($created.LinkType) { Write-Host "FAIL: executor evidence root is a link ($($created.LinkType))"; exit 1 }
+
+          $execLong = Resolve-LongPath $created.FullName
+          if ([string]::IsNullOrWhiteSpace($execLong)) { Write-Host "FAIL: could not resolve executor evidence root to a long path"; exit 1 }
+          $execLong = $execLong.TrimEnd('\')
+          if ($execLong -match '~\d') { Write-Host "FAIL: executor evidence root carries an 8.3 component: '$execLong'"; exit 1 }
+
+          # Direct parent must be RUNNER_TEMP itself -- a sibling, not a descendant of something else.
+          $execParent = ([System.IO.Path]::GetDirectoryName($execLong)).TrimEnd('\')
+          if ($execParent -ne $rtLong) {
+            Write-Host "FAIL: executor evidence root parent '$execParent' is not RUNNER_TEMP '$rtLong'"; exit 1
+          }
+
+          # Must be neither gate-evidence nor contained beneath it.
+          $gateLong = (Join-Path $rtLong 'gate-evidence').TrimEnd('\')
+          if ($execLong -eq $gateLong) { Write-Host "FAIL: executor evidence root collides with gate-evidence"; exit 1 }
+          if ($execLong.StartsWith($gateLong + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+            Write-Host "FAIL: executor evidence root is beneath gate-evidence"; exit 1
+          }
+          Write-Host "Executor evidence root: $execLong"
+
           # ---- Windows PowerShell 5.1 Desktop ----
           $major = $PSVersionTable.PSVersion.Major
           $edition = $PSVersionTable.PSEdition
@@ -507,9 +588,11 @@ jobs:
             "powershell_identity=$psIdentity",
             "python_identity=$pyIdentity",
             "python_boundary=$locFull",
+            "executor_evidence_root=$execLong",
             $pathPyNote
           ) | Set-Content -Encoding ASCII (Join-Path $ev 'identity.txt')
 
+          "SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT=$execLong" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "PREFLIGHT_POWERSHELL=$psAbs"   | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "PREFLIGHT_PYTHON=$pyAbs"       | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
           "GATE_PS_IDENTITY=$psIdentity"  | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
@@ -541,6 +624,17 @@ jobs:
             Write-Host "FAIL: PREFLIGHT_PYTHON is not bound to an existing file: '$py'"; exit 1
           }
           Write-Host "Using bound Python: $py"
+
+          # Fail closed if the evidence root did not survive step 1. Note the harness's own
+          # normcase parent-role assert (test_wrapper_contracts.py) is DORMANT when the variable is
+          # unset -- which is why it did not fire on the failing run. Binding the variable activates
+          # that assert AND removes the representation ambiguity that broke the ordinal comparisons
+          # in check_orphans.ps1. An unset or altered value reintroduces both.
+          $execRoot = $env:SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT
+          if ([string]::IsNullOrWhiteSpace($execRoot)) { Write-Host "FAIL: SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT is not bound"; exit 1 }
+          if (-not (Test-Path -LiteralPath $execRoot -PathType Container)) { Write-Host "FAIL: executor evidence root '$execRoot' is not an existing directory"; exit 1 }
+          if ($execRoot -match '~\d') { Write-Host "FAIL: executor evidence root carries an 8.3 component: '$execRoot'"; exit 1 }
+          Write-Host "Using executor evidence root: $execRoot"
 
           $ev = Join-Path $env:RUNNER_TEMP 'gate-evidence'
           New-Item -ItemType Directory -Path $ev -Force | Out-Null
