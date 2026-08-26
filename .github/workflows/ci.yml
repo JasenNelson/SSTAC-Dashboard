@@ -386,3 +386,400 @@ jobs:
           echo "| E2E Tests | ${{ needs.e2e-tests.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Performance Analysis | ${{ needs.performance-analysis.result }} |" >> $GITHUB_STEP_SUMMARY
 
+  # ---------------------------------------------------------------------------------------------
+  # Guardrail tests on Windows PowerShell 5.1.
+  #
+  # WHY THIS JOB EXISTS. tooling/wiki/graphify_guardrail.ps1 is protected by 44 behavioural tests
+  # and a 5-case smoke script, and NONE of them run in CI today: every other job here is
+  # ubuntu-latest, and on Linux the guardrail tests call skipTest because shutil.which("powershell")
+  # returns nothing. They therefore SKIP AND REPORT GREEN having tested nothing. Closing that
+  # false-green is the entire point of this job, so its assertions are deliberately paranoid: a
+  # zero exit code from `unittest` is NOT evidence, because unittest exits 0 on a fully skipped run.
+  #
+  # BOTH interpreters are IDENTITY-BOUND before any test runs. Neither `powershell` nor `python` is
+  # ever invoked bare: a gate that closes a false green must not itself depend on PATH resolution
+  # picking the interpreter it was verified against.
+  #
+  # This job is ADVISORY in branch protection (it is intentionally absent from status-check.needs).
+  # It is BLOCKING by protocol: no hardening or first-adopter PR merges unless it is green on that
+  # exact head. `main` has enforce_admins disabled and no required reviews, so that protocol rule
+  # must also appear in the PR body -- it has no mechanical enforcement here.
+  # ---------------------------------------------------------------------------------------------
+  guardrail-tests-windows:
+    name: Guardrail Tests (Windows PowerShell 5.1)
+    runs-on: windows-2025
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      # STEP 1 -- authenticate BOTH runtimes and bind their exact absolute paths.
+      # Without this a Linux-shaped mistake, or a PATH that resolves to a different interpreter than
+      # the one verified, reports green having tested nothing.
+      - name: Authenticate runtimes and bind exact interpreters
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $ev = Join-Path $env:RUNNER_TEMP 'gate-evidence'
+          New-Item -ItemType Directory -Path $ev -Force | Out-Null
+          # Stub IMMEDIATELY. Every validation below can `exit 1`, and the upload step runs with
+          # `if: always()` and `if-no-files-found: error` -- so without this the common failure path
+          # leaves an EMPTY directory and the upload adds a second, misleading "no files" error on
+          # top of the real one. Overwritten with the full identity once both runtimes authenticate.
+          "step1_started=$((Get-Date).ToString('o'))" | Set-Content -Encoding ASCII (Join-Path $ev 'identity.txt')
+
+          # ---- Dedicated executor evidence root, bound BEFORE any Python starts ----
+          # ROOT CAUSE this addresses, stated as MEASURED rather than as first assumed.
+          #
+          # The defect is an ASYMMETRY between how PowerShell and Python canonicalise a Windows path
+          # that carries an 8.3 short component. Measured on .NET Framework 4.8 / CPython 3.11:
+          #     [IO.Path]::GetFullPath('...\LONGNA~1')  ->  '...\longnamedfolder12345'   (EXPANDS)
+          #     os.path.abspath(r'...\LONGNA~1')        ->  '...\LONGNA~1'               (does NOT)
+          # So the same physical directory reaches an ordinal comparison as two different strings.
+          # check_orphans.ps1 canonicalises its runtime root with GetFullPath and then ordinal-matches
+          # the result against a fixture command line that Python built from the UN-expanded form; the
+          # parent-role check throws, the helper exits 1, and the test's assertEqual(returncode, 0)
+          # records a FAILURE. That is why the hosted run reported failures=9 with errors=0, and why
+          # those were never eight product custody defects.
+          #
+          # An earlier revision of this comment claimed GetFullPath does NOT expand 8.3. That is
+          # false on .NET Framework, and the correction below never depended on it being true.
+          #
+          # The fix is to remove the ambiguity at the source: bind ONE canonical long root, so every
+          # Python-derived path descends lexically from it, GetFullPath is a no-op, and both
+          # languages agree. GetLongPathNameW is used because it expands 8.3 deterministically in
+          # BOTH directions of this comparison, which is the property actually required here.
+          # Single-line signature deliberately: a PowerShell here-string needs its delimiters at
+          # column 0, which would terminate this YAML block scalar.
+          if (-not ('Win32.LongPath' -as [type])) {
+            $sig = '[DllImport("kernel32.dll", CharSet = CharSet.Unicode, SetLastError = true)] public static extern uint GetLongPathNameW(string lpszShortPath, System.Text.StringBuilder lpszLongPath, uint cchBuffer);'
+            Add-Type -MemberDefinition $sig -Name 'LongPath' -Namespace 'Win32' | Out-Null
+          }
+          function Resolve-LongPath([string]$p) {
+            $sb = New-Object System.Text.StringBuilder 32767
+            $n = [Win32.LongPath]::GetLongPathNameW($p, $sb, $sb.Capacity)
+            if ($n -eq 0 -or $n -gt $sb.Capacity) { return $null }
+            return $sb.ToString()
+          }
+
+          $rt = $env:RUNNER_TEMP
+          if ([string]::IsNullOrWhiteSpace($rt)) { Write-Host "FAIL: RUNNER_TEMP is not set"; exit 1 }
+          if (-not [System.IO.Path]::IsPathRooted($rt)) { Write-Host "FAIL: RUNNER_TEMP '$rt' is not absolute"; exit 1 }
+          if (-not (Test-Path -LiteralPath $rt -PathType Container)) { Write-Host "FAIL: RUNNER_TEMP '$rt' is not an existing directory"; exit 1 }
+          $rtLong = Resolve-LongPath ([System.IO.Path]::GetFullPath($rt))
+          if ([string]::IsNullOrWhiteSpace($rtLong)) { Write-Host "FAIL: could not resolve RUNNER_TEMP to a long path"; exit 1 }
+          $rtLong = $rtLong.TrimEnd('\')
+          if ($rtLong -match '~\d') { Write-Host "FAIL: RUNNER_TEMP still carries an 8.3 component after long-path resolution: '$rtLong'"; exit 1 }
+
+          # A DEDICATED SIBLING of gate-evidence. Kept separate so fixture residue never reaches the
+          # uploaded guardrail-windows-evidence artifact.
+          $execRoot = Join-Path $rtLong 'wiki-executor-evidence'
+
+          # Must be ABSENT. No -Force, no reuse, no fallback: a pre-existing directory here means
+          # something else owns it, and silently adopting it is how a run inherits foreign state.
+          if (Test-Path -LiteralPath $execRoot) { Write-Host "FAIL: executor evidence root already exists: '$execRoot'"; exit 1 }
+          try { New-Item -ItemType Directory -Path $execRoot -ErrorAction Stop | Out-Null }
+          catch { Write-Host "FAIL: could not create executor evidence root '$execRoot': $($_.Exception.Message)"; exit 1 }
+
+          # REOPEN and validate what actually landed, rather than trusting the create.
+          $created = Get-Item -LiteralPath $execRoot -Force -ErrorAction SilentlyContinue
+          if ($null -eq $created) { Write-Host "FAIL: executor evidence root vanished after creation"; exit 1 }
+          if (-not ($created -is [System.IO.DirectoryInfo])) { Write-Host "FAIL: executor evidence root is not a directory"; exit 1 }
+          if (($created.Attributes -band [System.IO.FileAttributes]::ReparsePoint) -ne 0) {
+            Write-Host "FAIL: executor evidence root is a reparse point"; exit 1
+          }
+          if ($created.LinkType) { Write-Host "FAIL: executor evidence root is a link ($($created.LinkType))"; exit 1 }
+
+          $execLong = Resolve-LongPath $created.FullName
+          if ([string]::IsNullOrWhiteSpace($execLong)) { Write-Host "FAIL: could not resolve executor evidence root to a long path"; exit 1 }
+          $execLong = $execLong.TrimEnd('\')
+          if ($execLong -match '~\d') { Write-Host "FAIL: executor evidence root carries an 8.3 component: '$execLong'"; exit 1 }
+
+          # Direct parent must be RUNNER_TEMP itself -- a sibling, not a descendant of something else.
+          $execParent = ([System.IO.Path]::GetDirectoryName($execLong)).TrimEnd('\')
+          if ($execParent -ne $rtLong) {
+            Write-Host "FAIL: executor evidence root parent '$execParent' is not RUNNER_TEMP '$rtLong'"; exit 1
+          }
+
+          # Must be neither gate-evidence nor contained beneath it.
+          $gateLong = (Join-Path $rtLong 'gate-evidence').TrimEnd('\')
+          if ($execLong -eq $gateLong) { Write-Host "FAIL: executor evidence root collides with gate-evidence"; exit 1 }
+          if ($execLong.StartsWith($gateLong + '\', [System.StringComparison]::OrdinalIgnoreCase)) {
+            Write-Host "FAIL: executor evidence root is beneath gate-evidence"; exit 1
+          }
+          Write-Host "Executor evidence root: $execLong"
+
+          # ---- Windows PowerShell 5.1 Desktop ----
+          $major = $PSVersionTable.PSVersion.Major
+          $edition = $PSVersionTable.PSEdition
+          Write-Host "PSVersion=$($PSVersionTable.PSVersion) PSEdition=$edition"
+          if ($major -ne 5) { Write-Host "FAIL: expected PowerShell major version 5, got $major"; exit 1 }
+          if ($edition -ne 'Desktop') { Write-Host "FAIL: expected PSEdition Desktop, got $edition"; exit 1 }
+          $psCmd = Get-Command powershell.exe -ErrorAction SilentlyContinue
+          if ($null -eq $psCmd) { Write-Host "FAIL: powershell.exe did not resolve"; exit 1 }
+          $psAbs = $psCmd.Source
+          if ([string]::IsNullOrWhiteSpace($psAbs) -or -not (Test-Path -LiteralPath $psAbs -PathType Leaf)) {
+            Write-Host "FAIL: powershell.exe resolved to a path that does not exist: '$psAbs'"; exit 1
+          }
+          $psIdentity = "$($PSVersionTable.PSVersion) $edition @ $psAbs"
+          Write-Host "Authenticated PowerShell: $psIdentity"
+
+          # ---- Python: EXACT toolcache identity, derived from setup-python's pythonLocation ----
+          # Bare `python` is never executed. PATH can resolve to a different interpreter than the one
+          # actions/setup-python provisioned; binding the toolcache path makes the identity exact.
+          $loc = $env:pythonLocation
+          if ([string]::IsNullOrWhiteSpace($loc)) {
+            Write-Host "FAIL: pythonLocation is not set; setup-python did not provision an interpreter"; exit 1
+          }
+          if (-not (Test-Path -LiteralPath $loc -PathType Container)) {
+            Write-Host "FAIL: pythonLocation '$loc' is not an existing directory"; exit 1
+          }
+          $locFull = [System.IO.Path]::GetFullPath($loc)
+
+          # Exactly one candidate directly under the boundary, else the identity is AMBIGUOUS.
+          $cands = @(Get-ChildItem -LiteralPath $locFull -Filter 'python.exe' -File -ErrorAction SilentlyContinue)
+          if ($cands.Count -eq 0) { Write-Host "FAIL: no python.exe directly under '$locFull'"; exit 1 }
+          if ($cands.Count -gt 1) { Write-Host "FAIL: AMBIGUOUS python identity -- $($cands.Count) candidates under '$locFull'"; exit 1 }
+
+          $pyAbs = [System.IO.Path]::GetFullPath($cands[0].FullName)
+          if (-not [System.IO.Path]::IsPathRooted($pyAbs)) { Write-Host "FAIL: resolved python path is not absolute: '$pyAbs'"; exit 1 }
+          if (-not (Test-Path -LiteralPath $pyAbs -PathType Leaf)) { Write-Host "FAIL: resolved python path does not exist: '$pyAbs'"; exit 1 }
+
+          # Boundary check. Honest about its scope: $pyAbs was enumerated FROM $locFull, so this is
+          # a defence-in-depth string containment check, not a traversal defence -- there is no
+          # traversal input, and StartsWith does not prove containment against a junction pointing
+          # outside the toolcache. The real identity proof is executing the interpreter below.
+          $boundary = $locFull.TrimEnd('\') + '\'
+          if (-not $pyAbs.StartsWith($boundary, [System.StringComparison]::OrdinalIgnoreCase)) {
+            Write-Host "FAIL: resolved python '$pyAbs' is not beneath the pythonLocation boundary '$boundary'"; exit 1
+          }
+
+          # Version from the interpreter itself, as a tuple -- not by parsing banner text.
+          # Do NOT pipe a native command into Select-Object before reading $LASTEXITCODE.
+          # `Select-Object -First 1` stops the upstream pipeline before the process is reaped, and
+          # Windows PowerShell 5.1 then records $LASTEXITCODE as -1 instead of the real code --
+          # measured 20 of 20 runs on the 5.1 Desktop host this job asserts. The earlier form made
+          # this gate fail before any test ran, on every run. Let the command complete, capture the
+          # code, THEN reduce. `-Last 1` also stops an interleaved stderr line landing first.
+          $pyVerRaw = & $pyAbs -c "import sys; print('{}.{}'.format(sys.version_info[0], sys.version_info[1]))" 2>&1
+          $pyRc = $LASTEXITCODE
+          if ($pyRc -ne 0) { Write-Host "FAIL: bound python did not execute (exit $pyRc)"; exit 1 }
+          $pyVer = "$(@($pyVerRaw) | Select-Object -Last 1)".Trim()
+          if ($pyVer -ne '3.11') { Write-Host "FAIL: bound python reports '$pyVer', expected exactly '3.11'"; exit 1 }
+          $pyFullRaw = & $pyAbs -c "import sys; print(sys.version.split()[0])" 2>&1
+          $pyFullRc = $LASTEXITCODE
+          if ($pyFullRc -ne 0) { Write-Host "FAIL: bound python failed reporting its full version (exit $pyFullRc)"; exit 1 }
+          $pyFull = "$(@($pyFullRaw) | Select-Object -Last 1)".Trim()
+          $pyIdentity = "$pyFull @ $pyAbs"
+          Write-Host "Authenticated Python: $pyIdentity"
+
+          # Recorded, never used: if PATH would have resolved elsewhere, say so rather than rely on it.
+          $pathPy = (Get-Command python -ErrorAction SilentlyContinue)
+          $pathPyNote = if ($null -eq $pathPy) { 'PATH python: (unresolved)' } else { "PATH python: $($pathPy.Source)" }
+          Write-Host $pathPyNote
+
+          @(
+            "powershell_identity=$psIdentity",
+            "python_identity=$pyIdentity",
+            "python_boundary=$locFull",
+            "executor_evidence_root=$execLong",
+            $pathPyNote
+          ) | Set-Content -Encoding ASCII (Join-Path $ev 'identity.txt')
+
+          "SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT=$execLong" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREFLIGHT_POWERSHELL=$psAbs"   | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "PREFLIGHT_PYTHON=$pyAbs"       | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_PS_IDENTITY=$psIdentity"  | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_PY_IDENTITY=$pyIdentity"  | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      # STEP 2 -- run the tests and assert the FIVE-CLAUSE execution contract.
+      # Clause 5 assumes each named test's "... ok" lands unsplit on one line. Verified on the real
+      # suite (93/93 clean), but the tests spawn PowerShell children: one leaking stderr mid-line
+      # could split the line and turn clause 5 red for a plumbing reason rather than a real defect.
+      #   1-4 arithmetic: executed >= N, failures = 0, errors = 0, skips = 0
+      #   5   identity:   the named load-bearing tests are observed to have EXECUTED AND PASSED
+      # Count alone is never identity evidence: "Ran 93 ... OK (skipped=93)" would satisfy a count
+      # clause while having tested nothing.
+      #
+      # N and the named list are PROVISIONAL for this tip and MUST be re-derived when item C adds
+      # tests. N = 93 was derived from an actual `unittest discover` run, not from a `def test_` grep.
+      - name: Run guardrail wrapper contract tests
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $N = 93
+          $named = @(
+            'test_guardrail_pins_a_single_shared_drain_budget',
+            'test_exact_environment_bounded_drain_survives_a_descendant_holding_the_pipe'
+          )
+
+          $py = $env:PREFLIGHT_PYTHON
+          if ([string]::IsNullOrWhiteSpace($py) -or -not (Test-Path -LiteralPath $py -PathType Leaf)) {
+            Write-Host "FAIL: PREFLIGHT_PYTHON is not bound to an existing file: '$py'"; exit 1
+          }
+          Write-Host "Using bound Python: $py"
+
+          # Fail closed if the evidence root did not survive step 1. Note the harness's own
+          # normcase parent-role assert (test_wrapper_contracts.py) is DORMANT when the variable is
+          # unset -- which is why it did not fire on the failing run. Binding the variable activates
+          # that assert AND removes the representation ambiguity that broke the ordinal comparisons
+          # in check_orphans.ps1. An unset or altered value reintroduces both.
+          $execRoot = $env:SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT
+          if ([string]::IsNullOrWhiteSpace($execRoot)) { Write-Host "FAIL: SSTAC_WIKI_EXECUTOR_EVIDENCE_ROOT is not bound"; exit 1 }
+          if (-not (Test-Path -LiteralPath $execRoot -PathType Container)) { Write-Host "FAIL: executor evidence root '$execRoot' is not an existing directory"; exit 1 }
+          if ($execRoot -match '~\d') { Write-Host "FAIL: executor evidence root carries an 8.3 component: '$execRoot'"; exit 1 }
+          Write-Host "Using executor evidence root: $execRoot"
+
+          $ev = Join-Path $env:RUNNER_TEMP 'gate-evidence'
+          New-Item -ItemType Directory -Path $ev -Force | Out-Null
+          $outFile = Join-Path $ev 'unittest_stdout.txt'
+          $errFile = Join-Path $ev 'unittest_stderr.txt'
+
+          # unittest writes its progress lines, the `Ran N tests` summary and the OK/FAILED verdict
+          # to STDERR. Capture BOTH streams to files: a step redirecting stdout alone gets an empty
+          # buffer, and `2>&1` in a pipeline would trip this shell's ErrorActionPreference.
+          $pyArgs = @(
+            '-m','unittest','discover',
+            '--start-directory','tooling/wiki/tests',
+            '--top-level-directory','tooling/wiki/tests',
+            '--pattern','test_wrapper_contracts.py',
+            '--verbose'
+          )
+          $t0 = (Get-Date).ToString('o')
+          $proc = Start-Process -FilePath $py -ArgumentList $pyArgs -NoNewWindow -Wait -PassThru `
+                    -RedirectStandardOutput $outFile -RedirectStandardError $errFile
+          $t1 = (Get-Date).ToString('o')
+          $exit = if ($null -eq $proc) { $null } else { $proc.ExitCode }
+
+          $output = @()
+          foreach ($f in @($outFile, $errFile)) {
+            if (Test-Path -LiteralPath $f) { $output += (Get-Content -LiteralPath $f) }
+          }
+          $output | ForEach-Object { Write-Host $_ }
+
+          $failed = $false
+          function Fail([string]$m) { Write-Host "ASSERTION FAILED: $m"; $script:failed = $true }
+
+          # Necessary but NOT sufficient -- recorded so nobody later mistakes it for the gate.
+          if ($null -eq $exit) { Fail "python process failed to launch (no exit code)" }
+          elseif ($exit -ne 0) { Fail "python exited $exit" }
+
+          # Clause 1 -- executed >= N
+          $ran = -1
+          $ranLine = $output | Where-Object { $_ -match '^Ran (\d+) test' } | Select-Object -Last 1
+          if (-not $ranLine) { Fail "no 'Ran N tests' summary line found in captured output" }
+          else {
+            $ran = [int]([regex]::Match($ranLine, '^Ran (\d+) test').Groups[1].Value)
+            Write-Host "executed=$ran required>=$N"
+            if ($ran -lt $N) { Fail "executed $ran is below the frozen lower bound $N (silent test loss)" }
+          }
+
+          # Clauses 2-4 -- failures = 0, errors = 0, skips = 0
+          $skipped = @($output | Where-Object { $_ -match '\.\.\. skipped' }).Count
+          $failLines = @($output | Where-Object { $_ -match '\.\.\. (FAIL|ERROR)$' }).Count
+          if ($skipped -ne 0) { Fail "skips must be 0, found $skipped (a skipped guardrail test is the Linux-shaped false green)" }
+          if ($failLines -ne 0) { Fail "failures/errors must be 0, found $failLines" }
+          $summary = $output | Where-Object { $_ -match '^(OK|FAILED)' } | Select-Object -Last 1
+          if (-not $summary) { Fail "no OK/FAILED verdict line found" }
+          elseif ($summary -notmatch '^OK\s*$') { Fail "verdict line was '$summary', expected exactly 'OK'" }
+
+          # Clause 5 -- IDENTITY. Assert PRESENCE, not absence: the check must fail when a named
+          # test is missing from the output, which is the existence counterpart an absence-only
+          # check lacks. Anchored on the method name (verified: 93 names, 0 strict-prefix pairs).
+          $namedOk = 0
+          foreach ($t in $named) {
+            $hit = $output | Where-Object { $_ -match ("^" + [regex]::Escape($t) + " ") -and $_ -match 'ok\s*$' }
+            if ($hit) { Write-Host "named test executed and passed: $t"; $namedOk++ }
+            else { Fail "named load-bearing test did not appear as passed in the output: $t" }
+          }
+
+          "GATE_TESTS_EXIT=$exit"       | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_EXECUTED=$ran"          | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_SKIPS=$skipped"         | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_FAILERR=$failLines"     | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_NAMED_OK=$namedOk/$($named.Count)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_TESTS_START=$t0"        | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_TESTS_END=$t1"          | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+          if ($failed) { Write-Host "RESULT: FAIL"; exit 1 }
+          Write-Host "RESULT: PASS (five-clause contract satisfied)"
+
+      # STEP 3 -- run the smoke script through the SAME authenticated interpreter, not a bare
+      # `powershell`, so this step cannot silently use a different host than step 1 verified.
+      - name: Run guardrail smoke script
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          $interp = $env:PREFLIGHT_POWERSHELL
+          if ([string]::IsNullOrWhiteSpace($interp) -or -not (Test-Path -LiteralPath $interp -PathType Leaf)) {
+            Write-Host "FAIL: PREFLIGHT_POWERSHELL is not bound to an existing path: '$interp'"; exit 1
+          }
+          Write-Host "Using authenticated interpreter: $interp"
+
+          $ev = Join-Path $env:RUNNER_TEMP 'gate-evidence'
+          New-Item -ItemType Directory -Path $ev -Force | Out-Null
+          $smokeOut = Join-Path $ev 'smoke_stdout.txt'
+          $smokeErr = Join-Path $ev 'smoke_stderr.txt'
+          $proc = Start-Process -FilePath $interp `
+                    -ArgumentList @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass','-File','tooling\wiki\guardrail_smoke.ps1') `
+                    -NoNewWindow -Wait -PassThru -RedirectStandardOutput $smokeOut -RedirectStandardError $smokeErr
+          $exit = if ($null -eq $proc) { $null } else { $proc.ExitCode }
+
+          $out = @()
+          foreach ($f in @($smokeOut, $smokeErr)) {
+            if (Test-Path -LiteralPath $f) { $out += (Get-Content -LiteralPath $f) }
+          }
+          $out | ForEach-Object { Write-Host $_ }
+
+          $passCount = @($out | Where-Object { $_ -match '^PASS: ' }).Count
+          Write-Host "smoke exit=$exit passLines=$passCount required=5"
+          "GATE_SMOKE_EXIT=$exit"   | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "GATE_SMOKE_PASS=$passCount" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          if ($null -eq $exit) { Write-Host "ASSERTION FAILED: smoke process failed to launch"; exit 1 }
+          if ($exit -ne 0) { Write-Host "ASSERTION FAILED: smoke script exited $exit"; exit 1 }
+          if ($passCount -ne 5) { Write-Host "ASSERTION FAILED: expected exactly 5 PASS lines, found $passCount"; exit 1 }
+          Write-Host "RESULT: PASS (smoke exit 0, 5 PASS lines)"
+
+      # Summary of what was authenticated and what actually executed. Identities and counts only --
+      # no environment dumps, no secrets, no unrelated runner files.
+      - name: Job summary
+        if: always()
+        shell: powershell
+        run: |
+          $ErrorActionPreference = 'Continue'
+          function V($x) { if ([string]::IsNullOrWhiteSpace($x)) { '(not reached)' } else { $x } }
+          $rows = @(
+            "| Item | Value |",
+            "|---|---|",
+            "| PowerShell identity | $(V $env:GATE_PS_IDENTITY) |",
+            "| Python identity | $(V $env:GATE_PY_IDENTITY) |",
+            "| Executed tests | $(V $env:GATE_EXECUTED) (required >= 93) |",
+            "| Failures + errors | $(V $env:GATE_FAILERR) (required 0) |",
+            "| Skips | $(V $env:GATE_SKIPS) (required 0) |",
+            "| Named load-bearing tests passed | $(V $env:GATE_NAMED_OK) |",
+            "| Smoke PASS lines | $(V $env:GATE_SMOKE_PASS) (required 5) |",
+            "| unittest native exit | $(V $env:GATE_TESTS_EXIT) |",
+            "| smoke native exit | $(V $env:GATE_SMOKE_EXIT) |",
+            "| unittest start / end | $(V $env:GATE_TESTS_START) / $(V $env:GATE_TESTS_END) |"
+          )
+          "## Guardrail Tests (Windows PowerShell 5.1)" | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          ""                                            | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+          $rows | Out-File -FilePath $env:GITHUB_STEP_SUMMARY -Encoding utf8 -Append
+
+      # Durable evidence. `identity.txt` is written by step 1, so if the job got past runtime
+      # authentication at all the directory is non-empty -- which is what makes `error` the correct
+      # if-no-files-found semantics here rather than a nuisance failure.
+      - name: Upload guardrail gate evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: guardrail-windows-evidence
+          path: ${{ runner.temp }}/gate-evidence
+          retention-days: 14
+          if-no-files-found: error
