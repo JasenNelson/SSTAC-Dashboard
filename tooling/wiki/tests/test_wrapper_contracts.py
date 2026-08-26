@@ -7,6 +7,7 @@ import stat
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -438,7 +439,12 @@ class TestWrapperContracts(unittest.TestCase):
     def test_affected_powershell_files_parse_under_windows_powershell_51(self):
         if not POWERSHELL:
             self.skipTest("Windows PowerShell unavailable")
-        paths = [WIKI_DIR / "nightly_wiki_sync.ps1", WIKI_DIR / "activation_preflight.ps1"]
+        paths = [
+            WIKI_DIR / "nightly_wiki_sync.ps1",
+            WIKI_DIR / "activation_preflight.ps1",
+            WIKI_DIR / "graphify_guardrail.ps1",
+            WIKI_DIR / "guardrail_smoke.ps1",
+        ]
         command = (
             "$errors=$null;$tokens=$null;"
             + ";".join(
@@ -2448,6 +2454,10 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
             "function Set-GuardedAuxiliaryFailure", 1
         )[1].split("function Invoke-GraphifyGuarded", 1)[0]
         self.assertNotIn("Stop-GuardedRootProcess", auxiliary)
+        # Set-GuardedAuxiliaryFailure must stay custody-free in BOTH senses: it neither terminates
+        # anything nor asserts an orphan. A drain expiry sets OrphanRisk at its own call site
+        # precisely so this helper's other callers keep their existing meaning.
+        self.assertNotIn("OrphanRisk", auxiliary)
         smoke = (WIKI_DIR / "guardrail_smoke.ps1").read_text(encoding="ascii")
         sync = (WIKI_DIR / "sync_wiki.ps1").read_text(encoding="ascii")
         semantic = (WIKI_DIR / "semantic_extract.ps1").read_text(encoding="ascii")
@@ -2455,6 +2465,1104 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         self.assertIn("ROOT_TERMINATED_TREE_UNPROVEN", smoke)
         self.assertIn("descendant tree unproven", sync)
         self.assertIn("$gpuOrphanRisk = $true", semantic)
+    # --- exact-environment coverage -------------------------------------------------
+    #
+    # These tests exercise the -ExactEnvironment capability end to end against real child
+    # processes. The guardrail reports only the block it CONFIGURED (LaunchEnvironment,
+    # sourced PROCESS_START_INFO_READBACK); a child may still add variables to itself after
+    # start, which no launcher can observe. Exact child-observed equality is therefore a
+    # property of these fixtures, reached by ALSO declaring the keys the shell injects
+    # (PSModulePath, PSExecutionPolicyPreference). Keys compare case-insensitively because
+    # Windows environment keys are case-insensitive; values compare ordinally.
+
+    ENV_PROBE_BODY = (
+        "$m = @{}\n"
+        "foreach ($e in [System.Environment]::GetEnvironmentVariables().GetEnumerator()) {\n"
+        "    $m[[string]$e.Key] = [string]$e.Value\n"
+        "}\n"
+        "[pscustomobject]@{ Env = $m } | ConvertTo-Json -Depth 5 -Compress\n"
+    )
+
+    # Interleaved so a sequential reader of one stream would block once the other pipe
+    # buffer filled. 1000 iterations of ~66 bytes per stream comfortably exceeds the
+    # default 64 KB pipe buffer, so this fails if the drain is not concurrent.
+    STREAM_PROBE_BODY = (
+        "for ($i = 1; $i -le 1000; $i++) {\n"
+        "    [Console]::Out.WriteLine('OUT-' + $i + '-' + ('o' * 60))\n"
+        "    [Console]::Error.WriteLine('ERR-' + $i + '-' + ('e' * 60))\n"
+        "}\n"
+    )
+
+    EXIT_PROBE_BODY = (
+        "$code = [int]$env:GUARDRAIL_EXIT_CODE\n"
+        "exit $code\n"
+    )
+
+    MARKER_PROBE_BODY = (
+        "param([string]$MarkerPath)\n"
+        "[System.IO.File]::WriteAllText($MarkerPath, 'started')\n"
+    )
+
+    SLEEP_PROBE_BODY = "Start-Sleep -Seconds 600\n"
+
+    SMALL_OUTPUT_PROBE_BODY = (
+        "[Console]::Out.WriteLine('probe-stdout')\n"
+        "[Console]::Error.WriteLine('probe-stderr')\n"
+    )
+
+    LAUNCH_EVIDENCE_FIELDS = (
+        "ExecutablePath",
+        "ArgumentSnapshot",
+        "EnvironmentMode",
+        "LaunchEnvironment",
+        "LaunchEnvironmentSource",
+        "LaunchWorkingDirectory",
+        "EnvironmentValidationError",
+        "StartUtc",
+        "EndUtc",
+        "DurationMs",
+    )
+
+    def exact_probe_dir(self):
+        directory = FOCUSED_TEST_TMP / "exact-env"
+        directory.mkdir(parents=True, exist_ok=True)
+        return directory
+
+    def write_exact_probe(self, name, body):
+        path = self.exact_probe_dir() / name
+        path.write_text(body, encoding="ascii")
+        return str(path)
+
+    @staticmethod
+    def child_launch_args(probe, *extra):
+        elements = [
+            "'-NoProfile'",
+            "'-NonInteractive'",
+            "'-ExecutionPolicy'",
+            "'Bypass'",
+            "'-File'",
+            "'%s'" % probe,
+        ]
+        elements.extend("'%s'" % item for item in extra)
+        return "@(%s)" % ",".join(elements)
+
+    @staticmethod
+    def declaration_snippet(extra_entries=(), omit=()):
+        entries = [
+            ("SystemRoot", "$env:SystemRoot"),
+            ("PATH", "$env:PATH"),
+            ("PATHEXT", "$env:PATHEXT"),
+            ("TEMP", "$env:TEMP"),
+            ("TMP", "$env:TMP"),
+            ("EMPTYVAL", "''"),
+            ("MiXeDcAsE", "'mixed-case-value'"),
+            ("PSModulePath", "'C:\\NoSuchModules'"),
+            ("PSExecutionPolicyPreference", "'Bypass'"),
+        ]
+        entries = [entry for entry in entries if entry[0] not in omit]
+        entries.extend(extra_entries)
+        parts = ["$decl = New-Object 'System.Collections.Specialized.OrderedDictionary';"]
+        for key, value in entries:
+            parts.append("$decl['%s'] = %s;" % (key, value))
+        return "".join(parts)
+
+    @staticmethod
+    def as_line_list(value):
+        # ConvertTo-Json in Windows PowerShell 5.1 can render a zero- or one-element
+        # collection as null or as a bare scalar, so normalise before comparing.
+        if value is None:
+            return []
+        if isinstance(value, str):
+            return [value]
+        return list(value)
+
+    @staticmethod
+    def fold_environment_keys(mapping):
+        folded = {}
+        for key, value in mapping.items():
+            upper = str(key).upper()
+            if upper in folded:
+                raise AssertionError("case-colliding environment key observed: %s" % key)
+            folded[upper] = value
+        return folded
+
+    @classmethod
+    def diff_environment(cls, declared, observed):
+        declared_ci = cls.fold_environment_keys(declared)
+        observed_ci = cls.fold_environment_keys(observed)
+        extra = sorted(set(observed_ci) - set(declared_ci))
+        missing = sorted(set(declared_ci) - set(observed_ci))
+        changed = sorted(
+            key
+            for key in set(declared_ci) & set(observed_ci)
+            if declared_ci[key] != observed_ci[key]
+        )
+        return extra, missing, changed
+
+    def test_exact_environment_child_receives_only_the_declared_block(self):
+        probe = self.write_exact_probe("env_probe.ps1", self.ENV_PROBE_BODY)
+        command = (
+            "$env:GUARDRAIL_SENTINEL_ALPHA = 'alpha-secret';"
+            "$env:GUARDRAIL_SENTINEL_BETA = 'beta-secret';"
+            "$env:GUARDRAIL_SENTINEL_GAMMA = 'gamma-secret';"
+            + self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "[pscustomobject]@{Result=$r;Declared=$decl;"
+            "ParentAlpha=$env:GUARDRAIL_SENTINEL_ALPHA;"
+            "ParentLeakedDeclaredKey=[bool]$env:MiXeDcAsE;"
+            "ParentSentinelIsTruthy=[bool]$env:GUARDRAIL_SENTINEL_ALPHA}"
+            "|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertEqual(result["ExitCode"], 0, result)
+        self.assertFalse(result["GuardrailFailed"], result)
+        self.assertFalse(result["TimedOut"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertEqual(result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+        self.assertIsNone(result["EnvironmentValidationError"])
+        self.assertIsNone(result["OutputReadError"])
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+
+        declared = evidence["Declared"]
+        observed = json.loads(result["StdOutText"])["Env"]
+        self.assertEqual(
+            self.diff_environment(declared, observed),
+            ([], [], []),
+            result["StdOutText"],
+        )
+
+        # LaunchEnvironment is the guardrail's own read-back of the block it configured,
+        # and it matches what the child actually received.
+        self.assertEqual(result["LaunchEnvironment"], declared)
+        self.assertEqual(self.diff_environment(result["LaunchEnvironment"], observed), ([], [], []))
+
+        observed_ci = self.fold_environment_keys(observed)
+        for sentinel in (
+            "GUARDRAIL_SENTINEL_ALPHA",
+            "GUARDRAIL_SENTINEL_BETA",
+            "GUARDRAIL_SENTINEL_GAMMA",
+        ):
+            self.assertNotIn(sentinel, observed_ci)
+
+        for required in ("PATH", "PATHEXT", "SYSTEMROOT", "TEMP", "TMP"):
+            self.assertIn(required, observed_ci)
+        self.assertTrue(observed_ci["PATH"])
+        self.assertEqual(observed_ci["EMPTYVAL"], "")
+        self.assertEqual(observed_ci["MIXEDCASE"], "mixed-case-value")
+        self.assertIn("MiXeDcAsE", declared)
+        self.assertIn("MiXeDcAsE", result["LaunchEnvironment"])
+
+        # The guardrail never writes to the calling process's own environment block.
+        self.assertEqual(evidence["ParentAlpha"], "alpha-secret")
+        self.assertFalse(evidence["ParentLeakedDeclaredKey"])
+        # Two-sided: the same [bool]$env: expression shape must be able to report True, otherwise
+        # a mistyped variable name would make the assertion above pass forever.
+        self.assertTrue(evidence["ParentSentinelIsTruthy"])
+
+    def test_exact_environment_comparison_detects_a_real_undeclared_child_variable(self):
+        # Two-sided proof that the equality assertion above can fail. Omitting PSModulePath
+        # lets the powershell child inject PSMODULEPATH itself, which is a genuine extra
+        # variable produced by a real process rather than a synthetic mutation.
+        probe = self.write_exact_probe("env_probe.ps1", self.ENV_PROBE_BODY)
+        command = (
+            self.declaration_snippet(omit=("PSModulePath",))
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "[pscustomobject]@{Result=$r;Declared=$decl}|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertEqual(result["ExitCode"], 0, result)
+        declared = evidence["Declared"]
+        observed = json.loads(result["StdOutText"])["Env"]
+        extra, missing, changed = self.diff_environment(declared, observed)
+        self.assertIn("PSMODULEPATH", extra)
+        self.assertEqual(missing, [])
+        self.assertEqual(changed, [])
+        # The configured launch block is still exactly the declaration: the extra variable
+        # is the child's own, not something the guardrail leaked into the launch.
+        self.assertEqual(result["LaunchEnvironment"], declared)
+
+        # The comparison itself is falsifiable in all three directions.
+        base = {"ALPHA": "1", "BETA": ""}
+        self.assertEqual(
+            self.diff_environment(base, {"ALPHA": "1", "BETA": "", "GAMMA": "x"}),
+            (["GAMMA"], [], []),
+        )
+        self.assertEqual(self.diff_environment(base, {"ALPHA": "1"}), ([], ["BETA"], []))
+        self.assertEqual(self.diff_environment(base, {"ALPHA": "2", "BETA": ""}), ([], [], ["ALPHA"]))
+        self.assertEqual(self.diff_environment(base, {"alpha": "1", "beta": ""}), ([], [], []))
+
+    def test_exact_environment_keeps_stdout_and_stderr_separate_and_complete(self):
+        probe = self.write_exact_probe("stream_probe.ps1", self.STREAM_PROBE_BODY)
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 300 -ExactEnvironment $decl;"
+            "[pscustomobject]@{ExitCode=$r.ExitCode;GuardrailFailed=$r.GuardrailFailed;"
+            "TimedOut=$r.TimedOut;OutputReadError=$r.OutputReadError;"
+            "TempCleanupStatus=$r.TempCleanupStatus;"
+            "OutCount=@($r.StdOutLines).Count;ErrCount=@($r.StdErrLines).Count;"
+            "CombinedCount=@($r.OutputLines).Count;"
+            "OutFirst=@($r.StdOutLines)[0];OutLast=@($r.StdOutLines)[-1];"
+            "ErrFirst=@($r.StdErrLines)[0];ErrLast=@($r.StdErrLines)[-1];"
+            "CombinedFirst=@($r.OutputLines)[0];CombinedLast=@($r.OutputLines)[-1];"
+            "OutStreamLeak=@($r.StdOutLines | Where-Object { $_ -like 'ERR-*' }).Count;"
+            "ErrStreamLeak=@($r.StdErrLines | Where-Object { $_ -like 'OUT-*' }).Count;"
+            "OutTextLast=[bool]($r.StdOutText -like '*OUT-1000-*');"
+            "ErrTextLast=[bool]($r.StdErrText -like '*ERR-1000-*')}"
+            "|ConvertTo-Json -Depth 6 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        self.assertEqual(evidence["ExitCode"], 0, evidence)
+        self.assertFalse(evidence["GuardrailFailed"], evidence)
+        self.assertFalse(evidence["TimedOut"])
+        self.assertIsNone(evidence["OutputReadError"])
+        self.assertEqual(evidence["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(evidence["OutCount"], 1000)
+        self.assertEqual(evidence["ErrCount"], 1000)
+        self.assertEqual(evidence["CombinedCount"], 2000)
+        self.assertEqual(evidence["OutStreamLeak"], 0)
+        self.assertEqual(evidence["ErrStreamLeak"], 0)
+        self.assertTrue(evidence["OutFirst"].startswith("OUT-1-"))
+        self.assertTrue(evidence["OutLast"].startswith("OUT-1000-"))
+        self.assertTrue(evidence["ErrFirst"].startswith("ERR-1-"))
+        self.assertTrue(evidence["ErrLast"].startswith("ERR-1000-"))
+        self.assertEqual(evidence["CombinedFirst"], evidence["OutFirst"])
+        self.assertEqual(evidence["CombinedLast"], evidence["ErrLast"])
+        self.assertTrue(evidence["OutTextLast"])
+        self.assertTrue(evidence["ErrTextLast"])
+
+    def test_exact_environment_declared_value_reaches_the_child_and_exit_code_passes_through(self):
+        probe = self.write_exact_probe("exit_probe.ps1", self.EXIT_PROBE_BODY)
+        command = (
+            self.declaration_snippet(extra_entries=(("GUARDRAIL_EXIT_CODE", "'7'"),))
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuarded -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 60 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        # The child could only exit 7 by reading a variable that exists solely in the
+        # declared block, so this also proves the declaration reached the process.
+        self.assertEqual(result["ExitCode"], 7, result)
+        self.assertFalse(result["GuardrailFailed"], result)
+        self.assertFalse(result["TimedOut"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertFalse(result["Killed"])
+        self.assertEqual(result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+        self.assertEqual(result["LaunchEnvironment"]["GUARDRAIL_EXIT_CODE"], "7")
+        self.assertIsInstance(result["ProcId"], int)
+
+    NEGATIVE_DECLARATIONS = (
+        (
+            "empty_declaration",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';",
+            "exact environment declaration is empty",
+        ),
+        (
+            "empty_key",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad[''] = 'value';",
+            "exact environment declares an empty key",
+        ),
+        (
+            "whitespace_key",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['   '] = 'value';",
+            "exact environment declares an empty key",
+        ),
+        (
+            "equals_sign_in_key",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA=BETA'] = 'value';",
+            "exact environment key contains an equals sign",
+        ),
+        (
+            "null_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = $null;",
+            "exact environment declares a null value for key",
+        ),
+        (
+            "array_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = @('one','two');",
+            "has no unambiguous string conversion",
+        ),
+        (
+            "dictionary_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = @{ inner = 'one' };",
+            "has no unambiguous string conversion",
+        ),
+        (
+            # CreateProcess separates "key=value" entries with NUL, so an embedded NUL splits the
+            # entry and injects an undeclared variable the read-back structurally cannot see.
+            "nul_in_key",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA' + [char]0 + 'BETA'] = 'value';",
+            "exact environment key contains a NUL character",
+        ),
+        (
+            "nul_in_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = 'dash-v' + [char]0 + 'INJECTED=yes';",
+            "contains a NUL character",
+        ),
+        (
+            # Keys get the same allow-list as values; without it an array key silently became the
+            # literal string "System.Object[]".
+            "array_key",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad[@('ALPHA','BETA')] = 'value';",
+            "key with no unambiguous string conversion",
+        ),
+        (
+            "arraylist_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = (New-Object 'System.Collections.ArrayList');",
+            "has no unambiguous string conversion",
+        ),
+        (
+            "pscustomobject_value",
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$bad['ALPHA'] = [pscustomobject]@{ inner = 'one' };",
+            "has no unambiguous string conversion",
+        ),
+        (
+            # A plain PowerShell @{} is already case-insensitive and would silently collapse
+            # these two keys into one, so the collision must be built with an ordinal
+            # dictionary for the case to exist at all.
+            "case_colliding_keys",
+            "$bad = New-Object 'System.Collections.Generic.Dictionary[string,string]' "
+            "([System.StringComparer]::Ordinal);"
+            "$bad.Add('Alpha','one');$bad.Add('ALPHA','two');",
+            "case-colliding duplicate key",
+        ),
+    )
+
+    def test_exact_environment_invalid_declarations_are_rejected_before_launch(self):
+        probe = self.write_exact_probe("marker_probe.ps1", self.MARKER_PROBE_BODY)
+        marker = str(self.exact_probe_dir() / "rejected_never_started.marker")
+        if os.path.exists(marker):
+            os.remove(marker)
+        probe_args = self.child_launch_args(probe, marker)
+        for label, builder, expected in self.NEGATIVE_DECLARATIONS:
+            with self.subTest(rejection=label):
+                command = (
+                    builder
+                    + "$exe = (Get-Command powershell).Source;"
+                    "$probeArgs = " + probe_args + ";"
+                    "$r = Invoke-GraphifyGuarded -GraphifyExe $exe -GraphifyArgs $probeArgs "
+                    "-TimeoutSec 60 -ExactEnvironment $bad;"
+                    "[pscustomobject]@{Result=$r;"
+                    "MarkerExists=(Test-Path -LiteralPath '" + marker + "')}"
+                    "|ConvertTo-Json -Depth 8 -Compress"
+                )
+                evidence = self.run_guardrail_command(command)
+                result = evidence["Result"]
+                self.assertTrue(result["GuardrailFailed"], result)
+                self.assertFalse(result["OrphanRisk"], result)
+                self.assertFalse(result["TimedOut"])
+                self.assertNotEqual(result["ExitCode"], 0)
+                self.assertIsNone(result["ProcId"])
+                self.assertEqual(result["CleanupStatus"], "START_FAILED")
+                self.assertEqual(result["EnvironmentMode"], "EXACT")
+                self.assertEqual(
+                    result["LaunchEnvironmentSource"],
+                    "EXACT_ENVIRONMENT_REJECTED_BEFORE_LAUNCH",
+                )
+                self.assertIsNone(result["LaunchEnvironment"])
+                self.assertIn(expected, result["EnvironmentValidationError"])
+                self.assertIn(expected, result["GuardrailError"])
+                self.assertFalse(evidence["MarkerExists"])
+        self.assertFalse(os.path.exists(marker))
+
+    def test_exact_environment_explicit_null_is_rejected_not_silently_downgraded(self):
+        # Keying the branch on $PSBoundParameters rather than on the value means a caller whose
+        # declaration computed to $null gets a rejection instead of an inherited-environment launch
+        # that silently hands the child every parent variable.
+        command = (
+            "$exe = (Get-Command powershell).Source;"
+            "$r = Invoke-GraphifyGuarded -GraphifyExe $exe "
+            "-GraphifyArgs @('-NoProfile','-Command','exit 0') -TimeoutSec 30 "
+            "-ExactEnvironment $null;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertEqual(result["EnvironmentMode"], "EXACT", result)
+        self.assertEqual(
+            result["LaunchEnvironmentSource"], "EXACT_ENVIRONMENT_REJECTED_BEFORE_LAUNCH"
+        )
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertIsNone(result["ProcId"])
+        self.assertEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertIn("declaration is null", result["EnvironmentValidationError"])
+
+    def guardrail_code_tokens(self):
+        # Structural pins must inspect CODE, not raw text. Stripping '#' lines by hand cannot see
+        # PowerShell <# block comments #>, and a raw substring count is satisfied by a commented-out
+        # statement: prefixing "$drainTimeoutMs = 5000" with '#' leaves its count at one while the
+        # effective drain budget silently becomes zero, which the timing bounds still tolerate.
+        # Tokenising with the real 5.1 parser drops every comment form.
+        script = (
+            "$errors=$null;$tokens=$null;"
+            "[System.Management.Automation.Language.Parser]::ParseFile('"
+            + str(self.guardrail_path).replace("'", "''")
+            + "',[ref]$tokens,[ref]$errors)|Out-Null;"
+            "if($errors.Count -gt 0){throw ('parse errors: ' + $errors.Count)};"
+            "($tokens | Where-Object { $_.Kind -ne 'Comment' } | ForEach-Object { $_.Text })"
+            " -join ' '"
+        )
+        result = subprocess.run(
+            [POWERSHELL, "-NoProfile", "-NonInteractive", "-Command", script],
+            capture_output=True,
+            text=True,
+            check=False,
+            env=fixture_environment(),
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(result.stdout.strip(), "tokeniser returned nothing")
+        return result.stdout
+
+    @staticmethod
+    def squash(text):
+        # Token text is re-joined with single spaces, so compare whitespace-insensitively.
+        return "".join(text.split())
+
+    def test_guardrail_pins_a_single_shared_drain_budget(self):
+        # Load-independent complement to the wall-clock assertion in the descendant test: budgeting
+        # each stream separately would double the worst case, and a timing threshold alone is a
+        # weak guard against that regression.
+        code = self.squash(self.guardrail_code_tokens())
+
+        def count(needle):
+            return code.count(self.squash(needle))
+
+        self.assertEqual(count("$drainTimeoutMs = 5000"), 1)
+        self.assertEqual(
+            count("$remainingMs = $drainTimeoutMs - [int]$drainClock.ElapsedMilliseconds"), 1
+        )
+        self.assertEqual(count(".Wait($remainingMs)"), 1)
+        # The whole budget must never be handed to a single stream's wait.
+        self.assertEqual(count(".Wait($drainTimeoutMs)"), 0)
+        # One clock, started BEFORE the loop is entered -- the counts above all survive moving the
+        # Stopwatch inside it, which is exactly the per-stream regression.
+        clock = self.squash("$drainClock = [System.Diagnostics.Stopwatch]::StartNew()")
+        loop = self.squash("foreach ($pending in $pendingReads)")
+        self.assertEqual(code.count(clock), 1)
+        self.assertEqual(code.count(loop), 1)
+        self.assertLess(code.index(clock), code.index(loop))
+        # ... and restarting or resetting it inside the loop would defeat that ordering pin.
+        self.assertEqual(count("$drainClock.Restart"), 0)
+        self.assertEqual(count("$drainClock.Reset"), 0)
+        self.assertEqual(count("$drainClock.Start()"), 0)
+        # The pipes must be STREAMED to disk, never buffered whole: the drain budget bounds how
+        # long the guardrail waits, not how much it holds, so a buffering read would reintroduce
+        # an unbounded-memory path the file-backed inherited path does not have.
+        self.assertEqual(count(".ReadToEndAsync("), 0)
+        self.assertEqual(count(".BaseStream.CopyToAsync("), 2)
+        # ... and the DESTINATION must be the temp files. Counting CopyToAsync alone cannot tell a
+        # FileStream destination from a MemoryStream one, so swapping in a MemoryStream plus a
+        # WriteAllBytes would restore unbounded buffering while passing every other assertion.
+        self.assertEqual(count("[System.IO.File]::Create($so)"), 1)
+        self.assertEqual(count("[System.IO.File]::Create($se)"), 1)
+        self.assertEqual(count("$p.StandardOutput.BaseStream.CopyToAsync($outStream)"), 1)
+        self.assertEqual(count("$p.StandardError.BaseStream.CopyToAsync($errStream)"), 1)
+        # The close-flush failure must not be swallowed: Dispose is where the last buffered bytes
+        # reach disk, so a bare catch there would present a truncated file as complete output.
+        self.assertEqual(count("redirected output flush failed"), 1)
+        # The SOURCE pipes must be closed too, or an abandoned copy stays blocked on a read and
+        # parks a thread and a handle for the life of the host.
+        self.assertEqual(count("$sourceReader.Dispose()"), 1)
+        # Evidence recorded before the readback must survive a readback failure.
+        self.assertEqual(count("Join-GuardedError $drainError $readMessage"), 1)
+
+    def test_exact_environment_valid_declaration_starts_the_child_the_rejections_blocked(self):
+        # Falsification pair for the rejection test above: the same executable and the same
+        # arguments DO start and DO write the marker once the declaration is valid, so those
+        # rejections are not passing merely because the child could never run.
+        probe = self.write_exact_probe("marker_probe.ps1", self.MARKER_PROBE_BODY)
+        marker = str(self.exact_probe_dir() / "accepted_did_start.marker")
+        if os.path.exists(marker):
+            os.remove(marker)
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe, marker) + ";"
+            "$r = Invoke-GraphifyGuarded -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 60 -ExactEnvironment $decl;"
+            "[pscustomobject]@{Result=$r;"
+            "MarkerExists=(Test-Path -LiteralPath '" + marker + "')}"
+            "|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+        self.assertEqual(result["ExitCode"], 0, result)
+        self.assertFalse(result["GuardrailFailed"], result)
+        self.assertEqual(result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+        self.assertTrue(evidence["MarkerExists"])
+        self.assertTrue(os.path.exists(marker))
+        os.remove(marker)
+
+    def test_exact_environment_capture_rejection_still_cleans_redirect_temp_files(self):
+        command = (
+            "$bad = New-Object 'System.Collections.Specialized.OrderedDictionary';"
+            "$exe = (Get-Command powershell).Source;"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe "
+            "-GraphifyArgs @('-NoProfile','-Command','exit 0') -TimeoutSec 60 -ExactEnvironment $bad;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertIsNone(result["ProcId"])
+        self.assertEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+        self.assertIsNone(result["TempCleanupError"])
+        self.assertEqual(self.as_line_list(result["OutputLines"]), [])
+        self.assertEqual(self.as_line_list(result["StdOutLines"]), [])
+        self.assertEqual(self.as_line_list(result["StdErrLines"]), [])
+        self.assertEqual(
+            result["LaunchEnvironmentSource"], "EXACT_ENVIRONMENT_REJECTED_BEFORE_LAUNCH"
+        )
+        self.assertIn("declaration is empty", result["EnvironmentValidationError"])
+
+    def test_convert_to_guarded_exact_environment_rejects_unsupported_argument_types(self):
+        # Helper-level by necessity: the entry points type the parameter as
+        # [System.Collections.IDictionary], so a string/int/array is refused by PowerShell
+        # parameter binding with a hard error and no result object at all. This pins the helper's
+        # own contract; the reachable entry-point case is the explicit $null test above.
+        command = (
+            "$cases = @("
+            "[pscustomobject]@{L='string';V='notadict'},"
+            "[pscustomobject]@{L='integer';V=42},"
+            "[pscustomobject]@{L='array';V=@('one','two')},"
+            "[pscustomobject]@{L='null';V=$null},"
+            "[pscustomobject]@{L='plain_hashtable';V=@{ ALPHA = 'one' }},"
+            "[pscustomobject]@{L='value_type_value';V=@{ ALPHA = 42 }},"
+            "[pscustomobject]@{L='value_type_key';V=@{ 42 = 'one' }});"
+            "$out = @();"
+            "foreach ($case in $cases) {"
+            "try { $converted = ConvertTo-GuardedExactEnvironment $case.V;"
+            "$out += [pscustomobject]@{Label=$case.L;Rejected=$false;Message='';"
+            "Count=$converted.Count} }"
+            "catch { $out += [pscustomobject]@{Label=$case.L;Rejected=$true;"
+            "Message=$_.Exception.Message;Count=-1} } };"
+            "ConvertTo-Json -InputObject @($out) -Depth 5 -Compress"
+        )
+        outcomes = {case["Label"]: case for case in self.run_guardrail_command(command)}
+        self.assertEqual(len(outcomes), 7)
+        for label, fragment in (
+            ("string", "must be a dictionary"),
+            ("integer", "must be a dictionary"),
+            ("array", "must be a dictionary"),
+            ("null", "declaration is null"),
+        ):
+            with self.subTest(unsupported=label):
+                self.assertTrue(outcomes[label]["Rejected"], outcomes[label])
+                self.assertIn(fragment, outcomes[label]["Message"])
+        # Two-sided: an ordinary hashtable is a supported declaration, and so is a value type --
+        # without this, deleting the [System.ValueType] half of the allow-list would break no test.
+        self.assertFalse(outcomes["plain_hashtable"]["Rejected"], outcomes["plain_hashtable"])
+        self.assertEqual(outcomes["plain_hashtable"]["Count"], 1)
+        self.assertFalse(outcomes["value_type_value"]["Rejected"], outcomes["value_type_value"])
+        self.assertEqual(outcomes["value_type_value"]["Count"], 1)
+        # Same for the KEY allow-list: without this, deleting its [System.ValueType] half would
+        # break no test, since every other fixture uses string keys.
+        self.assertFalse(outcomes["value_type_key"]["Rejected"], outcomes["value_type_key"])
+        self.assertEqual(outcomes["value_type_key"]["Count"], 1)
+
+    def test_exact_environment_timeout_terminates_the_exact_root_and_cleans_up(self):
+        probe = self.write_exact_probe("sleep_probe.ps1", self.SLEEP_PROBE_BODY)
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 2 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertTrue(result["TimedOut"], result)
+        self.assertEqual(result["ExitCode"], 124)
+        self.assertFalse(result["Killed"])
+        self.assertTrue(result["RootTerminated"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertFalse(result["GuardrailFailed"], result)
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+        self.assertIsNone(result["OutputReadError"])
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+        self.assertIsInstance(result["ProcId"], int)
+
+    def test_exact_environment_start_failure_is_reported_without_an_orphan_claim(self):
+        command = (
+            self.declaration_snippet()
+            + "$r = Invoke-GraphifyGuarded "
+            "-GraphifyExe 'C:\\guardrail-no-such-executable-exact-env.exe' "
+            "-GraphifyArgs @('arg') -TimeoutSec 30 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertTrue(result["GuardrailFailed"], result)
+        self.assertFalse(result["OrphanRisk"])
+        self.assertFalse(result["TimedOut"])
+        self.assertIsNone(result["ProcId"])
+        self.assertEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        # The block WAS configured and read back; only the launch failed, so the evidence
+        # must not claim the declaration was rejected.
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+        self.assertIsNotNone(result["LaunchEnvironment"])
+        self.assertIsNone(result["EnvironmentValidationError"])
+        self.assertTrue(result["GuardrailError"])
+
+    def test_exact_environment_output_read_and_temp_cleanup_failures_are_classified(self):
+        probe = self.write_exact_probe("small_output_probe.ps1", self.SMALL_OUTPUT_PROBE_BODY)
+        probe_args = self.child_launch_args(probe)
+        read_failure = (
+            self.declaration_snippet()
+            + "function Get-Content { param($LiteralPath,$ErrorAction) "
+            "throw 'synthetic output read failure' };"
+            "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + probe_args + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(read_failure)
+        self.assertIn("synthetic output read failure", result["OutputReadError"])
+        self.assertIn("redirected output read failed", result["GuardrailError"])
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+
+        cleanup_failure = (
+            self.declaration_snippet()
+            + self.temp_cleanup_failure_mock()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + probe_args + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "[pscustomobject]@{Result=$r;RemoveCalls=$script:removeCalls}"
+            "|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(cleanup_failure)
+        cleanup_result = evidence["Result"]
+        self.assertEqual(evidence["RemoveCalls"], 2)
+        self.assertEqual(cleanup_result["TempCleanupStatus"], "REMOVAL_FAILED")
+        self.assertIn("synthetic temp cleanup failure", cleanup_result["TempCleanupError"])
+        self.assertIn("redirected temp cleanup failed", cleanup_result["GuardrailError"])
+        self.assertTrue(cleanup_result["GuardrailFailed"])
+        self.assertFalse(cleanup_result["OrphanRisk"])
+        # The output was still read before cleanup ran.
+        self.assertEqual(self.as_line_list(cleanup_result["StdOutLines"]), ["probe-stdout"])
+        self.assertEqual(self.as_line_list(cleanup_result["StdErrLines"]), ["probe-stderr"])
+        # Captured lines are plain strings, not Get-Content note-property objects.
+        for line in self.as_line_list(cleanup_result["StdOutLines"]):
+            self.assertIsInstance(line, str)
+
+    def test_callers_without_exact_environment_keep_prior_behavior(self):
+        probe = self.write_exact_probe("env_probe.ps1", self.ENV_PROBE_BODY)
+        command = (
+            "$env:GUARDRAIL_INHERIT_SENTINEL = 'inherited-value';"
+            "$exe = (Get-Command powershell).Source;"
+            "$plain = @('-NoProfile','-NonInteractive','-ExecutionPolicy','Bypass',"
+            "'-Command','exit 7');"
+            "$r1 = Invoke-GraphifyGuarded -GraphifyExe $exe -GraphifyArgs $plain -TimeoutSec 60;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r2 = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120;"
+            "[pscustomobject]@{Standard=$r1;Capture=$r2}|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+
+        standard = evidence["Standard"]
+        self.assertEqual(standard["ExitCode"], 7, standard)
+        self.assertFalse(standard["TimedOut"])
+        self.assertFalse(standard["GuardrailFailed"], standard)
+        self.assertFalse(standard["OrphanRisk"])
+        self.assertFalse(standard["Killed"])
+        self.assertEqual(standard["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(standard["EnvironmentMode"], "INHERITED")
+        self.assertEqual(
+            standard["LaunchEnvironmentSource"], "INHERITED_PARENT_BLOCK_NOT_CAPTURED"
+        )
+        self.assertIsNone(standard["LaunchEnvironment"])
+        self.assertIsNone(standard["EnvironmentValidationError"])
+
+        capture = evidence["Capture"]
+        self.assertEqual(capture["ExitCode"], 0, capture)
+        self.assertFalse(capture["GuardrailFailed"], capture)
+        self.assertEqual(capture["EnvironmentMode"], "INHERITED")
+        self.assertEqual(
+            capture["LaunchEnvironmentSource"], "INHERITED_PARENT_BLOCK_NOT_CAPTURED"
+        )
+        self.assertIsNone(capture["LaunchEnvironment"])
+        self.assertIsNone(capture["OutputReadError"])
+        self.assertEqual(capture["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(
+            self.as_line_list(capture["OutputLines"]),
+            self.as_line_list(capture["StdOutLines"]) + self.as_line_list(capture["StdErrLines"]),
+        )
+
+        for line in self.as_line_list(capture["StdOutLines"]):
+            self.assertIsInstance(line, str)
+        inherited = self.fold_environment_keys(json.loads(capture["StdOutText"])["Env"])
+        # Inheritance is genuinely preserved on the unchanged path.
+        self.assertEqual(inherited.get("GUARDRAIL_INHERIT_SENTINEL"), "inherited-value")
+
+    def test_every_result_carries_launch_evidence_fields(self):
+        command = self.fake_start_process(timeout=False, exit_code=0) + (
+            "$result=Invoke-GraphifyGuarded -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('with space','plain') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 6 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        for field in self.LAUNCH_EVIDENCE_FIELDS:
+            with self.subTest(field=field):
+                self.assertIn(field, result)
+        self.assertEqual(result["ExecutablePath"], "fake.exe")
+        # ArgumentSnapshot records the flattened, quoted argument list the guardrail
+        # actually launched with, not the caller's unprocessed input.
+        self.assertEqual(self.as_line_list(result["ArgumentSnapshot"]), ['"with space"', "plain"])
+        self.assertEqual(result["EnvironmentMode"], "INHERITED")
+        self.assertIsNone(result["LaunchEnvironment"])
+        self.assertIsInstance(result["DurationMs"], int)
+        self.assertGreaterEqual(result["DurationMs"], 0)
+        self.assertRegex(result["StartUtc"], r"^\d{4}-\d{2}-\d{2}T")
+        self.assertRegex(result["EndUtc"], r"^\d{4}-\d{2}-\d{2}T")
+
+        capture_command = self.fake_start_process(timeout=False, exit_code=0) + (
+            "$result=Invoke-GraphifyGuardedCapture -GraphifyExe 'fake.exe' "
+            "-GraphifyArgs @('with space','plain') -TimeoutSec 1;"
+            "$result|ConvertTo-Json -Depth 6 -Compress"
+        )
+        capture = self.run_guardrail_command(capture_command)
+        for field in self.LAUNCH_EVIDENCE_FIELDS + (
+            "StdOutLines",
+            "StdErrLines",
+            "StdOutText",
+            "StdErrText",
+            "OutputLines",
+        ):
+            with self.subTest(capture_field=field):
+                self.assertIn(field, capture)
+        self.assertEqual(self.as_line_list(capture["ArgumentSnapshot"]), ['"with space"', "plain"])
+        self.assertEqual(capture["EnvironmentMode"], "INHERITED")
+
+    # --- regressions found by adversarial review of the exact-environment change ----------
+
+    # Starts a descendant that INHERITS the redirected stdout write handle and outlives its own
+    # parent. The guardrail terminates only the retained root, so the pipe stays open after the
+    # timeout kill -- the condition under which an unbounded drain would defeat the hard timeout.
+    DESCENDANT_PROBE_BODY = (
+        "$si = New-Object System.Diagnostics.ProcessStartInfo\n"
+        "$si.FileName = (Get-Command powershell).Source\n"
+        "$si.Arguments = '-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 30\"'\n"
+        "$si.UseShellExecute = $false\n"
+        "$null = [System.Diagnostics.Process]::Start($si)\n"
+        "Start-Sleep -Seconds 120\n"
+    )
+
+    CWD_PROBE_BODY = "[Console]::Out.WriteLine((Get-Location).Path)\n"
+
+    # 0xE9 is built from a code point so this file stays pure ASCII.
+    MIXED_OUTPUT_PROBE_BODY = (
+        "[Console]::Out.WriteLine('alpha-' + [char]0xE9 + '-omega')\n"
+        "[Console]::Out.WriteLine('plain-ascii-line')\n"
+        "[Console]::Error.WriteLine('err-plain-ascii')\n"
+    )
+
+    def test_exact_environment_bounded_drain_survives_a_descendant_holding_the_pipe(self):
+        # A redirected pipe stays open while ANY process holding the inherited write handle lives.
+        # This guardrail proves only ROOT termination (CleanupStatus ROOT_TERMINATED_TREE_UNPROVEN),
+        # so a surviving descendant keeps the pipe open past the timeout kill. With an unbounded
+        # read the timeout evidence is built and then never returned and the caller never resumes.
+        # Falsification pair: test_exact_environment_timeout_terminates_the_exact_root_and_cleans_up
+        # is the same timeout with no descendant, where OutputReadError stays None.
+        #
+        # The descendant self-limits to 30s and is never killed by PID: Windows recycles PIDs and
+        # os.kill on Windows TERMINATES rather than probes, so PID-based cleanup could kill an
+        # unrelated process.
+        probe = self.write_exact_probe("descendant_probe.ps1", self.DESCENDANT_PROBE_BODY)
+        # The guardrail's OWN return time is measured inside PowerShell. Wall clock here cannot be
+        # used: bInheritHandles propagates this test runner's stdout pipe down the whole chain, so
+        # the descendant holds a duplicate of it and subprocess.run blocks on its own pipe EOF
+        # until the descendant exits, no matter how promptly the guardrail returned.
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$sw = [System.Diagnostics.Stopwatch]::StartNew();"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 3 -ExactEnvironment $decl;"
+            "$sw.Stop();"
+            "[pscustomobject]@{Result=$r;GuardrailMs=[int]$sw.ElapsedMilliseconds}"
+            "|ConvertTo-Json -Depth 8 -Compress"
+        )
+        started = time.monotonic()
+        evidence = self.run_guardrail_command(command)
+        wall = time.monotonic() - started
+        result = evidence["Result"]
+        guardrail_ms = evidence["GuardrailMs"]
+        # Three observed correct runs: 8194 / 8273 / 8363 ms (3000 timeout + a prompt root kill +
+        # one shared 5000 ms drain budget). A PER-STREAM budget measures ~13200 ms, and an
+        # unbounded drain waits out the 30s descendant. 12000 keeps ~1.2s of discrimination
+        # against the per-stream shape (which a 15000 threshold did NOT have) while leaving ~3.6s
+        # of headroom over the correct runs -- this test starts two real PowerShell processes
+        # inside a suite that serially spawns dozens, so process-creation latency is the flake
+        # risk. The structural test is the load-independent guard; this one proves "bounded".
+        self.assertLess(
+            guardrail_ms, 12000,
+            "exact-mode drain was not bounded: guardrail returned in %d ms" % guardrail_ms)
+        # It must still have honoured the timeout rather than returning early.
+        self.assertGreaterEqual(guardrail_ms, 3000, guardrail_ms)
+        self.assertLess(wall, 90, "descendant scenario hung: %.1fs" % wall)
+        self.assertTrue(result["TimedOut"], result)
+        self.assertEqual(result["ExitCode"], 124)
+        self.assertFalse(result["Killed"])
+        self.assertTrue(result["RootTerminated"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertIn("did not complete within", result["OutputReadError"])
+        self.assertIn("redirected output read failed", result["GuardrailError"])
+        self.assertTrue(result["GuardrailFailed"])
+        # The bound must not cost the temp-file guarantees.
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertEqual(result["LaunchEnvironmentSource"], "PROCESS_START_INFO_READBACK")
+
+    # Same descendant, but the parent EXITS immediately instead of hanging, so the guardrail
+    # takes the clean-exit path and never sets OrphanRisk from a timeout.
+    SURVIVING_DESCENDANT_PROBE_BODY = (
+        "$si = New-Object System.Diagnostics.ProcessStartInfo\n"
+        "$si.FileName = (Get-Command powershell).Source\n"
+        "$si.Arguments = '-NoProfile -NonInteractive -Command \"Start-Sleep -Seconds 20\"'\n"
+        "$si.UseShellExecute = $false\n"
+        "$null = [System.Diagnostics.Process]::Start($si)\n"
+        "[Console]::Out.WriteLine('parent-exiting')\n"
+    )
+
+    def test_drain_expiry_after_a_clean_exit_is_reported_as_orphan_risk(self):
+        # An expired drain is positive evidence that something still holds the inherited write
+        # handle: the child is gone, yet the pipe is not at EOF. Reporting OrphanRisk = $false
+        # beside "a surviving descendant may still hold the write handle" would contradict the
+        # guardrail's own finding, and semantic_extract.ps1 keys its GPU-orphan handling and its
+        # evidence receipt off exactly this flag.
+        # Falsification pair: test_exact_environment_declared_value_reaches_the_child... is the
+        # same clean exit with no descendant, where OrphanRisk stays False.
+        probe = self.write_exact_probe(
+            "surviving_descendant_probe.ps1", self.SURVIVING_DESCENDANT_PROBE_BODY
+        )
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 90 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        # The child exited on its own, so this is NOT the timeout path.
+        self.assertFalse(result["TimedOut"], result)
+        self.assertFalse(result["RootTerminated"])
+        self.assertEqual(result["CleanupStatus"], "NOT_REQUIRED")
+        self.assertIn("did not complete within", result["OutputReadError"])
+        self.assertTrue(result["GuardrailFailed"])
+        # The finding the guardrail actually made must reach the caller.
+        self.assertTrue(result["OrphanRisk"], result)
+        self.assertEqual(result["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+
+    def test_drain_evidence_survives_a_failing_readback(self):
+        # Both failures in ONE run: a descendant holds the pipe past the drain bound AND the
+        # readback throws. The OrphanRisk branch sits after the read inside the try, so a throw
+        # there used to skip it and overwrite OutputReadError, returning OrphanRisk = False beside
+        # a lost "surviving descendant" finding.
+        # Falsification pair: test_drain_expiry_after_a_clean_exit_is_reported_as_orphan_risk is
+        # the same expiry with a WORKING readback, and
+        # test_exact_environment_output_read_and_temp_cleanup_failures_are_classified is a failing
+        # readback with no expiry -- neither alone exercises the interaction.
+        probe = self.write_exact_probe(
+            "surviving_descendant_probe.ps1", self.SURVIVING_DESCENDANT_PROBE_BODY
+        )
+        command = (
+            self.declaration_snippet()
+            + "function Get-Content { param($LiteralPath,$ErrorAction) "
+            "throw 'synthetic readback failure' };"
+            "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + self.child_launch_args(probe) + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 90 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(command)
+        self.assertFalse(result["TimedOut"], result)
+        self.assertTrue(result["GuardrailFailed"])
+        # BOTH findings must reach the caller, not just the later one.
+        self.assertIn("did not complete within", result["OutputReadError"])
+        self.assertIn("synthetic readback failure", result["OutputReadError"])
+        # And the orphan finding the expiry implies must not be lost.
+        self.assertTrue(result["OrphanRisk"], result)
+
+    def test_exact_environment_temp_allocation_failure_still_reports_exact_mode(self):
+        # Temp allocation runs BEFORE the exact-mode branch. Deriving EnvironmentMode from having
+        # reached that branch made a failed exact-mode call positively assert it was an
+        # inherited-environment run, so an auditor asking "did any run use a non-exact
+        # environment?" got the wrong answer.
+        exact = (
+            self.declaration_snippet()
+            + "function New-GuardedTempFile { throw 'synthetic allocation failure' };"
+            "$exe = (Get-Command powershell).Source;"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe "
+            "-GraphifyArgs @('-NoProfile','-Command','exit 0') -TimeoutSec 30 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        result = self.run_guardrail_command(exact)
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertFalse(result["OrphanRisk"])
+        self.assertEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertEqual(result["TempCleanupStatus"], "NOT_CREATED")
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertEqual(result["LaunchEnvironmentSource"], "EXACT_ENVIRONMENT_NOT_CONFIGURED")
+        self.assertIsNone(result["LaunchEnvironment"])
+        # Nothing was rejected -- the declaration was never even examined -- so the validation
+        # field must stay empty rather than absorbing an unrelated allocation failure.
+        self.assertIsNone(result["EnvironmentValidationError"])
+        self.assertIn("synthetic allocation failure", result["GuardrailError"])
+
+        # Two-sided: the identical failure without -ExactEnvironment still reports an inherited run.
+        inherited = (
+            "function New-GuardedTempFile { throw 'synthetic allocation failure' };"
+            "$exe = (Get-Command powershell).Source;"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe "
+            "-GraphifyArgs @('-NoProfile','-Command','exit 0') -TimeoutSec 30;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        plain = self.run_guardrail_command(inherited)
+        self.assertEqual(plain["EnvironmentMode"], "INHERITED")
+        self.assertEqual(
+            plain["LaunchEnvironmentSource"], "INHERITED_PARENT_BLOCK_NOT_CAPTURED"
+        )
+
+    def test_exact_and_inherited_capture_are_byte_identical(self):
+        probe = self.write_exact_probe("mixed_output_probe.ps1", self.MIXED_OUTPUT_PROBE_BODY)
+        probe_args = self.child_launch_args(probe)
+        command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + probe_args + ";"
+            "$exact = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "$plain = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120;"
+            # Character CODES, not the characters: this snippet's JSON reaches the runner through a
+            # pipe and Windows PowerShell 5.1 ConvertTo-Json does NOT escape non-ASCII, so a
+            # literal character would be re-encoded in transport and the assertion would be
+            # measuring the harness rather than the guardrail.
+            "$exactCodes = ((@($exact.StdOutLines)[0]).ToCharArray() "
+            "| ForEach-Object { [int]$_ }) -join ',';"
+            "$plainCodes = ((@($plain.StdOutLines)[0]).ToCharArray() "
+            "| ForEach-Object { [int]$_ }) -join ',';"
+            "[pscustomobject]@{Exact=$exact;Plain=$plain;ExactCodes=$exactCodes;"
+            "PlainCodes=$plainCodes}|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        exact_out = self.as_line_list(evidence["Exact"]["StdOutLines"])
+        plain_out = self.as_line_list(evidence["Plain"]["StdOutLines"])
+        self.assertEqual(len(exact_out), 2, exact_out)
+        self.assertEqual(len(plain_out), 2, plain_out)
+        # Pure-ASCII content must be identical on both launch paths.
+        self.assertEqual(exact_out[1], "plain-ascii-line")
+        self.assertEqual(exact_out[1], plain_out[1])
+        self.assertEqual(
+            self.as_line_list(evidence["Exact"]["StdErrLines"]),
+            self.as_line_list(evidence["Plain"]["StdErrLines"]),
+        )
+        # BYTE PARITY on non-ASCII. Both paths now put the child's raw bytes on disk -- exact
+        # mode streams the pipe with CopyToAsync, the inherited path lets Start-Process redirect --
+        # and both read them back with the same Get-Content, so the two must agree exactly.
+        # This is the guard for three regressions, all found by measurement:
+        #   - CreateNoWindow = $true put the child in a private console, changing its output code
+        #     page so it emitted a literal '?' where the inherited path preserved the character.
+        #   - Decoding the pipe and re-encoding it as UTF-8 while Get-Content read the ANSI code
+        #     page inflated every non-ASCII character into two.
+        #   - Buffering both streams whole in memory, which is what forced that decode/re-encode.
+        # Compared as CODES because this snippet's JSON reaches the runner through a pipe and PS
+        # 5.1 ConvertTo-Json does not escape non-ASCII, so comparing the characters themselves
+        # would measure the runner's locale rather than the guardrail.
+        self.assertEqual(
+            evidence["ExactCodes"], evidence["PlainCodes"],
+            "exact and inherited disagree on non-ASCII output",
+        )
+        self.assertNotEqual(evidence["ExactCodes"], "", evidence)
+        # Non-vacuity: on a host whose output code page cannot represent U+00E9 both paths would
+        # emit '?' and agree on a pure-ASCII line, silently guarding nothing. The comparison is
+        # only meaningful if a byte above 127 actually survived to be compared.
+        self.assertTrue(
+            any(int(code) > 127 for code in evidence["ExactCodes"].split(",")),
+            evidence["ExactCodes"],
+        )
+        self.assertEqual(len(exact_out[0]), len(plain_out[0]))
+
+    def test_exact_environment_child_uses_the_same_working_directory_as_the_inherited_path(self):
+        # Start-Process launches at the PowerShell session location, but a bare ProcessStartInfo
+        # inherits [Environment]::CurrentDirectory, which Set-Location does NOT update.
+        # sync_wiki.ps1 does Set-Location and then passes the relative argument '.', so the
+        # divergence would make an exact-mode caller silently operate on the wrong tree while
+        # every field reported success.
+        probe = self.write_exact_probe("cwd_probe.ps1", self.CWD_PROBE_BODY)
+        workdir = self.exact_probe_dir() / "workdir"
+        workdir.mkdir(parents=True, exist_ok=True)
+        probe_args = self.child_launch_args(probe)
+        command = (
+            "Set-Location -LiteralPath '" + str(workdir) + "';"
+            + self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + probe_args + ";"
+            "$exact = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120 -ExactEnvironment $decl;"
+            "$plain = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 120;"
+            "[pscustomobject]@{ExactCwd=@($exact.StdOutLines)[0];"
+            "PlainCwd=@($plain.StdOutLines)[0];Session=(Get-Location).Path;"
+            "ExactWorkDir=$exact.LaunchWorkingDirectory;"
+            "PlainWorkDir=$plain.LaunchWorkingDirectory}"
+            "|ConvertTo-Json -Depth 4 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+
+        def norm(value):
+            return os.path.normcase(os.path.normpath(str(value)))
+
+        expected = norm(workdir)
+        self.assertEqual(norm(evidence["Session"]), expected)
+        self.assertEqual(norm(evidence["PlainCwd"]), expected, evidence)
+        self.assertEqual(norm(evidence["ExactCwd"]), expected, evidence)
+        # The working directory is a launch input, so exact mode records what it configured.
+        self.assertEqual(norm(evidence["ExactWorkDir"]), expected, evidence)
+        # The inherited path never observes it, so it must not claim one.
+        self.assertIsNone(evidence["PlainWorkDir"])
 
 
 class TestProcessCustodyHelpers(unittest.TestCase):
