@@ -2414,13 +2414,26 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         self.assertRegex(self.runbook, r"unattended\s+scheduling")
 
     def test_both_wrappers_share_root_only_cleanup_and_callers_are_honest(self):
+        # These two counts are the ONLY instrument that distinguishes "reused the shared custody
+        # surface" from "invented a parallel termination path". A hand-rolled $p.Kill() in the
+        # fail-fast branch would fail fast just as convincingly, would satisfy every behavioural
+        # assertion in this file, and would survive falsification -- these pins are what catch it.
+        #
+        # This one stays 2: the two DIRECT timeout-branch sites. It is deliberately UNCHANGED by the
+        # post-start stream-acquisition fail-fast path, because that path terminates through
+        # Set-GuardedCustodyFailure, which calls the stopper internally as -Process $Process.
+        # An unchanged count is a prediction too: if this becomes 3, a direct parallel kill was
+        # introduced. (Python str.count is case-sensitive, so "$p" does not match "$Process".)
         self.assertEqual(
             self.guardrail.count("Stop-GuardedRootProcess -Process $p"),
             2,
         )
+        # 4 -> 5 with the post-start stream-acquisition fail-fast branch, which reuses this exact
+        # surface rather than adding a termination path of its own. Still 4 would mean the branch
+        # did not go through the custody surface at all.
         self.assertEqual(
             self.guardrail.count("Set-GuardedCustodyFailure -Result"),
-            4,
+            5,
         )
         for forbidden in (
             "Win32_Process",
@@ -3180,6 +3193,106 @@ class TestGraphifyGuardrailRootOnly(unittest.TestCase):
         # Captured lines are plain strings, not Get-Content note-property objects.
         for line in self.as_line_list(cleanup_result["StdOutLines"]):
             self.assertIsInstance(line, str)
+
+    def test_exact_environment_post_start_stream_acquisition_failure_fails_fast(self):
+        """A post-start redirected-stream acquisition failure must fail fast, not stall.
+
+        THE DEFECT. In exact mode both temp files are opened by hand and both streams are copied
+        asynchronously. If the SECOND File::Create throws, no copy task exists for that side, so the
+        child blocks once its 64 KB pipe buffer fills -- and the guardrail then waited the FULL
+        TimeoutSec. For the nightly that is 3000 s (semantic_extract.ps1 passes it explicitly),
+        double-bounded by the outer 3600 s guard. Fifty minutes to learn something already certain.
+
+        WHAT THIS TEST PROVES, and why each half matters:
+          * the child REALLY STARTED (a long-sleeping probe, and a real integer ProcId);
+          * the call returns PROMPTLY -- a 300 s nominal timeout with an asserted sub-30 s bound, so
+            the GAP is measured rather than implied. A short timeout would only prove the timeout
+            works, which is not the claim;
+          * every affected field is compared to a LITERAL PREDICTED VALUE fixed before the run;
+          * CleanupStatus is NOT 'START_FAILED' -- that misclassification is the defect #793 fixed,
+            and nothing else in this file pins it.
+
+        The paired non-injected fixture is not decoration: without it, a guardrail that failed fast
+        on EVERY exact-mode launch would pass the injected half.
+        """
+        probe = self.write_exact_probe("failfast_sleep_probe.ps1", self.SLEEP_PROBE_BODY)
+        probe_args = self.child_launch_args(probe)
+
+        # Injection seam: the reviewed one. The SECOND New-GuardedTempFile call returns a path in a
+        # directory that does not exist, so $so opens and [System.IO.File]::Create($se) throws.
+        # Nothing else about the launch is altered.
+        missing_dir = self.exact_probe_dir() / "no_such_dir_failfast" / "stderr.tmp"
+        injection = (
+            "$script:ffIndex=0;"
+            "function New-GuardedTempFile { $script:ffIndex++;"
+            "if ($script:ffIndex -eq 2) { return '" + str(missing_dir) + "' };"
+            "return [System.IO.Path]::GetTempFileName() };"
+        )
+        command = (
+            self.declaration_snippet()
+            + injection
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + probe_args + ";"
+            "$sw = [System.Diagnostics.Stopwatch]::StartNew();"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 300 -ExactEnvironment $decl;"
+            "$sw.Stop();"
+            "[pscustomobject]@{Result=$r;ElapsedMs=$sw.ElapsedMilliseconds}"
+            "|ConvertTo-Json -Depth 8 -Compress"
+        )
+        evidence = self.run_guardrail_command(command)
+        result = evidence["Result"]
+
+        # PROMPT RETURN. The nominal budget was 300 s; a stall would consume all of it.
+        self.assertLess(
+            evidence["ElapsedMs"],
+            30000,
+            "post-start stream-acquisition failure must fail fast, not wait out TimeoutSec",
+        )
+        # THE CHILD REALLY STARTED -- a real identity, never a manufactured pre-start record.
+        self.assertIsInstance(result["ProcId"], int)
+        self.assertGreater(result["ProcId"], 0)
+        # POST-START classification. Never START_FAILED.
+        self.assertNotEqual(result["CleanupStatus"], "START_FAILED")
+        self.assertEqual(result["CleanupStatus"], "ROOT_TERMINATED_TREE_UNPROVEN")
+        self.assertTrue(result["RootTerminated"])
+        # Predicted literals.
+        self.assertTrue(result["GuardrailFailed"])
+        self.assertTrue(result["OrphanRisk"])
+        self.assertEqual(result["EnvironmentMode"], "EXACT")
+        self.assertFalse(result["TimedOut"])
+        self.assertEqual(result["ExitCode"], 1)
+        # Two STACKED auxiliary failures, both asserted rather than the first one found.
+        self.assertIn("redirected pipe reader could not be acquired", result["OutputReadError"])
+        self.assertIn(
+            "redirected pipe reader could not be acquired", result["GuardrailError"]
+        )
+        self.assertEqual(result["TempCleanupStatus"], "REMOVAL_FAILED")
+
+        # PAIRED POSITIVE FIXTURE: identical shape, no injection. Without this, a guardrail that
+        # fail-fasted on every exact-mode launch would satisfy the half above.
+        clean_probe = self.write_exact_probe(
+            "failfast_clean_probe.ps1", self.SMALL_OUTPUT_PROBE_BODY
+        )
+        clean_args = self.child_launch_args(clean_probe)
+        clean_command = (
+            self.declaration_snippet()
+            + "$exe = (Get-Command powershell).Source;"
+            "$probeArgs = " + clean_args + ";"
+            "$r = Invoke-GraphifyGuardedCapture -GraphifyExe $exe -GraphifyArgs $probeArgs "
+            "-TimeoutSec 300 -ExactEnvironment $decl;"
+            "$r|ConvertTo-Json -Depth 8 -Compress"
+        )
+        clean = self.run_guardrail_command(clean_command)
+        self.assertIsNone(clean["OutputReadError"])
+        self.assertFalse(clean["GuardrailFailed"])
+        self.assertFalse(clean["OrphanRisk"])
+        self.assertEqual(clean["CleanupStatus"], "NOT_REQUIRED")
+        self.assertEqual(clean["TempCleanupStatus"], "REMOVED")
+        self.assertEqual(clean["ExitCode"], 0)
+        # NON-VACUITY: the clean arm really produced captured output, so "no error" is not merely
+        # the absence of a run.
+        self.assertEqual(self.as_line_list(clean["StdOutLines"]), ["probe-stdout"])
 
     def test_callers_without_exact_environment_keep_prior_behavior(self):
         probe = self.write_exact_probe("env_probe.ps1", self.ENV_PROBE_BODY)
