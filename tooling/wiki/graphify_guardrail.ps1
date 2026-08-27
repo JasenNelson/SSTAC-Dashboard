@@ -563,8 +563,37 @@ function Invoke-GraphifyGuardedCapture {
             try {
                 $procId = [int]$p.Id
                 $null = $p.Handle
-                $waited = $p.WaitForExit($TimeoutSec * 1000)
-                if (-not $waited) {
+                if ($null -ne $streamAcquireError) {
+                    # POST-START STREAM-ACQUISITION FAILURE -- FAIL FAST.
+                    #
+                    # One redirected stream was acquired and the other was not, so NO copy task
+                    # exists for the unacquired side. The child then blocks once its 64 KB pipe
+                    # buffer fills, and the ordinary WaitForExit below would wait the FULL
+                    # TimeoutSec before doing anything: 3000 s for the nightly, which
+                    # semantic_extract.ps1 passes explicitly, double-bounded by the outer 3600 s
+                    # guard. Waiting 50 minutes to discover a failure that is already certain is
+                    # the defect this branch removes. The stall is a defect, not a specification.
+                    #
+                    # The child ALREADY STARTED, so this must never be reported as START_FAILED
+                    # with a null identity -- that misclassification is precisely what #793 fixed.
+                    # The real ProcId is retained, the pre-seeded classification is
+                    # POST_START_FAILURE (the taxonomy the catch block below already uses), and
+                    # custody goes through the EXISTING Set-GuardedCustodyFailure surface, which
+                    # calls Stop-GuardedRootProcess internally. No parallel kill and no new
+                    # controller, launcher, cleanup surface or exception taxonomy is introduced.
+                    # The literal-count pins are what enforce that: a hand-rolled $p.Kill() would
+                    # fail fast just as convincingly and would also survive falsification.
+                    #
+                    # Control falls through to the drain/read block below UNCHANGED, so
+                    # OutputReadError still names the acquisition failure and TempCleanupStatus is
+                    # still computed on the one existing code path.
+                    $exitCode = 1
+                    $result = New-GuardedCaptureResult -TimedOut $false -ExitCode 1 -ProcId $procId `
+                        -RootTerminated $false -CleanupStatus 'POST_START_FAILURE' -CleanupError $null `
+                        -GuardrailFailed $true -OrphanRisk $true -GuardrailError $null
+                    $result = Set-GuardedCustodyFailure -Result $result -Process $p `
+                        -Message ("redirected pipe reader could not be acquired: $streamAcquireError")
+                } elseif (-not ($waited = $p.WaitForExit($TimeoutSec * 1000))) {
                     $timedOut = $true
                     $exitCode = 124
                     $cleanup = Stop-GuardedRootProcess -Process $p
