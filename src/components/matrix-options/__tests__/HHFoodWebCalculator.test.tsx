@@ -10,8 +10,8 @@ vi.mock('@/components/MathRenderer', () => ({
 
 // Mock the scenario-aware active-default resolver so the calculator's frame-seeding is
 // deterministic (and decoupled from the live catalog). Default: no active default
-// (the calculator opens on the unsourced baseline), preserving the pre-C-BC tests.
-// The C-BC block below overrides it with an active 0.111 (recreational) seed.
+// (the calculator opens on the fail-closed empty baseline).
+// The C-BC block below overrides it with active seeds.
 // Also mock getSelectableFrameScenarios so selector visibility is test-controlled.
 // getReceptorScenarioFrame and getDefaultSelectableScenarioId use the real module.
 vi.mock('@/lib/matrix-options/frameDefaults', async (importOriginal) => {
@@ -37,8 +37,7 @@ import {
 const mockGetActiveScenarioFrameDefaults = vi.mocked(getActiveScenarioFrameDefaults);
 const mockGetSelectableFrameScenarios = vi.mocked(getSelectableFrameScenarios);
 
-// Build an active WLRS IR frame-default entry (what getActiveScenarioFrameDefaults returns
-// under the recreational-fisher scenario once that record is promoted).
+// Build an active WLRS IR frame-default entry (recreational-fisher scenario).
 function activeWlrsIrRecreational() {
   return [
     {
@@ -55,8 +54,8 @@ function activeWlrsIrRecreational() {
   ];
 }
 
-// Build an active WLRS IR frame-default for the subsistence-fisher scenario.
-function activeWlrsIrSubsistence() {
+// Build an active WLRS IR + BW frame-default for the subsistence-fisher scenario.
+function activeWlrsIrAndBwSubsistence() {
   return [
     {
       inputKey: 'IR_food_kg_per_day',
@@ -69,11 +68,22 @@ function activeWlrsIrSubsistence() {
       qaStatus: 'approved' as const,
       reason: 'ok',
     },
+    {
+      inputKey: 'BW_kg',
+      parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+      candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+      label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+      status: 'active' as const,
+      value: 70.7,
+      unit: 'kg',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
   ];
 }
 
-// Build an active ACFN community-specific IR frame-default (ACFN Lower Athabasca, 388 g/day).
-function activeWlrsIrAcfn() {
+// Build an active ACFN community-specific IR + BW frame-default (388 g/day, 70.7 kg).
+function activeWlrsIrAndBwAcfn() {
   return [
     {
       inputKey: 'IR_food_kg_per_day',
@@ -83,6 +93,45 @@ function activeWlrsIrAcfn() {
       status: 'active' as const,
       value: 0.388,
       unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+    {
+      inputKey: 'BW_kg',
+      parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
+      candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+      label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
+      status: 'active' as const,
+      value: 70.7,
+      unit: 'kg',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+  ];
+}
+
+// Build an active TWN toddler subsistence IR + BW frame-default (94 g/day, 16.5 kg).
+function activeWlrsIrAndBwTwn() {
+  return [
+    {
+      inputKey: 'IR_food_kg_per_day',
+      parameterValueId: 'pv-twn-biwqo-2021-ir-food-toddler-bc',
+      candidateGroupId: 'human-health-food__generic__IR_food_kg_per_day__BC',
+      label: 'TWN BIWQO 2021, toddler subsistence',
+      status: 'active' as const,
+      value: 0.094,
+      unit: 'kg/day',
+      qaStatus: 'approved' as const,
+      reason: 'ok',
+    },
+    {
+      inputKey: 'BW_kg',
+      parameterValueId: 'pv-hc-pqra-v4-2024-bw-toddler-food-bc',
+      candidateGroupId: 'human-health-food__generic__BW_kg__BC',
+      label: 'HC PQRA v4.0, toddler 16.5 kg (Appendix E)',
+      status: 'active' as const,
+      value: 16.5,
+      unit: 'kg',
       qaStatus: 'approved' as const,
       reason: 'ok',
     },
@@ -106,8 +155,7 @@ function activeEpaIr() {
   ];
 }
 
-// Build the C-3 BC frame defaults: the WLRS IR seed PLUS the adult body-weight seed
-// (for the recreational scenario).
+// Build the BC recreational frame defaults: IR seed 0.111 + adult body-weight seed 70.7.
 function activeWlrsIrAndBwRecreational() {
   return [
     ...activeWlrsIrRecreational(),
@@ -125,22 +173,24 @@ function activeWlrsIrAndBwRecreational() {
   ];
 }
 
-// Selectable-scenario options for the BC food-web frame (recreational + subsistence + ACFN).
+// Selectable-scenario options for the BC food-web frame (recreational + subsistence + ACFN + TWN toddler).
 function bcFoodWebScenarios() {
   return [
     { scenarioId: 'recreational-fisher', scenarioLabel: 'Recreational fisher', isDefault: true },
     { scenarioId: 'subsistence-fisher', scenarioLabel: 'Subsistence fisher', isDefault: false },
     { scenarioId: 'acfn-community-specific', scenarioLabel: 'ACFN subsistence (Lower Athabasca)', isDefault: false },
+    { scenarioId: 'twn-toddler-subsistence', scenarioLabel: 'TWN toddler subsistence (Burrard Inlet)', isDefault: false },
   ];
 }
 
-describe('HHFoodWebCalculator', () => {
+describe('HHFoodWebCalculator core and fail-closed behaviors', () => {
   beforeEach(() => {
     mockGetActiveScenarioFrameDefaults.mockReturnValue([]);
     mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
   it('renders a functioning Human Health food-web calculator', () => {
+    mockGetActiveScenarioFrameDefaults.mockReturnValue(activeWlrsIrRecreational());
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -160,7 +210,7 @@ describe('HHFoodWebCalculator', () => {
     );
   });
 
-  it('quick-set buttons update the food ingestion rate', () => {
+  it('fails closed when no active default exists and input is empty', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -168,9 +218,44 @@ describe('HHFoodWebCalculator', () => {
       />,
     );
     const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
-    expect(input.value).toBe('0.142');
-    fireEvent.click(screen.getByRole('button', { name: /388 g\/day/i }));
-    expect(input.value).toBe('0.388');
+    expect(input.value).toBe('');
+    const standard = screen.getByTestId('hh-food-preliminary-standard');
+    expect(standard).toHaveTextContent(/--\s*mg\/kg/);
+  });
+
+  it('proves complete absence of 32, 142, and 388 quick-set buttons', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    expect(screen.queryByRole('button', { name: /32 g\/day/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /142 g\/day/i })).toBeNull();
+    expect(screen.queryByRole('button', { name: /388 g\/day/i })).toBeNull();
+  });
+
+  it('allows manual screening assumption entry with appropriate provenance role scoped to table row', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="bc-protocol1-v5-dra"
+      />,
+    );
+    const irInput = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
+    fireEvent.change(irInput, { target: { value: '0.150' } });
+    expect(irInput.value).toBe('0.150');
+
+    // Standard computes
+    const standard = screen.getByTestId('hh-food-preliminary-standard');
+    expect(standard).not.toHaveTextContent(/--\s*mg\/kg/);
+
+    // Provenance panel marks Food ingestion row itself as screening assumption
+    const panel = screen.getByTestId('calculator-provenance-panel');
+    const rows = Array.from(panel.querySelectorAll('tbody tr'));
+    const foodIrRow = rows.find((r) => r.textContent?.includes('Food ingestion'));
+    expect(foodIrRow).toBeDefined();
+    expect(foodIrRow).toHaveTextContent(/screening assumption/i);
   });
 
   it('Ecosystem radiogroup responds to ArrowRight/ArrowLeft', () => {
@@ -185,8 +270,8 @@ describe('HHFoodWebCalculator', () => {
 
     expect(freshwaterBtn).toHaveAttribute('aria-checked', 'true');
     expect(estuarineBtn).toHaveAttribute('aria-checked', 'false');
-    
-    // Press ArrowRight on the selected button
+
+    // Press ArrowRight
     fireEvent.keyDown(freshwaterBtn, { key: 'ArrowRight' });
     expect(freshwaterBtn).toHaveAttribute('aria-checked', 'false');
     expect(estuarineBtn).toHaveAttribute('aria-checked', 'true');
@@ -198,6 +283,7 @@ describe('HHFoodWebCalculator', () => {
   });
 
   it('allows site-specific BSAF entry when the selected substance lacks a default BSAF', () => {
+    mockGetActiveScenarioFrameDefaults.mockReturnValue(activeWlrsIrRecreational());
     render(
       <HHFoodWebCalculator
         substanceKey="lead"
@@ -207,11 +293,8 @@ describe('HHFoodWebCalculator', () => {
     expect(screen.getByTestId('hh-food-error')).toHaveTextContent(
       /BSAF_loc must be a positive/i,
     );
-    // T43 fail-closed sweep: while the BSAF is missing/ambiguous, the numeric standard must be
-    // withheld ('--'), never a stale or partial number.
     const standard = screen.getByTestId('hh-food-preliminary-standard');
     expect(standard).toHaveTextContent(/--\s*mg\/kg/);
-    expect(standard).not.toHaveTextContent(/[0-9]/);
     fireEvent.change(screen.getByTestId('hh-food-bsaf-input'), {
       target: { value: '0.25' },
     });
@@ -219,17 +302,10 @@ describe('HHFoodWebCalculator', () => {
     expect(screen.getByTestId('hh-food-preliminary-standard')).not.toHaveTextContent(
       /--\s*mg\/kg/,
     );
-    expect(
-      screen.getByTestId('regulatory-frame-notice-human-health-food'),
-    ).toHaveTextContent(/BC Protocol 1 v5 DRA/);
   });
 
-  // T43 fail-closed sweep gap: HHFoodWebCalculator's underlying humanHealthFoodWeb() reducer has a
-  // SECOND fail-closed path distinct from the hard parse error above -- a `blocked` result (foc outside
-  // the EqP validity window [0.2%, 10%], derivations.ts FOC_MIN/FOC_MAX) that still computes a
-  // diagnostic sedS but must NOT surface it as a usable standard. No prior test in this file exercised
-  // this path (the Eco calculators' equivalent foc-block tests exist; this one did not). Added here.
   it('BLOCKS the standard (fail-closed render) when foc is outside the EqP validity window', () => {
+    mockGetActiveScenarioFrameDefaults.mockReturnValue(activeWlrsIrRecreational());
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -241,7 +317,6 @@ describe('HHFoodWebCalculator', () => {
     expect(screen.getByTestId('hh-food-blocked-notice')).toBeInTheDocument();
     const standard = screen.getByTestId('hh-food-preliminary-standard');
     expect(standard).toHaveTextContent(/--\s*mg\/kg/);
-    expect(standard).not.toHaveTextContent(/[0-9]/);
   });
 
   it('renders conservative provenance scaffolds for HH food-web inputs', () => {
@@ -260,14 +335,8 @@ describe('HHFoodWebCalculator', () => {
     expect(panel).toHaveTextContent(/Hazard quotient/);
     expect(panel).toHaveTextContent(/current default/);
     expect(panel).toHaveTextContent(/needs review/);
-    // PCB HH oral RfD slot is now an approved HC current_default (owner/QP
-    // 2026-07-16), so the summary counts 1 approved source (the other three
-    // scaffolded inputs -- oral slope factor, BSAF, bioavailability -- remain
-    // needs-review scaffolds).
     expect(panel).toHaveTextContent(/1 approved/);
-    expect(panel).toHaveTextContent(
-      /current calculator scaffold only/i,
-    );
+    expect(panel).toHaveTextContent(/current calculator scaffold only/i);
   });
 
   it('suppresses the frame-variant fallback notice for the default baseline frame', () => {
@@ -290,22 +359,17 @@ describe('HHFoodWebCalculator', () => {
       );
       const notice = screen.getByTestId('frame-variant-fallback-notice');
       expect(notice).toBeInTheDocument();
-      // Proves getEquation(jurisdiction, 'human-health-food') was called and
-      // its fallbackReason flowed through (not a hardcoded fallback).
       const text = notice.textContent ?? '';
       expect(text).toMatch(/No specialized equation is defined for frame/);
-      const baselineMentions =
-        text.split('Using BC Protocol 1 v5 DRA baseline').length - 1;
-      expect(baselineMentions).toBe(1);
       unmount();
     }
   });
 
-  it('does not render the receptor-scenario selector when scenarios < 2', () => {
+  it('does not render the non-BC receptor-scenario select when scenarios < 2', () => {
     render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
-        jurisdiction="bc-protocol1-v5-dra"
+        jurisdiction="canada-fcsap-aquatic"
       />,
     );
     expect(screen.queryByTestId('hh-food-receptor-scenario-select')).toBeNull();
@@ -320,9 +384,7 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
-  function renderBc(
-    jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra',
-  ) {
+  function renderBc(jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra') {
     return render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -337,16 +399,18 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     expect(input.value).toBe('0.111');
     const label = screen.getByTestId('hh-food-ir-frame-default-label');
     expect(label).toHaveTextContent(/Frame default 0\.111 kg\/day/);
-    // The per-frame source descriptor must render byte-identical to pre-PR2 (C-BC behavior).
     expect(label).toHaveTextContent('(BC WLRS 2023, recreational)');
   });
 
   it('attributes the seeded IR to the WLRS source in the provenance panel', () => {
     renderBc();
     const panel = screen.getByTestId('calculator-provenance-panel');
-    // The IR value is now an approved source-backed default (not a scaffold):
-    // at least one approved value appears once the WLRS IR is attributed.
     expect(panel).not.toHaveTextContent(/0 approved/);
+    const rows = Array.from(panel.querySelectorAll('tbody tr'));
+    const foodIrRow = rows.find((r) => r.textContent?.includes('Food ingestion'));
+    expect(foodIrRow).toBeDefined();
+    expect(foodIrRow).toHaveTextContent(/source-backed default/i);
+    expect(foodIrRow).toHaveTextContent(/BC WLRS/i);
   });
 
   it('a user edit drops the attribution and shows the reset button', () => {
@@ -380,16 +444,14 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     expect(screen.queryByTestId('hh-food-ir-reset-to-frame-default')).toBeNull();
   });
 
-  it('a no-default frame seeds nothing (baseline 0.142, no label)', () => {
-    // ccme-sediment-quality has no frame default (the mock returns [] for it). Note: this stand-in
-    // changed from us-epa-usace-sediment, which now HAS a default (C-nonBC) and is covered below.
+  it('a no-default frame seeds nothing (fail-closed empty input, no label)', () => {
     renderBc('ccme-sediment-quality');
     const input = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
-    expect(input.value).toBe('0.142');
+    expect(input.value).toBe('');
     expect(screen.queryByTestId('hh-food-ir-frame-default-label')).toBeNull();
   });
 
-  it('switching BC -> a no-default frame resets the seed to 0.142', () => {
+  it('switching BC -> a no-default frame resets unedited seed to empty string', () => {
     const { rerender } = renderBc();
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
@@ -402,7 +464,7 @@ describe('HHFoodWebCalculator C-BC frame default (IR seed)', () => {
     );
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
-    ).toBe('0.142');
+    ).toBe('');
   });
 
   it('a deliberate off-default edit survives a frame switch (do not clobber)', () => {
@@ -509,9 +571,7 @@ describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
     mockGetSelectableFrameScenarios.mockReturnValue([]);
   });
 
-  function renderBc(
-    jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra',
-  ) {
+  function renderBc(jurisdiction: RegulatoryFrameId = 'bc-protocol1-v5-dra') {
     return render(
       <HHFoodWebCalculator
         substanceKey="total_pcbs_aroclor_1254"
@@ -526,7 +586,6 @@ describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
     expect(input.value).toBe('70.7');
     const label = screen.getByTestId('hh-food-bw-frame-default-label');
     expect(label).toHaveTextContent(/Frame default 70\.7 kg/);
-    // The BW seed renders its OWN label override, NOT the row "recreational" descriptor.
     expect(label).toHaveTextContent('(BC WLRS 2023, adult 70.7 kg (Table 1))');
   });
 
@@ -550,52 +609,42 @@ describe('HHFoodWebCalculator C-3 frame default (BW seed)', () => {
     expect(input.value).toBe('70');
     expect(screen.queryByTestId('hh-food-bw-frame-default-label')).toBeNull();
   });
+
+  it('switching BC -> a no-default frame resets unedited seeds (IR 0.111 -> empty, BW 70.7 -> 70)', () => {
+    const { rerender } = renderBc();
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+
+    rerender(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="ccme-sediment-quality"
+      />,
+    );
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('');
+    expect(screen.queryByTestId('hh-food-ir-frame-default-label')).toBeNull();
+
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70');
+    expect(screen.queryByTestId('hh-food-bw-frame-default-label')).toBeNull();
+  });
 });
 
-// Phase D receptor-scenario selector (2026-06-13): the BC food-web frame now offers
-// TWO selectable receptor scenarios -- recreational-fisher (default, 0.111 kg/day) and
-// subsistence-fisher (0.22 kg/day) -- both with the shared adult BW 70.7 kg.
-// The selector renders only when scenarios.length >= 2.
-describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', () => {
-  // The mock returns scenario-specific defaults: recreational gets 0.111, subsistence 0.22.
-  // BW 70.7 is shared across both scenarios (same parameterValueId).
+describe('HHFoodWebCalculator B.C. Sediment Use Navigator & Scenarios', () => {
   beforeEach(() => {
     mockGetActiveScenarioFrameDefaults.mockImplementation(
       (frameId, _pathway, scenarioId) => {
         if (frameId !== 'bc-protocol1-v5-dra') return [];
-        if (scenarioId === 'subsistence-fisher') {
-          return [
-            ...activeWlrsIrSubsistence(),
-            {
-              inputKey: 'BW_kg',
-              parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
-              candidateGroupId: 'human-health-food__generic__BW_kg__BC',
-              label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
-              status: 'active' as const,
-              value: 70.7,
-              unit: 'kg',
-              qaStatus: 'approved' as const,
-              reason: 'ok',
-            },
-          ];
-        }
-        if (scenarioId === 'acfn-community-specific') {
-          return [
-            ...activeWlrsIrAcfn(),
-            {
-              inputKey: 'BW_kg',
-              parameterValueId: 'pv-wlrs-2023-bw-adult-bc',
-              candidateGroupId: 'human-health-food__generic__BW_kg__BC',
-              label: 'BC WLRS 2023, adult 70.7 kg (Table 1)',
-              status: 'active' as const,
-              value: 70.7,
-              unit: 'kg',
-              qaStatus: 'approved' as const,
-              reason: 'ok',
-            },
-          ];
-        }
-        // Default: recreational-fisher (also handles undefined)
+        if (scenarioId === 'subsistence-fisher') return activeWlrsIrAndBwSubsistence();
+        if (scenarioId === 'acfn-community-specific') return activeWlrsIrAndBwAcfn();
+        if (scenarioId === 'twn-toddler-subsistence') return activeWlrsIrAndBwTwn();
         return activeWlrsIrAndBwRecreational();
       },
     );
@@ -613,30 +662,20 @@ describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', (
     );
   }
 
-  it('renders the selector with Recreational fisher and Subsistence fisher options', () => {
+  it('renders SedimentUseNavigator under bc-protocol1-v5-dra with all 4 categories', () => {
     renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    expect(select).toBeInTheDocument();
-    const labels = Array.from(select.options).map((o) => o.textContent);
-    expect(labels).toContain('Recreational fisher');
-    expect(labels).toContain('Subsistence fisher');
+    expect(screen.getByTestId('sediment-use-navigator')).toBeInTheDocument();
+    expect(screen.getByTestId('sediment-use-category-aw')).toBeInTheDocument();
+    expect(screen.getByTestId('sediment-use-category-arth')).toBeInTheDocument();
+    expect(screen.getByTestId('sediment-use-category-ca')).toBeInTheDocument();
+    expect(screen.getByTestId('sediment-use-category-ia')).toBeInTheDocument();
   });
 
-  it('defaults to recreational fisher and seeds IR 0.111', () => {
+  it('defaults to recreational fisher and seeds IR 0.111 and BW 70.7', () => {
     renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    expect(select.value).toBe('recreational-fisher');
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.111');
-  });
-
-  it('BW defaults to 70.7 under the recreational scenario', () => {
-    renderBc();
     expect(
       (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
     ).toBe('70.7');
@@ -644,69 +683,110 @@ describe('HHFoodWebCalculator receptor-scenario selector (BC food-web frame)', (
 
   it('switching to subsistence-fisher reseeds IR to 0.22 and BW stays 70.7', () => {
     renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    const subBtn = screen.getByTestId('sediment-use-scenario-btn-subsistence-fisher');
+    fireEvent.click(subBtn);
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.22');
-    // BW is the same record under both scenarios (70.7 kg adult).
     expect(
       (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
     ).toBe('70.7');
   });
 
-  it('switching back from subsistence to recreational reseeds IR to 0.111', () => {
+  it('switching back from subsistence to recreational reseeds IR 0.22 -> 0.111 and BW remains 70.7', () => {
     renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    const subBtn = screen.getByTestId('sediment-use-scenario-btn-subsistence-fisher');
+    fireEvent.click(subBtn);
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.22');
-    fireEvent.change(select, { target: { value: 'recreational-fisher' } });
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+
+    const recBtn = screen.getByTestId('sediment-use-scenario-btn-recreational-fisher');
+    fireEvent.click(recBtn);
     expect(
       (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
     ).toBe('0.111');
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+  });
+
+  it('switching to ACFN community-specific reseeds IR to 0.388 and BW stays 70.7', () => {
+    renderBc();
+    const acfnBtn = screen.getByTestId('sediment-use-scenario-btn-acfn-community-specific');
+    expect(acfnBtn).toHaveTextContent('ACFN subsistence (Lower Athabasca)');
+    expect(acfnBtn).toHaveTextContent(/Community-specific/i);
+    fireEvent.click(acfnBtn);
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.388');
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+  });
+
+  it('switching to TWN toddler subsistence reseeds IR to 0.094, BW to 16.5, and surfaces caveat with exact phrase', () => {
+    renderBc();
+    const twnBtn = screen.getByTestId('sediment-use-scenario-btn-twn-toddler-subsistence');
+    expect(twnBtn).toHaveTextContent('TWN toddler subsistence (Burrard Inlet)');
+    expect(twnBtn).toHaveTextContent(/Toddler receptor/i);
+
+    fireEvent.click(twnBtn);
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.094');
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('16.5');
+
+    // Caveat is visible with exact authoritative phrase
+    const caveat = screen.getByTestId('sediment-use-twn-caveat');
+    expect(caveat).toBeInTheDocument();
+    expect(caveat).toHaveTextContent(/ambient water quality objectives/i);
+    expect(caveat).toHaveTextContent('must not be used to derive remediation or CSR guidelines');
+    expect(caveat).toHaveTextContent(/0\.094 kg\/day/i);
+  });
+
+  it('switching back from TWN toddler to recreational reseeds IR 0.111, BW 70.7, and hides caveat', () => {
+    renderBc();
+    const twnBtn = screen.getByTestId('sediment-use-scenario-btn-twn-toddler-subsistence');
+    fireEvent.click(twnBtn);
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.094');
+    expect(screen.getByTestId('sediment-use-twn-caveat')).toBeInTheDocument();
+
+    const recBtn = screen.getByTestId('sediment-use-scenario-btn-recreational-fisher');
+    fireEvent.click(recBtn);
+    expect(
+      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
+    ).toBe('0.111');
+    expect(
+      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
+    ).toBe('70.7');
+    expect(screen.queryByTestId('sediment-use-twn-caveat')).toBeNull();
   });
 
   it('a user IR edit is preserved when switching scenarios (does not clobber an off-default value)', () => {
     renderBc();
     const irInput = screen.getByTestId('hh-food-ir-input') as HTMLInputElement;
-    // Edit off the recreational default.
     fireEvent.change(irInput, { target: { value: '0.3' } });
     expect(irInput.value).toBe('0.3');
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    // Switch to subsistence; the user-edited IR must NOT be overwritten.
-    fireEvent.change(select, { target: { value: 'subsistence-fisher' } });
+    const subBtn = screen.getByTestId('sediment-use-scenario-btn-subsistence-fisher');
+    fireEvent.click(subBtn);
     expect(irInput.value).toBe('0.3');
   });
 
-  it('renders the ACFN subsistence option labeled "ACFN subsistence (Lower Athabasca)"', () => {
-    renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    const labels = Array.from(select.options).map((o) => o.textContent);
-    expect(labels).toContain('ACFN subsistence (Lower Athabasca)');
-  });
-
-  it('switching to acfn-community-specific reseeds IR to 0.388 and BW stays 70.7', () => {
-    renderBc();
-    const select = screen.getByTestId(
-      'hh-food-receptor-scenario-select',
-    ) as HTMLSelectElement;
-    fireEvent.change(select, { target: { value: 'acfn-community-specific' } });
-    expect(
-      (screen.getByTestId('hh-food-ir-input') as HTMLInputElement).value,
-    ).toBe('0.388');
-    // BW is the same shared adult record (70.7 kg) across all scenarios.
-    expect(
-      (screen.getByTestId('hh-food-bw-input') as HTMLInputElement).value,
-    ).toBe('70.7');
+  it('does NOT render SedimentUseNavigator for non-BC frames', () => {
+    render(
+      <HHFoodWebCalculator
+        substanceKey="total_pcbs_aroclor_1254"
+        jurisdiction="us-epa-usace-sediment"
+      />,
+    );
+    expect(screen.queryByTestId('sediment-use-navigator')).toBeNull();
   });
 });

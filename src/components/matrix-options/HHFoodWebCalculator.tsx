@@ -36,15 +36,17 @@ import FrameImpactCard from './FrameImpactCard';
 import CalculatorStage, { type StageState } from './CalculatorStage';
 import { formatMagnitude } from '@/lib/matrix-options/formatMagnitude';
 
+import SedimentUseNavigator from './SedimentUseNavigator';
+
 const ECOSYSTEM_OPTIONS: ReadonlyArray<{ value: Ecosystem; label: string }> = [
   { value: 'freshwater', label: 'Freshwater' },
   { value: 'estuarine', label: 'Estuarine' },
   { value: 'coastal-marine', label: 'Coastal-Marine' },
 ];
 
-// Unsourced calculator baseline IR, used when the selected frame / scenario has no active
-// frame-default (C1 may later source/replace this; out of C-BC scope).
-const BASELINE_IR_KG_PER_DAY = '0.142';
+// Unsourced calculator baseline IR (fail-closed empty string when no active
+// frame-default exists; users may enter a manual screening assumption).
+const BASELINE_IR_KG_PER_DAY = '';
 
 // Unsourced calculator baseline body weight (kg), used when the selected frame / scenario has no
 // active frame-default BW_kg seed. Adult default; preserves the prior hardcoded '70'.
@@ -627,27 +629,35 @@ export default function HHFoodWebCalculator({
         fallbackReason={fallbackReason}
       />
 
-      {selectableScenarios.length >= 2 && (
-        <div className="mb-4" data-testid="hh-food-receptor-scenario">
-          <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
-            Receptor scenario
-            <select
-              data-testid="hh-food-receptor-scenario-select"
-              value={scenarioId ?? ''}
-              onChange={(e) => setScenarioId(e.target.value || undefined)}
-              className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm"
-            >
-              {selectableScenarios.map((s) => (
-                <option key={s.scenarioId} value={s.scenarioId}>
-                  {s.scenarioLabel}
-                </option>
-              ))}
-            </select>
-            <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
-              Switches fish ingestion rate and body weight defaults across receptor scenarios.
-            </p>
-          </label>
-        </div>
+      {jurisdiction === 'bc-protocol1-v5-dra' ? (
+        <SedimentUseNavigator
+          selectedScenarioId={scenarioId}
+          selectableScenarios={selectableScenarios}
+          onSelectScenario={(id) => setScenarioId(id)}
+        />
+      ) : (
+        selectableScenarios.length >= 2 && (
+          <div className="mb-4" data-testid="hh-food-receptor-scenario">
+            <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
+              Receptor scenario
+              <select
+                data-testid="hh-food-receptor-scenario-select"
+                value={scenarioId ?? ''}
+                onChange={(e) => setScenarioId(e.target.value || undefined)}
+                className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm"
+              >
+                {selectableScenarios.map((s) => (
+                  <option key={s.scenarioId} value={s.scenarioId}>
+                    {s.scenarioLabel}
+                  </option>
+                ))}
+              </select>
+              <p className="mt-1 text-xs font-normal text-slate-500 dark:text-slate-400">
+                Switches fish ingestion rate and body weight defaults across receptor scenarios.
+              </p>
+            </label>
+          </div>
+        )
       )}
 
       <div
@@ -684,7 +694,7 @@ export default function HHFoodWebCalculator({
           </div>
         </fieldset>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
           <label className="text-sm font-medium text-slate-700 dark:text-slate-300">
             Body weight (kg)
             <input data-testid="hh-food-bw-input" type="number" inputMode="decimal" min="0.1" step="any" value={bwInput} onChange={(e) => setBwInput(e.target.value)} className="mt-1 w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm font-mono focus:ring-2 focus:ring-sky-500 focus:border-sky-500 focus:outline-none" />
@@ -714,17 +724,6 @@ export default function HHFoodWebCalculator({
                 Reset to frame default
               </button>
             )}
-          </div>
-          <div className="flex items-end gap-2 flex-wrap">
-            <button type="button" onClick={() => setFoodIrInput('0.032')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-              32 g/day
-            </button>
-            <button type="button" onClick={() => setFoodIrInput('0.142')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-              142 g/day
-            </button>
-            <button type="button" onClick={() => setFoodIrInput('0.388')} className="px-2.5 py-2 text-xs rounded-md border border-slate-300 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200">
-              388 g/day
-            </button>
           </div>
         </div>
 
