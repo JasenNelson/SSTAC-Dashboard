@@ -65,9 +65,6 @@ export default async function MatrixOptionsPage() {
     return 'Error loading final paper.';
   };
 
-  const eqpCaseStudyContent = readDraft('CaseStudy_EqP_AVS.md');
-  const bsafCaseStudyContent = readDraft('CaseStudy_BSAF.md');
-  const humanHealthContent = readDraft('Framework_HumanHealth.md');
   const guideContent = readDraft('The_Guide.md');
   const finalDraftContent = readFinalPaper();
 
@@ -111,9 +108,6 @@ export default async function MatrixOptionsPage() {
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden print:block print:h-auto print:overflow-visible">
       <MatrixDashboard
-        eqpCaseStudyContent={eqpCaseStudyContent}
-        bsafCaseStudyContent={bsafCaseStudyContent}
-        humanHealthContent={humanHealthContent}
         guideContent={guideContent}
         finalDraftContent={finalDraftContent}
         initialMapData={initialMapData}

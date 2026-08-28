@@ -1399,11 +1399,11 @@ describe('EvidenceLibrary saved views (Supabase)', () => {
   });
 
   it('preserves a stale localStorage equations saved view, remapped to the Values mode', async () => {
-    // Legacy local-only saved view persisted before the Equations view mode was retired
-    // (equations now render in the Jurisdictional Frameworks Quick Reference). loadSavedViews
-    // used to admit only values/sources, so this view would be DROPPED. It must instead be
-    // PRESERVED (name + filters) with its mode coerced to 'values', mirroring the Supabase
-    // coerceViewMode fallback, so applying it lands on a real view rather than a removed mode.
+    // Legacy local-only saved view persisted before the Equations view mode was retired.
+    // loadSavedViews used to admit only values/sources, so this view would be DROPPED. It must
+    // instead be PRESERVED (name + filters) with its mode coerced to 'values', mirroring the
+    // Supabase coerceViewMode fallback, so applying it lands on a real view rather than a
+    // removed mode.
     window.localStorage.setItem(
       SAVED_VIEWS_KEY,
       JSON.stringify([

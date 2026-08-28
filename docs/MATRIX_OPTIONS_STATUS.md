@@ -19,8 +19,9 @@ verification date; and the co-update rule in item 4 below names every site that 
 If the owner prefers, the durable fix is a lane-scoped carve-out added to
 `current_status_claims_policy` itself -- that is a manifest policy change and was not made
 unilaterally here.
-**Verified against:** `origin/main` `1602652be817ae78feeb37af380a2d4aa80f5e2f`
-**Verification date:** 2026-08-23
+**Verified against:** Correction 001 working-tree candidate based on HEAD
+`f609b8ebc4ac3a6732bafb1d5caf409879805017`
+**Verification date:** 2026-08-28
 **Supersedes for CURRENT status:** the dated Matrix Options status snapshots listed in section 6.
 
 ---
@@ -36,7 +37,7 @@ Rules:
 1. This file states CURRENT lane state, re-verified against source and evidence on the date above.
 2. The dated snapshots in section 6 remain valid as HISTORICAL claim lists tied to their own dates.
    Where they contradict this file, THIS file is current and they are not.
-3. Every claim below was verified either from source code at the pinned SHA, from a recomputation
+3. Every claim below was verified either from the source state named above, from a recomputation
    over the actual catalog files, or from a named evidence artifact. Claims that could not be
    verified are marked as such rather than repeated from prior prose.
 4. Do not add volatile project-wide metrics here. Lane facts are recorded CANONICALLY in the
@@ -263,8 +264,8 @@ Canonical store: manifest `facts.matrix_options_catalog.default_coverage_input_s
 
 ## 3. Calculators
 
-All nine calculator and evidence surfaces below EXIST in source and are WIRED into the UI at the
-pinned SHA. The Matrix Options route is `src/app/(dashboard)/matrix-options/page.tsx`, rendering
+All nine calculator and evidence surfaces below EXIST in source and are WIRED into the UI in the
+current candidate. The Matrix Options route is `src/app/(dashboard)/matrix-options/page.tsx`, rendering
 `src/components/MatrixDashboard.tsx`, which owns the tab registry.
 
 | Surface | State | Primary implementation |
@@ -279,18 +280,23 @@ pinned SHA. The Matrix Options route is `src/app/(dashboard)/matrix-options/page
 | Provenance / value search; References and Values | Implemented, wired | `CalculatorValueSearchPanel.tsx`, `EvidenceLibrary.tsx`, `CalculatorProvenancePanel.tsx` |
 | SSD Workbench | Implemented, wired (own top-level tab) | `src/components/matrix-options/SsdWorkbench.tsx` |
 
-### 3.0 PR #791 Frontend Enablement Event (COMPLETE, 2026-08-23)
+### 3.0 PR #791 Frontend Enablement Event (HISTORICAL; SUPERSEDED IN PART)
 
 On 2026-08-23, PR #791 merged into `main` (`1602652be817ae78feeb37af380a2d4aa80f5e2f`, final reviewed
-head `af930c2ca6d4be4b9ccd8dc03f9c2a8d0abb3bd2`) delivering an accepted frontend enablement event
-supporting Phase 2 / L2 across 53 tracked paths.
+head `af930c2ca6d4be4b9ccd8dc03f9c2a8d0abb3bd2`) as an accepted frontend enablement event supporting
+Phase 2 / L2 across 53 tracked paths. That merge remains a historical fact, but current source
+supersedes its navigation and Methodology-restoration state: `MatrixDashboard.tsx` now has seven
+top-level views and no Methodology by pathway view. The continuity record remains unchanged as the
+record of what PR #791 delivered at merge time.
 
-Delivered frontend features and polish:
+At merge time, PR #791 delivered these frontend features and polish:
 - **Restored full 8-tab top-level registry** in `MatrixDashboard.tsx`: Guide, Modernizing Schedule 3.4,
   Methodology by pathway (`Jurisdictional Frameworks`), TWG Review, Database (`Interactive Map`),
-  Calculator, SSD Workbench, and Catalogue (`References & Values`).
+  Calculator, SSD Workbench, and Catalogue (`References & Values`). This registry is historical and
+  is superseded by the current seven-view registry.
 - **Restored Methodology by pathway vertical side tabs**: EqP & AVS, Food Web (BSAF), and Human
-  Health Pathways, with automatic keyboard activation and `demoteLeadingH1(...)` case-study rendering.
+  Health Pathways, with automatic keyboard activation and `demoteLeadingH1(...)` case-study
+  rendering. This restoration is historical and superseded; the current UI has no Methodology view.
 - **Full-fidelity print stylesheets**: Unclipped printing across prose and calculator tabs.
 - **Evidence Library QA/QC & Candidate defaults control**: Restored the `Candidate defaults` quick
   review button with explicit `>=44px` two-axis touch targets (`min-h-[44px] min-w-[44px] justify-center`),
@@ -300,7 +306,8 @@ Delivered frontend features and polish:
 - **A11y and code quality**: Minimum 44px touch targets, verified contrast, pure ASCII character sets,
   and complete six-gate verification suite.
 
-Full continuity record: `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
+Preserved historical continuity record:
+`docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
 
 ### 3.1 Human Health Inhalation is NOT scaffold-only and NOT parked
 
@@ -591,8 +598,9 @@ Numerals for all four items are in section 2 and, canonically, in manifest
 
 ### 7.6 Next L2 backend continuation
 
-The PR #791 frontend enablement event is complete, but the durable Phase 2 / L2 backend-data goal
-remains ACTIVE. A future L2 session resuming this workstream must:
+The PR #791 frontend enablement event is historical, and its Methodology restoration is superseded
+by the current seven-view registry. The durable Phase 2 / L2 backend-data goal remains ACTIVE. A
+future L2 session resuming this workstream must:
 
 1. **Reauthenticate live state:** Read `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` and
    this status file to verify the current standing of Phase 2 Task 3 Streams A and B.
@@ -602,8 +610,9 @@ remains ACTIVE. A future L2 session resuming this workstream must:
    which subtask is first if current live evidence does not establish it.
 3. **Continue backend/data compilation:** Execute the database schema, data compilation, or input-parameter
    work from that defined starting point.
-4. **Preserve frontend deliverables:** Avoid reopening or rewriting PR #791 frontend components or
-   selectors unless an explicit, reproducible regression is verified.
+4. **Preserve current frontend deliverables:** Avoid reopening or rewriting still-current PR #791
+   frontend components or selectors unless an explicit, reproducible regression is verified. Do
+   not use its historical Methodology-restoration record to reintroduce the removed view.
 
 ---
 

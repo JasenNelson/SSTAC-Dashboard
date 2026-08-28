@@ -35,8 +35,7 @@ export function MatrixMapMobileFallback() {
           Use a desktop or tablet (768px or wider) for the full interactive map.
         </p>
         <p className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-          The other Matrix Options tabs (Guide, Vision for Modernizing Schedule 3.4,
-          Methodology by pathway, TWG Review, Calculator) are fully usable on this device.
+          All other Matrix Options tabs remain fully usable on this device.
         </p>
       </div>
     </div>

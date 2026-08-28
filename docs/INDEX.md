@@ -9,8 +9,11 @@ This file is the **single canonical entrypoint** for project documentation.
   - **If you are resuming ACTIVE WORK, do not stop here.** This routing anchor is intentionally
     stateless. For current lane status, see the domain entrypoints below:
     - **Matrix Options / Matrix Map**: `docs/MATRIX_OPTIONS_STATUS.md` (authoritative current status).
-      The PR #791 frontend enablement event is complete (see `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`),
-      while `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` remains the authority for active Phase 2 Task 3 backend/data work.
+      PR #791 is a historical frontend enablement event whose Methodology restoration has since
+      been superseded by the current seven-view registry (see the preserved continuity record at
+      `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`), while
+      `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` remains the authority for active
+      Phase 2 Task 3 backend/data work.
 - **Docs manifest (authoritative)**: `docs/_meta/docs-manifest.json`
 - **Facts policy (volatile metrics)**: Volatile metrics (test counts, grades, etc.) must live in the manifest under `facts` (live/current) or `facts_history` (frozen session-closeout snapshots). Only `facts` is canonical truth; `facts_history` is read-only history and must not be cited as "current".
 
@@ -101,8 +104,9 @@ The exact required sections are enumerated in `docs/_meta/docs-manifest.json` un
   what is actually built and deployed; use the dated snapshots below only as historical claim lists.
   Lane-scoped only -- it does not claim global project status, which stays in this index and the
   manifest `facts`.
-- `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md` - completion record for
-  the PR #791 frontend enablement event supporting Phase 2/L2.
+- `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md` - preserved historical
+  completion record for the PR #791 frontend enablement event supporting Phase 2/L2. Its
+  Methodology-restoration claims describe the 2026-08-23 merge state, not the current view registry.
 - `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md` - authoritative Phase 2 project plan for
   active Phase 2 Task 3 backend/data work (BC Aquatic Database and policy-ready input parameters).
 
@@ -167,11 +171,14 @@ or `scripts/matrix-map/validation/**` now activate `MATRIX_MAP_GATE`.
   refresh, publish, and unpublish are each still separately owner-gated, and the
   schema apply grants none of them. Do not describe publication as authorized.
 - Current lane status: `docs/MATRIX_OPTIONS_STATUS.md`.
-- **PR #791 Frontend Enablement Event (Merged 2026-08-23)**:
-  - PR #791 merged into `main` (`1602652be817ae78feeb37af380a2d4aa80f5e2f`), delivering full
-    8-tab navigation polish, Methodology by pathway restoration, Evidence Library QA/QC controls,
-    Candidate defaults touch target hardening (>=44px), and E2E synchronization.
-  - Detailed completion record: `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
+- **PR #791 Frontend Enablement Event (Historical; merged 2026-08-23)**:
+  - PR #791 merged into `main` (`1602652be817ae78feeb37af380a2d4aa80f5e2f`). At that merge it
+    delivered 8-tab navigation polish and Methodology by pathway restoration, plus Evidence Library
+    QA/QC controls, Candidate defaults touch target hardening (>=44px), and E2E synchronization.
+  - The current Matrix Options registry has seven views and no Methodology by pathway view. That
+    current source state supersedes PR #791's navigation and Methodology restoration; it does not
+    rewrite the historical event.
+  - Preserved completion record: `docs/continuity/qaqc-polish-pr791/PR791_FRONTEND_COMPLETION_2026_08_23.md`.
   - Authoritative current Matrix Options status: `docs/MATRIX_OPTIONS_STATUS.md`.
   - Authoritative Phase 2 backend/data plan: `docs/sediment-standards-phase2/PROJECT_PLAN_PHASE_2.md`.
 - Historical predecessor handoffs (reference):
