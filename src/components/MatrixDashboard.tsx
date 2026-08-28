@@ -3,7 +3,6 @@
 import React, {
   useCallback,
   useEffect,
-  useMemo,
   useRef,
   useState,
 } from 'react';
@@ -56,7 +55,6 @@ import type {
   EvidenceLibraryFilters,
   ProvenancePathway,
 } from '@/lib/matrix-options/provenance/types';
-import { EQUATION_RECORDS } from '@/lib/matrix-options/provenance/catalog';
 import {
   isMatrixCategory,
   type MatrixCategory,
@@ -227,9 +225,6 @@ function restoreJurisdiction(): RegulatoryFrame {
 }
 
 interface MatrixDashboardProps {
-  eqpCaseStudyContent: string;
-  bsafCaseStudyContent: string;
-  humanHealthContent: string;
   guideContent: string;
   finalDraftContent: string;
   /**
@@ -262,7 +257,6 @@ interface MatrixDashboardProps {
 const TABS = [
   'The Guide',
   'Vision for Modernizing Schedule 3.4',
-  'Jurisdictional Frameworks',
   'TWG Review',
   'Interactive Map',
   'Calculator',
@@ -277,24 +271,12 @@ const TABS = [
 const TAB_LABELS: Record<string, string> = {
   'The Guide': 'Guide',
   'Vision for Modernizing Schedule 3.4': 'Modernizing Schedule 3.4',
-  'Jurisdictional Frameworks': 'Methodology by pathway',
   'Interactive Map': 'Database',
   'References & Values': 'Catalogue',
 };
-const JURISDICTIONAL_SIDE_TABS = ['Ecological: EqP & AVS', 'Ecological: Food Web (BSAF)', 'Human Health Pathways'];
-// Maps each Jurisdictional Frameworks side-tab to the derivation equation pathway(s) shown
-// in its Quick Reference drawer. The cross-cutting 'background-adjustment' equation is
-// intentionally omitted here (see JURISDICTIONAL_SIDE_TAB_PATHWAYS) so it stays in the calculator only.
-const JURISDICTIONAL_SIDE_TAB_PATHWAYS: Record<string, ProvenancePathway[]> = {
-  'Ecological: EqP & AVS': ['eco-direct-eqp'],
-  'Ecological: Food Web (BSAF)': ['eco-food-bsaf'],
-  'Human Health Pathways': ['human-health-direct', 'human-health-food'],
-};
-
-// A11y (A1/A2 fixes, 2026-08-14): id helpers for the two tab/tabpanel pairs
-// in this file -- the primary top nav and side-tab lists. Same roving-tabindex pattern as
-// matrix-options/CategorySelector.tsx (the in-repo reference
-// implementation); forked here rather than re-invented.
+// A11y (A1/A2 fixes, 2026-08-14): id helper for the primary top nav and panel.
+// Same roving-tabindex pattern as matrix-options/CategorySelector.tsx (the in-repo
+// reference implementation); forked here rather than re-invented.
 function slugifyTabId(label: string): string {
   return label
     .toLowerCase()
@@ -307,21 +289,13 @@ const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 // Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
 // demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
 // printed.
-const DEMOTED_DOCUMENT_TABS = new Set(['Jurisdictional Frameworks', 'The Guide']);
-const JURISDICTIONAL_SIDE_TABPANEL_ID = 'matrix-jurisdictional-side-tabpanel';
+const DEMOTED_DOCUMENT_TABS = new Set(['The Guide']);
 
 function primaryTabId(tab: string): string {
   return `matrix-tab-${slugifyTabId(tab)}`;
 }
 
-function sideTabId(tab: string): string {
-  return `matrix-side-tab-${slugifyTabId(tab)}`;
-}
-
 export default function MatrixDashboard({
-  eqpCaseStudyContent,
-  bsafCaseStudyContent,
-  humanHealthContent,
   guideContent,
   finalDraftContent,
   initialMapData = EMPTY_MATRIX_MAP_DATA,
@@ -351,7 +325,6 @@ export default function MatrixDashboard({
     });
   }, []);
   const [activeTopTab, setActiveTopTab] = useState('The Guide');
-  const [activeSideTab, setActiveSideTab] = useState('Ecological: EqP & AVS');
   // Side panels open by default in Map/TWG modes. In Calculator mode, the panels
   // start collapsed per user preference.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -372,8 +345,7 @@ export default function MatrixDashboard({
     null,
   );
   // A11y fix (F1, 2026-08-14 adversarial review): the right rail wrapper
-  // (calculator-reference-rail, shared by Calculator + Jurisdictional
-  // Frameworks) goes `inert` whenever it closes, including the AUTOMATIC
+  // (calculator-reference-rail) goes `inert` whenever it closes, including the AUTOMATIC
   // close driven by backgroundReferenceNeedsAttention flipping to false. If
   // the user's focus was inside the rail when that happens (e.g. a Value
   // Search input), the browser drops focus to <body> with no announcement.
@@ -444,13 +416,11 @@ export default function MatrixDashboard({
   // single recompute without waiting for the ref to update post-render.
   const leftWidthRef = useRef(MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH);
   const rightWidthRef = useRef(MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH);
-  // A11y (A1/A2): roving-tabindex focus targets for the two tab lists in
-  // this file, keyed by tab label. Same pattern as CategorySelector's
-  // buttonRefs.
+  // A11y (A1/A2): roving-tabindex focus targets for the primary tab list,
+  // keyed by tab label. Same pattern as CategorySelector's buttonRefs.
   const primaryTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  const sideTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
   // P3-1 (a11y audit 2026-08-14): manual-activation roving-tabindex focus
-  // target for the primary 8-tab top nav, tracked separately from
+  // target for the primary 7-tab top nav, tracked separately from
   // activeTopTab. See handlePrimaryTabKeyDown below for why this tablist
   // uses manual (not automatic) activation.
   const [focusedPrimaryTab, setFocusedPrimaryTab] = useState(TABS[0]);
@@ -608,13 +578,13 @@ export default function MatrixDashboard({
     }
   }, [jurisdiction]);
 
-  const isToolMode = activeTopTab === 'Calculator' || activeTopTab === 'Jurisdictional Frameworks';
+  const isToolMode = activeTopTab === 'Calculator';
   const isReviewMode = activeTopTab === 'TWG Review';
   const isEvidenceLibraryMode = activeTopTab === 'References & Values';
   const isSsdWorkbenchMode = activeTopTab === 'SSD Workbench';
   const isMapMode = activeTopTab === 'Interactive Map';
   const isCalculatorMode = activeTopTab === 'Calculator';
-  const hideSidebarOnPrint = isToolMode && activeTopTab === 'Calculator';
+  const hideSidebarOnPrint = isToolMode;
   const handleRefreshMapData = useCallback(() => {
     router.refresh();
   }, [router]);
@@ -1085,17 +1055,6 @@ export default function MatrixDashboard({
         ? 'It exceeds the preliminary standard, so it sets the adjusted standard.'
         : 'It is at or above the background UTL, so it sets the adjusted standard.'
       : undefined;
-  // Derivation equations shown in the Jurisdictional Frameworks Quick Reference,
-  // filtered to the active side-tab's pathway(s). The cross-cutting
-  // 'background-adjustment' equation is intentionally excluded (see
-  // JURISDICTIONAL_SIDE_TAB_PATHWAYS) so it stays in the calculator only.
-  const jurisdictionalEquations = useMemo(
-    () =>
-      EQUATION_RECORDS.filter((eq) =>
-        (JURISDICTIONAL_SIDE_TAB_PATHWAYS[activeSideTab] ?? []).includes(eq.pathway),
-      ),
-    [activeSideTab],
-  );
   const rightPanelTitle =
     activeTopTab === 'Calculator' ? 'Value Search' : 'Quick Reference';
   // A11y fix (F2, 2026-08-14 adversarial review): content-aware aria-label
@@ -1138,7 +1097,7 @@ export default function MatrixDashboard({
     activeTopTab === 'Calculator' ? 'w-full lg:w-[384px]' : 'w-full lg:w-[320px]';
 
   // A11y (A2/P3-1): roving-tabindex arrow-key navigation for the primary
-  // 8-tab top nav, using MANUAL activation per the ARIA Authoring
+  // 7-tab top nav, using MANUAL activation per the ARIA Authoring
   // Practices Guide (https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ --
   // "Tabs With Manual Activation"). Arrow/Home/End move DOM focus only
   // (roving tabindex, tracked by focusedPrimaryTab); they do NOT call
@@ -1147,18 +1106,12 @@ export default function MatrixDashboard({
   // Enter/Space handling is needed here.
   //
   // Manual activation was chosen for THIS tablist because its panels are
-  // expensive to mount/unmount: the Vision page, the Jurisdictional
-  // Frameworks document, TWG Review, the Leaflet-based Interactive Map,
+  // expensive to mount/unmount: the Vision page, TWG Review, the Leaflet-based Interactive Map,
   // the Calculator (5 stacked calculators + in-progress user input), and
   // the SSD Workbench. Automatic activation would mount-then-unmount each
   // of these in sequence while a keyboard user simply arrows past them to
   // reach a farther tab, and would silently discard any in-progress
   // Calculator input the moment the user arrowed off that tab.
-  //
-  // The Jurisdictional Frameworks side-tab list (handleSideTabKeyDown
-  // below) keeps AUTOMATIC activation: its three panels only swap which
-  // already-in-memory case-study string is passed to MathRenderer, no
-  // component mount/unmount, so there is no expensive-panel cost to avoid.
   const handlePrimaryTabKeyDown = (
     event: React.KeyboardEvent<HTMLButtonElement>,
     currentTab: string,
@@ -1185,72 +1138,8 @@ export default function MatrixDashboard({
     primaryTabRefs.current[nextTab]?.focus();
   };
 
-  // A11y (A1): roving-tabindex arrow-key navigation for the Jurisdictional
-  // Frameworks side-tab list (vertical list -> ArrowUp/ArrowDown).
-  const handleSideTabKeyDown = (
-    event: React.KeyboardEvent<HTMLButtonElement>,
-    currentTab: string,
-  ): void => {
-    const navKeys = ['ArrowDown', 'ArrowUp', 'Home', 'End'];
-    if (!navKeys.includes(event.key)) return;
-    event.preventDefault();
-
-    const currentIdx = JURISDICTIONAL_SIDE_TABS.indexOf(currentTab);
-    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
-    let nextIdx = safeIdx;
-    if (event.key === 'ArrowDown') {
-      nextIdx = (safeIdx + 1) % JURISDICTIONAL_SIDE_TABS.length;
-    } else if (event.key === 'ArrowUp') {
-      nextIdx = (safeIdx - 1 + JURISDICTIONAL_SIDE_TABS.length) % JURISDICTIONAL_SIDE_TABS.length;
-    } else if (event.key === 'Home') {
-      nextIdx = 0;
-    } else if (event.key === 'End') {
-      nextIdx = JURISDICTIONAL_SIDE_TABS.length - 1;
-    }
-
-    const nextTab = JURISDICTIONAL_SIDE_TABS[nextIdx];
-    setActiveSideTab(nextTab);
-    sideTabRefs.current[nextTab]?.focus();
-  };
-
   const renderSidebar = () => {
     switch (activeTopTab) {
-      case 'Jurisdictional Frameworks':
-        return (
-          <div
-            role="tablist"
-            aria-orientation="vertical"
-            aria-label="Pathway sections"
-            className="space-y-2"
-          >
-            {JURISDICTIONAL_SIDE_TABS.map((tab) => {
-              const selected = activeSideTab === tab;
-              return (
-                <button
-                  key={tab}
-                  ref={(el) => {
-                    sideTabRefs.current[tab] = el;
-                  }}
-                  type="button"
-                  role="tab"
-                  id={sideTabId(tab)}
-                  aria-selected={selected}
-                  aria-controls={JURISDICTIONAL_SIDE_TABPANEL_ID}
-                  tabIndex={selected ? 0 : -1}
-                  onClick={() => setActiveSideTab(tab)}
-                  onKeyDown={(e) => handleSideTabKeyDown(e, tab)}
-                  className={`w-full text-left p-3 rounded-lg cursor-pointer font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900 ${
-                    selected
-                      ? 'bg-white dark:bg-slate-800 shadow-sm border border-slate-200 dark:border-slate-700 font-semibold text-sky-700 dark:text-sky-400'
-                      : 'hover:bg-white dark:hover:bg-slate-800 text-slate-600 dark:text-slate-300'
-                  }`}
-                >
-                  {tab}
-                </button>
-              );
-            })}
-          </div>
-        );
       case 'Calculator': {
         const tierContent = GUIDE_TIER_CONTENT[activeTier];
         return (
@@ -1320,99 +1209,21 @@ export default function MatrixDashboard({
     }
   };
 
-  const leftSidebarHeading =
-    activeTopTab === 'Calculator'
-      ? 'GUIDE'
-      : activeTopTab === 'Jurisdictional Frameworks'
-        ? 'PATHWAY / APPROACH'
-        : 'CONTEXT';
+  const leftSidebarHeading = 'GUIDE';
 
-  const renderToolReference = () => {
-    if (activeTopTab === 'Calculator') {
-      return (
-        <CalculatorValueSearchPanel
-          pathway={calculatorPathway}
-          pathwayLabel={calculatorCategoryLabel}
-          substanceKey={substanceKey}
-          substanceLabel={selectedSubstance?.displayName ?? substanceKey}
-          jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
-          regulatoryFrameId={jurisdiction}
-          onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
-          candidateReview={candidateReview}
-          onCandidateReviewed={setCandidateReview}
-        />
-      );
-    }
-
-    return (
-      <div className="space-y-4" data-testid="matrix-options-right-reference">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-            Methodology Quick Reference
-          </p>
-          <p className="mt-2 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-            Use the methodology material to compare method choices, not to
-            copy a single standard.
-          </p>
-        </div>
-        <ol className="list-decimal space-y-3 pl-5 text-sm leading-relaxed text-slate-600 dark:text-slate-300">
-          <li>Start with the selected pathway group: {activeSideTab}.</li>
-          <li>Look for receptor groups, exposure routes, and endpoint choices.</li>
-          <li>Note how each program handles bioavailability and uncertainty.</li>
-          <li>Carry useful assumptions into the calculator for testing.</li>
-        </ol>
-        {jurisdictionalEquations.length > 0 && (
-          <div
-            className="space-y-2 border-t border-slate-200 pt-4 dark:border-slate-700"
-            data-testid="jurisdictional-equation-reference"
-          >
-            <p className="text-xs font-semibold uppercase tracking-wider text-sky-700 dark:text-sky-300">
-              Derivation equations
-            </p>
-            <div className="grid gap-2">
-              {jurisdictionalEquations.map((eq) => (
-                <details
-                  key={eq.equation_id}
-                  className="rounded-lg border border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-950"
-                >
-                  <summary className="cursor-pointer px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white">
-                    {eq.display_name}
-                  </summary>
-                  <div className="space-y-2 border-t border-slate-200 px-3 py-3 text-xs text-slate-700 dark:border-slate-800 dark:text-slate-200">
-                    {/* remark-math only recognizes $$...$$ as BLOCK/display
-                        math (KaTeX displayMode) when the delimiters sit on
-                        their own lines; a same-line `$$...$$` parses as
-                        inline math instead. The surrounding newlines here
-                        are required, not stylistic. */}
-                    {/* Round-2 P2-2: this drawer's <details> surface is
-                        `bg-white dark:bg-slate-950` (see the className two
-                        elements up), NOT the ScrollFadeRegion default of
-                        dark:slate-900 -- pass the real surface or the fade
-                        paints a mismatched stripe in dark mode. */}
-                    <MathRenderer
-                      content={`$$\n${eq.equation_latex}\n$$`}
-                      fadeFrom="from-white dark:from-slate-950"
-                    />
-                    <p className="leading-relaxed text-slate-600 dark:text-slate-300">
-                      {eq.plain_language}
-                    </p>
-                    {eq.unit_notes && (
-                      <p className="text-slate-500 dark:text-slate-400">
-                        Units: {eq.unit_notes}
-                      </p>
-                    )}
-                    <p className="text-slate-500 dark:text-slate-400">
-                      Status: {eq.qa_status.replace(/_/g, ' ')}
-                    </p>
-                  </div>
-                </details>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    );
-  };
+  const renderToolReference = () => (
+    <CalculatorValueSearchPanel
+      pathway={calculatorPathway}
+      pathwayLabel={calculatorCategoryLabel}
+      substanceKey={substanceKey}
+      substanceLabel={selectedSubstance?.displayName ?? substanceKey}
+      jurisdictionLabel={selectedJurisdiction?.label ?? jurisdiction}
+      regulatoryFrameId={jurisdiction}
+      onOpenEvidenceLibrary={handleOpenEvidenceLibrary}
+      candidateReview={candidateReview}
+      onCandidateReviewed={setCandidateReview}
+    />
+  );
 
   const renderContent = () => {
     switch (activeTopTab) {
@@ -1434,7 +1245,7 @@ export default function MatrixDashboard({
         return (
           <div className="space-y-6">
             <div className={cardClassName} data-testid="guide-section-card">
-              {/* Audit #16: The_Guide.md opens with `# The Guide: Matrix Options Workspace`.
+              {/* Audit #16: The_Guide.md opens with `# Guide: Matrix Options Workspace`.
                   Only part 0 of the SECTION_BOUNDARY split can carry a leading title, so the
                   helper is applied here alone; on parts 1 and 2 it would be a no-op. */}
               <MathRenderer content={demoteLeadingH1(introContent)} fadeFrom={guideFadeFrom} />
@@ -1461,23 +1272,6 @@ export default function MatrixDashboard({
             <ConceptualMatrix />
           </div>
         );
-      case 'Jurisdictional Frameworks': {
-        let contentToRender = '';
-        if (activeSideTab === 'Ecological: EqP & AVS') contentToRender = eqpCaseStudyContent;
-        else if (activeSideTab === 'Ecological: Food Web (BSAF)') contentToRender = bsafCaseStudyContent;
-        else if (activeSideTab === 'Human Health Pathways') contentToRender = humanHealthContent;
-
-        return (
-          <div
-            className="space-y-6"
-            role="tabpanel"
-            id={JURISDICTIONAL_SIDE_TABPANEL_ID}
-            aria-labelledby={sideTabId(activeSideTab)}
-          >
-            <MathRenderer content={demoteLeadingH1(contentToRender)} fadeFrom="from-white dark:from-slate-950" />
-          </div>
-        );
-      }
       case 'TWG Review':
         return (
           <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />
@@ -2057,16 +1851,12 @@ export default function MatrixDashboard({
         not actually implement it -- see the comment on that div for the
         mechanism and the fix.
       */}
-      {/* Audit #16, PRINT correction. Demoting each document's leading `# ` to `##` is right
+      {/* Audit #16, PRINT correction. Demoting the Guide's leading `# ` to `##` is right
           ON SCREEN, because the shell supplies the page <h1> in the toolbar above. It is WRONG
           IN PRINT: that toolbar carries `print:hidden`, so on paper the shell heading vanishes
-          and the demoted document heading is an h2 -- leaving the four regulatory documents
-          printing with NO level-1 heading at all, where before the demotion they printed with
-          one.
-          Placed HERE, above the isToolMode branch, deliberately: renderContent() has FIVE call
-          sites across the two layout branches, and an earlier version of this fix sat inside
-          only one of them, so the tool-mode tabs (Methodology by pathway, Calculator) still
-          printed with none. One heading above the split covers every tab.
+          and the demoted document heading is an h2, leaving the Guide with no level-1 heading.
+          Placed HERE, above the isToolMode branch, so the replacement remains paired with the
+          active tab rather than with one particular layout branch.
           `hidden` keeps it out of the screen accessibility tree (display:none), so it cannot
           reintroduce the duplicate-H1 defect #16 exists to fix; `print:block` restores it for
           the print medium only.
@@ -2079,14 +1869,8 @@ export default function MatrixDashboard({
           on that toolbar above), and TWG Review renders its paper RAW -- demoteLeadingH1 is not
           applied there -- so its printed h1 count went 2 -> 3 rather than 0 -> 1.
           The heading exists to replace an h1 that the demotion removed, so it belongs only where
-          the demotion happens: the two `demoteLeadingH1(...)` call sites in this file, which
-          render the Jurisdictional Frameworks and The Guide documents. Named rather than cited by
-          line, and the reason is worth recording because it is not the obvious one. An earlier
-          version of this comment cited :1421 and :1445. Those numbers did not go stale over time
-          -- `git show f0f56330:src/components/MatrixDashboard.tsx` puts the call sites at 1426 and
-          1450 on the very commit that wrote the citation. They were wrong when typed, and nothing
-          checked them. The lesson is not "line numbers move", it is "a number nobody verifies is
-          decoration". The membership is now pinned mechanically by
+          the demotion happens: the Guide's `demoteLeadingH1(...)` call site in this file. The
+          membership is pinned mechanically by
           src/components/__tests__/demotedDocumentTabsDrift.test.ts. */}
       {DEMOTED_DOCUMENT_TABS.has(activeTopTab) && (
         <h1
@@ -2112,8 +1896,6 @@ export default function MatrixDashboard({
                 // side-by-side at lg and up, on the right edge as before.
                 'border-b lg:border-b-0 lg:border-r',
                 // Bathymetric shell chrome (DESIGN.md), Calculator tab only.
-                // Jurisdictional Frameworks (the other isToolMode tab) keeps
-                // its original slate styling unchanged.
                 isCalculatorMode
                   ? 'bg-[var(--db-depth-1)] border-[var(--db-border)]'
                   : 'bg-slate-50 dark:bg-slate-900/50 border-slate-200 dark:border-slate-800',
@@ -2237,13 +2019,9 @@ export default function MatrixDashboard({
 
             {/* Right Drawer */}
             <div
-              // F5 fix (2026-08-14 adversarial review): this testid used to be
-              // unconditional, so it was also present when isToolMode covers
-              // Jurisdictional Frameworks -- a test selecting by this testid
-              // could silently pass against the wrong tab's drawer. No existing
-              // test relies on it being present outside Calculator mode (the
-              // only describe block that reads it is scoped to Calculator, per
-              // MatrixDashboard.test.tsx), so restricting it is safe.
+              // F5 fix (2026-08-14 adversarial review): keep this testid explicitly
+              // scoped to Calculator mode so a future tool-mode view cannot satisfy
+              // Calculator rail tests accidentally.
               data-testid={isCalculatorMode ? 'calculator-reference-rail' : undefined}
               ref={rightPanelWrapperRef}
               // F1 fix: React's onFocus/onBlur use the focusin/focusout event
@@ -2375,7 +2153,7 @@ export default function MatrixDashboard({
         ) : isEvidenceLibraryMode ? (
           // P2-5 (a11y audit 2026-08-14): give this branch a real tabpanel,
           // same id/aria-labelledby/tabIndex contract as its five sibling
-          // branches above, so the 8-tab tablist's aria-controls IDREF is
+          // branches above, so the 7-tab tablist's aria-controls IDREF is
           // never dangling when 'References & Values' is active. An
           // ordinary wrapper (not display:contents, which would drop the
           // role/id ARIA semantics) carrying the same flex layout class the

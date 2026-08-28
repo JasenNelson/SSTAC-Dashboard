@@ -16,14 +16,14 @@ import { gotoMatrixOptionsOrSkip, clickUntilVisible } from './fixtures/matrix-op
  *
  * Falsification record -- each was run against a deliberately broken build and watched failing:
  *  - Removing the `print:block` h1 from MatrixDashboard -> "prints exactly one level-1 heading"
- *    FAILS with a count of 0 on both tabs.
+ *    FAILS with a count of 0 on the Guide tab.
  *  - Changing the h1's classes to `print:hidden` -> same failure, which is the point: the
  *    assertion is on RENDERED VISIBILITY under print, not on a class string.
  *  - Removing `hidden` (so it shows on screen too) -> "does not add a second heading on screen"
  *    FAILS with a screen count of 2.
  */
 
-const PROSE_TABS = ['Guide', 'Methodology by pathway'] as const;
+const PROSE_TABS = ['Guide'] as const;
 
 test.describe('Matrix Options print heading outline', () => {
   for (const tab of PROSE_TABS) {

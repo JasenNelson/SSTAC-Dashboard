@@ -118,9 +118,9 @@ function useEvidenceLibraryAnnounce(): (message: string) => void {
 // (pathway, substance, input) and flags incommensurate-unit candidate groups (the #206
 // badge). By Parameter was inadvertently orphaned when the tab list was trimmed in #210
 // (its render branch + ValueGroupCard stayed, but no tab selected it); it is re-exposed here.
-// The Equations tab was retired -- equations now render in the Jurisdictional Frameworks
-// Quick Reference. Source Leads still folds into Sources, and the Assumptions branch (which
-// duplicated Values) remains unexposed by design.
+// The Equations tab was retired; legacy equation-mode saved views fall back to Values. Source
+// Leads still folds into Sources, and the Assumptions branch (which duplicated Values) remains
+// unexposed by design.
 const VIEW_MODES: Array<{ id: EvidenceLibraryViewMode; label: string }> = [
   // Ordered References then Values to match the tab title "References & Values"; By Parameter
   // is the third, value-centric view. (Values remains the default-selected view -- see the
@@ -307,8 +307,7 @@ function loadSavedViews(): SavedFilterView[] {
         // Sources view (it has no tab and would otherwise render blank); the live, renderable
         // modes ('by-parameter' -- re-exposed with the #206 value-groups tab -- 'sources',
         // 'values', and the unexposed-but-still-rendering 'assumptions') are PRESERVED; the
-        // retired 'equations' tab (now in the Jurisdictional Frameworks Quick Reference) and
-        // any unknown value fall back to the default 'values' view.
+        // retired 'equations' tab and any unknown value fall back to the default 'values' view.
         viewMode:
           entry.viewMode === 'source-leads'
             ? 'sources'

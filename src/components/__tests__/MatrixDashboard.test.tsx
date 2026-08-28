@@ -65,9 +65,6 @@ vi.mock('@/lib/admin-utils', () => ({
 import MatrixDashboard from '../MatrixDashboard';
 
 const DEFAULT_PROPS = {
-  eqpCaseStudyContent: '',
-  bsafCaseStudyContent: '',
-  humanHealthContent: '',
   guideContent: '',
   finalDraftContent: '',
 };
@@ -128,7 +125,7 @@ describe('MatrixDashboard -- primary tabpanel focus contract (APG)', () => {
 describe('MatrixDashboard -- Matrix Options guide copy', () => {
   it('keeps the v1 guide focused on workflow instead of placeholder status copy', () => {
     expect(GUIDE_MARKDOWN).toMatch(/## 1\. How to Use This Workspace/);
-    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*The Guide\*\*/);
+    expect(GUIDE_MARKDOWN).toMatch(/\*\s+\*\*Guide:\*\*/);
     expect(GUIDE_MARKDOWN).toMatch(/## 2\. Project Roadmap/);
     expect(GUIDE_MARKDOWN).toMatch(/Scientific Literature Search/);
     expect(GUIDE_MARKDOWN).toMatch(/Jurisdictional Scan/);
@@ -2068,9 +2065,7 @@ describe('MatrixDashboard -- Calculator tab wire-up (PR-A2 commit 6)', () => {
 
     // F2 (2026-08-14 adversarial review): the toggle's aria-label is
     // content-aware ("Value Search panel") in Calculator mode, using the same
-    // string as the rail's own on-screen heading, and stays generic
-    // ("right panel") on Jurisdictional Frameworks, which shares the wrapper
-    // but was not named in the finding.
+    // string as the rail's own on-screen heading.
     it('F2: right panel toggle label is content-aware in Calculator', () => {
       render(<MatrixDashboard {...DEFAULT_PROPS} />);
       clickCalculatorTab();
@@ -2194,8 +2189,8 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
       // The mock renders the RAW markdown string, so this asserts the prefix actually
       // handed to the renderer -- not a parsed heading level, which the mock cannot
       // produce and which would make this assertion vacuous.
-      expect(content.trimStart()).toMatch(/^## The Guide: Matrix Options Workspace/);
-      expect(content.trimStart()).not.toMatch(/^# The Guide/);
+      expect(content.trimStart()).toMatch(/^## Guide: Matrix Options Workspace/);
+      expect(content.trimStart()).not.toMatch(/^# Guide/);
     });
 
     it('leaves a guide document that does not open with an H1 untouched', () => {
@@ -2310,60 +2305,26 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
     });
   });
 
-  describe('Jurisdictional Frameworks (Methodology by pathway) tab and pathway side-tabs', () => {
-    it('activates Methodology by pathway and swaps case study sentinel content across side tabs', () => {
-      const eqpSentinel = '# EqP Case Study Sentinel Content\n\nEquilibrium partitioning details.';
-      const bsafSentinel = '# BSAF Case Study Sentinel Content\n\nBiota-sediment accumulation factor details.';
-      const hhSentinel = '# Human Health Case Study Sentinel Content\n\nDirect contact and fish ingestion details.';
+  describe('primary Matrix Options views', () => {
+    it('shows the seven current views and omits the retired Methodology view', () => {
+      render(<MatrixDashboard {...DEFAULT_PROPS} />);
 
-      render(
-        <MatrixDashboard
-          {...DEFAULT_PROPS}
-          eqpCaseStudyContent={eqpSentinel}
-          bsafCaseStudyContent={bsafSentinel}
-          humanHealthContent={hhSentinel}
-        />,
-      );
-
-      // 1. Activate "Methodology by pathway" primary tab
-      const methodologyTab = screen.getByRole('tab', { name: /^Methodology by pathway$/ });
-      expect(methodologyTab).toHaveAttribute('aria-selected', 'false');
-      fireEvent.click(methodologyTab);
-      expect(methodologyTab).toHaveAttribute('aria-selected', 'true');
-
-      // 2. Verify default side-tab is "Ecological: EqP & AVS" and shows EqP sentinel (with H1 demoted)
-      const eqpSideTab = screen.getByRole('tab', { name: /^Ecological: EqP & AVS$/ });
-      const bsafSideTab = screen.getByRole('tab', { name: /^Ecological: Food Web \(BSAF\)$/ });
-      const hhSideTab = screen.getByRole('tab', { name: /^Human Health Pathways$/ });
-
-      expect(eqpSideTab).toHaveAttribute('aria-selected', 'true');
-      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
-      expect(hhSideTab).toHaveAttribute('aria-selected', 'false');
-
-      const mainPanel = document.getElementById('matrix-jurisdictional-side-tabpanel')!;
-      expect(mainPanel).toBeInTheDocument();
-
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## EqP Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
-
-      // 3. Switch to BSAF side tab and verify BSAF sentinel replaces EqP
-      fireEvent.click(bsafSideTab);
-      expect(bsafSideTab).toHaveAttribute('aria-selected', 'true');
-      expect(eqpSideTab).toHaveAttribute('aria-selected', 'false');
-
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## BSAF Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/Human Health Case Study Sentinel Content/);
-
-      // 4. Switch to Human Health side tab and verify HH sentinel replaces BSAF
-      fireEvent.click(hhSideTab);
-      expect(hhSideTab).toHaveAttribute('aria-selected', 'true');
-      expect(bsafSideTab).toHaveAttribute('aria-selected', 'false');
-
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).toHaveTextContent(/## Human Health Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/EqP Case Study Sentinel Content/);
-      expect(within(mainPanel).getByTestId('math-renderer-mock')).not.toHaveTextContent(/BSAF Case Study Sentinel Content/);
+      const tablist = screen.getByRole('tablist', { name: 'Matrix Options' });
+      expect(within(tablist).getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
+        'Guide',
+        'Modernizing Schedule 3.4',
+        'TWG Review',
+        'Database',
+        'Calculator',
+        'SSD Workbench',
+        'Catalogue',
+      ]);
+      expect(
+        within(tablist).queryByRole('tab', { name: 'Methodology by pathway' }),
+      ).not.toBeInTheDocument();
+      expect(
+        screen.queryByRole('tablist', { name: 'Pathway sections' }),
+      ).not.toBeInTheDocument();
     });
   });
 });

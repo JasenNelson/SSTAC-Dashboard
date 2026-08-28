@@ -139,11 +139,10 @@ test.describe('Calculator pathway navigation', () => {
   });
 });
 
-// A11y (2026-08-14 audit): the primary 8-tab tablist ('The Guide' ...
-// 'References & Values') claims manual activation (ArrowLeft/ArrowRight/
+// A11y (2026-08-14 audit): the primary 7-tab tablist ('Guide' ...
+// 'Catalogue') claims manual activation (ArrowLeft/ArrowRight/
 // Home/End move focus only; Enter/Space/click activate) with a roving
-// tabindex, while the Jurisdictional Frameworks side tablist claims
-// automatic activation (arrows both move focus and select). These tests use
+// tabindex. These tests use
 // real page.keyboard.press() events -- not clicks -- because that is the
 // only way to verify focus movement, tabindex desync, and the `inert`
 // attribute; jsdom-based unit tests cannot observe any of these.
@@ -153,6 +152,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
     const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
+    await expect(page.getByRole('tab', { name: 'Methodology by pathway', exact: true })).toHaveCount(0);
 
     await guideTab.focus();
     await expect(guideTab).toBeFocused();
@@ -175,11 +175,10 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const calculatorTab = page.getByRole('tab', { name: 'Calculator', exact: true });
 
     await guideTab.focus();
-    // TABS order: The Guide(0), Vision for Modernizing Schedule 3.4(1), Methodology by pathway
-    // aka Jurisdictional Frameworks(2), TWG Review(3), Interactive Map(4),
-    // Calculator(5). 5 ArrowRight presses walks focus there without
+    // TABS order: Guide(0), Modernizing Schedule 3.4(1), TWG Review(2),
+    // Database(3), Calculator(4). 4 ArrowRight presses walk focus there without
     // activating any of the intermediate tabs.
-    for (let i = 0; i < 5; i += 1) {
+    for (let i = 0; i < 4; i += 1) {
       await page.keyboard.press('ArrowRight');
     }
     await expect(calculatorTab).toBeFocused();
@@ -200,9 +199,9 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const ssdTab = page.getByRole('tab', { name: 'SSD Workbench', exact: true });
 
     await guideTab.focus();
-    // Index 6: The Guide -> Vision for Modernizing Schedule 3.4 -> Methodology by pathway ->
-    // TWG Review -> Interactive Map -> Calculator -> SSD Workbench.
-    for (let i = 0; i < 6; i += 1) {
+    // Index 5: Guide -> Modernizing Schedule 3.4 -> TWG Review -> Database ->
+    // Calculator -> SSD Workbench.
+    for (let i = 0; i < 5; i += 1) {
       await page.keyboard.press('ArrowRight');
     }
     await expect(ssdTab).toBeFocused();
@@ -353,37 +352,6 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await expect(hideButton).toBeVisible();
   });
 });
-
-test.describe('Jurisdictional Frameworks side tabs (automatic activation)', () => {
-  test('arrow keys change selection immediately, unlike the primary tablist', async ({ page }) => {
-    await gotoMatrixOptionsOrSkip(page);
-
-    // The primary tab's accessible name for this section is its display
-    // label, not the internal TABS identifier (see TAB_LABELS in
-    // MatrixDashboard.tsx).
-    const sideTablist = page.getByRole('tablist', { name: 'Pathway sections' });
-    await clickUntilVisible(page, 'Methodology by pathway', sideTablist);
-
-    const firstSideTab = page.getByRole('tab', { name: 'Ecological: EqP & AVS', exact: true });
-    const secondSideTab = page.getByRole('tab', {
-      name: 'Ecological: Food Web (BSAF)',
-      exact: true,
-    });
-
-    await expect(firstSideTab).toHaveAttribute('aria-selected', 'true');
-
-    await firstSideTab.focus();
-    await page.keyboard.press('ArrowDown');
-
-    // Deliberately different contract from the primary tablist: here the
-    // arrow key itself moves BOTH focus and selection, because these three
-    // panels are cheap to swap (see handleSideTabKeyDown's comment).
-    await expect(secondSideTab).toBeFocused();
-    await expect(secondSideTab).toHaveAttribute('aria-selected', 'true');
-    await expect(firstSideTab).toHaveAttribute('aria-selected', 'false');
-  });
-});
-
 
 test.describe('Vision page -- axis colour encoding (decision #3)', () => {
   test('renders DIFFERENT computed border colours per receptor axis', async ({ page }) => {
