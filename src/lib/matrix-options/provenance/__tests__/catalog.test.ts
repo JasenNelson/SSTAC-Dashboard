@@ -252,6 +252,49 @@ describe('matrix options provenance catalog', () => {
     }
   });
 
+  it('binds the Aroclor 1254 Eco-Direct logKow row to the Oregon source-table candidate', () => {
+    const source = getSourceRecord('src-oregon-deq-bioaccumulative-sediment-2007');
+    const parameter = getParameterValueRecord(
+      'total_pcbs_aroclor_1254',
+      'eco-direct-eqp',
+      'logKow',
+    );
+
+    expect(source).toMatchObject({
+      source_id: 'src-oregon-deq-bioaccumulative-sediment-2007',
+      title: 'Guidance for Assessing Bioaccumulative Chemicals of Concern in Sediment',
+      publisher: 'Oregon Department of Environmental Quality',
+      file_storage: 'zotero_or_external',
+      zotero_status: 'pending_owner_export',
+      calculator_source_role: 'canonical_candidate',
+      canonical_source_status: 'direct_source_verified',
+    });
+    expect(parameter).toMatchObject({
+      parameter_value_id: 'pv-pcb-logkow',
+      value: 6.5,
+      default_status: 'current_default',
+      qa_status: 'needs_review',
+      evidence_support_status: 'pending_source_locator',
+      extraction_status: 'extracted_from_source',
+      source_ids: ['src-oregon-deq-bioaccumulative-sediment-2007'],
+    });
+    expect(parameter?.evidence_items[0]).toMatchObject({
+      source_id: 'src-oregon-deq-bioaccumulative-sediment-2007',
+      locator: 'PDF page 63, Table C-2, Aroclor 1254 row, CASRN 11097-69-1, log Kow 6.5',
+      locator_type: 'source_table',
+      extraction_method: 'manual_source_extraction',
+      extracted_by: 'codex',
+      extracted_at: '2026-09-02',
+    });
+    expect(parameter?.evidence_items[0].note).toMatch(/remains unpromoted/i);
+    expect(parameter?.review_notes).toMatch(/Do not cite IRIS for this Eco-Direct input/i);
+    expect(getSourceRecord('src-us-epa-iris-aroclor-1254')).toMatchObject({
+      authority_scope: 'international-guidance',
+    });
+    expect(parameter?.source_ids).not.toContain('src-us-epa-iris-aroclor-1254');
+    expect(parameter?.evidence_items[0].source_id).not.toBe('src-us-epa-iris-aroclor-1254');
+  });
+
   it('resolves every parameter source and equation reference', () => {
     for (const parameter of PARAMETER_VALUE_RECORDS) {
       for (const sourceId of parameter.source_ids) {

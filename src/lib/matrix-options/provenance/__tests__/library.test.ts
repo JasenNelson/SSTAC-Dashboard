@@ -13,6 +13,8 @@ import {
   createEvidenceLibraryFilters,
   getParameterValueReviewDisposition,
   getSourceLeadReviewDisposition,
+  isCalculatorEvidenceSource,
+  isEvidenceSource,
   type EvidenceLibraryValueRow,
 } from '../library';
 import type {
@@ -696,9 +698,14 @@ describe('matrix options evidence library helpers', () => {
       'eq-eco-direct-eqp-di-toro',
     ]);
     expect(view.sources.map((row) => row.record.source_id).sort()).toEqual([
+      'src-oregon-deq-bioaccumulative-sediment-2007',
       'src-us-epa-esb-tier2-nonionic-organics-2008',
-      'src-us-epa-iris-aroclor-1254',
     ]);
+
+    const oregon = getSourceRecord('src-oregon-deq-bioaccumulative-sediment-2007');
+    expect(oregon).toBeDefined();
+    expect(isEvidenceSource(oregon!)).toBe(true);
+    expect(isCalculatorEvidenceSource(oregon!)).toBe(true);
   });
 
   it('keeps HH scaffolds as current-calculator needs-review records', () => {

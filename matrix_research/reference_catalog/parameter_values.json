@@ -91,10 +91,10 @@
     "unit": "unitless",
     "value_type": "single_value",
     "default_status": "current_default",
-    "extraction_status": "extracted_from_current_calculator",
+    "extraction_status": "extracted_from_source",
     "qa_status": "needs_review",
     "source_ids": [
-      "src-us-epa-iris-aroclor-1254"
+      "src-oregon-deq-bioaccumulative-sediment-2007"
     ],
     "equation_ids": [
       "eq-eco-direct-eqp-di-toro"
@@ -102,21 +102,21 @@
     "jurisdiction": "general",
     "applicability": "Non-ionic organic EqP pathway.",
     "uncertainty": null,
-    "review_notes": "Starter value from current substance library. Confirm mixture basis.",
+    "review_notes": "Exact Oregon DEQ source-table row recorded at PDF page 63, Table C-2, Aroclor 1254, CASRN 11097-69-1, log Kow 6.5. Value and current-default status are preserved. Evidence remains needs_review and evidence_support_status remains pending_source_locator until owner confirms source identity, applicability, currentness, and review. Do not cite IRIS for this Eco-Direct input; this row is not human-health TRV evidence.",
     "evidence_items": [
       {
-        "source_id": "src-us-epa-iris-aroclor-1254",
-        "locator": "Current calculator substance library; source page/table pending",
+        "source_id": "src-oregon-deq-bioaccumulative-sediment-2007",
+        "locator": "PDF page 63, Table C-2, Aroclor 1254 row, CASRN 11097-69-1, log Kow 6.5",
         "value_text": "6.5",
-        "extraction_method": "current_calculator_scaffold",
+        "extraction_method": "manual_source_extraction",
         "extracted_by": "codex",
-        "extracted_at": "2026-05-23",
+        "extracted_at": "2026-09-02",
         "qa_status": "needs_review",
         "reviewed_by": null,
         "reviewed_at": null,
-        "note": "Exact source locator must be confirmed before approval.",
+        "note": "Exact Oregon DEQ source-table locator captured: PDF page 63, Table C-2, Aroclor 1254, CASRN 11097-69-1, log Kow 6.5. Locator is recorded but remains unpromoted pending owner and QA review.",
         "evidence_id": "ev-pv-pcb-logkow-1",
-        "locator_type": "current_calculator"
+        "locator_type": "source_table"
       }
     ],
     "candidate_group_id": "eco-direct-eqp__total_pcbs_aroclor_1254__logKow__general",
