@@ -12,7 +12,9 @@ import {
   getSourceRecord,
 } from './catalog';
 import type {
+  CanonicalSourceStatus,
   CatalogPathway,
+  DefaultStatus,
   EquationRecord,
   EvidenceSupportStatus,
   EvidenceLibraryFilterRequest,
@@ -20,14 +22,18 @@ import type {
   ParameterValueRecord,
   ProvenancePathway,
   CalculatorSourceRole,
-  CanonicalSourceStatus,
   SourceAuthorityTier,
   SourceCurrentnessStatus,
   SourceRelationship,
   SourceRelationshipRole,
   SourceRecord,
 } from './types';
-import { isProvenancePathway } from './pathways';
+import {
+  catalogValueRole,
+  isCatalogEvidencePathway,
+  isProvenancePathway,
+  type CatalogValueRole,
+} from './pathways';
 
 export interface EvidenceLibraryValueRow {
   record: ParameterValueRecord;
@@ -39,6 +45,253 @@ export interface EvidenceLibraryValueRow {
   populationGroups: string[];
   speciesGroups: string[];
   assumptionTags: string[];
+}
+
+// `incomplete` is used when at least one evidence item is missing or carries a placeholder
+// locator, even if another item on the same record has a usable locator.
+export type CatalogTruthLensLocatorStatus =
+  | 'present'
+  | 'placeholder'
+  | 'missing'
+  | 'incomplete';
+
+export type CatalogTruthLensBlockedReason =
+  | 'none'
+  | 'catalog_only_pathway'
+  | 'superseded_record'
+  | 'calculator_scaffold_review_required'
+  | 'qa_review_required'
+  | 'canonical_source_verification_required'
+  | 'exact_locator_required'
+  | 'source_currentness_check_required'
+  | 'evidence_support_review_required';
+
+export type CatalogTruthLensNextAction =
+  | 'read_only_review'
+  | 'exact_locator_work'
+  | 'currentness_check'
+  | 'policy_review'
+  | 'no_action';
+
+export interface CatalogTruthLens {
+  identity: {
+    parameterValueId: string;
+    displayName: string;
+    substanceKey: string;
+    substanceLabel: string;
+    pathway: CatalogPathway;
+    inputKey: string;
+    candidateGroupId: string;
+  };
+  role: CatalogValueRole;
+  calculatorReachable: boolean;
+  defaultStatus: DefaultStatus;
+  review: {
+    qaStatus: ParameterValueRecord['qa_status'];
+    extractionStatus: ParameterValueRecord['extraction_status'];
+  };
+  support: {
+    evidenceSupportStatus: EvidenceSupportStatus;
+    evidenceCount: number;
+  };
+  provenance: {
+    sourceCount: number;
+    currentnessStatuses: SourceCurrentnessStatus[];
+    currentnessSummary: SourceCurrentnessStatus | 'no_sources';
+    canonicalSourceStatus: CanonicalSourceStatus | 'not_recorded';
+  };
+  locator: {
+    status: CatalogTruthLensLocatorStatus;
+    presentCount: number;
+    placeholderCount: number;
+    missingCount: number;
+  };
+  blocked: {
+    reason: CatalogTruthLensBlockedReason;
+    nextAction: CatalogTruthLensNextAction;
+    remainingReasons: CatalogTruthLensBlockedReason[];
+  };
+}
+
+const PLACEHOLDER_LOCATOR_PATTERN =
+  /\b(?:pending|placeholder|not recorded|unknown|tbd|todo)\b/i;
+
+function locatorStatus(locator: string): 'present' | 'placeholder' | 'missing' {
+  const normalized = locator.trim();
+  if (!normalized) return 'missing';
+  return PLACEHOLDER_LOCATOR_PATTERN.test(normalized)
+    ? 'placeholder'
+    : 'present';
+}
+
+function currentnessSummary(
+  statuses: SourceCurrentnessStatus[],
+): SourceCurrentnessStatus | 'no_sources' {
+  if (statuses.length === 0) return 'no_sources';
+  if (statuses.includes('superseded')) return 'superseded';
+  if (statuses.includes('needs_currentness_check')) {
+    return 'needs_currentness_check';
+  }
+  if (statuses.includes('unknown')) return 'unknown';
+  return 'current';
+}
+
+/**
+ * Derives the read-only trust hierarchy for one catalog value row.
+ *
+ * This function intentionally reports local record state only. It does not infer scientific
+ * correctness, change default policy, or promote an evidence-level state to product GREEN.
+ * Blockers are ordered so a row has one stable primary reason while preserving all remaining
+ * reasons for the dossier. The order is: superseded, catalog-only, calculator scaffold, QA,
+ * canonical source, locator, source currentness, then evidence support.
+ */
+export function buildCatalogTruthLens(
+  row: EvidenceLibraryValueRow,
+): CatalogTruthLens {
+  const { record } = row;
+  const role = catalogValueRole(record.pathway);
+  const calculatorReachable = isProvenancePathway(record.pathway);
+  const locatorCounts = row.record.evidence_items.reduce(
+    (counts, evidence) => {
+      const status = locatorStatus(evidence.locator);
+      counts[status] += 1;
+      return counts;
+    },
+    { present: 0, placeholder: 0, missing: 0 },
+  );
+  const locator = {
+    presentCount: locatorCounts.present,
+    placeholderCount: locatorCounts.placeholder,
+    missingCount: locatorCounts.missing,
+    status: locatorCounts.present > 0
+      ? locatorCounts.placeholder > 0 || locatorCounts.missing > 0
+        ? ('incomplete' as const)
+        : ('present' as const)
+      : locatorCounts.placeholder > 0
+        ? ('placeholder' as const)
+        : ('missing' as const),
+  };
+  const currentnessStatuses = Array.from(
+    new Set(row.sources.map((source) => source.currentness_status)),
+  ).sort();
+  const reasons: Array<{
+    reason: CatalogTruthLensBlockedReason;
+    nextAction: CatalogTruthLensNextAction;
+  }> = [];
+  const addReason = (
+    reason: CatalogTruthLensBlockedReason,
+    nextAction: CatalogTruthLensNextAction,
+  ) => {
+    if (!reasons.some((candidate) => candidate.reason === reason)) {
+      reasons.push({ reason, nextAction });
+    }
+  };
+
+  if (record.qa_status === 'superseded') {
+    addReason('superseded_record', 'policy_review');
+  }
+  if (!calculatorReachable || isCatalogEvidencePathway(record.pathway)) {
+    addReason('catalog_only_pathway', 'read_only_review');
+  }
+  if (record.evidence_support_status === 'current_calculator_scaffold') {
+    addReason('calculator_scaffold_review_required', 'read_only_review');
+  }
+  if (record.qa_status === 'needs_review') {
+    addReason('qa_review_required', 'read_only_review');
+  }
+  if (
+    record.canonical_source_status === 'needs_direct_source_check' ||
+    record.canonical_source_status === 'needs_exact_source_locator'
+  ) {
+    addReason('canonical_source_verification_required', 'read_only_review');
+  }
+  if (locator.status !== 'present') {
+    addReason('exact_locator_required', 'exact_locator_work');
+  }
+  if (
+    currentnessStatuses.length === 0 ||
+    currentnessStatuses.some((status) => status !== 'current')
+  ) {
+    addReason('source_currentness_check_required', 'currentness_check');
+  }
+  if (
+    record.evidence_support_status !== 'approved_source_backed' &&
+    record.evidence_support_status !== 'current_calculator_scaffold'
+  ) {
+    addReason('evidence_support_review_required', 'read_only_review');
+  }
+
+  const primary = reasons[0] ?? {
+    reason: 'none' as const,
+    nextAction: 'no_action' as const,
+  };
+
+  return {
+    identity: {
+      parameterValueId: record.parameter_value_id,
+      displayName: record.display_name,
+      substanceKey: record.substance_key,
+      substanceLabel: row.substanceLabel,
+      pathway: record.pathway,
+      inputKey: record.input_key,
+      candidateGroupId: record.candidate_group_id,
+    },
+    role,
+    calculatorReachable,
+    defaultStatus: record.default_status,
+    review: {
+      qaStatus: record.qa_status,
+      extractionStatus: record.extraction_status,
+    },
+    support: {
+      evidenceSupportStatus: record.evidence_support_status,
+      evidenceCount: record.evidence_items.length,
+    },
+    provenance: {
+      sourceCount: row.sources.length,
+      currentnessStatuses,
+      currentnessSummary: currentnessSummary(currentnessStatuses),
+      canonicalSourceStatus: record.canonical_source_status ?? 'not_recorded',
+    },
+    locator,
+    blocked: {
+      reason: primary.reason,
+      nextAction: primary.nextAction,
+      remainingReasons: reasons
+        .slice(1)
+        .map((candidate) => candidate.reason),
+    },
+  };
+}
+
+export function catalogTruthLensReasonLabel(
+  reason: CatalogTruthLensBlockedReason,
+): string {
+  const labels: Record<CatalogTruthLensBlockedReason, string> = {
+    none: 'None recorded',
+    catalog_only_pathway: 'Catalog-only pathway is not calculator-reachable',
+    superseded_record: 'Record is superseded',
+    calculator_scaffold_review_required: 'Current calculator scaffold needs review',
+    qa_review_required: 'QA review is required',
+    canonical_source_verification_required: 'Canonical source verification is required',
+    exact_locator_required: 'Exact evidence locator is required',
+    source_currentness_check_required: 'Source currentness check is required',
+    evidence_support_review_required: 'Evidence support review is required',
+  };
+  return labels[reason];
+}
+
+export function catalogTruthLensNextActionLabel(
+  action: CatalogTruthLensNextAction,
+): string {
+  const labels: Record<CatalogTruthLensNextAction, string> = {
+    read_only_review: 'Read-only review',
+    exact_locator_work: 'Exact locator work',
+    currentness_check: 'Currentness check',
+    policy_review: 'Policy review',
+    no_action: 'No action',
+  };
+  return labels[action];
 }
 
 export interface EvidenceLibraryEquationRow {

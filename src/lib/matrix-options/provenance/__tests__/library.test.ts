@@ -7,13 +7,105 @@ import {
 } from '../catalog';
 import {
   buildCalculatorEvidenceRequest,
+  buildCatalogTruthLens,
   buildEvidenceLibraryView,
   buildProtocol28ReviewSummary,
   createEvidenceLibraryFilters,
   getParameterValueReviewDisposition,
   getSourceLeadReviewDisposition,
+  type EvidenceLibraryValueRow,
 } from '../library';
-import type { SourceRecord } from '../types';
+import type {
+  EvidenceItem,
+  ParameterValueRecord,
+  SourceCurrentnessStatus,
+  SourceRecord,
+} from '../types';
+
+function lensSource(
+  status: SourceCurrentnessStatus = 'current',
+): SourceRecord {
+  return {
+    source_id: `lens-source-${status}`,
+    short_citation: 'Lens test source',
+    title: 'Lens test source',
+    year: 2026,
+    publisher: 'Test publisher',
+    doi: null,
+    url: null,
+    zotero_item_key: null,
+    zotero_collection_path: null,
+    zotero_attachment_keys: [],
+    zotero_status: 'not_in_zotero',
+    external_file_hint: null,
+    file_storage: 'repo_metadata_only',
+    notes: null,
+    authority_scope: 'repo-design',
+    currentness_status: status,
+    version: null,
+    page_last_modified: null,
+    checked_at: null,
+    conflict_rule: null,
+    supersedes_source_ids: [],
+  };
+}
+
+function lensEvidence(locator: string): EvidenceItem {
+  return {
+    evidence_id: `lens-evidence-${locator || 'missing'}`,
+    source_id: 'lens-source-current',
+    locator,
+    locator_type: 'source_table',
+    value_text: '1',
+    extraction_method: 'manual_source_extraction',
+    extracted_by: 'test',
+    extracted_at: '2026-09-01',
+    qa_status: 'approved',
+    reviewed_by: 'test',
+    reviewed_at: '2026-09-01',
+    note: null,
+  };
+}
+
+function lensRow(
+  overrides: Partial<ParameterValueRecord> = {},
+  sources: SourceRecord[] = [lensSource()],
+): EvidenceLibraryValueRow {
+  const record: ParameterValueRecord = {
+    parameter_value_id: 'lens-value-1',
+    substance_key: 'lens-substance',
+    pathway: 'human-health-food',
+    input_key: 'rfd_oral_mg_per_kg_bw_day',
+    display_name: 'Lens test value',
+    value: 1,
+    unit: 'mg/kg-bw/day',
+    value_type: 'single_value',
+    candidate_group_id: 'lens-group-1',
+    default_status: 'current_default',
+    evidence_support_status: 'approved_source_backed',
+    extraction_status: 'extracted_from_source',
+    qa_status: 'approved',
+    source_ids: sources.map((source) => source.source_id),
+    equation_ids: ['lens-equation-1'],
+    jurisdiction: 'general',
+    applicability: 'Test-only row',
+    uncertainty: null,
+    evidence_items: [lensEvidence('Table 1, p. 1')],
+    review_notes: '',
+    ...overrides,
+  };
+  return {
+    record,
+    substanceLabel: 'Lens Substance',
+    sources,
+    equations: [],
+    sourceRelationships: [],
+    receptorGroups: [],
+    populationGroups: [],
+    speciesGroups: [],
+    assumptionTags: [],
+  };
+}
 
 // 2026-07-16: Stage 2 copper #18 disposal (scripts/matrix-options/promote-copper-hc0426.mjs, owner
 // --apply pending) will flip these 6 redundant copper oral-RfD candidates from needs_review ->
@@ -732,6 +824,160 @@ describe('matrix options evidence library helpers', () => {
         }
       }
     }
+  });
+});
+
+describe('Catalog Truth Lens', () => {
+  it('reports the complete read-only hierarchy without changing the row', () => {
+    const row = lensRow({
+      canonical_source_status: 'direct_source_verified',
+    });
+    const before = JSON.stringify(row.record);
+
+    const lens = buildCatalogTruthLens(row);
+
+    expect(lens.identity).toMatchObject({
+      parameterValueId: 'lens-value-1',
+      substanceLabel: 'Lens Substance',
+      pathway: 'human-health-food',
+      inputKey: 'rfd_oral_mg_per_kg_bw_day',
+    });
+    expect(lens.role).toBe('selectable-value');
+    expect(lens.calculatorReachable).toBe(true);
+    expect(lens.defaultStatus).toBe('current_default');
+    expect(lens.review).toEqual({
+      qaStatus: 'approved',
+      extractionStatus: 'extracted_from_source',
+    });
+    expect(lens.support).toEqual({
+      evidenceSupportStatus: 'approved_source_backed',
+      evidenceCount: 1,
+    });
+    expect(lens.provenance).toMatchObject({
+      sourceCount: 1,
+      currentnessStatuses: ['current'],
+      currentnessSummary: 'current',
+      canonicalSourceStatus: 'direct_source_verified',
+    });
+    expect(lens.locator).toMatchObject({
+      status: 'present',
+      presentCount: 1,
+      placeholderCount: 0,
+      missingCount: 0,
+    });
+    expect(lens.blocked).toEqual({
+      reason: 'none',
+      nextAction: 'no_action',
+      remainingReasons: [],
+    });
+    expect(JSON.stringify(row.record)).toBe(before);
+  });
+
+  it('uses deterministic blocker order and retains additional blockers', () => {
+    const lens = buildCatalogTruthLens(
+      lensRow(
+        {
+          default_status: 'available_option',
+          evidence_support_status: 'current_calculator_scaffold',
+          qa_status: 'needs_review',
+          evidence_items: [lensEvidence('Current calculator substance library; source pending')],
+        },
+        [lensSource('needs_currentness_check')],
+      ),
+    );
+
+    expect(lens.blocked.reason).toBe('calculator_scaffold_review_required');
+    expect(lens.blocked.nextAction).toBe('read_only_review');
+    expect(lens.blocked.remainingReasons).toEqual([
+      'qa_review_required',
+      'exact_locator_required',
+      'source_currentness_check_required',
+    ]);
+  });
+
+  it('does not treat an approved source-backed available option as blocked by default status alone', () => {
+    const lens = buildCatalogTruthLens(
+      lensRow({
+        default_status: 'available_option',
+        canonical_source_status: 'direct_source_verified',
+      }),
+    );
+
+    expect(lens.defaultStatus).toBe('available_option');
+    expect(lens.blocked).toEqual({
+      reason: 'none',
+      nextAction: 'no_action',
+      remainingReasons: [],
+    });
+  });
+
+  it('distinguishes catalog-only pathways from calculator-reachable values', () => {
+    const lens = buildCatalogTruthLens(
+      lensRow({ pathway: 'human-health-inhalation' }),
+    );
+
+    expect(lens.role).toBe('selectable-value');
+    expect(lens.calculatorReachable).toBe(false);
+    expect(lens.blocked.reason).toBe('catalog_only_pathway');
+    expect(lens.blocked.nextAction).toBe('read_only_review');
+  });
+
+  it('classifies missing, placeholder, present, and mixed locator states', () => {
+    expect(
+      buildCatalogTruthLens(lensRow({ evidence_items: [] })).locator.status,
+    ).toBe('missing');
+    expect(
+      buildCatalogTruthLens(
+        lensRow({
+          evidence_items: [lensEvidence('TBD - source page pending')],
+        }),
+      ).locator.status,
+    ).toBe('placeholder');
+    expect(
+      buildCatalogTruthLens(lensRow({ evidence_items: [lensEvidence('Table 2, p. 4')] })).locator.status,
+    ).toBe('present');
+    const mixed = buildCatalogTruthLens(
+      lensRow({
+        evidence_items: [lensEvidence('Table 2, p. 4'), lensEvidence('TBD')],
+      }),
+    );
+    expect(mixed.locator).toMatchObject({
+      status: 'incomplete',
+      presentCount: 1,
+      placeholderCount: 1,
+      missingCount: 0,
+    });
+    expect(mixed.blocked.reason).toBe('exact_locator_required');
+    const mixedMissing = buildCatalogTruthLens(
+      lensRow({
+        evidence_items: [lensEvidence('Table 2, p. 4'), lensEvidence('')],
+      }),
+    );
+    expect(mixedMissing.locator).toMatchObject({
+      status: 'incomplete',
+      presentCount: 1,
+      placeholderCount: 0,
+      missingCount: 1,
+    });
+    expect(mixedMissing.blocked.reason).toBe('exact_locator_required');
+  });
+
+  it('does not allow pending source locator support to produce an unblocked lens', () => {
+    const lens = buildCatalogTruthLens(
+      lensRow({ evidence_support_status: 'pending_source_locator' }),
+    );
+
+    expect(lens.blocked.reason).toBe('evidence_support_review_required');
+    expect(lens.blocked.reason).not.toBe('none');
+  });
+
+  it('makes superseded records policy-blocked even when evidence is source-backed', () => {
+    const lens = buildCatalogTruthLens(
+      lensRow({ qa_status: 'superseded' }),
+    );
+
+    expect(lens.blocked.reason).toBe('superseded_record');
+    expect(lens.blocked.nextAction).toBe('policy_review');
   });
 });
 

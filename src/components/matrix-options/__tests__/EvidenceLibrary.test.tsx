@@ -629,6 +629,39 @@ describe('EvidenceLibrary', () => {
   });
 });
 
+describe('EvidenceLibrary -- Catalog Truth Lens', () => {
+  it('keeps the row lens compact and repeats the full hierarchy in the selected dossier', async () => {
+    renderControlled();
+
+    const row = screen.getByRole('button', {
+      name: /Inspect Benzo\[a\]pyrene log Kow/,
+    });
+    const rowLens = within(row).getByTestId('catalog-truth-lens-row');
+
+    expect(rowLens).toHaveTextContent('Role: Selectable calculator value');
+    expect(rowLens).toHaveTextContent('Reach: Calculator-reachable');
+    expect(rowLens).toHaveTextContent('Primary trust: QA review is required');
+    expect(within(rowLens).queryByText('QA needs review')).not.toBeInTheDocument();
+    expect(within(rowLens).queryByText('Other blockers')).not.toBeInTheDocument();
+
+    fireEvent.click(rowLens);
+    expect(screen.getByTestId('evidence-library-right-dashboard')).toBeInTheDocument();
+    expect(screen.queryByTestId('evidence-library-value-detail')).not.toBeInTheDocument();
+
+    fireEvent.click(row);
+
+    await waitFor(() => {
+      expect(screen.getByTestId('evidence-library-value-detail')).toBeInTheDocument();
+    });
+    const dossierLens = within(
+      screen.getByTestId('evidence-library-value-detail'),
+    ).getByTestId('catalog-truth-lens-dossier');
+    expect(dossierLens).toHaveTextContent('Catalog Truth Lens');
+    expect(dossierLens).toHaveTextContent('QA review is required');
+    expect(dossierLens).toHaveTextContent('Other blockers');
+  });
+});
+
 // ---------------------------------------------------------------------------
 // UI batch Group B, 2026-08-15: decisions #2, #5, #6, #1b
 // (docs/UI_DECISIONS_2026_08_15.md / docs/UI_BATCH_PLAN_2026_08_15.md)

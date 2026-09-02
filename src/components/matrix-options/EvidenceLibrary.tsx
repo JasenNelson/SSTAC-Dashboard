@@ -32,7 +32,10 @@ import {
   PROTOCOL28_POLICY_ALIGNMENT,
   buildProtocol28ReviewSummary,
   buildCrossPathwayAudit,
+  buildCatalogTruthLens,
   buildEvidenceLibraryView,
+  catalogTruthLensNextActionLabel,
+  catalogTruthLensReasonLabel,
   createEvidenceLibraryFilters,
   getParameterValueReviewDisposition,
   getSourceLeadReviewDisposition,
@@ -46,6 +49,7 @@ import type {
   EvidenceLibraryProtocol28ReviewSummary,
   EvidenceLibrarySourceLeadSummary,
   EvidenceLibrarySourceRow,
+  CatalogTruthLens,
   EvidenceLibraryValueGroup,
   EvidenceLibraryValueRow,
 } from '@/lib/matrix-options/provenance/library';
@@ -496,6 +500,132 @@ function ReviewDispositionNote({
         </div>
       )}
     </div>
+  );
+}
+
+function CatalogTruthLensSummary({
+  row,
+  compact = false,
+}: {
+  row: EvidenceLibraryValueRow;
+  compact?: boolean;
+}) {
+  const lens: CatalogTruthLens = buildCatalogTruthLens(row);
+  const testId = compact
+    ? 'catalog-truth-lens-row'
+    : 'catalog-truth-lens-dossier';
+  const roleLabel = lens.role === 'toxicity-weighting-modifier'
+    ? 'Toxicity-weighting modifier'
+    : lens.calculatorReachable
+      ? 'Selectable calculator value'
+      : 'Catalog-only evidence category';
+  const reachLabel = lens.calculatorReachable
+    ? 'Calculator-reachable'
+    : 'Catalog-only; not calculator-reachable';
+  const currentnessLabel = lens.provenance.currentnessSummary === 'no_sources'
+    ? 'No linked sources'
+    : humanizeCatalogLabel(lens.provenance.currentnessSummary);
+  const locatorLabel = `${humanizeCatalogLabel(lens.locator.status)} (${lens.locator.presentCount}/${lens.support.evidenceCount})`;
+
+  if (compact) {
+    return (
+      <div
+        className="mt-2 flex max-w-full flex-wrap gap-x-2 gap-y-0.5 rounded-md border border-indigo-100 bg-indigo-50/50 px-2 py-1.5 text-[10px] text-indigo-950 dark:border-indigo-900/60 dark:bg-indigo-950/20 dark:text-indigo-100"
+        data-testid={testId}
+        aria-label="Catalog Truth Lens row summary"
+        onClick={(event) => event.stopPropagation()}
+      >
+        <span>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Role:</span>{' '}
+          {roleLabel}
+        </span>
+        <span>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Reach:</span>{' '}
+          {reachLabel}
+        </span>
+        <span data-testid="catalog-truth-lens-blocked-reason">
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Primary trust:</span>{' '}
+          {catalogTruthLensReasonLabel(lens.blocked.reason)}
+        </span>
+      </div>
+    );
+  }
+
+  return (
+    <section
+      className={cn(
+        'rounded-md border border-indigo-100 bg-indigo-50/50 text-indigo-950 dark:border-indigo-900/60 dark:bg-indigo-950/20 dark:text-indigo-100',
+        compact ? 'mt-2 p-2 text-[10px]' : 'p-3 text-xs',
+      )}
+      data-testid={testId}
+      aria-label="Catalog Truth Lens"
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className="font-bold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+          Catalog Truth Lens
+        </span>
+        {!compact && (
+          <span className="text-[10px] text-indigo-700/80 dark:text-indigo-300/80">
+            Read-only summary
+          </span>
+        )}
+      </div>
+      <div className={cn('grid gap-x-3 gap-y-1', compact ? 'mt-1.5 grid-cols-2' : 'mt-2 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4')}>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Role</span>{' '}
+          <span>{roleLabel}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Reach</span>{' '}
+          <span>{reachLabel}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Default</span>{' '}
+          <span>{humanizeCatalogLabel(lens.defaultStatus)}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">QA</span>{' '}
+          <span>{humanizeCatalogLabel(lens.review.qaStatus)}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Extraction</span>{' '}
+          <span>{humanizeCatalogLabel(lens.review.extractionStatus)}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Evidence support</span>{' '}
+          <span>{humanizeCatalogLabel(lens.support.evidenceSupportStatus)} ({lens.support.evidenceCount})</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Sources</span>{' '}
+          <span>{lens.provenance.sourceCount}; {currentnessLabel}</span>
+        </div>
+        <div>
+          <span className="font-semibold text-indigo-700/80 dark:text-indigo-300/80">Locators</span>{' '}
+          <span>{locatorLabel}</span>
+        </div>
+      </div>
+      <div className="mt-2 border-t border-indigo-200/70 pt-1.5 dark:border-indigo-800/60" data-testid="catalog-truth-lens-blocked-reason">
+        <span className="font-semibold">Blocked reason:</span>{' '}
+        <span>{catalogTruthLensReasonLabel(lens.blocked.reason)}</span>
+        <span className="mx-1.5 text-indigo-400" aria-hidden="true">|</span>
+        <span className="font-semibold">Next safe action:</span>{' '}
+        <span data-testid="catalog-truth-lens-next-action">
+          {catalogTruthLensNextActionLabel(lens.blocked.nextAction)}
+        </span>
+      </div>
+      {lens.blocked.remainingReasons.length > 0 && (
+        <details className="mt-1.5" data-testid="catalog-truth-lens-remaining-blockers">
+          <summary className="cursor-pointer font-semibold text-indigo-700 dark:text-indigo-300">
+            Other blockers ({lens.blocked.remainingReasons.length})
+          </summary>
+          <ul className="mt-1 list-disc pl-4">
+            {lens.blocked.remainingReasons.map((reason) => (
+              <li key={reason}>{catalogTruthLensReasonLabel(reason)}</li>
+            ))}
+          </ul>
+        </details>
+      )}
+    </section>
   );
 }
 
@@ -2223,7 +2353,7 @@ function ValueDetailPanel({
 
       {/* Hero Value Card */}
       <div className="p-3 rounded-xl bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-2">
-        <div className="flex items-baseline justify-between">
+          <div className="flex items-baseline justify-between">
           <span className="text-[10px] uppercase font-bold text-slate-400">Numerical Value</span>
           <div className="font-mono text-xl font-black text-slate-900 dark:text-white">
             {formatValue(row.record.value, row.record.unit)}
@@ -2237,8 +2367,10 @@ function ValueDetailPanel({
           {row.record.canonical_source_status && (
             <StatusBadge value={row.record.canonical_source_status} />
           )}
+          </div>
         </div>
-      </div>
+
+        <CatalogTruthLensSummary row={row} />
 
       {isAdmin && (
         <QaReviewActions
@@ -6222,6 +6354,7 @@ export default function EvidenceLibrary({
                               <div className="text-[11px] text-slate-500 dark:text-slate-400 break-words">
                                 {row.substanceLabel}
                               </div>
+                              <CatalogTruthLensSummary row={row} compact />
                             </div>
                             <button
                               type="button"
