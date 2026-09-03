@@ -1,6 +1,7 @@
 import React from 'react';
 import { createServerClient } from '@supabase/ssr';
 import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 import fs from 'fs';
 import path from 'path';
 
@@ -13,6 +14,11 @@ import {
   type MatrixMapData,
   type MatrixSiteAggregateData,
 } from '@/app/(dashboard)/matrix-map/types';
+import {
+  isMatrixOptionsPaperWorkspaceEnabled,
+  MATRIX_OPTIONS_PAPER_LANDING_PATH,
+  parseMatrixOptionsViewParam,
+} from '@/lib/matrix-options/navigation';
 
 export const metadata = {
   title: 'Matrix Options Analysis | SSTAC Dashboard',
@@ -40,7 +46,19 @@ async function buildSupabase() {
   );
 }
 
-export default async function MatrixOptionsPage() {
+interface MatrixOptionsPageProps {
+  searchParams: Promise<{ view?: string | string[] }>;
+}
+
+export default async function MatrixOptionsPage({ searchParams }: MatrixOptionsPageProps) {
+  const { view } = await searchParams;
+  const initialViewId = parseMatrixOptionsViewParam(view);
+  const paperWorkspaceEnabled = isMatrixOptionsPaperWorkspaceEnabled(
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
+  );
+  if (paperWorkspaceEnabled && initialViewId === 'TWG Review') {
+    redirect(MATRIX_OPTIONS_PAPER_LANDING_PATH);
+  }
   const readDraft = (filename: string) => {
     try {
       const filePath = path.join(process.cwd(), 'matrix_research', 'content_drafts', filename);
@@ -110,6 +128,8 @@ export default async function MatrixOptionsPage() {
       <MatrixDashboard
         guideContent={guideContent}
         finalDraftContent={finalDraftContent}
+        initialViewId={initialViewId}
+        paperWorkspaceEnabled={paperWorkspaceEnabled}
         initialMapData={initialMapData}
         fetchErrorMessage={fetchErrorMessage}
         siteAggregateData={siteAggregateData}

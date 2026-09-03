@@ -19,9 +19,9 @@ import {
   type MatrixSiteAggregateData,
 } from '@/app/(dashboard)/matrix-map/types';
 import MathRenderer from './MathRenderer';
-import ScrollFadeRegion from './ScrollFadeRegion';
 import ConceptualMatrix from './ConceptualMatrix';
 import TWGReviewPortal from './TWGReviewPortal';
+import MatrixOptionsPrimaryNavigation from './matrix-options/MatrixOptionsPrimaryNavigation';
 import BackgroundAdjustment, {
   type AdjustedStandardReport,
   type BackgroundAdjustmentPreliminaryStandard,
@@ -85,6 +85,12 @@ import {
   clampMatrixMapPanelWidth,
   getMatrixMapPanelMaxWidth,
 } from './matrix-map-panel-layout';
+import {
+  MATRIX_OPTIONS_TABPANEL_ID,
+  matrixOptionsPrimaryTabId,
+  matrixOptionsViewLabel,
+  type MatrixOptionsViewId,
+} from '@/lib/matrix-options/navigation';
 
 // Audience tier for the Calculator sidebar guide. The value is persisted
 // with the rest of the lifted Calculator state so the chosen explanation
@@ -227,6 +233,8 @@ function restoreJurisdiction(): RegulatoryFrame {
 interface MatrixDashboardProps {
   guideContent: string;
   finalDraftContent: string;
+  initialViewId?: MatrixOptionsViewId;
+  paperWorkspaceEnabled?: boolean;
   /**
    * Server-fetched matrix-map RPC payload. Embedded in the 'Interactive Map'
    * tab (BN-RRM tab pattern, owner directive 2026-05-20). Replaces the
@@ -251,53 +259,16 @@ interface MatrixDashboardProps {
   siteAggregateFetchErrorMessage?: string | null;
 }
 
-// 'Vision for Modernizing Schedule 3.4' (was 'Conceptual Model'): the view now
-// states the project's own three-part vision for Schedule 3.4, sourced from the
-// Phase 2 project plan, so the generic label no longer described it.
-const TABS = [
-  'The Guide',
-  'Vision for Modernizing Schedule 3.4',
-  'TWG Review',
-  'Interactive Map',
-  'Calculator',
-  'SSD Workbench',
-  'References & Values',
-];
-// Display labels for the top tabs. The internal tab IDENTIFIER strings in TABS
-// are load-bearing (compared against activeTopTab in control flow throughout
-// this file), so they MUST stay stable. Render the user-facing label via this
-// lookup instead of renaming the identifier. Only entries that differ from the
-// identifier need listing; unlisted tabs render their identifier verbatim.
-const TAB_LABELS: Record<string, string> = {
-  'The Guide': 'Guide',
-  'Vision for Modernizing Schedule 3.4': 'Modernizing Schedule 3.4',
-  'Interactive Map': 'Database',
-  'References & Values': 'Catalogue',
-};
-// A11y (A1/A2 fixes, 2026-08-14): id helper for the primary top nav and panel.
-// Same roving-tabindex pattern as matrix-options/CategorySelector.tsx (the in-repo
-// reference implementation); forked here rather than re-invented.
-function slugifyTabId(label: string): string {
-  return label
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/(^-+|-+$)/g, '');
-}
-
-const PRIMARY_TABPANEL_ID = 'matrix-dashboard-tabpanel';
-
 // Audit #16: the tabs whose markdown document has its leading `# ` demoted to `##` by
 // demoteLeadingH1, and therefore the ONLY tabs that need a replacement level-1 heading when
 // printed.
 const DEMOTED_DOCUMENT_TABS = new Set(['The Guide']);
 
-function primaryTabId(tab: string): string {
-  return `matrix-tab-${slugifyTabId(tab)}`;
-}
-
 export default function MatrixDashboard({
   guideContent,
   finalDraftContent,
+  initialViewId = 'The Guide',
+  paperWorkspaceEnabled = false,
   initialMapData = EMPTY_MATRIX_MAP_DATA,
   fetchErrorMessage = null,
   siteAggregateData = EMPTY_MATRIX_SITE_AGGREGATE_DATA,
@@ -324,7 +295,7 @@ export default function MatrixDashboard({
       return Array.from(byId.values());
     });
   }, []);
-  const [activeTopTab, setActiveTopTab] = useState('The Guide');
+  const [activeTopTab, setActiveTopTab] = useState<MatrixOptionsViewId>(initialViewId);
   // Side panels open by default in Map/TWG modes. In Calculator mode, the panels
   // start collapsed per user preference.
   const [showLeftPanel, setShowLeftPanel] = useState(true);
@@ -416,32 +387,6 @@ export default function MatrixDashboard({
   // single recompute without waiting for the ref to update post-render.
   const leftWidthRef = useRef(MATRIX_MAP_LEFT_PANEL_DEFAULT_WIDTH);
   const rightWidthRef = useRef(MATRIX_MAP_RIGHT_PANEL_DEFAULT_WIDTH);
-  // A11y (A1/A2): roving-tabindex focus targets for the primary tab list,
-  // keyed by tab label. Same pattern as CategorySelector's buttonRefs.
-  const primaryTabRefs = useRef<Record<string, HTMLButtonElement | null>>({});
-  // P3-1 (a11y audit 2026-08-14): manual-activation roving-tabindex focus
-  // target for the primary 7-tab top nav, tracked separately from
-  // activeTopTab. See handlePrimaryTabKeyDown below for why this tablist
-  // uses manual (not automatic) activation.
-  const [focusedPrimaryTab, setFocusedPrimaryTab] = useState(TABS[0]);
-  // Interactivity marker for the primary tablist (2026-08-14 a11y e2e).
-  // /matrix-options paints its full SSR markup -- including every tab button
-  // with correct role/ARIA/tabindex -- before React has client-rendered this
-  // component. Inside that window the buttons are inert DOM: no onKeyDown, no
-  // onClick. Worse, the client render REPLACES those nodes rather than
-  // hydrating them in place (measured 2026-08-14: the SSR node identity does
-  // not survive, and DOM focus is dropped to <body> when it happens), so a
-  // real-browser test that focuses a tab and presses a key during that window
-  // silently no-ops against a doomed node. Waiting on any SSR-present element
-  // (a heading, the tablist itself) cannot detect this. This flag is set in a
-  // mount-only effect, so the data attribute below can only ever appear on the
-  // live, handler-bearing render -- making it a deterministic "the tablist is
-  // interactive now" gate for e2e (see gotoMatrixOptionsOrSkip in
-  // e2e/matrix-options.spec.ts).
-  const [primaryTablistReady, setPrimaryTablistReady] = useState(false);
-  useEffect(() => {
-    setPrimaryTablistReady(true);
-  }, []);
   // ARIA ranges for the resize separators. aria-valuemax depends on
   // window.innerWidth, which differs between SSR and the client; computing
   // it at render time would ship an invalid SSR range (valuemax below
@@ -733,15 +678,6 @@ export default function MatrixDashboard({
   useEffect(() => {
     if (!showRightPanel) setMatrixMapWorkbenchFocused(false);
   }, [showRightPanel]);
-
-  // Keep the primary tablist's roving-tabindex focus target in sync when
-  // activeTopTab changes by any means other than an explicit arrow-key
-  // focus move (click activation, or a programmatic jump such as
-  // handleOpenEvidenceLibrary switching to 'References & Values'), so the
-  // next Tab-into-the-tablist lands on the now-active tab.
-  useEffect(() => {
-    setFocusedPrimaryTab(activeTopTab);
-  }, [activeTopTab]);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
@@ -1095,48 +1031,6 @@ export default function MatrixDashboard({
     activeTopTab === 'Calculator' ? 'lg:w-96' : 'lg:w-80';
   const rightPanelInnerWidth =
     activeTopTab === 'Calculator' ? 'w-full lg:w-[384px]' : 'w-full lg:w-[320px]';
-
-  // A11y (A2/P3-1): roving-tabindex arrow-key navigation for the primary
-  // 7-tab top nav, using MANUAL activation per the ARIA Authoring
-  // Practices Guide (https://www.w3.org/WAI/ARIA/apg/patterns/tabs/ --
-  // "Tabs With Manual Activation"). Arrow/Home/End move DOM focus only
-  // (roving tabindex, tracked by focusedPrimaryTab); they do NOT call
-  // setActiveTopTab. Activation happens on click or on Enter/Space, which
-  // native <button> already turns into a click event, so no separate
-  // Enter/Space handling is needed here.
-  //
-  // Manual activation was chosen for THIS tablist because its panels are
-  // expensive to mount/unmount: the Vision page, TWG Review, the Leaflet-based Interactive Map,
-  // the Calculator (5 stacked calculators + in-progress user input), and
-  // the SSD Workbench. Automatic activation would mount-then-unmount each
-  // of these in sequence while a keyboard user simply arrows past them to
-  // reach a farther tab, and would silently discard any in-progress
-  // Calculator input the moment the user arrowed off that tab.
-  const handlePrimaryTabKeyDown = (
-    event: React.KeyboardEvent<HTMLButtonElement>,
-    currentTab: string,
-  ): void => {
-    const navKeys = ['ArrowRight', 'ArrowLeft', 'Home', 'End'];
-    if (!navKeys.includes(event.key)) return;
-    event.preventDefault();
-
-    const currentIdx = TABS.indexOf(currentTab);
-    const safeIdx = currentIdx === -1 ? 0 : currentIdx;
-    let nextIdx = safeIdx;
-    if (event.key === 'ArrowRight') {
-      nextIdx = (safeIdx + 1) % TABS.length;
-    } else if (event.key === 'ArrowLeft') {
-      nextIdx = (safeIdx - 1 + TABS.length) % TABS.length;
-    } else if (event.key === 'Home') {
-      nextIdx = 0;
-    } else if (event.key === 'End') {
-      nextIdx = TABS.length - 1;
-    }
-
-    const nextTab = TABS[nextIdx];
-    setFocusedPrimaryTab(nextTab);
-    primaryTabRefs.current[nextTab]?.focus();
-  };
 
   const renderSidebar = () => {
     switch (activeTopTab) {
@@ -1692,54 +1586,12 @@ export default function MatrixDashboard({
              <div><h1 className="font-bold text-slate-800 dark:text-slate-100 leading-tight">Matrix Options</h1><p className="text-[10px] text-slate-500 dark:text-slate-400 leading-tight">Policy Review</p></div>
           </div>
           <div className="min-w-0 flex-1">
-            <ScrollFadeRegion
-              fadeFrom="from-white dark:from-slate-800"
-              captionText=""
-              className="py-0.5"
-            >
-              <nav aria-label="Matrix Options primary">
-                <div
-                  role="tablist"
-                  aria-label="Matrix Options"
-                  data-primary-tablist-ready={primaryTablistReady ? 'true' : undefined}
-                  className="flex gap-1 bg-slate-100 dark:bg-slate-700 rounded-lg p-1 w-max"
-                >
-                {TABS.map((tab) => {
-                  const selected = activeTopTab === tab;
-                  return (
-                    <button
-                      key={tab}
-                      ref={(el) => {
-                        primaryTabRefs.current[tab] = el;
-                      }}
-                      type="button"
-                      role="tab"
-                      id={primaryTabId(tab)}
-                      aria-selected={selected}
-                      aria-controls={PRIMARY_TABPANEL_ID}
-                      tabIndex={focusedPrimaryTab === tab ? 0 : -1}
-                      onClick={() => {
-                        // NEW-P3-2 (a11y audit round 3): set focusedPrimaryTab
-                        // directly here instead of relying solely on the
-                        // activeTopTab-sync effect above. Clicking the already-
-                        // active tab (e.g. after an arrow key moved DOM focus to
-                        // a different, not-yet-activated tab) makes
-                        // setActiveTopTab(tab) a same-value no-op, so that effect
-                        // never re-fires and tabIndex=0 would otherwise stay on
-                        // the previously-arrowed-to tab while focus is here.
-                        setFocusedPrimaryTab(tab);
-                        setActiveTopTab(tab);
-                      }}
-                      onKeyDown={(e) => handlePrimaryTabKeyDown(e, tab)}
-                      className={cn('relative flex min-h-[44px] items-center gap-2 px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-200 whitespace-nowrap focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-slate-900', selected ? 'bg-white dark:bg-slate-600 text-sky-600 dark:text-sky-400 shadow-sm' : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-white/50 dark:hover:bg-slate-600/50')}
-                    >
-                      <span>{TAB_LABELS[tab] ?? tab}</span>
-                    </button>
-                  );
-                })}
-                </div>
-              </nav>
-            </ScrollFadeRegion>
+            <MatrixOptionsPrimaryNavigation
+              activeViewId={activeTopTab}
+              onSelectView={setActiveTopTab}
+              paperWorkspaceEnabled={paperWorkspaceEnabled}
+              panelId={MATRIX_OPTIONS_TABPANEL_ID}
+            />
           </div>
         </div>
         <div className="flex items-center gap-1 ml-auto pl-4 border-l border-slate-200 dark:border-slate-700">
@@ -1877,7 +1729,7 @@ export default function MatrixDashboard({
           data-testid="matrix-print-title"
           className="hidden print:block px-4 pt-4 text-2xl font-bold text-slate-900"
         >
-          Matrix Options -- {TAB_LABELS[activeTopTab] ?? activeTopTab}
+          Matrix Options -- {matrixOptionsViewLabel(activeTopTab)}
         </h1>
       )}
       <div className="flex flex-col lg:flex-row flex-1 overflow-y-auto lg:overflow-hidden print:block print:overflow-visible print:h-auto">
@@ -2010,8 +1862,8 @@ export default function MatrixDashboard({
                   : 'bg-white dark:bg-slate-950',
               )}
               role="tabpanel"
-              id={PRIMARY_TABPANEL_ID}
-              aria-labelledby={primaryTabId(activeTopTab)}
+              id={MATRIX_OPTIONS_TABPANEL_ID}
+              aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
               tabIndex={-1}
             >
               {renderContent()}
@@ -2127,8 +1979,8 @@ export default function MatrixDashboard({
           <div
             className="flex-1 flex overflow-hidden print:block print:overflow-visible print:h-auto"
             role="tabpanel"
-            id={PRIMARY_TABPANEL_ID}
-            aria-labelledby={primaryTabId(activeTopTab)}
+            id={MATRIX_OPTIONS_TABPANEL_ID}
+            aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
             tabIndex={-1}
           >
             {renderContent()}
@@ -2144,8 +1996,8 @@ export default function MatrixDashboard({
           <div
             className="flex-1 flex overflow-hidden print:hidden"
             role="tabpanel"
-            id={PRIMARY_TABPANEL_ID}
-            aria-labelledby={primaryTabId(activeTopTab)}
+            id={MATRIX_OPTIONS_TABPANEL_ID}
+            aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
             tabIndex={-1}
           >
             {renderContent()}
@@ -2163,8 +2015,8 @@ export default function MatrixDashboard({
           <div
             className="flex-1 flex overflow-hidden"
             role="tabpanel"
-            id={PRIMARY_TABPANEL_ID}
-            aria-labelledby={primaryTabId(activeTopTab)}
+            id={MATRIX_OPTIONS_TABPANEL_ID}
+            aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
             tabIndex={-1}
           >
             <EvidenceLibrary
@@ -2183,8 +2035,8 @@ export default function MatrixDashboard({
           <div
             className="flex-1 overflow-y-auto bg-white dark:bg-slate-950"
             role="tabpanel"
-            id={PRIMARY_TABPANEL_ID}
-            aria-labelledby={primaryTabId(activeTopTab)}
+            id={MATRIX_OPTIONS_TABPANEL_ID}
+            aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
             tabIndex={-1}
           >
             <div className="mx-auto w-full max-w-7xl px-4 py-10 lg:px-8">
@@ -2195,8 +2047,8 @@ export default function MatrixDashboard({
           <div
             className={`flex-1 overflow-y-auto ${activeTopTab === 'The Guide' ? 'bg-slate-50' : 'bg-white'} dark:bg-slate-900`}
             role="tabpanel"
-            id={PRIMARY_TABPANEL_ID}
-            aria-labelledby={primaryTabId(activeTopTab)}
+            id={MATRIX_OPTIONS_TABPANEL_ID}
+            aria-labelledby={matrixOptionsPrimaryTabId(activeTopTab)}
             // NEW-P3-2 (a11y audit 2026-08-14): this wrapper serves two
             // different tabs with different focusable-content shapes. 'The
             // Guide' always renders Phase2TasksSection's Expand-all /

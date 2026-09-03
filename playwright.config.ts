@@ -114,7 +114,7 @@ export default defineConfig({
             // project while a full-suite run still goes green. That silent-skip shape is the
             // same one E2E_AUTH_ENABLED already has, so any new authenticated spec must be
             // added here deliberately.
-            testMatch: /(matrix-options(-phone-layout|-print)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
+            testMatch: /(matrix-options(-phone-layout|-print|-paper)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
           },
         ]
       : []),
@@ -166,4 +166,3 @@ export default defineConfig({
     },
   },
 });
-
