@@ -1111,5 +1111,31 @@
     "bc_protocol_alignment": "protocol_1_v5_0_tier_1_government_source",
     "bc_protocol_basis": null,
     "source_crystallization_date": "1996-04-01"
+  },
+  {
+    "source_id": "src-oregon-deq-bioaccumulative-sediment-2007",
+    "short_citation": "Oregon DEQ BCC Sediment Guidance (2007)",
+    "title": "Guidance for Assessing Bioaccumulative Chemicals of Concern in Sediment",
+    "year": 2007,
+    "publisher": "Oregon Department of Environmental Quality",
+    "doi": null,
+    "url": "https://semspub.epa.gov/work/10/500011406.pdf",
+    "zotero_item_key": null,
+    "zotero_collection_path": null,
+    "zotero_attachment_keys": [],
+    "zotero_status": "pending_owner_export",
+    "external_file_hint": "EPA-SEMS-hosted PDF; do not copy the source file into the repository.",
+    "file_storage": "zotero_or_external",
+    "notes": "Prospective direct source for Aroclor 1254 logKow only. PDF page 63, Table C-2, CASRN 11097-69-1, log Kow 6.5. Not an IRIS source and not a human-health TRV source.",
+    "authority_scope": "supporting-science",
+    "source_authority_tier": "tier_1_government_or_regulatory",
+    "currentness_status": "needs_currentness_check",
+    "version": "2007",
+    "page_last_modified": null,
+    "checked_at": "2026-09-02",
+    "conflict_rule": "Use only for the Aroclor 1254 Eco-Direct EqP logKow source binding after owner review. Do not use it for IRIS human-health TRVs or for any other analyte or equation.",
+    "supersedes_source_ids": [],
+    "calculator_source_role": "canonical_candidate",
+    "canonical_source_status": "direct_source_verified"
   }
 ]
