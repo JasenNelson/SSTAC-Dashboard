@@ -1,3 +1,52 @@
+# RUN_STATE -- UI/UX audit remediation autonomous run (2026-08-16)
+
+Supersedes the Matrix-Options run state preserved below. That section is PRIOR-RUN HISTORY and
+is kept deliberately -- an earlier version of this commit left it as the only content of this
+file, which would have made main's root state describe July while COMMAND_LOG described August.
+
+## Status: COMPLETE. Six PRs open, none merged. The owner merges; this run merged nothing.
+
+| PR | Branch | Base | CI | Contents |
+|---|---|---|---|---|
+| #782 | feat/section-b-wave0-20260815 | main | real | B14 44px ThemeToggle; B11 pre-paint theme bootstrap |
+| #783 | feat/mo-batch2-20260816 | main | real | batch 2, five owner-decided items |
+| #784 | feat/section-b-wavea-20260816 | #783 | NONE | Section B Wave A; owner decision D7 |
+| #785 | feat/deferred-triage-20260816 | #784 | NONE | deferred triage; owner decision D8 |
+| #786 | docs/ui-ux-autonomous-run-20260816 | main | real | this documentation |
+| #787 | feat/theme-cookie-20260816 | #782 | NONE | owner decision D2, cookie-resolved theme |
+
+Two independent stacks: #782 -> #787, and #783 -> #784 -> #785. MEASURED with
+`git merge-tree --write-tree`: the two stacks share ZERO files, so they may merge in either
+order; within each stack the order is strictly bottom-up.
+
+## The load-bearing facts for whoever merges these
+
+- **Merge method matters more than merge order.** On the MERGE-COMMIT path all 15 pairwise
+  branch combinations are clean. On the SQUASH path, squashing #783 then merging #784 conflicts
+  on page.test.tsx, and squashing #782 then merging #787 conflicts on SIX files. REBASE-MERGE
+  was simulated separately and produces a byte-identical conflict to squash -- the hazard is
+  history rewriting, not squash specifically.
+- **#784, #785 and #787 have NO CI and are mergeable right now.** Branch protection guards main
+  only, and `enforce_admins` is false, so the merge button is live and admin-bypassable on three
+  PRs that have never run unit, build or e2e in CI.
+- **Retargeting may not trigger CI by itself.** ci.yml declares no `types:` key, so default
+  activity types apply (opened / synchronize / reopened). A base-branch change fires `edited`,
+  which is NOT in that set. After retargeting, confirm with `gh pr checks` that the four required
+  contexts actually ran; if they did not, push a rebase to fire `synchronize`.
+- **required_status_checks.strict is false**, so a green PR is not re-tested against a moved
+  main. Do not merge the next PR until the previous merge's push-CI on main is green.
+
+## Not verified by this run
+
+Nothing was measured in a real browser beyond Playwright assertions. jsdom implements neither
+`@media print` nor WebKit pseudo-elements, so both headline changes in #785 are class-contract
+only -- and the print change lives in ScrollFadeRegion, which reaches every calculator surface
+through MathRenderer. No axe run. Contrast ratios were computed from Tailwind's documented hex
+while v4 ships OKLCH.
+---
+
+## PRIOR RUN, PRESERVED BELOW (do not delete)
+
 # RUN_STATE -- Matrix-Options top-50 autonomous run (updated 2026-07-16/17)
 
 Mode: Autonomous Multi-Hour. Phase transitions are NOT stop points. Only stop for true owner gates
