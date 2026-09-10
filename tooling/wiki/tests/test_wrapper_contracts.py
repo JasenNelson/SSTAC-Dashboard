@@ -3712,6 +3712,17 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         graph, exe = root / "wiki" / ".graph" / "graph.json", root / ".venv-graphify" / "Scripts" / "python.exe"
         return self.row(pid, parent, "python.exe", created, f'"{exe}" -m graphify.serve "{graph}" --transport stdio', str(exe))
 
+    def graphify_child(self, pid=210, parent=200, created="2026-07-29T22:00:01Z", root=None, name="python.exe", executable=None, command=None, graph=None):
+        # The measured real-world shape: graphify.serve re-launches itself under a DIFFERENT
+        # interpreter (here, an "outside" python.exe placed under the runtime root so the row
+        # is still runtime-referencing without needing to be the canonical venv executable).
+        # Callers override name/executable/command/graph to isolate one invariant at a time.
+        root = Path(root or self.root)
+        graph = graph or (root / "wiki" / ".graph" / "graph.json")
+        executable = executable or str(root / "system-python" / "python.exe")
+        command = command if command is not None else f'"{executable}" -m graphify.serve "{graph}" --transport stdio'
+        return self.row(pid, parent, name, created, command, executable)
+
     def conhost(self, pid=300, parent=100, name="conhost.exe", executable=None, command=None, created="2026-07-30T01:00:00Z"):
         executable = executable or str(Path(os.environ["SystemRoot"]) / "System32" / "conhost.exe")
         command = command if command is not None else f'"{executable}" 0x4'
@@ -3914,6 +3925,259 @@ class TestProcessCustodyHelpers(unittest.TestCase):
                 failure_data = json.loads(failure.read_text(encoding="utf-8"))
                 self.assertEqual(failure_data["result"], "FAIL")
                 self.assertIn("missing full current identity field", failure_data["error"])
+
+    # -- Regression coverage for the graphify.serve self-relaunch custody fix -----------------
+    # graphify.serve re-launches itself under the SYSTEM Python interpreter, so its child does
+    # not satisfy Test-Graphify (different executable_path) and used to abort the nightly as
+    # DISALLOWED_RELEVANT_PROCESS. Get-Relevant now runs a second pass that promotes such a
+    # child to PREEXISTING_GRAPHIFY_MCP_CHILD only when it matches the exact graphify.serve
+    # invocation shape AND its ancestry (via Test-Descendant) reaches a PID this same snapshot
+    # already classified PREEXISTING_GRAPHIFY_MCP. These tests pin that behavior on both sides.
+
+    def test_graphify_server_child_is_promoted_and_passes(self):
+        server = self.graphify()
+        child = self.graphify_child(pid=210, parent=200)
+        result, baseline = self.capture(self.base(False) + [server, child], "child-promoted")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        self.assertEqual(data["disallowed_relevant_count"], 0)
+        self.assertEqual(data["relevant_count"], 2)
+        classes = {item["process_id"]: item["process_class"] for item in data["relevant_identities"]}
+        self.assertEqual(classes[200], "PREEXISTING_GRAPHIFY_MCP")
+        self.assertEqual(classes[210], "PREEXISTING_GRAPHIFY_MCP_CHILD")
+
+    def test_graphify_server_grandchild_is_promoted_transitively(self):
+        server = self.graphify()
+        child = self.graphify_child(pid=210, parent=200)
+        grandchild = self.graphify_child(pid=211, parent=210)
+        result, baseline = self.capture(self.base(False) + [server, child, grandchild], "grandchild-promoted")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        self.assertEqual(data["disallowed_relevant_count"], 0)
+        self.assertEqual(data["relevant_count"], 3)
+        classes = {item["process_id"]: item["process_class"] for item in data["relevant_identities"]}
+        self.assertEqual(classes[200], "PREEXISTING_GRAPHIFY_MCP")
+        self.assertEqual(classes[210], "PREEXISTING_GRAPHIFY_MCP_CHILD")
+        self.assertEqual(classes[211], "PREEXISTING_GRAPHIFY_MCP_CHILD")
+
+    def test_matching_invocation_without_server_ancestry_stays_disallowed(self):
+        # Same command-line shape as the real bug's child, but its parent_process_id does not
+        # chain back to any PID this snapshot classified PREEXISTING_GRAPHIFY_MCP. Proves
+        # promotion requires proven descent, not just a matching invocation.
+        server = self.graphify()
+        orphan = self.graphify_child(pid=220, parent=999)
+        result, receipt = self.capture(self.base(False) + [server, orphan], "no-server-ancestry")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 220)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_server_descendant_running_a_different_module_stays_disallowed(self):
+        # Proves the module invariant is required: a python.exe descended from an allowed
+        # server that does not run graphify.serve at all must never be promoted.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        other_module = self.row(230, 200, "python.exe", "2026-07-29T22:00:01Z", f'"{exe}" -m http.server 8000', exe)
+        result, receipt = self.capture(self.base(False) + [server, other_module], "wrong-module")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 230)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_server_descendant_against_a_different_graph_path_stays_disallowed(self):
+        # Proves the accepted-graph binding is required: a descendant of an allowed server
+        # running graphify.serve against a graph outside this runtime's accepted path must
+        # never be promoted.
+        server = self.graphify()
+        other_graph = self.root / "wiki" / ".graph" / "other-graph.json"
+        child = self.graphify_child(pid=240, parent=200, graph=other_graph)
+        result, receipt = self.capture(self.base(False) + [server, child], "wrong-graph-path")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 240)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_server_descendant_with_extra_module_switch_stays_disallowed(self):
+        # Proves the switch-count invariant still holds for the child path: a second -m token
+        # anywhere in the command line must keep the process disallowed even though the exact
+        # "-m graphify.serve" substring is still present once.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        extra_switch = self.row(250, 200, "python.exe", "2026-07-29T22:00:01Z", f'"{exe}" -m foo -m graphify.serve "{graph}" --transport stdio', exe)
+        result, receipt = self.capture(self.base(False) + [server, extra_switch], "extra-m-switch")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 250)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_server_descendant_with_a_non_python_image_name_stays_disallowed(self):
+        # Proves the image-name invariant is required: an otherwise-matching command line under
+        # a non-python.exe process name descended from an allowed server must never be promoted.
+        server = self.graphify()
+        node_exe = str(self.root / "system-node" / "node.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        wrong_image = self.row(260, 200, "node.exe", "2026-07-29T22:00:01Z", f'"{node_exe}" -m graphify.serve "{graph}" --transport stdio', node_exe)
+        result, receipt = self.capture(self.base(False) + [server, wrong_image], "wrong-image-name")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 260)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    # -- Single-clause isolation for Test-GraphifyInvocation (mutation-hardening) ------------
+    # A mutation-tested review of the 19 pre-existing custody tests found four surviving
+    # mutants of Test-GraphifyInvocation: dropping the "-m graphify.serve" module
+    # requirement, dropping the "--transport" requirement entirely, accepting any
+    # --transport VALUE, and the two combined. The pre-existing "different module" fixture
+    # (test_server_descendant_running_a_different_module_stays_disallowed) varies the
+    # module AND drops --transport in the same fixture, so a failure there can only ever be
+    # attributed to the transport clause -- the module clause itself was never independently
+    # exercised. Each fixture below changes EXACTLY ONE respect from a legitimate
+    # graphify.serve child invocation so a failure can be attributed to one clause.
+
+    def test_child_different_module_with_transport_intact_stays_disallowed(self):
+        # Isolates the module clause: different module, but --transport stdio and the exact
+        # accepted graph path are both present and correct.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        child = self.graphify_child(pid=270, parent=200, command=f'"{exe}" -m http.server "{graph}" --transport stdio')
+        result, receipt = self.capture(self.base(False) + [server, child], "isolated-wrong-module")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 270)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_child_missing_transport_switch_entirely_stays_disallowed(self):
+        # Isolates the transport-presence clause: exact module and exact accepted graph path,
+        # but NO --transport switch anywhere on the command line.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        child = self.graphify_child(pid=271, parent=200, command=f'"{exe}" -m graphify.serve "{graph}"')
+        result, receipt = self.capture(self.base(False) + [server, child], "isolated-missing-transport")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 271)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_child_wrong_transport_value_stays_disallowed(self):
+        # Isolates the transport-value clause: exact module, exact accepted graph path, and a
+        # --transport switch is present -- but its value is "tcp", not "stdio".
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        child = self.graphify_child(pid=272, parent=200, command=f'"{exe}" -m graphify.serve "{graph}" --transport tcp')
+        result, receipt = self.capture(self.base(False) + [server, child], "isolated-wrong-transport-value")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 272)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_child_two_module_switches_stays_disallowed(self):
+        # Isolates the module-switch-count clause: the exact "-m graphify.serve" substring is
+        # present once, but a SECOND -m switch also appears; everything else is correct.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        child = self.graphify_child(pid=273, parent=200, command=f'"{exe}" -m graphify.serve -m something "{graph}" --transport stdio')
+        result, receipt = self.capture(self.base(False) + [server, child], "isolated-two-m-switches")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 273)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_child_two_transport_switches_stays_disallowed(self):
+        # Isolates the transport-switch-count clause: the exact "--transport stdio" substring
+        # is present, but a SECOND --transport switch also appears; everything else is correct.
+        server = self.graphify()
+        exe = str(self.root / "system-python" / "python.exe")
+        graph = self.root / "wiki" / ".graph" / "graph.json"
+        child = self.graphify_child(pid=274, parent=200, command=f'"{exe}" -m graphify.serve "{graph}" --transport stdio --transport stdio')
+        result, receipt = self.capture(self.base(False) + [server, child], "isolated-two-transport-switches")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 274)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    # -- Coverage for the two most recent implementation fixes -------------------------------
+
+    def test_creation_order_ancestry_rejects_earlier_child_and_promotes_later_child(self):
+        # Test-AncestryWithCreationOrder requires a claimed parent to have been CREATED BEFORE
+        # its child -- a real parent always exists first. A candidate whose command line is
+        # an otherwise-perfect graphify.serve child match, and whose parent_process_id names a
+        # legitimate server PID, but whose creation_utc PRECEDES that server's creation_utc, is
+        # the PID-reuse signature (Windows recycles PIDs) and must never be promoted.
+        server = self.graphify(pid=200, created="2026-07-29T22:00:00Z")
+        earlier_child = self.graphify_child(pid=210, parent=200, created="2026-07-29T21:59:59Z")
+        result, receipt = self.capture(self.base(False) + [server, earlier_child], "earlier-child-not-promoted")
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        target = next(item for item in data["disallowed_relevant_identities"] if item["process_id"] == 210)
+        self.assertEqual(target["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+        # Healthy control: identical shape, but the child's creation_utc is AFTER the server's
+        # -- a genuine parent-before-child relationship -- and promotion succeeds.
+        later_child = self.graphify_child(pid=210, parent=200, created="2026-07-29T22:00:01Z")
+        result, receipt = self.capture(self.base(False) + [server, later_child], "later-child-promoted")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        classes = {item["process_id"]: item["process_class"] for item in data["relevant_identities"]}
+        self.assertEqual(classes[210], "PREEXISTING_GRAPHIFY_MCP_CHILD")
+
+    def test_terminal_degradation_of_a_previously_promoted_child_fails_even_without_a_new_survivor(self):
+        # A terminal identity whose process_class is no longer allowed must fail the run even
+        # when its identity hash still matches the baseline (i.e. it is not a "new survivor").
+        # Scenario: a Graphify child was legitimately promoted at baseline because its owning
+        # server was present. By terminal time the server has exited (departed), so the SAME,
+        # UNCHANGED child process can no longer prove ancestry to any currently-classified
+        # server and is reclassified DISALLOWED_RELEVANT_PROCESS. Its identity_sha256 does not
+        # change (the row itself is untouched), so survivor_count stays 0 -- only the
+        # terminal_disallowed_count / result fields can catch this degradation.
+        server = self.graphify(pid=200)
+        child = self.graphify_child(pid=210, parent=200)
+        result, baseline = self.capture(self.base(False) + [server, child], "degradation-baseline")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        base = json.loads(baseline.read_text(encoding="utf-8"))
+        base_classes = {item["process_id"]: item["process_class"] for item in base["relevant_identities"]}
+        self.assertEqual(base_classes[210], "PREEXISTING_GRAPHIFY_MCP_CHILD")
+
+        # Terminal snapshot: the server (200) has exited; the child (210) row is UNCHANGED.
+        result, receipt = self.terminal(baseline, self.base(False) + [child], "degradation-terminal", 160)
+        self.assertEqual(result.returncode, 1, result.stdout + result.stderr)
+        data = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "FAIL")
+        self.assertEqual(data["survivor_count"], 0)
+        self.assertEqual(data["departed_baseline_count"], 1)
+        self.assertGreater(data["terminal_disallowed_count"], 0)
+        degraded = next(item for item in data["terminal_disallowed_identities"] if item["process_id"] == 210)
+        self.assertEqual(degraded["process_class"], "DISALLOWED_RELEVANT_PROCESS")
+
+    def test_server_only_snapshot_still_classifies_and_passes_unchanged(self):
+        # Regression guard: a snapshot with only the canonical server (no child at all) must
+        # still yield exactly the pre-fix PREEXISTING_GRAPHIFY_MCP / PASS outcome -- the fix
+        # must not have changed the original single-process baseline behavior.
+        result, baseline = self.capture(self.base(), "server-only-regression")
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        data = json.loads(baseline.read_text(encoding="utf-8"))
+        self.assertEqual(data["result"], "PASS")
+        self.assertEqual(data["relevant_count"], 1)
+        self.assertEqual(data["disallowed_relevant_count"], 0)
+        self.assertEqual(data["relevant_identities"][0]["process_class"], "PREEXISTING_GRAPHIFY_MCP")
 
     def test_parent_checker_path_boundary_and_exact_graph_fail_closed(self):
         result, baseline = self.capture(self.base())

@@ -163,6 +163,15 @@ function Get-Summary(
     [pscustomobject]$summary
 }
 
+# The ONLY two classifications a baseline may carry. Kept in one place so the three call
+# sites that gate on it (baseline assertion, the disallowed filter, and terminal
+# verification) can never drift apart.
+$script:allowedProcessClasses = @('PREEXISTING_GRAPHIFY_MCP', 'PREEXISTING_GRAPHIFY_MCP_CHILD')
+
+function Test-AllowedProcessClass([string]$ProcessClass) {
+    $script:allowedProcessClasses -ccontains $ProcessClass
+}
+
 function Assert-Summary([object]$Identity, [string]$Name, [bool]$RequireGraphifyClass = $false) {
     if ($null -eq $Identity) { throw "missing baseline identity $Name" }
     $identityProcessId = Get-StrictNonnegativeInteger $Identity.process_id "$Name.process_id"
@@ -183,7 +192,7 @@ function Assert-Summary([object]$Identity, [string]$Name, [bool]$RequireGraphify
             throw "invalid baseline classification flag $Name.$field"
         }
     }
-    if ($RequireGraphifyClass -and [string]$Identity.process_class -cne 'PREEXISTING_GRAPHIFY_MCP') {
+    if ($RequireGraphifyClass -and -not (Test-AllowedProcessClass ([string]$Identity.process_class))) {
         throw "invalid baseline process classification $Name"
     }
 }
@@ -254,6 +263,44 @@ function Test-Descendant([int]$ProcessId, [hashtable]$ByPid, [int]$ParentPid) {
     }
 }
 
+# Ancestry for ALLOWLIST PROMOTION, which is a stronger question than plain descendancy.
+#
+# A parent_process_id is only a NUMBER. Windows reuses PIDs, and a dead parent's PID says nothing
+# about the process now occupying it. Plain Test-Descendant therefore ASSERTS ancestry rather than
+# proving it: a process can name, as its parent, a PID that was recycled into a legitimate Graphify
+# server long after that process started, and be promoted on the strength of a coincidence.
+#
+# A real parent is created BEFORE its child. So at EVERY hop this requires
+# parentCreated <= childCreated. A stale or reused PPID shows up as a claimed parent that is NEWER
+# than the process claiming it, and is rejected. This is the same guard the run-console-host check
+# already applies via `$identityCreated -ge $parentCreated`; promotion had been the one place that
+# reached a conclusion about ancestry without it.
+#
+# Fails CLOSED: a missing or unparseable creation time on any link refuses the promotion.
+function Test-AncestryWithCreationOrder([int]$ProcessId, [hashtable]$ByPid, [int]$AncestorPid) {
+    $visited = @{}
+    $cursor = $ProcessId
+    while ($true) {
+        if ($visited.ContainsKey($cursor)) { throw "ancestry cycle at PID $cursor" }
+        $visited[$cursor] = $true
+        if (-not $ByPid.ContainsKey($cursor)) { return $false }
+        $childRow = $ByPid[$cursor]
+        $next = [int]$childRow.parent_process_id
+        if ($next -le 0 -or $next -eq $cursor) { return $false }
+        if (-not $ByPid.ContainsKey($next)) { return $false }
+        $parentRow = $ByPid[$next]
+        try {
+            $childCreated = Convert-StrictUtc $childRow.creation_utc "creation_utc for PID $cursor"
+            $parentCreated = Convert-StrictUtc $parentRow.creation_utc "creation_utc for PID $next"
+        } catch {
+            return $false
+        }
+        if ($parentCreated -gt $childCreated) { return $false }
+        if ($next -eq $AncestorPid) { return $true }
+        $cursor = $next
+    }
+}
+
 function Test-ExpectedRunConsoleHost(
     [object]$Identity,
     [object]$ExpectedParentIdentity,
@@ -289,13 +336,44 @@ function Test-ExpectedRunConsoleHost(
         -not (Test-NamespacePrefixedPathToken ([string]$Identity.command_line) $Runtime))
 }
 
-function Test-Graphify([object]$Identity, [string]$Runtime) {
-    $expectedExecutable = Join-Path $Runtime '.venv-graphify\Scripts\python.exe'
+# The module / graph / transport shape shared by a Graphify MCP server AND by the helper
+# process that server spawns. It pins the EXACT accepted graph path for THIS runtime, the
+# exact module, and the exact transport, and requires the image to be python.exe. It
+# deliberately does NOT constrain WHICH interpreter, because that is the only thing that
+# differs between a legitimate server and its own child.
+#
+# This is NOT "allow python.exe". A python.exe that does not run `-m graphify.serve`
+# against THIS runtime's wiki\.graph\graph.json fails here and stays DISALLOWED, as does
+# one carrying extra -m or --transport switches.
+function Test-GraphifyInvocation([object]$Identity, [string]$Runtime) {
     $graphPath = Join-Path $Runtime 'wiki\.graph\graph.json'
     $moduleMatches = [regex]::Matches($Identity.command_line, '(?i)(?:^|\s)-m\s+graphify\.serve(?:\s|$)')
     $transportMatches = [regex]::Matches($Identity.command_line, '(?i)(?:^|\s)--transport\s+stdio(?:\s|$)')
     $allModuleSwitches = [regex]::Matches($Identity.command_line, '(?i)(?:^|\s)-m(?:\s|$)')
     $allTransportSwitches = [regex]::Matches($Identity.command_line, '(?i)(?:^|\s)--transport(?:\s|$)')
+    ([string]::Equals([string]$Identity.name, 'python.exe', [StringComparison]::OrdinalIgnoreCase) -and
+        (Test-ExactArgumentToken $Identity.command_line $graphPath) -and
+        $moduleMatches.Count -eq 1 -and $allModuleSwitches.Count -eq 1 -and
+        $transportMatches.Count -eq 1 -and $allTransportSwitches.Count -eq 1)
+}
+
+# A helper spawned BY an already-classified Graphify MCP server. This predicate is NEVER
+# sufficient on its own: Get-Relevant additionally requires a proven ancestry chain to a
+# process it has already classified PREEXISTING_GRAPHIFY_MCP in the SAME snapshot.
+#
+# Why this exists: graphify.serve re-launches itself under the SYSTEM interpreter, so the
+# child's executable_path is not the runtime venv python and Test-Graphify rejected it.
+# The child was therefore classified DISALLOWED_RELEVANT_PROCESS and the nightly aborted
+# at N0 with "Baseline contains non-Graphify relevant identity" -- meaning ANY interactive
+# session holding a Graphify MCP server open at 05:30 broke the unattended refresh. Two
+# consecutive nightly runs were lost this way (2026-09-09, 2026-09-10) before diagnosis,
+# and the only signal was a stale-receipt watchdog that blamed the scheduler.
+function Test-GraphifyChild([object]$Identity, [string]$Runtime) {
+    Test-GraphifyInvocation $Identity $Runtime
+}
+
+function Test-Graphify([object]$Identity, [string]$Runtime) {
+    $expectedExecutable = Join-Path $Runtime '.venv-graphify\Scripts\python.exe'
     $command = $Identity.command_line.TrimStart()
     $quotedExecutable = '"' + $expectedExecutable + '"'
     $quotedMatch = $command.StartsWith($quotedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
@@ -303,12 +381,9 @@ function Test-Graphify([object]$Identity, [string]$Runtime) {
     $commandStartsExpected = $quotedMatch -or
         ($command.StartsWith($expectedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
             ($command.Length -eq $expectedExecutable.Length -or [char]::IsWhiteSpace($command[$expectedExecutable.Length])))
-    ([string]::Equals([string]$Identity.name, 'python.exe', [StringComparison]::OrdinalIgnoreCase) -and
-        [string]::Equals([string]$Identity.executable_path, $expectedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
+    ([string]::Equals([string]$Identity.executable_path, $expectedExecutable, [StringComparison]::OrdinalIgnoreCase) -and
         $commandStartsExpected -and
-        (Test-ExactArgumentToken $Identity.command_line $graphPath) -and
-        $moduleMatches.Count -eq 1 -and $allModuleSwitches.Count -eq 1 -and
-        $transportMatches.Count -eq 1 -and $allTransportSwitches.Count -eq 1)
+        (Test-GraphifyInvocation $Identity $Runtime))
 }
 
 function Test-ParentRole([object]$Identity, [string]$Runtime) {
@@ -349,6 +424,11 @@ function Read-Rows {
 function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentity, [int]$CheckerPid, [string]$Runtime, [datetimeoffset]$ObservationAt) {
     $result = @()
     $parentPid = [int]$ParentIdentity.process_id
+    # PASS 1 -- classify canonical Graphify MCP servers and everything else.
+    # `$pending` keeps the full row alongside its summary so pass 2 can re-examine
+    # candidates without re-deriving them.
+    $pending = @()
+    $serverPids = @{}
     foreach ($row in $Rows) {
         if ($row.process_id -eq $ParentPid -or $row.process_id -eq $CheckerPid) { continue }
         $runtimeRef = Test-RuntimeReference $row $Runtime
@@ -361,8 +441,33 @@ function Get-Relevant([object[]]$Rows, [hashtable]$ByPid, [object]$ParentIdentit
             } else {
                 'DISALLOWED_RELEVANT_PROCESS'
             }
-            $result += Get-Summary $full $runtimeRef $descendant $class
+            if ($class -ceq 'PREEXISTING_GRAPHIFY_MCP') { $serverPids[[int]$row.process_id] = $true }
+            $pending += [pscustomobject]@{ Row = $row; Full = $full; RuntimeRef = $runtimeRef; Descendant = $descendant; Class = $class }
         }
+    }
+    # PASS 2 -- promote ONLY the helper processes that a canonical server spawned.
+    # Three conditions must ALL hold, and they are checked against this same snapshot:
+    #   1. the process was not already allowed;
+    #   2. it satisfies the exact module / accepted-graph / transport invariant; and
+    #   3. its ancestry chain reaches a PID classified PREEXISTING_GRAPHIFY_MCP in pass 1.
+    # A python.exe that is not descended from such a server is NEVER promoted, and neither
+    # is a descendant whose command line does not target this runtime's accepted graph.
+    foreach ($candidate in $pending) {
+        if ($candidate.Class -ceq 'PREEXISTING_GRAPHIFY_MCP') { continue }
+        if (-not (Test-GraphifyChild $candidate.Full $Runtime)) { continue }
+        foreach ($serverPid in $serverPids.Keys) {
+            if ([int]$candidate.Row.process_id -eq $serverPid) { continue }
+            # Creation-ordered ancestry, NOT plain descendancy. A parent_process_id is only a
+            # number and Windows reuses PIDs; without the ordering check a process could be
+            # promoted for naming a PID that was later recycled into a real server.
+            if (Test-AncestryWithCreationOrder ([int]$candidate.Row.process_id) $ByPid ([int]$serverPid)) {
+                $candidate.Class = 'PREEXISTING_GRAPHIFY_MCP_CHILD'
+                break
+            }
+        }
+    }
+    foreach ($candidate in $pending) {
+        $result += Get-Summary $candidate.Full $candidate.RuntimeRef $candidate.Descendant $candidate.Class
     }
     if ($result.Count -gt $identityCap) {
         $script:identityOverflow = $true
@@ -443,7 +548,7 @@ try {
     $script:classificationSucceeded = $true
 
     if ($Mode -eq 'CaptureBaseline') {
-        $notAllowed = @($relevant | Where-Object { [string]$_.process_class -cne 'PREEXISTING_GRAPHIFY_MCP' })
+        $notAllowed = @($relevant | Where-Object { -not (Test-AllowedProcessClass ([string]$_.process_class)) })
         $capturedAt = $observationAt
         $futureIdentity = @($relevant + @($parentSummary, $checkerSummary) | Where-Object { (Convert-StrictUtc $_.creation_utc 'capture identity creation_utc') -gt $capturedAt })
         if ($futureIdentity.Count -ne 0) { throw 'baseline identity creation is after captured_at_utc' }
@@ -588,7 +693,15 @@ try {
     $currentHashes = @($terminalIdentities | ForEach-Object { [string]$_.identity_sha256 })
     $survivors = @($terminalIdentities | Where-Object { $baselineHashes -notcontains [string]$_.identity_sha256 })
     $departed = @($baselineIdentities | Where-Object { $currentHashes -notcontains [string]$_.identity_sha256 })
-    $result = if ($parentMatch -and $survivors.Count -eq 0) { 'PASS' } else { 'FAIL' }
+    # A terminal identity that is no longer ALLOWED must fail the run even when it is not a new
+    # survivor. Identity hashes do not cover process_class, so a process whose classification
+    # DEGRADED between baseline and terminal -- for example a Graphify child whose owning server
+    # exited mid-run, leaving it with no legitimate ancestry -- carries an unchanged hash, matches
+    # the baseline set, and would otherwise be published under result PASS. That would let the only
+    # evidence an unattended run leaves record a clean custody outcome for a process the checker had
+    # just decided was not allowed.
+    $terminalDisallowed = @($terminalIdentities | Where-Object { -not (Test-AllowedProcessClass ([string]$_.process_class)) })
+    $result = if ($parentMatch -and $survivors.Count -eq 0 -and $terminalDisallowed.Count -eq 0) { 'PASS' } else { 'FAIL' }
     $receipt = [ordered]@{
         schema_version = '1.0'
         evidence_type = 'PROCESS_CUSTODY_TERMINAL'
@@ -611,6 +724,8 @@ try {
         baseline_relevant_count = $baselineIdentities.Count
         terminal_relevant_count = $terminalIdentities.Count
         allowed_preexisting_graphify_count = $baselineIdentities.Count
+        terminal_disallowed_count = $terminalDisallowed.Count
+        terminal_disallowed_identities = $terminalDisallowed
         survivor_count = $survivors.Count
         departed_baseline_count = $departed.Count
         baseline_identity_set_sha256 = $baselineSetHash

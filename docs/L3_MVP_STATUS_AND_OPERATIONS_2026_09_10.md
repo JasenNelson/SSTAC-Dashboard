@@ -141,14 +141,63 @@ venv interpreter. PID 11416's own parent is `claude.exe` -- an interactive Claud
 MCP server open at 05:30 causes the nightly to abort at N0. That is precisely what the capability
 is FOR. Two consecutive nights have already been lost this way, silently.
 
-**Recommended fix (NOT applied in this run -- it is an operational guard change and deserves its
-own review):** extend the custody allowlist in `check_orphans.ps1` to recognise
-`-m graphify.serve` by MODULE and graph target rather than by interpreter path, so a Graphify
-server is allowed regardless of which Python launched it. Alternatively, treat descendants of an
-already-allowed Graphify process as allowed. Do NOT simply relax the guard to accept any
-`python.exe`: it exists to catch genuine contamination of the runtime root.
+**STATUS: NOT SHIPPABLE AS IT STANDS. DO NOT MERGE THIS CHANGE YET.**
 
-**Interim mitigation:** if a nightly must succeed, ensure no interactive session is holding a
+A second adversarial review found that the fix is INCOMPLETE in a way that makes the outcome WORSE,
+not better. `check_orphans.ps1` is not the only consumer of the process classification:
+`tooling/wiki/nightly_terminalizer.ps1:40` and `tooling/wiki/activation_preflight.ps1:317` both
+assert `$RequireGraphifyClass = $true` over every baseline, terminal and departed identity, and
+both REJECT the new `PREEXISTING_GRAPHIFY_MCP_CHILD` class.
+
+Consequence on exactly the night this fix targets: the run would clear N0, execute the ENTIRE
+pipeline, and then die at `nightly_wiki_sync.ps1:682` with no terminal receipt and no
+`receipt-<date>.md` -- strictly worse than today's fast N0 abort, because it burns the whole run and
+leaves less evidence. The in-code comment claiming "three call sites" is also wrong; there are five.
+
+Completing this fix means teaching all five consumers the new class, with tests driving each of the
+two additional consumers. That work is NOT done and is NOT in this change.
+
+**Everything below describes the fix as designed and as far as it was verified. It remains accurate
+about `check_orphans.ps1` itself, and it is NOT sufficient to ship.**
+
+`check_orphans.ps1` now classifies a
+`graphify.serve` helper as `PREEXISTING_GRAPHIFY_MCP_CHILD` -- but ONLY when all three hold: it is
+not already allowed; it satisfies the exact module / accepted-graph / transport invariant
+(`python.exe`, exactly one `-m graphify.serve`, exactly one `-m` total, exactly one
+`--transport stdio`, exactly one `--transport` total, and an exact argument token for THIS
+runtime's `wiki/.graph/graph.json`); and its ancestry provably reaches a process classified
+`PREEXISTING_GRAPHIFY_MCP` in the SAME snapshot.
+
+This does NOT broadly allow `python.exe`. A process with no `graphify.serve`, a different graph, an
+extra `-m`, a non-python image, or no ancestry to a real server all remain DISALLOWED.
+
+**Operational proof, two-sided, on LIVE process data.** A fixture built from the real process table
+(525 rows, including the two standing venv -> SYSTEM Graphify pairs) was run through the ORIGINAL
+checker and the fixed one:
+
+    ORIGINAL  exit=1  result=FAIL  allowed=2  disallowed=2   <- exactly the 09-09 / 09-10 failure
+    FIXED     exit=0  result=PASS  allowed=4  disallowed=0   <- the nightly proceeds past N0
+
+**KNOWN LIMITATION, deliberate:** a `graphify.serve` spawned DIRECTLY under the system interpreter
+by a session -- not descended from a venv server -- is still DISALLOWED and will still block a
+nightly. That is the conservative reading: such a process is an ad-hoc, unmanaged consumer of the
+runtime graph. Both real failures were the descendant pattern.
+
+### THE FIX DOES NOT TAKE EFFECT UNTIL THE RUNTIME IS REPINNED
+
+The scheduled task executes the RUNTIME worktree's OWN copy of the pipeline, and that runtime is
+pinned -- N0 records `PINNED_INSTALLED_RUNTIME (3600a18f...)` every run. Measured:
+
+    runtime tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   HEAD 3600a18f
+    main    tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   identical
+    fixed   tooling/wiki/check_orphans.ps1   sha16 b83d7bb9eab9f7b7
+    occurrences of the fix in the runtime copy: 0
+
+**Merging the fix to `main` leaves the runtime running the OLD checker and the nightly keeps
+failing.** Recovering it operationally requires REPINNING the installed runtime to a commit that
+contains the fix -- an activation-class mutation and an owner decision.
+
+**Interim mitigation, still valid until the repin:** ensure no interactive session is holding a
 Graphify MCP server open against the runtime graph at 05:30.
 
 ---
@@ -194,17 +243,66 @@ Measured against the accepted graph:
 | CROSS_COMMUNITY | 70 | 10 |
 | CROSS_FILE_CODE_CODE | 174 | 10 |
 
-**M4's sampling design cannot be satisfied as written.** Verified two ways: inferred edge endpoint
+**M4's sampling design could not be satisfied as written.** Verified two ways: inferred edge endpoint
 `file_type` pairs are only `(code,code)` and `(code,concept)`, and zero inferred edges have even one
 endpoint whose `source_file` ends in `.md`.
 
-The substantive point is larger than the blocker: **the semantic layer currently produces no
-document-to-code edges at all.** For a Wiki-KB whose purpose is connecting documentation to the code
-it describes, that is arguably the most valuable edge type, and it is absent.
+Sharper still, and worse than first stated: there are **zero `(code, document)` edges in EITHER
+layer**. The EXTRACTED layer contains 2411 `(document, document)` edges and 22 `(concept, document)`,
+but not one document-to-code edge. Documentation is a well-connected island that never touches code.
+For a Wiki-KB whose purpose is connecting documentation to the code it describes, the most valuable
+edge type is structurally absent.
 
-M4 additionally requires a reserved GPU window (none exists; per-day schedule files end 2026-07-27),
-a running Ollama (not running), and explicit owner approval for model, lock, window, seed and
-disposable root, plus separate approval for the canary and for promotion.
+### RESOLVED (2026-09-10, second session) -- and without a GPU
+
+`tooling/wiki/doc_code_candidates.py` mines the bridge signal that already exists in the corpus:
+documentation cites code in BACKTICKS, the same convention the docs-trust mechanism already relies
+on. A cited span becomes a candidate only when it resolves EXACTLY to an existing code node -- by
+that file's FILE-LEVEL node, or by an unambiguous label -- and each citation is attributed to the
+enclosing document section.
+
+    581 candidates | 270 distinct code targets | 480 distinct (doc section -> code file) pairs
+    independent audit: quoted text present at the cited line 60/60; every sampled target file
+    exists on disk (193 distinct target files across the pool)
+    top targets: database_schema.sql 67, api-guards.ts 36, pack-types.ts 25, route.ts 21
+
+CORRECTION, recorded rather than quietly edited: this block previously read 591 / 277 / 489 and
+"target files on disk 297/297". Those were the figures from BEFORE the resolver was tightened for
+case-sensitivity and empty target files, and the 297 was internally impossible -- it exceeded the
+pool's own distinct-target count. An independent review caught all of it. The figures above are the
+shipped generator's own output.
+
+FALSE-POSITIVE ESTIMATE, from independent audit: roughly 3% on endpoint identity (upper bound ~5%).
+The wrong ones are an output label resolving to a same-named function, and about eight database
+object names resolving to a validation query or a draft .sql under docs/ rather than the defining
+migration. The RELATION-level rate is materially higher than that: much of the pool is changelog or
+status prose that merely MENTIONS a file rather than documenting it. Treat these as candidates for
+review, which is what they are, and not as established edges.
+
+Properties that matter: it needs **no model, no Ollama and no GPU**, so it runs outside the shared-GPU
+schedule entirely; the canonical served graph is opened READ-ONLY and verified byte-identical before
+and after every run; nothing is promoted; and an ambiguous label is EXCLUDED rather than guessed.
+
+Grounding is what makes this usable without weakening M4: its support rubric holds that an edge is
+supported only when grounded in exact cited content from the authenticated source snapshot, and a
+backtick citation IS exact cited content.
+
+**The DOC_CODE stratum is no longer the blocker.** M4 still requires the owner-gated model, lock,
+GPU window, seed and disposable root, plus canary and promotion approvals.
+
+M4 additionally requires a reserved GPU window and explicit owner approval for model, lock, window,
+seed and disposable root, plus separate approval for the canary and for promotion.
+
+CORRECTION: an earlier revision of this line claimed "none exists; per-day schedule files end
+2026-07-27". That was FALSE and an independent review caught it. There are 51 `OLLAMA_SCHEDULE_*`
+files including one for TODAY, and today's drift log records real runs completing this morning
+(openharness-dev labeling COMPLETED_GREEN 03:30, semantic extract COMPLETED_RED 03:37). The
+protocol is live and in daily use, and `C:\Projects\OLLAMA_ACTIVE.lock` is currently free.
+
+So the accurate constraint is NOT "no schedule exists". It is that SSTAC must negotiate a block
+under `OLLAMA_SCHEDULE_PROTOCOL.md` (two active lanes maximum; a third writes a HITL request), and
+that the owner-gated model, lock, seed and disposable-root approvals are still outstanding. Ollama
+was not running when checked, which is a startup step rather than a blocker.
 
 ---
 
@@ -219,13 +317,24 @@ disposable root, plus separate approval for the canary and for promotion.
    evidence the structure is absent.** No efficiency, speed or operation-count benefit has been
    established; none may be claimed from the M3 evidence, which is a capability demonstration only.
 
-0a. **`src_grep` LIES ON DIRECTORY PATHS.** In the M3 sealed-snapshot source proxy
-   (`L3-M3-PRE-ARM-PACKET-R5-R3/mcp/source_mcp.py`), `src_grep` given a DIRECTORY path silently
-   returns success with NO results instead of searching it or refusing. In the final demonstration a
-   session issued seven such non-searches and then wrote "I searched the entire snapshot ... found no
-   matches" -- a false statement produced by a tool reporting success for work it never did. Any
-   "searched and found nothing" conclusion reached through that surface is unreliable and must be
-   re-established before it is relied on. UNREPAIRED.
+0a. **`src_grep` LIED ON DIRECTORY PATHS -- NOW REPAIRED, and the conclusion it corrupted has been
+   re-established.** In the M3 sealed-snapshot source proxy, `src_grep` given a DIRECTORY path
+   silently returned success with NO results instead of searching it or refusing. In the final
+   demonstration a session issued seven such non-searches and then wrote "I searched the entire
+   snapshot ... found no matches" -- a false statement produced by a tool reporting success for work
+   it never did.
+
+   REPAIRED in sealed successor packet `L3-M3-PRE-ARM-PACKET-R5-R4`
+   (`E6F08DC5CAEAB500EAA91A965764AE497C42F0E5A556B62DB3216D5176CD5D2D`, 63 members): a directory now
+   expands recursively within the allowlist-bounded root and is searched; a non-existent path and an
+   empty expansion both FAIL LOUDLY. Predecessors R5-R3 and R5-R2 verified unmodified.
+
+   RE-ESTABLISHED, and it revises the M3 reading: a working search WOULD have returned
+   `is_untrusted_source_path` (must-have **M5.5**, 1 file) and `_is_link_or_junction` (must-have
+   **M5.4**, 2 files) -- precisely the two enforced-guard facts task_5 missed. The defect
+   **materially caused** task_5's 1/6; it was not merely a contributing factor. M5.2 and M5.3 were
+   independently confirmed correct in the same pass (`REFUSED_TOOLING_CHANGE` occurs **0** times in
+   `nightly_wiki_sync.ps1`, and `WIKI_KB_OPERATIONS_2026_07.md:674` does assert it is "LIVE today").
 
 1. **Retrieval is seed-dependent.** Identifier seeds retrieve precisely; prose seeds collapse. The
    assist wrapper makes that visible but does not fix retrieval. Independent verification of the
