@@ -3931,7 +3931,7 @@ class TestProcessCustodyHelpers(unittest.TestCase):
     # not satisfy Test-Graphify (different executable_path) and used to abort the nightly as
     # DISALLOWED_RELEVANT_PROCESS. Get-Relevant now runs a second pass that promotes such a
     # child to PREEXISTING_GRAPHIFY_MCP_CHILD only when it matches the exact graphify.serve
-    # invocation shape AND its ancestry (via Test-Descendant) reaches a PID this same snapshot
+    # invocation shape AND its ancestry (via Test-AncestryWithCreationOrder) reaches a PID this same snapshot
     # already classified PREEXISTING_GRAPHIFY_MCP. These tests pin that behavior on both sides.
 
     def test_graphify_server_child_is_promoted_and_passes(self):
@@ -4411,6 +4411,35 @@ class TestProcessCustodyHelpers(unittest.TestCase):
         result = self.terminal_command(ps_script)
         self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
         self.assertTrue(receipt.is_file())
+
+    def test_terminalizer_accepts_promoted_graphify_child_class(self):
+        # Producer/consumer pair (round-2 U1): check_orphans legitimately classifies a
+        # graphify.serve helper as PREEXISTING_GRAPHIFY_MCP_CHILD, and the terminal receipt
+        # must publish over that class. Before the consumer fix this threw at
+        # Assert-SstacIdentitySummary, so the nightly died at nightly_wiki_sync.ps1:682
+        # AFTER the whole pipeline had run, leaving no terminal receipt.
+        child = self.receipt_payload()
+        custody = child["terminal_process_custody_evidence"]
+        for field in ("baseline_relevant_identities", "terminal_relevant_identities"):
+            custody[field][0]["process_class"] = "PREEXISTING_GRAPHIFY_MCP_CHILD"
+        payload = self.root / "child-class-payload.json"
+        receipt = self.root / "child-class-receipt.json"
+        guard = self.root / "child-class-guard"
+        payload.write_text(json.dumps(child), encoding="ascii")
+        result = self.terminal_command(
+            "Enter-NightlyTerminalization -GuardPath '{guard}'; "
+            "$r=Get-Content -LiteralPath '{payload}' -Raw|ConvertFrom-Json; "
+            "Publish-NightlyTerminalReceipt -Receipt $r -ReceiptPath '{receipt}'".format(
+                guard=guard, payload=payload, receipt=receipt
+            )
+        )
+        self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+        self.assertTrue(receipt.is_file())
+        published = json.loads(receipt.read_text(encoding="utf-8"))
+        self.assertEqual(
+            published["terminal_process_custody_evidence"]["baseline_relevant_identities"][0]["process_class"],
+            "PREEXISTING_GRAPHIFY_MCP_CHILD",
+        )
 
 
 if __name__ == "__main__":

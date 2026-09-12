@@ -33,6 +33,10 @@ MCP capability in an interactive session currently prevents the nightly refresh 
   - SHA-256 `40DAB025C918F235E390FBC2C94B5FBD2358AE902D5A62040D27EB6C6253AE5A`
   - `built_at_commit` `3600a18fb6b9944368c45ce1843245df2e508abb`
   - 12464 nodes / 24548 edges / 706 communities; 99% EXTRACTED, 1% INFERRED (323 inferred edges)
+  - (Identity as measured 2026-09-10 -- the state the L3-M2 acceptance bound. The nightly
+    republished the served graph on 09-11 and 09-12; the graph.json at this path as of
+    2026-09-12 hashes to sha16 `8626515afac16da950fb` (mtime 2026-09-12 05:30:37). The
+    40DAB025 identity above is the accepted-snapshot record, not the current served bytes.)
 - **Server**: exactly one `graphify` MCP registration exists, under project key
   `C:/Projects/SSTAC-Dashboard` in `~/.claude.json`, launching
   `<runtime>\.venv-graphify\Scripts\python.exe -m graphify.serve <accepted graph> --transport stdio`.
@@ -111,8 +115,10 @@ receipt, and `receipt-<date>.md`.
 
 ## 5. THE NIGHTLY IS CURRENTLY BROKEN -- root cause and recommended fix
 
-**Symptom.** Receipts stop at `receipt-2026-09-08.md`. The freshness watchdog reports a stale
-receipt and infers the nightly "is not running". That inference is wrong.
+**Symptom (as measured 2026-09-10; historical -- receipts for 09-11 and 09-12 now exist via
+the no-MCP-at-05:30 mitigation, not the fix; see the SESSION-3 block below).** Receipts
+stopped at `receipt-2026-09-08.md` through that morning. The freshness watchdog reports a
+stale receipt and infers the nightly "is not running". That inference is wrong.
 
 **What is actually happening.** The task runs exactly on schedule and FAILS.
 `SSTAC-Wiki-Nightly` last ran 2026-09-10 05:30:01 with `LastResult = 1`. The 09-09 and 09-10
@@ -122,8 +128,10 @@ transcripts are 1704 bytes instead of 2148 and stop at N0:
 check_orphans.ps1 : Baseline contains non-Graphify relevant identity
 ```
 
-`tooling/wiki/check_orphans.ps1:473` refuses and exits 1 whenever the process custody baseline
-contains a "relevant" process that is not on the Graphify allowlist.
+`tooling/wiki/check_orphans.ps1:582` refuses and exits 1 whenever the process custody baseline
+contains a "relevant" process that is not on the Graphify allowlist. (Line reference corrected
+2026-09-12: the refusal sits at :473 on main, sat at :578 in this delta before the session-3
+comment correction, and sits at :582 in the branch as of 2026-09-12.)
 
 **Root cause, identified to the process.** The 2026-09-10 baseline records 4 relevant identities,
 2 of them disallowed. Resolved against the live process table:
@@ -141,7 +149,9 @@ venv interpreter. PID 11416's own parent is `claude.exe` -- an interactive Claud
 MCP server open at 05:30 causes the nightly to abort at N0. That is precisely what the capability
 is FOR. Two consecutive nights have already been lost this way, silently.
 
-**STATUS: NOT SHIPPABLE AS IT STANDS. DO NOT MERGE THIS CHANGE YET.**
+**STATUS (as reviewed 2026-09-10): NOT SHIPPABLE AS IT STANDS. DO NOT MERGE THIS CHANGE YET.**
+(The session-3 block below records what has since been completed on this branch; the merge
+and the runtime repin remain owner-gated regardless.)
 
 A second adversarial review found that the fix is INCOMPLETE in a way that makes the outcome WORSE,
 not better. `check_orphans.ps1` is not the only consumer of the process classification:
@@ -157,6 +167,47 @@ leaves less evidence. The in-code comment claiming "three call sites" is also wr
 Completing this fix means teaching all five consumers the new class, with tests driving each of the
 two additional consumers. That work is NOT done and is NOT in this change.
 
+### SESSION-3 CORRECTION COMPLETED (2026-09-12)
+
+The completion this section demanded is now DONE on this branch (owner decision "RESUME
+SESSION 3 NOW", 2026-09-12):
+
+- All FIVE consumers now gate on the same two-value allowlist: the three call sites inside
+  `check_orphans.ps1` (which share `$script:allowedProcessClasses`), plus
+  `nightly_terminalizer.ps1` `Assert-SstacIdentitySummary` and `activation_preflight.ps1`
+  `Assert-CustodyIdentity`, which each carry their own copy of the allowlist. The false
+  "three call sites" comment now names all five.
+- Both external consumers are driven by new tests that publish/verify a receipt whose
+  baseline and terminal identities carry `PREEXISTING_GRAPHIFY_MCP_CHILD`:
+  `test_terminalizer_accepts_promoted_graphify_child_class` (wrapper contracts) and
+  `test_execution_proof_accepts_promoted_graphify_child_class` (activation preflight).
+  Both were RED against the unpatched consumers, are GREEN against the patched ones, and
+  removing the child class from either consumer's allowlist in a scratch mutant kills its
+  named test (U1a, U1b).
+- The two `doc_code` exclusions (`CASE_MISMATCH`, `TARGET_HAS_NO_SOURCE_FILE`) are now
+  falsifiable: `TestExclusionGrounding` kills the three round-2 surviving mutants (D1,
+  D2, D3) by name.
+- Suites after the correction: wrapper contracts 110/110, activation preflight 77/77,
+  doc_code 18/18, all with PYTHONDONTWRITEBYTECODE=1. The pre-existing unrelated
+  SyntaxWarning at `test_activation_preflight.py:389` is unchanged.
+- The two-sided operational proof was re-run against the 9ce0917c session-3 artifact (the
+  landing-prep delta is comment-only; the classified behavior is unchanged) -- see the
+  CORRECTION note under the repin section below.
+- Six-gate and adversarial-review status for the session-3 correction is recorded in the
+  session-3 evidence file in the run evidence root, not here.
+
+The runtime REPIN (decision D2) remains owner-gated: the installed runtime still runs the
+7b2bed3dc5c6d733 checker, so merging alone still does not recover the nightly. The 09-11 and
+09-12 receipts came from the mitigation (no interactive Graphify MCP session open at 05:30),
+not from any fix landing.
+
+One post-repin case is costlier than before the correction, stated for completeness: a child
+legitimately promoted at baseline whose owning server exits DURING the run is no longer
+caught at N0 -- it fails at terminalization after the full pipeline has run, leaving the
+T3-covered terminal_disallowed evidence but no receipt-<date>.md (the same degraded-child
+path test_terminal_degradation_of_a_previously_promoted_child_fails_even_without_a_new_survivor
+pins). Every other observed case is unchanged or improved.
+
 **Everything below describes the fix as designed and as far as it was verified. It remains accurate
 about `check_orphans.ps1` itself, and it is NOT sufficient to ship.**
 
@@ -171,9 +222,12 @@ runtime's `wiki/.graph/graph.json`); and its ancestry provably reaches a process
 This does NOT broadly allow `python.exe`. A process with no `graphify.serve`, a different graph, an
 extra `-m`, a non-python image, or no ancestry to a real server all remain DISALLOWED.
 
-**Operational proof, two-sided, on LIVE process data.** A fixture built from the real process table
-(525 rows, including the two standing venv -> SYSTEM Graphify pairs) was run through the ORIGINAL
-checker and the fixed one:
+**Operational proof, two-sided, on LIVE process data -- AS MEASURED 2026-09-10, SUPERSEDED.**
+A fixture built from the real process table (525 rows, including the two standing venv -> SYSTEM
+Graphify pairs) was run through the ORIGINAL checker and the fixed one (SUPERSEDED 2026-09-12 by
+the re-run against the FINAL artifact recorded in the CORRECTION note below, which measured the
+same two-sided outcome on one live pair -- ORIGINAL allowed=1 disallowed=1 vs FIXED allowed=2
+disallowed=0. The figures below are the 09-10 two-pair measurement and are NOT current):
 
     ORIGINAL  exit=1  result=FAIL  allowed=2  disallowed=2   <- exactly the 09-09 / 09-10 failure
     FIXED     exit=0  result=PASS  allowed=4  disallowed=0   <- the nightly proceeds past N0
@@ -190,8 +244,23 @@ pinned -- N0 records `PINNED_INSTALLED_RUNTIME (3600a18f...)` every run. Measure
 
     runtime tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   HEAD 3600a18f
     main    tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   identical
-    fixed   tooling/wiki/check_orphans.ps1   sha16 b83d7bb9eab9f7b7
+    fixed   tooling/wiki/check_orphans.ps1   sha16 8d1b1d251fcbb226   (landing-prep final, 2026-09-12; was 9ce0917c0cefb70c before the comment correction)
     occurrences of the fix in the runtime copy: 0
+
+CORRECTION (2026-09-12, session 3): this block previously recorded the fixed checker as
+sha16 b83d7bb9eab9f7b7 -- the pre-T1/T3 artifact, superseded before the branch was pushed.
+The shipped pre-session-3 file hashed 0a93c93988c983a71b92; after the session-3 completion
+it hashed 9ce0917c0cefb70c, and after the landing-prep comment correction (2026-09-12) it
+hashes 8d1b1d251fcbb226. The two-sided operational proof above was originally run against
+the superseded b83d7bb artifact; it was re-run on 2026-09-12 against the 9ce0917c artifact
+(comment-only edits followed; the classified behavior the proof exercised is unchanged), on
+live process data (the standing venv server and its system-interpreter child captured from
+the running machine, full command lines, no truncation; the snapshot's two Graphify rows are
+live-captured, while its wrapper parent and checker rows follow the synthetic fixture shape
+the wrapper-contract tests use):
+
+    ORIGINAL  exit=1  result=FAIL  allowed=1  disallowed=1   <- child classed DISALLOWED_RELEVANT_PROCESS
+    FIXED     exit=0  result=PASS  allowed=2  disallowed=0   <- child promoted to PREEXISTING_GRAPHIFY_MCP_CHILD
 
 **Merging the fix to `main` leaves the runtime running the OLD checker and the nightly keeps
 failing.** Recovering it operationally requires REPINNING the installed runtime to a commit that

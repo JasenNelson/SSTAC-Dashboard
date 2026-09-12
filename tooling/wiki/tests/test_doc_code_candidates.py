@@ -10,6 +10,7 @@ a caller would, with PYTHONDONTWRITEBYTECODE=1 set explicitly in the env even
 though the script also sets sys.dont_write_bytecode itself.
 """
 import hashlib
+import importlib.util
 import json
 import os
 import subprocess
@@ -327,6 +328,124 @@ class TestExactTotals(DocCodeCandidatesFixture):
         self.assertEqual(payload["unreadable_document_sources"], [])
         self.assertEqual(payload["canonical_graph_modified"], False)
         self.assertEqual(payload["generated_without_model"], True)
+
+
+class TestExclusionGrounding(unittest.TestCase):
+    """Grounds the two round-2 exclusions (CASE_MISMATCH, TARGET_HAS_NO_SOURCE_FILE) in
+    tests that fail if either is removed. Mutants killed, per the round-2 numbering:
+
+        D1  remove the CASE_MISMATCH check                -> test_case_mismatch_...  fails
+        D2  remove the label-branch source_file check     -> test_empty_source_...   fails
+        D3  remove the path-branch source_file check     -> test_path_branch_...    fails
+    """
+
+    # DCC_SCRIPT_PATH lets the mutation harness point this class at a scratch mutant
+    # copy of doc_code_candidates.py; unset, it runs the real tool.
+    script_path = Path(os.environ.get("DCC_SCRIPT_PATH") or SCRIPT_PATH)
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temp_dir = tempfile.TemporaryDirectory()
+        cls.repo_root = Path(cls.temp_dir.name)
+        cls.graph_path = cls.repo_root / "graph.json"
+
+        _write(cls.repo_root / "docs" / "case_ref.md", [
+            "# Case Mismatch Doc",
+            "Cite `Swap_Staging` here.",
+        ])
+        _write(cls.repo_root / "docs" / "empty_source_ref.md", [
+            "# Empty Source Doc",
+            "Cite `orphan_target` here.",
+        ])
+        _write(cls.repo_root / "docs" / "control_ref.md", [
+            "# Control Doc",
+            "Cite `swap_staging` here.",
+        ])
+        nodes = [
+            _node("doc:case_doc", "Case Mismatch Doc", "document", "docs/case_ref.md", "L1"),
+            _node("doc:empty_doc", "Empty Source Doc", "document", "docs/empty_source_ref.md", "L1"),
+            _node("doc:control_doc", "Control Doc", "document", "docs/control_ref.md", "L1"),
+            _node("code:swap_staging", "swap_staging", "code", "src/pkg/staging.py", "L5"),
+            _node("code:orphan", "orphan_target", "code", "", "L1"),
+        ]
+        with open(cls.graph_path, "w", encoding="ascii", newline="\n") as handle:
+            handle.write(json.dumps({"nodes": nodes, "links": []}, indent=2) + "\n")
+        cls.graph_hash_before = _sha256(cls.graph_path)
+
+        cls.out_path = cls.repo_root / "candidates.json"
+        env = dict(os.environ)
+        env["PYTHONDONTWRITEBYTECODE"] = "1"
+        proc = subprocess.run(
+            [sys.executable, "-X", "utf8", str(cls.script_path),
+             "--graph", str(cls.graph_path), "--repo-root", str(cls.repo_root),
+             "--out", str(cls.out_path)],
+            capture_output=True, text=True, check=False, env=env, timeout=30,
+        )
+        assert proc.returncode == 0, proc.stderr
+        with open(cls.out_path, "r", encoding="utf-8") as handle:
+            cls.payload = json.load(handle)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temp_dir.cleanup()
+
+    def candidates_for(self, source_file):
+        return [c for c in self.payload["candidates"] if c["source_file"] == source_file]
+
+    @classmethod
+    def load_module(cls):
+        spec = importlib.util.spec_from_file_location("dcc_under_test", cls.script_path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return module
+
+    def test_case_mismatch_citation_is_excluded_and_counted(self):
+        # A citation differing only in CASE from the resolved node's label is a
+        # coincidence, not a reference. Kill-mutant D1: remove the CASE_MISMATCH check
+        # and this citation resolves to code:swap_staging, so this test fails.
+        self.assertEqual(self.candidates_for("docs/case_ref.md"), [])
+        self.assertEqual(self.payload["unresolved_reason_counts"].get("CASE_MISMATCH"), 1)
+        # two-sided: the same node reached with the exact case still resolves
+        control = self.candidates_for("docs/control_ref.md")
+        self.assertEqual(len(control), 1)
+        self.assertEqual(control[0]["target"], "code:swap_staging")
+
+    def test_empty_source_label_target_is_excluded_and_counted(self):
+        # A target with no source_file cannot be opened or cited, so it cannot ground an
+        # edge. Kill-mutant D2: remove the label-branch check and code:orphan becomes a
+        # candidate, so this test fails.
+        self.assertEqual(self.candidates_for("docs/empty_source_ref.md"), [])
+        self.assertEqual(self.payload["unresolved_reason_counts"].get("TARGET_HAS_NO_SOURCE_FILE"), 1)
+        all_targets = {c["target"] for c in self.payload["candidates"]}
+        self.assertNotIn("code:orphan", all_targets)
+
+    def test_path_branch_rejects_target_without_source_file(self):
+        # The path branch's empty-source guard is unreachable end-to-end by construction
+        # (build_code_index only indexes non-empty source_file), so resolve() is driven
+        # directly. Kill-mutant D3: remove the guard and resolve() returns the node.
+        module = self.load_module()
+        ghost = {"id": "code:ghost", "label": "ghost.py", "source_file": "",
+                 "file_type": "code", "source_location": "L1"}
+        node, reason = module.resolve("src/ghost.py", {"src/ghost.py": ghost}, {})
+        self.assertIsNone(node)
+        self.assertEqual(reason, "TARGET_HAS_NO_SOURCE_FILE")
+        # two-sided control: a non-empty source_file resolves normally
+        ok = dict(ghost, source_file="src/ghost.py")
+        node_ok, reason_ok = module.resolve("src/ghost.py", {"src/ghost.py": ok}, {})
+        self.assertIsNotNone(node_ok)
+        self.assertIsNone(reason_ok)
+
+    def test_exclusion_fixture_totals_are_exact(self):
+        self.assertEqual(self.payload["document_nodes_seen"], 3)
+        self.assertEqual(self.payload["documents_contributing"], 1)
+        self.assertEqual(self.payload["candidate_count"], 1)
+        self.assertEqual(self.payload["distinct_code_targets"], 1)
+        self.assertEqual(self.payload["unreadable_document_sources"], [])
+        self.assertEqual(self.payload["canonical_graph_modified"], False)
+        self.assertEqual(self.payload["generated_without_model"], True)
+
+    def test_exclusion_run_leaves_graph_byte_identical(self):
+        self.assertEqual(self.graph_hash_before, _sha256(self.graph_path))
 
 
 if __name__ == "__main__":

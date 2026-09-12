@@ -163,9 +163,14 @@ function Get-Summary(
     [pscustomobject]$summary
 }
 
-# The ONLY two classifications a baseline may carry. Kept in one place so the three call
-# sites that gate on it (baseline assertion, the disallowed filter, and terminal
-# verification) can never drift apart.
+# The ONLY two classifications a baseline identity may carry. Three call sites in THIS
+# file (baseline assertion, the disallowed filter, terminal verification) share this
+# constant, but there are FIVE gate sites in total: nightly_terminalizer.ps1
+# Assert-SstacIdentitySummary and activation_preflight.ps1 Assert-CustodyIdentity each
+# carry their own copy of the same two-value allowlist. A new class must be taught to
+# all five in lockstep; the wrapper-contract and activation-preflight test suites each
+# drive their consumer with a child-class identity, so missing one fails the suite
+# instead of the nightly.
 $script:allowedProcessClasses = @('PREEXISTING_GRAPHIFY_MCP', 'PREEXISTING_GRAPHIFY_MCP_CHILD')
 
 function Test-AllowedProcessClass([string]$ProcessClass) {

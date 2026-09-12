@@ -1141,6 +1141,20 @@ class ActivationPreflightTests(unittest.TestCase):
         self.assertIn("PASS    runtime-ref:", result.stdout)
         self.assertIn("PASS    execution-proof:", result.stdout)
 
+    def test_execution_proof_accepts_promoted_graphify_child_class(self):
+        # Producer/consumer pair (round-2 U1): activation_preflight re-validates the
+        # nightly's terminal custody evidence and must accept the checker's
+        # PREEXISTING_GRAPHIFY_MCP_CHILD classification. Before the consumer fix this
+        # failed execution-proof with "invalid custody process class baseline_identity".
+        def promote_child(custody):
+            for field in ("baseline_relevant_identities", "terminal_relevant_identities"):
+                custody[field][0]["process_class"] = "PREEXISTING_GRAPHIFY_MCP_CHILD"
+        self.write_contract("StagedManualProven")
+        self.write_terminal_receipt(custody_mutator=promote_child)
+        result = self.run_preflight(contract="A", phase="StagedManualProven")
+        self.assert_fixture_non_activation(result)
+        self.assertIn("PASS    execution-proof:", result.stdout)
+
     def test_receipt_schema_and_native_exit_presence_fail_closed(self):
         for field in ("schema_version", "native_exit_code"):
             with self.subTest(field=field):
