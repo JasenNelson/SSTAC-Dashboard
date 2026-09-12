@@ -33,6 +33,10 @@ MCP capability in an interactive session currently prevents the nightly refresh 
   - SHA-256 `40DAB025C918F235E390FBC2C94B5FBD2358AE902D5A62040D27EB6C6253AE5A`
   - `built_at_commit` `3600a18fb6b9944368c45ce1843245df2e508abb`
   - 12464 nodes / 24548 edges / 706 communities; 99% EXTRACTED, 1% INFERRED (323 inferred edges)
+  - (Identity as measured 2026-09-10 -- the state the L3-M2 acceptance bound. The nightly
+    republished the served graph on 09-11 and 09-12; the graph.json at this path as of
+    2026-09-12 hashes to sha16 `8626515afac16da950fb` (mtime 2026-09-12 05:30:37). The
+    40DAB025 identity above is the accepted-snapshot record, not the current served bytes.)
 - **Server**: exactly one `graphify` MCP registration exists, under project key
   `C:/Projects/SSTAC-Dashboard` in `~/.claude.json`, launching
   `<runtime>\.venv-graphify\Scripts\python.exe -m graphify.serve <accepted graph> --transport stdio`.
@@ -111,8 +115,10 @@ receipt, and `receipt-<date>.md`.
 
 ## 5. THE NIGHTLY IS CURRENTLY BROKEN -- root cause and recommended fix
 
-**Symptom.** Receipts stop at `receipt-2026-09-08.md`. The freshness watchdog reports a stale
-receipt and infers the nightly "is not running". That inference is wrong.
+**Symptom (as measured 2026-09-10; historical -- receipts for 09-11 and 09-12 now exist via
+the no-MCP-at-05:30 mitigation, not the fix; see the SESSION-3 block below).** Receipts
+stopped at `receipt-2026-09-08.md` through that morning. The freshness watchdog reports a
+stale receipt and infers the nightly "is not running". That inference is wrong.
 
 **What is actually happening.** The task runs exactly on schedule and FAILS.
 `SSTAC-Wiki-Nightly` last ran 2026-09-10 05:30:01 with `LastResult = 1`. The 09-09 and 09-10
@@ -122,8 +128,10 @@ transcripts are 1704 bytes instead of 2148 and stop at N0:
 check_orphans.ps1 : Baseline contains non-Graphify relevant identity
 ```
 
-`tooling/wiki/check_orphans.ps1:473` refuses and exits 1 whenever the process custody baseline
-contains a "relevant" process that is not on the Graphify allowlist.
+`tooling/wiki/check_orphans.ps1:582` refuses and exits 1 whenever the process custody baseline
+contains a "relevant" process that is not on the Graphify allowlist. (Line reference corrected
+2026-09-12: the refusal sits at :473 on main, sat at :578 in this delta before the session-3
+comment correction, and sits at :582 in the branch as of 2026-09-12.)
 
 **Root cause, identified to the process.** The 2026-09-10 baseline records 4 relevant identities,
 2 of them disallowed. Resolved against the live process table:
@@ -141,14 +149,124 @@ venv interpreter. PID 11416's own parent is `claude.exe` -- an interactive Claud
 MCP server open at 05:30 causes the nightly to abort at N0. That is precisely what the capability
 is FOR. Two consecutive nights have already been lost this way, silently.
 
-**Recommended fix (NOT applied in this run -- it is an operational guard change and deserves its
-own review):** extend the custody allowlist in `check_orphans.ps1` to recognise
-`-m graphify.serve` by MODULE and graph target rather than by interpreter path, so a Graphify
-server is allowed regardless of which Python launched it. Alternatively, treat descendants of an
-already-allowed Graphify process as allowed. Do NOT simply relax the guard to accept any
-`python.exe`: it exists to catch genuine contamination of the runtime root.
+**STATUS (as reviewed 2026-09-10): NOT SHIPPABLE AS IT STANDS. DO NOT MERGE THIS CHANGE YET.**
+(The session-3 block below records what has since been completed on this branch; the merge
+and the runtime repin remain owner-gated regardless.)
 
-**Interim mitigation:** if a nightly must succeed, ensure no interactive session is holding a
+A second adversarial review found that the fix is INCOMPLETE in a way that makes the outcome WORSE,
+not better. `check_orphans.ps1` is not the only consumer of the process classification:
+`tooling/wiki/nightly_terminalizer.ps1:40` and `tooling/wiki/activation_preflight.ps1:317` both
+assert `$RequireGraphifyClass = $true` over every baseline, terminal and departed identity, and
+both REJECT the new `PREEXISTING_GRAPHIFY_MCP_CHILD` class.
+
+Consequence on exactly the night this fix targets: the run would clear N0, execute the ENTIRE
+pipeline, and then die at `nightly_wiki_sync.ps1:682` with no terminal receipt and no
+`receipt-<date>.md` -- strictly worse than today's fast N0 abort, because it burns the whole run and
+leaves less evidence. The in-code comment claiming "three call sites" is also wrong; there are five.
+
+Completing this fix means teaching all five consumers the new class, with tests driving each of the
+two additional consumers. That work is NOT done and is NOT in this change.
+
+### SESSION-3 CORRECTION COMPLETED (2026-09-12)
+
+The completion this section demanded is now DONE on this branch (owner decision "RESUME
+SESSION 3 NOW", 2026-09-12):
+
+- All FIVE consumers now gate on the same two-value allowlist: the three call sites inside
+  `check_orphans.ps1` (which share `$script:allowedProcessClasses`), plus
+  `nightly_terminalizer.ps1` `Assert-SstacIdentitySummary` and `activation_preflight.ps1`
+  `Assert-CustodyIdentity`, which each carry their own copy of the allowlist. The false
+  "three call sites" comment now names all five.
+- Both external consumers are driven by new tests that publish/verify a receipt whose
+  baseline and terminal identities carry `PREEXISTING_GRAPHIFY_MCP_CHILD`:
+  `test_terminalizer_accepts_promoted_graphify_child_class` (wrapper contracts) and
+  `test_execution_proof_accepts_promoted_graphify_child_class` (activation preflight).
+  Both were RED against the unpatched consumers, are GREEN against the patched ones, and
+  removing the child class from either consumer's allowlist in a scratch mutant kills its
+  named test (U1a, U1b).
+- The two `doc_code` exclusions (`CASE_MISMATCH`, `TARGET_HAS_NO_SOURCE_FILE`) are now
+  falsifiable: `TestExclusionGrounding` kills the three round-2 surviving mutants (D1,
+  D2, D3) by name.
+- Suites after the correction: wrapper contracts 110/110, activation preflight 77/77,
+  doc_code 18/18, all with PYTHONDONTWRITEBYTECODE=1. The pre-existing unrelated
+  SyntaxWarning at `test_activation_preflight.py:389` is unchanged.
+- The two-sided operational proof was re-run against the 9ce0917c session-3 artifact (the
+  landing-prep delta is comment-only; the classified behavior is unchanged) -- see the
+  CORRECTION note under the repin section below.
+- Six-gate and adversarial-review status for the session-3 correction is recorded in the
+  session-3 evidence file in the run evidence root, not here.
+
+The runtime REPIN (decision D2) remains owner-gated: the installed runtime still runs the
+7b2bed3dc5c6d733 checker, so merging alone still does not recover the nightly. The 09-11 and
+09-12 receipts came from the mitigation (no interactive Graphify MCP session open at 05:30),
+not from any fix landing.
+
+One post-repin case is costlier than before the correction, stated for completeness: a child
+legitimately promoted at baseline whose owning server exits DURING the run is no longer
+caught at N0 -- it fails at terminalization after the full pipeline has run, leaving the
+T3-covered terminal_disallowed evidence but no receipt-<date>.md (the same degraded-child
+path test_terminal_degradation_of_a_previously_promoted_child_fails_even_without_a_new_survivor
+pins). Every other observed case is unchanged or improved.
+
+**Everything below describes the fix as designed and as far as it was verified. It remains accurate
+about `check_orphans.ps1` itself, and it is NOT sufficient to ship.**
+
+`check_orphans.ps1` now classifies a
+`graphify.serve` helper as `PREEXISTING_GRAPHIFY_MCP_CHILD` -- but ONLY when all three hold: it is
+not already allowed; it satisfies the exact module / accepted-graph / transport invariant
+(`python.exe`, exactly one `-m graphify.serve`, exactly one `-m` total, exactly one
+`--transport stdio`, exactly one `--transport` total, and an exact argument token for THIS
+runtime's `wiki/.graph/graph.json`); and its ancestry provably reaches a process classified
+`PREEXISTING_GRAPHIFY_MCP` in the SAME snapshot.
+
+This does NOT broadly allow `python.exe`. A process with no `graphify.serve`, a different graph, an
+extra `-m`, a non-python image, or no ancestry to a real server all remain DISALLOWED.
+
+**Operational proof, two-sided, on LIVE process data -- AS MEASURED 2026-09-10, SUPERSEDED.**
+A fixture built from the real process table (525 rows, including the two standing venv -> SYSTEM
+Graphify pairs) was run through the ORIGINAL checker and the fixed one (SUPERSEDED 2026-09-12 by
+the re-run against the FINAL artifact recorded in the CORRECTION note below, which measured the
+same two-sided outcome on one live pair -- ORIGINAL allowed=1 disallowed=1 vs FIXED allowed=2
+disallowed=0. The figures below are the 09-10 two-pair measurement and are NOT current):
+
+    ORIGINAL  exit=1  result=FAIL  allowed=2  disallowed=2   <- exactly the 09-09 / 09-10 failure
+    FIXED     exit=0  result=PASS  allowed=4  disallowed=0   <- the nightly proceeds past N0
+
+**KNOWN LIMITATION, deliberate:** a `graphify.serve` spawned DIRECTLY under the system interpreter
+by a session -- not descended from a venv server -- is still DISALLOWED and will still block a
+nightly. That is the conservative reading: such a process is an ad-hoc, unmanaged consumer of the
+runtime graph. Both real failures were the descendant pattern.
+
+### THE FIX DOES NOT TAKE EFFECT UNTIL THE RUNTIME IS REPINNED
+
+The scheduled task executes the RUNTIME worktree's OWN copy of the pipeline, and that runtime is
+pinned -- N0 records `PINNED_INSTALLED_RUNTIME (3600a18f...)` every run. Measured:
+
+    runtime tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   HEAD 3600a18f
+    main    tooling/wiki/check_orphans.ps1   sha16 7b2bed3dc5c6d733   identical
+    fixed   tooling/wiki/check_orphans.ps1   sha16 8d1b1d251fcbb226   (landing-prep final, 2026-09-12; was 9ce0917c0cefb70c before the comment correction)
+    occurrences of the fix in the runtime copy: 0
+
+CORRECTION (2026-09-12, session 3): this block previously recorded the fixed checker as
+sha16 b83d7bb9eab9f7b7 -- the pre-T1/T3 artifact, superseded before the branch was pushed.
+The shipped pre-session-3 file hashed 0a93c93988c983a71b92; after the session-3 completion
+it hashed 9ce0917c0cefb70c, and after the landing-prep comment correction (2026-09-12) it
+hashes 8d1b1d251fcbb226. The two-sided operational proof above was originally run against
+the superseded b83d7bb artifact; it was re-run on 2026-09-12 against the 9ce0917c artifact
+(comment-only edits followed; the classified behavior the proof exercised is unchanged), on
+live process data (the standing venv server and its system-interpreter child captured from
+the running machine, full command lines, no truncation; the snapshot's two Graphify rows are
+live-captured, while its wrapper parent and checker rows follow the synthetic fixture shape
+the wrapper-contract tests use):
+
+    ORIGINAL  exit=1  result=FAIL  allowed=1  disallowed=1   <- child classed DISALLOWED_RELEVANT_PROCESS
+    FIXED     exit=0  result=PASS  allowed=2  disallowed=0   <- child promoted to PREEXISTING_GRAPHIFY_MCP_CHILD
+
+**Merging the fix to `main` leaves the runtime running the OLD checker and the nightly keeps
+failing.** Recovering it operationally requires REPINNING the installed runtime to a commit that
+contains the fix -- an activation-class mutation and an owner decision.
+
+**Interim mitigation, still valid until the repin:** ensure no interactive session is holding a
 Graphify MCP server open against the runtime graph at 05:30.
 
 ---
@@ -194,17 +312,66 @@ Measured against the accepted graph:
 | CROSS_COMMUNITY | 70 | 10 |
 | CROSS_FILE_CODE_CODE | 174 | 10 |
 
-**M4's sampling design cannot be satisfied as written.** Verified two ways: inferred edge endpoint
+**M4's sampling design could not be satisfied as written.** Verified two ways: inferred edge endpoint
 `file_type` pairs are only `(code,code)` and `(code,concept)`, and zero inferred edges have even one
 endpoint whose `source_file` ends in `.md`.
 
-The substantive point is larger than the blocker: **the semantic layer currently produces no
-document-to-code edges at all.** For a Wiki-KB whose purpose is connecting documentation to the code
-it describes, that is arguably the most valuable edge type, and it is absent.
+Sharper still, and worse than first stated: there are **zero `(code, document)` edges in EITHER
+layer**. The EXTRACTED layer contains 2411 `(document, document)` edges and 22 `(concept, document)`,
+but not one document-to-code edge. Documentation is a well-connected island that never touches code.
+For a Wiki-KB whose purpose is connecting documentation to the code it describes, the most valuable
+edge type is structurally absent.
 
-M4 additionally requires a reserved GPU window (none exists; per-day schedule files end 2026-07-27),
-a running Ollama (not running), and explicit owner approval for model, lock, window, seed and
-disposable root, plus separate approval for the canary and for promotion.
+### RESOLVED (2026-09-10, second session) -- and without a GPU
+
+`tooling/wiki/doc_code_candidates.py` mines the bridge signal that already exists in the corpus:
+documentation cites code in BACKTICKS, the same convention the docs-trust mechanism already relies
+on. A cited span becomes a candidate only when it resolves EXACTLY to an existing code node -- by
+that file's FILE-LEVEL node, or by an unambiguous label -- and each citation is attributed to the
+enclosing document section.
+
+    581 candidates | 270 distinct code targets | 480 distinct (doc section -> code file) pairs
+    independent audit: quoted text present at the cited line 60/60; every sampled target file
+    exists on disk (193 distinct target files across the pool)
+    top targets: database_schema.sql 67, api-guards.ts 36, pack-types.ts 25, route.ts 21
+
+CORRECTION, recorded rather than quietly edited: this block previously read 591 / 277 / 489 and
+"target files on disk 297/297". Those were the figures from BEFORE the resolver was tightened for
+case-sensitivity and empty target files, and the 297 was internally impossible -- it exceeded the
+pool's own distinct-target count. An independent review caught all of it. The figures above are the
+shipped generator's own output.
+
+FALSE-POSITIVE ESTIMATE, from independent audit: roughly 3% on endpoint identity (upper bound ~5%).
+The wrong ones are an output label resolving to a same-named function, and about eight database
+object names resolving to a validation query or a draft .sql under docs/ rather than the defining
+migration. The RELATION-level rate is materially higher than that: much of the pool is changelog or
+status prose that merely MENTIONS a file rather than documenting it. Treat these as candidates for
+review, which is what they are, and not as established edges.
+
+Properties that matter: it needs **no model, no Ollama and no GPU**, so it runs outside the shared-GPU
+schedule entirely; the canonical served graph is opened READ-ONLY and verified byte-identical before
+and after every run; nothing is promoted; and an ambiguous label is EXCLUDED rather than guessed.
+
+Grounding is what makes this usable without weakening M4: its support rubric holds that an edge is
+supported only when grounded in exact cited content from the authenticated source snapshot, and a
+backtick citation IS exact cited content.
+
+**The DOC_CODE stratum is no longer the blocker.** M4 still requires the owner-gated model, lock,
+GPU window, seed and disposable root, plus canary and promotion approvals.
+
+M4 additionally requires a reserved GPU window and explicit owner approval for model, lock, window,
+seed and disposable root, plus separate approval for the canary and for promotion.
+
+CORRECTION: an earlier revision of this line claimed "none exists; per-day schedule files end
+2026-07-27". That was FALSE and an independent review caught it. There are 51 `OLLAMA_SCHEDULE_*`
+files including one for TODAY, and today's drift log records real runs completing this morning
+(openharness-dev labeling COMPLETED_GREEN 03:30, semantic extract COMPLETED_RED 03:37). The
+protocol is live and in daily use, and `C:\Projects\OLLAMA_ACTIVE.lock` is currently free.
+
+So the accurate constraint is NOT "no schedule exists". It is that SSTAC must negotiate a block
+under `OLLAMA_SCHEDULE_PROTOCOL.md` (two active lanes maximum; a third writes a HITL request), and
+that the owner-gated model, lock, seed and disposable-root approvals are still outstanding. Ollama
+was not running when checked, which is a startup step rather than a blocker.
 
 ---
 
@@ -219,13 +386,24 @@ disposable root, plus separate approval for the canary and for promotion.
    evidence the structure is absent.** No efficiency, speed or operation-count benefit has been
    established; none may be claimed from the M3 evidence, which is a capability demonstration only.
 
-0a. **`src_grep` LIES ON DIRECTORY PATHS.** In the M3 sealed-snapshot source proxy
-   (`L3-M3-PRE-ARM-PACKET-R5-R3/mcp/source_mcp.py`), `src_grep` given a DIRECTORY path silently
-   returns success with NO results instead of searching it or refusing. In the final demonstration a
-   session issued seven such non-searches and then wrote "I searched the entire snapshot ... found no
-   matches" -- a false statement produced by a tool reporting success for work it never did. Any
-   "searched and found nothing" conclusion reached through that surface is unreliable and must be
-   re-established before it is relied on. UNREPAIRED.
+0a. **`src_grep` LIED ON DIRECTORY PATHS -- NOW REPAIRED, and the conclusion it corrupted has been
+   re-established.** In the M3 sealed-snapshot source proxy, `src_grep` given a DIRECTORY path
+   silently returned success with NO results instead of searching it or refusing. In the final
+   demonstration a session issued seven such non-searches and then wrote "I searched the entire
+   snapshot ... found no matches" -- a false statement produced by a tool reporting success for work
+   it never did.
+
+   REPAIRED in sealed successor packet `L3-M3-PRE-ARM-PACKET-R5-R4`
+   (`E6F08DC5CAEAB500EAA91A965764AE497C42F0E5A556B62DB3216D5176CD5D2D`, 63 members): a directory now
+   expands recursively within the allowlist-bounded root and is searched; a non-existent path and an
+   empty expansion both FAIL LOUDLY. Predecessors R5-R3 and R5-R2 verified unmodified.
+
+   RE-ESTABLISHED, and it revises the M3 reading: a working search WOULD have returned
+   `is_untrusted_source_path` (must-have **M5.5**, 1 file) and `_is_link_or_junction` (must-have
+   **M5.4**, 2 files) -- precisely the two enforced-guard facts task_5 missed. The defect
+   **materially caused** task_5's 1/6; it was not merely a contributing factor. M5.2 and M5.3 were
+   independently confirmed correct in the same pass (`REFUSED_TOOLING_CHANGE` occurs **0** times in
+   `nightly_wiki_sync.ps1`, and `WIKI_KB_OPERATIONS_2026_07.md:674` does assert it is "LIVE today").
 
 1. **Retrieval is seed-dependent.** Identifier seeds retrieve precisely; prose seeds collapse. The
    assist wrapper makes that visible but does not fix retrieval. Independent verification of the

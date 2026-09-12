@@ -37,7 +37,7 @@ function Assert-SstacIdentitySummary([object]$Identity, [string]$Name, [bool]$Re
     foreach($field in @('command_line_sha256','executable_path_sha256','identity_sha256')){if([string]$Identity.$field-cnotmatch'^[0-9a-f]{64}$'){throw "Invalid custody hash $Name.$field"}}
     if($null-ne$Identity.PSObject.Properties['command_line']-or$null-ne$Identity.PSObject.Properties['executable_path']){throw "Raw custody process field in $Name"}
     foreach($field in @('runtime_reference','attributable_descendant')){if($null-eq$Identity.PSObject.Properties[$field]-or$Identity.$field-isnot[bool]){throw "Invalid custody classification flag $Name.$field"}}
-    if($RequireGraphifyClass-and[string]$Identity.process_class-cne'PREEXISTING_GRAPHIFY_MCP'){throw "Invalid custody process class $Name"}
+    if($RequireGraphifyClass-and@('PREEXISTING_GRAPHIFY_MCP','PREEXISTING_GRAPHIFY_MCP_CHILD')-cnotcontains[string]$Identity.process_class){throw "Invalid custody process class $Name"}
 }
 function Test-SstacUniqueHashes([object[]]$Items) { $hashes=@($Items|ForEach-Object{[string]$_.identity_sha256});$hashes.Count-eq@($hashes|Select-Object -Unique).Count-and@($hashes|Where-Object{$_-cnotmatch'^[0-9a-f]{64}$'}).Count-eq0 }
 function Assert-SstacSuccessCustody([object]$Custody, [object]$Receipt) {

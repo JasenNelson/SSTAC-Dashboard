@@ -314,7 +314,7 @@ function Assert-CustodyIdentity([object]$Identity, [string]$Name, [bool]$Require
     foreach ($field in @('runtime_reference', 'attributable_descendant')) {
         if ($null -eq $Identity.PSObject.Properties[$field] -or $Identity.$field -isnot [bool]) { throw "invalid custody classification flag $Name.$field" }
     }
-    if ($RequireGraphifyClass -and [string]$Identity.process_class -cne 'PREEXISTING_GRAPHIFY_MCP') {
+    if ($RequireGraphifyClass -and @('PREEXISTING_GRAPHIFY_MCP', 'PREEXISTING_GRAPHIFY_MCP_CHILD') -cnotcontains [string]$Identity.process_class) {
         throw "invalid custody process class $Name"
     }
 }
