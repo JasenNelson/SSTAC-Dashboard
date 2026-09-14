@@ -50,9 +50,9 @@ export default async function PaperVersionPage({
     const query = await searchParams;
     const mode = parseWorkspaceMode(query?.mode);
     const atlasQuery = parseAtlasQuery(query ?? {});
-    return import('@/components/matrix-options/paper/RevisedPaperWorkspace').then(({ RevisedPaperWorkspace }) => (
-      <RevisedPaperWorkspace model={createWorkspaceModel(loadRevisedPaperStructure(), atlasQuery, mode)} />
-    ));
+    const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
+    const model = createWorkspaceModel(loadRevisedPaperStructure(), atlasQuery, mode);
+    return <RevisedPaperWorkspace model={model} />;
   } catch (error) {
     if (error instanceof RevisedPaperUnavailableError) notFound();
     if (error instanceof ReviewQueryError) notFound();

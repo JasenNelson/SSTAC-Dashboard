@@ -38,6 +38,7 @@ beforeEach(() => {
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.restoreAllMocks();
   Object.defineProperty(HTMLElement.prototype, 'getBoundingClientRect', { configurable: true, value: originalRect });
 });
 
@@ -118,6 +119,7 @@ describe('RevisedPaperWorkspace', () => {
       expect(region).toHaveClass('print:hidden');
     }
     expect(reader).not.toHaveClass('print:hidden');
+    expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(reader).toHaveClass('print:col-span-full', 'print:w-full', 'print:max-w-none');
     expect(within(reader).getByRole('heading', { name: 'Printed paper', level: 1 })).toBeInTheDocument();
     expect(within(reader).getByText('Authenticated body.')).toBeInTheDocument();
@@ -156,7 +158,7 @@ describe('RevisedPaperWorkspace', () => {
     const model = createWorkspaceModel(structure, undefined, 'publication');
     render(<RevisedPaperWorkspace model={model} />);
 
-    const main = screen.getByRole('main');
+    const main = screen.getByTestId('workspace-shell');
     expect(main).toHaveAttribute('data-pin-eligible', 'true');
     const trustStrip = screen.getByTestId('trust-strip');
     expect(trustStrip).toHaveTextContent(model.documentVersion);
@@ -193,6 +195,51 @@ describe('RevisedPaperWorkspace', () => {
     expect(window.localStorage.getItem(releaseNoteKey(model.releaseIdentity, noteId))).toBe('release-local note');
   });
 
+  it('binds reader heading and device-local notes to the requested detail, not the first atlas row', () => {
+    const structure = loadRevisedPaperStructure();
+    const target = structure.nodes[1];
+    const firstAtlasRow = structure.nodes[0];
+    expect(target).toBeTruthy();
+    expect(firstAtlasRow).toBeTruthy();
+    if (!target || !firstAtlasRow) return;
+    expect(target.id).not.toBe(firstAtlasRow.id);
+    window.localStorage.clear();
+    const model = createWorkspaceModel(
+      structure,
+      { lens: 'all', q: '', page: 1 },
+      'publication',
+      { id: target.id, domain: target.domain, label: target.label, startByte: target.startByte, endByte: target.endByte, ownerNodeId: null },
+    );
+    render(<RevisedPaperWorkspace model={model} readerText="# Requested detail\n\nExact range." />);
+
+    expect(screen.getByRole('heading', { name: target.label })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: target.label }).closest('section')).toHaveAttribute('data-reader-detail-id', target.id);
+    fireEvent.click(screen.getByRole('button', { name: 'Open context' }));
+    fireEvent.change(screen.getByRole('textbox', { name: 'Note' }), { target: { value: 'detail-local note' } });
+    expect(window.localStorage.getItem(releaseNoteKey(model.releaseIdentity, target.id))).toBe('detail-local note');
+    expect(window.localStorage.getItem(releaseNoteKey(model.releaseIdentity, firstAtlasRow.id))).toBeNull();
+  });
+
+  it('keeps note editing usable when storage read or write is unavailable', () => {
+    const structure = loadRevisedPaperStructure();
+    vi.spyOn(window.localStorage, 'getItem').mockImplementation(() => { throw new Error('storage denied'); });
+    render(<RevisedPaperWorkspace model={createWorkspaceModel(structure)} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Open context' }));
+    expect(screen.getByRole('status')).toHaveTextContent('Retained for this session; device storage is unavailable.');
+    const note = screen.getByRole('textbox', { name: 'Note' });
+    fireEvent.change(note, { target: { value: 'session-only note' } });
+    expect(note).toHaveValue('session-only note');
+
+    vi.restoreAllMocks();
+    vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => { throw new Error('quota exceeded'); });
+    render(<RevisedPaperWorkspace model={createWorkspaceModel(structure)} />);
+    fireEvent.click(screen.getAllByRole('button', { name: 'Open context' }).at(-1) as HTMLElement);
+    const secondNote = screen.getAllByRole('textbox', { name: 'Note' }).at(-1) as HTMLElement;
+    fireEvent.change(secondNote, { target: { value: 'quota note' } });
+    expect(secondNote).toHaveValue('quota note');
+    expect(screen.getAllByRole('status').at(-1)).toHaveTextContent('Retained for this session; device storage is unavailable.');
+  });
+
   it('shows the unassigned question packet without assignment or progress state', () => {
     const structure = loadRevisedPaperStructure();
     render(<RevisedPaperWorkspace model={createWorkspaceModel(structure)} />);
@@ -210,7 +257,7 @@ describe('RevisedPaperWorkspace', () => {
     fireEvent.click(screen.getByRole('button', { name: 'Open context' }));
     const pinButton = screen.getByRole('button', { name: 'Pin context' });
     expect(pinButton).toBeDisabled();
-    expect(screen.getByRole('main')).toHaveAttribute('data-pin-eligible', 'false');
+    expect(screen.getByTestId('workspace-shell')).toHaveAttribute('data-pin-eligible', 'false');
     expect(screen.getByTestId('context-rail')).toHaveAttribute('data-pinned', 'false');
     fireEvent.click(pinButton);
     expect(screen.getByTestId('context-rail')).toHaveAttribute('data-pinned', 'false');
@@ -219,7 +266,7 @@ describe('RevisedPaperWorkspace', () => {
   it('recomputes measured width and page overflow at runtime', async () => {
     const structure = loadRevisedPaperStructure();
     render(<RevisedPaperWorkspace model={createWorkspaceModel(structure)} />);
-    const main = screen.getByRole('main');
+    const main = screen.getByTestId('workspace-shell');
     expect(main).toHaveAttribute('data-pin-eligible', 'true');
 
     measuredWidth = 719.84;

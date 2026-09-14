@@ -8,11 +8,12 @@ import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import {
   createWorkspaceModel,
-  parseAtlasQuery,
+  parseDetailQuery,
   parseWorkspaceMode,
   ReviewQueryError,
   sourceRangeText,
 } from '@/lib/matrix-options/revised-paper-review';
+import type { RequestedDetail } from '@/lib/matrix-options/revised-paper-review';
 
 export default async function PublicationQuestionPage({
   params,
@@ -36,15 +37,24 @@ export default async function PublicationQuestionPage({
   const structure = loadRevisedPaperStructure();
   const question = structure.questions.find((candidate) => candidate.id === resolvedQuestionId);
   if (!question) notFound();
+  const detail: RequestedDetail = {
+    id: question.id,
+    domain: question.domain,
+    label: question.label,
+    startByte: question.startByte,
+    endByte: question.endByte,
+    ownerNodeId: question.ownerNodeId,
+  };
   try {
     const query = (await searchParams) ?? {};
     const model = createWorkspaceModel(
       structure,
-      parseAtlasQuery({ ...query, lens: query.lens ?? 'questions', q: query.q ?? question.label, page: query.page ?? '1' }),
+      parseDetailQuery(query, 'questions'),
       parseWorkspaceMode(query.mode ?? 'publication'),
+      detail,
     );
     const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} readerText={sourceRangeText(structure.content, question.startByte, question.endByte)} />;
+    return <RevisedPaperWorkspace model={model} readerText={sourceRangeText(structure.content, detail.startByte, detail.endByte)} />;
   } catch (error) {
     if (error instanceof ReviewQueryError) notFound();
     throw error;

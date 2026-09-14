@@ -88,6 +88,15 @@ export interface AtlasWindow {
   readonly hasNext: boolean;
 }
 
+export interface RequestedDetail {
+  readonly id: string;
+  readonly domain: StructureDomain;
+  readonly label: string;
+  readonly startByte: number;
+  readonly endByte: number;
+  readonly ownerNodeId: string | null;
+}
+
 export interface QuestionPacketItem {
   readonly id: string;
   readonly label: string;
@@ -99,6 +108,11 @@ export interface QuestionPacketItem {
 
 export interface ReaderContext {
   readonly selectedId: string | null;
+  readonly selectedDomain: StructureDomain | null;
+  readonly selectedLabel: string | null;
+  readonly selectedStartByte: number | null;
+  readonly selectedEndByte: number | null;
+  readonly selectedOwnerNodeId: string | null;
   readonly ancestors: readonly string[];
   readonly neighborhood: readonly AtlasRow[];
 }
@@ -109,6 +123,8 @@ export interface WorkspaceModel {
   readonly mode: WorkspaceMode;
   readonly assignment: AssignmentState;
   readonly atlas: AtlasWindow;
+  readonly requestedDetail: RequestedDetail | null;
+  readonly internalLinkMap: Readonly<Record<string, string>>;
   readonly readerContext: ReaderContext;
   readonly questionPacket: readonly QuestionPacketItem[];
   readonly trust: TrustState;
@@ -160,6 +176,19 @@ export function parseAtlasQuery(
   return { lens: lensValue, q, page };
 }
 
+export function parseDetailQuery(
+  input: Readonly<Record<string, string | readonly string[] | undefined>>,
+  defaultLens: PublicationLens,
+): AtlasQuery {
+  const parsed = parseAtlasQuery({
+    ...input,
+    lens: input.lens ?? defaultLens,
+    q: input.q ?? '',
+    page: input.page ?? '1',
+  });
+  return input.q === undefined && parsed.page > 1 ? { ...parsed, page: 1 } : parsed;
+}
+
 function placementMatches(placement: LensPlacement, normalizedQuery: string): boolean {
   if (!normalizedQuery) return true;
   return normalizeSearch(placement.label).includes(normalizedQuery);
@@ -171,6 +200,101 @@ function rowHref(documentVersion: string, placement: LensPlacement): string {
   if (placement.domain === 'question') return `/matrix-options/paper/publication/v/${encodedVersion}/questions/${encodedId}`;
   if (placement.domain === 'node') return `/matrix-options/paper/publication/v/${encodedVersion}/nodes/${encodedId}`;
   return `/matrix-options/paper/publication/v/${encodedVersion}/nodes/${encodedId}`;
+}
+
+function queryHref(mode: WorkspaceMode, query: AtlasQuery): string {
+  const params = new URLSearchParams({ mode, lens: query.lens, page: String(query.page) });
+  if (query.q) params.set('q', query.q);
+  return `?${params.toString()}`;
+}
+
+function createInternalLinkMap(
+  structure: RevisedPaperStructure,
+  query: AtlasQuery,
+  mode: WorkspaceMode,
+): Readonly<Record<string, string>> {
+  const suffix = queryHref(mode, query);
+  const linkMap = Object.fromEntries(
+    structure.nodes
+      .filter((node) => node.anchor)
+      .map((node) => {
+        const placement = structure.lenses.all.find((candidate) => candidate.id === node.id);
+        if (!placement) throw new Error('Compiler node missing canonical placement');
+        return [node.anchor, `${rowHref(structure.manifest.source.version, placement)}${suffix}`];
+      }),
+  );
+  const explicitAnchorPattern = /<div id="((?:sec|app)-[^"\r\n]+)" class="section-anchor"><\/div>/g;
+  for (const match of structure.content.matchAll(explicitAnchorPattern)) {
+    const markerEnd = (match.index ?? 0) + match[0].length;
+    const markerEndByte = new TextEncoder().encode(structure.content.slice(0, markerEnd)).length;
+    const node = structure.nodes.find((candidate) => candidate.startByte >= markerEndByte);
+    if (!node) continue;
+    const placement = structure.lenses.all.find((candidate) => candidate.id === node.id);
+    if (!placement) throw new Error('Compiler node missing canonical placement');
+    linkMap[match[1]] = `${rowHref(structure.manifest.source.version, placement)}${suffix}`;
+  }
+
+  const sourceAnchorLabels = new Map<string, string>();
+  const sourceLinkPattern = /\[([^\]\r\n]+)\]\(#((?:sec|app)-[A-Za-z0-9-]+)\)/g;
+  for (const match of structure.content.matchAll(sourceLinkPattern)) {
+    sourceAnchorLabels.set(match[2], match[1]);
+  }
+  const labelTerms = (label: string): string[] => label
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .split(/\s+/)
+    .filter((term) => term.length > 2 && !/^\d+$/.test(term));
+  const labelMatchScore = (sourceLabel: string, nodeLabel: string): number => {
+    const normalizedNode = nodeLabel.toLowerCase();
+    const sourceSection = sourceLabel.match(/\b\d+(?:\.\d+)+\b/)?.[0].replace(/\./g, '');
+    const nodeSection = nodeLabel.match(/\b\d+(?:\.\d+)+\b/)?.[0].replace(/\./g, '');
+    const sectionScore = sourceSection && sourceSection === nodeSection ? 100 : 0;
+    return sectionScore + labelTerms(sourceLabel).filter((term) => normalizedNode.includes(term)).length;
+  };
+
+  // The verified source also contains a small set of hand-authored section
+  // links whose IDs follow the paper's numeric heading convention (for
+  // example, sec-7-1 for the heading "7.1 ...") but do not have a standalone
+  // marker. Resolve those IDs against the compiler's canonical heading
+  // anchors; never derive a destination from raw HTML.
+  const sourceAnchorPattern = /#((?:sec|app)-[A-Za-z0-9-]+)/g;
+  for (const match of structure.content.matchAll(sourceAnchorPattern)) {
+    const anchor = match[1];
+    if (linkMap[anchor]) continue;
+    const headingSlug = anchor.replace(/^(?:sec|app)-/, '');
+    const compactHeadingSlug = headingSlug.replace(/-/g, '');
+    const prefixCandidates = structure.nodes.filter((node) => (
+      node.anchor === headingSlug
+      || node.anchor.replace(/-/g, '').startsWith(compactHeadingSlug)
+    ));
+    const sourceLabel = sourceAnchorLabels.get(anchor);
+    const labelCandidates = sourceLabel
+      ? structure.nodes
+        .map((node) => ({ node, score: labelMatchScore(sourceLabel, node.label) }))
+        .filter(({ score }) => score > 0)
+        .sort((a, b) => b.score - a.score || a.node.startByte - b.node.startByte)
+      : [];
+    const semanticCandidates = labelCandidates.length > 0
+      && labelCandidates[0].score > (labelCandidates[1]?.score ?? 0)
+      ? [labelCandidates[0].node]
+      : prefixCandidates;
+    const aliasLabels: Readonly<Record<string, string>> = {
+      'sec-7-5': '7.5.1 Scope',
+      'sec-7-8': 'Policy-ready input categories - Phase 2 boundary',
+    };
+    const aliasCandidates = aliasLabels[anchor]
+      ? structure.nodes.filter((node) => node.label === aliasLabels[anchor])
+      : [];
+    const aliasedCandidates = aliasCandidates.length > 0
+      ? aliasCandidates
+      : semanticCandidates;
+    if (aliasedCandidates.length === 0) continue;
+    const candidate = [...aliasedCandidates].sort((a, b) => a.anchor.length - b.anchor.length || a.startByte - b.startByte)[0];
+    const placement = structure.lenses.all.find((candidatePlacement) => candidatePlacement.id === candidate.id);
+    if (!placement) throw new Error('Compiler node missing canonical placement');
+    linkMap[anchor] = `${rowHref(structure.manifest.source.version, placement)}${suffix}`;
+  }
+  return linkMap;
 }
 
 export function createAtlasWindow(
@@ -251,12 +375,51 @@ export function createQuestionPacket(structure: RevisedPaperStructure): readonly
   }));
 }
 
-function createReaderContext(structure: RevisedPaperStructure, atlas: AtlasWindow): ReaderContext {
-  const selected = atlas.rows[0] ?? null;
-  if (!selected) return { selectedId: null, ancestors: [], neighborhood: [] };
-  const selectedNode = structure.nodes.find((node) => node.id === selected.id);
-  if (!selectedNode) return { selectedId: selected.id, ancestors: [], neighborhood: [selected] };
-  const selectedIndex = structure.nodes.findIndex((node) => node.id === selected.id);
+function detailFromPlacement(structure: RevisedPaperStructure, placement: LensPlacement): RequestedDetail {
+  if (placement.domain === 'node') return { ...placement, ownerNodeId: null };
+  if (placement.domain === 'question') {
+    const question = structure.questions.find((candidate) => candidate.id === placement.id);
+    if (!question) throw new Error('Compiler question missing canonical placement');
+    return { ...placement, ownerNodeId: question.ownerNodeId };
+  }
+  const object = structure.objects.find((candidate) => candidate.id === placement.id);
+  if (!object) throw new Error('Compiler object missing canonical placement');
+  return { ...placement, ownerNodeId: object.ownerNodeId };
+}
+
+function createReaderContext(
+  structure: RevisedPaperStructure,
+  atlas: AtlasWindow,
+  requestedDetail: RequestedDetail | null,
+): ReaderContext {
+  const selected = requestedDetail ?? (atlas.rows[0] ? detailFromPlacement(structure, atlas.rows[0]) : null);
+  if (!selected) {
+    return {
+      selectedId: null,
+      selectedDomain: null,
+      selectedLabel: null,
+      selectedStartByte: null,
+      selectedEndByte: null,
+      selectedOwnerNodeId: null,
+      ancestors: [],
+      neighborhood: [],
+    };
+  }
+  const contextNodeId = selected.domain === 'node' ? selected.id : selected.ownerNodeId;
+  const selectedNode = contextNodeId ? structure.nodes.find((node) => node.id === contextNodeId) : undefined;
+  if (!selectedNode) {
+    return {
+      selectedId: selected.id,
+      selectedDomain: selected.domain,
+      selectedLabel: selected.label,
+      selectedStartByte: selected.startByte,
+      selectedEndByte: selected.endByte,
+      selectedOwnerNodeId: selected.ownerNodeId,
+      ancestors: [],
+      neighborhood: [],
+    };
+  }
+  const selectedIndex = structure.nodes.findIndex((node) => node.id === selectedNode.id);
   const neighborhoodStart = Math.max(0, selectedIndex - 2);
   const neighborhood = structure.nodes
     .slice(neighborhoodStart, neighborhoodStart + 5)
@@ -267,6 +430,11 @@ function createReaderContext(structure: RevisedPaperStructure, atlas: AtlasWindo
     });
   return {
     selectedId: selected.id,
+    selectedDomain: selected.domain,
+    selectedLabel: selected.label,
+    selectedStartByte: selected.startByte,
+    selectedEndByte: selected.endByte,
+    selectedOwnerNodeId: selected.ownerNodeId,
     ancestors: selectedNode.ancestorIds,
     neighborhood,
   };
@@ -276,6 +444,7 @@ export function createWorkspaceModel(
   structure: RevisedPaperStructure,
   query: AtlasQuery = { lens: 'all', q: '', page: 1 },
   mode: WorkspaceMode = 'my-review',
+  requestedDetail: RequestedDetail | null = null,
 ): WorkspaceModel {
   const assignment = getProductionAssignment();
   const atlas = createAtlasWindow(structure, query);
@@ -284,8 +453,10 @@ export function createWorkspaceModel(
     documentVersion: structure.manifest.source.version,
     mode,
     assignment,
+    requestedDetail,
+    internalLinkMap: createInternalLinkMap(structure, query, mode),
     atlas,
-    readerContext: createReaderContext(structure, atlas),
+    readerContext: createReaderContext(structure, atlas, requestedDetail),
     questionPacket: createQuestionPacket(structure),
     trust: createTrustState(),
     ledgers: createLedgerSummary(assignment, structure.questions.length),

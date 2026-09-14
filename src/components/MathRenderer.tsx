@@ -8,6 +8,7 @@ import ScrollFadeRegion from './ScrollFadeRegion';
 
 interface MathRendererProps {
   content: string;
+  internalLinkMap?: Readonly<Record<string, string>>;
   /**
    * Tailwind `from-*`/`dark:from-*` classes forwarded to every ScrollFadeRegion this
    * renderer creates (tables + display equations).
@@ -40,6 +41,7 @@ interface MathRendererProps {
 // kappa tables + comparison-dimension status tables.
 export default function MathRenderer({
   content,
+  internalLinkMap,
   fadeFrom = 'from-white dark:from-slate-900',
 }: MathRendererProps) {
   // Memoised on `fadeFrom` so the override functions keep a stable identity across
@@ -75,8 +77,12 @@ export default function MathRenderer({
         }
         return <span className={className} {...props} />;
       },
+      a: ({ node: _node, href, ...props }: { node?: unknown } & React.ComponentPropsWithoutRef<'a'>) => {
+        const mappedHref = href?.startsWith('#') ? internalLinkMap?.[href.slice(1)] : undefined;
+        return <a href={mappedHref ?? href} {...props} />;
+      },
     }),
-    [fadeFrom],
+    [fadeFrom, internalLinkMap],
   );
 
   return (

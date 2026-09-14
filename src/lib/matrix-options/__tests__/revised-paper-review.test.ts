@@ -12,6 +12,7 @@ import {
   createWorkspaceModel,
   getProductionAssignment,
   isPinEligible,
+  parseDetailQuery,
   parseAtlasQuery,
   releaseNoteKey,
   REVIEW_DISPOSITIONS,
@@ -49,6 +50,20 @@ describe('revised paper review contracts', () => {
     expect(() => parseAtlasQuery({ page: '01' })).toThrow(/INVALID_PAGE/);
     expect(() => parseAtlasQuery({ page: '0' })).toThrow(/INVALID_PAGE/);
     expect(() => parseAtlasQuery({ q: 'a'.repeat(161) })).toThrow(/QUERY_TOO_LONG/);
+  });
+
+  it('resets inherited detail pages only when q is absent', () => {
+    expect(parseDetailQuery({ page: '2' }, 'all')).toEqual({
+      lens: 'all',
+      q: '',
+      page: 1,
+    });
+    expect(parseDetailQuery({ q: 'broad', page: '2' }, 'all')).toEqual({
+      lens: 'all',
+      q: 'broad',
+      page: 2,
+    });
+    expect(() => parseDetailQuery({ page: ['1', '2'] }, 'all')).toThrow(/REPEATED_PARAMETER/);
   });
 
   it('bounds server atlas windows to 40 rows and never changes source labels', () => {
@@ -101,6 +116,94 @@ describe('revised paper review contracts', () => {
     expect(assigned.nonterminal).toEqual({ UNASSIGNED: 0, NOT_STARTED: 9, UNAVAILABLE: 0 });
     expect(releaseNoteKey('release-a', 'node-a')).toBe('matrix-paper-v16:notes:release-a:node-a');
     expect(releaseNoteKey('release-b', 'node-a')).not.toBe(releaseNoteKey('release-a', 'node-a'));
+  });
+
+  it('routes compiler objects to their canonical detail URLs', () => {
+    const structure = loadRevisedPaperStructure();
+    expect(structure.objects.length).toBeGreaterThan(0);
+    for (const object of structure.objects) {
+      const rows = createAtlasWindow(structure, { lens: 'objects', q: object.label, page: 1 }).rows;
+      const row = rows.find((candidate) => candidate.id === object.id);
+      expect(row?.href).toContain(`/nodes/${encodeURIComponent(object.id)}`);
+    }
+  });
+
+  it('keeps real long-label detail pages unfiltered unless q is explicit', () => {
+    const structure = loadRevisedPaperStructure();
+    const tables = structure.objects.filter((object) => object.domain === 'object.table');
+    const longestNode = structure.nodes.reduce((longest, node) => node.label.length > longest.label.length ? node : longest, structure.nodes[0]);
+    const longestQuestion = structure.questions.reduce((longest, question) => question.label.length > longest.label.length ? question : longest, structure.questions[0]);
+    expect(tables).toHaveLength(45);
+    expect(longestNode.label.length).toBeGreaterThan(80);
+    expect(longestQuestion.label.length).toBeGreaterThan(80);
+
+    const unfiltered = createWorkspaceModel(structure, parseDetailQuery({ page: '2' }, 'objects'), 'publication', {
+      id: tables[0].id,
+      domain: tables[0].domain,
+      label: tables[0].label,
+      startByte: tables[0].startByte,
+      endByte: tables[0].endByte,
+      ownerNodeId: tables[0].ownerNodeId,
+    });
+    expect(unfiltered.atlas.query).toEqual({ lens: 'objects', q: '', page: 1 });
+    expect(unfiltered.requestedDetail?.id).toBe(tables[0].id);
+
+    const explicit = createWorkspaceModel(structure, parseDetailQuery({ q: '|', page: '2' }, 'objects'), 'publication');
+    expect(explicit.atlas.query).toEqual({ lens: 'objects', q: '|', page: 2 });
+    expect(() => createWorkspaceModel(structure, parseDetailQuery({ q: 'not-a-real-label', page: '2' }, 'objects'))).toThrow(/PAGE_OUT_OF_RANGE/);
+    expect(() => parseDetailQuery({ q: ['table', 'question'] }, 'objects')).toThrow(/REPEATED_PARAMETER/);
+    expect(() => parseDetailQuery({ lens: ['objects', 'all'] }, 'objects')).toThrow(/REPEATED_PARAMETER/);
+  });
+
+  it('maps authenticated source anchors to canonical routes while preserving query state', () => {
+    const structure = loadRevisedPaperStructure();
+    const model = createWorkspaceModel(structure, { lens: 'all', q: 'section', page: 1 }, 'my-review');
+    const sourceAnchorIds = [...structure.content.matchAll(/\(#((?:sec|app)-[^)]+)\)/g)].map((match) => match[1]);
+    expect(sourceAnchorIds).toHaveLength(130);
+    expect(new Set(sourceAnchorIds).size).toBe(130);
+    const markerIds = new Set([...structure.content.matchAll(/<div id="((?:sec|app)-[^"]+)" class="section-anchor"><\/div>/g)].map((match) => match[1]));
+    expect(sourceAnchorIds.filter((anchor) => !markerIds.has(anchor))).toEqual([
+      'sec-7-1', 'sec-7-2', 'sec-7-3', 'sec-7-4', 'sec-7-5', 'sec-7-6', 'sec-7-7', 'sec-7-8',
+      'sec-8-0', 'sec-9-9-1', 'sec-9-9-2', 'sec-9-9-3', 'sec-9-9-4', 'sec-13-0', 'sec-15-5', 'sec-15-6',
+    ]);
+    expect(sourceAnchorIds.filter((anchor) => !model.internalLinkMap[anchor])).toEqual([]);
+    const anchoredNodes = structure.nodes.filter((node) => node.anchor);
+    expect(Object.keys(model.internalLinkMap).length).toBeGreaterThanOrEqual(anchoredNodes.length);
+    const expectedNodeForLabel = (label: string) => {
+      const node = structure.nodes.find((candidate) => candidate.label === label);
+      expect(node, `authenticated fixture node: ${label}`).toBeDefined();
+      return node!;
+    };
+    const expectedHref = (anchor: string, label: string) => {
+      const node = expectedNodeForLabel(label);
+      expect(model.internalLinkMap[anchor]).toBe(
+        `/matrix-options/paper/publication/v/${encodeURIComponent(structure.manifest.source.version)}/nodes/${encodeURIComponent(node.id)}?mode=my-review&lens=all&page=1&q=section`,
+      );
+    };
+    // These source-contract labels independently bind same-section, cross-section,
+    // and the non-heading 7.8 alias to their canonical compiler identities.
+    expectedHref('sec-7-1', '7.1 Bioavailability Adjustment');
+    expectedHref('sec-7-2', 'Section 7.2 Bioaccumulation draft text');
+    expectedHref('sec-7-3', '7.3 Substance Classification');
+    expectedHref('sec-7-4', '7.4 Substance Prioritization');
+    expectedHref('sec-7-5', '7.5.1 Scope');
+    expectedHref('sec-7-6', '7.6 Generic Standards Adoption Procedure');
+    expectedHref('sec-7-7', '7.7 BC Aquatic Database');
+    expectedHref('sec-7-8', 'Policy-ready input categories - Phase 2 boundary');
+    expectedHref('sec-8-0', '8.0 Evaluation Criteria');
+    expectedHref('sec-9-9-1', '9.9.1 The four options');
+    expectedHref('sec-9-9-2', '9.9.2 What the options actually differ on');
+    expectedHref('sec-9-9-3', '9.9.3 The exposure terms, and where they come from');
+    expectedHref('sec-9-9-4', '9.9.4 What the Technical Working Group is asked to decide');
+    expectedHref('sec-13-0', '13.0 Phase 2 Workstreams, Schedule, and the Status of This Draft');
+    expectedHref('sec-15-5', '15.5 Governing input evidence gaps');
+    expectedHref('sec-15-6', '15.6 There is no British Columbia protocol for sediment background concentrations');
+    expect(model.internalLinkMap[anchoredNodes[0].anchor]).toContain(`/nodes/${encodeURIComponent(anchoredNodes[0].id)}`);
+    expect(model.internalLinkMap[anchoredNodes[0].anchor]).toContain('mode=my-review');
+    expect(model.internalLinkMap[anchoredNodes[0].anchor]).toContain('q=section');
+    const finalNode = anchoredNodes[anchoredNodes.length - 1];
+    expect(model.internalLinkMap[finalNode.anchor]).toContain(`/nodes/${encodeURIComponent(finalNode.id)}`);
+    expect(model.internalLinkMap[finalNode.anchor]).not.toBe(model.internalLinkMap[anchoredNodes[0].anchor]);
   });
 
   it('pins only at the deterministic 45rem threshold', () => {

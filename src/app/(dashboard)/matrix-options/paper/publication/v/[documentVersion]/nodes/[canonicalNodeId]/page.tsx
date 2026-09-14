@@ -8,11 +8,12 @@ import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import {
   createWorkspaceModel,
-  parseAtlasQuery,
+  parseDetailQuery,
   parseWorkspaceMode,
   ReviewQueryError,
   sourceRangeText,
 } from '@/lib/matrix-options/revised-paper-review';
+import type { RequestedDetail } from '@/lib/matrix-options/revised-paper-review';
 
 export default async function PublicationNodePage({
   params,
@@ -35,16 +36,27 @@ export default async function PublicationNodePage({
   }
   const structure = loadRevisedPaperStructure();
   const node = structure.nodes.find((candidate) => candidate.id === resolvedCanonicalNodeId);
-  if (!node) notFound();
+  const object = structure.objects.find((candidate) => candidate.id === resolvedCanonicalNodeId);
+  let detail: RequestedDetail;
+  if (node) {
+    detail = { id: node.id, domain: node.domain, label: node.label, startByte: node.startByte, endByte: node.endByte, ownerNodeId: null };
+  } else {
+    if (!object) {
+      notFound();
+      return null;
+    }
+    detail = { id: object.id, domain: object.domain, label: object.label, startByte: object.startByte, endByte: object.endByte, ownerNodeId: object.ownerNodeId };
+  }
   try {
     const query = (await searchParams) ?? {};
     const model = createWorkspaceModel(
       structure,
-      parseAtlasQuery({ ...query, lens: query.lens ?? 'all', q: query.q ?? node.label, page: query.page ?? '1' }),
+      parseDetailQuery(query, node ? 'all' : 'objects'),
       parseWorkspaceMode(query.mode ?? 'publication'),
+      detail,
     );
     const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} readerText={sourceRangeText(structure.content, node.startByte, node.endByte)} />;
+    return <RevisedPaperWorkspace model={model} readerText={sourceRangeText(structure.content, detail.startByte, detail.endByte)} />;
   } catch (error) {
     if (error instanceof ReviewQueryError) notFound();
     throw error;

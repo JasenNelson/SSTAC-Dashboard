@@ -22,6 +22,8 @@ export interface RevisedPaperWorkspaceProps {
   readonly readerText?: string;
 }
 
+type NotePersistenceStatus = 'saved' | 'session-only';
+
 const STANDALONE_SECTION_ANCHOR_LINE = /^[ \t]*<div[ \t]+id="[^"\r\n]+"[ \t]+class="section-anchor"[ \t]*>[ \t]*<\/div>[ \t]*(?:\r?\n|$)/gm;
 
 export function normalizeReaderTextForDisplay(text: string): string {
@@ -177,9 +179,11 @@ function TrustStrip({ model, drawerOpen, onOpen, openerRef }: { readonly model: 
 export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspaceProps) {
   const displayReaderText = readerText ? normalizeReaderTextForDisplay(readerText) : '';
   const selectedRow = model.atlas.rows[0];
-  const noteId = selectedRow?.id ?? 'workspace';
+  const requestedDetail = model.requestedDetail;
+  const noteId = requestedDetail?.id ?? selectedRow?.id ?? 'workspace';
   const noteKey = useMemo(() => releaseNoteKey(model.releaseIdentity, noteId), [model.releaseIdentity, noteId]);
   const [note, setNote] = useState('');
+  const [notePersistence, setNotePersistence] = useState<NotePersistenceStatus>('saved');
   const [pinPreference, setPinPreference] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [pinEligible, setPinEligible] = useState(false);
@@ -188,7 +192,13 @@ export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspa
   const drawerOpenerRef = useRef<HTMLButtonElement>(null);
 
   useEffect(() => {
-    setNote(window.localStorage.getItem(noteKey) ?? '');
+    try {
+      setNote(window.localStorage.getItem(noteKey) ?? '');
+      setNotePersistence('saved');
+    } catch {
+      setNote('');
+      setNotePersistence('session-only');
+    }
   }, [noteKey]);
 
   useEffect(() => {
@@ -229,7 +239,12 @@ export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspa
 
   const saveNote = (value: string) => {
     setNote(value);
-    window.localStorage.setItem(noteKey, value);
+    try {
+      window.localStorage.setItem(noteKey, value);
+      setNotePersistence('saved');
+    } catch {
+      setNotePersistence('session-only');
+    }
   };
 
   const pinActive = pinEligible && pinPreference;
@@ -250,7 +265,7 @@ export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspa
     });
   };
   return (
-    <main className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100" data-pin-eligible={pinEligible ? 'true' : 'false'} data-pin-preference={pinPreference ? 'true' : 'false'} data-reader-width-px={measuredLayout.widthPx} data-page-overflow-px={measuredLayout.overflowPx}>
+    <div data-testid="workspace-shell" className="min-h-screen bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100" data-pin-eligible={pinEligible ? 'true' : 'false'} data-pin-preference={pinPreference ? 'true' : 'false'} data-reader-width-px={measuredLayout.widthPx} data-page-overflow-px={measuredLayout.overflowPx}>
       <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 print:hidden">
         <div className="mx-auto flex max-w-[120rem] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
           <div>
@@ -297,12 +312,12 @@ export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspa
             </nav>
           </section>
 
-          <section aria-labelledby="reader-heading" className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 print:col-span-full print:w-full print:max-w-none print:border-0 print:bg-transparent print:p-0">
-            <h2 id="reader-heading" className="text-lg font-bold">Canonical reader</h2>
+          <section aria-labelledby="reader-heading" data-reader-detail-id={requestedDetail?.id ?? undefined} className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 print:col-span-full print:w-full print:max-w-none print:border-0 print:bg-transparent print:p-0">
+            <h2 id="reader-heading" className="text-lg font-bold">{requestedDetail?.label ?? 'Canonical reader'}</h2>
             <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Reader content is sourced from the authenticated release and selected range.</p>
-            {selectedRow && <h3 className="mt-4 text-base font-semibold">{selectedRow.label}</h3>}
+            {!requestedDetail && selectedRow && <h3 className="mt-4 text-base font-semibold">{selectedRow.label}</h3>}
             {model.readerContext.selectedId && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Selected canonical section is linked to {model.readerContext.ancestors.length} authenticated ancestors and {model.readerContext.neighborhood.length} nearby headings.</p>}
-            {readerText && <div className="mt-3 min-w-0 rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><MathRenderer content={displayReaderText} /></div>}
+            {readerText && <div className="mt-3 min-w-0 rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><MathRenderer content={displayReaderText} internalLinkMap={model.internalLinkMap} /></div>}
             <section aria-labelledby="question-packet-heading" className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-700 print:hidden"><h3 id="question-packet-heading" className="font-semibold">Unassigned publication questions</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">This packet is structural only; no assignment, inventory, progress, or disposition is created.</p><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">{model.questionPacket.map((question) => <li key={question.id}><a className="underline" href={destinationHref(model, `/matrix-options/paper/publication/v/${encodeURIComponent(model.documentVersion)}/questions/${encodeURIComponent(question.id)}`)}>{question.label}</a></li>)}</ol></section>
           </section>
 
@@ -313,12 +328,12 @@ export function RevisedPaperWorkspace({ model, readerText }: RevisedPaperWorkspa
           <TrustStrip model={model} drawerOpen={drawerOpen} onOpen={() => setDrawerOpen(true)} openerRef={drawerOpenerRef} />
           {drawerOpen && <div id="context-drawer" role="dialog" aria-labelledby="context-drawer-title" className="space-y-5 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900" data-testid="context-drawer">
             <div className="flex items-center justify-between gap-3"><h2 id="context-drawer-title" className="font-bold">Context details</h2><button type="button" className="min-h-[44px] rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-600" onClick={closeDrawer}>Close context</button></div>
-            <section><h3 className="font-bold">Device-local note</h3><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Stored only on this device and release/item namespaced.</p><label className="mt-3 block text-sm font-semibold">Note<textarea value={note} onChange={(event) => saveNote(event.target.value)} className="mt-1 block min-h-24 w-full rounded-md border border-slate-300 bg-white p-2 font-normal dark:border-slate-600 dark:bg-slate-950" /></label></section>
+            <section><h3 className="font-bold">Device-local note</h3><p className="mt-1 text-xs text-slate-500 dark:text-slate-400">Stored only on this device and release/item namespaced.</p><p role="status" aria-live="polite" className="mt-2 text-xs text-slate-600 dark:text-slate-300">{notePersistence === 'saved' ? 'Saved locally for this release item.' : 'Retained for this session; device storage is unavailable.'}</p><label className="mt-3 block text-sm font-semibold">Note<textarea value={note} onChange={(event) => saveNote(event.target.value)} className="mt-1 block min-h-24 w-full rounded-md border border-slate-300 bg-white p-2 font-normal dark:border-slate-600 dark:bg-slate-950" /></label></section>
             <section className="text-sm"><h3 className="font-bold">Context rail</h3><p className="mt-1">Pinning is {pinActive ? 'on.' : pinEligible ? 'available at or above 45rem.' : 'disabled below 45rem.'}</p><button type="button" className="mt-3 min-h-[44px] rounded-md border border-slate-300 px-3 py-2 font-semibold disabled:cursor-not-allowed disabled:opacity-60 dark:border-slate-600" aria-pressed={pinActive} disabled={!pinEligible} onClick={togglePin}>{pinActive ? 'Unpin context' : 'Pin context'}</button></section>
           </div>}
         </aside>
       </div>
-    </main>
+    </div>
   );
 }
 

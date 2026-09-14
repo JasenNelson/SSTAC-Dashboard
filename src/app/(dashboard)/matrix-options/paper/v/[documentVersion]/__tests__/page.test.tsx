@@ -2,11 +2,12 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { loadMock, notFoundMock } = vi.hoisted(() => ({
+const { loadMock, notFoundMock, structureMock } = vi.hoisted(() => ({
   loadMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
+  structureMock: vi.fn(),
 }));
 
 vi.mock('next/navigation', () => ({
@@ -34,6 +35,14 @@ vi.mock('@/components/TWGReviewPortal', () => ({
     />
   ),
 }));
+vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({
+  RevisedPaperWorkspace: ({ model }: { model: { query: { page: number } } }) => (
+    <div data-testid="workspace" data-page={model.query.page} />
+  ),
+}));
+vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({
+  loadRevisedPaperStructure: structureMock,
+}));
 
 import PaperVersionPage from '../page';
 
@@ -53,6 +62,29 @@ describe('/matrix-options/paper/v/[documentVersion]', () => {
     loadMock.mockReturnValue(paper);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+    structureMock.mockReturnValue({
+      releaseIdentity: paper.releaseIdentity,
+      content: '# Exact paper',
+      lines: [],
+      nodes: [],
+      objects: [],
+      questions: [],
+      questionContainerIds: [],
+      manifest: { source: { version: paper.documentVersion } },
+      lenses: { all: [], core: [], appendices: [], evidence: [], objects: [], questions: [] },
+    });
+  });
+
+  it('maps asynchronous workspace query failures to the route notFound boundary', async () => {
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
+
+    await expect(
+      PaperVersionPage({
+        params: Promise.resolve({ documentVersion: paper.documentVersion }),
+        searchParams: Promise.resolve({ page: '2' }),
+      }),
+    ).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(notFoundMock).toHaveBeenCalled();
   });
 
   it('loads only the exact version and passes the same descriptor to TWGReviewPortal', async () => {
