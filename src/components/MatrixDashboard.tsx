@@ -91,6 +91,7 @@ import {
   matrixOptionsViewLabel,
   type MatrixOptionsViewId,
 } from '@/lib/matrix-options/navigation';
+import type { RevisedPaperDescriptor } from '@/lib/matrix-options/revised-paper';
 
 // Audience tier for the Calculator sidebar guide. The value is persisted
 // with the rest of the lifted Calculator state so the chosen explanation
@@ -232,7 +233,7 @@ function restoreJurisdiction(): RegulatoryFrame {
 
 interface MatrixDashboardProps {
   guideContent: string;
-  finalDraftContent: string;
+  paperRelease: RevisedPaperDescriptor;
   initialViewId?: MatrixOptionsViewId;
   paperWorkspaceEnabled?: boolean;
   /**
@@ -266,7 +267,7 @@ const DEMOTED_DOCUMENT_TABS = new Set(['The Guide']);
 
 export default function MatrixDashboard({
   guideContent,
-  finalDraftContent,
+  paperRelease,
   initialViewId = 'The Guide',
   paperWorkspaceEnabled = false,
   initialMapData = EMPTY_MATRIX_MAP_DATA,
@@ -1168,7 +1169,12 @@ export default function MatrixDashboard({
         );
       case 'TWG Review':
         return (
-          <TWGReviewPortal finalDraftContent={finalDraftContent} showLeftPanel={showLeftPanel} showRightPanel={showRightPanel} />
+          <TWGReviewPortal
+            finalDraftContent={paperRelease.content}
+            paperRelease={paperRelease}
+            showLeftPanel={showLeftPanel}
+            showRightPanel={showRightPanel}
+          />
         );
       case 'References & Values':
         // EvidenceLibrary is now rendered directly in the isEvidenceLibraryMode

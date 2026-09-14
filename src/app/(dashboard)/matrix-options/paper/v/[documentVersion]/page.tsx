@@ -1,20 +1,61 @@
 import { notFound, redirect } from 'next/navigation';
 
-import { isMatrixOptionsPaperWorkspaceEnabled, MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH } from '@/lib/matrix-options/navigation';
+import {
+  MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
+  resolveMatrixOptionsPaperReviewNavigationGate,
+} from '@/lib/matrix-options/navigation';
+import {
+  loadRevisedPaper,
+  REVISED_PAPER_VERSION,
+  RevisedPaperUnavailableError,
+} from '@/lib/matrix-options/revised-paper';
+import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
+import {
+  createWorkspaceModel,
+  parseAtlasQuery,
+  parseWorkspaceMode,
+  ReviewQueryError,
+} from '@/lib/matrix-options/revised-paper-review';
 
-export default async function PaperVersionPage({ params }: { params: Promise<{ documentVersion: string }> }) {
-  if (!isMatrixOptionsPaperWorkspaceEnabled(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE)) {
-    redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
-  }
-  const [{ PaperVersionLanding }, { PaperContentNotFoundError }] = await Promise.all([
-    import('@/components/matrix-options/paper/PaperReader'),
-    import('@/lib/matrix-options/paper/provider'),
-  ]);
+export default async function PaperVersionPage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ documentVersion: string }>;
+  searchParams?: Promise<{ mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[]; scenario?: string | string[] }>;
+}) {
   const { documentVersion } = await params;
+  if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  const gate = resolveMatrixOptionsPaperReviewNavigationGate(
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION,
+  );
+  if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
+  if (gate === 'PAPER_RESOLVER') {
+    try {
+      const paper = loadRevisedPaper(documentVersion);
+      const { default: TWGReviewPortal } = await import('@/components/TWGReviewPortal');
+      return (
+        <div className="flex h-[calc(100vh-4rem)] w-full overflow-hidden print:block print:h-auto print:overflow-visible">
+          <TWGReviewPortal finalDraftContent={paper.content} paperRelease={paper} />
+        </div>
+      );
+    } catch (error) {
+      if (error instanceof RevisedPaperUnavailableError) notFound();
+      throw error;
+    }
+  }
+
   try {
-    return await PaperVersionLanding({ documentVersion });
+    const query = await searchParams;
+    const mode = parseWorkspaceMode(query?.mode);
+    const atlasQuery = parseAtlasQuery(query ?? {});
+    return import('@/components/matrix-options/paper/RevisedPaperWorkspace').then(({ RevisedPaperWorkspace }) => (
+      <RevisedPaperWorkspace model={createWorkspaceModel(loadRevisedPaperStructure(), atlasQuery, mode)} />
+    ));
   } catch (error) {
-    if (error instanceof PaperContentNotFoundError) notFound();
+    if (error instanceof RevisedPaperUnavailableError) notFound();
+    if (error instanceof ReviewQueryError) notFound();
     throw error;
   }
 }

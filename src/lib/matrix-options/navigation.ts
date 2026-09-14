@@ -13,7 +13,16 @@ export type MatrixOptionsViewId = (typeof MATRIX_OPTIONS_VIEW_IDS)[number];
 export const MATRIX_OPTIONS_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 export const MATRIX_OPTIONS_PAPER_TABPANEL_ID = 'matrix-options-paper-tabpanel';
 export const MATRIX_OPTIONS_PAPER_LANDING_PATH = '/matrix-options/paper';
+export const MATRIX_OPTIONS_PAPER_REVIEW_ROUTE = '/matrix-options/paper/review/v/1.0.11-remediated-20260913';
 export const MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH = '/matrix-options?view=TWG%20Review';
+export const MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION_FLAG =
+  'MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION';
+export const MATRIX_OPTIONS_PAPER_WORKSPACE_FLAG = 'MATRIX_OPTIONS_PAPER_WORKSPACE';
+
+export type MatrixOptionsPaperReviewNavigationGate =
+  | 'LEGACY_TWG_REVIEW'
+  | 'PAPER_RESOLVER'
+  | 'REVIEW_NAVIGATION';
 
 const DISPLAY_LABELS: Partial<Record<MatrixOptionsViewId, string>> = {
   'The Guide': 'Guide',
@@ -52,6 +61,21 @@ export function parseMatrixOptionsViewParam(
 
 export function isMatrixOptionsPaperWorkspaceEnabled(value: string | undefined): boolean {
   return value === 'true';
+}
+
+export function isMatrixOptionsPaperReviewNavigationEnabled(
+  value: string | undefined,
+): boolean {
+  return value === 'true';
+}
+
+export function resolveMatrixOptionsPaperReviewNavigationGate(
+  outerValue: string | undefined,
+  innerValue: string | undefined,
+): MatrixOptionsPaperReviewNavigationGate {
+  if (!isMatrixOptionsPaperWorkspaceEnabled(outerValue)) return 'LEGACY_TWG_REVIEW';
+  if (!isMatrixOptionsPaperReviewNavigationEnabled(innerValue)) return 'PAPER_RESOLVER';
+  return 'REVIEW_NAVIGATION';
 }
 
 export function matrixOptionsPrimaryTabId(viewId: MatrixOptionsViewId): string {

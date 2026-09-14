@@ -21,6 +21,7 @@ vi.mock('@/components/matrix-options/paper/PaperReader', () => ({
 import { createSyntheticPaperProvider, PaperContentNotFoundError } from '../provider';
 import { createSyntheticPaperFixture, SYNTHETIC_PAPER_VERSION } from '../synthetic-fixture';
 import { sha256Object, withComputedReceiptHash } from '../contracts';
+import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 
 describe('synthetic paper provider', () => {
   it('returns only the requested fragment from the provider boundary', async () => {
@@ -81,8 +82,26 @@ describe('synthetic paper provider', () => {
       const version = (await import('@/app/(dashboard)/matrix-options/paper/v/[documentVersion]/page')).default;
       const section = (await import('@/app/(dashboard)/matrix-options/paper/v/[documentVersion]/[stableSectionId]/page')).default;
       await expect(resolver()).rejects.toThrow('REDIRECT:/matrix-options?view=TWG%20Review');
-      await expect(version({ params: Promise.resolve({ documentVersion: SYNTHETIC_PAPER_VERSION }) })).rejects.toThrow('REDIRECT:/matrix-options?view=TWG%20Review');
-      await expect(section({ params: Promise.resolve({ documentVersion: SYNTHETIC_PAPER_VERSION, stableSectionId: 'synthetic.orientation' }) })).rejects.toThrow('REDIRECT:/matrix-options?view=TWG%20Review');
+      await expect(version({ params: Promise.resolve({ documentVersion: REVISED_PAPER_VERSION }) })).rejects.toThrow('REDIRECT:/matrix-options?view=TWG%20Review');
+      await expect(section({ params: Promise.resolve({ documentVersion: REVISED_PAPER_VERSION, stableSectionId: 'synthetic.orientation' }) })).rejects.toThrow('REDIRECT:/matrix-options?view=TWG%20Review');
+      expect(routeMocks.versionLanding).not.toHaveBeenCalled();
+      expect(routeMocks.sectionReader).not.toHaveBeenCalled();
+    } finally {
+      if (previous === undefined) delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+      else process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = previous;
+    }
+  });
+
+  it.each(['unknown', SYNTHETIC_PAPER_VERSION])('notFound for non-real version %s before provider readers are touched', async (documentVersion) => {
+    const previous = process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
+    routeMocks.versionLanding.mockClear();
+    routeMocks.sectionReader.mockClear();
+    try {
+      const version = (await import('@/app/(dashboard)/matrix-options/paper/v/[documentVersion]/page')).default;
+      const section = (await import('@/app/(dashboard)/matrix-options/paper/v/[documentVersion]/[stableSectionId]/page')).default;
+      await expect(version({ params: Promise.resolve({ documentVersion }) })).rejects.toThrow('NOT_FOUND');
+      await expect(section({ params: Promise.resolve({ documentVersion, stableSectionId: 'synthetic.orientation' }) })).rejects.toThrow('NOT_FOUND');
       expect(routeMocks.versionLanding).not.toHaveBeenCalled();
       expect(routeMocks.sectionReader).not.toHaveBeenCalled();
     } finally {

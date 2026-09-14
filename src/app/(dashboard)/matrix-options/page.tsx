@@ -19,6 +19,10 @@ import {
   MATRIX_OPTIONS_PAPER_LANDING_PATH,
   parseMatrixOptionsViewParam,
 } from '@/lib/matrix-options/navigation';
+import {
+  loadRevisedPaper,
+  REVISED_PAPER_VERSION,
+} from '@/lib/matrix-options/revised-paper';
 
 export const metadata = {
   title: 'Matrix Options Analysis | SSTAC Dashboard',
@@ -56,6 +60,7 @@ export default async function MatrixOptionsPage({ searchParams }: MatrixOptionsP
   const paperWorkspaceEnabled = isMatrixOptionsPaperWorkspaceEnabled(
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
   );
+  const paperRelease = loadRevisedPaper(REVISED_PAPER_VERSION);
   if (paperWorkspaceEnabled && initialViewId === 'TWG Review') {
     redirect(MATRIX_OPTIONS_PAPER_LANDING_PATH);
   }
@@ -71,20 +76,7 @@ export default async function MatrixOptionsPage({ searchParams }: MatrixOptionsP
     return `Error loading ${filename}.`;
   };
 
-  const readFinalPaper = () => {
-    try {
-      const filePath = path.join(process.cwd(), 'matrix_research', 'options_paper', 'BC_Matrix_Options_Paper_FINAL_DRAFT.md');
-      if (fs.existsSync(filePath)) {
-        return fs.readFileSync(filePath, 'utf8');
-      }
-    } catch (error) {
-      console.error('Failed to load final paper', error);
-    }
-    return 'Error loading final paper.';
-  };
-
   const guideContent = readDraft('The_Guide.md');
-  const finalDraftContent = readFinalPaper();
 
   // Matrix Interactive Map embed (owner directive 2026-05-20): the
   // /matrix-options 'Interactive Map' tab now hosts the live matrix-map
@@ -127,7 +119,7 @@ export default async function MatrixOptionsPage({ searchParams }: MatrixOptionsP
     <div className="flex flex-col h-[calc(100vh-4rem)] w-full overflow-hidden print:block print:h-auto print:overflow-visible">
       <MatrixDashboard
         guideContent={guideContent}
-        finalDraftContent={finalDraftContent}
+        paperRelease={paperRelease}
         initialViewId={initialViewId}
         paperWorkspaceEnabled={paperWorkspaceEnabled}
         initialMapData={initialMapData}

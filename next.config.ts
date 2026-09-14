@@ -2,6 +2,28 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  outputFileTracingIncludes: {
+    '/matrix-options': [
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
+    ],
+    '/matrix-options/paper/v/[documentVersion]': [
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
+    ],
+    '/matrix-options/paper/publication/v/[documentVersion]': [
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
+    ],
+    '/matrix-options/paper/publication/v/[documentVersion]/nodes/[canonicalNodeId]': [
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
+    ],
+    '/matrix-options/paper/publication/v/[documentVersion]/questions/[questionId]': [
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
+      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
+    ],
+  },
   // Skip ONLY the redundant in-build ESLint pass: CI's `eslint .` gate is a
   // superset, so re-linting inside `next build` adds no coverage and wastes
   // build memory. The in-build TypeScript check is KEPT -- it validates the

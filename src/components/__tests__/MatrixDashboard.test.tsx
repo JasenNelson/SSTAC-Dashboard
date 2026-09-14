@@ -38,7 +38,28 @@ vi.mock('../ConceptualMatrix', () => ({
   default: () => <div data-testid="conceptual-matrix-mock" />,
 }));
 vi.mock('../TWGReviewPortal', () => ({
-  default: () => <div data-testid="twg-review-portal-mock" />,
+  default: ({
+    finalDraftContent,
+    paperRelease,
+  }: {
+    finalDraftContent: string;
+    paperRelease: {
+      documentVersion: string;
+      sha256: string;
+      releaseIdentity: string;
+      persistenceState: string;
+    };
+  }) => (
+    <div
+      data-testid="twg-review-portal-mock"
+      data-document-version={paperRelease.documentVersion}
+      data-sha256={paperRelease.sha256}
+      data-release-identity={paperRelease.releaseIdentity}
+      data-persistence-state={paperRelease.persistenceState}
+    >
+      {finalDraftContent}
+    </div>
+  ),
 }));
 vi.mock('../matrix-options/SsdWorkbench', () => ({
   default: () => <div data-testid="ssd-workbench-mock" />,
@@ -66,8 +87,16 @@ import MatrixDashboard from '../MatrixDashboard';
 
 const DEFAULT_PROPS = {
   guideContent: '',
-  finalDraftContent: '',
-};
+  paperRelease: {
+    documentVersion: '1.0.11-remediated-20260913',
+    sha256: 'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
+    bytes: 534101,
+    releaseIdentity:
+      'matrix-options-paper:1.0.11-remediated-20260913:bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
+    persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT' as const,
+    content: 'V16 authenticated paper bytes',
+  },
+} as const;
 
 const LS_CATEGORY = 'matrix-options-active-category-v1';
 const LS_TIER = 'matrix-options-guide-tier-v1';
@@ -83,6 +112,39 @@ function clickCalculatorTab() {
   const tabBtn = screen.getByRole('tab', { name: /^Calculator$/ });
   fireEvent.click(tabBtn);
 }
+
+describe('MatrixDashboard -- authenticated V16 paper integration', () => {
+  it.each([false, true])(
+    'renders the same immutable V16 descriptor when paper workspace enabled is %s',
+    (paperWorkspaceEnabled) => {
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          initialViewId="TWG Review"
+          paperWorkspaceEnabled={paperWorkspaceEnabled}
+        />,
+      );
+
+      const portal = screen.getByTestId('twg-review-portal-mock');
+      expect(portal).toHaveTextContent(DEFAULT_PROPS.paperRelease.content);
+      expect(portal).toHaveAttribute(
+        'data-document-version',
+        DEFAULT_PROPS.paperRelease.documentVersion,
+      );
+      expect(portal).toHaveAttribute('data-sha256', DEFAULT_PROPS.paperRelease.sha256);
+      expect(portal).toHaveAttribute(
+        'data-release-identity',
+        DEFAULT_PROPS.paperRelease.releaseIdentity,
+      );
+      expect(portal).toHaveAttribute(
+        'data-persistence-state',
+        'DISABLED_PENDING_LIVE_CONTRACT',
+      );
+      expect(document.body).not.toHaveTextContent('Candidate-015');
+      expect(document.body).not.toHaveTextContent('slice-1a-fixture-v1');
+    },
+  );
+});
 
 // Substance selection is a type-to-search combobox (item 1b), not a native select:
 // open it and click the target option.
