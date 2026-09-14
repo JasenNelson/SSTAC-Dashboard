@@ -1,0 +1,38 @@
+fix(theme): make the wire assertions prove what they claim, and stop the docs prescribing the anti-patterns
+
+Three verification-layer defects found by adversarial review. No runtime behaviour changes:
+src/app/layout.tsx is untouched and THEME_BOOTSTRAP_SCRIPT is byte-identical.
+
+1. e2e/theme-flash.spec.ts carried a falsification record that had quietly stopped holding.
+   It claimed tests 1-3 fail without the bootstrap; re-measured by blanking
+   THEME_BOOTSTRAP_SCRIPT, the real answer is 3 fail / 6 pass and test 3 is NOT among them --
+   since the server began emitting the class, test 3 could no longer discriminate the bootstrap.
+   Test 3 is rewritten to assert on the SERVED MARKUP, so it now fails if the server resolution
+   is removed. Falsified: "server did not emit a theme class on <html>".
+
+   The helper those assertions rest on was wrong three further times, each caught by a
+   constructed counter-example: substring-matching the tag scored on data-theme="light"; matching
+   class= scored on class-like text inside another attribute; and a non-sticky walk resumed
+   INSIDE a value it had failed to parse. It now strips comments, walks attributes with a sticky
+   regex, and bails to an empty list on anything unparseable -- so a wrong answer is an EMPTY
+   one, which fails loud because every call site makes a positive assertion. Six guard tests
+   assert every counter-example the reviewers built.
+
+2. src/lib/themeBootstrap.ts named middleware.ts as the CSP governing this inline script. True
+   only where middleware runs: config.matcher excludes /, /login, /signup and /cew-polls/*, which
+   is exactly where a cookie-less first-time visitor meets it, and where no CSP is emitted at all.
+
+3. docs/THEME_COOKIE_SCOPE_2026_08_16.md landed unchanged as the final commit of the branch that
+   implemented it, still saying "SCOPING ONLY. Nothing implemented." while layout.tsx points
+   maintainers at it. It prescribes two things the code deliberately does NOT do -- Next's
+   cookies() and the persistence-effect cookie write -- both of which a maintainer following it
+   would reintroduce. An 8-item superseded banner plus inline markers at every instruction that
+   contradicts the shipped code.
+
+Known residual, accepted and documented rather than implied away: a visitor with a stored dark
+preference and no cookie sees the toggle's label lag by one render on the migration request.
+Closing it would need either a hydration mismatch on the toggle or an unasked-for cookie, both of
+which this branch deliberately removed. Reviewed and agreed as a bounded P2, not a blocker.
+
+Co-Authored-By: Claude Opus 5 (1M context) <noreply@anthropic.com>
+Claude-Session: https://claude.ai/code/session_01QqfQTrd1HfvE3nMzJJy2TX
