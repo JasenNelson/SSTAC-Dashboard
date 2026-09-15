@@ -2,16 +2,47 @@ import { describe, expect, it, beforeEach, vi } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock } = vi.hoisted(() => ({
+const { redirectMock, notFoundMock, workspaceMock, structureMock, authenticateReviewerGuideMock, cohortManifestMock, paperContent } = vi.hoisted(() => {
+  const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
+  const content = labels.join('\n');
+  const nodes = labels.slice(0, -1).map((label, index) => {
+    const startByte = content.indexOf(label);
+    return { id: `node:test-${index}`, domain: 'node' as const, kind: 'heading' as const, depth: label === 'Technical Appendices Compendium' ? 1 : 2, label, parentId: null, ancestorIds: [], tokenEndByte: startByte + label.length, anchor: `test-${index}`, startByte, endByte: startByte + label.length };
+  });
+  const placements = nodes.map((node) => ({ id: node.id, domain: 'node' as const, lens: 'all' as const, label: node.label, reason: 'test', triggers: [], startByte: node.startByte, endByte: node.endByte }));
+  return {
   redirectMock: vi.fn(() => { throw new Error('NEXT_REDIRECT'); }),
   notFoundMock: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
   workspaceMock: vi.fn(() => <div data-testid="revised-workspace" />),
-  structureMock: vi.fn(() => ({ manifest: { source: { version: '1.0.11-remediated-20260913' } }, releaseIdentity: 'release', nodes: [], objects: [], questions: [], lenses: { all: [], core: [], appendices: [], evidence: [], objects: [], questions: [] }, content: '', lines: [], questionContainerIds: [] })),
-}));
+  structureMock: vi.fn(() => ({ manifest: { source: { version: '1.0.11-remediated-20260913' } }, releaseIdentity: 'release', nodes, objects: [], questions: [], lenses: { all: placements, core: [], appendices: [], evidence: [], objects: [], questions: [] }, content, lines: content.split('\n'), questionContainerIds: [] })),
+  authenticateReviewerGuideMock: vi.fn(async (_contract: unknown, _paperText: string): Promise<void> => undefined),
+  cohortManifestMock: vi.fn(() => ({
+    schemaVersion: 'matrix-paper-cohorts-v1',
+    releaseIdentity: '1.0.11-remediated-20260913',
+    status: 'PROPOSED_PENDING_OWNER_QP_APPROVAL',
+    cohorts: [
+      { id: 'categories', name: 'Categories', questionNumbers: [1, 2, 3], sourceLocators: ['Sections 4.1 and 9.9', "Reviewer's Guide lines 181-190"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
+      { id: 'pathway-grid', name: 'Pathway and grid', questionNumbers: [4, 5], sourceLocators: ['Sections 4.1 and 6.0', 'Section 18.1', "Reviewer's Guide lines 191-197"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
+      { id: 'exposure-assumptions', name: 'Exposure assumptions', questionNumbers: [6, 7], sourceLocators: ['Sections 7.5 and 7.8', 'Section 9.5', "Reviewer's Guide lines 198-204"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
+      { id: 'inputs-evidence', name: 'Inputs and evidence', questionNumbers: [8, 9, 12], sourceLocators: ['Sections 7.7 and 7.8', 'Section 15', "Reviewer's Guide lines 205-226"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
+      { id: 'methods-water-type', name: 'Methods and water type', questionNumbers: [10, 11], sourceLocators: ['Sections 6.0 and 7.5', 'Section 4.4.2', "Reviewer's Guide lines 212-222"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
+    ],
+  })),
+    paperContent: content,
+  };
+});
 
 vi.mock('next/navigation', () => ({ redirect: redirectMock, notFound: notFoundMock }));
 vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({ RevisedPaperWorkspace: workspaceMock }));
 vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({ loadRevisedPaperStructure: structureMock }));
+vi.mock('@/lib/matrix-options/cohort-contract', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/matrix-options/cohort-contract')>('@/lib/matrix-options/cohort-contract');
+  return { ...actual, getCohortManifest: cohortManifestMock };
+});
+vi.mock('@/lib/matrix-options/reviewer-guide', async () => {
+  const actual = await vi.importActual<typeof import('@/lib/matrix-options/reviewer-guide')>('@/lib/matrix-options/reviewer-guide');
+  return { ...actual, authenticateReviewerGuideAgainstPaper: authenticateReviewerGuideMock };
+});
 
 import PublicationPage from '../page';
 import PublicationNodePage from '../nodes/[canonicalNodeId]/page';
@@ -22,6 +53,7 @@ const version = '1.0.11-remediated-20260913';
 describe('paper publication V16 route', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    authenticateReviewerGuideMock.mockResolvedValue(undefined);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
   });
@@ -29,6 +61,75 @@ describe('paper publication V16 route', () => {
   it('renders the publication workspace with SSR query windows', async () => {
     const result = await PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({ lens: 'questions', q: 'question', page: '1' }) });
     expect(result).toBeTruthy();
+    expect(authenticateReviewerGuideMock).toHaveBeenCalledWith(expect.objectContaining({ schemaVersion: 'matrix-paper-reviewer-guide-v1' }), expect.any(String));
+    const props = (result as { props: { cohortPortions: readonly { cohortId: string; status: string; sourceNodeId?: string; sectionLabel: string; startByte?: number; endByte?: number; text?: string }[] } }).props;
+    expect(props.cohortPortions).toHaveLength(14);
+    expect(props.cohortPortions.filter((portion) => portion.cohortId === 'categories').map((portion) => portion.sectionLabel)).toEqual(['4.1 Categories and uses', '9.9 Water lot use classes']);
+    expect(props.cohortPortions.every((portion) => portion.status === 'unavailable' ? portion.text === undefined && portion.startByte === undefined && portion.endByte === undefined : Boolean(portion.sourceNodeId?.startsWith('node:test-') && portion.endByte !== undefined && portion.startByte !== undefined && portion.endByte > portion.startByte && portion.text && portion.text !== paperContent && portion.text !== 'fixture\nunrelated-sentinel' && !portion.text.includes('unrelated-sentinel')))).toBe(true);
+  });
+
+  it('renders the real release only after authenticating its guide against paper bytes', async () => {
+    const actualStructureModule = await vi.importActual<typeof import('@/lib/matrix-options/revised-paper-structure')>('@/lib/matrix-options/revised-paper-structure');
+    const actualGuideModule = await vi.importActual<typeof import('@/lib/matrix-options/reviewer-guide')>('@/lib/matrix-options/reviewer-guide');
+    const structure = actualStructureModule.loadRevisedPaperStructure();
+    structureMock.mockReturnValueOnce(structure as never);
+    authenticateReviewerGuideMock.mockImplementationOnce((contract, paperText) => actualGuideModule.authenticateReviewerGuideAgainstPaper(contract as Parameters<typeof actualGuideModule.authenticateReviewerGuideAgainstPaper>[0], paperText));
+
+    const result = await PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({ mode: 'my-review' }) });
+    expect(result).toBeTruthy();
+    expect(authenticateReviewerGuideMock).toHaveBeenCalledWith(expect.objectContaining({ releaseIdentity: version }), structure.content);
+    const props = (result as { props: { cohortPortions: readonly { sectionNumber: string; status: string; text?: string; startByte?: number; endByte?: number; sectionLabel?: string }[] } }).props;
+    const aggregate = props.cohortPortions.find((portion) => portion.sectionNumber === '7.5');
+    expect(aggregate).toMatchObject({ status: 'available', sectionLabel: 'Section 7.5 (7.5.1-7.5.3)' });
+    expect(aggregate?.endByte).toBeGreaterThan(aggregate?.startByte ?? -1);
+    expect(aggregate?.text).toContain('7.5.1');
+    expect(aggregate?.text).toContain('7.5.3');
+    const unavailable = props.cohortPortions.find((portion) => portion.sectionNumber === '7.8');
+    expect(unavailable).toMatchObject({ status: 'unavailable', sectionLabel: 'Section 7.8' });
+    expect(unavailable?.text).toBeUndefined();
+    expect(unavailable?.startByte).toBeUndefined();
+    expect(unavailable?.endByte).toBeUndefined();
+  });
+
+  it('aggregates consecutive direct children across valid newline and prose gaps', async () => {
+    const content = '7.5.1 Scope\nprose between sections\n7.5.2 Evidence\nmore prose\n7.5.3 Boundary\n';
+    const labels = ['7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary'];
+    const nodes = labels.map((label) => {
+      const startByte = content.indexOf(label);
+      return { id: `node:${label}`, domain: 'node' as const, kind: 'heading' as const, depth: 2, label, parentId: null, ancestorIds: [], tokenEndByte: startByte + label.length, anchor: label, startByte, endByte: startByte + label.length };
+    });
+    const appendix = { id: 'node:appendix', domain: 'node' as const, kind: 'heading' as const, depth: 1, label: 'Technical Appendices Compendium', parentId: null, ancestorIds: [], tokenEndByte: content.length, anchor: 'appendix', startByte: content.length, endByte: content.length };
+    const placements = [...nodes, appendix].map((node) => ({ id: node.id, domain: 'node' as const, lens: 'all' as const, label: node.label, reason: 'test', triggers: [], startByte: node.startByte, endByte: node.endByte }));
+    structureMock.mockReturnValueOnce({ manifest: { source: { version } }, releaseIdentity: 'release', nodes: [...nodes, appendix], objects: [], questions: [], lenses: { all: placements, core: [], appendices: [], evidence: [], objects: [], questions: [] }, content, lines: content.split('\n'), questionContainerIds: [] } as never);
+    const result = await PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({ mode: 'my-review' }) });
+    const props = (result as { props: { cohortPortions: readonly { sectionNumber: string; status: string; text?: string }[] } }).props;
+    const aggregate = props.cohortPortions.find((portion) => portion.sectionNumber === '7.5');
+    expect(aggregate).toMatchObject({ sectionNumber: '7.5', status: 'available' });
+    expect(aggregate?.text).toContain('prose between sections');
+  });
+
+  it('marks a missing direct child number unavailable instead of bridging it', async () => {
+    const content = '7.5.1 Scope\n7.5.3 Boundary\n';
+    const labels = ['7.5.1 Scope', '7.5.3 Boundary'];
+    const nodes = labels.map((label) => {
+      const startByte = content.indexOf(label);
+      return { id: `node:${label}`, domain: 'node' as const, kind: 'heading' as const, depth: 2, label, parentId: null, ancestorIds: [], tokenEndByte: startByte + label.length, anchor: label, startByte, endByte: startByte + label.length };
+    });
+    const appendix = { id: 'node:appendix', domain: 'node' as const, kind: 'heading' as const, depth: 1, label: 'Technical Appendices Compendium', parentId: null, ancestorIds: [], tokenEndByte: content.length, anchor: 'appendix', startByte: content.length, endByte: content.length };
+    const placements = [...nodes, appendix].map((node) => ({ id: node.id, domain: 'node' as const, lens: 'all' as const, label: node.label, reason: 'test', triggers: [], startByte: node.startByte, endByte: node.endByte }));
+    structureMock.mockReturnValueOnce({ manifest: { source: { version } }, releaseIdentity: 'release', nodes: [...nodes, appendix], objects: [], questions: [], lenses: { all: placements, core: [], appendices: [], evidence: [], objects: [], questions: [] }, content, lines: content.split('\n'), questionContainerIds: [] } as never);
+    const result = await PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({ mode: 'my-review' }) });
+    const props = (result as { props: { cohortPortions: readonly { sectionNumber: string; status: string; text?: string }[] } }).props;
+    const unavailable = props.cohortPortions.find((portion) => portion.sectionNumber === '7.5');
+    expect(unavailable).toMatchObject({ sectionNumber: '7.5', status: 'unavailable' });
+    expect(unavailable?.text).toBeUndefined();
+  });
+
+  it.each(['guide', 'range', 'paper'])('fails closed when authenticated %s verification rejects', async (tamperedPart) => {
+    authenticateReviewerGuideMock.mockRejectedValueOnce(new Error(`tampered ${tamperedPart}`));
+    await expect(PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({}) })).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(notFoundMock).toHaveBeenCalledTimes(1);
+    expect(workspaceMock).not.toHaveBeenCalled();
   });
 
   it('redirects legacy and resolver states before loading real content', async () => {
@@ -126,7 +227,7 @@ describe('paper publication V16 route', () => {
     await expect(PublicationPage({ params: Promise.resolve({ documentVersion: version }), searchParams: Promise.resolve({ mode: ['publication', 'my-review'] }) })).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
-  it('preserves My Review mode and Atlas query state on canonical node and question children', async () => {
+  it('redirects My Review child details to the canonical publication workspace with query state', async () => {
     const nodePlacement = { id: 'node:canonical', domain: 'node' as const, lens: 'all' as const, label: 'Canonical section', reason: 'section', triggers: [], startByte: 0, endByte: 9 };
     const questionPlacement = { id: 'question:canonical', domain: 'question' as const, lens: 'questions' as const, label: 'Review question', reason: 'question', triggers: [], startByte: 0, endByte: 9 };
     const structure = {
@@ -142,25 +243,18 @@ describe('paper publication V16 route', () => {
     } as never;
     structureMock.mockReturnValue(structure);
 
-    const nodeResult = await PublicationNodePage({
+    await expect(PublicationNodePage({
       params: Promise.resolve({ documentVersion: version, canonicalNodeId: 'node%3Acanonical' }),
-      searchParams: Promise.resolve({ mode: 'my-review', lens: 'core', q: 'canonical', page: '1' }),
-    });
-    const nodeModel = (nodeResult as { props: { model: { mode: string; atlas: { query: unknown }; requestedDetail: { id: string; label: string; domain: string; ownerNodeId: string | null } } } }).props.model;
-    expect(nodeModel.mode).toBe('my-review');
-    expect(nodeModel.atlas.query).toEqual({ lens: 'core', q: 'canonical', page: 1 });
-    expect((nodeResult as { props: { readerText: string } }).props.readerText).toBe('Canonical');
-
-    const questionResult = await PublicationQuestionPage({
+      searchParams: Promise.resolve({ mode: 'my-review', lens: 'core', q: 'canonical phrase', page: '2' }),
+    })).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=my-review&lens=core&page=2&q=canonical+phrase');
+    redirectMock.mockClear();
+    await expect(PublicationQuestionPage({
       params: Promise.resolve({ documentVersion: version, questionId: 'question%3Acanonical' }),
       searchParams: Promise.resolve({ mode: 'my-review', lens: 'questions', q: 'review', page: '1' }),
-    });
-    const questionModel = (questionResult as { props: { model: { mode: string; atlas: { query: unknown }; requestedDetail: { id: string; label: string; domain: string; ownerNodeId: string | null } } } }).props.model;
-    expect(questionModel.mode).toBe('my-review');
-    expect(questionModel.atlas.query).toEqual({ lens: 'questions', q: 'review', page: 1 });
-    expect((questionResult as { props: { readerText: string } }).props.readerText).toBe('Canonical');
-    expect(nodeModel.requestedDetail).toMatchObject({ id: nodePlacement.id, label: nodePlacement.label, domain: 'node' });
-    expect(questionModel.requestedDetail).toMatchObject({ id: questionPlacement.id, label: questionPlacement.label, domain: 'question', ownerNodeId: nodePlacement.id });
+    })).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=my-review&lens=questions&page=1&q=review');
+    await expect(PublicationNodePage({ params: Promise.resolve({ documentVersion: version, canonicalNodeId: 'node%3Acanonical' }), searchParams: Promise.resolve({ mode: ['my-review', 'publication'] }) })).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('keeps publication routes free of Candidate-015 navigation imports', () => {

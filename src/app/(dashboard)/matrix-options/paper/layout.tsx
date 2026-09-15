@@ -34,6 +34,12 @@ export default function MatrixOptionsPaperLayout({ children }: { children: React
             paperRoute
           />
         </div>
+        <div
+          id="matrix-options-paper-header-actions"
+          data-testid="paper-header-actions"
+          className="ml-auto flex min-h-[44px] shrink-0 items-center gap-2 border-l border-slate-200 pl-4 dark:border-slate-700"
+          aria-label="Paper workspace actions"
+        />
       </header>
       <div
         id={MATRIX_OPTIONS_PAPER_TABPANEL_ID}

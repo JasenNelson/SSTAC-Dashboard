@@ -15,12 +15,20 @@ import {
 } from '@/lib/matrix-options/revised-paper-review';
 import type { RequestedDetail } from '@/lib/matrix-options/revised-paper-review';
 
+type DetailSearchParams = { mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[] };
+
+function canonicalReviewHref(documentVersion: string, query: ReturnType<typeof parseDetailQuery>): string {
+  const params = new URLSearchParams({ mode: 'my-review', lens: query.lens, page: String(query.page) });
+  if (query.q) params.set('q', query.q);
+  return `/matrix-options/paper/publication/v/${encodeURIComponent(documentVersion)}?${params.toString()}`;
+}
+
 export default async function PublicationNodePage({
   params,
   searchParams,
 }: {
   params: Promise<{ documentVersion: string; canonicalNodeId: string }>;
-  searchParams?: Promise<{ mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[] }>;
+  searchParams?: Promise<DetailSearchParams>;
 }) {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
@@ -49,14 +57,17 @@ export default async function PublicationNodePage({
   }
   try {
     const query = (await searchParams) ?? {};
+    const detailQuery = parseDetailQuery(query, node ? 'all' : 'objects');
+    const mode = parseWorkspaceMode(query.mode ?? 'publication');
+    if (mode === 'my-review') redirect(canonicalReviewHref(documentVersion, detailQuery));
     const model = createWorkspaceModel(
       structure,
-      parseDetailQuery(query, node ? 'all' : 'objects'),
-      parseWorkspaceMode(query.mode ?? 'publication'),
+      detailQuery,
+      mode,
       detail,
     );
     const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} readerText={sourceRangeText(structure.content, detail.startByte, detail.endByte)} />;
+    return <RevisedPaperWorkspace model={model} readerText={mode === 'publication' ? sourceRangeText(structure.content, detail.startByte, detail.endByte) : undefined} />;
   } catch (error) {
     if (error instanceof ReviewQueryError) notFound();
     throw error;
