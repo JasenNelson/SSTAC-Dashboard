@@ -373,19 +373,21 @@ The Cohort 0 baseline-v1 reachability census is recorded in
 426 selectable substances because no smaller v1 substance set has been selected. It performs no
 regulatory-value selection or promotion.
 
-### 3.5 Options Paper -- Working Draft longform UX (M1)
+### 3.5 Options Paper -- Working Draft + My Review longform UX (M1 + M2)
 
-**Status: IMPLEMENTED on branch `design/matrix-paper-longform-ux-20260903`, UNCOMMITTED (staged working
-tree only), pending the L2 gate (PLAN-R4, run root
-`.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/`). Do not describe as merged or deployed.**
+**Status: IMPLEMENTED ON BRANCH `design/matrix-paper-longform-ux-20260903`, UNCOMMITTED (staged
+working tree only). M1 (Working Draft) is pending its own L2 gate; M2 (My Review) is pending
+CP-M2 (L2 + HITL). Run root `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/`. Do not describe
+either M1 or M2 as merged or deployed.**
 
 This is a distinct sub-lane from the Matrix Options calculators (sections 2-3 above): a longform
 reader/review workspace for the Options Paper itself, under
 `src/app/(dashboard)/matrix-options/paper/**`, `src/components/matrix-options/paper/**`, and
 `src/lib/matrix-options/paper/**`. PLAN-R4's full acceptance criteria (`.tmp/mission-control/
 MATRIX-TWG-FRONTEND-COMPLETION-PLAN-001/PLAN-R4.md` section 3) cover M1 (Working Draft), M2 (My
-Review), M3 (persistence), M5 (Admin) and M6 (quality); only M1 (Working Draft) is implemented as
-of this candidate.
+Review), M3 (persistence), M5 (Admin) and M6 (quality). As of this candidate, M1 (Working Draft)
+and M2 (My Review) are both implemented; M3 (persistence/save/submit/autosave), M5 (Admin) and M6
+(quality sign-off) are not.
 
 - **Feature flags** (both read server-side from `process.env`, gated in this order):
   - `MATRIX_OPTIONS_PAPER_WORKSPACE` (`isMatrixOptionsPaperWorkspaceEnabled` /
@@ -443,8 +445,55 @@ of this candidate.
   allowed to call a raw scroll API; `src/lib/matrix-options/paper/__tests__/scroll-authority-guard.test.ts`
   fails the build of any other paper-tree file that calls one directly.
 
-Documentation coverage for this candidate follows PLAN-R4 section 10.4's manual checklist; see
-`.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`.
+**My Review (M2), local-buffer only -- no server save, no submit, no autosave; those arrive in
+M3.**
+- **Left rail: cohort review navigation** (`CohortReviewNav.tsx`). Five collapsible cohort
+  disclosures (`aria-expanded`); an expanded cohort lists both its authenticated portions and its
+  review questions. Selecting a question updates `cohort`/`q` in URL state and moves focus to the
+  question; the active question is `aria-current`.
+- **Document column: stacked portions, not paginated.** The selected cohort's authenticated
+  portions render all at once (`cohort-paper-stack` / `cohort-paper`), each with an "Open in
+  Working Draft" canonical link (`mode=working-draft&section=<anchor>`, built from the existing
+  `paperWorkspaceHref`/`serializePaperUrlState`). Unavailable portions are shown truthfully (no
+  link, existing unavailable-state text); M1's single-portion "Paper portion N of M" pager is gone
+  from this mode.
+- **Right rail: Review Comments panel** (`ReviewCommentsPanel.tsx`), `lg:w-96`, open by default.
+  One question at a time; the prompt renders as clean text via the existing `MathRenderer`/
+  clean-text path (no raw markdown markers, no stray `$`). Textarea has a 16rem minimum that grows,
+  a visible character count (limit 20000, enforced on both write and on read-back via
+  `REVIEW_LOCAL_BUFFER_TEXT_LIMIT`; the count's `aria-live` is present only once remaining
+  characters drop to <= 1000, so it does not re-announce every keystroke). Previous/Next are
+  adjacent and equal width (`grid grid-cols-2`); "Jump to topic" is a full-width `<select>` below a
+  divider. Progress text reads exactly "Question N of 12 - X drafted - Y submitted - Z changed
+  since submit": X is computed from the local buffer (`countReviewLocalDrafted`); Y and Z are 0 in
+  M2, computed by named functions (`computeSubmittedCount`, `computeChangedSinceSubmitCount`) that
+  M3 fills in without changing the progress-string call site. A saved-questions list shows one
+  status chip per question, in cohort order (12 total, spanning all 5 cohorts), and resumes any
+  question directly. No control in this rail is a `<select>`, checkbox, radio, or `<label>`
+  requesting a scroll-authority reveal; question navigation only moves focus (`preventScroll`),
+  never a raw scroll API -- `scroll-authority.ts` itself is unmodified by M2.
+- **Local-only draft buffer** (`src/lib/matrix-options/paper/review-local-buffer.ts`). Browser
+  `localStorage`, every access wrapped in try/catch (unavailable storage degrades to an empty/no-op
+  buffer, never breaks the UI). Key: `mtwg-paper-review:<userKey>:<documentVersion>:<questionId>`.
+  No authenticated user id reaches `RevisedPaperWorkspace` through its existing props today, so
+  `userKey` is the literal string `local` for every reader on a given browser/profile -- **not
+  per-user, not synced across devices, and not cleared by anything in M2** (no clear-on-sign-out;
+  that is M3 scope, per PLAN-R4 6.A). "Drafted" means non-empty buffered text. M3's eventual key
+  scheme (`<userId>:<version>:<questionId>`, cleared on sign-out, replaced by real save/submit/
+  autosave) supersedes this buffer; it is a reload-survival convenience only, not persistence.
+- **URL state with Back support.** Cohort/question/section are reflected in the URL and restored
+  on reload via the existing `url-state.ts` (unmodified by M2 -- no gap was proven against it).
+  New in M2: a question change now calls `history.pushState` (PLAN-R4 6.C: "pushState on question
+  change so Back works"); every other My Review URL change (cohort, portion) still uses
+  `replaceState`. A `popstate` handler (added to `RevisedPaperWorkspace.tsx`, scoped to
+  `mode=my-review`) re-parses the restored URL through the existing `parsePaperUrlState` and
+  updates the visible cohort/question/progress state without requesting any scroll-authority
+  reveal or scroll; it moves focus to the response section only if focus was already inside the
+  Review Comments rail before Back was pressed, otherwise focus is left alone.
+
+Documentation coverage for the M1 candidate follows PLAN-R4 section 10.4's manual checklist; see
+`.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`. The M2
+checklist is `.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m2/docs/DOCS_CHECKLIST_M2.md`.
 
 ---
 

@@ -94,6 +94,7 @@ function realPortions(): CohortPortion[] {
     startByte: 0,
     endByte: 42,
     text: `# ${cohort.name} source context\n\nAuthenticated bounded excerpt.`,
+    sectionAnchor: `anchor-${cohort.id}`,
   }));
 }
 
@@ -267,7 +268,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(fireEvent.keyDown(document.body, { key: 'Escape' })).toBe(true);
     expect(screen.getByTestId('navigation-rail')).toHaveAttribute('data-state', 'open');
     expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'open');
-    const select = screen.getByRole('combobox', { name: 'Jump to question' });
+    const select = screen.getByRole('combobox', { name: 'Jump to topic' });
     expect(fireEvent.keyDown(select, { key: 'Escape' })).toBe(true);
     expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'open');
     expect(fireEvent.keyDown(document.body, { key: 'Enter' })).toBe(true);
@@ -808,12 +809,20 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(within(unavailable).getByRole('status')).toHaveTextContent('My Review shows no paper text');
     expect(within(unavailable).getByRole('link', { name: 'Open the Working Draft' })).toHaveAttribute('href', `${base}?mode=working-draft`);
     expect(screen.queryByTestId('cohort-paper')).toBeNull();
+    // FIX CYCLE 1 / F3: restored (was silently dropped from this branch in
+    // the original M2 pass; harmless since no pager ever renders in M2 at
+    // all, but the closeout's changed-assertion list should not miss any).
     expect(screen.queryByTestId('paper-portion-navigation')).toBeNull();
 
     rerender(<RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} />);
     expect(screen.queryByTestId('cohort-portions-unavailable')).toBeNull();
+    // M2: the selected cohort's portions render STACKED (PLAN-R4 3.B.2), not
+    // paginated -- one authenticated portion here, so exactly one cohort-paper
+    // section, each followed by its own "Open in Working Draft" canonical link
+    // (built from the existing url-state serializer).
+    expect(screen.getAllByTestId('cohort-paper')).toHaveLength(1);
     expect(screen.getByTestId('cohort-paper')).toHaveTextContent('Authenticated bounded excerpt.');
-    expect(screen.getByTestId('paper-portion-navigation')).toHaveTextContent('Paper portion 1 of 1');
+    expect(screen.getByRole('link', { name: 'Open in Working Draft' })).toHaveAttribute('href', `${base}?mode=working-draft&section=anchor-categories`);
   });
 
   it('restores cohort and question from URL state with Review Comments open in the right rail', () => {
@@ -823,6 +832,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(question && cohort).toBeTruthy();
     if (!question || !cohort) return;
     const replaceState = vi.spyOn(window.history, 'replaceState');
+    const pushState = vi.spyOn(window.history, 'pushState');
     renderMyReview({ cohort: cohort.id, q: question.id });
 
     expect(screen.getByRole('link', { name: 'My Review' })).toHaveAttribute('aria-current', 'page');
@@ -838,7 +848,7 @@ describe('RevisedPaperWorkspace My Review', () => {
     const cohortButton = screen.getByRole('button', { name: `${cohort.name}, ${cohort.questionNumbers.length} questions` });
     expect(cohortButton).toHaveAttribute('aria-expanded', 'true');
     expect(cohortButton).not.toHaveAttribute('aria-pressed');
-    const select = screen.getByRole('combobox', { name: 'Jump to question' });
+    const select = screen.getByRole('combobox', { name: 'Jump to topic' });
     expect(select).toHaveValue('4');
     const response = screen.getByTestId('active-question-response');
     expect(response).toHaveTextContent('4\u00d74=16');
@@ -846,14 +856,134 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(visibleMath).not.toBeNull();
     expect(visibleMath?.textContent).not.toContain('\\');
     expect(visibleMath?.textContent).not.toContain('$');
-    expect(screen.queryByRole('textbox')).toBeNull();
+    // M2: a real local-buffer-backed textarea now exists (PLAN-R4 3.B.3); the
+    // M1 scaffold's "no textbox yet" placeholder is exactly what this unit was
+    // commissioned to replace. The honesty bar (no implied server save) is
+    // still enforced: no Save/Submit/Resume-labelled control exists anywhere.
+    const textarea = screen.getByRole('textbox', { name: 'Your response' });
+    expect(textarea).toHaveValue('');
+    expect(screen.getByTestId('review-comment-char-count')).toHaveTextContent('0 / 20000');
     expect(screen.queryByRole('button', { name: /Save|Submit|Resume/i })).toBeNull();
 
     const otherNumber = cohort.questionNumbers.find((number) => number !== 4) ?? 4;
     const other = guide.questions.find((candidate) => candidate.number === otherNumber);
     fireEvent.change(select, { target: { value: String(otherNumber) } });
     expect(screen.getByTestId('active-question-response')).toHaveFocus();
-    expect(replaceState).toHaveBeenLastCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}`);
+    // PLAN-R4 6.C: a question change pushes a new history entry (so Back
+    // steps between questions) instead of replacing (old M1 behavior: every
+    // My Review URL change, including a question change, used replaceState).
+    expect(pushState).toHaveBeenLastCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}`);
+    expect(replaceState).not.toHaveBeenCalledWith(null, '',`/?mode=my-review&cohort=${cohort.id}&q=${encodeURIComponent(other?.id ?? '')}`);
+  });
+
+  it('M2: Next question walks all 12 questions in cohort order, crossing from one cohort to the next', () => {
+    renderMyReview();
+    const guide = getReviewerGuideContract();
+    const manifest = getCohortManifest();
+    // categories = [1, 2, 3]; the next cohort in manifest order is pathway-grid = [4, 5].
+    expect(manifest.cohorts[0]?.questionNumbers).toEqual([1, 2, 3]);
+    const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
+    fireEvent.click(next);
+    fireEvent.click(next);
+    fireEvent.click(next);
+    const question4 = guide.questions.find((candidate) => candidate.number === 4);
+    expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+    expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 4: ${question4?.heading}`);
+    // Crossing cohorts also switches the left rail's selected/expanded cohort.
+    expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+  });
+
+  /*
+   * FIX CYCLE 1 / F1 (PLAN-R4 6.C "pushState on question change so Back
+   * works"). A real Back navigation: the browser restores the prior URL and
+   * fires `popstate` with no DOM mutation of its own -- so the test mirrors
+   * that exactly (`history.replaceState` to the prior URL, then a real
+   * `PopStateEvent`), rather than calling any workspace handler directly.
+   */
+  describe('M2-POPSTATE: Back restores My Review state via a real popstate event', () => {
+    function popTo(url: string) {
+      act(() => {
+        window.history.replaceState(null, '', url);
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      });
+    }
+
+    it('M2-POPSTATE: restores the visible question, cohort disclosure, and progress line', () => {
+      renderMyReview();
+      const guide = getReviewerGuideContract();
+      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
+      fireEvent.click(next); // -> q2 (pushState)
+      const urlAfterQ2 = window.location.pathname + window.location.search;
+      fireEvent.click(next); // -> q3 (pushState)
+      expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
+
+      popTo(urlAfterQ2);
+
+      expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('2');
+      const question2 = guide.questions.find((candidate) => candidate.number === 2);
+      expect(screen.getByTestId('active-question-response')).toHaveTextContent(`Question 2: ${question2?.heading}`);
+      expect(screen.getByTestId('review-progress')).toHaveTextContent('Question 2 of 12');
+      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('M2-POPSTATE: restores state crossing a cohort boundary, without requesting any reveal or scroll', () => {
+      renderMyReview();
+      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
+      fireEvent.click(next);
+      fireEvent.click(next);
+      const urlAfterQ3 = window.location.pathname + window.location.search;
+      fireEvent.click(next); // -> q4, crosses into pathway-grid
+      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+
+      scrollIntoView.mockClear();
+      scrollBy.mockClear();
+      popTo(urlAfterQ3);
+
+      expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('3');
+      expect(screen.getByRole('button', { name: 'Categories, 3 questions' })).toHaveAttribute('aria-expanded', 'true');
+      // No reveal/scroll is requested by a Back navigation (popstate is not a
+      // scroll-authority activation kind; scroll-authority.ts is unmodified).
+      expect(scrollIntoView).not.toHaveBeenCalled();
+      expect(scrollBy).not.toHaveBeenCalled();
+    });
+
+    it('M2-POPSTATE: moves focus to the response section on Back only when focus was inside Review Comments', () => {
+      renderMyReview();
+      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
+      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      const urlAtQ2 = window.location.pathname + window.location.search;
+      fireEvent.click(next); // -> q3
+      const select = screen.getByRole('combobox', { name: 'Jump to topic' });
+      select.focus();
+      expect(select).toHaveFocus();
+
+      popTo(urlAtQ2);
+      expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('2');
+      expect(screen.getByTestId('active-question-response')).toHaveFocus();
+    });
+
+    it('M2-POPSTATE: leaves focus alone on Back when it was outside Review Comments beforehand', () => {
+      renderMyReview();
+      const next = within(screen.getByTestId('review-comments-rail')).getByRole('button', { name: 'Next question' });
+      fireEvent.click(next); // -> q2 (pushState; this is the URL Back returns to below)
+      const urlAtQ2 = window.location.pathname + window.location.search;
+      fireEvent.click(next); // -> q3
+      const cohortButton = screen.getByRole('button', { name: 'Categories, 3 questions' });
+      cohortButton.focus();
+      expect(cohortButton).toHaveFocus();
+
+      popTo(urlAtQ2);
+      expect(screen.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('2');
+      expect(cohortButton).toHaveFocus();
+      expect(screen.getByTestId('active-question-response')).not.toHaveFocus();
+    });
+
+    it('M2-POPSTATE: removes its popstate listener on unmount', () => {
+      const removeSpy = vi.spyOn(window, 'removeEventListener');
+      const { unmount } = renderMyReview();
+      unmount();
+      expect(removeSpy).toHaveBeenCalledWith('popstate', expect.any(Function));
+    });
   });
 
   it('closes Review Comments with focus rescue and reveals its heading below lg', () => {
@@ -888,21 +1018,29 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(scrollIntoView).not.toHaveBeenCalled();
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Pathway and grid, 2 questions' }));
-    const heading = within(screen.getByTestId('cohort-paper')).getByRole('heading', { level: 2 });
-    expect(heading).toHaveTextContent('Pathway and grid');
-    expect(heading).toHaveFocus();
-    expect(scrolledElements()).toContain(heading);
+    // M2: pathway-grid now resolves TWO portions (the fixture's base one plus
+    // "second"), stacked together (PLAN-R4 3.B.2) -- so cohort selection
+    // focuses the FIRST stacked heading, not a single paginated one.
+    const stack = screen.getByTestId('cohort-paper-stack');
+    expect(within(stack).getAllByTestId('cohort-paper')).toHaveLength(2);
+    const firstHeading = within(stack).getAllByRole('heading', { level: 2 })[0];
+    expect(firstHeading).toHaveTextContent('Pathway and grid');
+    expect(firstHeading).toHaveFocus();
+    expect(scrolledElements()).toContain(firstHeading);
 
     fireEvent.click(within(nav).getByRole('button', { name: 'Pathway second portion' }));
-    expect(within(screen.getByTestId('cohort-paper')).getByRole('heading', { name: 'Pathway second portion', level: 2 })).toHaveFocus();
-    expect(screen.getByTestId('cohort-paper')).toHaveTextContent('Second authenticated bounded excerpt.');
+    const secondHeading = within(stack).getByRole('heading', { name: 'Pathway second portion', level: 2 });
+    expect(secondHeading).toHaveFocus();
+    expect(within(stack).getByText('Second authenticated bounded excerpt.')).toBeInTheDocument();
     expect(within(nav).getByRole('button', { name: 'Pathway second portion' })).toHaveAttribute('aria-pressed', 'true');
 
-    const previous = screen.getByRole('button', { name: 'Previous portion' });
-    previous.focus();
-    fireEvent.click(previous);
-    expect(screen.getByTestId('paper-portion-navigation')).toHaveTextContent('Paper portion 1 of 2');
-    expect(previous).toHaveFocus();
+    // Old (M1 scaffold): a "Paper portion N of M" pager with Previous/Next
+    // portion buttons paginated a single visible portion. New (M2): every
+    // portion is stacked and visible at once (PLAN-R4 3.B.2 "stacked"), so
+    // there is nothing left to page through -- the pager is gone, not hidden.
+    expect(screen.queryByRole('button', { name: 'Previous portion' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Next portion' })).toBeNull();
+    expect(screen.queryByTestId('paper-portion-navigation')).toBeNull();
   });
 
   it('M1-09: never moves focus into the closed, inert Review Comments rail', () => {
@@ -911,15 +1049,18 @@ describe('RevisedPaperWorkspace My Review', () => {
     fireEvent.click(toggle);
     expect(screen.getByTestId('review-comments-rail')).toHaveAttribute('inert');
     expect(toggle).toHaveFocus();
-    const replaceState = vi.spyOn(window.history, 'replaceState');
+    const pushState = vi.spyOn(window.history, 'pushState');
     scrollIntoView.mockClear();
-    const select = screen.getByRole('combobox', { name: 'Jump to question' });
+    const select = screen.getByRole('combobox', { name: 'Jump to topic' });
     const response = screen.getByTestId('active-question-response');
     fireEvent.change(select, { target: { value: '2' } });
     expect(response).not.toHaveFocus();
     expect(toggle).toHaveFocus();
     expect(scrolledElements()).not.toContain(response);
-    expect(replaceState).toHaveBeenCalled();
+    // PLAN-R4 6.C: a question change pushes a history entry (old M1 scaffold
+    // used replaceState for every My Review URL change; see the "restores
+    // cohort and question..." test above for the paired positive assertion).
+    expect(pushState).toHaveBeenCalled();
 
     fireEvent.click(toggle);
     expect(screen.getByTestId('review-comments-rail')).not.toHaveAttribute('inert');
@@ -956,7 +1097,16 @@ describe('RevisedPaperWorkspace My Review', () => {
     renderMyReview({}, [unavailable]);
     expect(screen.getByText('Section 7.8 is referenced by this review cohort but is not present as a section in this release.')).toBeInTheDocument();
     expect(screen.getByTestId('cohort-paper')).toHaveTextContent('No paper bytes are attached.');
-    expect(screen.getByTestId('paper-portion-navigation')).toHaveTextContent('Paper portion 1 of 1');
+    // M2: unavailable portions never get an "Open in Working Draft" link (no
+    // resolved section anchor to link to) -- truthful, per PLAN-R4 3.B.2.
+    expect(screen.queryByRole('link', { name: 'Open in Working Draft' })).toBeNull();
+    // FIX CYCLE 1 / F3 + E13: the C1 scaffold rendered this exact case (a
+    // single portion, unavailable or not) inside a "Paper portion 1 of 1"
+    // pager (data-testid=paper-portion-navigation); M2 stacks portions with
+    // no pager at all (PLAN-R4 3.B.2). This assertion is the real C1/M2
+    // discriminator for this test (the two previous ones above are true on
+    // both C1 and M2 and do not discriminate).
+    expect(screen.queryByTestId('paper-portion-navigation')).toBeNull();
   });
 
   it('keeps trust, local notes, ledgers, and assignment claims truthful', () => {
@@ -2860,7 +3010,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
       heading.getBoundingClientRect = () => rect(400, 40);
       const delta = expectedDelta(400, 129);
       const response = screen.getByTestId('active-question-response');
-      const select = screen.getByRole('combobox', { name: 'Jump to question' });
+      const select = screen.getByRole('combobox', { name: 'Jump to topic' });
 
       // CONTROL: the identical reveal with no question change corrects twice.
       fireEvent.click(toggle);

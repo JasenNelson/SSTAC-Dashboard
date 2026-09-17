@@ -331,9 +331,76 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await page.goto(`${workspacePath}/questions/${encodeURIComponent(questionId)}`, { waitUntil: 'domcontentloaded' });
     await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('my-review');
     await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(questionId);
-    await expect(page.getByRole('combobox', { name: 'Jump to question' })).toHaveValue('4');
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
     await page.reload({ waitUntil: 'domcontentloaded' });
-    await expect(page.getByRole('combobox', { name: 'Jump to question' })).toHaveValue('4');
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+  });
+
+  /*
+   * M2 (PLAN-R4 3.B.3): local-buffer-only draft text, the saved-questions
+   * resume chip, and Prev/Next spanning all 12 questions in cohort order.
+   */
+  test('M2: authenticated real release saved-questions chip resumes a question, a typed draft survives a reload, and the char count/progress line update', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+
+    const savedQuestions = page.getByTestId('review-saved-questions');
+    await expect(savedQuestions.getByRole('button')).toHaveCount(12);
+    await savedQuestions.getByRole('button', { name: /^Question 4:/ }).click();
+    await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(`rpq:${realVersion}:q04`);
+    await expect(page.getByRole('combobox', { name: 'Jump to topic' })).toHaveValue('4');
+
+    const textarea = page.getByRole('textbox', { name: 'Your response' });
+    await textarea.fill('E2E authenticated draft text for question 4.');
+    await expect(page.getByTestId('review-comment-char-count')).toHaveText(/^44 \/ 20000$/);
+    await expect(page.getByTestId('review-progress')).toContainText('Question 4 of 12');
+    await expect(page.getByTestId('review-progress')).toContainText('1 drafted');
+    await expect(savedQuestions.getByRole('button', { name: /^Question 4:/ })).toContainText('Drafted');
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('E2E authenticated draft text for question 4.');
+  });
+
+  test('M2: authenticated real release per-portion "Open in Working Draft" link opens the canonical Working Draft on that section', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const link = page.getByTestId('cohort-paper-stack').getByRole('link', { name: 'Open in Working Draft' }).first();
+    const href = await link.getAttribute('href');
+    expect(href).toMatch(/mode=working-draft&section=/);
+    await link.click();
+    await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('working-draft');
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page');
+  });
+
+  test('M2: authenticated real release Previous/Next question walk all 12 questions in cohort order, bounded at both ends', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const previous = page.getByRole('button', { name: 'Previous question' });
+    const next = page.getByRole('button', { name: 'Next question' });
+    const select = page.getByRole('combobox', { name: 'Jump to topic' });
+
+    await expect(previous).toBeDisabled();
+    for (let step = 0; step < 11; step += 1) await next.click();
+    await expect(next).toBeDisabled();
+    await expect(page.getByTestId('review-progress')).toContainText('Question 12 of 12');
+    await previous.click();
+    await expect(next).toBeEnabled();
+    await expect(select).not.toHaveValue('12');
+  });
+
+  test('M2: authenticated real release rails including the new Review Comments controls fit at 360 and 1024 with no horizontal overflow', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    for (const width of [360, 1024]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      await expect(page.getByTestId('review-comment-draft')).toBeVisible();
+      const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
+      expect(overflow).toBeLessThanOrEqual(1);
+    }
   });
 
   test('authenticated real release rails close with focus rescue and reveal opened panels at 360 and 768', async ({ page }, testInfo) => {
