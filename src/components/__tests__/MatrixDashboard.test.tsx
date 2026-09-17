@@ -2373,9 +2373,9 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
 
       const tablist = screen.getByRole('tablist', { name: 'Matrix Options' });
       expect(within(tablist).getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-        'Guide',
         'Modernizing Schedule 3.4',
-        'TWG Review',
+        'Guide',
+        'Options Paper',
         'Database',
         'Calculator',
         'SSD Workbench',

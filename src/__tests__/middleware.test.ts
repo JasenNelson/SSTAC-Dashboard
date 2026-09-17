@@ -54,6 +54,31 @@ describe('middleware auth gating', () => {
     expect(res.headers.get('Content-Security-Policy')).toBeTruthy()
   })
 
+  it('redirects an unauthenticated request to /login preserving the full path and query string (D9)', async () => {
+    ;(createServerClient as unknown as Mock).mockReturnValue({
+      auth: { getUser: vi.fn().mockResolvedValue({ data: { user: null }, error: null }) },
+    })
+
+    const req = new NextRequest(
+      new URL('http://localhost/matrix-options/paper/publication/v/x?mode=my-review&q=y'),
+    )
+    const res = await middleware(req)
+
+    expect(res.status).toBe(307)
+    const location = res.headers.get('location')
+    expect(location).toBeTruthy()
+    const redirectUrl = new URL(location!)
+    expect(redirectUrl.pathname).toBe('/login')
+    // Decode via URLSearchParams and assert the EXACT value (not a substring/
+    // toContain match) -- pre-D9, redirectToLogin() set only
+    // `request.nextUrl.pathname` (see git show HEAD:src/middleware.ts), which
+    // would decode here to '/matrix-options/paper/publication/v/x' with the
+    // query string silently dropped. This assertion fails against that code.
+    expect(redirectUrl.searchParams.get('redirect')).toBe(
+      '/matrix-options/paper/publication/v/x?mode=my-review&q=y',
+    )
+  })
+
   it('passes an authenticated request through with security headers', async () => {
     ;(createServerClient as unknown as Mock).mockReturnValue({
       auth: { getUser: vi.fn().mockResolvedValue({ data: { user: { id: 'u1' } }, error: null }) },

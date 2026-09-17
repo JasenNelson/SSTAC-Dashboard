@@ -4,25 +4,19 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
+import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import {
   loadRevisedPaper,
   REVISED_PAPER_VERSION,
   RevisedPaperUnavailableError,
 } from '@/lib/matrix-options/revised-paper';
-import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
-import {
-  createWorkspaceModel,
-  parseAtlasQuery,
-  parseWorkspaceMode,
-  ReviewQueryError,
-} from '@/lib/matrix-options/revised-paper-review';
 
 export default async function PaperVersionPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ documentVersion: string }>;
-  searchParams?: Promise<{ mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[]; scenario?: string | string[] }>;
+  /** Accepted for route-contract compatibility; flags-on this route ignores the query. */
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const { documentVersion } = await params;
   if (documentVersion !== REVISED_PAPER_VERSION) notFound();
@@ -45,17 +39,6 @@ export default async function PaperVersionPage({
       throw error;
     }
   }
-
-  try {
-    const query = await searchParams;
-    const mode = parseWorkspaceMode(query?.mode);
-    const atlasQuery = parseAtlasQuery(query ?? {});
-    const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    const model = createWorkspaceModel(loadRevisedPaperStructure(), atlasQuery, mode);
-    return <RevisedPaperWorkspace model={model} />;
-  } catch (error) {
-    if (error instanceof RevisedPaperUnavailableError) notFound();
-    if (error instanceof ReviewQueryError) notFound();
-    throw error;
-  }
+  // REVIEW_NAVIGATION: this route never renders the workspace (R2-01); it lands on the canonical Working Draft.
+  redirect(paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null }));
 }

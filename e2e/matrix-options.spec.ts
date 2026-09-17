@@ -139,7 +139,7 @@ test.describe('Calculator pathway navigation', () => {
   });
 });
 
-// A11y (2026-08-14 audit): the primary 7-tab tablist ('Guide' ...
+// A11y (2026-08-14 audit): the primary 7-tab tablist ('Modernizing Schedule 3.4' ...
 // 'Catalogue') claims manual activation (ArrowLeft/ArrowRight/
 // Home/End move focus only; Enter/Space/click activate) with a roving
 // tabindex. These tests use
@@ -151,7 +151,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await gotoMatrixOptionsOrSkip(page);
 
     const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
-    const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
+    const optionsPaperTab = page.getByRole('tab', { name: 'Options Paper', exact: true });
     await expect(page.getByRole('tab', { name: 'Methodology by pathway', exact: true })).toHaveCount(0);
 
     await guideTab.focus();
@@ -160,12 +160,12 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     await page.keyboard.press('ArrowRight');
 
-    // Focus moved to the next tab...
-    await expect(conceptualTab).toBeFocused();
+    // Focus moved to the next tab (Options Paper, the D12-reordered neighbour of Guide)...
+    await expect(optionsPaperTab).toBeFocused();
     // ...but selection did NOT follow it. This is the entire point of manual
     // activation and the thing no unit test can cover.
     await expect(guideTab).toHaveAttribute('aria-selected', 'true');
-    await expect(conceptualTab).toHaveAttribute('aria-selected', 'false');
+    await expect(optionsPaperTab).toHaveAttribute('aria-selected', 'false');
   });
 
   test('Enter activates the focused tab and swaps the panel content', async ({ page }) => {
@@ -175,10 +175,10 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const calculatorTab = page.getByRole('tab', { name: 'Calculator', exact: true });
 
     await guideTab.focus();
-    // TABS order: Guide(0), Modernizing Schedule 3.4(1), TWG Review(2),
-    // Database(3), Calculator(4). 4 ArrowRight presses walk focus there without
-    // activating any of the intermediate tabs.
-    for (let i = 0; i < 4; i += 1) {
+    // TABS order: Modernizing Schedule 3.4(0), Guide(1), Options Paper(2),
+    // Database(3), Calculator(4). 3 ArrowRight presses from Guide walk focus there
+    // without activating any of the intermediate tabs.
+    for (let i = 0; i < 3; i += 1) {
       await page.keyboard.press('ArrowRight');
     }
     await expect(calculatorTab).toBeFocused();
@@ -199,9 +199,9 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     const ssdTab = page.getByRole('tab', { name: 'SSD Workbench', exact: true });
 
     await guideTab.focus();
-    // Index 5: Guide -> Modernizing Schedule 3.4 -> TWG Review -> Database ->
-    // Calculator -> SSD Workbench.
-    for (let i = 0; i < 5; i += 1) {
+    // Index 5 (0-based: Modernizing Schedule 3.4=0, Guide=1): Guide -> Options
+    // Paper -> Database -> Calculator -> SSD Workbench.
+    for (let i = 0; i < 4; i += 1) {
       await page.keyboard.press('ArrowRight');
     }
     await expect(ssdTab).toBeFocused();
@@ -218,11 +218,12 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
 
     const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
     const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
+    const optionsPaperTab = page.getByRole('tab', { name: 'Options Paper', exact: true });
     const referencesTab = page.getByRole('tab', { name: 'Catalogue', exact: true });
 
     await guideTab.focus();
     await page.keyboard.press('ArrowRight');
-    await expect(conceptualTab).toBeFocused();
+    await expect(optionsPaperTab).toBeFocused();
 
     await page.keyboard.press('End');
     await expect(referencesTab).toBeFocused();
@@ -230,17 +231,21 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     await expect(guideTab).toHaveAttribute('aria-selected', 'true');
     await expect(referencesTab).toHaveAttribute('aria-selected', 'false');
 
+    // Home jumps to the FIRST tab overall, which after D12's reorder is
+    // Modernizing Schedule 3.4, not Guide.
     await page.keyboard.press('Home');
-    await expect(guideTab).toBeFocused();
+    await expect(conceptualTab).toBeFocused();
   });
 
   test('ArrowRight from the last tab wraps focus to the first tab', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
 
-    const guideTab = page.getByRole('tab', { name: 'Guide', exact: true });
+    const conceptualTab = page.getByRole('tab', { name: 'Modernizing Schedule 3.4', exact: true });
     const referencesTab = page.getByRole('tab', { name: 'Catalogue', exact: true });
 
-    await guideTab.focus();
+    // Modernizing Schedule 3.4 is the FIRST tab after D12's reorder, so it is
+    // the tab wraparound from the last tab must land focus on.
+    await conceptualTab.focus();
     await page.keyboard.press('End');
     await expect(referencesTab).toBeFocused();
 
@@ -248,7 +253,7 @@ test.describe('Matrix Options primary tablist keyboard navigation (manual activa
     // so this is real modular-arithmetic wraparound, not a clamp. Verifying
     // actual behaviour rather than assuming it.
     await page.keyboard.press('ArrowRight');
-    await expect(guideTab).toBeFocused();
+    await expect(conceptualTab).toBeFocused();
   });
 
   test('exactly one primary tab has tabindex=0 at any time, including after arrowing', async ({ page }) => {

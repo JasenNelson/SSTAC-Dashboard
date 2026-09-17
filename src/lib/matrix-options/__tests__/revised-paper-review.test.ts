@@ -14,6 +14,7 @@ import {
   isPinEligible,
   parseDetailQuery,
   parseAtlasQuery,
+  parseWorkspaceMode,
   releaseNoteKey,
   REVIEW_DISPOSITIONS,
   REVIEW_NONTERMINAL_CATEGORIES,
@@ -50,6 +51,16 @@ describe('revised paper review contracts', () => {
     expect(() => parseAtlasQuery({ page: '01' })).toThrow(/INVALID_PAGE/);
     expect(() => parseAtlasQuery({ page: '0' })).toThrow(/INVALID_PAGE/);
     expect(() => parseAtlasQuery({ q: 'a'.repeat(161) })).toThrow(/QUERY_TOO_LONG/);
+  });
+
+  it('parses Working Draft as the default mode and publication as its alias', () => {
+    expect(parseWorkspaceMode(undefined)).toBe('working-draft');
+    expect(parseWorkspaceMode('working-draft')).toBe('working-draft');
+    expect(parseWorkspaceMode('publication')).toBe('working-draft');
+    expect(parseWorkspaceMode(['publication'])).toBe('working-draft');
+    expect(parseWorkspaceMode('my-review')).toBe('my-review');
+    expect(() => parseWorkspaceMode('Publication')).toThrow(/INVALID_LENS/);
+    expect(() => parseWorkspaceMode(['my-review', 'working-draft'])).toThrow(/REPEATED_PARAMETER/);
   });
 
   it('resets inherited detail pages only when q is absent', () => {
@@ -137,7 +148,7 @@ describe('revised paper review contracts', () => {
     expect(longestNode.label.length).toBeGreaterThan(80);
     expect(longestQuestion.label.length).toBeGreaterThan(80);
 
-    const unfiltered = createWorkspaceModel(structure, parseDetailQuery({ page: '2' }, 'objects'), 'publication', {
+    const unfiltered = createWorkspaceModel(structure, parseDetailQuery({ page: '2' }, 'objects'), 'working-draft', {
       id: tables[0].id,
       domain: tables[0].domain,
       label: tables[0].label,
@@ -148,7 +159,7 @@ describe('revised paper review contracts', () => {
     expect(unfiltered.atlas.query).toEqual({ lens: 'objects', q: '', page: 1 });
     expect(unfiltered.requestedDetail?.id).toBe(tables[0].id);
 
-    const explicit = createWorkspaceModel(structure, parseDetailQuery({ q: '|', page: '2' }, 'objects'), 'publication');
+    const explicit = createWorkspaceModel(structure, parseDetailQuery({ q: '|', page: '2' }, 'objects'), 'working-draft');
     expect(explicit.atlas.query).toEqual({ lens: 'objects', q: '|', page: 2 });
     expect(() => createWorkspaceModel(structure, parseDetailQuery({ q: 'not-a-real-label', page: '2' }, 'objects'))).toThrow(/PAGE_OUT_OF_RANGE/);
     expect(() => parseDetailQuery({ q: ['table', 'question'] }, 'objects')).toThrow(/REPEATED_PARAMETER/);

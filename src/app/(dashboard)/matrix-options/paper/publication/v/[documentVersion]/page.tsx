@@ -6,84 +6,118 @@ import {
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
-import type { RevisedPaperNode } from '@/lib/matrix-options/revised-paper-structure';
+import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import { authenticateReviewerGuideAgainstPaper, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
-import { createWorkspaceModel, parseAtlasQuery, parseWorkspaceMode, ReviewQueryError, sourceRangeText } from '@/lib/matrix-options/revised-paper-review';
-import type { CohortManifest } from '@/lib/matrix-options/cohort-contract';
-import type { CohortPortion } from '@/components/matrix-options/paper/RevisedPaperWorkspace';
+import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-review';
+import { deriveCohortPortions } from '@/lib/matrix-options/paper/cohort-portions';
+import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
+import { paperWorkspaceHref, parsePaperUrlState } from '@/lib/matrix-options/paper/url-state';
+import type { PaperSearchParams, PaperUrlContext } from '@/lib/matrix-options/paper/url-state';
+import {
+  getPaperSectionWindowModel,
+  owningSectionIndex,
+  PAPER_SECTION_WINDOW_FAILURE_PREFIX,
+  paperSectionIdentity,
+  summarizePaperSections,
+} from '@/lib/matrix-options/paper/section-window';
+import type { PaperSectionWindowData } from '@/components/matrix-options/paper/PaperSectionWindow';
+import {
+  buildPaperUrlContext,
+  getPaperDocumentModel,
+  getPaperNavOutline,
+  PaperDocument,
+} from '@/components/matrix-options/paper/PaperDocument';
+import type { PaperDocumentModel } from '@/components/matrix-options/paper/PaperDocument';
 
-function normalizeSectionNumber(value: string): string {
-  return value.replace(/\.0$/, '');
+/** Non-sensitive reason codes logged before an expected fail-closed 404 (F-04). */
+type PaperRouteFailureReason =
+  | 'URL_CONTEXT_UNAVAILABLE'
+  | 'GUIDE_AUTHENTICATION_FAILED'
+  | 'COHORT_RELEASE_MISMATCH'
+  | 'COHORT_PORTIONS_UNAVAILABLE'
+  | 'PAPER_DOCUMENT_UNAVAILABLE';
+
+class PaperRouteFailure extends Error {
+  readonly reason: PaperRouteFailureReason;
+
+  constructor(reason: PaperRouteFailureReason) {
+    super(reason);
+    this.name = 'PaperRouteFailure';
+    this.reason = reason;
+  }
 }
 
-function sectionNumbersFromLocator(locator: string): readonly string[] {
-  if (/Reviewer's Guide/i.test(locator)) return [];
-  return [...locator.matchAll(/\b\d+(?:\.\d+)+\b|\b\d{1,2}\b/g)].map((match) => normalizeSectionNumber(match[0]));
+function failClosed(reason: PaperRouteFailureReason): never {
+  console.error(`[matrix-options-paper] publication route unavailable: ${reason}`);
+  notFound();
 }
 
-function sectionNumberFromHeading(label: string): string | undefined {
-  const match = label.match(/^\s*(\d+(?:\.\d+)*)(?:\s|[.:]|$)/);
-  return match ? normalizeSectionNumber(match[1]) : undefined;
+/*
+ * M1-05: only the known contract and validation failures become a reason-coded
+ * 404. Each prefix is the message of a plain `Error` thrown by a validator or
+ * derivation this route calls. Any other error (a TypeError, RangeError, other
+ * Error subclass, or an unrecognised message) is a programming or environment
+ * defect and is rethrown so it surfaces instead of hiding behind a 404.
+ */
+const CONTRACT_FAILURE_PREFIXES = ['Invalid reviewer guide contract: ', 'Invalid cohort contract: '] as const;
+const COHORT_PORTION_FAILURE_PREFIXES = [
+  'Expected exactly one authenticated appendix boundary',
+  'Cohort has no paper section locators: ',
+  'Ambiguous canonical paper heading for ',
+  'Authenticated paper section is empty: ',
+  'Cohort manifest resolved no authenticated paper sections',
+] as const;
+const DOCUMENT_FAILURE_PREFIXES = [
+  'Paper full-document model unavailable: ',
+  PAPER_SECTION_WINDOW_FAILURE_PREFIX,
+  'Compiler node missing canonical placement',
+  'Compiler question missing canonical placement',
+  'Compiler object missing canonical placement',
+] as const;
+
+function isExpectedPaperFailure(error: unknown, prefixes: readonly string[]): boolean {
+  return error instanceof Error
+    && Object.getPrototypeOf(error) === Error.prototype
+    && prefixes.some((prefix) => error.message.startsWith(prefix));
 }
 
-interface ResolvedCohortSection {
-  readonly sectionNumber: string;
-  readonly sourceLocator: string;
-  readonly nodes: readonly RevisedPaperNode[];
-}
+// One authentication per cached structure object: loadRevisedPaperStructure
+// returns a process-cached, byte/SHA-verified structure, so the guide hash and
+// the cohort portion derivation are not repeated on every request (F-04).
+// Failures are not cached.
+const authenticatedPortionsCache = new WeakMap<object, Promise<readonly CohortPortion[]>>();
 
-function resolveCohortSectionNodes(nodes: readonly RevisedPaperNode[], cohort: CohortManifest['cohorts'][number]): readonly ResolvedCohortSection[] {
-  const appendixBoundaries = nodes.reduce<number[]>((indexes, node, index) => {
-    if (node.depth === 1 && node.label === 'Technical Appendices Compendium') indexes.push(index);
-    return indexes;
-  }, []);
-  if (appendixBoundaries.length !== 1) throw new Error(`Expected exactly one authenticated appendix boundary; found ${appendixBoundaries.length}`);
-  const appendixBoundary = appendixBoundaries[0];
-  const canonicalNodes = nodes.slice(0, appendixBoundary).filter((node) => node.kind === 'heading');
-  const requestedNumbers = [...new Set(cohort.sourceLocators.flatMap(sectionNumbersFromLocator))];
-  if (requestedNumbers.length === 0) throw new Error(`Cohort has no paper section locators: ${cohort.id}`);
-  return requestedNumbers.map((sectionNumber) => {
-    const sourceLocator = cohort.sourceLocators.find((locator) => !/Reviewer's Guide/i.test(locator) && sectionNumbersFromLocator(locator).includes(sectionNumber)) ?? `Section ${sectionNumber}`;
-    const matches = canonicalNodes.filter((node) => {
-      const headingNumber = sectionNumberFromHeading(node.label);
-      return headingNumber === sectionNumber || headingNumber?.startsWith(`${sectionNumber}.`);
-    });
-    const exact = matches.filter((node) => sectionNumberFromHeading(node.label) === sectionNumber);
-    if (exact.length > 1) throw new Error(`Ambiguous canonical paper heading for ${cohort.id} section ${sectionNumber}`);
-    if (exact.length === 1) return { sectionNumber, sourceLocator, nodes: exact };
-    const children = matches
-      .filter((node) => sectionNumberFromHeading(node.label)?.startsWith(`${sectionNumber}.`) && node.parentId === matches[0]?.parentId)
-      .sort((a, b) => a.startByte - b.startByte);
-    const childNumbers = children.map((node) => sectionNumberFromHeading(node.label)?.slice(sectionNumber.length + 1));
-    const consecutive = children.length > 0 && childNumbers.every((value, index) => value === String(index + 1));
-    return consecutive ? { sectionNumber, sourceLocator, nodes: children } : { sectionNumber, sourceLocator, nodes: [] };
-  });
-}
-
-function deriveCohortPortions(structure: { readonly content: string; readonly nodes: readonly RevisedPaperNode[] }, manifest: CohortManifest): readonly CohortPortion[] {
-  const portions = manifest.cohorts.flatMap((cohort) => resolveCohortSectionNodes(structure.nodes, cohort).map((resolved) => {
-    if (resolved.nodes.length === 0) return { id: `${cohort.id}:section-${resolved.sectionNumber}`, cohortId: cohort.id, name: cohort.name, status: 'unavailable' as const, sectionNumber: resolved.sectionNumber, sourceLocator: resolved.sourceLocator, sectionLabel: `Section ${resolved.sectionNumber}` };
-    const first = resolved.nodes[0];
-    const last = resolved.nodes.at(-1) ?? first;
-    const text = sourceRangeText(structure.content, first.startByte, last.endByte);
-    if (!text.trim()) throw new Error(`Authenticated paper section is empty: ${cohort.id}/${resolved.sectionNumber}`);
-    return {
-      id: `${cohort.id}:${resolved.sectionNumber}`,
-      cohortId: cohort.id,
-      name: cohort.name,
-      status: 'available' as const,
-      sectionNumber: resolved.sectionNumber,
-      sourceLocator: resolved.sourceLocator,
-      sourceNodeId: resolved.nodes.length === 1 ? first.id : `${first.id}..${last.id}`,
-      sectionLabel: resolved.nodes.length === 1 ? first.label : `Section ${resolved.sectionNumber} (${sectionNumberFromHeading(first.label)}-${sectionNumberFromHeading(last.label)})`,
-      startByte: first.startByte,
-      endByte: last.endByte,
-      text,
-    };
-  }));
-  if (portions.length === 0) throw new Error('Cohort manifest resolved no authenticated paper sections');
-  return portions;
+function authenticatedCohortPortions(structure: RevisedPaperStructure): Promise<readonly CohortPortion[]> {
+  const cached = authenticatedPortionsCache.get(structure);
+  if (cached) return cached;
+  const pending = (async () => {
+    try {
+      await authenticateReviewerGuideAgainstPaper(getReviewerGuideContract(), structure.content);
+    } catch (error) {
+      if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) throw new PaperRouteFailure('GUIDE_AUTHENTICATION_FAILED');
+      throw error;
+    }
+    let cohortManifest: ReturnType<typeof getCohortManifest>;
+    try {
+      cohortManifest = getCohortManifest();
+    } catch (error) {
+      if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
+      throw error;
+    }
+    if (cohortManifest.releaseIdentity !== REVISED_PAPER_VERSION || structure.manifest.source.version !== REVISED_PAPER_VERSION || cohortManifest.cohorts.length !== 5) {
+      throw new PaperRouteFailure('COHORT_RELEASE_MISMATCH');
+    }
+    try {
+      return deriveCohortPortions(structure, cohortManifest);
+    } catch (error) {
+      if (isExpectedPaperFailure(error, COHORT_PORTION_FAILURE_PREFIXES)) throw new PaperRouteFailure('COHORT_PORTIONS_UNAVAILABLE');
+      throw error;
+    }
+  })();
+  authenticatedPortionsCache.set(structure, pending);
+  pending.catch(() => authenticatedPortionsCache.delete(structure));
+  return pending;
 }
 
 export default async function PublicationPage({
@@ -91,31 +125,68 @@ export default async function PublicationPage({
   searchParams,
 }: {
   params: Promise<{ documentVersion: string }>;
-  searchParams: Promise<{ mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[] }>;
+  searchParams?: Promise<PaperSearchParams>;
 }) {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
   if (gate === 'PAPER_RESOLVER') redirect(REVISED_PAPER_ROUTE);
   const { documentVersion } = await params;
   if (documentVersion !== REVISED_PAPER_VERSION) notFound();
+  const query = (await searchParams) ?? {};
+  const structure = loadRevisedPaperStructure();
+
+  let context: PaperUrlContext;
   try {
-    const query = await searchParams;
-    const structure = loadRevisedPaperStructure();
-    let cohortPortions: readonly CohortPortion[];
-    try {
-      const reviewerGuide = getReviewerGuideContract();
-      await authenticateReviewerGuideAgainstPaper(reviewerGuide, structure.content);
-      const cohortManifest = getCohortManifest();
-      if (cohortManifest.releaseIdentity !== REVISED_PAPER_VERSION || structure.manifest.source.version !== REVISED_PAPER_VERSION || cohortManifest.cohorts.length !== 5) throw new Error('Cohort contract release mismatch');
-      cohortPortions = deriveCohortPortions(structure, cohortManifest);
-    } catch {
-      notFound();
-    }
-    const model = createWorkspaceModel(structure, parseAtlasQuery(query), parseWorkspaceMode(query.mode ?? 'publication'));
-    const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} cohortPortions={cohortPortions!} />;
+    context = buildPaperUrlContext(structure);
   } catch (error) {
-    if (error instanceof ReviewQueryError) notFound();
+    if (isExpectedPaperFailure(error, CONTRACT_FAILURE_PREFIXES)) failClosed('URL_CONTEXT_UNAVAILABLE');
     throw error;
   }
+  const { state, canonical } = parsePaperUrlState(query, context);
+  // Aliases, missing mode, unknown or repeated values: 307 to the canonical URL.
+  if (!canonical) redirect(paperWorkspaceHref(documentVersion, state));
+
+  let cohortPortions: readonly CohortPortion[];
+  try {
+    cohortPortions = await authenticatedCohortPortions(structure);
+  } catch (error) {
+    if (error instanceof PaperRouteFailure) failClosed(error.reason);
+    throw error;
+  }
+
+  const assignment = getProductionAssignment();
+  const workspaceKey = `${state.mode}:${state.cohort ?? ''}:${state.q ?? ''}`;
+  const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
+  if (state.mode === 'my-review') {
+    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} urlState={state} assignment={assignment} cohortPortions={cohortPortions} />;
+  }
+
+  // S1 incremental section window: only the initial (or deep-linked) depth-1
+  // section is server-rendered. Every other section ships as an ordered
+  // placeholder descriptor (label and size only, no markdown and no byte
+  // offsets) and is fetched from the guarded per-section route on demand.
+  let documentModel: PaperDocumentModel;
+  let sectionWindow: PaperSectionWindowData;
+  try {
+    const fullModel = getPaperDocumentModel(structure);
+    const { chunks, groups } = getPaperSectionWindowModel(structure);
+    const identity = paperSectionIdentity(structure, documentVersion);
+    const initialIndex = (state.section === null ? null : owningSectionIndex(groups, state.section)) ?? 0;
+    const initialGroup = groups[initialIndex];
+    documentModel = { chunks: chunks.slice(initialGroup.chunkStart, initialGroup.chunkEnd), linkMap: fullModel.linkMap };
+    sectionWindow = {
+      paperSha256: identity.paperSha256,
+      initialIndex,
+      sections: summarizePaperSections(groups),
+      linkMap: fullModel.linkMap,
+    };
+  } catch (error) {
+    if (isExpectedPaperFailure(error, DOCUMENT_FAILURE_PREFIXES)) failClosed('PAPER_DOCUMENT_UNAVAILABLE');
+    throw error;
+  }
+  return (
+    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow}>
+      <PaperDocument model={documentModel} layout="chunks" />
+    </RevisedPaperWorkspace>
+  );
 }

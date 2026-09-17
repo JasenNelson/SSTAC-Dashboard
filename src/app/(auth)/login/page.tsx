@@ -7,6 +7,21 @@ import { createClient } from '@/lib/supabase/client';
 import type { NextPage } from 'next';
 import Link from 'next/link';
 
+// Only same-origin relative paths are honoured as a post-login destination, so a crafted
+// ?redirect= value cannot send a signed-in user to another origin.
+function safeRedirectPath(value: string | null): string {
+  const fallback = '/dashboard';
+  if (!value || !value.startsWith('/') || value.startsWith('//') || value.includes('\\')) return fallback;
+  try {
+    const base = 'http://sstac.invalid';
+    const url = new URL(value, base);
+    if (url.origin !== base) return fallback;
+    return `${url.pathname}${url.search}${url.hash}`;
+  } catch {
+    return fallback;
+  }
+}
+
 const LoginForm: React.FC = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -19,8 +34,8 @@ const LoginForm: React.FC = () => {
 
   useEffect(() => { setHydrated(true); }, []);
 
-  // Get redirect URL from query params
-  const redirectUrl = searchParams.get('redirect') || '/dashboard';
+  // Get redirect URL from query params (validated; see safeRedirectPath)
+  const redirectUrl = safeRedirectPath(searchParams.get('redirect'));
 
   const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();

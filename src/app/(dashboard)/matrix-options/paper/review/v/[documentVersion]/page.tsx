@@ -5,21 +5,15 @@ import {
   MATRIX_OPTIONS_PAPER_LANDING_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
 } from '@/lib/matrix-options/navigation';
+import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
-import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
-import {
-  createWorkspaceModel,
-  parseAtlasQuery,
-  parseWorkspaceMode,
-  ReviewQueryError,
-} from '@/lib/matrix-options/revised-paper-review';
 
 export default async function ReviewVersionPage({
   params,
-  searchParams,
 }: {
   params: Promise<{ documentVersion: string }>;
-  searchParams: Promise<{ mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[]; scenario?: string | string[] }>;
+  /** Accepted for route-contract compatibility; this legacy route ignores the query. */
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
@@ -29,17 +23,6 @@ export default async function ReviewVersionPage({
   if (gate === 'PAPER_RESOLVER') redirect(MATRIX_OPTIONS_PAPER_LANDING_PATH);
   const { documentVersion } = await params;
   if (documentVersion !== REVISED_PAPER_VERSION) notFound();
-  try {
-    const query = await searchParams;
-    const model = createWorkspaceModel(
-      loadRevisedPaperStructure(),
-      parseAtlasQuery(query),
-      parseWorkspaceMode(query.mode),
-    );
-    const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} />;
-  } catch (error) {
-    if (error instanceof ReviewQueryError) notFound();
-    throw error;
-  }
+  // R2-01: the legacy review route never renders My Review without cohort portions.
+  redirect(paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null }));
 }

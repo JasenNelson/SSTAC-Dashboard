@@ -2,17 +2,19 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { loadMock, notFoundMock, structureMock } = vi.hoisted(() => ({
+const { loadMock, notFoundMock, redirectMock } = vi.hoisted(() => ({
   loadMock: vi.fn(),
   notFoundMock: vi.fn(() => {
     throw new Error('NEXT_NOT_FOUND');
   }),
-  structureMock: vi.fn(),
+  redirectMock: vi.fn((_url: string) => {
+    throw new Error('NEXT_REDIRECT');
+  }),
 }));
 
 vi.mock('next/navigation', () => ({
   notFound: notFoundMock,
-  redirect: vi.fn(() => { throw new Error('NEXT_REDIRECT'); }),
+  redirect: redirectMock,
 }));
 vi.mock('@/lib/matrix-options/revised-paper', () => ({
   loadRevisedPaper: loadMock,
@@ -35,14 +37,6 @@ vi.mock('@/components/TWGReviewPortal', () => ({
     />
   ),
 }));
-vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({
-  RevisedPaperWorkspace: ({ model }: { model: { query: { page: number } } }) => (
-    <div data-testid="workspace" data-page={model.query.page} />
-  ),
-}));
-vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({
-  loadRevisedPaperStructure: structureMock,
-}));
 
 import PaperVersionPage from '../page';
 
@@ -62,36 +56,34 @@ describe('/matrix-options/paper/v/[documentVersion]', () => {
     loadMock.mockReturnValue(paper);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
-    structureMock.mockReturnValue({
-      releaseIdentity: paper.releaseIdentity,
-      content: '# Exact paper',
-      lines: [],
-      nodes: [],
-      objects: [],
-      questions: [],
-      questionContainerIds: [],
-      manifest: { source: { version: paper.documentVersion } },
-      lenses: { all: [], core: [], appendices: [], evidence: [], objects: [], questions: [] },
-    });
   });
 
-  it('maps asynchronous workspace query failures to the route notFound boundary', async () => {
+  it('R2-01: with both flags on, lands on the canonical Working Draft URL without rendering a workspace', async () => {
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
 
     await expect(
       PaperVersionPage({
         params: Promise.resolve({ documentVersion: paper.documentVersion }),
-        searchParams: Promise.resolve({ page: '2' }),
+        searchParams: Promise.resolve({ mode: 'my-review', page: '2' }),
       }),
-    ).rejects.toThrow('NEXT_NOT_FOUND');
-    expect(notFoundMock).toHaveBeenCalled();
+    ).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledTimes(1);
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=working-draft');
+    expect(loadMock).not.toHaveBeenCalled();
+    expect(notFoundMock).not.toHaveBeenCalled();
+  });
+
+  it('redirects to the legacy TWG Review when the workspace flag is off', async () => {
+    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    await expect(PaperVersionPage({ params: Promise.resolve({ documentVersion: paper.documentVersion }) })).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options?view=TWG%20Review');
   });
 
   it('loads only the exact version and passes the same descriptor to TWGReviewPortal', async () => {
     const result = await PaperVersionPage({
       params: Promise.resolve({ documentVersion: paper.documentVersion }),
     });
-    render(result);
+    render(result as React.ReactElement);
 
     expect(loadMock).toHaveBeenCalledWith(paper.documentVersion);
     expect(screen.getByTestId('portal')).toHaveAttribute('data-content', paper.content);

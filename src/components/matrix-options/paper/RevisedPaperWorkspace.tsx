@@ -1,63 +1,233 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
-import type { RefObject } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import type { KeyboardEvent, MouseEvent, ReactNode, RefObject } from 'react';
 import { Download, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
 import MathRenderer from '@/components/MathRenderer';
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import type { CohortId, CohortManifest } from '@/lib/matrix-options/cohort-contract';
-import type {
-  AtlasRow,
-  WorkspaceMode,
-  WorkspaceModel,
-} from '@/lib/matrix-options/revised-paper-review';
-import {
-  placementDomainLabel,
-  REVIEW_LENSES,
-} from '@/lib/matrix-options/revised-paper-review';
-import type { PublicationLens } from '@/lib/matrix-options/revised-paper-structure';
+import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
+import { stripStandaloneSectionAnchorLines } from '@/lib/matrix-options/paper/full-document';
+import { PAPER_LANDING_TOLERANCE_PX, PaperScrollAuthority, panelRevealScrollDelta } from '@/lib/matrix-options/paper/scroll-authority';
+import type { PaperRevealCause } from '@/lib/matrix-options/paper/scroll-authority';
+import { owningSectionIndex } from '@/lib/matrix-options/paper/section-window';
+import { paperWorkspaceHref, serializePaperUrlState } from '@/lib/matrix-options/paper/url-state';
+import type { PaperUrlState } from '@/lib/matrix-options/paper/url-state';
+import type { AssignmentState } from '@/lib/matrix-options/revised-paper-review';
 import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import type { ReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
+import { cn } from '@/utils/cn';
+
+import { PAPER_STICKY_HEADER_HEIGHT_VAR } from './PaperChunkSection';
+import { isPlainPrimaryClick, PaperOutlineNav } from './PaperOutlineNav';
+import type { PaperOutlineNavEntry } from './PaperOutlineNav';
+import { isPanelEscapeKey, PaperRail, PaperRailToggle, PAPER_SHELL_CLASSES } from './PaperRail';
+import { PaperLoadFullDocumentControl, PaperSectionWindowView, usePaperSectionWindow } from './PaperSectionWindow';
+import type { PaperSectionWindowData } from './PaperSectionWindow';
+import { PaperText, portionHeadingOffset } from './PaperText';
+import { isLgViewport } from './paper-viewport';
 
 export interface RevisedPaperWorkspaceProps {
-  readonly model: WorkspaceModel;
-  readonly readerText?: string;
+  readonly documentVersion: string;
+  /** Canonical URL state parsed on the server (paper/url-state.ts). */
+  readonly urlState: PaperUrlState;
+  readonly assignment: AssignmentState;
+  /** Working Draft only: the full outline for the Navigation rail. */
+  readonly outline?: readonly PaperOutlineNavEntry[];
+  /** My Review only: authenticated cohort portions from deriveCohortPortions. */
   readonly cohortPortions?: readonly CohortPortion[];
+  /**
+   * Working Draft only (S1): the ordered depth-1 sections, which one the server
+   * rendered, and the whole-document link map. Serializable descriptors only --
+   * labels and byte sizes, never paper markdown.
+   */
+  readonly sectionWindow?: PaperSectionWindowData;
+  /** Working Draft only: the server-rendered initial section (<PaperDocument layout="chunks">). */
+  readonly children?: ReactNode;
 }
 
-export interface CohortPortion {
-  readonly id: string;
-  readonly cohortId: CohortId;
-  readonly name: string;
-  readonly status: 'available' | 'unavailable';
-  readonly sectionNumber: string;
-  readonly sourceLocator: string;
-  readonly sourceNodeId?: string;
-  readonly sectionLabel?: string;
-  readonly startByte?: number;
-  readonly endByte?: number;
-  readonly text?: string;
-}
+export const PAPER_NAVIGATION_RAIL_ID = 'paper-navigation-rail';
+export const PAPER_REVIEW_COMMENTS_RAIL_ID = 'paper-review-comments-rail';
+export const PAPER_DOWNLOAD_PANEL_ID = 'paper-download-files-panel';
+export const PAPER_DOCUMENT_COLUMN_ID = 'paper-document-column';
+export { PAPER_LG_MEDIA_QUERY } from './paper-viewport';
 
-type WorkspaceDrawer = 'review-package' | 'publication-sections' | 'reading-materials' | 'release-notes';
-type OpenWorkspaceDrawer = WorkspaceDrawer | null;
+/*
+ * The landing and reveal numbers and the two pure landing predicates live in
+ * the scroll authority (AMENDMENT-M1-SCROLL-AUTHORITY-001), which is the only
+ * module that scrolls. They are re-exported here unchanged, so every existing
+ * importer and the e2e drift guard keep reading the same source of truth.
+ */
+export {
+  landingNeedsCorrection,
+  PAPER_LANDING_MAX_ATTEMPTS,
+  PAPER_LANDING_TOLERANCE_PX,
+  PAPER_PANEL_REVEAL_GAP_PX,
+  PAPER_REVEAL_SETTLE_MAX_FRAMES,
+  PAPER_REVEAL_SETTLE_STABLE_FRAMES,
+  PAPER_REVEAL_SETTLE_TIMEOUT_MS,
+  panelRevealScrollDelta,
+} from '@/lib/matrix-options/paper/scroll-authority';
 
-const STANDALONE_SECTION_ANCHOR_LINE = /^[ \t]*<div[ \t]+id="[^"\r\n]+"[ \t]+class="section-anchor"[ \t]*>[ \t]*<\/div>[ \t]*(?:\r?\n|$)/gm;
+type PanelKey = 'navigation' | 'review-comments' | 'download';
 
 export function normalizeReaderTextForDisplay(text: string): string {
-  return text.replace(STANDALONE_SECTION_ANCHOR_LINE, '');
+  return stripStandaloneSectionAnchorLines(text);
 }
 
-function CohortNav({ cohortManifest, cohortPortions, selectedCohortId, selectedPortionId, onSelect, onSelectPortion }: { readonly cohortManifest: CohortManifest; readonly cohortPortions: readonly CohortPortion[]; readonly selectedCohortId: CohortId; readonly selectedPortionId?: string; readonly onSelect: (cohortId: CohortId) => void; readonly onSelectPortion: (portionId: string) => void }) {
+function decodeHashValue(value: string | null): string | null {
+  if (!value || !value.startsWith('#') || value.length < 2) return null;
+  try {
+    return decodeURIComponent(value.slice(1));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * The section an in-page link names (M1-04): a `#anchor`, or the canonical
+ * relative Working Draft query `?mode=working-draft&section=<anchor>` that
+ * outline entries and in-paper references use as their href.
+ */
+export function sectionFromInPageHref(href: string | null): string | null {
+  if (!href) return null;
+  if (href.startsWith('#')) return decodeHashValue(href);
+  if (!href.startsWith('?')) return null;
+  const params = new URLSearchParams(href.slice(1));
+  if (params.get('mode') !== 'working-draft' || params.getAll('section').length !== 1) return null;
+  return params.get('section');
+}
+
+export interface SectionReadingGeometry {
+  readonly id: string;
+  /** Viewport top of the section element; the section starts with its heading. */
+  readonly top: number;
+  /** The section's computed scroll-margin-top in px. */
+  readonly scrollMarginTop: number;
+}
+
+/**
+ * Active-section rule (M1-01). `candidates` are observed sections in document
+ * order. The active section is the LAST one whose top has crossed the reading
+ * line: top <= scrollportTop + its own scroll-margin-top (+1px tolerance). That
+ * line is exactly where scrollIntoView({ block: 'start' }) lands a section, so a
+ * jump activates its target, never the predecessor whose tail is still visible
+ * above it. When no candidate has crossed (top of the document) the first
+ * candidate is active.
+ */
+export function selectActiveSectionAnchor(candidates: readonly SectionReadingGeometry[], scrollportTop: number): string | null {
+  let active: string | null = null;
+  for (const candidate of candidates) {
+    if (candidate.top <= scrollportTop + candidate.scrollMarginTop + 1) active = candidate.id;
+    else break;
+  }
+  return active ?? candidates[0]?.id ?? null;
+}
+
+/**
+ * M1R2-04: at the very end of the scrollport nothing further can cross the
+ * reading line, so the active section is the last one whose top is inside the
+ * scrollport. Without this the trailing short sections can never become active.
+ */
+export function selectEndOfDocumentSectionAnchor(candidates: readonly SectionReadingGeometry[], scrollportTop: number, scrollportBottom: number): string | null {
+  for (let index = candidates.length - 1; index >= 0; index -= 1) {
+    const candidate = candidates[index];
+    if (candidate.top >= scrollportTop && candidate.top < scrollportBottom) return candidate.id;
+  }
+  return null;
+}
+
+/** True only when the scrollport can scroll and is at its maximum scroll offset. */
+export function isScrolledToEnd(root: HTMLElement, lg: boolean): boolean {
+  if (lg) return root.scrollHeight > root.clientHeight && root.scrollTop + root.clientHeight >= root.scrollHeight - 1;
+  if (typeof window === 'undefined') return false;
+  const page = document.documentElement;
+  return page.scrollHeight > window.innerHeight && window.scrollY + window.innerHeight >= page.scrollHeight - 1;
+}
+
+/**
+ * M1R5-04 (browser run-003 sections 6.2 and 7; FIX_R5_BRIEF item 5). The reading
+ * line is only a contract where the scrollport can still reach it. My Review's
+ * Review Comments heading at 768x1024 is the last element of the stacked layout,
+ * so the page is already at MAXIMUM SCROLL (3,128 of 3,128) when it is revealed
+ * and the +263px correction panelRevealScrollDelta asks for has nowhere to go.
+ *
+ * DECISION (a): at maximum scroll the landing contract is "visible, focused and
+ * below the sticky header", not "flush to the reading line". Everywhere else the
+ * reading line still decides. A genuinely OCCLUDED heading -- one whose top is
+ * above the sticky header's bottom edge, which is the defect this whole work
+ * stream fixed -- fails in BOTH cases, so this can never certify an occlusion.
+ */
+export function panelRevealLandingSatisfied({ headingTop, stickyHeaderHeight, viewportHeight, atMaxScroll, tolerance = PAPER_LANDING_TOLERANCE_PX }: {
+  readonly headingTop: number;
+  readonly stickyHeaderHeight: number;
+  readonly viewportHeight: number;
+  readonly atMaxScroll: boolean;
+  readonly tolerance?: number;
+}): boolean {
+  if (!Number.isFinite(headingTop) || !Number.isFinite(stickyHeaderHeight) || !Number.isFinite(viewportHeight)) return false;
+  // Occlusion never passes, at maximum scroll or anywhere else.
+  if (headingTop < stickyHeaderHeight) return false;
+  // Off the bottom of the scrollport is not "visible" either.
+  if (headingTop >= viewportHeight) return false;
+  if (atMaxScroll) return true;
+  return panelRevealScrollDelta(headingTop, stickyHeaderHeight, tolerance) === 0;
+}
+
+/** The sticky header height this workspace published, in px; falls back to measuring the header. */
+function stickyHeaderHeightPx(shell: HTMLElement | null): number {
+  const published = Number.parseFloat(shell?.style.getPropertyValue(PAPER_STICKY_HEADER_HEIGHT_VAR) ?? '');
+  if (Number.isFinite(published) && published > 0) return published;
+  if (typeof document === 'undefined') return 0;
+  const header = document.querySelector<HTMLElement>('[data-testid="paper-layout-header"]');
+  const measured = header ? header.getBoundingClientRect().height : 0;
+  return Number.isFinite(measured) && measured > 0 ? measured : 0;
+}
+
+function scrollMarginTopOf(element: Element): number {
+  try {
+    const value = Number.parseFloat(window.getComputedStyle(element).scrollMarginTop);
+    return Number.isFinite(value) ? value : 0;
+  } catch {
+    return 0;
+  }
+}
+
+/**
+ * M1R8-08 (informed Opus holistic pass, P3-9). The pending reveal that a request
+ * to open `panel` should leave behind.
+ *
+ * `openPanel` used to set the pending reveal unconditionally below lg and then
+ * call `setPanelOpen(panel, true)`. If the panel is ALREADY open React bails out
+ * of that state update, the reveal effect never re-runs, and the pending reveal
+ * stays set -- so the NEXT time any panel's open state changes, the effect reads
+ * the stale value, finds that panel open and reveals it. A reader who opens
+ * Download Files is then scrolled to the Navigation heading. No current call
+ * site can reach it (all three pass the panel's own current state), but M2 and
+ * M3 add programmatic opens, so the request is made unable to leave a pending
+ * reveal that nothing will consume.
+ */
+export function pendingRevealForOpenRequest(panel: PanelKey, alreadyOpen: boolean, lgViewport: boolean): PanelKey | null {
+  if (lgViewport || alreadyOpen) return null;
+  return panel;
+}
+
+function replaceUrlState(state: PaperUrlState): void {
+  if (typeof window === 'undefined') return;
+  window.history.replaceState(window.history.state, '', `${window.location.pathname}${serializePaperUrlState(state)}`);
+}
+
+function CohortNav({ cohortManifest, cohortPortions, selectedCohortId, expandedCohortId, selectedPortionId, onSelect, onSelectPortion }: { readonly cohortManifest: CohortManifest; readonly cohortPortions: readonly CohortPortion[]; readonly selectedCohortId: CohortId; readonly expandedCohortId: CohortId | null; readonly selectedPortionId?: string; readonly onSelect: (cohortId: CohortId) => void; readonly onSelectPortion: (portionId: string) => void }) {
   return <nav aria-label="Review cohorts"><ul className="space-y-2">{cohortManifest.cohorts.map((cohort) => {
     const selected = selectedCohortId === cohort.id;
+    const expanded = expandedCohortId === cohort.id;
     const portions = cohortPortions.filter((portion) => portion.cohortId === cohort.id);
     const portionsId = `cohort-${cohort.id}-portions`;
     return <li key={cohort.id} className="rounded-lg border border-slate-200 dark:border-slate-700">
-      <button type="button" aria-label={`${cohort.name}, ${cohort.questionNumbers.length} questions`} aria-expanded={selected} aria-controls={portionsId} aria-pressed={selected} onClick={() => onSelect(cohort.id)} className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${selected ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}><span className="min-w-0 break-words">{cohort.name}</span><span className="shrink-0 text-xs font-normal">{cohort.questionNumbers.length} questions</span></button>
-      <div id={portionsId} hidden={!selected} aria-hidden={!selected} className="border-t border-slate-200 p-2 dark:border-slate-700">
+      <button type="button" aria-label={`${cohort.name}, ${cohort.questionNumbers.length} questions`} aria-expanded={expanded} aria-controls={portionsId} onClick={() => onSelect(cohort.id)} className={`flex min-h-[44px] w-full items-center justify-between gap-3 rounded-lg px-3 py-2 text-left text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${selected ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}><span className="min-w-0 break-words">{cohort.name}</span><span className="shrink-0 text-xs font-normal">{cohort.questionNumbers.length} questions</span></button>
+      <div id={portionsId} hidden={!expanded} className="border-t border-slate-200 p-2 dark:border-slate-700">
         <p className="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">Authenticated paper portions</p>
         {portions.length > 0 ? <ul className="space-y-1">{portions.map((portion) => <li key={portion.id}><button type="button" aria-label={`${portion.sectionLabel ?? `Section ${portion.sectionNumber}`}${portion.status === 'unavailable' ? ', unavailable' : ''}`} aria-pressed={selectedPortionId === portion.id} onClick={() => onSelectPortion(portion.id)} className={`min-h-[44px] w-full rounded-md px-3 py-2 text-left text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 ${selectedPortionId === portion.id ? 'bg-sky-100 font-semibold text-sky-900 dark:bg-sky-900/40 dark:text-sky-100' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}><span className="block break-words">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</span><span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">{portion.status === 'unavailable' ? 'Unavailable in this release' : portion.sourceLocator}</span></button></li>)}</ul> : <p className="px-2 pb-2 text-sm text-slate-600 dark:text-slate-300">No authenticated paper portion is available for this cohort.</p>}
       </div>
@@ -66,7 +236,7 @@ function CohortNav({ cohortManifest, cohortPortions, selectedCohortId, selectedP
 }
 
 function CohortPaperPortion({ cohort, portion, headingRef }: { readonly cohort: CohortManifest['cohorts'][number] | undefined; readonly portion: CohortPortion | undefined; readonly headingRef: RefObject<HTMLHeadingElement | null> }) {
-  if (!cohort || !portion) return <section data-testid="cohort-paper" aria-labelledby="cohort-paper-heading" className="rounded-xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-900 dark:bg-sky-950"><h2 id="cohort-paper-heading" className="text-lg font-bold">Selected cohort paper</h2><p className="mt-2 text-sm">This authenticated bounded portion is unavailable.</p></section>;
+  if (!cohort || !portion) return <section data-testid="cohort-paper" aria-labelledby="cohort-paper-heading" className="rounded-xl border border-sky-200 bg-sky-50 p-5 dark:border-sky-900 dark:bg-sky-950"><h2 ref={headingRef} tabIndex={-1} id="cohort-paper-heading" className="text-lg font-bold">Selected cohort paper</h2><p className="mt-2 text-sm">No authenticated paper portion is available for this cohort.</p></section>;
   if (portion.status === 'unavailable') return <section data-testid="cohort-paper" aria-labelledby="cohort-paper-heading" className="min-w-0 border-y border-amber-300 py-5 dark:border-amber-800 print:hidden"><p className="text-xs font-bold uppercase tracking-wide text-amber-800 dark:text-amber-200">Paper section unavailable</p><h2 ref={headingRef} tabIndex={-1} id="cohort-paper-heading" className="mt-1 text-xl font-bold">{portion.sectionLabel ?? `Section ${portion.sectionNumber}`}</h2><p className="mt-2 text-sm text-slate-700 dark:text-slate-200">Section {portion.sectionNumber} is referenced by this review cohort but is not present as a section in this release.</p><p className="mt-2 break-words text-xs text-slate-600 dark:text-slate-300">Source locator: {portion.sourceLocator}. No paper bytes are attached.</p></section>;
   const displayPortionText = portion.text ? normalizeReaderTextForDisplay(portion.text) : '';
   return <section data-testid="cohort-paper" aria-labelledby="cohort-paper-heading" className="min-w-0 border-y border-sky-200 py-5 dark:border-sky-900 print:hidden">
@@ -74,13 +244,21 @@ function CohortPaperPortion({ cohort, portion, headingRef }: { readonly cohort: 
     <h2 ref={headingRef} tabIndex={-1} id="cohort-paper-heading" className="mt-1 text-xl font-bold">{portion.sectionLabel ?? cohort.name}</h2>
     <p className="mt-1 text-sm text-slate-700 dark:text-slate-200">{cohort.purpose}</p>
     <p className="mt-2 break-words text-xs text-slate-600 dark:text-slate-300">Authenticated source: {portion.sourceNodeId ?? 'section unavailable'}; bytes {portion.startByte ?? 'unavailable'}-{portion.endByte ?? 'unavailable'}. Five cohorts remain proposed pending owner QP approval.</p>
-    <div className="reader-prose mt-4 min-w-0 max-w-none [&_blockquote]:max-w-[84ch] [&_li]:max-w-[84ch] [&_p]:max-w-[84ch]"><MathRenderer content={displayPortionText} /></div>
+    <PaperText markdown={displayPortionText} className="mt-4" headingOffset={portionHeadingOffset(displayPortionText)} headingVariant="portion" />
+  </section>;
+}
+
+function CohortPortionsUnavailable({ workingDraftHref }: { readonly workingDraftHref: string }) {
+  return <section data-testid="cohort-portions-unavailable" aria-labelledby="cohort-portions-unavailable-heading" className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+    <h2 id="cohort-portions-unavailable-heading" className="text-lg font-bold">Cohort paper portions unavailable</h2>
+    <p role="status" className="mt-2 text-sm">Authenticated cohort paper portions were not provided for this release, so My Review shows no paper text. The full paper remains available in the Working Draft.</p>
+    <a href={workingDraftHref} className="mt-3 inline-flex min-h-[44px] items-center rounded-md border border-amber-400 px-3 text-sm font-semibold underline dark:border-amber-700">Open the Working Draft</a>
   </section>;
 }
 
 function ActiveQuestionResponse({ questions, question, responseRef, onSelectQuestion, onPreviousQuestion, onNextQuestion }: { readonly questions: readonly ReviewerGuideContract['questions'][number][]; readonly question: ReviewerGuideContract['questions'][number] | undefined; readonly responseRef: RefObject<HTMLElement | null>; readonly onSelectQuestion: (number: number) => void; readonly onPreviousQuestion: () => void; readonly onNextQuestion: () => void }) {
   return <section ref={responseRef} tabIndex={-1} data-testid="active-question-response" aria-labelledby="active-question-heading" className="rounded-xl border border-slate-200 bg-white p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600 dark:border-slate-700 dark:bg-slate-900 print:hidden">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">Response preview</p><h2 id="active-question-heading" className="mt-1 text-lg font-bold">{question ? `Question ${question.number}: ${question.heading}` : 'Active review question'}</h2></div><span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">Responses not connected</span></div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide text-sky-700 dark:text-sky-300">Response preview</p><h3 id="active-question-heading" className="mt-1 text-lg font-bold">{question ? `Question ${question.number}: ${question.heading}` : 'Active review question'}</h3></div><span className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100">Responses not connected</span></div>
     {question ? <div className="mt-4 rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-700 dark:bg-slate-950"><MathRenderer content={question.prompt} /></div> : <p className="mt-4 text-sm">No authenticated question is selected.</p>}
     <p className="mt-4 text-sm text-slate-600 dark:text-slate-300">Authenticated responses, saving, submitting, and resuming are not connected until U4-U6. No response editor or progress claim is available.</p>
     <div aria-disabled="true" className="mt-4 min-h-48 rounded-lg border border-dashed border-slate-300 bg-slate-50 p-4 text-sm text-slate-500 dark:border-slate-600 dark:bg-slate-950 dark:text-slate-400">Response space is reserved for the approved response workflow. It is read-only until U4-U6.</div>
@@ -88,124 +266,118 @@ function ActiveQuestionResponse({ questions, question, responseRef, onSelectQues
   </section>;
 }
 
-function assignmentStateLabel(assignment: WorkspaceModel['assignment']): string {
+function assignmentStateLabel(assignment: AssignmentState): string {
   if (assignment.state === 'ASSIGNMENT_UNAVAILABLE') return 'Assignment unavailable';
   if (assignment.state === 'NO_ASSIGNMENT') return 'No assignment';
   return 'Assigned';
 }
 
-function assignmentSourceLabel(assignment: WorkspaceModel['assignment']): string {
+function assignmentSourceLabel(assignment: AssignmentState): string {
   if (assignment.state === 'ASSIGNMENT_UNAVAILABLE') return 'Assignments are not connected for this release.';
   if (assignment.state === 'NO_ASSIGNMENT') return 'No authoritative assignment exists for this release.';
   return assignment.title;
 }
 
-const lensLabel: Record<PublicationLens, string> = {
-  all: 'All',
-  core: 'Core',
-  appendices: 'Appendices',
-  evidence: 'Evidence',
-  objects: 'Objects',
-  questions: 'Questions',
-};
-
-function queryHref(model: WorkspaceModel, mode: WorkspaceMode, lens = model.atlas.query.lens, page = 1): string {
-  const query = new URLSearchParams({ mode, lens, page: String(page) });
-  if (model.atlas.query.q) query.set('q', model.atlas.query.q);
-  return `?${query.toString()}`;
+function firstQuestionOf(reviewerGuide: ReviewerGuideContract, cohort: CohortManifest['cohorts'][number] | undefined) {
+  return reviewerGuide.questions.find((question) => cohort?.questionNumbers.includes(question.number));
 }
 
-function publicationRootHref(model: WorkspaceModel, mode: WorkspaceMode): string {
-  return `/matrix-options/paper/publication/v/${encodeURIComponent(model.documentVersion)}${queryHref(model, mode)}`;
-}
-
-function destinationHref(model: WorkspaceModel, destination: string): string {
-  return `${destination}${queryHref(model, model.mode, model.atlas.query.lens, model.atlas.query.page)}`;
-}
-
-function AtlasRowView({ model, row }: { readonly model: WorkspaceModel; readonly row: AtlasRow }) {
-  return (
-    <li className="border-t border-slate-200 py-3 first:border-t-0 dark:border-slate-700">
-      <a href={destinationHref(model, row.href)} className="group block rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">
-        <span className="flex min-w-0 flex-wrap items-center gap-2 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">
-          <span>{placementDomainLabel(row.domain)}</span>
-          <span aria-hidden="true">|</span>
-          <span>Source-linked placement</span>
-        </span>
-        <span className="mt-1 block min-w-0 break-words text-base font-semibold text-slate-950 group-hover:underline dark:text-white [overflow-wrap:anywhere]">{row.label}</span>
-        <span className="mt-1 block text-xs text-slate-500 dark:text-slate-400">Authenticated source placement</span>
-      </a>
-    </li>
-  );
-}
-
-function drawerTitle(drawer: WorkspaceDrawer): string {
-  if (drawer === 'review-package' || drawer === 'publication-sections') return 'Navigation';
-  if (drawer === 'reading-materials') return 'Download files';
-  return 'Review Comments';
-}
-
-function ReadingMaterialsPanel({ selectedCohort }: { readonly selectedCohort: CohortManifest['cohorts'][number] | undefined }) {
-  return <section aria-labelledby="reading-materials-heading" data-testid="reading-materials-content" className="space-y-4">
-    <p id="reading-materials-instructions" className="text-sm text-slate-600 dark:text-slate-300">Download files is where verified cohort PDF and DOCX reading packages will be downloaded when ready. They are not available yet.</p>
-    <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-      <h3 id="reading-materials-heading" className="font-bold">Download files: {selectedCohort?.name ?? 'Selected cohort'}</h3>
-      <p className="mt-2">The selected cohort PDF and DOCX are being prepared pending integrity verification. No download is available in this preview.</p>
-    </div>
-  </section>;
-}
-
-function WorkspacePanel({ drawer, model, cohortManifest, cohortPortions, selectedCohortId, selectedPortionId, selectedQuestions, activeQuestion, responseRef, onSelectCohort, onSelectPortion, onSelectQuestion, onPreviousQuestion, onNextQuestion, onClose, closeRef }: {
-  readonly drawer: WorkspaceDrawer;
-  readonly model: WorkspaceModel;
-  readonly cohortManifest: CohortManifest;
-  readonly cohortPortions: readonly CohortPortion[];
-  readonly selectedCohortId: CohortId;
-  readonly selectedPortionId?: string;
-  readonly selectedQuestions: readonly ReviewerGuideContract['questions'][number][];
-  readonly activeQuestion: ReviewerGuideContract['questions'][number] | undefined;
-  readonly responseRef: RefObject<HTMLElement | null>;
-  readonly onSelectCohort: (cohortId: CohortId) => void;
-  readonly onSelectPortion: (portionId: string) => void;
-  readonly onSelectQuestion: (number: number) => void;
-  readonly onPreviousQuestion: () => void;
-  readonly onNextQuestion: () => void;
-  readonly onClose: () => void;
-  readonly closeRef: RefObject<HTMLButtonElement | null>;
-}) {
-  const selectedCohort = cohortManifest.cohorts.find((cohort) => cohort.id === selectedCohortId) ?? cohortManifest.cohorts[0];
-  const id = `${drawer}-panel`;
-  return <section id={id} data-testid={`${drawer}-panel`} aria-labelledby={`${id}-heading`} aria-describedby={`${id}-instructions`} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 lg:w-full">
-    <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-700"><div className="min-w-0"><h2 id={`${id}-heading`} className="text-base font-bold">{drawerTitle(drawer)}</h2><p id={`${id}-instructions`} className="mt-1 text-xs text-slate-600 dark:text-slate-300">This panel stays in the page flow. Use Hide to return to the document.</p></div><button ref={closeRef} type="button" aria-label={`Hide ${drawerTitle(drawer)}`} aria-controls={id} title={`Hide ${drawerTitle(drawer)}`} onClick={onClose} className="inline-flex min-h-[44px] shrink-0 items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 transition-colors hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">{drawer === 'release-notes' ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftClose aria-hidden="true" className="h-4 w-4" />}<span>Hide</span></button></div>
-    <div className="mt-4 min-w-0">
-      {drawer === 'review-package' && <><p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Choose a release-bound cohort and its authenticated paper portions.</p><CohortNav cohortManifest={cohortManifest} cohortPortions={cohortPortions} selectedCohortId={selectedCohortId} selectedPortionId={selectedPortionId} onSelect={onSelectCohort} onSelectPortion={onSelectPortion} /></>}
-      {drawer === 'publication-sections' && <><p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Choose a publication lens; the Atlas stays in the document column.</p><LensNav model={model} /></>}
-      {drawer === 'reading-materials' && <ReadingMaterialsPanel selectedCohort={selectedCohort} />}
-      {drawer === 'release-notes' && <ActiveQuestionResponse questions={selectedQuestions} question={activeQuestion} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />}
-    </div>
-  </section>;
-}
-
-export function RevisedPaperWorkspace({ model, readerText, cohortPortions }: RevisedPaperWorkspaceProps) {
-  const displayReaderText = readerText ? normalizeReaderTextForDisplay(readerText) : '';
-  const selectedRow = model.atlas.rows[0];
-  const requestedDetail = model.requestedDetail;
+export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, outline, cohortPortions, sectionWindow, children }: RevisedPaperWorkspaceProps) {
+  const isMyReview = urlState.mode === 'my-review';
   const cohortManifest = useMemo(() => getCohortManifest(), []);
   const reviewerGuide = useMemo(() => getReviewerGuideContract(), []);
-  const [selectedCohortId, setSelectedCohortId] = useState<CohortId>(cohortManifest.cohorts[0]?.id ?? 'categories');
-  const selectedCohort = cohortManifest.cohorts.find((cohort) => cohort.id === selectedCohortId) ?? cohortManifest.cohorts[0];
-  const selectedQuestions = useMemo(() => reviewerGuide.questions.filter((question) => selectedCohort?.questionNumbers.includes(question.number)), [reviewerGuide, selectedCohort]);
-  const selectedPortions = useMemo(() => (cohortPortions ?? []).filter((portion) => portion.cohortId === selectedCohort?.id), [cohortPortions, selectedCohort]);
-  const [activeQuestionNumber, setActiveQuestionNumber] = useState<number>(selectedQuestions[0]?.number ?? 1);
-  const [portionIndex, setPortionIndex] = useState(0);
-  const [openDrawer, setOpenDrawer] = useState<OpenWorkspaceDrawer>(null);
+  const portions = useMemo(() => cohortPortions ?? [], [cohortPortions]);
+  const portionsProvided = cohortPortions !== undefined && cohortPortions.length > 0;
+  const workingDraftHref = paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null });
+  const myReviewHref = paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: null, q: null, section: null });
+
   const [headerActionsHost, setHeaderActionsHost] = useState<HTMLElement | null>(null);
   const [headerActionsReady, setHeaderActionsReady] = useState(false);
-  const drawerOpenerRef = useRef<HTMLElement>(null);
-  const drawerCloseRef = useRef<HTMLButtonElement>(null);
+  const [navigationOpen, setNavigationOpen] = useState(true);
+  const [reviewCommentsOpen, setReviewCommentsOpen] = useState(true);
+  const [downloadOpen, setDownloadOpen] = useState(false);
+  const navigationToggleRef = useRef<HTMLButtonElement>(null);
+  const reviewCommentsToggleRef = useRef<HTMLButtonElement>(null);
+  const downloadToggleRef = useRef<HTMLButtonElement>(null);
+  const navigationHeadingRef = useRef<HTMLHeadingElement>(null);
+  const reviewCommentsHeadingRef = useRef<HTMLHeadingElement>(null);
+  const downloadHeadingRef = useRef<HTMLHeadingElement>(null);
+  /*
+   * A requested reveal and the id of the activation that requested it, captured
+   * synchronously in the requesting handler (scroll authority rule 3) and
+   * carried to the claim in the reveal effect below.
+   */
+  const pendingRevealRef = useRef<{ readonly panel: PanelKey; readonly cause: PaperRevealCause } | null>(null);
+  /*
+   * M1R5-01. The measured sticky header height, as STATE rather than only as a
+   * CSS variable, so that a change in it can trigger the re-landing below. See
+   * the landing effect for why a resize is the event that matters.
+   */
+  const [publishedStickyHeaderHeight, setPublishedStickyHeaderHeight] = useState(0);
+  const currentUrlStateRef = useRef<PaperUrlState>(urlState);
+  const documentColumnRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
+  /*
+   * AMENDMENT-M1-SCROLL-AUTHORITY-001. The ONE scroll authority for this
+   * workspace instance: scrollport ownership, activation identity, the reveal
+   * lifecycle, the section pin and pending navigation, and the arbitration
+   * predicate every scroll consults. Created once (lazy state initialiser); it
+   * reads the sticky header only when it corrects.
+   */
+  const [authority] = useState(() => new PaperScrollAuthority({ stickyHeaderHeight: () => stickyHeaderHeightPx(shellRef.current) }));
+  /*
+   * Rule 1: the activation observer is installed on MOUNT, before any reveal
+   * can be claimed, and stays for the whole mounted lifetime. This is the FIRST
+   * effect of the component, so it runs before every other effect, including
+   * the reveal effect. Installed via useLayoutEffect so that the observation
+   * guarantee starts BEFORE any input event or scheduler task can run in the gap.
+   * Its cleanup is unmount-only (M1R7-04): disposing finishes every live reveal
+   * and stops every landing-check chain still in flight.
+   */
+  useLayoutEffect(() => {
+    authority.observe(window);
+    return () => authority.dispose();
+  }, [authority]);
+  // S1 section window: loading state for every depth-1 section except the one
+  // the server rendered. Inert (total 0) in My Review and without a window.
+  const sectionApi = usePaperSectionWindow(documentVersion, sectionWindow);
+
+  // My Review selection state, initialised from the server-parsed URL state.
+  // M1-07 (by design): node and question child routes redirect My Review with
+  // their `section` identity. That section selects a cohort and portion only
+  // when it equals an authenticated portion's sectionAnchor; otherwise the
+  // identity stays in the URL unchanged (it is never rewritten or dropped) and
+  // the first cohort is shown, because My Review renders portions, not the
+  // full paper.
+  const initialCohortId = useMemo<CohortId>(() => {
+    const fromUrl = cohortManifest.cohorts.find((cohort) => cohort.id === urlState.cohort)?.id;
+    if (fromUrl) return fromUrl;
+    const fromSection = urlState.section ? portions.find((portion) => portion.sectionAnchor === urlState.section)?.cohortId : undefined;
+    return fromSection ?? cohortManifest.cohorts[0]?.id ?? 'categories';
+    // Initial value only; later selections are client state.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  const [selectedCohortId, setSelectedCohortId] = useState<CohortId>(initialCohortId);
+  const [expandedCohortId, setExpandedCohortId] = useState<CohortId | null>(initialCohortId);
+  const selectedCohort = cohortManifest.cohorts.find((cohort) => cohort.id === selectedCohortId) ?? cohortManifest.cohorts[0];
+  const selectedQuestions = useMemo(() => reviewerGuide.questions.filter((question) => selectedCohort?.questionNumbers.includes(question.number)), [reviewerGuide, selectedCohort]);
+  const selectedPortions = useMemo(() => portions.filter((portion) => portion.cohortId === selectedCohort?.id), [portions, selectedCohort]);
+  const [activeQuestionNumber, setActiveQuestionNumber] = useState<number>(() => {
+    const fromUrl = reviewerGuide.questions.find((question) => question.id === urlState.q && selectedCohort?.questionNumbers.includes(question.number));
+    return fromUrl?.number ?? firstQuestionOf(reviewerGuide, selectedCohort)?.number ?? 1;
+  });
+  const [portionIndex, setPortionIndex] = useState<number>(() => {
+    const index = urlState.section ? portions.filter((portion) => portion.cohortId === initialCohortId).findIndex((portion) => portion.sectionAnchor === urlState.section) : -1;
+    return index >= 0 ? index : 0;
+  });
+  const [paperFocusRequest, setPaperFocusRequest] = useState(0);
   const responseRef = useRef<HTMLElement>(null);
   const paperHeadingRef = useRef<HTMLHeadingElement>(null);
-  const pendingPaperSelectionRef = useRef<{ readonly cohortId: CohortId; readonly portionId?: string } | null>(null);
+
+  // Working Draft section state.
+  const anchors = useMemo(() => new Set((outline ?? []).map((entry) => entry.anchor)), [outline]);
+  const [activeAnchor, setActiveAnchor] = useState<string | null>(urlState.section);
+  const [targetAnchor, setTargetAnchor] = useState<string | null>(urlState.section);
 
   useEffect(() => {
     setHeaderActionsHost(document.getElementById('matrix-options-paper-header-actions'));
@@ -213,158 +385,535 @@ export function RevisedPaperWorkspace({ model, readerText, cohortPortions }: Rev
   }, []);
 
   useEffect(() => {
-    setActiveQuestionNumber(selectedQuestions[0]?.number ?? 1);
-    const pending = pendingPaperSelectionRef.current;
-    if (pending?.cohortId === selectedCohortId && pending.portionId) {
-      const pendingIndex = selectedPortions.findIndex((portion) => portion.id === pending.portionId);
-      setPortionIndex(pendingIndex >= 0 ? pendingIndex : 0);
-    } else {
-      setPortionIndex(0);
+    currentUrlStateRef.current = urlState;
+  }, [urlState]);
+
+  // The layout header is sticky and its height depends on width and content
+  // (129px at 360, 77px at 768 in browser run-001), so scroll targets were
+  // landing underneath it. Publish the measured height as a CSS variable on the
+  // workspace shell; chunk sections, placeholders and panel headings derive
+  // their scroll margin from it, and scrollMarginTopOf reads the same value back.
+  useEffect(() => {
+    const shell = shellRef.current;
+    const header = typeof document === 'undefined' ? null : document.querySelector<HTMLElement>('[data-testid="paper-layout-header"]');
+    if (!shell || !header) return undefined;
+    const apply = () => {
+      const height = Math.round(header.getBoundingClientRect().height);
+      if (height <= 0) return;
+      shell.style.setProperty(PAPER_STICKY_HEADER_HEIGHT_VAR, `${height}px`);
+      setPublishedStickyHeaderHeight((current) => (current === height ? current : height));
+    };
+    apply();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', apply);
+      return () => window.removeEventListener('resize', apply);
     }
-  }, [selectedCohortId, selectedQuestions, selectedPortions]);
+    const observer = new ResizeObserver(apply);
+    observer.observe(header);
+    return () => observer.disconnect();
+  }, []);
+
+  const updateUrl = useCallback((patch: Partial<PaperUrlState>) => {
+    const next: PaperUrlState = { ...currentUrlStateRef.current, ...patch };
+    currentUrlStateRef.current = next;
+    replaceUrlState(next);
+  }, []);
+
+  // Panels: open by default (Navigation, Review Comments); Download Files closed.
+  const setPanelOpen = (panel: PanelKey, open: boolean) => {
+    /*
+     * M1R9-02 (codex r8-sol-1, P2), and section 4.2 item 4 of the migration.
+     * Opening or closing a panel moves the reader's attention to it, so the
+     * section pin is stale from that moment. A POINTER reader always had this
+     * (their mousedown drops the pin); a bare click -- VoiceOver AXPress, Dragon
+     * "click <label>", element.click() -- did not, and the next section load or
+     * header resize scrolled them back off the panel. The policy lives in the
+     * authority and is applied HERE, in the one state setter every open and
+     * close goes through, so no control -- a rail toggle, "Hide Download Files",
+     * Escape -- can bypass it. A "Load section" click does not come through
+     * here and keeps the pin (M1R4-03).
+     */
+    authority.panelActivated();
+    if (panel === 'navigation') setNavigationOpen(open);
+    else if (panel === 'review-comments') setReviewCommentsOpen(open);
+    else setDownloadOpen(open);
+  };
+  const toggleRefFor = (panel: PanelKey) => (panel === 'navigation' ? navigationToggleRef : panel === 'review-comments' ? reviewCommentsToggleRef : downloadToggleRef);
+  const closePanel = (panel: PanelKey) => {
+    if (pendingRevealRef.current?.panel === panel) pendingRevealRef.current = null;
+    setPanelOpen(panel, false);
+    toggleRefFor(panel).current?.focus({ preventScroll: true });
+  };
+  const openPanel = (panel: PanelKey) => {
+    // M1R8-08: a request to open an ALREADY-open panel must not leave a pending
+    // reveal behind; React bails out of the state update, so nothing would ever
+    // consume it and the next unrelated panel change would reveal the wrong one.
+    const alreadyOpen = panel === 'navigation' ? navigationOpen : panel === 'review-comments' ? reviewCommentsOpen : downloadOpen;
+    const requested = pendingRevealForOpenRequest(panel, alreadyOpen, isLgViewport());
+    // Rule 3: the cause is minted by the authority NOW, while the requesting
+    // activation dispatches. A request made outside one (M2/M3 programmatic
+    // opens) gets its own ordinal instead, so two of them can never both own
+    // the scrollport (HOLISTIC_R2 F1).
+    pendingRevealRef.current = requested === null ? null : { panel: requested, cause: authority.requestRevealCause() };
+    setPanelOpen(panel, true);
+  };
+  const togglePanel = (panel: PanelKey, open: boolean) => (open ? closePanel(panel) : openPanel(panel));
+
+  useEffect(() => {
+    const pending = pendingRevealRef.current;
+    if (!pending) return;
+    const open = pending.panel === 'navigation' ? navigationOpen : pending.panel === 'review-comments' ? reviewCommentsOpen : downloadOpen;
+    if (!open) return;
+    pendingRevealRef.current = null;
+    const heading = pending.panel === 'navigation' ? navigationHeadingRef.current : pending.panel === 'review-comments' ? reviewCommentsHeadingRef.current : downloadHeadingRef.current;
+    if (!heading) return;
+    /*
+     * Opening a panel is an explicit reader act, so its reveal claims the
+     * scrollport (M1R5-02) with the id of the activation that requested it, and
+     * the authority runs the whole lifecycle: claim, the heading's own scroll,
+     * focus, the measured correction and the settle loop, each exit releasing
+     * exactly once (M1R4-02, M1R6-01, M1R6-04, M1R7-01..04). This effect only
+     * runs below lg -- openPanel leaves no pending reveal at lg. Asserting the
+     * observer here as well guarantees a sequence can never exist unobserved; on
+     * a mounted component it is already installed and this does nothing.
+     */
+    authority.revealPanelHeading(pending.cause, heading);
+  }, [authority, navigationOpen, reviewCommentsOpen, downloadOpen]);
+
+
+
+  /*
+   * M1R8-01 (informed Opus holistic pass, P2-1). focusSection used to pin AND
+   * scroll with no ownership test at all. The collision needs two ordinary
+   * clicks and no synthetic event: an outline click into a section outside the
+   * S1 window takes navigateToAnchor's asynchronous branch and defers the
+   * navigation; the reader then opens a rail panel, which claims the scrollport;
+   * the fetch resolves and the post-commit effect calls focusSection. No reader
+   * activation happened between the panel opening and that call, so the reveal
+   * is still entitled.
+   *
+   * DECISION, carried into the authority unchanged: SUPPRESS THE SCROLL, do not
+   * defer. The navigation still takes full effect as IDENTITY -- it pins,
+   * focuses without scrolling, sets the active and target anchors and writes the
+   * URL -- and only yields the scrollport (PaperScrollAuthority.scrollTargetIntoView
+   * records why deferring was rejected). A navigation that IS a reader
+   * activation (an outline click, a hash change) has already abandoned every
+   * earlier reveal by the time it gets here, so it lands.
+   */
+  const focusSection = useCallback((anchor: string, writeUrl: boolean): boolean => {
+    if (!anchors.has(anchor)) return false;
+    const element = document.getElementById(anchor);
+    if (!element) return false;
+    authority.pin(anchor);
+    authority.scrollTargetIntoView(element);
+    element.focus({ preventScroll: true });
+    setActiveAnchor(anchor);
+    setTargetAnchor(anchor);
+    if (writeUrl) updateUrl({ section: anchor });
+    return true;
+  }, [anchors, authority, updateUrl]);
+
+  /*
+   * After a section loads or the sticky header resizes, the layout above the
+   * pinned target may have moved, so its landing is verified and corrected a
+   * bounded number of times. The request-time and per-attempt arbitration, the
+   * pin guard and the M1R6-03 drop-not-requeue decision are the authority's
+   * (PaperScrollAuthority.requestLandingCheck); this only says what to measure.
+   */
+  const scheduleLandingCheck = useCallback((anchor: string) => {
+    authority.requestLandingCheck(anchor, (target) => {
+      const element = document.getElementById(target);
+      const root = documentColumnRef.current;
+      if (!element || !root) return null;
+      const expectedTop = (isLgViewport() ? root.getBoundingClientRect().top : 0) + scrollMarginTopOf(element);
+      return { element, actualTop: element.getBoundingClientRect().top, expectedTop };
+    });
+  }, [authority]);
+
+  /**
+   * S1 navigation to any known anchor. An anchor already in the DOM keeps the
+   * existing synchronous path (no added latency); otherwise the owning depth-1
+   * section is loaded first and focus is issued from the post-commit effect
+   * below, once its chunks have actually mounted.
+   */
+  const navigateToAnchor = useCallback((anchor: string, writeUrl: boolean): boolean => {
+    if (!anchors.has(anchor)) return false;
+    if (typeof document !== 'undefined' && document.getElementById(anchor)) {
+      /*
+       * Section 4.2 item 2: a later navigation WINS. A navigation still waiting
+       * for an earlier, unloaded section must not take the pin, focus, URL and
+       * scroll back when that section finally arrives.
+       */
+      authority.cancelPendingNavigation();
+      /*
+       * M1R5-01 (root cause, half 1). This SYNCHRONOUS branch used to return
+       * focusSection's result directly and never scheduled a landing check,
+       * while the asynchronous branch below always got one from the post-commit
+       * effect. That asymmetry is not theoretical: for a `?section=` deep link
+       * the SERVER already rendered the owning section (page.tsx computes
+       * initialIndex = owningSectionIndex(groups, state.section)), so a deep
+       * link at mount takes THIS branch, whereas an outline click into a
+       * section that is not loaded yet takes the other one. The two journeys
+       * that browser run-003 measured as opposite outcomes are these two
+       * branches. Both now verify their landing.
+       */
+      if (!focusSection(anchor, writeUrl)) return false;
+      scheduleLandingCheck(anchor);
+      return true;
+    }
+    const index = outline ? owningSectionIndex(outline, anchor) : null;
+    if (index === null || !sectionApi.ensureLoaded(index)) return false;
+    authority.deferNavigation({ anchor, writeUrl, sectionIndex: index });
+    setTargetAnchor(anchor);
+    return true;
+  }, [anchors, authority, focusSection, outline, scheduleLandingCheck, sectionApi]);
+
+  const navigateRef = useRef(navigateToAnchor);
+  useEffect(() => {
+    navigateRef.current = navigateToAnchor;
+  }, [navigateToAnchor]);
+
+  useEffect(() => {
+    if (isMyReview) return;
+    const pending = authority.pendingNavigation();
+    if (pending) {
+      /*
+       * Section 4.2 item 2: a FAILED load clears the pending navigation, so a
+       * later retry or prefetch that finally loads the section does not yank the
+       * reader to it, and pinned re-landing is no longer skipped behind it.
+       * `loadedKey` is the per-section status list, in section order.
+       */
+      if (sectionApi.loadedKey.split(',')[pending.sectionIndex] === 'error') {
+        authority.cancelPendingNavigation();
+        return;
+      }
+      if (document.getElementById(pending.anchor) === null) return;
+      authority.cancelPendingNavigation();
+      if (focusSection(pending.anchor, pending.writeUrl)) scheduleLandingCheck(pending.anchor);
+      return;
+    }
+    /*
+     * M1R4-03 (browser run-002 sections 7b and 7c). A deep link into an unloaded
+     * section landed 56px (360) and 4px (768) above its reading line and stayed
+     * there for the whole 2.5s the run sampled, while an outline click into an
+     * unloaded section landed on exactly the same reading line with delta 0. The
+     * correction mechanism is therefore sound; it is simply spent within about
+     * three frames of the mount, whereas the prefetch observer keeps loading the
+     * sections ABOVE the target for seconds afterwards and every one of those
+     * loads changes the height above a pinned target. The landing is re-verified
+     * after each section load for as long as the target stays pinned. On a
+     * settled page the check measures a delta of 0 and does nothing, and any
+     * reader scroll intent drops the pin (PAPER_PIN_RELEASING_ACTIVATIONS).
+     */
+    const pinned = authority.pinnedAnchor();
+    if (pinned) scheduleLandingCheck(pinned);
+  }, [authority, isMyReview, focusSection, scheduleLandingCheck, sectionApi.loadedKey]);
+
+  /*
+   * M1R5-01 (root cause, half 2 -- the load-bearing half).
+   *
+   * Round 4 keyed the re-landing above on `sectionApi.loadedKey`, i.e. on a
+   * SECTION LOAD. Browser run-003 measured that this changed the deep-link
+   * landing by not one pixel: -56 at 360 and -4 at 768, identical to run-002,
+   * `converged: never`, `settle changes: 0` across a full 12 seconds, while
+   * `diagnostic-landing.json` proved the very same targets were mid-document
+   * (160,238 of 257,833 at 360) and that a manual scroll placed each one on
+   * exactly its reading line. The correction was reachable and simply never
+   * applied, so a longer window or more attempts was never the answer.
+   *
+   * The reason is that a section load is the WRONG SIGNAL for this journey. The
+   * mount journey is not broken by content loading above the target; it is
+   * broken by the STICKY HEADER GROWING UNDER IT. `#matrix-options-paper-header-actions`
+   * is `empty:hidden` in the layout, and this workspace only discovers that host
+   * in an effect (setHeaderActionsHost), so the panel-controls portal cannot
+   * render until the SECOND commit. On the FIRST commit the header is therefore
+   * still one row, the effect above publishes that collapsed height, and the
+   * deep link scrolls its target to `collapsedHeight + 0.5rem`. On the next
+   * commit the portal fills the actions slot -- below `sm` it takes a full-width
+   * line of its own -- the header grows, the ResizeObserver republishes the
+   * height, and every scroll margin moves to `finalHeight + 0.5rem`, while the
+   * reader stays exactly where the stale scroll put them. That predicts a
+   * viewport-INDEPENDENT landing and an error equal to the header's growth,
+   * which is precisely what run-003 measured: top 81 at BOTH 360 and 768, with
+   * expected 137 (129px header) and 85 (77px header). An outline click cannot
+   * hit this, because by then the header has long since reached its final
+   * height -- which is why the same loader path passes with delta 0.
+   *
+   * So the re-landing is triggered by the event that actually invalidates the
+   * landing. On a settled page the height never changes and this never fires;
+   * when it does fire the check measures the delta and does nothing if the
+   * target is already on its line; and any user scroll intent has already
+   * dropped the pin, so the reader's own position is never taken back.
+   *
+   * jsdom has no layout engine, so the unit tests below drive the mechanism,
+   * not the pixels. Only browser run-004 can confirm the landing itself.
+   */
+  useEffect(() => {
+    if (isMyReview || publishedStickyHeaderHeight === 0) return;
+    const pinned = authority.pinnedAnchor();
+    if (pinned) scheduleLandingCheck(pinned);
+  }, [authority, isMyReview, publishedStickyHeaderHeight, scheduleLandingCheck]);
+
+  // Deep links. A known `#anchor` that differs from `section` is the identity that
+  // was actually followed, so it wins and is mirrored into `section` (M1-04: a
+  // stale `section=` never overrides it). Otherwise `section` from the URL is focused.
+  // Either identity may name a section that is not loaded yet (S1).
+  useEffect(() => {
+    if (isMyReview) return;
+    const hashAnchor = typeof window === 'undefined' ? null : decodeHashValue(window.location.hash);
+    if (hashAnchor && anchors.has(hashAnchor) && hashAnchor !== urlState.section) {
+      navigateRef.current(hashAnchor, true);
+      return;
+    }
+    if (urlState.section) navigateRef.current(urlState.section, false);
+  }, [isMyReview, urlState.section, anchors]);
+
+  useEffect(() => {
+    if (isMyReview) return undefined;
+    const onHashChange = () => {
+      const hashAnchor = decodeHashValue(window.location.hash);
+      if (hashAnchor) navigateRef.current(hashAnchor, true);
+    };
+    window.addEventListener('hashchange', onHashChange);
+    return () => window.removeEventListener('hashchange', onHashChange);
+  }, [isMyReview]);
+
+  // Active section (M1-01). IntersectionObserver keeps the set of sections in the
+  // top half of the viewport. On every observer callback and every (frame
+  // throttled) scroll, the active section is the last observed section whose
+  // heading has crossed the reading line below the sticky header
+  // (selectActiveSectionAnchor, which honours each section's scroll-margin). At
+  // lg the document column is the scrollport; below lg the page scrolls. A
+  // section reached by focusSection stays active until the next user scroll
+  // intent, which the scroll authority's observer turns into a pin release for
+  // the whole mounted lifetime (no longer only where this effect is installed).
+  useEffect(() => {
+    const root = documentColumnRef.current;
+    if (isMyReview || !root || typeof IntersectionObserver === 'undefined') return undefined;
+    const sections = Array.from(root.querySelectorAll<HTMLElement>('section[data-paper-chunk]'));
+    const order = new Map(sections.map((section, index) => [section, index]));
+    const visible = new Set<HTMLElement>();
+    const geometryOf = (section: HTMLElement) => ({ id: section.id, top: section.getBoundingClientRect().top, scrollMarginTop: scrollMarginTopOf(section) });
+    const recompute = () => {
+      if (authority.pinnedAnchor() !== null) return;
+      const lg = isLgViewport();
+      const rect = root.getBoundingClientRect();
+      const scrollportTop = lg ? rect.top : 0;
+      if (isScrolledToEnd(root, lg)) {
+        // M1R2-04: nothing can cross the reading line any more at maximum scroll.
+        const last = selectEndOfDocumentSectionAnchor(sections.map(geometryOf), scrollportTop, lg ? rect.bottom : window.innerHeight);
+        if (last !== null) {
+          setActiveAnchor(last);
+          return;
+        }
+      }
+      const candidates = [...visible]
+        .sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0))
+        .map(geometryOf);
+      const next = selectActiveSectionAnchor(candidates, scrollportTop);
+      if (next !== null) setActiveAnchor(next);
+    };
+    const observer = new IntersectionObserver((entries) => {
+      for (const entry of entries) {
+        const section = entry.target as HTMLElement;
+        if (entry.isIntersecting) visible.add(section);
+        else visible.delete(section);
+      }
+      recompute();
+    }, { rootMargin: '0px 0px -50% 0px', threshold: 0 });
+    let frame = 0;
+    const onScroll = () => {
+      if (typeof window.requestAnimationFrame !== 'function') {
+        recompute();
+        return;
+      }
+      if (frame !== 0) return;
+      frame = window.requestAnimationFrame(() => {
+        frame = 0;
+        recompute();
+      });
+    };
+    document.addEventListener('scroll', onScroll, { capture: true, passive: true });
+    sections.forEach((section) => observer.observe(section));
+    return () => {
+      observer.disconnect();
+      document.removeEventListener('scroll', onScroll, { capture: true });
+      if (frame !== 0 && typeof window.cancelAnimationFrame === 'function') window.cancelAnimationFrame(frame);
+    };
+    // sectionApi.loadedKey changes whenever a section loads, so the observer is
+    // rebuilt over the sections that are now in the DOM (S1).
+  }, [authority, isMyReview, children, sectionApi.loadedKey]);
+
+  const onDocumentClick = (event: MouseEvent<HTMLDivElement>) => {
+    if (isMyReview || event.defaultPrevented || !isPlainPrimaryClick(event)) return;
+    const target = event.target as Element | null;
+    const link = target && typeof target.closest === 'function' ? target.closest('a[href^="#"], a[href^="?"]') : null;
+    const anchor = link ? sectionFromInPageHref(link.getAttribute('href')) : null;
+    if (anchor && anchors.has(anchor)) {
+      event.preventDefault();
+      navigateToAnchor(anchor, true);
+    }
+  };
+
+  // Holistic P3-6: the skip link's scroll is arbitrated like every other one.
+  // Its own activation has already abandoned any earlier reveal, so it lands.
+  const skipToDocument = () => {
+    const column = documentColumnRef.current;
+    if (!column) return;
+    authority.scrollTargetIntoView(column);
+    column.focus({ preventScroll: true });
+  };
+
+  /*
+   * Focuses and reveals an element unless it sits in an inert, closed rail
+   * (M1-09). Holistic P3-6 and section 4.2 item 1: the reveal is arbitrated.
+   * Focus no longer scrolls natively (preventScroll); the authority's single
+   * start-aligned scroll decides the landing, exactly as the second of the two
+   * scrolls this used to issue always did.
+   */
+  const focusUnlessInert = useCallback((element: HTMLElement | null): boolean => {
+    if (!element || element.closest('[inert]')) return false;
+    element.focus({ preventScroll: true });
+    authority.scrollTargetIntoView(element);
+    return true;
+  }, [authority]);
+
+  useEffect(() => {
+    if (paperFocusRequest === 0) return;
+    focusUnlessInert(paperHeadingRef.current);
+  }, [focusUnlessInert, paperFocusRequest]);
 
   const activeQuestion = selectedQuestions.find((question) => question.number === activeQuestionNumber) ?? selectedQuestions[0];
   const selectedPortion = selectedPortions[portionIndex];
   const portionCount = Math.max(1, selectedPortions.length);
 
-  useEffect(() => {
-    const pending = pendingPaperSelectionRef.current;
-    if (!pending || pending.cohortId !== selectedCohortId || (pending.portionId && pending.portionId !== selectedPortion?.id)) return;
-    pendingPaperSelectionRef.current = null;
-    paperHeadingRef.current?.focus();
-    paperHeadingRef.current?.scrollIntoView?.({ block: 'start' });
-  }, [selectedCohortId, selectedPortion?.id]);
-
-  useEffect(() => {
-    if (!openDrawer) return undefined;
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') {
-        event.preventDefault();
-        setOpenDrawer(null);
-        drawerOpenerRef.current?.focus();
-      }
-    };
-    document.addEventListener('keydown', onKeyDown);
-    drawerCloseRef.current?.focus();
-    return () => document.removeEventListener('keydown', onKeyDown);
-  }, [openDrawer]);
-
-  const closeDrawer = () => {
-    setOpenDrawer(null);
-    drawerOpenerRef.current?.focus();
-  };
-  const toggleDrawer = (drawer: WorkspaceDrawer, trigger: HTMLElement) => {
-    drawerOpenerRef.current = trigger;
-    setOpenDrawer((current) => current === drawer ? null : drawer);
-  };
   const selectQuestion = (number: number) => {
     setActiveQuestionNumber(number);
-    responseRef.current?.focus();
-    responseRef.current?.scrollIntoView?.({ block: 'start' });
+    const question = reviewerGuide.questions.find((candidate) => candidate.number === number);
+    if (question) updateUrl({ cohort: selectedCohortId, q: question.id });
+    // Never move focus into the Review Comments rail while it is closed (inert).
+    focusUnlessInert(responseRef.current);
   };
   const selectCohort = (cohortId: CohortId) => {
-    const firstPortion = (cohortPortions ?? []).find((portion) => portion.cohortId === cohortId);
-    pendingPaperSelectionRef.current = { cohortId, portionId: firstPortion?.id };
+    if (cohortId === selectedCohortId) {
+      setExpandedCohortId((current) => (current === cohortId ? null : cohortId));
+      return;
+    }
+    const cohort = cohortManifest.cohorts.find((candidate) => candidate.id === cohortId);
     setSelectedCohortId(cohortId);
-    const firstQuestion = reviewerGuide.questions.find((question) => cohortManifest.cohorts.find((cohort) => cohort.id === cohortId)?.questionNumbers.includes(question.number));
-    setActiveQuestionNumber(firstQuestion?.number ?? 1);
+    setExpandedCohortId(cohortId);
     setPortionIndex(0);
+    setActiveQuestionNumber(firstQuestionOf(reviewerGuide, cohort)?.number ?? 1);
+    setPaperFocusRequest((count) => count + 1);
+    updateUrl({ cohort: cohortId, q: null, section: portions.find((portion) => portion.cohortId === cohortId)?.sectionAnchor ?? null });
   };
   const selectPortion = (portionId: string) => {
-    const portion = (cohortPortions ?? []).find((candidate) => candidate.id === portionId);
+    const portion = portions.find((candidate) => candidate.id === portionId);
     if (!portion) return;
-    pendingPaperSelectionRef.current = { cohortId: portion.cohortId, portionId };
-    setSelectedCohortId(portion.cohortId);
-    const nextPortions = (cohortPortions ?? []).filter((candidate) => candidate.cohortId === portion.cohortId);
-    setPortionIndex(Math.max(0, nextPortions.findIndex((candidate) => candidate.id === portionId)));
-    const firstQuestion = reviewerGuide.questions.find((question) => cohortManifest.cohorts.find((cohort) => cohort.id === portion.cohortId)?.questionNumbers.includes(question.number));
-    setActiveQuestionNumber(firstQuestion?.number ?? 1);
+    const cohortChanged = portion.cohortId !== selectedCohortId;
+    const index = Math.max(0, portions.filter((candidate) => candidate.cohortId === portion.cohortId).findIndex((candidate) => candidate.id === portionId));
+    if (cohortChanged) {
+      setSelectedCohortId(portion.cohortId);
+      setActiveQuestionNumber(firstQuestionOf(reviewerGuide, cohortManifest.cohorts.find((cohort) => cohort.id === portion.cohortId))?.number ?? 1);
+    }
+    setExpandedCohortId(portion.cohortId);
+    setPortionIndex(index);
+    setPaperFocusRequest((count) => count + 1);
+    updateUrl({ cohort: portion.cohortId, q: cohortChanged ? null : currentUrlStateRef.current.q, section: portion.sectionAnchor ?? null });
+  };
+  const movePortion = (offset: number) => {
+    const next = Math.min(portionCount - 1, Math.max(0, portionIndex + offset));
+    setPortionIndex(next);
+    updateUrl({ section: selectedPortions[next]?.sectionAnchor ?? null });
   };
   const moveQuestion = (offset: number) => {
     const currentIndex = selectedQuestions.findIndex((question) => question.number === activeQuestion?.number);
     const next = selectedQuestions[currentIndex + offset];
     if (next) selectQuestion(next.number);
   };
-  const leftRailOpen = openDrawer === 'review-package' || openDrawer === 'publication-sections';
-  const rightRailOpen = openDrawer === 'release-notes';
-  const leftDrawer = model.mode === 'my-review' ? 'review-package' : 'publication-sections';
-  const leftLabel = 'Navigation';
-  const panelButtons = <>
-    <button type="button" aria-label={`${leftRailOpen ? 'Hide' : 'Show'} ${leftLabel}`} aria-expanded={leftRailOpen} aria-controls={`${leftDrawer}-panel`} onClick={(event) => toggleDrawer(leftDrawer, event.currentTarget)} className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${leftRailOpen ? 'border border-slate-400 bg-slate-200 text-slate-900 shadow-sm hover:bg-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'}`}>{leftRailOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />}<span>{leftLabel}</span></button>
-    {model.mode === 'my-review' && <button type="button" aria-label={`${rightRailOpen ? 'Hide' : 'Show'} Review Comments`} aria-expanded={rightRailOpen} aria-controls="release-notes-panel" onClick={(event) => toggleDrawer('release-notes', event.currentTarget)} className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${rightRailOpen ? 'border border-slate-400 bg-slate-200 text-slate-900 shadow-sm hover:bg-slate-300 dark:border-slate-500 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'}`}>{rightRailOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />}<span>Review Comments</span></button>}
-  </>;
-  const panelControls = <div data-testid="workspace-panel-controls" className="flex flex-wrap items-center gap-2">{panelButtons}</div>;
+
+  const onDownloadKeyDown = (event: KeyboardEvent<HTMLElement>) => {
+    if (!downloadOpen || !isPanelEscapeKey(event)) return;
+    event.preventDefault();
+    closePanel('download');
+  };
+
+  const panelControls = <div data-testid="workspace-panel-controls" className="flex flex-wrap items-center gap-2">
+    <PaperRailToggle label="Navigation" open={navigationOpen} controls={PAPER_NAVIGATION_RAIL_ID} buttonRef={navigationToggleRef} onClick={() => togglePanel('navigation', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
+    {isMyReview && <PaperRailToggle label="Review Comments" open={reviewCommentsOpen} controls={PAPER_REVIEW_COMMENTS_RAIL_ID} buttonRef={reviewCommentsToggleRef} onClick={() => togglePanel('review-comments', reviewCommentsOpen)} icon={reviewCommentsOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} />}
+  </div>;
+
+  const selectedCohortForDownload = selectedCohort;
+
   return (
     <>
     {headerActionsHost ? createPortal(panelControls, headerActionsHost) : null}
-    <div data-testid="workspace-shell" className="min-h-screen overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100">
-      <header className="border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 print:hidden">
-        <div className="mx-auto flex max-w-[120rem] flex-wrap items-center justify-between gap-3 px-4 py-4 sm:px-6">
-          <div>
+    <div ref={shellRef} data-testid="workspace-shell" className="flex min-h-0 flex-col overflow-x-clip bg-slate-50 text-slate-950 dark:bg-slate-950 dark:text-slate-100 lg:h-[calc(100dvh-8rem)] print:block print:h-auto">
+      <header className="shrink-0 border-b border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900 print:hidden">
+        <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-3 sm:px-6">
+          <div className="min-w-0">
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Matrix Options Paper</p>
             <h1 className="text-xl font-bold">Review workspace</h1>
-            <p className="font-mono text-xs text-slate-500 dark:text-slate-400">{model.documentVersion}</p>
+            <p className="break-words font-mono text-xs text-slate-500 dark:text-slate-400">{documentVersion}</p>
           </div>
           <div data-testid="workspace-header-controls" className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             <nav aria-label="Workspace mode" className="flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-700">
-              <a href={publicationRootHref(model, 'my-review')} aria-current={model.mode === 'my-review' ? 'page' : undefined} className={`rounded-md px-3 py-2 text-sm font-semibold ${model.mode === 'my-review' ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>My Review</a>
-              <a href={model.mode === 'publication' ? queryHref(model, 'publication') : publicationRootHref(model, 'publication')} aria-current={model.mode === 'publication' ? 'page' : undefined} className={`rounded-md px-3 py-2 text-sm font-semibold ${model.mode === 'publication' ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>Publication</a>
+              <a href={workingDraftHref} aria-current={isMyReview ? undefined : 'page'} className={`flex min-h-[36px] items-center rounded-md px-3 py-2 text-sm font-semibold ${isMyReview ? 'hover:bg-slate-100 dark:hover:bg-slate-800' : 'bg-sky-700 text-white'}`}>Working Draft</a>
+              <a href={myReviewHref} aria-current={isMyReview ? 'page' : undefined} className={`flex min-h-[36px] items-center rounded-md px-3 py-2 text-sm font-semibold ${isMyReview ? 'bg-sky-700 text-white' : 'hover:bg-slate-100 dark:hover:bg-slate-800'}`}>My Review</a>
             </nav>
-            <button type="button" aria-label={`${openDrawer === 'reading-materials' ? 'Hide' : 'Show'} Download files`} aria-expanded={openDrawer === 'reading-materials'} aria-controls="reading-materials-panel" onClick={(event) => toggleDrawer('reading-materials', event.currentTarget)} className={`inline-flex min-h-[44px] items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 ${openDrawer === 'reading-materials' ? 'bg-sky-50 text-sky-700 hover:bg-sky-100 dark:bg-sky-900/40 dark:text-sky-300 dark:hover:bg-sky-900/60' : 'border border-slate-200 bg-white text-slate-700 hover:bg-slate-100 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700'}`}><Download aria-hidden="true" className="h-4 w-4" /><span>Download files</span></button>
+            <PaperRailToggle label="Download Files" open={downloadOpen} controls={PAPER_DOWNLOAD_PANEL_ID} buttonRef={downloadToggleRef} onClick={() => togglePanel('download', downloadOpen)} icon={<Download aria-hidden="true" className="h-4 w-4" />} />
             {headerActionsReady && !headerActionsHost && <div className="border-l border-slate-200 pl-2 dark:border-slate-700 sm:ml-1">{panelControls}</div>}
           </div>
         </div>
       </header>
 
-      <div className="mx-auto max-w-[90rem] px-4 py-5 sm:px-6 print:max-w-none print:px-0 print:py-0">
-        {openDrawer === 'reading-materials' && <WorkspacePanel drawer="reading-materials" model={model} cohortManifest={cohortManifest} cohortPortions={cohortPortions ?? []} selectedCohortId={selectedCohortId} selectedPortionId={selectedPortion?.id} selectedQuestions={selectedQuestions} activeQuestion={activeQuestion} responseRef={responseRef} onSelectCohort={selectCohort} onSelectPortion={selectPortion} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} onClose={closeDrawer} closeRef={drawerCloseRef} />}
-        <div data-testid="workspace-layout" className={`block min-w-0 items-start gap-4 lg:grid motion-safe:transition-[grid-template-columns] motion-safe:duration-200 motion-reduce:transition-none ${rightRailOpen ? 'lg:grid-cols-[minmax(0,1fr)_24rem]' : leftRailOpen ? 'lg:grid-cols-[20rem_minmax(0,1fr)]' : 'lg:block'} print:block`}>
-          {leftRailOpen && <aside aria-label={leftLabel} className="min-w-0 print:hidden"><WorkspacePanel drawer={leftDrawer} model={model} cohortManifest={cohortManifest} cohortPortions={cohortPortions ?? []} selectedCohortId={selectedCohortId} selectedPortionId={selectedPortion?.id} selectedQuestions={selectedQuestions} activeQuestion={activeQuestion} responseRef={responseRef} onSelectCohort={selectCohort} onSelectPortion={selectPortion} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} onClose={closeDrawer} closeRef={drawerCloseRef} /></aside>}
-        <section className="min-w-0 space-y-5" aria-label="Publication workspace">
-          <section className={model.mode === 'my-review' ? 'flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3 dark:border-slate-700 print:hidden' : 'rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 print:hidden'}>
-            <div className="flex flex-wrap items-start justify-between gap-3">
-              <div><h2 className="text-lg font-bold">{model.mode === 'my-review' ? 'My Review' : 'Publication cockpit'}</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">One authenticated paper release, one bounded server window.</p></div>
-              <span className="max-w-full break-words rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 [overflow-wrap:anywhere]">{assignmentStateLabel(model.assignment)}</span>
-            </div>
-            <p className="min-w-0 break-words text-sm [overflow-wrap:anywhere]">Assignment source: {assignmentSourceLabel(model.assignment)}</p>
-          </section>
+      <div data-testid="workspace-layout" className={cn(PAPER_SHELL_CLASSES, 'min-h-0')}>
+        <PaperRail id={PAPER_NAVIGATION_RAIL_ID} testId="navigation-rail" side="left" open={navigationOpen} heading="Navigation" headingId="paper-navigation-rail-heading" headingRef={navigationHeadingRef} onEscape={() => closePanel('navigation')}>
+          {isMyReview
+            ? <><p className="mb-3 text-sm text-slate-600 dark:text-slate-300">Choose a release-bound cohort and its authenticated paper portions.</p><CohortNav cohortManifest={cohortManifest} cohortPortions={portions} selectedCohortId={selectedCohortId} expandedCohortId={expandedCohortId} selectedPortionId={selectedPortion?.id} onSelect={selectCohort} onSelectPortion={selectPortion} /></>
+            : outline && outline.length > 0
+              ? <PaperOutlineNav outline={outline} activeAnchor={activeAnchor} targetAnchor={targetAnchor} documentTargetId={PAPER_DOCUMENT_COLUMN_ID} onNavigate={(anchor) => { navigateToAnchor(anchor, true); }} onSkipToDocument={skipToDocument} />
+              : <p className="text-sm text-slate-600 dark:text-slate-300">The paper outline is unavailable.</p>}
+        </PaperRail>
 
-          {model.mode === 'publication' && <section aria-labelledby="atlas-heading" className="rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 print:hidden">
-            <div className="flex flex-wrap items-end justify-between gap-3"><div><h2 id="atlas-heading" className="text-lg font-bold">Publication Atlas</h2><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">{model.atlas.totalMatches} matching placements; page {model.atlas.query.page} of {model.atlas.totalPages}.</p></div></div>
-            <form method="get" className="mt-4 flex flex-col gap-2 sm:flex-row sm:items-end" role="search">
-              <input type="hidden" name="mode" value={model.mode} /><input type="hidden" name="lens" value={model.atlas.query.lens} />
-              <label className="flex-1 text-sm font-semibold">Search labels<input name="q" defaultValue={model.atlas.query.q} maxLength={160} className="mt-1 block min-h-[44px] w-full rounded-md border border-slate-300 bg-white px-3 py-2 font-normal dark:border-slate-600 dark:bg-slate-950" /></label>
-              <button type="submit" className="min-h-[44px] rounded-md bg-sky-700 px-4 py-2 font-semibold text-white hover:bg-sky-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">Search</button>
-            </form>
-            <ol className="mt-4" aria-label="Current atlas page">{model.atlas.rows.map((row) => <AtlasRowView key={`${row.id}-${row.startByte}`} model={model} row={row} />)}</ol>
-            <nav aria-label="Atlas pages" className="mt-4 flex flex-wrap gap-2 border-t border-slate-200 pt-4 dark:border-slate-700">
-              {model.atlas.hasPrevious && <a href={queryHref(model, model.mode, model.atlas.query.lens, model.atlas.query.page - 1)} className="min-h-[44px] rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-600">Previous</a>}
-              {model.atlas.hasNext && <a href={queryHref(model, model.mode, model.atlas.query.lens, model.atlas.query.page + 1)} className="min-h-[44px] rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold dark:border-slate-600">Next</a>}
-            </nav>
-          </section>}
+        <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="min-w-0 flex-1 focus:outline-none lg:overflow-y-auto print:overflow-visible">
+          <div className="mx-auto min-w-0 max-w-[72rem] space-y-5 px-4 py-5 sm:px-6 print:max-w-none print:p-0">
+            <section id={PAPER_DOWNLOAD_PANEL_ID} data-testid="download-files-panel" hidden={!downloadOpen} aria-labelledby="paper-download-files-heading" onKeyDown={onDownloadKeyDown} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 print:hidden">
+              <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-700">
+                <h2 ref={downloadHeadingRef} tabIndex={-1} id="paper-download-files-heading" className="scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)] text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">Download Files</h2>
+                <button type="button" onClick={() => closePanel('download')} className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Hide Download Files</button>
+              </div>
+              <div data-testid="reading-materials-content" className="mt-4 space-y-4">
+                <p className="text-sm text-slate-600 dark:text-slate-300">Download Files is where verified cohort PDF and DOCX reading packages will be downloaded when ready. They are not available yet.</p>
+                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
+                  <h3 className="font-bold">Download Files: {selectedCohortForDownload?.name ?? 'Selected cohort'}</h3>
+                  <p className="mt-2">The selected cohort PDF and DOCX are being prepared pending integrity verification. No download is available in this preview.</p>
+                </div>
+              </div>
+            </section>
 
-        {model.mode === 'my-review' && <><CohortPaperPortion cohort={selectedCohort} portion={selectedPortion} headingRef={paperHeadingRef} /><nav aria-label="Paper portion navigation" data-testid="paper-portion-navigation" className="flex min-w-0 flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 print:hidden"><span className="text-sm font-semibold">Paper portion {portionIndex + 1} of {portionCount}</span><button type="button" disabled={portionIndex === 0} onClick={() => setPortionIndex((index) => Math.max(0, index - 1))} className="min-h-[44px] min-w-40 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600">Previous portion</button><button type="button" disabled={portionIndex >= portionCount - 1} onClick={() => setPortionIndex((index) => Math.min(portionCount - 1, index + 1))} className="min-h-[44px] min-w-40 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600">Next portion</button></nav></>}
+            <section aria-label={isMyReview ? 'My Review status' : 'Working Draft status'} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3 dark:border-slate-700 print:hidden">
+              <h2 className="text-lg font-bold">{isMyReview ? 'My Review' : 'Working Draft'}</h2>
+              <span className="max-w-full break-words rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-950 dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 [overflow-wrap:anywhere]">{assignmentStateLabel(assignment)}</span>
+              <p className="min-w-0 break-words text-sm [overflow-wrap:anywhere]">Assignment source: {assignmentSourceLabel(assignment)}</p>
+              {!isMyReview && sectionWindow ? <PaperLoadFullDocumentControl api={sectionApi} /> : null}
+            </section>
 
-        {model.mode === 'publication' && <section aria-labelledby="reader-heading" data-reader-detail-id={requestedDetail?.id ?? undefined} className="min-w-0 rounded-xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900 print:col-span-full print:w-full print:max-w-none print:border-0 print:bg-transparent print:p-0">
-            <h2 id="reader-heading" className="text-lg font-bold">{requestedDetail?.label ?? 'Canonical reader'}</h2>
-            <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">Reader content is sourced from the authenticated release and selected range.</p>
-            {!requestedDetail && selectedRow && <h3 className="mt-4 text-base font-semibold">{selectedRow.label}</h3>}
-            {model.readerContext.selectedId && <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">Selected canonical section is linked to {model.readerContext.ancestors.length} authenticated ancestors and {model.readerContext.neighborhood.length} nearby headings.</p>}
-            {model.mode === 'publication' && readerText && <div className="mt-3 min-w-0 rounded-lg bg-slate-50 p-4 dark:bg-slate-950"><MathRenderer content={displayReaderText} internalLinkMap={model.internalLinkMap} /></div>}
-            {model.mode === 'publication' && <section aria-labelledby="question-packet-heading" className="mt-5 rounded-lg border border-slate-200 p-4 dark:border-slate-700 print:hidden"><h3 id="question-packet-heading" className="font-semibold">Unassigned publication questions</h3><p className="mt-1 text-sm text-slate-600 dark:text-slate-300">This packet is structural only; no assignment, inventory, progress, or disposition is created.</p><ol className="mt-3 list-decimal space-y-2 pl-5 text-sm">{model.questionPacket.map((question) => <li key={question.id}><a className="underline" href={destinationHref(model, `/matrix-options/paper/publication/v/${encodeURIComponent(model.documentVersion)}/questions/${encodeURIComponent(question.id)}`)}>{question.label}</a></li>)}</ol></section>}
-          </section>}
-
-          
-        </section>
-          {rightRailOpen && model.mode === 'my-review' && <aside aria-label="Review Comments" className="min-w-0 print:hidden"><WorkspacePanel drawer="release-notes" model={model} cohortManifest={cohortManifest} cohortPortions={cohortPortions ?? []} selectedCohortId={selectedCohortId} selectedPortionId={selectedPortion?.id} selectedQuestions={selectedQuestions} activeQuestion={activeQuestion} responseRef={responseRef} onSelectCohort={selectCohort} onSelectPortion={selectPortion} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} onClose={closeDrawer} closeRef={drawerCloseRef} /></aside>}
-
+            {isMyReview
+              ? portionsProvided
+                ? <><CohortPaperPortion cohort={selectedCohort} portion={selectedPortion} headingRef={paperHeadingRef} /><nav aria-label="Paper portion navigation" data-testid="paper-portion-navigation" className="flex min-w-0 flex-wrap items-center gap-3 rounded-lg border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 print:hidden"><span aria-live="polite" className="text-sm font-semibold">Paper portion {portionIndex + 1} of {portionCount}</span><button type="button" disabled={portionIndex === 0} onClick={() => movePortion(-1)} className="min-h-[44px] min-w-40 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600">Previous portion</button><button type="button" disabled={portionIndex >= portionCount - 1} onClick={() => movePortion(1)} className="min-h-[44px] min-w-40 flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600">Next portion</button></nav></>
+                : <CohortPortionsUnavailable workingDraftHref={workingDraftHref} />
+              : sectionWindow && children
+                ? <PaperSectionWindowView sectionWindow={sectionWindow} api={sectionApi} scrollRootRef={documentColumnRef}>{children}</PaperSectionWindowView>
+                : children ?? <section data-testid="paper-document-unavailable" className="rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100"><h2 className="text-lg font-bold">Paper text unavailable</h2><p role="status" className="mt-2">The authenticated paper text was not provided to this view.</p></section>}
+          </div>
         </div>
+
+        {isMyReview && <PaperRail id={PAPER_REVIEW_COMMENTS_RAIL_ID} testId="review-comments-rail" side="right" open={reviewCommentsOpen} heading="Review Comments" headingId="paper-review-comments-rail-heading" headingRef={reviewCommentsHeadingRef} onEscape={() => closePanel('review-comments')}>
+          <ActiveQuestionResponse questions={selectedQuestions} question={activeQuestion} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} />
+        </PaperRail>}
       </div>
     </div>
     </>
   );
-}
-
-function LensNav({ model }: { readonly model: WorkspaceModel }) {
-  return <nav aria-label="Publication lenses"><ul className="space-y-1">{REVIEW_LENSES.map((lens) => <li key={lens}><a href={queryHref(model, model.mode, lens)} aria-current={model.atlas.query.lens === lens ? 'page' : undefined} className="flex min-h-[44px] items-center justify-between rounded-md px-2 py-2 text-sm hover:bg-slate-100 dark:hover:bg-slate-800"><span>{lensLabel[lens]}</span><span className="font-mono text-xs">{lens === model.atlas.query.lens ? model.atlas.totalMatches : '-'}</span></a></li>)}</ul></nav>;
 }

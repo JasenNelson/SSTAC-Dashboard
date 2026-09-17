@@ -92,6 +92,7 @@ Routes follow a consistent error pattern:
 - [Regulatory Review — search](#regulatory-review--search)
 - [Regulatory Review — validation & progress](#regulatory-review--validation--progress)
 - [HITL packets](#hitl-packets)
+- [Matrix Options - paper workspace](#matrix-options---paper-workspace)
 
 ---
 
@@ -459,6 +460,36 @@ Download the pre-generated CSV.
 Download the pre-generated markdown packet.
 - **Auth:** authenticated session; 401 if absent.
 - **Response:** `text/markdown` with `Content-Disposition: attachment; filename="HITL_PACKET_{sessionId}.md"`.
+
+---
+
+## Matrix Options - paper workspace
+
+Options Paper Working Draft longform reader (M1; see `docs/MATRIX_OPTIONS_STATUS.md` section 3.5).
+UNCOMMITTED as of this entry -- branch `design/matrix-paper-longform-ux-20260903`, pending the L2
+gate. `/api/**` is not covered by the middleware auth matcher, so this route checks the feature gate
+and session itself.
+
+### `GET /api/matrix-options/paper/v/[documentVersion]/sections/[sectionAnchor]`
+Fetch one depth-1 section of the Working Draft as serializable data (S1 incremental section
+window), never JSX/HTML and never the whole paper.
+- **Runtime:** `export const runtime = 'nodejs'`; `export const dynamic = 'force-dynamic'`.
+- **Auth/guard order:** feature gate (`resolveMatrixOptionsPaperReviewNavigationGate` on
+  `MATRIX_OPTIONS_PAPER_WORKSPACE` / `MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION`; anything other than
+  `REVIEW_NAVIGATION` returns 404) -> authenticated session (`createAuthenticatedClient()` +
+  `getAuthenticatedUser()`; 401 if absent) -> rate limit (`RATE_LIMIT_CONFIGS.default`, keyed by
+  user id) -> `documentVersion` match against `REVISED_PAPER_VERSION` (404 if not) -> `paper` query
+  param must match the loaded structure's `paperSha256` (409 `Paper release mismatch` if not) ->
+  section anchor resolution (404 if the depth-1 group is not found, tried raw then
+  percent-decoded).
+- **Query:** `paper` (required; the paper's `sha256` identity).
+- **Params:** `documentVersion`, `sectionAnchor` (route segments).
+- **Response:** `200` with the section contract (`buildPaperSectionContract`) as JSON; `401`
+  `{ error: 'Unauthorized' }`; `404` `{ error: 'Not found' }` (gate off, version mismatch, unknown
+  anchor, or a recognized `PAPER_SECTION_WINDOW_FAILURE_PREFIX` / full-document-model failure --
+  anything else rethrows); `409` `{ error: 'Paper release mismatch' }`.
+- **Cache:** every response sets `Cache-Control: no-store`.
+- **Rate limiting:** rate-limited responses also get `Cache-Control: no-store` set explicitly.
 
 ---
 

@@ -1,6 +1,6 @@
 export const MATRIX_OPTIONS_VIEW_IDS = [
-  'The Guide',
   'Vision for Modernizing Schedule 3.4',
+  'The Guide',
   'TWG Review',
   'Interactive Map',
   'Calculator',
@@ -42,7 +42,7 @@ export interface MatrixOptionsViewDefinition {
 export const MATRIX_OPTIONS_VIEWS: readonly MatrixOptionsViewDefinition[] =
   MATRIX_OPTIONS_VIEW_IDS.map((id) => ({
     id,
-    dashboardLabel: DISPLAY_LABELS[id] ?? id,
+    dashboardLabel: id === 'TWG Review' ? 'Options Paper' : (DISPLAY_LABELS[id] ?? id),
     paperLabel: id === 'TWG Review' ? 'Options Paper' : (DISPLAY_LABELS[id] ?? id),
     dashboardHref: `/matrix-options?view=${encodeURIComponent(id)}`,
     paperHref: id === 'TWG Review' ? MATRIX_OPTIONS_PAPER_LANDING_PATH : null,

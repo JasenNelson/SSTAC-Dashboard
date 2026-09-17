@@ -27,6 +27,6 @@ describe('Paper reader route states', () => {
     render(<MatrixOptionsPaperNotFound />);
     expect(screen.queryByRole('main')).not.toBeInTheDocument();
     expect(screen.getByRole('heading', { name: 'Paper version or section not found' })).toBeVisible();
-    expect(screen.getByRole('link', { name: 'Open the current fixture' })).toHaveAttribute('href', '/matrix-options/paper');
+    expect(screen.getByRole('link', { name: 'Open the current verified paper' })).toHaveAttribute('href', '/matrix-options/paper');
   });
 });

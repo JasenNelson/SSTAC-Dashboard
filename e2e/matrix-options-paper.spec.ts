@@ -4,6 +4,28 @@ const realVersion = '1.0.11-remediated-20260913';
 const realReviewPath = `/matrix-options/paper/review/v/${realVersion}`;
 const legacyFixtureVersion = 'slice-1a-fixture-v1';
 const legacySectionPath = `/matrix-options/paper/v/${legacyFixtureVersion}/synthetic.framework.example`;
+/*
+ * M1R8-07 (informed Opus holistic pass, P3-8). These two numbers are EXPORTED by
+ * src/components/matrix-options/paper/RevisedPaperWorkspace.tsx, and the unit
+ * suite imports them from there. This file cannot: that module is a `use client`
+ * React component whose import graph pulls react, react-dom, lucide-react,
+ * next/navigation and MathRenderer's KaTeX bundle into Playwright's own test
+ * process, for two integers, and there is no shared constants module to hold
+ * them (creating one is part of M2's centralisation of scroll authority, which
+ * is explicitly out of scope for this round).
+ *
+ * So they are restated here as NAMED constants rather than typed as bare
+ * literals at their use sites, and the duplication is GUARDED rather than
+ * trusted: 'M1R8-07: pins the reveal numbers that the paper e2e restates' in
+ * RevisedPaperWorkspace.test.tsx reads THIS file's bytes and fails if either
+ * number stops matching the exported constant it copies. Same technique as
+ * PaperRailDrift.test.ts.
+ */
+/** Mirrors PAPER_PANEL_REVEAL_GAP_PX. */
+const PAPER_PANEL_REVEAL_GAP_PX = 8;
+/** Mirrors PAPER_REVEAL_SETTLE_TIMEOUT_MS: how long a reveal may own the scrollport. */
+const PAPER_REVEAL_SETTLE_TIMEOUT_MS = 600;
+
 const paperWorkspaceEnabled = process.env.MATRIX_OPTIONS_PAPER_WORKSPACE === 'true';
 const reviewNavigationEnabled = paperWorkspaceEnabled && process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION === 'true';
 
@@ -56,126 +78,438 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
 });
 
 test.describe('Matrix Options Paper real V16 acceptance', () => {
-  test('authenticated real release opens node, object, question, and both modes', async ({ page }, testInfo) => {
+  const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
+  const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
+  const pathAndQuery = (url: string) => {
+    const parsed = new URL(url);
+    return `${parsed.pathname}${parsed.search}`;
+  };
+  const requireJourney = (projectName: string) => {
     test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
-    if (testInfo.project.name !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
+    if (projectName !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
+  };
+  const failOnLogin = (url: string) => {
+    if (url.includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
+  };
 
-    for (const [mode, lens, expectedPath] of [
-      ['my-review', 'all', '/nodes/'],
-      ['publication', 'objects', '/nodes/'],
-      ['my-review', 'questions', '/questions/'],
-    ] as const) {
-      await page.goto(`${realReviewPath}?mode=${mode}&lens=${lens}&page=1`, { waitUntil: 'domcontentloaded' });
-      if (page.url().includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
-      await expect(page.getByRole('main')).toHaveCount(1);
-      const atlas = page.getByRole('list', { name: 'Current atlas page' });
-      const firstLink = atlas.getByRole('link').first();
-      await expect(firstLink).toHaveAttribute('href', new RegExp(`mode=${mode}`));
-      await firstLink.click();
-      await expect.poll(() => page.url()).toContain(expectedPath);
-      await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe(mode);
-      await expect(page.getByTestId('trust-strip')).toBeVisible();
+  test('authenticated real release lands every legacy entry on the canonical Working Draft', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    for (const entry of [
+      '/matrix-options/paper',
+      `/matrix-options/paper/v/${realVersion}`,
+      `/matrix-options/paper/v/${realVersion}/ignored-section`,
+      realReviewPath,
+      `${realReviewPath}?mode=my-review&lens=all&page=1`,
+      `${realReviewPath}/assignments/assignment/packets/packet/items/item`,
+      workspacePath,
+      `${workspacePath}?mode=publication`,
+    ]) {
+      await page.goto(entry, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      await expect.poll(() => pathAndQuery(page.url())).toBe(canonicalWorkingDraft);
+    }
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('link', { name: 'Publication', exact: true })).toHaveCount(0);
+    await expect(page.getByRole('heading', { name: 'Publication Atlas' })).toHaveCount(0);
+    await expect(page.getByRole('list', { name: 'Current atlas page' })).toHaveCount(0);
+    await expect(page.getByTestId('trust-strip')).toHaveCount(0);
+    await expect(page.getByTestId('context-drawer')).toHaveCount(0);
+    await expect(page.getByRole('textbox', { name: 'Note' })).toHaveCount(0);
+    await expect(page.getByRole('dialog')).toHaveCount(0);
+  });
+
+  const isSectionRequest = (url: string) => /\/api\/matrix-options\/paper\/v\/[^/]+\/sections\//.test(url);
+
+  test('authenticated real release serves an initial section window and reaches the last heading after Load full document', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    /*
+     * M1R6-06 (codex r5-luna-1 R5-S1-E2E). Loading all 338 chunks is given 180 s
+     * by the toHaveText assertion below, but an assertion timeout cannot outlive
+     * the TEST timeout, and the repository default is Playwright's 30 s. On a
+     * slower CI runner the test was therefore aborted long before the 180 s it
+     * asks for could help, and the failure read as a load timeout rather than as
+     * a budget that was never granted. browser run-004 only passed this spec
+     * because its own config raised the per-test timeout to 300 s; the repo's
+     * default would not have. The budget belongs in the spec, so it travels with
+     * the assertion that needs it.
+     */
+    test.setTimeout(240000);
+    await page.setViewportSize({ width: 1440, height: 900 });
+
+    // S1: the document response itself carries only the initial window plus the
+    // ordered placeholders for the other 15 depth-1 sections.
+    const initialHtml = await (await page.request.get(canonicalWorkingDraft)).text();
+    const initialChunks = (initialHtml.match(/data-paper-chunk="/g) ?? []).length;
+    const placeholders = (initialHtml.match(/data-paper-section-placeholder="/g) ?? []).length;
+    expect(initialChunks).toBeGreaterThan(0);
+    expect(initialChunks).toBeLessThan(338);
+    expect(placeholders).toBe(15);
+
+    let inFlight = 0;
+    let maxInFlight = 0;
+    const cacheControl: string[] = [];
+    page.on('request', (request) => {
+      if (!isSectionRequest(request.url())) return;
+      inFlight += 1;
+      maxInFlight = Math.max(maxInFlight, inFlight);
+    });
+    const settle = (request: { url(): string }) => {
+      if (isSectionRequest(request.url())) inFlight -= 1;
+    };
+    page.on('requestfinished', settle);
+    page.on('requestfailed', settle);
+    page.on('response', (response) => {
+      if (isSectionRequest(response.url())) cacheControl.push(response.headers()['cache-control'] ?? '');
+    });
+
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const navigationToggle = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true });
+    await expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('navigation-rail')).toHaveAttribute('data-state', 'open');
+    await expect(page.getByTestId('paper-outline-desktop').getByRole('link').first()).toBeVisible();
+    await expect(page.getByTestId('paper-load-progress')).toContainText('of 16 sections');
+    await expect(page.getByTestId('paper-print-button')).toBeDisabled();
+
+    await page.getByTestId('paper-load-full-document-button').click();
+    await expect(page.getByTestId('paper-load-full-document-button')).toHaveText('Full document loaded', { timeout: 180000 });
+    const sections = page.locator('[data-testid="paper-document"] section[data-paper-chunk]');
+    await expect(sections).toHaveCount(338);
+    await expect(page.locator('[data-paper-section-placeholder]')).toHaveCount(0);
+    await expect(page.getByTestId('paper-find-guidance')).toBeVisible();
+    await expect(page.getByTestId('paper-print-button')).toBeEnabled();
+    // Sections are named groups (M1-09), not region landmarks.
+    await expect(page.getByRole('group', { name: 'Technical Appendices Compendium', exact: true })).toHaveCount(1);
+    await expect(page.locator('[data-testid="paper-document"] [role="region"]')).toHaveCount(0);
+    await expect(page.locator('h1')).toHaveCount(1);
+    const last = sections.last();
+    await last.scrollIntoViewIfNeeded();
+    await expect(last).toBeVisible();
+    await expect(page.locator('.katex-error')).toHaveCount(0);
+    const columnBox = await page.getByTestId('paper-document-column').boundingBox();
+    expect(columnBox?.height ?? 0).toBeGreaterThan(0);
+
+    // At most two section requests are ever in flight, and none is cacheable.
+    expect(maxInFlight).toBeGreaterThan(0);
+    expect(maxInFlight).toBeLessThanOrEqual(2);
+    expect(cacheControl.length).toBeGreaterThan(0);
+    expect(cacheControl.every((value) => value.includes('no-store'))).toBe(true);
+
+    await page.emulateMedia({ media: 'print' });
+    await expect(page.getByTestId('navigation-rail')).toHaveCSS('display', 'none');
+    await expect(page.getByTestId('paper-document')).toBeVisible();
+    await page.emulateMedia({ media: 'screen' });
+  });
+
+  test('authenticated real release lands a navigated unloaded section below the sticky header at 360 and 768', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    for (const width of [360, 768]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      // Below lg the stacked outline lists the depth-1 sections; the last one is
+      // never part of the initial window, so this navigates into a placeholder.
+      const entries = page.getByTestId('paper-outline-stacked').getByRole('link');
+      const target = entries.nth((await entries.count()) - 1);
+      const href = await target.getAttribute('href');
+      const anchor = new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
+      expect(anchor.length).toBeGreaterThan(0);
+      const section = page.locator(`[data-paper-chunk="${anchor}"]`);
+      await expect(section).toHaveCount(0);
+      await target.click();
+      await expect(section).toHaveCount(1, { timeout: 60000 });
+      await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(anchor);
+      const stickyBottom = await page.evaluate(() => document.querySelector('header.sticky')?.getBoundingClientRect().bottom ?? 0);
+      expect(stickyBottom).toBeGreaterThan(0);
+      const box = await section.boundingBox();
+      expect(box).not.toBeNull();
+      expect(box?.y ?? -1).toBeGreaterThanOrEqual(stickyBottom - 2);
+      expect(box?.y ?? Number.POSITIVE_INFINITY).toBeLessThan(800);
     }
   });
 
+  test('authenticated real release lands a deep-linked unloaded section on its reading line at 360 and 768', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    for (const width of [360, 768]) {
+      await page.setViewportSize({ width, height: 800 });
+      // The last stacked outline entry is never part of the initial window, so
+      // entering by URL exercises the same loader path as run-002's failing
+      // `working-draft.deep-link` check.
+      await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      const entries = page.getByTestId('paper-outline-stacked').getByRole('link');
+      const href = await entries.nth((await entries.count()) - 1).getAttribute('href');
+      const anchor = new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
+      expect(anchor.length).toBeGreaterThan(0);
+      // M1R5-03 (codex r4-luna-1, accepted). The scenario is only exercised if
+      // this section is genuinely absent from the DEFAULT initial window. Without
+      // this assertion the test would still pass if the initial window ever grew
+      // to include it -- and a deep link that needs no loading at all cannot
+      // exhibit the defect. That is the defect class that let round 4's broken
+      // deep-link fix be certified as working.
+      await expect(page.locator(`[data-paper-chunk="${anchor}"]`)).toHaveCount(0);
+
+      await page.goto(`${canonicalWorkingDraft}&section=${encodeURIComponent(anchor)}`, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      const section = page.locator(`[data-paper-chunk="${anchor}"]`);
+      await expect(section).toHaveCount(1, { timeout: 60000 });
+      await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(anchor);
+
+      // M1R4-03. Run-002 measured this landing 56px short at 360 and 4px short
+      // at 768, stable for 2.5s: the correction was spent within about three
+      // frames of the mount while the prefetch observer kept loading the
+      // sections above the target. The landing must still be on the reading line
+      // once those loads have finished, so this polls rather than sampling once.
+      await expect
+        .poll(async () => page.evaluate((id) => {
+          const element = document.getElementById(id);
+          if (!element) return 9999;
+          const margin = Number.parseFloat(getComputedStyle(element).scrollMarginTop) || 0;
+          return Math.abs(Math.round(element.getBoundingClientRect().top - margin));
+        }, anchor), { timeout: 20000 })
+        .toBeLessThanOrEqual(2);
+
+      const landed = await page.evaluate((id) => ({
+        top: Math.round(document.getElementById(id)?.getBoundingClientRect().top ?? -1),
+        stickyBottom: Math.round(document.querySelector('header.sticky')?.getBoundingClientRect().bottom ?? 0),
+      }), anchor);
+      expect(landed.stickyBottom).toBeGreaterThan(0);
+      expect(landed.top).toBeGreaterThanOrEqual(landed.stickyBottom - 2);
+      expect(landed.top).toBeLessThan(800);
+    }
+  });
+
+  test('authenticated real release deep links a section, restores it on reload, and updates it from the outline', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.setViewportSize({ width: 1440, height: 900 });
+    await page.goto(canonicalWorkingDraft, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const outline = page.getByTestId('paper-outline-desktop');
+    const entry = outline.getByRole('link').nth(5);
+    // Outline hrefs are the canonical Working Draft section query (M1-04).
+    const sectionOf = (href: string | null) => new URLSearchParams((href ?? '').replace(/^\?/, '')).get('section') ?? '';
+    const anchor = sectionOf(await entry.getAttribute('href'));
+    expect(anchor.length).toBeGreaterThan(0);
+    await entry.click();
+    await expect.poll(() => new URL(page.url()).searchParams.get('section')).toBe(anchor);
+    await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('working-draft');
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(anchor);
+
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(anchor);
+    // M1-01: the active entry is the focused target, not the predecessor whose tail is still visible.
+    await expect.poll(async () => sectionOf(await outline.locator('a[aria-current="location"]').first().getAttribute('href'))).toBe(anchor);
+    await expect(outline.locator('a[aria-current="location"]')).toHaveCount(1);
+
+    const firstNodeHref = await page.locator('[data-testid="paper-document"] section[data-paper-chunk]').nth(7).getAttribute('id');
+    await page.goto(`${canonicalWorkingDraft}&section=${firstNodeHref ?? ''}`, { waitUntil: 'domcontentloaded' });
+    await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(firstNodeHref ?? '');
+  });
+
   test('authenticated real release reports unavailable assignment truthfully', async ({ page }, testInfo) => {
-    test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
-    if (testInfo.project.name !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
-    await page.goto(`${realReviewPath}?mode=my-review&lens=all&page=1`, { waitUntil: 'domcontentloaded' });
-    if (page.url().includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
+    requireJourney(testInfo.project.name);
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
     await expect(page.getByText('Assignment unavailable', { exact: true })).toBeVisible();
     await expect(page.getByText(/Assignments are not connected for this release\./)).toBeVisible();
     await expect(page.getByText(/synthetic|fixture/i)).toHaveCount(0);
   });
 
-  test('authenticated real release exercises reader references, controls, history, notes, and print bounds', async ({ page }, testInfo) => {
-    test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
-    if (testInfo.project.name !== 'chromium-auth') test.skip(true, 'This journey is required only in the authenticated Chromium project.');
+  test('authenticated real release opens My Review with cohort portions, Review Comments, and question deep links', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect.poll(() => pathAndQuery(page.url())).toBe(`${workspacePath}?mode=my-review`);
+    await expect(page.getByRole('link', { name: 'My Review', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByTestId('cohort-portions-unavailable')).toHaveCount(0);
+    await expect(page.getByTestId('cohort-paper')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'Review cohorts' }).getByRole('button', { name: /questions$/ })).toHaveCount(5);
+    await expect(page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true })).toHaveAttribute('aria-expanded', 'true');
+    await expect(page.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'open');
 
-    await page.goto(`${realReviewPath}?mode=my-review&lens=all&page=1`, { waitUntil: 'domcontentloaded' });
-    if (page.url().includes('/login')) throw new Error('REAL_V16_AUTH_REQUIRED_BUT_LOGIN_REDIRECTED');
-
-    await page.getByRole('link', { name: 'Publication', exact: true }).click();
-    await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('publication');
-    await page.getByRole('link', { name: 'My Review', exact: true }).click();
+    const questionId = `rpq:${realVersion}:q04`;
+    await page.goto(`${workspacePath}/questions/${encodeURIComponent(questionId)}`, { waitUntil: 'domcontentloaded' });
     await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('my-review');
+    await expect.poll(() => new URL(page.url()).searchParams.get('q')).toBe(questionId);
+    await expect(page.getByRole('combobox', { name: 'Jump to question' })).toHaveValue('4');
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('combobox', { name: 'Jump to question' })).toHaveValue('4');
+  });
 
-    const next = page.getByRole('link', { name: 'Next', exact: true });
-    await expect(next).toBeVisible();
-    await next.click();
-    await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('2');
-    await page.getByRole('link', { name: 'Previous', exact: true }).click();
-    await expect.poll(() => new URL(page.url()).searchParams.get('page')).toBe('1');
+  test('authenticated real release rails close with focus rescue and reveal opened panels at 360 and 768', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    for (const width of [360, 768]) {
+      await page.setViewportSize({ width, height: 800 });
+      await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+      failOnLogin(page.url());
+      /*
+       * M1R5-03 (codex r4-luna-1, accepted). The rail expands under a 300ms
+       * transition, so geometry read straight after toBeFocused() can be an
+       * INTERMEDIATE position: the assertion could pass, or fail, on a frame
+       * that is not the landing. Poll until the heading's top stops moving
+       * first. run-003's own harness samples a landing until it settles; the
+       * repo e2e must be at least as strict.
+       */
+      const settledHeadingGeometry = async (selector: string) => {
+        let previous: number | null = null;
+        let stable = 0;
+        let latest = { top: Number.NaN, stickyBottom: 0, atMaxScroll: false, viewportHeight: 0 };
+        /*
+         * M1R8-06 (informed Opus holistic pass, P3-7). Two samples 100 ms apart
+         * can be "stable" about 300 ms after the panel opens, while the
+         * component may still OWN the scrollport for PAPER_REVEAL_SETTLE_TIMEOUT_MS
+         * and still apply a deadline correction after that -- so the landing the
+         * assertions below judged would not be the resting one. The settle
+         * criterion is therefore tied to the component's own bound: no reading is
+         * accepted until the sampling window has outlasted the ownership window.
+         */
+        const startedAt = Date.now();
+        const elapsed = () => Date.now() - startedAt;
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+          latest = await page.evaluate((id) => {
+            const element = document.querySelector(id);
+            const header = document.querySelector('header.sticky');
+            const root = document.documentElement;
+            return {
+              // M1R6-05: UNROUNDED, so the occlusion guard below is exactly the
+              // unit predicate and not a rounded approximation of it.
+              top: element ? element.getBoundingClientRect().top : Number.NaN,
+              stickyBottom: header ? header.getBoundingClientRect().bottom : 0,
+              atMaxScroll: root.scrollHeight > window.innerHeight && window.scrollY + window.innerHeight >= root.scrollHeight - 1,
+              viewportHeight: window.innerHeight,
+            };
+          }, selector);
+          if (previous !== null && Math.abs(latest.top - previous) < 0.1) {
+            stable += 1;
+            if (stable >= 2 && elapsed() > PAPER_REVEAL_SETTLE_TIMEOUT_MS) return latest;
+          } else {
+            stable = 0;
+          }
+          previous = latest.top;
+          await page.waitForTimeout(100);
+        }
+        /*
+         * M1R7-05 (codex r6-luna-1). Falling out of this loop used to return the
+         * last sample, so geometry that never settled was asserted on as though
+         * it had -- the same "a check only verifies if its scope could have
+         * failed" class as the caller below, in the measurement rather than the
+         * assertion. An unsettled landing makes every assertion that follows
+         * meaningless, so it fails here, loudly, naming what did not settle.
+         */
+        throw new Error(`M1R7-05/M1R8-06: ${selector} never settled: 40 polls without two consecutive stable tops sampled beyond the ${PAPER_REVEAL_SETTLE_TIMEOUT_MS}ms reveal-ownership window; elapsed ${elapsed()}ms, last top ${latest.top}, sticky bottom ${latest.stickyBottom}. The landing assertions below would have run on an intermediate frame, or on one the deadline correction had not reached yet.`);
+      };
 
-    // Use an isolated authenticated page and a unique, valid filtered root so Back
-    // must restore this exact history entry without contaminating later checks.
-    const historyPage = await page.context().newPage();
-    const historyRoot = `${realReviewPath}?mode=my-review&lens=all&page=1&q=7.1`;
-    await historyPage.goto(historyRoot, { waitUntil: 'networkidle' });
-    const historyRootUrl = new URL(historyRoot, historyPage.url());
-    await expect.poll(() => historyPage.url()).toBe(historyRootUrl.href);
-    const firstAtlasLink = historyPage.getByRole('list', { name: 'Current atlas page' }).getByRole('link').first();
-    const firstAtlasHref = new URL(await firstAtlasLink.getAttribute('href') ?? '', historyPage.url());
-    expect(firstAtlasHref.pathname).toMatch(/^\/matrix-options\/paper\/publication\/v\/1\.0\.11-remediated-20260913\/nodes\//);
-    expect(firstAtlasHref.searchParams.get('mode')).toBe('my-review');
-    expect(firstAtlasHref.searchParams.get('lens')).toBe('all');
-    expect(firstAtlasHref.searchParams.get('q')).toBe('7.1');
-    expect(firstAtlasHref.searchParams.get('page')).toBe('1');
-    await firstAtlasLink.click();
-    await expect.poll(() => historyPage.url()).toContain('/nodes/');
-    await historyPage.goBack({ waitUntil: 'networkidle' });
-    await expect.poll(() => historyPage.url()).toBe(historyRootUrl.href);
-    await historyPage.goForward({ waitUntil: 'networkidle' });
-    await expect.poll(() => historyPage.url()).toContain('/nodes/');
-    await expect.poll(() => new URL(historyPage.url()).searchParams.get('mode')).toBe('my-review');
-    await expect.poll(() => new URL(historyPage.url()).searchParams.get('q')).toBe('7.1');
-    await historyPage.close();
+      /**
+       * M1R6-02 (browser run-004 section 9, caveat 1). Polls a panel's own
+       * height until it stops changing, so a panel is only ever re-opened from a
+       * SETTLED closed state.
+       */
+      const settledPanelHeight = async (selector: string) => {
+        let previous: number | null = null;
+        let stable = 0;
+        for (let attempt = 0; attempt < 40; attempt += 1) {
+          const height = await page.evaluate((id) => {
+            const element = document.querySelector(id);
+            return element ? element.getBoundingClientRect().height : 0;
+          }, selector);
+          if (previous !== null && Math.abs(height - previous) < 0.1) {
+            stable += 1;
+            if (stable >= 2) return height;
+          } else {
+            stable = 0;
+          }
+          previous = height;
+          await page.waitForTimeout(100);
+        }
+        /*
+         * M1R7-05 (codex r6-luna-1), the finding as codex wrote it. This used to
+         * return the last polled height after 40 attempts and the caller ignored
+         * the result, so a collapse that never settled let the panel be re-opened
+         * from a half-collapsed state -- which is EXACTLY the sequence browser
+         * run-004 section 7.2 identified as the one that hides the 24px defect
+         * (the rail is still nearly expanded, so almost no expansion remains
+         * after the reveal's correction measures). Silently skipping this
+         * precondition does not weaken the test a little; it turns it into a
+         * different test that cannot fail for the reason it was written.
+         */
+        throw new Error(`M1R7-05: ${selector} never settled: 40 polls (about 4s) without two consecutive stable heights; last height ${previous ?? 'none'}. Re-opening from an unsettled collapse is the one sequence that hides the landing defect this test exists to catch.`);
+      };
 
-    await page.goto(`${realReviewPath}?mode=my-review&lens=all&page=1`, { waitUntil: 'networkidle' });
-    await page.getByRole('list', { name: 'Current atlas page' }).getByRole('link').first().click();
-    await expect.poll(() => page.url()).toContain('/nodes/');
-
-    const readerReferences = page.locator('[data-reader-detail-id] a[href*="/matrix-options/paper/publication/v/"]');
-    await expect.poll(() => readerReferences.count()).toBeGreaterThan(1);
-    const referenceHrefs = await readerReferences.evaluateAll((links) => [...new Set(links.map((link) => (link as HTMLAnchorElement).href))]);
-    expect(referenceHrefs.length).toBeGreaterThan(1);
-    for (const href of referenceHrefs.slice(0, 2)) {
-      await page.goto(href, { waitUntil: 'domcontentloaded' });
-      await expect.poll(() => page.url()).toContain('/nodes/');
-      await expect(page.getByTestId('trust-strip')).toBeVisible();
-    }
-
-    await page.goto(`${realReviewPath}?mode=my-review&lens=all&page=1`, { waitUntil: 'networkidle' });
-    const contextToggle = page.getByTestId('trust-strip').locator('button[aria-controls="context-drawer"]');
-    await expect(contextToggle).toHaveAttribute('aria-expanded', 'false');
-    await contextToggle.click();
-    await expect(contextToggle).toHaveAttribute('aria-expanded', 'true');
-    await expect(page.getByRole('dialog', { name: 'Context details' })).toBeVisible();
-    await page.getByRole('textbox', { name: 'Note' }).fill('release-boundary smoke note');
-    await expect(page.getByRole('status')).toContainText(/Saved locally|Retained for this session/);
-    await page.getByRole('button', { name: 'Close context', exact: true }).click();
-    await expect(contextToggle).toBeFocused();
-
-    await page.goto(`${realReviewPath}?mode=my-review&lens=all&page=1`, { waitUntil: 'domcontentloaded' });
-    await page.getByRole('list', { name: 'Current atlas page' }).getByRole('link').first().click();
-    const paperReader = page.locator('[data-reader-detail-id] .math-renderer');
-    await expect(paperReader).toBeVisible();
-
-    await page.setViewportSize({ width: 375, height: 812 });
-    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
-    await page.emulateMedia({ media: 'print' });
-    await expect(paperReader).toBeVisible();
-    await expect(page.locator('header').filter({ hasText: 'SSTAC & TWG' })).toHaveCSS('display', 'none');
-    await expect(page.locator('header').filter({ hasText: 'Policy Review' })).toHaveCSS('display', 'none');
-    await expect(page.locator('[data-testid="workspace-shell"] > header')).toHaveCSS('display', 'none');
-    await expect.poll(() => page.getByTestId('trust-strip').evaluate((element) => {
-      let current: Element | null = element;
-      while (current) {
-        if (getComputedStyle(current).display === 'none') return true;
-        current = current.parentElement;
+      const panels = [
+        { toggle: page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true }), heading: page.locator('#paper-navigation-rail-heading'), selector: '#paper-navigation-rail-heading', panel: '#paper-navigation-rail' },
+        { toggle: page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true }), heading: page.locator('#paper-review-comments-rail-heading'), selector: '#paper-review-comments-rail-heading', panel: '#paper-review-comments-rail' },
+        { toggle: page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true }), heading: page.locator('#paper-download-files-heading'), selector: '#paper-download-files-heading', panel: '#paper-download-files-panel' },
+      ];
+      for (const { toggle, heading, selector, panel } of panels) {
+        if ((await toggle.getAttribute('aria-expanded')) === 'true') {
+          await toggle.click();
+          await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+          await expect(toggle).toBeFocused();
+          /*
+           * M1R6-02 (codex r4-luna-1 [P1], REINSTATED by browser run-004). This
+           * wait is the whole reason this assertion can fail at all. The test
+           * used to close a panel and re-open it IMMEDIATELY, and run-004
+           * section 7.2 measured that this is the ONE sequence in which the
+           * landing is genuinely 0: the rail is still nearly expanded, so almost
+           * no expansion remains after the reveal's correction measures. The
+           * same build, in the same session, measured +24 at rest when the
+           * collapse was allowed to finish first -- which is what a reader
+           * actually does. The settle poll below was already correct and would
+           * have settled on 161 just as readily as on 137; it is the SEQUENCE
+           * that hid the 24px, not the sampling. So: let the collapse finish.
+           */
+          await settledPanelHeight(panel);
+        }
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-expanded', 'true');
+        await expect(heading).toBeFocused();
+        await expect(heading).toBeVisible();
+        const landing = await settledHeadingGeometry(selector);
+        expect(landing.stickyBottom).toBeGreaterThan(0);
+        /*
+         * Occlusion -- the defect this work stream fixed -- fails here whatever
+         * the scroll position is. This is the assertion that must stay able to
+         * fail, and the clamp branch below never relaxes it.
+         *
+         * M1R6-05 (codex r5-luna-1 R5-04-E2E). This guard used to read
+         * `>= stickyBottom - 1`, which ADMITTED a 1px occlusion: a heading at 76
+         * under a sticky bottom of 77 passed here, and because atMaxScroll then
+         * skipped the reading-line assertion, an occluded landing could pass the
+         * whole check. The unit predicate panelRevealLandingSatisfied rejects
+         * exactly that geometry (`if (headingTop < stickyHeaderHeight) return
+         * false`, proven both ways in run-004 section 10: "occluded by 1px at
+         * maximum scroll -> false", "exactly on the line -> true"). Two
+         * assertions of the same contract must not disagree about their
+         * boundary, so this is now the predicate's boundary exactly, on the same
+         * unrounded geometry the predicate would see.
+         */
+        expect(landing.top).toBeGreaterThanOrEqual(landing.stickyBottom);
+        expect(landing.top).toBeLessThan(landing.viewportHeight);
+        // M1R4-02 (PLAN-R4 3.A item 4). Browser run-002 measured Navigation and
+        // Review Comments at 24px and 20px under a 129px sticky header at 360
+        // and 768 -- the rails' own padding -- because a rail is an
+        // overflow:hidden scroll container and clips the scroll-margin box. The
+        // reveal now corrects by an explicit measured delta, so the heading must
+        // land ON the reading line (header + the 0.5rem the scroll-margin
+        // utility adds, i.e. PAPER_PANEL_REVEAL_GAP_PX), not merely below the
+        // header. Asserting only "below the header" is what let 24px pass here
+        // while the browser run failed it.
+        //
+        // M1R5-04 (browser run-003 sections 6.2 and 7, DECISION (a)). The one
+        // exception is a scrollport already at MAXIMUM SCROLL: My Review's
+        // Review Comments heading at 768x1024 is the last element of the stacked
+        // layout and landed at 348 needing 85 because the +263px correction had
+        // nowhere to go. The reading line is not a contract the browser can
+        // honour there, so at maximum scroll the contract is visible, focused
+        // and below the sticky header -- all three already asserted above.
+        if (!landing.atMaxScroll) {
+          expect(Math.abs(landing.top - (landing.stickyBottom + PAPER_PANEL_REVEAL_GAP_PX))).toBeLessThanOrEqual(2);
+        }
+        await toggle.click();
+        await expect(toggle).toHaveAttribute('aria-expanded', 'false');
+        await expect(toggle).toBeFocused();
       }
-      return false;
-    })).toBe(true);
-    await page.emulateMedia({ media: 'screen' });
+      await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
+    }
   });
 });

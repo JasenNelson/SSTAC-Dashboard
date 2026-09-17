@@ -4,8 +4,8 @@ import {
   MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH,
   MATRIX_OPTIONS_PAPER_LANDING_PATH,
   resolveMatrixOptionsPaperReviewNavigationGate,
-  MATRIX_OPTIONS_PAPER_REVIEW_ROUTE,
 } from '@/lib/matrix-options/navigation';
+import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 
 export default async function ReviewItemPage({
@@ -17,6 +17,8 @@ export default async function ReviewItemPage({
     packetId: string;
     reviewItemId: string;
   }>;
+  /** Accepted for route-contract compatibility; this legacy route ignores the query. */
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 }) {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE,
@@ -27,5 +29,5 @@ export default async function ReviewItemPage({
 
   const { documentVersion } = await params;
   if (documentVersion !== REVISED_PAPER_VERSION) notFound();
-  redirect(MATRIX_OPTIONS_PAPER_REVIEW_ROUTE);
+  redirect(paperWorkspaceHref(documentVersion, { mode: 'working-draft', cohort: null, q: null, section: null }));
 }

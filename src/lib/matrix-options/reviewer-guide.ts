@@ -1,6 +1,8 @@
 import guideContract from './paper/contracts/reviewer-guide-v1.json';
 
 export const REVIEW_GUIDE_RELEASE_IDENTITY = '1.0.11-remediated-20260913' as const;
+/** The guide questions are authenticated against this exact release file (F-05). */
+export const REVIEW_GUIDE_SOURCE_PATH = 'matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md' as const;
 const AUTHORITATIVE_PAPER_BYTES = 534101;
 const AUTHORITATIVE_PAPER_SHA256 = 'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd';
 
@@ -28,13 +30,16 @@ export function validateReviewerGuideContract(candidate: unknown): ReviewerGuide
   const contract = candidate as ReviewerGuideContract;
   if (contract.schemaVersion !== 'matrix-paper-reviewer-guide-v1') fail('schema version');
   if (contract.releaseIdentity !== REVIEW_GUIDE_RELEASE_IDENTITY) fail('release identity');
+  if (contract.sourcePath !== REVIEW_GUIDE_SOURCE_PATH) fail('source path');
   if (!Array.isArray(contract.questions) || contract.questions.length !== 12) fail('question count');
+  if ((contract.questions as readonly unknown[]).some((question) => !question || typeof question !== 'object' || Array.isArray(question))) fail('question shape');
   const numbers = contract.questions.map((question) => question.number);
   if (numbers.some((number, index) => number !== index + 1)) fail('question numbering');
   for (const question of contract.questions) {
     const expectedId = `rpq:${REVIEW_GUIDE_RELEASE_IDENTITY}:q${String(question.number).padStart(2, '0')}`;
-    if (question.id !== expectedId || !question.prompt || !question.heading) fail(`question ${question.number}`);
-    if (question.sourceLines.length !== 2 || !Number.isInteger(question.sourceLines[0]) || !Number.isInteger(question.sourceLines[1]) || question.sourceLines[0] < 1 || question.sourceLines[0] > question.sourceLines[1]) fail(`source range ${question.number}`);
+    if (question.id !== expectedId || typeof question.prompt !== 'string' || !question.prompt || typeof question.heading !== 'string' || !question.heading) fail(`question ${question.number}`);
+    const sourceLines: unknown = question.sourceLines;
+    if (!Array.isArray(sourceLines) || sourceLines.length !== 2 || !Number.isInteger(sourceLines[0]) || !Number.isInteger(sourceLines[1]) || sourceLines[0] < 1 || sourceLines[0] > sourceLines[1]) fail(`source range ${question.number}`);
   }
   return contract;
 }
@@ -62,6 +67,9 @@ export async function authenticateReviewerGuideAgainstPaper(
   contract: ReviewerGuideContract,
   paperText: string,
 ): Promise<void> {
+  // Re-validate the contract shape so an empty (or otherwise malformed)
+  // question list can never authenticate vacuously.
+  validateReviewerGuideContract(contract);
   if (new TextEncoder().encode(paperText).byteLength !== AUTHORITATIVE_PAPER_BYTES) fail('paper byte length');
   if (await sha256Text(paperText) !== AUTHORITATIVE_PAPER_SHA256) fail('paper SHA-256');
   if (paperText.charCodeAt(0) === 0xfeff || paperText.includes('\r')) fail('paper encoding or line endings');

@@ -1740,7 +1740,9 @@
       "opened": "2026-08-03",
       "note": "No bundle triggers on the Matrix OPTIONS source paths. Enumerated across all six bundles on 2026-08-03: src/app/(dashboard)/matrix-options/**, src/lib/matrix-options/**, src/components/matrix-options/**, and matrix_research/reference_catalog/** appear in NO bundle's triggers. MATRIX_MAP_GATE covers only matrix-MAP paths. Consequence: a change to the Matrix Options calculators or to the reference catalog activates no documentation gate, so docs/MATRIX_OPTIONS_STATUS.md sections 2, 3, 7.2 and 7.4 -- exactly the content that went stale before this consolidation -- can drift with nothing forcing a re-check.",
       "second_limitation": "Even where a gate DOES fire, scripts/verify/docs-gate.mjs only checks that required documents EXIST. It performs no freshness, modification-time, or content verification. Registering a document in requires_documents therefore prevents deletion and forces awareness; it does NOT prevent staleness.",
-      "proposed_fix": "Either add ALL FOUR path globs above -- including src/app/(dashboard)/matrix-options/**, which is the lane's entry route -- to MATRIX_MAP_GATE.triggers, or create a MATRIX_OPTIONS_GATE bundle requiring matrix_options.status_current and core.agents. NOT done in the 2026-08-03 documentation pass because widening gate triggers changes what future PRs are required to satisfy, which is a policy change beyond a documentation consolidation and should be an explicit owner decision."
+      "proposed_fix": "Either add ALL FOUR path globs above -- including src/app/(dashboard)/matrix-options/**, which is the lane's entry route -- to MATRIX_MAP_GATE.triggers, or create a MATRIX_OPTIONS_GATE bundle requiring matrix_options.status_current and core.agents. NOT done in the 2026-08-03 documentation pass because widening gate triggers changes what future PRs are required to satisfy, which is a policy change beyond a documentation consolidation and should be an explicit owner decision.",
+      "resolved": "2026-09-16",
+      "resolution": "RESOLVED. Owner-approved D11 receipt L2_D11_APPROVE_AND_M1_EVIDENCE_DOCS_SUCCESSOR-001 ('APPROVE MATRIX TWG D11 DOCS BUNDLE 001') took the second proposed_fix option: a new MATRIX_OPTIONS_GATE bundle (bundles.MATRIX_OPTIONS_GATE) now triggers on all four path globs named above plus src/app/api/matrix-options/** (added for consistency with MATRIX_MAP_GATE, which lists its own API path explicitly alongside the generic API_GATE), and requires matrix_options.status_current and core.agents. This closes the first limitation (no bundle at all on these paths). The second_limitation (docs-gate.mjs checks existence only, never freshness or content) is a separate, still-open limitation of scripts/verify/docs-gate.mjs and is NOT resolved by this change."
     }
   },
   "documents": [
@@ -3882,7 +3884,27 @@
         },
         {
           "doc_id": "matrix_options.status_current",
-          "why": "Current lane deployment/implementation status; a matrix-map change must not leave it contradicted. Added 2026-08-03. SCOPE OF THIS CONTROL, stated precisely so it is not over-trusted: docs-gate.mjs verifies only that a required document EXISTS (see its missing_doc_file check); it performs NO freshness, modification, or content check. It also only fires on the MATRIX_MAP_GATE triggers, which are matrix-map paths -- no bundle currently triggers on src/lib/matrix-options/**, src/components/matrix-options/**, or matrix_research/reference_catalog/**, so the matrix-OPTIONS half of this document is not gate-covered at all. See known_issues.matrix_options_paths_have_no_docs_gate."
+          "why": "Current lane deployment/implementation status; a matrix-map change must not leave it contradicted. Added 2026-08-03. SCOPE OF THIS CONTROL, stated precisely so it is not over-trusted: docs-gate.mjs verifies only that a required document EXISTS (see its missing_doc_file check); it performs NO freshness, modification, or content check. It also only fires on the MATRIX_MAP_GATE triggers, which are matrix-map paths -- no bundle currently triggers on src/lib/matrix-options/**, src/components/matrix-options/**, or matrix_research/reference_catalog/**, so the matrix-OPTIONS half of this document is not gate-covered at all. See known_issues.matrix_options_paths_have_no_docs_gate. STATUS UPDATE 2026-09-16: the matrix-OPTIONS half is now covered separately by MATRIX_OPTIONS_GATE (below), registered per D11 receipt L2_D11_APPROVE_AND_M1_EVIDENCE_DOCS_SUCCESSOR-001; see known_issues.matrix_options_paths_have_no_docs_gate for the resolution record."
+        }
+      ]
+    },
+    "MATRIX_OPTIONS_GATE": {
+      "description": "Triggered by Matrix Options source, component, library, API, or reference-catalog changes. Added 2026-09-16 per owner-approved D11 receipt L2_D11_APPROVE_AND_M1_EVIDENCE_DOCS_SUCCESSOR-001 ('APPROVE MATRIX TWG D11 DOCS BUNDLE 001'), resolving known_issues.matrix_options_paths_have_no_docs_gate's proposed_fix option of a dedicated bundle (the other option, widening MATRIX_MAP_GATE.triggers, was not taken).",
+      "triggers": [
+        "src/app/(dashboard)/matrix-options/**",
+        "src/lib/matrix-options/**",
+        "src/components/matrix-options/**",
+        "matrix_research/reference_catalog/**",
+        "src/app/api/matrix-options/**"
+      ],
+      "requires_documents": [
+        {
+          "doc_id": "matrix_options.status_current",
+          "why": "Current lane status; a Matrix Options change must not leave it contradicted. This is the fix for known_issues.matrix_options_paths_have_no_docs_gate: these paths previously activated no bundle at all."
+        },
+        {
+          "doc_id": "core.agents",
+          "why": "Core safety rules; prevents known high-cost mistakes."
         }
       ]
     },

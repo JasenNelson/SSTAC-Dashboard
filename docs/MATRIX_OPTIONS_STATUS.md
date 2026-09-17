@@ -373,6 +373,79 @@ The Cohort 0 baseline-v1 reachability census is recorded in
 426 selectable substances because no smaller v1 substance set has been selected. It performs no
 regulatory-value selection or promotion.
 
+### 3.5 Options Paper -- Working Draft longform UX (M1)
+
+**Status: IMPLEMENTED on branch `design/matrix-paper-longform-ux-20260903`, UNCOMMITTED (staged working
+tree only), pending the L2 gate (PLAN-R4, run root
+`.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/`). Do not describe as merged or deployed.**
+
+This is a distinct sub-lane from the Matrix Options calculators (sections 2-3 above): a longform
+reader/review workspace for the Options Paper itself, under
+`src/app/(dashboard)/matrix-options/paper/**`, `src/components/matrix-options/paper/**`, and
+`src/lib/matrix-options/paper/**`. PLAN-R4's full acceptance criteria (`.tmp/mission-control/
+MATRIX-TWG-FRONTEND-COMPLETION-PLAN-001/PLAN-R4.md` section 3) cover M1 (Working Draft), M2 (My
+Review), M3 (persistence), M5 (Admin) and M6 (quality); only M1 (Working Draft) is implemented as
+of this candidate.
+
+- **Feature flags** (both read server-side from `process.env`, gated in this order):
+  - `MATRIX_OPTIONS_PAPER_WORKSPACE` (`isMatrixOptionsPaperWorkspaceEnabled` /
+    `resolveMatrixOptionsPaperReviewNavigationGate`, `src/lib/matrix-options/navigation.ts`): off ->
+    the paper layout and legacy resolver redirect to the legacy TWG Review view
+    (`/matrix-options?view=TWG%20Review`, gate `LEGACY_TWG_REVIEW`).
+  - `MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION`: with the workspace flag on but this flag off, the gate
+    resolves `PAPER_RESOLVER` and the legacy `TWGReviewPortal` still renders at
+    `/matrix-options/paper/v/<version>`. With both flags on, the gate resolves `REVIEW_NAVIGATION`
+    and every entry route redirects (307, never `permanentRedirect`) to the canonical Working Draft
+    URL.
+- **Routes** (`src/app/(dashboard)/matrix-options/paper/`):
+  - `layout.tsx`: shared header/nav shell for the whole paper tree; redirects to legacy TWG Review
+    when the workspace flag is off.
+  - `page.tsx` and `v/[documentVersion]/page.tsx`: resolver pages that redirect per the gate above.
+  - `publication/v/[documentVersion]/page.tsx`: the actual Working Draft / My Review workspace page.
+    Validates `documentVersion` against `REVISED_PAPER_VERSION` (404 otherwise), parses and
+    canonicalizes URL state (`parsePaperUrlState`; a 307 redirect to the canonical URL on an alias,
+    missing mode, or unknown/repeated query value), authenticates cohort portions against the
+    reviewer guide contract, and fail-closes to a reason-coded 404 on any recognized contract/
+    validation failure (`URL_CONTEXT_UNAVAILABLE`, `GUIDE_AUTHENTICATION_FAILED`,
+    `COHORT_RELEASE_MISMATCH`, `COHORT_PORTIONS_UNAVAILABLE`, `PAPER_DOCUMENT_UNAVAILABLE`) while
+    rethrowing anything unrecognized.
+  - `publication/v/[documentVersion]/nodes/[canonicalNodeId]/page.tsx` and
+    `.../questions/[questionId]/page.tsx`: child routes that `redirect()` (307) to the canonical URL
+    with `section=<anchor>`; unknown ids 404.
+  - `review/v/[documentVersion]/**`: assignment/packet/review-item routes (My Review scaffolding).
+- **Working Draft label and mode alias.** "Working Draft" replaces "Publication" in UI/aria/tests.
+  URL state is `?mode=working-draft` (My Review is `?mode=my-review`); `mode=publication` is accepted
+  as a legacy alias and canonicalized to `working-draft` via `PAPER_MODE_ALIASES`
+  (`src/lib/matrix-options/paper/url-state.ts`). The `publication/` URL path segment itself is
+  retained unchanged.
+- **Rails (left Navigation, right Review Comments / Download Files).** Match the existing
+  Catalogue/Calculator rail model in `src/components/MatrixDashboard.tsx` (no modal, no overlay, at
+  any width); class parity is pinned by a drift test
+  (`src/components/matrix-options/paper/__tests__/PaperRailDrift.test.ts`). Navigation opens by
+  default at every width. At `lg` and up the shell is a flex row with independently scrolling rails
+  (left `lg:w-80` collapsing to `lg:w-0`, right `lg:w-96`); below `lg` the rails stack in DOM order,
+  a closed rail is `max-h-0 p-0 border-b-0` and `inert`, and opening a rail scrolls its content into
+  view and moves focus to its heading, while closing one returns focus to its toggle. Rails are
+  `print:hidden` and respect `motion-reduce:transition-none`.
+- **Section focus and deep links.** Each chunk renders as
+  `<section id="<anchor>" tabIndex={-1} aria-labelledby=...>`; a Navigation click scrolls to and
+  focuses the section and updates `section` in the URL. The active section is tracked by
+  `IntersectionObserver` and marked `aria-current="location"`. An S1 incremental section window
+  (`src/lib/matrix-options/paper/section-window.ts`) serves only the initial (or deep-linked)
+  depth-1 section server-side; every other section ships as an ordered placeholder descriptor
+  (label and size only) and is fetched on demand from the guarded per-section API route (see
+  `docs/API_REFERENCE.md`).
+- **Centralized scroll authority and its guard.** Every scroll the workspace performs passes
+  through `src/lib/matrix-options/paper/scroll-authority.ts` (AMENDMENT-M1-SCROLL-AUTHORITY-001):
+  one ownership state, one activation-observation rule, one reveal lifecycle, one pin policy, and
+  one arbitration predicate (`revealIsEntitled`), keyed to a causal activation identity rather than
+  timers. It is framework-agnostic (no React import) and is the ONLY module in the paper tree
+  allowed to call a raw scroll API; `src/lib/matrix-options/paper/__tests__/scroll-authority-guard.test.ts`
+  fails the build of any other paper-tree file that calls one directly.
+
+Documentation coverage for this candidate follows PLAN-R4 section 10.4's manual checklist; see
+`.tmp/mission-control/MATRIX-TWG-FRONTEND-RUN-001/m1/docs-r12/DOCS_CHECKLIST_M1.md`.
+
 ---
 
 ## 4. Interactive map

@@ -6,29 +6,26 @@ import {
 } from '@/lib/matrix-options/navigation';
 import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 import { loadRevisedPaperStructure } from '@/lib/matrix-options/revised-paper-structure';
-import {
-  createWorkspaceModel,
-  parseDetailQuery,
-  parseWorkspaceMode,
-  ReviewQueryError,
-  sourceRangeText,
-} from '@/lib/matrix-options/revised-paper-review';
-import type { RequestedDetail } from '@/lib/matrix-options/revised-paper-review';
+import { paperWorkspaceHref, parsePaperUrlState } from '@/lib/matrix-options/paper/url-state';
+import type { PaperSearchParams } from '@/lib/matrix-options/paper/url-state';
+import { buildPaperUrlContext, resolveSectionAnchor } from '@/components/matrix-options/paper/PaperDocument';
 
-type DetailSearchParams = { mode?: string | string[]; lens?: string | string[]; q?: string | string[]; page?: string | string[] };
-
-function canonicalReviewHref(documentVersion: string, query: ReturnType<typeof parseDetailQuery>): string {
-  const params = new URLSearchParams({ mode: 'my-review', lens: query.lens, page: String(query.page) });
-  if (query.q) params.set('q', query.q);
-  return `/matrix-options/paper/publication/v/${encodeURIComponent(documentVersion)}?${params.toString()}`;
-}
-
+/**
+ * Legacy question deep link (F-07: the identity is never dropped).
+ * - A reviewer-guide question id opens My Review on that question (q) and its cohort.
+ * - A paper question id opens its owner (else container) heading section, keeping a
+ *   valid mode (and, in My Review, a valid cohort and question).
+ * - Anything else is 404.
+ * In My Review a paper question's `section` identity is carried in the URL by
+ * design (M1-07): the workspace selects a cohort portion only when the anchor is
+ * a portion's sectionAnchor, and otherwise leaves the identity in the URL unchanged.
+ */
 export default async function PublicationQuestionPage({
   params,
   searchParams,
 }: {
   params: Promise<{ documentVersion: string; questionId: string }>;
-  searchParams?: Promise<DetailSearchParams>;
+  searchParams?: Promise<PaperSearchParams>;
 }) {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE, process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
   if (gate === 'LEGACY_TWG_REVIEW') redirect(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
@@ -40,34 +37,17 @@ export default async function PublicationQuestionPage({
     resolvedQuestionId = decodeURIComponent(questionId);
   } catch {
     notFound();
-    return null;
   }
   const structure = loadRevisedPaperStructure();
+  const context = buildPaperUrlContext(structure);
+  const guideCohort = context.questionCohort.get(resolvedQuestionId);
+  if (guideCohort !== undefined) {
+    redirect(paperWorkspaceHref(documentVersion, { mode: 'my-review', cohort: guideCohort, q: resolvedQuestionId, section: null }));
+  }
   const question = structure.questions.find((candidate) => candidate.id === resolvedQuestionId);
   if (!question) notFound();
-  const detail: RequestedDetail = {
-    id: question.id,
-    domain: question.domain,
-    label: question.label,
-    startByte: question.startByte,
-    endByte: question.endByte,
-    ownerNodeId: question.ownerNodeId,
-  };
-  try {
-    const query = (await searchParams) ?? {};
-    const detailQuery = parseDetailQuery(query, 'questions');
-    const mode = parseWorkspaceMode(query.mode ?? 'publication');
-    if (mode === 'my-review') redirect(canonicalReviewHref(documentVersion, detailQuery));
-    const model = createWorkspaceModel(
-      structure,
-      detailQuery,
-      mode,
-      detail,
-    );
-    const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
-    return <RevisedPaperWorkspace model={model} readerText={mode === 'publication' ? sourceRangeText(structure.content, detail.startByte, detail.endByte) : undefined} />;
-  } catch (error) {
-    if (error instanceof ReviewQueryError) notFound();
-    throw error;
-  }
+  const headingNodeId = structure.nodes.some((node) => node.id === question.ownerNodeId) ? question.ownerNodeId : question.containerNodeId;
+  const section = resolveSectionAnchor(structure, headingNodeId, question.startByte);
+  const { state } = parsePaperUrlState((await searchParams) ?? {}, context);
+  redirect(paperWorkspaceHref(documentVersion, { ...state, section }));
 }

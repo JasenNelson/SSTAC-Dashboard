@@ -18,7 +18,7 @@ export const REVIEW_LENSES: readonly PublicationLens[] = [
   'questions',
 ];
 
-export type WorkspaceMode = 'my-review' | 'publication';
+export type WorkspaceMode = 'my-review' | 'working-draft';
 export type AssignmentState =
   | { readonly state: 'ASSIGNMENT_UNAVAILABLE'; readonly reasonCode: 'LIVE_ASSIGNMENT_SOURCE_NOT_AUTHORIZED' }
   | { readonly state: 'NO_ASSIGNMENT'; readonly reasonCode: 'AUTHORITATIVE_EMPTY' }
@@ -44,8 +44,9 @@ export function parseWorkspaceMode(value: string | readonly string[] | undefined
     if (value.length !== 1) throw new ReviewQueryError('REPEATED_PARAMETER');
     return parseWorkspaceMode(value[0]);
   }
-  if (value === undefined || value === 'my-review') return 'my-review';
-  if (value === 'publication') return 'publication';
+  // Working Draft is the landing mode; `publication` is the legacy alias.
+  if (value === undefined || value === 'working-draft' || value === 'publication') return 'working-draft';
+  if (value === 'my-review') return 'my-review';
   throw new ReviewQueryError('INVALID_LENS');
 }
 

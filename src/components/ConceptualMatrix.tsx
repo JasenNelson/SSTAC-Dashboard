@@ -171,7 +171,7 @@ const OBJECTIVES: { title: string; body: string; home?: string }[] = [
     title: 'Matrix Options Paper',
     body:
       'The Phase 2 deliverable: research findings, options considered, and the rationale behind each recommendation, together with a summary of the engagement that produced them.',
-    home: 'TWG Review',
+    home: 'Options Paper',
   },
 ];
 

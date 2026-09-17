@@ -14,14 +14,16 @@ describe('MatrixOptionsPrimaryNavigation', () => {
     const onSelectView = vi.fn();
     render(<MatrixOptionsPrimaryNavigation activeViewId="The Guide" onSelectView={onSelectView} paperWorkspaceEnabled={false} panelId="panel" />);
     expect(screen.getAllByRole('tab')).toHaveLength(7);
-    fireEvent.click(screen.getByRole('tab', { name: 'TWG Review' }));
+    expect(screen.getAllByRole('tab').map((tab) => tab.textContent)).toEqual(['Modernizing Schedule 3.4', 'Guide', 'Options Paper', 'Database', 'Calculator', 'SSD Workbench', 'Catalogue']);
+    fireEvent.click(screen.getByRole('tab', { name: 'Options Paper' }));
     expect(onSelectView).toHaveBeenCalledWith('TWG Review');
     expect(push).not.toHaveBeenCalled();
   });
 
   it('routes TWG Review to the Options Paper when enabled', () => {
     render(<MatrixOptionsPrimaryNavigation activeViewId="The Guide" onSelectView={vi.fn()} paperWorkspaceEnabled />);
-    fireEvent.click(screen.getByRole('tab', { name: 'TWG Review' }));
+    expect(screen.getByRole('tab', { name: 'Options Paper' })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('tab', { name: 'Options Paper' }));
     expect(push).toHaveBeenCalledWith('/matrix-options/paper');
   });
 
@@ -31,8 +33,12 @@ describe('MatrixOptionsPrimaryNavigation', () => {
     const guide = screen.getByRole('tab', { name: 'Guide' });
     guide.focus();
     fireEvent.keyDown(guide, { key: 'ArrowRight' });
-    expect(screen.getByRole('tab', { name: 'Modernizing Schedule 3.4' })).toHaveFocus();
+    expect(screen.getByRole('tab', { name: 'Options Paper' })).toHaveFocus();
     expect(onSelectView).not.toHaveBeenCalled();
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Options Paper' }), { key: 'Home' });
+    expect(screen.getByRole('tab', { name: 'Modernizing Schedule 3.4' })).toHaveFocus();
+    fireEvent.keyDown(screen.getByRole('tab', { name: 'Modernizing Schedule 3.4' }), { key: 'End' });
+    expect(screen.getByRole('tab', { name: 'Catalogue' })).toHaveFocus();
   });
 
   it('returns from the paper shell to a query-selected dashboard view', () => {
