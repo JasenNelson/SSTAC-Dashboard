@@ -4,17 +4,17 @@ import { createHash } from 'node:crypto';
 import fs from 'node:fs';
 import path from 'node:path';
 
-export const REVISED_PAPER_VERSION = '1.0.11-remediated-20260913';
+export const REVISED_PAPER_VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
 export const REVISED_PAPER_SHA256 =
-  'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd';
-export const REVISED_PAPER_BYTES = 534101;
+  'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337';
+export const REVISED_PAPER_BYTES = 541959;
 export const REVISED_PAPER_FILENAME =
-  'BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md';
+  'BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md';
 export const REVISED_PAPER_SIDECAR_FILENAME = `${REVISED_PAPER_FILENAME}.sha256`;
 export const REVISED_PAPER_RELATIVE_PATH =
-  `matrix_research/options_paper/${REVISED_PAPER_FILENAME}`;
+  `candidate/paper/${REVISED_PAPER_FILENAME}`;
 export const REVISED_PAPER_SIDECAR_RELATIVE_PATH =
-  `matrix_research/options_paper/${REVISED_PAPER_SIDECAR_FILENAME}`;
+  `candidate/paper/${REVISED_PAPER_SIDECAR_FILENAME}`;
 export const REVISED_PAPER_RELEASE_IDENTITY =
   `matrix-options-paper:${REVISED_PAPER_VERSION}:${REVISED_PAPER_SHA256}`;
 export const REVISED_PAPER_ROUTE =

@@ -9,6 +9,8 @@ import {
 import { paperWorkspaceHref } from '@/lib/matrix-options/paper/url-state';
 import { REVISED_PAPER_ROUTE, REVISED_PAPER_VERSION } from '@/lib/matrix-options/revised-paper';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MatrixOptionsPaperResolverPage() {
   const gate = resolveMatrixOptionsPaperReviewNavigationGate(
     process.env[MATRIX_OPTIONS_PAPER_WORKSPACE_FLAG],

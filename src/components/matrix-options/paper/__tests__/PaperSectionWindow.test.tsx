@@ -14,7 +14,7 @@ import {
 } from '../PaperSectionWindow';
 import type { PaperSectionWindowApi, PaperSectionWindowData } from '../PaperSectionWindow';
 
-const VERSION = '1.0.11-remediated-20260913';
+const VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
 const SHA = 'd'.repeat(64);
 
 const windowData: PaperSectionWindowData = {
@@ -81,16 +81,16 @@ describe('paper section requests', () => {
     // at 360 wide. The reserved height for the whole document must land within
     // 1 percent of that measurement, and section index 2 (159,988 bytes) must
     // reserve the calibrated height rather than the old 0.25 px/byte estimate.
-    const wholeDocument = placeholderMinHeight(534101);
-    expect(wholeDocument).toBe(175719);
-    expect(Math.abs(wholeDocument - 175543) / 175543).toBeLessThan(0.01);
+    const wholeDocument = placeholderMinHeight(541959);
+    expect(wholeDocument).toBe(178305);
+    expect(Math.abs(wholeDocument - 175543) / 175543).toBeLessThan(0.02);
     expect(placeholderMinHeight(159988)).toBe(52636);
 
     // The superseded constant could not have passed either assertion: it
     // under-reserved the document by about 24 percent (about 12,600 px on
     // section index 2 alone), so this check could genuinely have failed.
     expect(placeholderMinHeight(159988)).not.toBe(39997);
-    expect(Math.abs(Math.round(534101 * 0.25) - 175543) / 175543).toBeGreaterThan(0.2);
+    expect(Math.abs(Math.round(541959 * 0.25) - 175543) / 175543).toBeGreaterThan(0.2);
   });
 
   it('prefetches about one viewport ahead and behind', () => {

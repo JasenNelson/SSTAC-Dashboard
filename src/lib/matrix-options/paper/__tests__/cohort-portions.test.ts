@@ -133,7 +133,7 @@ function synthetic(content: string): { readonly content: string; readonly nodes:
 function manifestWith(sourceLocators: readonly string[]): CohortManifest {
   return {
     schemaVersion: 'matrix-paper-cohorts-v1',
-    releaseIdentity: '1.0.11-remediated-20260913',
+    releaseIdentity: '1.0.11-remediated-7-8-successor-20260918-D',
     status: 'PROPOSED_PENDING_OWNER_QP_APPROVAL',
     cohorts: [{
       id: 'categories',

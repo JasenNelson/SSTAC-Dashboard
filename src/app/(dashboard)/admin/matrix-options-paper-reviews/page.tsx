@@ -1,0 +1,42 @@
+import { createServerClient, type CookieOptions } from '@supabase/ssr';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import AdminReviewsClient from './AdminReviewsClient';
+import { getPaperAdminAccess, getTrustedPaperReviewIdentity, validateTrustedReviewFilters } from '@/lib/matrix-options/paper-admin-guard';
+import { normalizeReviewRows, REVIEW_RESPONSE_SELECT } from '@/lib/matrix-options/paper/review-csv';
+
+type SearchParams = Record<string, string | string[] | undefined>;
+const keys = ['documentVersion', 'manifestSha256', 'cohortId', 'questionId', 'userId', 'status'] as const;
+const first = (value: string | string[] | undefined) => Array.isArray(value) ? value[0] || '' : value || '';
+const STATUSES = new Set(['not-started', 'drafted', 'submitted', 'changed-since-submit']);
+
+export default async function MatrixOptionsPaperReviewsPage({ searchParams }: { searchParams?: Promise<SearchParams> }) {
+  const store = await cookies();
+  const supabase = createServerClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!, { cookies: {
+    get(name: string) { return store.get(name)?.value; },
+    set(name: string, value: string, options: CookieOptions) { try { store.set({ name, value, ...options }); } catch {} },
+    remove(name: string, options: CookieOptions) { try { store.set({ name, value: '', ...options }); } catch {} },
+  } });
+  const access = await getPaperAdminAccess(supabase);
+  if (!access.allowed) redirect(access.status === 401 ? '/login' : '/dashboard');
+  const params = searchParams ? await searchParams : {};
+  const initialFilters = Object.fromEntries(keys.map((key) => [key, first(params[key])])) as Record<string, string>;
+  let trusted;
+  try { trusted = await getTrustedPaperReviewIdentity(); } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />; }
+  const identityFilters = { documentVersion: initialFilters.documentVersion || undefined, manifestSha256: initialFilters.manifestSha256 || undefined, cohortId: initialFilters.cohortId || undefined, questionId: initialFilters.questionId || undefined };
+  if ((identityFilters.manifestSha256 && !/^[0-9a-f]{64}$/i.test(identityFilters.manifestSha256)) || !validateTrustedReviewFilters(identityFilters, trusted)) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
+  if (initialFilters.status && !STATUSES.has(initialFilters.status)) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
+  let query: any;
+  try {
+    query = supabase.from('matrix_paper_review_responses').select(REVIEW_RESPONSE_SELECT);
+    const databaseFilters = [['documentVersion', 'document_version'], ['manifestSha256', 'manifest_sha256'], ['cohortId', 'cohort_id'], ['questionId', 'question_id'], ['userId', 'user_id']] as const;
+    for (const [key, column] of databaseFilters) if (initialFilters[key]) query = query.eq(column, initialFilters[key]);
+  } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />; }
+  let result: { data?: unknown; error?: unknown };
+  try { result = await query; } catch { return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />; }
+  if (result.error || !Array.isArray(result.data)) return <AdminReviewsClient rows={[]} state={{ kind: 'query-error' }} initialFilters={initialFilters} />;
+  const rows = normalizeReviewRows(result.data, trusted);
+  if (rows === null) return <AdminReviewsClient rows={[]} state={{ kind: 'integrity-error' }} initialFilters={initialFilters} />;
+  const filtered = initialFilters.status ? rows.filter((row) => row.status === initialFilters.status) : rows;
+  return <AdminReviewsClient rows={filtered} state={{ kind: filtered.length ? 'ready' : 'empty' }} initialFilters={initialFilters} />;
+}

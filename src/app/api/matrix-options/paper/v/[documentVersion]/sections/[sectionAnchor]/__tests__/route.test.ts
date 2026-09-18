@@ -21,7 +21,7 @@ import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-s
 import { validatePaperSectionContract } from '@/lib/matrix-options/paper/section-window';
 import { GET } from '../route';
 
-const VERSION = '1.0.11-remediated-20260913';
+const VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
 const encoder = new TextEncoder();
 const byteLength = (text: string) => encoder.encode(text).length;
 
@@ -79,10 +79,10 @@ describe('GET /api/matrix-options/paper/v/[documentVersion]/sections/[sectionAnc
     expect(response.headers.get('X-RateLimit-Limit')).toBe('200');
     expect(response.headers.get('content-type')).toContain('application/json');
     const body = await response.json();
-    const contract = validatePaperSectionContract(body, { documentVersion: VERSION, paperSha256: realSha, index: 0, anchor: realFirstAnchor, sectionCount: 16 });
+    const contract = validatePaperSectionContract(body, { documentVersion: VERSION, paperSha256: realSha, index: 0, anchor: realFirstAnchor, sectionCount: 17 });
     expect(contract.chunks.length).toBeGreaterThan(1);
     expect(contract.startByte).toBe(0);
-    expect(contract.endByte).toBeLessThan(534101);
+    expect(contract.endByte).toBeLessThan(541959);
     expect(JSON.stringify(body)).not.toContain('"layout"');
     expect(getAuthenticatedUserMock).toHaveBeenCalledTimes(1);
   });

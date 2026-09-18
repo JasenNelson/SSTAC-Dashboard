@@ -16,13 +16,13 @@ const LONG_BAD = 'b'.repeat(PAPER_URL_VALUE_MAX_LENGTH + 1);
 const ctx = {
   anchors: new Set(['intro', 'methods', LONG_OK, LONG_BAD]),
   questionCohort: new Map([
-    ['rpq:1.0.11-remediated-20260913:q01', 'categories'],
+    ['rpq:1.0.11-remediated-7-8-successor-20260918-D:q01', 'categories'],
     ['q2', 'pathway-grid'],
     ['q-ghost', 'ghost-cohort'],
   ]),
   cohortIds: new Set(['categories', 'pathway-grid', LONG_BAD]),
 };
-const Q1 = 'rpq:1.0.11-remediated-20260913:q01';
+const Q1 = 'rpq:1.0.11-remediated-7-8-successor-20260918-D:q01';
 
 describe('workingDraftSectionHref (M1-04)', () => {
   it('serializes exactly one encoded section identity as a canonical Working Draft query', () => {
@@ -94,7 +94,7 @@ describe('paper URL state serialize and href', () => {
     expect(serializePaperUrlState(wd())).toBe('?mode=working-draft');
     expect(serializePaperUrlState(wd('intro'))).toBe('?mode=working-draft&section=intro');
     expect(serializePaperUrlState({ section: 'intro', q: Q1, cohort: 'categories', mode: 'my-review' })).toBe(
-      '?mode=my-review&cohort=categories&q=rpq%3A1.0.11-remediated-20260913%3Aq01&section=intro',
+      '?mode=my-review&cohort=categories&q=rpq%3A1.0.11-remediated-7-8-successor-20260918-D%3Aq01&section=intro',
     );
     expect(serializePaperUrlState(mr(null, null, 'a b&c=d'))).toBe('?mode=my-review&section=a+b%26c%3Dd');
   });
@@ -108,8 +108,8 @@ describe('paper URL state serialize and href', () => {
   });
 
   it('builds the workspace href with an encoded document version', () => {
-    expect(paperWorkspaceHref('1.0.11-remediated-20260913', wd('intro'))).toBe(
-      '/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=working-draft&section=intro',
+    expect(paperWorkspaceHref('1.0.11-remediated-7-8-successor-20260918-D', wd('intro'))).toBe(
+      '/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft&section=intro',
     );
     expect(paperWorkspaceHref('a b/c?d', mr('categories'))).toBe(
       '/matrix-options/paper/publication/v/a%20b%2Fc%3Fd?mode=my-review&cohort=categories',

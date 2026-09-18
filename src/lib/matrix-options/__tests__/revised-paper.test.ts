@@ -38,19 +38,19 @@ afterEach(() => {
 
 describe('revised paper loader', () => {
   it('pins the exact release and traced file constants', () => {
-    expect(REVISED_PAPER_VERSION).toBe('1.0.11-remediated-20260913');
-    expect(REVISED_PAPER_BYTES).toBe(534101);
+    expect(REVISED_PAPER_VERSION).toBe('1.0.11-remediated-7-8-successor-20260918-D');
+    expect(REVISED_PAPER_BYTES).toBe(541959);
     expect(REVISED_PAPER_SHA256).toBe(
-      'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
+      'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
     );
     expect(REVISED_PAPER_RELEASE_IDENTITY).toBe(
       `matrix-options-paper:${REVISED_PAPER_VERSION}:${REVISED_PAPER_SHA256}`,
     );
     expect(REVISED_PAPER_RELATIVE_PATH).toBe(
-      `matrix_research/options_paper/${REVISED_PAPER_FILENAME}`,
+      `candidate/paper/${REVISED_PAPER_FILENAME}`,
     );
     expect(REVISED_PAPER_SIDECAR_RELATIVE_PATH).toBe(
-      `matrix_research/options_paper/${REVISED_PAPER_SIDECAR_FILENAME}`,
+      `candidate/paper/${REVISED_PAPER_SIDECAR_FILENAME}`,
     );
     expect(REVISED_PAPER_PERSISTENCE_STATE).toBe(
       'DISABLED_PENDING_LIVE_CONTRACT',
@@ -144,34 +144,25 @@ describe('revised paper loader', () => {
     });
   });
 
-  it('preserves ordered claim-local verification-open notices and excludes Appendix J', () => {
+  it('resolves 7.8.1 and 7.8.2 locators and excludes Appendix J and all STATUS tags', () => {
     const { content } = loadRevisedPaper(REVISED_PAPER_VERSION);
     const precedingSection = content.indexOf(
-      '#### 4.3.1 The Schedule 3.1 Precedent for Soil',
-    );
-    const burrardNotice = content.indexOf(
-      '> **[STATUS: SOURCE-GAP QUARANTINE - PRIMARY VERIFICATION OPEN]** Burrard Inlet',
-      precedingSection,
+      '#### 7.8.1 Inventory, provenance and status discipline',
     );
     const sectionStart = content.indexOf(
-      '#### 4.4.3 What the current draft material actually supports',
+      '#### 7.8.2 Source submission and primary verification',
     );
-    const freshwaterNotice = content.indexOf(
-      '> **[STATUS: SOURCE-GAP QUARANTINE - PRIMARY VERIFICATION OPEN]** Quantitative freshwater',
-      burrardNotice + 1,
-    );
-    const candidateRecordNotice = content.indexOf(
-      '> **[STATUS: QUARANTINED - PRIMARY VERIFICATION OPEN]** The quantitative records',
-      freshwaterNotice + 1,
-    );
-    const nextSection = content.indexOf('#### 4.4.4 The applicability statement');
+    const nextSection = content.indexOf('# Policy-ready input categories - Phase 2 boundary');
 
     expect(precedingSection).toBeGreaterThanOrEqual(0);
-    expect(burrardNotice).toBeGreaterThan(precedingSection);
-    expect(sectionStart).toBeGreaterThan(burrardNotice);
-    expect(freshwaterNotice).toBeGreaterThan(sectionStart);
-    expect(candidateRecordNotice).toBeGreaterThan(freshwaterNotice);
-    expect(nextSection).toBeGreaterThan(candidateRecordNotice);
+    expect(sectionStart).toBeGreaterThan(precedingSection);
+    expect(nextSection).toBeGreaterThan(sectionStart);
+    
+    const evalCriteria = content.indexOf('## 8.0 Evaluation Criteria');
+    expect(evalCriteria).toBeGreaterThan(nextSection);
+    const section78Slice = content.substring(precedingSection, evalCriteria);
+    expect(section78Slice).not.toMatch(/\[STATUS:/);
+    
     expect(content).not.toMatch(/Appendix J/i);
   });
 });

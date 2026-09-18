@@ -14,7 +14,7 @@ describe('cohort contract', () => {
     );
     expect(manifest.status).toBe('PROPOSED_PENDING_OWNER_QP_APPROVAL');
     expect(manifest.cohorts.map((cohort) => cohort.guideEvidenceRanges)).toEqual([
-      [[181, 190]], [[191, 197]], [[198, 204]], [[205, 226]], [[212, 222]],
+      [[181, 190]], [[191, 197]], [[198, 204]], [[205, 211], [222, 226]], [[212, 220]],
     ]);
   });
 

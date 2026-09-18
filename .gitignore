@@ -72,6 +72,8 @@ __pycache__/
 develop-eggs/
 dist/
 downloads/
+# Matrix Options paper download API routes are source code, not download artifacts.
+!src/app/api/matrix-options/paper/downloads/
 eggs/
 .eggs/
 lib64/

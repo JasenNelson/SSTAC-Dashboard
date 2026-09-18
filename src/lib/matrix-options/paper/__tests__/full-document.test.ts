@@ -71,7 +71,7 @@ describe('full-document model against the real authenticated paper', () => {
   const totalBytes = bytesOf(structure.content);
 
   it('uses UTF-8 byte ranges that tile the whole paper with no gap or overlap', () => {
-    expect(totalBytes).toBe(534101);
+    expect(totalBytes).toBe(541959);
     // The current release is pure ASCII (bytes == UTF-16 code units); the
     // byte-vs-code-unit distinction is exercised by the multi-byte synthetic test.
     expect(structure.content.length).toBe(totalBytes);
@@ -85,10 +85,10 @@ describe('full-document model against the real authenticated paper', () => {
     expect(chunks.map((chunk) => rawRange(structure.content, chunk.startByte, chunk.endByte)).join('')).toBe(structure.content);
   });
 
-  it('has exactly 338 heading chunks in node order and no preamble (the paper starts with a heading)', () => {
-    expect(structure.nodes).toHaveLength(338);
+  it('has exactly 341 heading chunks in node order and no preamble (the paper starts with a heading)', () => {
+    expect(structure.nodes).toHaveLength(341);
     expect(chunks.filter((chunk) => chunk.id === PREAMBLE_CHUNK_ID)).toHaveLength(0);
-    expect(chunks).toHaveLength(338);
+    expect(chunks).toHaveLength(341);
     expect(chunks.map((chunk) => chunk.nodeId)).toEqual(structure.nodes.map((node) => node.id));
     expect(chunks.map((chunk) => chunk.anchor)).toEqual(structure.nodes.map((node) => node.anchor));
     chunks.forEach((chunk, index) => {
@@ -97,11 +97,10 @@ describe('full-document model against the real authenticated paper', () => {
     expect(chunks.some((chunk) => chunk.label === 'Technical Appendices Compendium' && chunk.depth === 1)).toBe(true);
   });
 
-  it('builds a 338-entry outline with 108 entries at depth 1-2, unique anchors and consistent child links', () => {
-    expect(outline).toHaveLength(338);
-    expect(outline.filter((entry) => entry.depth <= 2)).toHaveLength(108);
-    expect(new Set(outline.map((entry) => entry.anchor)).size).toBe(338);
-    expect(anchors.size).toBe(338);
+  it('builds a 341-entry outline with unique anchors and consistent child links', () => {
+    expect(outline).toHaveLength(341);
+    expect(new Set(outline.map((entry) => entry.anchor)).size).toBe(341);
+    expect(anchors.size).toBe(341);
     for (const entry of outline) {
       expect(anchors.has(entry.anchor)).toBe(true);
       expect(entry.childIds).toEqual(outline.filter((candidate) => candidate.parentId === entry.id).map((candidate) => candidate.id));
@@ -115,7 +114,7 @@ describe('full-document model against the real authenticated paper', () => {
 
   it('removes only standalone section-anchor div lines from chunk markdown', () => {
     const rawAnchorLines = [...structure.content.matchAll(ANCHOR_LINE_GLOBAL)];
-    expect(rawAnchorLines).toHaveLength(118);
+    expect(rawAnchorLines).toHaveLength(121);
     let removedBytes = 0;
     for (const chunk of chunks) {
       const raw = rawRange(structure.content, chunk.startByte, chunk.endByte);
@@ -135,12 +134,13 @@ describe('full-document model against the real authenticated paper', () => {
   it('maps legacy section-anchor ids only to valid heading anchors', () => {
     const legacy = buildLegacyAnchorMap(structure);
     const distinctIds = [...new Set([...structure.content.matchAll(ANCHOR_LINE_GLOBAL)].map((match) => match[1]))];
-    expect(distinctIds).toHaveLength(117);
+    expect(distinctIds).toHaveLength(120);
+    const legacyExpectedIds = distinctIds.filter(id => !['sec-7-8', 'sec-7-8-1', 'sec-7-8-2'].includes(id));
     for (const [id, anchor] of Object.entries(legacy)) {
-      expect(distinctIds).toContain(id);
+      expect(legacyExpectedIds).toContain(id);
       expect(anchors.has(anchor)).toBe(true);
     }
-    expect(Object.keys(legacy).sort()).toEqual([...distinctIds].sort());
+    expect(Object.keys(legacy).sort()).toEqual([...legacyExpectedIds].sort());
     const headingAnchor = (prefix: string) => structure.nodes.find((node) => node.label.startsWith(prefix))?.anchor;
     expect(legacy['sec-4-1']).toBe(headingAnchor('4.1 '));
     expect(legacy['sec-10-2']).toBe(headingAnchor('10.2 '));

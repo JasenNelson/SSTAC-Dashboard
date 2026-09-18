@@ -11,7 +11,7 @@ import {
   resolveSectionAnchor,
 } from '../PaperDocument';
 
-const version = '1.0.11-remediated-20260913';
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 
 function syntheticStructure(withPreamble = true): RevisedPaperStructure {
   const content = [

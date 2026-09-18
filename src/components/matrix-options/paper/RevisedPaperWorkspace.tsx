@@ -23,15 +23,19 @@ import { CohortReviewNav } from './CohortReviewNav';
 import { PAPER_STICKY_HEADER_HEIGHT_VAR } from './PaperChunkSection';
 import { isPlainPrimaryClick, PaperOutlineNav } from './PaperOutlineNav';
 import type { PaperOutlineNavEntry } from './PaperOutlineNav';
-import { isPanelEscapeKey, PaperRail, PaperRailToggle, PAPER_SHELL_CLASSES } from './PaperRail';
+import { PaperRail, PaperRailToggle, PAPER_SHELL_CLASSES } from './PaperRail';
 import { PaperLoadFullDocumentControl, PaperSectionWindowView, usePaperSectionWindow } from './PaperSectionWindow';
 import type { PaperSectionWindowData } from './PaperSectionWindow';
 import { PaperText, portionHeadingOffset } from './PaperText';
 import { isLgViewport } from './paper-viewport';
 import { ReviewCommentsPanel } from './ReviewCommentsPanel';
+import { DownloadFilesPanel } from './DownloadFilesPanel';
+import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
 
 export interface RevisedPaperWorkspaceProps {
   readonly documentVersion: string;
+  /** Authenticated release manifest identity passed by the server route. */
+  readonly reviewManifestSha256?: string;
   /** Canonical URL state parsed on the server (paper/url-state.ts). */
   readonly urlState: PaperUrlState;
   readonly assignment: AssignmentState;
@@ -47,6 +51,8 @@ export interface RevisedPaperWorkspaceProps {
   readonly sectionWindow?: PaperSectionWindowData;
   /** Working Draft only: the server-rendered initial section (<PaperDocument layout="chunks">). */
   readonly children?: ReactNode;
+  /** Authenticated opaque-ID PDF/DOCX manifest; null remains a visible pending state. */
+  readonly downloadManifest?: VerifiedDownloadManifest | null;
 }
 
 export const PAPER_NAVIGATION_RAIL_ID = 'paper-navigation-rail';
@@ -303,7 +309,7 @@ function searchParamsRecord(search: string): PaperSearchParams {
   return record;
 }
 
-export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, outline, cohortPortions, sectionWindow, children }: RevisedPaperWorkspaceProps) {
+export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifest = null }: RevisedPaperWorkspaceProps) {
   const isMyReview = urlState.mode === 'my-review';
   const cohortManifest = useMemo(() => getCohortManifest(), []);
   const reviewerGuide = useMemo(() => getReviewerGuideContract(), []);
@@ -322,7 +328,6 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
   const downloadToggleRef = useRef<HTMLButtonElement>(null);
   const navigationHeadingRef = useRef<HTMLHeadingElement>(null);
   const reviewCommentsHeadingRef = useRef<HTMLHeadingElement>(null);
-  const downloadHeadingRef = useRef<HTMLHeadingElement>(null);
   /*
    * A requested reveal and the id of the activation that requested it, captured
    * synchronously in the requesting handler (scroll authority rule 3) and
@@ -506,7 +511,7 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
     const open = pending.panel === 'navigation' ? navigationOpen : pending.panel === 'review-comments' ? reviewCommentsOpen : downloadOpen;
     if (!open) return;
     pendingRevealRef.current = null;
-    const heading = pending.panel === 'navigation' ? navigationHeadingRef.current : pending.panel === 'review-comments' ? reviewCommentsHeadingRef.current : downloadHeadingRef.current;
+    const heading = pending.panel === 'navigation' ? navigationHeadingRef.current : pending.panel === 'review-comments' ? reviewCommentsHeadingRef.current : document.getElementById('paper-download-files-heading');
     if (!heading) return;
     /*
      * Opening a panel is an explicit reader act, so its reveal claims the
@@ -877,6 +882,7 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
   }, [focusUnlessInert, paperFocusRequest]);
 
   const activeQuestion = allQuestionsInCohortOrder.find((question) => question.number === activeQuestionNumber) ?? allQuestionsInCohortOrder[0];
+  const activeQuestionCohortId = cohortManifest.cohorts.find((cohort) => cohort.questionNumbers.includes(activeQuestion?.number ?? -1))?.id ?? selectedCohort?.id ?? null;
 
   const selectQuestion = (number: number) => {
     // M2: Prev/Next, the "Jump to topic" select and the saved-questions list
@@ -934,18 +940,10 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
     if (next) selectQuestion(next.number);
   };
 
-  const onDownloadKeyDown = (event: KeyboardEvent<HTMLElement>) => {
-    if (!downloadOpen || !isPanelEscapeKey(event)) return;
-    event.preventDefault();
-    closePanel('download');
-  };
-
   const panelControls = <div data-testid="workspace-panel-controls" className="flex flex-wrap items-center gap-2">
     <PaperRailToggle label="Navigation" open={navigationOpen} controls={PAPER_NAVIGATION_RAIL_ID} buttonRef={navigationToggleRef} onClick={() => togglePanel('navigation', navigationOpen)} icon={navigationOpen ? <PanelLeftClose aria-hidden="true" className="h-4 w-4" /> : <PanelLeftOpen aria-hidden="true" className="h-4 w-4" />} />
     {isMyReview && <PaperRailToggle label="Review Comments" open={reviewCommentsOpen} controls={PAPER_REVIEW_COMMENTS_RAIL_ID} buttonRef={reviewCommentsToggleRef} onClick={() => togglePanel('review-comments', reviewCommentsOpen)} icon={reviewCommentsOpen ? <PanelRightClose aria-hidden="true" className="h-4 w-4" /> : <PanelRightOpen aria-hidden="true" className="h-4 w-4" />} />}
   </div>;
-
-  const selectedCohortForDownload = selectedCohort;
 
   return (
     <>
@@ -957,6 +955,7 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
             <p className="text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-300">Matrix Options Paper</p>
             <h1 className="text-xl font-bold">Review workspace</h1>
             <p className="break-words font-mono text-xs text-slate-500 dark:text-slate-400">{documentVersion}</p>
+            <p role="status" data-testid="noncanonical-preview-banner" className="mt-1 inline-flex rounded border border-amber-500 bg-amber-100 px-2 py-1 text-[0.7rem] font-bold uppercase tracking-wide text-amber-950 dark:border-amber-400 dark:bg-amber-950 dark:text-amber-100">NON-CANONICAL PREVIEW - integration only</p>
           </div>
           <div data-testid="workspace-header-controls" className="flex min-w-0 flex-wrap items-center justify-end gap-2">
             <nav aria-label="Workspace mode" className="flex min-h-[44px] items-center gap-1 rounded-lg border border-slate-200 p-1 dark:border-slate-700">
@@ -980,19 +979,7 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
 
         <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="min-w-0 flex-1 focus:outline-none lg:overflow-y-auto print:overflow-visible">
           <div className="mx-auto min-w-0 max-w-[72rem] space-y-5 px-4 py-5 sm:px-6 print:max-w-none print:p-0">
-            <section id={PAPER_DOWNLOAD_PANEL_ID} data-testid="download-files-panel" hidden={!downloadOpen} aria-labelledby="paper-download-files-heading" onKeyDown={onDownloadKeyDown} className="min-w-0 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-900 print:hidden">
-              <div className="flex items-start justify-between gap-3 border-b border-slate-200 pb-3 dark:border-slate-700">
-                <h2 ref={downloadHeadingRef} tabIndex={-1} id="paper-download-files-heading" className="scroll-mt-[calc(var(--paper-sticky-header-height,6rem)+0.5rem)] text-base font-bold focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-600">Download Files</h2>
-                <button type="button" onClick={() => closePanel('download')} className="inline-flex min-h-[44px] shrink-0 items-center rounded-lg border border-slate-200 bg-white px-2.5 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700">Hide Download Files</button>
-              </div>
-              <div data-testid="reading-materials-content" className="mt-4 space-y-4">
-                <p className="text-sm text-slate-600 dark:text-slate-300">Download Files is where verified cohort PDF and DOCX reading packages will be downloaded when ready. They are not available yet.</p>
-                <div className="rounded-lg border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 dark:border-amber-800 dark:bg-amber-950 dark:text-amber-100">
-                  <h3 className="font-bold">Download Files: {selectedCohortForDownload?.name ?? 'Selected cohort'}</h3>
-                  <p className="mt-2">The selected cohort PDF and DOCX are being prepared pending integrity verification. No download is available in this preview.</p>
-                </div>
-              </div>
-            </section>
+            <DownloadFilesPanel open={downloadOpen} manifest={downloadManifest} onClose={() => closePanel('download')} closeFocusRef={downloadToggleRef} panelId={PAPER_DOWNLOAD_PANEL_ID} />
 
             <section aria-label={isMyReview ? 'My Review status' : 'Working Draft status'} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3 dark:border-slate-700 print:hidden">
               <h2 className="text-lg font-bold">{isMyReview ? 'My Review' : 'Working Draft'}</h2>
@@ -1022,7 +1009,7 @@ export function RevisedPaperWorkspace({ documentVersion, urlState, assignment, o
         </div>
 
         {isMyReview && <PaperRail id={PAPER_REVIEW_COMMENTS_RAIL_ID} testId="review-comments-rail" side="right" open={reviewCommentsOpen} heading="Review Comments" headingId="paper-review-comments-rail-heading" headingRef={reviewCommentsHeadingRef} onEscape={() => closePanel('review-comments')}>
-          <ReviewCommentsPanel documentVersion={documentVersion} questions={allQuestionsInCohortOrder} question={activeQuestion} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} />
+          <ReviewCommentsPanel documentVersion={documentVersion} manifestSha256={reviewManifestSha256 ?? ''} cohortId={activeQuestionCohortId} questions={allQuestionsInCohortOrder} question={activeQuestion} responseRef={responseRef} onSelectQuestion={selectQuestion} onPreviousQuestion={() => moveQuestion(-1)} onNextQuestion={() => moveQuestion(1)} />
         </PaperRail>}
       </div>
     </div>

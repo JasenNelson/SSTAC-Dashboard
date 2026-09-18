@@ -6,7 +6,7 @@ import { describe, expect, it } from 'vitest';
 import { sha256Hex, validatePackageManifest, type PackageManifest } from '../package-integrity';
 
 const hash = 'a'.repeat(64);
-const paperText = readFileSync(resolve(process.cwd(), 'matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md'), 'utf8');
+const paperText = readFileSync(resolve(process.cwd(), 'candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md'), 'utf8');
 const paperHash = sha256Hex(new TextEncoder().encode(paperText));
 const paperBytes = Buffer.from(paperText, 'utf8');
 const guideBytes = readFileSync(resolve(process.cwd(), 'src/lib/matrix-options/paper/contracts/reviewer-guide-v1.json'));
@@ -20,7 +20,7 @@ const basePortion = { id: 'categories:section-4.1', cohortId: 'categories', sect
 const paperContextPortions = [basePortion];
 const manifest: PackageManifest = {
   schemaVersion: 'matrix-review-package-v1',
-  releaseIdentity: '1.0.11-remediated-20260913',
+  releaseIdentity: '1.0.11-remediated-7-8-successor-20260918-D',
   cohortId: 'categories',
   status: 'REVIEW_READY_NOT_GREEN',
   paperSha256: paperHash,

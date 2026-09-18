@@ -13,7 +13,7 @@ export type MatrixOptionsViewId = (typeof MATRIX_OPTIONS_VIEW_IDS)[number];
 export const MATRIX_OPTIONS_TABPANEL_ID = 'matrix-dashboard-tabpanel';
 export const MATRIX_OPTIONS_PAPER_TABPANEL_ID = 'matrix-options-paper-tabpanel';
 export const MATRIX_OPTIONS_PAPER_LANDING_PATH = '/matrix-options/paper';
-export const MATRIX_OPTIONS_PAPER_REVIEW_ROUTE = '/matrix-options/paper/review/v/1.0.11-remediated-20260913';
+export const MATRIX_OPTIONS_PAPER_REVIEW_ROUTE = '/matrix-options/paper/review/v/1.0.11-remediated-7-8-successor-20260918-D';
 export const MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH = '/matrix-options?view=TWG%20Review';
 export const MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION_FLAG =
   'MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION';

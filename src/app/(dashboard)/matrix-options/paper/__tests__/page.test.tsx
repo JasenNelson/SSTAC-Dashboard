@@ -37,7 +37,7 @@ describe('/matrix-options/paper', () => {
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');
   });
 
   it('F-06: gives the header actions slot a named group role and hides it while empty', () => {

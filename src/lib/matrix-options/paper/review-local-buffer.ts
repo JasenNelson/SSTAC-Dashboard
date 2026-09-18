@@ -2,10 +2,10 @@
  * M2 LOCAL REVIEW BUFFER (PLAN-R4 3.B / 6.A local-buffer-only scope).
  *
  * A small localStorage-backed per-question draft store for My Review. This is
- * NOT the M3 persistence layer: there is no debounce, no server save, no
- * conflict resolution, and no clear-on-signout here. It exists only so a
- * reader's in-progress text survives a reload while M3's real save/submit
- * path is built. Every localStorage access is wrapped in try/catch: storage
+ * NOT the M3 persistence layer: server save, debounce, conflict resolution,
+ * and session lifecycle remain in ReviewCommentsPanel. It exists so a
+ * reader's in-progress text survives a reload alongside M3's real save/submit
+ * path. Every localStorage access is wrapped in try/catch: storage
  * being unavailable (private browsing, quota, disabled cookies) must degrade
  * to an empty/no-op buffer, never break the workspace. The 20000-char limit
  * (PLAN-R4 3.B.3) is enforced on READ (`readReviewLocalDraft`), the one
@@ -13,19 +13,15 @@
  * storage.
  *
  * Key scheme: `mtwg-paper-review:<userKey>:<documentVersion>:<questionId>`.
- * PLAN-R4 6.A's eventual M3 key is `<userId>:<version>:<questionId>`, keyed by
- * an authenticated user id. M2 has no network calls of its own and no
- * authenticated user id reaches RevisedPaperWorkspace through its existing
- * props (verified against AssignmentState and RevisedPaperWorkspaceProps: no
- * user identity field exists anywhere in the paper tree's props today), so
- * `userKey` here is the literal string 'local' unless a caller is later wired
- * with a real one. This is a recorded M2 limitation (see M2 writer closeout),
- * not a silent guess: a future M3 change that starts threading an
- * authenticated user id through these props should also migrate this key.
+ * PLAN-R4 6.A's M3 key is `<userId>:<version>:<questionId>`, keyed by the
+ * authenticated identity returned by the server bootstrap. The anonymous
+ * `local` namespace is retained only for pre-authentication crash recovery and
+ * is migrated only after an authenticated write succeeds.
  */
 
 export const REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY = 'local';
 const REVIEW_LOCAL_BUFFER_PREFIX = 'mtwg-paper-review';
+const knownReviewLocalBufferKeys = new Set<string>();
 /**
  * FIX CYCLE 1 / F2. The 20000-char draft limit (PLAN-R4 3.B.3), enforced at
  * ONE boundary: here, on READ. `writeReviewLocalDraft` never needs its own
@@ -67,14 +63,68 @@ export function readReviewLocalDraft(identity: ReviewLocalBufferIdentity): strin
  * (an empty buffer is not "drafted", so nothing is retained for it). Never
  * throws: an unavailable or full store silently drops the write.
  */
-export function writeReviewLocalDraft(identity: ReviewLocalBufferIdentity, text: string): void {
+export function writeReviewLocalDraft(identity: ReviewLocalBufferIdentity, text: string): boolean {
   try {
-    if (typeof window === 'undefined' || !window.localStorage) return;
+    if (typeof window === 'undefined' || !window.localStorage) return false;
     const key = reviewLocalBufferKey(identity);
-    if (text.length === 0) window.localStorage.removeItem(key);
-    else window.localStorage.setItem(key, text);
+    if (text.length === 0) { window.localStorage.removeItem(key); knownReviewLocalBufferKeys.delete(key); }
+    else { window.localStorage.setItem(key, text); knownReviewLocalBufferKeys.add(key); }
+    return true;
   } catch {
     // Unavailable storage must not break the UI (private browsing, quota, disabled cookies).
+    return false;
+  }
+}
+
+/** Removes all locally buffered review drafts for one authenticated user. */
+export function clearReviewLocalDrafts(userKey: string, documentVersion?: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage || !userKey) return;
+    const prefix = `${REVIEW_LOCAL_BUFFER_PREFIX}:${userKey}:`;
+    const versionPrefix = documentVersion ? `${prefix}${documentVersion}:` : prefix;
+    removeReviewLocalBufferKeys((key) => key.startsWith(versionPrefix));
+  } catch {
+    // Sign-out cleanup must never make sign-out fail.
+  }
+}
+
+/** Removes every user namespace for one release before a session handoff. */
+export function clearReviewLocalDraftsForVersion(documentVersion: string): void {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage || !documentVersion) return;
+    const suffix = `:${documentVersion}:`;
+    removeReviewLocalBufferKeys((key) => key.startsWith(`${REVIEW_LOCAL_BUFFER_PREFIX}:`) && key.includes(suffix));
+  } catch {
+    // Sign-out cleanup must never make sign-out fail.
+  }
+}
+
+function removeReviewLocalBufferKeys(predicate: (key: string) => boolean): void {
+  const keys = new Set(knownReviewLocalBufferKeys);
+  const storage = window.localStorage as Storage & { readonly length?: number; key?: (index: number) => string | null };
+  if (typeof storage.length === 'number' && typeof storage.key === 'function') {
+    for (let index = storage.length - 1; index >= 0; index -= 1) {
+      const key = storage.key(index);
+      if (key) keys.add(key);
+    }
+  }
+  for (const key of keys) {
+    if (predicate(key)) { storage.removeItem(key); knownReviewLocalBufferKeys.delete(key); }
+  }
+}
+
+/** Moves a pre-authentication crash draft into the authenticated namespace. */
+export function migrateAnonymousReviewDraft(identity: Omit<ReviewLocalBufferIdentity, 'userKey'> & { readonly userKey: string }): boolean {
+  try {
+    if (typeof window === 'undefined' || !window.localStorage || !identity.userKey) return false;
+    const anonymous = readReviewLocalDraft({ documentVersion: identity.documentVersion, questionId: identity.questionId });
+    if (!anonymous) return true;
+    const authenticated = readReviewLocalDraft(identity);
+    if (!authenticated && !writeReviewLocalDraft(identity, anonymous)) return false;
+    return writeReviewLocalDraft({ documentVersion: identity.documentVersion, questionId: identity.questionId }, '');
+  } catch {
+    // Storage failure is a normal degraded mode for the crash buffer.
+    return false;
   }
 }
 

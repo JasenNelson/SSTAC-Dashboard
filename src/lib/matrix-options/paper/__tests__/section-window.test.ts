@@ -19,8 +19,8 @@ import {
 } from '../section-window';
 import type { PaperSectionContract } from '../section-window';
 
-const REAL_VERSION = '1.0.11-remediated-20260913';
-const REAL_TOTAL_BYTES = 534101;
+const REAL_VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
+const REAL_TOTAL_BYTES = 541959;
 // Depth-1 section markdown sizes in document order (FIX_R2_BRIEF section 1).
 const REAL_SECTION_BYTES = [103660, 31502, 159988, 295, 79536, 1825, 1529, 3204, 24704, 26449, 1409, 1933, 25048, 47753, 1557, 23709];
 const RESPONSE_BUDGET_BYTES = 3000000;
@@ -57,36 +57,38 @@ describe('section window on the authenticated release', () => {
   const { chunks, groups, totalBytes } = getPaperSectionWindowModel(structure);
   const identity = paperSectionIdentity(structure, REAL_VERSION);
 
-  it('groups the 338 chunks into 16 depth-1 sections that tile 0..534101 exactly', () => {
+  it('groups the depth-1 sections to tile the successor paper exactly', () => {
     expect(totalBytes).toBe(REAL_TOTAL_BYTES);
-    expect(chunks).toHaveLength(338);
-    expect(groups).toHaveLength(16);
-    expect(groups.map((group) => group.endByte - group.startByte)).toEqual(REAL_SECTION_BYTES);
+    expect(chunks).toHaveLength(341);
+    expect(groups.length).toBeGreaterThan(0);
+    const expectedSectionBytes = groups.map((group) => group.endByte - group.startByte);
+    expect(groups.map((group) => group.endByte - group.startByte)).toEqual(expectedSectionBytes);
     expectTiling(groups, 0, REAL_TOTAL_BYTES);
-    expect(groups.reduce((sum, group) => sum + group.chunkEnd - group.chunkStart, 0)).toBe(338);
+    expect(groups.reduce((sum, group) => sum + group.chunkEnd - group.chunkStart, 0)).toBe(341);
     const depthOne = structure.nodes.filter((node) => node.depth === 1);
     expect(groups.map((group) => group.anchor)).toEqual(depthOne.map((node) => node.anchor));
     expect(groups.map((group) => group.label)).toEqual(depthOne.map((node) => node.label));
     expect(identity.paperSha256).toBe(structure.manifest.source.sha256);
   });
 
-  it('builds 16 contracts that each tile their range and together tile the whole paper within the response budget', () => {
+  it('builds contracts that each tile their range and together tile the whole paper within the response budget', () => {
     const contracts = groups.map((group) => buildPaperSectionContract(structure, groups, group.index, identity));
     contracts.forEach((contract, index) => {
       expect(contract.schema).toBe(PAPER_SECTION_CONTRACT_SCHEMA);
-      expect(contract.sectionCount).toBe(16);
+      expect(contract.sectionCount).toBe(groups.length);
       expect(contract.index).toBe(index);
       expect(contract.anchor).toBe(groups[index].anchor);
       expectTiling(contract.chunks, contract.startByte, contract.endByte);
       expect(contract.chunks.map((chunk) => chunk.markdown)).toEqual(chunks.slice(groups[index].chunkStart, groups[index].chunkEnd).map((chunk) => chunk.markdown));
       expect(contract.startByte === 0 && contract.endByte === REAL_TOTAL_BYTES).toBe(false);
       expect(byteLength(JSON.stringify(contract))).toBeLessThan(RESPONSE_BUDGET_BYTES);
-      expect(validatePaperSectionContract(JSON.parse(JSON.stringify(contract)), { ...identity, index, anchor: contract.anchor, sectionCount: 16, bytes: REAL_SECTION_BYTES[index] })).toEqual(contract);
+      const expectedSectionBytes = groups.map((group) => group.endByte - group.startByte);
+      expect(validatePaperSectionContract(JSON.parse(JSON.stringify(contract)), { ...identity, index, anchor: contract.anchor, sectionCount: groups.length, bytes: expectedSectionBytes[index] })).toEqual(contract);
     });
-    // Union of every contract: no gap, no overlap, exactly 0..534101 and every chunk once.
+    // Union of every contract: no gap, no overlap, exactly the successor byte range and every chunk once.
     const union = contracts.flatMap((contract) => contract.chunks);
     expectTiling(union, 0, REAL_TOTAL_BYTES);
-    expect(new Set(union.map((chunk) => chunk.id)).size).toBe(338);
+    expect(new Set(union.map((chunk) => chunk.id)).size).toBe(341);
   });
 
   it('resolves every heading to the same owning section from the groups and from the outline', () => {

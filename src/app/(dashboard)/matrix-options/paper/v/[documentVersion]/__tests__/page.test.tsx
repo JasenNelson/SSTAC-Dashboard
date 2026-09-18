@@ -18,7 +18,7 @@ vi.mock('next/navigation', () => ({
 }));
 vi.mock('@/lib/matrix-options/revised-paper', () => ({
   loadRevisedPaper: loadMock,
-  REVISED_PAPER_VERSION: '1.0.11-remediated-20260913',
+  REVISED_PAPER_VERSION: '1.0.11-remediated-7-8-successor-20260918-D',
   RevisedPaperUnavailableError: class RevisedPaperUnavailableError extends Error {},
 }));
 vi.mock('@/components/TWGReviewPortal', () => ({
@@ -42,11 +42,11 @@ import PaperVersionPage from '../page';
 
 const paper = {
   content: '# Exact paper',
-  documentVersion: '1.0.11-remediated-20260913',
-  sha256: 'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
-  bytes: 534101,
+  documentVersion: '1.0.11-remediated-7-8-successor-20260918-D',
+  sha256: 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+  bytes: 541959,
   releaseIdentity:
-    'matrix-options-paper:1.0.11-remediated-20260913:bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
+    'matrix-options-paper:1.0.11-remediated-7-8-successor-20260918-D:feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
   persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT',
 };
 
@@ -68,7 +68,7 @@ describe('/matrix-options/paper/v/[documentVersion]', () => {
       }),
     ).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
-    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-20260913?mode=working-draft');
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');
     expect(loadMock).not.toHaveBeenCalled();
     expect(notFoundMock).not.toHaveBeenCalled();
   });

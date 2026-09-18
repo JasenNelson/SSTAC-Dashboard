@@ -10,6 +10,7 @@ import type { RevisedPaperStructure } from '@/lib/matrix-options/revised-paper-s
 import { getCohortManifest } from '@/lib/matrix-options/cohort-contract';
 import { authenticateReviewerGuideAgainstPaper, getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 import { getProductionAssignment } from '@/lib/matrix-options/revised-paper-review';
+import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 import { deriveCohortPortions } from '@/lib/matrix-options/paper/cohort-portions';
 import type { CohortPortion } from '@/lib/matrix-options/paper/cohort-portions';
 import { paperWorkspaceHref, parsePaperUrlState } from '@/lib/matrix-options/paper/url-state';
@@ -29,6 +30,15 @@ import {
   PaperDocument,
 } from '@/components/matrix-options/paper/PaperDocument';
 import type { PaperDocumentModel } from '@/components/matrix-options/paper/PaperDocument';
+import {
+  buildValidatedDownloadManifest,
+  loadAuthenticatedPrintPackageCatalog,
+  loadTrustedDownloadContext,
+  loadDownloadManifestState,
+  type DownloadRequestBinding,
+  type DownloadManifestLoadState,
+} from '@/lib/matrix-options/paper/download-manifest-server';
+import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
 
 /** Non-sensitive reason codes logged before an expected fail-closed 404 (F-04). */
 type PaperRouteFailureReason =
@@ -120,6 +130,8 @@ function authenticatedCohortPortions(structure: RevisedPaperStructure): Promise<
   return pending;
 }
 
+export const dynamic = 'force-dynamic';
+
 export default async function PublicationPage({
   params,
   searchParams,
@@ -156,9 +168,19 @@ export default async function PublicationPage({
 
   const assignment = getProductionAssignment();
   const workspaceKey = `${state.mode}:${state.cohort ?? ''}:${state.q ?? ''}`;
+  const reviewManifestSha256 = getReviewManifest().sha256;
+  const selectedDownloadCohortId = state.cohort ?? getCohortManifest().cohorts[0]?.id;
+  if (!selectedDownloadCohortId) throw new Error('Download cohort binding unavailable.');
+  const downloadBinding: DownloadRequestBinding = {
+    documentVersion,
+    manifestSha256: reviewManifestSha256,
+    cohortId: selectedDownloadCohortId,
+    ...(state.q ? { questionId: state.q } : {}),
+  };
+  const downloadState = await loadDownloadManifestState(downloadBinding);
   const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
   if (state.mode === 'my-review') {
-    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} urlState={state} assignment={assignment} cohortPortions={cohortPortions} />;
+    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifest={downloadState.manifest} />;
   }
 
   // S1 incremental section window: only the initial (or deep-linked) depth-1
@@ -185,7 +207,7 @@ export default async function PublicationPage({
     throw error;
   }
   return (
-    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow}>
+    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifest={downloadState.manifest}>
       <PaperDocument model={documentModel} layout="chunks" />
     </RevisedPaperWorkspace>
   );

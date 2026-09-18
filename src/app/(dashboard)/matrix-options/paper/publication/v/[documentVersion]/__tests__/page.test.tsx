@@ -3,7 +3,7 @@ import type { MockInstance } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructure, authenticateReviewerGuideMock, cohortManifestMock, defaultManifest } = vi.hoisted(() => {
+const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructure, authenticateReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock } = vi.hoisted(() => {
   const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
   // Depth-1 headings are the S1 section boundaries: sections are [0,1], [2..9], [10,11], [12].
   const TOP_LEVEL_LABELS = ['4.1 Categories and uses', '6.0 Proposed framework', '15.0 Limitations of this draft', 'Technical Appendices Compendium'];
@@ -14,11 +14,11 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructu
       return { id: `node:test-${index}`, domain: 'node' as const, kind: 'heading' as const, depth: TOP_LEVEL_LABELS.includes(label) ? 1 : 2, label, parentId: null, ancestorIds: [], tokenEndByte: startByte + label.length, anchor: `test-${index}`, startByte, endByte: startByte + label.length };
     });
     const placements = nodes.map((node) => ({ id: node.id, domain: 'node' as const, lens: 'all' as const, label: node.label, reason: 'test', triggers: [], startByte: node.startByte, endByte: node.endByte }));
-    return { manifest: { source: { version: '1.0.11-remediated-20260913', sha256: 'f'.repeat(64) } }, releaseIdentity: 'release', nodes, objects: [] as unknown[], questions: [] as unknown[], lenses: { all: placements, core: [], appendices: [], evidence: [], objects: [], questions: [] }, content, lines: content.split('\n'), questionContainerIds: [] };
+    return { manifest: { source: { version: '1.0.11-remediated-7-8-successor-20260918-D', sha256: 'f'.repeat(64) } }, releaseIdentity: 'release', nodes, objects: [] as unknown[], questions: [] as unknown[], lenses: { all: placements, core: [], appendices: [], evidence: [], objects: [], questions: [] }, content, lines: content.split('\n'), questionContainerIds: [] };
   };
   const buildManifest = () => ({
     schemaVersion: 'matrix-paper-cohorts-v1',
-    releaseIdentity: '1.0.11-remediated-20260913',
+    releaseIdentity: '1.0.11-remediated-7-8-successor-20260918-D',
     status: 'PROPOSED_PENDING_OWNER_QP_APPROVAL',
     cohorts: [
       { id: 'categories', name: 'Categories', questionNumbers: [1, 2, 3], sourceLocators: ['Sections 4.1 and 9.9', "Reviewer's Guide lines 181-190"], guideEvidenceRanges: [[1, 1]], purpose: 'test', packageContents: ['test'], limitations: 'test' },
@@ -31,12 +31,18 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructu
   return {
     redirectMock: vi.fn((_url: string) => { throw new Error('NEXT_REDIRECT'); }),
     notFoundMock: vi.fn(() => { throw new Error('NEXT_NOT_FOUND'); }),
-    workspaceMock: vi.fn(() => <div data-testid="revised-workspace" />),
+    workspaceMock: vi.fn((..._args: any[]) => <div data-testid="revised-workspace" />),
     structureMock: vi.fn(buildStructure),
     defaultStructure: buildStructure,
     authenticateReviewerGuideMock: vi.fn(async (_contract: unknown, _paperText: string): Promise<void> => undefined),
     cohortManifestMock: vi.fn(buildManifest),
     defaultManifest: buildManifest,
+    downloadServerMock: {
+      loadTrustedDownloadContext: vi.fn(async () => ({ documentVersion: '1.0.11-remediated-7-8-successor-20260918-D', manifestSha256: 'a'.repeat(64), paperSha256: 'b'.repeat(64), releaseIdentity: 'release', paperReleaseIdentity: 'paper', cohortQuestionIds: {}, reviewManifest: {} })),
+      loadAuthenticatedPrintPackageCatalog: vi.fn(async (): Promise<any> => null),
+      buildValidatedDownloadManifest: vi.fn(),
+      loadDownloadManifestState: vi.fn<typeof loadDownloadManifestState>(async () => ({ status: 'ready', manifest: { packages: [] } as any })),
+    },
   };
 });
 
@@ -51,13 +57,16 @@ vi.mock('@/lib/matrix-options/reviewer-guide', async () => {
   const actual = await vi.importActual<typeof import('@/lib/matrix-options/reviewer-guide')>('@/lib/matrix-options/reviewer-guide');
   return { ...actual, authenticateReviewerGuideAgainstPaper: authenticateReviewerGuideMock };
 });
+vi.mock('@/lib/matrix-options/paper/download-manifest-server', () => ({ ...downloadServerMock }));
 
 import PublicationPage from '../page';
+import { loadDownloadManifestState } from '@/lib/matrix-options/paper/download-manifest-server';
 import PublicationNodePage from '../nodes/[canonicalNodeId]/page';
 import PublicationQuestionPage from '../questions/[questionId]/page';
 import { PaperDocument } from '@/components/matrix-options/paper/PaperDocument';
+import { getReviewManifest } from '@/lib/matrix-options/paper/review-manifest';
 
-const version = '1.0.11-remediated-20260913';
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const base = `/matrix-options/paper/publication/v/${version}`;
 const guideId = (number: number) => `rpq:${version}:q${String(number).padStart(2, '0')}`;
 
@@ -65,6 +74,7 @@ interface WorkspaceElement {
   readonly type: unknown;
   readonly props: {
     readonly documentVersion: string;
+    readonly reviewManifestSha256?: string;
     readonly urlState: { mode: string; cohort: string | null; q: string | null; section: string | null };
     readonly outline?: readonly { anchor: string }[];
     readonly sectionWindow?: { paperSha256: string; initialIndex: number; sections: readonly { index: number; anchor: string; label: string; bytes: number }[]; linkMap: Record<string, string> };
@@ -121,6 +131,7 @@ describe('paper publication V16 route', () => {
     expect(redirectMock).not.toHaveBeenCalled();
     expect(result.props.urlState).toEqual({ mode: 'working-draft', cohort: null, q: null, section: 'test-3' });
     expect(result.props.documentVersion).toBe(version);
+    expect(result.props.reviewManifestSha256).toBe(getReviewManifest().sha256);
     expect(result.props.outline?.map((entry) => entry.anchor)).toEqual(Array.from({ length: 13 }, (_, index) => `test-${index}`));
     expect(result.props.cohortPortions).toBeUndefined();
     expect(result.props.children?.type).toBe(PaperDocument);
@@ -193,18 +204,17 @@ describe('paper publication V16 route', () => {
     expect(aggregate?.endByte).toBeGreaterThan(aggregate?.startByte ?? -1);
     expect(aggregate?.text).toContain('7.5.1');
     expect(aggregate?.text).toContain('7.5.3');
-    const unavailable = portions.find((portion) => portion.sectionNumber === '7.8');
-    expect(unavailable).toMatchObject({ status: 'unavailable', sectionLabel: 'Section 7.8' });
-    expect(unavailable?.text).toBeUndefined();
+    const unavailable = portions.find((portion) => portion.status === 'unavailable');
+    expect(unavailable).toBeUndefined();
 
     const workingDraft = await page({ mode: 'working-draft' });
-    expect(workingDraft.props.outline).toHaveLength(338);
-    // S1 on the real release: 16 depth-1 sections, only the first is server-rendered.
+    expect(workingDraft.props.outline).toHaveLength(341);
+    // S1 on the real release: 17 depth-1 sections, only the first is server-rendered.
     const realWindow = workingDraft.props.sectionWindow;
-    expect(realWindow?.sections).toHaveLength(16);
+    expect(realWindow?.sections).toHaveLength(17);
     expect(realWindow?.initialIndex).toBe(0);
     expect(realWindow?.paperSha256).toBe(structure.manifest.source.sha256);
-    expect(realWindow?.sections.reduce((sum, section) => sum + section.bytes, 0)).toBe(534101);
+    expect(realWindow?.sections.reduce((sum, section) => sum + section.bytes, 0)).toBe(541959);
     const initialChunks = workingDraft.props.children?.props.model.chunks ?? [];
     expect(initialChunks).toHaveLength(50);
     expect(initialChunks[0].startByte).toBe(0);
@@ -329,7 +339,7 @@ describe('paper publication V16 route', () => {
     await expectRedirect(() => page({}), '/matrix-options?view=TWG%20Review');
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
-    await expectRedirect(() => page({}), '/matrix-options/paper/v/1.0.11-remediated-20260913');
+    await expectRedirect(() => page({}), '/matrix-options/paper/v/1.0.11-remediated-7-8-successor-20260918-D');
     expect(structureMock).not.toHaveBeenCalled();
   });
 
@@ -416,5 +426,13 @@ describe('paper publication V16 route', () => {
       expect(source).not.toMatch(/@\/components\/matrix-options\/paper\/ReviewNavigation|@\/lib\/matrix-options\/paper\/review-navigation/);
       expect(source).not.toContain('permanentRedirect');
     }
+  });
+
+  it('passes pending through the full publication page and rethrows boundary failures', async () => {
+    downloadServerMock.loadDownloadManifestState.mockResolvedValueOnce({ status: 'pending', manifest: null });
+    const result = await page({ mode: 'working-draft' });
+    expect(result.props).toMatchObject({ downloadManifest: null });
+    downloadServerMock.loadDownloadManifestState.mockRejectedValueOnce(new Error('private transport failure'));
+    await expect(page({ mode: 'working-draft' })).rejects.toThrow('private transport failure');
   });
 });

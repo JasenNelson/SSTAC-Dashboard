@@ -19,7 +19,7 @@ import { PaperChunkSection } from '../PaperChunkSection';
  * (hydration, selectors, focus targets and scroll margins all depend on it).
  */
 
-const VERSION = '1.0.11-remediated-20260913';
+const VERSION = '1.0.11-remediated-7-8-successor-20260918-D';
 const SHA = 'c'.repeat(64);
 const encoder = new TextEncoder();
 const byteLength = (text: string) => encoder.encode(text).length;

@@ -67,6 +67,10 @@ export default defineConfig({
   // disk (default playwright-report/) for manual `npx playwright show-report`
   // inspection -- only the auto-serve-and-block behavior is disabled.
   reporter: [['html', { open: 'never' }]],
+  timeout: 60000,
+  expect: {
+    timeout: 30000,
+  },
   use: {
     baseURL: playwrightBaseURL,
     trace: 'on-first-retry',

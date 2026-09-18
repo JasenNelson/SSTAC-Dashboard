@@ -2,7 +2,9 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   countReviewLocalDrafted,
+  clearReviewLocalDraftsForVersion,
   isReviewDraftDrafted,
+  migrateAnonymousReviewDraft,
   readReviewLocalDraft,
   REVIEW_LOCAL_BUFFER_ANONYMOUS_USER_KEY,
   REVIEW_LOCAL_BUFFER_TEXT_LIMIT,
@@ -10,7 +12,7 @@ import {
   writeReviewLocalDraft,
 } from '../review-local-buffer';
 
-const version = '1.0.11-remediated-20260913';
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 
 afterEach(() => {
   window.localStorage.clear();
@@ -102,6 +104,30 @@ describe('readReviewLocalDraft / writeReviewLocalDraft round trip', () => {
     });
     expect(() => writeReviewLocalDraft({ documentVersion: version, questionId: 'rpq:x:q01' }, 'text')).not.toThrow();
     setItem.mockRestore();
+  });
+
+  it('M3: migration removes anonymous data only after authenticated storage succeeds', () => {
+    const anonymous = { documentVersion: version, questionId: 'rpq:x:q01' };
+    writeReviewLocalDraft(anonymous, 'anonymous');
+    expect(migrateAnonymousReviewDraft({ ...anonymous, userKey: 'user-a' })).toBe(true);
+    expect(readReviewLocalDraft({ ...anonymous, userKey: 'user-a' })).toBe('anonymous');
+    expect(readReviewLocalDraft(anonymous)).toBe('');
+
+    writeReviewLocalDraft(anonymous, 'preserve-on-failure');
+    const setItem = vi.spyOn(window.localStorage, 'setItem').mockImplementation(() => { throw new Error('quota exceeded'); });
+    expect(migrateAnonymousReviewDraft({ ...anonymous, userKey: 'user-b' })).toBe(false);
+    expect(readReviewLocalDraft(anonymous)).toBe('preserve-on-failure');
+    setItem.mockRestore();
+  });
+
+  it('M3: release cleanup removes all user namespaces for the version', () => {
+    writeReviewLocalDraft({ documentVersion: version, questionId: 'rpq:x:q01', userKey: 'user-a' }, 'a');
+    writeReviewLocalDraft({ documentVersion: version, questionId: 'rpq:x:q02', userKey: 'user-b' }, 'b');
+    writeReviewLocalDraft({ documentVersion: 'other', questionId: 'rpq:x:q01', userKey: 'user-a' }, 'keep');
+    clearReviewLocalDraftsForVersion(version);
+    expect(readReviewLocalDraft({ documentVersion: version, questionId: 'rpq:x:q01', userKey: 'user-a' })).toBe('');
+    expect(readReviewLocalDraft({ documentVersion: version, questionId: 'rpq:x:q02', userKey: 'user-b' })).toBe('');
+    expect(readReviewLocalDraft({ documentVersion: 'other', questionId: 'rpq:x:q01', userKey: 'user-a' })).toBe('keep');
   });
 });
 

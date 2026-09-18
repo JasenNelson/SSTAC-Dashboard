@@ -21,26 +21,26 @@ describe('PaperDocument on the authenticated release', () => {
   const structure = loadRevisedPaperStructure();
   const model = getPaperDocumentModel(structure);
 
-  it('renders all 338 headings in order through the Technical Appendices Compendium to the last heading', () => {
+  it('renders all 341 headings in order through the Technical Appendices Compendium to the last heading', () => {
     const { container } = render(<PaperDocument model={model} />);
     const sections = Array.from(container.querySelectorAll('section[data-paper-chunk]'));
-    expect(structure.nodes).toHaveLength(338);
-    expect(sections).toHaveLength(338);
+    expect(structure.nodes).toHaveLength(341);
+    expect(sections).toHaveLength(341);
     expect(sections.map((section) => section.id)).toEqual(structure.nodes.map((node) => node.anchor));
     expect(container.querySelectorAll('section[data-paper-preamble]')).toHaveLength(0);
     const labelOf = (section: Element) => document.getElementById(section.getAttribute('aria-labelledby') ?? '')?.textContent;
     expect(labelOf(sections[sections.length - 1])).toBe(structure.nodes[structure.nodes.length - 1].label);
     expect(sections.filter((section) => labelOf(section) === 'Technical Appendices Compendium')).toHaveLength(1);
     expect(structure.nodes.some((node) => /^Appendix J\b/i.test(node.label))).toBe(false);
-    expect(container.querySelectorAll('[data-testid="markdown"][data-link-map="yes"]')).toHaveLength(338);
-    // M1-09: sections are named groups, never 338 region landmarks.
-    expect(container.querySelectorAll('section[data-paper-chunk][role="group"]')).toHaveLength(338);
+    expect(container.querySelectorAll('[data-testid="markdown"][data-link-map="yes"]')).toHaveLength(341);
+    // M1-09: sections are named groups, never 341 region landmarks.
+    expect(container.querySelectorAll('section[data-paper-chunk][role="group"]')).toHaveLength(341);
     expect(screen.queryAllByRole('region')).toHaveLength(0);
   });
 
-  it('tiles bytes 0..534101 with no gap or overlap', () => {
+  it('tiles the successor paper bytes with no gap or overlap', () => {
     expect(model.chunks[0].startByte).toBe(0);
-    expect(model.chunks[model.chunks.length - 1].endByte).toBe(534101);
+    expect(model.chunks[model.chunks.length - 1].endByte).toBe(541959);
     for (let index = 1; index < model.chunks.length; index += 1) {
       expect(model.chunks[index].startByte).toBe(model.chunks[index - 1].endByte);
     }
@@ -62,10 +62,10 @@ describe('PaperDocument on the authenticated release', () => {
     expect(sectionReferences.filter((id) => !model.linkMap[id])).toEqual([]);
   });
 
-  it('exposes a 338-entry outline and URL context for the release', () => {
-    expect(getPaperNavOutline(structure)).toHaveLength(338);
+  it('exposes a 341-entry outline and URL context for the release', () => {
+    expect(getPaperNavOutline(structure)).toHaveLength(341);
     const context = buildPaperUrlContext(structure);
-    expect(context.anchors.size).toBe(338);
+    expect(context.anchors.size).toBe(341);
     expect(context.questionCohort.size).toBe(12);
     expect(context.cohortIds.size).toBe(5);
   });

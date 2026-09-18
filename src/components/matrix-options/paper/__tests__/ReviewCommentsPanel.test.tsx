@@ -1,5 +1,5 @@
 import { createRef } from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { readReviewLocalDraft, writeReviewLocalDraft } from '@/lib/matrix-options/paper/review-local-buffer';
@@ -7,12 +7,16 @@ import { getReviewerGuideContract } from '@/lib/matrix-options/reviewer-guide';
 
 import { REVIEW_COMMENTS_TEXT_LIMIT, ReviewCommentsPanel } from '../ReviewCommentsPanel';
 
-const version = '1.0.11-remediated-20260913';
+vi.mock('@/lib/supabase/client', () => ({ createClient: () => { throw new Error('client unavailable in unit test'); } }));
+
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const guide = getReviewerGuideContract();
 const questions = guide.questions.slice(0, 4);
 
 afterEach(() => {
   window.localStorage.clear();
+  vi.unstubAllGlobals();
+  vi.restoreAllMocks();
 });
 
 function renderPanel(overrides: Partial<Parameters<typeof ReviewCommentsPanel>[0]> = {}) {
@@ -168,9 +172,177 @@ describe('ReviewCommentsPanel', () => {
     expect(onSelectQuestion).toHaveBeenCalledWith(questions[3].number);
   });
 
-  it('M2: never renders a Save/Submit-labelled affordance (local-buffer-only honesty bar)', () => {
+  it('M3: renders save and submit affordances but keeps them disabled when persistence is unavailable', () => {
     renderPanel();
-    expect(screen.queryByRole('button', { name: /Save|Submit/i })).toBeNull();
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Submit response' })).toBeDisabled();
+  });
+
+  it('M3: bootstrap does not overwrite text entered while the session request is loading', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    let resolveBootstrap!: (response: Response) => void;
+    vi.stubGlobal('fetch', vi.fn(() => new Promise<Response>((resolve) => { resolveBootstrap = resolve; })));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    const textarea = screen.getByRole('textbox', { name: 'Your response' });
+    fireEvent.change(textarea, { target: { value: 'typed while loading' } });
+    resolveBootstrap(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [{ document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'server text', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null }] }), { status: 200 }));
+    await waitFor(() => expect(textarea).toHaveValue('typed while loading'));
+  });
+
+  it('M3: sign-out aborts pending mutations and clears authenticated and anonymous release buffers', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    let signal: AbortSignal | null | undefined;
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      signal = init?.signal;
+      return new Promise<Response>(() => undefined);
+    }));
+    writeReviewLocalDraft({ documentVersion: version, questionId: questions[0].id, userKey: 'user-a' }, 'private draft');
+    writeReviewLocalDraft({ documentVersion: version, questionId: questions[1].id }, 'anonymous draft');
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your response' }), { target: { value: 'pending mutation' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent(window, new Event('matrix-options-auth-signed-out'));
+    expect(signal?.aborted).toBe(true);
+    await waitFor(() => expect(screen.getByRole('textbox', { name: 'Your response' })).toHaveValue(''));
+    expect(readReviewLocalDraft({ documentVersion: version, questionId: questions[0].id, userKey: 'user-a' })).toBe('');
+    expect(readReviewLocalDraft({ documentVersion: version, questionId: questions[1].id })).toBe('');
+  });
+
+  it('M3: a stale mutation completion cannot overwrite the newer per-question mutation', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ init?: RequestInit; resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ init, resolve }); });
+    }));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    const textarea = screen.getByRole('textbox', { name: 'Your response' });
+    fireEvent.change(textarea, { target: { value: 'first' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    fireEvent.change(textarea, { target: { value: 'second' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    expect(requests).toHaveLength(2);
+    expect(requests[0].init?.signal?.aborted).toBe(true);
+    requests[1].resolve(new Response(JSON.stringify({ outcome: 'ok', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'second', submitted_text: null, revision: 2, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 200 }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'ok', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'first', submitted_text: null, revision: 1, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 200 }));
+    await waitFor(() => expect(screen.getByTestId('review-save-status')).toHaveTextContent('Saved'));
+    expect(textarea).toHaveValue('second');
+  });
+
+  it('M3: conflict actions update the local/server row and retry Keep mine at the latest revision', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ init?: RequestInit; resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string, init?: RequestInit) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ init, resolve }); });
+    }));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    const textarea = screen.getByRole('textbox', { name: 'Your response' });
+    fireEvent.change(textarea, { target: { value: 'mine' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'saved elsewhere', submitted_text: null, revision: 4, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Keep mine' }));
+    expect(requests).toHaveLength(2);
+    const retryBody = JSON.parse(String(requests[1].init?.body));
+    expect(retryBody.expectedRevision).toBe(4);
+    requests[1].resolve(new Response(JSON.stringify({ outcome: 'ok', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'mine', submitted_text: null, revision: 5, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 200 }));
+    await waitFor(() => expect(screen.getByTestId('review-save-status')).toHaveTextContent('Saved'));
+    expect(textarea).toHaveValue('mine');
+    expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument();
+  });
+
+  it('M3: Use saved clears the dirty buffer and requires a valid conflict row', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ resolve }); });
+    }));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your response' }), { target: { value: 'mine' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'saved', submitted_text: null, revision: 3, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Use saved' }));
+    expect(screen.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved');
+    expect(readReviewLocalDraft({ documentVersion: version, questionId: questions[0].id, userKey: 'user-a' })).toBe('saved');
+  });
+
+  it('M3: conflict actions are serialized while Keep mine is in flight', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ resolve }); });
+    }));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your response' }), { target: { value: 'mine' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'saved elsewhere', submitted_text: null, revision: 4, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Keep mine' }));
+    expect(requests).toHaveLength(2);
+    expect(screen.getByRole('button', { name: 'Keep mine' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use saved' })).toBeDisabled();
+    fireEvent.click(screen.getByRole('button', { name: 'Keep mine' }));
+    fireEvent.click(screen.getByRole('button', { name: 'Use saved' }));
+    expect(requests).toHaveLength(2);
+    requests[1].resolve(new Response(JSON.stringify({ outcome: 'ok', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'mine', submitted_text: null, revision: 5, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 200 }));
+    await waitFor(() => expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument());
+  });
+
+  it('M3: a failed Keep mine retry preserves the actionable conflict', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ resolve }); });
+    }));
+    renderPanel({ manifestSha256, cohortId: 'categories' });
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your response' }), { target: { value: 'mine' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'saved elsewhere', submitted_text: null, revision: 4, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    fireEvent.click(screen.getByRole('button', { name: 'Keep mine' }));
+    requests[1].resolve(new Response(JSON.stringify({ outcome: 'persistence_unavailable' }), { status: 503 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    expect(screen.getByText('Saved response: saved elsewhere')).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Keep mine' })).not.toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Use saved' })).not.toBeDisabled();
+  });
+
+  it('M3: conflicts remain bound to their question across navigation and never render for another question', async () => {
+    const manifestSha256 = 'a'.repeat(64);
+    const requests: Array<{ resolve: (response: Response) => void }> = [];
+    vi.stubGlobal('fetch', vi.fn((url: string) => {
+      if (url.includes('?documentVersion=')) return Promise.resolve(new Response(JSON.stringify({ persistence: 'available', userKey: 'user-a', rows: [] }), { status: 200 }));
+      return new Promise<Response>((resolve) => { requests.push({ resolve }); });
+    }));
+    const responseRef = createRef<HTMLElement>();
+    const onSelectQuestion = vi.fn();
+    const onPreviousQuestion = vi.fn();
+    const onNextQuestion = vi.fn();
+    const { rerender } = render(<ReviewCommentsPanel documentVersion={version} manifestSha256={manifestSha256} cohortId="categories" questions={questions} question={questions[0]} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />);
+    await waitFor(() => expect(screen.getByRole('button', { name: 'Save draft' })).not.toBeDisabled());
+    fireEvent.change(screen.getByRole('textbox', { name: 'Your response' }), { target: { value: 'q1 mine' } });
+    fireEvent.click(screen.getByRole('button', { name: 'Save draft' }));
+    requests[0].resolve(new Response(JSON.stringify({ outcome: 'stale_revision', row: { document_version: version, manifest_sha256: manifestSha256, cohort_id: 'categories', question_id: questions[0].id, draft_text: 'q1 saved', submitted_text: null, revision: 2, submitted_revision: null, submitted_at: null, updated_at: null } }), { status: 409 }));
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    fireEvent.click(within(screen.getByTestId('review-saved-questions')).getByRole('button', { name: new RegExp(`Question ${questions[1].number}:`) }));
+    rerender(<ReviewCommentsPanel documentVersion={version} manifestSha256={manifestSha256} cohortId="categories" questions={questions} question={questions[1]} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />);
+    await waitFor(() => expect(screen.queryByTestId('review-conflict')).not.toBeInTheDocument());
+    fireEvent.click(within(screen.getByTestId('review-saved-questions')).getByRole('button', { name: new RegExp(`Question ${questions[0].number}:`) }));
+    rerender(<ReviewCommentsPanel documentVersion={version} manifestSha256={manifestSha256} cohortId="categories" questions={questions} question={questions[0]} responseRef={responseRef} onSelectQuestion={onSelectQuestion} onPreviousQuestion={onPreviousQuestion} onNextQuestion={onNextQuestion} />);
+    await waitFor(() => expect(screen.getByTestId('review-conflict')).toBeInTheDocument());
+    expect(screen.getByText('Saved response: q1 saved')).toBeInTheDocument();
   });
 
   it('M2: no control here is a checkbox, radio or <select>-driven reveal request -- only the existing Jump-to-topic select and plain buttons exist', () => {

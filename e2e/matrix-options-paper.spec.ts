@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test';
 
-const realVersion = '1.0.11-remediated-20260913';
+const realVersion = '1.0.11-remediated-7-8-successor-20260918-D';
 const realReviewPath = `/matrix-options/paper/review/v/${realVersion}`;
 const legacyFixtureVersion = 'slice-1a-fixture-v1';
 const legacySectionPath = `/matrix-options/paper/v/${legacyFixtureVersion}/synthetic.framework.example`;
@@ -78,6 +78,7 @@ test.describe('Matrix Options Paper disabled-route regressions', () => {
 });
 
 test.describe('Matrix Options Paper real V16 acceptance', () => {
+  test.setTimeout(120000);
   const workspacePath = `/matrix-options/paper/publication/v/${realVersion}`;
   const canonicalWorkingDraft = `${workspacePath}?mode=working-draft`;
   const pathAndQuery = (url: string) => {
@@ -106,9 +107,9 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     ]) {
       await page.goto(entry, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
-      await expect.poll(() => pathAndQuery(page.url())).toBe(canonicalWorkingDraft);
+      await expect.poll(() => pathAndQuery(page.url()), { timeout: 30000 }).toBe(canonicalWorkingDraft);
     }
-    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page', { timeout: 30000 });
     await expect(page.getByRole('link', { name: 'Publication', exact: true })).toHaveCount(0);
     await expect(page.getByRole('heading', { name: 'Publication Atlas' })).toHaveCount(0);
     await expect(page.getByRole('list', { name: 'Current atlas page' })).toHaveCount(0);
@@ -142,8 +143,8 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const initialChunks = (initialHtml.match(/data-paper-chunk="/g) ?? []).length;
     const placeholders = (initialHtml.match(/data-paper-section-placeholder="/g) ?? []).length;
     expect(initialChunks).toBeGreaterThan(0);
-    expect(initialChunks).toBeLessThan(338);
-    expect(placeholders).toBe(15);
+    expect(initialChunks).toBeLessThan(341);
+    expect(placeholders).toBe(16);
 
     let inFlight = 0;
     let maxInFlight = 0;
@@ -168,13 +169,13 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(navigationToggle).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('navigation-rail')).toHaveAttribute('data-state', 'open');
     await expect(page.getByTestId('paper-outline-desktop').getByRole('link').first()).toBeVisible();
-    await expect(page.getByTestId('paper-load-progress')).toContainText('of 16 sections');
+    await expect(page.getByTestId('paper-load-progress')).toContainText('of 17 sections', { timeout: 30000 });
     await expect(page.getByTestId('paper-print-button')).toBeDisabled();
 
     await page.getByTestId('paper-load-full-document-button').click();
     await expect(page.getByTestId('paper-load-full-document-button')).toHaveText('Full document loaded', { timeout: 180000 });
     const sections = page.locator('[data-testid="paper-document"] section[data-paper-chunk]');
-    await expect(sections).toHaveCount(338);
+    await expect(sections).toHaveCount(341, { timeout: 30000 });
     await expect(page.locator('[data-paper-section-placeholder]')).toHaveCount(0);
     await expect(page.getByTestId('paper-find-guidance')).toBeVisible();
     await expect(page.getByTestId('paper-print-button')).toBeEnabled();
@@ -292,7 +293,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     expect(anchor.length).toBeGreaterThan(0);
     await entry.click();
     await expect.poll(() => new URL(page.url()).searchParams.get('section')).toBe(anchor);
-    await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('working-draft');
+    await expect.poll(() => new URL(page.url()).searchParams.get('mode'), { timeout: 30000 }).toBe('working-draft');
     await expect.poll(() => page.evaluate(() => document.activeElement?.id ?? '')).toBe(anchor);
 
     await page.reload({ waitUntil: 'domcontentloaded' });
@@ -322,7 +323,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect.poll(() => pathAndQuery(page.url())).toBe(`${workspacePath}?mode=my-review`);
     await expect(page.getByRole('link', { name: 'My Review', exact: true })).toHaveAttribute('aria-current', 'page');
     await expect(page.getByTestId('cohort-portions-unavailable')).toHaveCount(0);
-    await expect(page.getByTestId('cohort-paper')).toBeVisible();
+    await expect(page.getByTestId('cohort-paper').first()).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'Review cohorts' }).getByRole('button', { name: /questions$/ })).toHaveCount(5);
     await expect(page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true })).toHaveAttribute('aria-expanded', 'true');
     await expect(page.getByTestId('review-comments-rail')).toHaveAttribute('data-state', 'open');
@@ -344,6 +345,7 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading saved responses...', { timeout: 30000 });
 
     const savedQuestions = page.getByTestId('review-saved-questions');
     await expect(savedQuestions.getByRole('button')).toHaveCount(12);
@@ -370,25 +372,72 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     const href = await link.getAttribute('href');
     expect(href).toMatch(/mode=working-draft&section=/);
     await link.click();
-    await expect.poll(() => new URL(page.url()).searchParams.get('mode')).toBe('working-draft');
-    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page');
+    await expect.poll(() => new URL(page.url()).searchParams.get('mode'), { timeout: 30000 }).toBe('working-draft');
+    await expect(page.getByRole('link', { name: 'Working Draft', exact: true })).toHaveAttribute('aria-current', 'page', { timeout: 30000 });
   });
 
   test('M2: authenticated real release Previous/Next question walk all 12 questions in cohort order, bounded at both ends', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
     await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
     failOnLogin(page.url());
+    await expect(page.getByTestId('review-save-status')).not.toHaveText('Loading saved responses...', { timeout: 30000 });
     const previous = page.getByRole('button', { name: 'Previous question' });
     const next = page.getByRole('button', { name: 'Next question' });
     const select = page.getByRole('combobox', { name: 'Jump to topic' });
 
     await expect(previous).toBeDisabled();
-    for (let step = 0; step < 11; step += 1) await next.click();
+      for (let step = 0; step < 11; step += 1) {
+        await next.click();
+        await expect(page.getByTestId('review-progress')).toContainText(`Question ${step + 2} of 12`);
+      }
     await expect(next).toBeDisabled();
     await expect(page.getByTestId('review-progress')).toContainText('Question 12 of 12');
     await previous.click();
     await expect(next).toBeEnabled();
     await expect(select).not.toHaveValue('12');
+  });
+
+  test('M3: intercepted response save, submit, reload and CAS conflict expose the authenticated workflow', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    const questionId = `rpq:${realVersion}:q01`;
+    const userKey = '11111111-1111-4111-8111-111111111111';
+    let reviewManifestSha256 = '';
+    let savedRow: Record<string, unknown> | null = null;
+    let forceConflict = false;
+    await page.route('**/api/matrix-options/paper/reviews?*', async (route) => {
+      reviewManifestSha256 = new URL(route.request().url()).searchParams.get('manifestSha256') ?? '';
+      await route.fulfill({ status: 200, headers: { 'Cache-Control': 'no-store' }, contentType: 'application/json', body: JSON.stringify({ persistence: 'available', userKey, rows: savedRow ? [savedRow] : [] }) });
+    });
+    await page.route('**/api/matrix-options/paper/reviews/**', async (route) => {
+      const body = JSON.parse(route.request().postData() ?? '{}') as { action?: string; text?: string; expectedRevision?: number | null };
+      if (forceConflict) {
+        await route.fulfill({ status: 409, contentType: 'application/json', body: JSON.stringify({ outcome: 'stale_revision', row: { ...savedRow, draft_text: 'saved in another tab', revision: 9 } }) });
+        return;
+      }
+      const revision = Number(savedRow?.revision ?? 0) + 1;
+      savedRow = { id: 'response-1', document_version: realVersion, manifest_sha256: reviewManifestSha256, cohort_id: 'categories', question_id: questionId, draft_text: body.text ?? '', submitted_text: body.action === 'submit' ? body.text ?? '' : (savedRow?.submitted_text ?? null), revision, submitted_revision: body.action === 'submit' ? revision : (savedRow?.submitted_revision ?? null), submitted_at: body.action === 'submit' ? new Date().toISOString() : (savedRow?.submitted_at ?? null), updated_at: new Date().toISOString() };
+      await route.fulfill({ status: 200, contentType: 'application/json', body: JSON.stringify({ outcome: 'ok', row: savedRow }) });
+    });
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    const textarea = page.getByRole('textbox', { name: 'Your response' });
+    await textarea.fill('intercepted M3 response');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByTestId('review-save-status')).toContainText('Saved');
+    await page.getByRole('button', { name: 'Submit response' }).click();
+    await expect(page.getByRole('button', { name: 'Re-submit response' })).toBeVisible();
+    await page.reload({ waitUntil: 'domcontentloaded' });
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('intercepted M3 response');
+    forceConflict = true;
+    await page.getByRole('textbox', { name: 'Your response' }).fill('local conflict text');
+    await page.getByRole('button', { name: 'Save draft' }).click();
+    await expect(page.getByTestId('review-conflict')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Keep mine' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Use saved' })).toBeVisible();
+    await page.getByRole('button', { name: 'Use saved' }).click();
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved in another tab');
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/login/);
   });
 
   test('M2: authenticated real release rails including the new Review Comments controls fit at 360 and 1024 with no horizontal overflow', async ({ page }, testInfo) => {
@@ -580,3 +629,4 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     }
   });
 });
+

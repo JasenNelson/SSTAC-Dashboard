@@ -23,7 +23,6 @@ const batchStarts = Array.from({ length: Math.ceil(model.chunks.length / BATCH_S
 const KNOWN_UNBALANCED_EMPHASIS_SNIPPET = '**[Protocol 13 (';
 // M1R2-03 frozen-source pins, one per marker class (see the aggregate test below).
 const KNOWN_DOUBLE_UNDERSCORE_SNIPPET = 'https://www2.gov.bc.ca/assets/gov/environment/air-land-water/site-remediation/docs/protocols/p28__ja';
-const KNOWN_LONE_UNDERSCORE_SNIPPET = '_sources';
 const KNOWN_LONE_STAR_SNIPPET = 'C_pw = C_sed / (K_oc*f_oc) Bounds: 0.2% <= f_oc <= 10.0%';
 // A lone delimiter next to a word character; `**`/`__` runs are excluded (their own buckets).
 const LONE_UNDERSCORE = /(?<![\w_])_(?=\w)|(?<=\w)_(?![\w_])/;
@@ -120,7 +119,7 @@ describe('PaperDocument real release render through the real MathRenderer', () =
     // leading `_` as text. The pins are exact, so a NEW occurrence of any class, or a
     // corrected source, fails here. Each is recorded as a pin candidate for L2.
     expect(findings.rawDoubleUnderscore).toEqual([KNOWN_DOUBLE_UNDERSCORE_SNIPPET]);
-    expect(findings.rawLoneUnderscore).toEqual([KNOWN_LONE_UNDERSCORE_SNIPPET]);
+    expect(findings.rawLoneUnderscore).toEqual([]);
     expect(findings.rawLoneStar).toEqual([KNOWN_LONE_STAR_SNIPPET]);
     // Source parity: each pinned string is exactly what the frozen source carries,
     // once backslash escapes are resolved the way CommonMark resolves them. The
@@ -128,7 +127,7 @@ describe('PaperDocument real release render through the real MathRenderer', () =
     // "C\_pw = C\_sed / (K\_oc\*f\_oc)"), so the literal `*` is intended text, not
     // a failed emphasis marker.
     const unescapedSource = structure.content.replace(/\\([\\`*_{}[\]()#+\-.!])/g, '$1').replace(/\s+/g, ' ');
-    for (const pinned of [KNOWN_DOUBLE_UNDERSCORE_SNIPPET, KNOWN_LONE_UNDERSCORE_SNIPPET, KNOWN_LONE_STAR_SNIPPET]) {
+    for (const pinned of [KNOWN_DOUBLE_UNDERSCORE_SNIPPET, KNOWN_LONE_STAR_SNIPPET]) {
       expect(unescapedSource.split(pinned)).toHaveLength(2);
     }
     expect(structure.content.split('\\*')).toHaveLength(4);

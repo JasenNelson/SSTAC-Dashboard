@@ -25,7 +25,7 @@ import {
 } from '../RevisedPaperWorkspace';
 import { PaperScrollAuthority } from '@/lib/matrix-options/paper/scroll-authority';
 
-const version = '1.0.11-remediated-20260913';
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const base = `/matrix-options/paper/publication/v/${version}`;
 const originalMatchMedia = window.matchMedia;
 const originalScrollBy = window.scrollBy;
@@ -250,7 +250,7 @@ describe('RevisedPaperWorkspace Working Draft', () => {
     expect(heading.className).not.toMatch(/scroll-mt-24/);
     const content = screen.getByTestId('reading-materials-content');
     expect(content).toHaveTextContent('will be downloaded when ready');
-    expect(content).toHaveTextContent('being prepared pending integrity verification');
+    expect(content).toHaveTextContent('review package files are pending server validation');
     expect(within(panel).queryByRole('link')).toBeNull();
 
     fireEvent.click(within(panel).getByRole('button', { name: 'Hide Download Files' }));
@@ -863,8 +863,8 @@ describe('RevisedPaperWorkspace My Review', () => {
     const textarea = screen.getByRole('textbox', { name: 'Your response' });
     expect(textarea).toHaveValue('');
     expect(screen.getByTestId('review-comment-char-count')).toHaveTextContent('0 / 20000');
-    expect(screen.queryByRole('button', { name: /Save|Submit|Resume/i })).toBeNull();
-
+    expect(screen.getByRole('button', { name: 'Save draft' })).toBeDisabled();
+    expect(screen.getByRole('button', { name: 'Submit response' })).toBeDisabled();
     const otherNumber = cohort.questionNumbers.find((number) => number !== 4) ?? 4;
     const other = guide.questions.find((candidate) => candidate.number === otherNumber);
     fireEvent.change(select, { target: { value: String(otherNumber) } });

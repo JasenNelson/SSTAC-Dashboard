@@ -88,11 +88,11 @@ import MatrixDashboard from '../MatrixDashboard';
 const DEFAULT_PROPS = {
   guideContent: '',
   paperRelease: {
-    documentVersion: '1.0.11-remediated-20260913',
-    sha256: 'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
-    bytes: 534101,
+    documentVersion: '1.0.11-remediated-7-8-successor-20260918-D',
+    sha256: 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+    bytes: 541959,
     releaseIdentity:
-      'matrix-options-paper:1.0.11-remediated-20260913:bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd',
+      'matrix-options-paper:1.0.11-remediated-7-8-successor-20260918-D:feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
     persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT' as const,
     content: 'V16 authenticated paper bytes',
   },

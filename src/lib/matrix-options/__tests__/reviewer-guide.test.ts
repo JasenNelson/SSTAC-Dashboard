@@ -11,7 +11,7 @@ describe('reviewer guide contract', () => {
     const contract = getReviewerGuideContract();
     expect(contract.questions).toHaveLength(12);
     expect(contract.questions.map((question) => question.id)).toEqual(
-      Array.from({ length: 12 }, (_, index) => `rpq:1.0.11-remediated-20260913:q${String(index + 1).padStart(2, '0')}`),
+      Array.from({ length: 12 }, (_, index) => `rpq:1.0.11-remediated-7-8-successor-20260918-D:q${String(index + 1).padStart(2, '0')}`),
     );
     expect(contract.questions[3].prompt).toContain('$4 \\times 4 = 16');
     expect(contract.questions[10].sourceLines).toEqual([219, 220]);
@@ -37,7 +37,7 @@ describe('reviewer guide contract', () => {
   });
 
   it('authenticates every prompt, heading, range, and paper SHA against the real release', async () => {
-    const paperText = readFileSync(resolve(process.cwd(), 'matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md'), 'utf8');
+    const paperText = readFileSync(resolve(process.cwd(), 'candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md'), 'utf8');
     const contract = getReviewerGuideContract();
     await expect(authenticateReviewerGuideAgainstPaper(contract, paperText)).resolves.toBeUndefined();
     await expect(authenticateReviewerGuideAgainstPaper({ ...contract, questions: contract.questions.map((question, index) => index === 0 ? { ...question, prompt: `${question.prompt} altered` } : question) }, paperText)).rejects.toThrow(/prompt source/);
@@ -46,7 +46,7 @@ describe('reviewer guide contract', () => {
   });
 
   it('never authenticates an empty question list vacuously', async () => {
-    const paperText = readFileSync(resolve(process.cwd(), 'matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md'), 'utf8');
+    const paperText = readFileSync(resolve(process.cwd(), 'candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md'), 'utf8');
     const contract = getReviewerGuideContract();
     await expect(authenticateReviewerGuideAgainstPaper({ ...contract, questions: [] }, paperText)).rejects.toThrow(/question count/);
     await expect(authenticateReviewerGuideAgainstPaper({ ...contract, questions: contract.questions.slice(0, 1) }, paperText)).rejects.toThrow(/question count/);

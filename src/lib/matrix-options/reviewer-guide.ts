@@ -1,10 +1,10 @@
 import guideContract from './paper/contracts/reviewer-guide-v1.json';
 
-export const REVIEW_GUIDE_RELEASE_IDENTITY = '1.0.11-remediated-20260913' as const;
+export const REVIEW_GUIDE_RELEASE_IDENTITY = '1.0.11-remediated-7-8-successor-20260918-D' as const;
 /** The guide questions are authenticated against this exact release file (F-05). */
-export const REVIEW_GUIDE_SOURCE_PATH = 'matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md' as const;
-const AUTHORITATIVE_PAPER_BYTES = 534101;
-const AUTHORITATIVE_PAPER_SHA256 = 'bcc4e4b472d13d12506ece436edf4a4aa6a5bb9ff4724a5478573993183057bd';
+export const REVIEW_GUIDE_SOURCE_PATH = 'candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md' as const;
+const AUTHORITATIVE_PAPER_BYTES = 541959;
+const AUTHORITATIVE_PAPER_SHA256 = 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337';
 
 export interface ReviewerGuideQuestion {
   readonly number: number;

@@ -14,7 +14,7 @@ import ReviewAssignmentPage from '../assignments/[assignmentId]/page';
 import ReviewPacketPage from '../assignments/[assignmentId]/packets/[packetId]/page';
 import ReviewItemPage from '../assignments/[assignmentId]/packets/[packetId]/items/[reviewItemId]/page';
 
-const version = '1.0.11-remediated-20260913';
+const version = '1.0.11-remediated-7-8-successor-20260918-D';
 const canonicalWorkingDraft = `/matrix-options/paper/publication/v/${version}?mode=working-draft`;
 
 const routes = (documentVersion: string) => [

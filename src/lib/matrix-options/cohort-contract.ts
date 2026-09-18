@@ -2,7 +2,7 @@ import cohortContract from './paper/contracts/cohorts-v1.json';
 
 import { getReviewerGuideContract } from './reviewer-guide';
 
-export const COHORT_RELEASE_IDENTITY = '1.0.11-remediated-20260913' as const;
+export const COHORT_RELEASE_IDENTITY = '1.0.11-remediated-7-8-successor-20260918-D' as const;
 export const COHORT_STATUS = 'PROPOSED_PENDING_OWNER_QP_APPROVAL' as const;
 export const COHORT_IDS = ['categories', 'pathway-grid', 'exposure-assumptions', 'inputs-evidence', 'methods-water-type'] as const;
 
