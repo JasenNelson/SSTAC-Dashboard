@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
 import path from 'path';
 
+import { SESSION_TEARDOWN_GREP, SESSION_TEARDOWN_PROJECT } from './e2e/session-teardown';
+
 // Load .env.local (and Next.js's other env-file tiers) into process.env so the
 // credentials e2e/global.setup.ts / e2e/admin.setup.ts read (E2E_TEST_EMAIL,
 // E2E_TEST_PASSWORD, E2E_ADMIN_EMAIL, E2E_ADMIN_PASSWORD, E2E_AUTH_ENABLED)
@@ -106,6 +108,10 @@ export default defineConfig({
             name: 'chromium-auth',
             use: { ...devices['Desktop Chrome'], storageState: userAuthState },
             dependencies: ['setup'],
+            // teardown (not a reverse dependency): selecting chromium-auth - as
+            // scripts/verify/matrix-paper-e2e.mjs does with --project=chromium-auth - also runs
+            // the session-teardown project, after chromium-auth has finished.
+            teardown: SESSION_TEARDOWN_PROJECT,
             // T40: run the member-fixture RBAC specs authenticated alongside matrix-options.
             // ssd-workbench added: it navigates to the auth-gated /matrix-options route and
             // was previously excluded here, so its authenticated assertions never ran anywhere
@@ -119,6 +125,17 @@ export default defineConfig({
             // same one E2E_AUTH_ENABLED already has, so any new authenticated spec must be
             // added here deliberately.
             testMatch: /(matrix-options(-phone-layout|-print|-paper)?|mo-map-access|mo-publish-rbac|ssd-workbench)\.spec\.ts/,
+            // A global logout here would revoke the session every other (and, fullyParallel,
+            // every concurrent) test in this project shares; see e2e/session-teardown.ts.
+            grepInvert: SESSION_TEARDOWN_GREP,
+          },
+          {
+            // Session-ending tests: chromium-auth's teardown, so they run only after the whole
+            // chromium-auth project has finished.
+            name: SESSION_TEARDOWN_PROJECT,
+            use: { ...devices['Desktop Chrome'], storageState: userAuthState },
+            testMatch: /matrix-options-paper\.spec\.ts/,
+            grep: SESSION_TEARDOWN_GREP,
           },
         ]
       : []),

@@ -3,7 +3,7 @@ import type { MockInstance } from 'vitest';
 import { readdirSync, readFileSync, statSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 
-const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructure, authenticateReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock } = vi.hoisted(() => {
+const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructure, authenticateReviewerGuideMock, cohortManifestMock, defaultManifest, downloadServerMock, supabaseMock } = vi.hoisted(() => {
   const labels = ['4.1 Categories and uses', '9.9 Water lot use classes', '6.0 Proposed framework', '18.1 Three-part structure', '7.5.1 Scope', '7.5.2 Evidence', '7.5.3 Boundary', '7.8 Exposure terms', '9.5 Matrix derivation options', '7.7 BC Aquatic Database', '15.0 Limitations of this draft', '4.4.2 Existing schedule structure', 'Technical Appendices Compendium', 'unrelated-sentinel'];
   // Depth-1 headings are the S1 section boundaries: sections are [0,1], [2..9], [10,11], [12].
   const TOP_LEVEL_LABELS = ['4.1 Categories and uses', '6.0 Proposed framework', '15.0 Limitations of this draft', 'Technical Appendices Compendium'];
@@ -41,12 +41,18 @@ const { redirectMock, notFoundMock, workspaceMock, structureMock, defaultStructu
       loadTrustedDownloadContext: vi.fn(async () => ({ documentVersion: '1.0.11-remediated-7-8-successor-20260918-D', manifestSha256: 'a'.repeat(64), paperSha256: 'b'.repeat(64), releaseIdentity: 'release', paperReleaseIdentity: 'paper', cohortQuestionIds: {}, reviewManifest: {} })),
       loadAuthenticatedPrintPackageCatalog: vi.fn(async (): Promise<any> => null),
       buildValidatedDownloadManifest: vi.fn(),
-      loadDownloadManifestState: vi.fn<typeof loadDownloadManifestState>(async () => ({ status: 'ready', manifest: { packages: [] } as any })),
+      loadDownloadManifestMapState: vi.fn<typeof loadDownloadManifestMapState>(async () => ({ status: 'ready', manifests: {} as any })),
+    },
+    supabaseMock: {
+      auth: {
+        getUser: vi.fn(async () => ({ data: { user: { is_anonymous: false } }, error: null })),
+      },
     },
   };
 });
 
 vi.mock('next/navigation', () => ({ redirect: redirectMock, notFound: notFoundMock }));
+vi.mock('@/lib/supabase-auth', () => ({ createClientForPagePath: () => ({ supabase: supabaseMock }) }));
 vi.mock('@/components/matrix-options/paper/RevisedPaperWorkspace', () => ({ RevisedPaperWorkspace: workspaceMock }));
 vi.mock('@/lib/matrix-options/revised-paper-structure', () => ({ loadRevisedPaperStructure: structureMock }));
 vi.mock('@/lib/matrix-options/cohort-contract', async () => {
@@ -60,7 +66,7 @@ vi.mock('@/lib/matrix-options/reviewer-guide', async () => {
 vi.mock('@/lib/matrix-options/paper/download-manifest-server', () => ({ ...downloadServerMock }));
 
 import PublicationPage from '../page';
-import { loadDownloadManifestState } from '@/lib/matrix-options/paper/download-manifest-server';
+import { loadDownloadManifestMapState } from '@/lib/matrix-options/paper/download-manifest-server';
 import PublicationNodePage from '../nodes/[canonicalNodeId]/page';
 import PublicationQuestionPage from '../questions/[questionId]/page';
 import { PaperDocument } from '@/components/matrix-options/paper/PaperDocument';
@@ -102,6 +108,7 @@ describe('paper publication V16 route', () => {
     structureMock.mockImplementation(defaultStructure);
     cohortManifestMock.mockImplementation(defaultManifest);
     authenticateReviewerGuideMock.mockResolvedValue(undefined);
+    supabaseMock.auth.getUser.mockResolvedValue({ data: { user: { is_anonymous: false } }, error: null });
     consoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
@@ -429,10 +436,18 @@ describe('paper publication V16 route', () => {
   });
 
   it('passes pending through the full publication page and rethrows boundary failures', async () => {
-    downloadServerMock.loadDownloadManifestState.mockResolvedValueOnce({ status: 'pending', manifest: null });
+    downloadServerMock.loadDownloadManifestMapState.mockResolvedValueOnce({ status: 'pending', manifests: null });
     const result = await page({ mode: 'working-draft' });
-    expect(result.props).toMatchObject({ downloadManifest: null });
-    downloadServerMock.loadDownloadManifestState.mockRejectedValueOnce(new Error('private transport failure'));
+    expect(result.props).toMatchObject({ downloadManifests: null });
+    downloadServerMock.loadDownloadManifestMapState.mockRejectedValueOnce(new Error('private transport failure'));
     await expect(page({ mode: 'working-draft' })).rejects.toThrow('private transport failure');
+  });
+
+  it('hides the complete manifest map from anonymous readers', async () => {
+    supabaseMock.auth.getUser.mockResolvedValueOnce({ data: { user: { is_anonymous: true } }, error: null });
+    const { default: PublicationPage } = await import('../page');
+    const result = await PublicationPage({ params: Promise.resolve({ documentVersion: '1.0.11-remediated-7-8-successor-20260918-D' }), searchParams: Promise.resolve({ mode: 'my-review' }) });
+    expect(result.type).toBe(workspaceMock);
+    expect(result.props.downloadManifests).toBeNull();
   });
 });

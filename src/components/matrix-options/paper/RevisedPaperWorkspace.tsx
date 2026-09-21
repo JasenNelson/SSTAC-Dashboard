@@ -1,7 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import type { KeyboardEvent, MouseEvent, ReactNode, Ref } from 'react';
+import type { MouseEvent, ReactNode, Ref } from 'react';
 import { Download, PanelLeftClose, PanelLeftOpen, PanelRightClose, PanelRightOpen } from 'lucide-react';
 import { createPortal } from 'react-dom';
 
@@ -51,8 +51,8 @@ export interface RevisedPaperWorkspaceProps {
   readonly sectionWindow?: PaperSectionWindowData;
   /** Working Draft only: the server-rendered initial section (<PaperDocument layout="chunks">). */
   readonly children?: ReactNode;
-  /** Authenticated opaque-ID PDF/DOCX manifest; null remains a visible pending state. */
-  readonly downloadManifest?: VerifiedDownloadManifest | null;
+  /** Authenticated opaque-ID PDF/DOCX manifests by cohortId; null remains a visible pending state. */
+  readonly downloadManifests?: Readonly<Record<string, VerifiedDownloadManifest>> | null;
 }
 
 export const PAPER_NAVIGATION_RAIL_ID = 'paper-navigation-rail';
@@ -309,7 +309,7 @@ function searchParamsRecord(search: string): PaperSearchParams {
   return record;
 }
 
-export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifest = null }: RevisedPaperWorkspaceProps) {
+export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, urlState, assignment, outline, cohortPortions, sectionWindow, children, downloadManifests = null }: RevisedPaperWorkspaceProps) {
   const isMyReview = urlState.mode === 'my-review';
   const cohortManifest = useMemo(() => getCohortManifest(), []);
   const reviewerGuide = useMemo(() => getReviewerGuideContract(), []);
@@ -386,6 +386,37 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
   const [selectedCohortId, setSelectedCohortId] = useState<CohortId>(initialCohortId);
   const [expandedCohortId, setExpandedCohortId] = useState<CohortId | null>(initialCohortId);
   const selectedCohort = cohortManifest.cohorts.find((cohort) => cohort.id === selectedCohortId) ?? cohortManifest.cohorts[0];
+
+  /**
+   * Which cohorts' packages the Download Files panel shows.
+   *
+   * Working Draft is the DEFAULT reading mode and shows ALL five cohorts (ten
+   * packages), grouped and labelled by cohort. It previously showed only
+   * `downloadManifests[selectedCohortId]`, and because Working Draft drops the
+   * cohort from the URL by rule and has no cohort setter, that always resolved
+   * to the FIRST cohort - leaving 8 of 10 packages unreachable in the mode most
+   * readers use.
+   *
+   * My Review stays filtered to the selected cohort, which is the mode where a
+   * cohort is actually chosen, and follows cohort state and popstate.
+   *
+   * A cohort with no verified manifest is OMITTED rather than rendered empty or
+   * fabricated; if none survive, the panel shows its pending state. Cohort is
+   * not an authorization boundary - this is presentation only, and every
+   * package still goes through the same authenticated, integrity-checked route.
+   */
+  const downloadGroups = useMemo(() => {
+    if (!downloadManifests) return null;
+    const visible = isMyReview
+      ? cohortManifest.cohorts.filter((cohort) => cohort.id === selectedCohortId)
+      : cohortManifest.cohorts;
+    const groups = visible.flatMap((cohort) => {
+      const manifest = downloadManifests[cohort.id];
+      return manifest ? [{ cohortId: cohort.id, cohortName: cohort.name, manifest }] : [];
+    });
+    return groups.length > 0 ? groups : null;
+  }, [downloadManifests, isMyReview, cohortManifest, selectedCohortId]);
+
   // PLAN-R4 3.B.3 "order is all 12 questions in cohort order": the ONE
   // canonical sequence Prev/Next, the progress count, the "Jump to topic"
   // select and the saved-questions list all read, independent of which
@@ -750,7 +781,9 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
       const { state: restored } = parsePaperUrlState(searchParamsRecord(window.location.search), ctx);
       if (restored.mode !== 'my-review') return;
 
-      const cohortId: CohortId = (restored.cohort as CohortId | null) ?? cohortManifest.cohorts[0]?.id ?? 'categories';
+      const cohortFromUrl = cohortManifest.cohorts.find((c) => c.id === restored.cohort)?.id;
+      const cohortFromSection = restored.section ? portions.find((p) => p.sectionAnchor === restored.section)?.cohortId : undefined;
+      const cohortId: CohortId = cohortFromUrl ?? cohortFromSection ?? cohortManifest.cohorts[0]?.id ?? 'categories';
       const cohort = cohortManifest.cohorts.find((candidate) => candidate.id === cohortId);
       const questionFromUrl = reviewerGuide.questions.find((question) => question.id === restored.q && cohort?.questionNumbers.includes(question.number));
       const questionNumber = questionFromUrl?.number ?? firstQuestionOf(reviewerGuide, cohort)?.number ?? 1;
@@ -979,7 +1012,7 @@ export function RevisedPaperWorkspace({ documentVersion, reviewManifestSha256, u
 
         <div ref={documentColumnRef} id={PAPER_DOCUMENT_COLUMN_ID} data-testid="paper-document-column" tabIndex={-1} onClick={onDocumentClick} className="min-w-0 flex-1 focus:outline-none lg:overflow-y-auto print:overflow-visible">
           <div className="mx-auto min-w-0 max-w-[72rem] space-y-5 px-4 py-5 sm:px-6 print:max-w-none print:p-0">
-            <DownloadFilesPanel open={downloadOpen} manifest={downloadManifest} onClose={() => closePanel('download')} closeFocusRef={downloadToggleRef} panelId={PAPER_DOWNLOAD_PANEL_ID} />
+            <DownloadFilesPanel open={downloadOpen} groups={downloadGroups} onClose={() => closePanel('download')} closeFocusRef={downloadToggleRef} panelId={PAPER_DOWNLOAD_PANEL_ID} />
 
             <section aria-label={isMyReview ? 'My Review status' : 'Working Draft status'} className="flex flex-wrap items-center gap-x-4 gap-y-2 border-y border-slate-200 py-3 dark:border-slate-700 print:hidden">
               <h2 className="text-lg font-bold">{isMyReview ? 'My Review' : 'Working Draft'}</h2>

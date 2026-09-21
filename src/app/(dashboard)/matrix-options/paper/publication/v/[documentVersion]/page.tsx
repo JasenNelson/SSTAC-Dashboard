@@ -30,15 +30,11 @@ import {
   PaperDocument,
 } from '@/components/matrix-options/paper/PaperDocument';
 import type { PaperDocumentModel } from '@/components/matrix-options/paper/PaperDocument';
-import {
-  buildValidatedDownloadManifest,
-  loadAuthenticatedPrintPackageCatalog,
-  loadTrustedDownloadContext,
-  loadDownloadManifestState,
-  type DownloadRequestBinding,
-  type DownloadManifestLoadState,
-} from '@/lib/matrix-options/paper/download-manifest-server';
-import type { VerifiedDownloadManifest } from '@/lib/matrix-options/paper/download-manifest';
+// The page consumes ONLY the manifest-map loader. It deliberately does not import
+// the catalog/context/manifest primitives: catalog authentication and release
+// binding belong to the server trust boundary, and importing them here would
+// suggest the page performs validation it does not perform.
+import { loadDownloadManifestMapState } from '@/lib/matrix-options/paper/download-manifest-server';
 
 /** Non-sensitive reason codes logged before an expected fail-closed 404 (F-04). */
 type PaperRouteFailureReason =
@@ -169,18 +165,29 @@ export default async function PublicationPage({
   const assignment = getProductionAssignment();
   const workspaceKey = `${state.mode}:${state.cohort ?? ''}:${state.q ?? ''}`;
   const reviewManifestSha256 = getReviewManifest().sha256;
-  const selectedDownloadCohortId = state.cohort ?? getCohortManifest().cohorts[0]?.id;
-  if (!selectedDownloadCohortId) throw new Error('Download cohort binding unavailable.');
-  const downloadBinding: DownloadRequestBinding = {
-    documentVersion,
-    manifestSha256: reviewManifestSha256,
-    cohortId: selectedDownloadCohortId,
-    ...(state.q ? { questionId: state.q } : {}),
-  };
-  const downloadState = await loadDownloadManifestState(downloadBinding);
+
+  const { createClientForPagePath } = await import('@/lib/supabase-auth');
+  const { supabase } = await createClientForPagePath('/matrix-options/paper/publication');
+  const { data: { user } } = await supabase.auth.getUser();
+  const isAnonymous = user?.is_anonymous ?? true;
+
+  // DELIBERATE, TESTED BEHAVIOUR: a download-boundary failure propagates and
+  // fails the page, rather than degrading the download panel to pending. See
+  // the regression test "passes pending through the full publication page and
+  // rethrows boundary failures" - `pending` and `failed` are distinguished on
+  // purpose so a genuine transport/authentication failure cannot be silently
+  // rendered as "not yet provisioned".
+  // A reviewer argued this should degrade instead, so that catalog
+  // authentication failing cannot take the whole publication workspace down.
+  // That is a real trade-off, but reversing it would mean rewriting the
+  // regression test that encodes the current intent, so it is an OWNER decision
+  // and is recorded in the handoff rather than changed here.
+  const downloadState = isAnonymous ? null : await loadDownloadManifestMapState(documentVersion, reviewManifestSha256);
+  const downloadManifests = downloadState?.status === 'ready' ? downloadState.manifests : null;
+
   const { RevisedPaperWorkspace } = await import('@/components/matrix-options/paper/RevisedPaperWorkspace');
   if (state.mode === 'my-review') {
-    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifest={downloadState.manifest} />;
+    return <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} cohortPortions={cohortPortions} downloadManifests={downloadManifests} />;
   }
 
   // S1 incremental section window: only the initial (or deep-linked) depth-1
@@ -207,7 +214,7 @@ export default async function PublicationPage({
     throw error;
   }
   return (
-    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifest={downloadState.manifest}>
+    <RevisedPaperWorkspace key={workspaceKey} documentVersion={documentVersion} reviewManifestSha256={reviewManifestSha256} urlState={state} assignment={assignment} outline={getPaperNavOutline(structure)} sectionWindow={sectionWindow} downloadManifests={downloadManifests}>
       <PaperDocument model={documentModel} layout="chunks" />
     </RevisedPaperWorkspace>
   );

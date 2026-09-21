@@ -2,6 +2,8 @@ import { defineConfig, devices } from '@playwright/test';
 import { loadEnvConfig } from '@next/env';
 import path from 'node:path';
 
+import { SESSION_TEARDOWN_GREP, SESSION_TEARDOWN_PROJECT } from './e2e/session-teardown';
+
 loadEnvConfig(process.cwd());
 const paperWorkspaceFlag = process.env.MATRIX_OPTIONS_PAPER_WORKSPACE ?? 'true';
 process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = paperWorkspaceFlag;
@@ -33,9 +35,22 @@ export default defineConfig({
         ...devices['Desktop Chrome'],
         ...(hasCredentials ? { storageState: userAuthState } : {}),
       },
-      ...(hasCredentials ? { dependencies: ['setup'] } : {}),
+      // teardown (not a reverse dependency): selecting chromium-auth - as the standard harness does
+      // with --project=chromium-auth - also runs the teardown project, after chromium-auth finishes.
+      ...(hasCredentials ? { dependencies: ['setup'], teardown: SESSION_TEARDOWN_PROJECT } : {}),
       testIgnore: /global\.setup\.ts/,
+      // A global logout here would revoke the session every later test shares; see e2e/session-teardown.ts.
+      grepInvert: SESSION_TEARDOWN_GREP,
     },
+    // Runs the session-ending tests only after every shared-session test has finished.
+    ...(hasCredentials
+      ? [{
+          name: SESSION_TEARDOWN_PROJECT,
+          use: { ...devices['Desktop Chrome'], storageState: userAuthState },
+          testIgnore: /global\.setup\.ts/,
+          grep: SESSION_TEARDOWN_GREP,
+        }]
+      : []),
   ],
   webServer: {
     command: `npx next dev --hostname ${host} --port ${port}`,

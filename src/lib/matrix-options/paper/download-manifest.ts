@@ -4,6 +4,7 @@ export const DOWNLOAD_VALIDATION_STATE = 'SERVER_VALIDATED' as const;
 export const DOWNLOAD_PACKAGE_KINDS = ['PDF', 'DOCX'] as const;
 const DOWNLOAD_ROUTE_PREFIX = '/api/matrix-options/paper/downloads/';
 const PACKAGE_ID_PATTERN = /^[a-z0-9][a-z0-9._-]*$/;
+const RELEASE_IDENTITY_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const FILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(pdf|docx)$/;
 
 export type DownloadPackageKind = typeof DOWNLOAD_PACKAGE_KINDS[number];
@@ -23,6 +24,7 @@ export class DownloadManifestError extends Error { constructor(message: string) 
 function fail(message: string): never { throw new DownloadManifestError(message); }
 function isSha256(value: unknown): value is string { return typeof value === 'string' && /^[a-f0-9]{64}$/.test(value); }
 function isStableId(value: unknown): value is string { return typeof value === 'string' && PACKAGE_ID_PATTERN.test(value); }
+function isReleaseIdentity(value: unknown): value is string { return typeof value === 'string' && RELEASE_IDENTITY_PATTERN.test(value); }
 function isRecord(value: unknown): value is Record<string, unknown> { return typeof value === 'object' && value !== null && !Array.isArray(value); }
 
 function validatePackage(raw: unknown, expected: DownloadManifestExpectation): DownloadManifestPackage {
@@ -44,8 +46,8 @@ function validatePackage(raw: unknown, expected: DownloadManifestExpectation): D
 
 export function validateDownloadManifest(candidate: unknown, expected: DownloadManifestExpectation): VerifiedDownloadManifest {
   if (!isSha256(expected.manifestSha256) || typeof expected.documentVersion !== 'string' || !expected.documentVersion.trim()) fail('expected release binding');
-  if (expected.releaseIdentity !== undefined && !isStableId(expected.releaseIdentity)) fail('expected release identity');
-  if (!isRecord(candidate) || candidate.schemaVersion !== DOWNLOAD_MANIFEST_SCHEMA || candidate.validationState !== DOWNLOAD_VALIDATION_STATE || candidate.status !== DOWNLOAD_MANIFEST_STATUS || !isStableId(candidate.releaseIdentity) || candidate.documentVersion !== expected.documentVersion || !isSha256(candidate.manifestSha256) || candidate.manifestSha256 !== expected.manifestSha256 || (expected.releaseIdentity !== undefined && candidate.releaseIdentity !== expected.releaseIdentity) || !Array.isArray(candidate.packages) || candidate.packages.length !== 2) fail('release binding or packages');
+  if (expected.releaseIdentity !== undefined && !isReleaseIdentity(expected.releaseIdentity)) fail('expected release identity');
+  if (!isRecord(candidate) || candidate.schemaVersion !== DOWNLOAD_MANIFEST_SCHEMA || candidate.validationState !== DOWNLOAD_VALIDATION_STATE || candidate.status !== DOWNLOAD_MANIFEST_STATUS || !isReleaseIdentity(candidate.releaseIdentity) || candidate.documentVersion !== expected.documentVersion || !isSha256(candidate.manifestSha256) || candidate.manifestSha256 !== expected.manifestSha256 || (expected.releaseIdentity !== undefined && candidate.releaseIdentity !== expected.releaseIdentity) || !Array.isArray(candidate.packages) || candidate.packages.length !== 2) fail('release binding or packages');
   const packages = candidate.packages.map((entry) => validatePackage(entry, expected));
   const ids = new Set<string>(); const orders = new Set<number>(); const kinds = new Set<DownloadPackageKind>();
   for (const entry of packages) { if (ids.has(entry.packageId)) fail('duplicate package ID'); if (orders.has(entry.order)) fail('duplicate package order'); if (kinds.has(entry.kind)) fail('duplicate package kind'); ids.add(entry.packageId); orders.add(entry.order); kinds.add(entry.kind); }

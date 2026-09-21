@@ -1,4 +1,14 @@
 import { expect, test } from '@playwright/test';
+import fs from 'node:fs';
+import path from 'node:path';
+
+import { SESSION_TEARDOWN_PROJECT, SESSION_TEARDOWN_TAG } from './session-teardown';
+
+// The ten package ids of the reviewed print-package catalog, read from the contract itself so the
+// anonymous-denial test covers every artifact route rather than a hand-picked one.
+const printPackageIds: string[] = (JSON.parse(
+  fs.readFileSync(path.join(__dirname, '..', 'src', 'lib', 'matrix-options', 'paper', 'contracts', 'print-packages-v1.json'), 'utf8'),
+) as { artifacts: Array<{ packageId: string }> }).artifacts.map((artifact) => artifact.packageId);
 
 const realVersion = '1.0.11-remediated-7-8-successor-20260918-D';
 const realReviewPath = `/matrix-options/paper/review/v/${realVersion}`;
@@ -436,8 +446,11 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     await expect(page.getByRole('button', { name: 'Use saved' })).toBeVisible();
     await page.getByRole('button', { name: 'Use saved' }).click();
     await expect(page.getByRole('textbox', { name: 'Your response' })).toHaveValue('saved in another tab');
-    await page.getByRole('button', { name: 'Logout' }).click();
-    await expect(page).toHaveURL(/\/login/);
+    // The Logout assertion that used to end this test now lives in the dedicated
+    // SESSION_TEARDOWN_TAG test below. Logout calls supabase.auth.signOut() with the default
+    // GLOBAL scope, which revokes every session of the E2E user - including the shared
+    // storage-state session every later test in this project starts from. Run here, it sent
+    // each subsequent authenticated test to /login.
   });
 
   test('M2: authenticated real release rails including the new Review Comments controls fit at 360 and 1024 with no horizontal overflow', async ({ page }, testInfo) => {
@@ -628,5 +641,148 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
       await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth)).toBeLessThanOrEqual(1);
     }
   });
-});
 
+  test('authenticated real release user can view download controls and download all expected PDFs and DOCXs', async ({ page }, testInfo) => {
+    requireJourney(testInfo.project.name);
+    test.setTimeout(120000); // Allow time for compilation and downloads
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+
+    // Open the download files panel and handle React hydration races
+    const downloadToggle = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
+
+    // Wait for the client-only Navigation button to become visible as a hydration sentinel
+    const navigationButton = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Navigation', exact: true });
+    await expect(navigationButton).toBeVisible();
+
+    // Wait for the button to be interactive and hydrated
+    await expect(downloadToggle).toBeVisible();
+    await expect(downloadToggle).toBeEnabled();
+    await downloadToggle.click();
+    await expect(downloadToggle).toHaveAttribute('aria-expanded', 'true');
+
+    // Verify the panel opens and the heading is visible
+    const panel = page.getByTestId('download-files-panel');
+    await expect(panel).toBeVisible();
+
+    // Verify PDF and DOCX packages are present (2 total packages for the active cohort)
+    const packageItems = panel.getByRole('listitem');
+    await expect(packageItems).toHaveCount(2);
+
+    // Verify exact package IDs, metadata, lengths, and hashes rendered in the UI
+    const pdfItem = packageItems.nth(0);
+    const docxItem = packageItems.nth(1);
+
+    await expect(pdfItem).toContainText('categories PDF');
+    await expect(pdfItem).toContainText('matrix-options-categories-preview.pdf - 110968 bytes - SHA-256 b1cf2731823687c30612fbf56e5b87049b32cd9ec0b4f5dbaf2d9ff06d19ff7f');
+
+    await expect(docxItem).toContainText('categories DOCX');
+    await expect(docxItem).toContainText('matrix-options-categories-preview.docx - 38137 bytes - SHA-256 7572fae5c934b2da8c6fdc9c37a948f2efd392dde76bb65fbbf07f119f8c93b3');
+
+    // The download controls are BUTTONS, not links: the panel fetches and verifies
+    // the response before writing anything, so a JSON error can never be saved as
+    // a .pdf. There is therefore no href to read - the route URL is derived from
+    // the package id, exactly as the manifest builds it.
+    await expect(pdfItem.getByRole('button', { name: 'Download PDF' })).toBeVisible();
+    await expect(docxItem.getByRole('button', { name: 'Download DOCX' })).toBeVisible();
+    const pdfHref = '/api/matrix-options/paper/downloads/categories-pdf';
+    const docxHref = '/api/matrix-options/paper/downloads/categories-docx';
+
+    // Everything above is provable TODAY. Everything below requires the private
+    // Supabase bucket to be provisioned; until then the artifact route correctly
+    // fails closed with 503 and these exact-byte assertions cannot pass.
+    //
+    // This is an explicit, visible skip bound to an env flag - NOT a weakened
+    // assertion and NOT treating 503 as success. After the owner-approved
+    // provisioning, set MATRIX_TWG_PACKAGES_PROVISIONED=true and these become
+    // hard assertions again.
+    test.skip(
+      process.env.MATRIX_TWG_PACKAGES_PROVISIONED !== 'true',
+      'Artifact bytes require the matrix-twg-packages bucket. Set MATRIX_TWG_PACKAGES_PROVISIONED=true after provisioning.',
+    );
+
+    // Validate actual response status, headers, lengths, and hashes for PDF
+    const pdfResponse = await page.request.get(pdfHref!);
+    expect(pdfResponse.status()).toBe(200);
+    expect(pdfResponse.headers()['content-type']).toBe('application/pdf');
+    expect(pdfResponse.headers()['content-length']).toBe('110968');
+    const pdfBody = await pdfResponse.body();
+    const crypto = await import('crypto');
+    const pdfHash = crypto.createHash('sha256').update(pdfBody).digest('hex');
+    expect(pdfHash).toBe('b1cf2731823687c30612fbf56e5b87049b32cd9ec0b4f5dbaf2d9ff06d19ff7f');
+
+    // Validate actual response status, headers, lengths, and hashes for DOCX
+    const docxResponse = await page.request.get(docxHref!);
+    expect(docxResponse.status()).toBe(200);
+    expect(docxResponse.headers()['content-type']).toBe('application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+    expect(docxResponse.headers()['content-length']).toBe('38137');
+    const docxBody = await docxResponse.body();
+    const docxHash = crypto.createHash('sha256').update(docxBody).digest('hex');
+    expect(docxHash).toBe('7572fae5c934b2da8c6fdc9c37a948f2efd392dde76bb65fbbf07f119f8c93b3');
+  });
+
+  test('unauthenticated and anonymous users are securely denied access to the print package manifest and artifacts', async ({ playwright, baseURL }) => {
+    // storageState is EXPLICITLY empty. In the chromium-auth project a bare
+    // playwright.request.newContext() inherits the project's stored session, so this test
+    // used to send AUTHENTICATED requests: the manifest route (which authenticates before it
+    // parses its query) answered 400 MISSING_QUERY_PARAMETER instead of 401.
+    const anonContext = await playwright.request.newContext({ baseURL: baseURL!, storageState: { cookies: [], origins: [] } });
+    try {
+      // The context must carry no credential at all, or every 401 below proves nothing.
+      expect((await anonContext.storageState()).cookies).toHaveLength(0);
+
+      // 1. Manifest endpoint
+      const manifestResponse = await anonContext.get('/api/matrix-options/paper/downloads');
+      expect(manifestResponse.status()).toBe(401);
+      const manifestJson = await manifestResponse.json();
+      expect(manifestJson.code).toBe('UNAUTHORIZED');
+
+      // 2. EVERY package artifact endpoint, from the reviewed print-package catalog.
+      expect(printPackageIds).toHaveLength(10);
+      for (const packageId of printPackageIds) {
+        const artifactResponse = await anonContext.get(`/api/matrix-options/paper/downloads/${packageId}`);
+        expect(artifactResponse.status(), packageId).toBe(401);
+        const artifactJson = await artifactResponse.json();
+        expect(artifactJson.code, packageId).toBe('UNAUTHORIZED');
+      }
+    } finally {
+      await anonContext.dispose();
+    }
+  });
+
+  // Runs ONLY in the chromium-auth-session-teardown project: chromium-auth's Playwright TEARDOWN, so it
+  // starts after every shared-session test has finished. Playwright re-adds teardown suites without
+  // applying the CLI --grep, so any run that selects chromium-auth (including the standard harness,
+  // scripts/verify/matrix-paper-e2e.mjs) also runs it; the chromium-auth projects grepInvert the tag.
+  //
+  // The app's Logout is a GLOBAL sign-out. Sent for real, it would revoke EVERY session of the shared
+  // E2E account - including sessions held by any other run using that account at the same moment
+  // (another local run, a concurrent CI workflow), which Playwright ordering cannot protect. So only
+  // the GoTrue logout request is intercepted: the app's real logout path runs end to end (button ->
+  // signOut -> local session cleared -> redirect -> middleware refuses the protected route), and the
+  // test proves the app asked GoTrue for a GLOBAL sign-out, without revoking anyone's session.
+  // If the intercept ever stops matching, the request-count assertion fails the test.
+  test(`${SESSION_TEARDOWN_TAG} authenticated real release logout ends the session and returns to /login`, async ({ page }, testInfo) => {
+    test.skip(!reviewNavigationEnabled, 'The standard E2E harness supplies both exact-true flags for this journey.');
+    test.skip(testInfo.project.name !== SESSION_TEARDOWN_PROJECT, 'Session-ending tests run only after every shared-session test has finished.');
+    const logoutRequests: string[] = [];
+    await page.route('**/auth/v1/logout**', async (route) => {
+      logoutRequests.push(route.request().url());
+      await route.fulfill({ status: 204, body: '', headers: { 'access-control-allow-origin': route.request().headers()['origin'] ?? '*', 'access-control-allow-credentials': 'true' } });
+    });
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    failOnLogin(page.url());
+    await expect(page.getByRole('textbox', { name: 'Your response' })).toBeVisible();
+    await page.getByRole('button', { name: 'Logout' }).click();
+    await expect(page).toHaveURL(/\/login/);
+    // The app asked GoTrue to end the session, exactly once, with GLOBAL scope.
+    expect(logoutRequests).toHaveLength(1);
+    expect(new URL(logoutRequests[0]).searchParams.get('scope')).toBe('global');
+    // The browser no longer holds the Supabase session cookie.
+    const authCookies = (await page.context().cookies()).filter((cookie) => /^sb-.+-auth-token/.test(cookie.name));
+    expect(authCookies).toHaveLength(0);
+    // And the session is really gone for this browser: the protected workspace redirects to /login.
+    await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
+    await expect(page).toHaveURL(/\/login/);
+  });
+});

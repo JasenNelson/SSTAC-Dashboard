@@ -900,6 +900,22 @@ describe('RevisedPaperWorkspace My Review', () => {
    * that exactly (`history.replaceState` to the prior URL, then a real
    * `PopStateEvent`), rather than calling any workspace handler directly.
    */
+    it('derives cohort from a section-only popstate', () => {
+      const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
+      renderMyReview({ cohort: null, q: null, section: null }, portions);
+
+      act(() => {
+        window.history.replaceState(null, '', '/?mode=my-review&section=anchor-pathway-grid');
+        window.dispatchEvent(new PopStateEvent('popstate'));
+      });
+      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    });
+
+    it('derives cohort from a section-only initial URL', () => {
+      const portions = realPortions().map((portion) => ({ ...portion, sectionAnchor: `anchor-${portion.cohortId}` }));
+      renderMyReview({ cohort: null, q: null, section: 'anchor-pathway-grid' }, portions);
+      expect(screen.getByRole('button', { name: 'Pathway and grid, 2 questions' })).toHaveAttribute('aria-expanded', 'true');
+    });
   describe('M2-POPSTATE: Back restores My Review state via a real popstate event', () => {
     function popTo(url: string) {
       act(() => {
@@ -1117,6 +1133,130 @@ describe('RevisedPaperWorkspace My Review', () => {
     expect(screen.queryByText('Review ledger')).toBeNull();
     expect(screen.getByText('Assignment unavailable')).toBeInTheDocument();
     expect(screen.getByText(/Assignments are not connected for this release\./)).toBeInTheDocument();
+  });
+
+  it('supplies distinguishable download manifests and switches cohorts, updating the download links dynamically', () => {
+    const downloadManifests = {
+      'categories': {
+        schemaVersion: 'matrix-paper-download-manifest-v1' as const,
+        validationState: 'SERVER_VALIDATED' as const,
+        status: 'REVIEW_READY_NOT_GREEN' as const,
+        releaseIdentity: 'test-release',
+        documentVersion: version,
+        manifestSha256: 'a'.repeat(64),
+        packages: [
+          { packageId: 'cat-pdf', kind: 'PDF' as const, label: 'Categories PDF', fileName: 'cat.pdf', path: 'opaque/cat-pdf', href: '/api/matrix-options/paper/downloads/cat-pdf', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 0 },
+          { packageId: 'cat-docx', kind: 'DOCX' as const, label: 'Categories DOCX', fileName: 'cat.docx', path: 'opaque/cat-docx', href: '/api/matrix-options/paper/downloads/cat-docx', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 1 }
+        ]
+      },
+      'pathway-grid': {
+        schemaVersion: 'matrix-paper-download-manifest-v1' as const,
+        validationState: 'SERVER_VALIDATED' as const,
+        status: 'REVIEW_READY_NOT_GREEN' as const,
+        releaseIdentity: 'test-release',
+        documentVersion: version,
+        manifestSha256: 'a'.repeat(64),
+        packages: [
+          { packageId: 'pg-pdf', kind: 'PDF' as const, label: 'Pathway Grid PDF', fileName: 'pg.pdf', path: 'opaque/pg-pdf', href: '/api/matrix-options/paper/downloads/pg-pdf', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 0 },
+          { packageId: 'pg-docx', kind: 'DOCX' as const, label: 'Pathway Grid DOCX', fileName: 'pg.docx', path: 'opaque/pg-docx', href: '/api/matrix-options/paper/downloads/pg-docx', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 1 }
+        ]
+      }
+    };
+    render(
+      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'my-review' })} assignment={getProductionAssignment()} cohortPortions={realPortions()} downloadManifests={downloadManifests} />
+    );
+
+    // Initial cohort is Categories. Open download panel.
+    const downloadBtn = screen.getByRole('button', { name: 'Download Files' });
+    fireEvent.click(downloadBtn);
+
+    // My Review shows EXACTLY the selected cohort's pair - one group, two
+    // packages. Controls are buttons now, not anchors: the panel fetches and
+    // verifies before writing anything to disk.
+    expect(screen.getByTestId('download-button-cat-pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button-cat-docx')).toBeInTheDocument();
+    expect(screen.getByText('Categories PDF')).toBeInTheDocument();
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+
+    // Switch to Pathway and grid cohort.
+    fireEvent.click(screen.getByRole('button', { name: /Pathway and grid/ }));
+
+    // ONLY the pair shown changes; it is still exactly one cohort's two packages.
+    expect(screen.getByTestId('download-button-pg-pdf')).toBeInTheDocument();
+    expect(screen.getByTestId('download-button-pg-docx')).toBeInTheDocument();
+    expect(screen.getByText('Pathway Grid PDF')).toBeInTheDocument();
+    expect(screen.queryByTestId('download-button-cat-pdf')).not.toBeInTheDocument();
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+  });
+
+  it('P1-A: Working Draft exposes every cohort package pair, not just the first', () => {
+    // The pre-fix defect: Working Draft drops the cohort from the URL by rule
+    // and has no cohort setter, so the panel always resolved to cohorts[0] and
+    // every other cohort's packages were unreachable in the default mode.
+    const mk = (cohortId: string, tag: string) => ({
+      schemaVersion: 'matrix-paper-download-manifest-v1' as const,
+      validationState: 'SERVER_VALIDATED' as const,
+      status: 'REVIEW_READY_NOT_GREEN' as const,
+      releaseIdentity: 'test-release',
+      documentVersion: version,
+      manifestSha256: 'a'.repeat(64),
+      packages: [
+        { packageId: `${tag}-pdf`, kind: 'PDF' as const, label: `${cohortId} PDF`, fileName: `${tag}.pdf`, path: `opaque/${tag}-pdf`, href: `/api/matrix-options/paper/downloads/${tag}-pdf`, sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 0 },
+        { packageId: `${tag}-docx`, kind: 'DOCX' as const, label: `${cohortId} DOCX`, fileName: `${tag}.docx`, path: `opaque/${tag}-docx`, href: `/api/matrix-options/paper/downloads/${tag}-docx`, sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 1 },
+      ],
+    });
+    const cohortIds = getCohortManifest().cohorts.map((cohort) => cohort.id);
+    const downloadManifests = Object.fromEntries(cohortIds.map((id, index) => [id, mk(id, `c${index}`)]));
+
+    render(
+      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
+
+    // Every cohort is present exactly once, and all ten packages are reachable.
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(cohortIds.length);
+    for (const id of cohortIds) expect(screen.getByTestId(`download-cohort-${id}`)).toBeInTheDocument();
+    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(cohortIds.length * 2);
+    cohortIds.forEach((_id, index) => {
+      expect(screen.getByTestId(`download-button-c${index}-pdf`)).toBeInTheDocument();
+      expect(screen.getByTestId(`download-button-c${index}-docx`)).toBeInTheDocument();
+    });
+  });
+
+  it('P1-A: Working Draft omits a cohort with no verified manifest rather than faking one', () => {
+    const cohortIds = getCohortManifest().cohorts.map((cohort) => cohort.id);
+    const only = cohortIds[0];
+    const downloadManifests = {
+      [only]: {
+        schemaVersion: 'matrix-paper-download-manifest-v1' as const,
+        validationState: 'SERVER_VALIDATED' as const,
+        status: 'REVIEW_READY_NOT_GREEN' as const,
+        releaseIdentity: 'test-release',
+        documentVersion: version,
+        manifestSha256: 'a'.repeat(64),
+        packages: [
+          { packageId: 'only-pdf', kind: 'PDF' as const, label: 'Only PDF', fileName: 'only.pdf', path: 'opaque/only-pdf', href: '/api/matrix-options/paper/downloads/only-pdf', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 0 },
+          { packageId: 'only-docx', kind: 'DOCX' as const, label: 'Only DOCX', fileName: 'only.docx', path: 'opaque/only-docx', href: '/api/matrix-options/paper/downloads/only-docx', sha256: 'b'.repeat(64), byteLength: 100, documentVersion: version, manifestSha256: 'a'.repeat(64), order: 1 },
+        ],
+      },
+    };
+    render(
+      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={downloadManifests} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
+    expect(screen.getAllByTestId(/^download-cohort-/)).toHaveLength(1);
+    expect(screen.getAllByRole('button', { name: /^Download (PDF|DOCX)$/ })).toHaveLength(2);
+  });
+
+  it('P1-A: an entirely absent manifest map still fails closed to pending', () => {
+    render(
+      <RevisedPaperWorkspace documentVersion={version} urlState={state({ mode: 'working-draft' })} assignment={getProductionAssignment()} outline={[]} downloadManifests={null} />
+    );
+    fireEvent.click(screen.getByRole('button', { name: 'Download Files' }));
+    expect(screen.getByTestId('download-files-pending')).toHaveTextContent('pending server validation');
+    expect(screen.queryByRole('button', { name: /^Download (PDF|DOCX)$/ })).not.toBeInTheDocument();
   });
 });
 
@@ -3279,7 +3419,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     );
 
     expect(listeners).toBe(4);
-    
+
     unmount();
     expect(listeners).toBe(0);
   });
@@ -3290,19 +3430,19 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
   });
 
   it('R11-FG2: two reveal requests from one user activation leave only the latter entitled', () => {
-    // The component's single pending slot (pendingRevealRef at RevisedPaperWorkspace.tsx:310) 
+    // The component's single pending slot (pendingRevealRef at RevisedPaperWorkspace.tsx:310)
     // makes a two-claim race impossible through the component itself.
     // So we use the real PaperScrollAuthority directly in an integration test.
     const authority = new PaperScrollAuthority({ stickyHeaderHeight: () => 129 });
     authority.observe(window);
-    
+
     const parent = document.createElement('div');
     const child = document.createElement('button');
     parent.appendChild(child);
     document.body.appendChild(parent);
 
     const frames = controllableFrames();
-    
+
     const navigation = document.createElement('h2');
     navigation.getBoundingClientRect = () => rect(400, 40);
     const download = document.createElement('h2');
@@ -3314,7 +3454,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     child.addEventListener('click', () => {
       cause1 = authority.requestRevealCause();
     });
-    
+
     parent.addEventListener('click', () => {
       cause2 = authority.requestRevealCause();
     });
@@ -3323,16 +3463,16 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
 
     try {
       fireEvent.click(child);
-      
+
       if (cause1 === null || cause2 === null) throw new Error('no cause minted');
       authority.revealPanelHeading(cause1, navigation);
       authority.revealPanelHeading(cause2, download);
-      
+
       drainFrames(frames);
-      
+
       const navigationDelta = expectedDelta(400, 129);
       const downloadDelta = expectedDelta(200, 129);
-      
+
       expect(scrollBy).not.toHaveBeenCalledWith(0, navigationDelta);
       expect(scrollBy).toHaveBeenCalledWith(0, downloadDelta);
     } finally {
@@ -3346,7 +3486,7 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
     const observe = vi.spyOn(PaperScrollAuthority.prototype, 'observe').mockImplementation(() => {
       order.push('observe');
     });
-    
+
     function Flag() {
       useLayoutEffect(() => { order.push('layout-effect'); }, []);
       return null;
@@ -3358,11 +3498,10 @@ describe('mount-journey landing, scroll arbitration and the clamp contract (M1R5
         <Flag />
       </>
     );
-    
+
     // observe must happen before passive-effect
     expect(order).toEqual(['observe', 'layout-effect']);
     observe.mockRestore();
   });
 });
 });
-

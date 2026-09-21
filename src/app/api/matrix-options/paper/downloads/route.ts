@@ -30,7 +30,7 @@ function errorResponse(error: DownloadBoundaryError | { status: number; code: st
 export async function GET(request: NextRequest): Promise<NextResponse> {
   const { user, rateLimitResponse, rateLimitHeaders } = await getAuthAndRateLimit(request, 'default');
   if (rateLimitResponse) return noStore(rateLimitResponse);
-  if (!user) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401, headers: { ...NO_STORE_HEADERS, ...rateLimitHeaders } });
+  if (!user || user.is_anonymous !== false) return NextResponse.json({ error: 'Unauthorized', code: 'UNAUTHORIZED' }, { status: 401, headers: { ...NO_STORE_HEADERS, ...rateLimitHeaders } });
   try {
     const binding = parseDownloadRequestBinding(new URL(request.url));
     const context = await loadTrustedDownloadContext(binding);
@@ -39,6 +39,14 @@ export async function GET(request: NextRequest): Promise<NextResponse> {
     const manifest = buildValidatedDownloadManifest(artifacts, context, binding.cohortId);
     return NextResponse.json({ manifest, apiPrefix: DOWNLOAD_API_PREFIX }, { headers: { ...NO_STORE_HEADERS, ...rateLimitHeaders } });
   } catch (error) {
+    // Log before responding: the client only ever sees a code, so without this
+    // an operator has no record that the manifest boundary refused a request.
+    console.error(
+      `[matrix-options-paper][manifest-route] ` +
+      (error instanceof DownloadBoundaryError
+        ? `code=${error.code} status=${error.status}`
+        : `unexpected=${error instanceof Error ? error.message : 'unknown'}`),
+    );
     if (error instanceof DownloadBoundaryError) return errorResponse(error, rateLimitHeaders);
     return errorResponse({ status: 503, code: 'DOWNLOAD_BOUNDARY_UNAVAILABLE', message: 'Download boundary is unavailable.' }, rateLimitHeaders);
   }

@@ -1,0 +1,120 @@
+{
+  "schema": "matrix-twg-private-preview-package-catalog-v1",
+  "status": "NON_CANONICAL_PREVIEW",
+  "sourceRelease": "1.0.11-remediated-7-8-successor-20260918-D",
+  "sourcePaperSha256": "feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337",
+  "sourceCatalogSha256": "3dd253316b177dfe3f962070c24e95ad29e0abf4971eca33813b157f0876619f",
+  "sourceReviewManifestSha256": "5d83a3c9ba78e4da234c70678fcf57db9abbefc189002303879ebc0c80ac926e",
+  "artifacts": [
+    {
+      "byteLength": 110968,
+      "cohortId": "categories",
+      "fileName": "matrix-options-categories-preview.pdf",
+      "kind": "PDF",
+      "label": "categories PDF",
+      "order": 0,
+      "packageId": "categories-pdf",
+      "path": "private-packages/categories/matrix-options-categories-preview.pdf",
+      "sha256": "b1cf2731823687c30612fbf56e5b87049b32cd9ec0b4f5dbaf2d9ff06d19ff7f"
+    },
+    {
+      "byteLength": 38137,
+      "cohortId": "categories",
+      "fileName": "matrix-options-categories-preview.docx",
+      "kind": "DOCX",
+      "label": "categories DOCX",
+      "order": 1,
+      "packageId": "categories-docx",
+      "path": "private-packages/categories/matrix-options-categories-preview.docx",
+      "sha256": "7572fae5c934b2da8c6fdc9c37a948f2efd392dde76bb65fbbf07f119f8c93b3"
+    },
+    {
+      "byteLength": 109788,
+      "cohortId": "exposure-assumptions",
+      "fileName": "matrix-options-exposure-assumptions-preview.pdf",
+      "kind": "PDF",
+      "label": "exposure-assumptions PDF",
+      "order": 0,
+      "packageId": "exposure-assumptions-pdf",
+      "path": "private-packages/exposure-assumptions/matrix-options-exposure-assumptions-preview.pdf",
+      "sha256": "cb3d6146f0b54b7ba01f2279466c1b260d2de2c13e63d00df13bcfbce38d2489"
+    },
+    {
+      "byteLength": 38091,
+      "cohortId": "exposure-assumptions",
+      "fileName": "matrix-options-exposure-assumptions-preview.docx",
+      "kind": "DOCX",
+      "label": "exposure-assumptions DOCX",
+      "order": 1,
+      "packageId": "exposure-assumptions-docx",
+      "path": "private-packages/exposure-assumptions/matrix-options-exposure-assumptions-preview.docx",
+      "sha256": "65d6a4b2c5e46a01cbd4423c022013f23dfdb274d1bf9e7459d7195cedaa07fd"
+    },
+    {
+      "byteLength": 112524,
+      "cohortId": "inputs-evidence",
+      "fileName": "matrix-options-inputs-evidence-preview.pdf",
+      "kind": "PDF",
+      "label": "inputs-evidence PDF",
+      "order": 0,
+      "packageId": "inputs-evidence-pdf",
+      "path": "private-packages/inputs-evidence/matrix-options-inputs-evidence-preview.pdf",
+      "sha256": "8deb2c2ebebbf7a70e5b8381450579e6a58ff50f5938282e288765e5d8a06996"
+    },
+    {
+      "byteLength": 38257,
+      "cohortId": "inputs-evidence",
+      "fileName": "matrix-options-inputs-evidence-preview.docx",
+      "kind": "DOCX",
+      "label": "inputs-evidence DOCX",
+      "order": 1,
+      "packageId": "inputs-evidence-docx",
+      "path": "private-packages/inputs-evidence/matrix-options-inputs-evidence-preview.docx",
+      "sha256": "9b10f2fd86ceafefbd8dfa3178d95924e40bc67bb73b793e34e36fb1625df7b5"
+    },
+    {
+      "byteLength": 109276,
+      "cohortId": "methods-water-type",
+      "fileName": "matrix-options-methods-water-type-preview.pdf",
+      "kind": "PDF",
+      "label": "methods-water-type PDF",
+      "order": 0,
+      "packageId": "methods-water-type-pdf",
+      "path": "private-packages/methods-water-type/matrix-options-methods-water-type-preview.pdf",
+      "sha256": "b417e39b0294210f5b8f5da8cc0b2f773721bd6d70765d179791cf4a011cc3e4"
+    },
+    {
+      "byteLength": 38136,
+      "cohortId": "methods-water-type",
+      "fileName": "matrix-options-methods-water-type-preview.docx",
+      "kind": "DOCX",
+      "label": "methods-water-type DOCX",
+      "order": 1,
+      "packageId": "methods-water-type-docx",
+      "path": "private-packages/methods-water-type/matrix-options-methods-water-type-preview.docx",
+      "sha256": "584d8c11b26040cd03b30497878c3b5900775133f4e97ec587ba7f44d6be6111"
+    },
+    {
+      "byteLength": 109560,
+      "cohortId": "pathway-grid",
+      "fileName": "matrix-options-pathway-grid-preview.pdf",
+      "kind": "PDF",
+      "label": "pathway-grid PDF",
+      "order": 0,
+      "packageId": "pathway-grid-pdf",
+      "path": "private-packages/pathway-grid/matrix-options-pathway-grid-preview.pdf",
+      "sha256": "8ce3a1ba23a983ecfc222e290f1b7257e4d9bc154f253e3d7077ecb75aeb3888"
+    },
+    {
+      "byteLength": 38127,
+      "cohortId": "pathway-grid",
+      "fileName": "matrix-options-pathway-grid-preview.docx",
+      "kind": "DOCX",
+      "label": "pathway-grid DOCX",
+      "order": 1,
+      "packageId": "pathway-grid-docx",
+      "path": "private-packages/pathway-grid/matrix-options-pathway-grid-preview.docx",
+      "sha256": "da1a836543acf8e12d4f9dfe94b3ae6f9a073abc78dfe78e0333ddad499ac89f"
+    }
+  ]
+}

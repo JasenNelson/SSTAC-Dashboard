@@ -1,10 +1,25 @@
 import 'server-only';
 
-import { createHash } from 'node:crypto';
-import { readFile, open } from 'node:fs/promises';
-import { Readable } from 'node:stream';
-import path from 'node:path';
+import { createHash, timingSafeEqual } from 'node:crypto';
 import { NextResponse } from 'next/server';
+import type { SupabaseClient } from '@supabase/supabase-js';
+
+// INERT DATA, not an executable module. The private print-package catalog is a
+// plain JSON contract, imported through the bundler exactly like the sibling
+// cohort and reviewer-guide contracts. This is structural, not stylistic: while
+// the catalog was a .ts module it was imported BEFORE its authenticator and its
+// top-level code could rewrite the realm intrinsics the authenticator is built
+// from, so no authenticator written in that realm could be proven correct. JSON
+// cannot carry getters, Proxies, overridden methods or prototype changes, so an
+// edit to this data can only change VALUES - which is precisely what the pinned
+// payload digest detects.
+import printPackagesCatalog from './contracts/print-packages-v1.json';
+import {
+  authenticatePrintPackageCatalogPayload,
+  EXPECTED_CATALOG_PROVENANCE_LABEL,
+} from './print-packages-catalog-authentication';
+import type { PrivateCatalogDocument } from './print-packages-catalog-contract';
+
 
 import {
   DOWNLOAD_MANIFEST_SCHEMA,
@@ -35,24 +50,13 @@ const DOCUMENT_VERSION_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
 const FILE_NAME_PATTERN = /^[A-Za-z0-9][A-Za-z0-9._-]*\.(pdf|docx)$/;
 const QUESTION_ID_PREFIX = `rpq:${REVIEW_GUIDE_RELEASE_IDENTITY}:q`;
 const PRIVATE_LOCATOR_PATTERN = /^private-print-package:[a-z0-9][a-z0-9._:-]*$/;
-const PRIVATE_PACKAGE_ROOT = path.join(process.cwd(), 'private-packages');
-const PRIVATE_CATALOG_PATH = path.join(PRIVATE_PACKAGE_ROOT, 'catalog.json');
+const CATALOG_PATH_PREFIX = 'private-packages/';
+export const PRIVATE_PACKAGE_BUCKET = 'matrix-twg-packages' as const;
+const MAX_PRIVATE_PACKAGE_BYTES = 5 * 1024 * 1024;
+/** Bucket-relative storage path: one cohort segment, then one file segment. */
+const STORAGE_PATH_PATTERN = /^[a-z0-9][a-z0-9._-]*\/[A-Za-z0-9][A-Za-z0-9._-]*\.(pdf|docx)$/;
 
-interface PrivateCatalogEntry {
-  readonly packageId: string;
-  readonly kind: DownloadPackageKind;
-  readonly label: string;
-  readonly fileName: string;
-  readonly cohortId: string;
-  readonly order: number;
-  readonly byteLength: number;
-  readonly sha256: string;
-  readonly path: string;
-}
-
-interface PrivateCatalogDocument {
-  readonly artifacts: readonly PrivateCatalogEntry[];
-}
+export type { PrivateCatalogEntry, PrivateCatalogDocument } from './print-packages-catalog-contract';
 
 export interface TrustedDownloadContext {
   readonly documentVersion: string;
@@ -77,6 +81,14 @@ export interface PrintPackageArtifact {
   readonly manifestSha256: string;
   /** Catalog-owned opaque locator. It is never joined with user input. */
   readonly serverAssetLocator: string;
+  /**
+   * Storage object path taken from the AUTHENTICATED catalog payload, relative
+   * to the `matrix-twg-packages` bucket root. It is carried on the artifact so
+   * that the streaming boundary never has to re-read the imported catalog data
+   * after authentication. It is server-internal and is never projected into the
+   * public download manifest.
+   */
+  readonly storagePath: string;
 }
 
 export interface DownloadRequestBinding {
@@ -96,6 +108,26 @@ export class DownloadBoundaryError extends Error {
     this.code = code;
     this.status = status;
   }
+}
+
+/**
+ * Server-side log for download-boundary events.
+ *
+ * The boundary previously logged NOTHING, so the two events this whole change
+ * exists to detect - a catalog payload that fails authentication, and served
+ * bytes that fail their integrity check - were reported only to the end user's
+ * browser, and every storage failure (bucket missing, object missing, RLS
+ * denied, expired token, network) collapsed into one undiagnosable 503.
+ *
+ * Non-sensitive by construction: a code, a package id and a bucket-relative
+ * path. No credential, no signed URL, no user identifier, no file content.
+ */
+function logBoundaryEvent(code: string, detail: Record<string, string | number | undefined>): void {
+  const fields = Object.entries(detail)
+    .filter(([, value]) => value !== undefined)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(' ');
+  console.error(`[matrix-options-paper][download-boundary] ${code}${fields ? ` ${fields}` : ''}`);
 }
 
 function boundaryFailure(code: string, message: string, status: 400 | 404 | 409 | 503): never {
@@ -162,8 +194,14 @@ export function validateTrustedCohortQuestion(
   binding: Pick<DownloadRequestBinding, 'cohortId' | 'questionId'>,
   context: Pick<TrustedDownloadContext, 'cohortQuestionIds'>,
 ): void {
-  const questionIds = context.cohortQuestionIds[binding.cohortId];
-  if (!questionIds) boundaryFailure('UNKNOWN_COHORT', 'Cohort is not in the trusted release.', 409);
+  // hasOwnProperty, not a bare lookup: `cohortId` is caller-supplied and matches
+  // STABLE_ID_PATTERN for inherited Object.prototype keys such as `constructor`,
+  // which would otherwise skip this 409 and reach a TypeError further down.
+  // Matches the sibling checks in validateCatalogArtifact/validateCompleteCatalog.
+  const questionIds = Object.prototype.hasOwnProperty.call(context.cohortQuestionIds, binding.cohortId)
+    ? context.cohortQuestionIds[binding.cohortId]
+    : undefined;
+  if (!Array.isArray(questionIds)) boundaryFailure('UNKNOWN_COHORT', 'Cohort is not in the trusted release.', 409);
   if (binding.questionId !== undefined && !questionIds.includes(binding.questionId)) boundaryFailure('COHORT_QUESTION_MISMATCH', 'Question is not a member of the cohort.', 409);
 }
 
@@ -216,8 +254,13 @@ export async function loadTrustedDownloadContext(binding: DownloadRequestBinding
 }
 
 function validateCatalogArtifact(artifact: PrintPackageArtifact, context: TrustedDownloadContext, cohortId?: string): void {
+  // `isStableId`, not `validateOpaquePackageId`: this is a CATALOG-side defect,
+  // so it must fail as a 503 like every sibling branch here. The old call could
+  // only ever return truthy or throw its own 400, mislabelling a bad catalog as
+  // a bad client request.
   if (
-    !validateOpaquePackageId(artifact.packageId) ||
+    !isStableId(artifact.packageId) ||
+    artifact.packageId.includes('..') ||
     !['PDF', 'DOCX'].includes(artifact.kind) ||
     typeof artifact.label !== 'string' ||
     !artifact.label.trim() ||
@@ -230,14 +273,24 @@ function validateCatalogArtifact(artifact: PrintPackageArtifact, context: Truste
     artifact.order < 0 ||
     !isStableId(artifact.cohortId) ||
     !isSha256(artifact.manifestSha256) ||
-    !PRIVATE_LOCATOR_PATTERN.test(artifact.serverAssetLocator)
+    !PRIVATE_LOCATOR_PATTERN.test(artifact.serverAssetLocator) ||
+    !STORAGE_PATH_PATTERN.test(artifact.storagePath) ||
+    artifact.storagePath.includes('..') ||
+    !artifact.storagePath.startsWith(`${artifact.cohortId}/`) ||
+    !artifact.storagePath.endsWith(`/${artifact.fileName}`) ||
+    // Bind the filename extension to the declared kind. The manifest path gets
+    // this from validateDownloadManifest, but the STREAMING path never calls
+    // that, and it is the streaming path that chooses the Content-Type. Without
+    // this, a catalog declaring kind PDF with a .docx filename would be served
+    // as application/pdf.
+    !artifact.fileName.toLowerCase().endsWith(artifact.kind === 'PDF' ? '.pdf' : '.docx')
   ) {
     boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Print package catalog entry is invalid.', 503);
   }
   if (artifact.documentVersion !== context.documentVersion || artifact.manifestSha256 !== context.manifestSha256 || (cohortId !== undefined && artifact.cohortId !== cohortId)) {
     boundaryFailure('CATALOG_RELEASE_MISMATCH', 'Print package catalog entry is not bound to the trusted release.', 409);
   }
-  if (!context.cohortQuestionIds[artifact.cohortId]) boundaryFailure('CATALOG_COHORT_MISMATCH', 'Print package catalog cohort is not trusted.', 409);
+  if (!Object.prototype.hasOwnProperty.call(context.cohortQuestionIds, artifact.cohortId)) boundaryFailure('CATALOG_COHORT_MISMATCH', 'Print package catalog cohort is not trusted.', 409);
 }
 
 function validateCompleteCatalog(artifacts: readonly PrintPackageArtifact[], context: TrustedDownloadContext, cohortId?: string): readonly PrintPackageArtifact[] {
@@ -255,9 +308,14 @@ function validateCompleteCatalog(artifacts: readonly PrintPackageArtifact[], con
     boundaryFailure('PRINT_PACKAGE_ARTIFACTS_INCOMPLETE', 'Exactly one authenticated PDF and one DOCX artifact are required.', 503);
   }
 
+  const trustedCohorts = Object.keys(context.cohortQuestionIds);
+  if (cohortId === undefined && byCohort.size !== trustedCohorts.length) {
+    boundaryFailure('PRINT_PACKAGE_ARTIFACTS_INCOMPLETE', 'Catalog must contain packages for all trusted cohorts.', 503);
+  }
+
   const ids = new Set<string>();
-  for (const [groupCohort, group] of byCohort.entries()) {
-    if (group.length !== 2) boundaryFailure('PRINT_PACKAGE_ARTIFACTS_INCOMPLETE', 'Exactly one authenticated PDF and one DOCX artifact are required per cohort.', 503);
+  for (const [groupCohortId, group] of byCohort) {
+    if (!Object.prototype.hasOwnProperty.call(context.cohortQuestionIds, groupCohortId)) boundaryFailure('CATALOG_COHORT_MISMATCH', 'Print package catalog cohort is not trusted.', 409);
     const kinds = new Set<DownloadPackageKind>();
     const orders = new Set<number>();
     for (const artifact of group) {
@@ -279,25 +337,77 @@ export async function loadAuthenticatedPrintPackageCatalog(
   cohortId?: string,
 ): Promise<readonly PrintPackageArtifact[] | null> {
   try {
-    let raw: string;
+    // Read the imported binding HERE, once per call, rather than aliasing it to a
+    // module-level const. The alias would freeze whatever the binding resolved to at
+    // import time, which also made the value unobservable to test substitution.
+    const catalog = printPackagesCatalog as PrivateCatalogDocument;
+
+    // STEP 1 - CONTENT AUTHENTICATION, before anything reads the artifact list.
+    // Hashes the actual imported catalog payload (provenance identity plus every
+    // artifact security field, with the self-declared digest excluded) and
+    // compares it to a digest pinned independently in trusted server code. This
+    // is what makes a substituted path, hash, byte length, cohort identity or
+    // package identity fail closed. It runs before the metadata comparison below
+    // because that comparison cannot authenticate content.
+    // Translated into a DownloadBoundaryError with its own code so the outer
+    // catch cannot flatten it into the generic "artifacts unavailable" 503 and
+    // hide the reason the catalog was rejected.
+    //
+    // READ-ONCE DISCIPLINE (defence in depth): authentication returns the frozen
+    // SNAPSHOT of the values it hashed, and everything below consumes ONLY that
+    // snapshot; the raw `catalog` object is never read again. The PRIMARY control
+    // is that the catalog is inert JSON and cannot define a getter or Proxy at
+    // all (see the import comment at the top of this file). This discipline is
+    // retained because it costs nothing and would still hold if the data source
+    // ever regained the ability to execute.
+    let authenticated;
     try {
-      raw = await readFile(PRIVATE_CATALOG_PATH, 'utf8');
-    } catch (err: any) {
-      if (err.code === 'ENOENT') return null;
-      throw err;
+      authenticated = authenticatePrintPackageCatalogPayload(catalog);
+    } catch (authenticationError) {
+      logBoundaryEvent('PRIVATE_CATALOG_PAYLOAD_AUTHENTICATION_FAILED', {
+        reason: authenticationError instanceof Error ? authenticationError.message : 'unknown',
+      });
+      boundaryFailure(
+        'PRIVATE_CATALOG_PAYLOAD_AUTHENTICATION_FAILED',
+        'Private package catalog payload does not match the pinned release digest.',
+        503,
+      );
     }
-    const catalog = JSON.parse(raw) as PrivateCatalogDocument;
-    if (!Array.isArray(catalog.artifacts)) boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package catalog is invalid.', 503);
-    const entries = catalog.artifacts.filter((entry) => cohortId === undefined || entry.cohortId === cohortId);
-    const artifacts: PrintPackageArtifact[] = [];
-    for (const entry of entries) {
-      if (!entry || typeof entry !== 'object' || !isStableId(entry.packageId) || !isStableId(entry.cohortId)) {
+
+    // STEP 2 - RELEASE BINDING. Ties the (now authenticated) catalog to the
+    // trusted paper/review release for THIS request. `sourceCatalogSha256` is
+    // still checked here, but only as a provenance label: it is self-declared by
+    // the catalog, so on its own it authenticates nothing. Step 1 is what
+    // authenticates the content.
+    if (
+      authenticated.schema !== 'matrix-twg-private-preview-package-catalog-v1' ||
+      authenticated.status !== 'NON_CANONICAL_PREVIEW' ||
+      authenticated.sourceRelease !== context.documentVersion ||
+      authenticated.sourcePaperSha256 !== context.paperSha256 ||
+      authenticated.sourceCatalogSha256 !== EXPECTED_CATALOG_PROVENANCE_LABEL ||
+      authenticated.sourceReviewManifestSha256 !== context.manifestSha256
+    ) {
+      boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package catalog metadata does not match trusted context.', 503);
+    }
+    // CURRENTLY UNREACHABLE BY DESIGN, and retained deliberately.
+    // The pinned payload digest covers a catalog of ten artifacts, so an empty
+    // artifact list now fails content authentication in STEP 1 above and never
+    // reaches this line. The `null` -> "pending" contract is kept because it is
+    // the honest representation of a legitimately empty, re-pinned catalog, and
+    // because the page and panel still consume that contract. Do NOT treat
+    // reaching this branch as a normal "not yet provisioned" state: with the
+    // current pin it would mean authentication was bypassed.
+    if (authenticated.artifacts.length === 0) return null;
+    const allArtifacts: PrintPackageArtifact[] = [];
+    for (const entry of authenticated.artifacts) {
+      if (!isStableId(entry.packageId) || !isStableId(entry.cohortId)) {
         boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package catalog entry is invalid.', 503);
       }
-      if (!entry.path.startsWith('private-packages/') || entry.path.includes('..') || entry.path.includes('\\')) {
+      if (!entry.path.startsWith(CATALOG_PATH_PREFIX) || entry.path.includes('..') || entry.path.includes('\\')) {
         boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package catalog path is invalid.', 503);
       }
       const artifact: PrintPackageArtifact = {
+        storagePath: entry.path.slice(CATALOG_PATH_PREFIX.length),
         packageId: entry.packageId,
         kind: entry.kind,
         label: entry.label,
@@ -310,19 +420,15 @@ export async function loadAuthenticatedPrintPackageCatalog(
         manifestSha256: context.manifestSha256,
         serverAssetLocator: `private-print-package:${entry.packageId}`,
       };
-      validateCatalogArtifact(artifact, context, cohortId);
-      const absolutePath = path.join(process.cwd(), entry.path);
-      if (!absolutePath.startsWith(PRIVATE_PACKAGE_ROOT + path.sep)) {
-        boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package locator escaped the sealed root.', 503);
-      }
-      const bytes = await readFile(absolutePath);
-      const digest = createHash('sha256').update(bytes).digest('hex');
-      if (bytes.byteLength !== artifact.byteLength || digest !== artifact.sha256) {
-        boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package bytes do not match the authenticated catalog.', 503);
-      }
-      artifacts.push(artifact);
+      validateCatalogArtifact(artifact, context, undefined);
+      allArtifacts.push(artifact);
     }
-    return validateCompleteCatalog(artifacts, context, cohortId);
+    const validatedCompleteCatalog = validateCompleteCatalog(allArtifacts, context, undefined);
+
+    if (cohortId === undefined) return validatedCompleteCatalog;
+    const entries = validatedCompleteCatalog.filter((entry) => entry.cohortId === cohortId);
+    if (entries.length === 0) boundaryFailure('PRINT_PACKAGE_ARTIFACTS_INCOMPLETE', 'Exactly one authenticated PDF and one DOCX artifact are required.', 503);
+    return entries;
   } catch (error) {
     if (error instanceof DownloadBoundaryError) throw error;
     boundaryFailure('PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE', 'Authenticated print-package artifacts are unavailable.', 503);
@@ -388,69 +494,118 @@ export function contentDispositionForCatalog(artifact: PrintPackageArtifact): st
 
 export async function streamAuthenticatedPrintPackageArtifact(
   artifact: PrintPackageArtifact,
+  supabase: SupabaseClient
 ): Promise<NextResponse> {
   validateOpaquePackageId(artifact.packageId);
   if (!PRIVATE_LOCATOR_PATTERN.test(artifact.serverAssetLocator)) boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package locator is invalid.', 503);
   if (artifact.serverAssetLocator !== `private-print-package:${artifact.packageId}`) boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package locator does not match the package ID.', 503);
-  const raw = await readFile(PRIVATE_CATALOG_PATH, 'utf8');
-  const catalog = JSON.parse(raw) as PrivateCatalogDocument;
-  const entry = catalog.artifacts.find((candidate) => candidate.packageId === artifact.packageId);
-  if (!entry || !entry.path.startsWith('private-packages/') || entry.path.includes('..') || entry.path.includes('\\')) {
-    boundaryFailure('ARTIFACT_NOT_FOUND', 'Opaque package ID is not in the authenticated catalog.', 404);
+
+  // The storage path travels ON the artifact, which was produced only by
+  // `loadAuthenticatedPrintPackageCatalog` after the catalog payload passed
+  // content authentication. This boundary therefore never re-reads the raw
+  // catalog module, so there is no post-authentication read of unauthenticated
+  // data. The shape checks below are defence in depth, not the trust source.
+  const storagePath = artifact.storagePath;
+  if (!STORAGE_PATH_PATTERN.test(storagePath) || storagePath.includes('..') || storagePath.includes('\\')) {
+    boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package storage path is invalid.', 503);
   }
-  const absolutePath = path.join(process.cwd(), entry.path);
-  if (!absolutePath.startsWith(PRIVATE_PACKAGE_ROOT + path.sep)) boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package locator escaped the sealed root.', 503);
-  
-  let handle: import('node:fs/promises').FileHandle | null = null;
-  let digest: string;
-  let byteLength = 0;
-  
-  try {
-    handle = await open(absolutePath, 'r');
-    const hash = createHash('sha256');
-    const verifyStream = handle.createReadStream({ autoClose: false });
-    
-    for await (const chunk of verifyStream) {
-      byteLength += chunk.length;
-      hash.update(chunk);
-    }
-    digest = hash.digest('hex');
-    
-    if (byteLength !== artifact.byteLength || digest !== artifact.sha256.toLowerCase() || digest !== entry.sha256.toLowerCase()) {
-      await handle.close();
-      handle = null;
-      boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package bytes do not match the authenticated artifact.', 503);
-    }
-    
-    const nodeStream = handle.createReadStream({ start: 0, autoClose: true });
-    const webStream = Readable.toWeb(nodeStream);
-    
-    return new NextResponse(webStream as any, {
-      status: 200,
-      headers: {
-        'Content-Type': artifact.kind === 'PDF' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
-        'Content-Length': String(byteLength),
-        'Content-Disposition': contentDispositionForCatalog(artifact),
-        'Cache-Control': 'private, no-store',
-        'X-Content-Type-Options': 'nosniff',
-      },
+  if (!storagePath.startsWith(`${artifact.cohortId}/`) || !storagePath.endsWith(`/${artifact.fileName}`)) {
+    boundaryFailure('INVALID_PRINT_PACKAGE_CATALOG', 'Private package storage path is not bound to the artifact cohort and filename.', 503);
+  }
+
+  const { data, error } = await supabase.storage.from(PRIVATE_PACKAGE_BUCKET).download(storagePath);
+
+  if (error || !data) {
+    // The storage error was previously discarded, which made a missing bucket
+    // indistinguishable from a missing object, an RLS denial or a network fault.
+    logBoundaryEvent('PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE', {
+      packageId: artifact.packageId,
+      bucket: PRIVATE_PACKAGE_BUCKET,
+      storagePath,
+      storageError: error?.message ?? 'no data returned',
     });
-  } catch (error) {
-    if (handle) {
-      await handle.close().catch(() => {});
-    }
-    throw error;
+    boundaryFailure('PRINT_PACKAGE_ARTIFACTS_UNAVAILABLE', 'Authenticated print-package artifacts are unavailable in storage.', 503);
   }
+
+  // NOTE ON WHAT THIS CEILING DOES AND DOES NOT DO: the object has already been
+  // fetched by the time this runs, so this check does NOT bound memory. Bounding
+  // the transfer requires a `file_size_limit` on the bucket itself.
+  // AS OF 2026-09-20 THE BUCKET DOES NOT EXIST YET, so no such limit is in force;
+  // provisioning is expected to set it to the same 5 MiB. Until then this check
+  // is the only ceiling, and it is a post-hoc one. Do not read this comment as a
+  // statement that the server-side limit is already configured.
+  if (data.size > MAX_PRIVATE_PACKAGE_BYTES) {
+    boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package exceeds maximum allowed size.', 503);
+  }
+
+  // Reject on the REPORTED size before materializing the bytes. The
+  // authenticated artifact states an exact byteLength, so any other size is
+  // already a mismatch and there is no reason to buffer it first. The
+  // post-buffer length check below stays as the authoritative one, since
+  // `data.size` is reported by the storage client rather than measured here.
+  if (data.size !== artifact.byteLength) {
+    boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package bytes do not match the authenticated artifact length.', 503);
+  }
+
+  const arrayBuffer = await data.arrayBuffer();
+  const buffer = Buffer.from(arrayBuffer);
+
+  if (buffer.length !== artifact.byteLength) {
+    boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package bytes do not match the authenticated artifact length.', 503);
+  }
+
+  const hash = createHash('sha256');
+  hash.update(buffer);
+  const digest = hash.digest('hex');
+
+  // `artifact.sha256` came from the authenticated catalog payload, so a single
+  // comparison against it is the real integrity check. An earlier version also
+  // compared against a freshly re-read catalog entry, which added no assurance
+  // because that re-read value was itself unauthenticated.
+  const expectedDigest = Buffer.from(artifact.sha256.toLowerCase(), 'hex');
+  const actualDigest = Buffer.from(digest, 'hex');
+  if (expectedDigest.length !== actualDigest.length || !timingSafeEqual(actualDigest, expectedDigest)) {
+    // A security event: stored bytes disagree with the authenticated catalog.
+    logBoundaryEvent('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', {
+      packageId: artifact.packageId,
+      storagePath,
+      expectedSha256: artifact.sha256.toLowerCase(),
+      actualSha256: digest,
+      byteLength: buffer.length,
+    });
+    boundaryFailure('PRIVATE_PACKAGE_INTEGRITY_MISMATCH', 'Private package bytes do not match the authenticated artifact hash.', 503);
+  }
+
+  return new NextResponse(buffer, {
+    status: 200,
+    headers: {
+      'Content-Type': artifact.kind === 'PDF' ? 'application/pdf' : 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+      'Content-Length': artifact.byteLength.toString(),
+      'Content-Disposition': contentDispositionForCatalog(artifact),
+      'Cache-Control': 'private, no-store',
+      'X-Content-Type-Options': 'nosniff',
+    },
+  });
 }
 
-export type DownloadManifestLoadState =
-  | { readonly status: 'pending'; readonly manifest: null }
-  | { readonly status: 'ready'; readonly manifest: VerifiedDownloadManifest };
+export type DownloadManifestMapLoadState =
+  | { readonly status: 'pending'; readonly manifests: null }
+  | { readonly status: 'ready'; readonly manifests: Readonly<Record<string, VerifiedDownloadManifest>> };
 
-export async function loadDownloadManifestState(binding: DownloadRequestBinding): Promise<DownloadManifestLoadState> {
-  const context = await loadTrustedDownloadContext(binding);
-  const catalog = await loadAuthenticatedPrintPackageCatalog(context, binding.cohortId);
-  if (catalog === null) return { status: 'pending', manifest: null };
-  return { status: 'ready', manifest: buildValidatedDownloadManifest(catalog, context, binding.cohortId) };
+export async function loadDownloadManifestMapState(
+  documentVersion: string,
+  manifestSha256: string
+): Promise<DownloadManifestMapLoadState> {
+  const context = await loadTrustedDownloadReleaseContext();
+  if (context.documentVersion !== documentVersion || context.manifestSha256 !== manifestSha256) {
+    boundaryFailure('RELEASE_IDENTITY_MISMATCH', 'Request is not bound to the trusted paper release.', 409);
+  }
+  const catalog = await loadAuthenticatedPrintPackageCatalog(context);
+  if (!catalog) return { status: 'pending', manifests: null };
+  const map: Record<string, VerifiedDownloadManifest> = {};
+  for (const cohortId of Object.keys(context.cohortQuestionIds)) {
+    const cohortArtifacts = catalog.filter(artifact => artifact.cohortId === cohortId);
+    map[cohortId] = buildValidatedDownloadManifest(cohortArtifacts, context, cohortId);
+  }
+  return { status: 'ready', manifests: map };
 }
-
