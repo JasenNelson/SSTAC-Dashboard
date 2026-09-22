@@ -4,6 +4,8 @@ import path from 'node:path';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { render, screen } from '@testing-library/react';
 
+import { isMatrixOptionsPaperReviewNavigationEnabled } from '@/lib/matrix-options/navigation';
+
 const {
   createServerClientMock,
   loadRevisedPaperMock,
@@ -77,13 +79,13 @@ const PAPER_RELEASE = {
   persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT' as const,
   content: 'exact authenticated V16 paper content',
 };
-const EFFECTIVE_REVIEW_NAVIGATION_VALUE =
-  process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION ?? '<unset>';
-
 async function loadDirectReviewRouteFailClosed() {
-  const effectiveValue = process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION ?? '<unset>';
-  if (effectiveValue === 'true') {
-    throw new Error('Review Navigation must be non-exact-true for Unit 0A');
+  const rawValue = process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+  const effectiveValue = rawValue ?? '<unset>';
+  // Absence now enables Review Navigation, so the guard uses the production
+  // helper rather than an exact-'true' check.
+  if (isMatrixOptionsPaperReviewNavigationEnabled(rawValue)) {
+    throw new Error('Review Navigation must be disabled for Unit 0A');
   }
 
   const route = await import('../paper/review/v/[documentVersion]/page');
@@ -145,6 +147,20 @@ describe('Matrix Options main page revised-paper integration', () => {
     expect(createServerClientMock).not.toHaveBeenCalled();
   });
 
+  it('redirects the Review view to the revised workspace when both paper flags are absent', async () => {
+    vi.stubEnv('MATRIX_OPTIONS_PAPER_WORKSPACE', undefined);
+    vi.stubEnv('MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION', undefined);
+
+    await expect(
+      MatrixOptionsPage({
+        searchParams: Promise.resolve({ view: 'TWG Review' }),
+      }),
+    ).rejects.toThrow('NEXT_REDIRECT');
+
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper');
+    expect(createServerClientMock).not.toHaveBeenCalled();
+  });
+
   it('contains no legacy-paper or Candidate-015 content fallback', () => {
     const source = fs.readFileSync(
       path.join(process.cwd(), 'src', 'app', '(dashboard)', 'matrix-options', 'page.tsx'),
@@ -157,22 +173,21 @@ describe('Matrix Options main page revised-paper integration', () => {
     expect(source).not.toContain('Error loading final paper.');
   });
 
-  it('records the effective Review Navigation value and requires it to be non-exact-true', () => {
-    expect(EFFECTIVE_REVIEW_NAVIGATION_VALUE).not.toBe('true');
-    expect(EFFECTIVE_REVIEW_NAVIGATION_VALUE).toBe('<unset>');
-  });
-
-  it('fails closed before importing direct-review code when Review Navigation is exact true', async () => {
-    vi.stubEnv('MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION', 'true');
+  it.each([
+    ['absent', undefined],
+    ['exact true', 'true'],
+  ])('fails closed before importing direct-review code when Review Navigation is %s', async (_label, value) => {
+    vi.stubEnv('MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION', value);
 
     await expect(loadDirectReviewRouteFailClosed()).rejects.toThrow(
-      'Review Navigation must be non-exact-true for Unit 0A',
+      'Review Navigation must be disabled for Unit 0A',
     );
     expect(redirectMock).not.toHaveBeenCalled();
   });
 
   it('routes unchanged direct review through the real-paper resolver before Candidate-015 loads or requests', async () => {
     vi.stubEnv('MATRIX_OPTIONS_PAPER_WORKSPACE', 'true');
+    vi.stubEnv('MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION', 'false');
     const fetchSpy = vi.spyOn(globalThis, 'fetch');
     const { effectiveValue, route } = await loadDirectReviewRouteFailClosed();
 
@@ -183,7 +198,7 @@ describe('Matrix Options main page revised-paper integration', () => {
       }),
     ).rejects.toThrow('NEXT_REDIRECT');
 
-    expect(effectiveValue).toBe(EFFECTIVE_REVIEW_NAVIGATION_VALUE);
+    expect(effectiveValue).toBe('false');
     expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper');
     expect(fetchSpy).not.toHaveBeenCalled();
 

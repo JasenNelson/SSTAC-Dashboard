@@ -36,8 +36,11 @@ const PAPER_PANEL_REVEAL_GAP_PX = 8;
 /** Mirrors PAPER_REVEAL_SETTLE_TIMEOUT_MS: how long a reveal may own the scrollport. */
 const PAPER_REVEAL_SETTLE_TIMEOUT_MS = 600;
 
-const paperWorkspaceEnabled = process.env.MATRIX_OPTIONS_PAPER_WORKSPACE === 'true';
-const reviewNavigationEnabled = paperWorkspaceEnabled && process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION === 'true';
+// Mirrors src/lib/matrix-options/navigation.ts: an absent flag selects the
+// reviewed workspace, exact 'true' enables it, and every other value is off.
+const paperFlagEnabled = (value: string | undefined) => value === undefined || value === 'true';
+const paperWorkspaceEnabled = paperFlagEnabled(process.env.MATRIX_OPTIONS_PAPER_WORKSPACE);
+const reviewNavigationEnabled = paperWorkspaceEnabled && paperFlagEnabled(process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION);
 
 test.describe('Matrix Options Paper disabled-route regressions', () => {
   test('flags-off old TWG query preserves the revised-paper status', async ({ page }, testInfo) => {
@@ -453,13 +456,22 @@ test.describe('Matrix Options Paper real V16 acceptance', () => {
     // each subsequent authenticated test to /login.
   });
 
-  test('M2: authenticated real release rails including the new Review Comments controls fit at 360 and 1024 with no horizontal overflow', async ({ page }, testInfo) => {
+  test('M2: authenticated real release rails keep review and download controls usable across phone, tablet, desktop, and wide layouts', async ({ page }, testInfo) => {
     requireJourney(testInfo.project.name);
-    for (const width of [360, 1024]) {
+    for (const width of [320, 767, 768, 1023, 1024, 1440]) {
       await page.setViewportSize({ width, height: 800 });
       await page.goto(`${workspacePath}?mode=my-review`, { waitUntil: 'domcontentloaded' });
       failOnLogin(page.url());
       await expect(page.getByTestId('review-comment-draft')).toBeVisible();
+      const reviewComments = page.getByTestId('paper-header-actions').getByRole('button', { name: 'Review Comments', exact: true });
+      const downloads = page.getByTestId('workspace-header-controls').getByRole('button', { name: 'Download Files', exact: true });
+      await expect(reviewComments).toBeVisible();
+      await expect(downloads).toBeVisible();
+      for (const control of [reviewComments, downloads]) {
+        const box = await control.boundingBox();
+        expect(box?.width ?? 0).toBeGreaterThanOrEqual(44);
+        expect(box?.height ?? 0).toBeGreaterThanOrEqual(44);
+      }
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
       expect(overflow).toBeLessThanOrEqual(1);
     }

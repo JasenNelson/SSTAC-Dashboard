@@ -74,12 +74,13 @@ describe('/matrix-options/paper/v/[documentVersion]', () => {
   });
 
   it('redirects to the legacy TWG Review when the workspace flag is off', async () => {
-    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'false';
     await expect(PaperVersionPage({ params: Promise.resolve({ documentVersion: paper.documentVersion }) })).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledWith('/matrix-options?view=TWG%20Review');
   });
 
   it('loads only the exact version and passes the same descriptor to TWGReviewPortal', async () => {
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false';
     const result = await PaperVersionPage({
       params: Promise.resolve({ documentVersion: paper.documentVersion }),
     });

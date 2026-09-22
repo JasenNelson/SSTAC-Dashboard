@@ -59,14 +59,10 @@ describe('/matrix-options/paper/v/[documentVersion]/[stableSectionId]', () => {
     delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
   });
 
-  it.each([undefined, '', 'false', 'TRUE']) (
+  it.each(['', 'false', 'TRUE']) (
     'redirects exact V16 to the legacy real-paper review when the workspace flag is %s, without loading paper structure',
     async (workspaceValue) => {
-      if (workspaceValue === undefined) {
-        delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
-      } else {
-        process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = workspaceValue;
-      }
+      process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = workspaceValue;
 
       await expect(visit('ignored-old-id')).rejects.toThrow('NEXT_REDIRECT');
       expect(redirectMock).toHaveBeenCalledWith(MATRIX_OPTIONS_LEGACY_TWG_REVIEW_PATH);
@@ -74,8 +70,17 @@ describe('/matrix-options/paper/v/[documentVersion]/[stableSectionId]', () => {
     },
   );
 
+  it('lands on the canonical Working Draft when both flags are absent', async () => {
+    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+    await expect(visit('ignored-old-id')).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledTimes(1);
+    expect(redirectMock).toHaveBeenCalledWith(workingDraft(null));
+  });
+
   it('redirects exact V16 to its version page when only the workspace flag is exact-true, without loading paper structure', async () => {
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false';
     await expect(visit('ignored-old-id')).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledWith(REVISED_PAPER_ROUTE);
     expect(loadStructureSpy).not.toHaveBeenCalled();

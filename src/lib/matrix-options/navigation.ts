@@ -60,13 +60,17 @@ export function parseMatrixOptionsViewParam(
 }
 
 export function isMatrixOptionsPaperWorkspaceEnabled(value: string | undefined): boolean {
-  return value === 'true';
+  // Production deployments historically omitted this flag, which silently
+  // selected the obsolete TWGReviewPortal. Treat absence as the reviewed
+  // workspace default; only the exact true value enables this route and every
+  // other set value (including '') remains fail-closed for rollback.
+  return value === undefined || value === 'true';
 }
 
 export function isMatrixOptionsPaperReviewNavigationEnabled(
   value: string | undefined,
 ): boolean {
-  return value === 'true';
+  return value === undefined || value === 'true';
 }
 
 export function resolveMatrixOptionsPaperReviewNavigationGate(
