@@ -1,29 +1,28 @@
 import { withSentryConfig } from '@sentry/nextjs';
 
+const MATRIX_OPTIONS_PAPER_TRACE_FILES = [
+  './candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md',
+  './candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md.sha256',
+];
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Runtime fs reads of the authenticated revised paper and its sha256 sidecar
+  // (src/lib/matrix-options/revised-paper.ts REVISED_PAPER_RELATIVE_PATH and
+  // REVISED_PAPER_SIDECAR_RELATIVE_PATH) are invisible to the bundler, so Vercel
+  // omits them from the serverless function unless listed here. Next 15 matches
+  // these keys against each route with picomatch `contains: true` (a SUBSTRING
+  // match, not a prefix): '/matrix-options' therefore also reaches /api/... and
+  // /admin/... routes containing it. Every route that reads the paper is still
+  // listed explicitly so narrowing a key cannot silently drop one.
+  // scripts/verify/verify-matrix-options-paper-trace.mjs proves the built
+  // .nft.json traces contain both files for each of those routes.
   outputFileTracingIncludes: {
-    '/matrix-options': [
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
-    ],
-    '/matrix-options/paper/v/[documentVersion]': [
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
-    ],
-    '/matrix-options/paper/publication/v/[documentVersion]': [
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
-    ],
-    '/matrix-options/paper/publication/v/[documentVersion]/nodes/[canonicalNodeId]': [
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
-    ],
-    '/matrix-options/paper/publication/v/[documentVersion]/questions/[questionId]': [
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md',
-      './matrix_research/options_paper/BC_Matrix_Options_Paper_v1.0.11-remediated-20260913.md.sha256',
-    ],
+    '/matrix-options': MATRIX_OPTIONS_PAPER_TRACE_FILES,
+    '/api/matrix-options/paper': MATRIX_OPTIONS_PAPER_TRACE_FILES,
+    '/admin/matrix-options-paper-reviews': MATRIX_OPTIONS_PAPER_TRACE_FILES,
   },
+
   // Skip ONLY the redundant in-build ESLint pass: CI's `eslint .` gate is a
   // superset, so re-linting inside `next build` adds no coverage and wastes
   // build memory. The in-build TypeScript check is KEPT -- it validates the
