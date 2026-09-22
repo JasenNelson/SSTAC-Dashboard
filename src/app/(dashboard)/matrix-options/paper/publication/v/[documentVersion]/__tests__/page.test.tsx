@@ -342,10 +342,10 @@ describe('paper publication V16 route', () => {
   });
 
   it('redirects legacy and resolver states before loading real content', async () => {
-    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'false';
     await expectRedirect(() => page({}), '/matrix-options?view=TWG%20Review');
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
-    delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false';
     await expectRedirect(() => page({}), '/matrix-options/paper/v/1.0.11-remediated-7-8-successor-20260918-D');
     expect(structureMock).not.toHaveBeenCalled();
   });

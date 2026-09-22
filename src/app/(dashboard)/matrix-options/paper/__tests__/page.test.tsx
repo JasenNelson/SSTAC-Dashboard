@@ -23,18 +23,29 @@ describe('/matrix-options/paper', () => {
   });
 
   it('redirects directly to the exact authenticated paper version', async () => {
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false';
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledWith(REVISED_PAPER_ROUTE);
   });
 
   it('keeps the legacy redirect when the workspace flag is off', async () => {
-    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'false';
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledWith('/matrix-options?view=TWG%20Review');
   });
 
   it('lands on the canonical Working Draft URL when both flags are on', async () => {
     process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'true';
+    await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
+    expect(redirectMock).toHaveBeenCalledTimes(1);
+    expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');
+  });
+
+  it('lands on the canonical Working Draft URL when both flags are absent', async () => {
+    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+    render(<MatrixOptionsPaperLayout><p>workspace child</p></MatrixOptionsPaperLayout>);
+    expect(screen.getByText('workspace child')).toBeInTheDocument();
     await expect(MatrixOptionsPaperResolverPage()).rejects.toThrow('NEXT_REDIRECT');
     expect(redirectMock).toHaveBeenCalledTimes(1);
     expect(redirectMock).toHaveBeenCalledWith('/matrix-options/paper/publication/v/1.0.11-remediated-7-8-successor-20260918-D?mode=working-draft');

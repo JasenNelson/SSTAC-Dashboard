@@ -88,8 +88,8 @@ describe('GET /api/matrix-options/paper/v/[documentVersion]/sections/[sectionAnc
   });
 
   it.each([
-    ['workspace flag off', () => { delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE; }],
-    ['review navigation flag off', () => { delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION; }],
+    ['workspace flag off', () => { process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'false'; }],
+    ['review navigation flag off', () => { process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false'; }],
   ])('returns 404 with %s and never loads the paper or the session', async (_name, disable) => {
     disable();
     const response = await call(realFirstAnchor, `?paper=${realSha}`);

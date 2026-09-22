@@ -45,10 +45,10 @@ describe('paper review V16 legacy routes', () => {
   });
 
   it('keeps the exact flags-off legacy and resolver redirects', async () => {
-    delete process.env.MATRIX_OPTIONS_PAPER_WORKSPACE;
+    process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'false';
     await expectEveryRouteRedirectsTo('/matrix-options?view=TWG%20Review');
     process.env.MATRIX_OPTIONS_PAPER_WORKSPACE = 'true';
-    delete process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION;
+    process.env.MATRIX_OPTIONS_PAPER_REVIEW_NAVIGATION = 'false';
     await expectEveryRouteRedirectsTo('/matrix-options/paper');
   });
 
