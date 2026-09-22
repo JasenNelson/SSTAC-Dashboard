@@ -9,6 +9,13 @@ interface TWGReviewPortalProps {
   finalDraftContent: string;
   showLeftPanel?: boolean;
   showRightPanel?: boolean;
+  paperRelease?: {
+    documentVersion: string;
+    sha256: string;
+    bytes: number;
+    releaseIdentity: string;
+    persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT';
+  };
 }
 
 // v6 bumped storage key because the underlying document was completely replaced again (Section 7 and Appendices).
@@ -77,7 +84,23 @@ function makeBareRecord<T>(): Record<string, T> {
   return Object.create(null) as Record<string, T>;
 }
 
-export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = true, showRightPanel = true }: TWGReviewPortalProps) {
+export default function TWGReviewPortal({
+  finalDraftContent,
+  showLeftPanel = true,
+  showRightPanel = true,
+  paperRelease,
+}: TWGReviewPortalProps) {
+  const remotePersistenceDisabled =
+    paperRelease?.persistenceState === 'DISABLED_PENDING_LIVE_CONTRACT';
+  const draftStorageKey = paperRelease
+    ? `${paperRelease.releaseIdentity}:draft`
+    : DRAFT_STORAGE_KEY;
+  const truncationStorageKey = paperRelease
+    ? `${paperRelease.releaseIdentity}:truncation`
+    : TRUNCATION_STORAGE_KEY;
+  const unknownProvenanceStorageKey = paperRelease
+    ? `${paperRelease.releaseIdentity}:unknown-provenance`
+    : UNKNOWN_PROVENANCE_STORAGE_KEY;
   const [comments, setComments] = useState<Record<string, string>>(() => makeBareRecord<string>());
   // How many characters the last edit to each field had to drop. 0 / absent means none.
   // This exists so truncation is ANNOUNCED rather than silent -- see handleCommentChange.
@@ -100,7 +123,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
   useEffect(() => {
     if (typeof window === 'undefined') return;
     try {
-      const raw = window.localStorage.getItem(DRAFT_STORAGE_KEY);
+      const raw = window.localStorage.getItem(draftStorageKey);
       if (!raw) return;
       const parsed = JSON.parse(raw);
       if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return;
@@ -153,7 +176,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       // trusted.
       const persistedUnknown = makeBareRecord<true>();
       try {
-        const rawU = window.localStorage.getItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
+        const rawU = window.localStorage.getItem(unknownProvenanceStorageKey);
         if (rawU !== null) {
           const parsedU = JSON.parse(rawU);
           if (parsedU && typeof parsedU === 'object' && !Array.isArray(parsedU)) {
@@ -168,7 +191,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
         /* corrupt unknown-provenance record - ignore, the draft itself is still usable */
       }
 
-      const rawT = window.localStorage.getItem(TRUNCATION_STORAGE_KEY);
+      const rawT = window.localStorage.getItem(truncationStorageKey);
       if (rawT === null) {
         // Do NOT gate this branch's unknown set on atLimitKeys alone -- a persisted
         // unknown-provenance record must surface even if this particular restore does not
@@ -220,7 +243,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     } catch {
       /* corrupt draft - ignore */
     }
-  }, []);
+  }, [draftStorageKey, truncationStorageKey, unknownProvenanceStorageKey]);
 
   const headings = useMemo<HeadingEntry[]>(() => {
     if (!finalDraftContent) return [];
@@ -351,7 +374,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       }
       if (typeof window !== 'undefined') {
         try {
-          window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(next));
+          window.localStorage.setItem(unknownProvenanceStorageKey, JSON.stringify(next));
         } catch {
           /* best-effort persistence; the in-memory dismissal above still applies */
         }
@@ -403,7 +426,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     // poison is ever written, or it fails and the whole save aborts before the truncation record
     // (or the draft) is touched at all.
     try {
-      window.localStorage.setItem(UNKNOWN_PROVENANCE_STORAGE_KEY, JSON.stringify(unknownProvenanceKeys));
+      window.localStorage.setItem(unknownProvenanceStorageKey, JSON.stringify(unknownProvenanceKeys));
     } catch {
       alert(
         'Unable to save the unknown-provenance record (storage quota or access denied), so the ' +
@@ -413,7 +436,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       return;
     }
     try {
-      window.localStorage.setItem(TRUNCATION_STORAGE_KEY, JSON.stringify(truncatedBy));
+      window.localStorage.setItem(truncationStorageKey, JSON.stringify(truncatedBy));
     } catch {
       alert(
         'Unable to save the truncation record (storage quota or access denied), so the draft was ' +
@@ -424,12 +447,16 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
     }
     try {
       // JSON.stringify on a null-prototype object still serializes own keys.
-      window.localStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify(comments));
+      window.localStorage.setItem(draftStorageKey, JSON.stringify(comments));
     } catch {
       alert('Unable to save draft locally (storage quota or access denied).');
       return;
     }
-    alert('Progress saved to local storage.');
+    alert(
+      remotePersistenceDisabled
+        ? 'Draft saved on this device only. Nothing was sent to the review database.'
+        : 'Progress saved to local storage.',
+    );
   };
 
   // Map internal storage keys to user-readable labels for the DB payload.
@@ -454,6 +481,7 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
 
   const handleSubmit = async () => {
     if (isSubmitting) return;
+    if (remotePersistenceDisabled) return;
 
     // Submit-time truncation confirmation. The inline role="alert" fires when the clip happens,
     // which may be many minutes and one page-resume before the reviewer presses Submit -- and a
@@ -585,9 +613,9 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
       }
 
       try {
-        window.localStorage.removeItem(DRAFT_STORAGE_KEY);
-        window.localStorage.removeItem(TRUNCATION_STORAGE_KEY);
-        window.localStorage.removeItem(UNKNOWN_PROVENANCE_STORAGE_KEY);
+        window.localStorage.removeItem(draftStorageKey);
+        window.localStorage.removeItem(truncationStorageKey);
+        window.localStorage.removeItem(unknownProvenanceStorageKey);
       } catch {
         /* non-fatal */
       }
@@ -649,19 +677,43 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
           visible scrollport. */}
       <div className="flex-1 relative overflow-y-auto bg-white dark:bg-slate-950 px-8 py-10 sm:px-12 print:flex-none print:overflow-visible print:h-auto print:p-0">
         <div className="max-w-4xl mx-auto space-y-8 print:max-w-none">
+          {paperRelease && (
+            <section
+              aria-label="Paper release and review status"
+              data-testid="revised-paper-status"
+              className="sticky top-0 z-20 border border-amber-300 bg-amber-50 p-4 text-sm text-amber-950 shadow-sm dark:border-amber-700 dark:bg-amber-950 dark:text-amber-100 print:static print:block print:shadow-none"
+            >
+              <h2 className="font-bold">Revised Matrix Options Paper</h2>
+              <p className="mt-1 font-semibold">
+                Version 1.0.11 - revised September 13, 2026
+              </p>
+              <p className="mt-2">
+                Review notes are saved only on this device. Online Save and Submit are not yet available.
+              </p>
+              <p className="mt-1 text-xs">
+                Scientific caveats and verification notes appear in context throughout the paper.
+              </p>
+            </section>
+          )}
           {/* Header card with title + Download (PDF) action. The whole card
               is hidden in print so the PDF starts at the paper body. */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 p-6 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 print:hidden">
             <div>
-              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">Final Master Draft</h2>
-              <p className="text-sm text-slate-500 dark:text-slate-400">Review the concatenated policy options below.</p>
+              <h2 className="text-xl font-bold text-slate-900 dark:text-slate-100">
+                {paperRelease ? 'Revised Matrix Options Paper' : 'Final Master Draft'}
+              </h2>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                {paperRelease
+                  ? 'Review the revised paper below.'
+                  : 'Review the concatenated policy options below.'}
+              </p>
             </div>
             <button
               type="button"
               onClick={() => {
                 if (typeof window !== 'undefined') window.print();
               }}
-              aria-label="Download Final Master Draft as PDF (opens browser print dialog)"
+              aria-label="Download paper as PDF (opens browser print dialog)"
               className="flex items-center justify-center gap-2 px-4 py-2 bg-slate-900 dark:bg-white text-white dark:text-slate-900 text-sm font-medium rounded-lg hover:bg-slate-800 dark:hover:bg-slate-100 transition-colors"
             >
               <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
@@ -688,7 +740,9 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
             <span>Section Comments</span>
           </h3>
           <p className="text-xs text-amber-700 dark:text-amber-400 bg-amber-50 dark:bg-amber-900/20 p-3 rounded-lg border border-amber-100 dark:border-amber-800/50">
-            Reviews can be saved and updated at any time. Submitting simply flags your review as ready for author consideration.
+            {remotePersistenceDisabled
+              ? 'Review notes are saved only on this device. Online Save and Submit are not yet available.'
+              : 'Reviews can be saved and updated at any time. Submitting simply flags your review as ready for author consideration.'}
           </p>
         </div>
 
@@ -895,14 +949,18 @@ export default function TWGReviewPortal({ finalDraftContent, showLeftPanel = tru
               disabled={isSubmitting}
               className="flex-1 py-2 px-4 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-200 font-medium rounded-lg border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Save Draft
+              {remotePersistenceDisabled ? 'Save Draft on This Device' : 'Save Draft'}
             </button>
             <button
               onClick={handleSubmit}
-              disabled={isSubmitting}
+              disabled={isSubmitting || remotePersistenceDisabled}
               className="flex-1 py-2 px-4 bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400 disabled:cursor-not-allowed text-white font-medium rounded-lg shadow-md transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500 focus-visible:ring-offset-1"
             >
-              {isSubmitting ? 'Submitting...' : 'Submit Review'}
+              {remotePersistenceDisabled
+                ? 'Online Submit Not Yet Available'
+                : isSubmitting
+                  ? 'Submitting...'
+                  : 'Submit Review'}
             </button>
           </div>
         </div>

@@ -1,0 +1,21 @@
+{
+  "schemaVersion": "matrix-paper-reviewer-guide-v1",
+  "releaseIdentity": "1.0.11-remediated-7-8-successor-20260918-D",
+  "paperSha256": "FEB62BD63C46F9B799A705DA9CCB6DB41974512CA4C73D9582111EEB3AE47337",
+  "sourcePath": "candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md",
+  "candidateRecordStatusModel": {"path":"candidate/contracts/status-model-v3.json","sha256":"C604DD2A3F4E928A2775A860AA7003C0B653A80CD06B63B6998585B1BF939E9D"},
+  "questions": [
+    {"number":1,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q01","sourceLines":[185,186],"heading":"On sediment uses (Section 4.1)","prompt":"Do the four Sediment Use Categories describe the aquatic receiving environments you actually work in? What is missing, and what is over-split?"},
+    {"number":2,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q02","sourceLines":[187,187],"heading":"On sediment uses (Section 4.1)","prompt":"Is Industrial Aquatic the right fourth category, and is its scope right?"},
+    {"number":3,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q03","sourceLines":[188,190],"heading":"On sediment uses (Section 4.1)","prompt":"Could you assign a real site to one of these four categories without ambiguity? If not, what makes it ambiguous?"},
+    {"number":4,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q04","sourceLines":[193,194],"heading":"On receptors and pathways (Sections 4.1 and 6.0)","prompt":"Four receptor-pathways across four use categories gives $4 \\times 4 = 16$ exposure scenarios as the starting point. Is that the right starting grid?"},
+    {"number":5,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q05","sourceLines":[195,197],"heading":"On receptors and pathways (Sections 4.1 and 6.0)","prompt":"Which of the sixteen do you expect to be implausible, or wholly dominated by another scenario, and could be dropped with a stated reason rather than carried?"},
+    {"number":6,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q06","sourceLines":[200,201],"heading":"On exposure assumptions and receptor characteristics (Sections 7.5 and 7.8)","prompt":"In the scenarios closest to your expertise, which assumptions are defensible, which are not, and which are missing entirely?"},
+    {"number":7,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q07","sourceLines":[202,204],"heading":"On exposure assumptions and receptor characteristics (Sections 7.5 and 7.8)","prompt":"Where does an assumption need a BC-specific value rather than one imported from another jurisdiction?"},
+    {"number":8,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q08","sourceLines":[207,208],"heading":"On input parameter selection (Section 7.8)","prompt":"For any parameter in your area: which source should govern, and what is the defensible value or range? A citation is more useful to us than a number."},
+    {"number":9,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q09","sourceLines":[209,211],"heading":"On input parameter selection (Section 7.8)","prompt":"Where a parameter in this draft is unsourced or thinly sourced, say so - we would rather withdraw a number than defend one we cannot trace."},
+    {"number":10,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q10","sourceLines":[214,216],"heading":"On equation form (Sections 6.0 and 7.5)","prompt":"Where do you see a genuine alternative equation form, as opposed to an apparent choice that is really a parameter choice in disguise?"},
+    {"number":11,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q11","sourceLines":[219,220],"heading":"On water type","prompt":"The framework is intended to apply to freshwater, estuarine and marine sediments. What changes across the three in your area, and where do the parameter sets not yet exist?"},
+    {"number":12,"id":"rpq:1.0.11-remediated-7-8-successor-20260918-D:q12","sourceLines":[224,226],"heading":"On data (Sections 7.7 and 7.8)","prompt":"What sediment concentration data, reports, datasets or published parameter sets should we know about? This directly feeds Task 3.1 and Task 3.8, and it is the single most useful thing most reviewers can contribute."}
+  ]
+}

@@ -53,6 +53,9 @@ export default defineConfig({
       '**/e2e/**',
       // Performance tests require a build - run separately with `npm run build && npm test`
       '**/performance.test.ts',
+      // node:test file owned by the print lane (scripts/build-review-package.mjs);
+      // it uses node's built-in test runner, not Vitest, and must not be collected here.
+      'scripts/build-review-package.test.mjs',
     ],
     coverage: {
       provider: 'v8',

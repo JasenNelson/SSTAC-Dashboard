@@ -38,7 +38,28 @@ vi.mock('../ConceptualMatrix', () => ({
   default: () => <div data-testid="conceptual-matrix-mock" />,
 }));
 vi.mock('../TWGReviewPortal', () => ({
-  default: () => <div data-testid="twg-review-portal-mock" />,
+  default: ({
+    finalDraftContent,
+    paperRelease,
+  }: {
+    finalDraftContent: string;
+    paperRelease: {
+      documentVersion: string;
+      sha256: string;
+      releaseIdentity: string;
+      persistenceState: string;
+    };
+  }) => (
+    <div
+      data-testid="twg-review-portal-mock"
+      data-document-version={paperRelease.documentVersion}
+      data-sha256={paperRelease.sha256}
+      data-release-identity={paperRelease.releaseIdentity}
+      data-persistence-state={paperRelease.persistenceState}
+    >
+      {finalDraftContent}
+    </div>
+  ),
 }));
 vi.mock('../matrix-options/SsdWorkbench', () => ({
   default: () => <div data-testid="ssd-workbench-mock" />,
@@ -66,8 +87,16 @@ import MatrixDashboard from '../MatrixDashboard';
 
 const DEFAULT_PROPS = {
   guideContent: '',
-  finalDraftContent: '',
-};
+  paperRelease: {
+    documentVersion: '1.0.11-remediated-7-8-successor-20260918-D',
+    sha256: 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+    bytes: 541959,
+    releaseIdentity:
+      'matrix-options-paper:1.0.11-remediated-7-8-successor-20260918-D:feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+    persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT' as const,
+    content: 'V16 authenticated paper bytes',
+  },
+} as const;
 
 const LS_CATEGORY = 'matrix-options-active-category-v1';
 const LS_TIER = 'matrix-options-guide-tier-v1';
@@ -83,6 +112,39 @@ function clickCalculatorTab() {
   const tabBtn = screen.getByRole('tab', { name: /^Calculator$/ });
   fireEvent.click(tabBtn);
 }
+
+describe('MatrixDashboard -- authenticated V16 paper integration', () => {
+  it.each([false, true])(
+    'renders the same immutable V16 descriptor when paper workspace enabled is %s',
+    (paperWorkspaceEnabled) => {
+      render(
+        <MatrixDashboard
+          {...DEFAULT_PROPS}
+          initialViewId="TWG Review"
+          paperWorkspaceEnabled={paperWorkspaceEnabled}
+        />,
+      );
+
+      const portal = screen.getByTestId('twg-review-portal-mock');
+      expect(portal).toHaveTextContent(DEFAULT_PROPS.paperRelease.content);
+      expect(portal).toHaveAttribute(
+        'data-document-version',
+        DEFAULT_PROPS.paperRelease.documentVersion,
+      );
+      expect(portal).toHaveAttribute('data-sha256', DEFAULT_PROPS.paperRelease.sha256);
+      expect(portal).toHaveAttribute(
+        'data-release-identity',
+        DEFAULT_PROPS.paperRelease.releaseIdentity,
+      );
+      expect(portal).toHaveAttribute(
+        'data-persistence-state',
+        'DISABLED_PENDING_LIVE_CONTRACT',
+      );
+      expect(document.body).not.toHaveTextContent('Candidate-015');
+      expect(document.body).not.toHaveTextContent('slice-1a-fixture-v1');
+    },
+  );
+});
 
 // Substance selection is a type-to-search combobox (item 1b), not a native select:
 // open it and click the target option.
@@ -2311,9 +2373,9 @@ describe('MatrixDashboard -- batch 2 audit items', () => {
 
       const tablist = screen.getByRole('tablist', { name: 'Matrix Options' });
       expect(within(tablist).getAllByRole('tab').map((tab) => tab.textContent)).toEqual([
-        'Guide',
         'Modernizing Schedule 3.4',
-        'TWG Review',
+        'Guide',
+        'Options Paper',
         'Database',
         'Calculator',
         'SSD Workbench',

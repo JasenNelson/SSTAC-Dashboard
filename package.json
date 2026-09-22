@@ -23,7 +23,7 @@
     "test:ci": "cross-env CI=true vitest run --coverage",
     "gate:preflight": "node scripts/verify/gate-preflight.mjs",
     "pretest:e2e": "npm run gate:preflight",
-    "test:e2e": "playwright test",
+    "test:e2e": "node scripts/verify/matrix-paper-e2e.mjs",
     "pretest:e2e:ui": "npm run gate:preflight",
     "test:e2e:ui": "playwright test --ui",
     "pretest:e2e:debug": "npm run gate:preflight",

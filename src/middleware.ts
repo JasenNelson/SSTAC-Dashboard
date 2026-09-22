@@ -67,7 +67,9 @@ function isTerminalAuthError(error: { message?: string; status?: number }): bool
 // existing cookies are preserved (which is what the retryable path wants).
 function redirectToLogin(request: NextRequest, carryFrom: NextResponse): NextResponse {
   const loginUrl = new URL('/login', request.url)
-  loginUrl.searchParams.set('redirect', request.nextUrl.pathname)
+  // Carry the query as well as the path so deep-link review state (mode, cohort, question, section)
+  // survives the sign-in round trip. The login page accepts only same-origin relative paths.
+  loginUrl.searchParams.set('redirect', `${request.nextUrl.pathname}${request.nextUrl.search}`)
   const redirectRes = NextResponse.redirect(loginUrl)
   carryFrom.cookies.getAll().forEach((cookie) => redirectRes.cookies.set(cookie))
   return applySecurityHeaders(redirectRes)

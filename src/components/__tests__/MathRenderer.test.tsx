@@ -122,6 +122,19 @@ describe('MathRenderer', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'Heading' })).toBeInTheDocument();
     expect(screen.getByText('bold')).toBeInTheDocument();
   });
+
+  it('maps known internal anchors without enabling raw HTML or unsafe links', () => {
+    render(
+      <MathRenderer
+        content={'[Known](#sec-known) [Unknown](#sec-unknown) [Unsafe](javascript:alert(1))'}
+        internalLinkMap={{ 'sec-known': '/matrix-options/paper/publication/v/v1/nodes/node%3Aknown?mode=my-review' }}
+      />,
+    );
+    expect(screen.getByRole('link', { name: 'Known' })).toHaveAttribute('href', '/matrix-options/paper/publication/v/v1/nodes/node%3Aknown?mode=my-review');
+    expect(screen.getByRole('link', { name: 'Unknown' })).toHaveAttribute('href', '#sec-unknown');
+    expect(document.querySelector('a[href=""]')).toHaveTextContent('Unsafe');
+    expect(document.querySelector('script')).not.toBeInTheDocument();
+  });
   // ---------------------------------------------------------------------------
   // Audit #16 guard (2026-08-16). The duplicate-H1 fix demotes a document's leading
   // `# ` heading, but it is applied at the MatrixDashboard CALL SITES, never here.

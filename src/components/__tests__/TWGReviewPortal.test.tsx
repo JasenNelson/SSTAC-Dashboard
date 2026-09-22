@@ -15,6 +15,14 @@ vi.mock('../MathRenderer', () => ({
 }))
 
 describe('TWGReviewPortal', () => {
+  const v16Release = {
+    documentVersion: '1.0.11-remediated-7-8-successor-20260918-D',
+    sha256: 'feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+    bytes: 541959,
+    releaseIdentity:
+      'matrix-options-paper:1.0.11-remediated-7-8-successor-20260918-D:feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337',
+    persistenceState: 'DISABLED_PENDING_LIVE_CONTRACT' as const,
+  }
   const mockInsert = vi.fn()
   const mockUpdate = vi.fn()
   const mockFrom = vi.fn()
@@ -56,6 +64,155 @@ describe('TWGReviewPortal', () => {
     // Mock alert to prevent test output noise
     vi.spyOn(window, 'alert').mockImplementation(() => {})
     vi.spyOn(console, 'error').mockImplementation(() => {})
+  })
+
+  it('renders representative Markdown in source order through the real MathRenderer', async () => {
+    const { default: RealMathRenderer } = await vi.importActual<
+      typeof import('../MathRenderer')
+    >('../MathRenderer')
+
+    const { container } = render(
+      <RealMathRenderer
+        content={`# First heading
+
+Opening paragraph.
+
+- First item
+
+## Second heading
+
+| Column |
+| --- |
+| Value |`}
+      />
+    )
+
+    const renderer = container.querySelector('.math-renderer')
+    expect(renderer).not.toBeNull()
+    const orderedText = Array.from(renderer?.children ?? []).map(
+      (element) => (element.textContent ?? '').replace(/\s+/g, ' ').trim(),
+    )
+
+    expect(orderedText).toEqual([
+      'First heading',
+      'Opening paragraph.',
+      'First item',
+      'Second heading',
+      'ColumnValue',
+    ])
+  })
+
+  it('keeps raw HTML inert and rejects unsafe URLs through the real MathRenderer', async () => {
+    const { default: RealMathRenderer } = await vi.importActual<
+      typeof import('../MathRenderer')
+    >('../MathRenderer')
+
+    const { container } = render(
+      <RealMathRenderer
+        content={`Safe text before.
+
+<script>window.__paperScriptExecuted = true</script>
+
+<img src="x" onerror="window.__paperImageExecuted = true" alt="unsafe raw image">
+
+[Unsafe link](javascript:alert('paper'))`}
+      />
+    )
+
+    expect(container.querySelector('script')).toBeNull()
+    expect(container.querySelector('img')).toBeNull()
+    expect(screen.queryByAltText('unsafe raw image')).not.toBeInTheDocument()
+    const unsafeLink = screen.getByText('Unsafe link').closest('a')
+    expect(unsafeLink).not.toBeNull()
+    expect(unsafeLink).toHaveAttribute('href', '')
+  })
+
+  it('shows concise reader-facing version, local-save, and scientific-caveat guidance', () => {
+    render(
+      <TWGReviewPortal
+        finalDraftContent={'## Exact heading\nExact body'}
+        paperRelease={v16Release}
+      />
+    )
+
+    const status = screen.getByTestId('revised-paper-status')
+    expect(status).toHaveClass('print:block')
+    expect(status).toHaveTextContent(
+      'Version 1.0.11 - revised September 13, 2026'
+    )
+    expect(status).toHaveTextContent(
+      'Review notes are saved only on this device. Online Save and Submit are not yet available.'
+    )
+    expect(status).toHaveTextContent(
+      'Scientific caveats and verification notes appear in context throughout the paper.'
+    )
+    expect(document.body).not.toHaveTextContent(v16Release.documentVersion)
+    expect(document.body).not.toHaveTextContent(v16Release.sha256)
+    expect(document.body).not.toHaveTextContent(v16Release.releaseIdentity)
+    expect(document.body).not.toHaveTextContent('541959')
+    expect(document.body).not.toHaveTextContent('DISABLED_PENDING_LIVE_CONTRACT')
+    expect(document.body).not.toHaveTextContent(/Policy adoption|Publication authorization/)
+    expect(screen.queryByText('Final Master Draft')).not.toBeInTheDocument()
+  })
+
+  it('uses only release-namespaced device-local draft keys and never migrates legacy v6 state', async () => {
+    window.localStorage.setItem(
+      'twg-matrix-review-draft-v6',
+      JSON.stringify({ general: 'legacy text must stay detached' })
+    )
+
+    render(
+      <TWGReviewPortal
+        finalDraftContent={'## Exact heading\nExact body'}
+        paperRelease={v16Release}
+      />
+    )
+
+    const textarea = screen.getByPlaceholderText(/Overall thoughts/i) as HTMLTextAreaElement
+    await waitFor(() => expect(textarea.value).toBe(''))
+    fireEvent.change(textarea, { target: { value: 'device-local V16 note' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Save Draft on This Device' }))
+
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(`${v16Release.releaseIdentity}:draft`) as string
+      )
+    ).toEqual({ general: 'device-local V16 note' })
+    expect(
+      window.localStorage.getItem(`${v16Release.releaseIdentity}:truncation`)
+    ).toBe('{}')
+    expect(
+      window.localStorage.getItem(`${v16Release.releaseIdentity}:unknown-provenance`)
+    ).toBe('{}')
+    expect(
+      JSON.parse(window.localStorage.getItem('twg-matrix-review-draft-v6') as string)
+    ).toEqual({ general: 'legacy text must stay detached' })
+  })
+
+  it('guards V16 remote submission before any Supabase client or table request', () => {
+    render(
+      <TWGReviewPortal
+        finalDraftContent={'## Exact heading\nExact body'}
+        paperRelease={v16Release}
+      />
+    )
+
+    expect(screen.getAllByText(/Review notes are saved only on this device/)[0]).toHaveTextContent(
+      'Online Save and Submit are not yet available.'
+    )
+    const submit = screen.getByRole('button', { name: 'Online Submit Not Yet Available' })
+    expect(submit).toBeDisabled()
+
+    // Exercise the handler guard independently of the DOM disabled attribute.
+    // This protects against a future presentation-only change accidentally
+    // making the V16 path reach Supabase.
+    submit.removeAttribute('disabled')
+    expect(submit).toBeEnabled()
+    fireEvent.click(submit)
+
+    expect(createClient).not.toHaveBeenCalled()
+    expect(mockGetUser).not.toHaveBeenCalled()
+    expect(mockFrom).not.toHaveBeenCalled()
   })
 
   it('inserts a new review when none exists', async () => {

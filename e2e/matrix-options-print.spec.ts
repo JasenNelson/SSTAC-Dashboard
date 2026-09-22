@@ -79,17 +79,18 @@ test.describe('Matrix Options print heading outline', () => {
  * Regression guard added after the print fix broke a tab it was never reasoned about.
  *
  * The first version rendered the replacement heading on EVERY tab. That was wrong twice over on
- * TWG Review: its toolbar carries `print:hidden` specifically so window.print() produces a
- * chrome-free PDF of the paper body (see the comment on that toolbar in MatrixDashboard), and
- * its document is rendered RAW -- demoteLeadingH1 is not applied there -- so the tab already
- * prints its own level-1 heading. The unconditional heading took it from 2 printed h1s to 3.
+ * the Options Paper tab (internal view id 'TWG Review'): its toolbar carries `print:hidden`
+ * specifically so window.print() produces a chrome-free PDF of the paper body (see the comment
+ * on that toolbar in MatrixDashboard), and its document is rendered RAW -- demoteLeadingH1 is
+ * not applied there -- so the tab already prints its own level-1 heading. The unconditional
+ * heading took it from 2 printed h1s to 3.
  *
  * Falsified: removing the DEMOTED_DOCUMENT_TABS guard fails this test with a count of 3.
  */
 test.describe('Matrix Options print -- tabs that were NOT demoted', () => {
-  test('TWG Review keeps its own heading and gains no injected chrome', async ({ page }) => {
+  test('Options Paper keeps its own heading and gains no injected chrome', async ({ page }) => {
     await gotoMatrixOptionsOrSkip(page);
-    await clickUntilVisible(page, 'TWG Review', page.locator('#matrix-dashboard-tabpanel'));
+    await clickUntilVisible(page, 'Options Paper', page.locator('#matrix-dashboard-tabpanel'));
 
     await page.emulateMedia({ media: 'print' });
 
@@ -105,7 +106,7 @@ test.describe('Matrix Options print -- tabs that were NOT demoted', () => {
     }
     expect(
       visibleInPrint,
-      'TWG Review renders its paper raw, so it supplies its own printed heading; the audit #16 ' +
+      'Options Paper renders its paper raw, so it supplies its own printed heading; the audit #16 ' +
         'replacement heading must not be injected on top of it',
     ).toBeGreaterThan(0);
   });

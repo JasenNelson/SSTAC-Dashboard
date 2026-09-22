@@ -4,6 +4,7 @@ import { redirect } from 'next/navigation';
 import { cookies } from 'next/headers';
 import AdminDashboardClient from './AdminDashboardClient';
 import ErrorBoundary from '@/components/ErrorBoundary';
+import Link from 'next/link';
 
 export default async function AdminDashboardPage() {
   const cookieStore = await cookies();
@@ -110,6 +111,7 @@ export default async function AdminDashboardPage() {
   return (
     <ErrorBoundary>
       <AdminDashboardClient metrics={metrics} />
+      <p><Link href="/admin/matrix-options-paper-reviews">Matrix Options paper reviews</Link></p>
     </ErrorBoundary>
   );
 }

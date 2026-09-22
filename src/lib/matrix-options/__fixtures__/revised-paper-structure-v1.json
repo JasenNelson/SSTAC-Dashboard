@@ -1,0 +1,82 @@
+{
+  "schemaVersion": "matrix-paper-v16-structure-v1",
+  "compilerVersion": "1",
+  "source": {
+    "path": "candidate/paper/BC_Matrix_Options_Paper_v1.0.11-remediated-7-8-successor-20260918-D.md",
+    "version": "1.0.11-remediated-7-8-successor-20260918-D",
+    "releaseIdentity": "matrix-options-paper:1.0.11-remediated-7-8-successor-20260918-D:feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337",
+    "bytes": 541959,
+    "sha256": "feb62bd63c46f9b799a705da9ccb6db41974512ca4c73d9582111eeb3ae47337"
+  },
+  "parsers": [
+    {
+      "name": "remark-gfm",
+      "version": "4.0.1"
+    },
+    {
+      "name": "remark-math",
+      "version": "6.0.0"
+    },
+    {
+      "name": "remark-parse",
+      "version": "11.0.0"
+    },
+    {
+      "name": "unified",
+      "version": "11.0.5"
+    }
+  ],
+  "counts": {
+    "astBlocks": 5563,
+    "headings": 341,
+    "coreNodes": 163,
+    "appendixNodes": 178,
+    "figureObjects": 0,
+    "tableObjects": 45,
+    "equationObjects": 0,
+    "questions": 9,
+    "questionContainers": 7,
+    "duplicateHeadings": 7
+  },
+  "lenses": {
+    "all": {
+      "placements": 341,
+      "canonical": 341,
+      "orderedIdsSha256": "de285f6bddfdbc0b3d47efa54065c0fa1db2b37c9e9d4728f07a5231fdda432a"
+    },
+    "core": {
+      "placements": 163,
+      "canonical": 163,
+      "orderedIdsSha256": "f8b969165dfd4cc917694c4b767340238436b4460b1ed82faf9f08b0b37ad722"
+    },
+    "appendices": {
+      "placements": 178,
+      "canonical": 178,
+      "orderedIdsSha256": "0aa621e12de9661a89c018e1a3000c2c97928c7fa2afdd428732a33c2dede12e"
+    },
+    "evidence": {
+      "placements": 165,
+      "canonical": 29,
+      "orderedIdsSha256": "bc0f77cab2d353df3f25ebcbc1f5133d7ea158239419b3d22f6a63dcb85794fc"
+    },
+    "objects": {
+      "placements": 45,
+      "canonical": 45,
+      "orderedIdsSha256": "effa7ae0043166305486caf6ec7040ab5c701683dc78d0bc3d28aa54cff8d988"
+    },
+    "questions": {
+      "placements": 9,
+      "canonical": 9,
+      "orderedIdsSha256": "9e96ab12ce05ca5f02d551c52a114b2f66b47469a0181a457e498a726a20e12b"
+    }
+  },
+  "coverage": {
+    "firstByte": 0,
+    "lastByteExclusive": 541959
+  },
+  "orderedIdsSha256": {
+    "nodes": "de285f6bddfdbc0b3d47efa54065c0fa1db2b37c9e9d4728f07a5231fdda432a",
+    "objects": "effa7ae0043166305486caf6ec7040ab5c701683dc78d0bc3d28aa54cff8d988",
+    "questions": "9e96ab12ce05ca5f02d551c52a114b2f66b47469a0181a457e498a726a20e12b"
+  }
+}
