@@ -4,6 +4,7 @@ import React, { useState, useMemo, useEffect, useRef } from 'react';
 import MathRenderer from './MathRenderer';
 import { cn } from '@/utils/cn';
 import { createClient } from '@/lib/supabase/client';
+import { stripStandaloneSectionAnchorLines } from '@/lib/matrix-options/paper/full-document';
 
 interface TWGReviewPortalProps {
   finalDraftContent: string;
@@ -244,6 +245,14 @@ export default function TWGReviewPortal({
       /* corrupt draft - ignore */
     }
   }, [draftStorageKey, truncationStorageKey, unknownProvenanceStorageKey]);
+
+  // Display boundary only: ReactMarkdown shows raw HTML literally, so the
+  // canonical paper's standalone section-anchor marker lines are removed with
+  // the same helper the revised-paper reader uses. No other HTML is touched.
+  const displayContent = useMemo(
+    () => stripStandaloneSectionAnchorLines(finalDraftContent || ''),
+    [finalDraftContent],
+  );
 
   const headings = useMemo<HeadingEntry[]>(() => {
     if (!finalDraftContent) return [];
@@ -724,7 +733,7 @@ export default function TWGReviewPortal({
           </div>
           <div ref={contentRef}>
             {/* Round-2 P2-2: document column is bg-white dark:bg-slate-950. */}
-            <MathRenderer content={finalDraftContent || ''} fadeFrom="from-white dark:from-slate-950" />
+            <MathRenderer content={displayContent} fadeFrom="from-white dark:from-slate-950" />
           </div>
         </div>
       </div>
