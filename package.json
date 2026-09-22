@@ -31,6 +31,7 @@
     "test:k6": "k6 run tests/load/main.k6.js",
     "test:agy-tooling": "node --test tooling/agy/__tests__/*.node-test.mjs",
     "test:agy-canary": "node --test tooling/agy/__tests__/*.canary.mjs",
+    "verify:matrix-paper-trace": "node scripts/verify/verify-matrix-options-paper-trace.mjs",
     "docs:gate": "node scripts/verify/docs-gate.mjs",
     "docs:gate:json": "node scripts/verify/docs-gate.mjs --json",
     "docs:archive:investigate": "node scripts/verify/docs-archive-investigation.mjs",
